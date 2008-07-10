@@ -221,6 +221,18 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     
     private boolean enableSATransform = false;
     
+    /** We use the constant to preserve the FOV. Either 1 or 0; */
+    private int constantFOV = 1;
+    
+    /** Button group for interpolation type, contant FOV or start, end matching. */
+    private ButtonGroup interpFOVgroup;
+    
+    /** Radio button for constant FOV interpolation. */
+    private JRadioButton constantFOVradio;
+    
+    /** Radio button for slice start & end matching interpolation. */
+    private JRadioButton endMatchFOVradio;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -374,52 +386,52 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         userValue = Float.valueOf(userText).floatValue();
 
         if (source == textDimX) {
-            factor = (userValue-1) / (float) (cXdim-1);
+            factor = (userValue-constantFOV) / (float) (cXdim-constantFOV);
             dims[0] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cXdim-1) * cXres;
-                resols[0] = fov / (dims[0]-1);
+                fov = (cXdim-constantFOV) * cXres;
+                resols[0] = fov / (dims[0]-constantFOV);
             }
         } else if (source == textDimY) {
-            factor = (userValue-1) / (float) (cYdim-1);
+            factor = (userValue-constantFOV) / (float) (cYdim-constantFOV);
             dims[1] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cYdim-1) * cYres;
-                resols[1] = fov / (dims[1]-1);
+                fov = (cYdim-constantFOV) * cYres;
+                resols[1] = fov / (dims[1]-constantFOV);
             }
         } else if (source == textDimZ) {
-            factor = (userValue-1) / (float) (cZdim-1);
+            factor = (userValue-constantFOV) / (float) (cZdim-constantFOV);
             dims[2] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution in z
-                fov = (cZdim-1) * cZres;
-                resols[2] = fov / (dims[2]-1);
+                fov = (cZdim-constantFOV) * cZres;
+                resols[2] = fov / (dims[2]-constantFOV);
             }
         } else if (source == textResX) {
             factor = cXres / userValue;
             resols[0] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cXdim-1) * cXres;
-                dims[0] = fov / resols[0] + 1;
+                fov = (cXdim-constantFOV) * cXres;
+                dims[0] = fov / resols[0] + constantFOV;
             }
         } else if (source == textResY) {
             factor = cYres / userValue;
             resols[1] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cYdim-1) * cYres;
-                dims[1] = fov / resols[1] + 1;
+                fov = (cYdim-constantFOV) * cYres;
+                dims[1] = fov / resols[1] + constantFOV;
             }
         } else if (source == textResZ) {
             factor = cZres / userValue;
             resols[2] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cZdim-1) * cZres;
-                dims[2] = fov / resols[2] + 1;
+                fov = (cZdim-constantFOV) * cZres;
+                dims[2] = fov / resols[2] + constantFOV;
             }
         }
 
@@ -639,6 +651,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 rotOrigin.setEnabled(false);
                 useSACenterBox.setEnabled(false);
                 
+                constantFOVradio.setEnabled(false);
+                endMatchFOVradio.setEnabled(false);
+                
                 padValTxt.setEnabled(false);
                 padLabel.setEnabled(false);
 
@@ -768,12 +783,22 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 useSACenterBox.setEnabled(false);
                 padRadio.setEnabled(false);
                 cropRadio.setEnabled(false);
+                constantFOVradio.setEnabled(false);
+                endMatchFOVradio.setEnabled(false);
             } else {
                 rotCenter.setEnabled(true);
                 rotOrigin.setEnabled(true);
                 useSACenterBox.setEnabled(true && enableSATransform);
                 padRadio.setEnabled(true);
                 cropRadio.setEnabled(true);
+                int boxIndex = comboBoxInterp.getSelectedIndex();
+                if ( boxIndex == 1 ) {
+                	constantFOVradio.setEnabled(true);
+                    endMatchFOVradio.setEnabled(true);
+                } else {
+                	constantFOVradio.setEnabled(false);
+                    endMatchFOVradio.setEnabled(false);
+                }
             }
         } else if (source == padRadio) {
 
@@ -784,6 +809,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 padValTxt.setEnabled(false);
                 padLabel.setEnabled(false);
             }
+        } else if ( source == constantFOVradio ) {
+        	constantFOV = 0;
+        } else if ( source == endMatchFOVradio ) {
+        	constantFOV = 1;
         } else if (source == resampletoUser) {
 
             if (resampletoUser.isSelected()) {
@@ -1397,11 +1426,11 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 						iZres = image.getFileInfo(0).getResolutions()[2];
 					}
 
-					if (setPix) {
-						float fovX = iXres * (iXdim-1);
-						float fovY = iYres * (iYdim-1);
-						oXdim = (int) (fovX / oXres) + 1;
-						oYdim = (int) (fovY / oYres) + 1;
+					if (setPix) {		
+						float fovX = iXres * (iXdim-constantFOV);
+						float fovY = iYres * (iYdim-constantFOV);
+						oXdim = (int) (fovX / oXres) + constantFOV;
+						oYdim = (int) (fovY / oYres) + constantFOV;
 					} else {
 						oXdim = selectedImg.getExtents()[0];
 						oYdim = selectedImg.getExtents()[1];
@@ -1411,8 +1440,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 						oZres = selectedImg.getFileInfo(0).getResolutions()[2];
 						//units[2] = selectedImg.getUnitsOfMeasure(2);
 						if (setPix) {
-							float fovZ = iZres * (iZdim-1);
-							oZdim = (int) (fovZ / oZres) + 1;
+							float fovZ = iZres * (iZdim-constantFOV);
+							oZdim = (int) (fovZ / oZres) + constantFOV;
+							
 						} else {
 							oZdim = selectedImg.getExtents()[2];
 						}
@@ -2085,7 +2115,29 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         comboBoxInterp.addItem("Heptic Lagrangian");
         comboBoxInterp.addItem("Windowed sinc");
         comboBoxInterp.addItemListener(this);
-
+        
+        JLabel labelInterpFor = new JLabel("Interpolate For :");
+        labelInterpFor.setForeground(Color.black);
+        labelInterpFor.setFont(serif12);
+        labelInterpFor.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        interpFOVgroup = new ButtonGroup();
+        constantFOVradio = new JRadioButton("Constant FOV", true);
+        constantFOVradio.setFont(serif12);
+        constantFOVradio.setEnabled(false);
+        interpFOVgroup.add(constantFOVradio);
+        constantFOVradio.setSelected(false);
+        constantFOVradio.addItemListener(this);
+        constantFOVradio.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        endMatchFOVradio = new JRadioButton("Begin & End Matching", true);
+        endMatchFOVradio.setFont(serif12);
+        endMatchFOVradio.setEnabled(false);
+        interpFOVgroup.add(endMatchFOVradio);
+        endMatchFOVradio.setSelected(true);
+        endMatchFOVradio.addItemListener(this);
+        endMatchFOVradio.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
         cropOrPad = new ButtonGroup();
         cropRadio = new JRadioButton("Retain original image size", true);
         cropRadio.setFont(serif12);
@@ -2209,9 +2261,17 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         gbc.gridx = 2;
         gbc.gridwidth = 2;
         optionPanel.add(comboBoxInterp, gbc);
-
         gbc.gridx = 0;
         gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        optionPanel.add(labelInterpFor, gbc);
+        gbc.gridx = 2;
+        optionPanel.add(constantFOVradio, gbc);
+        gbc.gridx = 3;
+        optionPanel.add(endMatchFOVradio, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         gbc.gridwidth = 1;
         optionPanel.add(labelOrigin, gbc);
         gbc.gridx = 2;
@@ -2223,27 +2283,27 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         
         
         gbc.gridx = 2;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         optionPanel.add(cropRadio, gbc);
         gbc.gridx = 3;
         optionPanel.add(padRadio, gbc);
 
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         gbc.gridx = 3;
         optionPanel.add(padValuePanel, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
         optionPanel.add(clipCheckbox, gbc);
-        gbc.gridy = 5;
-        optionPanel.add(image25DCheckbox, gbc);
         gbc.gridy = 6;
-        optionPanel.add(updateOriginCheckbox, gbc);
+        optionPanel.add(image25DCheckbox, gbc);
         gbc.gridy = 7;
-        optionPanel.add(voiCheckbox, gbc);
+        optionPanel.add(updateOriginCheckbox, gbc);
         gbc.gridy = 8;
+        optionPanel.add(voiCheckbox, gbc);
+        gbc.gridy = 9;
         optionPanel.add(invertCheckbox, gbc);
 
         return optionPanel;
@@ -2285,7 +2345,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         xyzAspectRatio.addItemListener(this);
         xyzAspectRatio.setEnabled(false);
 
-        fieldOfView = new JCheckBox("Preserve field of view.", false);
+        fieldOfView = new JCheckBox("Preserve the Resol/Dim aspect ratio.", false);
         fieldOfView.setForeground(Color.black);
         fieldOfView.setFont(serif12);
         fieldOfView.addItemListener(this);
@@ -3295,6 +3355,12 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
         int boxIndex = comboBoxInterp.getSelectedIndex();
 
+        if ( boxIndex != 1 ) {
+        	constantFOVradio.setEnabled(false);
+            endMatchFOVradio.setEnabled(false);
+            constantFOV = 1;
+        }
+        
         if (boxIndex == 0) {
             interp = AlgorithmTransform.NEAREST_NEIGHBOR;
         } else if (boxIndex == 1) {
@@ -3303,6 +3369,13 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 interp = AlgorithmTransform.BILINEAR;
             } else {
                 interp = AlgorithmTransform.TRILINEAR;
+            }
+            constantFOVradio.setEnabled(true);
+            endMatchFOVradio.setEnabled(true);
+            if ( constantFOVradio.isSelected() ) {
+            	constantFOV = 0;
+            } else {
+            	constantFOV = 1;
             }
         } // else if (boxIndex == 1)
         else if (boxIndex == 2) {
@@ -3322,7 +3395,6 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         doVOI = voiCheckbox.isSelected();
         doClip = clipCheckbox.isSelected();
         doInvMat = invertCheckbox.isSelected();
-
         
         //set the units.  will be reset if image is being resampled to another image's size
         units = new int[image.getUnitsOfMeasure().length];
@@ -3429,10 +3501,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             
             
             if (setPix) {
-                fovX = iXres * (iXdim-1);
-                fovY = iYres * (iYdim-1);
-                oXdim = (int) (fovX / oXres) + 1;
-                oYdim = (int) (fovY / oYres) + 1;
+                fovX = iXres * (iXdim-constantFOV);
+                fovY = iYres * (iYdim-constantFOV);
+                oXdim = (int) (fovX / oXres) + constantFOV;
+                oYdim = (int) (fovY / oYres) + constantFOV;
             } else {
                 oXdim = selectedImg.getExtents()[0];
                 oYdim = selectedImg.getExtents()[1];
@@ -3442,8 +3514,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 oZres = selectedImg.getFileInfo(0).getResolutions()[2];
                 units[2] = selectedImg.getUnitsOfMeasure(2);
                 if (setPix) {
-                    fovZ = iZres * (iZdim-1);
-                    oZdim = (int) (fovZ / oZres) + 1;
+                    fovZ = iZres * (iZdim-constantFOV);
+                    oZdim = (int) (fovZ / oZres) + constantFOV;
                 } else {
                     oZdim = selectedImg.getExtents()[2];
                 }
@@ -3747,23 +3819,22 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         if (noTransform.isSelected() || userDefinedMatrix.isSelected()) {
 
             if ((image.getNDims() >= 3) && (!do25D)) {
-
-                if (((iXres * (float) (iXdim-1)) != (oXres * (float) (oXdim-1))) ||
-                        ((iYres * (float) (iYdim-1)) != (oYres * (float) (oYdim-1))) ||
-                        ((iZres * (float) (iZdim-1)) != ((float) (oZdim-1) * oZres))) {
-                    Sx = ((float) (oXdim-1) * oXres) / ((float) (iXdim-1) * iXres);
-                    Sy = ((float) (oYdim-1) * oYres) / ((float) (iYdim-1) * iYres);
-                    Sz = ((float) (oZdim-1) * oZres) / ((float) (iZdim-1) * iZres);
+                if (((iXres * (float) (iXdim-constantFOV)) != (oXres * (float) (oXdim-constantFOV))) ||
+                        ((iYres * (float) (iYdim-constantFOV)) != (oYres * (float) (oYdim-constantFOV))) ||
+                        ((iZres * (float) (iZdim-constantFOV)) != ((float) (oZdim-constantFOV) * oZres))) {
+                    Sx = ((float) (oXdim-constantFOV) * oXres) / ((float) (iXdim-constantFOV) * iXres);
+                    Sy = ((float) (oYdim-constantFOV) * oYres) / ((float) (iYdim-constantFOV) * iYres);
+                    Sz = ((float) (oZdim-constantFOV) * oZres) / ((float) (iZdim-constantFOV) * iZres);
                     xfrm.setZoom(Sx, Sy, Sz);
                 }
             } else { // ((image.getNDims() == 2) || (do25D))
-
-                if (((iXres * (float) (iXdim-1)) != (oXres * (float) (oXdim-1))) ||
-                        ((iYres * (float) (iYdim-1)) != (oYres * (float) (oYdim-1)))) {
-                    Sx = ((float) (oXdim-1) * oXres) / ((float) (iXdim-1) * iXres);
-                    Sy = ((float) (oYdim-1) * oYres) / ((float) (iYdim-1) * iYres);
+                if (((iXres * (float) (iXdim-constantFOV)) != (oXres * (float) (oXdim-constantFOV))) ||
+                        ((iYres * (float) (iYdim-constantFOV)) != (oYres * (float) (oYdim-constantFOV)))) {
+                    Sx = ((float) (oXdim-constantFOV) * oXres) / ((float) (iXdim-constantFOV) * iXres);
+                    Sy = ((float) (oYdim-constantFOV) * oYres) / ((float) (iYdim-constantFOV) * iYres);
                     xfrm.setZoom(Sx, Sy);
                 }
+            
             }
         }
         
