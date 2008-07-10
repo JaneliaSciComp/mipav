@@ -1672,10 +1672,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 imm = i * oXres;
                 X = (j1 + (imm * T00)) * invXRes;
 
-                if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                if ((X > -0.5f) && (X < iXdim)) {
                     Y = (j2 + (imm * T10)) * invYRes;
 
-                    if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                    if ((Y > -0.5f) && (Y < iYdim)) {
 
                         if (X <= 0) {
                             x0 = 0;
@@ -1824,10 +1824,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 imm = i * oXres;
                 X = (j1 + (imm * T00)) * invXRes;
 
-                if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                if ((X > -0.5f) && (X < iXdim)) {
                     Y = (j2 + (imm * T10)) * invYRes;
 
-                    if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                    if ((Y > -0.5f) && (Y < iYdim)) {
 
                         if (X <= 0) {
                             x0 = 0;
@@ -1972,10 +1972,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 imm = i * oXres;
                 X = (j1 + (imm * T00)) * invXRes;
 
-                if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                if ((X > -0.5f) && (X < iXdim)) {
                     Y = (j2 + (imm * T10)) * invYRes;
 
-                    if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                    if ((Y > -0.5f) && (Y < iYdim)) {
 
                         if (X <= 0) {
                             x0 = 0;
@@ -2104,17 +2104,15 @@ public class AlgorithmTransform extends AlgorithmBase {
                 imgBuf2[indexDest + 3] = 0;
                 jmm = (float) j * oYres;
                 X = (temp1 + (jmm * T01)) / iXres;
-                roundX = (int) (X + 0.5f);
 
-                if ((X >= 0) && (roundX < iXdim)) {
+                if ((X >= 0) && (X < iXdim)) {
                     Y = (temp2 + (jmm * T11)) / iYres;
-                    roundY = (int) (Y + 0.5f);
 
-                    if ((Y >= 0) && (roundY < iYdim)) {
+                    if ((Y >= 0) && (Y < iYdim)) {
 
-                        if ((roundX == (iXdim - 1)) || (roundY == (iYdim - 1))) { // cannot interpolate on last X or Y
-                            X0pos = roundX;
-                            Y0pos = roundY * iXdim;
+                        if ((X >= (iXdim - 1)) || (Y >= (iYdim - 1))) { // cannot interpolate on last X or Y
+                            X0pos = Math.min((int)(X + 0.5f),(iXdim - 1));
+                            Y0pos = Math.min((int)(Y + 0.5f),(iYdim - 1)) * iXdim;
                             index = 4 * (Y0pos + X0pos);
 
                             // imgBuf2[indexDest] = imgBuf[index];
@@ -2222,11 +2220,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                 roundX = (int) (X + 0.5f);
                 roundY = (int) (Y + 0.5f);
 
-                if ((roundX < 0) || (roundX > (xdim - 1)) || (roundY < 0) || (roundY > (ydim - 1))) {
+                if ((X < -0.5) || (X >= xdim) || (Y < -0.5) || (Y >= ydim)) {
                     value = min;
                 } else {
-                    xOffset = roundX;
-                    yOffset = roundY * xdim;
+                    xOffset = Math.min(roundX, xdim - 1);
+                    yOffset = Math.min(roundY, ydim - 1) * xdim;
                     value = imgBuf[xOffset + yOffset];
                 }
 
@@ -2307,11 +2305,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                 roundX = (int) (X + 0.5f);
                 roundY = (int) (Y + 0.5f);
 
-                if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1))) {
+                if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
                     value = min;
                 } else {
-                    xOffset = roundX;
-                    yOffset = roundY * iXdim;
+                    xOffset = Math.min(roundX, iXdim - 1);
+                    yOffset = Math.min(roundY, iYdim - 1) * iXdim;
                     value = imgBuf[xOffset + yOffset];
                 }
 
@@ -2395,13 +2393,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     roundY = (int) (Y + 0.5f);
                     roundZ = (int) (Z + 0.5f);
 
-                    if ((roundX < 0) || (roundX > (Xdim - 1)) || (roundY < 0) || (roundY > (Ydim - 1)) ||
-                            (roundZ < 0) || (roundZ > (Zdim - 1))) {
+                    if ((X < -0.5) || (X >= Xdim) || (Y < -0.5) || (Y >= Ydim) ||
+                            (Z < -0.5) || (Z >= Zdim)) {
                         value = min;
                     } else {
-                        xOffset = roundX;
-                        yOffset = roundY * Xdim;
-                        zOffset = roundZ * sliceSize;
+                        xOffset = Math.min(roundX, Xdim - 1);
+                        yOffset = Math.min(roundY, Ydim - 1) * Xdim;
+                        zOffset = Math.min(roundZ, Zdim - 1) * sliceSize;
                         value = imgBuf[xOffset + yOffset + zOffset];
 
                     }
@@ -2544,13 +2542,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     imm = i * oXres;
                     X = (j1 + (imm * T00)) * invXRes;
 
-                    if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                    if ((X > -0.5f) && (X < iXdim)) {
                         Y = (j2 + (imm * T10)) * invYRes;
 
-                        if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                        if ((Y > -0.5f) && (Y < iYdim)) {
                             Z = (j3 + (imm * T20)) * invZRes;
 
-                            if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {
+                            if ((Z > -0.5f) && (Z < iZdim)) {
 
                                 if (X <= 0) {
                                     x0 = 0;
@@ -2751,13 +2749,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         imm = i * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
-                        if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                        if ((X > -0.5f) && (X < iXdim)) {
                             Y = (j2 + (imm * T10)) * invYRes;
 
-                            if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                            if ((Y > -0.5f) && (Y < iYdim)) {
                                 Z = (j3 + (imm * T20)) * invZRes;
 
-                                if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {
+                                if ((Z > -0.5f) && (Z < iZdim)) {
 
                                     if (X <= 0) {
                                         x0 = 0;
@@ -2959,13 +2957,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     imm = i * oXres;
                     X = (j1 + (imm * T00)) * invXRes;
 
-                    if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                    if ((X > -0.5f) && (X < iXdim)) {
                         Y = (j2 + (imm * T10)) * invYRes;
 
-                        if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                        if ((Y > -0.5f) && (Y < iYdim)) {
                             Z = (j3 + (imm * T20)) * invZRes;
 
-                            if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {
+                            if ((Z > -0.5f) && (Z < iZdim)) {
 
                                 if (X <= 0) {
                                     x0 = 0;
@@ -3099,10 +3097,6 @@ public class AlgorithmTransform extends AlgorithmBase {
             T22 = (float) xfrmD[2][2];
             T23 = (float) xfrmD[2][3];
 
-            int iXdim1 = xDim - 1;
-            int iYdim1 = yDim - 1;
-            int iZdim1 = zDim - 1;
-
             float invXRes = 1 / xRes;
             float invYRes = 1 / yRes;
             float invZRes = 1 / zRes;
@@ -3134,13 +3128,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                             imm = i * xRes;
                             X = (j1 + (imm * T00)) * invXRes;
 
-                            if ((X >= 0) && (X < iXdim1)) {
+                            if ((X >= 0) && (X < xDim)) {
                                 Y = (j2 + (imm * T10)) * invYRes;
 
-                                if ((Y >= 0) && (Y < iYdim1)) {
+                                if ((Y >= 0) && (Y < yDim)) {
                                     Z = (j3 + (imm * T20)) * invZRes;
 
-                                    if ((Z >= 0) && (Z < iZdim1)) {
+                                    if ((Z >= 0) && (Z < zDim)) {
 
                                         x0 = (int) X;
                                         y0 = (int) Y;
@@ -3288,22 +3282,22 @@ public class AlgorithmTransform extends AlgorithmBase {
                         X = X / resols[0];
                         roundX = (int) (X + 0.5f);
 
-                        if ((X >= 0) && (roundX < xDim)) {
+                        if ((X >= 0) && (X < xDim)) {
                             Y = (imm * T10) + (jmm * T11) + (kmm * T12) + T13;
                             Y = Y / resols[1];
                             roundY = (int) (Y + 0.5f);
 
-                            if ((Y >= 0) && (roundY < yDim)) {
+                            if ((Y >= 0) && (Y < yDim)) {
                                 Z = (imm * T20) + (jmm * T21) + (kmm * T22) + T23;
                                 Z = Z / resols[2];
                                 roundZ = (int) (Z + 0.5f);
 
-                                if ((Z >= 0) && (roundZ < zDim)) {
+                                if ((Z >= 0) && (Z < zDim)) {
 
-                                    if ((roundX == (xDim - 1)) || (roundY == (yDim - 1)) || (roundZ == (zDim - 1))) { // cannot interpolate on last X, Y, or Z
-                                        X0pos = roundX;
-                                        Y0pos = roundY * xDim;
-                                        Z0pos = roundZ * sliceSize;
+                                    if ((X >= (xDim - 1)) || (Y >= (yDim - 1)) || (Z >= (zDim - 1))) { // cannot interpolate on last X, Y, or Z
+                                        X0pos = Math.min(roundX, xDim - 1);
+                                        Y0pos = Math.min(roundY, yDim - 1) * xDim;
+                                        Z0pos = Math.min(roundZ, zDim - 1) * sliceSize;
                                         index = 4 * (Z0pos + Y0pos + X0pos);
                                         valueA = imgBuffer[index];
                                         valueR = imgBuffer[index + 1];
@@ -3504,22 +3498,22 @@ public class AlgorithmTransform extends AlgorithmBase {
                     X = (temp3 + (kmm * T02)) / iXres;
                     roundX = (int) (X + 0.5f);
 
-                    if ((X >= 0) && (roundX < iXdim)) {
+                    if ((X >= 0) && (X < iXdim)) {
                         Y = temp2 + (kmm * T12);
                         Y = Y / iYres;
                         roundY = (int) (Y + 0.5f);
 
-                        if ((Y >= 0) && (roundY < iYdim)) {
+                        if ((Y >= 0) && (Y < iYdim)) {
                             Z = temp1 + (kmm * T22);
                             Z = Z / iZres;
                             roundZ = (int) (Z + 0.5f);
 
-                            if ((Z >= 0) && (roundZ < iZdim)) {
+                            if ((Z >= 0) && (Z < iZdim)) {
 
-                                if ((roundX == (iXdim - 1)) || (roundY == (iYdim - 1)) || (roundZ == (iZdim - 1))) { // cannot interpolate on last X, Y, or Z
-                                    X0pos = roundX;
-                                    Y0pos = roundY * iXdim;
-                                    Z0pos = roundZ * sliceSize;
+                                if ((X >= (iXdim - 1)) || (Y >= (iYdim - 1)) || (Z >= (iZdim - 1))) { // cannot interpolate on last X, Y, or Z
+                                    X0pos = Math.min(roundX, iXdim - 1);
+                                    Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
+                                    Z0pos = Math.min(roundZ, iZdim - 1) * sliceSize;
                                     index = 4 * (Z0pos + Y0pos + X0pos);
 
                                     // imgBuffer2[indexDest] = imgBuffer[index];
@@ -3694,23 +3688,23 @@ public class AlgorithmTransform extends AlgorithmBase {
                             X = X / resols[0];
                             roundX = (int) (X + 0.5f);
 
-                            if ((X >= 0) && (roundX < xDim)) {
+                            if ((X >= 0) && (X < xDim)) {
                                 Y = (imm * T10) + (jmm * T11) + (kmm * T12) + T13;
                                 Y = Y / resols[1];
                                 roundY = (int) (Y + 0.5f);
 
-                                if ((Y >= 0) && (roundY < yDim)) {
+                                if ((Y >= 0) && (Y < yDim)) {
                                     Z = (imm * T20) + (jmm * T21) + (kmm * T22) + T23;
                                     Z = Z / resols[2];
                                     roundZ = (int) (Z + 0.5f);
 
-                                    if ((Z >= 0) && (roundZ < zDim)) {
+                                    if ((Z >= 0) && (Z < zDim)) {
 
-                                        if ((roundX == (xDim - 1)) || (roundY == (yDim - 1)) ||
-                                                (roundZ == (zDim - 1))) { // cannot interpolate on last X, Y, or Z
-                                            X0pos = roundX;
-                                            Y0pos = roundY * xDim;
-                                            Z0pos = roundZ * sliceSize;
+                                        if ((X >= (xDim - 1)) || (Y >= (yDim - 1)) ||
+                                                (Z >= (zDim - 1))) { // cannot interpolate on last X, Y, or Z
+                                            X0pos = Math.min(roundX, xDim - 1);
+                                            Y0pos = Math.min(roundY, yDim - 1) * xDim;
+                                            Z0pos = Math.min(roundZ, zDim - 1) * sliceSize;
                                             index = 4 * (Z0pos + Y0pos + X0pos);
                                             valueA = imgBuffer[index];
                                             valueR = imgBuffer[index + 1];
@@ -4885,13 +4879,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 X = (temp1 + (jmm * T01)) / iXres;
                 roundX = (int) (X + 0.5f);
 
-                if ((X >= -0.5f) && (roundX < iXdim)) {
+                if ((X >= -0.5f) && (X < iXdim)) {
                     Y = (temp2 + (jmm * T11)) / iYres;
                     roundY = (int) (Y + 0.5f);
 
-                    if ((Y >= -0.5f) && (roundY < iYdim)) {
-                        X0pos = roundX;
-                        Y0pos = roundY * iXdim;
+                    if ((Y >= -0.5f) && (Y < iYdim)) {
+                        X0pos = Math.min(roundX, iXdim - 1);
+                        Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
                         value = imgBuffer[Y0pos + X0pos];
                     } // end if Y in bounds
                 } // end if X in bounds
@@ -4996,13 +4990,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     X = (temp1 + (jmm * T01)) / iXres;
                     roundX = (int) (X + 0.5f);
     
-                    if ((X >= -0.5f) && (roundX < iXdim)) {
+                    if ((X >= -0.5f) && (X < iXdim)) {
                         Y = (temp2 + (jmm * T11)) / iYres;
                         roundY = (int) (Y + 0.5f);
     
-                        if ((Y >= -0.5f) && (roundY < iYdim)) {
-                            X0pos = roundX;
-                            Y0pos = roundY * iXdim;
+                        if ((Y >= -0.5f) && (Y < iYdim)) {
+                            X0pos = Math.min(roundX, iXdim - 1);
+                            Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
                             value = imgBuffer[Y0pos + X0pos];
                         } // end if Y in bounds
                     } // end if X in bounds
@@ -5130,16 +5124,16 @@ public class AlgorithmTransform extends AlgorithmBase {
                     value = 0.0f; // remains zero if voxel is transformed out of bounds
                     X = (j1 + (imm * T00)) * invXRes;
 
-                    if ((X >= -0.5) && (X < (iXdim - 0.5f))) {
+                    if ((X >= -0.5) && (X < iXdim)) {
                         Y = (j2 + (imm * T10)) * invYRes;
 
-                        if ((Y >= -0.5) && (Y < (iYdim - 0.5f))) {
+                        if ((Y >= -0.5) && (Y < iYdim)) {
                             Z = (j3 + (imm * T20)) * invZRes;
 
-                            if ((Z >= -0.5) && (Z < (iZdim - 0.5f))) {
-                                X0pos = (int) (X + 0.5f);
-                                Y0pos = ((int) (Y + 0.5f)) * iXdim;
-                                Z0pos = ((int) (Z + 0.5f)) * sliceSize;
+                            if ((Z >= -0.5) && (Z < iZdim)) {
+                                X0pos = Math.min((int) (X + 0.5f), iXdim - 1);
+                                Y0pos = Math.min((int) (Y + 0.5f), iYdim - 1) * iXdim;
+                                Z0pos = Math.min((int) (Z + 0.5f), iZdim - 1) * sliceSize;
                                 value = imgBuffer[Z0pos + Y0pos + X0pos];
                             } // end if Z in bounds
                         } // end if Y in bounds
@@ -5246,10 +5240,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 imm = iAdj * oXres;
                 X = (j1 + (imm * T00)) * invXRes;
 
-                if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                if ((X > -0.5f) && (X < iXdim)) {
                     Y = (j2 + (imm * T10)) * invYRes;
 
-                    if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                    if ((Y > -0.5f) && (Y < iYdim)) {
 
                         if (X <= 0) {
                             x0 = 0;
@@ -5350,16 +5344,16 @@ public class AlgorithmTransform extends AlgorithmBase {
                     X = (temp1 + (jmm * T01)) / iXres;
                     roundX = (int) (X + 0.5f);
 
-                    if ((X >= 0) && (roundX < iXdim)) {
+                    if ((X >= 0) && (X < iXdim)) {
                         Y = (temp2 + (jmm * T11)) / iYres;
                         roundY = (int) (Y + 0.5f);
 
-                        if ((Y >= 0) && (roundY < iYdim)) {
+                        if ((Y >= 0) && (Y < iYdim)) {
 
-                            if ((roundX == (iXdim - 1)) || (roundY == (iYdim - 1))) { // cannot interpolate on last X
+                            if ((X >= (iXdim - 1)) || (Y >= (iYdim - 1))) { // cannot interpolate on last X
                                                                                       // or Y
-                                X0pos = roundX;
-                                Y0pos = roundY * iXdim;
+                                X0pos = Math.min(roundX, iXdim - 1);
+                                Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
                                 value = imgBuf[Y0pos + X0pos];
                             } else {
 
@@ -5478,16 +5472,16 @@ public class AlgorithmTransform extends AlgorithmBase {
                     X = (temp1 + (jmm * T01)) / iXres;
                     roundX = (int) (X + 0.5f);
 
-                    if ((X >= 0) && (roundX < iXdim)) {
+                    if ((X >= 0) && (X < iXdim)) {
                         Y = (temp2 + (jmm * T11)) / iYres;
                         roundY = (int) (Y + 0.5);
 
-                        if ((Y >= 0) && (roundY < iYdim)) {
+                        if ((Y >= 0) && (Y < iYdim)) {
 
-                            if ((roundX == (iXdim - 1)) || (roundY == (iYdim - 1))) { // cannot interpolate on last X
+                            if ((X >= (iXdim - 1)) || (Y >= (iYdim - 1))) { // cannot interpolate on last X
                                                                                       // or Y
-                                X0pos = roundX;
-                                Y0pos = roundY * iXdim;
+                                X0pos = Math.min(roundX, iXdim - 1);
+                                Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
                                 temp4 = 4 * (Y0pos + X0pos);
                                 imgBuf2[4 * (i + (j * oXdim))] = imgBuf[temp4];
                                 imgBuf2[(4 * (i + (j * oXdim))) + 1] = imgBuf[temp4 + 1];
@@ -5595,16 +5589,16 @@ public class AlgorithmTransform extends AlgorithmBase {
                         X = (temp1 + (jmm * T01)) / iXres;
                         roundX = (int) (X + 0.5f);
 
-                        if ((X >= 0) && (roundX < iXdim)) {
+                        if ((X >= 0) && (X < iXdim)) {
                             Y = (temp2 + (jmm * T11)) / iYres;
                             roundY = (int) (Y + 0.5f);
 
-                            if ((Y >= 0) && (roundY < iYdim)) {
+                            if ((Y >= 0) && (Y < iYdim)) {
 
-                                if ((roundX == (iXdim - 1)) || (roundY == (iYdim - 1))) { // cannot interpolate on last
+                                if ((X >= (iXdim - 1)) || (Y >= (iYdim - 1))) { // cannot interpolate on last
                                                                                           // X or Y
-                                    X0pos = roundX;
-                                    Y0pos = roundY * iXdim;
+                                    X0pos = Math.min(roundX, iXdim - 1);
+                                    Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
                                     value = imgBuf[Y0pos + X0pos];
                                 } else {
 
@@ -5698,16 +5692,16 @@ public class AlgorithmTransform extends AlgorithmBase {
                         X = (temp1 + (jmm * T01)) / iXres;
                         roundX = (int) (X + 0.5f);
 
-                        if ((X >= 0) && (roundX < iXdim)) {
+                        if ((X >= 0) && (X < iXdim)) {
                             Y = (temp2 + (jmm * T11)) / iYres;
                             roundY = (int) (Y + 0.5f);
 
-                            if ((Y >= 0) && (roundY < iYdim)) {
+                            if ((Y >= 0) && (Y < iYdim)) {
 
-                                if ((roundX == (iXdim - 1)) || (roundY == (iYdim - 1))) { // cannot interpolate on last
+                                if ((X >= (iXdim - 1)) || (Y >= (iYdim - 1))) { // cannot interpolate on last
                                                                                           // X or Y
-                                    X0pos = roundX;
-                                    Y0pos = roundY * iXdim;
+                                    X0pos = Math.min(roundX, iXdim - 1);
+                                    Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
                                     temp4 = 4 * (Y0pos + X0pos);
                                     imgBuf2[temp3] = imgBuf[temp4];
                                     imgBuf2[temp3 + 1] = imgBuf[temp4 + 1];
@@ -5844,15 +5838,15 @@ public class AlgorithmTransform extends AlgorithmBase {
                 X = (temp1 + (jmm * T01)) / iXres;
                 roundX = (int) (X + 0.5f);
 
-                if ((X >= 0) && (roundX < iXdim)) {
+                if ((X >= 0) && (X < iXdim)) {
                     Y = (temp2 + (jmm * T11)) / iYres;
                     roundY = (int) (Y + 0.5f);
 
-                    if ((Y >= 0) && (roundY < iYdim)) {
+                    if ((Y >= 0) && (Y < iYdim)) {
 
-                        if ((roundX == (iXdim - 1)) || (roundY == (iYdim - 1))) { // cannot interpolate on last X or Y
-                            X0pos = roundX;
-                            Y0pos = roundY * iXdim;
+                        if ((X >= (iXdim - 1)) || (Y >= (iYdim - 1))) { // cannot interpolate on last X or Y
+                            X0pos = Math.min(roundX, iXdim - 1);
+                            Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
                             temp4 = 4 * (Y0pos + X0pos);
                             imgBuf2[temp3] = imgBuf[temp4];
                             imgBuf2[temp3 + 1] = imgBuf[temp4 + 1];
@@ -6005,10 +5999,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     imm = i * oXres;
                     X = (j1 + (imm * T00)) * invXRes;
 
-                    if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                    if ((X > -0.5f) && (X < iXdim)) {
                         Y = (j2 + (imm * T10)) * invYRes;
 
-                        if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                        if ((Y > -0.5f) && (Y < iYdim)) {
                             value = (float) splineAlg.interpolatedValue(img2D, X, Y, iXdim, iYdim, degree);
 
                             if (value > sliceMax) {
@@ -6134,10 +6128,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         imm = i * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
-                        if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                        if ((X > -0.5f) && (X < iXdim)) {
                             Y = (j2 + (imm * T10)) * invYRes;
 
-                            if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                            if ((Y > -0.5f) && (Y < iYdim)) {
                                 value = (float) splineAlg.interpolatedValue(img2D, X, Y, iXdim, iYdim, degree);
 
                                 if (value > sliceMax) {
@@ -6244,13 +6238,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     imm = i * oXres;
                     X = (j1 + (imm * T00)) * invXRes;
 
-                    if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                    if ((X > -0.5f) && (X < iXdim)) {
                         Y = (j2 + (imm * T10)) * invYRes;
 
-                        if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                        if ((Y > -0.5f) && (Y < iYdim)) {
                             Z = (j3 + (imm * T20)) * invZRes;
 
-                            if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {
+                            if ((Z > -0.5f) && (Z < iZdim)) {
                                 value = (float) splineAlg.interpolatedValue(image, X, Y, Z, iXdim, iYdim, iZdim,
                                                                             degree);
 
@@ -6372,13 +6366,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         imm = i * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
-                        if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                        if ((X > -0.5f) && (X < iXdim)) {
                             Y = (j2 + (imm * T10)) * invYRes;
 
-                            if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                            if ((Y > -0.5f) && (Y < iYdim)) {
                                 Z = (j3 + (imm * T20)) * invZRes;
 
-                                if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {
+                                if ((Z > -0.5f) && (Z < iZdim)) {
                                     value = (float) splineAlg.interpolatedValue(image, X, Y, Z, iXdim, iYdim, iZdim,
                                                                                 degree);
 
@@ -6507,13 +6501,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         imm = i * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
-                        if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                        if ((X > -0.5f) && (X < iXdim)) {
                             Y = (j2 + (imm * T10)) * invYRes;
 
-                            if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                            if ((Y > -0.5f) && (Y < iYdim)) {
                                 Z = (j3 + (imm * T20)) * invZRes;
 
-                                if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {
+                                if ((Z > -0.5f) && (Z < iZdim)) {
                                     value = (float) splineAlg.interpolatedValue(image, X, Y, Z, iXdim, iYdim, iZdim,
                                                                                 degree);
 
@@ -6646,13 +6640,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                             imm = i * oXres;
                             X = (j1 + (imm * T00)) * invXRes;
     
-                            if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                            if ((X > -0.5f) && (X < iXdim)) {
                                 Y = (j2 + (imm * T10)) * invYRes;
     
-                                if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                                if ((Y > -0.5f) && (Y < iYdim)) {
                                     Z = (j3 + (imm * T20)) * invZRes;
     
-                                    if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {
+                                    if ((Z > -0.5f) && (Z < iZdim)) {
                                         value = (float) splineAlg.interpolatedValue(image, X, Y, Z, iXdim, iYdim, iZdim,
                                                                                     degree);
     
@@ -7383,13 +7377,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     imm = i * oXres;
                     X = (j1 + (imm * T00)) * invXRes;
 
-                    if ((X >= 0) && (X < (iXdim - 0.5f))) {
+                    if ((X >= 0) && (X < iXdim)) {
                         Y = (j2 + (imm * T10)) * invYRes;
 
-                        if ((Y >= 0) && (Y < (iYdim - 0.5f))) {
+                        if ((Y >= 0) && (Y < iYdim)) {
                             Z = (j3 + (imm * T20)) * invZRes;
 
-                            if ((Z >= 0) && (Z < (iZdim - 0.5f))) {
+                            if ((Z >= 0) && (Z < iZdim)) {
                                 value = CLag.cubicLagrangian3D(X, Y, Z);
                             }
                         }
@@ -9175,11 +9169,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                 roundX = (int) (X + 0.5f);
                 roundY = (int) (Y + 0.5f);
 
-                if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1))) {
+                if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
                     value = (float) srcImage.getMin();
                 } else {
-                    xOffset = roundX;
-                    yOffset = roundY * iXdim;
+                    xOffset = Math.min(roundX, iXdim -1);
+                    yOffset = Math.min(roundY, iYdim - 1) * iXdim;
                     value = imgBuf[xOffset + yOffset];
                 }
 
@@ -9235,14 +9229,14 @@ public class AlgorithmTransform extends AlgorithmBase {
                 roundX = (int) (X + 0.5f);
                 roundY = (int) (Y + 0.5f);
 
-                if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1))) {
+                if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
                     imgBuf2[4 * (i + (oXdim * j))] = 0;
                     imgBuf2[(4 * (i + (oXdim * j))) + 1] = 0;
                     imgBuf2[(4 * (i + (oXdim * j))) + 2] = 0;
                     imgBuf2[(4 * (i + (oXdim * j))) + 3] = 0;
                 } else {
-                    xOffset = roundX;
-                    yOffset = roundY * iXdim;
+                    xOffset = Math.min(roundX, iXdim - 1);
+                    yOffset = Math.min(roundY, iYdim - 1) * iXdim;
                     imgBuf2[4 * (i + (oXdim * j))] = imgBuf[4 * (xOffset + yOffset)];
                     imgBuf2[(4 * (i + (oXdim * j))) + 1] = imgBuf[(4 * (xOffset + yOffset)) + 1];
                     imgBuf2[(4 * (i + (oXdim * j))) + 2] = imgBuf[(4 * (xOffset + yOffset)) + 2];
@@ -9329,13 +9323,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     roundY = (int) (Y + 0.5f);
                     roundZ = (int) (Z + 0.5f);
 
-                    if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1)) ||
-                            (roundZ < 0) || (roundZ > (iZdim - 1))) {
+                    if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) ||
+                            (Z < -0.5) || (Z >= iZdim)) {
                         value = (float) srcImage.getMin();
                     } else {
-                        xOffset = roundX;
-                        yOffset = roundY * iXdim;
-                        zOffset = roundZ * sliceSize;
+                        xOffset = Math.min(roundX, iXdim - 1);
+                        yOffset = Math.min(roundY, iYdim - 1) * iXdim;
+                        zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
                         value = imgBuf[xOffset + yOffset + zOffset];
                     }
 
@@ -9409,16 +9403,16 @@ public class AlgorithmTransform extends AlgorithmBase {
                     roundY = (int) (Y + 0.5f);
                     roundZ = (int) (Z + 0.5f);
 
-                    if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1)) ||
-                            (roundZ < 0) || (roundZ > (iZdim - 1))) {
+                    if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) ||
+                            (Z < -0.5) || (Z >= iZdim)) {
                         imgBuf2[4 * (i + (oXdim * j) + (oXdim * oYdim * k))] = 0;
                         imgBuf2[(4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 1] = 0;
                         imgBuf2[(4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 2] = 0;
                         imgBuf2[(4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 3] = 0;
                     } else {
-                        xOffset = roundX;
-                        yOffset = roundY * iXdim;
-                        zOffset = roundZ * sliceSize;
+                        xOffset = Math.min(roundX, iXdim - 1);
+                        yOffset = Math.min(roundY, iYdim - 1) * iXdim;
+                        zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
                         imgBuf2[4 * (i + (oXdim * j) + (oXdim * oYdim * k))] = imgBuf[4 * (xOffset + yOffset + zOffset)];
                         imgBuf2[(4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 1] = imgBuf[(4 *
                                                                                                  (xOffset + yOffset +
@@ -9491,11 +9485,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                     roundX = (int) (X + 0.5f);
                     roundY = (int) (Y + 0.5f);
 
-                    if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1))) {
+                    if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
                         value = (float) srcImage.getMin();
                     } else {
-                        xOffset = roundX;
-                        yOffset = roundY * iXdim;
+                        xOffset = Math.min(roundX, iXdim - 1);
+                        yOffset = Math.min(roundY, iYdim - 1) * iXdim;
                         value = imgBuf[xOffset + yOffset];
                     }
 
@@ -9565,14 +9559,14 @@ public class AlgorithmTransform extends AlgorithmBase {
                     roundX = (int) (X + 0.5f);
                     roundY = (int) (Y + 0.5f);
 
-                    if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1))) {
+                    if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
                         imgBuf2[4 * (i + (oXdim * j))] = 0;
                         imgBuf2[(4 * (i + (oXdim * j))) + 1] = 0;
                         imgBuf2[(4 * (i + (oXdim * j))) + 2] = 0;
                         imgBuf2[(4 * (i + (oXdim * j))) + 3] = 0;
                     } else {
-                        xOffset = roundX;
-                        yOffset = roundY * iXdim;
+                        xOffset = Math.min(roundX, iXdim - 1);
+                        yOffset = Math.min(roundY, iYdim - 1) * iXdim;
                         imgBuf2[4 * (i + (oXdim * j))] = imgBuf[4 * (xOffset + yOffset)];
                         imgBuf2[(4 * (i + (oXdim * j))) + 1] = imgBuf[(4 * (xOffset + yOffset)) + 1];
                         imgBuf2[(4 * (i + (oXdim * j))) + 2] = imgBuf[(4 * (xOffset + yOffset)) + 2];
@@ -9668,13 +9662,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         roundY = (int) (Y + 0.5f);
                         roundZ = (int) (Z + 0.5f);
 
-                        if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1)) ||
-                                (roundZ < 0) || (roundZ > (iZdim - 1))) {
+                        if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) ||
+                                (Z < -0.5) || (Z >= iZdim)) {
                             value = (float) srcImage.getMin();
                         } else {
-                            xOffset = roundX;
-                            yOffset = roundY * iXdim;
-                            zOffset = roundZ * sliceSize;
+                            xOffset = Math.min(roundX, iXdim - 1);
+                            yOffset = Math.min(roundY, iYdim - 1) * iXdim;
+                            zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
                             value = imgBuf[xOffset + yOffset + zOffset];
 
                         }
@@ -9769,16 +9763,16 @@ public class AlgorithmTransform extends AlgorithmBase {
                         roundY = (int) (Y + 0.5f);
                         roundZ = (int) (Z + 0.5f);
 
-                        if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1)) ||
-                                (roundZ < 0) || (roundZ > (iZdim - 1))) {
+                        if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) ||
+                                (Z < -0.5) || (Z >= iZdim)) {
                             imgBuffer2[temp] = 0; // if voxel is transformed out of bounds
                             imgBuffer2[temp + 1] = 0;
                             imgBuffer2[temp + 2] = 0;
                             imgBuffer2[temp + 3] = 0;
                         } else {
-                            xOffset = roundX;
-                            yOffset = roundY * iXdim;
-                            zOffset = roundZ * sliceSize;
+                            xOffset = Math.min(roundX, iXdim - 1);
+                            yOffset = Math.min(roundY, iYdim - 1) * iXdim;
+                            zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
                             pos = xOffset + yOffset + zOffset;
                             imgBuffer2[temp] = imgBuf[4*pos];
                             imgBuffer2[temp+1] = imgBuf[4*pos+1];
@@ -9858,11 +9852,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                         roundX = (int) (X + 0.5f);
                         roundY = (int) (Y + 0.5f);
 
-                        if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1))) {
+                        if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
                             value = (float) srcImage.getMin();
                         } else {
-                            xOffset = roundX;
-                            yOffset = roundY * iXdim;
+                            xOffset = Math.min(roundX, iXdim - 1);
+                            yOffset = Math.min(roundY, iYdim - 1) * iXdim;
                             value = imgBuf[xOffset + yOffset];
                         }
 
@@ -9932,14 +9926,14 @@ public class AlgorithmTransform extends AlgorithmBase {
                         roundX = (int) (X + 0.5f);
                         roundY = (int) (Y + 0.5f);
 
-                        if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1))) {
+                        if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
                             imgBuf2[4 * (i + (oXdim * j))] = 0;
                             imgBuf2[(4 * (i + (oXdim * j))) + 1] = 0;
                             imgBuf2[(4 * (i + (oXdim * j))) + 2] = 0;
                             imgBuf2[(4 * (i + (oXdim * j))) + 3] = 0;
                         } else {
-                            xOffset = roundX;
-                            yOffset = roundY * iXdim;
+                            xOffset = Math.min(roundX, iXdim - 1);
+                            yOffset = Math.min(roundY, iYdim - 1) * iXdim;
                             imgBuf2[4 * (i + (oXdim * j))] = imgBuf[4 * (xOffset + yOffset)];
                             imgBuf2[(4 * (i + (oXdim * j))) + 1] = imgBuf[(4 * (xOffset + yOffset)) + 1];
                             imgBuf2[(4 * (i + (oXdim * j))) + 2] = imgBuf[(4 * (xOffset + yOffset)) + 2];
@@ -11058,11 +11052,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                     Y = (j2 + (imm * T10)) * invYRes;
                     Z = (j3 + (imm * T20)) * invZRes;
 
-                    if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                    if ((X > -0.5f) && (X < iXdim)) {
 
-                        if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                        if ((Y > -0.5f) && (Y < iYdim)) {
 
-                            if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {
+                            if ((Z > -0.5f) && (Z < iZdim)) {
 
                                 if (X <= 0) {
                                     x0 = 0;
@@ -11210,13 +11204,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         imm = i * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
-                        if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                        if ((X > -0.5f) && (X < iXdim)) {
                             Y = (j2 + (imm * T10)) * invYRes;
 
-                            if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                            if ((Y > -0.5f) && (Y < iYdim)) {
                                 Z = (j3 + (imm * T20)) * invZRes;
 
-                                if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {
+                                if ((Z > -0.5f) && (Z < iZdim)) {
 
                                     if (X <= 0) {
                                         x0 = 0;
@@ -11376,13 +11370,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         imm = i * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
-                        if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                        if ((X > -0.5f) && (X < iXdim)) {
                             Y = (j2 + (imm * T10)) * invYRes;
 
-                            if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                            if ((Y > -0.5f) && (Y < iYdim)) {
                                 Z = (j3 + (imm * T20)) * invZRes;
 
-                                if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {
+                                if ((Z > -0.5f) && (Z < iZdim)) {
 
                                     if (X <= 0) {
                                         x0 = 0;
@@ -11601,15 +11595,15 @@ public class AlgorithmTransform extends AlgorithmBase {
                     kmm = kAdj * oZres;
                     X = (temp3 + (kmm * T02)) / iXres;
 
-                    if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                    if ((X > -0.5f) && (X < iXdim)) {
                         Y = (temp2 + (kmm * T12)) / iYres;
 
-                        if ((Y > -0.5f) && (Y < (iYdim-0.5f))) {
+                        if ((Y > -0.5f) && (Y < iYdim)) {
                             temp1 = 0;
                             T22 = 1.0f;
                             Z = (temp1 + (kmm * T22)) / iZres;
 
-                            if ((Z > -0.5f) && (Z < (iZdim-0.5f))) {
+                            if ((Z > -0.5f) && (Z < iZdim)) {
                                 if (X <= 0) {
                                     x0 = 0;
                                     dx = 0;
