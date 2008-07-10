@@ -217,7 +217,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.titles = titles;
         this.mirrorArr = new String[voiList.length][];
         this.noMirrorArr = new String[voiList.length][];
-        this.calcTree = new TreeMap();
+        this.calcTree = new TreeMap<String, Boolean>();
         this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>());
         this.imageType = imageType;
         this.symmetry = symmetry;
@@ -228,8 +228,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         //image.addImageDisplayListener(this);
         
         for(int i=0; i<voiList.length; i++) {
-        	ArrayList mirrorArrList = new ArrayList(), noMirrorArrList = new ArrayList(), 
-        				mirrorZList = new ArrayList(), noMirrorZList = new ArrayList();
+        	ArrayList<Comparable> mirrorArrList = new ArrayList<Comparable>(), noMirrorArrList = new ArrayList<Comparable>(), 
+        				mirrorZList = new ArrayList<Comparable>(), noMirrorZList = new ArrayList<Comparable>();
         	for(int j=0; j<voiList[i].length; j++) {
         		voiBuffer.put(voiList[i][j].getName(), voiList[i][j]);
         		if(voiList[i][j].getName().contains("Left")) {
@@ -291,7 +291,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         progressBar.dispose();
         setVisible(true);
         
-        Iterator itr = voiBuffer.keySet().iterator();
+        Iterator<String> itr = voiBuffer.keySet().iterator();
         
         while(itr.hasNext()) {
         	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
@@ -337,16 +337,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.titles = titles;
         this.mirrorArr = new String[voiList.length][];
         this.noMirrorArr = new String[voiList.length][];
-        this.calcTree = new TreeMap();
-        this.voiBuffer = new TreeMap();
+        this.calcTree = new TreeMap<String, Boolean>();
+        this.voiBuffer = new TreeMap<String, PlugInSelectableVOI>();
         
         createVOIBuffer();
         
         //create automatic VOIs here
         
         for(int i=0; i<voiList.length; i++) {
-        	ArrayList mirrorArrList = new ArrayList(), noMirrorArrList = new ArrayList(), 
-        				mirrorZList = new ArrayList(), noMirrorZList = new ArrayList();
+        	ArrayList<Comparable> mirrorArrList = new ArrayList<Comparable>(), noMirrorArrList = new ArrayList<Comparable>(), 
+        				mirrorZList = new ArrayList<Comparable>(), noMirrorZList = new ArrayList<Comparable>();
         	for(int j=0; j<voiList[i].length; j++) {
         		voiBuffer.put(voiList[i][j].getName(), voiList[i][j]);
         		if(voiList[i][j].getName().contains("Left")) {
@@ -1187,7 +1187,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     public String[] getCalcRunning() {
     	if(calcGroup.activeCount() != 0) {
     		Thread[] activeThreads = new Thread[calcGroup.activeCount()];
-    		ArrayList<String> threadStr = new ArrayList();
+    		ArrayList<String> threadStr = new ArrayList<String>();
     		calcGroup.enumerate(activeThreads);
     		for(int i=0; i<activeThreads.length; i++) {
     			if(activeThreads[i] != null) {
@@ -1236,11 +1236,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      * file system for the first time.
      */
     private void createVOIBuffer() {
-    	Iterator voiItr = voiBuffer.keySet().iterator();
+    	Iterator<String> voiItr = voiBuffer.keySet().iterator();
     	
     	while(voiItr.hasNext()) {
     		String name;
-    		PlugInSelectableVOI v = loadVOI(name = (String)voiItr.next());
+    		PlugInSelectableVOI v = loadVOI(name = voiItr.next());
     		
     		Color c = PlugInSelectableVOI.INVALID_COLOR;
 			
@@ -1262,10 +1262,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      */
     private void getVOIs(int pane) {
     	
-    	Iterator voiItr = voiBuffer.keySet().iterator();
+    	Iterator<String> voiItr = voiBuffer.keySet().iterator();
     	PlugInSelectableVOI v;
     	while(voiItr.hasNext()) {
-    		String name = (String)voiItr.next();
+    		String name = voiItr.next();
     	
 	    	if(voiBuffer.get(name).getLocation() == pane) {
 	    		v = voiBuffer.get(name);
@@ -2498,7 +2498,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        this.noMirrorArr = getCalcItems(noMirrorArr);
 	        this.mirrorArr = getCalcItems(mirrorArr);
 	        
-	        checkBoxLocationTree = new TreeMap();
+	        checkBoxLocationTree = new TreeMap<String, ColorButtonPanel>();
 
 	        colorChoice = 0;
 	        
@@ -2512,7 +2512,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			String[][] resultArr = new String[objectArr.length][];
 			String tempStr = "";
 			for(int i=0; i<objectArr.length; i++) {
-				ArrayList<String> tempObj = new ArrayList();
+				ArrayList<String> tempObj = new ArrayList<String>();
 				for(int j=0; j<objectArr[i].length; j++) 
 					if(calcTree.get(tempStr = objectArr[i][j]).equals(true))
 						tempObj.add(tempStr);
@@ -2924,18 +2924,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				createPDF();
 				pdfCreated = true;
 			}
-			Iterator itr;
+			Iterator<String> itr;
 			if(all)
 				itr = voiBuffer.keySet().iterator();
 			else {
-				ArrayList totalList = new ArrayList(), subList = new ArrayList();
-				for (int listNum = 0; listNum < mirrorButtonArr.length; listNum++, subList = new ArrayList())  {   	
+				ArrayList<String> totalList = new ArrayList<String>(), subList = new ArrayList<String>();
+				for (int listNum = 0; listNum < mirrorButtonArr.length; listNum++, subList = new ArrayList<String>())  {   	
 	    			for(int i=0; i<mirrorButtonArr[listNum].length; i++) 
 	    				if(mirrorCheckArr[listNum][i].isSelected())
 	    					subList.add(mirrorButtonArr[listNum][i].getText());
 	    			totalList.addAll(subList);
 		    	}
-				for (int listNum = 0; listNum < noMirrorButtonArr.length; listNum++, subList = new ArrayList())  {   	
+				for (int listNum = 0; listNum < noMirrorButtonArr.length; listNum++, subList = new ArrayList<String>())  {   	
 	    			for(int i=0; i<noMirrorButtonArr[listNum].length; i++) 
 	    				if(noMirrorCheckArr[listNum][i].isSelected())
 	    					subList.add(noMirrorButtonArr[listNum][i].getText());
@@ -2995,14 +2995,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		    	output.start();
 				
 				//now load all VOIs at once:
-				ArrayList totalList = new ArrayList(), subList = new ArrayList();
-				for (int listNum = 0; listNum < mirrorButtonArr.length; listNum++, subList = new ArrayList())  {   	
+				ArrayList<String> totalList = new ArrayList<String>(), subList = new ArrayList<String>();
+				for (int listNum = 0; listNum < mirrorButtonArr.length; listNum++, subList = new ArrayList<String>())  {   	
 	    			for(int i=0; i<mirrorButtonArr[listNum].length; i++) 
 	    				if(mirrorButtonArr[listNum][i].isEnabled())
 	    					subList.add(mirrorButtonArr[listNum][i].getText());
 	    			totalList.addAll(subList);
 		    	}
-				for (int listNum = 0; listNum < noMirrorButtonArr.length; listNum++, subList = new ArrayList())  {   	
+				for (int listNum = 0; listNum < noMirrorButtonArr.length; listNum++, subList = new ArrayList<String>())  {   	
 	    			for(int i=0; i<noMirrorButtonArr[listNum].length; i++) 
 	    				if(noMirrorButtonArr[listNum][i].isEnabled())
 	    					subList.add(noMirrorButtonArr[listNum][i].getText());
@@ -3073,7 +3073,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			 */
 			public void run() {
 				long time = System.currentTimeMillis();
-				ArrayList<PlugInSelectableVOI> calcList = new ArrayList();
+				ArrayList<PlugInSelectableVOI> calcList = new ArrayList<PlugInSelectableVOI>();
 				Iterator<String> tempItr = voiBuffer.keySet().iterator();
 				PlugInSelectableVOI temp = null;
 				while(tempItr.hasNext()) {
@@ -3161,13 +3161,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					
 					//insertCalculations
 					PlugInSelectableVOI temp = null;
-					ArrayList<PlugInSelectableVOI> calcItems = new ArrayList(voiBuffer.keySet().size());
+					ArrayList<PlugInSelectableVOI> calcItems = new ArrayList<PlugInSelectableVOI>(voiBuffer.keySet().size());
 					Iterator<PlugInSelectableVOI> firstItr = voiBuffer.values().iterator();
 					while(firstItr.hasNext()) {
 						if((temp = firstItr.next()).calcEligible())
 							calcItems.add(temp);
 					}
-					ArrayList<PlugInSelectableVOI> orderedCalcItems = (ArrayList)calcItems.clone();
+					ArrayList<PlugInSelectableVOI> orderedCalcItems = (ArrayList<PlugInSelectableVOI>)calcItems.clone();
 					for(int j=0; j<calcItems.size(); j++) 
 						orderedCalcItems.set(calcItems.get(j).getOutputLoc(), calcItems.get(j));
 					dec = new DecimalFormat("0.##");
@@ -3245,7 +3245,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			//ViewJProgressBar progressBar = new ViewJProgressBar("Calculations", "Initializing...", 0, 100, true);
 			long time = System.currentTimeMillis();
 			
-			ArrayList<PlugInSelectableVOI> residuals = new ArrayList();
+			ArrayList<PlugInSelectableVOI> residuals = new ArrayList<PlugInSelectableVOI>();
 			VOI v = currentVOI;
 			double wholeMultiplier = 0.0, sliceMultiplier = 0.0;
 			wholeMultiplier = sliceMultiplier = Math.pow(getActiveImage().getResolutions(0)[0]*0.1, 2);
@@ -3254,7 +3254,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			System.out.println("Whole Multiplier: "+wholeMultiplier+"\tSliceMultiplier: "+sliceMultiplier);
 			PlugInSelectableVOI temp = voiBuffer.get(name);
 			residuals = getResiduals(temp);
-			ArrayList<Thread> calc = new ArrayList(residuals.size());
+			ArrayList<Thread> calc = new ArrayList<Thread>(residuals.size());
 			Thread tempThread = null;
 			for(int i=0; i<residuals.size(); i++) {
 				if(residuals.get(i).getLastCalculated() == null || 
@@ -3477,7 +3477,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 */
 		
 		private ArrayList<PlugInSelectableVOI> getResiduals(VOI v) {
-			ArrayList<PlugInSelectableVOI> arr = new ArrayList();
+			ArrayList<PlugInSelectableVOI> arr = new ArrayList<PlugInSelectableVOI>();
 			if(imageType.equals(ImageType.Abdomen)) {
 				if(v.getName().equals("Subcutaneous area")) {
 					arr.add(voiBuffer.get("Abdomen"));
@@ -3560,7 +3560,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     public void getVOIs(String[] voiName, double fillVOIs) {
     	getActiveImage().unregisterAllVOIs();
-    	ArrayList newName = new ArrayList();
+    	ArrayList<String> newName = new ArrayList<String>();
     	String v;
     	for(int i=0; i<voiName.length; i++) {
     		if(voiBuffer.get(v = voiName[i].substring(0, voiName[i].lastIndexOf('.'))).isCreated())
@@ -3570,7 +3570,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	VOI tempVOI;
     	for(int i=0; i<newName.size(); i++) {
     		getActiveImage().registerVOI(tempVOI = voiBuffer.get(newName.get(i)));
-    		if(fillVOIs != 0 && getZeroStatus((String)newName.get(i))) {
+    		if(fillVOIs != 0 && getZeroStatus(newName.get(i))) {
             	tempVOI.setDisplayMode(VOI.SOLID);
             	tempVOI.setOpacity((float)fillVOIs);
             }
@@ -3633,7 +3633,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      */
     private Color hasColor(VOI voi) {
         Color c = PlugInSelectableVOI.INVALID_COLOR;
-        Iterator voiListItr = voiBuffer.keySet().iterator();
+        Iterator<String> voiListItr = voiBuffer.keySet().iterator();
         boolean colorFound = false;
         String side1 = "", side2 = ""; 
         if(Symmetry.LEFT_RIGHT == Symmetry.LEFT_RIGHT) {
@@ -3642,7 +3642,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         }
         String testName = new String();
         while(voiListItr.hasNext() && !colorFound) {
-        	testName = (String)voiListItr.next();
+        	testName = voiListItr.next();
             if(voi.getName().contains(side1) || voi.getName().contains(side2)) {
                 if( !(testName.contains(side1)  &&  voi.getName().contains(side1)) && 
                         !(testName.contains(side2)  &&  voi.getName().contains(side2)) && 
