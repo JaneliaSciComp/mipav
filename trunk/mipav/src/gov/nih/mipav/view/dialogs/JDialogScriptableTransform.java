@@ -26,20 +26,26 @@ import javax.swing.event.*;
  * or use image's associated transformation matrix. User may input desired resolutions and dims. User may select
  * interpolation method. Creates new volume.
  * 
- * * You can choose either of 2 goals in interpolation, but you can choose both.
+ * * You can choose either of 2 goals in bilinear or trilinear interpolation, but you cannot choose both.
  * You can choose to:
  * 1.) Match the start row, column, and slice in the original image with the start row, column, and
- * slice in the transformed image and match the end row, column, and slice in the original image with the end row
- * column, and slice in the transformed image with a smooth interpolation occurring between the beginning and end.
- * This ensures that no duplicates of the end row, column, and slice values occur with the default bilinear or 
- * trilinear interpolation.  For a smooth bilinear or trilinear interpolation you must map from 0 to n1t - 1 
- * in the transformed image to 0 to n1 - 1 in the original image.  Mapping from n1t - 1 to n1t in the transformed image
- * to n1 - 1 to n1 in the source image would lead to multiple identical transformed copies for source image values
- * between n1 - 1 and n1 - 0.5 and identical or out of bounds transformed values for source values from n1 - 0.5 to n1.
- * This necessitates using equations of the form (dim - 1) * res = (transformedDim - 1) * transformedRes.
+ * slice in the transformed image with no duplication of start values and match the end row, column, and slice in
+ * the original image with the end row column, and slice in the transformed image with no duplication of end values
+ * with a smooth interpolation occurring between the beginning and end.  For a smooth bilinear or trilinear interpolation
+ * you must map from 0 to n1t - 1 in the transformed image to 0 to n1 - 1 in the original image.  Mapping from n1t - 1
+ * to n1t in the transformed image to n1 - 1 to n1 in the source image would lead to multiple identical transformed copies
+ * for source image values between n1 - 1 and n1 - 0.5 and identical or out of bounds transformed values for source values
+ * from n1 - 0.5 to n1. This necessitates using equations of the form (dim - 1) * res = (transformedDim - 1) * transformedRes.
  * Since the field of view = dim * res, this does not preserve field of view.
+ * If a user wishes to reslice an image and have the beginning and end slices match without duplication,
+ * then this would be the method to select
  * 2.) If a user simply wishes to magnify the field of view and is not worried about duplicate beginning and end values,
  * then preserve the field of view = dim * res = transformedDim * transformedRes.
+ * 
+ * If the interpolation is not bilinear or trilinear, then the purpose of interpolation is always to preserve the FOV.
+ * For either interpolation purpose, note that if the user selects the new dimension, then the floating point 
+ * resolution can be perfectly adjusted, but if the user selects the new resolution, since dimensions are integers,
+ * the new dimension value may not be perfectly adjusted.
  *
  * @version  0.1 Nov. 19, 1999
  * @author   Delia McGarry
@@ -439,7 +445,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             if (xyAspectRatio.isSelected() || xyzAspectRatio.isSelected()) { // update y values
                 if ((source == textDimX) || (fieldOfView.isSelected())) {
-                    dims[1] = (dims[1]-1) * factor + 1;
+                    dims[1] = (dims[1]-constantFOV) * factor + constantFOV;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -449,7 +455,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             if (xyzAspectRatio.isSelected()) { // update z values
                 if ((source == textDimX) || (fieldOfView.isSelected())) {
-                    dims[2] = (dims[2]-1) * factor + 1;
+                    dims[2] = (dims[2]-constantFOV) * factor + constantFOV;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -460,7 +466,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             if (xyAspectRatio.isSelected() || xyzAspectRatio.isSelected()) { // update x
                 if ((source == textDimY) || (fieldOfView.isSelected())) {
-                    dims[0] = (dims[0]-1) * factor + 1;
+                    dims[0] = (dims[0]-constantFOV) * factor + constantFOV;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -470,7 +476,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             if (xyzAspectRatio.isSelected()) { // update z
                 if ((source == textDimY) || (fieldOfView.isSelected())) {
-                    dims[2] = (dims[2]-1) * factor + 1;
+                    dims[2] = (dims[2]-constantFOV) * factor + constantFOV;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -483,8 +489,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             if (xyzAspectRatio.isSelected()) { // update x and y accordingly
                 if ((source == textDimZ) || (fieldOfView.isSelected())) {
-                    dims[0] = (dims[0]-1) * factor + 1;
-                    dims[1] = (dims[1]-1) * factor + 1;
+                    dims[0] = (dims[0]-constantFOV) * factor + constantFOV;
+                    dims[1] = (dims[1]-constantFOV) * factor + constantFOV;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -592,6 +598,20 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 clipCheckbox.setEnabled(false);
             } else {
                 clipCheckbox.setEnabled(true);
+            }
+            
+            if (comboBoxInterp.getSelectedIndex() == 1) {
+                // bilinear or trilinear interpolation
+                constantFOVradio.setEnabled(true);
+                endMatchFOVradio.setEnabled(true);
+            }
+            else {
+                constantFOVradio.setEnabled(false);
+                endMatchFOVradio.setEnabled(false);   
+                constantFOVradio.setSelected(true);
+                endMatchFOVradio.setSelected(false);
+                setPixels.setText("Set pixels to preserve FOV.");
+                fieldOfView.setText("Preserve FOV.");
             }
 
             if (userDefinedMatrix.isSelected()) {
@@ -811,8 +831,20 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             }
         } else if ( source == constantFOVradio ) {
         	constantFOV = 0;
+            if (setPixels != null) {
+                setPixels.setText("Set pixels to preserve FOV.");
+            }
+            if (fieldOfView != null) {
+                fieldOfView.setText("Preserve FOV.");
+            }
         } else if ( source == endMatchFOVradio ) {
         	constantFOV = 1;
+            if (setPixels != null) {
+                setPixels.setText("Set pixels to preserve unrepeated begin & end matching.");
+            }
+            if (fieldOfView != null) {
+                fieldOfView.setText("Preserve unrepeated begin & end matching.");
+            }
         } else if (source == resampletoUser) {
 
             if (resampletoUser.isSelected()) {
@@ -1290,6 +1322,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         parentFrame = image.getParentFrame();
 
         interp = scriptParameters.getParams().getInt("interpolation_type");
+        constantFOV = scriptParameters.getParams().getInt("constant_fov");
         doVOI = scriptParameters.getParams().getBoolean("do_transform_VOIs");
         doClip = scriptParameters.getParams().getBoolean("do_clip_output");
         doRotateCenter = scriptParameters.getParams().getBoolean("do_rotate_about_center");
@@ -1521,6 +1554,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         scriptParameters.storeImageInRecorder(resultImage);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("interpolation_type", interp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("constant_fov", constantFOV));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_transform_VOIs", doVOI));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_clip_output", doClip));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_rotate_about_center", doRotateCenter));
@@ -2124,15 +2158,15 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         interpFOVgroup = new ButtonGroup();
         constantFOVradio = new JRadioButton("Constant FOV", true);
         constantFOVradio.setFont(serif12);
-        constantFOVradio.setEnabled(false);
+        constantFOVradio.setEnabled(true);
         interpFOVgroup.add(constantFOVradio);
         constantFOVradio.setSelected(false);
         constantFOVradio.addItemListener(this);
         constantFOVradio.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        endMatchFOVradio = new JRadioButton("Begin & End Matching", true);
+        endMatchFOVradio = new JRadioButton("Unrepeated Begin & End Matching", true);
         endMatchFOVradio.setFont(serif12);
-        endMatchFOVradio.setEnabled(false);
+        endMatchFOVradio.setEnabled(true);
         interpFOVgroup.add(endMatchFOVradio);
         endMatchFOVradio.setSelected(true);
         endMatchFOVradio.addItemListener(this);
@@ -2345,13 +2379,13 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         xyzAspectRatio.addItemListener(this);
         xyzAspectRatio.setEnabled(false);
 
-        fieldOfView = new JCheckBox("Preserve the Resol/Dim aspect ratio.", false);
+        fieldOfView = new JCheckBox("Preserve unrepeated begin and end matching.", false);
         fieldOfView.setForeground(Color.black);
         fieldOfView.setFont(serif12);
         fieldOfView.addItemListener(this);
         fieldOfView.setEnabled(false);
 
-        setPixels = new JCheckBox("Set pixels to preserve FOV.", false);
+        setPixels = new JCheckBox("Set pixels to preserve unrepeated begin and end matching.", false);
         setPixels.setForeground(Color.black);
         setPixels.setFont(serif12);
         setPixels.addItemListener(this);
@@ -3358,7 +3392,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         if ( boxIndex != 1 ) {
         	constantFOVradio.setEnabled(false);
             endMatchFOVradio.setEnabled(false);
-            constantFOV = 1;
+            constantFOVradio.setSelected(true);
+            endMatchFOVradio.setSelected(false);
+            constantFOV = 0;
         }
         
         if (boxIndex == 0) {
@@ -3599,12 +3635,12 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             factor = magSlider.getValue() / (float) 100;
             oXdim = Math.round(image.getExtents()[0] * factor);
             oYdim = Math.round(image.getExtents()[1] * factor);
-            oXres = image.getFileInfo(0).getResolutions()[0] * (float) (image.getExtents()[0]-1) / (float) (oXdim-1);
-            oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1]-1) / (float) (oYdim-1);
+            oXres = image.getFileInfo(0).getResolutions()[0] * (float) (image.getExtents()[0]-constantFOV) / (float) (oXdim-constantFOV);
+            oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1]-constantFOV) / (float) (oYdim-constantFOV);
 
             if ((image.getNDims() >= 3) && (!do25D)) {
                 oZdim = Math.round(image.getExtents()[2] * factor);
-                oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]-1) / (float) (oZdim-1);
+                oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]-constantFOV) / (float) (oZdim-constantFOV);
             } else if ((image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
                 oZdim = image.getExtents()[2];
                 oZres = image.getFileInfo(0).getResolutions()[2];
