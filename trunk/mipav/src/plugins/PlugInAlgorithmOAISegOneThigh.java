@@ -206,6 +206,80 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         }
     }
 
+    
+    /**
+     * Mathematical Morphological closing operation as a series of 2D operations
+     */
+    public void closeImage25D(ModelImage img, int kernalSize, int iters) {
+        
+        // img is a 3D image.  break it into a series of 2D images
+        int[] extents = new int[2];
+        extents[0] = xDim;
+        extents[1] = yDim;
+        ModelImage img2D = new ModelImage(ModelStorageBase.USHORT, extents, "img2D");
+        AlgorithmMorphology2D MorphIDObj = null;
+
+        if (kernalSize == 4) {
+            
+//        MorphIDObj = new AlgorithmMorphology2D(img2D, 2, 1, AlgorithmMorphology2D.CLOSE, 4, 4, 0, 0, true);
+            MorphIDObj = new AlgorithmMorphology2D(img2D, AlgorithmMorphology2D.CONNECTED4, 1,
+                                                   AlgorithmMorphology2D.CLOSE, iters, iters, 0, 0, true);
+        }
+        if (kernalSize == 8) {
+            MorphIDObj = new AlgorithmMorphology2D(img2D, AlgorithmMorphology2D.CONNECTED8, 1,
+                                                   AlgorithmMorphology2D.CLOSE, iters, iters, 0, 0, true);
+        }
+
+        sliceSize = xDim * yDim;
+        short[] sliceBuffer;
+        // allocate the slice buffer
+        try {
+            sliceBuffer = new short[sliceSize];
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("PlugInAlgorithmCTAbdomen.init() Out of memory when making the slice buffer");
+            return;
+        }
+
+
+        for (int z = 0; z < zDim; z++) {
+            // fill up the slice buffer
+            try {
+                img.exportData(z * sliceSize, sliceSize, sliceBuffer);
+            } catch (IOException ex) {
+                System.err.println("PlugInAlgorithmCTAbdomen.closeImage25D(): Error exporting data on slice: " +z);
+                return;
+            }
+            // save the sliceBuffer into img2D
+            try {
+                img2D.importData(0, sliceBuffer, false);
+            } catch (IOException ex) {
+                System.err.println("PlugInAlgorithmCTAbdomen.closeImage25D(): Error importing data");
+            }
+            
+            // run the morphology
+            MorphIDObj.run();
+
+            try {
+                img2D.exportData(0, sliceSize, sliceBuffer);
+            } catch (IOException ex) {
+                System.err.println("PlugInAlgorithmCTAbdomen.closeImage25D(): Error exporting data on slice: " +z);
+                return;
+            }
+            // save the sliceBuffer into the source image
+            try {
+                img.importData(z * sliceSize, sliceBuffer, false);
+            } catch (IOException ex) {
+                System.err.println("PlugInAlgorithmCTAbdomen.closeImage25D(): Error importing data");
+            }
+  
+        } // end for (z = 0; ...)
+        
+    } // end closeImage25D(...)
+
+    
+    
+    
     /**
      * whenever templateImage = tempIntensity, srcImage converted to newDestIntensity.
      *
@@ -318,6 +392,8 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         float mrBoneThreshold = 0;
         int cnt = 0;
         fireProgressStateChanged("Extracting bone");
+        
+//      PFH        ShowImage(boneMarrow, "BoneMarrow");        
 
         ModelImage bone = new ModelImage(boneMarrow.getType(), boneMarrow.getExtents(), "boneImg");
 
@@ -369,7 +445,18 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
 
             // loop through each slice at most 8 times adding neighboring bone pixels
             // that are less than the mrBoneThreshold value
-            for (int iter = 0; iter < 8; iter++) {
+//            for (int iter = 0; iter < 8; iter++) {
+            // I changed the loop to a while loop and allow at most 20 iterations
+            // iterations end when a bone pixel is has not been added on an iteration
+            boolean foundBonePixel = true;
+            int iter = 0;
+            while(iter < 20 && foundBonePixel == true) {
+                foundBonePixel = false;
+                iter++;
+                
+                if (sliceNum == 3) {
+                    System.out.println("iteration: " +iter +"  mrThreshold: " +mrBoneThreshold);
+                }
 
                 for (int idx = xDim; idx < (boneBuffer.length - xDim); idx++) {
 
@@ -378,6 +465,7 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
                                  (imgBuffer1[idx + xDim] == 1) || (imgBuffer1[idx - xDim] == 1))) {
 
                         if (imgBuffer2[idx] < mrBoneThreshold) {
+                            foundBonePixel = true;
                             boneBuffer[idx] = 1;
                             imgBuffer1[idx] = 2;
                         } // end if (...)
@@ -392,7 +480,7 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
                     }
                 }
 
-                // decrease the threhsold value as you get further from the marrow
+                // decrease the threshold value as you get further from the marrow
                 mrBoneThreshold *= 0.95f;
             } // end for (int iter = 0; ...)
 
@@ -409,12 +497,18 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         } // end for (int sliceNum = 0; ...)
 
         bone.calcMinMax();
+        
+//      PFH        ShowImage(bone, "Intermediate bone");
+        
         if (bone.getNDims() == 2) {
             Close(bone, 4, 2);
         } else if (bone.getNDims() == 3) {
-            Close(bone, 6, 2);
+//            Close(bone, 6, 2);
+            closeImage25D(bone, 4, 2);
         }
         
+//      PFH        ShowImage(bone, "Intermediate bone after close");
+       
 
         return bone;
 
@@ -429,7 +523,7 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
      */
     public ModelImage extractedBoneMarrow(ModelImage hardSegImg) {
 
-        // PFH    	ShowImage(hardSegImg, "Hard Segmentation");
+        // PFH        ShowImage(hardSegImg, "Hard Segmentation");
 
         ModelImage bMarrow = threshold2(hardSegImg, FAT_2_A, FAT_2_B);
         // bMarrow contains all voxels labeled FAT_2_A or FAT_2_B in the C-Means segmented image (HardSeg) bMarrow is a
@@ -1052,6 +1146,11 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
 
         // use the bone marrow and input thigh image to segment out the bone
         ModelImage bone = extractBone(boneMarrow, thighInputImage);
+        //  PFH        ShowImage(bone, "bone image");
+
+        convert(destImage, bone, destImage, 1, BONE);
+        bone.disposeLocal();
+        bone = null;
 
         // put the boneMarrow segmented image into the destImage
         // label value for BONE_MARROW is 200
@@ -1059,11 +1158,7 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         boneMarrow.disposeLocal();
         boneMarrow = null;
 
-        convert(destImage, bone, destImage, 1, BONE);
-        bone.disposeLocal();
-        bone = null;
-
-        //       PFH         ShowImage(destImage, "bone/morrow image");
+        //       PFH        ShowImage(destImage, "bone/morrow image");
     } // end processBoneAndMarrow(...)
 
 
