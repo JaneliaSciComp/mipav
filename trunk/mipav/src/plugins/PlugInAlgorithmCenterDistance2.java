@@ -25,7 +25,7 @@ import java.util.*;
  *           of mass to the nucleus boundary. The geometric center is a zero order moment not using intensity
  *           multiplications. The center of mass is a first order moment mutliplying position by intensity. The nuclei
  *           are blue and the chromosome regions of interest outlined by the vois are predominantly green. Images are
- *           2D or 3D. The program will automatically generate green VOIs in each nucleus. The user can input 1 or 2 as
+ *           2D or 3D. The program will automatically generate green VOIs in each nucleus. The user can input 1,2 3, or 4 as
  *           the number of green VOIs to be looked for in each nucleus. The default is 2 green VOIs.</p>
  *
  *           <p>1.) Only the blue portion of the red, green, blue color image is used to create the blueImage.</p>
@@ -179,10 +179,11 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
     
     /** Green merging radius in inches around peak green spot */
     /** Merge 2 green VOIs together if 2 centers are <= merging radius */
+    /** Merging code not executed if mergingDistance == 0.0 */
     private float mergingDistance = 0.33f;
     
     // Number of green regions per cell
-    // Either 1 for 1 for all cells, 2 for 2 for all cells, or 0 for 1 or 2 for all cells
+    // Either 1, 2, 3, or 4 for all cells
     private int greenRegionNumber = 1;
     
     /** Minimum number of pixels in a blue object */
@@ -308,7 +309,7 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
         int itersErosion;
         int numPruningPixels;
         int edgingType;
-        int i, j;
+        int i, j, n;
         int x, y;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
@@ -879,8 +880,6 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
             return;
         }
 
-        
-
         fireProgressStateChanged("Getting histogram info on green");
         fireProgressStateChanged(48);
         bins = 256;
@@ -1261,10 +1260,12 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                     if (greenIntensityPerArea[j - 1] >= sortedGreenIntensity[id - 1][i]) {
                         found = true;
 
-                        if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
-                            sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
-                            sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
-                            isMaxGreen[id-1][1] = true;
+                        if (greenNucleusNumber[id-1] >= i + 2) {
+                            for (k = greenNucleusNumber[id-1]-1; k >= i+1; k--) {
+                                sortedGreenIntensity[id - 1][k] = sortedGreenIntensity[id - 1][k-1];
+                                sortedGreenIndex[id - 1][k] = sortedGreenIndex[id - 1][k-1];
+                                isMaxGreen[id-1][k] = true;
+                            }
                         }
 
                         sortedGreenIntensity[id - 1][i] = greenIntensityPerArea[j - 1];
@@ -1292,9 +1293,11 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                     if ((!isMaxGreen[id-1][i])&& (greenIntensityPerArea[j - 1] >= sortedGreenIntensity[id - 1][i])) {
                         found = true;
 
-                        if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
-                            sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
-                            sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
+                        if (greenNucleusNumber[id-1] >= i + 2) {
+                            for (k = greenNucleusNumber[id-1]-1; k >= i+1; k--) {
+                                sortedGreenIntensity[id - 1][k] = sortedGreenIntensity[id - 1][k-1];
+                                sortedGreenIndex[id - 1][k] = sortedGreenIndex[id - 1][k-1];
+                            }
                         }
 
                         sortedGreenIntensity[id - 1][i] = greenIntensityPerArea[j - 1];
@@ -1337,9 +1340,14 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                 } // for (k = 0; k < length; k++)
 
                 if (m == 0) {
-                    colorTable[j] = Color.pink;
-                } else {
-                    colorTable[j] = Color.pink.darker();
+                    colorTable[j] = Color.magenta;
+                } else if (m == 1) {
+                    colorTable[j] = Color.magenta.darker();
+                } else if (m == 2) {
+                    colorTable[j] = Color.pink; 
+                }
+                else {
+                    colorTable[j] = Color.pink.darker();    
                 }
 
                 nameTable[j] = new String((i + 1) + "G" + (m + 1));
@@ -1567,8 +1575,8 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
         // blue object 2 - large green VOI
         // blue object 2 - small green VOI
         // and so on
-        gIndex = new int[2];
-        gCount = new float[2];
+        gIndex = new int[greenRegionNumber];
+        gCount = new float[greenRegionNumber];
         VOIs2 = new ViewVOIVector();
         objectID2 = new int[nVOIs];
         xPosGrav2 = new float[nVOIs];
@@ -1577,20 +1585,23 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
         index2 = 0;
         for (j = 1; j <= numObjects; j++) {
             numGreenFound = 0;
-            gCount[0] = 0.0f;
-            gCount[1] = 0.0f;
+            for (n = 0; n < greenRegionNumber; n++) {
+                gCount[n] = 0.0f;
+            }
             for (i = 0; i < nVOIs; i++) {
                 if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) && (objectID[i] == j)) {
-                    if (numGreenFound < 2) {
+                    if (numGreenFound < greenRegionNumber) {
                         numGreenFound++;
                     }
                     placed = false;
-                    for (k = 0; k <= 1 && (!placed); k++) {
+                    for (k = 0; k <= greenRegionNumber - 1 && (!placed); k++) {
                         if (colorCount[i] >= gCount[k]) {
                             placed = true; 
-                            if ((k == 0) && (numGreenFound == 2)) {
-                                gIndex[1] = gIndex[0];
-                                gCount[1] = gCount[0];
+                            if (numGreenFound >= k+2) {
+                                for (m = numGreenFound-1; m >= k+1; m--) {
+                                    gIndex[m] = gIndex[m-1];
+                                    gCount[m] = gCount[m-1];
+                                }
                             }
                             gIndex[k] = i;
                             gCount[k] = colorCount[i];
@@ -1602,10 +1613,16 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
             for (k = 0; k < numGreenFound; k++) {
                 VOIs.VOIAt(gIndex[k]).setName(j + "G" + (k+1));
                 if (k == 0) {
-                    VOIs.VOIAt(gIndex[k]).setColor(Color.pink);
+                    VOIs.VOIAt(gIndex[k]).setColor(Color.magenta);
+                }
+                else if (k == 1){
+                    VOIs.VOIAt(gIndex[k]).setColor(Color.magenta.darker());
+                }
+                else if (k == 2) {
+                    VOIs.VOIAt(gIndex[k]).setColor(Color.pink);    
                 }
                 else {
-                    VOIs.VOIAt(gIndex[k]).setColor(Color.pink.darker());
+                    VOIs.VOIAt(gIndex[k]).setColor(Color.pink.darker());      
                 }
                 VOIs2.addElement(VOIs.VOIAt(gIndex[k]));
                 objectID2[index2] = j;
@@ -1766,7 +1783,7 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
         UI.getMessageFrame().addTab("PlugInAlgorithmCenterDistance");
         UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "\n");
         UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "File Name \t\tNucleus\tNArea\tRmin\tRmax" +
-                                    "\tObj\tGarea\tcenterToG\tcenterToGToEdge\tfractionGOut\n");
+        "\tObj\tGarea\tcenterToG\tcenterToGToEdge\tfractionGOut\n");
 
         for (i = 0; i < numObjects; i++) {
             nuclearArea = xRes * yRes * blueCountTotal[i];
@@ -1901,7 +1918,7 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
         int itersErosion;
         int numPruningPixels;
         int edgingType;
-        int i, j, k;
+        int i, j, k, n;
         int x, y, z;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
@@ -2952,10 +2969,12 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                     if (greenIntensityPerVolume[j - 1] >= sortedGreenIntensity[id - 1][i]) {
                         found = true;
 
-                        if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
-                            sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
-                            sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
-                            isMaxGreen[id - 1][1] = true;
+                        if (greenNucleusNumber[id-1] >= i + 2) {
+                            for (k = greenNucleusNumber[id-1]-1; k >= i+1; k--) {
+                                sortedGreenIntensity[id - 1][k] = sortedGreenIntensity[id - 1][k-1];
+                                sortedGreenIndex[id - 1][k] = sortedGreenIndex[id - 1][k-1];
+                                isMaxGreen[id-1][k] = true;
+                            }
                         }
 
                         sortedGreenIntensity[id - 1][i] = greenIntensityPerVolume[j - 1];
@@ -2982,9 +3001,11 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                     if ((!isMaxGreen[id-1][i])&& (greenIntensityPerVolume[j - 1] >= sortedGreenIntensity[id - 1][i])) {
                         found = true;
 
-                        if ((i == 0) && (greenNucleusNumber[id-1] >= 2)) {
-                            sortedGreenIntensity[id - 1][1] = sortedGreenIntensity[id - 1][0];
-                            sortedGreenIndex[id - 1][1] = sortedGreenIndex[id - 1][0];
+                        if (greenNucleusNumber[id-1] >= i + 2) {
+                            for (k = greenNucleusNumber[id-1]-1; k >= i+1; k--) {
+                                sortedGreenIntensity[id - 1][k] = sortedGreenIntensity[id - 1][k-1];
+                                sortedGreenIndex[id - 1][k] = sortedGreenIndex[id - 1][k-1];
+                            }
                         }
 
                         sortedGreenIntensity[id - 1][i] = greenIntensityPerVolume[j - 1];
@@ -3028,11 +3049,16 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                 } // for (k = 0; k < totLength; k++)
 
                 if (m == 0) {
-                    colorTable[j] = Color.pink;
-                } else {
-                    colorTable[j] = Color.pink.darker();
+                    colorTable[j] = Color.magenta;
+                } else if (m == 1) {
+                    colorTable[j] = Color.magenta.darker();
+                } else if (m == 2) {
+                    colorTable[j] = Color.pink; 
                 }
-
+                else {
+                    colorTable[j] = Color.pink.darker();    
+                }
+                
                 nameTable[j] = new String((i + 1) + "G" + (m + 1));
                 j++;
             } // for (m = 0; m < greenNucleusNumber[i]; m++)
@@ -3278,32 +3304,34 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
         // blue object 2 - large green VOI
         // blue object 2 - small green VOI
         // and so on
-        gIndex = new int[2];
-        gCount = new float[2];
+        gIndex = new int[greenRegionNumber];
+        gCount = new float[greenRegionNumber];
         VOIs2 = new ViewVOIVector();
         objectID2 = new int[nVOIs];
         xPosGrav2 = new float[nVOIs];
         yPosGrav2 = new float[nVOIs];
-        zPosGrav2 = new float[nVOIs];
         voiCount2 = new int[nVOIs];
+        zPosGrav2 = new float[nVOIs];
         index2 = 0;
         for (j = 1; j <= numObjects; j++) {
             numGreenFound = 0;
-            gCount[0] = 0.0f;
-            gCount[1] = 0.0f;
+            for (n = 0; n < greenRegionNumber; n++) {
+                gCount[n] = 0.0f;
+            }
             for (i = 0; i < nVOIs; i++) {
                 if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) && (objectID[i] == j)) {
-                    
-                    if (numGreenFound < 2) {
+                    if (numGreenFound < greenRegionNumber) {
                         numGreenFound++;
                     }
                     placed = false;
-                    for (k = 0; k <= 1 && (!placed); k++) {
+                    for (k = 0; k <= greenRegionNumber - 1 && (!placed); k++) {
                         if (colorCount[i] >= gCount[k]) {
                             placed = true; 
-                            if ((k == 0) && (numGreenFound == 2)) {
-                                gIndex[1] = gIndex[0];
-                                gCount[1] = gCount[0];
+                            if (numGreenFound >= k+2) {
+                                for (m = numGreenFound-1; m >= k+1; m--) {
+                                    gIndex[m] = gIndex[m-1];
+                                    gCount[m] = gCount[m-1];
+                                }
                             }
                             gIndex[k] = i;
                             gCount[k] = colorCount[i];
@@ -3315,10 +3343,16 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
             for (k = 0; k < numGreenFound; k++) {
                 VOIs.VOIAt(gIndex[k]).setName(j + "G" + (k+1));
                 if (k == 0) {
-                    VOIs.VOIAt(gIndex[k]).setColor(Color.pink);
+                    VOIs.VOIAt(gIndex[k]).setColor(Color.magenta);
+                }
+                else if (k == 1){
+                    VOIs.VOIAt(gIndex[k]).setColor(Color.magenta.darker());
+                }
+                else if (k == 2) {
+                    VOIs.VOIAt(gIndex[k]).setColor(Color.pink);    
                 }
                 else {
-                    VOIs.VOIAt(gIndex[k]).setColor(Color.pink.darker());
+                    VOIs.VOIAt(gIndex[k]).setColor(Color.pink.darker());      
                 }
                 VOIs2.addElement(VOIs.VOIAt(gIndex[k]));
                 objectID2[index2] = j;
