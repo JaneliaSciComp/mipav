@@ -1284,14 +1284,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     private void initVoiImage() {
     	//VOIs of pane already loaded, just need to make relevant ones solid
         VOIVector voiVec = getActiveImage().getVOIs();
-    	for(int i=0; i<voiVec.size(); i++) {
-    		VOI voi = voiVec.get(i);
-    		if(voiBuffer.get(voi.getName()).fillEligible()) { 
-    			if(!(((VoiDialogPrompt)tabs[voiTabLoc]).getObjectName().equals(voi.getName()))) {
+        VOI voi;
+    	for(int i=0; i<voiVec.size(); i++) 
+    		if(voiBuffer.get((voi = voiVec.get(i)).getName()).fillEligible()) 
+    			if(!(((VoiDialogPrompt)tabs[voiTabLoc]).getObjectName().equals(voi.getName()))) 
     				voi.setDisplayMode(VOI.SOLID);
-    			}
-    		}
-    	}
         
         componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
         updateImages(true);
@@ -3689,6 +3686,77 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     }
     
     /**
+     * This method saves all VOIs for the active image to a given directory.  Watch for changes
+     * in ViewJFrameBase that might break this method.
+     *
+     * @param  voiDir  directory that contains VOIs for this image.
+     */
+    public void saveAllVOIsTo(String voiDir) {
+
+        int nVOI;
+        int i;
+        ViewVOIVector VOIs;
+        FileVOI fileVOI;
+        ModelImage currentImage;
+
+        try {
+
+            if (displayMode == IMAGE_A) {
+                currentImage = imageA;
+                VOIs = imageA.getVOIs();
+            } else if (displayMode == IMAGE_B) {
+                currentImage = imageB;
+                VOIs = imageB.getVOIs();
+            } else {
+                MipavUtil.displayError(" Cannot save VOIs when viewing both images");
+
+                return;
+            }
+
+            // Might want to bring up warning message before deleting VOIs !!!!
+            // or not do it at all.
+            // if voiDir exists, then empty it
+            // if voiDir does not exist, then create it
+            File voiFileDir = new File(voiDir);
+
+            if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+
+                // only clean out the vois if this is a default voi directory
+                if (voiFileDir.getName().startsWith("defaultVOIs_")) {
+                    File[] files = voiFileDir.listFiles();
+
+                    if (files != null) {
+
+                        for (int k = 0; k < files.length; k++) {
+
+                            if (files[k].getName().endsWith(".voi") || files[k].getName().endsWith(".xml")) { // files[k].delete();
+                            }
+                        }
+                    } // if (files != null)
+                }
+            } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+            } else { // voiFileDir does not exist
+                voiFileDir.mkdir();
+            }
+
+            nVOI = VOIs.size();
+
+            System.err.println("Number of VOIs: " + nVOI);
+
+            for (i = 0; i < nVOI; i++) {
+
+                fileVOI = new PlugInFileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, currentImage);
+
+                fileVOI.writeVOI(VOIs.VOIAt(i), true);
+            }
+
+        } catch (IOException error) {
+            MipavUtil.displayError("Error writing all VOIs to " + voiDir + ": " + error);
+        }
+
+    } // end saveAllVOIsTo()
+    
+    /**
      * Loads VOI and automatically stores it into the voiBuffer.
      * @param name
      * @return
@@ -4074,16 +4142,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			String height = (String)fileInfo.getTagTable().getValue("0018,1130");
 			spTable.addCell((height != null ? height.trim() : "Unknown"));
 			
-			
-			
 			Paragraph pTable = new Paragraph();
 			pTable.add(new Paragraph());
 			pTable.setAlignment(Element.ALIGN_CENTER);
 			pTable.add(spTable);
 			pdfDocument.add(new Paragraph(new Chunk("")));
 			pdfDocument.add(pTable);
-			
-			// *// end commenting
 			
 			//create the Table where we will insert the data:
 			wholeTable = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
@@ -5330,6 +5394,47 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 			voiDialog = new PlugInVOIStats(compImage.getFrame(), compImage.getActiveImage(), null);
 		}
+	}
+	
+	/**
+	 * Another extended MIPAV class.  Designed to allow for overwriting of VOIs without prompt during plugin. 
+	 * Checks also exist to make sure coordinates are correctly written.   Used by saveAllVOIsTo(dir)
+	 * 
+	 * @author senseneyj
+	 *
+	 */
+	private class PlugInFileVOI extends FileVOI {
+		//~ Constructors ---------------------------------------------------------------------------------------------------
+
+	    /**
+	     * VOI reader/writer constructor.
+	     *
+	     * @param      fileName  file name
+	     * @param      fileDir   file directory
+	     * @param      image     image model: needed during the read process to ensure the VOI "fits" in the image space.
+	     *
+	     * @exception  IOException  if there is an error making the files
+	     */
+	    public PlugInFileVOI(String fileName, String fileDir, ModelImage image) throws IOException {
+	    	super(fileName, fileDir, image);
+	    }
+	    
+	    /**
+	     * Writes VOI to an XML formatted file.
+	     *
+	     * @param   voi              VOI to be saved
+	     * @param   saveAllContours  if true save all contours, not just the active ones
+	     *
+	     * @throws  IOException  exception thrown if there is an error writing the file
+	     */
+	    public void writeXML(VOI voi, boolean saveAllContours) throws IOException {
+	    	
+	    	if(file.exists() == true) 
+                file.delete();
+	    	
+	    	//now that file has been deleted, prompting will not occur
+	    	super.writeXML(voi, saveAllContours);
+	    }
 	}
 	
 }
