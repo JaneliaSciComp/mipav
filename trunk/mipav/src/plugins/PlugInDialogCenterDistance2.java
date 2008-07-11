@@ -15,7 +15,7 @@ import javax.swing.*;
 
 
 /**
- * @version  June 19, 2008
+ * @version  July 14, 2008
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -419,7 +419,7 @@ public class PlugInDialogCenterDistance2 extends JDialogScriptableBase implement
         String unitStr;
         String distStr;
         setForeground(Color.black);
-        setTitle("Center Distances version 2  06/19/08");
+        setTitle("Center Distances version 2  07/14/08");
         
         df = new DecimalFormat("0.000E0");
 
@@ -500,10 +500,12 @@ public class PlugInDialogCenterDistance2 extends JDialogScriptableBase implement
         mainPanel.add(greenMergingLabel, gbc);
 
         if (image.getNDims() == 2) {
-            mergingDistance = 8.0f * image.getFileInfo(0).getResolutions()[0];    
+            //mergingDistance = 8.0f * image.getFileInfo(0).getResolutions()[0]; 
+            mergingDistance = 0.0f;
         }
         else {
-            mergingDistance = 4.0f * image.getFileInfo(0).getResolutions()[0];
+            //mergingDistance = 4.0f * image.getFileInfo(0).getResolutions()[0];
+            mergingDistance = 0.0f;
         }
         distStr = df.format(mergingDistance);
         greenMergingText = new JTextField(10);
@@ -642,8 +644,8 @@ public class PlugInDialogCenterDistance2 extends JDialogScriptableBase implement
         
         tmpStr = greenMergingText.getText();
         mergingDistance = Float.parseFloat(tmpStr);
-        if (mergingDistance <= 0.0f) {
-            MipavUtil.displayError("Merging distance must be greater than 0");
+        if (mergingDistance < 0.0f) {
+            MipavUtil.displayError("Merging distance cannot be less than 0");
             greenMergingText.requestFocus();
             greenMergingText.selectAll();
             return false;
