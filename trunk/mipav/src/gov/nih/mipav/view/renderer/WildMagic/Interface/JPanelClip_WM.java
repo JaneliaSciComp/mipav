@@ -493,7 +493,7 @@ public class JPanelClip_WM extends JInterfaceBase
                 colorButtonStatic.setEnabled(false);
                 boundingCheckStatic.setSelected(false);
                 disableStaticClipping();
-                disableStaticInvClipping();
+                //disableStaticInvClipping();
             } else {
                 disableClipPlanes();
                 disableClipPlanesArbi();
@@ -515,7 +515,7 @@ public class JPanelClip_WM extends JInterfaceBase
                 colorButtonStaticInv.setEnabled(false);
                 boundingCheckStaticInv.setSelected(false);
                 disableStaticInvClipping();
-                disableStaticClipping();
+                //disableStaticClipping();
             } else {
                 disableClipPlanes();
                 disableClipPlanesArbi();
@@ -1862,6 +1862,15 @@ public class JPanelClip_WM extends JInterfaceBase
         boxZInv.setSelected(isSelected);
     }
 
+    public void setClipSliceAColor(Color color) {
+        if ( rayBasedRenderWM != null )
+        {
+            rayBasedRenderWM.setArbColor( new ColorRGB( colorButtonA.getBackground().getRed(),
+            		colorButtonA.getBackground().getGreen(),
+            		colorButtonA.getBackground().getBlue() ) );
+        }
+   }
+    
     /**
      * Sets the color of the static clipping plane slice frame.
      *
@@ -2243,7 +2252,7 @@ public class JPanelClip_WM extends JInterfaceBase
         } else if (button == colorButtonZInv) {
             setClipSliceZInvColor(color);
         } else if (button == colorButtonA) {
-            //setClipSliceAColor(color);
+            setClipSliceAColor(color);
         } else if (button == colorButtonStatic) {
             setClipSliceSColor(color);
         } else if (button == colorButtonStaticInv) {

@@ -192,6 +192,17 @@ public class MjCorticalMesh_WM {
             }
         }
     }
+    
+    public boolean CheckManifold()
+    {
+        for (int i = 0; i < m_akEdge.length; i++) {
+            if ( m_akEdge[i].T[1] == -1 )
+            {
+            	return false;
+            }
+        }
+        return true;
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -241,13 +252,13 @@ public class MjCorticalMesh_WM {
                 if ((iV2 != iV0) && (iV2 != iV1)) {
                     m_kMesh.VBuffer.GetPosition3( iV2, kPos2 );
 
-                    kPos0.sub(kPos2, kE0);
-                    kPos1.sub(kPos2, kE1);
-                    kE0.Cross(kE1, kNormal);
+                    kE0.Sub( kPos0, kPos2 );
+                    kE1.Sub( kPos1, kPos2 );
+                    kNormal.Cross( kE0, kE1 );
                     fValue = kE0.Dot(kE1) / kNormal.Length();
                 }
             }
-
+            
             Triangle kT1 = m_akTriangle[kE.T[1]];
 
             for (int i = 0; i < 3; i++) {
@@ -256,9 +267,9 @@ public class MjCorticalMesh_WM {
                 if ((iV2 != iV0) && (iV2 != iV1)) {
                     m_kMesh.VBuffer.GetPosition3( iV2, kPos2 );
 
-                    kPos0.sub(kPos2, kE0);
-                    kPos1.sub(kPos2, kE1);
-                    kE0.Cross(kE1, kNormal);
+                    kE0.Sub( kPos0, kPos2 );
+                    kE1.Sub( kPos1, kPos2 );
+                    kNormal.Cross( kE0, kE1 );
                     fValue += kE0.Dot(kE1) / kNormal.Length();
                 }
             }
@@ -303,10 +314,10 @@ public class MjCorticalMesh_WM {
         Vector3f kV0 = m_kMesh.VBuffer.GetPosition3( iV0 );
         Vector3f kV1 = m_kMesh.VBuffer.GetPosition3( iV1 );
         Vector3f kV2 = m_kMesh.VBuffer.GetPosition3( iV2 );
-        kV1.sub(kV0,kE10);
-        kV2.sub(kV0,kE20);
-        kV1.sub(kV2,kE12);
-        kE20.Cross(kE10,kCross);
+        kE10.Sub( kV1, kV0 );
+        kE20.Sub( kV2, kV0 );
+        kE12.Sub( kV1, kV2 );
+        kCross.Cross( kE20, kE10 );
 
         float fLen10 = kE10.Length();
         float fInvLen10 = 1.0f / fLen10;
@@ -336,7 +347,7 @@ public class MjCorticalMesh_WM {
         m_akPlane = new Vector2f[iVQuantity];
         for (int i = 0; i < iVQuantity; i++) {
             m_akPlane[i] = new Vector2f();
-            m_akPlane[i].X(afResult[i]);
+            m_akPlane[i].X = afResult[i];
             
             afTmp[i] = 0.0f;
         }
@@ -352,23 +363,23 @@ public class MjCorticalMesh_WM {
         float fMax = -1;
         
         for (int i = 0; i < iVQuantity; i++) {
-            m_akPlane[i].Y(afResult[i]);
+            m_akPlane[i].Y = afResult[i];
             
             if ( i == 0 )
             {
-                fMin = m_akPlane[0].X();
+                fMin = m_akPlane[0].X;
                 fMax = fMin;
             }
-            if (m_akPlane[i].X() < fMin) {
-                fMin = m_akPlane[i].X();
-            } else if (m_akPlane[i].X() > fMax) {
-                fMax = m_akPlane[i].X();
+            if (m_akPlane[i].X < fMin) {
+                fMin = m_akPlane[i].X;
+            } else if (m_akPlane[i].X > fMax) {
+                fMax = m_akPlane[i].X;
             }
 
-            if (m_akPlane[i].Y() < fMin) {
-                fMin = m_akPlane[i].Y();
-            } else if (m_akPlane[i].Y() > fMax) {
-                fMax = m_akPlane[i].Y();
+            if (m_akPlane[i].Y < fMin) {
+                fMin = m_akPlane[i].Y;
+            } else if (m_akPlane[i].Y > fMax) {
+                fMax = m_akPlane[i].Y;
             }
         }
 
@@ -385,34 +396,34 @@ public class MjCorticalMesh_WM {
         /* triangle, so the average is a good choice to place the pole. */
         Vector2f kOrigin = new Vector2f(0.0f, 0.0f);
         for (int i = 0; i < iVQuantity; i++) {
-            m_akPlane[i].X( -1.0f + (fInvHalfRange * (m_akPlane[i].X() - fMin)) );
-            m_akPlane[i].Y( -1.0f + (fInvHalfRange * (m_akPlane[i].Y() - fMin)) );
+            m_akPlane[i].X = ( -1.0f + (fInvHalfRange * (m_akPlane[i].X - fMin)) );
+            m_akPlane[i].Y = ( -1.0f + (fInvHalfRange * (m_akPlane[i].Y - fMin)) );
             
 
-            kOrigin.addEquals(m_akPlane[i]);
+            kOrigin.Add(m_akPlane[i]);
         }
-        kOrigin.scaleEquals(1.0f / (float) iVQuantity);
+        kOrigin.Scale(1.0f / (float) iVQuantity);
 
         m_kPlaneMin = new Vector2f();
         m_kPlaneMax = new Vector2f();
         for (int i = 0; i < iVQuantity; i++) {
-            m_akPlane[i].subEquals(kOrigin);
+            m_akPlane[i].Sub(kOrigin);
             
             if ( i == 0 )
             {
-                m_kPlaneMin.SetData(m_akPlane[0]);
-                m_kPlaneMax.SetData(m_akPlane[0]);
+                m_kPlaneMin.Copy(m_akPlane[0]);
+                m_kPlaneMax.Copy(m_akPlane[0]);
             }
-            if (m_akPlane[i].X() < m_kPlaneMin.X()) {
-                m_kPlaneMin.X( m_akPlane[i].X() );
-            } else if (m_akPlane[i].X() > m_kPlaneMax.X()) {
-                m_kPlaneMax.X( m_akPlane[i].X() );
+            if (m_akPlane[i].X < m_kPlaneMin.X) {
+                m_kPlaneMin.X =  m_akPlane[i].X;
+            } else if (m_akPlane[i].X > m_kPlaneMax.X) {
+                m_kPlaneMax.X = m_akPlane[i].X;
             }
 
-            if (m_akPlane[i].Y() < m_kPlaneMin.Y()) {
-                m_kPlaneMin.Y( m_akPlane[i].Y() );
-            } else if (m_akPlane[i].Y() > m_kPlaneMax.Y()) {
-                m_kPlaneMax.Y( m_akPlane[i].Y() );
+            if (m_akPlane[i].Y < m_kPlaneMin.Y) {
+                m_kPlaneMin.Y = m_akPlane[i].Y;
+            } else if (m_akPlane[i].Y > m_kPlaneMax.Y) {
+                m_kPlaneMax.Y = m_akPlane[i].Y;
             }
         }
 
@@ -427,9 +438,9 @@ public class MjCorticalMesh_WM {
             m_kMesh.VBuffer.GetPosition3( kT0.V[0], kV0 );
             m_kMesh.VBuffer.GetPosition3( kT0.V[1], kV1 );
             m_kMesh.VBuffer.GetPosition3( kT0.V[2], kV2 );
-            kV1.sub(kV0, kE0);
-            kV2.sub(kV0, kE1);
-            kE0.Cross(kE1, kCross);
+            kE0.Sub( kV1, kV0 );
+            kE1.Sub( kV2, kV0 );
+            kCross.Cross( kE0, kE1 );
             fTwoTotalArea += kCross.Length();
         }
 
@@ -443,16 +454,16 @@ public class MjCorticalMesh_WM {
         Vector2f kPlaneVector = new Vector2f();
         m_akSphere = new Vector3f[iVQuantity];
         for (int i = 0; i < iVQuantity; i++) {
-            kPlaneVector.SetData(m_akPlane[i]);
+            kPlaneVector.Copy(m_akPlane[i]);
 
             float fRSqr = kPlaneVector.SquaredLength();
             float fMult = 1.0f / (fRSqr + fRhoSqr);
-            float fX = 2.0f * fMult * fRhoSqr * m_akPlane[i].X();
-            float fY = 2.0f * fMult * fRhoSqr * m_akPlane[i].Y();
+            float fX = 2.0f * fMult * fRhoSqr * m_akPlane[i].X;
+            float fY = 2.0f * fMult * fRhoSqr * m_akPlane[i].Y;
             float fZ = fMult * m_fRho * (fRSqr - fRhoSqr);
 
             m_akSphere[i] = new Vector3f(fX, fY, fZ);
-            m_akSphere[i].scaleEquals(1.0f / m_fRho);
+            m_akSphere[i].Scale(1.0f / m_fRho);
         }
 
         /* Project the sphere onto a cylinder.  The cylinder is centered at the */
@@ -462,9 +473,9 @@ public class MjCorticalMesh_WM {
         m_akCylinder = new Vector3f[iVQuantity];
         for (int i = 0; i < iVQuantity; i++) {
             m_akCylinder[i] = new Vector3f();
-            m_akCylinder[i].X( -(float) Math.atan2(m_akSphere[i].Y(), m_akSphere[i].X()) );
-            m_akCylinder[i].Y( m_akSphere[i].Z() );
-            m_akCylinder[i].Z( 0.0f );
+            m_akCylinder[i].X = -(float) Math.atan2(m_akSphere[i].Y, m_akSphere[i].X);
+            m_akCylinder[i].Y = m_akSphere[i].Z;
+            m_akCylinder[i].Z = 0.0f;
         }
         if ( m_kSphereMesh != null )
         {
@@ -552,9 +563,9 @@ public class MjCorticalMesh_WM {
     public void computeSurfaceArea() {
         m_fSurfaceArea = 0.0f;
 
+        Vector3f kE0 = new Vector3f();
         Vector3f kE1 = new Vector3f();
-        Vector3f kE2 = new Vector3f();
-        Vector3f kNormal = new Vector3f();
+        Vector3f kCross = new Vector3f();
 
         int[] aiConnect = m_kMesh.IBuffer.GetData();
         int iTQuantity = m_kMesh.GetTriangleQuantity();
@@ -563,10 +574,10 @@ public class MjCorticalMesh_WM {
             Vector3f kV0 = m_kMesh.VBuffer.GetPosition3( aiConnect[(3 * i) + 0] );
             Vector3f kV1 = m_kMesh.VBuffer.GetPosition3( aiConnect[(3 * i) + 1] );
             Vector3f kV2 = m_kMesh.VBuffer.GetPosition3( aiConnect[(3 * i) + 2] );
-            kV1.sub(kV0, kE1);
-            kV2.sub(kV0, kE2);
-            kE1.Cross(kE2, kNormal);
-            m_fSurfaceArea += 0.5f * kNormal.Length();
+            kE0.Sub( kV1, kV0 );
+            kE1.Sub( kV2, kV0 );
+            kCross.Cross( kE0, kE1 );
+            m_fSurfaceArea += 0.5f * kCross.Length();
         }
     }
 
@@ -795,7 +806,7 @@ public class MjCorticalMesh_WM {
         /* latitude circles are uniformly spaced on the stereographic sphere in */
         /* the z-direction. */
         Circle2f kLatitude = new Circle2f();
-        kLatitude.Center.SetData(Vector2f.ZERO);
+        kLatitude.Center.Copy(Vector2f.ZERO);
         kLatitude.Radius = (float) Math.sqrt((1.0f + fZNormal) / (1.0f - fZNormal)) * getStereographicRadius();
 
         /* sorted t-values for intersections of circle */
@@ -820,11 +831,11 @@ public class MjCorticalMesh_WM {
             int iV1 = m_akEdge[i].V[1];
             Vector2f kV0 = m_akPlane[iV0];
             Vector2f kV1 = m_akPlane[iV1];
-            kEdge.Origin.SetData(kV0);
-            kV1.sub(kV0, kEdge.Direction);
+            kEdge.Origin.Copy(kV0);
+            kEdge.Direction.Sub( kV1, kV0 );
 
             /* compute intersection of ray and segment */
-            Vector2f[] akP = new Vector2f[2];
+            Vector2f[] akP = new Vector2f[]{ new Vector2f(), new Vector2f() };
             int iCount = IntrSegment2Circle2f.FindIntersection(kEdge, kLatitude, akP);
 
             if (iCount > 0) {
@@ -834,23 +845,21 @@ public class MjCorticalMesh_WM {
                 Vector3f kU0 = m_kMesh.VBuffer.GetPosition3(aiConnect[(3 * iTriangle) + 0]);
                 Vector3f kU1 = m_kMesh.VBuffer.GetPosition3(aiConnect[(3 * iTriangle) + 1]);
                 Vector3f kU2 = m_kMesh.VBuffer.GetPosition3(aiConnect[(3 * iTriangle) + 2]);
-                kU1.sub(kU0, kU1mU0);
-                kU2.sub(kU0, kU2mU0);
-                kU1mU0.Cross(kU2mU0, kN0);
-                kN0.Normalize();
+                kU1mU0.Sub( kU1, kU0 );
+                kU2mU0.Sub( kU2, kU0 );
+                kN0.UnitCross( kU1mU0, kU2mU0 );
 
                 /* get normal for sharing triangle */
                 iTriangle = m_akEdge[i].T[1];
                 kU0 = m_kMesh.VBuffer.GetPosition3(aiConnect[(3 * iTriangle) + 0]);
                 kU1 = m_kMesh.VBuffer.GetPosition3(aiConnect[(3 * iTriangle) + 1]);
                 kU2 = m_kMesh.VBuffer.GetPosition3(aiConnect[(3 * iTriangle) + 2]);
-                kU1.sub(kU0, kU1mU0);
-                kU2.sub(kU0, kU2mU0);
-                kU1mU0.Cross(kU2mU0, kN1);
-                kN1.Normalize();
+                kU1mU0.Sub( kU1, kU0 );
+                kU2mU0.Sub( kU2, kU0 );
+                kN1.UnitCross( kU1mU0, kU2mU0 );
 
                 /* average normal */
-                kN0.add(kN1, kNAvr);
+                kNAvr.Add( kN0, kN1 );
                 kNAvr.Normalize();
 
 
@@ -861,10 +870,10 @@ public class MjCorticalMesh_WM {
 
                     /* Use the angle formed by the intersection point with the */
                     /* positive x-axis as the map key for sorting. */
-                    float fAngle = (float) Math.atan2(akP[j].Y(), akP[j].X());
+                    float fAngle = (float) Math.atan2(akP[j].Y, akP[j].X);
 
                     /* determine the edge parameter at the intersection */
-                    akP[j].sub(kV0, kDiff);
+                    kDiff.Sub( akP[j], kV0 );
 
                     float fNumer = kDiff.Dot(kEdge.Direction);
                     float fDenom = kEdge.Direction.SquaredLength();
@@ -875,30 +884,30 @@ public class MjCorticalMesh_WM {
 
                     /* construct the edge point on the original mesh */
                     Vector3f kQ = new Vector3f();
-                    kPos1.sub(kPos0, kQ);
-                    kQ.scaleEquals(fS);
-                    kQ.addEquals(kPos0);
+                    kQ.Sub( kPos1, kPos0 );
+                    kQ.Scale(fS);
+                    kQ.Add(kPos0);
 
                     /* To avoid z-buffer biasing problems, lift the point in the */
                     /* direction of the average of the normals for the triangles */
                     /* sharing the edge. */
-                    kQ.addEquals(kNAvr.scale(fMBias));
+                    kNAvr.Scale(fMBias);
+                    kQ.Add(kNAvr);
 
                     /* save the point in an ordered map */
                     kIntrMesh.put(new Float(fAngle), kQ);
 
                     /* construct the edge point on the sphere */
-                    kQ = new Vector3f();
-                    m_akSphere[iV1].sub(m_akSphere[iV0], kQ);
-                    kQ.scaleEquals(fS);
-                    kQ.addEquals(m_akSphere[iV0]);
+                    kQ.Sub( m_akSphere[iV1], m_akSphere[iV0] );
+                    kQ.Scale(fS);
+                    kQ.Add(m_akSphere[iV0]);
 
                     /* To avoid z-buffer biasing problems, lift the point in the */
                     /* direction of sphere normal. */
-                    kNormal.SetData(kQ);
+                    kNormal.Copy(kQ);
                     kNormal.Normalize();
-                    kQ.SetData(kNormal.scale(fSBias));
-                    kQ.addEquals(kNormal);
+                    kQ.Scale(fSBias, kNormal );
+                    kQ.Add(kNormal);
 
                     /* save the point in an ordered map */
                     kIntrSphere.put(new Float(fAngle), kQ);
@@ -952,9 +961,9 @@ public class MjCorticalMesh_WM {
 
         /* longitude ray in the complex plane */
         Ray2f kLongitude = new Ray2f();
-        kLongitude.Origin.SetData(kPoint2fZero);
-        kLongitude.Direction.X( (float) Math.cos(fAngle) );
-        kLongitude.Direction.Y( (float) Math.sin(fAngle) );
+        kLongitude.Origin.Copy(kPoint2fZero);
+        kLongitude.Direction.X = (float) Math.cos(fAngle);
+        kLongitude.Direction.Y = (float) Math.sin(fAngle);
 
         /* sorted t-values for intersections of ray with edges */
         TreeMap<Float, Vector3f> kIntrMesh = new TreeMap<Float, Vector3f>(); /* map<float,Point3f> */
@@ -976,32 +985,37 @@ public class MjCorticalMesh_WM {
         Vector3f kU0 = m_kMesh.VBuffer.GetPosition3(iV0);
         Vector3f kU1 = m_kMesh.VBuffer.GetPosition3(iV1);
         Vector3f kU2 = m_kMesh.VBuffer.GetPosition3(iV2);
-        kU1.sub(kU0, kU1mU0);
-        kU2.sub(kU0, kU2mU0);
-        kU1mU0.Cross(kU2mU0, kNormal);
-        kNormal.Normalize();
+        kU1mU0.Sub( kU1, kU0 );
+        kU2mU0.Sub( kU2, kU0 );
+        kNormal.UnitCross( kU1mU0, kU2mU0 );
 
+        kU0.Scale(kBary.X);
+        kU1.Scale(kBary.Y);
+        kU2.Scale(kBary.Z);
         /* compute point on original mesh */
         Vector3f kQ = new Vector3f();
-        kQ.addEquals( kU0.scale(kBary.X()));
-        kQ.addEquals( kU1.scale(kBary.Y()));
-        kQ.addEquals( kU2.scale(kBary.Z()));
+        kQ.Add( kU0, kU1 );
+        kQ.Add( kU2 );
 
         /* lift slightly off the surface */
-        kQ.addEquals( kNormal.scale(fMBias));
+        kNormal.Scale(fMBias);
+        kQ.Add( kNormal );
         kIntrMesh.put(new Float(0.0f), kQ);
 
         /* repeat calculations for sphere */
         kU0 = m_akSphere[iV0];
         kU1 = m_akSphere[iV1];
-        kU2 = m_akSphere[iV2];
-        kQ = new Vector3f();
-        kQ.addEquals( kU0.scale(kBary.X()));
-        kQ.addEquals( kU1.scale(kBary.Y()));
-        kQ.addEquals( kU2.scale(kBary.Z()));
-        kNormal.SetData(kQ);
+        kU2 = m_akSphere[iV2];      
+        kU0.Scale(kBary.X);
+        kU1.Scale(kBary.Y);
+        kU2.Scale(kBary.Z);
+        kQ.Copy( Vector3f.ZERO );
+        kQ.Add( kU0, kU1 );
+        kQ.Add( kU2 );
+        kNormal.Copy(kQ);
         kNormal.Normalize();
-        kQ.addEquals( kNormal.scale(fMBias));
+        kNormal.Scale(fMBias);
+        kQ.Add( kNormal );
         kIntrSphere.put(new Float(0.0f), kQ);
         /* ***** end add ray origin ***** */
 
@@ -1012,34 +1026,35 @@ public class MjCorticalMesh_WM {
         m_kMesh.VBuffer.GetPosition3( iV0, kU0 );
         m_kMesh.VBuffer.GetPosition3( iV1, kU1 );
         m_kMesh.VBuffer.GetPosition3( iV2, kU2 );
-        kU1.sub(kU0, kU1mU0);
-        kU2.sub(kU0, kU2mU0);
-        kU1mU0.Cross(kU2mU0, kNormal);
-        kNormal.Normalize();
+        kU1mU0.Sub( kU1, kU0 );
+        kU2mU0.Sub( kU2, kU0 );
+        kNormal.UnitCross( kU1mU0, kU2mU0 );
 
         /* compute point on original mesh */
-        kQ = new Vector3f();
-        kQ.addEquals(kU0);
-        kQ.addEquals(kU1);
-        kQ.addEquals(kU2);
-        kQ.scaleEquals(1.0f / 3.0f);
+        kQ.Copy( Vector3f.ZERO );
+        kQ.Add(kU0);
+        kQ.Add(kU1);
+        kQ.Add(kU2);
+        kQ.Scale(1.0f / 3.0f);
 
         /* lift slightly off the surface */
-        kQ.addEquals( kNormal.scale(fMBias));
+        kNormal.Scale(fMBias);
+        kQ.Add( kNormal );
         kIntrMesh.put(new Float(Float.MAX_VALUE), kQ);
 
         /* repeat calculations for sphere */
         kU0 = m_akSphere[iV0];
         kU1 = m_akSphere[iV1];
         kU2 = m_akSphere[iV2];
-        kQ = new Vector3f();
-        kQ.addEquals(kU0);
-        kQ.addEquals(kU1);
-        kQ.addEquals(kU2);
-        kQ.scaleEquals(1.0f / 3.0f);
-        kNormal.SetData(kQ);
+        kQ.Copy( Vector3f.ZERO );
+        kQ.Add(kU0);
+        kQ.Add(kU1);
+        kQ.Add(kU2);
+        kQ.Scale(1.0f / 3.0f);
+        kNormal.Copy(kQ);
         kNormal.Normalize();
-        kQ.addEquals( kNormal.scale(fSBias));
+        kNormal.Scale(fSBias);
+        kQ.Add( kNormal );
         kIntrSphere.put(new Float(Float.MAX_VALUE), kQ);
         /* ***** end add ray origin ***** */
 
@@ -1057,8 +1072,8 @@ public class MjCorticalMesh_WM {
             Vector2f kV0 = m_akPlane[iV0];
             Vector2f kV1 = m_akPlane[iV1];
             Segment2f kEdge = new Segment2f();
-            kEdge.Origin.SetData(kV0);
-            kV1.sub(kV0, kEdge.Direction);
+            kEdge.Origin.Copy(kV0);
+            kEdge.Direction.Sub( kV1, kV0 );
 
             /* compute intersection of ray and segment */
             int iCount = IntrRay2Segment2f.FindIntersection(kLongitude, kEdge, afT);
@@ -1070,22 +1085,20 @@ public class MjCorticalMesh_WM {
                 m_kMesh.VBuffer.GetPosition3( aiConnect[(3 * iTriangle) + 0], kU0 );
                 m_kMesh.VBuffer.GetPosition3( aiConnect[(3 * iTriangle) + 1], kU1 );
                 m_kMesh.VBuffer.GetPosition3( aiConnect[(3 * iTriangle) + 2], kU2 );
-                kU1.sub(kU0, kU1mU0);
-                kU2.sub(kU0, kU2mU0);
-                kU1mU0.Cross(kU2mU0, kNormal0);
-                kNormal0.Normalize();
+                kU1mU0.Sub( kU1, kU0 );
+                kU2mU0.Sub( kU2, kU0 );
+                kNormal0.UnitCross( kU1mU0, kU2mU0 );
 
                 /* get normal for sharing triangle */
                 iTriangle = m_akEdge[i].T[1];
                 m_kMesh.VBuffer.GetPosition3( aiConnect[(3 * iTriangle) + 0], kU0 );
                 m_kMesh.VBuffer.GetPosition3( aiConnect[(3 * iTriangle) + 1], kU1 );
                 m_kMesh.VBuffer.GetPosition3( aiConnect[(3 * iTriangle) + 2], kU2 );
-                kU1.sub(kU0, kU1mU0);
-                kU2.sub(kU0, kU2mU0);
-                kU1mU0.Cross(kU2mU0, kNormal1);
-                kNormal1.Normalize();
+                kU1mU0.Sub( kU1, kU0 );
+                kU2mU0.Sub( kU2, kU0 );
+                kNormal1.UnitCross( kU1mU0, kU2mU0 );
 
-                kNormal0.add(kNormal1, kNormal);
+                kNormal.Add( kNormal0, kNormal1 );
                 kNormal.Normalize();
 
                 Vector3f kPos0 = new Vector3f();
@@ -1094,9 +1107,9 @@ public class MjCorticalMesh_WM {
 
                     /* afT[j] is the ray parameter, need to compute the edge */
                     /* parameter */
-                    kDiff.SetData(kLongitude.Direction);
-                    kDiff.scaleEquals(afT[j]);
-                    kDiff.subEquals(kV0);
+                    kDiff.Copy(kLongitude.Direction);
+                    kDiff.Scale(afT[j]);
+                    kDiff.Sub(kV0);
 
                     float fNumer = kDiff.Dot(kEdge.Direction);
                     float fDenom = kEdge.Direction.SquaredLength();
@@ -1106,26 +1119,28 @@ public class MjCorticalMesh_WM {
                     m_kMesh.VBuffer.GetPosition3( iV1, kPos1 );
 
                     /* construct the edge point on the original mesh */
-                    kQ = new Vector3f();
-                    kPos1.sub(kPos0, kQ);
-                    kQ.scaleEquals(fS);
-                    kQ.addEquals(kPos0);
+                    kQ.Copy( Vector3f.ZERO );
+                    kQ.Sub( kPos1, kPos0 );
+                    kQ.Scale(fS);
+                    kQ.Add(kPos0);
 
                     /* To avoid z-buffer biasing problems, lift the point in the */
                     /* direction of the average of the normals for the triangles */
                     /* sharing the edge. */
-                    kQ.addEquals( kNormal.scale(fMBias));
+                    kNormal.Scale(fMBias);
+                    kQ.Add( kNormal );
 
                     kIntrMesh.put(new Float(afT[j]), kQ);
 
                     /* repeat the construction for sphere */
-                    kQ = new Vector3f();
-                    m_akSphere[iV1].sub(m_akSphere[iV0], kQ);
-                    kQ.scaleEquals(fS);
-                    kQ.addEquals(m_akSphere[iV0]);
-                    kNormal.SetData(kQ);
+                    kQ.Copy( Vector3f.ZERO );
+                    kQ.Sub( m_akSphere[iV1], m_akSphere[iV0] );
+                    kQ.Scale(fS);
+                    kQ.Add(m_akSphere[iV0]);
+                    kNormal.Copy(kQ);
                     kNormal.Normalize();
-                    kQ.addEquals( kNormal.scale(fSBias));
+                    kNormal.Scale(fSBias);
+                    kQ.Add( kNormal );
                     kIntrSphere.put(new Float(afT[j]), kQ);
                 }
             }
@@ -1349,13 +1364,15 @@ public class MjCorticalMesh_WM {
         float fHalfRange = 0.5f * (fMax - fMin);
         float fInvHalfRange = 1.0f / fHalfRange;
         Vector3f kOne = new Vector3f(1.0f, 1.0f, 1.0f);
+        Vector3f kOneScaled = new Vector3f();
 
         Vector3f kPos = new Vector3f();
         for (int i = 0; i < iVQuantity; i++) {
             m_kMesh.VBuffer.GetPosition3( i, kPos );
-            kPos.addEquals( kOne.scale(-fMin));
-            kPos.scaleEquals(fInvHalfRange);
-            kPos.subEquals(kOne);
+            kOneScaled.Scale( -fMin, kOne );
+            kPos.Add( kOneScaled );
+            kPos.Scale(fInvHalfRange);
+            kPos.Sub(kOne);
             m_kMesh.VBuffer.SetPosition3( i, kPos );
         }
 
@@ -1434,9 +1451,9 @@ public class MjCorticalMesh_WM {
         Vector2f kDiff = new Vector2f();
 
         for (int i0 = 2, i1 = 0; i1 < 3; i0 = i1++) {
-            akVertex[i1].sub(akVertex[i0], kV1mV0);
+        	kV1mV0.Sub( akVertex[i1], akVertex[i0] );
             kInnerNormal.Perp(kV1mV0);
-            kP.sub(akVertex[i0], kDiff);
+            kDiff.Sub( kP, akVertex[i0] );
             kInnerNormal.Normalize();
             kDiff.Normalize();
 
@@ -1473,7 +1490,7 @@ public class MjCorticalMesh_WM {
         Vertex kSource = m_akVertex[iSource];
         int i, iNbr;
         Set<Integer> kBoundary = new HashSet<Integer>(); /* set of int */
-
+        Vector3f kDiff = new Vector3f();
         for (i = 0; i < kSource.VQuantity; i++) {
             iNbr = kSource.V[i];
             kBoundary.add(new Integer(iNbr));
@@ -1481,7 +1498,9 @@ public class MjCorticalMesh_WM {
             EdgeKey kKey = new EdgeKey(iSource, iNbr);
 
             if (!m_kDistance.containsKey(kKey)) {
-                float fDist = m_kMesh.VBuffer.GetPosition3(iNbr).sub(m_kMesh.VBuffer.GetPosition3(iSource)).Length();
+            	kDiff.Sub( m_kMesh.VBuffer.GetPosition3(iNbr),
+            			   m_kMesh.VBuffer.GetPosition3(iSource) );
+                float fDist = kDiff.Length();
                 m_kDistance.put(kKey, new Float(fDist));
             }
         }
@@ -1515,8 +1534,10 @@ public class MjCorticalMesh_WM {
 
                         /* get distance of edge <center,nbr> */
                         Float kDist = (Float) m_kDistance.get(new EdgeKey(iCenter, iNbr));
+                        kDiff.Sub( m_kMesh.VBuffer.GetPosition3(iNbr),
+                        	       m_kMesh.VBuffer.GetPosition3(iCenter) );
                         float fDist = (null != kDist) ? kDist.floatValue()
-                                                      : m_kMesh.VBuffer.GetPosition3(iNbr).sub(m_kMesh.VBuffer.GetPosition3(iCenter)).Length();
+                                                      : kDiff.Length();
 
                         /* get distance of <source,nbr> along current path */
                         float fTotalLength = fPathLength + fDist;
@@ -1591,14 +1612,14 @@ public class MjCorticalMesh_WM {
         float fR2Sqr = kV2.SquaredLength();
         float fDR10 = fR1Sqr - fR0Sqr;
         float fDR20 = fR2Sqr - fR0Sqr;
-        float fDX10 = kV1.X() - kV0.X();
-        float fDY10 = kV1.Y() - kV0.Y();
-        float fDX20 = kV2.X() - kV0.X();
-        float fDY20 = kV2.Y() - kV0.Y();
-        float fDRX10 = (kV1.X() * fR0Sqr) - (kV0.X() * fR1Sqr);
-        float fDRY10 = (kV1.Y() * fR0Sqr) - (kV0.Y() * fR1Sqr);
-        float fDRX20 = (kV2.X() * fR0Sqr) - (kV0.X() * fR2Sqr);
-        float fDRY20 = (kV2.Y() * fR0Sqr) - (kV0.Y() * fR2Sqr);
+        float fDX10 = kV1.X - kV0.X;
+        float fDY10 = kV1.Y - kV0.Y;
+        float fDX20 = kV2.X - kV0.X;
+        float fDY20 = kV2.Y - kV0.Y;
+        float fDRX10 = (kV1.X * fR0Sqr) - (kV0.X * fR1Sqr);
+        float fDRY10 = (kV1.Y * fR0Sqr) - (kV0.Y * fR1Sqr);
+        float fDRX20 = (kV2.X * fR0Sqr) - (kV0.X * fR2Sqr);
+        float fDRY20 = (kV2.Y * fR0Sqr) - (kV0.Y * fR2Sqr);
 
         float fC0 = (fDR20 * fDRY10) - (fDR10 * fDRY20);
         float fC1 = (fDR20 * fDY10) - (fDR10 * fDY20);
@@ -1679,7 +1700,7 @@ public class MjCorticalMesh_WM {
             for (int j = 0; j < kVertex.VQuantity; j++) {
                 int i1 = kVertex.V[j];
                 m_kMesh.VBuffer.GetPosition3( i1, kPos1 );
-                kPos0.sub(kPos1, kVDiff);
+                kVDiff.Sub( kPos0, kPos1 );
 
                 float fC = kVDiff.SquaredLength();
 
@@ -1694,10 +1715,11 @@ public class MjCorticalMesh_WM {
                 float fTmp1 = 1.0f + (fWeight * fTmp0);
 
                 fError += (2.0f * fC) + (fWeight * fTmp0 * fTmp0);
-                akDJDX[i0].addEquals( kVDiff.scale(fTmp1));
+                kVDiff.Scale(fTmp1);
+                akDJDX[i0].Add( kVDiff );
             }
 
-            kSumSqr.addEquals(akDJDX[i0]);
+            kSumSqr.Add(akDJDX[i0]);
 
             /* update average convexity */
             m_afAvrConvexity[i0] += m_kMesh.VBuffer.GetNormal3(i0).Dot(akDJDX[i0]);
@@ -1716,7 +1738,7 @@ public class MjCorticalMesh_WM {
             float fInvGradLength = 1.0f / fGradLength;
 
             for (int i = 0; i < iVQuantity; i++) {
-                akDJDX[i].scaleEquals(fInvGradLength);
+                akDJDX[i].Scale(fInvGradLength);
             }
         }
 
@@ -1737,8 +1759,8 @@ public class MjCorticalMesh_WM {
             for (int j = 0; j < kVertex.VQuantity; j++) {
                 int i1 = kVertex.V[j];
                 m_kMesh.VBuffer.GetPosition3( i1, kPos1 );
-                kPos0.sub(kPos1, kVDiff);
-                akDJDX[i0].sub(akDJDX[i1], kDDiff);
+                kVDiff.Sub( kPos0, kPos1 );
+                kDDiff.Sub( akDJDX[i0], akDJDX[i1] );
 
                 float fA = kDDiff.SquaredLength();
                 float fB = kDDiff.Dot(kVDiff);
@@ -1789,13 +1811,15 @@ public class MjCorticalMesh_WM {
 
             Vector3f kPos = new Vector3f();
             Vector3f kPos2 = new Vector3f();
+            Vector3f kScale = new Vector3f();
             for (int i = 0; i < iVQuantity; i++) {
                 m_kMesh.VBuffer.GetPosition3( i, kPos );
                 m_kMesh.VBuffer.GetPosition3( i, kPos2 );
-                kPos.addEquals( akDJDX[i].scale(fH));
+                kScale.Scale( fH, akDJDX[i] );
+                kPos.Add( kScale );
                 m_kMesh.VBuffer.SetPosition3( i, kPos );
                 
-                if ( !kPos.isEqual( kPos2 ) )
+                if ( !kPos.IsEqual( kPos2 ) )
                 {
                     iChanged++;
                 }
@@ -1823,13 +1847,13 @@ public class MjCorticalMesh_WM {
         Vector2f kV1 = m_akPlane[kT.V[1]];
         Vector2f kV2 = m_akPlane[kT.V[2]];
         Vector2f kE10 = new Vector2f();
-        kV1.sub(kV0, kE10);
+        kE10.Sub( kV1, kV0 );
 
         Vector2f kE20 = new Vector2f();
-        kV2.sub(kV0, kE20);
+        kE20.Sub( kV2, kV0 );
 
         Vector2f kDiff = new Vector2f();
-        kP.sub(kV0, kDiff);
+        kDiff.Sub( kP, kV0 );
 
         float fA00 = kE10.Dot(kE10);
         float fA01 = kE10.Dot(kE20);
@@ -1839,9 +1863,9 @@ public class MjCorticalMesh_WM {
         float fB1 = kE20.Dot(kDiff);
 
         Vector3f kBary = new Vector3f();
-        kBary.Y( ((fA11 * fB0) - (fA01 * fB1)) * fInvDet );
-        kBary.Z( ((fA00 * fB1) - (fA01 * fB0)) * fInvDet );
-        kBary.X( 1.0f - kBary.Y() - kBary.Z() );
+        kBary.Y = ((fA11 * fB0) - (fA01 * fB1)) * fInvDet;
+        kBary.Z = ((fA00 * fB1) - (fA01 * fB0)) * fInvDet;
+        kBary.X = 1.0f - kBary.Y - kBary.Z;
 
         return kBary;
     }
@@ -1883,19 +1907,19 @@ public class MjCorticalMesh_WM {
             /* P is outside the triangle.  Search an adjacent triangle through a */
             /* shared edge that is intersected by C+t*D where C is the current */
             /* triangle center and D is the direction (P-C)/|P-C|. */
-            kRay.Origin.SetData(0.0f, 0.0f);
-            kRay.Origin.addEquals(akVertex[0]);
-            kRay.Origin.addEquals(akVertex[1]);
-            kRay.Origin.addEquals(akVertex[2]);
-            kRay.Origin.scaleEquals(1.0f / 3.0f);
-            kP.sub(kRay.Origin, kRay.Direction);
+            kRay.Origin.Set(0.0f, 0.0f);
+            kRay.Origin.Add(akVertex[0]);
+            kRay.Origin.Add(akVertex[1]);
+            kRay.Origin.Add(akVertex[2]);
+            kRay.Origin.Scale(1.0f / 3.0f);
+            kRay.Direction.Sub( kP, kRay.Origin );
             kRay.Direction.Normalize();
 
             int i0, i1;
 
             for (i0 = 2, i1 = 0; i1 < 3; i0 = i1++) {
-                kSeg.Origin.SetData(akVertex[i0]);
-                akVertex[i1].sub(akVertex[i0], kSeg.Direction);
+                kSeg.Origin.Copy(akVertex[i0]);
+                kSeg.Direction.Sub( akVertex[i1], akVertex[i0] );
 
                 float[] afT = new float[2]; /* T[0] = ray, T[1] = segment */
                 int iQuantity = IntrRay2Segment2f.FindIntersection(kRay, kSeg, afT);

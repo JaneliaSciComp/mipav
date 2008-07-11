@@ -474,9 +474,9 @@ public class TriangleMesh {
 				tarea = 0.0;
 				anglesum = 0.0;
 				for (j = 0; j < 9; j++) {
-					dv[j].SetData(0, 0.0f);
-					dv[j].SetData(1, 0.0f);
-					dv[j].SetData(2, 0.0f);
+					dv[j].X = 0.0f;
+					dv[j].Y = 0.0f;
+					dv[j].Z = 0.0f;
 				}
 
 				while (next(now) != VTail[i]) {
@@ -504,12 +504,12 @@ public class TriangleMesh {
 					this.ScalarVector(dv[5], InnW1, dv[2]);
 					this.ScalarVector(dv[6], InnW2, dv[0]);
 					if (area != 0.0) {
-						dv[7].SetData(0, (float)(dv[7].X() + ((1.0 / (4.0 * area)) * (dv[5].X() + dv[6].X()))));
-						dv[7].SetData(1, (float)(dv[7].Y() + ((1.0 / (4.0 * area)) * (dv[5].Y() + dv[6].Y()))));
-						dv[7].SetData(2, (float)(dv[7].Z() + ((1.0 / (4.0 * area)) * (dv[5].Z() + dv[6].Z()))));
-						dv[8].SetData(0, dv[8].X() + dv[4].X());
-						dv[8].SetData(1, dv[8].Y() + dv[4].Y());
-						dv[8].SetData(2, dv[8].Z() + dv[4].Z());
+						dv[7].X = (float)(dv[7].X + ((1.0 / (4.0 * area)) * (dv[5].X + dv[6].X)));
+						dv[7].Y = (float)(dv[7].Y + ((1.0 / (4.0 * area)) * (dv[5].Y + dv[6].Y)));
+						dv[7].Z = (float)(dv[7].Z + ((1.0 / (4.0 * area)) * (dv[5].Z + dv[6].Z)));
+						dv[8].X = dv[8].X + dv[4].X;
+						dv[8].Y = dv[8].Y + dv[4].Y;
+						dv[8].Z = dv[8].Z + dv[4].Z;
 
 					}
 					now = next(now);
@@ -517,15 +517,15 @@ public class TriangleMesh {
 
 				dummytemp = Point3dSize(dv[8]);
 				if (dummytemp != 0.0) {
-					tmppoint3d1.SetData(0, (float)(((dv[8].X()) / dummytemp)));
-					tmppoint3d1.SetData(1, (float)(((dv[8].Y()) / dummytemp)));
-					tmppoint3d1.SetData(2, (float)(((dv[8].Z()) / dummytemp)));
+					tmppoint3d1.X = (float)(((dv[8].X) / dummytemp));
+					tmppoint3d1.Y = (float)(((dv[8].Y) / dummytemp));
+					tmppoint3d1.Z = (float)(((dv[8].Z) / dummytemp));
 				}
 
 				if (tarea != 0.0) {
-					tmppoint3d2.SetData(0, (float)(-((dv[7].X()) / (2.0 * tarea))));
-					tmppoint3d2.SetData(1, (float)(-((dv[7].Y()) / (2.0 * tarea))));
-					tmppoint3d2.SetData(2, (float)(-((dv[7].Z()) / (2.0 * tarea))));
+					tmppoint3d2.X = (float)(-((dv[7].X) / (2.0 * tarea)));
+					tmppoint3d2.Y = (float)(-((dv[7].Y) / (2.0 * tarea)));
+					tmppoint3d2.Z = (float)(-((dv[7].Z) / (2.0 * tarea)));
 				}
 				// K[i] = 3.0*(2.0*Math.PI - anglesum)/(tarea);
 
@@ -561,9 +561,9 @@ public class TriangleMesh {
 		double dz = 0.0;
 		double maxvalue = 0.0;
 		for (i = 0; i < numberV; i++) {
-			dx = subpoint[i].X();
-			dy = subpoint[i].Y();
-			dz = subpoint[i].Z();
+			dx = subpoint[i].X;
+			dy = subpoint[i].Y;
+			dz = subpoint[i].Z;
 			if (maxvalue < Math.abs(dx))
 				maxvalue = Math.abs(dx);
 			if (maxvalue < Math.abs(dy))
@@ -608,9 +608,9 @@ public class TriangleMesh {
 		double dz = 0.0;
 		double maxvalue = 0.0;
 		for (i = 0; i < numberVOrig; i++) {
-			dx = pointOrig[i].X();
-			dy = pointOrig[i].Y();
-			dz = pointOrig[i].Z();
+			dx = pointOrig[i].X;
+			dy = pointOrig[i].Y;
+			dz = pointOrig[i].Z;
 			if (maxvalue < Math.abs(dx))
 				maxvalue = Math.abs(dx);
 			if (maxvalue < Math.abs(dy))
@@ -647,35 +647,35 @@ public class TriangleMesh {
 	
 
 	public void makeVector(Vector3f out, Vector3f in1, Vector3f in2) {
-		out.SetData(0, (in2.X() - in1.X()));
-		out.SetData(1, (in2.Y() - in1.Y()));
-		out.SetData(2, (in2.Z() - in1.Z()));
+		out.X = (in2.X - in1.X);
+		out.Y = (in2.Y - in1.Y);
+		out.Z = (in2.Z - in1.Z);
 	}
 
 	public void CrossVector(Vector3f out, Vector3f in1, Vector3f in2) {
-		out.SetData(0, (in1.Y() * in2.Z() - in2.Y() * in1.Z()));
-		out.SetData(1, (in1.Z() * in2.X() - in2.Z() * in1.X()));
-		out.SetData(2, (in1.X() * in2.Y() - in2.X() * in1.Y()));
+		out.X = (in1.Y * in2.Z - in2.Y * in1.Z);
+		out.Y = (in1.Z * in2.X - in2.Z * in1.X);
+		out.Z = (in1.X * in2.Y - in2.X * in1.Y);
 	}
 
 	public double InnerProduct(Vector3f in1, Vector3f in2) {
-		return (in1.X() * in2.X() + in1.Y() * in2.Y() + in1.Z() * in2.Z());
+		return (in1.X * in2.X + in1.Y * in2.Y + in1.Z * in2.Z);
 	}
 
 	public void ScalarVector(Vector3f out, double dv, Vector3f in) {
-		out.SetData(0, (float)(dv * in.X()));
-		out.SetData(1, (float)(dv * in.Y()));
-		out.SetData(2, (float)(dv * in.Z()));
+		out.X = (float)(dv * in.X);
+                out.Y = (float)(dv * in.Y);
+		out.Z = (float)(dv * in.Z);
 	}
 
 	public double Point3dSize(Vector3f in) {
-		return Math.sqrt(((in.X() * in.X()) + (in.Y() * in.Y()) + (in.Z() * in.Z())));
+		return Math.sqrt(((in.X * in.X) + (in.Y * in.Y) + (in.Z * in.Z)));
 	}
 
 	public double Distance(Vector3f in1, Vector3f in2) {
 		return Math
-				.sqrt((((in1.X() - in2.X()) * (in1.X() - in2.X()))
-						+ ((in1.Y() - in2.Y()) * (in1.Y() - in2.Y())) + ((in1.Z() - in2.Z()) * (in1.Z() - in2.Z()))));
+				.sqrt((((in1.X - in2.X) * (in1.X - in2.X))
+						+ ((in1.Y - in2.Y) * (in1.Y - in2.Y)) + ((in1.Z - in2.Z) * (in1.Z - in2.Z))));
 
 	}
 
@@ -743,8 +743,8 @@ public class TriangleMesh {
 		pkVBuffer = new VertexBuffer(kAttr, mydecimate.deciV);
 
 		for (int i = 0; i < mydecimate.deciV; i++) {
-			pkVBuffer.SetPosition3(i, (float) subpoint[i].X(),
-					(float) subpoint[i].Y(), (float) subpoint[i].Z());
+			pkVBuffer.SetPosition3(i, (float) subpoint[i].X,
+					(float) subpoint[i].Y, (float) subpoint[i].Z);
 			pkVBuffer.SetColor4(0, i, 1.0f, 1.0f, 1.0f, 1.0f);
 		}
 		return pkVBuffer;

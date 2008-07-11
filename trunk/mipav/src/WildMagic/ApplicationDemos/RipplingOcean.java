@@ -154,9 +154,9 @@ public class RipplingOcean extends JavaApplication3D
         Vector3f kCLoc = new Vector3f(0.0f,-600.0f,-100.0f);
         Vector3f kCDir = new Vector3f(0.0f,1.0f,0.5f);
         kCDir.Normalize();
-        Vector3f kCUp = new Vector3f(0.0f,kCDir.Z(),-kCDir.Y());
+        Vector3f kCUp = new Vector3f(0.0f,kCDir.Z,-kCDir.Y);
         Vector3f kCRight = new Vector3f(Vector3f.UNIT_X);
-        kCRight.negEquals();
+        kCRight.Neg();
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();
@@ -314,9 +314,9 @@ public class RipplingOcean extends JavaApplication3D
 
                 // Transform the normal vector from [-1,1]^3 to [0,255]^3 so it
                 // can be stored as a color value.
-                aucNormal[4*(iX+iY*iXMax) + 0] = (byte)(127.5f*(kNormal.X()+1.0f));
-                aucNormal[4*(iX+iY*iXMax) + 1] = (byte)(127.5f*(kNormal.Y()+1.0f));
-                aucNormal[4*(iX+iY*iXMax) + 2] = (byte)(127.5f*(kNormal.Z()+1.0f));
+                aucNormal[4*(iX+iY*iXMax) + 0] = (byte)(127.5f*(kNormal.X+1.0f));
+                aucNormal[4*(iX+iY*iXMax) + 1] = (byte)(127.5f*(kNormal.Y+1.0f));
+                aucNormal[4*(iX+iY*iXMax) + 2] = (byte)(127.5f*(kNormal.Z+1.0f));
                 aucNormal[4*(iX+iY*iXMax) + 3] = 0;
             }
         }

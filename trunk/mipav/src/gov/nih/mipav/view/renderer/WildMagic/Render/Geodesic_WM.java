@@ -316,7 +316,7 @@ public class Geodesic_WM {
             /* Clear the last point added: */
             if (bAll == false) {
 
-                if (!m_kStartPoint.isEqual(m_kPreviousStartPoint)) {
+                if (!m_kStartPoint.IsEqual(m_kPreviousStartPoint)) {
 
                     if (!m_bLastWire) {
                         iNode = m_iSmoothedGeodesicGroup - 1;
@@ -806,7 +806,7 @@ public class Geodesic_WM {
             iPrevSide = iSide;
         }
 
-        kNewPoint4.SetData( kMesh.VBuffer.GetPosition3fX(iStart),
+        kNewPoint4.Set( kMesh.VBuffer.GetPosition3fX(iStart),
                 kMesh.VBuffer.GetPosition3fY(iStart),
                 kMesh.VBuffer.GetPosition3fZ(iStart),
                             iStart );
@@ -839,9 +839,9 @@ public class Geodesic_WM {
 
                 if ((iMiddle != -1) && (iSide != -1)) {
                     findMin(kMesh, 
-                            new Vector3f(kStart.X(), kStart.Y(), kStart.Z()), iMiddle, iSide,
-                            new Vector3f(kEnd.X(), kEnd.Y(), kEnd.Z()), newPoint1);
-                    ((Vector4f) kNewVert.get(i)).SetData( newPoint1 );
+                            new Vector3f(kStart.X, kStart.Y, kStart.Z), iMiddle, iSide,
+                            new Vector3f(kEnd.X, kEnd.Y, kEnd.Z), newPoint1);
+                    ((Vector4f) kNewVert.get(i)).Copy( newPoint1 );
 
                     newPoint1 = null;
                 }
@@ -852,11 +852,11 @@ public class Geodesic_WM {
 
         while (iPath < (kNewVert.size() - 1)) {
             boolean bRemoved = false;
-            int iCurrentPoint = (int) ((Vector4f) kNewVert.get(iPath)).W();
+            int iCurrentPoint = (int) ((Vector4f) kNewVert.get(iPath)).W;
 
             if (iCurrentPoint == -1) {
-                int iPrevPoint = (int) ((Vector4f) kNewVert.get(iPath - 1)).W();
-                int iNextPoint = (int) ((Vector4f) kNewVert.get(iPath + 1)).W();
+                int iPrevPoint = (int) ((Vector4f) kNewVert.get(iPath - 1)).W;
+                int iNextPoint = (int) ((Vector4f) kNewVert.get(iPath + 1)).W;
 
                 if ((((Integer) kLeft.get(iPath)).intValue() == iPrevPoint) ||
                         (((Integer) kRight.get(iPath)).intValue() == iPrevPoint)) {
@@ -888,9 +888,9 @@ public class Geodesic_WM {
         m_kGeodesicVertices = new Vector3f[m_iNumGeodesicVertices];
 
         for (int iVertex = 0; iVertex < m_iNumGeodesicVertices; iVertex++) {
-            m_kGeodesicVertices[iVertex] = new Vector3f(((Vector4f) kNewVert.get(iVertex)).X(),
-                                                       ((Vector4f) kNewVert.get(iVertex)).Y(),
-                                                       ((Vector4f) kNewVert.get(iVertex)).Z());
+            m_kGeodesicVertices[iVertex] = new Vector3f(((Vector4f) kNewVert.get(iVertex)).X,
+                                                       ((Vector4f) kNewVert.get(iVertex)).Y,
+                                                       ((Vector4f) kNewVert.get(iVertex)).Z);
 
             if (iVertex > 0) {
                 m_fSmoothedPathLength += distance(m_kGeodesicVertices[iVertex], m_kGeodesicVertices[iVertex - 1]);
@@ -1297,7 +1297,7 @@ public class Geodesic_WM {
 
             /* Check that the two end points are not the
              * same: */
-            if (!m_kStartPoint.isEqual(m_kEndPoint)) {
+            if (!m_kStartPoint.IsEqual(m_kEndPoint)) {
 
                 /* Compute the Geodesic curve. The 0.99
                  * parameter is an optimization to the
@@ -1364,7 +1364,7 @@ public class Geodesic_WM {
     public void getPathPoint(int iPoint, Vector3f kPoint) {
 
         if ((iPoint >= 0) && (iPoint < m_iNumGeodesicVertices)) {
-            kPoint.SetData( m_kGeodesicVertices[iPoint] );
+            kPoint.Copy( m_kGeodesicVertices[iPoint] );
         }
     }
 
@@ -1376,7 +1376,7 @@ public class Geodesic_WM {
     public void getPathPoints(Vector3f[] akPoints) {
 
         for (int iPoint = 0; iPoint < m_iNumGeodesicVertices; iPoint++) {
-            akPoints[iPoint].SetData( m_kGeodesicVertices[iPoint] );
+            akPoints[iPoint].Copy( m_kGeodesicVertices[iPoint] );
         }
     }
 
@@ -1889,9 +1889,14 @@ public class Geodesic_WM {
 //                 kMesh.VBuffer.GetPosition3fZ( kPickPoint.iV2 ) );
                 
         Vector3f kP0 = kMesh.VBuffer.GetPosition3( kPickPoint.iV0 );
+        kP0.Scale(kPickPoint.B0);
         Vector3f kP1 = kMesh.VBuffer.GetPosition3( kPickPoint.iV1 );
+        kP1.Scale( kPickPoint.B1);
         Vector3f kP2 = kMesh.VBuffer.GetPosition3( kPickPoint.iV2 );
-        Vector3f kPoint = kP0.scale(kPickPoint.B0).add( kP1.scale( kPickPoint.B1) ).add( kP2.scale( kPickPoint.B2 ) );
+        kP2.Scale( kPickPoint.B2 );
+        Vector3f kPoint = new Vector3f();
+        kPoint.Add( kP0, kP1 );
+        kPoint.Add( kP2 );
 //         System.err.println( kPoint.X() + " " + kPoint.Y() + " " + kPoint.Z() );        
         
         /* Increment the number of picked points. */
@@ -1942,7 +1947,7 @@ public class Geodesic_WM {
                  * the geodesic from there: */
                 if (m_bLivewire) {
 
-                    if (!m_kStartPoint.isEqual(m_kEndPoint)) {
+                    if (!m_kStartPoint.IsEqual(m_kEndPoint)) {
 
                         if (computeGeodesic( 0.99f, false)) {
                             saveStartEnd();
@@ -1980,7 +1985,7 @@ public class Geodesic_WM {
                 
                 /* Check that the two end points are not the
                  * same: */
-                if (!m_kStartPoint.isEqual(m_kEndPoint)) {
+                if (!m_kStartPoint.IsEqual(m_kEndPoint)) {
 
                     if (!m_bLivewire) {
 
@@ -2168,81 +2173,87 @@ public class Geodesic_WM {
         Vector3f kTri2 = new Vector3f();
         kMesh.VBuffer.GetPosition3(aiTriIndex[2], kTri2);
 
-        Vector3f kEdge = kTri0.sub(kTri1);
+        Vector3f kEdge = new Vector3f();
+        kEdge.Sub( kTri0, kTri1 );
         kEdge.Normalize();
 
-        Vector3f kP_Edge = kPoint.sub(kTri1);
+        Vector3f kP_Edge = new Vector3f();
+        kP_Edge.Sub( kPoint, kTri1 );
         float fDot = kEdge.Dot(kP_Edge);
-        Vector3f kNewPoint = new Vector3f((fDot * kEdge.X()) + kTri1.X(),
-                (fDot * kEdge.Y()) + kTri1.Y(),
-                (fDot * kEdge.Z()) + kTri1.Z());
+        Vector3f kNewPoint = new Vector3f((fDot * kEdge.X) + kTri1.X,
+                (fDot * kEdge.Y) + kTri1.Y,
+                (fDot * kEdge.Z) + kTri1.Z);
 
         Vector3f kNewNormal;
         Vector3f kNewTexCoord;
         ColorRGBA kNewColor;
 
-        if (kNewPoint.isEqual(kPoint)) {
+        if (kNewPoint.IsEqual(kPoint)) {
             //if (kNewPoint.epsilonEquals(kPoint, m_fEpsilon)) {
-            kPoint.SetData(kNewPoint);
+            kPoint.Copy(kNewPoint);
 
             kNewNormal = getNormal(kMesh, aiTriIndex[0], aiTriIndex[1]);
-            kNormal.SetData(kNewNormal);
+            kNormal.Copy(kNewNormal);
 
             kNewTexCoord = getTexCoord(kMesh, aiTriIndex[0], aiTriIndex[1]);
-            kTexCoord.SetData(kNewTexCoord);
+            kTexCoord.Copy(kNewTexCoord);
 
             kNewColor = getColor(kMesh, aiTriIndex[0], aiTriIndex[1]);
-            kColor.SetData(kNewColor);
+            kColor.Copy(kNewColor);
             iReturn = 2;
         }
 
         if (iReturn == -1) {
-            kEdge = kTri0.sub(kTri2);
+            kEdge = new Vector3f();
+            kEdge.Sub( kTri0, kTri2 );
             kEdge.Normalize();
-            kP_Edge = kPoint.sub(kTri2);
+            kP_Edge = new Vector3f();
+            kP_Edge.Sub( kPoint, kTri2 );
 
             fDot = kEdge.Dot(kP_Edge);
-            kNewPoint = new Vector3f((fDot * kEdge.X()) + kTri2.X(), 
-                    (fDot * kEdge.Y()) + kTri2.Y(), 
-                    (fDot * kEdge.Z()) + kTri2.Z());
+            kNewPoint = new Vector3f((fDot * kEdge.X) + kTri2.X, 
+                    (fDot * kEdge.Y) + kTri2.Y, 
+                    (fDot * kEdge.Z) + kTri2.Z);
 
-            if (kNewPoint.isEqual(kPoint)) {
+            if (kNewPoint.IsEqual(kPoint)) {
                 //if (kNewPoint.epsilonEquals(kPoint, m_fEpsilon)) {
-                kPoint.SetData(kNewPoint);
+                kPoint.Copy(kNewPoint);
 
                 kNewNormal = getNormal(kMesh, aiTriIndex[0], aiTriIndex[2]);
-                kNormal.SetData(kNewNormal);
+                kNormal.Copy(kNewNormal);
 
                 kNewTexCoord = getTexCoord(kMesh, aiTriIndex[0], aiTriIndex[2]);
-                kTexCoord.SetData(kNewTexCoord);
+                kTexCoord.Copy(kNewTexCoord);
 
                 kNewColor = getColor(kMesh, aiTriIndex[0], aiTriIndex[2]);
-                kColor.SetData(kNewColor);
+                kColor.Copy(kNewColor);
                 iReturn = 1;
             }
         }
 
         if (iReturn == -1) {
-            kEdge = kTri2.sub(kTri1);
+            kEdge = new Vector3f();
+            kEdge.Sub( kTri2, kTri1 );
             kEdge.Normalize();
-            kP_Edge = kPoint.sub(kTri1);
+            kP_Edge = new Vector3f();
+            kP_Edge.Sub( kPoint, kTri1 );
             fDot = kEdge.Dot(kP_Edge);
-            kNewPoint = new Vector3f((fDot * kEdge.X()) + kTri1.X(),
-                    (fDot * kEdge.Y()) + kTri1.Y(),
-                    (fDot * kEdge.Z()) + kTri1.Z());
+            kNewPoint = new Vector3f((fDot * kEdge.X) + kTri1.X,
+                    (fDot * kEdge.Y) + kTri1.Y,
+                    (fDot * kEdge.Z) + kTri1.Z);
 
-            if (kNewPoint.isEqual(kPoint)) {
+            if (kNewPoint.IsEqual(kPoint)) {
                 //if (kNewPoint.epsilonEquals(kPoint, m_fEpsilon)) {
-                kPoint.SetData(kNewPoint);
+                kPoint.Copy(kNewPoint);
 
                 kNewNormal = getNormal(kMesh, aiTriIndex[2], aiTriIndex[1]);
-                kNormal.SetData(kNewNormal);
+                kNormal.Copy(kNewNormal);
 
                 kNewTexCoord = getTexCoord(kMesh, aiTriIndex[2], aiTriIndex[1]);
-                kTexCoord.SetData(kNewTexCoord);
+                kTexCoord.Copy(kNewTexCoord);
 
                 kNewColor = getColor(kMesh, aiTriIndex[2], aiTriIndex[1]);
-                kColor.SetData(kNewColor);
+                kColor.Copy(kNewColor);
                 iReturn = 0;
             }
         }
@@ -2255,13 +2266,13 @@ public class Geodesic_WM {
 
         if (iReturn == -1) {
             kNewNormal = getNormal(kMesh, aiTriIndex);
-            kNormal.SetData(kNewNormal);
+            kNormal.Copy(kNewNormal);
 
             kNewTexCoord = getTexCoord(kMesh, aiTriIndex);
-            kTexCoord.SetData(kNewTexCoord);
+            kTexCoord.Copy(kNewTexCoord);
             
             kNewColor = getColor(kMesh, aiTriIndex);
-            kColor.SetData(kNewColor);
+            kColor.Copy(kNewColor);
         }
 
         kNewNormal = null;
@@ -2330,8 +2341,8 @@ public class Geodesic_WM {
         for (int iNewTri = 0; iNewTri < kTriList.size(); iNewTri++) {
             kTri = (Vector3f) kTriList.get(iNewTri);
 
-            if (triangleEquals( (int)kNewTri.X(), (int)kNewTri.Y(), (int)kNewTri.Z(),
-                    (int)kTri.X(), (int)kTri.Y(), (int)kTri.Z())) {
+            if (triangleEquals( (int)kNewTri.X, (int)kNewTri.Y, (int)kNewTri.Z,
+                    (int)kTri.X, (int)kTri.Y, (int)kTri.Z)) {
                 bReturn = true;
             }
         }
@@ -2343,7 +2354,7 @@ public class Geodesic_WM {
         for (int i = 0; i < kVecList.size(); i++) {
             Vector3f kTri = (Vector3f) kVecList.get(i);
 
-            if ( kTri.isEqual(kNewTri))
+            if ( kTri.IsEqual(kNewTri))
             {
                 return i;
             }
@@ -2505,12 +2516,12 @@ public class Geodesic_WM {
             else
             {
                 for (int i = 0; i < m_kRemoveTriangles.size(); i++) {
-                    aiRemoveTri.SetData((Vector3f)m_kRemoveTriangles.get(i));
+                    aiRemoveTri.Copy((Vector3f)m_kRemoveTriangles.get(i));
 
                     if (triangleEquals(aiIndex[(iTri * 3) + 0],
                                        aiIndex[(iTri * 3) + 1],
                                        aiIndex[(iTri * 3) + 2],
-                                       (int)aiRemoveTri.X(), (int)aiRemoveTri.Y(), (int)aiRemoveTri.Z()))
+                                       (int)aiRemoveTri.X, (int)aiRemoveTri.Y, (int)aiRemoveTri.Z))
                     {
                         bAdd = false;
                         break;
@@ -2556,11 +2567,11 @@ public class Geodesic_WM {
         /* Add new triangles to the mesh: */
         Vector3f aiAddTri = new Vector3f();
         for (int iTri = 0; iTri < m_kNewTriangles.size(); iTri++) {
-            aiAddTri.SetData((Vector3f) m_kNewTriangles.get(iTri));
+            aiAddTri.Copy((Vector3f) m_kNewTriangles.get(iTri));
             sortTriIndex(aiAddTri, kVBuffer);
-            aiConnect[(iNumAdded * 3) + 0] = (int)aiAddTri.X();
-            aiConnect[(iNumAdded * 3) + 1] = (int)aiAddTri.Y();
-            aiConnect[(iNumAdded * 3) + 2] = (int)aiAddTri.Z();
+            aiConnect[(iNumAdded * 3) + 0] = (int)aiAddTri.X;
+            aiConnect[(iNumAdded * 3) + 1] = (int)aiAddTri.Y;
+            aiConnect[(iNumAdded * 3) + 2] = (int)aiAddTri.Z;
             iNumAdded++;
         }
 
@@ -2589,9 +2600,9 @@ public class Geodesic_WM {
      * @return  float distance
      */
     private float distance(Vector3f kPoint1, Vector3f kPoint2) {
-        return (float) Math.sqrt(((kPoint1.X() - kPoint2.X()) * (kPoint1.X() - kPoint2.X())) +
-                                 ((kPoint1.Y() - kPoint2.Y()) * (kPoint1.Y() - kPoint2.Y())) +
-                                 ((kPoint1.Z() - kPoint2.Z()) * (kPoint1.Z() - kPoint2.Z())));
+        return (float) Math.sqrt(((kPoint1.X - kPoint2.X) * (kPoint1.X - kPoint2.X)) +
+                                 ((kPoint1.Y - kPoint2.Y) * (kPoint1.Y - kPoint2.Y)) +
+                                 ((kPoint1.Z - kPoint2.Z) * (kPoint1.Z - kPoint2.Z)));
     }
 
     /**
@@ -2771,18 +2782,20 @@ public class Geodesic_WM {
         /* Setup the vector from Side to Middle, we will add a fraction of
          * this vector to Middle each time through the loop, creating a new
          * point and re-evaluate the new path. */
-        Vector3f kDiff = kSide.sub( kMiddle );
-        kDiff.scaleEquals( 1.0f/10.0f );
+        Vector3f kDiff = new Vector3f();
+        kDiff.Sub( kSide, kMiddle );
+        kDiff.Scale( 1.0f/10.0f );
 
         /* fDistance is used the path length of the current path
          * Start-newpoint-End: */
         float fDistance;
 
         /* The first path is Start-Middle-End, find that distance: */
-        Vector3f kPath = kStart.sub( kMiddle );
+        Vector3f kPath = new Vector3f();
+        kPath.Sub( kStart, kMiddle );
 
         fDistance = kPath.Length();
-        kPath = kMiddle.sub( kEnd );
+        kPath.Sub( kMiddle, kEnd );
         fDistance += kPath.Length();
 
         float fMin1 = fDistance;
@@ -2795,35 +2808,35 @@ public class Geodesic_WM {
         int iMin = -1;
 
         for (int j = 0; j < 10; j++) {
-            kNewPoint1.addEquals( kDiff );
+            kNewPoint1.Add( kDiff );
 
-            kPath = kStart.sub( kNewPoint1 );
+            kPath.Sub( kStart, kNewPoint1 );
             fDistance = kPath.Length();
 
-            kPath = kNewPoint1.sub( kEnd );
+            kPath.Sub( kNewPoint1, kEnd );
             fDistance += kPath.Length();
 
             if (fDistance < fMin1) {
                 iMin = j;
                 fMin1 = fDistance;
-                kNewPoint.SetData( kNewPoint1 );
+                kNewPoint.Copy( kNewPoint1 );
             }
         }
 
         if (iMin == -1) {
-            kNewPoint4.SetData( kMiddle.X(), 
-                                kMiddle.Y(),
-                                kMiddle.Z(),
+            kNewPoint4.Set( kMiddle.X, 
+                                kMiddle.Y,
+                                kMiddle.Z,
                                 iMiddle );
         } else if (iMin == 9) {
-            kNewPoint4.SetData( kSide.X(),
-                                kSide.Y(),
-                                kSide.Z(),
+            kNewPoint4.Set( kSide.X,
+                                kSide.Y,
+                                kSide.Z,
                                 iSide );
         } else {
-            kNewPoint4.SetData( kNewPoint.X(),
-                                kNewPoint.Y(),
-                                kNewPoint.Z(),
+            kNewPoint4.Set( kNewPoint.X,
+                                kNewPoint.Y,
+                                kNewPoint.Z,
                                 -1 );
         }
 
@@ -3023,7 +3036,7 @@ public class Geodesic_WM {
 
         /* Last vert in the last list: */
         /* If it's a closed loop: */
-        if (kGeodesic.getFirst().isEqual(kGeodesic.getLast())) {
+        if (kGeodesic.getFirst().IsEqual(kGeodesic.getLast())) {
             bOpen = false;
         }
 
@@ -3057,8 +3070,10 @@ public class Geodesic_WM {
         Vector3f kNormal2 = new Vector3f();
         kMesh.VBuffer.GetNormal3(aiIndex[2], kNormal2);
 
-        Vector3f kNormal = kNormal0.add(kNormal1).add(kNormal2);
-        kNormal.scaleEquals( 1.0f / 3.0f);
+        Vector3f kNormal = new Vector3f();
+        kNormal.Add( kNormal0, kNormal1);
+        kNormal.Add(kNormal2);
+        kNormal.Scale( 1.0f / 3.0f);
         kNormal.Normalize();
 
         return kNormal;
@@ -3086,8 +3101,10 @@ public class Geodesic_WM {
         Vector3f kTexCoord2 = new Vector3f();
         kMesh.VBuffer.GetTCoord3(0, aiIndex[2], kTexCoord2);
         
-        Vector3f kTexCoord = kTexCoord0.add(kTexCoord1).add(kTexCoord2);
-        kTexCoord.scaleEquals( 1.0f / 3.0f);
+        Vector3f kTexCoord = new Vector3f();
+        kTexCoord.Add( kTexCoord0, kTexCoord1 );
+        kTexCoord.Add(kTexCoord2);
+        kTexCoord.Scale( 1.0f / 3.0f);
         return kTexCoord;
     }
 
@@ -3113,10 +3130,10 @@ public class Geodesic_WM {
         kMesh.VBuffer.GetColor4(0, aiIndex[2], kColor2);
         
         ColorRGBA kColor = new ColorRGBA();
-        kColor.R((kColor0.R() + kColor1.R() + kColor2.R()) / 3.0f);
-        kColor.G((kColor0.G() + kColor1.G() + kColor2.G()) / 3.0f);
-        kColor.B((kColor0.B() + kColor1.B() + kColor2.B()) / 3.0f);
-        kColor.A((kColor0.A() + kColor1.A() + kColor2.A()) / 3.0f);
+        kColor.R = (kColor0.R + kColor1.R + kColor2.R) / 3.0f;
+        kColor.G = (kColor0.G + kColor1.G + kColor2.G) / 3.0f;
+        kColor.B = (kColor0.B + kColor1.B + kColor2.B) / 3.0f;
+        kColor.A = (kColor0.A + kColor1.A + kColor2.A) / 3.0f;
 
         return kColor;
     }
@@ -3137,8 +3154,9 @@ public class Geodesic_WM {
         kMesh.VBuffer.GetNormal3(iIndex1, kSide1);
         kMesh.VBuffer.GetNormal3(iIndex2, kSide2);
 
-        Vector3f kNormal = kSide1.add(kSide2);
-        kNormal.scaleEquals(1.0f/2.0f);
+        Vector3f kNormal = new Vector3f();
+        kNormal.Add( kSide1, kSide2 );
+        kNormal.Scale(1.0f/2.0f);
         kNormal.Normalize();
 
         kSide1 = null;
@@ -3162,8 +3180,9 @@ public class Geodesic_WM {
         kMesh.VBuffer.GetTCoord3(0, iIndex1, kSide1);
         kMesh.VBuffer.GetTCoord3(0, iIndex2, kSide2);
 
-        Vector3f kTexCoord = kSide1.add(kSide2);
-        kTexCoord.scaleEquals(1.0f/2.0f);
+        Vector3f kTexCoord = new Vector3f();
+        kTexCoord.Add( kSide1, kSide2 );
+        kTexCoord.Scale(1.0f/2.0f);
 
         kSide1 = null;
         kSide2 = null;
@@ -3187,10 +3206,10 @@ public class Geodesic_WM {
         kMesh.VBuffer.GetColor4(0, iIndex2, kSide2);
 
         ColorRGBA kColor = new ColorRGBA();
-        kColor.R((kSide1.R() + kSide2.R()) / 2.0f);
-        kColor.G((kSide1.G() + kSide2.G()) / 2.0f);
-        kColor.B((kSide1.B() + kSide2.B()) / 2.0f);
-        kColor.A((kSide1.A() + kSide2.A()) / 2.0f);
+        kColor.R = (kSide1.R + kSide2.R) / 2.0f;
+        kColor.G = (kSide1.G + kSide2.G) / 2.0f;
+        kColor.B = (kSide1.B + kSide2.B) / 2.0f;
+        kColor.A = (kSide1.A + kSide2.A) / 2.0f;
 
         kSide1 = null;
         kSide2 = null;
@@ -3213,12 +3232,12 @@ public class Geodesic_WM {
      * @return  int the new vertex index
      */
     private int getPathIndex(LinkedList kPath, int iVertexCount, int iIndex, boolean bOpen) {
-        int iFirst = (int) ((Vector4f) kPath.get(0)).W();
-        int iLast = (int) ((Vector4f) kPath.get(kPath.size() - 1)).W();
+        int iFirst = (int) ((Vector4f) kPath.get(0)).W;
+        int iLast = (int) ((Vector4f) kPath.get(kPath.size() - 1)).W;
 
         for (int iPath = 0; iPath < kPath.size(); iPath++) {
 
-            if (iIndex == ((Vector4f) kPath.get(iPath)).W()) {
+            if (iIndex == ((Vector4f) kPath.get(iPath)).W) {
 
                 if ((iIndex == iFirst) || (iIndex == iLast)) {
 
@@ -3252,13 +3271,13 @@ public class Geodesic_WM {
         m_kEndPoint = new Vector3f((Vector3f) kStartEndList.get(2));
         m_kStartPoint = new Vector3f((Vector3f) kStartEndList.get(3));
 
-        m_aiEndIndex[0] = (int)kEndIndex.X();
-        m_aiEndIndex[1] = (int)kEndIndex.Y();
-        m_aiEndIndex[2] = (int)kEndIndex.Z();
+        m_aiEndIndex[0] = (int)kEndIndex.X;
+        m_aiEndIndex[1] = (int)kEndIndex.Y;
+        m_aiEndIndex[2] = (int)kEndIndex.Z;
 
-        m_aiStartIndex[0] = (int)kStartIndex.X();
-        m_aiStartIndex[1] = (int)kStartIndex.Y();
-        m_aiStartIndex[2] = (int)kStartIndex.Z();
+        m_aiStartIndex[0] = (int)kStartIndex.X;
+        m_aiStartIndex[1] = (int)kStartIndex.Y;
+        m_aiStartIndex[2] = (int)kStartIndex.Z;
     }
 
     /**
@@ -3287,7 +3306,7 @@ public class Geodesic_WM {
          * re-triangulated: */
         boolean bFirstSegment = false;
 
-        if (m_kEndPoint.isEqual(m_kFirstPoint)) {
+        if (m_kEndPoint.IsEqual(m_kFirstPoint)) {
             bFirstSegment = true;
         }
 
@@ -3299,21 +3318,21 @@ public class Geodesic_WM {
         for (int iVert = 0; iVert < m_iVertexCount; iVert++) {
             m_kSurface.VBuffer.GetPosition3(iVert, kVertex);
 
-            if (m_kStartPoint.isEqual(kVertex)) {
+            if (m_kStartPoint.IsEqual(kVertex)) {
                 //if (m_kStartPoint.epsilonEquals(kVertex, m_fEpsilon)) {
-                m_kStartPoint.SetData(kVertex);
+                m_kStartPoint.Copy(kVertex);
                 m_iStart = iVert;
             }
 
-            if (m_kEndPoint.isEqual(kVertex)) {
+            if (m_kEndPoint.IsEqual(kVertex)) {
                 //if (m_kEndPoint.epsilonEquals(kVertex, m_fEpsilon)) {
 
-                if (m_kEndPoint.isEqual(m_kFirstPoint)) {
-                    m_kFirstPoint.SetData(kVertex);
+                if (m_kEndPoint.IsEqual(m_kFirstPoint)) {
+                    m_kFirstPoint.Copy(kVertex);
                 }
 
                 m_bEndpointChanged = true;
-                m_kEndPoint.SetData(kVertex);
+                m_kEndPoint.Copy(kVertex);
                 m_iEnd = iVert;
             }
         }
@@ -3844,13 +3863,16 @@ public class Geodesic_WM {
         Vector3f kMeshNormal = new Vector3f();
         kMesh.VBuffer.GetNormal3(iIndex, kMeshNormal);
 
-        Vector3f kSide_Point = kSide.sub( kPoint );
+        Vector3f kSide_Point = new Vector3f();
+        kSide_Point.Sub( kSide, kPoint );
         kSide_Point.Normalize();
 
-        Vector3f kPrev_Point = kPrev.sub( kPoint );
+        Vector3f kPrev_Point = new Vector3f();
+        kPrev_Point.Sub( kPrev, kPoint );
         kPrev_Point.Normalize();
 
-        Vector3f kCross = kPrev_Point.Cross(kSide_Point);
+        Vector3f kCross = new Vector3f();
+        kCross.Cross( kPrev_Point, kSide_Point );
         boolean bReturn = true;
 
         if (kCross.Dot(kMeshNormal) < 0) {
@@ -4315,7 +4337,7 @@ public class Geodesic_WM {
 
         kLeftTemp.add(new Integer(-1));
         kRightTemp.add(new Integer(-1));
-        kNewVertTemp.add(new Vector4f(kMiddlePoint.X(), kMiddlePoint.Y(), kMiddlePoint.Z(), iMiddle));
+        kNewVertTemp.add(new Vector4f(kMiddlePoint.X, kMiddlePoint.Y, kMiddlePoint.Z, iMiddle));
 
         return -1;
     }
@@ -4328,26 +4350,29 @@ public class Geodesic_WM {
      * @param  aiAddTri    Point3i added triangle vertices
      */
     private void sortTriIndex(Vector3f aiAddTri, VertexBuffer kVBuffer) {
-        int i0 = (int)aiAddTri.X();
-        int i1 = (int)aiAddTri.Y();
-        int i2 = (int)aiAddTri.Z();
+        int i0 = (int)aiAddTri.X;
+        int i1 = (int)aiAddTri.Y;
+        int i2 = (int)aiAddTri.Z;
 
         Vector3f kP0 = kVBuffer.GetPosition3( i0 );
         Vector3f kP1 = kVBuffer.GetPosition3( i1 );
         Vector3f kP2 = kVBuffer.GetPosition3( i2 );
 
-        Vector3f kP1_P0 = kP1.sub( kP0 );
+        Vector3f kP1_P0 = new Vector3f();
+        kP1_P0.Sub( kP1, kP0 );
         kP1_P0.Normalize();
 
-        Vector3f kP2_P0 = kP2.sub( kP0 );
+        Vector3f kP2_P0 = new Vector3f();
+        kP2_P0.Sub( kP2, kP0 );
         kP2_P0.Normalize();
 
-        Vector3f kCross = kP1_P0.Cross(kP2_P0);
+        Vector3f kCross = new Vector3f();
+        kCross.Cross( kP1_P0, kP2_P0 );
 
         Vector3f kNormal = kVBuffer.GetNormal3( i0 );
         if (kCross.Dot(kNormal) < 0)
         {
-            aiAddTri.SetData( i1, i0, i2 );
+            aiAddTri.Set( i1, i0, i2 );
         }
 
         kP0 = null;
@@ -4455,7 +4480,7 @@ public class Geodesic_WM {
             int i1 = m_aiIndex[(iTri * 3) + 1];
             int i2 = m_aiIndex[(iTri * 3) + 2];
 
-            if (triangleEquals(i0, i1, i2, (int)kTri.X(), (int)kTri.Y(), (int)kTri.Z())) {
+            if (triangleEquals(i0, i1, i2, (int)kTri.X, (int)kTri.Y, (int)kTri.Z)) {
                 return true;
             }
         }
@@ -4490,7 +4515,7 @@ public class Geodesic_WM {
         Vector4f kNextPoint;
 
         /* Identify which point on the mesh this is: */
-        int iPathIndex = (int) kPathPoint.W();
+        int iPathIndex = (int) kPathPoint.W;
         int iPrevPathIndex = iPathIndex;
         int iNextPathIndex;
 
@@ -4507,7 +4532,7 @@ public class Geodesic_WM {
 
         for (iPath = 1; iPath < kPath.size(); iPath++) {
             kNextPoint = (Vector4f) kPath.get(iPath);
-            iNextPathIndex = (int) kNextPoint.W();
+            iNextPathIndex = (int) kNextPoint.W;
 
             if (iPathIndex == iNextPathIndex) {
                 iPrevPathIndex = iPathIndex;
@@ -4533,7 +4558,7 @@ public class Geodesic_WM {
 
                     /* Remove the triangle containing the side indexes and the
                      * next vertex: */
-                    kDeleteTri.SetData( iSideIndex[0], iSideIndex[1], iNextPathIndex );
+                    kDeleteTri.Set( iSideIndex[0], iSideIndex[1], iNextPathIndex );
 
                     if (triangleExists(kDeleteTri)) {
                         if (!contains(m_kRemoveTriangles, kDeleteTri)) {
@@ -4541,10 +4566,10 @@ public class Geodesic_WM {
                         }
 
                         /* Add two new triangles and quit: */
-                        kAddTri.SetData( iSideIndex[0], iPathIndex, iNextPathIndex );
+                        kAddTri.Set( iSideIndex[0], iPathIndex, iNextPathIndex );
                         m_kNewTriangles.add(new Vector3f(kAddTri));
 
-                        kAddTri.SetData( iSideIndex[1], iPathIndex, iNextPathIndex );
+                        kAddTri.Set( iSideIndex[1], iPathIndex, iNextPathIndex );
                         m_kNewTriangles.add(new Vector3f(kAddTri));
                     }
 
@@ -4557,7 +4582,7 @@ public class Geodesic_WM {
 
                 /* Update the path point from a -1 (unknown) index to the new
                  * index value: */
-                ((Vector4f) kPath.get(iPath)).W( iNextPathIndex );
+                ((Vector4f) kPath.get(iPath)).W = iNextPathIndex;
                 iSideIndex[0] = ((Integer) kLeftPath.get(iPath)).intValue();
                 iSideIndex[1] = ((Integer) kRightPath.get(iPath)).intValue();
 
@@ -4567,7 +4592,7 @@ public class Geodesic_WM {
 
                     /* remove the triangle containing the first
                      * vertex and the two new sides: */
-                    kDeleteTri.SetData( iPathIndex, iSideIndex[0], iSideIndex[1] );
+                    kDeleteTri.Set( iPathIndex, iSideIndex[0], iSideIndex[1] );
 
                     if (triangleExists(kDeleteTri)) {
 
@@ -4576,14 +4601,14 @@ public class Geodesic_WM {
                         }
 
                         /* Add two new triangles: */
-                        kAddTri.SetData( iPathIndex, iSideIndex[0], iNextPathIndex );
+                        kAddTri.Set( iPathIndex, iSideIndex[0], iNextPathIndex );
                         m_kNewTriangles.add(new Vector3f(kAddTri));
 
-                        kAddTri.SetData( iPathIndex, iSideIndex[1], iNextPathIndex );
+                        kAddTri.Set( iPathIndex, iSideIndex[1], iNextPathIndex );
                         m_kNewTriangles.add(new Vector3f(kAddTri));
 
                         /* Add the next vertex: */
-                        m_kNewVerts.add(new Vector3f(kNextPoint.X(), kNextPoint.Y(), kNextPoint.Z()));
+                        m_kNewVerts.add(new Vector3f(kNextPoint.X, kNextPoint.Y, kNextPoint.Z));
 
                         /* Add the new normal: */
                         m_kNewNormals.add(getNormal(kMesh, iSideIndex[0], iSideIndex[1]));
@@ -4621,7 +4646,7 @@ public class Geodesic_WM {
 
 
                     /* Delete the triangle: */
-                    kDeleteTri.SetData( iPrevSide, iSideIndex[0], iSideIndex[1] );
+                    kDeleteTri.Set( iPrevSide, iSideIndex[0], iSideIndex[1] );
 
                     if (triangleExists(kDeleteTri)) {
                         if (!contains(m_kRemoveTriangles, kDeleteTri)) {
@@ -4629,17 +4654,17 @@ public class Geodesic_WM {
                         }
 
                         /* Add three new triangles: */
-                        kAddTri.SetData( iPathIndex, iNextPathIndex, iSideIndex[0] );
+                        kAddTri.Set( iPathIndex, iNextPathIndex, iSideIndex[0] );
                         m_kNewTriangles.add(new Vector3f(kAddTri));
 
-                        kAddTri.SetData( iPathIndex, iNextPathIndex, iPrevSide );
+                        kAddTri.Set( iPathIndex, iNextPathIndex, iPrevSide );
                         m_kNewTriangles.add(new Vector3f(kAddTri));
 
-                        kAddTri.SetData( iPrevSide, iNextPathIndex, iSideIndex[1] );
+                        kAddTri.Set( iPrevSide, iNextPathIndex, iSideIndex[1] );
                         m_kNewTriangles.add(new Vector3f(kAddTri));
 
                         /* Add the next vertex: */
-                        m_kNewVerts.add(new Vector3f(kNextPoint.X(), kNextPoint.Y(), kNextPoint.Z()));
+                        m_kNewVerts.add(new Vector3f(kNextPoint.X, kNextPoint.Y, kNextPoint.Z));
 
                         /* Add the new normal: */
                         m_kNewNormals.add(new Vector3f(getNormal(kMesh, iSideIndex[0], iSideIndex[1])));
@@ -4773,7 +4798,7 @@ public class Geodesic_WM {
 
         while (iPath < kPath.size()) {
 
-            if (((Vector4f) kPath.get(iPath - 1)).W() == ((Vector4f) kPath.get(iPath)).W()) {
+            if (((Vector4f) kPath.get(iPath - 1)).W == ((Vector4f) kPath.get(iPath)).W) {
                 kPath.remove(iPath);
             } else {
                 iPath++;
@@ -4783,7 +4808,7 @@ public class Geodesic_WM {
         /* Add the first path index to the new list: */
         if (!bOpen && (kNewPath != null)) {
             kNewVertex = (Vector4f) kPath.get(0);
-            iPathIndex = (int) kNewVertex.W();
+            iPathIndex = (int) kNewVertex.W;
             kNewPath.add(new Integer(getPathIndex(kPath, iVertexCount, iPathIndex, bOpen)));
         }
 
@@ -4792,14 +4817,14 @@ public class Geodesic_WM {
 
             /* Get the path point, index, and normal to duplicate: */
             kNewVertex = (Vector4f) kPath.get(iPath);
-            iPathIndex = (int) kNewVertex.W();
+            iPathIndex = (int) kNewVertex.W;
             kMesh.VBuffer.GetNormal3(iPathIndex, kNewNormal);
             kMesh.VBuffer.GetTCoord3(0, iPathIndex, kNewTexCoord);
             kMesh.VBuffer.GetColor4(0, iPathIndex, kNewColor);
 
             /* Add the new vertex, with a new index, the new normal to the
              * lists: */
-            m_kNewVerts.add(new Vector3f(kNewVertex.X(), kNewVertex.Y(), kNewVertex.Z()));
+            m_kNewVerts.add(new Vector3f(kNewVertex.X, kNewVertex.Y, kNewVertex.Z));
             m_kNewNormals.add(new Vector3f(kNewNormal));
             m_kNewTexCoords.add(new Vector3f(kNewTexCoord));
             m_kNewColors.add(new ColorRGBA(kNewColor));
@@ -4810,18 +4835,18 @@ public class Geodesic_WM {
             }
 
             /* Get the previous path index: */
-            iPrevPathIndex = (int) ((Vector4f) kPath.get(iPath - 1)).W();
+            iPrevPathIndex = (int) ((Vector4f) kPath.get(iPath - 1)).W;
 
             /* Get the next path index: */
             if (iPath == (kPath.size() - 1)) {
 
                 if (!bOpen) {
-                    iNextPathIndex = (int) ((Vector4f) kPath.get(1)).W();
+                    iNextPathIndex = (int) ((Vector4f) kPath.get(1)).W;
                 } else {
                     break;
                 }
             } else {
-                iNextPathIndex = (int) ((Vector4f) kPath.get(iPath + 1)).W();
+                iNextPathIndex = (int) ((Vector4f) kPath.get(iPath + 1)).W;
             }
 
             /* For each triangle that contains the edge iPrevPathIndex ->
@@ -4846,16 +4871,16 @@ public class Geodesic_WM {
             while ((iEndIndex != iNextPathIndex) && (iEndIndex != iPrevPathIndex)) {
 
                 /* Add to the Add/Remove list: */
-                kDeleteTri.SetData(iPrevPathIndex, iPathIndex, iEndIndex);
+                kDeleteTri.Set(iPrevPathIndex, iPathIndex, iEndIndex);
 
                 if (triangleExists(kDeleteTri)) {
                     if (!contains(m_kRemoveTriangles, kDeleteTri)) {
                         m_kRemoveTriangles.add(new Vector3f(kDeleteTri));
                     }
 
-                    kAddTri.X(getPathIndex(kPath, iVertexCount, iPrevPathIndex, bOpen));
-                    kAddTri.Y(getPathIndex(kPath, iVertexCount, iPathIndex, bOpen));
-                    kAddTri.Z(getPathIndex(kPath, iVertexCount, iEndIndex, bOpen));
+                    kAddTri.X = getPathIndex(kPath, iVertexCount, iPrevPathIndex, bOpen);
+                    kAddTri.Y = getPathIndex(kPath, iVertexCount, iPathIndex, bOpen);
+                    kAddTri.Z = getPathIndex(kPath, iVertexCount, iEndIndex, bOpen);
 
                     if (!contains(m_kNewTriangles, kAddTri)) {
                         m_kNewTriangles.add(new Vector3f(kAddTri));
@@ -4896,16 +4921,16 @@ public class Geodesic_WM {
             if ((iPath == (kPath.size() - 2)) && bOpen) {
 
                 /* Add to the Add/Remove list: */
-                kDeleteTri.SetData(iPathIndex, iNextPathIndex, iEndIndex);
+                kDeleteTri.Set(iPathIndex, iNextPathIndex, iEndIndex);
 
                 if (triangleExists(kDeleteTri)) {
                     if (!contains(m_kRemoveTriangles, kDeleteTri)) {
                         m_kRemoveTriangles.add(new Vector3f(kDeleteTri));
                     }
 
-                    kAddTri.X(getPathIndex(kPath, iVertexCount, iPathIndex, bOpen));
-                    kAddTri.Y(getPathIndex(kPath, iVertexCount, iNextPathIndex, bOpen));
-                    kAddTri.Z(getPathIndex(kPath, iVertexCount, iEndIndex, bOpen));
+                    kAddTri.X = getPathIndex(kPath, iVertexCount, iPathIndex, bOpen);
+                    kAddTri.Y = getPathIndex(kPath, iVertexCount, iNextPathIndex, bOpen);
+                    kAddTri.Z = getPathIndex(kPath, iVertexCount, iEndIndex, bOpen);
 
                     if (!contains(m_kNewTriangles, kAddTri)) {
                         m_kNewTriangles.add(new Vector3f(kAddTri));

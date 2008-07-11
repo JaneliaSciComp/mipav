@@ -142,14 +142,20 @@ public class Rope extends JavaApplication3D
         
         m_spkScene.UpdateGS(0.0f, true);;
         Vector3f transResult = new Vector3f(m_spkScene.WorldBound.GetCenter());
-        transResult.negEquals();
+        transResult.Neg();
         m_spkTrnNode.Local.SetTranslate(transResult);
         
         m_spkCamera.SetFrustum(-0.55f,0.55f,-0.4125f,0.4125f,1.0f,100.0f);
         Vector3f kCDir = new Vector3f(0.0f,-1.0f,0.0f);
         Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
-        Vector3f kCRight = kCDir.Cross(kCUp);
-        Vector3f kCLoc = kCDir.scale(-3.0f*m_spkScene.WorldBound.GetRadius()).sub( kCUp.scale( 0.5f ) );
+        Vector3f kCRight = new Vector3f();
+        kCRight.Cross( kCDir, kCUp );
+        Vector3f kTemp1 = new Vector3f();
+        kTemp1.Scale( 0.5f, kCUp );
+        Vector3f kTemp2 = new Vector3f();
+        kTemp2.Scale( -3.0f*m_spkScene.WorldBound.GetRadius(), kCDir );
+        Vector3f kCLoc = new Vector3f();
+        kCLoc.Sub( kTemp2, kTemp1 );
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
        
         // initial update of objects

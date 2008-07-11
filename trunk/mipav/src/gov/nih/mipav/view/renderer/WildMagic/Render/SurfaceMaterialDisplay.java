@@ -99,15 +99,15 @@ implements GLEventListener, KeyListener
         Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
         Vector3f kCRight = new Vector3f();
-        kCDir.Cross(kCUp, kCRight);
+        kCRight.Cross( kCDir, kCUp );
         Vector3f kCLoc = new Vector3f(kCDir);
         if ( m_bMain )
         {
-            kCLoc.scaleEquals(-2.4f);
+            kCLoc.Scale(-2.4f);
         }
         else
         {
-            kCLoc.scaleEquals(-1.4f);
+            kCLoc.Scale(-1.4f);
         }
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
@@ -166,12 +166,15 @@ implements GLEventListener, KeyListener
 
     public void setMaterial( MaterialState kMaterial )
     {
-        m_pkMaterial.Ambient.SetData( kMaterial.Ambient );
-        m_pkMaterial.Diffuse.SetData( kMaterial.Diffuse );
-        m_pkMaterial.Specular.SetData( kMaterial.Specular );
-        m_pkMaterial.Emissive.SetData( kMaterial.Emissive );
-
-        m_spkScene.UpdateGS();
+    	System.err.println( "setMaterial "  + kMaterial.Shininess );
+    	
+        //m_pkMaterial.Ambient.Copy( kMaterial.Ambient );
+        //m_pkMaterial.Diffuse.Copy( kMaterial.Diffuse );
+        //m_pkMaterial.Specular.Copy( kMaterial.Specular );
+        //m_pkMaterial.Emissive.Copy( kMaterial.Emissive );
+        //m_pkMaterial.Shininess = kMaterial.Shininess;
+        //m_pkMaterial.Shininess = 1.0f;
+        //m_spkScene.UpdateGS();
     }
 
     /**

@@ -263,9 +263,9 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
         Vector3f kCRight = new Vector3f();
-        kCDir.Cross(kCUp, kCRight);
+        kCRight.Cross( kCDir, kCUp );
         Vector3f kCLoc = new Vector3f(kCDir);
-        kCLoc.scaleEquals(-1.4f);
+        kCLoc.Scale(-1.4f);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene( arg0 );
@@ -671,16 +671,21 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
      *
      * @param  kTriangleMesh  DOCUMENT ME!
      */
-    public void setup(TriMesh kMesh, Vector3f kCenter ) {
+    public boolean setup(TriMesh kMesh, Vector3f kCenter ) {
 
         /* reset inflation initialization: */
         m_bInflationInitialized = false;
         m_kCortical = new MjCorticalMesh_WM(kMesh);
-        /* cortical mesh initializations */
-        m_kCortical.computeMeanCurvature(kCenter);
-        /* calculate the conformal mapping of mesh to the flattened plane and
-         * sphere maps, and setup the display for the plane and sphere: */
-        calculateConformal();
+        if ( m_kCortical.CheckManifold() )
+        {
+        	/* cortical mesh initializations */
+        	m_kCortical.computeMeanCurvature(kCenter);
+        	/* calculate the conformal mapping of mesh to the flattened plane and
+        	 * sphere maps, and setup the display for the plane and sphere: */
+        	calculateConformal();
+        	return true;
+        }
+        return false;
     }
 
     
@@ -942,20 +947,33 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         Vector3f kP0 = m_kCortical.getCylinder().VBuffer.GetPosition3( kPickPoint.iV0 );
         Vector3f kP1 = m_kCortical.getCylinder().VBuffer.GetPosition3( kPickPoint.iV1 );
         Vector3f kP2 = m_kCortical.getCylinder().VBuffer.GetPosition3( kPickPoint.iV2 );
-        Vector3f kPoint = kP0.scale(kPickPoint.B0).add( kP1.scale( kPickPoint.B1) ).add( kP2.scale( kPickPoint.B2 ) );
+        Vector3f kP0mB0 = new Vector3f();
+        kP0mB0.Scale( kPickPoint.B0, kP0 );
+        Vector3f kP1mB1 = new Vector3f();
+        kP1mB1.Scale( kPickPoint.B1, kP1 );
+        Vector3f kP2mB2 = new Vector3f();
+        kP2mB2.Scale( kPickPoint.B2, kP2 );
+        Vector3f kPoint = new Vector3f();
+        kPoint.Add( kP0mB0, kP1mB1 );
+        kPoint.Add( kP2mB2 );
         
         float fDistance = Float.MAX_VALUE;
         float fMinDistance = Float.MAX_VALUE;
 
-        fDistance = kPoint.sub(kP0).SquaredLength();
+        Vector3f kDiff = new Vector3f();
+        kDiff.Sub( kPoint, kP0 );
+        fDistance = kDiff.SquaredLength();
         if (fDistance < fMinDistance) {
             fMinDistance = fDistance;
         }
-        fDistance = kPoint.sub(kP1).SquaredLength();
+
+        kDiff.Sub( kPoint, kP1 );
+        fDistance = kDiff.SquaredLength();
         if (fDistance < fMinDistance) {
             fMinDistance = fDistance;
         }
-        fDistance = kPoint.sub(kP2).SquaredLength();
+        kDiff.Sub( kPoint, kP2 );
+        fDistance = kDiff.SquaredLength();
         if (fDistance < fMinDistance) {
             fMinDistance = fDistance;
         }
@@ -1016,10 +1034,10 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 
 
         MaterialState kMaterial = new MaterialState();
-        kMaterial.Emissive.SetData(ColorRGB.BLACK);
-        kMaterial.Ambient.SetData(.2f, .2f, .2f );
-        kMaterial.Diffuse.SetData(m_akPickColors[m_iRunningNumPicked % MAX_POINTS]);
-        kMaterial.Specular.SetData(ColorRGB.WHITE);
+        kMaterial.Emissive.Copy(ColorRGB.BLACK);
+        kMaterial.Ambient.Set(.2f, .2f, .2f );
+        kMaterial.Diffuse.Copy(m_akPickColors[m_iRunningNumPicked % MAX_POINTS]);
+        kMaterial.Specular.Copy(ColorRGB.WHITE);
         kMaterial.Shininess = 83.2f;
         kSphere1.AttachGlobalState(kMaterial);
         kSphere1.AttachEffect(new MipavLightingEffect(true));

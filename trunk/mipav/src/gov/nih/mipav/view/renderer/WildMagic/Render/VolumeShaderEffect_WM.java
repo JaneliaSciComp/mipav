@@ -572,10 +572,10 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
         if ( pkProgram.GetUC("BackgroundColor") != null ) 
         {
             float[] afColor = new float[4];
-            afColor[0] = kColor.R();
-            afColor[1] = kColor.G();
-            afColor[2] = kColor.B();
-            afColor[3] = kColor.A();
+            afColor[0] = kColor.R;
+            afColor[1] = kColor.G;
+            afColor[2] = kColor.B;
+            afColor[3] = kColor.A;
             pkProgram.GetUC("BackgroundColor").SetDataSource(afColor);
         }
     }

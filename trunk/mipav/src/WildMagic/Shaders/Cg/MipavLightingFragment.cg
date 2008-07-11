@@ -653,6 +653,11 @@ void p_MipavLightingFragment(
         kVertexColor = color0 + color1 + color2 + color3;
         kVertexColor.a = Blend * kInColor0.a;
 
+//        kVertexColor -= (color0 + color1 + color2 + color3);
+//        kVertexColor.r += (kInNormal.x + 1.0)/2.0;
+//        kVertexColor.g += (kInNormal.y + 1.0)/2.0;
+//        kVertexColor.b += (kInNormal.z + 1.0)/2.0;
+
         if ( kVertexColor.a == 0 )
         {
             discard;

@@ -113,13 +113,13 @@ public class FileInfoSurfaceRefXML extends FileInfoXML {
         MaterialState kMaterialState = new MaterialState();
         Color3f kColor = new Color3f();
         m_kMaterial.getAmbientColor(kColor);
-        kMaterialState.Ambient.SetData( kColor.x, kColor.y, kColor.z );
+        kMaterialState.Ambient.Set( kColor.x, kColor.y, kColor.z );
         m_kMaterial.getDiffuseColor(kColor);
-        kMaterialState.Diffuse.SetData( kColor.x, kColor.y, kColor.z );
+        kMaterialState.Diffuse.Set( kColor.x, kColor.y, kColor.z );
         m_kMaterial.getEmissiveColor(kColor);
-        kMaterialState.Emissive.SetData( kColor.x, kColor.y, kColor.z );
+        kMaterialState.Emissive.Set( kColor.x, kColor.y, kColor.z );
         m_kMaterial.getSpecularColor(kColor);
-        kMaterialState.Specular.SetData( kColor.x, kColor.y, kColor.z );
+        kMaterialState.Specular.Set( kColor.x, kColor.y, kColor.z );
         kMaterialState.Shininess = m_kMaterial.getShininess();        
         return kMaterialState;
     }

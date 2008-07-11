@@ -120,12 +120,12 @@ public class AlgorithmDTITract extends AlgorithmBase
         if ( !bAllZero )
         {
         
-            kPos.SetData( iX, iY, iZ );
+            kPos.Set( iX, iY, iZ );
             kTract.add(i);
 
-            kV1.SetData( afVectorData[0], afVectorData[1], afVectorData[2] );
-            kV2.SetData(kV1);
-            kV2.negEquals();
+            kV1.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
+            kV2.Copy(kV1);
+            kV2.Neg();
 
             kV1.Normalize();
             kV2.Normalize();
@@ -214,12 +214,12 @@ public class AlgorithmDTITract extends AlgorithmBase
                     if ( !bAllZero )
                     {
                     	// System.out.println("point: iX = " + iX +  " iY = " + iY + " iZ = " + iZ  );
-                        kPos.SetData( iX, iY, iZ );
+                        kPos.Set( iX, iY, iZ );
                         kTract.add(i);
 
-                        kV1.SetData( afVectorData[0], afVectorData[1], afVectorData[2] );
-                        kV2.SetData(kV1);
-                        kV2.negEquals();
+                        kV1.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
+                        kV2.Copy(kV1);
+                        kV2.Neg();
 
                         kV1.Normalize();
                         kV2.Normalize();
@@ -278,10 +278,10 @@ public class AlgorithmDTITract extends AlgorithmBase
 
         while ( !bDone )
         {
-            kStart.add( kDir, kNext );
-            iX = Math.round(kNext.X());
-            iY = Math.round(kNext.Y());
-            iZ = Math.round(kNext.Z());
+        	kNext.Add( kStart, kDir );
+            iX = Math.round(kNext.X);
+            iY = Math.round(kNext.Y);
+            iZ = Math.round(kNext.Z);
             i = iZ * (iDimY*iDimX) + iY * iDimX + iX;
             
             if ( (iZ < 0) || (iZ >= iDimZ) ||
@@ -303,11 +303,11 @@ public class AlgorithmDTITract extends AlgorithmBase
             }
             if ( !bAllZero )
             {
-                kMatrix.SetData( afTensorData[0], afTensorData[3], afTensorData[4],
+                kMatrix.Set( afTensorData[0], afTensorData[3], afTensorData[4],
                                  afTensorData[3], afTensorData[1], afTensorData[5], 
                                  afTensorData[4], afTensorData[5], afTensorData[2] );
                 
-                kMatrix.mult(kDir, kOut);
+                kMatrix.Mult(kDir, kOut);
                 kOut.Normalize();
                 
                 if ( m_abVisited[i] )

@@ -278,10 +278,10 @@ public class VolumePlaneEffect extends ShaderEffect
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("BackgroundColor") != null ) 
         {
-            m_afBackgroundColor[0] = kColor.R();
-            m_afBackgroundColor[1] = kColor.G();
-            m_afBackgroundColor[2] = kColor.B();
-            m_afBackgroundColor[3] = kColor.A();
+            m_afBackgroundColor[0] = kColor.R;
+            m_afBackgroundColor[1] = kColor.G;
+            m_afBackgroundColor[2] = kColor.B;
+            m_afBackgroundColor[3] = kColor.A;
             pkProgram.GetUC("BackgroundColor").SetDataSource(m_afBackgroundColor);
         }
     }

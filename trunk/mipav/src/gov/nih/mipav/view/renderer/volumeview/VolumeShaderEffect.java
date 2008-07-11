@@ -818,21 +818,21 @@ public class VolumeShaderEffect extends ShaderEffect
                 for (iX = 1; iX < (iXBound - 1); iX++) {
                     int i = iX + offset;
 
-                    kNormal.SetData(WildMagic.LibFoundation.Mathematics.Vector3f.ZERO);
+                    kNormal.Copy(WildMagic.LibFoundation.Mathematics.Vector3f.ZERO);
                     for ( int iN = 0; iN < aiNormalAverageIndex.length; iN++ )
                     {
                         int index = i + aiNormalAverageIndex[iN];
                         index *= 3;
-                        kNormalTmp.X(afDataN[index + 0]);
-                        kNormalTmp.Y(afDataN[index + 1]);
-                        kNormalTmp.Z(afDataN[index + 2]);
+                        kNormalTmp.X = afDataN[index + 0];
+                        kNormalTmp.Y = afDataN[index + 1];
+                        kNormalTmp.Z = afDataN[index + 2];
 
-                        kNormal.addEquals( kNormalTmp );
+                        kNormal.Add( kNormalTmp );
                     }
                     kNormal.Normalize();
-                    acData[i*3+0] = (byte)(kNormal.X()*127 + 127);
-                    acData[i*3+1] = (byte)(kNormal.Y()*127 + 127);
-                    acData[i*3+2] = (byte)(kNormal.Z()*127 + 127);
+                    acData[i*3+0] = (byte)(kNormal.X*127 + 127);
+                    acData[i*3+1] = (byte)(kNormal.Y*127 + 127);
+                    acData[i*3+2] = (byte)(kNormal.Z*127 + 127);
                 }
             }
         }
@@ -1498,10 +1498,10 @@ public class VolumeShaderEffect extends ShaderEffect
         if ( pkProgram.GetUC("BackgroundColor") != null ) 
         {
             float[] afColor = new float[4];
-            afColor[0] = kColor.R();
-            afColor[1] = kColor.G();
-            afColor[2] = kColor.B();
-            afColor[3] = kColor.A();
+            afColor[0] = kColor.R;
+            afColor[1] = kColor.G;
+            afColor[2] = kColor.B;
+            afColor[3] = kColor.A;
             pkProgram.GetUC("BackgroundColor").SetDataSource(afColor);
         }
     }

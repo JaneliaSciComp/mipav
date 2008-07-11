@@ -107,31 +107,31 @@ public class Mesh {
 			Face[0] = face[i][0];
 			Face[1] = face[i][1];
 			Face[2] = face[i][2];
-			v1v3d.SetData(0,(float)(((point[Face[0]]).X() - (point[Face[1]]).X()) * scaler));
-			v1v3d.SetData(1,(float)(((point[Face[0]]).Y() - (point[Face[1]]).Y()) * scaler));
-			v1v3d.SetData(2,(float)(((point[Face[0]]).Z() - (point[Face[1]]).Z()) * scaler));
-			v2v3d.SetData(0,(float)(((point[Face[0]]).X() - (point[Face[2]]).X()) * scaler));
-			v2v3d.SetData(1,(float)(((point[Face[0]]).Y() - (point[Face[2]]).Y()) * scaler));
-			v2v3d.SetData(2,(float)(((point[Face[0]]).Z() - (point[Face[2]]).Z()) * scaler));
+			v1v3d.X = (float)(((point[Face[0]]).X - (point[Face[1]]).X) * scaler);
+			v1v3d.Y = (float)(((point[Face[0]]).Y - (point[Face[1]]).Y) * scaler);
+			v1v3d.Z = (float)(((point[Face[0]]).Z - (point[Face[1]]).Z) * scaler);
+			v2v3d.X = (float)(((point[Face[0]]).X - (point[Face[2]]).X) * scaler);
+			v2v3d.Y = (float)(((point[Face[0]]).Y - (point[Face[2]]).Y) * scaler);
+			v2v3d.Z = (float)(((point[Face[0]]).Z - (point[Face[2]]).Z) * scaler);
 
-			v1v3d.Cross(v2v3d, ddnormalv3d);
+			ddnormalv3d.Cross( v1v3d, v2v3d );
 			ddnormalv3d.Normalize();
 
 			kOut.print(" facet normal  ");
-			kOut.print(ddnormalv3d.X());
+			kOut.print(ddnormalv3d.X);
 			kOut.print(' ');
-			kOut.print(ddnormalv3d.Y());
+			kOut.print(ddnormalv3d.Y);
 			kOut.print(' ');
-			kOut.println(ddnormalv3d.Z());
+			kOut.println(ddnormalv3d.Z);
 
 			kOut.println("   outer loop");
 
 			
 			
 			for (j = 0; j < 3; j++) {
-				x = point[Face[j]].X() * scaler;
-				y = point[Face[j]].Y() * scaler;
-				z = point[Face[j]].Z() * scaler;
+				x = point[Face[j]].X * scaler;
+				y = point[Face[j]].Y * scaler;
+				z = point[Face[j]].Z * scaler;
 
 				
                 x = ((((x * 2.0f * maxBox) + xBox) / 2.0f) * direction[0]) + startLocation[0];
@@ -245,29 +245,29 @@ public class Mesh {
 			Face[0] = face[i][0];
 			Face[1] = face[i][1];
 			Face[2] = face[i][2];
-			v1v3d.SetData(0,(float)(((point[Face[0]]).X() - (point[Face[1]]).X()) * scaler));
-			v1v3d.SetData(1,(float)(((point[Face[0]]).Y() - (point[Face[1]]).Y()) * scaler));
-			v1v3d.SetData(2,(float)(((point[Face[0]]).Z() - (point[Face[1]]).Z()) * scaler));
-			v2v3d.SetData(0,(float)(((point[Face[0]]).X() - (point[Face[2]]).X()) * scaler));
-			v2v3d.SetData(1,(float)(((point[Face[0]]).Y() - (point[Face[2]]).Y()) * scaler));
-			v2v3d.SetData(2,(float)(((point[Face[0]]).Z() - (point[Face[2]]).Z()) * scaler));
-			v1v3d.Cross(v2v3d, ddnormalv3d);
+			v1v3d.X = (float)(((point[Face[0]]).X - (point[Face[1]]).X) * scaler);
+			v1v3d.Y = (float)(((point[Face[0]]).Y - (point[Face[1]]).Y) * scaler);
+			v1v3d.Z = (float)(((point[Face[0]]).Z - (point[Face[1]]).Z) * scaler);
+			v2v3d.X = (float)(((point[Face[0]]).X - (point[Face[2]]).X) * scaler);
+			v2v3d.Y = (float)(((point[Face[0]]).Y - (point[Face[2]]).Y) * scaler);
+			v2v3d.Z = (float)(((point[Face[0]]).Z - (point[Face[2]]).Z) * scaler);
+			ddnormalv3d.Cross( v1v3d, v2v3d );
 			ddnormalv3d.Normalize();
 
-			kOut.write(FileBase.floatToBytes((float) ddnormalv3d.X(), false));
-			kOut.write(FileBase.floatToBytes((float) ddnormalv3d.Y(), false));
-			kOut.write(FileBase.floatToBytes((float) ddnormalv3d.Z(), false));
+			kOut.write(FileBase.floatToBytes((float) ddnormalv3d.X, false));
+			kOut.write(FileBase.floatToBytes((float) ddnormalv3d.Y, false));
+			kOut.write(FileBase.floatToBytes((float) ddnormalv3d.Z, false));
 
 			for (j = 0; j < 3; j++) {
-				verts[(3 * i + j)].SetData(0, (float)(point[Face[j]].X() * scaler));
-				verts[(3 * i + j)].SetData(1, (float)(point[Face[j]].Y() * scaler));
-				verts[(3 * i + j)].SetData(2, (float)(point[Face[j]].Z() * scaler));
+				verts[(3 * i + j)].X = (float)(point[Face[j]].X * scaler);
+				verts[(3 * i + j)].Y = (float)(point[Face[j]].Y * scaler);
+				verts[(3 * i + j)].Z = (float)(point[Face[j]].Z * scaler);
 
-				kOut.write(FileBase.floatToBytes((float) verts[(3 * i + j)].X(),
+				kOut.write(FileBase.floatToBytes((float) verts[(3 * i + j)].X,
 						false));
-				kOut.write(FileBase.floatToBytes((float) verts[(3 * i + j)].Y(),
+				kOut.write(FileBase.floatToBytes((float) verts[(3 * i + j)].Y,
 						false));
-				kOut.write(FileBase.floatToBytes((float) verts[(3 * i + j)].Z(),
+				kOut.write(FileBase.floatToBytes((float) verts[(3 * i + j)].Z,
 						false));
 
 			}
@@ -284,20 +284,20 @@ public class Mesh {
 		Face[0] = di;
 		Face[1] = dj;
 		Face[2] = dk;
-		v1v3d.SetData(0,(float)(((point[Face[0]]).X() - (point[Face[1]]).X()) * scaler));
-		v1v3d.SetData(1,(float)(((point[Face[0]]).Y() - (point[Face[1]]).Y()) * scaler));
-		v1v3d.SetData(2,(float)(((point[Face[0]]).Z() - (point[Face[1]]).Z()) * scaler));
-		v2v3d.SetData(0,(float)(((point[Face[0]]).X() - (point[Face[2]]).X()) * scaler));
-		v2v3d.SetData(1,(float)(((point[Face[0]]).Y() - (point[Face[2]]).Y()) * scaler));
-		v2v3d.SetData(2,(float)(((point[Face[0]]).Z() - (point[Face[2]]).Z()) * scaler));
-		v1v3d.Cross(v2v3d, ddnormalv3d);
+		v1v3d.X = (float)(((point[Face[0]]).X - (point[Face[1]]).X) * scaler);
+		v1v3d.Y = (float)(((point[Face[0]]).Y - (point[Face[1]]).Y) * scaler);
+		v1v3d.Z = (float)(((point[Face[0]]).Z - (point[Face[1]]).Z) * scaler);
+		v2v3d.X = (float)(((point[Face[0]]).X - (point[Face[2]]).X) * scaler);
+		v2v3d.Y = (float)(((point[Face[0]]).Y - (point[Face[2]]).Y) * scaler);
+		v2v3d.Z = (float)(((point[Face[0]]).Z - (point[Face[2]]).Z) * scaler);
+		ddnormalv3d.Cross( v1v3d, v2v3d );
 		ddnormalv3d.Normalize();
 		int j = 0;
 
 		for (j = 0; j < 3; j++) {
-			verts[(3 * i + j)].SetData(0, (float)(point[Face[j]].X() * scaler));
-			verts[(3 * i + j)].SetData(1, (float)(point[Face[j]].Y() * scaler));
-			verts[(3 * i + j)].SetData(2, (float)(point[Face[j]].Z() * scaler));
+			verts[(3 * i + j)].X = (float)(point[Face[j]].X * scaler);
+			verts[(3 * i + j)].Y = (float)(point[Face[j]].Y * scaler);
+			verts[(3 * i + j)].Z = (float)(point[Face[j]].Z * scaler);
 		}
 
 	}

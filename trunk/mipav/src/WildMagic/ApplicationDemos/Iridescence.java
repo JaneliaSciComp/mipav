@@ -191,7 +191,7 @@ public class Iridescence extends JavaApplication3D
         Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCUp = new Vector3f(0.0f,1.0f,0.0f);
         Vector3f kCRight = new Vector3f();
-        kCDir.Cross(kCUp, kCRight);
+        kCRight.Cross( kCDir, kCUp );
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();

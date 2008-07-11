@@ -392,7 +392,7 @@ public class VolumeDTI extends VolumeObject
         {
             if ( pkProgram.GetUC("ConstantColor") != null )
             {
-                pkProgram.GetUC("ConstantColor").SetDataSource(new float[] { kColor.R(), kColor.G(), kColor.B(), 1f } );
+                pkProgram.GetUC("ConstantColor").SetDataSource(new float[] { kColor.R, kColor.G, kColor.B, 1f } );
             }
             if ( pkProgram.GetUC("UseConstantColor") != null )
             {
@@ -449,15 +449,15 @@ public class VolumeDTI extends VolumeObject
             }
             if ( !bAllZero )
             {
-                kMatrix.SetData( afTensorData[0], afTensorData[3], afTensorData[4],
+                kMatrix.Set( afTensorData[0], afTensorData[3], afTensorData[4],
                         afTensorData[3], afTensorData[1], afTensorData[5], 
                         afTensorData[4], afTensorData[5], afTensorData[2] );
 
                 if ( Matrix3f.EigenDecomposition( kMatrix, kEigenValues ) )
                 {
-                    fLambda1 = kEigenValues.GetData(2,2);
-                    fLambda2 = kEigenValues.GetData(1,1);
-                    fLambda3 = kEigenValues.GetData(0,0);
+                    fLambda1 = kEigenValues.M22;
+                    fLambda2 = kEigenValues.M11;
+                    fLambda3 = kEigenValues.M00;
                     kMatrix.GetColumn(2,kV1);
                     kMatrix.GetColumn(1,kV2);
                     kMatrix.GetColumn(0,kV3);
@@ -528,8 +528,8 @@ public class VolumeDTI extends VolumeObject
             kTransform = m_kEigenVectors.get(kKey);
 
             kScale = kTScale.GetScale();
-            kScale.scaleEquals( m_fScale );
-            kScale.multEquals( kTransform.GetScale() );
+            kScale.Scale( m_fScale );
+            kScale.Mult( kTransform.GetScale() );
             kTScale.SetScale(kScale);
 
             kTEllipse.SetTranslate( fX - .5f, fY - .5f, fZ - .5f );
@@ -687,16 +687,16 @@ public class VolumeDTI extends VolumeObject
                     fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
                     fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
                     fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
-                    m_kColorEllipse.R(fR);
-                    m_kColorEllipse.G(fG);
-                    m_kColorEllipse.B(fB);
+                    m_kColorEllipse.R = fR;
+                    m_kColorEllipse.G = fG;
+                    m_kColorEllipse.B = fB;
                 }
                 else
                 {
                     fR = kImage.getFloat( iIndex );
-                    m_kColorEllipse.R(fR);
-                    m_kColorEllipse.G(fR);
-                    m_kColorEllipse.B(fR);
+                    m_kColorEllipse.R = fR;
+                    m_kColorEllipse.G = fR;
+                    m_kColorEllipse.B = fR;
                 }
 
                 kEllipse = m_kSphere;
@@ -763,16 +763,16 @@ public class VolumeDTI extends VolumeObject
                                 fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
                                 fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
                                 fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
-                                m_kColorEllipse.R(fR);
-                                m_kColorEllipse.G(fG);
-                                m_kColorEllipse.B(fB);
+                                m_kColorEllipse.R = fR;
+                                m_kColorEllipse.G = fG;
+                                m_kColorEllipse.B = fB;
                             }
                             else
                             {
                                 fR = kImage.getFloat( iIndex );
-                                m_kColorEllipse.R(fR);
-                                m_kColorEllipse.G(fR);
-                                m_kColorEllipse.B(fR);
+                                m_kColorEllipse.R = fR;
+                                m_kColorEllipse.G = fR;
+                                m_kColorEllipse.B = fR;
                             }
                         }
                         
@@ -824,16 +824,16 @@ public class VolumeDTI extends VolumeObject
                     fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
                     fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
                     fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
-                    m_kColorEllipse.R(fR);
-                    m_kColorEllipse.G(fG);
-                    m_kColorEllipse.B(fB);
+                    m_kColorEllipse.R = fR;
+                    m_kColorEllipse.G = fG;
+                    m_kColorEllipse.B = fB;
                 }
                 else
                 {
                     fR = kImage.getFloat( iIndex );
-                    m_kColorEllipse.R(fR);
-                    m_kColorEllipse.G(fR);
-                    m_kColorEllipse.B(fR);
+                    m_kColorEllipse.R = fR;
+                    m_kColorEllipse.G = fR;
+                    m_kColorEllipse.B = fR;
                 }
 
                 kCylinder = m_kCylinder;
@@ -901,16 +901,16 @@ public class VolumeDTI extends VolumeObject
                                 fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
                                 fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
                                 fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
-                                m_kColorEllipse.R(fR);
-                                m_kColorEllipse.G(fG);
-                                m_kColorEllipse.B(fB);
+                                m_kColorEllipse.R = fR;
+                                m_kColorEllipse.G = fG;
+                                m_kColorEllipse.B = fB;
                             }
                             else
                             {
                                 fR = kImage.getFloat( iIndex );
-                                m_kColorEllipse.R(fR);
-                                m_kColorEllipse.G(fR);
-                                m_kColorEllipse.B(fR);
+                                m_kColorEllipse.R = fR;
+                                m_kColorEllipse.G = fR;
+                                m_kColorEllipse.B = fR;
                             }
                         }
                         
@@ -1076,11 +1076,7 @@ public class VolumeDTI extends VolumeObject
             m_kSphere.dispose();
             m_kSphere = null;
         }
-        if ( m_kColorEllipse != null )
-        {
-            m_kColorEllipse.dispose();
-            m_kColorEllipse = null;
-        }
+        m_kColorEllipse = null;
     }
 
     /** Hashmap for multiple fiber bundles: */

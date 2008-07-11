@@ -346,14 +346,14 @@ public class PlaneRender_WM extends GPURenderBase
         {     
 
             ColorRGBA kXSliceHairColor =
-                new ColorRGBA( m_aakColors[m_iPlaneOrientation][0].R(),
-                               m_aakColors[m_iPlaneOrientation][0].G(),
-                               m_aakColors[m_iPlaneOrientation][0].B(), 1.0f );
+                new ColorRGBA( m_aakColors[m_iPlaneOrientation][0].R,
+                               m_aakColors[m_iPlaneOrientation][0].G,
+                               m_aakColors[m_iPlaneOrientation][0].B, 1.0f );
 
             ColorRGBA kYSliceHairColor =
-                new ColorRGBA( m_aakColors[m_iPlaneOrientation][1].R(),
-                               m_aakColors[m_iPlaneOrientation][1].G(),
-                               m_aakColors[m_iPlaneOrientation][1].B(), 1.0f );
+                new ColorRGBA( m_aakColors[m_iPlaneOrientation][1].R,
+                               m_aakColors[m_iPlaneOrientation][1].G,
+                               m_aakColors[m_iPlaneOrientation][1].B, 1.0f );
             
             if ( !m_kImageA.getRadiologicalView() && (m_iPlaneOrientation != FileInfoBase.SAGITTAL) )
             {
@@ -970,13 +970,13 @@ public class PlaneRender_WM extends GPURenderBase
             for ( int j = 0; j < 4; j++ )
             {
                 m_kXArrow[0].VBuffer.GetPosition3(j, kPosition);
-                kPosition.addEquals(kDiff);
+                kPosition.Add(kDiff);
                 m_kXArrow[0].VBuffer.SetPosition3(j, kPosition );
             }
             for ( int j = 0; j < 3; j++ )
             {
                 m_kXArrow[1].VBuffer.GetPosition3(j, kPosition);
-                kPosition.addEquals(kDiff);
+                kPosition.Add(kDiff);
                 m_kXArrow[1].VBuffer.SetPosition3(j, kPosition );
             }
             for ( int i = 0; i < 2; i++ )

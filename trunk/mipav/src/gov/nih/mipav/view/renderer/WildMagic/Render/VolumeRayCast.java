@@ -299,7 +299,7 @@ public class VolumeRayCast extends VolumeObject
 
         m_kScene.UpdateGS();
         m_kTranslate = new Vector3f( m_kScene.WorldBound.GetCenter() );
-        m_kTranslate.negEquals();
+        m_kTranslate.Neg();
         m_kScene.GetChild(0).Local.SetTranslate( m_kTranslate );
 
         

@@ -61,7 +61,7 @@ public class CameraAndLightNodes extends JavaApplication3D
      */
     public static void main(String[] args) {
         Vector3f testVec = new Vector3f(2.0f, 3.0f, 4.0f);
-        System.out.println(testVec.X() + " " + testVec.Y() + " " +testVec.Z() + " done.");
+        System.out.println(testVec.X + " " + testVec.Y + " " +testVec.Z + " done.");
         //System.out.println("Hello world!");
         CameraAndLightNodes kWorld = new CameraAndLightNodes();        
         Frame frame = new Frame(kWorld.GetWindowTitle());
@@ -149,7 +149,7 @@ public class CameraAndLightNodes extends JavaApplication3D
         Vector3f kCDir = new Vector3f(0.0f,1.0f,0.0f);
         Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCRight = new Vector3f();
-        kCDir.Cross(kCUp, kCRight);
+        kCRight.Cross( kCDir, kCUp );
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();
@@ -359,8 +359,8 @@ public class CameraAndLightNodes extends JavaApplication3D
         Vector3f kLocation = m_spkCNode.Local.GetTranslate();
         Vector3f kDirection = new Vector3f();
         m_spkCNode.Local.GetRotate().GetColumn(0, kDirection);
-        kDirection.scaleEquals(m_fTrnSpeed);
-        kLocation.addEquals( kDirection );
+        kDirection.Scale(m_fTrnSpeed);
+        kLocation.Add( kDirection );
         m_spkCNode.Local.SetTranslate(kLocation);
         m_spkCNode.UpdateGS();
         m_kCuller.ComputeVisibleSet(m_spkScene);
@@ -372,8 +372,8 @@ public class CameraAndLightNodes extends JavaApplication3D
         Vector3f kLocation = m_spkCNode.Local.GetTranslate();
         Vector3f kDirection = new Vector3f();
         m_spkCNode.Local.GetRotate().GetColumn(0, kDirection);
-        kDirection.scaleEquals(m_fTrnSpeed);
-        kLocation.subEquals( kDirection );
+        kDirection.Scale(m_fTrnSpeed);
+        kLocation.Sub( kDirection );
         m_spkCNode.Local.SetTranslate(kLocation);
         m_spkCNode.UpdateGS();
         m_kCuller.ComputeVisibleSet(m_spkScene);
@@ -384,8 +384,9 @@ public class CameraAndLightNodes extends JavaApplication3D
     {
         Vector3f kUp = new Vector3f();
         m_spkCNode.Local.GetRotate().GetColumn(1, kUp);
-        m_spkCNode.Local.SetRotate(
-                                    (new Matrix3f(kUp,m_fRotSpeed)).mult(m_spkCNode.Local.GetRotate()));
+        Matrix3f kNewRotate = new Matrix3f(kUp,m_fRotSpeed);
+        kNewRotate.Mult( m_spkCNode.Local.GetRotate() );
+        m_spkCNode.Local.SetRotate(kNewRotate);
         m_spkCNode.UpdateGS();
         m_kCuller.ComputeVisibleSet(m_spkScene);
         kUp = null;
@@ -395,8 +396,9 @@ public class CameraAndLightNodes extends JavaApplication3D
     {
         Vector3f kUp = new Vector3f();
         m_spkCNode.Local.GetRotate().GetColumn(1, kUp);
-        m_spkCNode.Local.SetRotate(
-                                    (new Matrix3f(kUp,-m_fRotSpeed)).mult(m_spkCNode.Local.GetRotate()));
+        Matrix3f kNewRotate = new Matrix3f(kUp,-m_fRotSpeed);
+        kNewRotate.Mult( m_spkCNode.Local.GetRotate() );
+        m_spkCNode.Local.SetRotate(kNewRotate);
         m_spkCNode.UpdateGS();
         m_kCuller.ComputeVisibleSet(m_spkScene);
         kUp = null;

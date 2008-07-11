@@ -160,12 +160,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kLUTb = null;
         m_kRGBTb = null;
 
-        if ( m_kTranslate != null )
-        {
-            m_kTranslate.dispose();
-            m_kTranslate = null;
-        }
-
+        m_kTranslate = null;
 
         m_akLights = null;
 
@@ -204,7 +199,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_bTestFrameRate )
         {
             Matrix3f kRotate = m_spkScene.Local.GetRotate();
-            kRotate.multEquals(m_kRotate);
+            kRotate.Mult(m_kRotate);
             m_spkScene.Local.SetRotate(kRotate);
             m_spkScene.UpdateGS();
             m_kCuller.ComputeVisibleSet(m_spkScene);

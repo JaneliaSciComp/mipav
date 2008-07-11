@@ -62,7 +62,7 @@ public class BillboardNodes extends JavaApplication3D
      */
     public static void main(String[] args) {
         Vector3f testVec = new Vector3f(2.0f, 3.0f, 4.0f);
-        System.out.println(testVec.X() + " " + testVec.Y() + " " +testVec.Z() + " done.");
+        System.out.println(testVec.X + " " + testVec.Y + " " +testVec.Z + " done.");
         //System.out.println("Hello world!");
 
         BillboardNodes kWorld = new BillboardNodes();
@@ -140,7 +140,7 @@ public class BillboardNodes extends JavaApplication3D
         Vector3f kCDir = new Vector3f(0.0f,1.0f,0.0f);
         Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCRight = new Vector3f();
-        kCDir.Cross(kCUp, kCRight);
+        kCRight.Cross( kCDir, kCUp );
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();

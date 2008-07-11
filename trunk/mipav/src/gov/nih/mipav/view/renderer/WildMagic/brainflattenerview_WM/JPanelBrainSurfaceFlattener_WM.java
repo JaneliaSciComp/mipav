@@ -406,7 +406,10 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
      */
     public Node displayCorticalAnalysis( TriMesh kMesh, Vector3f kCenter ) {
         m_kTriangleMesh = kMesh;
-        m_kView.setup(m_kTriangleMesh, kCenter);
+        if ( !m_kView.setup(m_kTriangleMesh, kCenter) )
+        {
+        	return null;
+        }
 
         int iNumLat = Integer.parseInt(m_kNumLatText.getText());
         int iNumLon = Integer.parseInt(m_kNumLonText.getText());

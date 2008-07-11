@@ -587,7 +587,7 @@ public class FileSurface_WM {
 
                 tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
 
-                akVertex[i].X( Float.intBitsToFloat(tmpInt) );
+                akVertex[i].X = Float.intBitsToFloat(tmpInt);
 
                 b1 = bufferVertex[index++] & 0xff;
                 b2 = bufferVertex[index++] & 0xff;
@@ -596,7 +596,7 @@ public class FileSurface_WM {
 
                 tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
 
-                akVertex[i].Y( Float.intBitsToFloat(tmpInt) );
+                akVertex[i].Y = Float.intBitsToFloat(tmpInt);
 
                 b1 = bufferVertex[index++] & 0xff;
                 b2 = bufferVertex[index++] & 0xff;
@@ -605,24 +605,24 @@ public class FileSurface_WM {
 
                 tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
 
-                akVertex[i].Z( Float.intBitsToFloat(tmpInt) );
+                akVertex[i].Z = Float.intBitsToFloat(tmpInt);
 
                 if (dicom) {
-                    tCoord[0] = akVertex[i].X() - startLocation[0];
-                    tCoord[1] = akVertex[i].Y() - startLocation[1];
-                    tCoord[2] = akVertex[i].Z() - startLocation[2];
+                    tCoord[0] = akVertex[i].X - startLocation[0];
+                    tCoord[1] = akVertex[i].Y - startLocation[1];
+                    tCoord[2] = akVertex[i].Z - startLocation[2];
                     inverseDicomMatrix.transform(tCoord, coord);
-                    akVertex[i].X( (coord[0] * direction[0]) + startLocation[0] );
-                    akVertex[i].Y( (coord[1] * direction[1]) + startLocation[1] );
-                    akVertex[i].Z( (coord[2] * direction[2]) + startLocation[2] );
+                    akVertex[i].X = (coord[0] * direction[0]) + startLocation[0];
+                    akVertex[i].Y = (coord[1] * direction[1]) + startLocation[1];
+                    akVertex[i].Z = (coord[2] * direction[2]) + startLocation[2];
                 } // if (dicom)
 
                 if (flip) {
 
                     //                  Flip (kVertex.y - startLocation[1], but
                     //                  don't flip startLocation[1]
-                    akVertex[i].Y( (2 * startLocation[1]) + (box[1] * direction[1]) - akVertex[i].Y() );
-                    akVertex[i].Z( (2 * startLocation[2]) + (box[2] * direction[2]) - akVertex[i].Z() );
+                    akVertex[i].Y = ( (2 * startLocation[1]) + (box[1] * direction[1]) - akVertex[i].Y );
+                    akVertex[i].Z = ( (2 * startLocation[2]) + (box[2] * direction[2]) - akVertex[i].Z );
                 }
 
             }
@@ -642,7 +642,7 @@ public class FileSurface_WM {
 
                 tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
 
-                akNormal[i].X( Float.intBitsToFloat(tmpInt) );
+                akNormal[i].X = Float.intBitsToFloat(tmpInt);
 
                 b1 = bufferNormal[index++] & 0xff;
                 b2 = bufferNormal[index++] & 0xff;
@@ -651,7 +651,7 @@ public class FileSurface_WM {
 
                 tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
 
-                akNormal[i].Y( Float.intBitsToFloat(tmpInt) );
+                akNormal[i].Y = Float.intBitsToFloat(tmpInt);
 
                 b1 = bufferNormal[index++] & 0xff;
                 b2 = bufferNormal[index++] & 0xff;
@@ -660,7 +660,7 @@ public class FileSurface_WM {
 
                 tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
 
-                akNormal[i].Z( Float.intBitsToFloat(tmpInt) );
+                akNormal[i].Z = Float.intBitsToFloat(tmpInt);
             }
 
             progress.updateValueImmed(added + (66 / total));
@@ -703,7 +703,7 @@ public class FileSurface_WM {
 
                     R = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
 
-                    perVertexColor[i].R( Float.intBitsToFloat(R) );
+                    perVertexColor[i].R = Float.intBitsToFloat(R);
 
                     b1 = bufferPerVertexColor[index++] & 0xff;
                     b2 = bufferPerVertexColor[index++] & 0xff;
@@ -712,7 +712,7 @@ public class FileSurface_WM {
 
                     G = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
 
-                    perVertexColor[i].G( Float.intBitsToFloat(G) );
+                    perVertexColor[i].G = Float.intBitsToFloat(G);
 
                     b1 = bufferPerVertexColor[index++] & 0xff;
                     b2 = bufferPerVertexColor[index++] & 0xff;
@@ -721,7 +721,7 @@ public class FileSurface_WM {
 
                     B = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
 
-                    perVertexColor[i].B( Float.intBitsToFloat(B) );
+                    perVertexColor[i].B = Float.intBitsToFloat(B);
 
                     b1 = bufferPerVertexColor[index++] & 0xff;
                     b2 = bufferPerVertexColor[index++] & 0xff;
@@ -730,7 +730,7 @@ public class FileSurface_WM {
 
                     A = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
 
-                    perVertexColor[i].A( Float.intBitsToFloat(A) );
+                    perVertexColor[i].A = Float.intBitsToFloat(A);
 
                 }
             }
@@ -756,7 +756,7 @@ public class FileSurface_WM {
 
                 if ( perVertexColor != null )
                 {
-                    pkVB.SetColor4(0, i, perVertexColor[i].R(), perVertexColor[i].G(), perVertexColor[i].B(), perVertexColor[i].A());
+                    pkVB.SetColor4(0, i, perVertexColor[i].R, perVertexColor[i].G, perVertexColor[i].B, perVertexColor[i].A);
                 }
                 else
                 {
@@ -894,21 +894,27 @@ public class FileSurface_WM {
                 float red = Float.valueOf( stoken.nextToken() ).floatValue();
                 float green = Float.valueOf( stoken.nextToken() ).floatValue();
                 float blue = Float.valueOf( stoken.nextToken() ).floatValue();
-                kMaterial.Emissive.SetData( red, green, blue );
+                kMaterial.Emissive.R = red;
+                kMaterial.Emissive.G = green; 
+                kMaterial.Emissive.B = blue;
 
                 str = kIn.readLine().trim(); // diffuse color
                 stoken = new StringTokenizer(str);  stoken.nextToken();
                 red = Float.valueOf( stoken.nextToken() ).floatValue();
                 green = Float.valueOf( stoken.nextToken() ).floatValue();
                 blue = Float.valueOf( stoken.nextToken() ).floatValue();
-                kMaterial.Diffuse.SetData( red, green, blue );
+                kMaterial.Diffuse.R = red;
+                kMaterial.Diffuse.G = green;
+                kMaterial.Diffuse.B = blue;
 
                 str = kIn.readLine().trim(); // specular Color
                 stoken = new StringTokenizer(str);  stoken.nextToken();
                 red = Float.valueOf( stoken.nextToken() ).floatValue();
                 green = Float.valueOf( stoken.nextToken() ).floatValue();
                 blue = Float.valueOf( stoken.nextToken() ).floatValue();
-                kMaterial.Specular.SetData( red, green, blue );
+                kMaterial.Specular.R = red;
+                kMaterial.Specular.G = green;
+                kMaterial.Specular.B = blue;
 
                 str = kIn.readLine().trim(); // transparency
                 stoken = new StringTokenizer(str);  stoken.nextToken();
@@ -955,7 +961,7 @@ public class FileSurface_WM {
 
                 stoken = new StringTokenizer(str);
                 fPt = new Vector3f();
-                fPt.SetData( Float.valueOf(stoken.nextToken()).floatValue(),
+                fPt.Set( Float.valueOf(stoken.nextToken()).floatValue(),
                              Float.valueOf(stoken.nextToken()).floatValue(),
                              Float.valueOf(stoken.nextToken()).floatValue() );
 
@@ -975,9 +981,9 @@ public class FileSurface_WM {
                 
                 kVBuffer.SetPosition3(i, kVertex);      
                 kVBuffer.SetColor4( 0, i,
-                                    kMaterial.Diffuse.R(),
-                                    kMaterial.Diffuse.G(),
-                                    kMaterial.Diffuse.B(), 1.0f - transparency );
+                                    kMaterial.Diffuse.R,
+                                    kMaterial.Diffuse.G,
+                                    kMaterial.Diffuse.B, 1.0f - transparency );
             }
 
             vertexPts = null;
@@ -1419,11 +1425,11 @@ public class FileSurface_WM {
 
 	        for (i = 0; i < iVertexCount; i++) {
 	        	kVBuffer.GetPosition3(i, kVertex);;    
-	            kOut.print(kVertex.X());
+	            kOut.print(kVertex.X);
 	            kOut.print(' ');
-	            kOut.print(kVertex.Y());
+	            kOut.print(kVertex.Y);
 	            kOut.print(' ');
-	            kOut.println(kVertex.Z());
+	            kOut.println(kVertex.Z);
 	        }
 	        	        
 	        for (i = 0; i < iTriangleCount; i++) {
@@ -1533,34 +1539,34 @@ public class FileSurface_WM {
 	            kVBuffer.GetPosition3(index3, kNormal3);
 	            
 	            // Compute facet normal
-	            kNormal.SetData(0f, 0f, 0f);
-	            kNormal.add(kNormal1);
-	            kNormal.add(kNormal2);
-	            kNormal.add(kNormal3);
-	            kNormal.scale(1f/3f);
+	            kNormal.Set(0f, 0f, 0f);
+	            kNormal.Add(kNormal1);
+	            kNormal.Add(kNormal2);
+	            kNormal.Add(kNormal3);
+	            kNormal.Scale(1f/3f);
 	        
 	            // facet normal
-	            kOut.write(FileBase.floatToBytes(kNormal.X(), false));
-	            kOut.write(FileBase.floatToBytes(kNormal.Y(), false));
-	            kOut.write(FileBase.floatToBytes(kNormal.Z(), false));
+	            kOut.write(FileBase.floatToBytes(kNormal.X, false));
+	            kOut.write(FileBase.floatToBytes(kNormal.Y, false));
+	            kOut.write(FileBase.floatToBytes(kNormal.Z, false));
 	            
 	            // index 1
 	            kVBuffer.GetPosition3(index1, kVertex);;            
-	            kOut.write(FileBase.floatToBytes(kVertex.X(), false));
-	            kOut.write(FileBase.floatToBytes(kVertex.Y(), false));
-	            kOut.write(FileBase.floatToBytes(kVertex.Z(), false));
+	            kOut.write(FileBase.floatToBytes(kVertex.X, false));
+	            kOut.write(FileBase.floatToBytes(kVertex.Y, false));
+	            kOut.write(FileBase.floatToBytes(kVertex.Z, false));
 	                       
 	            // index 2
 	            kVBuffer.GetPosition3(index2, kVertex);;
-	            kOut.write(FileBase.floatToBytes(kVertex.X(), false));
-	            kOut.write(FileBase.floatToBytes(kVertex.Y(), false));
-	            kOut.write(FileBase.floatToBytes(kVertex.Z(), false));
+	            kOut.write(FileBase.floatToBytes(kVertex.X, false));
+	            kOut.write(FileBase.floatToBytes(kVertex.Y, false));
+	            kOut.write(FileBase.floatToBytes(kVertex.Z, false));
 
 	            // index 3
 	            kVBuffer.GetPosition3(index3, kVertex);
-	            kOut.write(FileBase.floatToBytes(kVertex.X(), false));
-	            kOut.write(FileBase.floatToBytes(kVertex.Y(), false));
-	            kOut.write(FileBase.floatToBytes(kVertex.Z(), false));
+	            kOut.write(FileBase.floatToBytes(kVertex.X, false));
+	            kOut.write(FileBase.floatToBytes(kVertex.Y, false));
+	            kOut.write(FileBase.floatToBytes(kVertex.Z, false));
 	            
 	            // 2 byte attribute == 0
 	            kOut.write(attribute);
@@ -1670,19 +1676,19 @@ public class FileSurface_WM {
         kOut.print("\tappearance Appearance {\n");
         kOut.print("\t\tmaterial Material {\n");
         kOut.print("\t\t\temissiveColor\t");
-        kOut.print( kMaterial.Emissive.R() + " ");
-        kOut.print( kMaterial.Emissive.G() + " ");
-        kOut.print( kMaterial.Emissive.B() );
+        kOut.print( kMaterial.Emissive.R + " ");
+        kOut.print( kMaterial.Emissive.G + " ");
+        kOut.print( kMaterial.Emissive.B );
         kOut.print("\n\t\t\tdiffuseColor\t");
-        kOut.print( kMaterial.Diffuse.R() + " ");
-        kOut.print( kMaterial.Diffuse.G() + " ");
-        kOut.print( kMaterial.Diffuse.B() );
+        kOut.print( kMaterial.Diffuse.R + " ");
+        kOut.print( kMaterial.Diffuse.G + " ");
+        kOut.print( kMaterial.Diffuse.B );
         kOut.print("\n\t\t\tspecularColor\t");
-        kOut.print( kMaterial.Specular.R() + " ");
-        kOut.print( kMaterial.Specular.G() + " ");
-        kOut.print( kMaterial.Specular.B() );
+        kOut.print( kMaterial.Specular.R + " ");
+        kOut.print( kMaterial.Specular.G + " ");
+        kOut.print( kMaterial.Specular.B );
 
-        float fTransparency = 1.0f - kVBuffer.GetColor4(0, 0).A();
+        float fTransparency = 1.0f - kVBuffer.GetColor4(0, 0).A;
         kOut.print("\n\t\t\ttransparency " + fTransparency + "\n");
         kOut.print("\t\t}\n");
         kOut.print("\t}\n");
@@ -1698,13 +1704,13 @@ public class FileSurface_WM {
         int i;
         for (i = 0; i < kVBuffer.GetVertexQuantity(); i++) {
             kVBuffer.GetPosition3(i, kPos);
-            kOut.print(kPos.X());
+            kOut.print(kPos.X);
             kOut.print(' ');
 
-            kOut.print(kPos.Y());
+            kOut.print(kPos.Y);
             kOut.print(' ');
 
-            kOut.print(kPos.Z());
+            kOut.print(kPos.Z);
 
             if (i < (kVBuffer.GetVertexQuantity() - 1)) {
                 kOut.print(" ,\n\t\t\t\t");
@@ -1849,19 +1855,19 @@ public class FileSurface_WM {
         for (i = 0, index = 0; i < kVBuffer.GetVertexQuantity(); i++) {
             kVBuffer.GetPosition3( i, kPos );
 
-            tmpInt = Float.floatToIntBits(kPos.X());
+            tmpInt = Float.floatToIntBits(kPos.X);
             bufferByte[index++] = (byte) (tmpInt >>> 24);
             bufferByte[index++] = (byte) (tmpInt >>> 16);
             bufferByte[index++] = (byte) (tmpInt >>> 8);
             bufferByte[index++] = (byte) (tmpInt & 0xff);
 
-            tmpInt = Float.floatToIntBits(kPos.Y());
+            tmpInt = Float.floatToIntBits(kPos.Y);
             bufferByte[index++] = (byte) (tmpInt >>> 24);
             bufferByte[index++] = (byte) (tmpInt >>> 16);
             bufferByte[index++] = (byte) (tmpInt >>> 8);
             bufferByte[index++] = (byte) (tmpInt & 0xff);
 
-            tmpInt = Float.floatToIntBits(kPos.Z());
+            tmpInt = Float.floatToIntBits(kPos.Z);
             bufferByte[index++] = (byte) (tmpInt >>> 24);
             bufferByte[index++] = (byte) (tmpInt >>> 16);
             bufferByte[index++] = (byte) (tmpInt >>> 8);
@@ -1874,19 +1880,19 @@ public class FileSurface_WM {
         for (i = 0; i < kMesh.VBuffer.GetVertexQuantity(); i++) {
             kMesh.VBuffer.GetPosition3( i, kNormal );
 
-            tmpInt = Float.floatToIntBits(kNormal.X());
+            tmpInt = Float.floatToIntBits(kNormal.X);
             bufferByte[index++] = (byte) (tmpInt >>> 24);
             bufferByte[index++] = (byte) (tmpInt >>> 16);
             bufferByte[index++] = (byte) (tmpInt >>> 8);
             bufferByte[index++] = (byte) (tmpInt & 0xff);
 
-            tmpInt = Float.floatToIntBits(kNormal.Y());
+            tmpInt = Float.floatToIntBits(kNormal.Y);
             bufferByte[index++] = (byte) (tmpInt >>> 24);
             bufferByte[index++] = (byte) (tmpInt >>> 16);
             bufferByte[index++] = (byte) (tmpInt >>> 8);
             bufferByte[index++] = (byte) (tmpInt & 0xff);
 
-            tmpInt = Float.floatToIntBits(kNormal.Z());
+            tmpInt = Float.floatToIntBits(kNormal.Z);
             bufferByte[index++] = (byte) (tmpInt >>> 24);
             bufferByte[index++] = (byte) (tmpInt >>> 16);
             bufferByte[index++] = (byte) (tmpInt >>> 8);
@@ -1919,25 +1925,25 @@ public class FileSurface_WM {
         for (i = 0, index = 0; i < kMesh.VBuffer.GetVertexQuantity(); i++) {
             kMesh.VBuffer.GetColor4( 0, i, kColor );
         	
-            R = Float.floatToIntBits(kColor.R());
+            R = Float.floatToIntBits(kColor.R);
             bufferColor[index++] = (byte) (R >>> 24);
             bufferColor[index++] = (byte) (R >>> 16);
             bufferColor[index++] = (byte) (R >>> 8);
             bufferColor[index++] = (byte) (R & 0xff);
             
-             G = Float.floatToIntBits(kColor.G());
+             G = Float.floatToIntBits(kColor.G);
              bufferColor[index++] = (byte) (G >>> 24);
              bufferColor[index++] = (byte) (G >>> 16);
              bufferColor[index++] = (byte) (G >>> 8);
              bufferColor[index++] = (byte) (G & 0xff);
 
-             B = Float.floatToIntBits(kColor.B());
+             B = Float.floatToIntBits(kColor.B);
              bufferColor[index++] = (byte) (B >>> 24);
              bufferColor[index++] = (byte) (B >>> 16);
              bufferColor[index++] = (byte) (B >>> 8);
              bufferColor[index++] = (byte) (B & 0xff);
              
-             A = Float.floatToIntBits(kColor.A());
+             A = Float.floatToIntBits(kColor.A);
              bufferColor[index++] = (byte) (A >>> 24);
              bufferColor[index++] = (byte) (A >>> 16);
              bufferColor[index++] = (byte) (A >>> 8);
@@ -2037,24 +2043,22 @@ public class FileSurface_WM {
 				vertex3 = new Vector3f(x, y, z);
 
 				// Check that the normal is in the correct direction
-				side1.SetData(vertex2);
-				side1.sub(vertex1);
-				side2.SetData(vertex3);
-				side2.sub(vertex2);
+				side1.Sub(vertex2, vertex1);
+				side2.Sub(vertex3, vertex2);
 				surfaceNormal.Cross(side1, side2);
-				side1.Cross(side2, surfaceNormal);
+				//side1.Cross(side2, surfaceNormal);
 				if (normal.Dot(surfaceNormal) < 0) {
 					// vertices were specified in the wrong order, so reverse
 					// two of them
-					temp.SetData(vertex2);
-					vertex2.SetData(vertex3);
-					vertex3.SetData(temp);
+					temp.Copy(vertex2);
+					vertex2.Copy(vertex3);
+					vertex3.Copy(temp);
 				}
 
 				// index1
-				x = vertex1.X();
-				y = vertex1.Y();
-				z = vertex1.Z();
+				x = vertex1.X;
+				y = vertex1.Y;
+				z = vertex1.Z;
 				searchIndex = vertexHashtable.get((x + " " + y + " " + z));
 				if (searchIndex == null) { // not found
 					vertexHashtable.put((x + " " + y + " " + z), new Integer(
@@ -2067,9 +2071,9 @@ public class FileSurface_WM {
 				}
 
 				// index 2
-				x = vertex2.X();
-				y = vertex2.Y();
-				z = vertex2.Z();
+				x = vertex2.X;
+				y = vertex2.Y;
+				z = vertex2.Z;
 				searchIndex = vertexHashtable.get((x + " " + y + " " + z));
 				if (searchIndex == null) {
 					vertexHashtable.put((x + " " + y + " " + z), new Integer(
@@ -2082,9 +2086,9 @@ public class FileSurface_WM {
 				}
 
 				// index 3
-				x = vertex3.X();
-				y = vertex3.Y();
-				z = vertex3.Z();
+				x = vertex3.X;
+				y = vertex3.Y;
+				z = vertex3.Z;
 				searchIndex = vertexHashtable.get((x + " " + y + " " + z));
 				if (searchIndex == null) {
 					vertexHashtable.put((x + " " + y + " " + z), new Integer(
@@ -2305,24 +2309,23 @@ public class FileSurface_WM {
 				vertex3 = readPoint(tokenizer, "vertex");
 
 				// Check that the normal is in the correct direction
-				side1.SetData(vertex2);
-				side1.sub(vertex1);
-				side2.SetData(vertex3);
-				side2.sub(vertex2);
+				side1.Sub(vertex2, vertex1);
+				side2.Sub(vertex3, vertex2);
+				
 				surfaceNormal.Cross(side1, side2);
-				side1.Cross(side2, surfaceNormal);
+				//side1.Cross(side2, surfaceNormal);
 				if (normal.Dot(surfaceNormal) < 0) {
 					// vertices were specified in the wrong order, so reverse
 					// two of them
-					temp.SetData(vertex2);
-					vertex2.SetData(vertex3);
-					vertex3.SetData(temp);
+					temp.Copy(vertex2);
+					vertex2.Copy(vertex3);
+					vertex3.Copy(temp);
 				}
 
 				// index 1;
-				x = vertex1.X();
-				y = vertex1.Y();
-				z = vertex1.Z();
+				x = vertex1.X;
+				y = vertex1.Y;
+				z = vertex1.Z;
 
 				searchIndex = vertexHashtable.get((x + " " + y + " " + z));
 				if (searchIndex == null) { // not found
@@ -2336,9 +2339,9 @@ public class FileSurface_WM {
 				}
 				
 				// index 2;
-				x = vertex2.X();
-				y = vertex2.Y();
-				z = vertex2.Z();
+				x = vertex2.X;
+				y = vertex2.Y;
+				z = vertex2.Z;
 
 				searchIndex = vertexHashtable.get((x + " " + y + " " + z));
 				if (searchIndex == null) { // not found
@@ -2352,9 +2355,9 @@ public class FileSurface_WM {
 				}
 				
 				// index 3;
-				x = vertex3.X();
-				y = vertex3.Y();
-				z = vertex3.Z();
+				x = vertex3.X;
+				y = vertex3.Y;
+				z = vertex3.Z;
 
 				searchIndex = vertexHashtable.get((x + " " + y + " " + z));
 				if (searchIndex == null) { // not found
@@ -2435,24 +2438,24 @@ public class FileSurface_WM {
 				vertex3 = readPoint(tokenizer, "vertex");
 
 				// Check that the normal is in the correct direction
-				side1.SetData(vertex2);
-				side1.sub(vertex1);
-				side2.SetData(vertex3);
-				side2.sub(vertex2);
-				surfaceNormal.Cross(side1, side2);
-				side1.Cross(side2, surfaceNormal);
+				side1.Copy(vertex2);
+				side1.Sub(vertex1);
+				side2.Copy(vertex3);
+				side2.Copy(vertex2);
+				side2.Cross( surfaceNormal, side1 );
+				surfaceNormal.Cross( side1, side2 );
 				if (normal.Dot(surfaceNormal) < 0) {
 					// vertices were specified in the wrong order, so reverse
 					// two of them
-					temp.SetData(vertex2);
-					vertex2.SetData(vertex3);
-					vertex3.SetData(temp);
+					temp.Copy(vertex2);
+					vertex2.Copy(vertex3);
+					vertex3.Copy(temp);
 				}
 
 				// index 1;
-				x = vertex1.X();
-				y = vertex1.Y();
-				z = vertex1.Z();
+				x = vertex1.X;
+				y = vertex1.Y;
+				z = vertex1.Z;
 
 				searchIndex = vertexHashtable.get((x + " " + y + " " + z));
 				if (searchIndex == null) { // not found
@@ -2466,9 +2469,9 @@ public class FileSurface_WM {
 				}
 				
 				// index 2;
-				x = vertex2.X();
-				y = vertex2.Y();
-				z = vertex2.Z();
+				x = vertex2.X;
+				y = vertex2.Y;
+				z = vertex2.Z;
 
 				searchIndex = vertexHashtable.get((x + " " + y + " " + z));
 				if (searchIndex == null) { // not found
@@ -2482,9 +2485,9 @@ public class FileSurface_WM {
 				}
 				
 				// index 3;
-				x = vertex3.X();
-				y = vertex3.Y();
-				z = vertex3.Z();
+				x = vertex3.X;
+				y = vertex3.Y;
+				z = vertex3.Z;
 
 				searchIndex = vertexHashtable.get((x + " " + y + " " + z));
 				if (searchIndex == null) { // not found
@@ -2606,7 +2609,7 @@ public class FileSurface_WM {
         try {
             FileSurfaceRefXML kSurfaceXML = new FileSurfaceRefXML(null, null);
             MaterialState kMaterial = (MaterialState)kMesh.GetGlobalState(GlobalState.StateType.MATERIAL);
-            float fOpacity = 1.0f - kMesh.VBuffer.GetColor4(0, 0).A();
+            float fOpacity = 1.0f - kMesh.VBuffer.GetColor4(0, 0).A;
             int iLOD = 0;
             kSurfaceXML.writeXMLsurface_WM(name, kMaterial, fOpacity, iLOD );
             saveSingleMesh( surfaceName, kImage, true, kMesh );

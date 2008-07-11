@@ -140,7 +140,7 @@ public class VolumeTextures extends JavaApplication3D
         kCDir.Normalize();
         kCUp.Normalize();
         Vector3f kCRight = new Vector3f();
-        kCDir.Cross(kCUp, kCRight);;
+        kCRight.Cross( kCDir, kCUp );
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();
@@ -225,31 +225,28 @@ public class VolumeTextures extends JavaApplication3D
         int i = 0;
         for (int iZ = 0; iZ < iBound; iZ++)
         {
-            kPoint.Z( -fExtreme + 2.0f*fExtreme*iZ/(float)(iBound-1) );
+            kPoint.Z = -fExtreme + 2.0f*fExtreme*iZ/(float)(iBound-1);
             for (int iY = 0; iY < iBound; iY++)
             {
-                kPoint.Y( -fExtreme + 2.0f*fExtreme*iY/(float)(iBound-1) );
+                kPoint.Y = -fExtreme + 2.0f*fExtreme*iY/(float)(iBound-1);
                 for (int iX = 0; iX < iBound; iX++)
                 {
-                    kPoint.X( -fExtreme + 2.0f*fExtreme*iX/(float)(iBound-1) );
-
-                    kPoint.sub( kRCenter, kDiff );
+                    kPoint.X = -fExtreme + 2.0f*fExtreme*iX/(float)(iBound-1);
+                    kDiff.Sub( kPoint, kRCenter );
                     float fRSqr = kDiff.SquaredLength();
                     float fRGauss = 1.0f - fRParam*fRSqr;
                     if (fRGauss < 0.0f)
                     {
                         fRGauss = 0.0f;
                     }
-
-                    kPoint.sub( kGCenter, kDiff );
+                    kDiff.Sub( kPoint, kGCenter );
                     fRSqr = kDiff.SquaredLength();
                     float fGGauss = 1.0f - fGParam*fRSqr;
                     if (fGGauss < 0.0f)
                     {
                         fGGauss = 0.0f;
                     }
-
-                    kPoint.sub( kBCenter, kDiff );
+                    kDiff.Sub( kPoint, kBCenter );
                     fRSqr = kDiff.SquaredLength();
                     float fBGauss = 1.0f - fBParam*fRSqr;
                     if (fBGauss < 0.0f)
