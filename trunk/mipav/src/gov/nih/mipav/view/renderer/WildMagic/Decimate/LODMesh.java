@@ -56,7 +56,7 @@ public class LODMesh {
 
 		for (i = 0; i < deciV; i++) {
 
-			point[i] = new Vector3f(rpoint[i].X(), rpoint[i].Y(), rpoint[i].Z());
+			point[i] = new Vector3f(rpoint[i].X, rpoint[i].Y, rpoint[i].Z);
 			boundary[i] = rboundary[i];
 
 		}
@@ -169,8 +169,8 @@ public class LODMesh {
 		while (next(now) != VTail) {
 			now = next(now);
 			if (now.EC) {
-				subpoint[i] = new Vector3f(point[now.ID].X(), point[now.ID].Y(),
-						point[now.ID].Z());
+				subpoint[i] = new Vector3f(point[now.ID].X, point[now.ID].Y,
+						point[now.ID].Z);
 				now.ID = i;
 				i++;
 				/*
@@ -207,8 +207,8 @@ public class LODMesh {
 		while (next(now) != VTail) {
 			now = next(now);
 			if (now.EC) {
-				subpoint[i] = new Vector3f(point[now.ID].X(), point[now.ID].Y(),
-						point[now.ID].Z());
+				subpoint[i] = new Vector3f(point[now.ID].X, point[now.ID].Y,
+						point[now.ID].Z);
 				ind[i] = now.ID;
 				now.ID = i;
 				i++;
@@ -332,13 +332,13 @@ public class LODMesh {
 	}
 
 	private double Size(Vector3f dv) {
-		return Math.sqrt((dv.X() * dv.X() + dv.Y() * dv.Y() + dv.Z() * dv.Z()));
+		return Math.sqrt((dv.X * dv.X + dv.Y * dv.Y + dv.Z * dv.Z));
 	}
 
 	private double DistanceS(Vector3f dv1, Vector3f dv2) {
-		double dx = dv1.X() - dv2.X();
-		double dy = dv1.Y() - dv2.Y();
-		double dz = dv1.Z() - dv2.Z();
+		double dx = dv1.X - dv2.X;
+		double dy = dv1.Y - dv2.Y;
+		double dz = dv1.Z - dv2.Z;
 		return (dx * dx + dy * dy + dz * dz);
 	}
 
@@ -347,9 +347,9 @@ public class LODMesh {
 		Neighbor now;
 		Neighbor tmp;
 		NEList nowe;
-		point[j].SetData(0, dv.X());
-		point[j].SetData(1, dv.Y());
-		point[j].SetData(2, dv.Z());
+		point[j].X = dv.X;
+		point[j].Y = dv.Y;
+		point[j].Z = dv.Z;
 		if (boundary[i] == 1)
 			boundary[j] = 1;
 
@@ -431,20 +431,20 @@ public class LODMesh {
 	}
 
 	private void CrossVector(Vector3f out, Vector3f in1, Vector3f in2) {
-		out.SetData(0, (in1.Y() * in2.Z() - in2.Y() * in1.Z()));
-		out.SetData(1, (in1.Z() * in2.X() - in2.Z() * in1.X()));
-		out.SetData(2, (in1.X() * in2.Y() - in2.X() * in1.Y()));
+		out.X = (in1.Y * in2.Z - in2.Y * in1.Z);
+		out.Y = (in1.Z * in2.X - in2.Z * in1.X);
+		out.Z = (in1.X * in2.Y - in2.X * in1.Y);
 	}
 
 	private void setNormal(Vector3f dln, int i, int j, Vector3f newp,
 			Vector3f dv1, Vector3f dv2) {
 
-		dv1.SetData(0, (point[i].X() - newp.X()));
-		dv1.SetData(1, (point[i].Y() - newp.Y()));
-		dv1.SetData(2, (point[i].Z() - newp.Z()));
-		dv2.SetData(0, (point[j].X() - newp.X()));
-		dv2.SetData(1, (point[j].Y() - newp.Y()));
-		dv2.SetData(2, (point[j].Z() - newp.Z()));
+		dv1.X = (point[i].X - newp.X);
+		dv1.Y = (point[i].Y - newp.Y);
+		dv1.Z = (point[i].Z - newp.Z);
+		dv2.X = (point[j].X - newp.X);
+		dv2.Y = (point[j].Y - newp.Y);
+		dv2.Z = (point[j].Z - newp.Z);
 		CrossVector(dln, dv1, dv2);
 	}
 
@@ -509,9 +509,9 @@ public class LODMesh {
 		// // System.out.println(+dv.x+" "+dv.y+" "+dv.z);
 		int dk1, dk2;
 
-		dummyv4.SetData(0, 0.0f);
-		dummyv4.SetData(1, 0.0f);
-		dummyv4.SetData(2, 0.0f);
+		dummyv4.X = 0.0f;
+		dummyv4.Y = 0.0f;
+		dummyv4.Z = 0.0f;
 
 		double dsize = 0.0f;
 
@@ -539,9 +539,9 @@ public class LODMesh {
 				}
 
 				setNormal(dummyv3, dk1, dk2, dv, dummyv1, dummyv2);
-				dummyv4.SetData(0, dummyv4.X() + dummyv3.X());
-				dummyv4.SetData(1, dummyv4.Y() + dummyv3.Y());
-				dummyv4.SetData(2, dummyv4.Z() + dummyv3.Z());
+				dummyv4.X = dummyv4.X + dummyv3.X;
+				dummyv4.Y = dummyv4.Y + dummyv3.Y;
+				dummyv4.Z = dummyv4.Z + dummyv3.Z;
 				Gamma = ((2.0 * Math.sqrt(3.0) * Size(dummyv3)) / (DistanceS(
 						dv, point[dk1])
 						+ DistanceS(dv, point[dk2]) + DistanceS(point[dk1],
@@ -573,9 +573,9 @@ public class LODMesh {
 				}
 
 				setNormal(dummyv3, dk1, dk2, dv, dummyv1, dummyv2);
-				dummyv4.SetData(0, dummyv4.X() + dummyv3.X());
-				dummyv4.SetData(1, dummyv4.Y() + dummyv3.Y());
-				dummyv4.SetData(2, dummyv4.Z() + dummyv3.Z());
+				dummyv4.X = dummyv4.X + dummyv3.X;
+				dummyv4.Y = dummyv4.Y + dummyv3.Y;
+				dummyv4.Z = dummyv4.Z + dummyv3.Z;
 				Gamma = ((2.0 * Math.sqrt(3.0) * Size(dummyv3)) / (DistanceS(
 						dv, point[dk1])
 						+ DistanceS(dv, point[dk2]) + DistanceS(point[dk1],
@@ -588,9 +588,9 @@ public class LODMesh {
 		dsize = Size(dummyv4);
 		if (dsize == 0.0f)
 			dsize = 1.0;
-		dummyv4.SetData(0, (float)(dummyv4.X() / dsize));
-		dummyv4.SetData(1, (float)(dummyv4.Y() / dsize));
-		dummyv4.SetData(2, (float)(dummyv4.Z() / dsize));
+		dummyv4.X = (float)(dummyv4.X / dsize);
+		dummyv4.Y = (float)(dummyv4.Y / dsize);
+		dummyv4.Z = (float)(dummyv4.Z / dsize);
 
 		now = NHead[i];
 		while (next(now) != NTail[i]) {
@@ -599,9 +599,9 @@ public class LODMesh {
 			if (!(now.dt.HasTwoV(i, j))) {
 				dk1 = now.dt.getV1(i);
 				dk2 = now.dt.getV2(i);
-				dummyv1.SetData(0,  0.5f * (point[dk1].X() + point[dk2].X()) + dummyv4.X());
-				dummyv1.SetData(1,  0.5f * (point[dk1].Y() + point[dk2].Y()) + dummyv4.Y());
-				dummyv1.SetData(2,  0.5f * (point[dk1].Z() + point[dk2].Z()) + dummyv4.Z());
+				dummyv1.Z =  0.5f * (point[dk1].X + point[dk2].X) + dummyv4.X;
+				dummyv1.Y =  0.5f * (point[dk1].Y + point[dk2].Y) + dummyv4.Y;
+				dummyv1.Z =  0.5f * (point[dk1].Z + point[dk2].Z) + dummyv4.Z;
 				if (PlaneSize(point[dk1], point[dk2], dummyv1, dv))
 					return false;
 			}
@@ -613,9 +613,9 @@ public class LODMesh {
 			if (!(now.dt.HasTwoV(i, j))) {
 				dk1 = now.dt.getV1(j);
 				dk2 = now.dt.getV2(j);
-				dummyv1.SetData(0,  0.5f * (point[dk1].X() + point[dk2].X()) + dummyv4.X());
-				dummyv1.SetData(1,  0.5f * (point[dk1].Y() + point[dk2].Y()) + dummyv4.Y());
-				dummyv1.SetData(2,  0.5f * (point[dk1].Z() + point[dk2].Z()) + dummyv4.Z());
+				dummyv1.X =  0.5f * (point[dk1].X + point[dk2].X) + dummyv4.X;
+				dummyv1.Y =  0.5f * (point[dk1].Y + point[dk2].Y) + dummyv4.Y;
+				dummyv1.Z =  0.5f * (point[dk1].Z + point[dk2].Z) + dummyv4.Z;
 				if (PlaneSize(point[dk1], point[dk2], dummyv1, dv))
 					return false;
 			}
@@ -625,15 +625,15 @@ public class LODMesh {
 	}
 
 	private boolean PlaneSize(Vector3f p1, Vector3f p2, Vector3f p3, Vector3f ep) {
-		double dv = (-ep.Z() * p1.Y() * p2.X() + ep.Y() * p1.Z() * p2.X() + ep.Z() * p1.X()
-				* p2.Y() - ep.X() * p1.Z() * p2.Y() - ep.Y() * p1.X() * p2.Z() + ep.X() * p1.Y()
-				* p2.Z() + ep.Z() * p1.Y() * p3.X() - ep.Y() * p1.Z() * p3.X() - ep.Z() * p2.Y()
-				* p3.X() + p1.Z() * p2.Y() * p3.X() + ep.Y() * p2.Z() * p3.X() - p1.Y() * p2.Z()
-				* p3.X() - ep.Z() * p1.X() * p3.Y() + ep.X() * p1.Z() * p3.Y() + ep.Z() * p2.X()
-				* p3.Y() - p1.Z() * p2.X() * p3.Y() - ep.X() * p2.Z() * p3.Y() + p1.X() * p2.Z()
-				* p3.Y() + ep.Y() * p1.X() * p3.Z() - ep.X() * p1.Y() * p3.Z() - ep.Y() * p2.X()
-				* p3.Z() + p1.Y() * p2.X() * p3.Z() + ep.X() * p2.Y() * p3.Z() - p1.X() * p2.Y()
-				* p3.Z());
+		double dv = (-ep.Z * p1.Y * p2.X + ep.Y * p1.Z * p2.X + ep.Z * p1.X
+				* p2.Y - ep.X * p1.Z * p2.Y - ep.Y * p1.X * p2.Z + ep.X * p1.Y
+				* p2.Z + ep.Z * p1.Y * p3.X - ep.Y * p1.Z * p3.X - ep.Z * p2.Y
+				* p3.X + p1.Z * p2.Y * p3.X + ep.Y * p2.Z * p3.X - p1.Y * p2.Z
+				* p3.X - ep.Z * p1.X * p3.Y + ep.X * p1.Z * p3.Y + ep.Z * p2.X
+				* p3.Y - p1.Z * p2.X * p3.Y - ep.X * p2.Z * p3.Y + p1.X * p2.Z
+				* p3.Y + ep.Y * p1.X * p3.Z - ep.X * p1.Y * p3.Z - ep.Y * p2.X
+				* p3.Z + p1.Y * p2.X * p3.Z + ep.X * p2.Y * p3.Z - p1.X * p2.Y
+				* p3.Z);
 
 		// // System.out.println(+dv);
 		if (dv > 0.0f)
@@ -644,25 +644,25 @@ public class LODMesh {
 	private void setNewPosition(int i, int j, Vector3f dv) {
 
 		if (boundary[i] == 1 && boundary[j] == 1) {
-			dv.SetData(0, 0.5f * (point[i].X() + point[j].X()));
-			dv.SetData(1, 0.5f * (point[i].Y() + point[j].Y()));
-			dv.SetData(2, 0.5f * (point[i].Z() + point[j].Z()));
+			dv.X = 0.5f * (point[i].X + point[j].X);
+                        dv.Y = 0.5f * (point[i].Y + point[j].Y);
+			dv.Z = 0.5f * (point[i].Z + point[j].Z);
 		} else if (boundary[i] == 1 && boundary[j] != 1) {
-			dv.SetData(0, point[i].X());
-			dv.SetData(1, point[i].Y());
-			dv.SetData(2, point[i].Z());
+			dv.X = point[i].X;
+			dv.Y = point[i].Y;
+			dv.Z = point[i].Z;
 
 		} else if (boundary[i] != 1 && boundary[j] == 1) {
-			dv.SetData(0, point[j].X());
-			dv.SetData(1, point[j].Y());
-			dv.SetData(2, point[j].Z());
+			dv.X = point[j].X;
+                        dv.Y = point[j].Y;
+			dv.Z = point[j].Z;
 		} else {
 			dummyQE.UpdateQuadric(initialV[i].error, initialV[j].error);
 			if (!dummyQE.setNewPosition(dv)) {
 				// // System.out.println("Error !!!");
-				dv.SetData(0, 0.5f * (point[i].X() + point[j].X()));
-				dv.SetData(1, 0.5f * (point[i].Y() + point[j].Y()));
-				dv.SetData(2, 0.5f * (point[i].Z() + point[j].Z()));
+				dv.X = 0.5f * (point[i].X + point[j].X);
+				dv.Y = 0.5f * (point[i].Y + point[j].Y);
+				dv.Z = 0.5f * (point[i].Z + point[j].Z);
 			}
 		}
 	}
@@ -695,9 +695,9 @@ public class LODMesh {
 		dummyQE.UpdateQuadric(dv1.error, dv2.error);
 		if (!dummyQE.setNewPosition(dummyv1)) {
 			// // System.out.println("AAAA");
-			dummyv1.SetData(0, (point[dv1.ID].X() + point[dv2.ID].X()) / 2.0f);
-			dummyv1.SetData(1, (point[dv1.ID].Y() + point[dv2.ID].Y()) / 2.0f);
-			dummyv1.SetData(2, (point[dv1.ID].Z() + point[dv2.ID].Z()) / 2.0f);
+			dummyv1.X = (point[dv1.ID].X + point[dv2.ID].X) / 2.0f;
+			dummyv1.Y = (point[dv1.ID].Y + point[dv2.ID].Y) / 2.0f;
+			dummyv1.Z = (point[dv1.ID].Z + point[dv2.ID].Z) / 2.0f;
 		}
 
 		energy = dummyQE.Quadric(dummyv1);
@@ -714,9 +714,9 @@ public class LODMesh {
 		Vertices dv2 = initialV[j];
 		dummyQE.UpdateQuadric(dv1.error, dv2.error);
 		if (!dummyQE.setNewPosition(dummyv1)) {
-			dummyv1.SetData(0, (point[dv1.ID].X() + point[dv2.ID].X()) / 2.0f);
-			dummyv1.SetData(1, (point[dv1.ID].Y() + point[dv2.ID].Y()) / 2.0f);
-			dummyv1.SetData(2, (point[dv1.ID].Z() + point[dv2.ID].Z()) / 2.0f);
+			dummyv1.X = (point[dv1.ID].X + point[dv2.ID].X) / 2.0f;
+			dummyv1.Y = (point[dv1.ID].Y + point[dv2.ID].Y) / 2.0f;
+			dummyv1.Z = (point[dv1.ID].Z + point[dv2.ID].Z) / 2.0f;
 		}
 		energy = dummyQE.Quadric(dummyv1);
 		if (maxenergy > energy)
@@ -785,12 +785,12 @@ public class LODMesh {
 	}
 
 	private void setTNormal(int dv1, int dv2, int dv3) {
-		dummyv1.SetData(0, (point[dv2].X() - point[dv1].X()));
-		dummyv1.SetData(1, (point[dv2].Y() - point[dv1].Y()));
-		dummyv1.SetData(2, (point[dv2].Z() - point[dv1].Z()));
-		dummyv2.SetData(0, (point[dv3].X() - point[dv1].X()));
-		dummyv2.SetData(1, (point[dv3].Y() - point[dv1].Y()));
-		dummyv2.SetData(2, (point[dv3].Z() - point[dv1].Z()));
+		dummyv1.X = (point[dv2].X - point[dv1].X);
+		dummyv1.Y = (point[dv2].Y - point[dv1].Y);
+		dummyv1.Z = (point[dv2].Z - point[dv1].Z);
+		dummyv2.X = (point[dv3].X - point[dv1].X);
+		dummyv2.Y = (point[dv3].Y - point[dv1].Y);
+		dummyv2.Z = (point[dv3].Z - point[dv1].Z);
 		CrossVector(dummyv3, dummyv1, dummyv2);
 	}
 
@@ -965,9 +965,9 @@ public class LODMesh {
 					* a12 + a11 * a22)
 					* bz)
 					/ divisor;
-			dv.SetData(0, (float)dx);
-			dv.SetData(1, (float)dy);
-			dv.SetData(2, (float)dz);
+			dv.X = (float)dx;
+			dv.Y = (float)dy;
+			dv.Z = (float)dz;
 			return true;
 		}
 
@@ -1012,10 +1012,10 @@ public class LODMesh {
 		}
 
 		public double Quadric(Vector3f dv) {
-			return (dd + 2.0 * bx * dv.X() + a11 * dv.X() * dv.X() + 2.0 * by * dv.Y()
-					+ 2.0 * a12 * dv.X() * dv.Y() + a22 * dv.Y() * dv.Y() + 2.0 * bz
-					* dv.Z() + 2.0 * a13 * dv.X() * dv.Z() + 2.0 * a23 * dv.Y() * dv.Z() + a33
-					* dv.Z() * dv.Z());
+			return (dd + 2.0 * bx * dv.X + a11 * dv.X * dv.X + 2.0 * by * dv.Y
+					+ 2.0 * a12 * dv.X * dv.Y + a22 * dv.Y * dv.Y + 2.0 * bz
+					* dv.Z + 2.0 * a13 * dv.X * dv.Z + 2.0 * a23 * dv.Y * dv.Z + a33
+					* dv.Z * dv.Z);
 		}
 
 	}
@@ -1171,14 +1171,14 @@ public class LODMesh {
 		}
 
 		public void setABCD(Vector3f dv1, Vector3f dn) {
-			double size = Math.sqrt((dn.X() * dn.X() + dn.Y() * dn.Y() + dn.Z() * dn.Z()));
+			double size = Math.sqrt((dn.X * dn.X + dn.Y * dn.Y + dn.Z * dn.Z));
 			if (size == 0.0f)
 				size = 1.0;
-			double dx = (dn.X() / size);
-			double dy = (dn.Y() / size);
-			double dz = (dn.Z() / size);
+			double dx = (dn.X / size);
+			double dy = (dn.Y / size);
+			double dz = (dn.Z / size);
 			area = (size / 2.0);
-			error = new Quadric(dx, dy, dz, (-(dv1.X() * dx + dv1.Y() * dy + dv1.Z()
+			error = new Quadric(dx, dy, dz, (-(dv1.X * dx + dv1.Y * dy + dv1.Z
 					* dz)), (size / 2.0));
 
 			v1.addABCD(error);

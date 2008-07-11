@@ -118,11 +118,8 @@ public class VolumeClip extends VolumeObject
             m_kClipEyeInv.dispose();
             m_kClipEyeInv = null;
         }
-        if ( m_kArbitraryClip != null )
-        {
-            m_kArbitraryClip.dispose();
-            m_kArbitraryClip = null;
-        }
+        m_kArbitraryClip = null;
+
         if ( m_spkEyeCamera != null )
         {
             m_spkEyeCamera.dispose();
@@ -469,9 +466,9 @@ public class VolumeClip extends VolumeObject
         Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCUp = new Vector3f(0.0f,-1.0f,0.0f);
         Vector3f kCRight = new Vector3f();
-        kCDir.Cross(kCUp, kCRight);
+        kCRight.Cross( kCDir, kCUp );
         Vector3f kCLoc = new Vector3f(kCDir);
-        kCLoc.scaleEquals(-4.0f);
+        kCLoc.Scale(-4.0f);
         m_spkEyeCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         for ( int i = 0; i < 4; i++ )

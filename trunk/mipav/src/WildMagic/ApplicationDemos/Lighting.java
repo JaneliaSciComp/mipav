@@ -159,9 +159,9 @@ public class Lighting extends JavaApplication3D
         Vector3f kCLoc = new Vector3f(8.0f,0.0f,4.0f);
         //Vector3f kCDir = kCLoc.neg();  // lookat origin
         Vector3f kCDir = new Vector3f(kCLoc);
-        kCDir.negEquals();  // lookat origin
+        kCDir.Neg();  // lookat origin
         kCDir.Normalize();
-        Vector3f kCUp = new Vector3f(kCDir.Z(),0,-kCDir.X());
+        Vector3f kCUp = new Vector3f(kCDir.Z,0,-kCDir.X);
         Vector3f kCRight = new Vector3f(Vector3f.UNIT_Y);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
@@ -589,20 +589,20 @@ public class Lighting extends JavaApplication3D
             TestStreaming(m_spkScene,"Lighting.wmof");
             return;
         case 'm':
-            m_kDiffuseColor.R( m_kDiffuseColor.R() + .1f );
-            if ( m_kDiffuseColor.R() > 1.0f )
+            m_kDiffuseColor.R = m_kDiffuseColor.R + .1f;
+            if ( m_kDiffuseColor.R > 1.0f )
             {
-                m_kDiffuseColor.R( 1.0f );
-                m_kDiffuseColor.G( m_kDiffuseColor.G() + .1f );
-                if ( m_kDiffuseColor.G() > 1.0f )
+                m_kDiffuseColor.R = 1.0f;
+                m_kDiffuseColor.G = m_kDiffuseColor.G + .1f;
+                if ( m_kDiffuseColor.G > 1.0f )
                 {
-                    m_kDiffuseColor.G( 1.0f );
-                    m_kDiffuseColor.B( m_kDiffuseColor.B() + .1f );
-                    if ( m_kDiffuseColor.B() > 1.0f )
+                    m_kDiffuseColor.G = 1.0f;
+                    m_kDiffuseColor.B = m_kDiffuseColor.B + .1f;
+                    if ( m_kDiffuseColor.B > 1.0f )
                     {
-                        m_kDiffuseColor.R( 0.0f );
-                        m_kDiffuseColor.G( 0.0f );
-                        m_kDiffuseColor.B( 0.0f );
+                        m_kDiffuseColor.R = 0.0f;
+                        m_kDiffuseColor.G = 0.0f;
+                        m_kDiffuseColor.B = 0.0f;
                     }
                 }
             }

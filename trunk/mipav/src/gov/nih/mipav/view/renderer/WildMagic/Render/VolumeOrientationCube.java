@@ -74,11 +74,7 @@ public class VolumeOrientationCube extends VolumeObject
         m_akOrientationCube = null;
 
         m_aakAxisFiles = null;
-        if ( m_kCubeTranslate != null )
-        {
-            m_kCubeTranslate.dispose();
-            m_kCubeTranslate = null;
-        }
+        m_kCubeTranslate = null;
     }
     
     /** Creates the orientation cube. */
@@ -162,7 +158,7 @@ public class VolumeOrientationCube extends VolumeObject
             for ( int j = 0; j < 4; j++ )
             {
                 akOutlineSquare[i].GetPosition3( j, kPos );
-                kPos.subEquals(kHalf);
+                kPos.Sub(kHalf);
                 akOutlineSquare[i].SetPosition3( j, kPos );
             }
             m_akOrientationCube[i] = new TriMesh( new VertexBuffer(akOutlineSquare[i]), kIndexBuffer );

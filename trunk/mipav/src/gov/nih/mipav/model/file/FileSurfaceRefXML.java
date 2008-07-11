@@ -482,7 +482,7 @@ public class FileSurfaceRefXML extends FileXML {
          * @return  the color in string format
          */
         public String getColorString(ColorRGB kColor) {
-            String kColorString = new String(kColor.R() + " " + kColor.G() + " " + kColor.B());
+            String kColorString = new String(kColor.R + " " + kColor.G + " " + kColor.B);
 
             return kColorString;
         }

@@ -306,15 +306,15 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
             {
                 for (int iX = 0; iX < iXBound; iX++)
                 {
-                    kIn.X(((float)iX/(float)iXBound)*fX);
-                    kIn.Y(((float)iY/(float)iYBound)*fY);
-                    kIn.Z(((float)iZ/(float)iZBound)*fZ);
+                    kIn.X = ((float)iX/(float)iXBound)*fX;
+                    kIn.Y = ((float)iY/(float)iYBound)*fY;
+                    kIn.Z = ((float)iZ/(float)iZBound)*fZ;
 
-                    Matrix4f.mult( kIn, m_kWVPMatrix, kOut);
-                    kOut.scaleEquals(1.0f/kOut.W());
+                    m_kWVPMatrix.MultLeft( kIn, kOut);
+                    kOut.Scale(1.0f/kOut.W);
 
-                    int iXIndex = (int)((m_iSculptImageWidth-1) * (1 + kOut.X())/2.0f);
-                    int iYIndex = (int)((m_iSculptImageHeight-1) * (1 - kOut.Y())/2.0f);
+                    int iXIndex = (int)((m_iSculptImageWidth-1) * (1 + kOut.X)/2.0f);
+                    int iYIndex = (int)((m_iSculptImageHeight-1) * (1 - kOut.Y)/2.0f);
 
                     int iDataIndex = iZ * (iXBound * iYBound) + (iY * iXBound) + iX;
 

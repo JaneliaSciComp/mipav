@@ -235,9 +235,9 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
         // Ambient light for model.
         m_akLights[LIGHT_INDEX_AMBIENT] = new Light();
         m_akLights[LIGHT_INDEX_AMBIENT].Intensity = 0.5f;
-        m_akLights[LIGHT_INDEX_AMBIENT].Ambient.SetData(1f, 1f, 1f);
-        m_akLights[LIGHT_INDEX_AMBIENT].Diffuse.SetData(1f, 1f, 1f);
-        m_akLights[LIGHT_INDEX_AMBIENT].Specular.SetData(1f, 1f, 1f);
+        m_akLights[LIGHT_INDEX_AMBIENT].Ambient.Set(1f, 1f, 1f);
+        m_akLights[LIGHT_INDEX_AMBIENT].Diffuse.Set(1f, 1f, 1f);
+        m_akLights[LIGHT_INDEX_AMBIENT].Specular.Set(1f, 1f, 1f);
         m_aiLightScale[LIGHT_INDEX_AMBIENT] = 1;
 
         // Model lights at corners of the volume.
@@ -248,22 +248,22 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
             m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i] = new Light(Light.LightType.LT_DIRECTIONAL);
             m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].On = false;
             m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Intensity = 0.5f;
-            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Ambient.SetData(1f, 1f, 1f);
-            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Diffuse.SetData(1f, 1f, 1f);
-            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Specular.SetData(1f, 1f, 1f);
-            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Position.SetData(fX, fY, fZ);
-            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].DVector.SetData(-fX, -fY, fZ);
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Ambient.Set(1f, 1f, 1f);
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Diffuse.Set(1f, 1f, 1f);
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Specular.Set(1f, 1f, 1f);
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Position.Set(fX, fY, fZ);
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].DVector.Set(-fX, -fY, fZ);
             m_aiLightScale[LIGHT_INDEX_MODEL_X0Y0Z0 + i] = 1;
         }
 
         // Directional light for world.
         m_akLights[LIGHT_INDEX_STATIC] = new Light(Light.LightType.LT_DIRECTIONAL);
         m_akLights[LIGHT_INDEX_STATIC].Intensity = 0.5f;
-        m_akLights[LIGHT_INDEX_STATIC].Ambient.SetData(1f, 1f, 1f);
-        m_akLights[LIGHT_INDEX_STATIC].Diffuse.SetData(1f, 1f, 1f);
-        m_akLights[LIGHT_INDEX_STATIC].Specular.SetData(1f, 1f, 1f);
-        m_akLights[LIGHT_INDEX_STATIC].Position.SetData(0f,0f,3f);
-        m_akLights[LIGHT_INDEX_STATIC].DVector.SetData( 0f, 0f, 1f );
+        m_akLights[LIGHT_INDEX_STATIC].Ambient.Set(1f, 1f, 1f);
+        m_akLights[LIGHT_INDEX_STATIC].Diffuse.Set(1f, 1f, 1f);
+        m_akLights[LIGHT_INDEX_STATIC].Specular.Set(1f, 1f, 1f);
+        m_akLights[LIGHT_INDEX_STATIC].Position.Set(0f,0f,3f);
+        m_akLights[LIGHT_INDEX_STATIC].DVector.Set( 0f, 0f, 1f );
         m_aiLightScale[LIGHT_INDEX_STATIC] = 3;
 
 
@@ -484,25 +484,25 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
             m_akLights[iSelect].Intensity = value;
         } else if (source == m_kSliderPosX) {
             m_kTextPosX.setText(String.valueOf((m_kSliderPosX.getValue() / 100.0d)));
-            m_akLights[iSelect].Position.X((float) (m_kSliderPosX.getValue() / 100.0));
-            m_akLights[iSelect].DVector.X( m_akLights[iSelect].DVector.X() - m_akLights[iSelect].Position.X() );
+            m_akLights[iSelect].Position.X = (float) (m_kSliderPosX.getValue() / 100.0);
+            m_akLights[iSelect].DVector.X =  m_akLights[iSelect].DVector.X - m_akLights[iSelect].Position.X ;
         } else if (source == m_kSliderPosY) {
             m_kTextPosY.setText(String.valueOf((m_kSliderPosY.getValue() / 100.0d)));
-            m_akLights[iSelect].Position.Y((float) (m_kSliderPosY.getValue() / 100.0));
-            m_akLights[iSelect].DVector.Y( m_akLights[iSelect].DVector.Y() - m_akLights[iSelect].Position.Y() );
+            m_akLights[iSelect].Position.Y = (float) (m_kSliderPosY.getValue() / 100.0);
+            m_akLights[iSelect].DVector.Y =  m_akLights[iSelect].DVector.Y - m_akLights[iSelect].Position.Y;
         } else if (source == m_kSliderPosZ) {
             m_kTextPosZ.setText(String.valueOf((m_kSliderPosZ.getValue() / 100.0d)));
-            m_akLights[iSelect].Position.Z((float) (m_kSliderPosZ.getValue() / 100.0));
-            m_akLights[iSelect].DVector.Z( -(m_akLights[iSelect].DVector.Z() - m_akLights[iSelect].Position.Z()) );
+            m_akLights[iSelect].Position.Z = (float) (m_kSliderPosZ.getValue() / 100.0);
+            m_akLights[iSelect].DVector.Z =  -(m_akLights[iSelect].DVector.Z - m_akLights[iSelect].Position.Z);
         } else if (source == m_kSliderTrgX) {
             m_kTextTrgX.setText(String.valueOf((m_kSliderTrgX.getValue() / 100.0d)));
-            m_akLights[iSelect].DVector.X(((float)(m_kSliderTrgX.getValue() / 100.0)) - m_akLights[iSelect].Position.X() );
+            m_akLights[iSelect].DVector.X = ((float)(m_kSliderTrgX.getValue() / 100.0)) - m_akLights[iSelect].Position.X;
         } else if (source == m_kSliderTrgY) {
             m_kTextTrgY.setText(String.valueOf((m_kSliderTrgY.getValue() / 100.0d)));
-            m_akLights[iSelect].DVector.Y(((float) (m_kSliderTrgY.getValue() / 100.0)) - m_akLights[iSelect].Position.Y() );
+            m_akLights[iSelect].DVector.Y = ((float) (m_kSliderTrgY.getValue() / 100.0)) - m_akLights[iSelect].Position.Y;
         } else if (source == m_kSliderTrgZ) {
             m_kTextTrgZ.setText(String.valueOf((m_kSliderTrgZ.getValue() / 100.0d)));
-            m_akLights[iSelect].DVector.Z( - (((float) (m_kSliderTrgZ.getValue() / 100.0)) - m_akLights[iSelect].Position.Z()) );
+            m_akLights[iSelect].DVector.Z =  - (((float) (m_kSliderTrgZ.getValue() / 100.0)) - m_akLights[iSelect].Position.Z);
         }
 
     }
@@ -862,7 +862,7 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
 
         Vector3f kPosition = light.Position;
         Vector3f kTarget = light.DVector;
-        Color kColor = new Color( light.Diffuse.R(), light.Diffuse.G(), light.Diffuse.B() );
+        Color kColor = new Color( light.Diffuse.R, light.Diffuse.G, light.Diffuse.B );
 
         onOffCheckBox.setSelected(bEnable);
 
@@ -914,51 +914,51 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
         m_kSliderPosX.removeChangeListener(this);
         m_kSliderPosX.setMinimum(-100 * iScale);
         m_kSliderPosX.setMaximum(+100 * iScale);
-        m_kSliderPosX.setValue(Math.round(kPosition.X() * 100));
+        m_kSliderPosX.setValue(Math.round(kPosition.X * 100));
         m_kSliderPosX.setLabelTable(labelsPos);
         m_kSliderPosX.addChangeListener(this);
-        m_kTextPosX.setText(makeString(kPosition.X(), 2));
+        m_kTextPosX.setText(makeString(kPosition.X, 2));
 
         m_kSliderPosY.removeChangeListener(this);
         m_kSliderPosY.setMinimum(-100 * iScale);
         m_kSliderPosY.setMaximum(+100 * iScale);
-        m_kSliderPosY.setValue(Math.round(kPosition.Y() * 100));
+        m_kSliderPosY.setValue(Math.round(kPosition.Y * 100));
         m_kSliderPosY.setLabelTable(labelsPos);
         m_kSliderPosY.addChangeListener(this);
-        m_kTextPosY.setText(makeString(kPosition.Y(), 2));
+        m_kTextPosY.setText(makeString(kPosition.Y, 2));
 
         m_kSliderPosZ.removeChangeListener(this);
         m_kSliderPosZ.setMinimum(-100 * iScale);
         m_kSliderPosZ.setMaximum(+100 * iScale);
-        m_kSliderPosZ.setValue(Math.round(kPosition.Z() * 100));
+        m_kSliderPosZ.setValue(Math.round(kPosition.Z * 100));
         m_kSliderPosZ.setLabelTable(labelsPos);
         m_kSliderPosZ.addChangeListener(this);
-        m_kTextPosZ.setText(makeString(kPosition.Z(), 2));
+        m_kTextPosZ.setText(makeString(kPosition.Z, 2));
 
         // update light target
         m_kSliderTrgX.removeChangeListener(this);
         m_kSliderTrgX.setMinimum(-100 * iScale);
         m_kSliderTrgX.setMaximum(+100 * iScale);
-        m_kSliderTrgX.setValue(Math.round((kTarget.X() + kPosition.X()) * 100));
+        m_kSliderTrgX.setValue(Math.round((kTarget.X + kPosition.X) * 100));
         m_kSliderTrgX.setLabelTable(labelsTrg);
         m_kSliderTrgX.addChangeListener(this);
-        m_kTextTrgX.setText(makeString((kTarget.X() + kPosition.X()), 2));
+        m_kTextTrgX.setText(makeString((kTarget.X + kPosition.X), 2));
 
         m_kSliderTrgY.removeChangeListener(this);
         m_kSliderTrgY.setMinimum(-100 * iScale);
         m_kSliderTrgY.setMaximum(+100 * iScale);
-        m_kSliderTrgY.setValue(Math.round((kTarget.Y() + kPosition.Y()) * 100));
+        m_kSliderTrgY.setValue(Math.round((kTarget.Y + kPosition.Y) * 100));
         m_kSliderTrgY.setLabelTable(labelsTrg);
         m_kSliderTrgY.addChangeListener(this);
-        m_kTextTrgY.setText(makeString((kTarget.Y() + kPosition.Y()), 2));
+        m_kTextTrgY.setText(makeString((kTarget.Y + kPosition.Y), 2));
 
         m_kSliderTrgZ.removeChangeListener(this);
         m_kSliderTrgZ.setMinimum(-100 * iScale);
         m_kSliderTrgZ.setMaximum(+100 * iScale);
-        m_kSliderTrgZ.setValue(Math.round(-(kTarget.Z() + kPosition.Z()) * 100));
+        m_kSliderTrgZ.setValue(Math.round(-(kTarget.Z + kPosition.Z) * 100));
         m_kSliderTrgZ.setLabelTable(labelsTrg);
         m_kSliderTrgZ.addChangeListener(this);
-        m_kTextTrgZ.setText(makeString(-(kTarget.Z() + kPosition.Z()), 2));
+        m_kTextTrgZ.setText(makeString(-(kTarget.Z + kPosition.Z), 2));
 
         // Enable slider and value controls
         m_kSliderPosX.setEnabled(bEnablePosition);
@@ -1060,8 +1060,8 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
             if (colorChooser != source) {
                 Color colorA = colorChooser.getColor();
 
-                m_akLights[iSelect].Ambient.SetData(colorA.getRed()/255.0f, colorA.getGreen()/255.0f, colorA.getBlue()/255.0f);
-                m_akLights[iSelect].Diffuse.SetData(colorA.getRed()/255.0f, colorA.getGreen()/255.0f, colorA.getBlue()/255.0f);
+                m_akLights[iSelect].Ambient.Set(colorA.getRed()/255.0f, colorA.getGreen()/255.0f, colorA.getBlue()/255.0f);
+                m_akLights[iSelect].Diffuse.Set(colorA.getRed()/255.0f, colorA.getGreen()/255.0f, colorA.getBlue()/255.0f);
                 refreshControlPanel();
                 refreshLighting();
             }

@@ -401,9 +401,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
         Vector3f kCRight = new Vector3f();
-        kCDir.Cross(kCUp, kCRight);
+        kCRight.Cross( kCDir, kCUp );
         Vector3f kCLoc = new Vector3f(kCDir);
-        kCLoc.scaleEquals(-1.4f);
+        kCLoc.Scale(-1.4f);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene( arg0 );
@@ -549,6 +549,26 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         case 'r':
             m_bLeft = false;
             m_bRight = true;
+            break;
+        case 'c':
+            for ( int i = 0; i < m_kDisplayList.size(); i++ )
+            {
+            	if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+            	{
+            		VolumeSurface kSurface = (VolumeSurface)m_kDisplayList.get(i);
+            		kSurface.SetFrontface(true);
+            	}
+            }
+            break;
+        case 'C':
+            for ( int i = 0; i < m_kDisplayList.size(); i++ )
+            {
+            	if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+            	{
+            		VolumeSurface kSurface = (VolumeSurface)m_kDisplayList.get(i);
+            		kSurface.SetBackface(true);
+            	}
+            }
             break;
             /*
 
@@ -1083,27 +1103,27 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         if ( m_kVolumeClip != null )
         {
-            m_kVolumeClip.SetArbPlane( m_kArbitraryClip.W() * m_fX );
+            m_kVolumeClip.SetArbPlane( m_kArbitraryClip.W * m_fX );
         }
 
         // Rotate normal vector:
         Matrix3f kClipRotate = m_kVolumeClip.ArbRotate().Local.GetRotate();
         Vector3f kNormal = new Vector3f( 1,0,0 );
-        kClipRotate.mult(kNormal, kNormal);
+        kClipRotate.Mult(kNormal, kNormal);
         kNormal.Normalize();
 
         // Scale kNormal based on the scaled volume:
-        kNormal.SetData( kNormal.X() * m_fX, kNormal.Y() * m_fY, kNormal.Z() * m_fZ );
+        kNormal.Set( kNormal.X * m_fX, kNormal.Y * m_fY, kNormal.Z * m_fZ );
         float fLength = kNormal.Length();
         kNormal.Normalize();
-        m_afArbEquation[0] = kNormal.X();
-        m_afArbEquation[1] = kNormal.Y();
-        m_afArbEquation[2] = kNormal.Z();
+        m_afArbEquation[0] = kNormal.X;
+        m_afArbEquation[1] = kNormal.Y;
+        m_afArbEquation[2] = kNormal.Z;
 
         // Calculate the distance to the plane, scaled based on the scaled kNormal:
         Vector3f kPos = new Vector3f();
-        kNormal.scale( (m_kArbitraryClip.W() - 0.5f)/fLength, kPos );
-        kPos.addEquals( new Vector3f( .5f, .5f, .5f ));
+        kPos.Scale( (m_kArbitraryClip.W - 0.5f)/fLength, kNormal );
+        kPos.Add( new Vector3f( .5f, .5f, .5f ));
         m_afArbEquation[3] = kNormal.Dot(kPos);   
         
         // Update shader with rotated normal and distance:
@@ -1127,9 +1147,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void setClipPlaneColor( int iWhich, ColorRGB kColor )
     {
-        kColor.R( (float)(kColor.R()/255.0) );
-        kColor.G( (float)(kColor.G()/255.0) );
-        kColor.B( (float)(kColor.B()/255.0) );
+        kColor.R = (float)(kColor.R/255.0);
+        kColor.G = (float)(kColor.G/255.0);
+        kColor.B = (float)(kColor.B/255.0);
 
         if ( m_kVolumeClip != null )
         {
@@ -1143,9 +1163,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void setEyeColor( ColorRGB kColor )
     {
-        kColor.R( (float)(kColor.R()/255.0) );
-        kColor.G( (float)(kColor.G()/255.0) );
-        kColor.B( (float)(kColor.B()/255.0) );
+        kColor.R = (float)(kColor.R/255.0);
+        kColor.G = (float)(kColor.G/255.0);
+        kColor.B = (float)(kColor.B/255.0);
         if ( m_kVolumeClip != null )
         {
             m_kVolumeClip.setEyeColor(kColor);
@@ -1158,9 +1178,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void setArbColor( ColorRGB kColor )
     {
-        kColor.R( (float)(kColor.R()/255.0) );
-        kColor.G( (float)(kColor.G()/255.0) );
-        kColor.B( (float)(kColor.B()/255.0) );
+        kColor.R = (float)(kColor.R/255.0);
+        kColor.G = (float)(kColor.G/255.0);
+        kColor.B = (float)(kColor.B/255.0);
         if ( m_kVolumeClip != null )
         {
             m_kVolumeClip.setArbColor(kColor);
@@ -1173,9 +1193,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void setEyeInvColor( ColorRGB kColor )
     {
-        kColor.R( (float)(kColor.R()/255.0) );
-        kColor.G( (float)(kColor.G()/255.0) );
-        kColor.B( (float)(kColor.B()/255.0) );
+        kColor.R = (float)(kColor.R/255.0);
+        kColor.G = (float)(kColor.G/255.0);
+        kColor.B = (float)(kColor.B/255.0);
         if ( m_kVolumeClip != null )
         {
             m_kVolumeClip.setEyeInvColor(kColor);
@@ -1618,9 +1638,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         if ( m_kSlices != null )
         {
-            m_kSlices.SetCenter( new Vector3f( (kCenter.X() / (m_kImageA.getExtents()[0] -1)),
-                                               (kCenter.Y() / (m_kImageA.getExtents()[1] -1)),
-                                               (kCenter.Z() / (m_kImageA.getExtents()[2] -1))  ) );
+            m_kSlices.SetCenter( new Vector3f( (kCenter.X / (m_kImageA.getExtents()[0] -1)),
+                                               (kCenter.Y / (m_kImageA.getExtents()[1] -1)),
+                                               (kCenter.Z / (m_kImageA.getExtents()[2] -1))  ) );
 
         }
     }

@@ -242,7 +242,7 @@ public class JPanelSurface_WM extends JInterfaceBase
 
         if (index < fixedColor.length) {
             // Use the fixed colors for the first six surfaces.
-            surfaceColor.SetData( fixedColor[index] );
+            surfaceColor.Copy( fixedColor[index] );
         }
         else
         {
@@ -250,7 +250,7 @@ public class JPanelSurface_WM extends JInterfaceBase
 
             // Use randomly generated colors for the seventh and
             // later surfaces.
-            surfaceColor.SetData( 0.5f * (1.0f + randomGen.nextFloat()),
+            surfaceColor.Set( 0.5f * (1.0f + randomGen.nextFloat()),
                                   0.5f * (1.0f + randomGen.nextFloat()),
                                   0.5f * (1.0f + randomGen.nextFloat()) );
         }
@@ -365,16 +365,16 @@ public class JPanelSurface_WM extends JInterfaceBase
             	 for ( int j = 0; j < akPolylines[i].VBuffer.GetVertexQuantity(); j++ )
                  {
 
-           		  akPolylines[i].VBuffer.SetPosition3(j, akPolylines[i].VBuffer.GetPosition3fX(j) - m_kTranslate.X(),
-           				  akPolylines[i].VBuffer.GetPosition3fY(j) - m_kTranslate.Y(), 
-           				  akPolylines[i].VBuffer.GetPosition3fZ(j) - m_kTranslate.Z() );
+           		  akPolylines[i].VBuffer.SetPosition3(j, akPolylines[i].VBuffer.GetPosition3fX(j) - m_kTranslate.X,
+           				  akPolylines[i].VBuffer.GetPosition3fY(j) - m_kTranslate.Y, 
+           				  akPolylines[i].VBuffer.GetPosition3fZ(j) - m_kTranslate.Z );
            		   akPolylines[i].VBuffer.SetPosition3(j, 
            				akPolylines[i].VBuffer.GetPosition3fX(j) * 1.0f/m_fX,
            				akPolylines[i].VBuffer.GetPosition3fY(j) * 1.0f/m_fY,
            				akPolylines[i].VBuffer.GetPosition3fZ(j) * 1.0f/m_fZ);
                  } 
                 
-                akPolylines[i].Local.SetTranslate(new Vector3f(m_kTranslate.X(), m_kTranslate.Y(), m_kTranslate.Z()));
+                akPolylines[i].Local.SetTranslate(new Vector3f(m_kTranslate.X, m_kTranslate.Y, m_kTranslate.Z));
             	m_kVolumeViewer.addPolyline(akPolylines[i], polylineCounter);
             	
             	polylineCounter++;
@@ -1341,7 +1341,7 @@ public class JPanelSurface_WM extends JInterfaceBase
      * @param  iIndex     int material index
      */
     public void setMaterial(MaterialState kMaterial, int iIndex) {
-        colorButton.setBackground( new Color(kMaterial.Diffuse.R(), kMaterial.Diffuse.G(), kMaterial.Diffuse.B()) );
+        colorButton.setBackground( new Color(kMaterial.Diffuse.R, kMaterial.Diffuse.G, kMaterial.Diffuse.B) );
         if ( m_kVolumeViewer != null )
         {
             DefaultListModel kList = (DefaultListModel)surfaceList.getModel();

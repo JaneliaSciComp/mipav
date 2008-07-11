@@ -25,7 +25,7 @@ void GetDirectionalLightFactors
         fSpec = dot(kModelNormal,kHalfVector);
         if (fSpec > 0.0f)
         {
-            fSpec = pow(1.03f * fSpec,32f);
+            fSpec = pow(1.03f * fSpec,fSpecularExponent);
         }
         else
         {
@@ -57,7 +57,7 @@ void GetDirectionalLightFactors
        fDiff = 1.0f * cos_theta;
     }
     if ( cos_alpha > 0 ) {
-       fSpec = pow(cos_alpha, 5f);
+       fSpec = pow(cos_alpha, fSpecularExponent);
     }
     
     fDiffuseFactor = fDiff;
@@ -89,7 +89,7 @@ void GetPointLightFactors
         fSpec = dot(kModelNormal,kHalfVector);
         if (fSpec > 0.0f)
         {
-            fSpec = pow(fSpec,32f);
+            fSpec = pow(fSpec,fSpecularExponent);
         }
         else
         {
@@ -123,7 +123,7 @@ void GetPointLightFactors
        fDiff = 1.0f * cos_theta;
     }
     if ( cos_alpha > 0 ) {
-       fSpec = pow(cos_alpha, 32f);
+       fSpec = pow(cos_alpha, fSpecularExponent);
     }
     */
     fDiffuseFactor = fDiff;

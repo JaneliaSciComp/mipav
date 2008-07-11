@@ -76,17 +76,21 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
                             TriMesh kMesh = (TriMesh)(pick.Intersected);
 
                             Vector3f kP0 = kMesh.VBuffer.GetPosition3( pick.iV0 ); 
+                            kP0.Scale( pick.B0 );
                             Vector3f kP1 = kMesh.VBuffer.GetPosition3( pick.iV1 ); 
+                            kP1.Scale( pick.B1 );
                             Vector3f kP2 = kMesh.VBuffer.GetPosition3( pick.iV2 );
+                            kP2.Scale( pick.B2 );
 
-                            Vector3f pickPoint = kP0.scale(pick.B0).add( kP1.scale(
-                                    pick.B1) ).add( kP2.scale( pick.B2 ) );
+                            Vector3f pickPoint = new Vector3f();
+                            pickPoint.Add( kP0, kP1 );
+                            pickPoint.Add( kP2 );
 
-                            pickPoint.multEquals( new Vector3f( 1.0f/m_fX, 1.0f/m_fY, 1.0f/m_fZ ));
+                            pickPoint.Mult( new Vector3f( 1.0f/m_fX, 1.0f/m_fY, 1.0f/m_fZ ));
                             int[] iExtents = m_kVolumeImageA.GetImage().getExtents();
-                            pickPoint.multEquals( new Vector3f( iExtents[0], iExtents[1], iExtents[2] ));
+                            pickPoint.Mult( new Vector3f( iExtents[0], iExtents[1], iExtents[2] ));
 
-                            ((VolumeTriPlanarInterfaceDTI) m_kParent).getParamPanel().diplayTract( (int)pickPoint.X(), (int)pickPoint.Y(), (int)pickPoint.Z());
+                            ((VolumeTriPlanarInterfaceDTI) m_kParent).getParamPanel().diplayTract( (int)pickPoint.X, (int)pickPoint.Y, (int)pickPoint.Z);
 
                         }
 

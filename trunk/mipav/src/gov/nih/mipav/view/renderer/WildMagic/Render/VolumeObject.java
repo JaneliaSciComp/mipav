@@ -189,6 +189,17 @@ public abstract class VolumeObject
         if ( m_kCull != null )
         {
             m_kCull.Enabled = bOn;
+            m_kCull.CullFace = CullState.CullMode.CT_BACK;
+        }
+    } 
+    
+
+    public void SetFrontface( boolean bOn )
+    {
+        if ( m_kCull != null )
+        {
+            m_kCull.Enabled = bOn;
+            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
         }
     } 
 

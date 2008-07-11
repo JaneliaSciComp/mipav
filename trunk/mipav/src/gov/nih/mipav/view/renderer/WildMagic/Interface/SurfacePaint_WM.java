@@ -145,7 +145,7 @@ public class SurfacePaint_WM extends JInterfaceBase
         mColorPaintButton.addActionListener( this );
         mColorPaintButton.setActionCommand( "ColorPaint" );
         mColorPaintButton.setToolTipText( "Change paint color." );
-        mColorPaintButton.setBackground( new Color(mPaintColor.R(), mPaintColor.G(), mPaintColor.B()) );
+        mColorPaintButton.setBackground( new Color(mPaintColor.R, mPaintColor.G, mPaintColor.B) );
         mColorPaintButton.setEnabled( false );
         mPaintToolBar.add( mColorPaintButton);
 
@@ -237,7 +237,7 @@ public class SurfacePaint_WM extends JInterfaceBase
                                                           new Integer(0));
 	        }
             Color color = mColorChooser.getColor();
-            mPaintColor.SetData( color.getRed()/255.0f, 
+            mPaintColor.Set( color.getRed()/255.0f, 
                     color.getGreen()/255.0f,
                     color.getBlue()/255.0f, mOpacity );
             setPaintMode( SurfacePaint_WM.VERTEX );
@@ -278,7 +278,7 @@ public class SurfacePaint_WM extends JInterfaceBase
         {
             Color color = mColorChooser.getColor();
             mColorPaintButton.setBackground( color ); 
-            mPaintColor.SetData( color.getRed()/255.0f, 
+            mPaintColor.Set( color.getRed()/255.0f, 
                     color.getGreen()/255.0f,
                     color.getBlue()/255.0f, mOpacity );
         }
@@ -325,7 +325,7 @@ public class SurfacePaint_WM extends JInterfaceBase
     public void setOpacity( float opacity )
     {
         mOpacity = opacity;
-        mPaintColor.A( mOpacity );
+        mPaintColor.A = mOpacity;
     }
     
     public void setDropperColor( ColorRGBA kDropperColor, Vector3f kPickPoint )
@@ -336,9 +336,9 @@ public class SurfacePaint_WM extends JInterfaceBase
         }
         else
         {
-            mColorPaintButton.setBackground( new Color(kDropperColor.R(), kDropperColor.G(), kDropperColor.B()) );
-            mOpacity = kDropperColor.A();
-            mPaintColor.SetData(kDropperColor);
+            mColorPaintButton.setBackground( new Color(kDropperColor.R, kDropperColor.G, kDropperColor.B) );
+            mOpacity = kDropperColor.A;
+            mPaintColor.Copy(kDropperColor);
         }
     }
 
@@ -354,10 +354,10 @@ public class SurfacePaint_WM extends JInterfaceBase
     public void regionGrow( ModelImage kImage, Vector3f kSeedPoint, ColorRGBA kSeedColor  )
     {
         
-        mPaintGrowDialog.setPositionText("  X: " + String.valueOf(kSeedPoint.X()) +
-                                         " Y: " + String.valueOf(kSeedPoint.Y()) +
-                                         " Z: " + String.valueOf(kSeedPoint.Z()) + "  Color:  " +
-                                         kSeedColor.R() * 255.0f + " " + kSeedColor.G() * 255.0f + " " + kSeedColor.B() * 255.0f );
+        mPaintGrowDialog.setPositionText("  X: " + String.valueOf(kSeedPoint.X) +
+                                         " Y: " + String.valueOf(kSeedPoint.Y) +
+                                         " Z: " + String.valueOf(kSeedPoint.Z) + "  Color:  " +
+                                         kSeedColor.R * 255.0f + " " + kSeedColor.G * 255.0f + " " + kSeedColor.B * 255.0f );
         //Cursor cursor = getCursor();
         //setCursor(MipavUtil.waitCursor);
         
@@ -369,9 +369,9 @@ public class SurfacePaint_WM extends JInterfaceBase
         try {
 
             int[] imageExtents = kImage.getExtents();
-            Point3Ds seed = new Point3Ds( (short)kSeedPoint.X(),
-                                          (short)kSeedPoint.Y(),
-                                          (short)kSeedPoint.Z() );
+            Point3Ds seed = new Point3Ds( (short)kSeedPoint.X,
+                                          (short)kSeedPoint.Y,
+                                          (short)kSeedPoint.Z );
 
             AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(kImage, 1.0f, 1.0f);
             regionGrowAlgo.setRunningInSeparateThread(false);
@@ -391,7 +391,7 @@ public class SurfacePaint_WM extends JInterfaceBase
                                              false,
                                              mPaintGrowDialog.getDisplayFuzzy(),
                                              mPaintGrowDialog,
-                                             kSeedColor.R() * 255.0f - less, kSeedColor.R() * 255.0f + more,
+                                             kSeedColor.R * 255.0f - less, kSeedColor.R * 255.0f + more,
                                              mPaintGrowDialog.getMaxSize(),
                                              mPaintGrowDialog.getMaxDistance(),
                                              mPaintGrowDialog.getVariableThresholds(),
@@ -404,12 +404,12 @@ public class SurfacePaint_WM extends JInterfaceBase
                                              false,
                                              mPaintGrowDialog.getDisplayFuzzy(),
                                              mPaintGrowDialog,
-                                             kSeedColor.R() * 255.0f - mPaintGrowDialog.getLowerBoundR(),
-                                             kSeedColor.R() * 255.0f + mPaintGrowDialog.getUpperBoundR(),
-                                             kSeedColor.G() * 255.0f - mPaintGrowDialog.getLowerBoundG(),
-                                             kSeedColor.G() * 255.0f + mPaintGrowDialog.getUpperBoundG(),
-                                             kSeedColor.B() * 255.0f - mPaintGrowDialog.getLowerBoundB(),
-                                             kSeedColor.B() * 255.0f + mPaintGrowDialog.getUpperBoundB(),
+                                             kSeedColor.R * 255.0f - mPaintGrowDialog.getLowerBoundR(),
+                                             kSeedColor.R * 255.0f + mPaintGrowDialog.getUpperBoundR(),
+                                             kSeedColor.G * 255.0f - mPaintGrowDialog.getLowerBoundG(),
+                                             kSeedColor.G * 255.0f + mPaintGrowDialog.getUpperBoundG(),
+                                             kSeedColor.B * 255.0f - mPaintGrowDialog.getLowerBoundB(),
+                                             kSeedColor.B * 255.0f + mPaintGrowDialog.getUpperBoundB(),
                                              mPaintGrowDialog.getMaxSize(),
                                              mPaintGrowDialog.getMaxDistance(),
                                              0, regionGrowBounds);

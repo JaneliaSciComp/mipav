@@ -106,14 +106,14 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             }
             if ( !bAllZero )
             {
-                kMatrix.SetData( afTensorData[0], afTensorData[3], afTensorData[4],
+                kMatrix.Set( afTensorData[0], afTensorData[3], afTensorData[4],
                                                  afTensorData[3], afTensorData[1], afTensorData[5], 
                                                  afTensorData[4], afTensorData[5], afTensorData[2] );
                 
                 Matrix3f.EigenDecomposition( kMatrix, kEigenValues );
-                float fLambda1 = kEigenValues.GetData(2,2);
-                float fLambda2 = kEigenValues.GetData(1,1);
-                float fLambda3 = kEigenValues.GetData(0,0);
+                float fLambda1 = kEigenValues.M22;
+                float fLambda2 = kEigenValues.M11;
+                float fLambda3 = kEigenValues.M00;
                 kMatrix.GetColumn(2,kV1);
                 kMatrix.GetColumn(1,kV2);
                 kMatrix.GetColumn(0,kV3);
@@ -129,17 +129,17 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                 afData[i] = 0;
             }
 
-            afDataCM[i + 0*iLen] = kV1.X();
-            afDataCM[i + 1*iLen] = kV1.Y();
-            afDataCM[i + 2*iLen] = kV1.Z();
+            afDataCM[i + 0*iLen] = kV1.X;
+            afDataCM[i + 1*iLen] = kV1.Y;
+            afDataCM[i + 2*iLen] = kV1.Z;
 
-            afDataCM[i + 3*iLen] = kV2.X();
-            afDataCM[i + 4*iLen] = kV2.Y();
-            afDataCM[i + 5*iLen] = kV2.Z();
+            afDataCM[i + 3*iLen] = kV2.X;
+            afDataCM[i + 4*iLen] = kV2.Y;
+            afDataCM[i + 5*iLen] = kV2.Z;
 
-            afDataCM[i + 6*iLen] = kV3.X();
-            afDataCM[i + 7*iLen] = kV3.Y();
-            afDataCM[i + 8*iLen] = kV3.Z();
+            afDataCM[i + 6*iLen] = kV3.X;
+            afDataCM[i + 7*iLen] = kV3.Y;
+            afDataCM[i + 8*iLen] = kV3.Z;
 
             if ( (i%iSliceSize) == 0 )
             {

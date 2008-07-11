@@ -499,7 +499,7 @@ public class JDialogDTIInput extends JInterfaceBase
             }
             if ( kColor != null )
             {
-                m_kColorButton.setBackground(new Color( kColor.R(), kColor.G(), kColor.B() ) );
+                m_kColorButton.setBackground(new Color( kColor.R, kColor.G, kColor.B ) );
                 m_kUseVolumeColor.setSelected(false);
             }
             else

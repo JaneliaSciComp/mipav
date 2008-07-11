@@ -476,18 +476,24 @@ implements MouseListener, ItemListener, ChangeListener {
                     new gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender(this, 
                             m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
                         m_kVolumeImageB, imageB, LUTb, RGBTB);
-                m_kBrainsurfaceFlattenerPanel = new JPanel();
-                m_kBrainsurfaceFlattenerPanel.add(brainsurfaceFlattenerRender.getMainPanel());
-                maxPanelWidth = Math.max(m_kBrainsurfaceFlattenerPanel.getPreferredSize().width, maxPanelWidth);
-                bf_flyPanel.add( brainsurfaceFlattenerRender.GetCanvas(), BorderLayout.CENTER );
-                dualPane.setDividerLocation( 0.5f );
-
                 TriMesh kSurface = raycastRenderWM.getSurface( surfaceGUI.getSelectedSurface() );
                 Vector3f kCenter = raycastRenderWM.GetCenter( surfaceGUI.getSelectedSurface() );
                 Node kMeshLines = brainsurfaceFlattenerRender.getPanel().displayCorticalAnalysis(kSurface, kCenter);       
-
-                m_kLightsPanel.enableLight(0, true);
-                addNode( kMeshLines );
+                if ( kMeshLines != null )
+                {
+                    m_kBrainsurfaceFlattenerPanel = new JPanel();
+                    m_kBrainsurfaceFlattenerPanel.add(brainsurfaceFlattenerRender.getMainPanel());
+                    maxPanelWidth = Math.max(m_kBrainsurfaceFlattenerPanel.getPreferredSize().width, maxPanelWidth);
+                    bf_flyPanel.add( brainsurfaceFlattenerRender.GetCanvas(), BorderLayout.CENTER );
+                    dualPane.setDividerLocation( 0.5f );
+                    
+                    m_kLightsPanel.enableLight(0, true);
+                    addNode( kMeshLines );
+                }
+                else
+                {
+                    MipavUtil.displayError(surfaceGUI.getSelectedSurface() + " is not a closed mesh. Unable to open brain flattener view.");
+                }
             }
             insertTab("BrainSurface", m_kBrainsurfaceFlattenerPanel );
             resizePanel();

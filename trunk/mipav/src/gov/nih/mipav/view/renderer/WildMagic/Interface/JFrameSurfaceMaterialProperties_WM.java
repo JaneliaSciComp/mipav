@@ -211,48 +211,48 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
             if (m_iWhichButton == AMBIENT) {
                 Color kColor = m_kColorChooser.getColor();
                 m_kAmbientColorButton.setBackground(kColor);
-                m_kMaterialNew.Ambient.SetData(kColor.getRed()/255.0f, kColor.getGreen()/255.0f, kColor.getBlue()/255.0f);
+                m_kMaterialNew.Ambient.Set(kColor.getRed()/255.0f, kColor.getGreen()/255.0f, kColor.getBlue()/255.0f);
             } else if (m_iWhichButton == DIFFUSE) {
                 Color kColor = m_kColorChooser.getColor();
                 m_kDiffuseColorButton.setBackground(kColor);
-                m_kMaterialNew.Diffuse.SetData(kColor.getRed()/255.0f, kColor.getGreen()/255.0f, kColor.getBlue()/255.0f);
+                m_kMaterialNew.Diffuse.Set(kColor.getRed()/255.0f, kColor.getGreen()/255.0f, kColor.getBlue()/255.0f);
             } else if (m_iWhichButton == SPECULAR) {
                 Color kColor = m_kColorChooser.getColor();
                 m_kSpecularColorButton.setBackground(kColor);
-                m_kMaterialNew.Specular.SetData(kColor.getRed()/255.0f, kColor.getGreen()/255.0f, kColor.getBlue()/255.0f);
+                m_kMaterialNew.Specular.Set(kColor.getRed()/255.0f, kColor.getGreen()/255.0f, kColor.getBlue()/255.0f);
             } else if (m_iWhichButton == EMISSIVE) {
                 Color kColor = m_kColorChooser.getColor();
                 m_kEmissiveColorButton.setBackground(kColor);
-                m_kMaterialNew.Emissive.SetData(kColor.getRed()/255.0f, kColor.getGreen()/255.0f, kColor.getBlue()/255.0f);
+                m_kMaterialNew.Emissive.Set(kColor.getRed()/255.0f, kColor.getGreen()/255.0f, kColor.getBlue()/255.0f);
             }
 
             m_kColorChooser = null;
         }
-        /* One of the presest material buttons is pressed, get which button
+        /* One of the preset material buttons is pressed, get which button
          * and use the defined material: */
         else if (kCommand.startsWith("Preset")) {
             int iPreset = Integer.valueOf(kCommand.substring("Preset".length())).intValue();
-            m_kAmbient.SetData( m_akMaterialPreset[iPreset].Ambient );
-            m_kAmbientColorButton.setBackground( new Color(m_kAmbient.R(), m_kAmbient.G(), m_kAmbient.B()) );
-            m_kMaterialNew.Ambient.SetData(m_kAmbient.R(), m_kAmbient.G(), m_kAmbient.B() );
+            m_kAmbient.Copy( m_akMaterialPreset[iPreset].Ambient );
+            m_kAmbientColorButton.setBackground( new Color(m_kAmbient.R, m_kAmbient.G, m_kAmbient.B) );
+            m_kMaterialNew.Ambient.Set(m_kAmbient.R, m_kAmbient.G, m_kAmbient.B );
 
-            m_kDiffuse.SetData( m_akMaterialPreset[iPreset].Diffuse );
-            m_kDiffuseColorButton.setBackground( new Color(m_kDiffuse.R(), m_kDiffuse.G(), m_kDiffuse.B()) );
-            m_kMaterialNew.Diffuse.SetData(m_kDiffuse.R(), m_kDiffuse.G(), m_kDiffuse.B() );
+            m_kDiffuse.Copy( m_akMaterialPreset[iPreset].Diffuse );
+            m_kDiffuseColorButton.setBackground( new Color(m_kDiffuse.R, m_kDiffuse.G, m_kDiffuse.B) );
+            m_kMaterialNew.Diffuse.Set(m_kDiffuse.R, m_kDiffuse.G, m_kDiffuse.B );
 
-            m_kSpecular.SetData( m_akMaterialPreset[iPreset].Specular );
-            m_kSpecularColorButton.setBackground( new Color(m_kSpecular.R(), m_kSpecular.G(), m_kSpecular.B()) );
-            m_kMaterialNew.Specular.SetData(m_kSpecular.R(), m_kSpecular.G(), m_kSpecular.B() );
+            m_kSpecular.Copy( m_akMaterialPreset[iPreset].Specular );
+            m_kSpecularColorButton.setBackground( new Color(m_kSpecular.R, m_kSpecular.G, m_kSpecular.B) );
+            m_kMaterialNew.Specular.Set(m_kSpecular.R, m_kSpecular.G, m_kSpecular.B );
 
-            m_kEmissive.SetData( m_akMaterialPreset[iPreset].Emissive );
-            m_kEmissiveColorButton.setBackground( new Color(m_kEmissive.R(), m_kEmissive.G(), m_kEmissive.B()) );
-            m_kMaterialNew.Emissive.SetData(m_kEmissive.R(), m_kEmissive.G(), m_kEmissive.B() );
+            m_kEmissive.Copy( m_akMaterialPreset[iPreset].Emissive );
+            m_kEmissiveColorButton.setBackground( new Color(m_kEmissive.R, m_kEmissive.G, m_kEmissive.B) );
+            m_kMaterialNew.Emissive.Set(m_kEmissive.R, m_kEmissive.G, m_kEmissive.B );
 
             m_fShininess = m_akMaterialPreset[iPreset].Shininess;
-            m_kMaterialNew.Shininess = m_fShininess;
+            //m_kMaterialNew.Shininess = m_fShininess;
             m_kShininessSlider.setValue((int) m_fShininess);
             
-            m_akSurfaceMaterial[1].setMaterial( m_kMaterialNew );
+            //m_akSurfaceMaterial[1].setMaterial( m_kMaterialNew );
         }
 
         /* The Apply button is pressed, call applyColorChange to apply the new
@@ -328,6 +328,10 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
         if (event.getSource() == m_kShininessSlider) {
             m_fShininess = (float) (m_kShininessSlider.getValue());
             m_kMaterialNew.Shininess = m_fShininess;
+            m_kMaterialNew.Specular.Set(m_kSpecular.R, m_kSpecular.G, m_kSpecular.B );
+        	System.err.println( "stateChanged "  + m_fShininess );
+        	
+            //m_akSurfaceMaterial[1].setMaterial( m_kMaterialNew );
         }
     }
 
@@ -389,17 +393,17 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
      * Update the color changes to the Before sphere and the original surface.
      */
     private void applyColorChange() {
-        m_kAmbient.SetData( m_kMaterialNew.Ambient );
-        m_kEmissive.SetData( m_kMaterialNew.Emissive );
-        m_kDiffuse.SetData( m_kMaterialNew.Diffuse );
-        m_kSpecular.SetData( m_kMaterialNew.Specular );
+        m_kAmbient.Copy( m_kMaterialNew.Ambient );
+        m_kEmissive.Copy( m_kMaterialNew.Emissive );
+        m_kDiffuse.Copy( m_kMaterialNew.Diffuse );
+        m_kSpecular.Copy( m_kMaterialNew.Specular );
         m_fShininess = m_kMaterialNew.Shininess;
 
         MaterialState kMaterial = new MaterialState();
-        kMaterial.Ambient.SetData( m_kAmbient );  
-        kMaterial.Emissive.SetData( m_kEmissive );
-        kMaterial.Diffuse.SetData( m_kDiffuse );
-        kMaterial.Specular.SetData( m_kSpecular );
+        kMaterial.Ambient.Copy( m_kAmbient );  
+        kMaterial.Emissive.Copy( m_kEmissive );
+        kMaterial.Diffuse.Copy( m_kDiffuse );
+        kMaterial.Specular.Copy( m_kSpecular );
         kMaterial.Shininess = m_fShininess;
         m_kParent.setMaterial( kMaterial, m_iSurfaceIndex );
 
@@ -437,28 +441,28 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
         {
             m_akMaterialPreset[i] = new MaterialState();
         }
-        m_akMaterialPreset[0].Ambient.SetData(0f, 0f, 0f); /* ambient */
-        m_akMaterialPreset[0].Emissive.SetData(0f, 0f, 0f); /* emissive */
-        m_akMaterialPreset[0].Diffuse.SetData(1f, 0f, 0f); /* diffuse */
-        m_akMaterialPreset[0].Specular.SetData(0f, 0f, 0f); /* specular */
+        m_akMaterialPreset[0].Ambient.Set(0f, 0f, 0f); /* ambient */
+        m_akMaterialPreset[0].Emissive.Set(0f, 0f, 0f); /* emissive */
+        m_akMaterialPreset[0].Diffuse.Set(1f, 0f, 0f); /* diffuse */
+        m_akMaterialPreset[0].Specular.Set(0f, 0f, 0f); /* specular */
         m_akMaterialPreset[0].Shininess = 0f; /* shininess */
 
-        m_akMaterialPreset[1].Ambient.SetData(0f, 0f, 0f); /* ambient */
-        m_akMaterialPreset[1].Emissive.SetData(0f, 0f, 0f); /* emissive */
-        m_akMaterialPreset[1].Diffuse.SetData(0f, 0f, 1f); /* diffuse */
-        m_akMaterialPreset[1].Specular.SetData(1f, 1f, 1f); /* specular */
+        m_akMaterialPreset[1].Ambient.Set(0f, 0f, 0f); /* ambient */
+        m_akMaterialPreset[1].Emissive.Set(0f, 0f, 0f); /* emissive */
+        m_akMaterialPreset[1].Diffuse.Set(0f, 0f, 1f); /* diffuse */
+        m_akMaterialPreset[1].Specular.Set(1f, 1f, 1f); /* specular */
         m_akMaterialPreset[1].Shininess = 128f; /* shininess */
 
-        m_akMaterialPreset[2].Ambient.SetData(0f, 0f, 0f); /* ambient */
-        m_akMaterialPreset[2].Emissive.SetData(0f, 0f, 0f); /* emissive */
-        m_akMaterialPreset[2].Diffuse.SetData(0f, 0.5f, 0f); /* diffuse */
-        m_akMaterialPreset[2].Specular.SetData(0.5f, 0.5f, 0f); /* specular */
+        m_akMaterialPreset[2].Ambient.Set(0f, 0f, 0f); /* ambient */
+        m_akMaterialPreset[2].Emissive.Set(0f, 0f, 0f); /* emissive */
+        m_akMaterialPreset[2].Diffuse.Set(0f, 0.5f, 0f); /* diffuse */
+        m_akMaterialPreset[2].Specular.Set(0.5f, 0.5f, 0f); /* specular */
         m_akMaterialPreset[2].Shininess = 33f; /* shininess */
 
-        m_akMaterialPreset[3].Ambient.SetData(0f, 0f, 0f); /* ambient */
-        m_akMaterialPreset[3].Emissive.SetData(0f, 0f, 0f); /* emissive */
-        m_akMaterialPreset[3].Diffuse.SetData(1f, 0f, 0f); /* diffuse */
-        m_akMaterialPreset[3].Specular.SetData(1f, 0.5f, 0f); /* specular */
+        m_akMaterialPreset[3].Ambient.Set(0f, 0f, 0f); /* ambient */
+        m_akMaterialPreset[3].Emissive.Set(0f, 0f, 0f); /* emissive */
+        m_akMaterialPreset[3].Diffuse.Set(1f, 0f, 0f); /* diffuse */
+        m_akMaterialPreset[3].Specular.Set(1f, 0.5f, 0f); /* specular */
         m_akMaterialPreset[3].Shininess = 25f; /* shininess */
 
     }
@@ -475,34 +479,34 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
             return;
         }
 
-        m_kAmbient.SetData( m_kMaterialSave.Ambient );
-        m_kEmissive.SetData( m_kMaterialSave.Emissive );
-        m_kDiffuse.SetData(  m_kMaterialSave.Diffuse );
-        m_kSpecular.SetData( m_kMaterialSave.Specular );
+        m_kAmbient.Copy( m_kMaterialSave.Ambient );
+        m_kEmissive.Copy( m_kMaterialSave.Emissive );
+        m_kDiffuse.Copy(  m_kMaterialSave.Diffuse );
+        m_kSpecular.Copy( m_kMaterialSave.Specular );
         m_fShininess = m_kMaterialSave.Shininess;
 
         // restore the per-vertex color and the old Material, then restore the material
         MaterialState kMaterial = new MaterialState();
-        kMaterial.Ambient.SetData( m_kAmbient );
-        kMaterial.Emissive.SetData( m_kEmissive );
-        kMaterial.Diffuse.SetData( m_kDiffuse );
-        kMaterial.Specular.SetData( m_kSpecular );
+        kMaterial.Ambient.Copy( m_kAmbient );
+        kMaterial.Emissive.Copy( m_kEmissive );
+        kMaterial.Diffuse.Copy( m_kDiffuse );
+        kMaterial.Specular.Copy( m_kSpecular );
         kMaterial.Shininess = m_fShininess;
 
         m_akSurfaceMaterial[1].setMaterial( kMaterial );
         m_kParent.setMaterial( kMaterial, m_iSurfaceIndex );
         //m_kParent.restorePerVertexColor( kMaterial, m_iSurfaceIndex );
 
-        m_kMaterialNew.Ambient.SetData( m_kAmbient );
-        m_kMaterialNew.Emissive.SetData( m_kEmissive );
-        m_kMaterialNew.Diffuse.SetData( m_kDiffuse );
-        m_kMaterialNew.Specular.SetData( m_kSpecular );
+        m_kMaterialNew.Ambient.Copy( m_kAmbient );
+        m_kMaterialNew.Emissive.Copy( m_kEmissive );
+        m_kMaterialNew.Diffuse.Copy( m_kDiffuse );
+        m_kMaterialNew.Specular.Copy( m_kSpecular );
         m_kMaterialNew.Shininess = m_fShininess;
 
-        m_kAmbientColorButton.setBackground(new Color( m_kAmbient.R(), m_kAmbient.G(), m_kAmbient.B() ));
-        m_kDiffuseColorButton.setBackground(new Color( m_kDiffuse.R(), m_kDiffuse.G(), m_kDiffuse.B() ));
-        m_kSpecularColorButton.setBackground(new Color( m_kSpecular.R(), m_kSpecular.G(), m_kSpecular.B() ));
-        m_kEmissiveColorButton.setBackground(new Color( m_kEmissive.R(), m_kEmissive.G(), m_kEmissive.B() ));
+        m_kAmbientColorButton.setBackground(new Color( m_kAmbient.R, m_kAmbient.G, m_kAmbient.B ));
+        m_kDiffuseColorButton.setBackground(new Color( m_kDiffuse.R, m_kDiffuse.G, m_kDiffuse.B ));
+        m_kSpecularColorButton.setBackground(new Color( m_kSpecular.R, m_kSpecular.G, m_kSpecular.B ));
+        m_kEmissiveColorButton.setBackground(new Color( m_kEmissive.R, m_kEmissive.G, m_kEmissive.B ));
         m_kShininessSlider.setValue((int) m_fShininess);
     }
 
@@ -514,7 +518,7 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
         /* Color buttons and labels, both are JButtons and can be pressed to
          * change the Ambient, Diffuse, Specular, or Emissive colors: */
         m_kAmbientColorButton = new JButton("       ");
-        m_kAmbientColorButton.setBackground(new Color( m_kAmbient.R(), m_kAmbient.G(), m_kAmbient.B() ));
+        m_kAmbientColorButton.setBackground(new Color( m_kAmbient.R, m_kAmbient.G, m_kAmbient.B ));
         m_kAmbientColorButton.setToolTipText("Change surface ambient color");
         m_kAmbientColorButton.addActionListener(this);
         m_kAmbientColorButton.setActionCommand("Ambient");
@@ -524,7 +528,7 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
         kAmbientColorButtonLabel.setActionCommand("Ambient");
 
         m_kDiffuseColorButton = new JButton("       ");
-        m_kDiffuseColorButton.setBackground(new Color( m_kDiffuse.R(), m_kDiffuse.G(), m_kDiffuse.B() ));
+        m_kDiffuseColorButton.setBackground(new Color( m_kDiffuse.R, m_kDiffuse.G, m_kDiffuse.B ));
         m_kDiffuseColorButton.setToolTipText("Change surface diffuse color");
         m_kDiffuseColorButton.addActionListener(this);
         m_kDiffuseColorButton.setActionCommand("Diffuse");
@@ -534,7 +538,7 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
         kDiffuseColorButtonLabel.setActionCommand("Diffuse");
 
         m_kSpecularColorButton = new JButton("       ");
-        m_kSpecularColorButton.setBackground(new Color( m_kSpecular.R(), m_kSpecular.G(), m_kSpecular.B() ));
+        m_kSpecularColorButton.setBackground(new Color( m_kSpecular.R, m_kSpecular.G, m_kSpecular.B ));
         m_kSpecularColorButton.setToolTipText("Change surface specular color");
         m_kSpecularColorButton.addActionListener(this);
         m_kSpecularColorButton.setActionCommand("Specular");
@@ -544,7 +548,7 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
         kSpecularColorButtonLabel.setActionCommand("Specular");
 
         m_kEmissiveColorButton = new JButton("       ");
-        m_kEmissiveColorButton.setBackground(new Color( m_kEmissive.R(), m_kEmissive.G(), m_kEmissive.B() ));
+        m_kEmissiveColorButton.setBackground(new Color( m_kEmissive.R, m_kEmissive.G, m_kEmissive.B ));
         m_kEmissiveColorButton.setToolTipText("Change surface emmissive color");
         m_kEmissiveColorButton.addActionListener(this);
         m_kEmissiveColorButton.setActionCommand("Emissive");
@@ -701,18 +705,18 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
 
         /* The new color values: */
         m_kMaterialNew = new MaterialState();
-        m_kMaterialNew.Ambient.SetData( m_kAmbient );
-        m_kMaterialNew.Emissive.SetData( m_kEmissive );
-        m_kMaterialNew.Diffuse.SetData( m_kDiffuse );
-        m_kMaterialNew.Specular.SetData(  m_kSpecular );
+        m_kMaterialNew.Ambient.Copy( m_kAmbient );
+        m_kMaterialNew.Emissive.Copy( m_kEmissive );
+        m_kMaterialNew.Diffuse.Copy( m_kDiffuse );
+        m_kMaterialNew.Specular.Copy(  m_kSpecular );
         m_kMaterialNew.Shininess = m_fShininess;
 
         /* Save the original: */
         m_kMaterialSave = new MaterialState();
-        m_kMaterialSave.Ambient.SetData(  m_kAmbient );
-        m_kMaterialSave.Emissive.SetData( m_kEmissive );
-        m_kMaterialSave.Diffuse.SetData( m_kDiffuse );
-        m_kMaterialSave.Specular.SetData( m_kSpecular );
+        m_kMaterialSave.Ambient.Copy( m_kAmbient );
+        m_kMaterialSave.Emissive.Copy( m_kEmissive );
+        m_kMaterialSave.Diffuse.Copy( m_kDiffuse );
+        m_kMaterialSave.Specular.Copy( m_kSpecular );
         m_kMaterialSave.Shininess = m_fShininess;
 
         if (m_iNumPreset < 0) {

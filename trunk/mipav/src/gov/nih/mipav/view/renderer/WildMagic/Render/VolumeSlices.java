@@ -235,13 +235,13 @@ public class VolumeSlices extends VolumeObject
      */
     public void SetCenter( Vector3f kCenter )
     {
-        float fX = m_fX * kCenter.X();
-        float fY = m_fY * kCenter.Y();
-        float fZ = m_fZ * kCenter.Z();
+        float fX = m_fX * kCenter.X;
+        float fY = m_fY * kCenter.Y;
+        float fZ = m_fZ * kCenter.Z;
 
-        float fTCX = kCenter.X();
-        float fTCY = kCenter.Y();
-        float fTCZ = kCenter.Z();
+        float fTCX = kCenter.X;
+        float fTCY = kCenter.Y;
+        float fTCZ = kCenter.Z;
         
         m_akPlanes[0].VBuffer.SetPosition3( 0, fX, 0, 0 ) ;
         m_akPlanes[0].VBuffer.SetPosition3( 1, fX, 0, m_fZ ) ;
@@ -352,16 +352,9 @@ public class VolumeSlices extends VolumeObject
                 }
                 m_akBoundingBox = null;
             }
-            if ( m_akColors != null )
-            {
-                if ( m_akColors[i] != null )
-                {
-                    m_akColors[i].dispose();
-                    m_akColors[i] = null;
-                }
-                m_akColors = null;
-            }
+            m_akColors[i] = null;
         }
+        m_akColors = null;
         m_abShowPlanes = null;
         m_abShowBoundingBox = null;
 

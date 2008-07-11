@@ -61,7 +61,7 @@ public class BspNodes extends JavaApplication3D
      */
     public static void main(String[] args) {
         Vector3f testVec = new Vector3f(2.0f, 3.0f, 4.0f);
-        System.out.println(testVec.X() + " " + testVec.Y() + " " +testVec.Z() + " done.");
+        System.out.println(testVec.X + " " + testVec.Y + " " +testVec.Z + " done.");
         //System.out.println("Hello world!");
 
         BspNodes kWorld = new BspNodes();
@@ -140,7 +140,7 @@ public class BspNodes extends JavaApplication3D
         Vector3f kCDir = new Vector3f(0.0f,1.0f,0.0f);
         Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCRight = new Vector3f();
-        kCDir.Cross(kCUp, kCRight);
+        kCRight.Cross( kCDir, kCUp );
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();
@@ -258,7 +258,7 @@ public class BspNodes extends JavaApplication3D
         // is nonconvex, z-buffering must be enabled for that object.  However,
         // only z-writes need to occur for the convex objects.
         float fHeight = 0.1f;
-        Vector2f kCenter;
+        Vector2f kCenter = new Vector2f();
         TriMesh pkMesh;
 
         // (R0) Create a torus mesh.  The torus is not convex, so z-buffering is
@@ -268,8 +268,10 @@ public class BspNodes extends JavaApplication3D
         pkEffect = new TextureEffect("Flower");
         pkMesh.AttachEffect(pkEffect);
         pkMesh.Local.SetUniformScale(0.1f);
-        kCenter = (kV2.add(kV6).add(kV7)).scale((float)(1.0/3.0f));
-        pkMesh.Local.SetTranslate(new Vector3f(kCenter.X(),kCenter.Y(),fHeight));
+        kCenter.Add(kV2,kV6);
+        kCenter.Add(kV7);
+        kCenter.Scale(1.0f/3.0f);
+        pkMesh.Local.SetTranslate(new Vector3f(kCenter.X,kCenter.Y,fHeight));
         pkBsp3.AttachPositiveChild(pkMesh);
 
         // The remaining objects are convex, so z-buffering is not required for
@@ -284,8 +286,11 @@ public class BspNodes extends JavaApplication3D
         pkMesh.AttachGlobalState(pkZBuffer);
         pkMesh.AttachEffect(pkEffect);
         pkMesh.Local.SetUniformScale(0.1f);
-        kCenter = (kV0.add(kV3).add(kV6).add(kV7)).scale((float)(1.0/4.0f));
-        pkMesh.Local.SetTranslate( new Vector3f(kCenter.X(),kCenter.Y(),fHeight));
+        kCenter.Add(kV0,kV3);
+        kCenter.Add(kV6);
+        kCenter.Add(kV7);
+        kCenter.Scale(1.0f/4.0f);
+        pkMesh.Local.SetTranslate( new Vector3f(kCenter.X,kCenter.Y,fHeight));
         pkBsp3.AttachNegativeChild(pkMesh);
 
         // (R2) create a tetrahedron
@@ -293,8 +298,10 @@ public class BspNodes extends JavaApplication3D
         pkMesh.AttachGlobalState(pkZBuffer);
         pkMesh.AttachEffect(pkEffect);
         pkMesh.Local.SetUniformScale(0.1f);
-        kCenter = (kV1.add(kV2).add(kV3)).scale((float)(1.0/3.0f));
-        pkMesh.Local.SetTranslate( new Vector3f(kCenter.X(),kCenter.Y(),fHeight));
+        kCenter.Add(kV1,kV2);
+        kCenter.Add(kV3);
+        kCenter.Scale(1.0f/3.0f);
+        pkMesh.Local.SetTranslate( new Vector3f(kCenter.X,kCenter.Y,fHeight));
         pkBsp1.AttachNegativeChild(pkMesh);
 
         // (R3) create a hexahedron
@@ -302,8 +309,10 @@ public class BspNodes extends JavaApplication3D
         pkMesh.AttachGlobalState(pkZBuffer);
         pkMesh.AttachEffect(pkEffect);
         pkMesh.Local.SetUniformScale(0.1f);
-        kCenter = (kV1.add(kV4).add(kV5)).scale((float)(1.0/3.0f));
-        pkMesh.Local.SetTranslate(new Vector3f(kCenter.X(),kCenter.Y(),fHeight));
+        kCenter.Add(kV1,kV4);
+        kCenter.Add(kV5);
+        kCenter.Scale(1.0f/3.0f);
+        pkMesh.Local.SetTranslate(new Vector3f(kCenter.X,kCenter.Y,fHeight));
         pkBsp2.AttachPositiveChild(pkMesh);
 
         // (R4) create an octahedron
@@ -311,8 +320,11 @@ public class BspNodes extends JavaApplication3D
         pkMesh.AttachGlobalState(pkZBuffer);
         pkMesh.AttachEffect(pkEffect);
         pkMesh.Local.SetUniformScale(0.1f);
-        kCenter = (kV0.add(kV4).add(kV5).add(kV8)).scale((float)(1.0/4.0f));
-        pkMesh.Local.SetTranslate( new Vector3f(kCenter.X(),kCenter.Y(),fHeight));
+        kCenter.Add(kV0,kV4);
+        kCenter.Add(kV5);
+        kCenter.Add(kV8);
+        kCenter.Scale(1.0f/4.0f);
+        pkMesh.Local.SetTranslate( new Vector3f(kCenter.X,kCenter.Y,fHeight));
         pkBsp2.AttachNegativeChild(pkMesh);
 
         m_spkScene.AttachChild(m_spkBsp);
@@ -321,16 +333,17 @@ public class BspNodes extends JavaApplication3D
     private BspNode CreateNode (final Vector2f rkV0, final Vector2f rkV1,
                                 final ColorRGB rkColor)
     {
-        Vector2f kDir = rkV1.sub( rkV0 );
-        Vector3f kNormal = new Vector3f(kDir.Y(),-kDir.X(),0.0f);
+        Vector2f kDir = new Vector2f();
+        kDir.Sub( rkV1, rkV0 );
+        Vector3f kNormal = new Vector3f(kDir.Y,-kDir.X,0.0f);
         kNormal.Normalize();
-        float fConstant = kNormal.Dot( new Vector3f(rkV0.X(),rkV0.Y(),0.0f));
+        float fConstant = kNormal.Dot( new Vector3f(rkV0.X,rkV0.Y,0.0f));
         float fXExtent = 0.5f*kDir.Length();
         float fYExtent = 0.125f;
-        Vector3f kTrn = new Vector3f(0.5f*(rkV0.X()+rkV1.X()),0.5f*(rkV0.Y()+rkV1.Y()),
+        Vector3f kTrn = new Vector3f(0.5f*(rkV0.X+rkV1.X),0.5f*(rkV0.Y+rkV1.Y),
                                      fYExtent+1e-03f);
-        Matrix3f kRot = new Matrix3f(Vector3f.UNIT_Z, (float)Math.atan2(kDir.Y(),kDir.X()));
-        kRot.multEquals( new Matrix3f(Vector3f.UNIT_X,Mathf.HALF_PI) );
+        Matrix3f kRot = new Matrix3f(Vector3f.UNIT_Z, (float)Math.atan2(kDir.Y,kDir.X));
+        kRot.Mult( new Matrix3f(Vector3f.UNIT_X,Mathf.HALF_PI) );
 
         BspNode pkBsp = new BspNode(new Plane3f(kNormal,fConstant));
 

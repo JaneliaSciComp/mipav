@@ -235,9 +235,9 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         {
             kImage = m_kImageNew;
         }
-        int iX = (int)(kTexCoord.X() * (kImage.getExtents()[0]-1));
-        int iY = (int)(kTexCoord.Y() * (kImage.getExtents()[1]-1));
-        int iZ = (int)(kTexCoord.Z() * (kImage.getExtents()[2]-1));
+        int iX = (int)(kTexCoord.X * (kImage.getExtents()[0]-1));
+        int iY = (int)(kTexCoord.Y * (kImage.getExtents()[1]-1));
+        int iZ = (int)(kTexCoord.Z * (kImage.getExtents()[2]-1));
         int iIndex = iZ * kImage.getExtents()[1] * kImage.getExtents()[0] +
                 iY * kImage.getExtents()[0] +
                 iX;
@@ -254,9 +254,9 @@ public class SurfaceLightingEffect extends VolumeClipEffect
             float[][] RGB_LUT = kLUT.exportRGB_LUT(true);
             TransferFunction tf_imgA = kLUT.getTransferFunction();
             int index = (int)(tf_imgA.getRemappedValue(fValue, 256) + 0.5f);
-            rkDropperColor.R(RGB_LUT[0][index]/255.0f);
-            rkDropperColor.G(RGB_LUT[1][index]/255.0f);
-            rkDropperColor.B(RGB_LUT[2][index]/255.0f);
+            rkDropperColor.R = RGB_LUT[0][index]/255.0f;
+            rkDropperColor.G = RGB_LUT[1][index]/255.0f;
+            rkDropperColor.B = RGB_LUT[2][index]/255.0f;
         }
     }
     
