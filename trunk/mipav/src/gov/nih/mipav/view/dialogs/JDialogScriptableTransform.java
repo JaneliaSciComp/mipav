@@ -363,7 +363,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     }
 
     /**
-     * When the user clicks the mouse out of a text field, resets the neccessary variables.
+     * When the user clicks the mouse out of a text field, resets the necessary variables.
      *
      * @param  event  event that triggers this function
      */
@@ -379,14 +379,16 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         dims = new float[3];
         resols = new float[3];
         factor = 1.f;
+        
+        dims[0] = image.getFileInfo()[0].getExtents()[0];
+        dims[1] = image.getFileInfo()[0].getExtents()[1];
+        dims[2] = image.getFileInfo()[0].getExtents()[2];
+        
+        resols[0] = image.getFileInfo()[0].getResolutions()[0];
+        resols[1] = image.getFileInfo()[0].getResolutions()[1];
+        resols[2] = image.getFileInfo()[0].getResolutions()[2];
 
-        dims[0] = cXdim;
-        dims[1] = cYdim;
-        dims[2] = cZdim;
-        resols[0] = cXres;
-        resols[1] = cYres;
-        resols[2] = cZres;
-
+        
         tempTextField = (JTextField) source;
         userText = tempTextField.getText();
         userValue = Float.valueOf(userText).floatValue();
@@ -415,6 +417,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 fov = (cZdim-constantFOV) * cZres;
                 resols[2] = fov / (dims[2]-constantFOV);
             }
+           
         } else if (source == textResX) {
             factor = cXres / userValue;
             resols[0] = userValue;
@@ -434,10 +437,11 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         } else if (source == textResZ) {
             factor = cZres / userValue;
             resols[2] = userValue;
-
+          
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cZdim-constantFOV) * cZres;
+            	fov = (cZdim-constantFOV) * cZres;
                 dims[2] = fov / resols[2] + constantFOV;
+                // System.err.println(" cZres = " + cZres + "  cZdim = " + cZdim);
             }
         }
 
@@ -830,6 +834,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 padLabel.setEnabled(false);
             }
         } else if (( source == constantFOVradio ) || (source == endMatchFOVradio)) {
+        	
             if (constantFOVradio.isSelected()) {
         	    constantFOV = 0;
                 if (setPixels != null) {
