@@ -62,14 +62,14 @@ public class FileVOI extends FileXML {
     
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** File reference. */
-    private File file;
+    /** File reference, it and its components are able to be modified by extending classes. */
+    protected File file;
 
     /** File directory where the VOI is to read or written. */
-    private String fileDir;
+    protected String fileDir;
 
     /** File name of the VOI. */
-    private String fileName;
+    protected String fileName;
 
     /** Image used to reference properties of the image to aid reading and writing of the VOI. */
     private ModelImage image;
