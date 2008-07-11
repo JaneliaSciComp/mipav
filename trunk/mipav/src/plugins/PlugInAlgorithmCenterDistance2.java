@@ -15,7 +15,7 @@ import java.util.*;
 
 /**
  *
- * @version  June 19, 2008
+ * @version  July 14, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -86,7 +86,7 @@ import java.util.*;
  *           <p>21.) Find blue objects to which the green objects belong.  Expand the blue objects to 
  *           include green objects protruding out of the blue boundaries.
  *           
- *           <p>22.) Merge green objects with 2 pixels having a distance <= mergingDistance.
+ *           <p>22.) If merging distance > 0, merge green objects with 2 pixels having a distance <= mergingDistance.
  *            
  *           <p>23.) Sort green objects by green intensity count per unit area or volume into a sorted green array.
  *           Have a separate sorted green array for each nucleus. Put no more than greenRegionNumber green objects
@@ -1133,109 +1133,111 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
             }
         }
         
-        fireProgressStateChanged("Merging together close green objects");
-        fireProgressStateChanged(62);
-        greenLeft = new int[numGreenTotal];
-        greenRight = new int[numGreenTotal];
-        greenTop = new int[numGreenTotal];
-        greenBottom = new int[numGreenTotal];
-        for (i = 0; i < numGreenTotal; i++) {
-            greenLeft[i] = Integer.MAX_VALUE;
-            greenTop[i] = Integer.MAX_VALUE;
-        }
-        // Obtain bounding blocks of numGreenTotal green objects
-        for (y = 0; y < yDim; y++) {
-            index = y*xDim;
-            for (x = 0; x < xDim; x++) {
-                i = x + index;
-                // id goes from 0 to numGreenTotal
-                id = greenIDArray[i];
-                if (id >= 1) {
-                    if (x < greenLeft[id-1]) {
-                        greenLeft[id-1] = x;
-                    }
-                    if (x > greenRight[id-1]) {
-                        greenRight[id-1] = x;
-                    }
-                    if (y < greenTop[id-1]) {
-                        greenTop[id-1] = y;
-                    }
-                    if (y > greenBottom[id-1]) {
-                        greenBottom[id-1] = y;
-                    }
-                } // if (id >= 1)
-            } // for (x = 0; x < xDim; x++)
-        } // for (y = 0; y < yDim; y++)
-        // Merge green regions in the same cell within merging distance together
-        loop1:
-        for (j = numGreenTotal; j >= 1; j--) {
-            for (i = 1; i < j; i++) {
-                if (greenCellNumber[j-1] == greenCellNumber[i-1]) {
-                    minDistanceSquared = Double.MAX_VALUE; 
-                    for (y = greenTop[j-1]; y <= greenBottom[j-1]; y++) {
-                        index1 = y*xDim;
-                        for (x = greenLeft[j-1]; x <= greenRight[j-1]; x++) {
-                            index = index1 + x;
-                            if (greenIDArray[index] == j) {
-                                for (y1 = greenTop[i-1]; y1 <= greenBottom[i-1]; y1++) {
-                                    index3 = y1*xDim;
-                                    for (x1 = greenLeft[i-1]; x1 <= greenRight[i-1]; x1++) {
-                                        index2 = index3 + x1;
-                                        if (greenIDArray[index2] == i) {
-                                            distX = (x1 - x) * xRes;
-                                            distY = (y1 - y) * yRes;
-                                            distanceSquared = distX*distX + distY*distY;
-                                            if (distanceSquared < minDistanceSquared) {
-                                                minDistanceSquared = distanceSquared;
+        if (mergingDistance > 0.0f) {
+            fireProgressStateChanged("Merging together close green objects");
+            fireProgressStateChanged(62);
+            greenLeft = new int[numGreenTotal];
+            greenRight = new int[numGreenTotal];
+            greenTop = new int[numGreenTotal];
+            greenBottom = new int[numGreenTotal];
+            for (i = 0; i < numGreenTotal; i++) {
+                greenLeft[i] = Integer.MAX_VALUE;
+                greenTop[i] = Integer.MAX_VALUE;
+            }
+            // Obtain bounding blocks of numGreenTotal green objects
+            for (y = 0; y < yDim; y++) {
+                index = y*xDim;
+                for (x = 0; x < xDim; x++) {
+                    i = x + index;
+                    // id goes from 0 to numGreenTotal
+                    id = greenIDArray[i];
+                    if (id >= 1) {
+                        if (x < greenLeft[id-1]) {
+                            greenLeft[id-1] = x;
+                        }
+                        if (x > greenRight[id-1]) {
+                            greenRight[id-1] = x;
+                        }
+                        if (y < greenTop[id-1]) {
+                            greenTop[id-1] = y;
+                        }
+                        if (y > greenBottom[id-1]) {
+                            greenBottom[id-1] = y;
+                        }
+                    } // if (id >= 1)
+                } // for (x = 0; x < xDim; x++)
+            } // for (y = 0; y < yDim; y++)
+            // Merge green regions in the same cell within merging distance together
+            loop1:
+            for (j = numGreenTotal; j >= 1; j--) {
+                for (i = 1; i < j; i++) {
+                    if (greenCellNumber[j-1] == greenCellNumber[i-1]) {
+                        minDistanceSquared = Double.MAX_VALUE; 
+                        for (y = greenTop[j-1]; y <= greenBottom[j-1]; y++) {
+                            index1 = y*xDim;
+                            for (x = greenLeft[j-1]; x <= greenRight[j-1]; x++) {
+                                index = index1 + x;
+                                if (greenIDArray[index] == j) {
+                                    for (y1 = greenTop[i-1]; y1 <= greenBottom[i-1]; y1++) {
+                                        index3 = y1*xDim;
+                                        for (x1 = greenLeft[i-1]; x1 <= greenRight[i-1]; x1++) {
+                                            index2 = index3 + x1;
+                                            if (greenIDArray[index2] == i) {
+                                                distX = (x1 - x) * xRes;
+                                                distY = (y1 - y) * yRes;
+                                                distanceSquared = distX*distX + distY*distY;
+                                                if (distanceSquared < minDistanceSquared) {
+                                                    minDistanceSquared = distanceSquared;
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-                    if (minDistanceSquared <= mergingDistanceSquared) {
-                        greenIntensityTotal[i-1] = 0.0f;
-                        greenArea[i-1] = 0;
-                        greenLeft[i-1] = Math.min(greenLeft[i-1], greenLeft[j-1]);
-                        greenRight[i-1] = Math.max(greenRight[i-1], greenRight[j-1]);
-                        greenTop[i-1] = Math.min(greenTop[i-1], greenTop[j-1]);
-                        greenBottom[i-1] = Math.max(greenBottom[i-1], greenBottom[j-1]);
-                        for (k = 0; k < length; k++) {
-                            if (greenIDArray[k] == j) {
-                                greenIDArray[k] = (byte)i;
-                            }
-                            if (greenIDArray[k] == i) {
-                                greenIntensityTotal[i-1] += greenBuffer[k];
-                                greenArea[i-1]++;
-                            }
-                        } // for (k = 0; k < length; k++)
-                        for (m = j+1; m <= numGreenTotal; m++) {
+                        if (minDistanceSquared <= mergingDistanceSquared) {
+                            greenIntensityTotal[i-1] = 0.0f;
+                            greenArea[i-1] = 0;
+                            greenLeft[i-1] = Math.min(greenLeft[i-1], greenLeft[j-1]);
+                            greenRight[i-1] = Math.max(greenRight[i-1], greenRight[j-1]);
+                            greenTop[i-1] = Math.min(greenTop[i-1], greenTop[j-1]);
+                            greenBottom[i-1] = Math.max(greenBottom[i-1], greenBottom[j-1]);
                             for (k = 0; k < length; k++) {
-                                if (greenIDArray[k] == m) {
-                                    greenIDArray[k] = (byte)(m-1);
+                                if (greenIDArray[k] == j) {
+                                    greenIDArray[k] = (byte)i;
                                 }
+                                if (greenIDArray[k] == i) {
+                                    greenIntensityTotal[i-1] += greenBuffer[k];
+                                    greenArea[i-1]++;
+                                }
+                            } // for (k = 0; k < length; k++)
+                            for (m = j+1; m <= numGreenTotal; m++) {
+                                for (k = 0; k < length; k++) {
+                                    if (greenIDArray[k] == m) {
+                                        greenIDArray[k] = (byte)(m-1);
+                                    }
+                                }
+                                greenIntensityTotal[m-2] = greenIntensityTotal[m-1];
+                                greenArea[m-2] = greenArea[m-1];
+                                greenCellNumber[m-2] = greenCellNumber[m-1];
+                                greenLeft[m-2] = greenLeft[m-1];
+                                greenRight[m-2] = greenRight[m-1];
+                                greenTop[m-2] = greenTop[m-1];
+                                greenBottom[m-2] = greenBottom[m-1];
                             }
-                            greenIntensityTotal[m-2] = greenIntensityTotal[m-1];
-                            greenArea[m-2] = greenArea[m-1];
-                            greenCellNumber[m-2] = greenCellNumber[m-1];
-                            greenLeft[m-2] = greenLeft[m-1];
-                            greenRight[m-2] = greenRight[m-1];
-                            greenTop[m-2] = greenTop[m-1];
-                            greenBottom[m-2] = greenBottom[m-1];
-                        }
-                        if (j <= numGreenObjects) {
-                            numGreenObjects--;
-                        }
-                        else {
-                            numGreenObjects2--;
-                        }
-                        numGreenTotal--;
-                        continue loop1;
-                    } // if (distanceSquared <= mergingDistanceSquared)
+                            if (j <= numGreenObjects) {
+                                numGreenObjects--;
+                            }
+                            else {
+                                numGreenObjects2--;
+                            }
+                            numGreenTotal--;
+                            continue loop1;
+                        } // if (distanceSquared <= mergingDistanceSquared)
+                    }
                 }
             }
-        }
+        } // if (mergingDistance > 0.0f)
 
         // Sort the green objects within each nucleus.
         // Create no more than greenRegionNumber green objects within each nucleus.
@@ -2801,132 +2803,134 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
             }
         }
         
-        fireProgressStateChanged("Merging together close green objects");
-        fireProgressStateChanged(62);
-        greenLeft = new int[numGreenTotal];
-        greenRight = new int[numGreenTotal];
-        greenTop = new int[numGreenTotal];
-        greenBottom = new int[numGreenTotal];
-        greenFront = new int[numGreenTotal];
-        greenBack = new int[numGreenTotal];
-        for (i = 0; i < numGreenTotal; i++) {
-            greenLeft[i] = Integer.MAX_VALUE;
-            greenTop[i] = Integer.MAX_VALUE;
-            greenFront[i] = Integer.MAX_VALUE;
-        }
-        // Obtain bounding blocks of numGreenTotal green objects
-        for (z = 0; z < zDim; z++) {
-            index = z*sliceSize;
-            for (y = 0; y < yDim; y++) {
-                index1 = index + y*xDim;
-                for (x = 0; x < xDim; x++) {
-                    i = x + index1;
-                    // id goes from 0 to numGreenTotal
-                    id = greenIDArray[i];
-                    if (id >= 1) {
-                        if (x < greenLeft[id-1]) {
-                            greenLeft[id-1] = x;
-                        }
-                        if (x > greenRight[id-1]) {
-                            greenRight[id-1] = x;
-                        }
-                        if (y < greenTop[id-1]) {
-                            greenTop[id-1] = y;
-                        }
-                        if (y > greenBottom[id-1]) {
-                            greenBottom[id-1] = y;
-                        }
-                        if (z < greenFront[id-1]) {
-                            greenFront[id-1] = z;
-                        }
-                        if (z > greenBack[id-1]) {
-                            greenBack[id-1] = z;
-                        }
-                    } // if (id >= 1)
-                } // for (x = 0; x < xDim; x++)
-            } // for (y = 0; y < yDim; y++)
-        } // for (z = 0; z < zDim; z++)
-        // Merge green regions in the same cell within merging distance together
-        loop1:
-        for (j = numGreenTotal; j >= 1; j--) {
-            for (i = 1; i < j; i++) {
-                if (greenCellNumber[j-1] == greenCellNumber[i-1]) {
-                    minDistanceSquared = Double.MAX_VALUE;
-                    for (z = greenFront[j-1]; z <= greenBack[j-1]; z++) {
-                        index2 = z*sliceSize;
-                        for (y = greenTop[j-1]; y <= greenBottom[j-1]; y++) {
-                            index1 = index2 + y*xDim;
-                            for (x = greenLeft[j-1]; x <= greenRight[j-1]; x++) {
-                                index = index1 + x;
-                                if (greenIDArray[index] == j) {
-                                    for (z1 = greenFront[i-1]; z1 <= greenBack[i-1]; z1++) {
-                                        index5 = z1*sliceSize;
-                                        for (y1 = greenTop[i-1]; y1 <= greenBottom[i-1]; y1++) {
-                                            index4 = index5 + y1*xDim;
-                                            for (x1 = greenLeft[i-1]; x1 <= greenRight[i-1]; x1++) {
-                                                index3 = index4 + x1;
-                                                if (greenIDArray[index3] == i) {
-                                                    distX = (x1 - x) * xRes;
-                                                    distY = (y1 - y) * yRes;
-                                                    distZ = (z1 - z) * zRes;
-                                                    distanceSquared = distX*distX + distY*distY + distZ*distZ;
-                                                    if (distanceSquared < minDistanceSquared) {
-                                                        minDistanceSquared = distanceSquared;
-                                                    } // if (distanceSquared < minDistanceSquared)
-                                                } // if (greenIDArray[index3] == i)
-                                            } // for (x1 = greenLeft[i-1]; x1 <= greenRight[i-1]; x1++)
-                                        } // for (y1 = greenTop[i-1]; y1 <= greenBottom[i-1]; y1++)
-                                    } // for (z1 = greenFront[i-1]; z1 <= greenBack[i-1]; z1++)
-                                } // if (greenIDArray[index] == j)
-                            } // for (x = greenLeft[j-1]; x <= greenRight[j-1]; x++)
-                        } // for (y = greenTop[j-1]; y <= greenBottom[j-1]; y++)
-                    } // for (z = greenFront[j-1]; z <= greenBack[j-1]; z++)
-                    if (minDistanceSquared <= mergingDistanceSquared) {
-                        greenIntensityTotal[i-1] = 0.0f;
-                        greenVolume[i-1] = 0;
-                        greenLeft[i-1] = Math.min(greenLeft[i-1], greenLeft[j-1]);
-                        greenRight[i-1] = Math.max(greenRight[i-1], greenRight[j-1]);
-                        greenTop[i-1] = Math.min(greenTop[i-1], greenTop[j-1]);
-                        greenBottom[i-1] = Math.max(greenBottom[i-1], greenBottom[j-1]);
-                        greenFront[i-1] = Math.min(greenFront[i-1], greenFront[j-1]);
-                        greenBack[i-1] = Math.max(greenBack[i-1], greenBack[j-1]);
-                        for (k = 0; k < totLength; k++) {
-                            if (greenIDArray[k] == j) {
-                                greenIDArray[k] = (byte)i;
+        if (mergingDistance > 0.0f) {
+            fireProgressStateChanged("Merging together close green objects");
+            fireProgressStateChanged(62);
+            greenLeft = new int[numGreenTotal];
+            greenRight = new int[numGreenTotal];
+            greenTop = new int[numGreenTotal];
+            greenBottom = new int[numGreenTotal];
+            greenFront = new int[numGreenTotal];
+            greenBack = new int[numGreenTotal];
+            for (i = 0; i < numGreenTotal; i++) {
+                greenLeft[i] = Integer.MAX_VALUE;
+                greenTop[i] = Integer.MAX_VALUE;
+                greenFront[i] = Integer.MAX_VALUE;
+            }
+            // Obtain bounding blocks of numGreenTotal green objects
+            for (z = 0; z < zDim; z++) {
+                index = z*sliceSize;
+                for (y = 0; y < yDim; y++) {
+                    index1 = index + y*xDim;
+                    for (x = 0; x < xDim; x++) {
+                        i = x + index1;
+                        // id goes from 0 to numGreenTotal
+                        id = greenIDArray[i];
+                        if (id >= 1) {
+                            if (x < greenLeft[id-1]) {
+                                greenLeft[id-1] = x;
                             }
-                            if (greenIDArray[k] == i) {
-                                greenIntensityTotal[i-1] += greenBuffer[k];
-                                greenVolume[i-1]++;
+                            if (x > greenRight[id-1]) {
+                                greenRight[id-1] = x;
                             }
-                        } // for (k = 0; k < length; k++)
-                        for (m = j+1; m <= numGreenTotal; m++) {
+                            if (y < greenTop[id-1]) {
+                                greenTop[id-1] = y;
+                            }
+                            if (y > greenBottom[id-1]) {
+                                greenBottom[id-1] = y;
+                            }
+                            if (z < greenFront[id-1]) {
+                                greenFront[id-1] = z;
+                            }
+                            if (z > greenBack[id-1]) {
+                                greenBack[id-1] = z;
+                            }
+                        } // if (id >= 1)
+                    } // for (x = 0; x < xDim; x++)
+                } // for (y = 0; y < yDim; y++)
+            } // for (z = 0; z < zDim; z++)
+            // Merge green regions in the same cell within merging distance together
+            loop1:
+            for (j = numGreenTotal; j >= 1; j--) {
+                for (i = 1; i < j; i++) {
+                    if (greenCellNumber[j-1] == greenCellNumber[i-1]) {
+                        minDistanceSquared = Double.MAX_VALUE;
+                        for (z = greenFront[j-1]; z <= greenBack[j-1]; z++) {
+                            index2 = z*sliceSize;
+                            for (y = greenTop[j-1]; y <= greenBottom[j-1]; y++) {
+                                index1 = index2 + y*xDim;
+                                for (x = greenLeft[j-1]; x <= greenRight[j-1]; x++) {
+                                    index = index1 + x;
+                                    if (greenIDArray[index] == j) {
+                                        for (z1 = greenFront[i-1]; z1 <= greenBack[i-1]; z1++) {
+                                            index5 = z1*sliceSize;
+                                            for (y1 = greenTop[i-1]; y1 <= greenBottom[i-1]; y1++) {
+                                                index4 = index5 + y1*xDim;
+                                                for (x1 = greenLeft[i-1]; x1 <= greenRight[i-1]; x1++) {
+                                                    index3 = index4 + x1;
+                                                    if (greenIDArray[index3] == i) {
+                                                        distX = (x1 - x) * xRes;
+                                                        distY = (y1 - y) * yRes;
+                                                        distZ = (z1 - z) * zRes;
+                                                        distanceSquared = distX*distX + distY*distY + distZ*distZ;
+                                                        if (distanceSquared < minDistanceSquared) {
+                                                            minDistanceSquared = distanceSquared;
+                                                        } // if (distanceSquared < minDistanceSquared)
+                                                    } // if (greenIDArray[index3] == i)
+                                                } // for (x1 = greenLeft[i-1]; x1 <= greenRight[i-1]; x1++)
+                                            } // for (y1 = greenTop[i-1]; y1 <= greenBottom[i-1]; y1++)
+                                        } // for (z1 = greenFront[i-1]; z1 <= greenBack[i-1]; z1++)
+                                    } // if (greenIDArray[index] == j)
+                                } // for (x = greenLeft[j-1]; x <= greenRight[j-1]; x++)
+                            } // for (y = greenTop[j-1]; y <= greenBottom[j-1]; y++)
+                        } // for (z = greenFront[j-1]; z <= greenBack[j-1]; z++)
+                        if (minDistanceSquared <= mergingDistanceSquared) {
+                            greenIntensityTotal[i-1] = 0.0f;
+                            greenVolume[i-1] = 0;
+                            greenLeft[i-1] = Math.min(greenLeft[i-1], greenLeft[j-1]);
+                            greenRight[i-1] = Math.max(greenRight[i-1], greenRight[j-1]);
+                            greenTop[i-1] = Math.min(greenTop[i-1], greenTop[j-1]);
+                            greenBottom[i-1] = Math.max(greenBottom[i-1], greenBottom[j-1]);
+                            greenFront[i-1] = Math.min(greenFront[i-1], greenFront[j-1]);
+                            greenBack[i-1] = Math.max(greenBack[i-1], greenBack[j-1]);
                             for (k = 0; k < totLength; k++) {
-                                if (greenIDArray[k] == m) {
-                                    greenIDArray[k] = (byte)(m-1);
+                                if (greenIDArray[k] == j) {
+                                    greenIDArray[k] = (byte)i;
                                 }
+                                if (greenIDArray[k] == i) {
+                                    greenIntensityTotal[i-1] += greenBuffer[k];
+                                    greenVolume[i-1]++;
+                                }
+                            } // for (k = 0; k < length; k++)
+                            for (m = j+1; m <= numGreenTotal; m++) {
+                                for (k = 0; k < totLength; k++) {
+                                    if (greenIDArray[k] == m) {
+                                        greenIDArray[k] = (byte)(m-1);
+                                    }
+                                }
+                                greenIntensityTotal[m-2] = greenIntensityTotal[m-1];
+                                greenVolume[m-2] = greenVolume[m-1];
+                                greenCellNumber[m-2] = greenCellNumber[m-1];
+                                greenLeft[m-2] = greenLeft[m-1];
+                                greenRight[m-2] = greenRight[m-1];
+                                greenTop[m-2] = greenTop[m-1];
+                                greenBottom[m-2] = greenBottom[m-1];
+                                greenFront[m-2] = greenFront[m-1];
+                                greenBack[m-2] = greenBack[m-1];
                             }
-                            greenIntensityTotal[m-2] = greenIntensityTotal[m-1];
-                            greenVolume[m-2] = greenVolume[m-1];
-                            greenCellNumber[m-2] = greenCellNumber[m-1];
-                            greenLeft[m-2] = greenLeft[m-1];
-                            greenRight[m-2] = greenRight[m-1];
-                            greenTop[m-2] = greenTop[m-1];
-                            greenBottom[m-2] = greenBottom[m-1];
-                            greenFront[m-2] = greenFront[m-1];
-                            greenBack[m-2] = greenBack[m-1];
-                        }
-                        if (j <= numGreenObjects) {
-                            numGreenObjects--;
-                        }
-                        else {
-                            numGreenObjects2--;
-                        }
-                        numGreenTotal--;
-                        continue loop1;
-                    } // if (distanceSquared <= mergingDistanceSquared)
-                } // if (greenCellNumber[j-1] == greenCellNumber[i-1])
-            } // for (i = 1; i < j; i++)
-        } // for (j = numGreenTotal; j >= 1; j--)
+                            if (j <= numGreenObjects) {
+                                numGreenObjects--;
+                            }
+                            else {
+                                numGreenObjects2--;
+                            }
+                            numGreenTotal--;
+                            continue loop1;
+                        } // if (distanceSquared <= mergingDistanceSquared)
+                    } // if (greenCellNumber[j-1] == greenCellNumber[i-1])
+                } // for (i = 1; i < j; i++)
+            } // for (j = numGreenTotal; j >= 1; j--)
+        } // if (mergingDistance > 0.0f)
 
         fireProgressStateChanged("Sorting green objects by intensity count");
         fireProgressStateChanged(66);
