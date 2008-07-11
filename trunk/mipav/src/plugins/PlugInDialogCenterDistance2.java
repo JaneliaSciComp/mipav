@@ -79,12 +79,16 @@ public class PlugInDialogCenterDistance2 extends JDialogScriptableBase implement
     
     private JRadioButton twoButton;
     
+    private JRadioButton threeButton;
+    
+    private JRadioButton fourButton;
+    
     private float mergingDistance;
     
     private int blueMin = 1000;
     
     // Number of green regions per cell
-    // Either 1 for 1 for all cells or 2 for 2 for all cells
+    // 1, 2, 3, or 4 will be applied to all cells
     private int greenRegionNumber;
     
     private JCheckBox twoBox;
@@ -296,7 +300,7 @@ public class PlugInDialogCenterDistance2 extends JDialogScriptableBase implement
 
     /**
      * Accessor that sets the greenRegionNumber variable, for number of green regions per cell
-     * 1 for 1 for all cells or 2 for 2 for all cells
+     * 1, 2, 3, or 4 will be applied to all cells
      *
      * @param  greenRegionNumber
      */
@@ -570,6 +574,22 @@ public class PlugInDialogCenterDistance2 extends JDialogScriptableBase implement
         gbc.gridy = 0;
         buttonPanel.add(twoButton, gbc);
         
+        threeButton = new JRadioButton("3", false);
+        threeButton.setForeground(Color.black);
+        threeButton.setFont(serif12);
+        greenGroup.add(threeButton);
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        buttonPanel.add(threeButton, gbc);
+        
+        fourButton = new JRadioButton("4", false);
+        fourButton.setForeground(Color.black);
+        fourButton.setFont(serif12);
+        greenGroup.add(fourButton);
+        gbc.gridx = 3;
+        gbc.gridy = 0;
+        buttonPanel.add(fourButton, gbc);
+        
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(buttonPanel, gbc);
@@ -737,8 +757,14 @@ public class PlugInDialogCenterDistance2 extends JDialogScriptableBase implement
         if (oneButton.isSelected()) {
             greenRegionNumber = 1;
         }
-        else {
+        else if (twoButton.isSelected()){
             greenRegionNumber = 2;
+        }
+        else if (threeButton.isSelected()) {
+            greenRegionNumber = 3;
+        }
+        else {
+            greenRegionNumber = 4;
         }
         
         twoGreenLevels = twoBox.isSelected();
