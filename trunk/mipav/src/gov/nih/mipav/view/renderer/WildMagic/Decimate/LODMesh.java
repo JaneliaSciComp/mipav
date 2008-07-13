@@ -599,7 +599,7 @@ public class LODMesh {
 			if (!(now.dt.HasTwoV(i, j))) {
 				dk1 = now.dt.getV1(i);
 				dk2 = now.dt.getV2(i);
-				dummyv1.Z =  0.5f * (point[dk1].X + point[dk2].X) + dummyv4.X;
+				dummyv1.X =  0.5f * (point[dk1].X + point[dk2].X) + dummyv4.X;
 				dummyv1.Y =  0.5f * (point[dk1].Y + point[dk2].Y) + dummyv4.Y;
 				dummyv1.Z =  0.5f * (point[dk1].Z + point[dk2].Z) + dummyv4.Z;
 				if (PlaneSize(point[dk1], point[dk2], dummyv1, dv))
