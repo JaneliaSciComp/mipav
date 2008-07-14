@@ -4,6 +4,7 @@ import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogInitialCentroids;
 
 import java.io.*;
 
@@ -454,9 +455,9 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
                 foundBonePixel = false;
                 iter++;
                 
-                if (sliceNum == 3) {
-                    System.out.println("iteration: " +iter +"  mrThreshold: " +mrBoneThreshold);
-                }
+//                if (sliceNum == 3) {
+//                    System.out.println("iteration: " +iter +"  mrThreshold: " +mrBoneThreshold);
+//                }
 
                 for (int idx = xDim; idx < (boneBuffer.length - xDim); idx++) {
 
@@ -528,7 +529,7 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         ModelImage bMarrow = threshold2(hardSegImg, FAT_2_A, FAT_2_B);
         // bMarrow contains all voxels labeled FAT_2_A or FAT_2_B in the C-Means segmented image (HardSeg) bMarrow is a
         // binary image and remains binary through this method
-        // PFH        ShowImage(bMarrow, "BMarrow");
+        // PFH        ShowImage(bMarrow, "thresholded");
 
         // find all objects in the thresholded image that have a cardinality within the specified range
         IDObjects(bMarrow, 90 * zDim, 500 * zDim);
@@ -646,9 +647,17 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         fileInfo1.setUnitsOfMeasure(srcImage.getUnitsOfMeasure());
         HardSeg[0].setFileInfo(fileInfo1, 0);
 
+        boolean entireImageFlag = true;
+        
         AlgorithmFuzzyCMeans firstFuzz = new AlgorithmFuzzyCMeans(HardSeg, srcImage, nClasses, 4, 1, 2, 2.0f, 20000,
-                                                                  200000, false, AlgorithmFuzzyCMeans.HARD_ONLY, true,
-                                                                  0.0f, 200, 0.01f, true);
+                                                                  200000, false, AlgorithmFuzzyCMeans.HARD_ONLY, false, //true,
+                                                                  0.0f, 200, 0.01f, entireImageFlag); //true);
+        
+        if (entireImageFlag == false) {
+            firstFuzz.setMask(srcImage.generateVOIMask());
+            // if non null, were set by script file
+        }        
+        
         /*   public AlgorithmFuzzyCMeans(ModelImage[] destImg, ModelImage srcImg, int _nClass, int _pyramidLevels,
          *         int _jacobiIters1, int _jacobiIters2, float _q, float _smooth1, float _smooth2,        boolean
          * _outputGainField, int _segmentation, boolean _cropBackground, float _threshold,        int _max_iter, float
@@ -658,6 +667,8 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         firstFuzz.run();
         firstFuzz.finalize();
         firstFuzz = null;
+
+        // PFH        ShowImage(HardSeg[0],"3 class HARD seg");
 
         // we need to convert values in the HardSeg[0] image
         // 1 should be converted to BACKGROUND_2 == 63
@@ -686,7 +697,6 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
             	MipavUtil.displayError("blah blah blah\n" + ioe.toString());
             }
          } // end for(sliceNum = 0; ...)
-
         
         return HardSeg[0];
     }
@@ -1141,7 +1151,6 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
 
         ModelImage boneMarrow = extractedBoneMarrow(CMeansSeg);
         // boneMarrow is a binary image containing only the bone marrow
-
         //  PFH        ShowImage(boneMarrow, "bone morrow image");
 
         // use the bone marrow and input thigh image to segment out the bone
@@ -1158,7 +1167,7 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         boneMarrow.disposeLocal();
         boneMarrow = null;
 
-        //       PFH        ShowImage(destImage, "bone/morrow image");
+        //  PFH        ShowImage(destImage, "bone/morrow image");
     } // end processBoneAndMarrow(...)
 
 
@@ -1267,7 +1276,12 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
          // we need to make the outer boundary mask image
          ModelImage hardSeg;
          hardSeg = HardFuzzy(srcImageA, 3);
-         // PFH         ShowImage(hardSeg, "hardSeg");
+         // image contains 3 label values:
+         // background and bone has label value 63 (BACKGROUND_2)
+         // muscle has label value 126 (MUSCLE_2)
+         // Fat and bone marrow has value 189 (FAT_2_A)
+         // PFH         ShowImage(hardSeg, "3 class hardSeg");
+
          obMaskA = boundaryCorrect(hardSeg);
          // PFH         ShowImage(obMaskA, "obMaskA");
          
@@ -1275,45 +1289,49 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
          obMask = (ModelImage) obMaskA.clone();
          // PFH         ShowImage(obMask, "obMask");
          // PFH         ShowImage(processedImage, "processedImage");
-        
-            /********************************************************
-             **************** general processing ********************
-             ********************************************************/
+         
+         
+         /********************************************************
+          **************** general processing ********************
+          ********************************************************/
 
-            // STEP 1: VOI to Mask
+         // STEP 1: VOI to Mask
 
-            // processedImage is the right or left thigh image
-            voiMask = makeVOI(processedImage);
-            // voiMask: binary image where 1's are inside the VOI otherwise values are 0's used in processHardFat(),
-            // should probably be made later!! 
-            // PFH            ShowImage(voiMask, "voi  mask");
+         // processedImage is a clone of the source image
+         voiMask = makeVOI(processedImage);
+         // voiMask: binary image where 1's are inside the VOI otherwise values are 0's used in processHardFat(),
+         // should probably be made later!! 
+         // PFH         ShowImage(voiMask, "voi mask");
+         // PFH         ShowImage(processedImage, "Step 1: processedImage");
 
-            if(leftThigh)
-            	aa=2;
-            else
-            	aa=1;
+         if(leftThigh) {
+             aa = 2;
+         } else {
+             aa = 1;
+         }
             
-            fireProgressStateChanged((50 * (aa - 1)) + 4);
+         fireProgressStateChanged((50 * (aa - 1)) + 4);
 
 
-            // STEP 2: ISN and N3 inside VOI
-            if (zDim > 1) {
-                ISN(processedImage);
-            }
-            // processedImage is right/left thigh image after ISN
-            // PFH            ShowImage(processedImage, "ISN");
+         // STEP 2: ISN and N3 inside VOI
+         // processedImage is a clone of the source image
+         if (zDim > 1) {
+             ISN(processedImage);
+         }
+         // processedImage is right/left thigh image after ISN
+         // PFH         ShowImage(processedImage, "ISN");
 
-            fireProgressStateChanged((50 * (aa - 1)) + 9);
+         fireProgressStateChanged((50 * (aa - 1)) + 9);
 
-            // should take this out since we decided to segment only N3 processed images!!
-            // remove the check box from the dialog (PlugInDialogPipeline) also
+         // should take this out since we decided to segment only N3 processed images!!
+         // remove the check box from the dialog (PlugInDialogPipeline) also
 
-            // STEP 3: FUZZY SEGMENT ENTIRE IMAGE
-            // Fuzzy C-Means for the right/left thigh image
-            ModelImage HardSeg1 = HardFuzzy(processedImage, 4);
-            // HardSeg1 image contains 4 different label values  63 for background and bone  126 muscle  189 fat 1 (Bone
-            // Marrow)  252 fat 2 (Bone Marrow) 
-            // PFH            ShowImage(HardSeg1,"4 class hard fuzzy segmentation");
+         // STEP 3: FUZZY SEGMENT ENTIRE IMAGE
+         // Fuzzy C-Means for the right/left thigh image
+         ModelImage HardSeg1 = HardFuzzy(processedImage, 4);
+         // HardSeg1 image contains 4 different label values  63 for background and bone  126 muscle  189 fat 1 (Bone
+         // Marrow)  252 fat 2 (Bone Marrow) 
+         // PFH         ShowImage(HardSeg1,"4 class hard fuzzy segmentation");
 
             fireProgressStateChanged((50 * (aa - 1)) + 18);
 
@@ -1517,7 +1535,16 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
      *
      * @param   SegmentedImg  DOCUMENT ME!
      *
-     * @return  DOCUMENT ME!
+     * @return  Maxk image representing the entire thigh area
+     * 
+     * Create a mask image representing the entire thigh area using the 3 class hard segmented
+     * image passed in
+     * 
+     * Start with all pixels on each slice of the mask image labeled as thigh tissue
+     * Change the value of a one pixel boarder around the image to background if the corresponding
+     * pixel in the Hard Segmentated image is labeled BACKGROUND
+     * Do a 4-connected analysis relabeling adjacient background pixels to background if 
+     * the corresponding pixel in the Hard Segmentated image is labeled BACKGROUND
      */
     public ModelImage boundaryCorrect(ModelImage SegmentedImg) {
         ModelImage Mask = new ModelImage(SegmentedImg.getType(), SegmentedImg.getExtents(), "Mask");
@@ -1532,13 +1559,15 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
                 Mask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer1);
 
                 // setting the outer BACKGROUND imgBuffers on mask---------background = 0, thigh in=1
+                // set the entire mask image to the thigh value
                 for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer1[i] = 1;
                     imgBuffer2[i] = 1;
                 }
 
+                // set the first column of the mask image to background if the segmented image
+                // is labeled as background
                 x = 0;
-
                 for (y = 0; y < yDim; y++) {
                     i = x + (y * xDim);
 
@@ -1548,8 +1577,9 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
                     }
                 }
 
+                // set the last column of the mask image to background if the segmented image
+                // is labeled as background
                 x = xDim - 1;
-
                 for (y = 0; y < yDim; y++) {
                     i = x + (y * xDim);
 
@@ -1559,8 +1589,9 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
                     }
                 }
 
+                // set the first row of the mask image to background if the segmented image
+                // is labeled as background
                 y = 0;
-
                 for (x = 0; x < xDim; x++) {
                     i = x + (y * xDim);
 
@@ -1570,8 +1601,9 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
                     }
                 }
 
+                // set the last row of the mask image to background if the segmented image
+                // is labeled as background
                 y = yDim - 1;
-
                 for (x = 0; x < xDim; x++) {
                     i = x + (y * xDim);
 
@@ -1586,7 +1618,6 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
                     BACKGROUNDFound = 0;
 
                     for (y = 0; y < yDim; y++) {
-
                         for (x = 0; x < xDim; x++) {
                             i = x + (y * xDim);
 
@@ -1595,7 +1626,6 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
                                 // checks left nearest neighbor   segmentedImg left pixel is background and left pixel
                                 // has not been relabeled from thigh
                                 iPrime = i - 1;
-
                                 if ((x != 0) && (imgBuffer[iPrime] == BACKGROUND) && (imgBuffer1[iPrime] == 1)) {
                                     imgBuffer1[i - 1] = 0;
                                     imgBuffer2[i - 1] = 0;
@@ -1604,7 +1634,6 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
 
                                 // right nearest neighbor
                                 iPrime = i + 1;
-
                                 if ((x != (xDim - 1)) && (imgBuffer[iPrime] == BACKGROUND) &&
                                         (imgBuffer1[iPrime] == 1)) {
                                     imgBuffer1[i + 1] = 0;
@@ -1612,18 +1641,16 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
                                     BACKGROUNDFound++;
                                 }
 
-                                // below
+                                // below neighbor
                                 iPrime = i - xDim;
-
                                 if ((y != 0) && (imgBuffer[iPrime] == BACKGROUND) && (imgBuffer1[iPrime] == 1)) {
                                     imgBuffer1[i - xDim] = 0;
                                     imgBuffer2[i - xDim] = 0;
                                     BACKGROUNDFound++;
                                 }
 
-                                // above
+                                // above neighbor
                                 iPrime = i + xDim;
-
                                 if ((y != (yDim - 1)) && (imgBuffer[iPrime] == BACKGROUND) &&
                                         (imgBuffer1[iPrime] == 1)) {
                                     imgBuffer1[i + xDim] = 0;
@@ -1635,32 +1662,31 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
                     } // end for (y = 0; ...)
                 } while (BACKGROUNDFound > 0);
 
-                // at this point all non-background pixels in imgBuffer (segmentedImg) should be labeled one
+                // at this point all non-background pixels in imgBuffer (segmentedImg) should be labeled 1
                 // in imgBuffer1 and imgBuffer2
 
+                // I don't understand what this means.  When this method is called from the runAlgorithm method
+                // after the 3 class HARD segmentation, no pixels in the image have a label value of MUSCLE.
+                // Therefore, no pixels get changed as a result of this loop through the image
                 // convert gray imgBuffer with outer BACKGROUND imgBuffer in its 5x5 neighborhood, into BACKGROUND
                 // relabels all pixels in the segmentedImg (imgBuffer) to background (0) if any pixels in its
                 // 5x5 neighbor are labeled as non-thigh
                 for (y = 2; y < (yDim - 2); y++) {
-
                     for (x = 2; x < (xDim - 2); x++) {
                         i = x + (y * xDim);
-
                         if (imgBuffer[i] == MUSCLE) {
 
                             // check 5x5 neighborhood
                             for (yy = -2; yy <= 2; yy++) {
-
                                 for (xx = -2; xx <= 2; xx++) {
-
                                     if (imgBuffer1[i + xx + (yy * xDim)] == 0) {
                                         imgBuffer[i] = BACKGROUND;
                                         imgBuffer2[i] = 0;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                    } // end if (...)
+                                } // end for(xx = -2; ...)
+                            } // end for(yy = -2; ...)
+                        } // end if (imgBuffer[i] == MUSCLE)
+                    } // end for (x = 2; ...)
                 } // end for (y = 2; ...)
 
                 Mask.importData((j * imgBuffer.length), imgBuffer2, false);
@@ -1746,6 +1772,74 @@ public class PlugInAlgorithmOAISegOneThigh extends AlgorithmBase {
         return resultImage;
     }
 
+    
+    
+/*    
+    private boolean getCentroids(float[] centroids, boolean entireImageFlag, AlgorithmFuzzyCMeans fuzz) {
+        int i;
+        float minimum, maximum;
+        int xDim = srcImageA.getExtents()[0];
+        int yDim = srcImageA.getExtents()[1];
+        int zDim;
+
+        if (srcImageA.getNDims() > 2) {
+            zDim = srcImageA.getExtents()[2];
+        } else {
+            zDim = 1;
+        }
+
+        int sliceSize = xDim * yDim;
+        int volSize = xDim * yDim * zDim;
+        float[] buffer = null;
+        int yStepIn, yStepOut, zStepIn, zStepOut;
+        int x, y, z, index, newXDim, newYDim, newZDim, newSliceSize;
+
+        try {
+            buffer = new float[volSize];
+            srcImageA.exportData(0, volSize, buffer);
+
+            srcImageA.calcMinMax();
+            minimum = (float) srcImageA.getMin();
+            maximum = (float) srcImageA.getMax();
+
+            if (!entireImageFlag) {
+                maximum = -Float.MAX_VALUE;
+                minimum = Float.MAX_VALUE;
+
+                for (i = 0; i < volSize; i++) {
+
+                    if (fuzz.getMask().get(i)) {
+
+                        if (buffer[i] > maximum) {
+                            maximum = buffer[i];
+                        }
+
+                        if (buffer[i] < minimum) {
+                            minimum = buffer[i];
+                        }
+                    }
+                }
+            } // if (!wholeImage)
+
+        } catch (java.io.IOException ioe) {
+            buffer = null;
+            System.gc();
+            MipavUtil.displayError("Error trying to get centroids.");
+
+            return false;
+        } catch (OutOfMemoryError error) {
+            buffer = null;
+            System.gc();
+            MipavUtil.displayError("Algorithm FuzzyCMeans reports:\n" + error.toString());
+
+            return false;
+        }
+
+        buffer = null;
+        System.gc();
+        return true;
+    }
+*/
 
     /**
      * THRESHOLD through given intensity.
