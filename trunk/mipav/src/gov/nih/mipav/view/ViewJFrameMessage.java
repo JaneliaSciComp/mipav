@@ -226,6 +226,27 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
         }
 
     }
+    
+    /**
+     * Method to append text to an attached JTextArea (not DEBUG or DATA areas).
+     *
+     * @param  tabTitle    String The title of the attached tab
+     * @param  font        font of the appended message
+     */
+    public void setFont(String tabTitle, Font font) {
+
+        int index = tabbedPane.indexOfTab(tabTitle);
+
+        if (index > -1) {
+
+            try {
+                ((ScrollTextArea) tabbedPane.getComponentAt(index)).getTextArea().setFont(font);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
 
     /**
      * Clears the text area.
