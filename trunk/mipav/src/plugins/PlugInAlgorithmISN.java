@@ -444,9 +444,10 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
                 twoDIM = false;
             }
 
-            // System.out.println("diff = " + Math.abs(sliceAverage[i] - adjAvg) + " adjAvg = " + (0.15 *
+            // System.out.println("diff = " + Math.abs(sliceAverage[i] - adjAvg) + " adjAvg = " + (0.2 *
             // sliceAverage[i]) );
-            if (Math.abs(sliceAverage[i] - adjAvg) > (0.15 * sliceAverage[i])) {
+            // more than a 20% difference
+            if (Math.abs(sliceAverage[i] - adjAvg) > (0.2 * sliceAverage[i])) {
 
                 // System.out.println("Image Slice = " + i);
                 try {
