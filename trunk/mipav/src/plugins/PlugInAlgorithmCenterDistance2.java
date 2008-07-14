@@ -451,6 +451,9 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
         int blueBoundaryValue;
         double maxBlueValue;
         long time;
+        int fileNameLength;
+        Font courier = MipavUtil.courier12;
+        int diffX, diffY;
 
         time = System.currentTimeMillis();
         df = new DecimalFormat("0.000E0");
@@ -1132,7 +1135,9 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
             }
         }
         
-        if (mergingDistance > 0.0f) {
+        if (twoGreenLevels || (mergingDistance > 0)) {
+            // Must do even if merging distance is zero, since numGreenObjects
+            // and numGreenObjects2 may be touching
             fireProgressStateChanged("Merging together close green objects");
             fireProgressStateChanged(62);
             greenLeft = new int[numGreenTotal];
@@ -1172,6 +1177,7 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                 for (i = 1; i < j; i++) {
                     if (greenCellNumber[j-1] == greenCellNumber[i-1]) {
                         minDistanceSquared = Double.MAX_VALUE; 
+                        loop2:
                         for (y = greenTop[j-1]; y <= greenBottom[j-1]; y++) {
                             index1 = y*xDim;
                             for (x = greenLeft[j-1]; x <= greenRight[j-1]; x++) {
@@ -1182,8 +1188,14 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                                         for (x1 = greenLeft[i-1]; x1 <= greenRight[i-1]; x1++) {
                                             index2 = index3 + x1;
                                             if (greenIDArray[index2] == i) {
-                                                distX = (x1 - x) * xRes;
-                                                distY = (y1 - y) * yRes;
+                                                diffX = x1 - x;
+                                                distX = diffX * xRes;
+                                                diffY = y1 - y;
+                                                distY = diffY * yRes;
+                                                if ((Math.abs(diffX) + Math.abs(diffY)) == 1) {
+                                                    minDistanceSquared = 0;
+                                                    break loop2;
+                                                }
                                                 distanceSquared = distX*distX + distY*distY;
                                                 if (distanceSquared < minDistanceSquared) {
                                                     minDistanceSquared = distanceSquared;
@@ -1236,7 +1248,7 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                     }
                 }
             }
-        } // if (mergingDistance > 0.0f)
+        } // if (twoGreenLevels || (mergingDistance > 0))
 
         // Sort the green objects within each nucleus.
         // Create no more than greenRegionNumber green objects within each nucleus.
@@ -1781,9 +1793,17 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
         srcImage.notifyImageDisplayListeners();
         
         UI.getMessageFrame().addTab("PlugInAlgorithmCenterDistance");
+        UI.getMessageFrame().setFont("PlugInAlgorithmCenterDistance", courier);
         UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "\n");
-        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "File Name \t\tNucleus\tNArea\tRmin\tRmax" +
-        "\tObj\tGarea\tcenterToG\tcenterToGToEdge\tfractionGOut\n");
+        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "File Name");
+        fileNameLength = srcImage.getFileInfo(0).getFileName().length();
+        if (fileNameLength > 9) {
+            for (i = 0; i < fileNameLength - 9; i++) {
+                UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", " ");
+            }
+        }
+        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", " \tNucleus\tNArea\tRmin\t\tRmax" +
+        "\tObj\tGarea\t\tcenterToG\tcenterToGToEdge\tfractionGOut\n");
 
         for (i = 0; i < numObjects; i++) {
             nuclearArea = xRes * yRes * blueCountTotal[i];
@@ -1864,10 +1884,22 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                     fractionOut = gravToCenter/centerToGravToEdge;
         
                     UI.getMessageFrame().append("PlugInAlgorithmCenterDistance",
-                    srcImage.getFileInfo(0).getFileName() + "\t" + (i+1) + "\t" + df.format(nuclearArea) +
-                    "\t" + df.format(centerToNearEdge[i]) + "\t" + df.format(centerToFarEdge[i]) +
-                    "\t" + (j+1) + "\t" + df.format(voiArea) + "\t" + df.format(gravToCenter) +
-                    "\t" + df.format(centerToGravToEdge) + "\t\t" + dfFract.format(fractionOut) + "\n");
+                    srcImage.getFileInfo(0).getFileName() + " \t" + (i+1) + "\t" + df.format(nuclearArea) +
+                    "\t" + df.format(centerToNearEdge[i]) + "\t");
+                    if (df.format(centerToNearEdge[i]).length() < 8) {
+                        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "\t");    
+                    }
+                    UI.getMessageFrame().append("PlugInAlgorithmCenterDistance",df.format(centerToFarEdge[i]) +
+                    "\t" + greenFound + "\t" + df.format(voiArea) + "\t");
+                    if (df.format(voiArea).length() < 8) {
+                        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "\t");    
+                    }
+                    UI.getMessageFrame().append("PlugInAlgorithmCenterDistance",df.format(gravToCenter) +
+                    "\t");
+                    if (df.format(gravToCenter).length() < 8) {
+                        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "\t");    
+                    }
+                    UI.getMessageFrame().append("PlugInAlgorithmCenterDistance",df.format(centerToGravToEdge) + "\t\t" + dfFract.format(fractionOut) + "\n");
                 } // if (objectID[j] == (i+1))
             } // for (j = 0; j <= nVOIs - 1; j++)
 
@@ -2078,6 +2110,9 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
         int blueBoundaryValue;
         double maxBlueValue;
         long time;
+        int fileNameLength;
+        Font courier = MipavUtil.courier12;
+        int diffX, diffY, diffZ;
         
         
         time = System.currentTimeMillis();
@@ -2694,7 +2729,7 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
 
         grayImage.calcMinMax();
         numGreenObjects = (int) grayImage.getMax();
-        Preferences.debug("numGreeenObjects = " + numGreenObjects + "\n");
+        Preferences.debug("numGreenObjects = " + numGreenObjects + "\n");
         greenIDArray = new byte[totLength];
 
         try {
@@ -2820,7 +2855,9 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
             }
         }
         
-        if (mergingDistance > 0.0f) {
+        if (twoGreenLevels || (mergingDistance > 0)) {
+            // Must do even if merging distance is zero, since numGreenObjects
+            // and numGreenObjects2 may be touching
             fireProgressStateChanged("Merging together close green objects");
             fireProgressStateChanged(62);
             greenLeft = new int[numGreenTotal];
@@ -2872,6 +2909,7 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                 for (i = 1; i < j; i++) {
                     if (greenCellNumber[j-1] == greenCellNumber[i-1]) {
                         minDistanceSquared = Double.MAX_VALUE;
+                        loop2:
                         for (z = greenFront[j-1]; z <= greenBack[j-1]; z++) {
                             index2 = z*sliceSize;
                             for (y = greenTop[j-1]; y <= greenBottom[j-1]; y++) {
@@ -2886,9 +2924,16 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                                                 for (x1 = greenLeft[i-1]; x1 <= greenRight[i-1]; x1++) {
                                                     index3 = index4 + x1;
                                                     if (greenIDArray[index3] == i) {
-                                                        distX = (x1 - x) * xRes;
-                                                        distY = (y1 - y) * yRes;
-                                                        distZ = (z1 - z) * zRes;
+                                                        diffX = x1 - x;
+                                                        distX = diffX * xRes;
+                                                        diffY = y1 - y;
+                                                        distY = diffY * yRes;
+                                                        diffZ = z1 - z;
+                                                        distZ = diffZ * zRes;
+                                                        if ((Math.abs(diffX) + Math.abs(diffY) + Math.abs(diffZ)) == 1) {
+                                                            minDistanceSquared = 0;
+                                                            break loop2;
+                                                        }
                                                         distanceSquared = distX*distX + distY*distY + distZ*distZ;
                                                         if (distanceSquared < minDistanceSquared) {
                                                             minDistanceSquared = distanceSquared;
@@ -2947,7 +2992,7 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                     } // if (greenCellNumber[j-1] == greenCellNumber[i-1])
                 } // for (i = 1; i < j; i++)
             } // for (j = numGreenTotal; j >= 1; j--)
-        } // if (mergingDistance > 0.0f)
+        } // if (twoGreenLevels || (mergingDistance > 0))
 
         fireProgressStateChanged("Sorting green objects by intensity count");
         fireProgressStateChanged(66);
@@ -3527,9 +3572,17 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
         srcImage.notifyImageDisplayListeners();
         
         UI.getMessageFrame().addTab("PlugInAlgorithmCenterDistance");
+        UI.getMessageFrame().setFont("PlugInAlgorithmCenterDistance", courier);
         UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "\n");
-        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "File Name \t\tNucleus\tNVolume\tRmin\tRmax" +
-                                    "\tObj\tGvolume\tcenterToG\tcenterToGToEdge\tfractionGOut\n");
+        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "File Name");
+        fileNameLength = srcImage.getFileInfo(0).getFileName().length();
+        if (fileNameLength > 9) {
+            for (i = 0; i < fileNameLength - 9; i++) {
+                UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", " ");
+            }
+        }
+        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", " \tNucleus\tNVolume\tRmin\t\tRmax" +
+                                    "\tObj\tGvolume\t\tcenterToG\tcenterToGToEdge\tfractionGOut\n");
 
         for (i = 0; i < numObjects; i++) {
             nuclearVolume = xRes * yRes * zRes * blueCountTotal[i];
@@ -3641,10 +3694,18 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                     fractionOut = gravToCenter/centerToGravToEdge;
                     
                     UI.getMessageFrame().append("PlugInAlgorithmCenterDistance",
-                            srcImage.getFileInfo(0).getFileName() + "\t" + (i+1) + "\t" + df.format(nuclearVolume) +
-                            "\t" + df.format(centerToNearEdge[i]) + "\t" + df.format(centerToFarEdge[i]) +
-                            "\t" + (j+1) + "\t" + df.format(voiVolume) + "\t" + df.format(gravToCenter) +
-                            "\t" + df.format(centerToGravToEdge) + "\t\t" + dfFract.format(fractionOut) + "\n");
+                            srcImage.getFileInfo(0).getFileName() + " \t" + (i+1) + "\t" + df.format(nuclearVolume) +
+                            "\t" + df.format(centerToNearEdge[i]) + "\t");
+                    if (df.format(centerToNearEdge[i]).length() < 8) {
+                        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "\t");    
+                    }
+                    UI.getMessageFrame().append("PlugInAlgorithmCenterDistance",df.format(centerToFarEdge[i]) +
+                            "\t" + greenFound + "\t" + df.format(voiVolume) + "\t");
+                    if (df.format(voiVolume).length() < 8) {
+                        UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "\t");    
+                    }
+                    UI.getMessageFrame().append("PlugInAlgorithmCenterDistance",df.format(gravToCenter) +
+                            "\t\t" + df.format(centerToGravToEdge) + "\t\t" + dfFract.format(fractionOut) + "\n");
                 } // if (objectID[j] == (i+1))
             } // for (j = 0; j <= nVOIs - 1; j++)
 
