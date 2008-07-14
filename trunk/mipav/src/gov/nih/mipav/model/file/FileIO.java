@@ -86,6 +86,8 @@ public class FileIO {
 
     /** flag telling IO this is a paint brush bitmap */
     private boolean isPaintBrush = false;
+    
+    
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -2369,7 +2371,114 @@ public class FileIO {
                 break;
 
             case FileUtility.DICOM:
-                success = writeDicom(image, options);
+            	//not handling 4d or greater images
+            	if(image.getNDims() > 3) {
+            		MipavUtil.displayInfo("Saving of 4D or greater datsets as DICOM is not currently supported");
+            		break;
+            	}
+            	
+            	//multiframe dicom images and 2D images 
+            	if((image.isDicomImage() && ((FileInfoDicom) image.getFileInfo(0)).isMultiFrame()) || (image.getNDims() == 2)) {
+            		success = writeDicom(image, options);
+            		break;
+            	}
+            	
+            	//For 3D images, will call writeDicomSlice or writeDicom depending on how much memory is in use along with how
+            	//big the image is and a factor since image cloning can occur
+            	long memoryInUse = ( (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+                long totalMemory = (Runtime.getRuntime().totalMemory());
+                int imageSize = image.getSize();
+                int numBytes = 1;
+                int type = image.getType();;
+                if(type == ModelStorageBase.BOOLEAN || type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
+                	numBytes = 1;
+                }else if(type == ModelStorageBase.SHORT || type == ModelStorageBase.USHORT) {
+                	numBytes = 2;
+                }else if(type == ModelStorageBase.INTEGER || type == ModelStorageBase.UINTEGER|| type == ModelStorageBase.FLOAT || type == ModelStorageBase.ARGB) {
+                	numBytes = 4;
+                }else if(type == ModelStorageBase.LONG || type == ModelStorageBase.DOUBLE || type == ModelStorageBase.ARGB_USHORT) {
+                	numBytes = 8;
+                }else if(type == ModelStorageBase.ARGB_FLOAT) {
+                	numBytes =16;
+                }
+                
+                long imageMemory = numBytes * imageSize;
+                //factor used
+                float factor = 3f;
+                //determine which write dicom method to call 
+                if((memoryInUse + (imageMemory * factor)) < (0.8 * totalMemory)) {
+                	success = writeDicom(image, options);
+                }else {
+                	FileInfoDicom fileDicom = null;
+                	if(!image.isDicomImage()) {
+                		fileDicom = new FileInfoDicom(options.getFileName(), fileDir, FileUtility.DICOM);
+                		
+                		JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), fileDicom, options.isScript());
+
+                		if (dialog.isCancelled()) {
+                			break;
+                		}
+                	}
+                	
+                	createProgressBar(null, options.getFileName(), FILE_WRITE);
+
+            		int beginSlice = options.getBeginSlice();
+            		int endSlice = options.getEndSlice();
+            		int sliceSize = image.getSliceSize();
+            		int colorFactor = 1;
+            		if(image.isColorImage()) {
+            			colorFactor = 4;
+            		}
+            		float[] imageBuffer = new float[colorFactor * sliceSize];
+            		int[] newExtents = new int[2];
+            		newExtents[0] = image.getExtents()[0];
+            		newExtents[1] = image.getExtents()[1];
+            		ModelImage newImage;
+
+            		//extract 2D slice from volume and write out
+                    for(int i=beginSlice; i<=endSlice;i++) {
+                    	try {
+                    		//extract 2D data to buffer
+	                    	if(image.isColorImage()) {
+	                    		image.exportData(i * 4 * sliceSize, 4 * sliceSize, imageBuffer);
+	                    	}else {
+	                    		image.exportData(i * sliceSize, sliceSize, imageBuffer);
+	                    	}
+	                    	//create new 2D ModelImage
+	                    	newImage = new ModelImage(image.getType(), newExtents,image.getImageName() + "_slice");
+	                    	
+	                    	//import data
+	                    	newImage.importData(0, imageBuffer, false);
+
+	                        //set fileInfo 
+	                    	if(image.isDicomImage()) {
+	                    		fileDicom = (FileInfoDicom)image.getFileInfo(i).clone();
+	                    		fileDicom.setExtents(newExtents);
+	                    		newImage.setFileInfo(fileDicom, 0);
+	                    		newImage.calcMinMax();
+	                    		//wrtie out DICOM slice
+		                        success = writeDicomSlice(newImage, i, options, null, null, -1, null, -1, -1, image.isDicomImage(), image.isColorImage());
+	                    	}else {
+	                    		fileDicom.setExtents(newExtents);
+	                    		//newImage.setFileInfo(fileDicom, 0);
+	                    		newImage.calcMinMax();
+	                    		//wrtie out DICOM slice
+		                        success = writeDicomSlice(newImage, i, options, fileDicom, image.getFileInfo(0), image.getType(), image.getMatrix(), image.getMin(), image.getMax(), image.isDicomImage(), image.isColorImage());
+	                    	}
+
+	                        //dispose 2D ModelImage
+	                    	if(newImage != null) {
+	                    		newImage.disposeLocal();
+	                    		newImage = null;
+	                    	}
+	                           
+                    	}catch(IOException e){
+                    		e.printStackTrace();
+                    		break;
+                    	}
+            		}
+                }
+
                 break;
 
             case FileUtility.JIMI:
@@ -8471,6 +8580,470 @@ public class FileIO {
 
         return true;
     }
+    
+    
+    /**
+     * Writes a DICOM file on a slice basis. 
+     * This method is specifically used in very large 3d datasets where memory becomes an issue
+     * DICOM images are each
+     * written to a separate file with a different header.
+     * 
+     * @param image The 2D image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
+     */
+    private boolean writeDicomSlice(ModelImage image, int sliceNumber, FileWriteOptions options, FileInfoDicom fileDicom, FileInfoBase originalFileInfo, int originalImageDataType, TransMatrix originalImageMatrix, double originalImageMin, double originalImageMax, boolean originalIsDicom, boolean originalIsColor) {
+    	int index;
+        String prefix = "";
+        String fileSuffix = "";
+    	String fileDir = null;
+        String fileName = null;
+        FileDicom dicomFile;
+        double volMin = originalImageMin;
+        double volMax = originalImageMax;
+        ModelImage clonedImage = null;
+        boolean didClone = false;
+        
+        
+    	if(image.getNDims() != 2) {
+    		return false;
+    	}
+    	
+    	progressBar.updateValue(Math.round((float) sliceNumber / (options.getEndSlice()) * 100), false);
+    	
+    	//create the directory
+		fileName = options.getFileName();
+
+        if ( /* options.isSaveAs() && */options.isSaveInSubdirectory()) {
+            String baseName = null;
+
+            // find the root of the filename (without extensions)
+            int ind = options.getFileName().lastIndexOf(".");
+
+            if (ind > 0) {
+                baseName = options.getFileName().substring(0, ind);
+            } else {
+                baseName = options.getFileName();
+            } // there wasn't an extension
+
+            // build directory name with the added subdirectory
+            fileDir = new String(options.getFileDirectory() + baseName + File.separator);
+        } else {
+
+            // fileDir = image.getFileInfo(0).getFileDirectory();
+            fileDir = options.getFileDirectory(); // options doesn't change...
+        }
+
+        // make sure fileDir exists
+        File tmpFile = new File(fileDir);
+
+        if ( !tmpFile.exists()) {
+
+            try {
+                tmpFile.mkdirs();
+                // don't reset here...may need for options to hold a root if we are saving into subdirs.
+                // options.setFileDirectory(fileDir);
+            } catch (Exception e) {
+                MipavUtil.displayError("Unable to create directory for DICOM file: \n" + fileDir);
+
+                e.printStackTrace();
+
+                return false;
+            }
+        }
+        
+        
+    	
+    	if (originalIsDicom) {
+            fileDicom = (FileInfoDicom) image.getFileInfo(0);
+    		fileDicom.setFileDirectory(fileDir);
+
+            // if this is a 'save as' file, then correct the directory name in fileInfo
+            // if (options.isSaveAs()) {
+            // //myFileInfo.setFileDirectory (fileDir);
+            // }
+            if (originalIsColor) {
+                // TODO: shouldn't these tags already be set?
+
+            	fileDicom.getTagTable().setValue("0028,0100", new Short((short) 8), 2);
+            	fileDicom.getTagTable().setValue("0028,0101", new Short((short) 8), 2);
+            	fileDicom.getTagTable().setValue("0028,0102", new Short((short) 7), 2);
+            	fileDicom.getTagTable().setValue("0028,0002", new Short((short) 3), 2); // samples per pixel
+            	fileDicom.getTagTable().setValue("0028,0004", new String("RGB")); // photometric
+            	fileDicom.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
+            	fileDicom.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
+            }
+
+        }else { // Non DICOM images
+        	//fileDicom = (FileInfoDicom) image.getFileInfo(0);
+        	fileDicom.setEndianess(FileBase.LITTLE_ENDIAN);
+        	fileDicom.setRescaleIntercept(0);
+        	fileDicom.setRescaleSlope(1);
+        	fileDicom.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
+        	fileDicom.vr_type = FileInfoDicom.EXPLICIT;
+        	
+        	
+        	
+            
+        	// necessary to save (non-pet) floating point minc files to dicom
+            if ( ( (originalFileInfo.getFileFormat() == FileUtility.MINC) && (originalImageDataType == ModelImage.FLOAT) && (fileDicom
+                    .getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY))
+                    || ( (originalFileInfo.getFileFormat() == FileUtility.ANALYZE) && (originalImageDataType == ModelImage.FLOAT))&& (fileDicom
+                            .getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
+
+            	clonedImage = (ModelImage) image.clone();
+            	didClone = true;
+                int newType;
+                if(originalImageMin >= 0) {
+                	newType = ModelImage.USHORT;
+                }else {
+                	newType = ModelImage.SHORT;
+                }
+                double newMin, newMax;
+                if(originalImageMin >= 0) {
+                	//give USHORT range
+                	newMin = 0;
+                	newMax = 65535;
+                	
+                }else {
+                	//give SHORT range
+                	newMin = Short.MIN_VALUE;
+                	newMax = Short.MAX_VALUE;
+                }
+                volMin = newMin;
+                volMax = newMax;
+                // in-place conversion is required so that the minc file info is retained
+                AlgorithmChangeType convertType = new AlgorithmChangeType(clonedImage, newType,
+                		originalImageMin, originalImageMax, newMin, newMax, false);
+                convertType.run();
+
+                image = clonedImage;
+            }
+
+            
+            if ( (image.getType() == ModelImage.SHORT) || (image.getType() == ModelImage.USHORT)
+                    || (originalFileInfo.getDataType() == ModelImage.SHORT)
+                    || (originalFileInfo.getDataType() == ModelImage.USHORT)) {
+                fileDicom.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
+                fileDicom.getTagTable().setValue("0028,0101", new Short((short) 16), 2);
+                fileDicom.getTagTable().setValue("0028,0102", new Short((short) 15), 2);
+                fileDicom.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+                fileDicom.getTagTable().setValue("0028,0004", new String("MONOCHROME2"), 11); // photometric
+
+                if ( (image.getType() == ModelImage.USHORT)
+                        || (originalFileInfo.getDataType() == ModelImage.USHORT)) {
+                	fileDicom.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
+                } else {
+                	fileDicom.getTagTable().setValue("0028,0103", new Short((short) 1), 2);
+                }
+            } else if ( (image.getType() == ModelImage.BYTE) || (image.getType() == ModelImage.UBYTE)
+                    || (originalFileInfo.getDataType() == ModelImage.BYTE)
+                    || (originalFileInfo.getDataType() == ModelImage.UBYTE)) {
+            	fileDicom.getTagTable().setValue("0028,0100", new Short((short) 8), 2);
+            	fileDicom.getTagTable().setValue("0028,0101", new Short((short) 8), 2);
+            	fileDicom.getTagTable().setValue("0028,0102", new Short((short) 7), 2);
+            	fileDicom.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+            	fileDicom.getTagTable().setValue("0028,0004", new String("MONOCHROME2")); // photometric
+
+                if ( (image.getType() == ModelImage.UBYTE) || (originalFileInfo.getDataType() == ModelImage.UBYTE)) {
+                	fileDicom.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
+                } else {
+                	fileDicom.getTagTable().setValue("0028,0103", new Short((short) 1), 2);
+                }
+            } else if ((image.getType() == ModelImage.ARGB) || (image.getType() == ModelImage.ARGB_USHORT) || (image.getType() == ModelImage.ARGB_FLOAT)) {
+            	fileDicom.getTagTable().setValue("0028,0100", new Short((short) 8), 2);
+            	fileDicom.getTagTable().setValue("0028,0101", new Short((short) 8), 2);
+            	fileDicom.getTagTable().setValue("0028,0102", new Short((short) 7), 2);
+            	fileDicom.getTagTable().setValue("0028,0002", new Short((short) 3), 2); // samples per pixel
+            	fileDicom.getTagTable().setValue("0028,0004", new String("RGB")); // photometric
+            	fileDicom.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
+            } else if ( ((image.getType() == ModelImage.FLOAT)|| (originalFileInfo.getDataType() == ModelImage.FLOAT)) //this is new 7/8/2008
+                    && (originalFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
+            	fileDicom.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
+            	fileDicom.getTagTable().setValue("0028,0101", new Short((short) 16), 2);
+            	fileDicom.getTagTable().setValue("0028,0102", new Short((short) 15), 2);
+            	fileDicom.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+            	fileDicom.getTagTable().setValue("0028,0004", new String("MONOCHROME2"), 11); // photometric
+
+                if ( originalImageMin >= 0) {
+                	fileDicom.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
+                } else {
+                	fileDicom.getTagTable().setValue("0028,0103", new Short((short) 1), 2);
+                }
+            }else {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("Saving the original image type in DICOM format is not yet supported.");
+
+                    if (image.getType() != originalFileInfo.getDataType()) {
+                        Preferences
+                                .debug(
+                                        "writeDicom:\tThe image file type in memory and the data type in the file info do not match.\n",
+                                        Preferences.DEBUG_FILEIO);
+                    }
+                }
+
+                System.gc();
+
+                return false;
+            }
+        	
+            fileDicom.setDataType(image.getFileInfo(0).getDataType());
+
+            FileDicomTag tag = null;
+            Object obj = null;
+            double slLoc;
+
+           int originalExtentsLength = originalFileInfo.getExtents().length;
+        	
+           if(originalExtentsLength > 2) {
+        	   double sliceResolution = originalFileInfo.getResolution(2);
+        	   //FileInfoBase[] fBase = new FileInfoBase[originalFileInfo.getExtents()[2]];
+        	   FileInfoBase fBase;
+
+               double[] axialOrigin = new double[3];
+               double[] dicomOrigin = new double[3];
+               TransMatrix matrix = fileDicom.getPatientOrientation();
+
+               if (matrix == null) {
+                   matrix = originalImageMatrix;
+               }
+
+               TransMatrix invMatrix = (TransMatrix) matrix.clone();
+               invMatrix.invert();
+        	   
+               float[] imageOrg = originalFileInfo.getOrigin();
+               double[] imageOrgDbl = new double[imageOrg.length];
+
+               for (int k = 0; k < imageOrg.length; k++) {
+                   imageOrgDbl[k] = (double) imageOrg[k];
+               }
+
+               matrix.transform(imageOrgDbl, axialOrigin);
+
+               slLoc = axialOrigin[2];
+
+               // see if the original dicom a minc was created from was part of a larger volume. if so, preserve the
+               // instance number it had
+               int baseInstanceNumber = -1;
+
+               if (originalFileInfo.getFileFormat() == FileUtility.MINC) {
+                   tag = fileDicom.getTagTable().get("0020,0013");
+
+                   if (tag != null) {
+                       obj = tag.getValue(false);
+                   }
+
+                   if (obj != null) {
+                       baseInstanceNumber = Integer.parseInt( ((String) obj).trim());
+                       options.setRecalculateInstanceNumber(false);
+                   }
+               }
+
+               //7/8/2008
+               //this handles PET float images
+               //convert type to float with short or ushort range
+               if ( (originalFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
+                       && ( (image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE))) {
+               	
+               	//clone the image
+               	//then convert type to float with short or ushort range
+            	   clonedImage = (ModelImage) image.clone();
+            	   didClone = true;
+                   int newType;
+                   //double newMin, newMax;
+                   newType = ModelImage.FLOAT;
+                   double newMin, newMax;
+                   if(originalImageMin >= 0) {
+                   	//give USHORT range
+                   	newMin = 0;
+                   	newMax = 65535;
+                   	
+                   }else {
+                   	//give SHORT range
+                   	newMin = Short.MIN_VALUE;
+                   	newMax = Short.MAX_VALUE;
+                   }
+                   volMin = newMin;
+                   volMax = newMax;
+
+                   AlgorithmChangeType convertType = new AlgorithmChangeType(clonedImage, newType,
+                           originalImageMin, originalImageMax, newMin, newMax, true);
+                   convertType.run();
+
+                   image = clonedImage;
+                   
+                   image.calcMinMax();
+               }
+               
+               double vmin;
+               double vmax;
+
+               if (originalFileInfo.getFileFormat() == FileUtility.MINC) {
+                   vmin = ((FileInfoMinc) originalFileInfo).vmin;
+                   vmax = ((FileInfoMinc) originalFileInfo).vmax;
+               } else {
+                   vmin = volMin;
+                   vmax = volMax;
+               }
+
+               double slopeDivisor = vmax - vmin;
+
+               if (slopeDivisor == 0) {
+                   slopeDivisor = 1;
+               }
+
+               int sliceSize = image.getExtents()[0] * image.getExtents()[1];
+               float[] sliceData = new float[sliceSize];
+
+               fBase = (FileInfoBase) fileDicom.clone();
+
+               // Add code to modify the slice location attribute (0020, 1041) VR = DS = decimal string
+               ((FileInfoDicom) (fBase)).getTagTable().setValue("0020,1041", Double.toString(slLoc),
+                       Double.toString(slLoc).length());
+               slLoc += sliceResolution;
+
+               // transform the slice position back into dicom space and store it in the file info
+               invMatrix.transform(axialOrigin, dicomOrigin);
+
+               String tmpStr = new String(Float.toString((float) dicomOrigin[0]) + "\\"
+                       + Float.toString((float) dicomOrigin[1]) + "\\" + Float.toString((float) dicomOrigin[2]));
+               ((FileInfoDicom) (fBase)).getTagTable().setValue("0020,0032", tmpStr, tmpStr.length());
+
+               // move the slice position to the next slice in the image
+               axialOrigin[2] += sliceResolution;
+
+               if (baseInstanceNumber != -1) {
+                   String instanceStr = "" + (baseInstanceNumber + sliceNumber);
+                   ((FileInfoDicom) fBase).getTagTable().setValue("0020,0013", instanceStr,
+                           instanceStr.length());
+               }
+
+               // rescaling intercepts and slopes for each slice.
+               if ( (fBase.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
+                       && ( (originalImageDataType == ModelStorageBase.FLOAT) || (originalImageDataType == ModelStorageBase.DOUBLE))) {
+
+                   double smin, smax; // slice min and max
+                   
+                   smin = image.getMin();
+                   smax = image.getMax();
+
+                   double slope = (smax - smin) / slopeDivisor;
+                   double intercept = smin - (slope * vmin);
+
+                   //7/8/2008
+                   if(vmin >= 0) {
+                   	fBase.setDataType(ModelImage.USHORT);
+                   }else {
+                   	fBase.setDataType(ModelImage.SHORT);
+                   }
+                   fBase.setRescaleSlope(slope);
+                   fBase.setRescaleIntercept(intercept);
+
+                   ((FileInfoDicom) fBase).getTagTable().setValue("0028,1052",
+                           "" + fBase.getRescaleIntercept());
+                   ((FileInfoDicom) fBase).getTagTable().setValue("0028,1053", "" + fBase.getRescaleSlope());
+               }
+               
+               image.setFileInfo(fBase,0);
+  
+           }//end if originalImage extents > 2
+           else {
+        	   image.setFileInfo(fileDicom, 0);
+           }
+
+        }//end else non-dicom images
+
+    	 if (options.isSaveAs()) {
+             index = options.getFileName().indexOf(".");
+             prefix = options.getFileName().substring(0, index); // Used for setting file name
+             fileSuffix = options.getFileName().substring(index);
+         }
+ 
+    	 try {
+             String name;
+
+             if ( ! ((FileInfoDicom) (fileDicom)).isMultiFrame()) {
+            	 
+                 //for (i = options.getBeginSlice(); i <= options.getEndSlice(); i++) {
+                     //progressBar.updateValue(Math.round((float) i / (options.getEndSlice()) * 100), false);
+            	 fileDicom = (FileInfoDicom) image.getFileInfo(0);
+            	 fileDicom.setFileDirectory(fileDir); // need to update in case it changed
+
+                     String s = "" + (sliceNumber + 1);
+
+                     if (options.isInstanceNumberRecalculated()) {
+                    	 fileDicom.getTagTable().setValue("0020,0013", s, s.length());
+                     }
+
+                     if (options.isSaveAs()) {
+
+                         if ( (sliceNumber < 9) && (options.getEndSlice() != options.getBeginSlice())) {
+                             name = prefix + "000" + (sliceNumber + 1) + fileSuffix;
+                         } else if ( (sliceNumber >= 9) && (sliceNumber < 99) && (options.getEndSlice() != options.getBeginSlice())) {
+                             name = prefix + "00" + (sliceNumber + 1) + fileSuffix;
+                         } else if ( (sliceNumber >= 99) && (sliceNumber < 999) && (options.getEndSlice() != options.getBeginSlice())) {
+                             name = prefix + "0" + (sliceNumber + 1) + fileSuffix;
+                         } else if (options.getEndSlice() != options.getBeginSlice()) {
+                             name = prefix + (sliceNumber + 1) + fileSuffix;
+                         } else {
+                             name = prefix + fileSuffix;
+                         }
+                     } else {
+                         name = fileDicom.getFileName();
+                     }
+
+                     dicomFile = new FileDicom(name, fileDir);
+                     int sliceSize = image.getSliceSize();
+                     dicomFile.writeImage(image, 0, sliceSize, 0);
+                 //}
+             } else { // its a multi frame image to be saved!!!
+
+                 // progressBar.updateValue( Math.round((float)i/(endSlice) * 100));
+                 dicomFile = new FileDicom(fileName, fileDir); // was (UI, fileDir, fileDir). think this fixes...
+
+                 // String s=""+(i+1);
+                 // myFileInfo = (FileInfoDicom)image.getFileInfo(i);
+                 // if (saveAs) myFileInfo.updateValue("0020,0013", s, s.length());
+                 dicomFile.writeMultiFrameImage(image, 0, 0);
+             }
+         } catch (IOException error) {
+             //image.setFileInfo(originalFileInfos);
+
+             error.printStackTrace();
+
+             if ( !quiet) {
+                 MipavUtil.displayError("FileIO: " + error);
+             }
+
+             error.printStackTrace();
+
+             return false;
+         } catch (OutOfMemoryError error) {
+             //image.setFileInfo(originalFileInfos);
+
+             error.printStackTrace();
+
+             if ( !quiet) {
+                 MipavUtil.displayError("FileIO: " + error);
+             }
+
+             error.printStackTrace();
+
+             return false;
+         }
+
+         //image.setFileInfo(originalFileInfos);
+         if(didClone) {
+      	   if(clonedImage != null) {
+      	   		clonedImage.disposeLocal();
+      	   		clonedImage = null;
+      	   }
+         }
+
+         return true;
+    } 
 
     /**
      * Writes a DICOM file to store the image. Calls a dialog if the source isn't a DICOM image. DICOM images are each
@@ -8482,15 +9055,22 @@ public class FileIO {
      * @return Flag indicating that this was a successful write.
      */
     private boolean writeDicom(ModelImage image, FileWriteOptions options) {
+    	
+    	
         int i;
         int index;
         String prefix = "";
         String fileSuffix = "";
         FileInfoDicom myFileInfo = null;
         FileInfoBase[] originalFileInfos;
-        FileDicom dicomFile = null;
+        FileDicom dicomFile;
         String fileDir = null;
         String fileName = null;
+        ModelImage clonedImage = null;
+        ModelImage originalImage = image;
+        boolean didClone = false;
+
+        
 
         // if a file is being 'saved as' a dicom file, then
         // actually save it to a subdirectory, named by the base of the FileName
@@ -8573,24 +9153,37 @@ public class FileIO {
             myFileInfo.setRescaleSlope(1);
             myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
             myFileInfo.vr_type = FileInfoDicom.EXPLICIT;
-
+            
             // necessary to save (non-pet) floating point minc files to dicom
             if ( ( (image.getFileInfo(0).getFileFormat() == FileUtility.MINC) && (image.getType() == ModelImage.FLOAT) && (myFileInfo
                     .getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY))
-                    || ( (image.getFileInfo(0).getFileFormat() == FileUtility.ANALYZE) && (image.getType() == ModelImage.FLOAT))) {
-                ModelImage newImage = (ModelImage) image.clone();
+                    || ( (image.getFileInfo(0).getFileFormat() == FileUtility.ANALYZE) && (image.getType() == ModelImage.FLOAT))&& (myFileInfo
+                            .getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
+            	clonedImage = (ModelImage) image.clone();
+            	didClone = true;
                 int newType;
-                if(newImage.getMin() >= 0) {
+                if(clonedImage.getMin() >= 0) {
                 	newType = ModelImage.USHORT;
                 }else {
                 	newType = ModelImage.SHORT;
                 }
+                double newMin, newMax;
+                if(image.getMin() >= 0) {
+                	//give USHORT range
+                	newMin = 0;
+                	newMax = 65535;
+                	
+                }else {
+                	//give SHORT range
+                	newMin = Short.MIN_VALUE;
+                	newMax = Short.MAX_VALUE;
+                }
                 // in-place conversion is required so that the minc file info is retained
-                AlgorithmChangeType convertType = new AlgorithmChangeType(newImage, newType,
-                        newImage.getMin(), newImage.getMax(), newImage.getMin(), newImage.getMax(), false);
+                AlgorithmChangeType convertType = new AlgorithmChangeType(clonedImage, newType,
+                		clonedImage.getMin(), clonedImage.getMax(), newMin, newMax, false);
                 convertType.run();
 
-                image = newImage;
+                image = clonedImage;   
             }
 
             if ( (image.getType() == ModelImage.SHORT) || (image.getType() == ModelImage.USHORT)
@@ -8629,7 +9222,20 @@ public class FileIO {
                 myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 3), 2); // samples per pixel
                 myFileInfo.getTagTable().setValue("0028,0004", new String("RGB")); // photometric
                 myFileInfo.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
-            } else {
+            } else if ( ((image.getType() == ModelImage.FLOAT)|| (image.getFileInfo(0).getDataType() == ModelImage.FLOAT)) //7/8/2008
+                    && (myFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
+                myFileInfo.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
+                myFileInfo.getTagTable().setValue("0028,0101", new Short((short) 16), 2);
+                myFileInfo.getTagTable().setValue("0028,0102", new Short((short) 15), 2);
+                myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+                myFileInfo.getTagTable().setValue("0028,0004", new String("MONOCHROME2"), 11); // photometric
+
+                if ( image.getMin() >= 0) {
+                    myFileInfo.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
+                } else {
+                    myFileInfo.getTagTable().setValue("0028,0103", new Short((short) 1), 2);
+                }
+            }else {
 
                 if ( !quiet) {
                     MipavUtil.displayError("Saving the original image type in DICOM format is not yet supported.");
@@ -8652,11 +9258,9 @@ public class FileIO {
             FileDicomTag tag = null;
             Object obj = null;
             double slLoc;
-
+           
             double sliceResolution = myFileInfo.getResolution(2);
-
             if (image.getExtents().length > 2) { // This sets the fileinfo to the same for all slices !!
-
                 FileInfoBase[] fBase = new FileInfoBase[image.getExtents()[2]];
 
                 double[] axialOrigin = new double[3];
@@ -8697,6 +9301,43 @@ public class FileIO {
                         options.setRecalculateInstanceNumber(false);
                     }
                 }
+                
+                
+                //7/8/2008
+                //this handles PET float images
+                //convert type to float with short or ushort range
+                if ( (myFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
+                        && ( (image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE))) {
+                	
+                	//clone the image
+                	//then convert type to float with short or ushort range
+                	clonedImage = (ModelImage) image.clone();
+                	didClone = true;
+                	
+                    int newType;
+                    double newMin, newMax;
+                    newType = ModelImage.FLOAT;
+                    
+                    if(image.getMin() >= 0) {
+                    	//give USHORT range
+                    	newMin = 0;
+                    	newMax = 65535;
+                    	
+                    }else {
+                    	//give SHORT range
+                    	newMin = Short.MIN_VALUE;
+                    	newMax = Short.MAX_VALUE;
+                    }
+ 
+                    AlgorithmChangeType convertType = new AlgorithmChangeType(clonedImage, newType,
+                    		clonedImage.getMin(), clonedImage.getMax(), newMin, newMax, false);
+                    convertType.run();
+                    
+                    clonedImage.calcMinMax();
+  
+                    image = clonedImage;
+   
+                }
 
                 double vmin;
                 double vmax;
@@ -8710,13 +9351,15 @@ public class FileIO {
                 }
 
                 double slopeDivisor = vmax - vmin;
+                
+                
 
                 if (slopeDivisor == 0) {
                     slopeDivisor = 1;
                 }
 
                 float[] sliceData = new float[sliceSize];
-
+                
                 for (int k = 0; k < image.getExtents()[2]; k++) {
 
                     // System.err.println("FileIO k = " + k);
@@ -8743,16 +9386,25 @@ public class FileIO {
                                 instanceStr.length());
                     }
 
+                    
+                   
                     // rescaling intercepts and slopes for each slice.
-                    if ( (fBase[k].getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
-                            && ( (image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE))) {
+                   if ( (fBase[k].getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
+                    && ( (image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE))) {
 
                         double smin, smax; // slice min and max
 
                         try {
                             image.exportData(k * sliceSize, sliceSize, sliceData);
                         } catch (IOException ioe) {
-                            image.setFileInfo(originalFileInfos);
+                        	if(didClone) {
+                         	   if(clonedImage != null) {
+                         	   	clonedImage.disposeLocal();
+                         	   	clonedImage = null;
+                         	   }
+                            }else {
+                         	   originalImage.setFileInfo(originalFileInfos);
+                            }
 
                             ioe.printStackTrace();
 
@@ -8780,8 +9432,17 @@ public class FileIO {
                             }
                         }
 
-                        fBase[k].setRescaleSlope( (smax - smin) / slopeDivisor);
-                        fBase[k].setRescaleIntercept(smin - (fBase[k].getRescaleSlope() * vmin));
+                        double slope = (smax - smin) / slopeDivisor;
+                        double intercept = smin - (slope * vmin);
+
+                        //7/8/2008
+                        if(vmin >= 0) {
+                        	fBase[k].setDataType(ModelImage.USHORT);
+                        }else {
+                        	fBase[k].setDataType(ModelImage.SHORT);
+                        }
+                        fBase[k].setRescaleSlope(slope);
+                        fBase[k].setRescaleIntercept(intercept);
 
                         ((FileInfoDicom) fBase[k]).getTagTable().setValue("0028,1052",
                                 "" + fBase[k].getRescaleIntercept());
@@ -8801,6 +9462,7 @@ public class FileIO {
             index = options.getFileName().indexOf(".");
             prefix = options.getFileName().substring(0, index); // Used for setting file name
             fileSuffix = options.getFileName().substring(index);
+            
         }
 
         try {
@@ -8838,6 +9500,8 @@ public class FileIO {
 
                     dicomFile = new FileDicom(name, fileDir);
                     dicomFile.writeImage(image, i * sliceSize, (i * sliceSize) + sliceSize, i);
+
+                    
                 }
             } else { // its a multi frame image to be saved!!!
 
@@ -8850,7 +9514,14 @@ public class FileIO {
                 dicomFile.writeMultiFrameImage(image, options.getBeginSlice(), options.getEndSlice());
             }
         } catch (IOException error) {
-            image.setFileInfo(originalFileInfos);
+        	if(didClone) {
+         	   if(clonedImage != null) {
+         	   	clonedImage.disposeLocal();
+         	   	clonedImage = null;
+         	   }
+            }else {
+         	   originalImage.setFileInfo(originalFileInfos);
+            }
 
             error.printStackTrace();
 
@@ -8862,7 +9533,14 @@ public class FileIO {
 
             return false;
         } catch (OutOfMemoryError error) {
-            image.setFileInfo(originalFileInfos);
+        	if(didClone) {
+         	   if(clonedImage != null) {
+         	   	clonedImage.disposeLocal();
+         	   	clonedImage = null;
+         	   }
+            }else {
+         	   originalImage.setFileInfo(originalFileInfos);
+            }
 
             error.printStackTrace();
 
@@ -8875,12 +9553,16 @@ public class FileIO {
             return false;
         }
 
-        image.setFileInfo(originalFileInfos);
-        if (dicomFile != null) {
-            dicomFile.finalize();
-            dicomFile = null;
-        }
-        return true;
+       if(didClone) {
+    	   if(clonedImage != null) {
+    	   	clonedImage.disposeLocal();
+    	   	clonedImage = null;
+    	   }
+       }else {
+    	   originalImage.setFileInfo(originalFileInfos);
+       }
+
+       return true;
     }
 
     /**
