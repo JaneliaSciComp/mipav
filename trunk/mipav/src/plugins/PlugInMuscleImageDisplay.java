@@ -137,6 +137,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     /**User specified preference for whether to ask on closing. */
     private boolean oldPrefCloseFrameCheckValue = Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK);
     
+    /**Frame of original image, hidden until plugin is exited.*/
+    private Frame hiddenFrame;
+    
     public enum ImageType{
         
         /** denotes that the srcImg is an abdomen */
@@ -208,6 +211,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	super(image);
     	
     	ViewJProgressBar progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
+    	Vector <Frame> vec = userInterface.getImageFrameVector();
+    	String fileName = image.getFileInfo()[0].getFileName();
+    	for(int i=0; i<vec.size(); i++) {
+    		if(!vec.get(i).getClass().equals(this.getClass())) {
+    			if(vec.get(i) instanceof ViewJFrameImage) {
+    				if(((ViewJFrameImage)vec.get(i)).getActiveImage().getFileInfo()[0].getFileName().equals(fileName)) {
+    					hiddenFrame = vec.get(i);
+    					hiddenFrame.setVisible(false);
+    				}
+    			}
+    		}
+    	}
     	setVisible(false);
         
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
@@ -782,6 +797,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                                                       JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (reply == JOptionPane.NO_OPTION) {
                 return;
+            } else if(reply == JOptionPane.YES_OPTION) {
+            	//reshow the hidden frame
+            	hiddenFrame.setVisible(true);
             }
         }
 
