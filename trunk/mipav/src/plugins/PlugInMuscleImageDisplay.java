@@ -140,6 +140,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     /**Frame of original image, hidden until plugin is exited.*/
     private Frame hiddenFrame;
     
+    /** Whether the algorithm is being run in standAlone mode.*/
+    private boolean standAlone;
+    
     public enum ImageType{
         
         /** denotes that the srcImg is an abdomen */
@@ -238,6 +241,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.symmetry = symmetry;
         this.multipleSlices = multipleSlices;
         this.currentSlice = getViewableSlice();
+        this.standAlone = false;
         
         //already added from super constructor
         //image.addImageDisplayListener(this);
@@ -350,11 +354,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	this.setImageA(image);
         
     	ViewJProgressBar progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
+    	setVisible(false);
+    	progressBar.setVisible(true);
         this.titles = titles;
         this.mirrorArr = new String[voiList.length][];
         this.noMirrorArr = new String[voiList.length][];
         this.calcTree = new TreeMap<String, Boolean>();
         this.voiBuffer = new TreeMap<String, PlugInSelectableVOI>();
+        this.standAlone = standAlone;
         
         createVOIBuffer();
         
@@ -391,8 +398,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
 
     	initStandAlone();
+    	setVisible(false);
     	this.setActiveImage(IMAGE_A);
-    	setVisible(true);
     	scrollPane.requestFocus();
     	
     	ctMode(getImageA(), -175, 275);
@@ -412,12 +419,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         createVOIBuffer();
         
         //Automatic segmentation here
-        setVisible(false);
+        
         progressBar.setMessage("Creating algorithms...");
         progressBar.setSeparateThread(true);
         long time = System.currentTimeMillis();
         progressBar.updateValue(10);
         autoSegmentation();
+        progressBar.setVisible(true);
         progressBar.updateValue(20);
     	progressBar.setMessage("Segmenting...");
         System.out.println("Time spent creating algs: "+(System.currentTimeMillis() - time));
@@ -586,6 +594,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      * Handles automatic segmentation algorithm completions.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+    	
+    		
 		Vector<VOIBase>[] firstVOI = null;
 		Vector<VOIBase>[] secondVOI = null;
 		PlugInSelectableVOI firstBufferVOI = null;
@@ -675,22 +685,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             algorithm.finalize();
             algorithm = null;
         }
+        if(standAlone)
+        	initControls();
 	}
 
-	/**
-     * Initializes the frame and variables.
-     */
-    private void initStandAlone() throws OutOfMemoryError {
-        initResolutions();
-        initZoom();
-        initLUT();
-
-        int[] extents = createBuffers();
-
-        initComponentImage(extents);
-        initExtentsVariables(imageA);
-
-        // create and build the menus and controls
+    private void initControls() {
+    	// create and build the menus and controls
         controls = new ViewControlsImage(this); // Build controls used in this frame
         menuBuilder = new ViewMenuBuilder(this);
 
@@ -721,6 +721,22 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         controls.buildSimpleToolBar();
         controls.addCustomToolBar(voiParams);
         controls.addCustomToolBar(voiActionParams);
+    }
+    
+	/**
+     * Initializes the frame and variables.
+     */
+    private void initStandAlone() throws OutOfMemoryError {
+        initResolutions();
+        initZoom();
+        initLUT();
+
+        int[] extents = createBuffers();
+
+        initComponentImage(extents);
+        initExtentsVariables(imageA);
+
+        initControls();
                 
         // MUST register frame to image models
         imageA.addImageDisplayListener(this);
@@ -853,7 +869,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                                                       JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (reply == JOptionPane.NO_OPTION) {
                 return;
-            } else if(reply == JOptionPane.YES_OPTION) {
+            } else if(reply == JOptionPane.YES_OPTION && !standAlone) {
             	//reshow the hidden frame
             	hiddenFrame.setVisible(true);
             }
