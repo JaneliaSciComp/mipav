@@ -349,6 +349,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	super(image, null, null, false, false);
     	this.setImageA(image);
         
+    	ViewJProgressBar progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
         this.titles = titles;
         this.mirrorArr = new String[voiList.length][];
         this.noMirrorArr = new String[voiList.length][];
@@ -377,10 +378,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         		}
         	}
         	mirrorArr[i] = new String[mirrorArrList.size()];
-        	for(int j=0; j<mirrorArr.length; j++) 
+        	for(int j=0; j<mirrorArr[i].length; j++) 
         		mirrorArr[i][j] = (String)mirrorArrList.get(j);
         	noMirrorArr[i] = new String[noMirrorArrList.size()];
-        	for(int j=0; j<noMirrorArr.length; j++) 
+        	for(int j=0; j<noMirrorArr[i].length; j++) 
         		noMirrorArr[i][j] = (String)noMirrorArrList.get(j);
         }
         this.imageType = imageType;
@@ -398,7 +399,62 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	
     	imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
     	
-    	
+    	if (imageA == null) {
+            return;
+        }
+        progressBar.updateValue(5);
+        
+        File f;
+        if(!(f = new File(imageDir+File.separator)).exists())
+        	f.mkdir();
+
+        System.out.println("Exists? "+f.exists());
+        createVOIBuffer();
+        
+        //Automatic segmentation here
+        setVisible(false);
+        progressBar.setMessage("Creating algorithms...");
+        progressBar.setSeparateThread(true);
+        long time = System.currentTimeMillis();
+        progressBar.updateValue(10);
+        autoSegmentation();
+        progressBar.updateValue(20);
+    	progressBar.setMessage("Segmenting...");
+        System.out.println("Time spent creating algs: "+(System.currentTimeMillis() - time));
+        time = System.currentTimeMillis();
+        waitAlg(progressBar);
+        System.out.println("Total time spent waiting for threads: "+(System.currentTimeMillis() - time));
+        progressBar.updateValue(90);
+    	progressBar.setMessage("Displaying results...");
+        initMuscleImage(2);
+        getActiveImage().unregisterAllVOIs();
+        initMuscleImage(1);
+        getActiveImage().unregisterAllVOIs();
+        initMuscleImage(0);
+        progressBar.setVisible(false);
+        progressBar.dispose();
+        setVisible(true);
+        
+        Iterator<String> itr = voiBuffer.keySet().iterator();
+        
+        while(itr.hasNext()) {
+        	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
+        	if(voi.calcEligible() && voi.area() > 0) {
+        		long timeVOI = System.currentTimeMillis();
+		        voi.setLastModified(timeVOI);
+        	}
+        }
+        
+        itr = voiBuffer.keySet().iterator();
+        //always perform new calculation here, no need to check
+        while(itr.hasNext()) {
+        	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
+        	if(voi.calcEligible() && voi.area() > 0) {
+		        MuscleCalculation muscleCalc = new MuscleCalculation(voi, voi.getName());
+		        Thread calc = new Thread(calcGroup, muscleCalc, voi.getName());
+		        calc.start();
+        	}
+        }
     	
     	
     }
