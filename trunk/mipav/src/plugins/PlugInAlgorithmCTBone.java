@@ -209,6 +209,7 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
 	    	srcImage.registerVOI(rightBoneVOI);
 	    	srcImage.registerVOI(leftBoneVOI);
 	    	frame.saveAllVOIsTo(imageDir);
+	    	frame.dispose();
         } else
         	System.err.println("No automatic VOI created");
         
