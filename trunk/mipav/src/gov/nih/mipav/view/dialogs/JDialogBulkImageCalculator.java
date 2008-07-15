@@ -252,7 +252,10 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
 	protected void callAlgorithm() {
 
 		resultImage = new ModelImage(imageA.getType(), imageA.getExtents(), makeImageName(imageA.getImageName(), "_calc"));
-		
+		if (isColor && opType == AlgorithmImageCalculator.AVGERAGE_WITH_STDEV){
+		    MipavUtil.displayError("Cannot do St Dev with Color Images!");
+		    return;
+		}
 		Object[] objs = srcImagesList.toArray();
 		ModelImage[] srcImages = new ModelImage[objs.length];
 		for (int i = 0; i < objs.length; i++) {
@@ -364,6 +367,7 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         comboBoxOperator.setBackground(Color.white);
         comboBoxOperator.addItem("Add");
         comboBoxOperator.addItem("Average");
+        comboBoxOperator.addItem("Average w/ Std Dev");
         
         JPanel srcPanel = new JPanel();
         srcTableModel = new ViewTableModel();
@@ -620,7 +624,10 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
                 opType = AlgorithmImageCalculator.ADD;
             }else if (comboBoxOperator.getSelectedIndex() == 1) {
                 opType = AlgorithmImageCalculator.AVERAGE;
+            }else if (comboBoxOperator.getSelectedIndex() == 2) {
+                opType = AlgorithmImageCalculator.AVGERAGE_WITH_STDEV;
             }
+            
             
             
         }

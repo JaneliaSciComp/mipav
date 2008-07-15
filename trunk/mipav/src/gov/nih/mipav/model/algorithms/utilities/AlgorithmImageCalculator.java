@@ -66,6 +66,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
     /** DOCUMENT ME! */
     public static final int XOR = 12;
+    
+    public static final int AVGERAGE_WITH_STDEV = 13;
 
 
     /** DOCUMENT ME! */
@@ -518,9 +520,13 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     		if(opType == AlgorithmImageCalculator.ADD) {
 	    		performBulkAdding();
     		}
-    		else if(opType == AlgorithmImageCalculator.AVERAGE) {
-    			performBulkAveraging();
-    		}	
+            else if(opType == AlgorithmImageCalculator.AVERAGE) {
+                performBulkAveraging(false);
+            }   
+            else if(opType == AlgorithmImageCalculator.AVGERAGE_WITH_STDEV) {
+                performBulkAveraging(true);
+            }   
+    		
     	}
     }
     
@@ -1461,7 +1467,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
      * perform bulk averaging
      *
      */
-    private void performBulkAveraging() {
+    private void performBulkAveraging(boolean findSD) {
+        System.out.println(findSD);
     	int i, j, k, m;
         int z, t, f;
         int offset;
@@ -1537,6 +1544,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                             bufferAI[i] = bufferAI[i]/numSrcImages;
                         }
                     }
+                    
                     try {
 
                         if (threadStopped) { // do BEFORE buffer has been exported to Image
@@ -1584,6 +1592,42 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             destImage.setHaveWindowed(srcImageA.getHaveWindowed());
         } else {
             destImage.calcMinMax();
+        }
+        
+        if (findSD){
+            System.out.println("enter");
+            double mean[] = new double[length], current[]= new double[length], total[]= new double[length];
+            try {
+                destImage.exportData(0, length, mean);
+            } catch (IOException e) {
+                
+            }
+            
+            for (int ii = 0; ii < srcImages.length; ii++){
+                try {
+                    srcImages[ii].exportData(0, length, current);
+                } catch (IOException e) {
+                    
+                }
+                
+                for (int jj = 0; jj < mean.length; jj++){
+                    current[jj] = current[jj] - mean[jj];
+                    current[jj] = current[jj] * current[jj];
+                    total[jj] = current[jj] + total[jj];
+                }
+            }
+            
+            for (int ii = 0; ii < total.length; ii++){
+                total[ii] = total[ii]/srcImages.length;
+                total[ii] = Math.sqrt(total[ii]);
+            }
+            
+            ModelImage stDev = new ModelImage(ModelStorageBase.DOUBLE, destImage.getExtents(), "St Dev");
+            try {
+                stDev.importData(0, total, true);
+            } catch (IOException e) {
+            }
+            new ViewJFrameImage(stDev);
         }
 
         setCompleted(true);
