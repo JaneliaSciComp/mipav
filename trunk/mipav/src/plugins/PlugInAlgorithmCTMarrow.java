@@ -227,6 +227,8 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
 	    	srcImage.registerVOI(rightMarrowVOI);
 	    	srcImage.registerVOI(leftMarrowVOI);
 	    	frame.saveAllVOIsTo(imageDir);
+	    	frame.setVisible(false);
+	    	frame.dispose();
         } else
         	System.err.println("Automatic VOIs not created");
    } // end segmentImage()
