@@ -197,6 +197,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
 	    	srcImage.registerVOI(rightThighVOI);
 	    	srcImage.registerVOI(leftThighVOI);
 	    	frame.saveAllVOIsTo(imageDir);
+	    	frame.dispose();
         } else
         	System.err.println("Automatic VOIs not created");
 
@@ -480,7 +481,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
             } else if (theVOI.getCurves()[0].size() != 4) {
                 boneImage.unregisterAllVOIs();
                 boneImage.registerVOI(theVOI);            
-                new ViewJFrameImage(boneImage).updateImages(true);
+                //new ViewJFrameImage(boneImage).updateImages(true);
                 System.err.println("makeThighTissueVOI() Error, did not get 2 curves in the VOI");
                 completedThigh = false;
             } else {
