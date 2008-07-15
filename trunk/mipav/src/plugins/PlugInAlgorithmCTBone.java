@@ -219,7 +219,7 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
      * @param totalVOI VOI of both bones (inside and outside)
      * @return multi-curve VOI
      */
-    private VOI makeLeftBoneVOI(VOI totalVOI) {
+    private VOI makeRightBoneVOI(VOI totalVOI) {
     	VOI tempVOI = (VOI)totalVOI.clone();
     	int size = 0;
     	for(int i=0; i<zDim; i++) {
@@ -227,7 +227,7 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
     		for(int j=1; j<size; j++)
     			tempVOI.removeCurve(1, i);
     	}
-    	tempVOI.setName("Left Bone");
+    	tempVOI.setName("Right Bone");
     	tempVOI.setColor(voiColor);
     	return tempVOI;
     }
@@ -237,7 +237,7 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
      * @param totalVOI VOI of both bones (inside and outside)
      * @return multi-curve VOI
      */
-    private VOI makeRightBoneVOI(VOI totalVOI) {
+    private VOI makeLeftBoneVOI(VOI totalVOI) {
     	VOI tempVOI = (VOI)totalVOI.clone();
     	int size = 0;
     	for(int i=0; i<zDim; i++) {
@@ -249,7 +249,7 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
     				tempVOI.removeCurve(1, i);
     		}
     	}
-    	tempVOI.setName("Right Bone");
+    	tempVOI.setName("Left Bone");
     	tempVOI.setColor(voiColor);
     	return tempVOI;
     }
