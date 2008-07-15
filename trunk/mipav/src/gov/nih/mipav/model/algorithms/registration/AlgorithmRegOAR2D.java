@@ -303,6 +303,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private int weightedRefPixelsSub8 = 0;
+    
+    private AlgorithmCostFunctions2D cost;
 
     /**
      * Used to store all paths for levelEigth, levelFour, levelTwo and levelOne.
@@ -1646,12 +1648,19 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         finalize();
         setCompleted(true);
     }
+    
+    
+    
+    public double getCost(){
+        return answer.cost;
+
+    }
 
     private void createTerrain(){
 		searchOptimalPath();
 		print(optimalPath, "Optimal Path: ");
 		long startTime = System.nanoTime();
-		AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(
+		cost = new AlgorithmCostFunctions2D(
 				simpleRef, simpleInput, costChoice, 256, 1);
 		maxIter = baseNumIter * 2;
 		Point2Dd cog = calculateCenterOfMass2D(simpleInput,
