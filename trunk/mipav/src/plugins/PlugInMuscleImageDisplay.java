@@ -848,8 +848,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	} else if(command.equals(DialogPrompt.EXIT)) {
             	close();
         	} else if(command.equals(DialogPrompt.HELP)) {
-        		//TODO: Deliniate by tab, 10 first, 20 second, 30 thirds
-        		MipavUtil.showHelp("MS00001");
+        		if(imageType.equals(ImageType.Thigh))
+        			MipavUtil.showHelp("MS00001");
+        		else //image is of type abdomen
+        			MipavUtil.showHelp("MS00050");
         	} else {
         		super.actionPerformed(e);
         	}
@@ -2941,7 +2943,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            		((JButton)e.getSource()).setText("Show LUT");
 	            	}
 	            } else if (command.equals(HELP)) {
-	                MipavUtil.showHelp("MS00040");
+	            	if(imageType.equals(ImageType.Thigh))
+	            		MipavUtil.showHelp("MS00040");
+	            	else //image is of type abdomen
+	            		MipavUtil.showHelp("MS00080");
 	            } else if (command.equals(LOAD_VOI)) {
 	            	String text = ((JButton)e.getSource()).getText();
 	            	VOIVector vec = getActiveImage().getVOIs();
