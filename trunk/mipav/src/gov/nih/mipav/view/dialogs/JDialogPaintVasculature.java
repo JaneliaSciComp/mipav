@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
@@ -163,9 +164,9 @@ public class JDialogPaintVasculature extends JDialogBase
             for (int i = 0; i < points.size(); i++) {
 
                 if (((VOIPoint) points.get(i)).isActive()) {
-                    Point3Df pt = ((VOIPoint) points.get(i)).exportPoint();
+                    Vector3f pt = ((VOIPoint) points.get(i)).exportPoint();
                     seedPoints.add(pt);
-                    rfastFrame.getComponentImage().regionGrow((short) pt.x, (short) pt.y, (short) pt.z, intensityValue,
+                    rfastFrame.getComponentImage().regionGrow((short) pt.X, (short) pt.Y, (short) pt.Z, intensityValue,
                                                               null, true);
                 }
             }
@@ -475,7 +476,7 @@ public class JDialogPaintVasculature extends JDialogBase
 
             // remember the point, so we can change the thresholds
             seedPoints.removeAllElements();
-            seedPoints.add(new Point3Df(mipX, mipY, z));
+            seedPoints.add(new Vector3f(mipX, mipY, z));
 
             rfastFrame.getComponentImage().regionGrow((short) mipX, (short) mipY, z, intensityValue, null, true);
 
@@ -685,8 +686,8 @@ public class JDialogPaintVasculature extends JDialogBase
 
             // region grow from all the seed points
             for (int i = 0; i < seedPoints.size(); i++) {
-                Point3Df pt = (Point3Df) seedPoints.get(i);
-                rfastFrame.getComponentImage().setRegionGrowVars((short) pt.x, (short) pt.y, (short) pt.z,
+                Vector3f pt = (Vector3f) seedPoints.get(i);
+                rfastFrame.getComponentImage().setRegionGrowVars((short) pt.X, (short) pt.Y, (short) pt.Z,
                                                                  intensityValue);
                 rfastFrame.getComponentImage().regionGrow(null);
             }

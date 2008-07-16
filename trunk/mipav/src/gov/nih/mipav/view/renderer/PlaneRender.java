@@ -304,14 +304,14 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     public void drawRFAPoint(Point3f kPoint) {
 
         /* FileToPatient: */
-        Point3Df patientPt = new Point3Df();
-        MipavCoordinateSystems.fileToPatient( new Point3Df( kPoint.x,
+    	WildMagic.LibFoundation.Mathematics.Vector3f patientPt = new WildMagic.LibFoundation.Mathematics.Vector3f();
+        MipavCoordinateSystems.fileToPatient( new WildMagic.LibFoundation.Mathematics.Vector3f( kPoint.x,
                                                             kPoint.y,
                                                             kPoint.z ),
                                               patientPt, m_kImageA,
                                               m_iPlaneOrientation );
         /* PatientToLocal: */
-        Point3Df localPt = new Point3Df();
+        WildMagic.LibFoundation.Mathematics.Vector3f localPt = new WildMagic.LibFoundation.Mathematics.Vector3f();
         this.PatientToLocal( patientPt, localPt );
 
         /* If this is the first time drawing, create the BranchGroup to hold
@@ -331,7 +331,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
             Transform3D kTransform = new Transform3D();
 
-            kTransform.set(new Vector3f(localPt.x, -localPt.y, -2.5f));
+            kTransform.set(new Vector3f(localPt.X, -localPt.Y, -2.5f));
 
             TransformGroup kTransformGroup = new TransformGroup();
 
@@ -350,7 +350,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         else {
             Transform3D kTransform = new Transform3D();
 
-            kTransform.set(new Vector3f(localPt.x, -localPt.y, -2.5f));
+            kTransform.set(new Vector3f(localPt.X, -localPt.Y, -2.5f));
 
             TransformGroup kTransformGroup =
                 (TransformGroup) (m_kRFA_BranchGroup.getChild(0));
@@ -524,16 +524,16 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
                 /* Calculate the center of the mouse in LOCAL coordineates, taking
                  * into account zoom and translate: */
-                Point3Df localPt = new Point3Df();
+            	WildMagic.LibFoundation.Mathematics.Vector3f localPt = new WildMagic.LibFoundation.Mathematics.Vector3f();
                 this.ScreenToLocal(kEvent.getX(), kEvent.getY(), localPt, false);
-                Point3Df patientPt = new Point3Df();
+                WildMagic.LibFoundation.Mathematics.Vector3f patientPt = new WildMagic.LibFoundation.Mathematics.Vector3f();
                 this.LocalToPatient( localPt, patientPt );
-                Point3Df kRFAPoint = new Point3Df();
+                WildMagic.LibFoundation.Mathematics.Vector3f kRFAPoint = new WildMagic.LibFoundation.Mathematics.Vector3f();
                 MipavCoordinateSystems.patientToFile(patientPt, kRFAPoint, m_kImageA,
                                                      m_iPlaneOrientation );
                 /* Tell the parent to draw the RFA point: */
                 m_kParent.
-                    drawRFAPoint( new Point3f( kRFAPoint.x, kRFAPoint.y, kRFAPoint.z ) );
+                    drawRFAPoint( new Point3f( kRFAPoint.X, kRFAPoint.Y, kRFAPoint.Z ) );
             }
         }
         m_bFirstDrag = true;
@@ -1064,7 +1064,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      * @param bSetCenter if true updates the position for rendering the x-bar
      * and y-bar colored axes (for left mouse drag)
      */
-    private void ScreenToLocal(int iX, int iY, Point3Df kLocal, boolean bSetCenter )
+    private void ScreenToLocal(int iX, int iY, WildMagic.LibFoundation.Mathematics.Vector3f kLocal, boolean bSetCenter )
     {
         int iCanvasWidth = m_kCanvas.getWidth();
         int iCanvasHeight = m_kCanvas.getHeight();
@@ -1073,29 +1073,29 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         float fHalfWidth = ((float) iCanvasWidth-1) / 2.0f;
         float fHalfHeight = ((float) iCanvasHeight-1) / 2.0f;
 
-        kLocal.x = ((float) (iX - fHalfWidth)) / fHalfWidth;
-        kLocal.y = ((float) (iY - fHalfHeight)) / fHalfWidth;
+        kLocal.X = ((float) (iX - fHalfWidth)) / fHalfWidth;
+        kLocal.Y = ((float) (iY - fHalfHeight)) / fHalfWidth;
 
-        kLocal.x /= m_fZoomScale;
-        kLocal.y /= m_fZoomScale;
+        kLocal.X /= m_fZoomScale;
+        kLocal.Y /= m_fZoomScale;
 
-        kLocal.x -= m_fXTranslate;
-        kLocal.y -= m_fYTranslate;
+        kLocal.X -= m_fXTranslate;
+        kLocal.Y -= m_fYTranslate;
 
         /* Bounds checking: */
-        kLocal.x = Math.min( Math.max( kLocal.x, m_fX0 ), m_fX1 );
-        kLocal.y = Math.min( Math.max( kLocal.y, m_fY0 ), m_fY1 );
+        kLocal.X = Math.min( Math.max( kLocal.X, m_fX0 ), m_fX1 );
+        kLocal.Y = Math.min( Math.max( kLocal.Y, m_fY0 ), m_fY1 );
 
         if ( bSetCenter )
         {
-            m_fCenterX = kLocal.x;
-            m_fCenterY = kLocal.y;
+            m_fCenterX = kLocal.X;
+            m_fCenterY = kLocal.Y;
         }
 
         /* Normalize: */
-        kLocal.x = (kLocal.x - m_fX0) / m_fXRange;
-        kLocal.y = (kLocal.y - m_fY0) / m_fYRange;
-        kLocal.z = m_iSlice / (float)(m_aiLocalImageExtents[2] - 1);
+        kLocal.X = (kLocal.X - m_fX0) / m_fXRange;
+        kLocal.Y = (kLocal.Y - m_fY0) / m_fYRange;
+        kLocal.Z = m_iSlice / (float)(m_aiLocalImageExtents[2] - 1);
     }
 
     /* Convert the position in LocalCoordinates (rendering space) into
@@ -1103,11 +1103,11 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      * @param localPt, the current point in LocalCoordinates
      * @param patientPt transformed localPt in PatientCoordinates
      */
-    private void LocalToPatient( Point3Df localPt, Point3Df patientPt )
+    private void LocalToPatient( WildMagic.LibFoundation.Mathematics.Vector3f localPt, WildMagic.LibFoundation.Mathematics.Vector3f patientPt )
     {
-        patientPt.x = localPt.x * (m_aiLocalImageExtents[0] - 1);
-        patientPt.y = localPt.y * (m_aiLocalImageExtents[1] - 1);
-        patientPt.z = localPt.z * (m_aiLocalImageExtents[2] - 1);
+        patientPt.X = localPt.X * (m_aiLocalImageExtents[0] - 1);
+        patientPt.Y = localPt.Y * (m_aiLocalImageExtents[1] - 1);
+        patientPt.Z = localPt.Z * (m_aiLocalImageExtents[2] - 1);
     }
 
     /**
@@ -1116,15 +1116,15 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      * @param patientPt the current point in PatientCoordinates
      * @param localPt, the transformed point in LocalCoordinates
      */
-    private void PatientToLocal( Point3Df patientPt, Point3Df localPt )
+    private void PatientToLocal( WildMagic.LibFoundation.Mathematics.Vector3f patientPt, WildMagic.LibFoundation.Mathematics.Vector3f localPt )
     {
-        localPt.x = patientPt.x / (float)(m_aiLocalImageExtents[0] - 1);
-        localPt.y = patientPt.y / (float)(m_aiLocalImageExtents[1] - 1);
-        localPt.z = patientPt.z / (float)(m_aiLocalImageExtents[2] - 1);
+        localPt.X = patientPt.X / (float)(m_aiLocalImageExtents[0] - 1);
+        localPt.Y = patientPt.Y / (float)(m_aiLocalImageExtents[1] - 1);
+        localPt.Z = patientPt.Z / (float)(m_aiLocalImageExtents[2] - 1);
 
-        localPt.x = (localPt.x * m_fXRange) + m_fX0;
-        localPt.y = (localPt.y * m_fYRange) + m_fY0;
-        localPt.z = 1.0f;
+        localPt.X = (localPt.X * m_fXRange) + m_fX0;
+        localPt.Y = (localPt.Y * m_fYRange) + m_fY0;
+        localPt.Z = 1.0f;
     }
 
 
@@ -1338,7 +1338,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
         /* Calculate the center of the mouse in local coordineates, taking into
          * account zoom and translate: */
-        Point3Df localPt = new Point3Df();
+        WildMagic.LibFoundation.Mathematics.Vector3f localPt = new WildMagic.LibFoundation.Mathematics.Vector3f();
         this.ScreenToLocal(kEvent.getX(), kEvent.getY(), localPt, true);
 
         drawLabels();
@@ -1346,9 +1346,9 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         /* Tell the ViewJFrameVolumeView parent to update the other
          * PlaneRenders and the SurfaceRender with the changed Z position
          * of the planes with color matching the moved bar: */
-        Point3Df patientPt = new Point3Df();
+        WildMagic.LibFoundation.Mathematics.Vector3f patientPt = new WildMagic.LibFoundation.Mathematics.Vector3f();
         this.LocalToPatient( localPt, patientPt );
-        Point3Df volumePt = new Point3Df();
+        WildMagic.LibFoundation.Mathematics.Vector3f volumePt = new WildMagic.LibFoundation.Mathematics.Vector3f();
         MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kImageA, m_iPlaneOrientation );
         m_kParent.setSliceFromPlane( volumePt );
     }
@@ -1360,16 +1360,15 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      * @param center, the 3D center in FileCoordinates of the three
      * intersecting ModelImage planes.
      */
-    public void setCenter( Point3Df center )
+    public void setCenter( WildMagic.LibFoundation.Mathematics.Vector3f center )
     {
         /* update PatientSlice first: */
-        m_kPatientSlice.setCenter( (int)center.x, (int)center.y, (int)center.z );
-
-        Point3Df patientPt = new Point3Df();
+        m_kPatientSlice.setCenter( (int)center.X, (int)center.Y, (int)center.Z );
+        WildMagic.LibFoundation.Mathematics.Vector3f patientPt = new WildMagic.LibFoundation.Mathematics.Vector3f();
         MipavCoordinateSystems.fileToPatient( center, patientPt, m_kImageA, m_iPlaneOrientation );
-        setXBar( patientPt.x );
-        setYBar( patientPt.y );
-        setSlice( patientPt.z );
+        setXBar( patientPt.X );
+        setYBar( patientPt.Y );
+        setSlice( patientPt.Z );
         drawLabels();
     }
 
@@ -1378,9 +1377,11 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      * planes in FileCoordinates.
      * @return the current volume center point in FileCoordinates
      */
-    public Point3Df getCenter()
+    public Vector3f getCenter()
     {
-        return m_kPatientSlice.getCenter();
+    	WildMagic.LibFoundation.Mathematics.Vector3f kCenter = m_kPatientSlice.getCenter();
+    	Vector3f center = new Vector3f( kCenter.X, kCenter.Y, kCenter.Z );
+        return center;
     }
 
     /**
@@ -1392,7 +1393,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     private void processRightMouseDrag(MouseEvent kEvent) {
 
         /* Get the coordinates of the mouse position in local coordinates: */
-        Point3Df localPt = new Point3Df();
+    	WildMagic.LibFoundation.Mathematics.Vector3f localPt = new WildMagic.LibFoundation.Mathematics.Vector3f();
         this.ScreenToLocal(kEvent.getX(), kEvent.getY(), localPt, false);
         m_kActiveLookupTable = null;
 
@@ -1408,7 +1409,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         m_kPatientSlice.setActiveImage( m_kActiveImage );
         m_kActiveLookupTable = m_kPatientSlice.getActiveLookupTable();
 
-        if ( m_kWinLevel.updateWinLevel( localPt.x, localPt.y, m_bFirstDrag, m_kActiveLookupTable, m_kActiveImage ) )
+        if ( m_kWinLevel.updateWinLevel( localPt.X, localPt.Y, m_bFirstDrag, m_kActiveLookupTable, m_kActiveImage ) )
         {
             if ( m_kActiveImage == m_kImageA )
             {

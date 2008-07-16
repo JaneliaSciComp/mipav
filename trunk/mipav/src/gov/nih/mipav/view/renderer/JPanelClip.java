@@ -376,7 +376,7 @@ public class JPanelClip extends JPanelRendererBase
         if ((source == extractButtonA) || (source == extractButtonS)) {
             // extract arbitrary clipping plane.
 
-            Point3Df[] pts;
+        	WildMagic.LibFoundation.Mathematics.Vector3f[] pts;
 
             pts = getAClipPlanePts();
 
@@ -384,13 +384,13 @@ public class JPanelClip extends JPanelRendererBase
             float[] plane = img.getPlane(pts[0], pts[1], pts[2], pts[3]);
 
             int length = (int)
-                             Math.round(Math.sqrt(((pts[2].x - pts[0].x) * (pts[2].x - pts[0].x)) +
-                                                  ((pts[2].y - pts[0].y) * (pts[2].y - pts[0].y)) +
-                                                  ((pts[2].z - pts[0].z) * (pts[2].z - pts[0].z))));
+                             Math.round(Math.sqrt(((pts[2].X - pts[0].X) * (pts[2].X - pts[0].X)) +
+                                                  ((pts[2].Y - pts[0].Y) * (pts[2].Y - pts[0].Y)) +
+                                                  ((pts[2].Z - pts[0].Z) * (pts[2].Z - pts[0].Z))));
             int width = (int)
-                            Math.round(Math.sqrt(((pts[1].x - pts[0].x) * (pts[1].x - pts[0].x)) +
-                                                 ((pts[1].y - pts[0].y) * (pts[1].y - pts[0].y)) +
-                                                 ((pts[1].z - pts[0].z) * (pts[1].z - pts[0].z))));
+                            Math.round(Math.sqrt(((pts[1].X - pts[0].X) * (pts[1].X - pts[0].X)) +
+                                                 ((pts[1].Y - pts[0].Y) * (pts[1].Y - pts[0].Y)) +
+                                                 ((pts[1].Z - pts[0].Z) * (pts[1].Z - pts[0].Z))));
 
             int[] ext = new int[2];
 
@@ -2560,10 +2560,10 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get the arbitrary clipping plane four corners points.
      *
-     * @return  Point3Df[]
+     * @return  Vector3f[]
      */
-    public Point3Df[] getAClipPlanePts() {
-        Point3Df[] pts = new Point3Df[4];
+    public WildMagic.LibFoundation.Mathematics.Vector3f[] getAClipPlanePts() {
+    	WildMagic.LibFoundation.Mathematics.Vector3f[] pts = new WildMagic.LibFoundation.Mathematics.Vector3f[4];
         float m_fX0;
         float m_fY0;
         float m_fZ0;
@@ -2571,10 +2571,10 @@ public class JPanelClip extends JPanelRendererBase
         float m_fY1;
         float m_fZ1;
         int j;
-        javax.vecmath.Vector4f[] cornerPts = new javax.vecmath.Vector4f[4];
+        WildMagic.LibFoundation.Mathematics.Vector3f[] cornerPts = new WildMagic.LibFoundation.Mathematics.Vector3f[4];
 
         for (int i = 0; i < 4; i++) {
-            cornerPts[i] = new javax.vecmath.Vector4f();
+            cornerPts[i] = new WildMagic.LibFoundation.Mathematics.Vector3f();
         }
 
         m_fX0 = -xBox;
@@ -2594,30 +2594,30 @@ public class JPanelClip extends JPanelRendererBase
 
             // transform from volume space to image space
             // using the bounding box approach
-            cornerPts[j].x = ((AclipPlanePts[j].x - m_fX0) / (m_fX1 - m_fX0)) * (xDim - 1);
-            cornerPts[j].y = ((AclipPlanePts[j].y - m_fY0) / (m_fY1 - m_fY0)) * (yDim - 1);
-            cornerPts[j].z = ((AclipPlanePts[j].z - m_fZ0) / (m_fZ1 - m_fZ0)) * (zDim - 1);
+            cornerPts[j].X = ((AclipPlanePts[j].x - m_fX0) / (m_fX1 - m_fX0)) * (xDim - 1);
+            cornerPts[j].Y = ((AclipPlanePts[j].y - m_fY0) / (m_fY1 - m_fY0)) * (yDim - 1);
+            cornerPts[j].Z = ((AclipPlanePts[j].z - m_fZ0) / (m_fZ1 - m_fZ0)) * (zDim - 1);
 
             // flip the z and y coordinate
-            cornerPts[j].z = zDim - 1 - cornerPts[j].z;
-            cornerPts[j].y = yDim - 1 - cornerPts[j].y;
+            cornerPts[j].Z = zDim - 1 - cornerPts[j].Z;
+            cornerPts[j].Y = yDim - 1 - cornerPts[j].Y;
 
-            pts[j] = new Point3Df();
+            pts[j] = new WildMagic.LibFoundation.Mathematics.Vector3f();
         }
 
         // go from counter-clockwise to upleft, lowleft, lowright, upright
-        pts[0].x = cornerPts[0].x;
-        pts[0].y = cornerPts[0].y;
-        pts[0].z = cornerPts[0].z;
-        pts[1].x = cornerPts[3].x;
-        pts[1].y = cornerPts[3].y;
-        pts[1].z = cornerPts[3].z;
-        pts[2].x = cornerPts[1].x;
-        pts[2].y = cornerPts[1].y;
-        pts[2].z = cornerPts[1].z;
-        pts[3].x = cornerPts[2].x;
-        pts[3].y = cornerPts[2].y;
-        pts[3].z = cornerPts[2].z;
+        pts[0].X = cornerPts[0].X;
+        pts[0].Y = cornerPts[0].Y;
+        pts[0].Z = cornerPts[0].Z;
+        pts[1].X = cornerPts[3].X;
+        pts[1].Y = cornerPts[3].Y;
+        pts[1].Z = cornerPts[3].Z;
+        pts[2].X = cornerPts[1].X;
+        pts[2].Y = cornerPts[1].Y;
+        pts[2].Z = cornerPts[1].Z;
+        pts[3].X = cornerPts[2].X;
+        pts[3].Y = cornerPts[2].Y;
+        pts[3].Z = cornerPts[2].Z;
 
         return pts;
     }

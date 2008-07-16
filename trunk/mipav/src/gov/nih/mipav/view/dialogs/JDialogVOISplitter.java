@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -54,8 +55,8 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     
     private JCheckBox onlyActiveBox;
     
-    private Point3Df startPt;
-    private Point3Df endPt;
+    private Vector3f startPt;
+    private Vector3f endPt;
     
     private float slope;
     private float b;
@@ -63,7 +64,7 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
   
-    public JDialogVOISplitter(Frame theParentFrame, ModelImage im, Point3Df sPt, Point3Df ePt) {
+    public JDialogVOISplitter(Frame theParentFrame, ModelImage im, Vector3f sPt, Vector3f ePt) {
         super(theParentFrame, true);
         image = im;
 
@@ -107,19 +108,19 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     }
 
     private void calcSlopeAndB() {
-    	if (endPt.x - startPt.x == 0) {
+    	if (endPt.X - startPt.X == 0) {
     		slope = 1;
     	} else {
-    		slope = (endPt.y - startPt.y) / (endPt.x - startPt.x);
+    		slope = (endPt.Y - startPt.Y) / (endPt.X - startPt.X);
     	}
-    	b = endPt.y - (slope * endPt.x);    	
+    	b = endPt.Y - (slope * endPt.X);    	
     }
     
-    private int checkSide(Point3Df testPoint) {
+    private int checkSide(Vector3f testPoint) {
     	
     	//System.err.println("checkSide(" + testPoint + ")");
     	
-    	float dif = testPoint.y - ((slope * testPoint.x) + b);
+    	float dif = testPoint.Y - ((slope * testPoint.X) + b);
     	//System.err.println("checkSide() dif is: " + dif);
     	if (dif > tol) {
     		return 1;
@@ -153,14 +154,14 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     	int size = 0;
     	int numPoints = 0;
     	
-    	Point3Df firstPt = null;
-    	Point3Df secondPt = null;
+    	Vector3f firstPt = null;
+    	Vector3f secondPt = null;
     	
     	boolean foundIntersection = false;
-    	Point3Df tempPt = new Point3Df();
+    	Vector3f tempPt = new Vector3f();
     	
-    	Point3Df firstIntersectionPt = null;
-    	Point3Df secondIntersectionPt = null;
+    	Vector3f firstIntersectionPt = null;
+    	Vector3f secondIntersectionPt = null;
     	int firstIndex = 0;
     	int secondIndex = 0;
     	
@@ -222,10 +223,10 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     								if (foundIntersection) {
     									//System.err.println("Found intersection: " + tempPt);
     									if (firstIntersectionPt == null) {
-    										firstIntersectionPt = new Point3Df(MipavMath.round(tempPt.x), MipavMath.round(tempPt.y), tempPt.z);
+    										firstIntersectionPt = new Vector3f(MipavMath.round(tempPt.X), MipavMath.round(tempPt.Y), tempPt.Z);
     										firstIndex = ptIndex;
     									} else if (secondIntersectionPt == null) {
-    										secondIntersectionPt = new Point3Df(MipavMath.round(tempPt.x), MipavMath.round(tempPt.y), tempPt.z);
+    										secondIntersectionPt = new Vector3f(MipavMath.round(tempPt.X), MipavMath.round(tempPt.Y), tempPt.Z);
     										secondIndex = ptIndex;
     									} else {
     										MipavUtil.displayError("VOI Splitter does not support more than 2 intersection points: exiting");
@@ -246,7 +247,7 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     								foundIntersection = intersects(firstPt, secondPt, startPt, endPt, tempPt);
     								
     								if (foundIntersection) {
-    									secondIntersectionPt = new Point3Df(MipavMath.round(tempPt.x), MipavMath.round(tempPt.y), tempPt.z);
+    									secondIntersectionPt = new Vector3f(MipavMath.round(tempPt.X), MipavMath.round(tempPt.Y), tempPt.Z);
     									secondIndex = numPoints - 1;
     								}
     							}
@@ -261,7 +262,7 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     								VOIContour secondContour = new VOIContour("secondContour", isClosed);
     								
     								//add the second intersection point 1st
-    								firstContour.addElement(new Point3Df(secondIntersectionPt.x, secondIntersectionPt.y, secondIntersectionPt.z));
+    								firstContour.addElement(new Vector3f(secondIntersectionPt.X, secondIntersectionPt.Y, secondIntersectionPt.Z));
     									
     								//check if there are points from second index to 0-index, add those first
     								for (int ptIndex = secondIndex + 1; ptIndex < numPoints; ptIndex++) {
@@ -274,12 +275,12 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     								}
     									
     								//add the first intersection point
-    								firstContour.addElement(new Point3Df(firstIntersectionPt.x, firstIntersectionPt.y, firstIntersectionPt.z));
+    								firstContour.addElement(new Vector3f(firstIntersectionPt.X, firstIntersectionPt.Y, firstIntersectionPt.Z));
     								
     								//repeat for second contour
  
     								//add the first intersection point
-    								secondContour.addElement(new Point3Df(firstIntersectionPt.x, firstIntersectionPt.y, firstIntersectionPt.z));
+    								secondContour.addElement(new Vector3f(firstIntersectionPt.X, firstIntersectionPt.Y, firstIntersectionPt.Z));
     									
     								//add all points between the first and second intersection points
     								for (int ptIndex = firstIndex + 1; ptIndex < secondIndex + 1 && ptIndex < numPoints; ptIndex++) {
@@ -287,7 +288,7 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     								}
     									
     								//add the second intersection point
-    								secondContour.addElement(new Point3Df(secondIntersectionPt.x, secondIntersectionPt.y, secondIntersectionPt.z));
+    								secondContour.addElement(new Vector3f(secondIntersectionPt.X, secondIntersectionPt.Y, secondIntersectionPt.Z));
     									
     									
     								//determine which contour goes where
@@ -419,15 +420,15 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
         pack();
     }
 
-    public static boolean intersects(Point3Df p1, Point3Df p2, Point3Df p3, Point3Df p4, Point3Df intersection) {
+    public static boolean intersects(Vector3f p1, Vector3f p2, Vector3f p3, Vector3f p4, Vector3f intersection) {
         double denom = 0f;
         double uAnum = 0f;
         double uBnum = 0f;
         double uA = 0f;
         double uB = 0f;
-        denom = ((p4.y - p3.y) * (p2.x - p1.x)) - ((p4.x - p3.x) * (p2.y - p1.y));
-        uAnum = ((p4.x - p3.x) * (p1.y - p3.y)) - ((p4.y - p3.y) * (p1.x - p3.x));
-        uBnum = ((p2.x - p1.x) * (p1.y - p3.y)) - ((p2.y - p1.y) * (p1.x - p3.x));
+        denom = ((p4.Y - p3.Y) * (p2.X - p1.X)) - ((p4.X - p3.X) * (p2.Y - p1.Y));
+        uAnum = ((p4.X - p3.X) * (p1.Y - p3.Y)) - ((p4.Y - p3.Y) * (p1.X - p3.X));
+        uBnum = ((p2.X - p1.X) * (p1.Y - p3.Y)) - ((p2.Y - p1.Y) * (p1.X - p3.X));
 
         if (denom == 0) {
 
@@ -439,10 +440,10 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
         uB = uBnum / denom;
 
         if ((uA >= 0) && (uA <= 1) && (uB >= 0) && (uB <= 1)) {
-            intersection.x = p1.x + (float) (uA * (p2.x - p1.x));
-            intersection.y = p1.y + (float) (uA * (p2.y - p1.y));
+            intersection.X = p1.X + (float) (uA * (p2.X - p1.X));
+            intersection.Y = p1.Y + (float) (uA * (p2.Y - p1.Y));
 
-            // System.err.println("found intersection to be: " + intersection.x + "," + intersection.y + "\n\n");
+            // System.err.println("found intersection to be: " + intersection.X + "," + intersection.Y + "\n\n");
             return true;
         } else {
             return false;

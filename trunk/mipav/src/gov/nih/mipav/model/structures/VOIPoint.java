@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.structures;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.model.file.*;
@@ -68,7 +69,7 @@ public class VOIPoint extends VOIBase {
      *  Import points into VOI - Included to extend abstract method
      *  @param pt     point
      */
-    public void importPoints( Point3Df[] pt ) {
+    public void importPoints( Vector3f[] pt ) {
         this.addElement( pt[0] );
     }
 
@@ -76,7 +77,7 @@ public class VOIPoint extends VOIBase {
      *  Import point into VOI
      *  @param pt     point
      */
-    public void importPoints( Point3Df pt ) {
+    public void importPoints( Vector3f pt ) {
         this.addElement( pt );
     }
 
@@ -85,12 +86,12 @@ public class VOIPoint extends VOIBase {
      *  @param point  point to be saved
      *  @param slice   index to save the point at
      */
-    public void importPoint( Point3Df point, int slice ) {
+    public void importPoint( Vector3f point, int slice ) {
 
         try {
             this.removeAllElements();
-            this.addElement( new Point3Df( point.x, point.y, slice ) );
-            System.err.println("x: " + point.x + ", y: " + point.y + ", z: " + slice);
+            this.addElement( new Vector3f( point.X, point.Y, slice ) );
+            System.err.println("x: " + point.X + ", y: " + point.Y + ", z: " + slice);
         } catch ( OutOfMemoryError error ) {
             System.gc();
             throw error;
@@ -104,7 +105,7 @@ public class VOIPoint extends VOIBase {
      *  @param z     z point
      */
     public void importArrays( int[] x, int[] y, int[] z, int i ) {
-        this.addElement( new Point3Df( x[0], y[0], z[0] ) );
+        this.addElement( new Vector3f( x[0], y[0], z[0] ) );
     }
 
     /**
@@ -114,14 +115,14 @@ public class VOIPoint extends VOIBase {
      *  @param z     z point
      */
     public void importArrays( float[] x, float[] y, float[] z, int i ) {
-        this.addElement( new Point3Df( x[0], y[0], z[0] ) );
+        this.addElement( new Vector3f( x[0], y[0], z[0] ) );
     }
 
     /**
      *  Import point into  point VOI
      *  @param pt  3D point
      */
-    public void importPoint( Point3Df pt ) {
+    public void importPoint( Vector3f pt ) {
         this.addElement( pt );
     }
 
@@ -129,15 +130,15 @@ public class VOIPoint extends VOIBase {
      *  Method to access point VOI coordinate
      *  @return       3d point
      */
-    public Point3Df exportPoint() {
-        return (Point3Df) ( elementAt( 0 ) );
+    public Vector3f exportPoint() {
+        return (Vector3f) ( elementAt( 0 ) );
     }
 
     /**
-     * Gets the active points location (point3df)
-     * @return Point3Df the location
+     * Gets the active points location (Vector3f)
+     * @return Vector3f the location
      */
-    public Point3Df getActivePt() {
+    public Vector3f getActivePt() {
         return exportPoint();
     }
 
@@ -164,10 +165,10 @@ public class VOIPoint extends VOIBase {
      *                   z[1] = max extent of the Contour in the z dimension
      */
     public void getBounds( int[] x, int[] y, int[] z ) {
-        Point3Df pt = exportPoint();
-        x[0] = x[1] = Math.round( pt.x );
-        y[0] = y[1] = Math.round( pt.y );
-        z[0] = z[1] = Math.round( pt.z );
+        Vector3f pt = exportPoint();
+        x[0] = x[1] = Math.round( pt.X );
+        y[0] = y[1] = Math.round( pt.Y );
+        z[0] = z[1] = Math.round( pt.Z );
     }
 
     /**
@@ -180,10 +181,10 @@ public class VOIPoint extends VOIBase {
      *                   z[1] = max extent of the Contour in the z dimension
      */
     public void getBounds( float[] x, float[] y, float[] z ) {
-        Point3Df pt = exportPoint();
-        x[0] = x[1] = pt.x;
-        y[0] = y[1] = pt.y;
-        z[0] = z[1] = pt.z;
+        Vector3f pt = exportPoint();
+        x[0] = x[1] = pt.X;
+        y[0] = y[1] = pt.Y;
+        z[0] = z[1] = pt.Z;
     }
 
     /**
@@ -249,28 +250,28 @@ public class VOIPoint extends VOIBase {
 
         if ( orientation == NA || orientation == XY ) {
             // 1 -> imageDim instead of 0 -> imageDim - 1
-            x = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x );
-            y = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y );
-            xS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x * zoomX * resolutionX );
-            yS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y * zoomY * resolutionY );
+            x = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).X );
+            y = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).Y );
+            xS = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).X * zoomX * resolutionX );
+            yS = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).Y * zoomY * resolutionY );
         } else if ( orientation == ZY ) {
             // 1 -> imageDim instead of 0 -> imageDim - 1
-            x = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).z );
-            y = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y );
-            xS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).z * zoomX * resolutionX );
-            yS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y * zoomY * resolutionY );
+            x = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).Z );
+            y = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).Y );
+            xS = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).Z * zoomX * resolutionX );
+            yS = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).Y * zoomY * resolutionY );
         } else if ( orientation == XZ ) {
             // 1 -> imageDim instead of 0 -> imageDim - 1
-            x = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x );
-            y = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).z );
-            xS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x * zoomX * resolutionX );
-            yS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).z * zoomY * resolutionY );
+            x = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).X );
+            y = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).Z );
+            xS = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).X * zoomX * resolutionX );
+            yS = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).Z * zoomY * resolutionY );
         } else {
             // 1 -> imageDim instead of 0 -> imageDim - 1
-            x = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x );
-            y = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y );
-            xS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).x * zoomX * resolutionX );
-            yS = Math.round( ( (Point3Df) ( elementAt( 0 ) ) ).y * zoomY * resolutionY );
+            x = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).X );
+            y = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).Y );
+            xS = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).X * zoomX * resolutionX );
+            yS = Math.round( ( (Vector3f) ( elementAt( 0 ) ) ).Y * zoomY * resolutionY );
         }
 
 
@@ -472,7 +473,7 @@ public class VOIPoint extends VOIBase {
      *  @param y             the y coordinate
      *  @param positionLabel the position in FileCoordinates
      */
-    public void drawAxialSelf( Graphics g, int x, int y, Point3Df positionLabel ) {
+    public void drawAxialSelf( Graphics g, int x, int y, Vector3f positionLabel ) {
         int xPos, yPos;
 
         if ( g == null ) {
@@ -485,18 +486,18 @@ public class VOIPoint extends VOIBase {
         //Create the string that will be drawn for label and name
         if (doName) {
             str = new String(name + ": (" +
-                             positionLabel.x + "," +
-                             positionLabel.y + ")" );
+                             positionLabel.X + "," +
+                             positionLabel.Y + ")" );
         }
         else if (label != null) {
             str = new String(label + ": (" +
-                             positionLabel.x + "," +
-                             positionLabel.y + ")" );
+                             positionLabel.X + "," +
+                             positionLabel.Y + ")" );
         }
         else {
             str = new String("(" +
-                             positionLabel.x + "," +
-                             positionLabel.y + ")" );
+                             positionLabel.X + "," +
+                             positionLabel.Y + ")" );
         }
 
         g.drawLine( x, y - 5, x, y + 5 );
@@ -558,25 +559,25 @@ public class VOIPoint extends VOIBase {
      */
     public void moveVOIPoint( int xM, int yM, int zM, int xDim, int yDim, int zDim ) {
 
-        Point3Df pt = exportPoint();
-        if ( pt.x + xM >= xDim || pt.x + xM < 0 ) {
+        Vector3f pt = exportPoint();
+        if ( pt.X + xM >= xDim || pt.X + xM < 0 ) {
             return;
         }
-        if ( pt.y + yM >= yDim || pt.y + yM < 0 ) {
+        if ( pt.Y + yM >= yDim || pt.Y + yM < 0 ) {
             return;
         }
-        if ( pt.z + zM >= zDim || pt.z + zM < 0 ) {
+        if ( pt.Z + zM >= zDim || pt.Z + zM < 0 ) {
             return;
         }
-        pt.x = pt.x + xM;
-        pt.y = pt.y + yM;
-        pt.z = pt.z + zM;
+        pt.X = pt.X + xM;
+        pt.Y = pt.Y + yM;
+        pt.Z = pt.Z + zM;
     }
 
 
     public void movePt( int x, int y ) {
-        ((Point3Df) (elementAt(0))).x = x;
-        ((Point3Df) (elementAt(0))).y = y;
+        ((Vector3f) (elementAt(0))).X = x;
+        ((Vector3f) (elementAt(0))).Y = y;
     }
 
     /**
@@ -626,7 +627,7 @@ public class VOIPoint extends VOIBase {
      *  @param zDim  z dimension maximum
      */
     public void locateVOIPoint( int xP, int yP, int zP, int xDim, int yDim, int zDim ) {
-        Point3Df pt = exportPoint();
+        Vector3f pt = exportPoint();
         if ( xP >= xDim || xP < 0 ) {
             return;
         }
@@ -636,9 +637,9 @@ public class VOIPoint extends VOIBase {
         if ( zP >= zDim || zP < 0 ) {
             return;
         }
-        pt.x = xP;
-        pt.y = yP;
-        pt.z = zP;
+        pt.X = xP;
+        pt.Y = yP;
+        pt.Z = zP;
     }
 
     /**
@@ -649,10 +650,10 @@ public class VOIPoint extends VOIBase {
      */
     public void translate( float xT, float yT, float zT ) {
 
-        Point3Df pt = exportPoint();
-        pt.x = pt.x + xT;
-        pt.y = pt.y + yT;
-        pt.z = pt.z + zT;
+        Vector3f pt = exportPoint();
+        pt.X = pt.X + xT;
+        pt.Y = pt.Y + yT;
+        pt.Z = pt.Z + zT;
     }
 
     /**
@@ -662,9 +663,9 @@ public class VOIPoint extends VOIBase {
      *                    y coordinate
      */
     public void getCoordinates( float[] coord ) {
-        Point3Df pt = exportPoint();
-        coord[0] = pt.x;
-        coord[1] = pt.y;
+        Vector3f pt = exportPoint();
+        coord[0] = pt.X;
+        coord[1] = pt.Y;
     }
 
 

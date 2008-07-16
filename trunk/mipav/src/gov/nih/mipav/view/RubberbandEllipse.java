@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -173,7 +174,7 @@ public class RubberbandEllipse extends Rubberband {
         double incX;
         double hwidth, shwidth;
         double hheight, shheight;
-        Point2Df origin;
+        Vector2f origin;
         int index;
         int colorID;
         ViewVOIVector VOIs;
@@ -220,7 +221,7 @@ public class RubberbandEllipse extends Rubberband {
                                                 Math.round(rect.height / (zoomY * resolutionY)));
 
 
-                origin = new Point2Df((float) (cRect.x + (cRect.width / 2.0)),
+                origin = new Vector2f((float) (cRect.x + (cRect.width / 2.0)),
                                       (float) (cRect.y + (cRect.height / 2.0)));
                 a = 0;
                 incX = cRect.width / 19.0;
@@ -254,8 +255,8 @@ public class RubberbandEllipse extends Rubberband {
                 c = 0;
 
                 for (b = 0; b < a; b++) {
-                    xInt = (int) Math.round(origin.x + xPts[b]);
-                    yInt = (int) Math.round(origin.y + yPts[b]);
+                    xInt = (int) Math.round(origin.X + xPts[b]);
+                    yInt = (int) Math.round(origin.Y + yPts[b]);
 
                     if (((xInt != xOld) || (yInt != yOld))) {
                         xPtsNew[c] = xInt;

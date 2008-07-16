@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.*;
 
@@ -569,7 +570,7 @@ public class ViewJComponentHistoRGB extends ViewJComponentHLUTBase implements Mo
         if (mode == RED) { // Add or remove points to red transfer function
 
             if ((addPointFlag == true) && (index != -99) && (mouseEvent.isShiftDown() == false)) {
-                RGBT.getRedFunction().insertPoint(new Point2Df(mx, my), index + 1);
+                RGBT.getRedFunction().insertPoint(new Vector2f(mx, my), index + 1);
             }
 
             if ((addPointFlag == false) && (index != -99) && mouseEvent.isShiftDown()) {
@@ -578,7 +579,7 @@ public class ViewJComponentHistoRGB extends ViewJComponentHLUTBase implements Mo
         } else if (mode == GREEN) {
 
             if ((addPointFlag == true) && (index != -99) && (mouseEvent.isShiftDown() == false)) {
-                RGBT.getGreenFunction().insertPoint(new Point2Df(mx, my), index + 1);
+                RGBT.getGreenFunction().insertPoint(new Vector2f(mx, my), index + 1);
             }
 
             if ((addPointFlag == false) && (index != -99) && mouseEvent.isShiftDown()) {
@@ -587,7 +588,7 @@ public class ViewJComponentHistoRGB extends ViewJComponentHLUTBase implements Mo
         } else if (mode == BLUE) {
 
             if ((addPointFlag == true) && (index != -99) && (mouseEvent.isShiftDown() == false)) {
-                RGBT.getBlueFunction().insertPoint(new Point2Df(mx, my), index + 1);
+                RGBT.getBlueFunction().insertPoint(new Vector2f(mx, my), index + 1);
             }
 
             if ((addPointFlag == false) && (index != -99) && mouseEvent.isShiftDown()) {
@@ -596,9 +597,9 @@ public class ViewJComponentHistoRGB extends ViewJComponentHLUTBase implements Mo
         } else if (mode == ALL) {
 
             if ((addPointFlag == true) && (index != -99) && (mouseEvent.isShiftDown() == false)) {
-                RGBT.getRedFunction().insertPoint(new Point2Df(mx, my), index + 1);
-                RGBT.getGreenFunction().insertPoint(new Point2Df(mx, my), index + 1);
-                RGBT.getBlueFunction().insertPoint(new Point2Df(mx, my), index + 1);
+                RGBT.getRedFunction().insertPoint(new Vector2f(mx, my), index + 1);
+                RGBT.getGreenFunction().insertPoint(new Vector2f(mx, my), index + 1);
+                RGBT.getBlueFunction().insertPoint(new Vector2f(mx, my), index + 1);
             }
 
             if ((addPointFlag == false) && (index != -99) && mouseEvent.isShiftDown()) {
@@ -1070,20 +1071,20 @@ public class ViewJComponentHistoRGB extends ViewJComponentHLUTBase implements Mo
             for (j = 0; j < (nPts - 1); j++) {
 
                 if (mode == RED) {
-                    ptX1 = ((Point2Df) (RGBT.getRedFunction().getPoint(j))).x;
-                    ptX2 = ((Point2Df) (RGBT.getRedFunction().getPoint(j + 1))).x;
-                    ptY1 = (dim.height - 1) - ((Point2Df) (RGBT.getRedFunction().getPoint(j))).y;
-                    ptY2 = (dim.height - 1) - ((Point2Df) (RGBT.getRedFunction().getPoint(j + 1))).y;
+                    ptX1 = ((Vector2f) (RGBT.getRedFunction().getPoint(j))).X;
+                    ptX2 = ((Vector2f) (RGBT.getRedFunction().getPoint(j + 1))).X;
+                    ptY1 = (dim.height - 1) - ((Vector2f) (RGBT.getRedFunction().getPoint(j))).Y;
+                    ptY2 = (dim.height - 1) - ((Vector2f) (RGBT.getRedFunction().getPoint(j + 1))).Y;
                 } else if (mode == GREEN) {
-                    ptX1 = ((Point2Df) (RGBT.getGreenFunction().getPoint(j))).x;
-                    ptX2 = ((Point2Df) (RGBT.getGreenFunction().getPoint(j + 1))).x;
-                    ptY1 = (dim.height - 1) - ((Point2Df) (RGBT.getGreenFunction().getPoint(j))).y;
-                    ptY2 = (dim.height - 1) - ((Point2Df) (RGBT.getGreenFunction().getPoint(j + 1))).y;
+                    ptX1 = ((Vector2f) (RGBT.getGreenFunction().getPoint(j))).X;
+                    ptX2 = ((Vector2f) (RGBT.getGreenFunction().getPoint(j + 1))).X;
+                    ptY1 = (dim.height - 1) - ((Vector2f) (RGBT.getGreenFunction().getPoint(j))).Y;
+                    ptY2 = (dim.height - 1) - ((Vector2f) (RGBT.getGreenFunction().getPoint(j + 1))).Y;
                 } else if (mode == BLUE) {
-                    ptX1 = ((Point2Df) (RGBT.getBlueFunction().getPoint(j))).x;
-                    ptX2 = ((Point2Df) (RGBT.getBlueFunction().getPoint(j + 1))).x;
-                    ptY1 = (dim.height - 1) - ((Point2Df) (RGBT.getBlueFunction().getPoint(j))).y;
-                    ptY2 = (dim.height - 1) - ((Point2Df) (RGBT.getBlueFunction().getPoint(j + 1))).y;
+                    ptX1 = ((Vector2f) (RGBT.getBlueFunction().getPoint(j))).X;
+                    ptX2 = ((Vector2f) (RGBT.getBlueFunction().getPoint(j + 1))).X;
+                    ptY1 = (dim.height - 1) - ((Vector2f) (RGBT.getBlueFunction().getPoint(j))).Y;
+                    ptY2 = (dim.height - 1) - ((Vector2f) (RGBT.getBlueFunction().getPoint(j + 1))).Y;
                 }
 
                 if ((iNew >= ptX1) && (iNew < ptX2)) {

@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.structures;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.view.*;
 
@@ -205,7 +206,7 @@ public class ModelLUT extends ModelStorageBase {
             lutHeight = getExtents()[1];
 
             for (j = 0; j < transferLine.size(); j++) {
-                x[j] = ((Point2Df) (transferLine.getPoint(j))).x;
+                x[j] = ((Vector2f) (transferLine.getPoint(j))).X;
 
             }
 
@@ -232,8 +233,8 @@ public class ModelLUT extends ModelStorageBase {
         int remappedValue;
         int count = 0;
         int nPts = kTransferLine.size();
-        float xMax = ((Point2Df) (kTransferLine.getPoint(nPts-1))).x;
-        float xMin = ((Point2Df) (kTransferLine.getPoint(0))).x;
+        float xMax = ((Vector2f) (kTransferLine.getPoint(nPts-1))).X;
+        float xMin = ((Vector2f) (kTransferLine.getPoint(0))).X;
         float fNew;
 
         int lutHeight = kLut.getExtents()[1];
@@ -261,14 +262,14 @@ public class ModelLUT extends ModelStorageBase {
         int nPtsR = kTransferLineR.size();
         int nPtsG = kTransferLineG.size();
         int nPtsB = kTransferLineB.size();
-        float xMaxR = ((Point2Df) (kTransferLineR.getPoint(nPtsR-1))).x;
-        float xMinR = ((Point2Df) (kTransferLineR.getPoint(0))).x;
+        float xMaxR = ((Vector2f) (kTransferLineR.getPoint(nPtsR-1))).X;
+        float xMinR = ((Vector2f) (kTransferLineR.getPoint(0))).X;
         
-        float xMaxG = ((Point2Df) (kTransferLineG.getPoint(nPtsG-1))).x;
-        float xMinG = ((Point2Df) (kTransferLineG.getPoint(0))).x;
+        float xMaxG = ((Vector2f) (kTransferLineG.getPoint(nPtsG-1))).X;
+        float xMinG = ((Vector2f) (kTransferLineG.getPoint(0))).X;
         
-        float xMaxB = ((Point2Df) (kTransferLineB.getPoint(nPtsB-1))).x;
-        float xMinB = ((Point2Df) (kTransferLineB.getPoint(0))).x;
+        float xMaxB = ((Vector2f) (kTransferLineB.getPoint(nPtsB-1))).X;
+        float xMinB = ((Vector2f) (kTransferLineB.getPoint(0))).X;
         
         int remappedValue;
         int count = 0;
@@ -1114,7 +1115,7 @@ public class ModelLUT extends ModelStorageBase {
         }
 
         for (j = 0; j < alphaLine.size(); j++) {
-            x[j] = ((Point2Df) (alphaLine.getPoint(j))).x;
+            x[j] = ((Vector2f) (alphaLine.getPoint(j))).X;
         }
 
         for (i = 0; i < height; i++) {
@@ -1749,7 +1750,7 @@ public class ModelLUT extends ModelStorageBase {
         int height = getExtents()[1]; // number of entries in the LUT (i.e. 256)
 
         for (j = 0; j < function.size(); j++) {
-            x[j] = ((Point2Df) (function.getPoint(j))).x;
+            x[j] = ((Vector2f) (function.getPoint(j))).X;
         }
 
         for (i = 0; i < height; i++) {

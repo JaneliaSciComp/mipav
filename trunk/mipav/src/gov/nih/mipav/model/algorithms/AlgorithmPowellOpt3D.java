@@ -1,7 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.structures.Point3Dd;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.jama.Matrix;
 
@@ -29,17 +29,17 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
      * @param  maxIter          Maximum number of iterations.
      * @param  bracketBound     DOCUMENT ME!
      */
-    public AlgorithmPowellOpt3D(AlgorithmBase parent, Point3Dd com, int degreeOfFreedom,
+    public AlgorithmPowellOpt3D(AlgorithmBase parent, Vector3f com, int degreeOfFreedom,
                                 AlgorithmOptimizeFunctionBase costFunc, double[] tols, int maxIter,
                                 int bracketBound) {
         super(parent, degreeOfFreedom, costFunc, tols, maxIter, 3, bracketBound);
 
         if (degreeOfFreedom <= 12) {
             toOrigin = new TransMatrix(4);
-            toOrigin.setTranslate(com.x, com.y, com.z);
+            toOrigin.setTranslate(com.X, com.Y, com.Z);
 
             fromOrigin = new TransMatrix(4);
-            fromOrigin.setTranslate(-com.x, -com.y, -com.z);
+            fromOrigin.setTranslate(-com.X, -com.Y, -com.Z);
         }
     }
 

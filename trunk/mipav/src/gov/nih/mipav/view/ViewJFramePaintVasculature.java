@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
@@ -492,27 +493,27 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
                 int y = i / mipExtents[0];
                 int z = (int) getMIPZValue(i);
 
-                points.add(new Point3Df(x, y, z));
+                points.add(new Vector3f(x, y, z));
             }
         }
 
         int[] x = new int[1];
         int[] y = new int[1];
         int[] z = new int[1];
-        Point3Df prev = new Point3Df(0, 0, 0);
+        Vector3f prev = new Vector3f(0, 0, 0);
 
         for (int i = 0; i < points.size(); i++) {
-            Point3Df cur = (Point3Df) points.get(i);
+            Vector3f cur = (Vector3f) points.get(i);
 
             /// good distance?
             if (distance(cur, prev) > 50) {
-                x[0] = (int) cur.x;
-                y[0] = (int) cur.y;
-                z[0] = (int) cur.z;
+                x[0] = (int) cur.X;
+                y[0] = (int) cur.Y;
+                z[0] = (int) cur.Z;
                 seedPoints.importCurve(x, y, z, 0);
             }
 
-            prev = (Point3Df) points.get(i);
+            prev = (Vector3f) points.get(i);
         }
 
         if (isNewVOI) {
@@ -965,9 +966,9 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
      *
      * @return  returns the distance
      */
-    protected static final double distance(Point3Df pt1, Point3Df pt2) {
-        return Math.sqrt(((pt2.x - pt1.x) * (pt2.x - pt1.x)) + ((pt2.y - pt1.y) * (pt2.y - pt1.y)) +
-                         ((pt2.z - pt1.z) * (pt2.z - pt1.z)));
+    protected static final double distance(Vector3f pt1, Vector3f pt2) {
+        return Math.sqrt(((pt2.X - pt1.X) * (pt2.X - pt1.X)) + ((pt2.Y - pt1.Y) * (pt2.Y - pt1.Y)) +
+                         ((pt2.Z - pt1.Z) * (pt2.Z - pt1.Z)));
     }
 
     /**

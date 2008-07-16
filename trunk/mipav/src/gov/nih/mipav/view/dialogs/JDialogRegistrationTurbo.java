@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
@@ -295,8 +296,8 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
 
             int nPtsA = 0; // = targetImage.getVOIs().size();
             int nPtsB = 0; // = sourceImage.getVOIs().size()
-            Point3Df[] tmpptA = null;
-            Point3Df[] tmpptB = null;
+            Vector3f[] tmpptA = null;
+            Vector3f[] tmpptB = null;
             double[][] targetPt = null; // new double[nPtsA][2] or new double[nPtsA][3]
             double[][] sourcePt = null; // new double[nPtsB][2] or new double[nPtsB][3]
             int i, j, s, ptNum, nVOIs;
@@ -349,9 +350,9 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
                                     ptNum = (int)
                                                 (Short.valueOf(((VOIPoint) curves[s].elementAt(j)).getLabel()).shortValue()) -
                                             1;
-                                    targetPt[ptNum][0] = tmpptA[j].x;
-                                    targetPt[ptNum][1] = tmpptA[j].y;
-                                    targetPt[ptNum][2] = tmpptA[j].z;
+                                    targetPt[ptNum][0] = tmpptA[j].X;
+                                    targetPt[ptNum][1] = tmpptA[j].Y;
+                                    targetPt[ptNum][2] = tmpptA[j].Z;
                                 }
                             }
                         } // if (VOIs.VOIAt(i).getCurveType() == VOI.POINT)
@@ -379,9 +380,9 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
                                     ptNum = (int)
                                                 (Short.valueOf(((VOIPoint) curves[s].elementAt(j)).getLabel()).shortValue()) -
                                             1;
-                                    sourcePt[ptNum][0] = tmpptB[j].x;
-                                    sourcePt[ptNum][1] = tmpptB[j].y;
-                                    sourcePt[ptNum][2] = tmpptB[j].z;
+                                    sourcePt[ptNum][0] = tmpptB[j].X;
+                                    sourcePt[ptNum][1] = tmpptB[j].Y;
+                                    sourcePt[ptNum][2] = tmpptB[j].Z;
                                 }
                             }
                         } // if (VOIs.VOIAt(i).getCurveType() == VOI.POINT)
@@ -420,8 +421,8 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
                                 ptNum = (int)
                                             (Short.valueOf(((VOIPoint) curves[0].elementAt(j)).getLabel()).shortValue()) -
                                         1;
-                                targetPt[ptNum][0] = tmpptA[j].x;
-                                targetPt[ptNum][1] = tmpptA[j].y;
+                                targetPt[ptNum][0] = tmpptA[j].X;
+                                targetPt[ptNum][1] = tmpptA[j].Y;
                             }
                         } // if (VOIs.VOIAt(i).getCurveType() == VOI.POINT)
                     } // for (i = 0; i < nVOIs; i++)
@@ -442,8 +443,8 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
                                 ptNum = (int)
                                             (Short.valueOf(((VOIPoint) curves[0].elementAt(j)).getLabel()).shortValue()) -
                                         1;
-                                sourcePt[ptNum][0] = tmpptB[j].x;
-                                sourcePt[ptNum][1] = tmpptB[j].y;
+                                sourcePt[ptNum][0] = tmpptB[j].X;
+                                sourcePt[ptNum][1] = tmpptB[j].Y;
                             }
                         } // if (VOIs.VOIAt(i).getCurveType() == VOI.POINT)
                     } // for (i = 0; i < nVOIs; i++)

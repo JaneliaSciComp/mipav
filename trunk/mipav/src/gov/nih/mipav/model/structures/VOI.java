@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.structures;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 
@@ -363,7 +364,7 @@ public class VOI extends ModelSerialCloneable {
         int i;
 
         Vector distanceVector = new Vector();
-        Point3Df firstPoint, secondPoint;
+        Vector3f firstPoint, secondPoint;
 
         String unitsStr = new String();
 
@@ -421,7 +422,7 @@ public class VOI extends ModelSerialCloneable {
                 try {
                     pointNumber = Integer.parseInt(((VOIPoint) curves[sliceCounter].elementAt(i)).getLabel());
                     firstPoint = ((VOIPoint) curves[sliceCounter].elementAt(i)).exportPoint();
-                    firstPoint.z = sliceCounter;
+                    firstPoint.Z = sliceCounter;
                     distanceVector.add(new PolyPointHolder(firstPoint, pointNumber));
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -446,9 +447,9 @@ public class VOI extends ModelSerialCloneable {
         for (i = 0; i < (distanceVector.size() - 1); i++) {
             firstPoint = ((PolyPointHolder) distanceVector.elementAt(i)).getPoint();
             secondPoint = ((PolyPointHolder) distanceVector.elementAt(i + 1)).getPoint();
-            distance3D = MipavMath.distance(firstPoint.x, firstPoint.y, firstPoint.z, secondPoint.x, secondPoint.y,
-                                            secondPoint.z, resols);
-            distance2D = MipavMath.distance(firstPoint.x, firstPoint.y, 0, secondPoint.x, secondPoint.y, 0, resols);
+            distance3D = MipavMath.distance(firstPoint.X, firstPoint.Y, firstPoint.Z, secondPoint.X, secondPoint.Y,
+                                            secondPoint.Z, resols);
+            distance2D = MipavMath.distance(firstPoint.X, firstPoint.Y, 0, secondPoint.X, secondPoint.Y, 0, resols);
             totalDistance3D += distance3D;
             totalDistance2D += distance2D;
 
@@ -463,9 +464,9 @@ public class VOI extends ModelSerialCloneable {
         firstPoint = ((PolyPointHolder) distanceVector.elementAt(0)).getPoint();
         secondPoint = ((PolyPointHolder) distanceVector.elementAt(distanceVector.size() - 1)).getPoint();
 
-        displacement2D = MipavMath.distance(firstPoint.x, firstPoint.y, 0, secondPoint.x, secondPoint.y, 0, resols);
-        displacement3D = MipavMath.distance(firstPoint.x, firstPoint.y, firstPoint.z, secondPoint.x, secondPoint.y,
-                                            secondPoint.z, resols);
+        displacement2D = MipavMath.distance(firstPoint.X, firstPoint.Y, 0, secondPoint.X, secondPoint.Y, 0, resols);
+        displacement3D = MipavMath.distance(firstPoint.X, firstPoint.Y, firstPoint.Z, secondPoint.X, secondPoint.Y,
+                                            secondPoint.Z, resols);
 
         // print displacement
         ViewUserInterface.getReference().getMessageFrame().append("Displacement (first point to last point): " +
@@ -598,12 +599,12 @@ public class VOI extends ModelSerialCloneable {
                 }
             }
         } else if ((process == true) && (curveType == POINT)) {
-            Point3Df pt;
+            Vector3f pt;
             int size = curves[slice].size();
 
             for (i = 0; i < size; i++) {
                 pt = ((VOIPoint) (curves[slice].elementAt(i))).exportPoint();
-                offset = MipavMath.round((slice * xDim * yDim) + (pt.y * xDim) + pt.x);
+                offset = MipavMath.round((slice * xDim * yDim) + (pt.Y * xDim) + pt.X);
 
                 if (polarity == ADDITIVE) {
                     mask.set(offset);
@@ -721,12 +722,12 @@ public class VOI extends ModelSerialCloneable {
                 }
             }
         } else if ((process == true) && (curveType == POINT)) {
-            Point3Df pt;
+            Vector3f pt;
             int size = curves[slice].size();
 
             for (i = 0; i < size; i++) {
                 pt = ((VOIPoint) (curves[slice].elementAt(i))).exportPoint();
-                offset = MipavMath.round((pt.y * xDim) + pt.x);
+                offset = MipavMath.round((pt.Y * xDim) + pt.X);
 
                 if (polarity == ADDITIVE) {
 
@@ -812,10 +813,10 @@ public class VOI extends ModelSerialCloneable {
                 }
             }
         } else if ((process == true) && (curveType == POINT)) {
-            Point3Df pt;
+            Vector3f pt;
             int size = curves[slice].size();
             pt = ((VOIPoint) (curves[slice].elementAt(element))).exportPoint();
-            offset = MipavMath.round((pt.y * xDim) + pt.x);
+            offset = MipavMath.round((pt.Y * xDim) + pt.X);
 
             if (polarity == ADDITIVE) {
 
@@ -1045,22 +1046,22 @@ public class VOI extends ModelSerialCloneable {
         if (curveType == POLYLINE_SLICE) {
             double distance = 0;
             Vector distanceVector = new Vector();
-            Point3Df firstPoint, secondPoint;
+            Vector3f firstPoint, secondPoint;
             // first calculate the total distance from pt->pt (even in !visible Points)
 
             for (i = 0; i < curves[slice].size(); i++) {
 
                 firstPoint = ((VOIPoint) curves[slice].elementAt(i)).exportPoint();
-                firstPoint.z = slice;
+                firstPoint.Z = slice;
                 distanceVector.add(firstPoint);
             }
 
             for (i = 0; i < (distanceVector.size() - 1); i++) {
-                firstPoint = (Point3Df) distanceVector.elementAt(i);
-                secondPoint = (Point3Df) distanceVector.elementAt(i + 1);
+                firstPoint = (Vector3f) distanceVector.elementAt(i);
+                secondPoint = (Vector3f) distanceVector.elementAt(i + 1);
 
-                distance += MipavMath.distance(firstPoint.x, firstPoint.y, firstPoint.z, secondPoint.x, secondPoint.y,
-                                               secondPoint.z, resols);
+                distance += MipavMath.distance(firstPoint.X, firstPoint.Y, firstPoint.Z, secondPoint.X, secondPoint.Y,
+                                               secondPoint.Z, resols);
             }
 
             // next draw lines between the points of the visible slice
@@ -1160,7 +1161,7 @@ public class VOI extends ModelSerialCloneable {
                 boolean is25D = fileInfo.getIs2_5D();
                 double distance = 0;
                 Vector distanceVector = new Vector();
-                Point3Df firstPoint, secondPoint;
+                Vector3f firstPoint, secondPoint;
 
                 // first calculate the total distance from pt->pt (even in !visible Points)
 
@@ -1177,9 +1178,9 @@ public class VOI extends ModelSerialCloneable {
                             firstPoint = ((VOIPoint) curves[sliceCounter].elementAt(i)).exportPoint();
 
                             if (is25D) {
-                                firstPoint.z = 0;
+                                firstPoint.Z = 0;
                             } else {
-                                firstPoint.z = sliceCounter;
+                                firstPoint.Z = sliceCounter;
                             }
 
                             distanceVector.add(new PolyPointHolder(firstPoint, pointNumber));
@@ -1198,8 +1199,8 @@ public class VOI extends ModelSerialCloneable {
                 for (i = 0; i < (distanceVector.size() - 1); i++) {
                     firstPoint = ((PolyPointHolder) distanceVector.elementAt(i)).getPoint();
                     secondPoint = ((PolyPointHolder) distanceVector.elementAt(i + 1)).getPoint();
-                    dTemp = MipavMath.distance(firstPoint.x, firstPoint.y, firstPoint.z, secondPoint.x, secondPoint.y,
-                                               secondPoint.z, resols);
+                    dTemp = MipavMath.distance(firstPoint.X, firstPoint.Y, firstPoint.Z, secondPoint.X, secondPoint.Y,
+                                               secondPoint.Z, resols);
                     distance += dTemp;
 
                     if (i == activePolylineSlicePoint) {
@@ -1234,38 +1235,38 @@ public class VOI extends ModelSerialCloneable {
                             if ((orientation == VOIBase.NA) || (orientation == VOIBase.XY)) {
 
                                 // 1 -> imageDim instead of 0 -> imageDim - 1
-                                xS = Math.round(firstPoint.x * zoomX * resolutionX);
-                                yS = Math.round(firstPoint.y * zoomY * resolutionY);
+                                xS = Math.round(firstPoint.X * zoomX * resolutionX);
+                                yS = Math.round(firstPoint.Y * zoomY * resolutionY);
 
-                                xS2 = Math.round(secondPoint.x * zoomX * resolutionX);
-                                yS2 = Math.round(secondPoint.y * zoomY * resolutionY);
+                                xS2 = Math.round(secondPoint.X * zoomX * resolutionX);
+                                yS2 = Math.round(secondPoint.Y * zoomY * resolutionY);
 
                             } else if (orientation == VOIBase.ZY) {
 
                                 // 1 -> imageDim instead of 0 -> imageDim - 1
-                                xS = Math.round(firstPoint.z * zoomX * resolutionX);
-                                yS = Math.round(firstPoint.y * zoomY * resolutionY);
+                                xS = Math.round(firstPoint.Z * zoomX * resolutionX);
+                                yS = Math.round(firstPoint.Y * zoomY * resolutionY);
 
-                                xS2 = Math.round(secondPoint.z * zoomX * resolutionX);
-                                yS2 = Math.round(secondPoint.y * zoomY * resolutionY);
+                                xS2 = Math.round(secondPoint.Z * zoomX * resolutionX);
+                                yS2 = Math.round(secondPoint.Y * zoomY * resolutionY);
 
                             } else if (orientation == VOIBase.XZ) {
 
                                 // 1 -> imageDim instead of 0 -> imageDim - 1
-                                xS = Math.round(firstPoint.x * zoomX * resolutionX);
-                                yS = Math.round(firstPoint.z * zoomY * resolutionY);
+                                xS = Math.round(firstPoint.X * zoomX * resolutionX);
+                                yS = Math.round(firstPoint.Z * zoomY * resolutionY);
 
-                                xS2 = Math.round(secondPoint.x * zoomX * resolutionX);
-                                yS2 = Math.round(secondPoint.z * zoomY * resolutionY);
+                                xS2 = Math.round(secondPoint.X * zoomX * resolutionX);
+                                yS2 = Math.round(secondPoint.Z * zoomY * resolutionY);
 
                             } else {
 
                                 // 1 -> imageDim instead of 0 -> imageDim - 1
-                                xS = Math.round(firstPoint.x * zoomX * resolutionX);
-                                yS = Math.round(firstPoint.y * zoomY * resolutionY);
+                                xS = Math.round(firstPoint.X * zoomX * resolutionX);
+                                yS = Math.round(firstPoint.Y * zoomY * resolutionY);
 
-                                xS2 = Math.round(secondPoint.x * zoomX * resolutionX);
-                                yS2 = Math.round(secondPoint.y * zoomY * resolutionY);
+                                xS2 = Math.round(secondPoint.X * zoomX * resolutionX);
+                                yS2 = Math.round(secondPoint.Y * zoomY * resolutionY);
                             }
 
                             g.drawLine(xS, yS, xS2, yS2);
@@ -1564,12 +1565,12 @@ public class VOI extends ModelSerialCloneable {
     }
 
     /**
-     * Get Point3Dfs from the VOI; can only use with Point.
+     * Get Vector3fs from the VOI; can only use with Point.
      *
      * @return  array of points at the slice
      */
-    public Point3Df[] exportAllPoints() {
-        Point3Df[] points;
+    public Vector3f[] exportAllPoints() {
+        Vector3f[] points;
         int i, j, k;
 
         if (curveType != POINT) {
@@ -1583,7 +1584,7 @@ public class VOI extends ModelSerialCloneable {
         }
 
         try {
-            points = new Point3Df[len];
+            points = new Vector3f[len];
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: unable to export Points.");
@@ -1645,7 +1646,7 @@ public class VOI extends ModelSerialCloneable {
      *
      * @return  return the request point from the VOIPoint object
      */
-    public Point3Df exportPoint() {
+    public Vector3f exportPoint() {
         int i, j;
 
         if (curveType != POINT) {
@@ -1666,21 +1667,21 @@ public class VOI extends ModelSerialCloneable {
     }
 
     /**
-     * Get Point3Dfs from the VOI; can only use with Point.
+     * Get Vector3fs from the VOI; can only use with Point.
      *
      * @param   slice  index of slice
      *
      * @return  array of points at the slice
      */
-    public Point3Df[] exportPoints(int slice) {
-        Point3Df[] points;
+    public Vector3f[] exportPoints(int slice) {
+        Vector3f[] points;
 
         if (curveType != POINT) {
             return null;
         }
 
         try {
-            points = new Point3Df[curves[slice].size()];
+            points = new Vector3f[curves[slice].size()];
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: unable to export Points.");
@@ -1774,11 +1775,11 @@ public class VOI extends ModelSerialCloneable {
         int i;
         int z;
         Polygon[][] transformedGon = null;
-        Point3Df gcPt = null;
+        Vector3f gcPt = null;
         TransMatrix tMatrix = null;
 
         try {
-            gcPt = new Point3Df();
+            gcPt = new Vector3f();
             tMatrix = new TransMatrix(4);
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -1790,10 +1791,10 @@ public class VOI extends ModelSerialCloneable {
         gcPt = getGeometricCenter();
 
         // construct transMatrix object
-        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
+        tMatrix.setTranslate((gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
+        tMatrix.setTranslate(-gcPt.X, -gcPt.Y, -gcPt.Z);
 
         if (curveType == CONTOUR) {
 
@@ -1815,7 +1816,7 @@ public class VOI extends ModelSerialCloneable {
      *
      * @return  DOCUMENT ME!
      */
-    public Point3Df exportPSlicePoint(int slice) {
+    public Vector3f exportPSlicePoint(int slice) {
 
         if (curveType == POLYLINE_SLICE) {
 
@@ -2261,10 +2262,10 @@ public class VOI extends ModelSerialCloneable {
      *
      * @return  returns the geometric center
      */
-    public Point3Df getGeometricCenter() {
+    public Vector3f getGeometricCenter() {
         int i, z;
         int ncurves = 0;
-        Point3Df tempPt = new Point3Df(0, 0, 0);
+        Vector3f tempPt = new Vector3f(0, 0, 0);
         float sumX = (float) 0.0;
         float sumY = (float) 0.0;
         float sumZ = (float) 0.0;
@@ -2280,14 +2281,14 @@ public class VOI extends ModelSerialCloneable {
                 for (i = 0; i < curves[z].size(); i++) {
                     tempPt = ((VOIContour) (curves[z].elementAt(i))).getGeometricCenter();
                     ncurves++;
-                    sumX += tempPt.x;
-                    sumY += tempPt.y;
-                    sumZ += tempPt.z;
+                    sumX += tempPt.X;
+                    sumY += tempPt.Y;
+                    sumZ += tempPt.Z;
                 }
             }
         }
 
-        return (new Point3Df(sumX / ncurves, sumY / ncurves, sumZ / ncurves));
+        return (new Vector3f(sumX / ncurves, sumY / ncurves, sumZ / ncurves));
     }
 
     /**
@@ -2298,10 +2299,10 @@ public class VOI extends ModelSerialCloneable {
      *
      * @return  returns the geometric center
      */
-    public Point3Df getGeometricCenter(int slice) {
+    public Vector3f getGeometricCenter(int slice) {
         int i;
         int ncurves = 0;
-        Point3Df tempPt = new Point3Df(0, 0, 0);
+        Vector3f tempPt = new Vector3f(0, 0, 0);
         float sumX = (float) 0.0;
         float sumY = (float) 0.0;
         float sumZ = (float) 0.0;
@@ -2317,13 +2318,13 @@ public class VOI extends ModelSerialCloneable {
             for (i = 0; i < curves[slice].size(); i++) {
                 ncurves++;
                 tempPt = ((VOIContour) (curves[slice].elementAt(i))).getGeometricCenter();
-                sumX += tempPt.x;
-                sumY += tempPt.y;
-                sumZ += tempPt.z;
+                sumX += tempPt.X;
+                sumY += tempPt.Y;
+                sumZ += tempPt.Z;
             }
         }
 
-        return (new Point3Df(sumX / ncurves, sumY / ncurves, sumZ / ncurves));
+        return (new Vector3f(sumX / ncurves, sumY / ncurves, sumZ / ncurves));
     }
 
     /**
@@ -2504,12 +2505,12 @@ public class VOI extends ModelSerialCloneable {
      *
      * @return  DOCUMENT ME!
      */
-    public int getPositionAndIntensity(int slice, int contourNo, Vector3Df[] position, float[] intensity,
+    public int getPositionAndIntensity(int slice, int contourNo, Vector3f[] position, float[] intensity,
                                        float[] imageBuffer, int xDim) {
 
         for (int i = 0; i < position.length; i++) {
-            position[i] = new Vector3Df();
-            position[i].z = slice;
+            position[i] = new Vector3f();
+            position[i].Z = slice;
         }
 
         if (curveType == LINE) {
@@ -2779,11 +2780,11 @@ public class VOI extends ModelSerialCloneable {
     		this.removeCurves(i);
     	}
     	
-    	Point3Df pt1 = (Point3Df)curve.elementAt(0);
-    	Point3Df pt2 = (Point3Df)curve.elementAt(1);
+    	Vector3f pt1 = (Vector3f)curve.elementAt(0);
+    	Vector3f pt2 = (Vector3f)curve.elementAt(1);
 
-    	pt1.z = slice;
-    	pt2.z = slice;
+    	pt1.Z = slice;
+    	pt2.Z = slice;
     	curve.removeAllElements();
     	curve.addElement(pt1);
     	curve.addElement(pt2);
@@ -2817,7 +2818,7 @@ public class VOI extends ModelSerialCloneable {
      * @param  pt     array of 3D points to import
      * @param  slice  index of slice of curve
      */
-    public void importCurve(Point3Df[] pt, int slice) {
+    public void importCurve(Vector3f[] pt, int slice) {
         VOIBase curve;
 
         if (curveType == LINE) {
@@ -2994,7 +2995,7 @@ public class VOI extends ModelSerialCloneable {
             }
         } else if (curveType == POINT) {
         	
-        	Point3Df [] pts = voi.exportPoints(voiSlice);
+        	Vector3f [] pts = voi.exportPoints(voiSlice);
         	for (int i = 0; i < pts.length; i++) {
         		System.err.println("i: " + i + ", pt: " + pts[i]);
         	}
@@ -3020,7 +3021,7 @@ public class VOI extends ModelSerialCloneable {
      * @param  point  point to import
      * @param  slice  index of slice of new point
      */
-    public void importPoint(Point3Df point, int slice) {
+    public void importPoint(Vector3f point, int slice) {
         VOIPoint voiPt = null;
 
         if (curveType == POINT) {
@@ -3040,7 +3041,7 @@ public class VOI extends ModelSerialCloneable {
      * @param  points  point to import
      * @param  slice   index of slice of new point
      */
-    public void importPoints(Point3Df[] points, int slice) {
+    public void importPoints(Vector3f[] points, int slice) {
         VOIPoint[] voiPts = new VOIPoint[points.length];
         int i;
 
@@ -3088,10 +3089,10 @@ System.err.println("VOI.importPoints() slice is: " + slice);
     /**
      * Only for POLYSLICE_LINE types. Inserts a new point into the structure and re-labels numbers
      *
-     * @param  point  Point3Df the new point to create a VOIPoint from
+     * @param  point  Vector3f the new point to create a VOIPoint from
      * @param  slice  int the slice into which this new VOIPoint will be inserted
      */
-    public void insertPSlicePt(Point3Df point, int slice) {
+    public void insertPSlicePt(Vector3f point, int slice) {
 
         if (curveType != POLYLINE_SLICE) {
             return;
@@ -3228,12 +3229,12 @@ System.err.println("curves size: " );
      *
      * @return  returns the two points.
      */
-    public Point3Df[] maxWidth() {
+    public Vector3f[] maxWidth() {
         int z, i;
         int j, conSize;
         double[] maxDistance = new double[1];
-        Point3Df[] points = new Point3Df[2];
-        Point3Df point;
+        Vector3f[] points = new Vector3f[2];
+        Vector3f point;
 
         for (z = 0; z < zDim; z++) {
 
@@ -3243,11 +3244,11 @@ System.err.println("curves size: " );
                     conSize = ((VOIContour) (curves[z].elementAt(i))).size();
 
                     for (j = 0; j < conSize; j++) {
-                        point = findMaxWidth((Point3Df) ((VOIContour) (curves[z].elementAt(i))).elementAt(j),
+                        point = findMaxWidth((Vector3f) ((VOIContour) (curves[z].elementAt(i))).elementAt(j),
                                              maxDistance);
 
                         if (point != null) {
-                            points[0] = (Point3Df) ((VOIContour) (curves[z].elementAt(i))).elementAt(j);
+                            points[0] = (Vector3f) ((VOIContour) (curves[z].elementAt(i))).elementAt(j);
                             points[1] = point;
                         }
                     }
@@ -3561,8 +3562,8 @@ System.err.println("curves size: " );
                 }
             }
         } else if (curveType == POLYLINE_SLICE) {
-            Point3Df pt1;
-            Point3Df pt2;
+            Vector3f pt1;
+            Vector3f pt2;
             int x1, y1, x2, y2;
 
             try {
@@ -3571,10 +3572,10 @@ System.err.println("curves size: " );
                     pt1 = ((VOIPoint) curves[slice].elementAt(i)).exportPoint();
                     pt2 = ((VOIPoint) curves[slice].elementAt(i + 1)).exportPoint();
 
-                    x1 = MipavMath.round(pt1.x);
-                    y1 = MipavMath.round(pt1.y);
-                    x2 = MipavMath.round(pt2.x);
-                    y2 = MipavMath.round(pt2.y);
+                    x1 = MipavMath.round(pt1.X);
+                    y1 = MipavMath.round(pt1.Y);
+                    x2 = MipavMath.round(pt2.X);
+                    y2 = MipavMath.round(pt2.Y);
 
                     if (VOIBase.testDistance(x, x1, x2, y, y1, y2, 3)) {
                         polygonIndex = i;
@@ -3845,7 +3846,7 @@ System.err.println("curves size: " );
         float x1, x2, y1, y2;
         float dx, dy;
         float inprod;
-        Point3Df point;
+        Vector3f point;
         float minDistance = Float.MAX_VALUE;
         float lineLengthSquared;
         float lineLength;
@@ -3865,19 +3866,19 @@ System.err.println("curves size: " );
                     for (j = 0; j < conSize; j++) {
 
                         // Find one end of the line segment
-                        point = (Point3Df) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j);
-                        x1 = point.x;
-                        y1 = point.y;
+                        point = (Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j);
+                        x1 = point.X;
+                        y1 = point.Y;
 
                         // Find the other end of the line segment
                         if (j == (conSize - 1)) {
-                            point = (Point3Df) ((VOIContour) (curves[slice].elementAt(i))).elementAt(0);
+                            point = (Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(0);
                         } else {
-                            point = (Point3Df) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j + 1);
+                            point = (Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j + 1);
                         }
 
-                        x2 = point.x;
-                        y2 = point.y;
+                        x2 = point.X;
+                        y2 = point.Y;
 
                         if ((x == x1) && (y == y1) && (z == slice)) {
                             return 0.0f;
@@ -4763,7 +4764,7 @@ System.err.println("curves size: " );
         float x1, x2, y1, y2;
         float dx, dy;
         float inprod;
-        Point3Df point;
+        Vector3f point;
         float minDistance = Float.MAX_VALUE;
         float lineLengthSquared;
         float lineLength;
@@ -4780,19 +4781,19 @@ System.err.println("curves size: " );
                 for (j = 0; j < conSize; j++) {
 
                     // Find one end of the line segment
-                    point = (Point3Df) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j);
-                    x1 = point.x;
-                    y1 = point.y;
+                    point = (Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j);
+                    x1 = point.X;
+                    y1 = point.Y;
 
                     // Find the other end of the line segment
                     if (j == (conSize - 1)) {
-                        point = (Point3Df) ((VOIContour) (curves[slice].elementAt(i))).elementAt(0);
+                        point = (Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(0);
                     } else {
-                        point = (Point3Df) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j + 1);
+                        point = (Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j + 1);
                     }
 
-                    x2 = point.x;
-                    y2 = point.y;
+                    x2 = point.X;
+                    y2 = point.Y;
 
                     if ((x == x1) && (y == y1)) {
                         return 0.0f;
@@ -4885,10 +4886,10 @@ System.err.println("curves size: " );
                              float sZ) {
         int z;
         TransMatrix tMatrix = null;
-        Point3Df gcPt = null;
+        Vector3f gcPt = null;
 
         try {
-            gcPt = new Point3Df();
+            gcPt = new Vector3f();
             tMatrix = new TransMatrix(4);
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -4898,10 +4899,10 @@ System.err.println("curves size: " );
         }
 
         gcPt = getGeometricCenter();
-        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
+        tMatrix.setTranslate((gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
         tMatrix.setRotate(rotX, rotY, rotZ, TransMatrix.DEGREES);
         tMatrix.setZoom(sX, sY, sZ);
-        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
+        tMatrix.setTranslate(-gcPt.X, -gcPt.Y, -gcPt.Z);
 
         if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
 
@@ -4933,10 +4934,10 @@ System.err.println("curves size: " );
     public void transformVOI(float rotX, float rotY, float rotZ, float tX, float tY, float tZ, float sX, float sY,
                              float sZ, int slice, int element, boolean doRound) {
         TransMatrix tMatrix = null;
-        Point3Df gcPt = null;
+        Vector3f gcPt = null;
 
         try {
-            gcPt = new Point3Df();
+            gcPt = new Vector3f();
             tMatrix = new TransMatrix(4);
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -4946,10 +4947,10 @@ System.err.println("curves size: " );
         }
 
         gcPt = ((VOIContour) (curves[slice].elementAt(element))).getGeometricCenter();
-        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
+        tMatrix.setTranslate((gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
         tMatrix.setRotate(rotX, rotY, rotZ, TransMatrix.DEGREES);
         tMatrix.setZoom(sX, sY, sZ);
-        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
+        tMatrix.setTranslate(-gcPt.X, -gcPt.Y, -gcPt.Z);
 
         if ((curveType == CONTOUR) || (curveType == POLYLINE)) {
             ((VOIContour) (curves[slice].elementAt(element))).transformContour(tMatrix, doRound);
@@ -5124,14 +5125,14 @@ System.err.println("curves size: " );
                 }
             }
         } else if ((process == true) && (curveType == POINT)) {
-            Point3Df pt;
+            Vector3f pt;
             int size = curves[slice].size();
 
             for (i = 0; i < size; i++) {
                 pt = ((VOIPoint) (curves[slice].elementAt(i))).exportPoint();
 
                 if (!onlyActive || ((VOIPoint) (curves[slice].elementAt(i))).isActive()) {
-                    offset = MipavMath.round((slice * xDim * yDim) + (pt.y * xDim) + pt.x);
+                    offset = MipavMath.round((slice * xDim * yDim) + (pt.Y * xDim) + pt.X);
 
                     if (polarity == ADDITIVE) {
 
@@ -5159,11 +5160,11 @@ System.err.println("curves size: " );
      *
      * @return  the maximum width of the VOI
      */
-    private Point3Df findMaxWidth(Point3Df pt, double[] maxDistance) {
+    private Vector3f findMaxWidth(Vector3f pt, double[] maxDistance) {
         int z, i;
         int j, conSize;
         double distance;
-        Point3Df point = null;
+        Vector3f point = null;
 
         for (z = 0; z < zDim; z++) {
 
@@ -5174,11 +5175,11 @@ System.err.println("curves size: " );
 
                     for (j = 0; j < conSize; j++) {
                         distance = MipavMath.distance(pt,
-                                                      (Point3Df) ((VOIContour) (curves[z].elementAt(i))).elementAt(j));
+                                                      (Vector3f) ((VOIContour) (curves[z].elementAt(i))).elementAt(j));
 
                         if (distance > maxDistance[0]) {
                             maxDistance[0] = distance;
-                            point = (Point3Df) ((VOIContour) (curves[z].elementAt(i))).elementAt(j);
+                            point = (Vector3f) ((VOIContour) (curves[z].elementAt(i))).elementAt(j);
                         }
                     }
                 }
@@ -5245,7 +5246,7 @@ System.err.println("curves size: " );
      */
     public Vector getSortedPolyPoints() {
     	Vector distanceVector = new Vector();
-        Point3Df firstPoint;
+        Vector3f firstPoint;
         int i;
         
 
@@ -5260,7 +5261,7 @@ System.err.println("curves size: " );
                     pointNumber = Integer.parseInt(((VOIPoint) curves[sliceCounter].elementAt(i)).getLabel());
                     firstPoint = ((VOIPoint) curves[sliceCounter].elementAt(i)).exportPoint();
 
-                    firstPoint.z = sliceCounter;
+                    firstPoint.Z = sliceCounter;
 
                     distanceVector.add(new PolyPointHolder(firstPoint, pointNumber));
                 } catch (Exception e) {
@@ -5306,7 +5307,7 @@ System.err.println("curves size: " );
         private int number;
 
         /** DOCUMENT ME! */
-        private Point3Df pt;
+        private Vector3f pt;
 
         /**
          * Creates a new PolyPointHolder object.
@@ -5314,7 +5315,7 @@ System.err.println("curves size: " );
          * @param  p  DOCUMENT ME!
          * @param  n  DOCUMENT ME!
          */
-        public PolyPointHolder(Point3Df p, int n) {
+        public PolyPointHolder(Vector3f p, int n) {
             this.pt = p;
             this.number = n;
         }
@@ -5333,7 +5334,7 @@ System.err.println("curves size: " );
          *
          * @return  DOCUMENT ME!
          */
-        public Point3Df getPoint() {
+        public Vector3f getPoint() {
             return this.pt;
         }
     }

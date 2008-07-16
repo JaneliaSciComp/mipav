@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
@@ -457,8 +458,8 @@ public class ViewJPanelLUT extends JPanel
                     threshUpperF.setEnabled(true);
                     threshFillF.setEnabled(true);
 
-                    float upper = ((Point2Df) (getLUTa().getTransferFunction().getPoint(4))).x;
-                    float lower = ((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
+                    float upper = ((Vector2f) (getLUTa().getTransferFunction().getPoint(4))).X;
+                    float lower = ((Vector2f) (getLUTa().getTransferFunction().getPoint(1))).X;
                     threshLowerF.setText(Float.toString(lower));
                     threshUpperF.setText(Float.toString(upper));
                     threshFillF.setText(Double.toString(panelParent.getImageA().getMin()));
@@ -488,8 +489,8 @@ public class ViewJPanelLUT extends JPanel
                     threshUpperBF.setEnabled(true);
                     threshFillBF.setEnabled(true);
 
-                    float upper = ((Point2Df) (getLUTb().getTransferFunction().getPoint(4))).x;
-                    float lower = ((Point2Df) (getLUTb().getTransferFunction().getPoint(1))).x;
+                    float upper = ((Vector2f) (getLUTb().getTransferFunction().getPoint(4))).X;
+                    float lower = ((Vector2f) (getLUTb().getTransferFunction().getPoint(1))).X;
                     threshLowerBF.setText(Float.toString(lower));
                     threshUpperBF.setText(Float.toString(upper));
 
@@ -524,8 +525,8 @@ public class ViewJPanelLUT extends JPanel
                     threshUpperF.setEnabled(true);
                     threshFillF.setEnabled(true);
 
-                    float upper = ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x;
-                    float lower = ((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
+                    float upper = ((Vector2f) (getLUTa().getTransferFunction().getPoint(3))).X;
+                    float lower = ((Vector2f) (getLUTa().getTransferFunction().getPoint(1))).X;
                     threshLowerF.setText(Float.toString(lower));
                     threshUpperF.setText(Float.toString(upper));
 
@@ -553,8 +554,8 @@ public class ViewJPanelLUT extends JPanel
                     threshUpperBF.setEnabled(true);
                     threshFillBF.setEnabled(true);
 
-                    float upper = ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x;
-                    float lower = ((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
+                    float upper = ((Vector2f) (getLUTa().getTransferFunction().getPoint(3))).X;
+                    float lower = ((Vector2f) (getLUTa().getTransferFunction().getPoint(1))).X;
                     threshLowerBF.setText(Float.toString(lower));
                     threshUpperBF.setText(Float.toString(upper));
 
@@ -577,10 +578,10 @@ public class ViewJPanelLUT extends JPanel
             if (isImageASelected()) {
 
                 if (MipavUtil.testParameter(threshLowerF.getText(), panelParent.getImageA().getMin(),
-                                            ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x)) {
+                                            ((Vector2f) (getLUTa().getTransferFunction().getPoint(3))).X)) {
 
                     if (MipavUtil.testParameter(threshUpperF.getText(),
-                                                ((Point2Df) (getLUTa().getTransferFunction().getPoint(2))).x,
+                                                ((Vector2f) (getLUTa().getTransferFunction().getPoint(2))).X,
                                                 panelParent.getImageA().getMax())) {
 
 
@@ -613,10 +614,10 @@ public class ViewJPanelLUT extends JPanel
             } else {
 
                 if (MipavUtil.testParameter(threshLowerBF.getText(), panelParent.getImageB().getMin(),
-                                            ((Point2Df) (getLUTb().getTransferFunction().getPoint(3))).x)) {
+                                            ((Vector2f) (getLUTb().getTransferFunction().getPoint(3))).X)) {
 
                     if (MipavUtil.testParameter(threshUpperBF.getText(),
-                                                ((Point2Df) (getLUTb().getTransferFunction().getPoint(2))).x,
+                                                ((Vector2f) (getLUTb().getTransferFunction().getPoint(2))).X,
                                                 panelParent.getImageB().getMax())) {
 
                         int outputType = outputBoxB.getSelectedIndex();
@@ -1332,7 +1333,7 @@ public class ViewJPanelLUT extends JPanel
             if (e.getSource().equals(threshLowerF)) {
 
                 if (MipavUtil.testParameter(threshLowerF.getText(), panelParent.getImageA().getMin(),
-                                            ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x)) {
+                                            ((Vector2f) (getLUTa().getTransferFunction().getPoint(3))).X)) {
 
                     getHistoLUTComponentA().updateDualThreshold(new Float(threshLowerF.getText()).floatValue(),
                                                                 new Float(threshUpperF.getText()).floatValue());
@@ -1343,7 +1344,7 @@ public class ViewJPanelLUT extends JPanel
             } else if (e.getSource().equals(threshUpperF)) {
 
                 if (MipavUtil.testParameter(threshUpperF.getText(),
-                                            ((Point2Df) (getLUTa().getTransferFunction().getPoint(2))).x,
+                                            ((Vector2f) (getLUTa().getTransferFunction().getPoint(2))).X,
                                             panelParent.getImageA().getMax())) {
                     getHistoLUTComponentA().updateDualThreshold(new Float(threshLowerF.getText()).floatValue(),
                                                                 new Float(threshUpperF.getText()).floatValue());
@@ -1367,7 +1368,7 @@ public class ViewJPanelLUT extends JPanel
             } else if (e.getSource().equals(threshLowerBF)) {
 
                 if (MipavUtil.testParameter(threshLowerBF.getText(), panelParent.getImageB().getMin(),
-                                            ((Point2Df) (getLUTb().getTransferFunction().getPoint(3))).x)) {
+                                            ((Vector2f) (getLUTb().getTransferFunction().getPoint(3))).X)) {
 
                     getHistoLUTComponentB().updateDualThreshold(new Float(threshLowerBF.getText()).floatValue(),
                                                                 new Float(threshUpperBF.getText()).floatValue());
@@ -1378,7 +1379,7 @@ public class ViewJPanelLUT extends JPanel
             } else if (e.getSource().equals(threshUpperBF)) {
 
                 if (MipavUtil.testParameter(threshUpperBF.getText(),
-                                            ((Point2Df) (getLUTb().getTransferFunction().getPoint(2))).x,
+                                            ((Vector2f) (getLUTb().getTransferFunction().getPoint(2))).X,
                                             panelParent.getImageB().getMax())) {
                     getHistoLUTComponentB().updateDualThreshold(new Float(threshLowerBF.getText()).floatValue(),
                                                                 new Float(threshUpperBF.getText()).floatValue());
@@ -2390,8 +2391,8 @@ public class ViewJPanelLUT extends JPanel
         float[] thresholds = new float[2];
 
         if (isImageASelected()) {
-            thresholds[0] = ((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
-            thresholds[1] = ((Point2Df) (getLUTa().getTransferFunction().getPoint(4))).x;
+            thresholds[0] = ((Vector2f) (getLUTa().getTransferFunction().getPoint(1))).X;
+            thresholds[1] = ((Vector2f) (getLUTa().getTransferFunction().getPoint(4))).X;
 
             JDialogThresholdLUT dialogLUT = new JDialogThresholdLUT(panelParent, panelParent.getImageA(), thresholds[0],
                                                                     thresholds[1]);
@@ -2406,8 +2407,8 @@ public class ViewJPanelLUT extends JPanel
                 //oneBasedLUTCheckBoxImageA.setSelected(false);
             }
         } else {
-            thresholds[0] = ((Point2Df) (getLUTb().getTransferFunction().getPoint(1))).x;
-            thresholds[1] = ((Point2Df) (getLUTb().getTransferFunction().getPoint(4))).x;
+            thresholds[0] = ((Vector2f) (getLUTb().getTransferFunction().getPoint(1))).X;
+            thresholds[1] = ((Vector2f) (getLUTb().getTransferFunction().getPoint(4))).X;
 
             JDialogThresholdLUT dialogLUT = new JDialogThresholdLUT(panelParent, panelParent.getImageB(), thresholds[0],
                                                                     thresholds[1]);

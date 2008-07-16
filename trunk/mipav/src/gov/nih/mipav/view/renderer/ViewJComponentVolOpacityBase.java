@@ -348,10 +348,10 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
         if (transferFunction.isEndpoint(tfActiveIndex) == false) {
 
             // do not allow transfer function to fail vertical line test
-            if (offsetMouseX <= convertFnPtToScreenSpaceX(transferFunction.getPoint(tfActiveIndex - 1).x)) {
-                offsetMouseX = (int) convertFnPtToScreenSpaceX(transferFunction.getPoint(tfActiveIndex - 1).x) + 1;
-            } else if (offsetMouseX >= convertFnPtToScreenSpaceX(transferFunction.getPoint(tfActiveIndex + 1).x)) {
-                offsetMouseX = (int) convertFnPtToScreenSpaceX(transferFunction.getPoint(tfActiveIndex + 1).x) - 1;
+            if (offsetMouseX <= convertFnPtToScreenSpaceX(transferFunction.getPoint(tfActiveIndex - 1).X)) {
+                offsetMouseX = (int) convertFnPtToScreenSpaceX(transferFunction.getPoint(tfActiveIndex - 1).X) + 1;
+            } else if (offsetMouseX >= convertFnPtToScreenSpaceX(transferFunction.getPoint(tfActiveIndex + 1).X)) {
+                offsetMouseX = (int) convertFnPtToScreenSpaceX(transferFunction.getPoint(tfActiveIndex + 1).X) - 1;
             }
 
             parentPanel.setAdjustersEnabled(true); // user is adjusting a non-endpoint, so enable adjustment components
@@ -412,8 +412,8 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
 
         // test to see if the cursor is near a point
         for (int i = 0; i < transferFunction.size(); i++) {
-            int x_point = (int) convertFnPtToScreenSpaceX(transferFunction.getPoint(i).x);
-            int y_point = (int) transferFunction.getPoint(i).y;
+            int x_point = (int) convertFnPtToScreenSpaceX(transferFunction.getPoint(i).X);
+            int y_point = (int) transferFunction.getPoint(i).Y;
 
             if (MipavMath.distance(offsetMouseX, x_point, offsetMouseY, y_point) < 5) {
 
@@ -433,8 +433,8 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
         if (isNearLine(offsetMouseX, offsetMouseY)) {
 
             for (int i = 0; i < (transferFunction.size() - 1); i++) {
-                int x_point1 = (int) convertFnPtToScreenSpaceX(transferFunction.getPoint(i).x);
-                int x_point2 = (int) convertFnPtToScreenSpaceX(transferFunction.getPoint(i + 1).x);
+                int x_point1 = (int) convertFnPtToScreenSpaceX(transferFunction.getPoint(i).X);
+                int x_point2 = (int) convertFnPtToScreenSpaceX(transferFunction.getPoint(i + 1).X);
 
                 if ((offsetMouseX >= x_point1) && (offsetMouseX <= x_point2)) {
                     newPointIndex = i;
@@ -472,8 +472,8 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
 
         // test to see if the cursor is near a point
         for (int i = 0; i < transferFunction.size(); i++) {
-            int x_point = (int) convertFnPtToScreenSpaceX(transferFunction.getPoint(i).x);
-            int y_point = (int) transferFunction.getPoint(i).y;
+            int x_point = (int) convertFnPtToScreenSpaceX(transferFunction.getPoint(i).X);
+            int y_point = (int) transferFunction.getPoint(i).Y;
 
             if (MipavMath.distance(offsetMouseX, x_point, offsetMouseY, y_point) < 5) {
                 parentPanel.setAdjustersEnabled(!transferFunction.isEndpoint(i)); // user is adjusting a non-endpoint,
@@ -632,7 +632,7 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
             return;
         }
 
-        transferFunction.replacePoint(_mx, transferFunction.getPoint(tfActiveIndex).y, tfActiveIndex);
+        transferFunction.replacePoint(_mx, transferFunction.getPoint(tfActiveIndex).Y, tfActiveIndex);
 
         showHistogram();
 
@@ -755,7 +755,7 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
 
         for (int i = 0; i < tf.size(); i++) {
             graphics.setColor(Color.black);
-            graphics.fillRect((int) (convertFnPtToScreenSpaceX(tf.getPoint(i).x) - 2), (int) (tf.getPoint(i).y) - 2, 5,
+            graphics.fillRect((int) (convertFnPtToScreenSpaceX(tf.getPoint(i).X) - 2), (int) (tf.getPoint(i).Y) - 2, 5,
                               5);
 
             if (tfActiveIndex == i) {
@@ -764,7 +764,7 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
                 graphics.setColor(Color.white);
             }
 
-            graphics.drawRect((int) (convertFnPtToScreenSpaceX(tf.getPoint(i).x) - 2), (int) (tf.getPoint(i).y) - 2, 5,
+            graphics.drawRect((int) (convertFnPtToScreenSpaceX(tf.getPoint(i).X) - 2), (int) (tf.getPoint(i).Y) - 2, 5,
                               5);
         }
     }
@@ -783,8 +783,8 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
         int[] y_points = new int[tf.size()];
 
         for (int i = 0; i < tf.size(); i++) {
-            x_points[i] = (int) (convertFnPtToScreenSpaceX(tf.getPoint(i).x) + 0.5);
-            y_points[i] = (int) (tf.getPoint(i).y);
+            x_points[i] = (int) (convertFnPtToScreenSpaceX(tf.getPoint(i).X) + 0.5);
+            y_points[i] = (int) (tf.getPoint(i).Y);
         }
 
         graphics.drawPolyline(x_points, y_points, tf.size());
@@ -816,10 +816,10 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
     protected boolean isNearLine(int offsetMouseX, int offsetMouseY) {
 
         for (int i = 0; i < (transferFunction.size() - 1); i++) {
-            int x1 = (int) (convertFnPtToScreenSpaceX(transferFunction.getPoint(i).x) + 0.5);
-            int y1 = (int) (transferFunction.getPoint(i).y + 0.5);
-            int x2 = (int) (convertFnPtToScreenSpaceX(transferFunction.getPoint(i + 1).x) + 0.5);
-            int y2 = (int) (transferFunction.getPoint(i + 1).y + 0.5);
+            int x1 = (int) (convertFnPtToScreenSpaceX(transferFunction.getPoint(i).X) + 0.5);
+            int y1 = (int) (transferFunction.getPoint(i).Y + 0.5);
+            int x2 = (int) (convertFnPtToScreenSpaceX(transferFunction.getPoint(i + 1).X) + 0.5);
+            int y2 = (int) (transferFunction.getPoint(i + 1).Y + 0.5);
 
             if ((MipavMath.distance(offsetMouseX, x1, offsetMouseY, y1) +
                      MipavMath.distance(offsetMouseX, x2, offsetMouseY, y2) - MipavMath.distance(x1, x2, y1, y2)) <
@@ -853,31 +853,31 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
             }
 
             // draw the vertical axis ticks and numbers
-            graphics.drawLine(-3, (int) tf.getPoint(i).y, 3, (int) tf.getPoint(i).y);
+            graphics.drawLine(-3, (int) tf.getPoint(i).Y, 3, (int) tf.getPoint(i).Y);
 
-            String valueString = MipavUtil.makeFloatString((dim.height - 1) - tf.getPoint(i).y, 1);
+            String valueString = MipavUtil.makeFloatString((dim.height - 1) - tf.getPoint(i).Y, 1);
             FontMetrics fontMetrics = graphics.getFontMetrics();
             graphics.drawString(valueString, -5 - (fontMetrics.stringWidth(valueString)),
-                                (int) tf.getPoint(i).y + (fontMetrics.getAscent() / 2));
+                                (int) tf.getPoint(i).Y + (fontMetrics.getAscent() / 2));
 
 
             if ((i % 2) == 0) // stagger every other tick to prevent overlap along the horizontal axis
             {
 
                 // draw the horizontal axis ticks and numbers
-                graphics.drawLine((int) (convertFnPtToScreenSpaceX(tf.getPoint(i).x)), dim.height - 3,
-                                  (int) (convertFnPtToScreenSpaceX(tf.getPoint(i).x)), dim.height + 3);
-                valueString = MipavUtil.makeFloatString(tf.getPoint(i).x, 1);
+                graphics.drawLine((int) (convertFnPtToScreenSpaceX(tf.getPoint(i).X)), dim.height - 3,
+                                  (int) (convertFnPtToScreenSpaceX(tf.getPoint(i).X)), dim.height + 3);
+                valueString = MipavUtil.makeFloatString(tf.getPoint(i).X, 1);
                 graphics.drawString(valueString,
-                                    (int) (convertFnPtToScreenSpaceX(tf.getPoint(i).x)) -
+                                    (int) (convertFnPtToScreenSpaceX(tf.getPoint(i).X)) -
                                     (fontMetrics.stringWidth(valueString) / 2),
                                     dim.height + fontMetrics.getAscent() + 5);
             } else {
-                graphics.drawLine((int) (convertFnPtToScreenSpaceX(tf.getPoint(i).x)), dim.height - 3,
-                                  (int) (convertFnPtToScreenSpaceX(tf.getPoint(i).x)), dim.height + 3);
-                valueString = MipavUtil.makeFloatString(tf.getPoint(i).x, 1);
+                graphics.drawLine((int) (convertFnPtToScreenSpaceX(tf.getPoint(i).X)), dim.height - 3,
+                                  (int) (convertFnPtToScreenSpaceX(tf.getPoint(i).X)), dim.height + 3);
+                valueString = MipavUtil.makeFloatString(tf.getPoint(i).X, 1);
                 graphics.drawString(valueString,
-                                    (int) (convertFnPtToScreenSpaceX(tf.getPoint(i).x)) -
+                                    (int) (convertFnPtToScreenSpaceX(tf.getPoint(i).X)) -
                                     (fontMetrics.stringWidth(valueString) / 2),
                                     dim.height + fontMetrics.getAscent() + 17);
             }

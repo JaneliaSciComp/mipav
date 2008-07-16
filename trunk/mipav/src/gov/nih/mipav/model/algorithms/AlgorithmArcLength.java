@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -247,11 +248,11 @@ public class AlgorithmArcLength extends AlgorithmBase {
      * @return  speed the speed ( magnitude ) is returned
      */
     private float speed(float q) {
-        Point2Df pt;
+        Vector2f pt;
         float speed;
 
         pt = bSpline.bSplineJetXY(1, q, xPoints, yPoints); // calc 1st deriv.
-        speed = (float) Math.sqrt((pt.x * pt.x) + (pt.y * pt.y));
+        speed = (float) Math.sqrt((pt.X * pt.X) + (pt.Y * pt.Y));
 
         return speed;
     }

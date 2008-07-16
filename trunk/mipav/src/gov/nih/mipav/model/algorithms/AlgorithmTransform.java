@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 
@@ -100,7 +102,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private boolean canPad = true;
 
     /** DOCUMENT ME! */
-    private Point3Df center = null;
+    private Vector3f center = null;
 
     /** DOCUMENT ME! */
     private boolean clip = true;
@@ -355,7 +357,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param  center
      */
     public AlgorithmTransform(ModelImage srcImage, TransMatrix xfrm, int interp, float oXres, float oYres, int oXdim,
-                              int oYdim, int[] units, boolean tVOI, boolean clip, boolean pad, boolean doCenter, Point3Df center) {
+                              int oYdim, int[] units, boolean tVOI, boolean clip, boolean pad, boolean doCenter, Vector3f center) {
         super(null, srcImage);
         transformVOI = tVOI;
         this.srcImage = srcImage;
@@ -394,9 +396,9 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (doCenter) {
                 xfrmC = new TransMatrix(3);
                 xfrmC.identity();
-                xfrmC.setTranslate(center.x, center.y);
+                xfrmC.setTranslate(center.X, center.Y);
                 xfrm.setMatrix((xfrmC.times(xfrm)).getArray());
-                xfrm.setTranslate(-center.x, -center.y);
+                xfrm.setTranslate(-center.X, -center.Y);
                 haveCentered = true;
             }
 
@@ -702,7 +704,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     public AlgorithmTransform(ModelImage _srcImage, TransMatrix xfrm, int interp, float _oXres, float _oYres,
                               float _oZres, int _oXdim, int _oYdim, int _oZdim, int[] units, boolean tVOI, boolean clip,
-                              boolean pad, boolean doCenter, Point3Df center) {
+                              boolean pad, boolean doCenter, Vector3f center) {
         super(null, _srcImage);
         this.interp = interp;
         this.srcImage = _srcImage;
@@ -752,9 +754,9 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (doCenter) {
                 xfrmC = new TransMatrix(4);
                 xfrmC.identity();
-                xfrmC.setTranslate(center.x, center.y, center.z);
+                xfrmC.setTranslate(center.X, center.Y, center.Z);
                 xfrm.setMatrix((xfrmC.times(xfrm)).getArray());
-                xfrm.setTranslate(-center.x, -center.y, -center.z);
+                xfrm.setTranslate(-center.X, -center.Y, -center.Z);
                 haveCentered = true;
             }
 
@@ -1422,7 +1424,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         float xf = 0.f, yf = 0.f, zf = 0.f;
         float minx, miny, maxx, maxy, minz, maxz;
         int leftPad = 0, rightPad = 0, topPad = 0, bottomPad = 0, front = 0, back = 0;
-        Point3Df[] ptsi3, ptsf3;
+        Vector3f[] ptsi3, ptsf3;
 
         /* Set the far corner of the image volume in mm (but relative to image origin, in image coordinates). */
         xf = xi + (dx * (nx - 1));
@@ -1438,64 +1440,64 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         /* Set up array of 8 points representing the corners of the image volume and then transform them with
          * transMatrix. */
-        ptsi3 = new Point3Df[8];
-        ptsf3 = new Point3Df[8];
+        ptsi3 = new Vector3f[8];
+        ptsf3 = new Vector3f[8];
 
         for (i = 1; i <= 8; i++) {
-            ptsi3[i - 1] = new Point3Df();
-            ptsf3[i - 1] = new Point3Df();
+            ptsi3[i - 1] = new Vector3f();
+            ptsf3[i - 1] = new Vector3f();
 
             if ((i == 1) || (i == 4) || (i == 5) || (i == 8)) {
-                ptsi3[i - 1].x = xi;
+                ptsi3[i - 1].X = xi;
             } else {
-                ptsi3[i - 1].x = xf;
+                ptsi3[i - 1].X = xf;
             }
 
             if ((i == 1) || (i == 2) || (i == 5) || (i == 6)) {
-                ptsi3[i - 1].y = yi;
+                ptsi3[i - 1].Y = yi;
             } else {
-                ptsi3[i - 1].y = yf;
+                ptsi3[i - 1].Y = yf;
             }
 
             if ((i == 1) || (i == 2) || (i == 3) || (i == 4)) {
-                ptsi3[i - 1].z = zi;
+                ptsi3[i - 1].Z = zi;
             } else {
-                ptsi3[i - 1].z = zf;
+                ptsi3[i - 1].Z = zf;
             }
-            // System.out.println("Initial point " +i +": " +(int)ptsi3[i-1].x +", " +(int)ptsi3[i-1].y +", "
-            // +(int)ptsi3[i-1].z);
+            // System.out.println("Initial point " +i +": " +(int)ptsi3[i-1].X +", " +(int)ptsi3[i-1].Y +", "
+            // +(int)ptsi3[i-1].Z);
         }
 
         /* Transform corner points, ptsi3, to get transformed points, ptsf3. */
-        transMatrix.transform(ptsi3, ptsf3);
+        transMatrix.transformAsVector3Df(ptsi3, ptsf3);
 
         /* Find new min and max values for the transformed point. */
         for (i = 1; i <= 8; i++) {
 
-            // System.out.println("Transformed point " +i +": " +(int)ptsf3[i-1].x +", " +(int)ptsf3[i-1].y +", "
-            // +(int)ptsf3[i-1].z);
-            if (ptsf3[i - 1].x < minx) {
-                minx = ptsf3[i - 1].x;
+            // System.out.println("Transformed point " +i +": " +(int)ptsf3[i-1].X +", " +(int)ptsf3[i-1].Y +", "
+            // +(int)ptsf3[i-1].Z);
+            if (ptsf3[i - 1].X < minx) {
+                minx = ptsf3[i - 1].X;
             }
 
-            if (ptsf3[i - 1].x > maxx) {
-                maxx = ptsf3[i - 1].x;
+            if (ptsf3[i - 1].X > maxx) {
+                maxx = ptsf3[i - 1].X;
             }
 
-            if (ptsf3[i - 1].y < miny) {
-                miny = ptsf3[i - 1].y;
+            if (ptsf3[i - 1].Y < miny) {
+                miny = ptsf3[i - 1].Y;
             }
 
-            if (ptsf3[i - 1].y > maxy) {
-                maxy = ptsf3[i - 1].y;
+            if (ptsf3[i - 1].Y > maxy) {
+                maxy = ptsf3[i - 1].Y;
             }
 
-            if (ptsf3[i - 1].z < minz) {
-                minz = ptsf3[i - 1].z;
+            if (ptsf3[i - 1].Z < minz) {
+                minz = ptsf3[i - 1].Z;
             }
 
-            if (ptsf3[i - 1].z > maxz) {
-                maxz = ptsf3[i - 1].z;
+            if (ptsf3[i - 1].Z > maxz) {
+                maxz = ptsf3[i - 1].Z;
             }
         }
         // System.out.println("Bounding box first corner: " +(int)minx +", " +(int)miny +", " +(int)minz);
@@ -3868,7 +3870,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         float xf = 0.f, yf = 0.f;
         float minx, miny, maxx, maxy;
         int leftPad = 0, rightPad = 0, topPad = 0, bottomPad = 0;
-        Point2Df[] ptsi2, ptsf2;
+        Vector2f[] ptsi2, ptsf2;
 
         /* Set the far corner of the image volume in mm (but relative to image origin, in image coordinates). */
         xf = xi + (dx * (nx - 1));
@@ -3881,49 +3883,49 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         /* Set up array of 4 points representing the corners of the image volume and then transform them with
          * transMatrix. */
-        ptsi2 = new Point2Df[4];
-        ptsf2 = new Point2Df[4];
+        ptsi2 = new Vector2f[4];
+        ptsf2 = new Vector2f[4];
 
         for (i = 1; i <= 4; i++) {
-            ptsi2[i - 1] = new Point2Df();
-            ptsf2[i - 1] = new Point2Df();
+            ptsi2[i - 1] = new Vector2f();
+            ptsf2[i - 1] = new Vector2f();
 
             if ((i == 1) || (i == 4)) {
-                ptsi2[i - 1].x = xi;
+                ptsi2[i - 1].X = xi;
             } else {
-                ptsi2[i - 1].x = xf;
+                ptsi2[i - 1].X = xf;
             }
 
             if ((i == 1) || (i == 2)) {
-                ptsi2[i - 1].y = yi;
+                ptsi2[i - 1].Y = yi;
             } else {
-                ptsi2[i - 1].y = yf;
+                ptsi2[i - 1].Y = yf;
             }
 
-            //System.out.println("Initial point " +i +": " +(int)ptsi2[i-1].x +", " +(int)ptsi2[i-1].y);
+            //System.out.println("Initial point " +i +": " +(int)ptsi2[i-1].X +", " +(int)ptsi2[i-1].Y);
         }
 
         /* Transform corner points, ptsi2, to get transformed points, ptsf2. */
-        transMatrix.transform(ptsi2, ptsf2);
+        transMatrix.transformAsPoint2Df(ptsi2, ptsf2);
 
         /* Find new min and max values for the transformed point. */
         for (i = 1; i <= 4; i++) {
 
-            //System.out.println("Transformed point " +i +": " +(int)ptsf2[i-1].x +", " +(int)ptsf2[i-1].y);
-            if (ptsf2[i - 1].x < minx) {
-                minx = ptsf2[i - 1].x;
+            //System.out.println("Transformed point " +i +": " +(int)ptsf2[i-1].X +", " +(int)ptsf2[i-1].Y);
+            if (ptsf2[i - 1].X < minx) {
+                minx = ptsf2[i - 1].X;
             }
 
-            if (ptsf2[i - 1].x > maxx) {
-                maxx = ptsf2[i - 1].x;
+            if (ptsf2[i - 1].X > maxx) {
+                maxx = ptsf2[i - 1].X;
             }
 
-            if (ptsf2[i - 1].y < miny) {
-                miny = ptsf2[i - 1].y;
+            if (ptsf2[i - 1].Y < miny) {
+                miny = ptsf2[i - 1].Y;
             }
 
-            if (ptsf2[i - 1].y > maxy) {
-                maxy = ptsf2[i - 1].y;
+            if (ptsf2[i - 1].Y > maxy) {
+                maxy = ptsf2[i - 1].Y;
             }
         }
         // System.out.println("Bounding box first corner: " +(int)minx +", " +(int)miny);
@@ -4065,7 +4067,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * @param  center  DOCUMENT ME!
      */
-    public void setCenter(Point3Df center) {
+    public void setCenter(Vector3f center) {
         this.center = center;
         if (pad) {
             
@@ -4335,18 +4337,18 @@ public class AlgorithmTransform extends AlgorithmBase {
                 xfrmC.identity();
 
                 if ((DIM >= 3) && (!do25D)) {
-                    xfrmC.setTranslate(center.x, center.y, center.z);
+                    xfrmC.setTranslate(center.X, center.Y, center.Z);
                 } else { // (DIM == 2) || do25D
-                    xfrmC.setTranslate(center.x, center.y);
+                    xfrmC.setTranslate(center.X, center.Y);
                 }
 
                 trans.setMatrix((xfrmC.times(transMatrix)).getArray());
 
 
                 if ((DIM >= 3) && (!do25D)) {
-                    trans.setTranslate(-center.x, -center.y, -center.z);
+                    trans.setTranslate(-center.X, -center.Y, -center.Z);
                 } else { // (DIM == 2) || do25D
-                    trans.setTranslate(-center.x, -center.y);
+                    trans.setTranslate(-center.X, -center.Y);
                 }
             } // if ((doCenter) && (!haveCentered))
 

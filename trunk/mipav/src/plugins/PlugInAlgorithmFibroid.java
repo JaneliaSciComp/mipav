@@ -1,3 +1,4 @@
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -388,7 +389,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         float scaleMax;
         float invMax;
         Polygon gon;
-        Point3Df kVoxel;
+        Vector3f kVoxel;
         AlgorithmQuadraticFit kQFit;
         float[] ellipseLength = new float[3];
 
@@ -810,10 +811,10 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                             for (j = 0; j < gon.npoints; j++) {
 
                                 if (useRes3D) {
-                                    kVoxel = new Point3Df(gon.xpoints[j] * xRes * invMax,
+                                    kVoxel = new Vector3f(gon.xpoints[j] * xRes * invMax,
                                                           gon.ypoints[j] * yRes * invMax, z * zRes * invMax);
                                 } else {
-                                    kVoxel = new Point3Df(gon.xpoints[j] * invMax, gon.ypoints[j] * invMax, z * invMax);
+                                    kVoxel = new Vector3f(gon.xpoints[j] * invMax, gon.ypoints[j] * invMax, z * invMax);
                                 }
 
                                 volPoints[k].add(kVoxel);

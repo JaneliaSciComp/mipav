@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -27,7 +28,7 @@ public class RubberbandPolyline extends Rubberband {
     private VOIContour contour = new VOIContour(false);
 
     /** DOCUMENT ME! */
-    private Point3Df cpt = null;
+    private Vector3f cpt = null;
 
     /** DOCUMENT ME! */
     private boolean firstPoint = true;
@@ -256,20 +257,20 @@ public class RubberbandPolyline extends Rubberband {
 
         // open - Polyline VOI
         if ((((ViewJComponentEditImage) (component)).getZoomX() >= 8.0f) && isActive() && (contour.size() > 2) &&
-                (xxS == (int) ((Point3Df) (contour.lastElement())).x) &&
-                (yyS == (int) ((Point3Df) (contour.lastElement())).y) && (mouseDragged == false)) {
+                (xxS == (int) ((Vector3f) (contour.lastElement())).X) &&
+                (yyS == (int) ((Vector3f) (contour.lastElement())).Y) && (mouseDragged == false)) {
             open = true;
             done = true;
         }
         // User clicked back again on first point.  closed - Polygon VOI
         else if ((((ViewJComponentEditImage) (component)).getZoomX() >= 8.0f) && isActive() && (contour.size() > 2) &&
-                     (xxS == (int) ((Point3Df) (contour.elementAt(0))).x) &&
-                     (yyS == (int) ((Point3Df) (contour.elementAt(0))).y)) {
+                     (xxS == (int) ((Vector3f) (contour.elementAt(0))).X) &&
+                     (yyS == (int) ((Vector3f) (contour.elementAt(0))).Y)) {
             open = false;
             done = true;
         } else if ((((ViewJComponentEditImage) (component)).getZoomX() < 8.0f) && isActive() && (contour.size() > 2) &&
-                       (distance(xxS, (int) ((Point3Df) (contour.lastElement())).x, yyS,
-                                     (int) ((Point3Df) (contour.lastElement())).y) < 3) && (mouseDragged == false)) {
+                       (distance(xxS, (int) ((Vector3f) (contour.lastElement())).X, yyS,
+                                     (int) ((Vector3f) (contour.lastElement())).Y) < 3) && (mouseDragged == false)) {
             open = true;
             done = true;
         }
@@ -277,13 +278,13 @@ public class RubberbandPolyline extends Rubberband {
         else if ((((ViewJComponentEditImage) (component)).getZoomX() < 8.0f) &&
                      (((ViewJComponentEditImage) (component)).getZoomX() >= 1.0f) && isActive() &&
                      (contour.size() > 2) &&
-                     (distance(xxS, (int) ((Point3Df) (contour.elementAt(0))).x, yyS,
-                                   (int) ((Point3Df) (contour.elementAt(0))).y) < 3)) {
+                     (distance(xxS, (int) ((Vector3f) (contour.elementAt(0))).X, yyS,
+                                   (int) ((Vector3f) (contour.elementAt(0))).Y) < 3)) {
             open = false;
             done = true;
         } else if ((((ViewJComponentEditImage) (component)).getZoomX() < 1.0f) && isActive() && (contour.size() > 2) &&
-                       (distance(xxS, (int) ((Point3Df) (contour.elementAt(0))).x, yyS,
-                                     (int) ((Point3Df) (contour.elementAt(0))).y) <
+                       (distance(xxS, (int) ((Vector3f) (contour.elementAt(0))).X, yyS,
+                                     (int) ((Vector3f) (contour.elementAt(0))).Y) <
                             (3 * (1.0 / ((ViewJComponentEditImage) (component)).getZoomX())))) {
             open = false;
             done = true;

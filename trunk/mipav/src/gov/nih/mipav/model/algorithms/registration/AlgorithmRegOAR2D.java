@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms.registration;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
@@ -12,7 +13,6 @@ import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
-import gov.nih.mipav.model.structures.Point2Dd;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -607,11 +607,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      *
      * @return  the center of mass as a 2D point
      */
-    public Point2Dd calculateCenterOfMass2D(ModelSimpleImage image, ModelSimpleImage wgtImage, boolean isColor) {
+    public Vector2f calculateCenterOfMass2D(ModelSimpleImage image, ModelSimpleImage wgtImage, boolean isColor) {
         int x, y, c;
         float diff;
 
-        Point2Dd cogPt = new Point2Dd(0, 0);
+        Vector2f cogPt = new Vector2f(0, 0);
 
         double voxVal = 0.0, total = 0.0, wgtVal = 0.0;
 
@@ -625,8 +625,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
                         for (c = 1; c <= 3; c++) {
                             voxVal = image.data[(4 * ((y * image.xDim) + x)) + c];
-                            cogPt.x += voxVal * x;
-                            cogPt.y += voxVal * y;
+                            cogPt.X += voxVal * x;
+                            cogPt.Y += voxVal * y;
                             total += voxVal;
                         }
                     }
@@ -656,8 +656,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
                         for (c = 1; c <= 3; c++) {
                             voxVal = image.data[(4 * ((y * image.xDim) + x)) + c];
-                            cogPt.x += wgtVal * voxVal * x;
-                            cogPt.y += wgtVal * voxVal * y;
+                            cogPt.X += wgtVal * voxVal * x;
+                            cogPt.Y += wgtVal * voxVal * y;
                             total += wgtVal * voxVal;
                         }
                     }
@@ -672,8 +672,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
                     for (x = 0; x < image.xDim; x++) {
                         voxVal = image.data[(y * image.xDim) + x] - image.min;
-                        cogPt.x += voxVal * x;
-                        cogPt.y += voxVal * y;
+                        cogPt.X += voxVal * x;
+                        cogPt.Y += voxVal * y;
                         total += voxVal;
                     }
                 }
@@ -700,8 +700,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                     for (x = 0; x < image.xDim; x++) {
                         voxVal = image.data[(y * image.xDim) + x] - image.min;
                         wgtVal = wgtImage.data[(y * image.xDim) + x];
-                        cogPt.x += wgtVal * voxVal * x;
-                        cogPt.y += wgtVal * voxVal * y;
+                        cogPt.X += wgtVal * voxVal * x;
+                        cogPt.Y += wgtVal * voxVal * y;
                         total += wgtVal * voxVal;
 
                     }
@@ -710,8 +710,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         } // else black and white
 
         if (total != 0) {
-            cogPt.x /= total;
-            cogPt.y /= total;
+            cogPt.X /= total;
+            cogPt.Y /= total;
         }
 
         return cogPt;
@@ -1663,7 +1663,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 		cost = new AlgorithmCostFunctions2D(
 				simpleRef, simpleInput, costChoice, 256, 1);
 		maxIter = baseNumIter * 2;
-		Point2Dd cog = calculateCenterOfMass2D(simpleInput,
+		Vector2f cog = calculateCenterOfMass2D(simpleInput,
 				simpleWeightInput, doColor);
 		double[] initial = new double[7];
 
@@ -1866,7 +1866,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         cost.setInputWgtImage(simpleWeightInput);
 
         /* Set the center of gravity to be the center of the input image: */
-        Point2Dd cog = new Point2Dd(simpleInput.xDim / 2, simpleInput.yDim / 2);
+        Vector2f cog = new Vector2f(simpleInput.xDim / 2, simpleInput.yDim / 2);
 
         /* Initialize the transform to the identity: */
         double[] initial = new double[7];
@@ -2301,14 +2301,14 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             cost.setInputWgtImage(simpleWeightInputSub8);
         }
 
-        Point2Dd cog = calculateCenterOfMass2D(input, simpleWeightInputSub8, doColor);
-        Point2Dd cogR = calculateCenterOfMass2D(ref, simpleWeightRefSub8, doColor);
+        Vector2f cog = calculateCenterOfMass2D(input, simpleWeightInputSub8, doColor);
+        Vector2f cogR = calculateCenterOfMass2D(ref, simpleWeightRefSub8, doColor);
 
         Preferences.debug(" COG input image = " + cog + "\n");
         Preferences.debug(" COG ref   image = " + cogR + "\n");
 
-        double diffX = (cog.x - cogR.x);
-        double diffY = (cog.y - cogR.y);
+        double diffX = (cog.X - cogR.X);
+        double diffY = (cog.Y - cogR.Y);
 
         double[] initial = new double[7];
 
@@ -2517,7 +2517,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             cost.setInputWgtImage(simpleWeightInputSub4);
         }
 
-        Point2Dd cog = calculateCenterOfMass2D(input, simpleWeightInputSub4, doColor);
+        Vector2f cog = calculateCenterOfMass2D(input, simpleWeightInputSub4, doColor);
         MatrixListItem item = null;
 
         // fix translations based on image resolutions!
@@ -2718,7 +2718,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             cost.setInputWgtImage(simpleWeightInput);
         }
 
-        Point2Dd cog = calculateCenterOfMass2D(input, simpleWeightInput, doColor);
+        Vector2f cog = calculateCenterOfMass2D(input, simpleWeightInput, doColor);
 
         item.initial[1] *= level1Factor;
         item.initial[2] *= level1Factor;
@@ -2783,14 +2783,14 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             cost.setInputWgtImage(simpleWeightInput);
         }
 
-        Point2Dd cog = calculateCenterOfMass2D(input, simpleWeightInput, doColor);
-        Point2Dd cogR = calculateCenterOfMass2D(ref, simpleWeightRef, doColor);
+        Vector2f cog = calculateCenterOfMass2D(input, simpleWeightInput, doColor);
+        Vector2f cogR = calculateCenterOfMass2D(ref, simpleWeightRef, doColor);
 
         Preferences.debug(" COG input image = " + cog + "\n");
         Preferences.debug(" COG ref   image = " + cogR + "\n");
 
-        double diffX = (cog.x - cogR.x);
-        double diffY = (cog.y - cogR.y);
+        double diffX = (cog.X - cogR.X);
+        double diffY = (cog.Y - cogR.Y);
 
         double[] initial = new double[7];
 
@@ -2853,7 +2853,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             cost.setInputWgtImage(simpleWeightInputSub2);
         }
 
-        Point2Dd cog = calculateCenterOfMass2D(input, simpleWeightInputSub2, doColor);
+        Vector2f cog = calculateCenterOfMass2D(input, simpleWeightInputSub2, doColor);
         MatrixListItem item = null;
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {

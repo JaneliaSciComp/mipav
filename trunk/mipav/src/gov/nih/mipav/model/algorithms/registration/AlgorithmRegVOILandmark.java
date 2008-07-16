@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms.registration;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
@@ -62,7 +63,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
     private int VOIlength;
 
     /** DOCUMENT ME! */
-    private Vector3Df[] VOIposition = null; // positions (x,y) of VOI in first slice
+    private Vector3f[] VOIposition = null; // positions (x,y) of VOI in first slice
 
     /** DOCUMENT ME! */
     private int volLength, sliceSize;
@@ -97,8 +98,8 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
      * @param  costFunc    DOCUMENT ME!
      */
     public AlgorithmRegVOILandmark(ModelImage volume, ModelImage gradMagVol, float[] sigmas, boolean maskFlag,
-                                   Vector3Df[] position, double minTx, double maxTx, double minTy, double maxTy,
-                                   double minRz, double maxRz, double step, int opt, int costFunc) {
+    		Vector3f[] position, double minTx, double maxTx, double minTy, double maxTy,
+    		double minRz, double maxRz, double step, int opt, int costFunc) {
         super(volume, gradMagVol);
         this.volume = volume;
         this.gradMagVol = gradMagVol;
@@ -162,7 +163,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
         }
 
         for (i = 0; i < VOIlength; i++) {
-            baseVOIGradMagSum += gradMagBuf[(int) (VOIposition[i].x + (VOIposition[i].y * xdim))];
+            baseVOIGradMagSum += gradMagBuf[(int) (VOIposition[i].X + (VOIposition[i].Y * xdim))];
         }
 
         Preferences.debug("baseVOIGradMagSum = " + baseVOIGradMagSum + "\n");
@@ -447,20 +448,20 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
             TransMatrix xfrm;
             xfrm = getTransform(x);
 
-            Vector3Df[] matchVOIposition = new Vector3Df[VOIlength];
+            Vector3f[] matchVOIposition = new Vector3f[VOIlength];
 
             for (i = 0; i < VOIlength; i++) {
-                matchVOIposition[i] = new Vector3Df();
+                matchVOIposition[i] = new Vector3f();
             }
 
-            xfrm.transform(VOIposition, matchVOIposition);
+            xfrm.transformAsVector3Df(VOIposition, matchVOIposition);
 
             for (i = 0; i < VOIlength; i++) {
                 value = 0;
-                X = matchVOIposition[i].x;
+                X = matchVOIposition[i].X;
 
                 if ((X >= 0) && (X < (xdim - 1))) {
-                    Y = matchVOIposition[i].y;
+                    Y = matchVOIposition[i].Y;
 
                     if ((Y >= 0) && (Y < (ydim - 1))) {
                         x0 = X - (int) X; // bilinear interp

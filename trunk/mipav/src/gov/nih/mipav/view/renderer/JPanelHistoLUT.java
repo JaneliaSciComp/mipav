@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
@@ -490,8 +491,8 @@ public class JPanelHistoLUT
                     getHistoLUTComponentA().dualThresholdMode(ViewJComponentHLUTBase.DUAL_THRESHOLD);
                     threshLowerF.setEnabled(true);
                     threshUpperF.setEnabled(true);
-                    threshLowerF.setText(Float.toString(((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x));
-                    threshUpperF.setText(Float.toString(((Point2Df) (getLUTa().getTransferFunction().getPoint(4))).x));
+                    threshLowerF.setText(Float.toString(((Vector2f) (getLUTa().getTransferFunction().getPoint(1))).X));
+                    threshUpperF.setText(Float.toString(((Vector2f) (getLUTa().getTransferFunction().getPoint(4))).X));
                     histoPanelA.updateLUTRecorder();
                 }
             } else {
@@ -526,8 +527,8 @@ public class JPanelHistoLUT
                     threshUpperF.setEnabled(true);
 
                     // threshFillF.setEnabled( true );
-                    threshLowerF.setText(Float.toString(((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x));
-                    threshUpperF.setText(Float.toString(((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x));
+                    threshLowerF.setText(Float.toString(((Vector2f) (getLUTa().getTransferFunction().getPoint(1))).X));
+                    threshUpperF.setText(Float.toString(((Vector2f) (getLUTa().getTransferFunction().getPoint(3))).X));
                     histoPanelA.updateLUTRecorder();
                     // threshFillF.setText( Double.toString( imageA.getMin() ) );
                 }
@@ -546,9 +547,9 @@ public class JPanelHistoLUT
                     getHistoLUTComponentB().dualThresholdMode(ViewJComponentHLUTBase.DUAL_THRESHOLD_INV);
                     histoPanelB.updateLUTRecorder();
                     // threshLowerBF.setEnabled( true ); threshUpperBF.setEnabled( true ); threshFillBF.setEnabled( true
-                    // ); threshLowerBF.setText( Float.toString( ( (Point3Df) (
+                    // ); threshLowerBF.setText( Float.toString( ( (Vector3f) (
                     // getLUTb().getTransferFunction().elementAt( 1 ) ) ).x ) ); threshUpperBF.setText( Float.toString(
-                    // ( (Point3Df) ( getLUTb().getTransferFunction().elementAt( 3 ) ) ).x ) ); threshFillBF.setText(
+                    // ( (Vector3f) ( getLUTb().getTransferFunction().elementAt( 3 ) ) ).x ) ); threshFillBF.setText(
                     // Double.toString( imageB.getMin() ) );
                 }
             }
@@ -821,8 +822,8 @@ public class JPanelHistoLUT
 
         if (e.getSource().equals(threshLowerF)) {
 
-            if (this.testParameter(threshLowerF.getText(), ((Point2Df) (getLUTa().getTransferFunction().getPoint(0))).x,
-                                       ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x)) {
+            if (this.testParameter(threshLowerF.getText(), ((Vector2f) (getLUTa().getTransferFunction().getPoint(0))).X,
+                                       ((Vector2f) (getLUTa().getTransferFunction().getPoint(3))).X)) {
 
                 getHistoLUTComponentA().updateDualThreshold(new Float(threshLowerF.getText()).floatValue(),
                                                             new Float(threshUpperF.getText()).floatValue());
@@ -830,8 +831,8 @@ public class JPanelHistoLUT
             }
         } else if (e.getSource().equals(threshUpperF)) {
 
-            if (this.testParameter(threshUpperF.getText(), ((Point2Df) (getLUTa().getTransferFunction().getPoint(2))).x,
-                                       ((Point2Df) (getLUTa().getTransferFunction().getPoint(5))).x)) {
+            if (this.testParameter(threshUpperF.getText(), ((Vector2f) (getLUTa().getTransferFunction().getPoint(2))).X,
+                                       ((Vector2f) (getLUTa().getTransferFunction().getPoint(5))).X)) {
 
                 // System.err.println("GOT HERE: UPPER");
                 getHistoLUTComponentA().updateDualThreshold(new Float(threshLowerF.getText()).floatValue(),
@@ -1060,8 +1061,8 @@ public class JPanelHistoLUT
             if (e.getSource().equals(threshLowerF)) {
 
                 if (this.testParameter(threshLowerF.getText(),
-                                           ((Point2Df) (getLUTa().getTransferFunction().getPoint(0))).x,
-                                           ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x)) {
+                                           ((Vector2f) (getLUTa().getTransferFunction().getPoint(0))).X,
+                                           ((Vector2f) (getLUTa().getTransferFunction().getPoint(3))).X)) {
 
                     getHistoLUTComponentA().updateDualThreshold(new Float(threshLowerF.getText()).floatValue(),
                                                                 new Float(threshUpperF.getText()).floatValue());
@@ -1069,8 +1070,8 @@ public class JPanelHistoLUT
             } else if (e.getSource().equals(threshUpperF)) {
 
                 if (this.testParameter(threshUpperF.getText(),
-                                           ((Point2Df) (getLUTa().getTransferFunction().getPoint(2))).x,
-                                           ((Point2Df) (getLUTa().getTransferFunction().getPoint(5))).x)) {
+                                           ((Vector2f) (getLUTa().getTransferFunction().getPoint(2))).X,
+                                           ((Vector2f) (getLUTa().getTransferFunction().getPoint(5))).X)) {
 
                     // System.err.println("GOT HERE: UPPER");
                     getHistoLUTComponentA().updateDualThreshold(new Float(threshLowerF.getText()).floatValue(),

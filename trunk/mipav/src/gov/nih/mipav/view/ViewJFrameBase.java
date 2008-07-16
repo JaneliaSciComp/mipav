@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
@@ -3552,18 +3553,18 @@ public abstract class ViewJFrameBase extends JFrame
      *
      * @param  position  DOCUMENT ME!
      */
-    protected void setAbsPositionLabels(Point3Df position) {
+    protected void setAbsPositionLabels(Vector3f position) {
 
         if (absoluteLabelVals == null) {
             return;
         }
 
-        absoluteLabelVals[0].setText("X: " + (int) position.x);
-        absoluteLabelVals[1].setText("Y: " + (int) position.y);
-        absoluteLabelVals[2].setText("Z: " + (int) position.z);
+        absoluteLabelVals[0].setText("X: " + (int) position.X);
+        absoluteLabelVals[1].setText("Y: " + (int) position.Y);
+        absoluteLabelVals[2].setText("Z: " + (int) position.Z);
 
         int[] dimExtents = imageA.getExtents();
-        int index = (int) ((position.z * dimExtents[0] * dimExtents[1]) + (position.y * dimExtents[0]) + position.x);
+        int index = (int) ((position.Z * dimExtents[0] * dimExtents[1]) + (position.Y * dimExtents[0]) + position.X);
 
         int iBuffFactor = imageA.isColorImage() ? 4 : 1;
         absoluteLabelVals[3].setText("1D index: " + index + " = " + imageA.getFloat(index * iBuffFactor));
@@ -3574,7 +3575,7 @@ public abstract class ViewJFrameBase extends JFrame
      *
      * @param  position  DOCUMENT ME!
      */
-    protected void setScannerPosition(Point3Df position) {
+    protected void setScannerPosition(Vector3f position) {
 
         if (scannerLabelVals == null) {
             return;
@@ -5124,16 +5125,16 @@ public abstract class ViewJFrameBase extends JFrame
             afniProgressBar.setVisible(true);
             afniProgressBar.updateValue(0, true);
 
-            Point3Df alpha = imageAInfo.getAlpha();
-            Point3Df beta = imageAInfo.getBeta();
-            Point3Df gamma = imageAInfo.getGamma();
-            Point3Df TalairachCenter = imageAInfo.getTalairachCenter();
-            Point3Df rr = imageAInfo.getrr();
+            Vector3f alpha = imageAInfo.getAlpha();
+            Vector3f beta = imageAInfo.getBeta();
+            Vector3f gamma = imageAInfo.getGamma();
+            Vector3f TalairachCenter = imageAInfo.getTalairachCenter();
+            Vector3f rr = imageAInfo.getrr();
 
             // Change rr into mm distance
-            rr.x = rr.x * xResA;
-            rr.y = rr.y * yResA;
-            rr.z = rr.z * zResA;
+            rr.X = rr.X * xResA;
+            rr.Y = rr.Y * yResA;
+            rr.Z = rr.Z * zResA;
 
             transformAFNI(image, imgBuffer, xResB, yResB, zResB, xDimB, yDimB, zDimB, tDimB, lowXmmB, lowYmmB, lowZmmB,
                           highXmmB, highYmmB, highZmmB, planeGap, gapArray, doNN, xResA, yResA, zResA, xDimA, yDimA,
@@ -5246,11 +5247,11 @@ public abstract class ViewJFrameBase extends JFrame
             newResol[2] = zResA;
 
             // convert talairach center from coordinates to millimeters
-            TalairachCenter.x = TalairachCenter.x * xResA;
-            TalairachCenter.y = TalairachCenter.y * yResA;
-            TalairachCenter.z = TalairachCenter.z * zResA;
+            TalairachCenter.X = TalairachCenter.X * xResA;
+            TalairachCenter.Y = TalairachCenter.Y * yResA;
+            TalairachCenter.Z = TalairachCenter.Z * zResA;
 
-            Point3Df center = image.getImageCentermm(false);
+            Vector3f center = image.getImageCentermm(false);
 
             bufferSize = xDimB * yDimB * zDimB * tDimB;
             imgBuffer = new float[bufferSize];
@@ -5278,7 +5279,7 @@ public abstract class ViewJFrameBase extends JFrame
 
             TransMatrix xfrm = new TransMatrix(4);
 
-            xfrm.setTranslate(center.x, center.y, center.z);
+            xfrm.setTranslate(center.X, center.Y, center.Z);
 
             xfrm.setRotate(alpha, beta, gamma);
 
@@ -5287,12 +5288,12 @@ public abstract class ViewJFrameBase extends JFrame
             // Remember this is an output to input mapping so find the translation needed
             // to map the transformed Talairach center to the original dicom ordered functional
             // image rr
-            double Tr03 = rr.x - (TalairachCenter.x * M[0][0]) - (TalairachCenter.y * M[0][1]) -
-                          (TalairachCenter.z * M[0][2]);
-            double Tr13 = rr.y - (TalairachCenter.x * M[1][0]) - (TalairachCenter.y * M[1][1]) -
-                          (TalairachCenter.z * M[1][2]);
-            double Tr23 = rr.z - (TalairachCenter.x * M[2][0]) - (TalairachCenter.y * M[2][1]) -
-                          (TalairachCenter.z * M[2][2]);
+            double Tr03 = rr.X - (TalairachCenter.X * M[0][0]) - (TalairachCenter.Y * M[0][1]) -
+                          (TalairachCenter.Z * M[0][2]);
+            double Tr13 = rr.Y - (TalairachCenter.X * M[1][0]) - (TalairachCenter.Y * M[1][1]) -
+                          (TalairachCenter.Z * M[1][2]);
+            double Tr23 = rr.Z - (TalairachCenter.X * M[2][0]) - (TalairachCenter.Y * M[2][1]) -
+                          (TalairachCenter.Z * M[2][2]);
 
             /*
              * Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3] Tr13 = M[1][0] * Tx + M[1][1] * Ty + M[1][2]
@@ -5355,11 +5356,11 @@ public abstract class ViewJFrameBase extends JFrame
             afniProgressBar.setVisible(true);
             afniProgressBar.updateValue(0, true);
 
-            Point3Df[] alphaArray = imageAInfo.getAlphaArray();
-            Point3Df[] betaArray = imageAInfo.getBetaArray();
-            Point3Df[] gammaArray = imageAInfo.getGammaArray();
-            Point3Df[] rrArray = imageAInfo.getrrArray();
-            Point3Df TalairachCenter = imageAInfo.getTalairachCenter();
+            Vector3f[] alphaArray = imageAInfo.getAlphaArray();
+            Vector3f[] betaArray = imageAInfo.getBetaArray();
+            Vector3f[] gammaArray = imageAInfo.getGammaArray();
+            Vector3f[] rrArray = imageAInfo.getrrArray();
+            Vector3f TalairachCenter = imageAInfo.getTalairachCenter();
             int[] botX = imageAInfo.getBotX();
             int[] botY = imageAInfo.getBotY();
             int[] botZ = imageAInfo.getBotZ();
@@ -5369,9 +5370,9 @@ public abstract class ViewJFrameBase extends JFrame
 
             // Change rr into mm distance
             for (int i = 0; i < 12; i++) {
-                rrArray[i].x = rrArray[i].x * xResA;
-                rrArray[i].y = rrArray[i].y * yResA;
-                rrArray[i].z = rrArray[i].z * zResA;
+                rrArray[i].X = rrArray[i].X * xResA;
+                rrArray[i].Y = rrArray[i].Y * yResA;
+                rrArray[i].Z = rrArray[i].Z * zResA;
             }
 
             transformAFNI(image, imgBuffer, xResB, yResB, zResB, xDimB, yDimB, zDimB, tDimB, lowXmmB, lowYmmB, lowZmmB,
@@ -5485,15 +5486,15 @@ public abstract class ViewJFrameBase extends JFrame
             newResol[2] = zResA;
 
             // Change TalairachCenter in millimeters
-            TalairachCenter.x = TalairachCenter.x * xResA;
-            TalairachCenter.y = TalairachCenter.y * yResA;
-            TalairachCenter.z = TalairachCenter.z * zResA;
+            TalairachCenter.X = TalairachCenter.X * xResA;
+            TalairachCenter.Y = TalairachCenter.Y * yResA;
+            TalairachCenter.Z = TalairachCenter.Z * zResA;
 
             newResUnit[0] = imageAInfo.getUnitsOfMeasure()[0];
             newResUnit[1] = imageAInfo.getUnitsOfMeasure()[1];
             newResUnit[2] = imageAInfo.getUnitsOfMeasure()[2];
 
-            Point3Df center = image.getImageCentermm(false);
+            Vector3f center = image.getImageCentermm(false);
 
             bufferSize = xDimB * yDimB * zDimB * tDimB;
             imgBuffer = new float[bufferSize];
@@ -5523,16 +5524,16 @@ public abstract class ViewJFrameBase extends JFrame
                 afniProgressBar.setMessage("Talairach transformation pass #" + j);
 
                 xfrm.identity();
-                xfrm.setTranslate(center.x, center.y, center.z);
+                xfrm.setTranslate(center.X, center.Y, center.Z);
                 xfrm.setRotate(alphaArray[i], betaArray[i], gammaArray[i]);
 
                 double[][] M = xfrm.getMatrix();
-                double Tr03 = rrArray[i].x - (TalairachCenter.x * M[0][0]) - (TalairachCenter.y * M[0][1]) -
-                              (TalairachCenter.z * M[0][2]);
-                double Tr13 = rrArray[i].y - (TalairachCenter.x * M[1][0]) - (TalairachCenter.y * M[1][1]) -
-                              (TalairachCenter.z * M[1][2]);
-                double Tr23 = rrArray[i].z - (TalairachCenter.x * M[2][0]) - (TalairachCenter.y * M[2][1]) -
-                              (TalairachCenter.z * M[2][2]);
+                double Tr03 = rrArray[i].X - (TalairachCenter.X * M[0][0]) - (TalairachCenter.Y * M[0][1]) -
+                              (TalairachCenter.Z * M[0][2]);
+                double Tr13 = rrArray[i].Y - (TalairachCenter.X * M[1][0]) - (TalairachCenter.Y * M[1][1]) -
+                              (TalairachCenter.Z * M[1][2]);
+                double Tr23 = rrArray[i].Z - (TalairachCenter.X * M[2][0]) - (TalairachCenter.Y * M[2][1]) -
+                              (TalairachCenter.Z * M[2][2]);
 
                 /*
                  * Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3] Tr13 = M[1][0] * Tx + M[1][1] * Ty +

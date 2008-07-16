@@ -1,6 +1,7 @@
 package gov.nih.mipav;
 
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.structures.*;
 
 
@@ -22,9 +23,9 @@ public class MipavMath {
      *
      * @return  returns the distance
      */
-    public static final double distance(final Point3Df pt1, final Point3Df pt2) {
-        return Math.sqrt(((pt2.x - pt1.x) * (pt2.x - pt1.x)) + ((pt2.y - pt1.y) * (pt2.y - pt1.y)) +
-                         ((pt2.z - pt1.z) * (pt2.z - pt1.z)));
+    public static final double distance(final Vector3f pt1, final Vector3f pt2) {
+        return Math.sqrt(((pt2.X - pt1.X) * (pt2.X - pt1.X)) + ((pt2.Y - pt1.Y) * (pt2.Y - pt1.Y)) +
+                         ((pt2.Z - pt1.Z) * (pt2.Z - pt1.Z)));
     }
 
     /**

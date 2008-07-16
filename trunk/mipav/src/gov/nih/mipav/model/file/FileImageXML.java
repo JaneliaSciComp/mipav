@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.file;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
@@ -1483,13 +1485,13 @@ public class FileImageXML extends FileXML {
         if (useTal && (talairach != null)) {
 
             openTag("Talairach", true);
-            closedTag("origAC", Float.toString(talairach.getOrigAC().x));
-            closedTag("origAC", Float.toString(talairach.getOrigAC().y));
-            closedTag("origAC", Float.toString(talairach.getOrigAC().z));
+            closedTag("origAC", Float.toString(talairach.getOrigAC().X));
+            closedTag("origAC", Float.toString(talairach.getOrigAC().Y));
+            closedTag("origAC", Float.toString(talairach.getOrigAC().Z));
 
-            closedTag("origPC", Float.toString(talairach.getOrigPC().x));
-            closedTag("origPC", Float.toString(talairach.getOrigPC().y));
-            closedTag("origPC", Float.toString(talairach.getOrigPC().z));
+            closedTag("origPC", Float.toString(talairach.getOrigPC().X));
+            closedTag("origPC", Float.toString(talairach.getOrigPC().Y));
+            closedTag("origPC", Float.toString(talairach.getOrigPC().Z));
 
             for (i = 0; i < 3; i++) {
                 closedTag("origDim", Integer.toString(talairach.getOrigDim()[i]));
@@ -1506,22 +1508,22 @@ public class FileImageXML extends FileXML {
                 }
             }
 
-            closedTag("acpcPC", Float.toString(talairach.getAcpcPC().x));
-            closedTag("acpcPC", Float.toString(talairach.getAcpcPC().y));
-            closedTag("acpcPC", Float.toString(talairach.getAcpcPC().z));
+            closedTag("acpcPC", Float.toString(talairach.getAcpcPC().X));
+            closedTag("acpcPC", Float.toString(talairach.getAcpcPC().Y));
+            closedTag("acpcPC", Float.toString(talairach.getAcpcPC().Z));
 
             closedTag("acpcRes", Float.toString(talairach.getAcpcRes()));
 
             if (talairach.isTlrc()) {
                 openTag("tlrcInfo", true);
 
-                closedTag("acpcMin", Float.toString(talairach.getAcpcMin().x));
-                closedTag("acpcMin", Float.toString(talairach.getAcpcMin().y));
-                closedTag("acpcMin", Float.toString(talairach.getAcpcMin().z));
+                closedTag("acpcMin", Float.toString(talairach.getAcpcMin().X));
+                closedTag("acpcMin", Float.toString(talairach.getAcpcMin().Y));
+                closedTag("acpcMin", Float.toString(talairach.getAcpcMin().Z));
 
-                closedTag("acpcMax", Float.toString(talairach.getAcpcMax().x));
-                closedTag("acpcMax", Float.toString(talairach.getAcpcMax().y));
-                closedTag("acpcMax", Float.toString(talairach.getAcpcMax().z));
+                closedTag("acpcMax", Float.toString(talairach.getAcpcMax().X));
+                closedTag("acpcMax", Float.toString(talairach.getAcpcMax().Y));
+                closedTag("acpcMax", Float.toString(talairach.getAcpcMax().Z));
 
                 for (i = 0; i < 7; i++) {
                     closedTag("tlrcRes", Float.toString(talairach.getTlrcRes()[i]));
@@ -1744,8 +1746,8 @@ public class FileImageXML extends FileXML {
         Preferences.debug("Function Points:" + "\n", Preferences.DEBUG_FILEIO);
 
         for (n = 0; n < functionVector.size(); n++) {
-            x[n] = ((Point2Df) functionVector.elementAt(n)).x;
-            y[n] = ((Point2Df) functionVector.elementAt(n)).y;
+            x[n] = ((Vector2f) functionVector.elementAt(n)).X;
+            y[n] = ((Vector2f) functionVector.elementAt(n)).Y;
             z[n] = 0;
 
             Preferences.debug("x: " + x[n] + ", y: " + y[n] + "\n", Preferences.DEBUG_FILEIO);
@@ -1798,8 +1800,8 @@ public class FileImageXML extends FileXML {
         Preferences.debug("Function Points:" + "\n", Preferences.DEBUG_FILEIO);
 
         for (n = 0; n < functionVector.size(); n++) {
-            x[n] = ((Point2Df) functionVector.elementAt(n)).x;
-            y[n] = ((Point2Df) functionVector.elementAt(n)).y;
+            x[n] = ((Vector2f) functionVector.elementAt(n)).X;
+            y[n] = ((Vector2f) functionVector.elementAt(n)).Y;
             z[n] = 0;
 
             Preferences.debug("x: " + x[n] + ", y: " + y[n] + "\n", Preferences.DEBUG_FILEIO);
@@ -1868,7 +1870,7 @@ public class FileImageXML extends FileXML {
             System.out.println(nfex.toString());
         }
 
-        functionVector.addElement(new Point2Df(x, y));
+        functionVector.addElement(new Vector2f(x, y));
     }
 
     /**
@@ -2822,21 +2824,21 @@ public class FileImageXML extends FileXML {
                 origAC[origACCount] = Float.parseFloat(elementBuffer);
 
                 if (origACCount == 2) {
-                    talairach.setOrigAC(new Point3Df(origAC[0], origAC[1], origAC[2]));
+                    talairach.setOrigAC(new Vector3f(origAC[0], origAC[1], origAC[2]));
                 }
             } else if (currentKey.equals("origPC")) {
                 origPCCount++;
                 origPC[origPCCount] = Float.parseFloat(elementBuffer);
 
                 if (origPCCount == 2) {
-                    talairach.setOrigPC(new Point3Df(origPC[0], origPC[1], origPC[2]));
+                    talairach.setOrigPC(new Vector3f(origPC[0], origPC[1], origPC[2]));
                 }
             } else if (currentKey.equals("acpcPC")) {
                 acpcPCCount++;
                 acpcPC[acpcPCCount] = Float.parseFloat(elementBuffer);
 
                 if (acpcPCCount == 2) {
-                    talairach.setAcpcPC(new Point3Df(acpcPC[0], acpcPC[1], acpcPC[2]));
+                    talairach.setAcpcPC(new Vector3f(acpcPC[0], acpcPC[1], acpcPC[2]));
                 }
             } else if (currentKey.equals("origDim")) {
                 origDimCount++;
@@ -2873,14 +2875,14 @@ public class FileImageXML extends FileXML {
                 acpcMin[acpcMinCount] = Float.parseFloat(elementBuffer);
 
                 if (acpcMinCount == 2) {
-                    talairach.setAcpcMin(new Point3Df(acpcMin[0], acpcMin[1], acpcMin[2]));
+                    talairach.setAcpcMin(new Vector3f(acpcMin[0], acpcMin[1], acpcMin[2]));
                 }
             } else if (currentKey.equals("acpcMax")) {
                 acpcMaxCount++;
                 acpcMax[acpcMaxCount] = Float.parseFloat(elementBuffer);
 
                 if (acpcMaxCount == 2) {
-                    talairach.setAcpcMax(new Point3Df(acpcMax[0], acpcMax[1], acpcMax[2]));
+                    talairach.setAcpcMax(new Vector3f(acpcMax[0], acpcMax[1], acpcMax[2]));
                 }
             } else if (currentKey.equals("acpcRes")) {
                 talairach.setAcpcRes(Float.parseFloat(elementBuffer));

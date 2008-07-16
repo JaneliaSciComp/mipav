@@ -1,5 +1,7 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 
@@ -903,11 +905,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 if (triImage[i] != null) {
                     triImage[i].setZoom(newZoom, newZoom);
 
-                    Point2Df oldCrosshairPoint = triImage[i].getCrosshairPoint();
+                    Vector2f oldCrosshairPoint = triImage[i].getCrosshairPoint();
 
                     if (oldCrosshairPoint != null) {
-                        int newX = MipavMath.round((oldCrosshairPoint.x * newZoom) / oldZoom);
-                        int newY = MipavMath.round((oldCrosshairPoint.y * newZoom) / oldZoom);
+                        int newX = MipavMath.round((oldCrosshairPoint.X * newZoom) / oldZoom);
+                        int newY = MipavMath.round((oldCrosshairPoint.Y * newZoom) / oldZoom);
 
                         triImage[i].updateCrosshairPosition(newX, newY);
 
@@ -942,11 +944,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 if (triImage[i] != null) {
                     triImage[i].setZoom(newZoom, newZoom);
 
-                    Point2Df oldCrosshairPoint = triImage[i].getCrosshairPoint();
+                    Vector2f oldCrosshairPoint = triImage[i].getCrosshairPoint();
 
                     if (oldCrosshairPoint != null) {
-                        int newX = MipavMath.round((oldCrosshairPoint.x * newZoom) / oldZoom);
-                        int newY = MipavMath.round((oldCrosshairPoint.y * newZoom) / oldZoom);
+                        int newX = MipavMath.round((oldCrosshairPoint.X * newZoom) / oldZoom);
+                        int newY = MipavMath.round((oldCrosshairPoint.Y * newZoom) / oldZoom);
 
                         triImage[i].updateCrosshairPosition(newX, newY);
 
@@ -967,11 +969,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                     triImage[i].setZoom(1, 1);
 
-                    Point2Df oldCrosshairPoint = triImage[i].getCrosshairPoint();
+                    Vector2f oldCrosshairPoint = triImage[i].getCrosshairPoint();
 
                     if (oldCrosshairPoint != null) {
-                        int newX = (int) (oldCrosshairPoint.x / oldZoom);
-                        int newY = (int) (oldCrosshairPoint.y / oldZoom);
+                        int newX = (int) (oldCrosshairPoint.X / oldZoom);
+                        int newY = (int) (oldCrosshairPoint.Y / oldZoom);
 
                         triImage[i].updateCrosshairPosition(newX, newY);
 
@@ -1171,8 +1173,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 imageB.setRadiologicalView(true);
             }
 
-            Point3Df kCenter = triImage[0].getCenter();
-            setPositionLabels((int) kCenter.x, (int) kCenter.y, (int) kCenter.z);
+            Vector3f kCenter = triImage[0].getCenter();
+            setPositionLabels((int) kCenter.X, (int) kCenter.Y, (int) kCenter.Z);
             updateImages(true);
         } else if (command.equals("NeurologicalView")) {
             imageA.setRadiologicalView(false);
@@ -1181,8 +1183,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 imageB.setRadiologicalView(false);
             }
 
-            Point3Df kCenter = triImage[0].getCenter();
-            setPositionLabels((int) kCenter.x, (int) kCenter.y, (int) kCenter.z);
+            Vector3f kCenter = triImage[0].getCenter();
+            setPositionLabels((int) kCenter.X, (int) kCenter.Y, (int) kCenter.Z);
             updateImages(true);
         } else {
 			getParentFrame().actionPerformed(event);	
@@ -1998,7 +2000,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  lower  the lower corner of the crop volume in File Coordinates
      * @param  upper  the upper corner of the crop volume in File Coordinates
      */
-    public void setCrop(Point3Df lower, Point3Df upper) {
+    public void setCrop(Vector3f lower, Vector3f upper) {
 
         /* set the crop dimensions for each triImage: */
         for (int i = 0; i < MAX_TRI_IMAGES; i++) {
@@ -2332,8 +2334,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  z  the z volume coordinate
      */
     public void setPositionLabels(int x, int y, int z) {
-        setAbsPositionLabels(new Point3Df(x, y, z));
-        setScannerPosition(new Point3Df(x, y, z));
+        setAbsPositionLabels(new Vector3f(x, y, z));
+        setScannerPosition(new Vector3f(x, y, z));
 
         if (showTalairachPosition) {
             setTalairachPositionLabels(x, y, z);
@@ -2407,10 +2409,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
 
     public void setSlicesFromFrame(int x, int y, int z) {
-        Point3Df inPoint = new Point3Df();
-        inPoint.x = x;
-        inPoint.y = y;
-        inPoint.z = z;
+        Vector3f inPoint = new Vector3f();
+        inPoint.X = x;
+        inPoint.Y = y;
+        inPoint.Z = z;
 
         // x, y, z passed in from ViewJComponentEditImage.mouseReleased() are
         // already in image volume space
@@ -3588,8 +3590,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         /* set the center after the triImage[].setResolutions and
          * triImage[].setZoom calls have been made: */
         setCenter((extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
-        setCrop(new Point3Df(extents[0] * 0.25f, extents[1] * 0.25f, extents[2] * 0.25f),
-                new Point3Df(extents[0] * 0.75f, extents[1] * 0.75f, extents[2] * 0.75f));
+        setCrop(new Vector3f(extents[0] * 0.25f, extents[1] * 0.25f, extents[2] * 0.25f),
+                new Vector3f(extents[0] * 0.75f, extents[1] * 0.75f, extents[2] * 0.75f));
 
 
         setTitle();
@@ -3776,7 +3778,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                         if (imageAVOIs.VOIAt(i).getCurveType() == VOI.POINT) {
 
                             for (int k = 0; k < imageA.getExtents()[2]; k++) {
-                                Point3Df[] voiPoints = imageAVOIs.VOIAt(i).exportPoints(k);
+                                Vector3f[] voiPoints = imageAVOIs.VOIAt(i).exportPoints(k);
 
                                 for (int j = 0; j < voiPoints.length; j++) {
                                     pointVOIVector.add(voiPoints);
@@ -3788,10 +3790,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     double[][] coordsA = new double[pointVOIVector.size()][3];
 
                     for (int i = 0; i < pointVOIVector.size(); i++) {
-                        Point3Df[] point3df = (Point3Df[]) pointVOIVector.elementAt(i);
-                        coordsA[i][0] = point3df[0].x;
-                        coordsA[i][1] = point3df[0].y;
-                        coordsA[i][2] = point3df[0].z;
+                        Vector3f[] Vector3f = (Vector3f[]) pointVOIVector.elementAt(i);
+                        coordsA[i][0] = Vector3f[0].X;
+                        coordsA[i][1] = Vector3f[0].Y;
+                        coordsA[i][2] = Vector3f[0].Z;
                     }
 
                     // extract point VOIs for image B
@@ -3803,7 +3805,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                         if (imageBVOIs.VOIAt(i).getCurveType() == VOI.POINT) {
 
                             for (int k = 0; k < imageA.getExtents()[2]; k++) {
-                                Point3Df[] voiPoints = imageBVOIs.VOIAt(i).exportPoints(k);
+                                Vector3f[] voiPoints = imageBVOIs.VOIAt(i).exportPoints(k);
 
                                 for (int j = 0; j < voiPoints.length; j++) {
                                     pointVOIVector.add(voiPoints);
@@ -3815,10 +3817,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     double[][] coordsB = new double[pointVOIVector.size()][3];
 
                     for (int i = 0; i < pointVOIVector.size(); i++) {
-                        Point3Df[] point3df = (Point3Df[]) pointVOIVector.elementAt(i);
-                        coordsB[i][0] = point3df[0].x;
-                        coordsB[i][1] = point3df[0].y;
-                        coordsB[i][2] = point3df[0].z;
+                        Vector3f[] Vector3f = (Vector3f[]) pointVOIVector.elementAt(i);
+                        coordsB[i][0] = Vector3f[0].X;
+                        coordsB[i][1] = Vector3f[0].Y;
+                        coordsB[i][2] = Vector3f[0].Z;
                     }
 
                     // now that we have the point coords, we can build the least squares algorithm
@@ -3966,7 +3968,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             if (imageAVOIs.VOIAt(i).getCurveType() == VOI.POINT) {
 
                 for (int k = 0; k < imageA.getExtents()[2]; k++) {
-                    Point3Df[] voiPoints = imageAVOIs.VOIAt(i).exportPoints(k);
+                    Vector3f[] voiPoints = imageAVOIs.VOIAt(i).exportPoints(k);
 
                     for (int j = 0; j < voiPoints.length; j++) {
                         pointVOIVector.add(voiPoints);
@@ -3976,10 +3978,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
 
         for (int i = 0; i < pointVOIVector.size(); i++) {
-            Point3Df[] point3df = (Point3Df[]) pointVOIVector.elementAt(i);
-            xSourceA[i] = point3df[0].x;
-            ySourceA[i] = point3df[0].y;
-            zSourceA[i] = point3df[0].z;
+            Vector3f[] Vector3f = (Vector3f[]) pointVOIVector.elementAt(i);
+            xSourceA[i] = Vector3f[0].X;
+            ySourceA[i] = Vector3f[0].Y;
+            zSourceA[i] = Vector3f[0].Z;
         }
 
         // extract point VOIs for image B
@@ -3991,7 +3993,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             if (imageBVOIs.VOIAt(i).getCurveType() == VOI.POINT) {
 
                 for (int k = 0; k < imageA.getExtents()[2]; k++) {
-                    Point3Df[] voiPoints = imageBVOIs.VOIAt(i).exportPoints(k);
+                    Vector3f[] voiPoints = imageBVOIs.VOIAt(i).exportPoints(k);
 
                     for (int j = 0; j < voiPoints.length; j++) {
                         pointVOIVector.add(voiPoints);
@@ -4001,10 +4003,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
 
         for (int i = 0; i < pointVOIVector.size(); i++) {
-            Point3Df[] point3df = (Point3Df[]) pointVOIVector.elementAt(i);
-            xTargetB[i] = point3df[0].x;
-            yTargetB[i] = point3df[0].y;
-            zTargetB[i] = point3df[0].z;
+            Vector3f[] Vector3f = (Vector3f[]) pointVOIVector.elementAt(i);
+            xTargetB[i] = Vector3f[0].X;
+            yTargetB[i] = Vector3f[0].Y;
+            zTargetB[i] = Vector3f[0].Z;
         }
 
         parentFrame.setActiveImage(ViewJComponentBase.IMAGE_A);
@@ -4229,7 +4231,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     protected void setTalairachPositionLabels(int x, int y, int z) {
         float xTal, yTal, zTal;
-        Point3Df pt;
+        Vector3f pt;
         DecimalFormat nf = new DecimalFormat("#####0.0##");
         String strX = "";
         String strY = "";
@@ -4245,9 +4247,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 pt = tInfo.getTlrcAC();
             }
 
-            xTal = x - pt.x;
-            yTal = y - pt.y;
-            zTal = z - pt.z;
+            xTal = x - pt.X;
+            yTal = y - pt.Y;
+            zTal = z - pt.Z;
         } catch (Exception ex) {
             xTal = (x * imageA.getResolutions(0)[0]) - ATLAS_BBOX_LAT;
             yTal = (y * imageA.getResolutions(0)[1]) - ATLAS_BBOX_ANT;
@@ -4765,22 +4767,22 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  lower  the lower bound in File Coordinates
      * @param  upper  the upper bound in File Coordinates
      */
-    private void setVolumeBounds(Point3Df lower, Point3Df upper) {
+    private void setVolumeBounds(Vector3f lower, Vector3f upper) {
         int[] xBounds = new int[2];
-        xBounds[0] = ((int) lower.x <= (int) upper.x) ? (int) lower.x : (int) upper.x;
-        xBounds[1] = ((int) lower.x <= (int) upper.x) ? (int) upper.x : (int) lower.x;
+        xBounds[0] = ((int) lower.X <= (int) upper.X) ? (int) lower.X : (int) upper.X;
+        xBounds[1] = ((int) lower.X <= (int) upper.X) ? (int) upper.X : (int) lower.X;
         xBounds[0] = Math.max(xBounds[0], 0);
         xBounds[1] = Math.min(xBounds[1], extents[0] - 1);
 
         int[] yBounds = new int[2];
-        yBounds[0] = ((int) lower.y <= (int) upper.y) ? (int) lower.y : (int) upper.y;
-        yBounds[1] = ((int) lower.y <= (int) upper.y) ? (int) upper.y : (int) lower.y;
+        yBounds[0] = ((int) lower.Y <= (int) upper.Y) ? (int) lower.Y : (int) upper.Y;
+        yBounds[1] = ((int) lower.Y <= (int) upper.Y) ? (int) upper.Y : (int) lower.Y;
         yBounds[0] = Math.max(yBounds[0], 0);
         yBounds[1] = Math.min(yBounds[1], extents[1] - 1);
 
         int[] zBounds = new int[2];
-        zBounds[0] = ((int) lower.z <= (int) upper.z) ? (int) lower.z : (int) upper.z;
-        zBounds[1] = ((int) lower.z <= (int) upper.z) ? (int) upper.z : (int) lower.z;
+        zBounds[0] = ((int) lower.Z <= (int) upper.Z) ? (int) lower.Z : (int) upper.Z;
+        zBounds[1] = ((int) lower.Z <= (int) upper.Z) ? (int) upper.Z : (int) lower.Z;
         zBounds[0] = Math.max(zBounds[0], 0);
         zBounds[1] = Math.min(zBounds[1], extents[2] - 1);
 
@@ -4813,11 +4815,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         if (triImage[frame] != null) {
             triImage[frame].setZoom(newZoom, newZoom);
 
-            Point2Df oldCrosshairPoint = triImage[frame].getCrosshairPoint();
+            Vector2f oldCrosshairPoint = triImage[frame].getCrosshairPoint();
 
             if (oldCrosshairPoint != null) {
-                int newX = MipavMath.round((oldCrosshairPoint.x * newZoom) / oldZoom);
-                int newY = MipavMath.round((oldCrosshairPoint.y * newZoom) / oldZoom);
+                int newX = MipavMath.round((oldCrosshairPoint.X * newZoom) / oldZoom);
+                int newY = MipavMath.round((oldCrosshairPoint.Y * newZoom) / oldZoom);
 
                 triImage[frame].updateCrosshairPosition(newX, newY);
 
@@ -4852,11 +4854,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         if (triImage[frame] != null) {
             triImage[frame].setZoom(newZoom, newZoom);
 
-            Point2Df oldCrosshairPoint = triImage[frame].getCrosshairPoint();
+            Vector2f oldCrosshairPoint = triImage[frame].getCrosshairPoint();
 
             if (oldCrosshairPoint != null) {
-                int newX = MipavMath.round((oldCrosshairPoint.x * newZoom) / oldZoom);
-                int newY = MipavMath.round((oldCrosshairPoint.y * newZoom) / oldZoom);
+                int newX = MipavMath.round((oldCrosshairPoint.X * newZoom) / oldZoom);
+                int newY = MipavMath.round((oldCrosshairPoint.Y * newZoom) / oldZoom);
 
                 triImage[frame].updateCrosshairPosition(newX, newY);
 

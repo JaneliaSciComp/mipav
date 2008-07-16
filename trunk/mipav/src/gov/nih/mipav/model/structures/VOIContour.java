@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.structures;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 
@@ -18,7 +20,7 @@ import java.util.*;
 
 /**
  * This class is fundamental to the VOI class in which points are stored that describe a curve of an VOI. The points are
- * 3D and are floats (see Point3Df). It extends VOIBase and therefore it extends Vector. Vector makes it very easy to
+ * 3D and are floats (see Vector3f). It extends VOIBase and therefore it extends Vector. Vector makes it very easy to
  * add points and remove points from the contour. An VOI is formed from one or many contours.
  *
  * <p>Routines that wish to sample all integer x,y values along a line must sample the line at 1/2 unit increments. As
@@ -117,15 +119,16 @@ public class VOIContour extends VOIBase {
         int i;
         int length;
         float result = 0;
-        Vector2Df oldVector, newVector;
-        Point2Df[] pts = null;
+        Vector2f oldVector = new Vector2f();
+        Vector2f newVector = new Vector2f();
+        Vector2f[] pts = null;
 
         try {
-            pts = new Point2Df[size()];
+            pts = new Vector2f[size()];
             length = size();
 
             for (i = 0; i < length; i++) {
-                pts[i] = new Point2Df(((Point3Df) (elementAt(i))).x, ((Point3Df) (elementAt(i))).y);
+                pts[i] = new Vector2f(((Vector3f) (elementAt(i))).X, ((Vector3f) (elementAt(i))).Y);
             }
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -134,11 +137,11 @@ public class VOIContour extends VOIBase {
         }
 
         if (size() >= 3) {
-            oldVector = pts[1].formVector(pts[0]);
+            oldVector.Sub( pts[1], pts[0] );
 
             for (i = 2; i < length; i++) {
-                newVector = pts[i].formVector(pts[0]);
-                result += newVector.crossProductVectors(oldVector) * 0.5;
+                newVector.Sub( pts[i], pts[0] );
+                result += newVector.Cross(oldVector) * 0.5;
                 oldVector = newVector;
             }
 
@@ -404,7 +407,7 @@ public class VOIContour extends VOIBase {
         int length, start;
         float vAx, vAy, vBx, vBy, crossProd;
         boolean flag;
-        Point3Df tmpPt;
+        Vector3f tmpPt;
         boolean repeat = true;
         boolean ccw = isCounterClockwise(); // ?
         length = size();
@@ -432,10 +435,10 @@ public class VOIContour extends VOIBase {
                 for (i = 0; i < (length - (k - 1)); i++) {
 
                     // Form two vectors
-                    vAx = ((Point3Df) (elementAt(i + (k / 2)))).x - ((Point3Df) (elementAt(i))).x;
-                    vAy = ((Point3Df) (elementAt(i + (k / 2)))).y - ((Point3Df) (elementAt(i))).y;
-                    vBx = ((Point3Df) (elementAt(i + (k - 1)))).x - ((Point3Df) (elementAt(i))).x;
-                    vBy = ((Point3Df) (elementAt(i + (k - 1)))).y - ((Point3Df) (elementAt(i))).y;
+                    vAx = ((Vector3f) (elementAt(i + (k / 2)))).X - ((Vector3f) (elementAt(i))).X;
+                    vAy = ((Vector3f) (elementAt(i + (k / 2)))).Y - ((Vector3f) (elementAt(i))).Y;
+                    vBx = ((Vector3f) (elementAt(i + (k - 1)))).X - ((Vector3f) (elementAt(i))).X;
+                    vBy = ((Vector3f) (elementAt(i + (k - 1)))).Y - ((Vector3f) (elementAt(i))).Y;
 
                     // calc cross product
                     crossProd = (vAx * vBy) - (vAy * vBx);
@@ -460,7 +463,7 @@ public class VOIContour extends VOIBase {
 
             // Rotate points so that all concavities are removed.
             for (j = 0; j < (length / 2); j++) {
-                tmpPt = (Point3Df) (elementAt(size() - 1));
+                tmpPt = (Vector3f) (elementAt(size() - 1));
                 removeElementAt(size() - 1);
                 insertElementAt(tmpPt, 0);
             }
@@ -575,8 +578,8 @@ public class VOIContour extends VOIBase {
         }
 
         getGeometricCenter();
-        xS = MipavMath.round(gcPt.x * scaleX * resolutionX);
-        yS = MipavMath.round(gcPt.y * scaleY * resolutionY);
+        xS = MipavMath.round(gcPt.X * scaleX * resolutionX);
+        yS = MipavMath.round(gcPt.Y * scaleY * resolutionY);
         g.drawLine(xS, yS - 3, xS, yS + 3);
         g.drawLine(xS - 3, yS, xS + 3, yS);
 
@@ -611,7 +614,7 @@ public class VOIContour extends VOIBase {
 
         length = getLengthPtToPt(res);
 
-        Point3Df pt = getGeometricCenter();
+        Vector3f pt = getGeometricCenter();
 
         // g.setColor(Color.yellow);
         tmpString = String.valueOf(length);
@@ -664,12 +667,12 @@ public class VOIContour extends VOIBase {
         }
 
         g.setColor(Color.black);
-        g.drawString(tmpString, (int) (pt.x * zoomX), (int) ((pt.y * zoomY) - 1));
-        g.drawString(tmpString, (int) (pt.x * zoomX), (int) ((pt.y * zoomY) + 1));
-        g.drawString(tmpString, (int) ((pt.x * zoomX) + 1), (int) (pt.y * zoomY));
-        g.drawString(tmpString, (int) ((pt.x * zoomX) - 1), (int) (pt.y * zoomY));
+        g.drawString(tmpString, (int) (pt.X * zoomX), (int) ((pt.Y * zoomY) - 1));
+        g.drawString(tmpString, (int) (pt.X * zoomX), (int) ((pt.Y * zoomY) + 1));
+        g.drawString(tmpString, (int) ((pt.X * zoomX) + 1), (int) (pt.Y * zoomY));
+        g.drawString(tmpString, (int) ((pt.X * zoomX) - 1), (int) (pt.Y * zoomY));
         g.setColor(Color.white);
-        g.drawString(tmpString, (int) (pt.x * zoomX), (int) (pt.y * zoomY));
+        g.drawString(tmpString, (int) (pt.X * zoomX), (int) (pt.Y * zoomY));
     }
 
     /**
@@ -728,11 +731,11 @@ public class VOIContour extends VOIBase {
     		double ddx, ddy, lineLength, scale;
     		
             for (int i = 0; i < size() - 1; i++) {
-                x1 = (int) ((((Point3Df) (elementAt(i))).x * zoomX * resolutionX) + 0.5);
-                y1 = (int) ((((Point3Df) (elementAt(i))).y * zoomY * resolutionY) + 0.5);
+                x1 = (int) ((((Vector3f) (elementAt(i))).X * zoomX * resolutionX) + 0.5);
+                y1 = (int) ((((Vector3f) (elementAt(i))).Y * zoomY * resolutionY) + 0.5);
                 
-                x2 = (int) ((((Point3Df) (elementAt(i+1))).x * zoomX * resolutionX) + 0.5);
-                y2 = (int) ((((Point3Df) (elementAt(i+1))).y * zoomY * resolutionY) + 0.5);
+                x2 = (int) ((((Vector3f) (elementAt(i+1))).X * zoomX * resolutionX) + 0.5);
+                y2 = (int) ((((Vector3f) (elementAt(i+1))).Y * zoomY * resolutionY) + 0.5);
                 
                 //now draw the connecting lines as polygons with thickness
                 dX = x2 - x1;
@@ -763,11 +766,11 @@ public class VOIContour extends VOIBase {
             }
             //if it's closed... connect the last and first points
             if (closed == true) {
-            	x1 = (int) ((((Point3Df) (elementAt(size()-1))).x * zoomX * resolutionX) + 0.5);
-                y1 = (int) ((((Point3Df) (elementAt(size()-1))).y * zoomY * resolutionY) + 0.5);
+            	x1 = (int) ((((Vector3f) (elementAt(size()-1))).X * zoomX * resolutionX) + 0.5);
+                y1 = (int) ((((Vector3f) (elementAt(size()-1))).Y * zoomY * resolutionY) + 0.5);
                 
-                x2 = (int) ((((Point3Df) (elementAt(0))).x * zoomX * resolutionX) + 0.5);
-                y2 = (int) ((((Point3Df) (elementAt(0))).y * zoomY * resolutionY) + 0.5);
+                x2 = (int) ((((Vector3f) (elementAt(0))).X * zoomX * resolutionX) + 0.5);
+                y2 = (int) ((((Vector3f) (elementAt(0))).Y * zoomY * resolutionY) + 0.5);
                 
                 //now draw the connecting lines as polygons with thickness
                 dX = x2 - x1;
@@ -1109,11 +1112,11 @@ public class VOIContour extends VOIBase {
     		double ddx, ddy, lineLength, scale;
     		
             for (int i = 0; i < size() - 1; i++) {
-                x1 = (int) ((((Point3Df) (elementAt(i))).x * zoomX * resolutionX) + 0.5);
-                y1 = (int) ((((Point3Df) (elementAt(i))).y * zoomY * resolutionY) + 0.5);
+                x1 = (int) ((((Vector3f) (elementAt(i))).X * zoomX * resolutionX) + 0.5);
+                y1 = (int) ((((Vector3f) (elementAt(i))).Y * zoomY * resolutionY) + 0.5);
                 
-                x2 = (int) ((((Point3Df) (elementAt(i+1))).x * zoomX * resolutionX) + 0.5);
-                y2 = (int) ((((Point3Df) (elementAt(i+1))).y * zoomY * resolutionY) + 0.5);
+                x2 = (int) ((((Vector3f) (elementAt(i+1))).X * zoomX * resolutionX) + 0.5);
+                y2 = (int) ((((Vector3f) (elementAt(i+1))).Y * zoomY * resolutionY) + 0.5);
                 
                 //now draw the connecting lines as polygons with thickness
                 dX = x2 - x1;
@@ -1144,11 +1147,11 @@ public class VOIContour extends VOIBase {
             }
             //if it's closed... connect the last and first points
             if (closed == true) {
-            	x1 = (int) ((((Point3Df) (elementAt(size()-1))).x * zoomX * resolutionX) + 0.5);
-                y1 = (int) ((((Point3Df) (elementAt(size()-1))).y * zoomY * resolutionY) + 0.5);
+            	x1 = (int) ((((Vector3f) (elementAt(size()-1))).X * zoomX * resolutionX) + 0.5);
+                y1 = (int) ((((Vector3f) (elementAt(size()-1))).Y * zoomY * resolutionY) + 0.5);
                 
-                x2 = (int) ((((Point3Df) (elementAt(0))).x * zoomX * resolutionX) + 0.5);
-                y2 = (int) ((((Point3Df) (elementAt(0))).y * zoomY * resolutionY) + 0.5);
+                x2 = (int) ((((Vector3f) (elementAt(0))).X * zoomX * resolutionX) + 0.5);
+                y2 = (int) ((((Vector3f) (elementAt(0))).Y * zoomY * resolutionY) + 0.5);
                 
                 //now draw the connecting lines as polygons with thickness
                 dX = x2 - x1;
@@ -1557,7 +1560,7 @@ public class VOIContour extends VOIBase {
     public VOIContour exportContour(TransMatrix tMatrix) {
         int i;
         VOIContour transformedContour = null;
-        Point3Df pt = null;
+        Vector3f pt = null;
 
         try {
 
@@ -1567,14 +1570,14 @@ public class VOIContour extends VOIBase {
                 transformedContour = new VOIContour(false);
             }
 
-            pt = new Point3Df();
+            pt = new Vector3f();
         } catch (OutOfMemoryError error) {
             System.gc();
             throw error;
         }
 
         for (i = 0; i < size(); i++) {
-            tMatrix.transform((Point3Df) (elementAt(i)), pt);
+            tMatrix.transformAsPoint3Df((Vector3f) (elementAt(i)), pt);
             transformedContour.addElement(pt);
         }
 
@@ -1601,7 +1604,7 @@ public class VOIContour extends VOIBase {
         int i;
         VOIContour transformedContour = null;
         TransMatrix tMatrix = null;
-        Point3Df pt = null;
+        Vector3f pt = null;
 
         try {
 
@@ -1612,7 +1615,7 @@ public class VOIContour extends VOIBase {
             }
 
             tMatrix = new TransMatrix(4);
-            pt = new Point3Df();
+            pt = new Vector3f();
         } catch (OutOfMemoryError error) {
             System.gc();
             throw error;
@@ -1621,13 +1624,13 @@ public class VOIContour extends VOIBase {
         getGeometricCenter();
 
         // construct transMatrix object
-        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
+        tMatrix.setTranslate((gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
+        tMatrix.setTranslate(-gcPt.X, -gcPt.Y, -gcPt.Z);
 
         for (i = 0; i < size(); i++) {
-            tMatrix.transform((Point3Df) (elementAt(i)), pt);
+            tMatrix.transformAsPoint3Df((Vector3f) (elementAt(i)), pt);
             transformedContour.addElement(pt);
         }
 
@@ -1652,8 +1655,8 @@ public class VOIContour extends VOIBase {
         }
 
         for (i = 0; i < size(); i++) {
-            x = (int) (((Point3Df) (elementAt(i))).x + 0.5);
-            y = (int) (((Point3Df) (elementAt(i))).y + 0.5);
+            x = (int) (((Vector3f) (elementAt(i))).X + 0.5);
+            y = (int) (((Vector3f) (elementAt(i))).Y + 0.5);
             gon.addPoint(x, y);
         }
 
@@ -1669,11 +1672,11 @@ public class VOIContour extends VOIBase {
      */
     public Polygon exportPolygon(TransMatrix tMatrix) {
         int i;
-        Point3Df pt = null;
+        Vector3f pt = null;
         Polygon transformedGon = null;
 
         try {
-            pt = new Point3Df();
+            pt = new Vector3f();
             transformedGon = new Polygon();
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -1681,8 +1684,8 @@ public class VOIContour extends VOIBase {
         }
 
         for (i = 0; i < size(); i++) {
-            tMatrix.transform((Point3Df) (elementAt(i)), pt);
-            transformedGon.addPoint((int) (pt.x + 0.5), (int) (pt.y + 0.5));
+            tMatrix.transformAsPoint3Df((Vector3f) (elementAt(i)), pt);
+            transformedGon.addPoint((int) (pt.X + 0.5), (int) (pt.Y + 0.5));
         }
 
         return transformedGon;
@@ -1720,13 +1723,13 @@ public class VOIContour extends VOIBase {
     public Polygon exportPolygon(float thetaX, float thetaY, float thetaZ, float tX, float tY, float tZ, float scaleX,
                                  float scaleY, float scaleZ) {
         int i;
-        Point3Df pt = null;
+        Vector3f pt = null;
         Polygon transformedGon = null;
         TransMatrix tMatrix = null;
 
         // change so that I don't allocate every time ?
         try {
-            pt = new Point3Df();
+            pt = new Vector3f();
             transformedGon = new Polygon();
             tMatrix = new TransMatrix(4);
         } catch (OutOfMemoryError error) {
@@ -1738,14 +1741,14 @@ public class VOIContour extends VOIBase {
 
         // construct transMatrix object
         // check into order of translate
-        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
+        tMatrix.setTranslate((gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
+        tMatrix.setTranslate(-gcPt.X, -gcPt.Y, -gcPt.Z);
 
         for (i = 0; i < size(); i++) {
-            tMatrix.transform((Point3Df) (elementAt(i)), pt);
-            transformedGon.addPoint((int) (pt.x + 0.5), (int) (pt.y + 0.5));
+            tMatrix.transformAsPoint3Df((Vector3f) (elementAt(i)), pt);
+            transformedGon.addPoint((int) (pt.X + 0.5), (int) (pt.Y + 0.5));
         }
 
         return transformedGon;
@@ -1776,10 +1779,10 @@ public class VOIContour extends VOIBase {
         pt = 0;
 
         for (j = 0; j < end; j++) {
-            x0 = ((Point3Df) (elementAt(j))).x;
-            y0 = ((Point3Df) (elementAt(j))).y;
-            x1 = ((Point3Df) (elementAt(j + 1))).x;
-            y1 = ((Point3Df) (elementAt(j + 1))).y;
+            x0 = ((Vector3f) (elementAt(j))).X;
+            y0 = ((Vector3f) (elementAt(j))).Y;
+            x1 = ((Vector3f) (elementAt(j + 1))).X;
+            y1 = ((Vector3f) (elementAt(j + 1))).Y;
             ptDistance = Math.sqrt(((x1 - x0) * (x1 - x0) * (resolutions[0]) * (resolutions[0])) +
                                    ((y1 - y0) * (y1 - y0) * (resolutions[1]) * (resolutions[1])));
             myX = x0;
@@ -1809,10 +1812,10 @@ public class VOIContour extends VOIBase {
         }
 
         if (closed == true) {
-            x0 = ((Point3Df) (elementAt(size() - 1))).x;
-            y0 = ((Point3Df) (elementAt(size() - 1))).y;
-            x1 = ((Point3Df) (elementAt(0))).x;
-            y1 = ((Point3Df) (elementAt(0))).y;
+            x0 = ((Vector3f) (elementAt(size() - 1))).X;
+            y0 = ((Vector3f) (elementAt(size() - 1))).Y;
+            x1 = ((Vector3f) (elementAt(0))).X;
+            y1 = ((Vector3f) (elementAt(0))).Y;
             ptDistance = Math.sqrt(((x1 - x0) * (x1 - x0) * (resolutions[0]) * (resolutions[0])) +
                                    ((y1 - y0) * (y1 - y0) * (resolutions[1]) * (resolutions[1])));
             myX = x0;
@@ -1877,10 +1880,10 @@ public class VOIContour extends VOIBase {
         pt = 0;
 
         for (j = 0; j < end; j++) {
-            x0 = ((Point3Df) (elementAt(j))).x;
-            y0 = ((Point3Df) (elementAt(j))).y;
-            x1 = ((Point3Df) (elementAt(j + 1))).x;
-            y1 = ((Point3Df) (elementAt(j + 1))).y;
+            x0 = ((Vector3f) (elementAt(j))).X;
+            y0 = ((Vector3f) (elementAt(j))).Y;
+            x1 = ((Vector3f) (elementAt(j + 1))).X;
+            y1 = ((Vector3f) (elementAt(j + 1))).Y;
             ptDistance = Math.sqrt(((x1 - x0) * (x1 - x0) * (resolutions[0]) * (resolutions[0])) +
                                    ((y1 - y0) * (y1 - y0) * (resolutions[1]) * (resolutions[1])));
             myX = x0;
@@ -1920,10 +1923,10 @@ public class VOIContour extends VOIBase {
         }
 
         if (closed == true) {
-            x0 = ((Point3Df) (elementAt(size() - 1))).x;
-            y0 = ((Point3Df) (elementAt(size() - 1))).y;
-            x1 = ((Point3Df) (elementAt(0))).x;
-            y1 = ((Point3Df) (elementAt(0))).y;
+            x0 = ((Vector3f) (elementAt(size() - 1))).X;
+            y0 = ((Vector3f) (elementAt(size() - 1))).Y;
+            x1 = ((Vector3f) (elementAt(0))).X;
+            y1 = ((Vector3f) (elementAt(0))).Y;
             ptDistance = Math.sqrt(((x1 - x0) * (x1 - x0) * (resolutions[0]) * (resolutions[0])) +
                                    ((y1 - y0) * (y1 - y0) * (resolutions[1]) * (resolutions[1])));
             myX = x0;
@@ -1982,15 +1985,15 @@ public class VOIContour extends VOIBase {
     }
 
     /**
-     * Gets the active points location (point3df).
+     * Gets the active points location (Vector3f).
      *
-     * @return  Point3Df the location
+     * @return  Vector3f the location
      */
-    public Point3Df getActivePt() {
-        Point3Df pt = null;
+    public Vector3f getActivePt() {
+        Vector3f pt = null;
 
         if ((lastPoint >= 0) && (lastPoint < this.size())) {
-            pt = (Point3Df) (elementAt(lastPoint));
+            pt = (Vector3f) (elementAt(lastPoint));
         }
 
         return pt;
@@ -2017,9 +2020,9 @@ public class VOIContour extends VOIBase {
         z[1] = -10000000;
 
         for (i = 0; i < size(); i++) {
-            xx = MipavMath.round(((Point3Df) (elementAt(i))).x);
-            yy = MipavMath.round(((Point3Df) (elementAt(i))).y);
-            zz = MipavMath.round(((Point3Df) (elementAt(i))).z);
+            xx = MipavMath.round(((Vector3f) (elementAt(i))).X);
+            yy = MipavMath.round(((Vector3f) (elementAt(i))).Y);
+            zz = MipavMath.round(((Vector3f) (elementAt(i))).Z);
 
             if (xx < x[0]) {
                 x[0] = xx;
@@ -2068,9 +2071,9 @@ public class VOIContour extends VOIBase {
         z[1] = -1;
 
         for (i = 0; i < size(); i++) {
-            xx = ((Point3Df) (elementAt(i))).x;
-            yy = ((Point3Df) (elementAt(i))).y;
-            zz = ((Point3Df) (elementAt(i))).z;
+            xx = ((Vector3f) (elementAt(i))).X;
+            yy = ((Vector3f) (elementAt(i))).Y;
+            zz = ((Vector3f) (elementAt(i))).Z;
 
             if (xx < x[0]) {
                 x[0] = xx;
@@ -2103,7 +2106,7 @@ public class VOIContour extends VOIBase {
      *
      * @return  returns the geometric center
      */
-    public Point3Df getGeometricCenter() {
+    public Vector3f getGeometricCenter() {
         int nPts = 0;
         int x, y;
         contains(0, 0, true);
@@ -2128,11 +2131,11 @@ public class VOIContour extends VOIBase {
             }
         }
 
-        gcPt.x = MipavMath.round(sumX / nPts);
-        gcPt.y = MipavMath.round(sumY / nPts);
+        gcPt.X = MipavMath.round(sumX / nPts);
+        gcPt.Y = MipavMath.round(sumY / nPts);
 
         if (this.size() > 0) {
-            gcPt.z = ((Point3Df) (elementAt(0))).z;
+            gcPt.Z = ((Vector3f) (elementAt(0))).Z;
         } else {
             System.err.println("Why is size == 0? weird");
             System.err.println("Here's the name: " + name + ", and label: " + label);
@@ -2148,7 +2151,7 @@ public class VOIContour extends VOIBase {
      * @param   xDim         x-Dimension of image
      * @return  returns the center of mass
      */
-    public Point3Df getCenterOfMass(float[] imageBuffer, int xDim) {
+    public Vector3f getCenterOfMass(float[] imageBuffer, int xDim) {
         double valTot = 0.0;
         int x, y;
         int index;
@@ -2177,11 +2180,11 @@ public class VOIContour extends VOIBase {
             }
         }
 
-        cenMassPt.x = MipavMath.round(sumX / valTot);
-        cenMassPt.y = MipavMath.round(sumY / valTot);
+        cenMassPt.X = MipavMath.round(sumX / valTot);
+        cenMassPt.Y = MipavMath.round(sumY / valTot);
 
         if (this.size() > 0) {
-            cenMassPt.z = ((Point3Df) (elementAt(0))).z;
+            cenMassPt.Z = ((Vector3f) (elementAt(0))).Z;
         } else {
             System.err.println("Why is size == 0? weird");
             System.err.println("Here's the name: " + name + ", and label: " + label);
@@ -2197,7 +2200,7 @@ public class VOIContour extends VOIBase {
      * @param   xDim         x-Dimension of image
      * @return  returns the center of mass
      */
-    public Point3Df getCenterOfMassR(float[] imageBuffer, int xDim) {
+    public Vector3f getCenterOfMassR(float[] imageBuffer, int xDim) {
         double valTot = 0.0;
         int x, y;
         int index;
@@ -2226,11 +2229,11 @@ public class VOIContour extends VOIBase {
             }
         }
 
-        cenMassPtR.x = MipavMath.round(sumX / valTot);
-        cenMassPtR.y = MipavMath.round(sumY / valTot);
+        cenMassPtR.X = MipavMath.round(sumX / valTot);
+        cenMassPtR.Y = MipavMath.round(sumY / valTot);
 
         if (this.size() > 0) {
-            cenMassPtR.z = ((Point3Df) (elementAt(0))).z;
+            cenMassPtR.Z = ((Vector3f) (elementAt(0))).Z;
         } else {
             System.err.println("Why is size == 0? weird");
             System.err.println("Here's the name: " + name + ", and label: " + label);
@@ -2246,7 +2249,7 @@ public class VOIContour extends VOIBase {
      * @param   xDim         x-Dimension of image
      * @return  returns the center of mass
      */
-    public Point3Df getCenterOfMassG(float[] imageBuffer, int xDim) {
+    public Vector3f getCenterOfMassG(float[] imageBuffer, int xDim) {
         double valTot = 0.0;
         int x, y;
         int index;
@@ -2275,11 +2278,11 @@ public class VOIContour extends VOIBase {
             }
         }
 
-        cenMassPtG.x = MipavMath.round(sumX / valTot);
-        cenMassPtG.y = MipavMath.round(sumY / valTot);
+        cenMassPtG.X = MipavMath.round(sumX / valTot);
+        cenMassPtG.Y = MipavMath.round(sumY / valTot);
 
         if (this.size() > 0) {
-            cenMassPtG.z = ((Point3Df) (elementAt(0))).z;
+            cenMassPtG.Z = ((Vector3f) (elementAt(0))).Z;
         } else {
             System.err.println("Why is size == 0? weird");
             System.err.println("Here's the name: " + name + ", and label: " + label);
@@ -2295,7 +2298,7 @@ public class VOIContour extends VOIBase {
      * @param   xDim         x-Dimension of image
      * @return  returns the center of mass
      */
-    public Point3Df getCenterOfMassB(float[] imageBuffer, int xDim) {
+    public Vector3f getCenterOfMassB(float[] imageBuffer, int xDim) {
         double valTot = 0.0;
         int x, y;
         int index;
@@ -2324,11 +2327,11 @@ public class VOIContour extends VOIBase {
             }
         }
 
-        cenMassPtB.x = MipavMath.round(sumX / valTot);
-        cenMassPtB.y = MipavMath.round(sumY / valTot);
+        cenMassPtB.X = MipavMath.round(sumX / valTot);
+        cenMassPtB.Y = MipavMath.round(sumY / valTot);
 
         if (this.size() > 0) {
-            cenMassPtB.z = ((Point3Df) (elementAt(0))).z;
+            cenMassPtB.Z = ((Vector3f) (elementAt(0))).Z;
         } else {
             System.err.println("Why is size == 0? weird");
             System.err.println("Here's the name: " + name + ", and label: " + label);
@@ -2361,26 +2364,26 @@ public class VOIContour extends VOIBase {
         end = size() - 1;
 
         for (i = 0; i < end; i++) {
-            x0 = ((Point3Df) (elementAt(i))).x;
-            y0 = ((Point3Df) (elementAt(i))).y;
+            x0 = ((Vector3f) (elementAt(i))).X;
+            y0 = ((Vector3f) (elementAt(i))).Y;
 
-            // z0 = ((Point3Df)(elementAt(i))).z;
-            x1 = ((Point3Df) (elementAt(i + 1))).x;
-            y1 = ((Point3Df) (elementAt(i + 1))).y;
+            // z0 = ((Vector3f)(elementAt(i))).Z;
+            x1 = ((Vector3f) (elementAt(i + 1))).X;
+            y1 = ((Vector3f) (elementAt(i + 1))).Y;
 
-            // z1 = ((Point3Df)(elementAt(i+1))).z;
+            // z1 = ((Vector3f)(elementAt(i+1))).Z;
             sum += MipavMath.length(x0, y0, x1, y1, resolutions);
         }
 
         if (closed == true) {
-            x0 = ((Point3Df) (elementAt(0))).x;
-            y0 = ((Point3Df) (elementAt(0))).y;
+            x0 = ((Vector3f) (elementAt(0))).X;
+            y0 = ((Vector3f) (elementAt(0))).Y;
 
-            // z0 = ((Point3Df)(elementAt(0))).z;
-            x1 = ((Point3Df) (elementAt(size() - 1))).x;
-            y1 = ((Point3Df) (elementAt(size() - 1))).y;
+            // z0 = ((Vector3f)(elementAt(0))).Z;
+            x1 = ((Vector3f) (elementAt(size() - 1))).X;
+            y1 = ((Vector3f) (elementAt(size() - 1))).Y;
 
-            // z1 = ((Point3Df)(elementAt(size()-1))).z;
+            // z1 = ((Vector3f)(elementAt(size()-1))).Z;
             sum += MipavMath.length(x0, y0, x1, y1, resolutions);
         }
 
@@ -2457,7 +2460,7 @@ public class VOIContour extends VOIBase {
      *
      * @return  the number of points in the position and intensity array that hava valid data.
      */
-    public int getPositionAndIntensity(Vector3Df[] position, float[] intensity, float[] imageBuffer, int xDim) {
+    public int getPositionAndIntensity(Vector3f[] position, float[] intensity, float[] imageBuffer, int xDim) {
         int i, j, end, pt;
         int index, indexX = 0, indexY = 0;
         double myY, myX, yInc, xInc;
@@ -2470,10 +2473,10 @@ public class VOIContour extends VOIBase {
         len = 0;
 
         for (j = 0; j < end; j++) {
-            x0 = ((Point3Df) (elementAt(j))).x;
-            y0 = ((Point3Df) (elementAt(j))).y;
-            x1 = ((Point3Df) (elementAt(j + 1))).x;
-            y1 = ((Point3Df) (elementAt(j + 1))).y;
+            x0 = ((Vector3f) (elementAt(j))).X;
+            y0 = ((Vector3f) (elementAt(j))).Y;
+            x1 = ((Vector3f) (elementAt(j + 1))).X;
+            y1 = ((Vector3f) (elementAt(j + 1))).Y;
             distance = Math.sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
             myX = x0;
             myY = y0;
@@ -2486,8 +2489,8 @@ public class VOIContour extends VOIBase {
                 if ((indexX != MipavMath.round(myX)) || (indexY != Math.round(myY))) {
                     indexY = (int) MipavMath.round(myY);
                     indexX = (int) MipavMath.round(myX);
-                    position[pt].x = indexX;
-                    position[pt].y = indexY;
+                    position[pt].X = indexX;
+                    position[pt].Y = indexY;
                     index = (indexY * xDim) + indexX;
 
                     // position[pt] = index;
@@ -2501,10 +2504,10 @@ public class VOIContour extends VOIBase {
         }
 
         if (closed == true) {
-            x0 = ((Point3Df) (elementAt(size() - 1))).x;
-            y0 = ((Point3Df) (elementAt(size() - 1))).y;
-            x1 = ((Point3Df) (elementAt(0))).x;
-            y1 = ((Point3Df) (elementAt(0))).y;
+            x0 = ((Vector3f) (elementAt(size() - 1))).X;
+            y0 = ((Vector3f) (elementAt(size() - 1))).Y;
+            x1 = ((Vector3f) (elementAt(0))).X;
+            y1 = ((Vector3f) (elementAt(0))).Y;
             distance = Math.sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
             myX = x0;
             myY = y0;
@@ -2517,8 +2520,8 @@ public class VOIContour extends VOIBase {
                 if ((indexX != MipavMath.round(myX)) || (indexY != Math.round(myY))) {
                     indexY = (int) MipavMath.round(myY);
                     indexX = (int) MipavMath.round(myX);
-                    position[pt].x = indexX;
-                    position[pt].y = indexY;
+                    position[pt].X = indexX;
+                    position[pt].Y = indexY;
                     index = (indexY * xDim) + indexX;
 
                     // position[pt] = index;
@@ -2557,10 +2560,10 @@ public class VOIContour extends VOIBase {
         len = 0;
 
         for (j = 0; j < end; j++) {
-            x0 = ((Point3Df) (elementAt(j))).x;
-            y0 = ((Point3Df) (elementAt(j))).y;
-            x1 = ((Point3Df) (elementAt(j + 1))).x;
-            y1 = ((Point3Df) (elementAt(j + 1))).y;
+            x0 = ((Vector3f) (elementAt(j))).X;
+            y0 = ((Vector3f) (elementAt(j))).Y;
+            x1 = ((Vector3f) (elementAt(j + 1))).X;
+            y1 = ((Vector3f) (elementAt(j + 1))).Y;
             distance = Math.sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
             myX = x0;
             myY = y0;
@@ -2585,10 +2588,10 @@ public class VOIContour extends VOIBase {
         }
 
         if (closed == true) {
-            x0 = ((Point3Df) (elementAt(size() - 1))).x;
-            y0 = ((Point3Df) (elementAt(size() - 1))).y;
-            x1 = ((Point3Df) (elementAt(0))).x;
-            y1 = ((Point3Df) (elementAt(0))).y;
+            x0 = ((Vector3f) (elementAt(size() - 1))).X;
+            y0 = ((Vector3f) (elementAt(size() - 1))).Y;
+            x1 = ((Vector3f) (elementAt(0))).X;
+            y1 = ((Vector3f) (elementAt(0))).Y;
             distance = Math.sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
             myX = x0;
             myY = y0;
@@ -2630,7 +2633,7 @@ public class VOIContour extends VOIBase {
             this.removeAllElements();
 
             for (i = 0; i < n; i++) {
-                this.addElement(new Point3Df(x[i], y[i], z[i]));
+                this.addElement(new Vector3f(x[i], y[i], z[i]));
             }
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -2653,7 +2656,7 @@ public class VOIContour extends VOIBase {
             this.removeAllElements();
 
             for (i = 0; i < n; i++) {
-                this.addElement(new Point3Df(x[i], y[i], z[i]));
+                this.addElement(new Vector3f(x[i], y[i], z[i]));
             }
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -2666,7 +2669,7 @@ public class VOIContour extends VOIBase {
      *
      * @param  pt  array of three dimensional points
      */
-    public void importPoints(Point3Df[] pt) {
+    public void importPoints(Vector3f[] pt) {
         int i;
         this.removeAllElements();
 
@@ -2688,7 +2691,7 @@ public class VOIContour extends VOIBase {
             this.removeAllElements();
 
             for (i = 0; i < gon.npoints; i++) {
-                this.addElement(new Point3Df(gon.xpoints[i], gon.ypoints[i], slice));
+                this.addElement(new Vector3f(gon.xpoints[i], gon.ypoints[i], slice));
             }
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -2720,9 +2723,9 @@ public class VOIContour extends VOIBase {
 
         for (i = 1; i < length; i++) {
 
-            if ((((Point3Df) (elementAt(i))).x <= ((Point3Df) (elementAt(k))).x) &&
-                    ((((Point3Df) (elementAt(i))).x < ((Point3Df) (elementAt(k))).x) ||
-                         (((Point3Df) (elementAt(i))).y < ((Point3Df) (elementAt(k))).y))) {
+            if ((((Vector3f) (elementAt(i))).X <= ((Vector3f) (elementAt(k))).X) &&
+                    ((((Vector3f) (elementAt(i))).X < ((Vector3f) (elementAt(k))).X) ||
+                         (((Vector3f) (elementAt(i))).Y < ((Vector3f) (elementAt(k))).Y))) {
                 k = i;
             }
         }
@@ -2740,10 +2743,10 @@ public class VOIContour extends VOIBase {
         }
 
         // Form two vectors
-        vAx = ((Point3Df) (elementAt(k))).x - ((Point3Df) (elementAt(prev))).x;
-        vAy = ((Point3Df) (elementAt(k))).y - ((Point3Df) (elementAt(prev))).y;
-        vBx = ((Point3Df) (elementAt(next))).x - ((Point3Df) (elementAt(prev))).x;
-        vBy = ((Point3Df) (elementAt(next))).y - ((Point3Df) (elementAt(prev))).y;
+        vAx = ((Vector3f) (elementAt(k))).X - ((Vector3f) (elementAt(prev))).X;
+        vAy = ((Vector3f) (elementAt(k))).Y - ((Vector3f) (elementAt(prev))).Y;
+        vBx = ((Vector3f) (elementAt(next))).X - ((Vector3f) (elementAt(prev))).X;
+        vBy = ((Vector3f) (elementAt(next))).Y - ((Vector3f) (elementAt(prev))).Y;
 
         // calc cross product 2*area if CCW or -2*area if CW
         crossProd = (vAx * vBy) - (vAy * vBx);
@@ -2760,7 +2763,7 @@ public class VOIContour extends VOIBase {
      */
     public void makeClockwise() {
         int i;
-        Point3Df obj;
+        Vector3f obj;
         int size;
 
         if (isCounterClockwise() == false) {
@@ -2782,7 +2785,7 @@ public class VOIContour extends VOIBase {
      */
     public void makeCounterClockwise() {
         int i;
-        Point3Df obj;
+        Vector3f obj;
         int size;
 
         if (isCounterClockwise() == true) {
@@ -2815,8 +2818,8 @@ public class VOIContour extends VOIBase {
     public void moveActivePt(int direction, int xDim, int yDim) {
 
         if ((nearPoint == NOT_A_POINT) && (lastPoint != NOT_A_POINT) && (this.size() > lastPoint) && (lastPoint >= 0)) {
-            float x = ((Point3Df) (elementAt(lastPoint))).x;
-            float y = ((Point3Df) (elementAt(lastPoint))).y;
+            float x = ((Vector3f) (elementAt(lastPoint))).X;
+            float y = ((Vector3f) (elementAt(lastPoint))).Y;
 
             switch (direction) {
 
@@ -2841,8 +2844,8 @@ public class VOIContour extends VOIBase {
             }
 
             if ((x >= 0) && (x < xDim) && (y >= 0) && (y < yDim)) {
-                ((Point3Df) (elementAt(lastPoint))).x = x;
-                ((Point3Df) (elementAt(lastPoint))).y = y;
+                ((Vector3f) (elementAt(lastPoint))).X = x;
+                ((Vector3f) (elementAt(lastPoint))).Y = y;
             }
         }
     }
@@ -2854,7 +2857,7 @@ public class VOIContour extends VOIBase {
      * @param  y  y coordinate
      */
     public void movePt(int x, int y) {
-        replaceElement(x, y, ((Point3Df) (elementAt(nearPoint))).z);
+        replaceElement(x, y, ((Vector3f) (elementAt(nearPoint))).Z);
     }
 
     /**
@@ -2957,8 +2960,8 @@ public class VOIContour extends VOIBase {
         }
 
         for (int i = 0; i < nPts; i++) {
-            xPts[i] = ((Point3Df) (elementAt(i))).x;
-            yPts[i] = ((Point3Df) (elementAt(i))).y;
+            xPts[i] = ((Vector3f) (elementAt(i))).X;
+            yPts[i] = ((Vector3f) (elementAt(i))).Y;
         }
     }
 
@@ -2995,7 +2998,7 @@ public class VOIContour extends VOIBase {
      */
     public void retraceContour(float zoomX, float zoomY, float resolutionX, float resolutionY, float[] resols, int x1,
                                int y1, Graphics g, int thickness) {
-        Point3Df ptRetrace = null;
+        Vector3f ptRetrace = null;
         double minDistance, dist;
         float x2, y2, z;
         int i, j, idx;
@@ -3026,9 +3029,9 @@ public class VOIContour extends VOIBase {
             }
 
             // Return if trying to add the same point.
-            z = ((Point3Df) (elementAt(0))).z;
+            z = ((Vector3f) (elementAt(0))).Z;
 
-            if (contains(new Point3Df(x1, y1, z))) {
+            if (contains(new Vector3f(x1, y1, z))) {
                 return;
             }
 
@@ -3045,12 +3048,12 @@ public class VOIContour extends VOIBase {
             end = oldContour.size();
 
             for (i = 0; i < end; i++) {
-                x2 = ((Point3Df) (oldContour.elementAt(i))).x;
-                y2 = ((Point3Df) (oldContour.elementAt(i))).y;
+                x2 = ((Vector3f) (oldContour.elementAt(i))).X;
+                y2 = ((Vector3f) (oldContour.elementAt(i))).Y;
                 dist = MipavMath.distance(x1, x2, y1, y2);
 
                 if (dist < minDistance) {
-                    ptRetrace = (Point3Df) oldContour.elementAt(i);
+                    ptRetrace = (Vector3f) oldContour.elementAt(i);
                     minDistance = dist;
                 }
             }
@@ -3086,8 +3089,8 @@ public class VOIContour extends VOIBase {
             idx = 0;
 
             for (i = 0; i < size(); i++) {
-                x2 = ((Point3Df) (elementAt(i))).x;
-                y2 = ((Point3Df) (elementAt(i))).y;
+                x2 = ((Vector3f) (elementAt(i))).X;
+                y2 = ((Vector3f) (elementAt(i))).Y;
                 dist = MipavMath.distance(x1, x2, y1, y2);
 
                 if (dist < minDistance) {
@@ -3097,7 +3100,7 @@ public class VOIContour extends VOIBase {
             }
 
             if (indexRetrace != NOT_A_POINT) {
-                insertElementAt(new Point3Df(x1, y1, z), idx);
+                insertElementAt(new Vector3f(x1, y1, z), idx);
                 indexRetrace = idx;
             } else {
                 indexRetrace = idx;
@@ -3612,23 +3615,23 @@ public class VOIContour extends VOIBase {
      */
     public void transformContour(TransMatrix tMatrix, boolean doRound) {
         int i;
-        Point3Df point = null;
+        Vector3f point = null;
 
         try {
-            point = new Point3Df();
+            point = new Vector3f();
         } catch (OutOfMemoryError error) {
             System.gc();
             throw error;
         }
 
         for (i = 0; i < size(); i++) {
-            tMatrix.transform((Point3Df) (elementAt(i)), point);
+            tMatrix.transformAsPoint3Df((Vector3f) (elementAt(i)), point);
 
             if (doRound) {
-                setElementAt(new Point3Df(MipavMath.round(point.x), MipavMath.round(point.y), MipavMath.round(point.z)),
+                setElementAt(new Vector3f(MipavMath.round(point.X), MipavMath.round(point.Y), MipavMath.round(point.Z)),
                              i);
             } else {
-                setElementAt(new Point3Df(point.x, point.y, point.z), i);
+                setElementAt(new Vector3f(point.X, point.Y, point.Z), i);
             }
         }
     }
@@ -3649,11 +3652,11 @@ public class VOIContour extends VOIBase {
     public void transformContour(float thetaX, float thetaY, float thetaZ, float tX, float tY, float tZ, float scaleX,
                                  float scaleY, float scaleZ) {
         int i;
-        Point3Df point = null;
+        Vector3f point = null;
         TransMatrix tMatrix = null;
 
         try {
-            point = new Point3Df();
+            point = new Vector3f();
             tMatrix = new TransMatrix(4);
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -3663,15 +3666,15 @@ public class VOIContour extends VOIBase {
         getGeometricCenter();
 
         // construct transMatrix object
-        // tMatrix.translate((gcPt.x+tX)*scaleX, (gcPt.y+tY)*scaleY, (gcPt.z+tZ)*scaleZ);
-        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
+        // tMatrix.translate((gcPt.X+tX)*scaleX, (gcPt.Y+tY)*scaleY, (gcPt.Z+tZ)*scaleZ);
+        tMatrix.setTranslate((gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
+        tMatrix.setTranslate(-gcPt.X, -gcPt.Y, -gcPt.Z);
 
         for (i = 0; i < size(); i++) {
-            tMatrix.transform((Point3Df) (elementAt(i)), point);
-            setElementAt(new Point3Df(point.x, point.y, point.z), i);
+            tMatrix.transformAsPoint3Df((Vector3f) (elementAt(i)), point);
+            setElementAt(new Vector3f(point.X, point.Y, point.Z), i);
         }
     }
 
@@ -3685,8 +3688,8 @@ public class VOIContour extends VOIBase {
         int i;
 
         for (i = 0; i < size(); i++) {
-            ((Point3Df) (elementAt(i))).x += xT;
-            ((Point3Df) (elementAt(i))).y += yT;
+            ((Vector3f) (elementAt(i))).X += xT;
+            ((Vector3f) (elementAt(i))).Y += yT;
         }
     }
 
@@ -3713,10 +3716,10 @@ public class VOIContour extends VOIBase {
             end = size();
 
             for (i = 0; i < (end - 1); i++) {
-                ax = ((Point3Df) (elementAt(i))).x;
-                ay = ((Point3Df) (elementAt(i))).y;
-                bx = ((Point3Df) (elementAt(i + 1))).x;
-                by = ((Point3Df) (elementAt(i + 1))).y;
+                ax = ((Vector3f) (elementAt(i))).X;
+                ay = ((Vector3f) (elementAt(i))).Y;
+                bx = ((Vector3f) (elementAt(i + 1))).X;
+                by = ((Vector3f) (elementAt(i + 1))).Y;
 
                 if (MipavMath.distance(ax, bx, ay, by) <= 1.5) {
                     removeElementAt(i + 1); // remove adjacient points
@@ -3739,12 +3742,12 @@ public class VOIContour extends VOIBase {
             }
 
             for (i = 0; i < (end - 2); i++) {
-                ax = ((Point3Df) (elementAt(i))).x;
-                ay = ((Point3Df) (elementAt(i))).y;
-                bx = ((Point3Df) (elementAt(i + 1))).x;
-                by = ((Point3Df) (elementAt(i + 1))).y;
-                cx = ((Point3Df) (elementAt(i + 2))).x;
-                cy = ((Point3Df) (elementAt(i + 2))).y;
+                ax = ((Vector3f) (elementAt(i))).X;
+                ay = ((Vector3f) (elementAt(i))).Y;
+                bx = ((Vector3f) (elementAt(i + 1))).X;
+                by = ((Vector3f) (elementAt(i + 1))).Y;
+                cx = ((Vector3f) (elementAt(i + 2))).X;
+                cy = ((Vector3f) (elementAt(i + 2))).Y;
 
                 if (testDistance(MipavMath.round(bx), MipavMath.round(ax), MipavMath.round(cx), MipavMath.round(by),
                                      MipavMath.round(ay), MipavMath.round(cy), constraint)) {
@@ -3798,8 +3801,8 @@ public class VOIContour extends VOIBase {
         }
 
         for (i = 0; i < size(); i++) {
-            x = (int) ((((Point3Df) (elementAt(i))).x * zoomX * resolutionX) + 0.5);
-            y = (int) ((((Point3Df) (elementAt(i))).y * zoomY * resolutionY) + 0.5);
+            x = (int) ((((Vector3f) (elementAt(i))).X * zoomX * resolutionX) + 0.5);
+            y = (int) ((((Vector3f) (elementAt(i))).Y * zoomY * resolutionY) + 0.5);
             scaledGon.addPoint(x, y);
         }
 

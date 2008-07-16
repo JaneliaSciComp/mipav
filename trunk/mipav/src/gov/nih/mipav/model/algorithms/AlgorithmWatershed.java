@@ -1,4 +1,5 @@
 package gov.nih.mipav.model.algorithms;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 import gov.nih.mipav.model.algorithms.filters.*;
@@ -154,7 +155,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
      *
      * @param  seedPoints  The seed points.
      */
-    public void setSeedVector(Point3Df[] seedPoints) {
+    public void setSeedVector(Vector3f[] seedPoints) {
         int i;
 
         try {
@@ -370,7 +371,7 @@ Found:
     
                             // Add point that has been found inside the VOI to the seed vector
                             try {
-                                seedVector.addElement(new Seed(new Point3Df(x, y, 0), VOIs.VOIAt(i).getWatershedID()));
+                                seedVector.addElement(new Seed(new Vector3f(x, y, 0), VOIs.VOIAt(i).getWatershedID()));
                             } catch (OutOfMemoryError error) {
     
                                 if (energyImage != null) {
@@ -453,10 +454,10 @@ Found:
         }
 
         for (i = 0; i < seedVector.size(); i++) {
-            destImage.set((int) ((Seed) seedVector.elementAt(i)).point.x,
-                          (int) ((Seed) seedVector.elementAt(i)).point.y, ((Seed) seedVector.elementAt(i)).seedValue);
-            energyImage.set((int) ((Seed) seedVector.elementAt(i)).point.x,
-                            (int) ((Seed) seedVector.elementAt(i)).point.y, energyImage.getMin());
+            destImage.set((int) ((Seed) seedVector.elementAt(i)).point.X,
+                          (int) ((Seed) seedVector.elementAt(i)).point.Y, ((Seed) seedVector.elementAt(i)).seedValue);
+            energyImage.set((int) ((Seed) seedVector.elementAt(i)).point.X,
+                            (int) ((Seed) seedVector.elementAt(i)).point.Y, energyImage.getMin());
         }
 
         // Set all initial regions to watershed value defined in VOI object
@@ -492,7 +493,7 @@ Found:
          * Seed_vector contains the seeds provided by user      current_basin labels a basin corresponding to a seed
          *
          **************************************************************************************/
-        Point3Df P;
+        Vector3f P;
         int tempP = 0;
         int pixC, pixN, pixS, pixE, pixW;
         float gmMin, gmMax;
@@ -537,7 +538,7 @@ Found:
 
         for (i = 0; i < seedVector.size(); i++) {
             P = ((Seed) seedVector.elementAt(i)).point;
-            pixC = (int) ((P.y * xDim) + P.x);
+            pixC = (int) ((P.Y * xDim) + P.X);
             hQueue.add(pixC, (float) energyImage.getMin());
         }
 
@@ -1029,7 +1030,7 @@ Found:
                                 }
     
                                 try {
-                                    seedVector.addElement(new Seed(new Point3Df(x, y, slice),
+                                    seedVector.addElement(new Seed(new Vector3f(x, y, slice),
                                                                    VOIs.VOIAt(i).getWatershedID()));
                                 } catch (OutOfMemoryError error) {
                                     energyImage = null;
@@ -1097,13 +1098,13 @@ Found:
         }
 
         for (i = 0; (i < seedVector.size()) && !threadStopped; i++) {
-            destImage.set((int) ((Seed) seedVector.elementAt(i)).point.x,
-                          (int) ((Seed) seedVector.elementAt(i)).point.y,
-                          (int) ((Seed) seedVector.elementAt(i)).point.z, ((Seed) seedVector.elementAt(i)).seedValue);
+            destImage.set((int) ((Seed) seedVector.elementAt(i)).point.X,
+                          (int) ((Seed) seedVector.elementAt(i)).point.Y,
+                          (int) ((Seed) seedVector.elementAt(i)).point.Z, ((Seed) seedVector.elementAt(i)).seedValue);
 
-            energyImage.set((int) ((Seed) seedVector.elementAt(i)).point.x,
-                            (int) ((Seed) seedVector.elementAt(i)).point.y,
-                            (int) ((Seed) seedVector.elementAt(i)).point.z, energyImage.getMin());
+            energyImage.set((int) ((Seed) seedVector.elementAt(i)).point.X,
+                            (int) ((Seed) seedVector.elementAt(i)).point.Y,
+                            (int) ((Seed) seedVector.elementAt(i)).point.Z, energyImage.getMin());
             // ((Seed)seedVector.elementAt(i)).seedValue);
         }
 
@@ -1155,7 +1156,7 @@ Found:
          * Seed_vector contains the seeds provided by user      current_basin labels a basin corresponding to a seed
          *
          **************************************************************************************/
-        Point3Df P = new Point3Df(0, 0, 0);
+        Vector3f P = new Vector3f(0, 0, 0);
         int tempP = 0;
         int pixC, pixN, pixS, pixE, pixW, pixU, pixD;
         int imageSize;
@@ -1207,7 +1208,7 @@ Found:
 
         for (i = 0; (i < seedVector.size()) && !threadStopped; i++) {
             P = ((Seed) seedVector.elementAt(i)).point;
-            pixC = (int) ((P.z * imageSize) + (P.y * xDim) + P.x);
+            pixC = (int) ((P.Z * imageSize) + (P.Y * xDim) + P.X);
             hQueue.add(pixC, gmMin);
         }
 
@@ -1631,7 +1632,7 @@ Found:
     private class Seed {
 
         /** DOCUMENT ME! */
-        public Point3Df point;
+        public Vector3f point;
 
         /** DOCUMENT ME! */
         public short seedValue;
@@ -1643,7 +1644,7 @@ Found:
          * @param  pt     DOCUMENT ME!
          * @param  value  DOCUMENT ME!
          */
-        public Seed(Point3Df pt, short value) {
+        public Seed(Vector3f pt, short value) {
 
             point = pt;
             seedValue = value;

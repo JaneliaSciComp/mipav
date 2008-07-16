@@ -1596,8 +1596,8 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
         afYLUTa = new float[iLutSize];
 
         for (int iLIndex = 0; iLIndex < iLutSize; iLIndex++) {
-            afXLUTa[iLIndex] = ((Point2Df) (kLUT.getTransferFunction().getPoint(iLIndex))).x;
-            afYLUTa[iLIndex] = 255 - ((Point2Df) (kLUT.getTransferFunction().getPoint(iLIndex))).y;
+            afXLUTa[iLIndex] = kLUT.getTransferFunction().getPoint(iLIndex).X;
+            afYLUTa[iLIndex] = 255 - kLUT.getTransferFunction().getPoint(iLIndex).Y;
         }
 
         iLutHeightA = kLUT.getExtents()[1];

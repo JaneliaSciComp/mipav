@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.file;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -729,8 +730,8 @@ public class FileHistoLUT extends FileBase {
         int nPts2 = funct.size();
 
 
-        float min = ((Point2Df) funct.getPoint(0)).x;
-        float max = ((Point2Df) funct.getPoint(nPts2 - 1)).x;
+        float min = ((Vector2f) funct.getPoint(0)).X;
+        float max = ((Vector2f) funct.getPoint(nPts2 - 1)).X;
 
         float diff = max - min;
 

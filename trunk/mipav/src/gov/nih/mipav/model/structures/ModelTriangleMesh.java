@@ -364,6 +364,42 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setTextureCoordinateIndices( 0, 0, aiConnect);
         m_kGenerator = null;
     }
+    
+
+    /**
+     * A triangle mesh whose vertex normal vectors are computed from the geometry of the mesh itself. The normal at a
+     * vertex is the normalized average of normals of the triangles that share the vertex.
+     *
+     * @param  akVertex   array of vertices in the mesh
+     * @param  aiConnect  Connectivity array for the triangles. Each triple of indices represents one triangle. The
+     *                    triangle is counterclockwise ordered as viewed by an observer outside the mesh.
+     */
+    public ModelTriangleMesh(WildMagic.LibFoundation.Mathematics.Vector3f[] akVertex, int[] aiConnect) {
+    	super(akVertex.length, IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.TEXTURE_COORDINATE_3 | IndexedTriangleArray.COLOR_4,
+    			2, new int[]{0, 0},
+    			aiConnect.length);
+
+    	init();
+
+    	Point3f[] akVertices = new Point3f[ akVertex.length ];
+    	for ( int i = 0; i < akVertex.length; i++ )
+    	{
+    		akVertices[i] = new Point3f( akVertex[i].X, akVertex[i].Y, akVertex[i].Z );
+    	}
+
+    	setCoordinates(0, akVertices);
+    	setCoordinateIndices(0, aiConnect);
+    	computeNormals();
+    	setNormalIndices(0, aiConnect);
+    	m_kColors = new Color4f[ akVertex.length ];
+    	for ( int i = 0; i < akVertex.length; i++ )
+    	{
+    		m_kColors[i] = new Color4f( 1f, 1f, 1f, 1f );
+    	}
+    	setColors( 0, m_kColors );
+    	setColorIndices(0, aiConnect);
+    	m_kGenerator = null;
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -2141,6 +2177,23 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         return akVertex;
     }
 
+
+    /**
+     * Make a copy of the vertices of a triangle mesh.
+     *
+     * @return  A copy of the array of vertices of the triangle mesh.
+     */
+    public WildMagic.LibFoundation.Mathematics.Vector3f[] getVertexCopyAsVector3f() {
+    	WildMagic.LibFoundation.Mathematics.Vector3f[] akVertex = 
+    		new WildMagic.LibFoundation.Mathematics.Vector3f[getVertexCount()];
+
+    	Point3f kVertex = new Point3f();
+        for (int i = 0; i < getVertexCount(); i++) {
+        	getCoordinate( i, kVertex );
+            akVertex[i] = new WildMagic.LibFoundation.Mathematics.Vector3f( kVertex.x, kVertex.y, kVertex.z );
+        }
+        return akVertex;
+    }
 
     /**
      * Make a copy of the colors of a triangle mesh.

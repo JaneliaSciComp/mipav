@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.file;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 
@@ -280,7 +282,7 @@ public class FileVOI extends FileXML {
             Vector[] curves = null;
             VOIText vText = null;
 
-            Point3Df arrowPt, textPt, arrowPtScanner, textPtScanner;
+            Vector3f arrowPt, textPt, arrowPtScanner, textPtScanner;
             int fontSize, fontDescriptors;
             boolean useMarker;
             String fontName;
@@ -288,8 +290,8 @@ public class FileVOI extends FileXML {
             Color voiBackgroundColor;
             String voiString;
 
-            arrowPtScanner = new Point3Df();
-            textPtScanner = new Point3Df();
+            arrowPtScanner = new Vector3f();
+            textPtScanner = new Vector3f();
 
             for (int i = 0; i < numVOIs; i++) {
                 currentVOI = VOIs.VOIAt(i);
@@ -309,8 +311,8 @@ public class FileVOI extends FileXML {
                             voiString = vText.getText();
                             voiColor = vText.getColor();
                             voiBackgroundColor = vText.getBackgroundColor();
-                            textPt = (Point3Df) vText.elementAt(0);
-                            arrowPt = (Point3Df) vText.elementAt(1);
+                            textPt = (Vector3f) vText.elementAt(0);
+                            arrowPt = (Vector3f) vText.elementAt(1);
                             useMarker = vText.useMarker();
                             fontSize = vText.getFontSize();
                             fontName = vText.getFontName();
@@ -322,22 +324,22 @@ public class FileVOI extends FileXML {
                                 MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
                                 MipavCoordinateSystems.fileToScanner(arrowPt, arrowPtScanner, image);
                                 closedTag( "TextLocation",
-                                          Float.toString(textPtScanner.x) + "," + Float.toString(textPtScanner.y) +
-                                          "," + Float.toString(textPtScanner.z));
+                                          Float.toString(textPtScanner.X) + "," + Float.toString(textPtScanner.Y) +
+                                          "," + Float.toString(textPtScanner.Z));
                                 closedTag( "ArrowLocation",
-                                          Float.toString(arrowPtScanner.x) + "," + Float.toString(arrowPtScanner.y) +
-                                          "," + Float.toString(arrowPtScanner.z));
+                                          Float.toString(arrowPtScanner.X) + "," + Float.toString(arrowPtScanner.Y) +
+                                          "," + Float.toString(arrowPtScanner.Z));
                                 // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
                                 // arrowPtScanner);
                             } else {
-                                textPt.z = j;
-                                arrowPt.z = j;
+                                textPt.Z = j;
+                                arrowPt.Z = j;
                                 closedTag( "TextLocation",
-                                          Float.toString(textPt.x) + "," + Float.toString(textPt.y) + "," +
-                                          Float.toString(textPt.z));
+                                          Float.toString(textPt.X) + "," + Float.toString(textPt.Y) + "," +
+                                          Float.toString(textPt.Z));
                                 closedTag( "ArrowLocation",
-                                          Float.toString(arrowPt.x) + "," + Float.toString(arrowPt.y) + "," +
-                                          Float.toString(arrowPt.z));
+                                          Float.toString(arrowPt.X) + "," + Float.toString(arrowPt.Y) + "," +
+                                          Float.toString(arrowPt.Z));
                             }
 
                             closedTag( "UseMarker", Boolean.toString(useMarker));
@@ -801,20 +803,20 @@ public class FileVOI extends FileXML {
                     tempBase.exportArrays(x, y, z);
 
                     if (!is2D && saveAsLPS) {
-                        Point3Df ptIn = new Point3Df();
-                        Point3Df ptOut = new Point3Df();
+                        Vector3f ptIn = new Vector3f();
+                        Vector3f ptOut = new Vector3f();
                         int slice = tempVOIItem.getSlice();
 
                         for (m = 0; m < nPts; m++) {
-                            ptIn.x = x[m];
-                            ptIn.y = y[m];
-                            ptIn.z = slice;
+                            ptIn.X = x[m];
+                            ptIn.Y = y[m];
+                            ptIn.Z = slice;
                             MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
 
                             // System.err.println("Pt in: " + ptIn + ", Pt out: " + ptOut);
                             closedTag( "Pt",
-                                      Float.toString(ptOut.x) + "," + Float.toString(ptOut.y) + "," +
-                                      Float.toString(ptOut.z));
+                                      Float.toString(ptOut.X) + "," + Float.toString(ptOut.Y) + "," +
+                                      Float.toString(ptOut.Z));
                         }
                     } else {
                         // image dim is 2 (or SaveAsLPS false).... save to old format
@@ -872,18 +874,18 @@ public class FileVOI extends FileXML {
                                 ((VOIBase) (contours[i].elementAt(j))).exportArrays(x, y, z);
 
                                 if (image.getNDims() > 2) {
-                                    Point3Df ptIn = new Point3Df();
-                                    Point3Df ptOut = new Point3Df();
+                                    Vector3f ptIn = new Vector3f();
+                                    Vector3f ptOut = new Vector3f();
                                     int slice = i;
 
                                     for (m = 0; m < nPts; m++) {
-                                        ptIn.x = x[m];
-                                        ptIn.y = y[m];
-                                        ptIn.z = slice;
+                                        ptIn.X = x[m];
+                                        ptIn.Y = y[m];
+                                        ptIn.Z = slice;
                                         MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
                                         closedTag( "Pt",
-                                                  Float.toString(ptOut.x) + "," + Float.toString(ptOut.y) + "," +
-                                                  Float.toString(ptOut.z));
+                                                  Float.toString(ptOut.X) + "," + Float.toString(ptOut.Y) + "," +
+                                                  Float.toString(ptOut.Z));
                                     }
                                 } else {
                                     // image is 2d
@@ -909,21 +911,21 @@ public class FileVOI extends FileXML {
     }
 
     /**
-     * Converts string point (x,y) to Point2Df point.
+     * Converts string point (x,y) to Vector2f point.
      *
      * @param  str  string to convert
      * @param  pt   point to return
      */
-    private void decodeLine(String str, Point2Df pt) {
+    private void decodeLine(String str, Vector2f pt) {
         int index;
         String xStr, yStr;
 
         index = str.indexOf(" ");
         xStr = str.substring(0, index).trim();
-        pt.x = (Float.valueOf(xStr).floatValue());
+        pt.X = (Float.valueOf(xStr).floatValue());
 
         yStr = str.substring(index + 1).trim();
-        pt.y = (Float.valueOf(yStr).floatValue());
+        pt.Y = (Float.valueOf(yStr).floatValue());
     }
 
     /**
@@ -991,7 +993,7 @@ public class FileVOI extends FileXML {
         int nSlices, nContours, nPts;
         int sliceNo;
         float[] x, y, z;
-        Point2Df pt2D = new Point2Df();
+        Vector2f pt2D = new Vector2f();
         VOI newVOI;
         int maxSlice;
         int curveType;
@@ -1046,8 +1048,8 @@ public class FileVOI extends FileXML {
 
                     for (k = 0; k < nPts; k++) {
                         decodeLine(readLine(), pt2D);
-                        x[k] = pt2D.x;
-                        y[k] = pt2D.y;
+                        x[k] = pt2D.X;
+                        y[k] = pt2D.Y;
                         z[k] = (float) sliceNo;
                     }
 
@@ -1170,7 +1172,7 @@ public class FileVOI extends FileXML {
         String VOIStr, tempStr;
         float[] x, y, z;
         float[] xTemp, yTemp;
-        Point2Df pt2D = new Point2Df();
+        Vector2f pt2D = new Vector2f();
         VOI newVOI;
         int maxSlice;
 
@@ -1219,13 +1221,13 @@ public class FileVOI extends FileXML {
                         while (!((VOIStr = readLine()).regionMatches(true, 0, "}", 0, 1))) {
                             decodeLine(VOIStr, pt2D);
 
-                            if ((pt2D.x < 0) || (pt2D.y < 0) || (pt2D.x >= image.getExtents()[0]) ||
-                                    (pt2D.y >= image.getExtents()[1])) {
+                            if ((pt2D.X < 0) || (pt2D.Y < 0) || (pt2D.X >= image.getExtents()[0]) ||
+                                    (pt2D.Y >= image.getExtents()[1])) {
                                 throw (new IOException("VOI points exceed image bounds"));
                             }
 
-                            xTemp[k] = pt2D.x;
-                            yTemp[k] = pt2D.y;
+                            xTemp[k] = pt2D.X;
+                            yTemp[k] = pt2D.Y;
                             k++;
                         }
 
@@ -1270,7 +1272,7 @@ public class FileVOI extends FileXML {
         int nSlices, nContours, nPts;
         int sliceNo;
         float[] x, y, z;
-        Point2Df pt2D = new Point2Df();
+        Vector2f pt2D = new Vector2f();
         VOI newVOI;
         short id = 7777; /* different from any IDs in ViewJComponentEditImage */
         int curveType;
@@ -1314,8 +1316,8 @@ public class FileVOI extends FileXML {
 
                     for (k = 0; k < nPts; k++) {
                         decodeLine(readLine(), pt2D);
-                        x[k] = pt2D.x;
-                        y[k] = pt2D.y;
+                        x[k] = pt2D.X;
+                        y[k] = pt2D.Y;
                         z[k] = (float) sliceNo;
                     }
 
@@ -1487,7 +1489,7 @@ public class FileVOI extends FileXML {
                 try {
                     x = Float.parseFloat(st.nextToken());
                     y = Float.parseFloat(st.nextToken());
-                    contourVector.addElement(new Point2Df(x, y));
+                    contourVector.addElement(new Vector2f(x, y));
                 } catch (NumberFormatException nfex) {
                     Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
                 }
@@ -1503,8 +1505,8 @@ public class FileVOI extends FileXML {
 
 
                 for (index = 0; index < contourVector.size(); index++) {
-                    x[index] = ((Point2Df) contourVector.elementAt(index)).x;
-                    y[index] = ((Point2Df) contourVector.elementAt(index)).y;
+                    x[index] = ((Vector2f) contourVector.elementAt(index)).X;
+                    y[index] = ((Vector2f) contourVector.elementAt(index)).Y;
                     z[index] = (float) sliceNumber;
                 }
 
@@ -1731,8 +1733,8 @@ public class FileVOI extends FileXML {
                     Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
                 }
 
-                Point3Df ptIn = new Point3Df(x, y, z);
-                Point3Df ptOut = new Point3Df();
+                Vector3f ptIn = new Vector3f(x, y, z);
+                Vector3f ptOut = new Vector3f();
 
                 if (image.getNDims() > 2) {
                     int xDim = image.getExtents()[0];
@@ -1744,14 +1746,14 @@ public class FileVOI extends FileXML {
                     MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);
 
 
-                    if ((ptOut.x > xDim) || (ptOut.y > yDim) || (ptOut.z >= zDim) || (ptOut.x < 0) || (ptOut.y < 0) ||
-                            (ptOut.z < 0)) {
+                    if ((ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim) || (ptOut.X < 0) || (ptOut.Y < 0) ||
+                            (ptOut.Z < 0)) {
                         MipavUtil.displayWarning("VOI on file out of image bounds:  Open VOI aborted");
 
                         return;
                     }
 
-                    slice = (int) ptOut.z;
+                    slice = (int) ptOut.Z;
 
                     voiText.addElement(ptOut);
                 } else {
@@ -1910,7 +1912,7 @@ public class FileVOI extends FileXML {
                     x = Float.parseFloat(st.nextToken());
                     y = Float.parseFloat(st.nextToken());
                     z = Float.parseFloat(st.nextToken());
-                    contourVector.addElement(new Point3Df(x, y, z));
+                    contourVector.addElement(new Vector3f(x, y, z));
                     // System.err.println("X: " + x + ", Y: " + y + ", Z: " + z);
                 } catch (NumberFormatException nfex) {
                     Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
@@ -1925,8 +1927,8 @@ public class FileVOI extends FileXML {
                 y = new float[contourVector.size()];
                 z = new float[contourVector.size()];
 
-                Point3Df ptIn = new Point3Df();
-                Point3Df ptOut = new Point3Df();
+                Vector3f ptIn = new Vector3f();
+                Vector3f ptOut = new Vector3f();
 
                 int xDim = image.getExtents()[0];
                 int yDim = image.getExtents()[1];
@@ -1935,21 +1937,21 @@ public class FileVOI extends FileXML {
                 Preferences.debug("New contour: " + "\n", Preferences.DEBUG_FILEIO);
 
                 for (index = 0; index < contourVector.size(); index++) {
-                    ptIn = (Point3Df) contourVector.elementAt(index);
+                    ptIn = (Vector3f) contourVector.elementAt(index);
 
                     // System.err.println("\tScanner coord: " + ptIn);
                     MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);
 
-                    x[index] = MipavMath.round(Math.abs(ptOut.x));
-                    y[index] = MipavMath.round(Math.abs(ptOut.y));
-                    z[index] = MipavMath.round(Math.abs(ptOut.z));
+                    x[index] = MipavMath.round(Math.abs(ptOut.X));
+                    y[index] = MipavMath.round(Math.abs(ptOut.Y));
+                    z[index] = MipavMath.round(Math.abs(ptOut.Z));
 
                     // System.err.println("POINT OUT (scanner to file): " + x[index] + ", " + y[index] + ", " +
                     // z[index]);
                     Preferences.debug("\tScanner coord: " + ptIn + ", File coord: " + x[index] + ", " + y[index] +
                                       ", " + z[index] + "\n", Preferences.DEBUG_FILEIO);
 
-                    if ((ptOut.x > xDim) || (ptOut.y > yDim) || (ptOut.z >= zDim)) {
+                    if ((ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {
                         MipavUtil.displayWarning("VOI on file out of image bounds:  Open VOI aborted");
 
                         return;

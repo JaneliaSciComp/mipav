@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -3422,7 +3423,7 @@ kernelLoop:
         int sliceSize = xDim * yDim;
         int pix, i;
         Point bgPoint;
-        Point3Df[] seeds;
+        Vector3f[] seeds;
         int[] destExtents = null;
         ModelImage wsImage = null;
         ModelImage distanceImage = null;
@@ -3524,30 +3525,30 @@ kernelLoop:
         try {
 
             // form vector of seeds from ultimate erode points + point for background(should be first in list!)
-            seeds = new Point3Df[ultErodeObjects.length + 1];
+            seeds = new Vector3f[ultErodeObjects.length + 1];
 
             if (bgIndex > 0) {
-                seeds[0] = new Point3Df(bgIndex / xDim, bgIndex % xDim, 1); // background seed
+                seeds[0] = new Vector3f(bgIndex / xDim, bgIndex % xDim, 1); // background seed
             } else {
-                seeds[0] = new Point3Df(1, 1, 1);
+                seeds[0] = new Vector3f(1, 1, 1);
             }
 
             for (i = 0; i < ultErodeObjects.length; i++) {
-                seeds[i + 1] = new Point3Df(ultErodeObjects[i].x, ultErodeObjects[i].y, 1);
+                seeds[i + 1] = new Vector3f(ultErodeObjects[i].x, ultErodeObjects[i].y, 1);
             }
 
             for (i = 0; i < seeds.length; i++) {
 
-                if (seeds[i].x == 0) {
-                    seeds[i].x++;
-                } else if (seeds[i].x == (xDim - 1)) {
-                    seeds[i].x--;
+                if (seeds[i].X == 0) {
+                    seeds[i].X++;
+                } else if (seeds[i].X == (xDim - 1)) {
+                    seeds[i].X--;
                 }
 
-                if (seeds[i].y == 0) {
-                    seeds[i].y++;
-                } else if (seeds[i].y == (yDim - 1)) {
-                    seeds[i].y--;
+                if (seeds[i].Y == 0) {
+                    seeds[i].Y++;
+                } else if (seeds[i].Y == (yDim - 1)) {
+                    seeds[i].Y--;
                 }
 
             }
@@ -3653,7 +3654,7 @@ kernelLoop:
         int yDim = srcImage.getExtents()[1];
         int sliceSize = xDim * yDim;
         int pix, i;
-        Point3Df[] seeds;
+        Vector3f[] seeds;
         int[] destExtents = null;
         ModelImage wsImage = null;
         ModelImage distanceImage = null;
@@ -3741,32 +3742,32 @@ kernelLoop:
 
         // Make result image of float type
         try {
-            seeds = new Point3Df[pruneSeeds.size() + 1];
+            seeds = new Vector3f[pruneSeeds.size() + 1];
 
             if (bgIndex > 0) {
-                seeds[0] = new Point3Df(bgIndex / xDim, bgIndex % xDim, 1); // background seed
+                seeds[0] = new Vector3f(bgIndex / xDim, bgIndex % xDim, 1); // background seed
             } else {
-                seeds[0] = new Point3Df(1, 1, 1);
+                seeds[0] = new Vector3f(1, 1, 1);
             }
 
             for (i = 0; i < pruneSeeds.size(); i++) {
                 int val = ((Integer) (pruneSeeds.elementAt(i))).intValue();
 
-                seeds[i + 1] = new Point3Df(val % xDim, val / xDim, 1);
+                seeds[i + 1] = new Vector3f(val % xDim, val / xDim, 1);
             }
 
             for (i = 0; i < seeds.length; i++) {
 
-                if (seeds[i].x == 0) {
-                    seeds[i].x++;
-                } else if (seeds[i].x == (xDim - 1)) {
-                    seeds[i].x--;
+                if (seeds[i].X == 0) {
+                    seeds[i].X++;
+                } else if (seeds[i].X == (xDim - 1)) {
+                    seeds[i].X--;
                 }
 
-                if (seeds[i].y == 0) {
-                    seeds[i].y++;
-                } else if (seeds[i].y == (yDim - 1)) {
-                    seeds[i].y--;
+                if (seeds[i].Y == 0) {
+                    seeds[i].Y++;
+                } else if (seeds[i].Y == (yDim - 1)) {
+                    seeds[i].Y--;
                 }
 
             }

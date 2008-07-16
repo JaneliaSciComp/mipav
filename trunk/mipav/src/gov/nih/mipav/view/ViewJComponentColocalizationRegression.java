@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -1470,7 +1471,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
     /* Since paintComponent is used rather than paintAnimate or some other name, then in addition to each
      * direct call to paintComponent in updateImages, 1 or 2 calls to paintComponent maybe made by Jcomponent.paint. */
     public void paintComponent(Graphics g) {
-        Point3Df pt;
+        Vector3f pt;
         int xPos, yPos;
         int leftX, bottomY, rightX, topY;
         int currentX, currentY;
@@ -1513,8 +1514,8 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
                                  destImage.getFileInfo(0).getUnitsOfMeasure(), 0, FileInfoBase.UNKNOWN_ORIENT, g);
 
                 pt = pointVOI.exportPoint();
-                xPos = (int) Math.round(pt.x * zoomX * resX);
-                yPos = (int) Math.round(pt.y * zoomY * resY);
+                xPos = (int) Math.round(pt.X * zoomX * resX);
+                yPos = (int) Math.round(pt.Y * zoomY * resY);
                 g.setColor(Color.cyan);
                 g.fillRect(xPos - 2, yPos - 2, 5, 5);
                 g.setColor(Color.yellow);

@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.structures;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 
@@ -58,7 +60,7 @@ public class VOICardiology extends VOIBase {
     private boolean[] activeArray;
 
     /** DOCUMENT ME! */
-    private CardioPoint3Df centerPt = null;
+    private CardioVector3f centerPt = null;
 
     /** Indicates whether or not the contour is closed. */
     private boolean closed = true;
@@ -125,9 +127,9 @@ public class VOICardiology extends VOIBase {
      * @param  numSections  DOCUMENT ME!
      * @param  centerPt     DOCUMENT ME!
      */
-    public VOICardiology(int numSections, Point3Df centerPt) {
+    public VOICardiology(int numSections, Vector3f centerPt) {
         this.numSections = numSections;
-        this.centerPt = new CardioPoint3Df(centerPt.x, centerPt.y, centerPt.z, -1, -1, false, false);
+        this.centerPt = new CardioVector3f(centerPt.X, centerPt.Y, centerPt.Z, -1, -1, false, false);
         this.activeArray = new boolean[numSections];
     }
 
@@ -142,42 +144,42 @@ public class VOICardiology extends VOIBase {
      * @param  dimX      DOCUMENT ME!
      * @param  dimY      DOCUMENT ME!
      */
-    public static void getSecondPoint(double angle, Point3Df centerPt, Point3Df secondPt, int dimX, int dimY) {
+    public static void getSecondPoint(double angle, Vector3f centerPt, Vector3f secondPt, int dimX, int dimY) {
         double slope = Math.tan(angle);
 
         if ((slope == Double.NaN) || (slope > VOICardiology.BIG_NUMBER)) {
 
             // System.err.println("slope is NaN");
-            secondPt.x = centerPt.x;
+            secondPt.X = centerPt.X;
 
             if (angle < Math.PI) {
-                secondPt.y = dimY;
+                secondPt.Y = dimY;
             } else {
-                secondPt.y = 0;
+                secondPt.Y = 0;
             }
         } else if ((slope == 0) || ((slope < VOICardiology.SMALL_NUMBER) && (slope > -(VOICardiology.SMALL_NUMBER)))) {
 
             // System.err.println("slope is zero");
-            secondPt.y = centerPt.y;
+            secondPt.Y = centerPt.Y;
 
             if ((angle > VOICardiology.HALF_PI) && (angle < VOICardiology.TH_PI)) {
-                secondPt.x = 0;
+                secondPt.X = 0;
             } else {
-                secondPt.x = dimX;
+                secondPt.X = dimX;
             }
         } else {
 
             // System.err.println("slope is: " + slope);
             if ((angle > VOICardiology.TH_PI) || (angle < VOICardiology.HALF_PI)) {
-                secondPt.x = dimX;
+                secondPt.X = dimX;
             } else {
-                secondPt.x = 0;
+                secondPt.X = 0;
             }
 
-            secondPt.y = (int) ((slope * (secondPt.x - centerPt.x)) + centerPt.y);
+            secondPt.Y = (int) ((slope * (secondPt.X - centerPt.X)) + centerPt.Y);
         }
-        // System.err.println(" angle: " + angle + ", line slope: " + slope +", second pt: (" + secondPt.x + "," +
-        // secondPt.y + ")");
+        // System.err.println(" angle: " + angle + ", line slope: " + slope +", second pt: (" + secondPt.X + "," +
+        // secondPt.Y + ")");
     }
 
     /**
@@ -191,15 +193,15 @@ public class VOICardiology extends VOIBase {
      *
      * @return  DOCUMENT ME!
      */
-    public static boolean intersects(Point3Df p1, Point3Df p2, Point3Df p3, Point3Df p4, Point3Df intersection) {
+    public static boolean intersects(Vector3f p1, Vector3f p2, Vector3f p3, Vector3f p4, Vector3f intersection) {
         double denom = 0f;
         double uAnum = 0f;
         double uBnum = 0f;
         double uA = 0f;
         double uB = 0f;
-        denom = ((p4.y - p3.y) * (p2.x - p1.x)) - ((p4.x - p3.x) * (p2.y - p1.y));
-        uAnum = ((p4.x - p3.x) * (p1.y - p3.y)) - ((p4.y - p3.y) * (p1.x - p3.x));
-        uBnum = ((p2.x - p1.x) * (p1.y - p3.y)) - ((p2.y - p1.y) * (p1.x - p3.x));
+        denom = ((p4.Y - p3.Y) * (p2.X - p1.X)) - ((p4.X - p3.X) * (p2.Y - p1.Y));
+        uAnum = ((p4.X - p3.X) * (p1.Y - p3.Y)) - ((p4.Y - p3.Y) * (p1.X - p3.X));
+        uBnum = ((p2.X - p1.X) * (p1.Y - p3.Y)) - ((p2.Y - p1.Y) * (p1.X - p3.X));
 
         if (denom == 0) {
 
@@ -211,10 +213,10 @@ public class VOICardiology extends VOIBase {
         uB = uBnum / denom;
 
         if ((uA >= 0) && (uA <= 1) && (uB >= 0) && (uB <= 1)) {
-            intersection.x = p1.x + (float) (uA * (p2.x - p1.x));
-            intersection.y = p1.y + (float) (uA * (p2.y - p1.y));
+            intersection.X = p1.X + (float) (uA * (p2.X - p1.X));
+            intersection.Y = p1.Y + (float) (uA * (p2.Y - p1.Y));
 
-            // System.err.println("found intersection to be: " + intersection.x + "," + intersection.y + "\n\n");
+            // System.err.println("found intersection to be: " + intersection.X + "," + intersection.Y + "\n\n");
             return true;
         } else {
             return false;
@@ -230,8 +232,8 @@ public class VOICardiology extends VOIBase {
      * @param  isIntersection  DOCUMENT ME!
      * @param  isShared        DOCUMENT ME!
      */
-    public void addPoint(Point3Df newPt, int type, int sectionNum, boolean isIntersection, boolean isShared) {
-        this.addElement(new CardioPoint3Df(newPt.x, newPt.y, newPt.z, type, sectionNum, isIntersection, isShared));
+    public void addPoint(Vector3f newPt, int type, int sectionNum, boolean isIntersection, boolean isShared) {
+        this.addElement(new CardioVector3f(newPt.X, newPt.Y, newPt.Z, type, sectionNum, isIntersection, isShared));
     }
 
     /**
@@ -243,15 +245,17 @@ public class VOICardiology extends VOIBase {
         int i;
         int length;
         float result = 0;
-        Vector2Df oldVector, newVector;
-        Point2Df[] pts = null;
+        Vector2f oldVector = new Vector2f(); 
+        Vector2f newVector = new Vector2f(); 
+        
+        Vector2f[] pts = null;
 
         try {
-            pts = new Point2Df[size()];
+            pts = new Vector2f[size()];
             length = size();
 
             for (i = 0; i < length; i++) {
-                pts[i] = new Point2Df(((Point3Df) (elementAt(i))).x, ((Point3Df) (elementAt(i))).y);
+                pts[i] = new Vector2f(((Vector3f) (elementAt(i))).X, ((Vector3f) (elementAt(i))).Y);
             }
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -260,11 +264,11 @@ public class VOICardiology extends VOIBase {
         }
 
         if (size() >= 3) {
-            oldVector = pts[1].formVector(pts[0]);
+            oldVector.Sub( pts[1], pts[0] );
 
             for (i = 2; i < length; i++) {
-                newVector = pts[i].formVector(pts[0]);
-                result += newVector.crossProductVectors(oldVector) * 0.5;
+                newVector.Sub( pts[i], pts[0] );
+                result += newVector.Cross(oldVector) * 0.5;
                 oldVector = newVector;
             }
 
@@ -304,11 +308,11 @@ public class VOICardiology extends VOIBase {
 
         // add the inner points
         for (int i = indicesInner[0], j = 0; i <= indicesInner[1]; i++, j++) {
-            entireSection.addElement((Point3Df) elementAt(i));
+            entireSection.addElement((Vector3f) elementAt(i));
         }
 
         if (indicesInner[1] != indicesInner[2]) {
-            entireSection.addElement((Point3Df) elementAt(indicesInner[2]));
+            entireSection.addElement((Vector3f) elementAt(indicesInner[2]));
         }
 
         // get the indices for the outer (add backwards to complete the
@@ -316,11 +320,11 @@ public class VOICardiology extends VOIBase {
         getSectionIndices(OUTER, sectionNum, -1, indicesOuter);
 
         if (indicesOuter[1] != indicesOuter[2]) {
-            entireSection.addElement((Point3Df) elementAt(indicesOuter[2]));
+            entireSection.addElement((Vector3f) elementAt(indicesOuter[2]));
         }
 
         for (int i = indicesOuter[1], j = 1; i >= indicesOuter[0]; i--, j++) {
-            entireSection.addElement((Point3Df) elementAt(i));
+            entireSection.addElement((Vector3f) elementAt(i));
         }
 
         // float totalIntensity = entireSection.calcIntensity(data, imgXDim);
@@ -396,9 +400,9 @@ public class VOICardiology extends VOIBase {
         double sectionAngleEnd = sectionAngleStart + sectionAngle;
         double angleIncrement = Math.PI / 400.0;
         double i;
-        Point3Df secondPt = new Point3Df();
-        Point3Df intersectionPtInner = new Point3Df();
-        Point3Df intersectionPtOuter = new Point3Df();
+        Vector3f secondPt = new Vector3f();
+        Vector3f intersectionPtInner = new Vector3f();
+        Vector3f intersectionPtOuter = new Vector3f();
         int[] indicesInner = new int[3];
         int[] indicesOuter = new int[3];
 
@@ -421,11 +425,11 @@ public class VOICardiology extends VOIBase {
         int numInfSections = infarctionIndicesVector.size();
         System.err.println("number of infarctions put into the vector: " + numInfSections);
 
-        Point3Df[] intersectionPtInfarctions = new Point3Df[numInfSections];
+        Vector3f[] intersectionPtInfarctions = new Vector3f[numInfSections];
 
         // new the points
         for (int n = 0; n < numInfSections; n++) {
-            intersectionPtInfarctions[n] = new Point3Df(centerPt.x, centerPt.y, 0);
+            intersectionPtInfarctions[n] = new Vector3f(centerPt.X, centerPt.Y, 0);
         }
 
         // will count each infarction section separately
@@ -456,34 +460,34 @@ public class VOICardiology extends VOIBase {
             getSecondPoint(i, centerPt, secondPt, dimX, dimY);
 
             // look for INNER intersection point
-            foundIntersectionInner = intersects(centerPt, secondPt, (Point3Df) elementAt(indicesInner[1]),
-                                                (Point3Df) elementAt(indicesInner[2]), intersectionPtInner);
+            foundIntersectionInner = intersects(centerPt, secondPt, (Vector3f) elementAt(indicesInner[1]),
+                                                (Vector3f) elementAt(indicesInner[2]), intersectionPtInner);
 
             for (int j = indicesInner[0]; !foundIntersectionInner && (j < indicesInner[1]); j++) {
-                foundIntersectionInner = intersects(centerPt, secondPt, (Point3Df) elementAt(j),
-                                                    (Point3Df) elementAt(j + 1), intersectionPtInner);
+                foundIntersectionInner = intersects(centerPt, secondPt, (Vector3f) elementAt(j),
+                                                    (Vector3f) elementAt(j + 1), intersectionPtInner);
             }
 
             // look for OUTER intersection poitn
-            foundIntersectionOuter = intersects(centerPt, secondPt, (Point3Df) elementAt(indicesOuter[1]),
-                                                (Point3Df) elementAt(indicesOuter[2]), intersectionPtOuter);
+            foundIntersectionOuter = intersects(centerPt, secondPt, (Vector3f) elementAt(indicesOuter[1]),
+                                                (Vector3f) elementAt(indicesOuter[2]), intersectionPtOuter);
 
             for (int j = indicesOuter[0]; !foundIntersectionOuter && (j < indicesOuter[1]); j++) {
-                foundIntersectionOuter = intersects(centerPt, secondPt, (Point3Df) elementAt(j),
-                                                    (Point3Df) elementAt(j + 1), intersectionPtOuter);
+                foundIntersectionOuter = intersects(centerPt, secondPt, (Vector3f) elementAt(j),
+                                                    (Vector3f) elementAt(j + 1), intersectionPtOuter);
             }
 
             // finally look for an intersection point with the infarction
             // if there are two points, then take the point farthest from the center
-            Point3Df tempPoint = new Point3Df();
+            Vector3f tempPoint = new Vector3f();
             double testDistance = 0;
             boolean foundInf = false;
             int endInfIndex = 0;
 
             // System.err.println("num inf sections: " + numInfSections);
             for (int j = 0; j < numInfSections; j++) {
-                intersectionPtInfarctions[j].x = centerPt.x;
-                intersectionPtInfarctions[j].y = centerPt.y;
+                intersectionPtInfarctions[j].X = centerPt.X;
+                intersectionPtInfarctions[j].Y = centerPt.Y;
                 infIndices = (int[]) infarctionIndicesVector.elementAt(j);
 
                 if ((infIndices[2] - 1) == infIndices[0]) {
@@ -495,31 +499,31 @@ public class VOICardiology extends VOIBase {
                 // System.err.println("Indices: " + infIndices[0] + "," +
                 // infIndices[1] + "," + infIndices[2]);
                 for (int k = infIndices[0]; k < endInfIndex; k++) {
-                    foundInf = intersects(centerPt, secondPt, (Point3Df) elementAt(k), (Point3Df) elementAt(k + 1),
+                    foundInf = intersects(centerPt, secondPt, (Vector3f) elementAt(k), (Vector3f) elementAt(k + 1),
                                           tempPoint);
 
                     // check to see which is the farthest from the center (make sure it's not already set to center
                     if (foundInf) {
                         foundIntersectionInfarction[j] = true;
 
-                        if ((intersectionPtInfarctions[j].x != centerPt.x) &&
-                                (intersectionPtInfarctions[j].y != centerPt.y)) {
-                            distanceInfarction = MipavMath.length(intersectionPtInfarctions[j].x,
-                                                                  intersectionPtInfarctions[j].y, centerPt.x,
-                                                                  centerPt.y, resolutions);
-                            testDistance = MipavMath.length(tempPoint.x, tempPoint.y, centerPt.x, centerPt.y,
+                        if ((intersectionPtInfarctions[j].X != centerPt.X) &&
+                                (intersectionPtInfarctions[j].Y != centerPt.Y)) {
+                            distanceInfarction = MipavMath.length(intersectionPtInfarctions[j].X,
+                                                                  intersectionPtInfarctions[j].Y, centerPt.X,
+                                                                  centerPt.Y, resolutions);
+                            testDistance = MipavMath.length(tempPoint.X, tempPoint.Y, centerPt.X, centerPt.Y,
                                                             resolutions);
 
                             if (testDistance > distanceInfarction) {
 
                                 // System.err.println("difference (for replace): " + (testDistance -
                                 // distanceInfarction));
-                                intersectionPtInfarctions[j].x = tempPoint.x;
-                                intersectionPtInfarctions[j].y = tempPoint.y;
+                                intersectionPtInfarctions[j].X = tempPoint.X;
+                                intersectionPtInfarctions[j].Y = tempPoint.Y;
                             }
                         } else {
-                            intersectionPtInfarctions[j].x = tempPoint.x;
-                            intersectionPtInfarctions[j].y = tempPoint.y;
+                            intersectionPtInfarctions[j].X = tempPoint.X;
+                            intersectionPtInfarctions[j].Y = tempPoint.Y;
                         }
                     }
                 }
@@ -527,9 +531,9 @@ public class VOICardiology extends VOIBase {
 
             // if the intersection point was found, calculate the distance
             if (foundIntersectionInner && foundIntersectionOuter) {
-                distanceInner = MipavMath.length(intersectionPtInner.x, intersectionPtInner.y, centerPt.x, centerPt.y,
+                distanceInner = MipavMath.length(intersectionPtInner.X, intersectionPtInner.Y, centerPt.X, centerPt.Y,
                                                  resolutions);
-                distanceOuter = MipavMath.length(intersectionPtOuter.x, intersectionPtOuter.y, centerPt.x, centerPt.y,
+                distanceOuter = MipavMath.length(intersectionPtOuter.X, intersectionPtOuter.Y, centerPt.X, centerPt.Y,
                                                  resolutions);
                 differenceTotal += (distanceOuter - distanceInner);
                 numIntersectionsEntire++;
@@ -537,8 +541,8 @@ public class VOICardiology extends VOIBase {
                 for (int m = 0; m < foundIntersectionInfarction.length; m++) {
 
                     if (foundIntersectionInfarction[m]) {
-                        distanceInfarction = MipavMath.length(intersectionPtInfarctions[m].x,
-                                                              intersectionPtInfarctions[m].y, centerPt.x, centerPt.y,
+                        distanceInfarction = MipavMath.length(intersectionPtInfarctions[m].X,
+                                                              intersectionPtInfarctions[m].Y, centerPt.X, centerPt.Y,
                                                               resolutions);
                         differenceTotalInf[m] += (distanceInfarction - distanceInner);
                         numIntersectionsInfarction[m]++;
@@ -773,8 +777,8 @@ public class VOICardiology extends VOIBase {
             }
 
             for (i = 0; i < nPts; i++) {
-                xPts[i] = ((Point3Df) (elementAt(i))).x;
-                yPts[i] = ((Point3Df) (elementAt(i))).y;
+                xPts[i] = ((Vector3f) (elementAt(i))).X;
+                yPts[i] = ((Vector3f) (elementAt(i))).Y;
             }
         }
 
@@ -806,7 +810,7 @@ public class VOICardiology extends VOIBase {
         int length, start;
         float vAx, vAy, vBx, vBy, crossProd;
         boolean flag;
-        Point3Df tmpPt;
+        Vector3f tmpPt;
         boolean repeat = true;
         boolean ccw = isCounterClockwise(); // ?
         length = size();
@@ -834,10 +838,10 @@ public class VOICardiology extends VOIBase {
                 for (i = 0; i < (length - (k - 1)); i++) {
 
                     // Form two vectors
-                    vAx = ((Point3Df) (elementAt(i + (k / 2)))).x - ((Point3Df) (elementAt(i))).x;
-                    vAy = ((Point3Df) (elementAt(i + (k / 2)))).y - ((Point3Df) (elementAt(i))).y;
-                    vBx = ((Point3Df) (elementAt(i + (k - 1)))).x - ((Point3Df) (elementAt(i))).x;
-                    vBy = ((Point3Df) (elementAt(i + (k - 1)))).y - ((Point3Df) (elementAt(i))).y;
+                    vAx = ((Vector3f) (elementAt(i + (k / 2)))).X - ((Vector3f) (elementAt(i))).X;
+                    vAy = ((Vector3f) (elementAt(i + (k / 2)))).Y - ((Vector3f) (elementAt(i))).Y;
+                    vBx = ((Vector3f) (elementAt(i + (k - 1)))).X - ((Vector3f) (elementAt(i))).X;
+                    vBy = ((Vector3f) (elementAt(i + (k - 1)))).Y - ((Vector3f) (elementAt(i))).Y;
 
                     // calc cross product
                     crossProd = (vAx * vBy) - (vAy * vBx);
@@ -862,7 +866,7 @@ public class VOICardiology extends VOIBase {
 
             // Rotate points so that all concavities are removed.
             for (j = 0; j < (length / 2); j++) {
-                tmpPt = (Point3Df) (elementAt(size() - 1));
+                tmpPt = (Vector3f) (elementAt(size() - 1));
                 removeElementAt(size() - 1);
                 insertElementAt(tmpPt, 0);
             }
@@ -889,11 +893,11 @@ public class VOICardiology extends VOIBase {
         VOIContour entireInfarction = new VOIContour(true);
         int index = -1;
         int firstSection = -1;
-        CardioPoint3Df tempPt = null;
+        CardioVector3f tempPt = null;
         boolean foundFirst = false;
 
         for (int i = 0; i < size(); i++) {
-            tempPt = (CardioPoint3Df) elementAt(i);
+            tempPt = (CardioVector3f) elementAt(i);
 
             if (tempPt.getType() == INFARCTION) {
 
@@ -902,7 +906,7 @@ public class VOICardiology extends VOIBase {
                 }
 
                 foundFirst = true;
-                entireInfarction.addElement((Point3Df) elementAt(i));
+                entireInfarction.addElement((Vector3f) elementAt(i));
             }
         }
 
@@ -927,7 +931,7 @@ public class VOICardiology extends VOIBase {
 
             // find the last inner index...
             for (int i = 0; i < size(); i++) {
-                tempPt = (CardioPoint3Df) elementAt(i);
+                tempPt = (CardioVector3f) elementAt(i);
 
                 if (tempPt.getType() == OUTER) {
                     index = i - 1;
@@ -937,16 +941,16 @@ public class VOICardiology extends VOIBase {
             }
 
             for (int i = innerEndIndex; i >= 0; i--) {
-                entireInfarction.addElement((Point3Df) elementAt(i));
+                entireInfarction.addElement((Vector3f) elementAt(i));
             }
 
             for (int i = index; i >= innerStartIndex; i--) {
-                entireInfarction.addElement((Point3Df) elementAt(i));
+                entireInfarction.addElement((Vector3f) elementAt(i));
             }
         } else {
 
             for (int i = innerEndIndex; i >= innerStartIndex; i--) {
-                entireInfarction.addElement((Point3Df) elementAt(i));
+                entireInfarction.addElement((Vector3f) elementAt(i));
             }
         }
 
@@ -1032,8 +1036,8 @@ public class VOICardiology extends VOIBase {
         }
 
         getGeometricCenter();
-        xS = Math.round(gcPt.x * scaleX * resolutionX);
-        yS = Math.round(gcPt.y * scaleY * resolutionY);
+        xS = Math.round(gcPt.X * scaleX * resolutionX);
+        yS = Math.round(gcPt.Y * scaleY * resolutionY);
         g.drawLine(xS, yS - 3, xS, yS + 3);
         g.drawLine(xS - 3, yS, xS + 3, yS);
 
@@ -1064,7 +1068,7 @@ public class VOICardiology extends VOIBase {
 
         length = getLengthPtToPt(res);
 
-        Point3Df pt = getGeometricCenter();
+        Vector3f pt = getGeometricCenter();
 
         // g.setColor(Color.yellow);
         tmpString = String.valueOf(length);
@@ -1117,12 +1121,12 @@ public class VOICardiology extends VOIBase {
         }
 
         g.setColor(Color.black);
-        g.drawString(tmpString, (int) (pt.x * zoomX), (int) ((pt.y * zoomY) - 1));
-        g.drawString(tmpString, (int) (pt.x * zoomX), (int) ((pt.y * zoomY) + 1));
-        g.drawString(tmpString, (int) ((pt.x * zoomX) + 1), (int) (pt.y * zoomY));
-        g.drawString(tmpString, (int) ((pt.x * zoomX) - 1), (int) (pt.y * zoomY));
+        g.drawString(tmpString, (int) (pt.X * zoomX), (int) ((pt.Y * zoomY) - 1));
+        g.drawString(tmpString, (int) (pt.X * zoomX), (int) ((pt.Y * zoomY) + 1));
+        g.drawString(tmpString, (int) ((pt.X * zoomX) + 1), (int) (pt.Y * zoomY));
+        g.drawString(tmpString, (int) ((pt.X * zoomX) - 1), (int) (pt.Y * zoomY));
         g.setColor(Color.white);
-        g.drawString(tmpString, (int) (pt.x * zoomX), (int) (pt.y * zoomY));
+        g.drawString(tmpString, (int) (pt.X * zoomX), (int) (pt.Y * zoomY));
     }
 
     /**
@@ -1169,15 +1173,15 @@ public class VOICardiology extends VOIBase {
         // draw the section lines
         g.setColor(Color.gray);
 
-        CardioPoint3Df firstPt = null;
-        CardioPoint3Df secondPt = null;
+        CardioVector3f firstPt = null;
+        CardioVector3f secondPt = null;
         String outerLabel = new String();
 
         for (int i = 0; i < numSections; i++) {
 
             // connect to the inner VOI
             for (j = 0; j < size(); j++) {
-                firstPt = (CardioPoint3Df) elementAt(j);
+                firstPt = (CardioVector3f) elementAt(j);
 
                 if ((firstPt.getType() == INNER) && (firstPt.getSection() == i) && firstPt.isIntersection()) {
                     break;
@@ -1185,7 +1189,7 @@ public class VOICardiology extends VOIBase {
             }
 
             for (j = 0; j < size(); j++) {
-                secondPt = (CardioPoint3Df) elementAt(j);
+                secondPt = (CardioVector3f) elementAt(j);
 
                 if ((secondPt.getType() == OUTER) && (secondPt.getSection() == i) && secondPt.isIntersection()) {
 
@@ -1193,8 +1197,8 @@ public class VOICardiology extends VOIBase {
                     // intersection points
                     outerLabel = Integer.toString(i);
                     g.setColor(Color.cyan);
-                    g.drawString(outerLabel, (int) (secondPt.x * zoomX * resolutionX),
-                                 (int) (secondPt.y * zoomY * resolutionY));
+                    g.drawString(outerLabel, (int) (secondPt.X * zoomX * resolutionX),
+                                 (int) (secondPt.Y * zoomY * resolutionY));
 
                     break;
                 }
@@ -1209,17 +1213,17 @@ public class VOICardiology extends VOIBase {
                 g.setColor(Color.gray);
             }
 
-            g.drawLine((int) Math.round(firstPt.x * zoomX * resolutionX),
-                       (int) Math.round(firstPt.y * zoomY * resolutionY),
-                       (int) Math.round(secondPt.x * zoomX * resolutionX),
-                       (int) Math.round(secondPt.y * zoomY * resolutionY));
+            g.drawLine((int) Math.round(firstPt.X * zoomX * resolutionX),
+                       (int) Math.round(firstPt.Y * zoomY * resolutionY),
+                       (int) Math.round(secondPt.X * zoomX * resolutionX),
+                       (int) Math.round(secondPt.Y * zoomY * resolutionY));
 
             if (showCenter) {
                 g.setColor(Color.lightGray);
-                g.drawLine((int) Math.round(centerPt.x * zoomX * resolutionX),
-                           (int) Math.round(centerPt.y * zoomY * resolutionY),
-                           (int) Math.round(firstPt.x * zoomX * resolutionX),
-                           (int) Math.round(firstPt.y * zoomY * resolutionY));
+                g.drawLine((int) Math.round(centerPt.X * zoomX * resolutionX),
+                           (int) Math.round(centerPt.Y * zoomY * resolutionY),
+                           (int) Math.round(firstPt.X * zoomX * resolutionX),
+                           (int) Math.round(firstPt.Y * zoomY * resolutionY));
             }
         }
 
@@ -1425,7 +1429,7 @@ public class VOICardiology extends VOIBase {
     public VOIContour exportContour(TransMatrix tMatrix) {
         int i;
         VOIContour transformedContour = null;
-        Point3Df pt = null;
+        Vector3f pt = null;
 
         try {
 
@@ -1435,14 +1439,14 @@ public class VOICardiology extends VOIBase {
                 transformedContour = new VOIContour(false);
             }
 
-            pt = new Point3Df();
+            pt = new Vector3f();
         } catch (OutOfMemoryError error) {
             System.gc();
             throw error;
         }
 
         for (i = 0; i < size(); i++) {
-            tMatrix.transform((Point3Df) (elementAt(i)), pt);
+            tMatrix.transformAsPoint3Df((Vector3f) (elementAt(i)), pt);
             transformedContour.addElement(pt);
         }
 
@@ -1469,7 +1473,7 @@ public class VOICardiology extends VOIBase {
         int i;
         VOIContour transformedContour = null;
         TransMatrix tMatrix = null;
-        Point3Df pt = null;
+        Vector3f pt = null;
 
         try {
 
@@ -1480,7 +1484,7 @@ public class VOICardiology extends VOIBase {
             }
 
             tMatrix = new TransMatrix(4);
-            pt = new Point3Df();
+            pt = new Vector3f();
         } catch (OutOfMemoryError error) {
             System.gc();
             throw error;
@@ -1489,13 +1493,13 @@ public class VOICardiology extends VOIBase {
         getGeometricCenter();
 
         // construct transMatrix object
-        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
+        tMatrix.setTranslate((gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
+        tMatrix.setTranslate(-gcPt.X, -gcPt.Y, -gcPt.Z);
 
         for (i = 0; i < size(); i++) {
-            tMatrix.transform((Point3Df) (elementAt(i)), pt);
+            tMatrix.transformAsPoint3Df((Vector3f) (elementAt(i)), pt);
             transformedContour.addElement(pt);
         }
 
@@ -1520,8 +1524,8 @@ public class VOICardiology extends VOIBase {
         }
 
         for (i = 0; i < size(); i++) {
-            x = (int) (((Point3Df) (elementAt(i))).x + 0.5);
-            y = (int) (((Point3Df) (elementAt(i))).y + 0.5);
+            x = (int) (((Vector3f) (elementAt(i))).X + 0.5);
+            y = (int) (((Vector3f) (elementAt(i))).Y + 0.5);
             gon.addPoint(x, y);
         }
 
@@ -1537,11 +1541,11 @@ public class VOICardiology extends VOIBase {
      */
     public Polygon exportPolygon(TransMatrix tMatrix) {
         int i;
-        Point3Df pt = null;
+        Vector3f pt = null;
         Polygon transformedGon = null;
 
         try {
-            pt = new Point3Df();
+            pt = new Vector3f();
             transformedGon = new Polygon();
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -1549,8 +1553,8 @@ public class VOICardiology extends VOIBase {
         }
 
         for (i = 0; i < size(); i++) {
-            tMatrix.transform((Point3Df) (elementAt(i)), pt);
-            transformedGon.addPoint((int) (pt.x + 0.5), (int) (pt.y + 0.5));
+            tMatrix.transformAsPoint3Df((Vector3f) (elementAt(i)), pt);
+            transformedGon.addPoint((int) (pt.X + 0.5), (int) (pt.Y + 0.5));
         }
 
         return transformedGon;
@@ -1588,13 +1592,13 @@ public class VOICardiology extends VOIBase {
     public Polygon exportPolygon(float thetaX, float thetaY, float thetaZ, float tX, float tY, float tZ, float scaleX,
                                  float scaleY, float scaleZ) {
         int i;
-        Point3Df pt = null;
+        Vector3f pt = null;
         Polygon transformedGon = null;
         TransMatrix tMatrix = null;
 
         // change so that I don't allocate every time ?
         try {
-            pt = new Point3Df();
+            pt = new Vector3f();
             transformedGon = new Polygon();
             tMatrix = new TransMatrix(4);
         } catch (OutOfMemoryError error) {
@@ -1606,14 +1610,14 @@ public class VOICardiology extends VOIBase {
 
         // construct transMatrix object
         // check into order of translate
-        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
+        tMatrix.setTranslate((gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
+        tMatrix.setTranslate(-gcPt.X, -gcPt.Y, -gcPt.Z);
 
         for (i = 0; i < size(); i++) {
-            tMatrix.transform((Point3Df) (elementAt(i)), pt);
-            transformedGon.addPoint((int) (pt.x + 0.5), (int) (pt.y + 0.5));
+            tMatrix.transformAsPoint3Df((Vector3f) (elementAt(i)), pt);
+            transformedGon.addPoint((int) (pt.X + 0.5), (int) (pt.Y + 0.5));
         }
 
         return transformedGon;
@@ -1644,10 +1648,10 @@ public class VOICardiology extends VOIBase {
         pt = 0;
 
         for (j = 0; j < end; j++) {
-            x0 = ((Point3Df) (elementAt(j))).x;
-            y0 = ((Point3Df) (elementAt(j))).y;
-            x1 = ((Point3Df) (elementAt(j + 1))).x;
-            y1 = ((Point3Df) (elementAt(j + 1))).y;
+            x0 = ((Vector3f) (elementAt(j))).X;
+            y0 = ((Vector3f) (elementAt(j))).Y;
+            x1 = ((Vector3f) (elementAt(j + 1))).X;
+            y1 = ((Vector3f) (elementAt(j + 1))).Y;
             ptDistance = MipavMath.length(x0, y0, x1, y1, resolutions);
             myX = x0;
             myY = y0;
@@ -1675,10 +1679,10 @@ public class VOICardiology extends VOIBase {
         }
 
         if (closed == true) {
-            x0 = ((Point3Df) (elementAt(size() - 1))).x;
-            y0 = ((Point3Df) (elementAt(size() - 1))).y;
-            x1 = ((Point3Df) (elementAt(0))).x;
-            y1 = ((Point3Df) (elementAt(0))).y;
+            x0 = ((Vector3f) (elementAt(size() - 1))).X;
+            y0 = ((Vector3f) (elementAt(size() - 1))).Y;
+            x1 = ((Vector3f) (elementAt(0))).X;
+            y1 = ((Vector3f) (elementAt(0))).Y;
             ptDistance = MipavMath.length(x0, y0, x1, y1, resolutions);
             myX = x0;
             myY = y0;
@@ -1740,10 +1744,10 @@ public class VOICardiology extends VOIBase {
         pt = 0;
 
         for (j = 0; j < end; j++) {
-            x0 = ((Point3Df) (elementAt(j))).x;
-            y0 = ((Point3Df) (elementAt(j))).y;
-            x1 = ((Point3Df) (elementAt(j + 1))).x;
-            y1 = ((Point3Df) (elementAt(j + 1))).y;
+            x0 = ((Vector3f) (elementAt(j))).X;
+            y0 = ((Vector3f) (elementAt(j))).Y;
+            x1 = ((Vector3f) (elementAt(j + 1))).X;
+            y1 = ((Vector3f) (elementAt(j + 1))).Y;
             ptDistance = MipavMath.length(x0, y0, x1, y1, resolutions);
             myX = x0;
             myY = y0;
@@ -1781,10 +1785,10 @@ public class VOICardiology extends VOIBase {
         }
 
         if (closed == true) {
-            x0 = ((Point3Df) (elementAt(size() - 1))).x;
-            y0 = ((Point3Df) (elementAt(size() - 1))).y;
-            x1 = ((Point3Df) (elementAt(0))).x;
-            y1 = ((Point3Df) (elementAt(0))).y;
+            x0 = ((Vector3f) (elementAt(size() - 1))).X;
+            y0 = ((Vector3f) (elementAt(size() - 1))).Y;
+            x1 = ((Vector3f) (elementAt(0))).X;
+            y1 = ((Vector3f) (elementAt(0))).Y;
             ptDistance = MipavMath.length(x0, y0, x1, y1, resolutions);
             myX = x0;
             myY = y0;
@@ -1853,7 +1857,7 @@ public class VOICardiology extends VOIBase {
      *
      * @return  DOCUMENT ME!
      */
-    public Point3Df getActivePt() {
+    public Vector3f getActivePt() {
         return null;
     }
 
@@ -1878,9 +1882,9 @@ public class VOICardiology extends VOIBase {
         z[1] = -10000000;
 
         for (i = 0; i < size(); i++) {
-            xx = Math.round(((Point3Df) (elementAt(i))).x);
-            yy = Math.round(((Point3Df) (elementAt(i))).y);
-            zz = Math.round(((Point3Df) (elementAt(i))).z);
+            xx = Math.round(((Vector3f) (elementAt(i))).X);
+            yy = Math.round(((Vector3f) (elementAt(i))).Y);
+            zz = Math.round(((Vector3f) (elementAt(i))).Z);
 
             if (xx < x[0]) {
                 x[0] = xx;
@@ -1929,9 +1933,9 @@ public class VOICardiology extends VOIBase {
         z[1] = -1;
 
         for (i = 0; i < size(); i++) {
-            xx = ((Point3Df) (elementAt(i))).x;
-            yy = ((Point3Df) (elementAt(i))).y;
-            zz = ((Point3Df) (elementAt(i))).z;
+            xx = ((Vector3f) (elementAt(i))).X;
+            yy = ((Vector3f) (elementAt(i))).Y;
+            zz = ((Vector3f) (elementAt(i))).Z;
 
             if (xx < x[0]) {
                 x[0] = xx;
@@ -1964,7 +1968,7 @@ public class VOICardiology extends VOIBase {
      *
      * @return  returns the geometric center
      */
-    public Point3Df getGeometricCenter() {
+    public Vector3f getGeometricCenter() {
         int nPts = 0;
         int x, y;
         contains(0, 0, true);
@@ -1989,9 +1993,9 @@ public class VOICardiology extends VOIBase {
             }
         }
 
-        gcPt.x = Math.round(sumX / nPts);
-        gcPt.y = Math.round(sumY / nPts);
-        gcPt.z = ((Point3Df) (elementAt(0))).z;
+        gcPt.X = Math.round(sumX / nPts);
+        gcPt.Y = Math.round(sumY / nPts);
+        gcPt.Z = ((Vector3f) (elementAt(0))).Z;
 
         return gcPt;
     }
@@ -2001,7 +2005,7 @@ public class VOICardiology extends VOIBase {
      *
      * @return  returns the geometric center
      */
-    public Point3Df getFGeometricCenterOld() {
+    public Vector3f getFGeometricCenterOld() {
         int j;
         float sumX = (float) 0.0;
         float sumY = (float) 0.0;
@@ -2009,14 +2013,14 @@ public class VOICardiology extends VOIBase {
         int nPts = 0;
 
         for (j = 0; j < size(); j++) {
-            sumX += ((Point3Df) (elementAt(j))).x;
-            sumY += ((Point3Df) (elementAt(j))).y;
-            sumZ += ((Point3Df) (elementAt(j))).z;
+            sumX += ((Vector3f) (elementAt(j))).X;
+            sumY += ((Vector3f) (elementAt(j))).Y;
+            sumZ += ((Vector3f) (elementAt(j))).Z;
             nPts++;
         }
 
         try {
-            gcPt = new Point3Df(Math.round(sumX / nPts), Math.round(sumY / nPts), Math.round(sumZ / nPts));
+            gcPt = new Vector3f(Math.round(sumX / nPts), Math.round(sumY / nPts), Math.round(sumZ / nPts));
         } catch (OutOfMemoryError error) {
             gcPt = null;
             System.gc();
@@ -2048,26 +2052,26 @@ public class VOICardiology extends VOIBase {
         end = size() - 1;
 
         for (i = 0; i < end; i++) {
-            x0 = ((Point3Df) (elementAt(i))).x;
-            y0 = ((Point3Df) (elementAt(i))).y;
+            x0 = ((Vector3f) (elementAt(i))).X;
+            y0 = ((Vector3f) (elementAt(i))).Y;
 
-            // z0 = ((Point3Df)(elementAt(i))).z;
-            x1 = ((Point3Df) (elementAt(i + 1))).x;
-            y1 = ((Point3Df) (elementAt(i + 1))).y;
+            // z0 = ((Vector3f)(elementAt(i))).Z;
+            x1 = ((Vector3f) (elementAt(i + 1))).X;
+            y1 = ((Vector3f) (elementAt(i + 1))).Y;
 
-            // z1 = ((Point3Df)(elementAt(i+1))).z;
+            // z1 = ((Vector3f)(elementAt(i+1))).Z;
             sum += getLength(x0, y0, x1, y1, resolutions);
         }
 
         if (closed == true) {
-            x0 = ((Point3Df) (elementAt(0))).x;
-            y0 = ((Point3Df) (elementAt(0))).y;
+            x0 = ((Vector3f) (elementAt(0))).X;
+            y0 = ((Vector3f) (elementAt(0))).Y;
 
-            // z0 = ((Point3Df)(elementAt(0))).z;
-            x1 = ((Point3Df) (elementAt(size() - 1))).x;
-            y1 = ((Point3Df) (elementAt(size() - 1))).y;
+            // z0 = ((Vector3f)(elementAt(0))).Z;
+            x1 = ((Vector3f) (elementAt(size() - 1))).X;
+            y1 = ((Vector3f) (elementAt(size() - 1))).Y;
 
-            // z1 = ((Point3Df)(elementAt(size()-1))).z;
+            // z1 = ((Vector3f)(elementAt(size()-1))).Z;
             sum += getLength(x0, y0, x1, y1, resolutions);
         }
 
@@ -2157,7 +2161,7 @@ public class VOICardiology extends VOIBase {
      *
      * @return  the number of points in the position and intensity array that hava valid data.
      */
-    public int getPositionAndIntensity(Vector3Df[] position, float[] intensity, float[] imageBuffer, int xDim) {
+    public int getPositionAndIntensity(Vector3f[] position, float[] intensity, float[] imageBuffer, int xDim) {
         int i, j, end, pt;
         int index, indexX = 0, indexY = 0;
         double myY, myX, yInc, xInc;
@@ -2170,10 +2174,10 @@ public class VOICardiology extends VOIBase {
         len = 0;
 
         for (j = 0; j < end; j++) {
-            x0 = ((Point3Df) (elementAt(j))).x;
-            y0 = ((Point3Df) (elementAt(j))).y;
-            x1 = ((Point3Df) (elementAt(j + 1))).x;
-            y1 = ((Point3Df) (elementAt(j + 1))).y;
+            x0 = ((Vector3f) (elementAt(j))).X;
+            y0 = ((Vector3f) (elementAt(j))).Y;
+            x1 = ((Vector3f) (elementAt(j + 1))).X;
+            y1 = ((Vector3f) (elementAt(j + 1))).Y;
             distance = MipavMath.distance(x0, y0, x1, y1);
             myX = x0;
             myY = y0;
@@ -2186,8 +2190,8 @@ public class VOICardiology extends VOIBase {
                 if ((indexX != Math.round(myX)) || (indexY != Math.round(myY))) {
                     indexY = (int) Math.round(myY);
                     indexX = (int) Math.round(myX);
-                    position[pt].x = indexX;
-                    position[pt].y = indexY;
+                    position[pt].X = indexX;
+                    position[pt].Y = indexY;
                     index = (indexY * xDim) + indexX;
 
                     // position[pt] = index;
@@ -2201,10 +2205,10 @@ public class VOICardiology extends VOIBase {
         }
 
         if (closed == true) {
-            x0 = ((Point3Df) (elementAt(size() - 1))).x;
-            y0 = ((Point3Df) (elementAt(size() - 1))).y;
-            x1 = ((Point3Df) (elementAt(0))).x;
-            y1 = ((Point3Df) (elementAt(0))).y;
+            x0 = ((Vector3f) (elementAt(size() - 1))).X;
+            y0 = ((Vector3f) (elementAt(size() - 1))).Y;
+            x1 = ((Vector3f) (elementAt(0))).X;
+            y1 = ((Vector3f) (elementAt(0))).Y;
             distance = MipavMath.distance(x0, y0, x1, y1);
             myX = x0;
             myY = y0;
@@ -2217,8 +2221,8 @@ public class VOICardiology extends VOIBase {
                 if ((indexX != Math.round(myX)) || (indexY != Math.round(myY))) {
                     indexY = (int) Math.round(myY);
                     indexX = (int) Math.round(myX);
-                    position[pt].x = indexX;
-                    position[pt].y = indexY;
+                    position[pt].X = indexX;
+                    position[pt].Y = indexY;
                     index = (indexY * xDim) + indexX;
 
                     // position[pt] = index;
@@ -2257,10 +2261,10 @@ public class VOICardiology extends VOIBase {
         len = 0;
 
         for (j = 0; j < end; j++) {
-            x0 = ((Point3Df) (elementAt(j))).x;
-            y0 = ((Point3Df) (elementAt(j))).y;
-            x1 = ((Point3Df) (elementAt(j + 1))).x;
-            y1 = ((Point3Df) (elementAt(j + 1))).y;
+            x0 = ((Vector3f) (elementAt(j))).X;
+            y0 = ((Vector3f) (elementAt(j))).Y;
+            x1 = ((Vector3f) (elementAt(j + 1))).X;
+            y1 = ((Vector3f) (elementAt(j + 1))).Y;
             distance = MipavMath.distance(x0, y0, x1, y1);
             myX = x0;
             myY = y0;
@@ -2285,10 +2289,10 @@ public class VOICardiology extends VOIBase {
         }
 
         if (closed == true) {
-            x0 = ((Point3Df) (elementAt(size() - 1))).x;
-            y0 = ((Point3Df) (elementAt(size() - 1))).y;
-            x1 = ((Point3Df) (elementAt(0))).x;
-            y1 = ((Point3Df) (elementAt(0))).y;
+            x0 = ((Vector3f) (elementAt(size() - 1))).X;
+            y0 = ((Vector3f) (elementAt(size() - 1))).Y;
+            x1 = ((Vector3f) (elementAt(0))).X;
+            y1 = ((Vector3f) (elementAt(0))).Y;
             distance = MipavMath.distance(x0, y0, x1, y1);
             myX = x0;
             myY = y0;
@@ -2350,7 +2354,7 @@ public class VOICardiology extends VOIBase {
             this.removeAllElements();
 
             for (i = 0; i < n; i++) {
-                this.addElement(new Point3Df(x[i], y[i], z[i]));
+                this.addElement(new Vector3f(x[i], y[i], z[i]));
             }
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -2373,7 +2377,7 @@ public class VOICardiology extends VOIBase {
             this.removeAllElements();
 
             for (i = 0; i < n; i++) {
-                this.addElement(new Point3Df(x[i], y[i], z[i]));
+                this.addElement(new Vector3f(x[i], y[i], z[i]));
             }
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -2386,7 +2390,7 @@ public class VOICardiology extends VOIBase {
      *
      * @param  pt  array of three dimensional points
      */
-    public void importPoints(Point3Df[] pt) {
+    public void importPoints(Vector3f[] pt) {
         int i;
         this.removeAllElements();
 
@@ -2408,7 +2412,7 @@ public class VOICardiology extends VOIBase {
             this.removeAllElements();
 
             for (i = 0; i < gon.npoints; i++) {
-                this.addElement(new Point3Df(gon.xpoints[i], gon.ypoints[i], slice));
+                this.addElement(new Vector3f(gon.xpoints[i], gon.ypoints[i], slice));
             }
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -2426,7 +2430,7 @@ public class VOICardiology extends VOIBase {
     public void insertCardioPoint(int x, int y, int z) {
 
         if ((nearPoint >= 0) && (nearPoint < size())) {
-            int newPtType = ((CardioPoint3Df) elementAt(nearPoint)).getType();
+            int newPtType = ((CardioVector3f) elementAt(nearPoint)).getType();
 
             // if the nearPoint Type is BOTH, change the new type to INNER
             // because we never return a near point type of a BOTH that
@@ -2435,8 +2439,8 @@ public class VOICardiology extends VOIBase {
                 newPtType = INNER;
             }
 
-            int section = ((CardioPoint3Df) elementAt(nearPoint)).getSection();
-            insertElementAt(new CardioPoint3Df(x, y, z, newPtType, section, false, false), nearPoint + 1);
+            int section = ((CardioVector3f) elementAt(nearPoint)).getSection();
+            insertElementAt(new CardioVector3f(x, y, z, newPtType, section, false, false), nearPoint + 1);
             nearPoint++;
             nearPoint = NOT_A_POINT;
         }
@@ -2477,9 +2481,9 @@ public class VOICardiology extends VOIBase {
 
         for (i = 1; i < length; i++) {
 
-            if ((((Point3Df) (elementAt(i))).x <= ((Point3Df) (elementAt(k))).x) &&
-                    ((((Point3Df) (elementAt(i))).x < ((Point3Df) (elementAt(k))).x) ||
-                         (((Point3Df) (elementAt(i))).y < ((Point3Df) (elementAt(k))).y))) {
+            if ((((Vector3f) (elementAt(i))).X <= ((Vector3f) (elementAt(k))).X) &&
+                    ((((Vector3f) (elementAt(i))).X < ((Vector3f) (elementAt(k))).X) ||
+                         (((Vector3f) (elementAt(i))).Y < ((Vector3f) (elementAt(k))).Y))) {
                 k = i;
             }
         }
@@ -2497,10 +2501,10 @@ public class VOICardiology extends VOIBase {
         }
 
         // Form two vectors
-        vAx = ((Point3Df) (elementAt(k))).x - ((Point3Df) (elementAt(prev))).x;
-        vAy = ((Point3Df) (elementAt(k))).y - ((Point3Df) (elementAt(prev))).y;
-        vBx = ((Point3Df) (elementAt(next))).x - ((Point3Df) (elementAt(prev))).x;
-        vBy = ((Point3Df) (elementAt(next))).y - ((Point3Df) (elementAt(prev))).y;
+        vAx = ((Vector3f) (elementAt(k))).X - ((Vector3f) (elementAt(prev))).X;
+        vAy = ((Vector3f) (elementAt(k))).Y - ((Vector3f) (elementAt(prev))).Y;
+        vBx = ((Vector3f) (elementAt(next))).X - ((Vector3f) (elementAt(prev))).X;
+        vBy = ((Vector3f) (elementAt(next))).Y - ((Vector3f) (elementAt(prev))).Y;
 
         // calc cross product 2*area if CCW or -2*area if CW
         crossProd = (vAx * vBy) - (vAy * vBx);
@@ -2517,7 +2521,7 @@ public class VOICardiology extends VOIBase {
      */
     public void makeClockwise() {
         int i;
-        Point3Df obj;
+        Vector3f obj;
         int size;
 
         if (isCounterClockwise() == false) {
@@ -2539,7 +2543,7 @@ public class VOICardiology extends VOIBase {
      */
     public void makeCounterClockwise() {
         int i;
-        Point3Df obj;
+        Vector3f obj;
         int size;
 
         if (isCounterClockwise() == true) {
@@ -2580,7 +2584,7 @@ public class VOICardiology extends VOIBase {
     public void movePt(int x, int y) {
 
         // see if the point is an intersection point (OUTER/INNER)
-        CardioPoint3Df currentPt = (CardioPoint3Df) elementAt(nearPoint);
+        CardioVector3f currentPt = (CardioVector3f) elementAt(nearPoint);
         int section = currentPt.getSection();
         boolean isIntersection = currentPt.isIntersection();
         boolean isShared = currentPt.isShared();
@@ -2592,30 +2596,30 @@ public class VOICardiology extends VOIBase {
             double slope = Math.tan(angle);
 
             if ((slope == Double.NaN) || (slope > BIG_NUMBER)) {
-                replaceElement(centerPt.x, y, ((Point3Df) (elementAt(nearPoint))).z);
+                replaceElement(centerPt.X, y, ((Vector3f) (elementAt(nearPoint))).Z);
 
                 return;
             } else if ((slope == 0) || ((slope < SMALL_NUMBER) && (slope > -(SMALL_NUMBER)))) {
-                replaceElement(x, centerPt.y, ((Point3Df) (elementAt(nearPoint))).z);
+                replaceElement(x, centerPt.Y, ((Vector3f) (elementAt(nearPoint))).Z);
 
                 return;
             }
 
-            int newY = (int) ((slope * (x - centerPt.x)) + centerPt.y);
-            replaceElement(x, (int) newY, ((Point3Df) (elementAt(nearPoint))).z);
+            int newY = (int) ((slope * (x - centerPt.X)) + centerPt.Y);
+            replaceElement(x, (int) newY, ((Vector3f) (elementAt(nearPoint))).Z);
         } else if (isShared) {
 
             // find the shared infarction point with the same x, y values
-            CardioPoint3Df infarctionPt = null;
+            CardioVector3f infarctionPt = null;
             int infarctionIndex = -1;
 
             for (int i = 0; i < size(); i++) {
-                infarctionPt = (CardioPoint3Df) elementAt(i);
+                infarctionPt = (CardioVector3f) elementAt(i);
 
                 if ((infarctionPt.getType() == INFARCTION) && (infarctionPt.getSection() == section) &&
                         infarctionPt.isShared() &&
-                        ((int) infarctionPt.x == (int) ((CardioPoint3Df) elementAt(nearPoint)).x) &&
-                        ((int) infarctionPt.y == (int) ((CardioPoint3Df) elementAt(nearPoint)).y)) {
+                        ((int) infarctionPt.X == (int) ((CardioVector3f) elementAt(nearPoint)).X) &&
+                        ((int) infarctionPt.Y == (int) ((CardioVector3f) elementAt(nearPoint)).Y)) {
                     infarctionIndex = i;
 
                     break;
@@ -2625,15 +2629,15 @@ public class VOICardiology extends VOIBase {
             if (infarctionIndex == -1) {
                 System.err.println("bad error, couldn't find matching point");
             } else {
-                ((Point3Df) (elementAt(infarctionIndex))).x = x;
-                ((Point3Df) (elementAt(infarctionIndex))).y = y;
+                ((Vector3f) (elementAt(infarctionIndex))).X = x;
+                ((Vector3f) (elementAt(infarctionIndex))).Y = y;
             }
 
-            replaceElement(x, y, ((Point3Df) (elementAt(nearPoint))).z);
+            replaceElement(x, y, ((Vector3f) (elementAt(nearPoint))).Z);
         } else {
 
             // POINT is not an intersection point
-            replaceElement(x, y, ((Point3Df) (elementAt(nearPoint))).z);
+            replaceElement(x, y, ((Vector3f) (elementAt(nearPoint))).Z);
         }
     }
 
@@ -2746,12 +2750,12 @@ public class VOICardiology extends VOIBase {
         float dist;
         nearPoint = NOT_A_POINT;
 
-        CardioPoint3Df pt = null;
+        CardioVector3f pt = null;
 
         for (i = 0; i < size(); i++) {
-            pt = (CardioPoint3Df) elementAt(i);
-            xC = Math.round(pt.x * zoom * resolutionX);
-            yC = Math.round(pt.y * zoom * resolutionY);
+            pt = (CardioVector3f) elementAt(i);
+            xC = Math.round(pt.X * zoom * resolutionX);
+            yC = Math.round(pt.Y * zoom * resolutionY);
             dist = (float) MipavMath.distance(x, xC, y, yC);
 
             // don't return a near point for an infarction with index BOTH
@@ -2768,9 +2772,9 @@ public class VOICardiology extends VOIBase {
         } else {
 
             // if the point is an intersection point, return the section number
-            if (((CardioPoint3Df) elementAt(nearPoint)).isIntersection() ||
-                    ((CardioPoint3Df) elementAt(nearPoint)).isShared()) {
-                return ((CardioPoint3Df) elementAt(nearPoint)).getSection();
+            if (((CardioVector3f) elementAt(nearPoint)).isIntersection() ||
+                    ((CardioVector3f) elementAt(nearPoint)).isShared()) {
+                return ((CardioVector3f) elementAt(nearPoint)).getSection();
             }
             // otherwise return -1... means near a point, but not near an intersection point
             else {
@@ -2802,7 +2806,7 @@ public class VOICardiology extends VOIBase {
      */
     public void retraceContour(float zoomX, float zoomY, float resolutionX, float resolutionY, float[] resols, int x1,
                                int y1, Graphics g, int thickness) {
-        Point3Df ptRetrace = null;
+        Vector3f ptRetrace = null;
         double minDistance, dist;
         float x2, y2, z;
         int i, j, idx;
@@ -2833,9 +2837,9 @@ public class VOICardiology extends VOIBase {
             }
 
             // Return if trying to add the same point.
-            z = ((Point3Df) (elementAt(0))).z;
+            z = ((Vector3f) (elementAt(0))).Z;
 
-            if (contains(new Point3Df(x1, y1, z))) {
+            if (contains(new Vector3f(x1, y1, z))) {
                 return;
             }
 
@@ -2852,12 +2856,12 @@ public class VOICardiology extends VOIBase {
             end = oldContour.size();
 
             for (i = 0; i < end; i++) {
-                x2 = ((Point3Df) (oldContour.elementAt(i))).x;
-                y2 = ((Point3Df) (oldContour.elementAt(i))).y;
+                x2 = ((Vector3f) (oldContour.elementAt(i))).X;
+                y2 = ((Vector3f) (oldContour.elementAt(i))).Y;
                 dist = MipavMath.distance(x1, x2, y1, y2);
 
                 if (dist < minDistance) {
-                    ptRetrace = (Point3Df) oldContour.elementAt(i);
+                    ptRetrace = (Vector3f) oldContour.elementAt(i);
                     minDistance = dist;
                 }
             }
@@ -2893,8 +2897,8 @@ public class VOICardiology extends VOIBase {
             idx = 0;
 
             for (i = 0; i < size(); i++) {
-                x2 = ((Point3Df) (elementAt(i))).x;
-                y2 = ((Point3Df) (elementAt(i))).y;
+                x2 = ((Vector3f) (elementAt(i))).X;
+                y2 = ((Vector3f) (elementAt(i))).Y;
                 dist = MipavMath.distance(x1, x2, y1, y2);
 
                 if (dist < minDistance) {
@@ -2904,7 +2908,7 @@ public class VOICardiology extends VOIBase {
             }
 
             if (indexRetrace != NOT_A_POINT) {
-                insertElementAt(new Point3Df(x1, y1, z), idx);
+                insertElementAt(new Vector3f(x1, y1, z), idx);
                 indexRetrace = idx;
             } else {
                 indexRetrace = idx;
@@ -2990,22 +2994,22 @@ public class VOICardiology extends VOIBase {
      */
     public void transformContour(TransMatrix tMatrix, boolean doRound) {
         int i;
-        Point3Df point = null;
+        Vector3f point = null;
 
         try {
-            point = new Point3Df();
+            point = new Vector3f();
         } catch (OutOfMemoryError error) {
             System.gc();
             throw error;
         }
 
         for (i = 0; i < size(); i++) {
-            tMatrix.transform((Point3Df) (elementAt(i)), point);
+            tMatrix.transformAsPoint3Df((Vector3f) (elementAt(i)), point);
 
             if (doRound) {
-                setElementAt(new Point3Df(Math.round(point.x), Math.round(point.y), Math.round(point.z)), i);
+                setElementAt(new Vector3f(Math.round(point.X), Math.round(point.Y), Math.round(point.Z)), i);
             } else {
-                setElementAt(new Point3Df(point.x, point.y, point.z), i);
+                setElementAt(new Vector3f(point.X, point.Y, point.Z), i);
             }
         }
     }
@@ -3026,11 +3030,11 @@ public class VOICardiology extends VOIBase {
     public void transformContour(float thetaX, float thetaY, float thetaZ, float tX, float tY, float tZ, float scaleX,
                                  float scaleY, float scaleZ) {
         int i;
-        Point3Df point = null;
+        Vector3f point = null;
         TransMatrix tMatrix = null;
 
         try {
-            point = new Point3Df();
+            point = new Vector3f();
             tMatrix = new TransMatrix(4);
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -3040,15 +3044,15 @@ public class VOICardiology extends VOIBase {
         getGeometricCenter();
 
         // construct transMatrix object
-        // tMatrix.translate((gcPt.x+tX)*scaleX, (gcPt.y+tY)*scaleY, (gcPt.z+tZ)*scaleZ);
-        tMatrix.setTranslate((gcPt.x + tX), (gcPt.y + tY), (gcPt.z + tZ));
+        // tMatrix.translate((gcPt.X+tX)*scaleX, (gcPt.Y+tY)*scaleY, (gcPt.Z+tZ)*scaleZ);
+        tMatrix.setTranslate((gcPt.X + tX), (gcPt.Y + tY), (gcPt.Z + tZ));
         tMatrix.setRotate(thetaX, thetaY, thetaZ, TransMatrix.DEGREES);
         tMatrix.setZoom(scaleX, scaleY, scaleZ);
-        tMatrix.setTranslate(-gcPt.x, -gcPt.y, -gcPt.z);
+        tMatrix.setTranslate(-gcPt.X, -gcPt.Y, -gcPt.Z);
 
         for (i = 0; i < size(); i++) {
-            tMatrix.transform((Point3Df) (elementAt(i)), point);
-            setElementAt(new Point3Df(point.x, point.y, point.z), i);
+            tMatrix.transformAsPoint3Df((Vector3f) (elementAt(i)), point);
+            setElementAt(new Vector3f(point.X, point.Y, point.Z), i);
         }
     }
 
@@ -3062,8 +3066,8 @@ public class VOICardiology extends VOIBase {
         int i;
 
         for (i = 0; i < size(); i++) {
-            ((Point3Df) (elementAt(i))).x += xT;
-            ((Point3Df) (elementAt(i))).y += yT;
+            ((Vector3f) (elementAt(i))).X += xT;
+            ((Vector3f) (elementAt(i))).Y += yT;
         }
     }
 
@@ -3090,10 +3094,10 @@ public class VOICardiology extends VOIBase {
             end = size();
 
             for (i = 0; i < (end - 1); i++) {
-                ax = ((Point3Df) (elementAt(i))).x;
-                ay = ((Point3Df) (elementAt(i))).y;
-                bx = ((Point3Df) (elementAt(i + 1))).x;
-                by = ((Point3Df) (elementAt(i + 1))).y;
+                ax = ((Vector3f) (elementAt(i))).X;
+                ay = ((Vector3f) (elementAt(i))).Y;
+                bx = ((Vector3f) (elementAt(i + 1))).X;
+                by = ((Vector3f) (elementAt(i + 1))).Y;
 
                 if (MipavMath.distance(ax, bx, ay, by) <= 1.5) {
                     removeElementAt(i + 1); // remove adjacient points
@@ -3116,12 +3120,12 @@ public class VOICardiology extends VOIBase {
             }
 
             for (i = 0; i < (end - 2); i++) {
-                ax = ((Point3Df) (elementAt(i))).x;
-                ay = ((Point3Df) (elementAt(i))).y;
-                bx = ((Point3Df) (elementAt(i + 1))).x;
-                by = ((Point3Df) (elementAt(i + 1))).y;
-                cx = ((Point3Df) (elementAt(i + 2))).x;
-                cy = ((Point3Df) (elementAt(i + 2))).y;
+                ax = ((Vector3f) (elementAt(i))).X;
+                ay = ((Vector3f) (elementAt(i))).Y;
+                bx = ((Vector3f) (elementAt(i + 1))).X;
+                by = ((Vector3f) (elementAt(i + 1))).Y;
+                cx = ((Vector3f) (elementAt(i + 2))).X;
+                cy = ((Vector3f) (elementAt(i + 2))).Y;
 
                 if (testDistance(Math.round(bx), Math.round(ax), Math.round(cx), Math.round(by), Math.round(ay),
                                      Math.round(cy), constraint)) {
@@ -3145,8 +3149,8 @@ public class VOICardiology extends VOIBase {
      *
      * @return  twice the area of the triangle if CCW or -2*area if CW
      */
-    private float area2(Point3Df ptA, Point3Df ptB, float ptCx, float ptCy) {
-        return (((ptA.x - ptCx) * (ptB.y - ptCy)) - ((ptA.y - ptCy) * (ptB.x - ptCx)));
+    private float area2(Vector3f ptA, Vector3f ptB, float ptCx, float ptCy) {
+        return (((ptA.X - ptCx) * (ptB.Y - ptCy)) - ((ptA.Y - ptCy) * (ptB.X - ptCx)));
     }
 
     /**
@@ -3184,12 +3188,12 @@ public class VOICardiology extends VOIBase {
 
         // find the first intersection point on the OUTER
         boolean foundFirst = false;
-        CardioPoint3Df currentPt = null;
+        CardioVector3f currentPt = null;
 
         if (section < (numSections - 1)) {
 
             for (k = 0; k < size(); k++) {
-                currentPt = (CardioPoint3Df) elementAt(k);
+                currentPt = (CardioVector3f) elementAt(k);
 
                 if (!foundFirst && (currentPt.getType() == OUTER) && (currentPt.getSection() == section) &&
                         currentPt.isIntersection()) {
@@ -3207,12 +3211,12 @@ public class VOICardiology extends VOIBase {
             j = numPoints - 1;
             xPts = new float[numPoints];
             yPts = new float[numPoints];
-            xPts[numPoints - 1] = centerPt.x;
-            yPts[numPoints - 1] = centerPt.y;
+            xPts[numPoints - 1] = centerPt.X;
+            yPts[numPoints - 1] = centerPt.Y;
 
             for (k = 0; k < (numPoints - 1); k++) {
-                xPts[k] = ((CardioPoint3Df) elementAt(outerIndex1 + k)).x;
-                yPts[k] = ((CardioPoint3Df) elementAt(outerIndex1 + k)).y;
+                xPts[k] = ((CardioVector3f) elementAt(outerIndex1 + k)).X;
+                yPts[k] = ((CardioVector3f) elementAt(outerIndex1 + k)).Y;
             }
 
             for (i = 0; i < numPoints; i++) {
@@ -3234,7 +3238,7 @@ public class VOICardiology extends VOIBase {
             boolean foundLastSection = false;
 
             for (k = 0; k < size(); k++) {
-                currentPt = (CardioPoint3Df) elementAt(k);
+                currentPt = (CardioVector3f) elementAt(k);
 
                 if (!foundFirst && (currentPt.getType() == OUTER) && (currentPt.getSection() == 0) &&
                         currentPt.isIntersection()) {
@@ -3254,14 +3258,14 @@ public class VOICardiology extends VOIBase {
             j = numPoints - 1;
             xPts = new float[numPoints];
             yPts = new float[numPoints];
-            xPts[numPoints - 1] = centerPt.x;
-            yPts[numPoints - 1] = centerPt.y;
-            xPts[numPoints - 2] = ((CardioPoint3Df) elementAt(sectionZeroPt)).x;
-            yPts[numPoints - 2] = ((CardioPoint3Df) elementAt(sectionZeroPt)).y;
+            xPts[numPoints - 1] = centerPt.X;
+            yPts[numPoints - 1] = centerPt.Y;
+            xPts[numPoints - 2] = ((CardioVector3f) elementAt(sectionZeroPt)).X;
+            yPts[numPoints - 2] = ((CardioVector3f) elementAt(sectionZeroPt)).Y;
 
             for (k = 0; k < (numPoints - 2); k++) {
-                xPts[k] = ((CardioPoint3Df) elementAt(lastSectionPt + k)).x;
-                yPts[k] = ((CardioPoint3Df) elementAt(lastSectionPt + k)).y;
+                xPts[k] = ((CardioVector3f) elementAt(lastSectionPt + k)).X;
+                yPts[k] = ((CardioVector3f) elementAt(lastSectionPt + k)).Y;
             }
 
             for (i = 0; i < numPoints; i++) {
@@ -3318,7 +3322,7 @@ public class VOICardiology extends VOIBase {
                 for (;;) {
 
                     /* write to curve structure; */
-                    pts.addElement(new Point2Df(xx, yy));
+                    pts.addElement(new Vector2f(xx, yy));
 
                     if (xx == x2) {
                         return;
@@ -3338,7 +3342,7 @@ public class VOICardiology extends VOIBase {
                 for (;;) {
 
                     /* write to curve structure; */
-                    pts.addElement(new Point2Df(xx, yy));
+                    pts.addElement(new Vector2f(xx, yy));
 
                     if (yy == y2) {
                         return;
@@ -3372,10 +3376,10 @@ public class VOICardiology extends VOIBase {
      */
     private int getIndex(int type, int section, boolean isIntersection, boolean isShared) {
         int index = -1;
-        CardioPoint3Df tempPt = null;
+        CardioVector3f tempPt = null;
 
         for (int i = 0; i < size(); i++) {
-            tempPt = (CardioPoint3Df) elementAt(i);
+            tempPt = (CardioVector3f) elementAt(i);
 
             if ((tempPt.getType() == type) && (tempPt.getSection() == section) &&
                     (tempPt.isIntersection() == isIntersection) && (tempPt.isShared() == isShared)) {
@@ -3420,7 +3424,7 @@ public class VOICardiology extends VOIBase {
      * @return  DOCUMENT ME!
      */
     private boolean getSectionIndices(int type, int section, int infarctionIndex, int[] indices) {
-        CardioPoint3Df currentPt = null;
+        CardioVector3f currentPt = null;
         boolean foundFirst = false;
         int endSection = section + 1;
 
@@ -3431,7 +3435,7 @@ public class VOICardiology extends VOIBase {
         if (type != INFARCTION) {
 
             for (int j = 0; j < size(); j++) {
-                currentPt = (CardioPoint3Df) elementAt(j);
+                currentPt = (CardioVector3f) elementAt(j);
 
                 if (currentPt.getType() == type) {
 
@@ -3464,7 +3468,7 @@ public class VOICardiology extends VOIBase {
             boolean foundLast = false;
 
             for (int i = 0; i < size(); i++) {
-                currentPt = (CardioPoint3Df) elementAt(i);
+                currentPt = (CardioVector3f) elementAt(i);
 
                 if (currentPt.getType() == INFARCTION) {
 
@@ -3523,15 +3527,15 @@ public class VOICardiology extends VOIBase {
      *
      * @return  DOCUMENT ME!
      */
-    private int getSharedIndex(int type, int section, Point3Df sharedPt) {
+    private int getSharedIndex(int type, int section, Vector3f sharedPt) {
         int index = -1;
-        CardioPoint3Df tempPt = null;
+        CardioVector3f tempPt = null;
 
         for (int i = 0; i < size(); i++) {
-            tempPt = (CardioPoint3Df) elementAt(i);
+            tempPt = (CardioVector3f) elementAt(i);
 
-            if (tempPt.isShared() && (tempPt.getType() == type) && (tempPt.x == sharedPt.x) &&
-                    (tempPt.y == sharedPt.y)) {
+            if (tempPt.isShared() && (tempPt.getType() == type) && (tempPt.X == sharedPt.X) &&
+                    (tempPt.Y == sharedPt.Y)) {
                 return i;
             }
         }
@@ -3549,28 +3553,28 @@ public class VOICardiology extends VOIBase {
      * @return  DOCUMENT ME!
      */
     private boolean nearCardioLine(int x, int y, int type) {
-        CardioPoint3Df firstPt = null;
-        CardioPoint3Df secondPt = null;
+        CardioVector3f firstPt = null;
+        CardioVector3f secondPt = null;
         int x1, y1, x2, y2;
         int i;
         nearPoint = NOT_A_POINT;
 
         for (i = 0; i < size(); i++) {
 
-            if (((CardioPoint3Df) elementAt(i)).getType() == type) {
+            if (((CardioVector3f) elementAt(i)).getType() == type) {
                 break;
             }
         }
 
         int index = i;
-        firstPt = (CardioPoint3Df) elementAt(index);
+        firstPt = (CardioVector3f) elementAt(index);
 
         while (firstPt.getType() == type) {
-            x1 = (int) firstPt.x;
-            y1 = (int) firstPt.y;
+            x1 = (int) firstPt.X;
+            y1 = (int) firstPt.Y;
 
-            if (((index + 1) < size()) && (((CardioPoint3Df) elementAt(index + 1)).getType() == type)) {
-                secondPt = (CardioPoint3Df) elementAt(index + 1);
+            if (((index + 1) < size()) && (((CardioVector3f) elementAt(index + 1)).getType() == type)) {
+                secondPt = (CardioVector3f) elementAt(index + 1);
             } else {
 
                 // the INFARCTION contour is not closed, so no more testing
@@ -3578,11 +3582,11 @@ public class VOICardiology extends VOIBase {
                     return false;
                 }
 
-                secondPt = (CardioPoint3Df) elementAt(i);
+                secondPt = (CardioVector3f) elementAt(i);
             }
 
-            x2 = (int) secondPt.x;
-            y2 = (int) secondPt.y;
+            x2 = (int) secondPt.X;
+            y2 = (int) secondPt.Y;
 
             if (testDistance(x, x1, x2, y, y1, y2, 5)) {
                 nearPoint = index;
@@ -3596,7 +3600,7 @@ public class VOICardiology extends VOIBase {
                 break;
             }
 
-            firstPt = (CardioPoint3Df) elementAt(index);
+            firstPt = (CardioVector3f) elementAt(index);
         }
 
         return false;
@@ -3626,8 +3630,8 @@ public class VOICardiology extends VOIBase {
         }
 
         for (i = 0; i < size(); i++) {
-            x = (int) ((((CardioPoint3Df) (elementAt(i))).x * zoomX * resolutionX) + 0.5);
-            y = (int) ((((CardioPoint3Df) (elementAt(i))).y * zoomY * resolutionY) + 0.5);
+            x = (int) ((((CardioVector3f) (elementAt(i))).X * zoomX * resolutionX) + 0.5);
+            y = (int) ((((CardioVector3f) (elementAt(i))).Y * zoomY * resolutionY) + 0.5);
             scaledGon.addPoint(x, y);
         }
 
@@ -3660,16 +3664,16 @@ public class VOICardiology extends VOIBase {
             throw error;
         }
 
-        CardioPoint3Df currentPt = null;
+        CardioVector3f currentPt = null;
         int infarctionCounter = 0;
 
         for (i = 0; i < size(); i++) {
-            currentPt = (CardioPoint3Df) elementAt(i);
+            currentPt = (CardioVector3f) elementAt(i);
 
             // for inner and outer contours, add normally
             if ((type != INFARCTION) && (type == currentPt.getType())) {
-                x = (int) ((currentPt.x * zoomX * resolutionX) + 0.5);
-                y = (int) ((currentPt.y * zoomY * resolutionY) + 0.5);
+                x = (int) ((currentPt.X * zoomX * resolutionX) + 0.5);
+                y = (int) ((currentPt.Y * zoomY * resolutionY) + 0.5);
                 scaledGon.addPoint(x, y);
 
                 break;
@@ -3678,8 +3682,8 @@ public class VOICardiology extends VOIBase {
             else if ((type == INFARCTION) && (currentPt.getType() == INFARCTION) && currentPt.isShared()) {
 
                 if (infarctionCounter == (infarctionNum * 2)) {
-                    x = (int) ((currentPt.x * zoomX * resolutionX) + 0.5);
-                    y = (int) ((currentPt.y * zoomY * resolutionY) + 0.5);
+                    x = (int) ((currentPt.X * zoomX * resolutionX) + 0.5);
+                    y = (int) ((currentPt.Y * zoomY * resolutionY) + 0.5);
                     scaledGon.addPoint(x, y);
 
                     break;
@@ -3692,11 +3696,11 @@ public class VOICardiology extends VOIBase {
         i++;
 
         if (i < size()) {
-            currentPt = (CardioPoint3Df) elementAt(i);
+            currentPt = (CardioVector3f) elementAt(i);
 
             while (currentPt.getType() == type) {
-                x = (int) ((currentPt.x * zoomX * resolutionX) + 0.5);
-                y = (int) ((currentPt.y * zoomY * resolutionY) + 0.5);
+                x = (int) ((currentPt.X * zoomX * resolutionX) + 0.5);
+                y = (int) ((currentPt.Y * zoomY * resolutionY) + 0.5);
                 scaledGon.addPoint(x, y);
                 i++;
 
@@ -3704,13 +3708,13 @@ public class VOICardiology extends VOIBase {
                     break;
                 }
 
-                currentPt = (CardioPoint3Df) elementAt(i);
+                currentPt = (CardioVector3f) elementAt(i);
 
                 // if we are drawing the infarction counter, stop
                 // when we get to the next intersection point
                 if ((infarctionNum >= 0) && (type == INFARCTION) && currentPt.isShared()) {
-                    x = (int) ((currentPt.x * zoomX * resolutionX) + 0.5);
-                    y = (int) ((currentPt.y * zoomY * resolutionY) + 0.5);
+                    x = (int) ((currentPt.X * zoomX * resolutionX) + 0.5);
+                    y = (int) ((currentPt.Y * zoomY * resolutionY) + 0.5);
                     scaledGon.addPoint(x, y);
 
                     break;
@@ -3726,7 +3730,7 @@ public class VOICardiology extends VOIBase {
     /**
      * DOCUMENT ME!
      */
-    public class CardioPoint3Df extends Point3Df {
+    public class CardioVector3f extends Vector3f {
 
         /** Use serialVersionUID for interoperability. */
         private static final long serialVersionUID = -8047244892701374896L;
@@ -3744,7 +3748,7 @@ public class VOICardiology extends VOIBase {
         private int type;
 
         /**
-         * Creates a new CardioPoint3Df object.
+         * Creates a new CardioVector3f object.
          *
          * @param  x               DOCUMENT ME!
          * @param  y               DOCUMENT ME!
@@ -3754,7 +3758,7 @@ public class VOICardiology extends VOIBase {
          * @param  isIntersection  DOCUMENT ME!
          * @param  isShared        DOCUMENT ME!
          */
-        public CardioPoint3Df(float x, float y, float z, int type, int sectionNum, boolean isIntersection,
+        public CardioVector3f(float x, float y, float z, int type, int sectionNum, boolean isIntersection,
                               boolean isShared) {
             super(x, y, z);
             this.type = type;

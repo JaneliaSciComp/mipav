@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -69,13 +70,13 @@ public class JDialogTalairach extends JDialogBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private Point3Df anotherPtDicom;
+    private Vector3f anotherPtDicom;
 
     /** DOCUMENT ME! */
     private JRadioButton anteriorPt;
 
     /** DOCUMENT ME! */
-    private Point3Df anteriorPt3Df;
+    private Vector3f anteriorPt3Df;
 
     /** DOCUMENT ME! */
     private JButton applyTalairachButton;
@@ -87,7 +88,7 @@ public class JDialogTalairach extends JDialogBase {
     private JButton clearTalairachButton;
 
     /** DOCUMENT ME! */
-    private Point3Df firstPtDicom;
+    private Vector3f firstPtDicom;
 
 
     /** DOCUMENT ME! */
@@ -115,46 +116,46 @@ public class JDialogTalairach extends JDialogBase {
     private ModelImage image;
 
     /** DOCUMENT ME! */
-    private Point3Df inferiorEdgeDicom;
+    private Vector3f inferiorEdgeDicom;
 
     /** DOCUMENT ME! */
     private JRadioButton inferiorPt;
 
     /** DOCUMENT ME! */
-    private Point3Df inferiorPt3Df;
+    private Vector3f inferiorPt3Df;
 
     /** DOCUMENT ME! */
     private JRadioButton leftPt;
 
     /** DOCUMENT ME! */
-    private Point3Df leftPt3Df;
+    private Vector3f leftPt3Df;
 
     /** DOCUMENT ME! */
-    private Point3Df posteriorMarginDicom;
+    private Vector3f posteriorMarginDicom;
 
     /** DOCUMENT ME! */
     private JRadioButton posteriorPt;
 
     /** DOCUMENT ME! */
-    private Point3Df posteriorPt3Df;
+    private Vector3f posteriorPt3Df;
 
     /** DOCUMENT ME! */
     private JRadioButton rightPt;
 
     /** DOCUMENT ME! */
-    private Point3Df rightPt3Df;
+    private Vector3f rightPt3Df;
 
     /** DOCUMENT ME! */
     private JButton setTalairachButton;
 
     /** DOCUMENT ME! */
-    private Point3Df superiorEdgeDicom;
+    private Vector3f superiorEdgeDicom;
 
     /** DOCUMENT ME! */
     private JRadioButton superiorPt;
 
     /** DOCUMENT ME! */
-    private Point3Df superiorPt3Df;
+    private Vector3f superiorPt3Df;
 
     /** DOCUMENT ME! */
     private int tOffset;
@@ -174,13 +175,13 @@ public class JDialogTalairach extends JDialogBase {
         image = im;
         init();
 
-        Point3Df pt = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
+        Vector3f pt = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
 
         if (image.getFileInfo()[0].getFileFormat() == FileUtility.AFNI) {
             pt = ((FileInfoAfni) image.getFileInfo(0)).getAnteriorPt();
         }
 
-        if (pt.x != Float.POSITIVE_INFINITY) {
+        if (pt.X != Float.POSITIVE_INFINITY) {
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.ANTERIOR_PT,
                                                                                                     pt);
             setAnteriorPt(pt);
@@ -190,7 +191,7 @@ public class JDialogTalairach extends JDialogBase {
             pt = ((FileInfoAfni) image.getFileInfo(0)).getPosteriorPt();
         }
 
-        if (pt.x != Float.POSITIVE_INFINITY) {
+        if (pt.X != Float.POSITIVE_INFINITY) {
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.POSTERIOR_PT,
                                                                                                     pt);
             setPosteriorPt(pt);
@@ -200,7 +201,7 @@ public class JDialogTalairach extends JDialogBase {
             pt = ((FileInfoAfni) image.getFileInfo(0)).getSuperiorPt();
         }
 
-        if (pt.x != Float.POSITIVE_INFINITY) {
+        if (pt.X != Float.POSITIVE_INFINITY) {
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.SUPERIOR_PT,
                                                                                                     pt);
             setSuperiorPt(pt);
@@ -210,7 +211,7 @@ public class JDialogTalairach extends JDialogBase {
             pt = ((FileInfoAfni) image.getFileInfo(0)).getInferiorPt();
         }
 
-        if (pt.x != Float.POSITIVE_INFINITY) {
+        if (pt.X != Float.POSITIVE_INFINITY) {
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.INFERIOR_PT,
                                                                                                     pt);
             setInferiorPt(pt);
@@ -220,7 +221,7 @@ public class JDialogTalairach extends JDialogBase {
             pt = ((FileInfoAfni) image.getFileInfo(0)).getLeftPt();
         }
 
-        if (pt.x != Float.POSITIVE_INFINITY) {
+        if (pt.X != Float.POSITIVE_INFINITY) {
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.LEFT_PT,
                                                                                                     pt);
             setLeftPt(pt);
@@ -230,7 +231,7 @@ public class JDialogTalairach extends JDialogBase {
             pt = ((FileInfoAfni) image.getFileInfo(0)).getRightPt();
         }
 
-        if (pt.x != Float.POSITIVE_INFINITY) {
+        if (pt.X != Float.POSITIVE_INFINITY) {
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.RIGHT_PT,
                                                                                                     pt);
             setRightPt(pt);
@@ -252,11 +253,11 @@ public class JDialogTalairach extends JDialogBase {
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
         int pointType;
-        Point3Df pt;
+        Vector3f pt;
         boolean found;
 
         if (command.equals("setTalairach")) {
-            pt = new Point3Df(frame.getSagittalComponentSlice(), frame.getCoronalComponentSlice(),
+            pt = new Vector3f(frame.getSagittalComponentSlice(), frame.getCoronalComponentSlice(),
                               frame.getAxialComponentSlice());
 
             if (anteriorPt.isSelected()) {
@@ -429,12 +430,12 @@ public class JDialogTalairach extends JDialogBase {
     private void convertToTalairach() {
         int[] orient = new int[3];
         float[] orgResol = new float[3];
-        Point3Df pcie = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
-        Point3Df TCenter = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
+        Vector3f pcie = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
+        Vector3f TCenter = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
         ;
 
-        Point3Df alpha, beta, gamma, translation, rr;
-        Point3Df posrr = new Point3Df(0.0f, 0.0f, 0.0f);
+        Vector3f alpha, beta, gamma, translation, rr;
+        Vector3f posrr = new Vector3f(0.0f, 0.0f, 0.0f);
         int[] AFNIOrigExtents;
         float[] AFNIOrigResols;
         float vlength;
@@ -448,42 +449,42 @@ public class JDialogTalairach extends JDialogBase {
         String name;
         FileInfoAfni[] fileInfo;
         int oXdim, oYdim, oZdim;
-        Point3Df center = new Point3Df(0.0f, 0.0f, 0.0f);
+        Vector3f center = new Vector3f(0.0f, 0.0f, 0.0f);
         int x, y, z;
         float Sx, Sy, Sz;
         float Ty;
         float oXres = 1.0f;
         float oYres = 1.0f;
         float oZres = 1.0f;
-        Point3Df[] alphaArray = {
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f)
+        Vector3f[] alphaArray = {
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f)
         };
-        Point3Df[] betaArray = {
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f)
+        Vector3f[] betaArray = {
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f)
         };
-        Point3Df[] gammaArray = {
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f)
+        Vector3f[] gammaArray = {
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f)
         };
 
         // Talairach origin in original image in coordinates
-        Point3Df[] rrArray = {
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-            new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f)
+        Vector3f[] rrArray = {
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+            new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f)
         };
 
         // Talairach origin in +tlrc image in coordinates
-        Point3Df Tal = new Point3Df(0.0f, 0.0f, 0.0f);
+        Vector3f Tal = new Vector3f(0.0f, 0.0f, 0.0f);
         int[] botX = new int[12];
         int[] botY = new int[12];
         int[] botZ = new int[12];
@@ -494,9 +495,9 @@ public class JDialogTalairach extends JDialogBase {
         float bot_A, bot_M, bot_P, bot_R, bot_L, bot_I, bot_S;
         float top_A, top_M, top_P, top_R, top_L, top_I, top_S;
 
-        Point3Df bv_P = new Point3Df(0.0f, 0.0f, 0.0f);
-        Point3Df sv_P = new Point3Df(0.0f, 0.0f, 0.0f);
-        Point3Df BTCenter = new Point3Df(0.0f, 0.0f, 0.0f);
+        Vector3f bv_P = new Vector3f(0.0f, 0.0f, 0.0f);
+        Vector3f sv_P = new Vector3f(0.0f, 0.0f, 0.0f);
+        Vector3f BTCenter = new Vector3f(0.0f, 0.0f, 0.0f);
         int[] axisOrientation = new int[3];
         ViewJProgressBar progressBar;
 
@@ -543,7 +544,7 @@ public class JDialogTalairach extends JDialogBase {
             pcie = ((FileInfoAfni) image.getFileInfo(0)).getpcie();
         }
 
-        if (pcie.x == Float.POSITIVE_INFINITY) {
+        if (pcie.X == Float.POSITIVE_INFINITY) {
             MipavUtil.displayError("Error! Posterior commissure inferior edge from +orig to +acpc" +
                                    " transformation is not stored in fileInfo");
 
@@ -554,28 +555,28 @@ public class JDialogTalairach extends JDialogBase {
             TCenter = ((FileInfoAfni) image.getFileInfo(0)).getTalairachCenter();
         }
 
-        if (TCenter.x == Float.POSITIVE_INFINITY) {
+        if (TCenter.X == Float.POSITIVE_INFINITY) {
             MipavUtil.displayError("Error! The Talairach center from +orig to +acpc" +
                                    " transformation is not stored in fileInfo");
 
             return;
         }
 
-        Preferences.debug("Talairach center before Talairach conversion = " + TCenter.x + "," + TCenter.y + "," +
-                          TCenter.z + "\n");
+        Preferences.debug("Talairach center before Talairach conversion = " + TCenter.X + "," + TCenter.Y + "," +
+                          TCenter.Z + "\n");
 
         /* compute distances between points in various directions */
 
-        dist_ant = (TCenter.y - anteriorPt3Df.y) * vlength;
-        dist_med = (pcie.y - TCenter.y) * vlength;
-        dist_pos = (posteriorPt3Df.y - pcie.y) * vlength;
+        dist_ant = (TCenter.Y - anteriorPt3Df.Y) * vlength;
+        dist_med = (pcie.Y - TCenter.Y) * vlength;
+        dist_pos = (posteriorPt3Df.Y - pcie.Y) * vlength;
 
-        dist_sup = (superiorPt3Df.z - TCenter.z) * vlength;
-        dist_inf = (TCenter.z - inferiorPt3Df.z) * vlength;
+        dist_sup = (superiorPt3Df.Z - TCenter.Z) * vlength;
+        dist_inf = (TCenter.Z - inferiorPt3Df.Z) * vlength;
 
-        dist_lef = (leftPt3Df.x - TCenter.x) * vlength;
-        dist_rig = (TCenter.x - rightPt3Df.x) * vlength;
-        Preferences.debug("pcie.y = " + pcie.y + "\n");
+        dist_lef = (leftPt3Df.X - TCenter.X) * vlength;
+        dist_rig = (TCenter.X - rightPt3Df.X) * vlength;
+        Preferences.debug("pcie.Y = " + pcie.Y + "\n");
 
         /* Check anterior distance */
         if (((dist_ant / ATLAS_FRONT_TO_AC) < MIN_ALLOWED_DEVIATION) ||
@@ -655,8 +656,8 @@ public class JDialogTalairach extends JDialogBase {
 
         /* shift vectors in each direction, for each y cell (A,M,P) */
 
-        bv_P.y = shift_P;
-        sv_P.y = -shift_P / scale_P;
+        bv_P.Y = shift_P;
+        sv_P.Y = -shift_P / scale_P;
 
         /* bounds information for each direction, for each cell */
 
@@ -696,9 +697,9 @@ public class JDialogTalairach extends JDialogBase {
         oXdim = (int) (((2 * ViewJFrameTriImage.ATLAS_BBOX_LAT) + 1) / vlength); // 161/vlength
         oYdim = (int) ((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_BBOX_POS + 1) / vlength); // 191/vlength
         oZdim = (int) ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW + ViewJFrameTriImage.ATLAS_BBOX_SUP + 1) / vlength); // 151/vlength
-        Tal.x = ViewJFrameTriImage.ATLAS_BBOX_LAT / vlength;
-        Tal.y = ViewJFrameTriImage.ATLAS_BBOX_ANT / vlength;
-        Tal.z = ViewJFrameTriImage.ATLAS_BBOX_INF_NEW / vlength;
+        Tal.X = ViewJFrameTriImage.ATLAS_BBOX_LAT / vlength;
+        Tal.Y = ViewJFrameTriImage.ATLAS_BBOX_ANT / vlength;
+        Tal.Z = ViewJFrameTriImage.ATLAS_BBOX_INF_NEW / vlength;
         extents = new int[] { oXdim, oYdim, oZdim };
 
         // The resolutions actually vary over the 12 differently scaled regions - just use
@@ -758,11 +759,11 @@ public class JDialogTalairach extends JDialogBase {
         TransMatrix xfrm = new TransMatrix(4);
 
         /*
-         * TCenterOriginal.x = TCenterNew.x * Sx + center.x + Sx*dx dx = (TCenter.x -
-         * ViewJFrameTriImage.ATLAS_BBOX_LAT*Sx - center.x)/Sx TCenterOriginal.y = TCenterNew.y * Sy + center.y + Sy*dy
-         * dy = (TCenter.y - ViewJFrameTriImage.ATLAS_BBOX_ANT*Sy - center.y)/Sy pcieOriginal.y = pcieNew.y * Sy +
-         * center.y + Sy*dy2 dy2 = (pcie.y - (ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC)*Sy
-         * - center.y)/Sy
+         * TCenterOriginal.X = TCenterNew.X * Sx + center.X + Sx*dx dx = (TCenter.X -
+         * ViewJFrameTriImage.ATLAS_BBOX_LAT*Sx - center.X)/Sx TCenterOriginal.Y = TCenterNew.Y * Sy + center.Y + Sy*dy
+         * dy = (TCenter.Y - ViewJFrameTriImage.ATLAS_BBOX_ANT*Sy - center.Y)/Sy pcieOriginal.Y = pcieNew.Y * Sy +
+         * center.Y + Sy*dy2 dy2 = (pcie.Y - (ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC)*Sy
+         * - center.Y)/Sy
          */
         center = image.getImageCentermm(false);
         oXres = vlength;
@@ -772,14 +773,14 @@ public class JDialogTalairach extends JDialogBase {
         if (image.getFileInfo()[0].getFileFormat() == FileUtility.AFNI) {
             FileInfoAfni afniInfo = (FileInfoAfni) image.getFileInfo()[0];
 
-            // In the Talairach image pcie.y = TCenter.y + ViewJFrameTriImage.ATLAS_AC_TO_PC
+            // In the Talairach image pcie.Y = TCenter.Y + ViewJFrameTriImage.ATLAS_AC_TO_PC
             // Use the transformation matrix to determine TCenter in the ACPC image from a
             // posterior section in the Talairach section.  Call this TCenter calculated back
             // from the Talairach posterior BTCenter.
-            // BTCenter.x = TCenter.x and BTCenter.z = TCenter.z
-            // However, BTCenter.y = pcie.y -(ViewJFrameTriImage.ATLAS_AC_TO_PC)/scale_P
+            // BTCenter.X = TCenter.X and BTCenter.Z = TCenter.Z
+            // However, BTCenter.Y = pcie.Y -(ViewJFrameTriImage.ATLAS_AC_TO_PC)/scale_P
             // This follows from the fact that in the Talairach image:
-            // TCenter.y = pcie.y - (ViewJFrameTriImage.ATLAS_AC_TO_PC)
+            // TCenter.Y = pcie.Y - (ViewJFrameTriImage.ATLAS_AC_TO_PC)
             alpha = afniInfo.getAlpha();
             beta = afniInfo.getBeta();
             gamma = afniInfo.getGamma();
@@ -790,7 +791,7 @@ public class JDialogTalairach extends JDialogBase {
 
             // Create the transformation that goes from +acpc to +orig
             xfrm.identity();
-            xfrm.setTranslate(translation.x, translation.y, translation.z);
+            xfrm.setTranslate(translation.X, translation.Y, translation.Z);
             xfrm.setRotate(alpha, beta, gamma);
             Mat = xfrm.getMatrix();
 
@@ -798,16 +799,16 @@ public class JDialogTalairach extends JDialogBase {
             // One rr is the back projection in +orig of a Talairach origin in anterior and
             // median Talairach sections.  The other rr, called posrr, is the back projection in +orig
             // of a Talairach origin in posterior Talairach sections.
-            BTCenter.x = TCenter.x;
-            BTCenter.y = pcie.y - ((ViewJFrameTriImage.ATLAS_AC_TO_PC) / scale_P);
-            BTCenter.z = TCenter.z;
-            posrr.x = (float) ((BTCenter.x * vlength * Mat[0][0]) + (BTCenter.y * vlength * Mat[0][1]) +
-                               (BTCenter.z * vlength * Mat[0][2]) + Mat[0][3]) / AFNIOrigResols[0];
-            posrr.y = (float) ((BTCenter.x * vlength * Mat[1][0]) + (BTCenter.y * vlength * Mat[1][1]) +
-                               (BTCenter.z * vlength * Mat[1][2]) + Mat[1][3]) / AFNIOrigResols[1];
-            posrr.z = (float) ((BTCenter.x * vlength * Mat[2][0]) + (BTCenter.y * vlength * Mat[2][1]) +
-                               (BTCenter.z * vlength * Mat[2][2]) + Mat[2][3]) / AFNIOrigResols[2];
-            Preferences.debug("posrr = " + posrr.x + " " + posrr.y + " " + posrr.z + "\n");
+            BTCenter.X = TCenter.X;
+            BTCenter.Y = pcie.Y - ((ViewJFrameTriImage.ATLAS_AC_TO_PC) / scale_P);
+            BTCenter.Z = TCenter.Z;
+            posrr.X = (float) ((BTCenter.X * vlength * Mat[0][0]) + (BTCenter.Y * vlength * Mat[0][1]) +
+                               (BTCenter.Z * vlength * Mat[0][2]) + Mat[0][3]) / AFNIOrigResols[0];
+            posrr.Y = (float) ((BTCenter.X * vlength * Mat[1][0]) + (BTCenter.Y * vlength * Mat[1][1]) +
+                               (BTCenter.Z * vlength * Mat[1][2]) + Mat[1][3]) / AFNIOrigResols[1];
+            posrr.Z = (float) ((BTCenter.X * vlength * Mat[2][0]) + (BTCenter.Y * vlength * Mat[2][1]) +
+                               (BTCenter.Z * vlength * Mat[2][2]) + Mat[2][3]) / AFNIOrigResols[2];
+            Preferences.debug("posrr = " + posrr.X + " " + posrr.Y + " " + posrr.Z + "\n");
 
             progressBar = new ViewJProgressBar(afniInfo.getFileName(), "Transformation pass #" + 1, 0, 100, false, null,
                                                null);
@@ -817,7 +818,7 @@ public class JDialogTalairach extends JDialogBase {
             for (int i = 0; i < 12; i++) {
                 progressBar.setMessage("Transformation pass #" + (i + 1));
                 xfrm.identity();
-                xfrm.setTranslate(center.x, center.y, center.z);
+                xfrm.setTranslate(center.X, center.Y, center.Z);
 
                 switch (i) {
 
@@ -925,37 +926,37 @@ public class JDialogTalairach extends JDialogBase {
 
                     case A:
                         Sy = 1.0f / scale_A;
-                        Ty = (TCenter.y - (ViewJFrameTriImage.ATLAS_BBOX_ANT * Sy) - center.y) / Sy;
+                        Ty = (TCenter.Y - (ViewJFrameTriImage.ATLAS_BBOX_ANT * Sy) - center.Y) / Sy;
                         botY[i] = 0;
                         topY[i] = (int) Math.round(ViewJFrameTriImage.ATLAS_BBOX_ANT / vlength);
-                        rrArray[i].x = rr.x;
-                        rrArray[i].y = rr.y;
-                        rrArray[i].z = rr.z;
+                        rrArray[i].X = rr.X;
+                        rrArray[i].Y = rr.Y;
+                        rrArray[i].Z = rr.Z;
                         break;
 
                     case M:
                         Sy = 1.0f / scale_M;
-                        Ty = (TCenter.y - (ViewJFrameTriImage.ATLAS_BBOX_ANT * Sy) - center.y) / Sy;
+                        Ty = (TCenter.Y - (ViewJFrameTriImage.ATLAS_BBOX_ANT * Sy) - center.Y) / Sy;
                         botY[i] = (int) Math.round(ViewJFrameTriImage.ATLAS_BBOX_ANT / vlength);
                         topY[i] = (int)
                                       Math.round((ViewJFrameTriImage.ATLAS_BBOX_ANT +
                                                   ViewJFrameTriImage.ATLAS_AC_TO_PC) / vlength);
-                        rrArray[i].x = rr.x;
-                        rrArray[i].y = rr.y;
-                        rrArray[i].z = rr.z;
+                        rrArray[i].X = rr.X;
+                        rrArray[i].Y = rr.Y;
+                        rrArray[i].Z = rr.Z;
                         break;
 
                     case P:
                         Sy = 1.0f / scale_P;
-                        Ty = (pcie.y - ((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC) * Sy) -
-                              center.y) / Sy;
+                        Ty = (pcie.Y - ((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC) * Sy) -
+                              center.Y) / Sy;
                         botY[i] = (int)
                                       Math.round((ViewJFrameTriImage.ATLAS_BBOX_ANT +
                                                   ViewJFrameTriImage.ATLAS_AC_TO_PC) / vlength);
                         topY[i] = oYdim - 1;
-                        rrArray[i].x = posrr.x;
-                        rrArray[i].y = posrr.y;
-                        rrArray[i].z = posrr.z;
+                        rrArray[i].X = posrr.X;
+                        rrArray[i].Y = posrr.Y;
+                        rrArray[i].Z = posrr.Z;
                         break;
 
                     default:
@@ -963,9 +964,9 @@ public class JDialogTalairach extends JDialogBase {
                         Ty = 0.0f;
                         botY[i] = 0;
                         topY[i] = oYdim - 1;
-                        rrArray[i].x = rr.x;
-                        rrArray[i].y = rr.y;
-                        rrArray[i].z = rr.z;
+                        rrArray[i].X = rr.X;
+                        rrArray[i].Y = rr.Y;
+                        rrArray[i].Z = rr.Z;
                         break;
                 } // switch(y)
 
@@ -992,8 +993,8 @@ public class JDialogTalairach extends JDialogBase {
 
                 xfrm.setZoom(Sx, Sy, Sz);
 
-                xfrm.setTranslate((TCenter.x - (ViewJFrameTriImage.ATLAS_BBOX_LAT * Sx) - center.x) / Sx, Ty,
-                                  (TCenter.z - (ViewJFrameTriImage.ATLAS_BBOX_INF_NEW * Sz) - center.z) / Sz);
+                xfrm.setTranslate((TCenter.X - (ViewJFrameTriImage.ATLAS_BBOX_LAT * Sx) - center.X) / Sx, Ty,
+                                  (TCenter.Z - (ViewJFrameTriImage.ATLAS_BBOX_INF_NEW * Sz) - center.Z) / Sz);
                 Mat = xfrm.getMatrix();
 
                 transformTalairachTrilinear(imgBuffer, Mat, vlength, image.getExtents()[0], image.getExtents()[1],
@@ -1001,21 +1002,21 @@ public class JDialogTalairach extends JDialogBase {
                                             botY[i], botZ[i], topX[i], topY[i], topZ[i], progressBar, talairachImage);
 
                 // Find the combined matrix that allows going directly from +orig to +tlrc
-                alphaArray[i].x = Sx * alpha.x;
-                alphaArray[i].y = Sy * alpha.y;
-                alphaArray[i].z = Sz * alpha.z;
-                betaArray[i].x = Sx * beta.x;
-                betaArray[i].y = Sy * beta.y;
-                betaArray[i].z = Sz * beta.z;
-                gammaArray[i].x = Sx * gamma.x;
-                gammaArray[i].y = Sy * gamma.y;
-                gammaArray[i].z = Sz * gamma.z;
-                Preferences.debug("alphaArray[" + i + "]= " + alphaArray[i].x + " " + alphaArray[i].y + " " +
-                                  alphaArray[i].z + "\n");
-                Preferences.debug("betaArray[" + i + "]=" + betaArray[i].x + " " + betaArray[i].y + " " +
-                                  betaArray[i].z + "\n");
-                Preferences.debug("gammaArray[" + i + "]=" + gammaArray[i].x + " " + gammaArray[i].y + " " +
-                                  gammaArray[i].z + "\n");
+                alphaArray[i].X = Sx * alpha.X;
+                alphaArray[i].Y = Sy * alpha.Y;
+                alphaArray[i].Z = Sz * alpha.Z;
+                betaArray[i].X = Sx * beta.X;
+                betaArray[i].Y = Sy * beta.Y;
+                betaArray[i].Z = Sz * beta.Z;
+                gammaArray[i].X = Sx * gamma.X;
+                gammaArray[i].Y = Sy * gamma.Y;
+                gammaArray[i].Z = Sz * gamma.Z;
+                Preferences.debug("alphaArray[" + i + "]= " + alphaArray[i].X + " " + alphaArray[i].Y + " " +
+                                  alphaArray[i].Z + "\n");
+                Preferences.debug("betaArray[" + i + "]=" + betaArray[i].X + " " + betaArray[i].Y + " " +
+                                  betaArray[i].Z + "\n");
+                Preferences.debug("gammaArray[" + i + "]=" + gammaArray[i].X + " " + gammaArray[i].Y + " " +
+                                  gammaArray[i].Z + "\n");
             } // for (i = 0; i < 12; i++)
 
             talairachImage.calcMinMax();
@@ -1051,40 +1052,40 @@ public class JDialogTalairach extends JDialogBase {
              * T23)/iZresWish to find i,j,k from X,Y,Z */
 
             /* xfrm.identity();
-             * xfrm.setTranslate(center.x, center.y, center.z); Sx = 1.0f/scale_R; Sy = 1.0f/scale_A; Sz = 1.0f/scale_I;
-             * xfrm.setZoom(Sx,Sy,Sz); xfrm.setTranslate((TCenter.x - ViewJFrameTriImage.ATLAS_BBOX_LAT*Sx -
-             * center.x)/Sx,              (TCenter.y - ViewJFrameTriImage.ATLAS_BBOX_ANT*Sy - center.y)/Sy, (TCenter.z -
-             * ViewJFrameTriImage.ATLAS_BBOX_INF_NEW*Sz -center.z)/Sz); Mat = xfrm.getMatrix(); Matrix Ac = new
+             * xfrm.setTranslate(center.X, center.Y, center.Z); Sx = 1.0f/scale_R; Sy = 1.0f/scale_A; Sz = 1.0f/scale_I;
+             * xfrm.setZoom(Sx,Sy,Sz); xfrm.setTranslate((TCenter.X - ViewJFrameTriImage.ATLAS_BBOX_LAT*Sx -
+             * center.X)/Sx,              (TCenter.Y - ViewJFrameTriImage.ATLAS_BBOX_ANT*Sy - center.Y)/Sy, (TCenter.Z -
+             * ViewJFrameTriImage.ATLAS_BBOX_INF_NEW*Sz -center.Z)/Sz); Mat = xfrm.getMatrix(); Matrix Ac = new
              * Matrix(3,3); Ac.set(0,0,oXres*Mat[0][0]/vlength); Ac.set(0,1,oYres*Mat[0][1]/vlength);
              * Ac.set(0,2,oZres*Mat[0][2]/vlength); Ac.set(1,0,oXres*Mat[1][0]/vlength);
              * Ac.set(1,1,oYres*Mat[1][1]/vlength); Ac.set(1,2,oZres*Mat[1][2]/vlength);
              * Ac.set(2,0,oXres*Mat[2][0]/vlength); Ac.set(2,1,oYres*Mat[2][1]/vlength);
-             * Ac.set(2,2,oZres*Mat[2][2]/vlength); Matrix b = new Matrix(3,1); b.set(0,0,TCenter.x -
-             * Mat[0][3]/vlength); b.set(1,0,TCenter.y - Mat[1][3]/vlength); b.set(2,0,TCenter.z - Mat[2][3]/vlength);
+             * Ac.set(2,2,oZres*Mat[2][2]/vlength); Matrix b = new Matrix(3,1); b.set(0,0,TCenter.X -
+             * Mat[0][3]/vlength); b.set(1,0,TCenter.Y - Mat[1][3]/vlength); b.set(2,0,TCenter.Z - Mat[2][3]/vlength);
              * Matrix X = Ac.solve(b); // Note that the final tranformed Talairach origin in millimeters should be at //
              * (ViewJFrameTriImage.ATLAS_BBOX_LAT, ViewJFrameTriImage.ATLAS_BBOX_ANT,
              * ViewJFrameTriImage.ATLAS_BBOX_INF_NEW) = (80,80,65) Preferences.debug("Non rounded T = " + X.get(0,0) +
-             * "," +                              X.get(1,0) + "," + X.get(2,0) + "\n"); NTCenter.x =
-             * (int)Math.round(X.get(0,0)); NTCenter.y = (int)Math.round(X.get(1,0)); NTCenter.z =
-             * (int)Math.round(X.get(2,0)); Preferences.debug("Transformed Talairach origin = " + NTCenter.x + "  " +
-             * NTCenter.y +              "  " + NTCenter.z + "\n"); // Now check the location of the new transformed
+             * "," +                              X.get(1,0) + "," + X.get(2,0) + "\n"); NTCenter.X =
+             * (int)Math.round(X.get(0,0)); NTCenter.Y = (int)Math.round(X.get(1,0)); NTCenter.Z =
+             * (int)Math.round(X.get(2,0)); Preferences.debug("Transformed Talairach origin = " + NTCenter.X + "  " +
+             * NTCenter.Y +              "  " + NTCenter.Z + "\n"); // Now check the location of the new transformed
              * pcie y coordinate.  This should be at // (ViewJFrameTriImage.ATLAS_BBOX_ANT +
-             * ViewJFrameTriImage.ATLAS_AC_TO_PC) = 103 xfrm.identity(); xfrm.setTranslate(center.x, center.y,
-             * center.z); Sx = 1.0f/scale_R; Sy = 1.0f/scale_P; Sz = 1.0f/scale_I; xfrm.setZoom(Sx,Sy,Sz);
-             * xfrm.setTranslate((TCenter.x - ViewJFrameTriImage.ATLAS_BBOX_LAT*Sx - center.x)/Sx,              (pcie.y
-             * - (ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC)*Sy - center.y)/Sy, (TCenter.z -
-             * ViewJFrameTriImage.ATLAS_BBOX_INF_NEW*Sz -center.z)/Sz); Mat = xfrm.getMatrix(); Ac = new Matrix(3,3);
+             * ViewJFrameTriImage.ATLAS_AC_TO_PC) = 103 xfrm.identity(); xfrm.setTranslate(center.X, center.Y,
+             * center.Z); Sx = 1.0f/scale_R; Sy = 1.0f/scale_P; Sz = 1.0f/scale_I; xfrm.setZoom(Sx,Sy,Sz);
+             * xfrm.setTranslate((TCenter.X - ViewJFrameTriImage.ATLAS_BBOX_LAT*Sx - center.X)/Sx,              (pcie.Y
+             * - (ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC)*Sy - center.Y)/Sy, (TCenter.Z -
+             * ViewJFrameTriImage.ATLAS_BBOX_INF_NEW*Sz -center.Z)/Sz); Mat = xfrm.getMatrix(); Ac = new Matrix(3,3);
              * Ac.set(0,0,oXres*Mat[0][0]/vlength); Ac.set(0,1,oYres*Mat[0][1]/vlength);
              * Ac.set(0,2,oZres*Mat[0][2]/vlength); Ac.set(1,0,oXres*Mat[1][0]/vlength);
              * Ac.set(1,1,oYres*Mat[1][1]/vlength); Ac.set(1,2,oZres*Mat[1][2]/vlength);
              * Ac.set(2,0,oXres*Mat[2][0]/vlength); Ac.set(2,1,oYres*Mat[2][1]/vlength);
-             * Ac.set(2,2,oZres*Mat[2][2]/vlength); b = new Matrix(3,1); b.set(0,0,pcie.x - Mat[0][3]/vlength);
-             * b.set(1,0,pcie.y - Mat[1][3]/vlength); b.set(2,0,pcie.z - Mat[2][3]/vlength); X = Ac.solve(b);
+             * Ac.set(2,2,oZres*Mat[2][2]/vlength); b = new Matrix(3,1); b.set(0,0,pcie.X - Mat[0][3]/vlength);
+             * b.set(1,0,pcie.Y - Mat[1][3]/vlength); b.set(2,0,pcie.Z - Mat[2][3]/vlength); X = Ac.solve(b);
              *
              * Preferences.debug("Non rounded pcie = " + X.get(0,0) + "," +                              X.get(1,0) + ","
-             * + X.get(2,0) + "\n"); tpcie.x = (int)Math.round(X.get(0,0)); tpcie.y = (int)Math.round(X.get(1,0));
-             * tpcie.z = (int)Math.round(X.get(2,0)); Preferences.debug("Transformed pcie = " + tpcie.x + "  " + tpcie.y
-             * +              "  " + tpcie.z + "\n"); */
+             * + X.get(2,0) + "\n"); tpcie.X = (int)Math.round(X.get(0,0)); tpcie.Y = (int)Math.round(X.get(1,0));
+             * tpcie.Z = (int)Math.round(X.get(2,0)); Preferences.debug("Transformed pcie = " + tpcie.X + "  " + tpcie.Y
+             * +              "  " + tpcie.Z + "\n"); */
 
             progressBar.dispose();
 
@@ -1204,7 +1205,7 @@ public class JDialogTalairach extends JDialogBase {
      *
      * @param  pt  Point that was set.
      */
-    private void setAnteriorPt(Point3Df pt) {
+    private void setAnteriorPt(Vector3f pt) {
         anteriorPt.setSelected(true);
         posteriorPt.setSelected(false);
         superiorPt.setSelected(false);
@@ -1213,7 +1214,7 @@ public class JDialogTalairach extends JDialogBase {
         rightPt.setSelected(false);
         anteriorPt3Df = pt;
         haveAnteriorPt = true;
-        anteriorPt.setText("Most anterior point " + (int) pt.x + "," + (int) pt.y + "," + (int) pt.z);
+        anteriorPt.setText("Most anterior point " + (int) pt.X + "," + (int) pt.Y + "," + (int) pt.Z);
         setTalairachButton.setEnabled(false);
         clearTalairachButton.setEnabled(true);
 
@@ -1228,7 +1229,7 @@ public class JDialogTalairach extends JDialogBase {
      *
      * @param  pt  Point that was set.
      */
-    private void setInferiorPt(Point3Df pt) {
+    private void setInferiorPt(Vector3f pt) {
         anteriorPt.setSelected(false);
         posteriorPt.setSelected(false);
         superiorPt.setSelected(false);
@@ -1237,7 +1238,7 @@ public class JDialogTalairach extends JDialogBase {
         rightPt.setSelected(false);
         inferiorPt3Df = pt;
         haveInferiorPt = true;
-        inferiorPt.setText("Most inferior point " + (int) pt.x + "," + (int) pt.y + "," + (int) pt.z);
+        inferiorPt.setText("Most inferior point " + (int) pt.X + "," + (int) pt.Y + "," + (int) pt.Z);
         setTalairachButton.setEnabled(false);
         clearTalairachButton.setEnabled(true);
 
@@ -1252,7 +1253,7 @@ public class JDialogTalairach extends JDialogBase {
      *
      * @param  pt  Point that was set.
      */
-    private void setLeftPt(Point3Df pt) {
+    private void setLeftPt(Vector3f pt) {
         anteriorPt.setSelected(false);
         posteriorPt.setSelected(false);
         superiorPt.setSelected(false);
@@ -1261,7 +1262,7 @@ public class JDialogTalairach extends JDialogBase {
         rightPt.setSelected(false);
         leftPt3Df = pt;
         haveLeftPt = true;
-        leftPt.setText("Most left point " + (int) pt.x + "," + (int) pt.y + "," + (int) pt.z);
+        leftPt.setText("Most left point " + (int) pt.X + "," + (int) pt.Y + "," + (int) pt.Z);
         setTalairachButton.setEnabled(false);
         clearTalairachButton.setEnabled(true);
 
@@ -1276,7 +1277,7 @@ public class JDialogTalairach extends JDialogBase {
      *
      * @param  pt  Point that was set.
      */
-    private void setPosteriorPt(Point3Df pt) {
+    private void setPosteriorPt(Vector3f pt) {
         anteriorPt.setSelected(false);
         posteriorPt.setSelected(true);
         superiorPt.setSelected(false);
@@ -1285,7 +1286,7 @@ public class JDialogTalairach extends JDialogBase {
         rightPt.setSelected(false);
         posteriorPt3Df = pt;
         havePosteriorPt = true;
-        posteriorPt.setText("Most posterior point " + (int) pt.x + "," + (int) pt.y + "," + (int) pt.z);
+        posteriorPt.setText("Most posterior point " + (int) pt.X + "," + (int) pt.Y + "," + (int) pt.Z);
         setTalairachButton.setEnabled(false);
         clearTalairachButton.setEnabled(true);
 
@@ -1300,7 +1301,7 @@ public class JDialogTalairach extends JDialogBase {
      *
      * @param  pt  Point that was set.
      */
-    private void setRightPt(Point3Df pt) {
+    private void setRightPt(Vector3f pt) {
         anteriorPt.setSelected(false);
         posteriorPt.setSelected(false);
         superiorPt.setSelected(false);
@@ -1309,7 +1310,7 @@ public class JDialogTalairach extends JDialogBase {
         rightPt.setSelected(true);
         rightPt3Df = pt;
         haveRightPt = true;
-        rightPt.setText("Most right point " + (int) pt.x + "," + (int) pt.y + "," + (int) pt.z);
+        rightPt.setText("Most right point " + (int) pt.X + "," + (int) pt.Y + "," + (int) pt.Z);
         setTalairachButton.setEnabled(false);
         clearTalairachButton.setEnabled(true);
 
@@ -1324,7 +1325,7 @@ public class JDialogTalairach extends JDialogBase {
      *
      * @param  pt  Point that was set.
      */
-    private void setSuperiorPt(Point3Df pt) {
+    private void setSuperiorPt(Vector3f pt) {
         anteriorPt.setSelected(false);
         posteriorPt.setSelected(false);
         superiorPt.setSelected(true);
@@ -1333,7 +1334,7 @@ public class JDialogTalairach extends JDialogBase {
         rightPt.setSelected(false);
         superiorPt3Df = pt;
         haveSuperiorPt = true;
-        superiorPt.setText("Most superior point " + (int) pt.x + "," + (int) pt.y + "," + (int) pt.z);
+        superiorPt.setText("Most superior point " + (int) pt.X + "," + (int) pt.Y + "," + (int) pt.Z);
         setTalairachButton.setEnabled(false);
         clearTalairachButton.setEnabled(true);
 

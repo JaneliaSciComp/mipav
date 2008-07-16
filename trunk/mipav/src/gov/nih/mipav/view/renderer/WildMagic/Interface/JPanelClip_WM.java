@@ -194,7 +194,7 @@ public class JPanelClip_WM extends JInterfaceBase
         if ((source == extractButtonA) || (source == extractButtonS)) {
             // extract arbitrary clipping plane.
 /*
-            Point3Df[] pts;
+            Vector3f[] pts;
 
             pts = getAClipPlanePts();
 

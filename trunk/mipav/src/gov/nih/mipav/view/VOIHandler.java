@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 
@@ -535,11 +536,11 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     }
 
                     // convert this VOI over to scanner coords and pass on to UI
-                    Vector<Point3Df> scannerVector = new Vector<Point3Df>();
+                    Vector<Vector3f> scannerVector = new Vector<Vector3f>();
                     VOIBase tempBase = null;
                     int numPoints = 0;
-                    Point3Df inPoint = new Point3Df();
-                    Point3Df outPoint = null;
+                    Vector3f inPoint = new Vector3f();
+                    Vector3f outPoint = null;
 
                     for (int s = 0; s < zDim; s++) {
                         numCurves = curves[s].size();
@@ -549,10 +550,10 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                             numPoints = tempBase.size();
 
                             for (int k = 0; k < numPoints; k++) {
-                                outPoint = new Point3Df();
-                                inPoint.x = ((Point3Df) tempBase.elementAt(k)).x;
-                                inPoint.y = ((Point3Df) tempBase.elementAt(k)).y;
-                                inPoint.z = s;
+                                outPoint = new Vector3f();
+                                inPoint.X = ((Vector3f) tempBase.elementAt(k)).X;
+                                inPoint.Y = ((Vector3f) tempBase.elementAt(k)).Y;
+                                inPoint.Z = s;
 
                                 // System.err.println("Initial point: " + inPoint);
                                 // convert to scanner and add to vector
@@ -1415,7 +1416,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
      */
     public void graphPointVOI(VOI v, VOIPoint voiPt, int j) {
         int t, s;
-        Point3Df pt;
+        Vector3f pt;
 
         if ((compImage.getActiveImage().getNDims() != 3) && (compImage.getActiveImage().getNDims() != 4)) {
             return;
@@ -1435,9 +1436,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         ptRGBIntensities[c][s] = compImage.getActiveImage().getFloat(((4 *
                                                                                            ((s *
                                                                                                  compImage.getActiveImage().getSliceSize()) +
-                                                                                                ((int) pt.y *
+                                                                                                ((int) pt.Y *
                                                                                                      compImage.getActiveImage().getExtents()[0]) +
-                                                                                                (int) pt.x)) + c + 1));
+                                                                                                (int) pt.X)) + c + 1));
                     }
                 }
 
@@ -1467,9 +1468,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         ptPosition[s] = s;
                         ptIntensity[s] = compImage.getActiveImage().getFloat((int) ((s *
                                                                                          compImage.getActiveImage().getSliceSize()) +
-                                                                                    (pt.y *
+                                                                                    (pt.Y *
                                                                                          compImage.getActiveImage().getExtents()[0]) +
-                                                                                    pt.x));
+                                                                                    pt.X));
                     }
 
                     if (v.getContourGraph() == null) {
@@ -1507,8 +1508,8 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     pt = voiPt.exportPoint();
                     ptPosition[t] = t;
                     ptIntensity[t] = compImage.getActiveImage().getFloat((int) ((t * xDim * yDim * zDim) +
-                                                                                (pt.z * xDim * yDim) + (pt.y * xDim) +
-                                                                                pt.x));
+                                                                                (pt.Z * xDim * yDim) + (pt.Y * xDim) +
+                                                                                pt.X));
                 }
 
                 if (v.getContourGraph() == null) {
@@ -2168,7 +2169,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         compImage.getActiveImage().notifyImageDisplayListeners();
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-                            Point3Df pt;
+                            Vector3f pt;
 
                             for (j = 0; j < VOIs.VOIAt(i).getCurves()[compImage.getSlice()].size(); j++) {
 
@@ -2176,7 +2177,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                         .isActive()) {
                                     pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)))
                                              .getActivePt();
-                                    compImage.setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                                    compImage.setPixelInformationAtLocation((int) pt.X, (int) pt.Y);
 
                                     if (compImage.getActiveImage().getNDims() == 3) {
 
@@ -2196,9 +2197,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                                                                                                            ((s *
                                                                                                                                  compImage.getActiveImage().getExtents()[0] *
                                                                                                                                  compImage.getActiveImage().getExtents()[1]) +
-                                                                                                                                (pt.y *
+                                                                                                                                (pt.Y *
                                                                                                                                      compImage.getActiveImage().getExtents()[0]) +
-                                                                                                                                pt.x)) +
+                                                                                                                                pt.X)) +
                                                                                                                       c +
                                                                                                                       1));
                                                     }
@@ -2223,9 +2224,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                                     ptIntensity[s] = compImage.getActiveImage().getFloat((int) ((s *
                                                                                                                      compImage.getActiveImage().getExtents()[0] *
                                                                                                                      compImage.getActiveImage().getExtents()[1]) +
-                                                                                                                (pt.y *
+                                                                                                                (pt.Y *
                                                                                                                      compImage.getActiveImage().getExtents()[0]) +
-                                                                                                                pt.x));
+                                                                                                                pt.X));
                                                 }
                                             }
 
@@ -2246,12 +2247,12 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                                 ptIntensity[t] = compImage.getActiveImage().getFloat((int) ((t * xDim *
                                                                                                                  yDim *
                                                                                                                  zDim) +
-                                                                                                            (pt.z *
+                                                                                                            (pt.Z *
                                                                                                                  xDim *
                                                                                                                  yDim) +
-                                                                                                            (pt.y *
+                                                                                                            (pt.Y *
                                                                                                                  xDim) +
-                                                                                                            pt.x));
+                                                                                                            pt.X));
                                             }
                                         }
 
@@ -2294,10 +2295,10 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                                     compImage.getResolutionX(), compImage.getResolutionY(), g);
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
-                            Point3Df pt = VOIs.VOIAt(i).exportPSlicePoint(compImage.getSlice());
+                            Vector3f pt = VOIs.VOIAt(i).exportPSlicePoint(compImage.getSlice());
 
                             if (pt != null) {
-                                compImage.setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                                compImage.setPixelInformationAtLocation((int) pt.X, (int) pt.Y);
                             }
 
                         } else if (VOIs.VOIAt(i).getCurveType() == VOI.LINE) {
@@ -3023,14 +3024,14 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                     // DATA window
                                     if ((mouseEvent.getModifiers() &
                                              (MouseEvent.CTRL_DOWN_MASK | MouseEvent.CTRL_MASK)) != 0) {
-                                        Point3Df startPt = null;
-                                        Point3Df endPt = null;
+                                        Vector3f startPt = null;
+                                        Vector3f endPt = null;
 
-                                        startPt = (Point3Df)
+                                        startPt = (Vector3f)
                                                       ((VOILine)
                                                            (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)))
                                                           .elementAt(0);
-                                        endPt = (Point3Df)
+                                        endPt = (Vector3f)
                                                     ((VOILine)
                                                          (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)))
                                                         .elementAt(1);
@@ -3053,12 +3054,12 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                                 (compImage.getActiveImage().getFileInfo(0).getOrigin()[1] != 0) ||
                                                 (compImage.getActiveImage().getFileInfo(0).getOrigin()[2] != 0)) {
                                             String[] startValues = ViewJComponentEditImage.getScannerPositionLabels(compImage.getActiveImage(),
-                                                                                                                    new Point3Df(startPt.x,
-                                                                                                                                 startPt.y,
+                                                                                                                    new Vector3f(startPt.X,
+                                                                                                                                 startPt.Y,
                                                                                                                                  compImage.getSlice()));
                                             String[] endValues = ViewJComponentEditImage.getScannerPositionLabels(compImage.getActiveImage(),
-                                                                                                                  new Point3Df(endPt.x,
-                                                                                                                               endPt.y,
+                                                                                                                  new Vector3f(endPt.X,
+                                                                                                                               endPt.Y,
                                                                                                                                compImage.getSlice()));
 
                                             if ((startValues != null) && (endValues != null)) {
@@ -3074,23 +3075,23 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                             } else {
                                                 ViewUserInterface.getReference().setDataText("Line: " + tmpString2 +
                                                                                              ", Position(start): " +
-                                                                                             (int) (startPt.x) +
+                                                                                             (int) (startPt.X) +
                                                                                              " " +
-                                                                                             (int) (startPt.y) +
+                                                                                             (int) (startPt.Y) +
                                                                                              ", Position(end): " +
-                                                                                             (int) (endPt.x) + " " +
-                                                                                             (int) (endPt.y) +
+                                                                                             (int) (endPt.X) + " " +
+                                                                                             (int) (endPt.Y) +
                                                                                              "\n");
 
                                             }
                                         } else {
                                             ViewUserInterface.getReference().setDataText("Line: " + tmpString2 +
                                                                                          ", Position(start): " +
-                                                                                         (int) (startPt.x) + " " +
-                                                                                         (int) (startPt.y) +
+                                                                                         (int) (startPt.X) + " " +
+                                                                                         (int) (startPt.Y) +
                                                                                          ", Position(end): " +
-                                                                                         (int) (endPt.x) + " " +
-                                                                                         (int) (endPt.y) + "\n");
+                                                                                         (int) (endPt.X) + " " +
+                                                                                         (int) (endPt.Y) + "\n");
                                         }
 
                                         // do not pop up graph here, instead return
@@ -3524,7 +3525,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                     if (!((mouseEvent.isShiftDown() == true) ||
                               Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-                        VOIs.VOIAt(i).insertPSlicePt(new Point3Df(xS, yS, 0), compImage.getSlice());
+                        VOIs.VOIAt(i).insertPSlicePt(new Vector3f(xS, yS, 0), compImage.getSlice());
                         compImage.getActiveImage().notifyImageDisplayListeners(null, true);
                     }
 
@@ -3834,9 +3835,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                 updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                                 ((VOIPoint) (selectedCurve)).setActive(true);
 
-                                Point3Df pt = ((VOIPoint) (selectedCurve)).exportPoint();
+                                Vector3f pt = ((VOIPoint) (selectedCurve)).exportPoint();
 
-                                compImage.setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                                compImage.setPixelInformationAtLocation((int) pt.X, (int) pt.Y);
 
                                 voiID = VOIs.VOIAt(i).getID();
                             }
@@ -3935,9 +3936,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     for (j = 0; j < VOIs.VOIAt(i).getCurves()[compImage.getSlice()].size(); j++) {
 
                         if (((VOIBase) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j))).isActive()) {
-                            Point3Df pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)))
+                            Vector3f pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)))
                                               .getActivePt();
-                            compImage.setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                            compImage.setPixelInformationAtLocation((int) pt.X, (int) pt.Y);
 
                             break;
                         }
@@ -3953,9 +3954,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         if (((VOIBase) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j))).isActive()) {
 
                             if (VOIs.VOIAt(i).getCurveType() == VOI.LINE) {
-                                Point3Df pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)))
+                                Vector3f pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)))
                                                   .getActivePt();
-                                compImage.setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                                compImage.setPixelInformationAtLocation((int) pt.X, (int) pt.Y);
                             }
 
                             if (VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
@@ -4082,8 +4083,8 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     int numCurves = 0;
                     Vector scannerVector = (Vector) scannerVectors.elementAt(k);
                     int scannerIndex = 0;
-                    Point3Df inPoint = null;
-                    Point3Df outPoint = new Point3Df();
+                    Vector3f inPoint = null;
+                    Vector3f outPoint = new Vector3f();
 
                     int slice = -1;
 
@@ -4100,31 +4101,31 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                             slice = -1;
 
                             for (int c = 0; c < numPoints; c++, scannerIndex++) {
-                                inPoint = (Point3Df) scannerVector.elementAt(scannerIndex);
+                                inPoint = (Vector3f) scannerVector.elementAt(scannerIndex);
 
                                // System.err.println("In point (scanner): " + inPoint);
 
                                 // convert from scanner
                                 MipavCoordinateSystems.scannerToFile(inPoint, outPoint, compImage.getActiveImage());
-                                outPoint.x = Math.abs(outPoint.x);
-                                outPoint.y = Math.abs(outPoint.y);
-                                outPoint.z = Math.abs(outPoint.z);
-                                ((Point3Df) tempBase.elementAt(c)).x = outPoint.x;
-                                ((Point3Df) tempBase.elementAt(c)).y = outPoint.y;
-                                ((Point3Df) tempBase.elementAt(c)).z = outPoint.z;
+                                outPoint.X = Math.abs(outPoint.X);
+                                outPoint.Y = Math.abs(outPoint.Y);
+                                outPoint.Z = Math.abs(outPoint.Z);
+                                ((Vector3f) tempBase.elementAt(c)).X = outPoint.X;
+                                ((Vector3f) tempBase.elementAt(c)).Y = outPoint.Y;
+                                ((Vector3f) tempBase.elementAt(c)).Z = outPoint.Z;
 
                             //   System.err.println("Out point is: " + outPoint);
 
-                                if ((slice != -1) && (slice != MipavMath.round(outPoint.z))) {
+                                if ((slice != -1) && (slice != MipavMath.round(outPoint.Z))) {
 
                                     // error...shouldnt be different slices  System.err.println("ERROR: slice is " +
-                                    // slice + ", while outPoint.z is " + MipavMath.round(outPoint.z));
+                                    // slice + ", while outPoint.Z is " + MipavMath.round(outPoint.Z));
                                     MipavUtil.displayError("VOI's contour points do not fall on the same slices: aborting");
 
                                     return;
                                 }
 
-                                slice = MipavMath.round(outPoint.z);
+                                slice = MipavMath.round(outPoint.Z);
                             }
 
                             newCurves[slice].addElement(tempBase);
@@ -4238,22 +4239,22 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         }
                     }
 
-                    Point3Df oldPt;
+                    Vector3f oldPt;
                     float[] xt = new float[1];
                     float[] yt = new float[1];
                     float[] zt = new float[1];
                     
                     Vector polyVector = newVOI.getSortedPolyPoints();
                     
-                    int adjZ = (int)((VOI.PolyPointHolder)polyVector.elementAt(0)).getPoint().z;
+                    int adjZ = (int)((VOI.PolyPointHolder)polyVector.elementAt(0)).getPoint().Z;
                     int diff = currentSlice - adjZ;
                     
                     for (int i = 0; i < polyVector.size(); i++) {
                     	oldPt = ((VOI.PolyPointHolder)polyVector.elementAt(i)).getPoint();
-                    	xt[0] = oldPt.x;
-                    	yt[0] = oldPt.y;
-                    	zt[0] = oldPt.z + diff;
-                        outVOI.importCurve(xt, yt, zt, (int)oldPt.z + diff);
+                    	xt[0] = oldPt.X;
+                    	yt[0] = oldPt.Y;
+                    	zt[0] = oldPt.Z + diff;
+                        outVOI.importCurve(xt, yt, zt, (int)oldPt.Z + diff);
                     }
 
                     compImage.getActiveImage().getVOIs().addElement(outVOI);
@@ -4270,11 +4271,11 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 	newText.setFontSize(vText.getFontSize());
                 	newText.setUseMarker(vText.useMarker());
                 	
-                	Point3Df oldPt1 = (Point3Df)vText.elementAt(0);
-                	Point3Df oldPt2 = (Point3Df)vText.elementAt(1);
+                	Vector3f oldPt1 = (Vector3f)vText.elementAt(0);
+                	Vector3f oldPt2 = (Vector3f)vText.elementAt(1);
                 	
-                	Point3Df pt1 = new Point3Df(oldPt1.x, oldPt1.y, currentSlice);
-                	Point3Df pt2 = new Point3Df(oldPt2.x, oldPt2.y, currentSlice);
+                	Vector3f pt1 = new Vector3f(oldPt1.X, oldPt1.Y, currentSlice);
+                	Vector3f pt2 = new Vector3f(oldPt2.X, oldPt2.Y, currentSlice);
                 	
                 	newText.addElement(pt1);
                 	newText.addElement(pt2);
@@ -4313,7 +4314,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         int nVOI;
         int nCurves;
         Polygon[] gons = null;
-        Point3Df[] points = null;
+        Vector3f[] points = null;
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
         Vector[] curves;
         boolean doPoint = false;
@@ -4574,7 +4575,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         int nVOI;
         int nCurves;
         Polygon[] gons = null;
-        Point3Df[] points = null;
+        Vector3f[] points = null;
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
         Vector[] curves;
         boolean doPoint = false;
@@ -4678,7 +4679,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
     public void redrawGraphPointVOI() {
 
         int i, j;
-        Point3Df pt;
+        Vector3f pt;
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
         int nVOI = VOIs.size();
         int yDim = compImage.getActiveImage().getExtents()[1];
@@ -4710,9 +4711,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                     ptRGBIntensities[c][s] = compImage.getActiveImage().getFloat((int) ((4 *
                                                                                                              ((s *
                                                                                                                    compImage.getActiveImage().getSliceSize()) +
-                                                                                                                  (pt.y *
+                                                                                                                  (pt.Y *
                                                                                                                        compImage.getActiveImage().getExtents()[0]) +
-                                                                                                                  pt.x)) +
+                                                                                                                  pt.X)) +
                                                                                                         c + 1));
                                 }
                             }
@@ -4729,9 +4730,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                 ptPosition[s] = s;
                                 ptIntensity[s] = compImage.getActiveImage().getFloat((int) ((s *
                                                                                                  compImage.getActiveImage().getSliceSize()) +
-                                                                                            (pt.y *
+                                                                                            (pt.Y *
                                                                                                  compImage.getActiveImage().getExtents()[0]) +
-                                                                                            pt.x));
+                                                                                            pt.X));
                             }
 
                             // VOIs.VOIAt(i).getContourGraph().update(ptPosition, ptIntensity, j);
@@ -4745,8 +4746,8 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                      .exportPoint();
                             ptPosition[t] = t;
                             ptIntensity[t] = compImage.getActiveImage().getFloat((int) ((t * xDim * yDim * zDim) +
-                                                                                        (pt.z * xDim * yDim) +
-                                                                                        (pt.y * xDim) + pt.x));
+                                                                                        (pt.Z * xDim * yDim) +
+                                                                                        (pt.Y * xDim) + pt.X));
                         }
 
                         // VOIs.VOIAt(i).getContourGraph().update(ptPosition, ptIntensity, j);
@@ -5255,7 +5256,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         VOIs = compImage.getActiveImage().getVOIs();
         nVOI = VOIs.size();
 
-        Point3Df pt;
+        Vector3f pt;
 
         for (int i = 0; i < nVOI; i++) {
 
@@ -5266,7 +5267,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                     if (((VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j))).isActive()) {
                         pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j))).exportPoint();
-                        new JDialogPointArea(compImage.getFrame(), compImage.getActiveImage(), (int) pt.x, (int) pt.y,
+                        new JDialogPointArea(compImage.getFrame(), compImage.getActiveImage(), (int) pt.X, (int) pt.Y,
                                              true);
                     }
                 }
@@ -5616,7 +5617,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
              * fileInfo.getResolutions()[0]; }
              *
              * String[] values = compImage.setOverlayValues(compImage.getActiveImage().getImageOrientation(),
-             * MipavMath.round(fileInfo.xLocation),                                MipavMath.round(fileInfo.yLocation),
+             * MipavMath.round(fileInfo.XLocation),                                MipavMath.round(fileInfo.yLocation),
              * MipavMath.round(fileInfo.zLocation),                                MipavMath.round(reconDiameter));
              *
              * int index = values[0].length() / 2;
@@ -5921,11 +5922,11 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                                     ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(index))).setActive(true);
 
-                                    Point3Df pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(index)))
+                                    Vector3f pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(index)))
                                                       .getActivePt();
 
                                     if (pt != null) {
-                                        compImage.setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                                        compImage.setPixelInformationAtLocation((int) pt.X, (int) pt.Y);
                                     }
 
                                     compImage.getActiveImage().notifyImageDisplayListeners();
@@ -5972,10 +5973,10 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         if (size > 0) {
                             ((VOIBase) (VOIs.VOIAt(index).getCurves()[sl].elementAt(0))).setActive(true);
 
-                            Point3Df pt = ((VOIBase) (VOIs.VOIAt(index).getCurves()[sl].elementAt(0))).getActivePt();
+                            Vector3f pt = ((VOIBase) (VOIs.VOIAt(index).getCurves()[sl].elementAt(0))).getActivePt();
 
                             if (pt != null) {
-                                compImage.setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                                compImage.setPixelInformationAtLocation((int) pt.X, (int) pt.Y);
                             }
 
                             break;
@@ -6171,10 +6172,10 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                 VOIs.VOIAt(i).moveVOI(compImage.getSlice(), xDim, yDim,
                                                       compImage.getActiveImage().getExtents()[2], 0, 0, keyCode);
 
-                                Point3Df pt = VOIs.VOIAt(i).exportPSlicePoint(compImage.getSlice());
+                                Vector3f pt = VOIs.VOIAt(i).exportPSlicePoint(compImage.getSlice());
 
                                 if (pt != null) {
-                                    compImage.setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                                    compImage.setPixelInformationAtLocation((int) pt.X, (int) pt.Y);
                                 }
 
                                 compImage.getActiveImage().notifyImageDisplayListeners();
@@ -6203,10 +6204,10 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                                     // show the active point's new (or dif active pt) location
 
-                                    Point3Df pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).getActivePt();
+                                    Vector3f pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).getActivePt();
 
                                     if (pt != null) {
-                                        compImage.setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                                        compImage.setPixelInformationAtLocation((int) pt.X, (int) pt.Y);
                                     }
 
                                     compImage.getActiveImage().notifyImageDisplayListeners();
@@ -6301,10 +6302,10 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                 if (((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).isActive()) {
                                     VOIs.VOIAt(i).moveVOI(sl, xDim, yDim, zDim, distX, distY, 0);
 
-                                    Point3Df pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).getActivePt();
+                                    Vector3f pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).getActivePt();
 
                                     if (pt != null) {
-                                        compImage.setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                                        compImage.setPixelInformationAtLocation((int) pt.X, (int) pt.Y);
                                     }
 
                                     compImage.getActiveImage().notifyImageDisplayListeners();

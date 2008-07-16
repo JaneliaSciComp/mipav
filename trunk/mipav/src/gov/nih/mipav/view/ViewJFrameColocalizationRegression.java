@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
@@ -1631,12 +1632,12 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
             return;
         }
 
-        Point3Df pt = pointVOI.exportPoint();
-        originalX = Math.round(pt.x);
-        originalY = Math.round(pt.y);
+        Vector3f pt = pointVOI.exportPoint();
+        originalX = Math.round(pt.X);
+        originalY = Math.round(pt.Y);
 
         if (thresholdOn1) {
-            index1 = (int) Math.round(((pt.x - leftPad) / scale1) + min1);
+            index1 = (int) Math.round(((pt.X - leftPad) / scale1) + min1);
             index2f = (index1 * slope) + offset;
             ip = index1 - (int) Math.ceil(lineMin1);
             threshold = rThreshold[ip];
@@ -1645,7 +1646,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
             colocIntensityPercent2 = colocIntensity2[ip];
         } else {
             bin2 = destImage.getExtents()[1] - bottomPad - topPad;
-            invertedy = (2 * topPad) + bin2 - 1 - pt.y;
+            invertedy = (2 * topPad) + bin2 - 1 - pt.Y;
             index2 = (int) Math.round(((invertedy - topPad) / scale2) + min2);
             index1f = (index2 - offset) / slope;
             ip = index2 - (int) Math.ceil(lineMin2);
@@ -1895,12 +1896,12 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
             return;
         }
 
-        Point3Df pt = pointVOI.exportPoint();
-        originalX = Math.round(pt.x);
-        originalY = Math.round(pt.y);
+        Vector3f pt = pointVOI.exportPoint();
+        originalX = Math.round(pt.X);
+        originalY = Math.round(pt.Y);
 
         if (thresholdOn1) {
-            index1 = (int) Math.round(((pt.x - leftPad) / scale1) + min1);
+            index1 = (int) Math.round(((pt.X - leftPad) / scale1) + min1);
             index2f = (index1 * slope) + offset;
             ip = index1 - (int) Math.ceil(lineMin1);
             threshold = rThreshold[ip];
@@ -1909,7 +1910,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
             colocIntensityPercent2 = colocIntensity2[ip];
         } else {
             bin2 = destImage.getExtents()[1] - bottomPad - topPad;
-            invertedy = (2 * topPad) + bin2 - 1 - pt.y;
+            invertedy = (2 * topPad) + bin2 - 1 - pt.Y;
             index2 = (int) Math.round(((invertedy - topPad) / scale2) + min2);
             index1f = (index2 - offset) / slope;
             ip = index2 - (int) Math.ceil(lineMin2);

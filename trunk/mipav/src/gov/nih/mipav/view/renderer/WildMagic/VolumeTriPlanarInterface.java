@@ -1661,7 +1661,7 @@ implements MouseListener, ItemListener, ChangeListener {
      * @param  kScaledPosition  Ruida please add comment
      */
 //    public void setPathPosition(Point3f kPosition, Point3f kScaledPosition) {
-//        Point3Df kCenter = new Point3Df(kPosition.x * imageA.getExtents()[0], kPosition.y * imageA.getExtents()[1],
+//        Vector3f kCenter = new Vector3f(kPosition.x * imageA.getExtents()[0], kPosition.y * imageA.getExtents()[1],
 //                                        kPosition.z * imageA.getExtents()[2]);
 
 //         for (int iPlane = 0; iPlane < 3; iPlane++) {
@@ -1678,7 +1678,7 @@ implements MouseListener, ItemListener, ChangeListener {
      *
      * @param  position  the slice positions in FileCoordinates.
      */
-    public void setPositionLabels(Point3Df position) {
+    public void setPositionLabels(Vector3f position) {
 
         if (scannerLabel == null) {
             return;
@@ -1752,14 +1752,14 @@ implements MouseListener, ItemListener, ChangeListener {
      *
      * @param  center  the new slice positions in FileCoordinates
      */
-    public void setSliceFromPlane(Point3Df center) {
+    public void setSliceFromPlane(Vector3f center) {
         setPositionLabels(center);
 
          for (int i = 0; i < 3; i++) {
              m_akPlaneRender[i].setCenter(center);
          }
 
-         raycastRenderWM.SetCenter( new Vector3f( center.x, center.y, center.z ) );
+         raycastRenderWM.SetCenter( new Vector3f( center.X, center.Y, center.Z ) );
     }
 
     /**
@@ -1767,7 +1767,7 @@ implements MouseListener, ItemListener, ChangeListener {
      *
      * @param  center  the new slice positions in FileCoordinates
      */
-    public void setSliceFromSurface(Point3Df center) {
+    public void setSliceFromSurface(Vector3f center) {
         setPositionLabels(center);
 
         if (m_akPlaneRender != null)
@@ -1779,7 +1779,7 @@ implements MouseListener, ItemListener, ChangeListener {
                 }
             }
         }
-        raycastRenderWM.SetCenter( new Vector3f( center.x, center.y, center.z ) );
+        raycastRenderWM.SetCenter( new Vector3f( center.X, center.Y, center.Z ) );
     }
 
 
@@ -2075,8 +2075,8 @@ implements MouseListener, ItemListener, ChangeListener {
         if (imageB != null) {
             imageB.setRadiologicalView(bOn);
         }
-        Point3Df center = sliceGUI.getCenter();
-        raycastRenderWM.SetCenter( new Vector3f( center.x, center.y, center.z ) );    
+        Vector3f center = sliceGUI.getCenter();
+        raycastRenderWM.SetCenter( new Vector3f( center.X, center.Y, center.Z ) );    
         for (int i = 0; i < 3; i++) {
             m_akPlaneRender[i].setCenter(center);
         }
@@ -2638,7 +2638,7 @@ implements MouseListener, ItemListener, ChangeListener {
      *
      * @param  position  DOCUMENT ME!
      */
-    protected void set3DModelPosition(Point3Df position) {
+    protected void set3DModelPosition(Vector3f position) {
 
         float fMaxX = (m_kVolumeImageA.GetImage().getExtents()[0] - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[0];
         float fMaxY = (float) (m_kVolumeImageA.GetImage().getExtents()[1] - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
@@ -2655,9 +2655,9 @@ implements MouseListener, ItemListener, ChangeListener {
         float fY = fMaxY/fMax;
         float fZ = fMaxZ/fMax;
 
-        fX *= position.x/(m_kVolumeImageA.GetImage().getExtents()[0] - 1);
-        fY *= position.y/(m_kVolumeImageA.GetImage().getExtents()[1] - 1);
-        fZ *= position.z/(m_kVolumeImageA.GetImage().getExtents()[2] - 1);
+        fX *= position.X/(m_kVolumeImageA.GetImage().getExtents()[0] - 1);
+        fY *= position.Y/(m_kVolumeImageA.GetImage().getExtents()[1] - 1);
+        fZ *= position.Z/(m_kVolumeImageA.GetImage().getExtents()[2] - 1);
 
          modelViewLabelVals[0].setText("X: " + fX);
          modelViewLabelVals[1].setText("Y: " + fY);
@@ -2670,19 +2670,19 @@ implements MouseListener, ItemListener, ChangeListener {
      *
      * @param  position  DOCUMENT ME!
      */
-    protected void setPatientSlicePosition(Point3Df position) {
-        Point3Df axial = new Point3Df();
+    protected void setPatientSlicePosition(Vector3f position) {
+        Vector3f axial = new Vector3f();
         MipavCoordinateSystems.fileToPatient(position, axial, imageA, FileInfoBase.AXIAL);
 
-        Point3Df coronal = new Point3Df();
+        Vector3f coronal = new Vector3f();
         MipavCoordinateSystems.fileToPatient(position, coronal, imageA, FileInfoBase.CORONAL);
 
-        Point3Df sagittal = new Point3Df();
+        Vector3f sagittal = new Vector3f();
         MipavCoordinateSystems.fileToPatient(position, sagittal, imageA, FileInfoBase.SAGITTAL);
 
-        patientSliceLabelVals[0].setText("sagittal slice: " + (int) sagittal.z);
-        patientSliceLabelVals[1].setText("coronal slice: " + (int) coronal.z);
-        patientSliceLabelVals[2].setText("axial slice: " + (int) axial.z);
+        patientSliceLabelVals[0].setText("sagittal slice: " + (int) sagittal.Z);
+        patientSliceLabelVals[1].setText("coronal slice: " + (int) coronal.Z);
+        patientSliceLabelVals[2].setText("axial slice: " + (int) axial.Z);
     }
 
     /**

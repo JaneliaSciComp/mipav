@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms.utilities;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
@@ -385,8 +386,8 @@ public class AlgorithmFlip extends AlgorithmBase {
                                     for (int m = 0; m < polyTemp.length; m++) {
                                         nextVoi.importPolygon(polyTemp[m], voiSlice + (scope * direction));
                                     }
-                                } else if (shapesAtSlice[k] instanceof Point3Df[]) {
-                                    nextVoi.importPoints((Point3Df[]) shapesAtSlice[k], voiSlice + (scope * direction));
+                                } else if (shapesAtSlice[k] instanceof Vector3f[]) {
+                                    nextVoi.importPoints((Vector3f[]) shapesAtSlice[k], voiSlice + (scope * direction));
                                 }
 
                             }
@@ -435,8 +436,8 @@ public class AlgorithmFlip extends AlgorithmBase {
                                 Iterator itr = base.iterator();
 
                                 while (itr.hasNext()) {
-                                    Point3Df point = (Point3Df) itr.next();
-                                    point.y = -point.y + yDim;
+                                    Vector3f point = (Vector3f) itr.next();
+                                    point.Y = -point.Y + yDim;
                                 }
                             }
                         }
@@ -459,8 +460,8 @@ public class AlgorithmFlip extends AlgorithmBase {
                                 Iterator itr = base.iterator();
 
                                 while (itr.hasNext()) {
-                                    Point3Df point = (Point3Df) itr.next();
-                                    point.x = -point.x + xDim;
+                                    Vector3f point = (Vector3f) itr.next();
+                                    point.X = -point.X + xDim;
                                 }
                             }
                         }
@@ -500,9 +501,9 @@ public class AlgorithmFlip extends AlgorithmBase {
                         int[] ypoints = new int[base.size()];
 
                         for (int i = 0; i < xpoints.length; i++) {
-                            Point3Df tempPoint = (Point3Df) base.get(i);
-                            xpoints[i] = (int) tempPoint.x;
-                            ypoints[i] = (int) tempPoint.y;
+                            Vector3f tempPoint = (Vector3f) base.get(i);
+                            xpoints[i] = (int) tempPoint.X;
+                            ypoints[i] = (int) tempPoint.Y;
                         }
 
                         Polygon gon = new Polygon(xpoints, ypoints, xpoints.length);

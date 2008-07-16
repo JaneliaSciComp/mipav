@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
@@ -284,18 +285,18 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
         }
 
         TransMatrix xfrmAdj = null;
-        Point3Df centerAdj = adjImage.getImageCentermm(false);
+        Vector3f centerAdj = adjImage.getImageCentermm(false);
         xfrmAdj = new TransMatrix(res.length + 1);
         xfrmAdj.identity();
-        xfrmAdj.setTranslate(centerAdj.x, centerAdj.y);
-        xfrmAdj.setTranslate(-centerAdj.x, -centerAdj.y);
+        xfrmAdj.setTranslate(centerAdj.X, centerAdj.Y);
+        xfrmAdj.setTranslate(-centerAdj.X, -centerAdj.Y);
 
         TransMatrix xfrmRef;
-        Point3Df centerRef = refImage.getImageCentermm(false);
+        Vector3f centerRef = refImage.getImageCentermm(false);
         xfrmRef = new TransMatrix(res.length + 1);
         xfrmRef.identity();
-        xfrmRef.setTranslate(centerRef.x, centerRef.y);
-        xfrmRef.setTranslate(-centerRef.x, -centerRef.y);
+        xfrmRef.setTranslate(centerRef.X, centerRef.Y);
+        xfrmRef.setTranslate(-centerRef.X, -centerRef.Y);
 
         AlgorithmTransform trans = null;
 

@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -237,7 +238,7 @@ public class AlgorithmBSmooth extends AlgorithmBase {
         int i, j;
         float pct;
         float index;
-        Point2Df interpPt = new Point2Df();
+        Vector2f interpPt = new Vector2f();
 
         float[] newXPts, newYPts;
 
@@ -254,8 +255,8 @@ public class AlgorithmBSmooth extends AlgorithmBase {
              * returns an index 2 below the maximum array index */
             index = arcLength.invlen(pct);
             interpPt = bSpline.bSplineJetXY(0, index, xPoints, yPoints);
-            newXPts[i] = interpPt.x;
-            newYPts[i] = interpPt.y;
+            newXPts[i] = interpPt.X;
+            newYPts[i] = interpPt.Y;
         }
 
         for (j = 0; j < nPts; j++) {

@@ -2557,7 +2557,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @param  kScaledPosition  position of the flythru view point along the flythru path.
      */
     public void setPathPosition(Point3f kPosition, Point3f kScaledPosition) {
-        Point3Df kCenter = new Point3Df(kPosition.x * imageA.getExtents()[0], kPosition.y * imageA.getExtents()[1],
+
+    	Vector3f center = new Vector3f( kPosition.x * imageA.getExtents()[0], kPosition.y * imageA.getExtents()[1],
+                kPosition.z * imageA.getExtents()[2] );
+        WildMagic.LibFoundation.Mathematics.Vector3f kCenter = new WildMagic.LibFoundation.Mathematics.Vector3f(kPosition.x * imageA.getExtents()[0], kPosition.y * imageA.getExtents()[1],
                                         kPosition.z * imageA.getExtents()[2]);
         if ( m_akPlaneRender != null ) {
 	        for (int iPlane = 0; iPlane < 3; iPlane++) {
@@ -2565,7 +2568,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 	        }
         }
 
-        surRender.setCenter(kCenter);
+        surRender.setCenter(center);
         surRender.getSurfaceDialog().setPathPosition(kScaledPosition);
 
     }
@@ -2575,7 +2578,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      *
      * @param  position  the slice positions in FileCoordinates.
      */
-    public void setPositionLabels(Point3Df position) {
+    public void setPositionLabels(WildMagic.LibFoundation.Mathematics.Vector3f position) {
 
         if (scannerLabel == null) {
             return;
@@ -2680,16 +2683,17 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      *
      * @param  center  the new slice positions in FileCoordinates
      */
-    public void setSliceFromPlane(Point3Df center) {
-        setPositionLabels(center);
+    public void setSliceFromPlane(WildMagic.LibFoundation.Mathematics.Vector3f kCenter) {
+        setPositionLabels(kCenter);
         if ( m_akPlaneRender != null ) {
 	        for (int i = 0; i < 3; i++) {
-	            m_akPlaneRender[i].setCenter(center);
+	            m_akPlaneRender[i].setCenter(kCenter);
 	        }
         }
         
         if ( surRender != null ) {
-           surRender.setCenter(center);
+        	Vector3f center = new Vector3f( kCenter.X, kCenter.Y, kCenter.Z );
+        	surRender.setCenter(center);
         }
     }
 
@@ -2698,7 +2702,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      *
      * @param  center  the new slice positions in FileCoordinates
      */
-    public void setSliceFromSurface(Point3Df center) {
+    public void setSliceFromSurface(WildMagic.LibFoundation.Mathematics.Vector3f center) {
         setPositionLabels(center);
 
         if (m_akPlaneRender == null) {
@@ -4135,8 +4139,9 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      *
      * @param  position  DOCUMENT ME!
      */
-    private void set3DModelPosition(Point3Df position) {
-        Point3Df screen = new Point3Df();
+    private void set3DModelPosition(WildMagic.LibFoundation.Mathematics.Vector3f kPosition) {
+        Vector3f screen = new Vector3f();
+        Vector3f position = new Vector3f( kPosition.X, kPosition.Y, kPosition.Z );
         surRender.ModelToScreen(position, screen);
 
         modelViewLabelVals[0].setText("X: " + screen.x);
@@ -4149,19 +4154,19 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      *
      * @param  position  DOCUMENT ME!
      */
-    private void setPatientSlicePosition(Point3Df position) {
-        Point3Df axial = new Point3Df();
+    private void setPatientSlicePosition(WildMagic.LibFoundation.Mathematics.Vector3f position) {
+    	WildMagic.LibFoundation.Mathematics.Vector3f axial = new WildMagic.LibFoundation.Mathematics.Vector3f();
         MipavCoordinateSystems.fileToPatient(position, axial, imageA, FileInfoBase.AXIAL);
 
-        Point3Df coronal = new Point3Df();
+        WildMagic.LibFoundation.Mathematics.Vector3f coronal = new WildMagic.LibFoundation.Mathematics.Vector3f();
         MipavCoordinateSystems.fileToPatient(position, coronal, imageA, FileInfoBase.CORONAL);
 
-        Point3Df sagittal = new Point3Df();
+        WildMagic.LibFoundation.Mathematics.Vector3f sagittal = new WildMagic.LibFoundation.Mathematics.Vector3f();
         MipavCoordinateSystems.fileToPatient(position, sagittal, imageA, FileInfoBase.SAGITTAL);
 
-        patientSliceLabelVals[0].setText("sagittal slice: " + (int) sagittal.z);
-        patientSliceLabelVals[1].setText("coronal slice: " + (int) coronal.z);
-        patientSliceLabelVals[2].setText("axial slice: " + (int) axial.z);
+        patientSliceLabelVals[0].setText("sagittal slice: " + (int) sagittal.Z);
+        patientSliceLabelVals[1].setText("coronal slice: " + (int) coronal.Z);
+        patientSliceLabelVals[2].setText("axial slice: " + (int) axial.Z);
     }
 
     /**

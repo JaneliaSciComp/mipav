@@ -12,9 +12,6 @@ import java.awt.*;
 import java.awt.image.*;
 
 import java.io.*;
-
-import javax.media.j3d.*;
-
 import javax.vecmath.*;
 
 
@@ -303,7 +300,7 @@ public class ViewJComponentTriSliceImage {
      */
     public boolean show(int tSlice, int zSlice,
                         ModelLUT _LUTa, ModelLUT _LUTb,
-                        boolean forceShow, Point3Df[] akVertices)
+                        boolean forceShow, Vector3f[] akVertices)
     {
 
         if ( imageA == null )
@@ -314,7 +311,13 @@ public class ViewJComponentTriSliceImage {
         int[] imageBufferA =
             new int[ localImageExtents[0] * localImageExtents[1] * buffFactor ];
 
-        m_kPatientSlice.setDiagonalVerts( akVertices );
+        WildMagic.LibFoundation.Mathematics.Vector3f[] akDiagonalVertices = new WildMagic.LibFoundation.Mathematics.Vector3f[akVertices.length];
+        for ( int i = 0; i < akVertices.length; i++ )
+        {
+        	akDiagonalVertices[i] = new WildMagic.LibFoundation.Mathematics.Vector3f( akVertices[i].x,
+        			akVertices[i].y, akVertices[i].z );
+        }
+        m_kPatientSlice.setDiagonalVerts( akDiagonalVertices );
         m_kPatientSlice.setLUTa( _LUTa );
         m_kPatientSlice.setLUTb( _LUTb );
 

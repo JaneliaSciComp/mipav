@@ -1,9 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import java.util.*;
-
-import javax.vecmath.*;
 
 
 /**
@@ -66,7 +66,7 @@ public class AlgorithmQuadraticFit {
     /**
      * The center G, orientation R, diagonal matrix D, and constant L in the factorization (P-G)^T R^T D R (P-G) = L.
      */
-    protected Point3f m_kCenter;
+    protected Vector3f m_kCenter;
 
     /** DOCUMENT ME! */
     protected Matrix3f m_kOrient;
@@ -91,10 +91,10 @@ public class AlgorithmQuadraticFit {
         }
 
         for (int i = 0; i < kPoints.size(); i++) {
-            Point3f kPoint = (Point3f) kPoints.get(i);
-            float fX = kPoint.x;
-            float fY = kPoint.y;
-            float fZ = kPoint.z;
+            Vector3f kPoint = (Vector3f) kPoints.get(i);
+            float fX = kPoint.X;
+            float fY = kPoint.Y;
+            float fZ = kPoint.Z;
             float fX2 = fX * fX;
             float fY2 = fY * fY;
             float fZ2 = fZ * fZ;
@@ -202,7 +202,7 @@ public class AlgorithmQuadraticFit {
             m_afCoeff[iRow] = (float) kES.getEigenvector(iRow, 0);
         }
 
-        m_kCenter = new Point3f();
+        m_kCenter = new Vector3f();
         m_kOrient = new Matrix3f();
         m_afDiagonal = new float[3];
 
@@ -213,42 +213,42 @@ public class AlgorithmQuadraticFit {
                                    m_afCoeff[6]);
         Vector3f kB = new Vector3f(m_afCoeff[1], m_afCoeff[2], m_afCoeff[3]);
         Matrix3f kInvA = new Matrix3f();
-        kInvA.invert(kA);
-        kInvA.transform(kB, m_kCenter);
-        m_kCenter.scale(-0.5f);
-        kA.transform(m_kCenter, kB);
-        m_fConstant = (m_kCenter.x * kB.x) + (m_kCenter.y * kB.y) + (m_kCenter.z * kB.z) - m_afCoeff[0];
+        kInvA.Inverse(kA);
+        kInvA.Mult(kB, m_kCenter);
+        m_kCenter.Scale(-0.5f);
+        kA.Mult(m_kCenter, kB);
+        m_fConstant = (m_kCenter.X * kB.X) + (m_kCenter.Y * kB.Y) + (m_kCenter.Z * kB.Z) - m_afCoeff[0];
 
         // factor A = R*D*R^T where R is a rotation and D is diagonal
         kES = new AlgorithmEigensolver(3);
-        kES.setMatrix(0, 0, kA.m00);
-        kES.setMatrix(0, 1, kA.m01);
-        kES.setMatrix(0, 2, kA.m02);
-        kES.setMatrix(1, 0, kA.m10);
-        kES.setMatrix(1, 1, kA.m11);
-        kES.setMatrix(1, 2, kA.m12);
-        kES.setMatrix(2, 0, kA.m20);
-        kES.setMatrix(2, 1, kA.m21);
-        kES.setMatrix(2, 2, kA.m22);
+        kES.setMatrix(0, 0, kA.M00);
+        kES.setMatrix(0, 1, kA.M01);
+        kES.setMatrix(0, 2, kA.M02);
+        kES.setMatrix(1, 0, kA.M10);
+        kES.setMatrix(1, 1, kA.M11);
+        kES.setMatrix(1, 2, kA.M12);
+        kES.setMatrix(2, 0, kA.M20);
+        kES.setMatrix(2, 1, kA.M21);
+        kES.setMatrix(2, 2, kA.M22);
         kES.solve();
 
         // the orientation is determined by the eigenvectors
-        m_kOrient.m00 = (float) kES.getEigenvector(0, 0);
-        m_kOrient.m01 = (float) kES.getEigenvector(0, 1);
-        m_kOrient.m02 = (float) kES.getEigenvector(0, 2);
-        m_kOrient.m10 = (float) kES.getEigenvector(1, 0);
-        m_kOrient.m11 = (float) kES.getEigenvector(1, 1);
-        m_kOrient.m12 = (float) kES.getEigenvector(1, 2);
-        m_kOrient.m20 = (float) kES.getEigenvector(2, 0);
-        m_kOrient.m21 = (float) kES.getEigenvector(2, 1);
-        m_kOrient.m22 = (float) kES.getEigenvector(2, 2);
+        m_kOrient.M00 = (float) kES.getEigenvector(0, 0);
+        m_kOrient.M01 = (float) kES.getEigenvector(0, 1);
+        m_kOrient.M02 = (float) kES.getEigenvector(0, 2);
+        m_kOrient.M10 = (float) kES.getEigenvector(1, 0);
+        m_kOrient.M11 = (float) kES.getEigenvector(1, 1);
+        m_kOrient.M12 = (float) kES.getEigenvector(1, 2);
+        m_kOrient.M20 = (float) kES.getEigenvector(2, 0);
+        m_kOrient.M21 = (float) kES.getEigenvector(2, 1);
+        m_kOrient.M22 = (float) kES.getEigenvector(2, 2);
 
-        if (m_kOrient.determinant() < 0.0f) {
+        if (m_kOrient.Determinant() < 0.0f) {
 
             // remove reflection by flipping direction of first eigenvector
-            m_kOrient.m00 = -m_kOrient.m00;
-            m_kOrient.m10 = -m_kOrient.m10;
-            m_kOrient.m20 = -m_kOrient.m20;
+            m_kOrient.M00 = -m_kOrient.M00;
+            m_kOrient.M10 = -m_kOrient.M10;
+            m_kOrient.M20 = -m_kOrient.M20;
         }
 
         // get the diagonal components
@@ -264,7 +264,7 @@ public class AlgorithmQuadraticFit {
      *
      * @return  the center point
      */
-    public final Point3f getCenter() {
+    public final Vector3f getCenter() {
         return m_kCenter;
     }
 

@@ -1,6 +1,10 @@
 package gov.nih.mipav.model.structures;
 
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Vector4f;
+
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.jama.*;
 
@@ -259,17 +263,17 @@ public class TransMatrix extends Matrix // implements TableModelListener
         tinvpmat.identity(4, 4);
 
         /* Vector4 type and functions need to be added to the common set. */
-        Vector4Dd prhs, psol;
-        prhs = new Vector4Dd();
-        psol = new Vector4Dd();
+        Vector4f prhs, psol;
+        prhs = new Vector4f();
+        psol = new Vector4f();
 
-        Vector3Dd[] row;
-        Vector3Dd pdum3;
-        row = new Vector3Dd[3];
-        pdum3 = new Vector3Dd();
+        Vector3f[] row;
+        Vector3f pdum3;
+        row = new Vector3f[3];
+        pdum3 = new Vector3f();
 
         for (i = 0; i < 3; i++) {
-            row[i] = new Vector3Dd();
+            row[i] = new Vector3f();
         }
 
         locmat = (Matrix) mat.clone();
@@ -309,8 +313,8 @@ public class TransMatrix extends Matrix // implements TableModelListener
          * // First, isolate perspective.  This is the messiest. if ( locmat.get( 0, 3 ) != 0 || locmat.get( 1, 3 ) != 0
          * || locmat.get( 2, 3 ) != 0 ) {
          *
-         * // prhs is the right hand side of the equation. prhs.x = locmat.get( 0, 3 ); prhs.y = locmat.get( 1, 3 );
-         * prhs.z = locmat.get( 2, 3 ); prhs.w = locmat.get( 3, 3 );
+         * // prhs is the right hand side of the equation. prhs.x = locmat.get( 0, 3 ); prhs.Y = locmat.get( 1, 3 );
+         * prhs.Z = locmat.get( 2, 3 ); prhs.w = locmat.get( 3, 3 );
          *
          * // Solve the equation by inverting pmat and multiplying // prhs by the inverse.  (This is the easiest way, not
          * // necessarily the best.) // inverse function (and det4x4, above) from the Matrix // Inversion gem in the
@@ -319,10 +323,10 @@ public class TransMatrix extends Matrix // implements TableModelListener
          * // inverse( &pmat, &invpmat ); invpmat = pmat.inverse(); // TransposeMatrix4( &invpmat, &tinvpmat ); tinvpmat =
          * invpmat.transpose(); V4MulPointByMatrix( prhs, tinvpmat, psol );
          *
-         * // Stuff the answer away. tran[U_PERSPX] = psol.x; tran[U_PERSPY] = psol.y; tran[U_PERSPZ] = psol.z;
+         * // Stuff the answer away. tran[U_PERSPX] = psol.x; tran[U_PERSPY] = psol.Y; tran[U_PERSPZ] = psol.Z;
          * tran[U_PERSPW] = psol.w;
          *
-         * tran[U_TRANSX] = psol.x; tran[U_TRANSY] = psol.y; tran[U_TRANSZ] = psol.z;
+         * tran[U_TRANSX] = psol.x; tran[U_TRANSY] = psol.Y; tran[U_TRANSZ] = psol.Z;
          *
          * // Clear the perspective partition. locmat.set( 0, 3, 0 ); locmat.set( 1, 3, 0 ); locmat.set( 2, 3, 0 );
          * locmat.set( 3, 3, 1 ); } else { // No perspective. tran[U_PERSPX] = tran[U_PERSPY] = tran[U_PERSPZ] =
@@ -339,50 +343,51 @@ public class TransMatrix extends Matrix // implements TableModelListener
 
         // Now get scale and shear.
         for (i = 0; i < 3; i++) {
-            row[i].x = locmat.get(i, 0);
-            row[i].y = locmat.get(i, 1);
-            row[i].z = locmat.get(i, 2);
+            row[i].X = (float)locmat.get(i, 0);
+            row[i].Y = (float)locmat.get(i, 1);
+            row[i].Z = (float)locmat.get(i, 2);
         }
 
         // Compute X scale factor and normalize first row.
-        tran[U_SCALEX] = row[0].length();
+        tran[U_SCALEX] = row[0].Length();
 
         // row[0] = *V3Scale(&row[0], 1.0);
-        row[0].scale(1.0);
+        row[0].Scale(1.0f);
 
         // Compute XY shear factor and make 2nd row orthogonal to 1st.
-        tran[U_SHEARXY] = V3Dot(row[0], row[1]);
+        tran[U_SHEARXY] = row[0].Dot(row[1]);
         V3Combine(row[1], row[0], row[1], 1.0, -tran[U_SHEARXY]);
 
         // Now, compute Y scale and normalize 2nd row.
         // tran[U_SCALEY] = V3Length(&row[1]);
-        tran[U_SCALEY] = row[1].length();
-        row[1].scale(1.0);
+        tran[U_SCALEY] = row[1].Length();
+        row[1].Scale(1.0f);
         tran[U_SHEARXY] /= tran[U_SCALEY];
 
         // Compute XZ and YZ shears, orthogonalize 3rd row.
-        tran[U_SHEARXZ] = V3Dot(row[0], row[2]);
+        tran[U_SHEARXZ] = row[0].Dot(row[2]);
         V3Combine(row[2], row[0], row[2], 1.0, -tran[U_SHEARXZ]);
-        tran[U_SHEARYZ] = V3Dot(row[1], row[2]);
+        tran[U_SHEARYZ] = row[1].Dot(row[2]);
         V3Combine(row[2], row[1], row[2], 1.0, -tran[U_SHEARYZ]);
 
         // Next, get Z scale and normalize 3rd row.
         // tran[U_SCALEZ] = V3Length(&row[2]);
-        tran[U_SCALEZ] = row[2].length();
-        row[2].scale(1.0);
+        tran[U_SCALEZ] = row[2].Length();
+        row[2].Scale(1.0f);
         tran[U_SHEARXZ] /= tran[U_SCALEZ];
         tran[U_SHEARYZ] /= tran[U_SCALEZ];
 
         // At this point, the matrix (in rows[]) is orthonormal.
         // Check for a coordinate system flip.  If the determinant
         // is -1, then negate the matrix and the scaling factors.
-        if (V3Dot(row[0], V3Cross(row[1], row[2], pdum3)) < 0) {
+        pdum3.Cross( row[1], row[2] );
+        if (row[0].Dot(pdum3) < 0) {
 
             for (i = 0; i < 3; i++) {
                 tran[U_SCALEX + i] *= -1;
-                row[i].x *= -1;
-                row[i].y *= -1;
-                row[i].z *= -1;
+                row[i].X *= -1;
+                row[i].Y *= -1;
+                row[i].Z *= -1;
             }
         }
 
@@ -408,13 +413,13 @@ public class TransMatrix extends Matrix // implements TableModelListener
         //
         // -cos(A)sin(B)cos(G)     cos(A)sin(B)sin(G)    cos(A)cos(B)
         // +sin(A)sin(G)           +sin(A)cos(G)
-        tran[U_ROTATEY] = Math.asin(row[0].z);
+        tran[U_ROTATEY] = Math.asin(row[0].Z);
 
         if (Math.cos(tran[U_ROTATEY]) != 0) {
-            tran[U_ROTATEX] = -Math.atan2(row[1].z, row[2].z);
-            tran[U_ROTATEZ] = -Math.atan2(row[0].y, row[0].x);
+            tran[U_ROTATEX] = -Math.atan2(row[1].Z, row[2].Z);
+            tran[U_ROTATEZ] = -Math.atan2(row[0].Y, row[0].X);
         } else {
-            tran[U_ROTATEX] = Math.atan2(row[2].y, row[1].y);
+            tran[U_ROTATEX] = Math.atan2(row[2].Y, row[1].Y);
             tran[U_ROTATEZ] = 0;
         }
 
@@ -451,17 +456,17 @@ public class TransMatrix extends Matrix // implements TableModelListener
         tinvpmat.identity(3, 3);
 
         /* Vector3 type and functions need to be added to the common set. */
-        Vector3Dd prhs, psol;
-        prhs = new Vector3Dd();
-        psol = new Vector3Dd();
+        Vector3f prhs, psol;
+        prhs = new Vector3f();
+        psol = new Vector3f();
 
-        Vector2Dd[] row;
-        Vector2Dd pdum2;
-        row = new Vector2Dd[2];
-        pdum2 = new Vector2Dd();
+        Vector2f[] row;
+        Vector2f pdum2;
+        row = new Vector2f[2];
+        pdum2 = new Vector2f();
 
         for (i = 0; i < 2; i++) {
-            row[i] = new Vector2Dd();
+            row[i] = new Vector2f();
         }
 
         locmat = (Matrix) mat.clone();
@@ -501,7 +506,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
          * // First, isolate perspective.  This is the messiest. if ( locmat.get( 0, 2 ) != 0 || locmat.get( 1, 2 ) !=
          * 0) {
          *
-         * // prhs is the right hand side of the equation. prhs.x = locmat.get( 0, 2 ); prhs.y = locmat.get( 1, 2 );
+         * // prhs is the right hand side of the equation. prhs.x = locmat.get( 0, 2 ); prhs.Y = locmat.get( 1, 2 );
          * prhs.w = locmat.get( 2, 2 );
          *
          * // Solve the equation by inverting pmat and multiplying // prhs by the inverse.  (This is the easiest way, not
@@ -511,9 +516,9 @@ public class TransMatrix extends Matrix // implements TableModelListener
          * // inverse( &pmat, &invpmat ); invpmat = pmat.inverse(); // TransposeMatrix3( &invpmat, &tinvpmat ); tinvpmat =
          * invpmat.transpose(); V3MulPointByMatrix( prhs, tinvpmat, psol );
          *
-         * // Stuff the answer away. tran[U_PERSPX] = psol.x; tran[U_PERSPY] = psol.y; tran[U_PERSPW] = psol.w;
+         * // Stuff the answer away. tran[U_PERSPX] = psol.x; tran[U_PERSPY] = psol.Y; tran[U_PERSPW] = psol.w;
          *
-         * tran[U_TRANSX] = psol.x; tran[U_TRANSY] = psol.y;
+         * tran[U_TRANSX] = psol.x; tran[U_TRANSY] = psol.Y;
          *
          * // Clear the perspective partition. locmat.set( 0, 2, 0 ); locmat.set( 1, 2, 0 ); locmat.set( 2, 2, 1 ); } else
          * { // No perspective. tran[U_PERSPX] = tran[U_PERSPY] = tran[U_PERSPW] = 0;}*/
@@ -529,15 +534,15 @@ public class TransMatrix extends Matrix // implements TableModelListener
 
         // Now get scale and shear.
         for (i = 0; i < 2; i++) {
-            row[i].x = locmat.get(i, 0);
-            row[i].y = locmat.get(i, 1);
+            row[i].X = (float)locmat.get(i, 0);
+            row[i].Y = (float)locmat.get(i, 1);
         }
 
         // Compute X scale factor and normalize first row.
-        tran[U_SCALEX] = row[0].length();
+        tran[U_SCALEX] = row[0].Length();
 
         // row[0] = *V2Scale(&row[0], 1.0);
-        row[0].normalizeVector();
+        row[0].Normalize();
 
         // Compute XY shear factor and make 2nd row orthogonal to 1st.
         tran[U_SHEARXY] = V2Dot(row[0], row[1]);
@@ -545,19 +550,19 @@ public class TransMatrix extends Matrix // implements TableModelListener
 
         // Now, compute Y scale and normalize 2nd row.
         // tran[U_SCALEY] = V3Length(&row[1]);
-        tran[U_SCALEY] = row[1].length();
-        row[1].normalizeVector();
+        tran[U_SCALEY] = row[1].Length();
+        row[1].Normalize();
         tran[U_SHEARXY] /= tran[U_SCALEY];
 
         // At this point, the matrix (in rows[]) is orthonormal.
         // Check for a coordinate system flip.  If the determinant
         // is positive, then negate the matrix and the scaling factors.
-        if (((row[0].x * row[1].y) - row[1].x - row[0].y) < 0) {
+        if (((row[0].X * row[1].Y) - row[1].X - row[0].Y) < 0) {
 
             for (i = 0; i < 2; i++) {
                 tran[U_SCALEX + i] *= -1;
-                row[i].x *= -1;
-                row[i].y *= -1;
+                row[i].X *= -1;
+                row[i].Y *= -1;
             }
         }
 
@@ -570,7 +575,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
         // sin(G)   cos(G)    0
         // 0        0         1
 
-        tran[U_ROTATEZ] = Math.asin(row[1].x);
+        tran[U_ROTATEZ] = Math.asin(row[1].X);
 
         // System.out.println( "transform:" );
         // System.out.println( "rot z: " + getRotateZ() );
@@ -1157,22 +1162,22 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  beta   DOCUMENT ME!
      * @param  gamma  DOCUMENT ME!
      */
-    public void setRotate(Point3Df alpha, Point3Df beta, Point3Df gamma) {
+    public void setRotate(Vector3f alpha, Vector3f beta, Vector3f gamma) {
 
         double[][] tmpMatrix = new double[4][4];
         double[][] rotateMatrix = new double[4][4];
         int rDim = getRowDimension();
         int cDim = getColumnDimension();
 
-        rotateMatrix[0][0] = alpha.x;
-        rotateMatrix[0][1] = alpha.y;
-        rotateMatrix[0][2] = alpha.z;
-        rotateMatrix[1][0] = beta.x;
-        rotateMatrix[1][1] = beta.y;
-        rotateMatrix[1][2] = beta.z;
-        rotateMatrix[2][0] = gamma.x;
-        rotateMatrix[2][1] = gamma.y;
-        rotateMatrix[2][2] = gamma.z;
+        rotateMatrix[0][0] = alpha.X;
+        rotateMatrix[0][1] = alpha.Y;
+        rotateMatrix[0][2] = alpha.Z;
+        rotateMatrix[1][0] = beta.X;
+        rotateMatrix[1][1] = beta.Y;
+        rotateMatrix[1][2] = beta.Z;
+        rotateMatrix[2][0] = gamma.X;
+        rotateMatrix[2][1] = gamma.Y;
+        rotateMatrix[2][2] = gamma.Z;
         rotateMatrix[3][3] = 1;
 
         int r, c;
@@ -1589,79 +1594,62 @@ public class TransMatrix extends Matrix // implements TableModelListener
         return newGon;
     }
 
+
     /**
-     * Takes a 2D vector (as a Point2Df) and premultiplies it by the 2d transformation matrix.
+     * Takes a 2D vector (as a Point2Df) and premultiplies it by the 2d
+     * transformation matrix.
      *
      * @param  vect   vector of floats to be transformed
      * @param  tVect  transformed vector
      */
-    public final void transform(Point2Df vect, Point2Df tVect) {
+//     public final void transform(Point2Df vect, Point2Df tVect) {
 
-        tVect.x = (float) (((double) vect.x * matrix[0][0]) + ((double) vect.y * matrix[0][1]) + matrix[0][2]);
+//         tVect.x = (float) (((double) vect.x * matrix[0][0]) +
+//                            ((double) vect.Y * matrix[0][1]) + matrix[0][2]);
 
-        tVect.y = (float) (((double) vect.x * matrix[1][0]) + ((double) vect.y * matrix[1][1]) + matrix[1][2]);
+//         tVect.Y = (float) (((double) vect.x * matrix[1][0]) +
+//                            ((double) vect.Y * matrix[1][1]) + matrix[1][2]);
 
-        return;
-    }
+//         return;
+//     }
 
     /**
-     * Takes a 2D vector (as a Vector3Df) and premultiplies it by the 2d transformation matrix.
+     * Takes a 2D vector (as a Vector3Df) and premultiplies it by the 2d
+     * transformation matrix.
      *
      * @param  vect   vector of floats to be transformed
      * @param  tVect  transformed vector
      */
-    public final void transform(Vector3Df vect, Vector3Df tVect) {
+//     public final void transform(Vector3Df vect, Vector3Df tVect) {
 
-        tVect.x = (float) (((double) vect.x * matrix[0][0]) + ((double) vect.y * matrix[0][1]) + matrix[0][2]);
+//         tVect.x = (float) (((double) vect.x * matrix[0][0]) +
+//                            ((double) vect.Y * matrix[0][1]) + matrix[0][2]);
 
-        tVect.y = (float) (((double) vect.x * matrix[1][0]) + ((double) vect.y * matrix[1][1]) + matrix[1][2]);
-        tVect.z = 1;
+//         tVect.Y = (float) (((double) vect.x * matrix[1][0]) +
+//                            ((double) vect.Y * matrix[1][1]) + matrix[1][2]);
+//         tVect.Z = 1;
 
-        return;
-    }
-
-    /**
-     * Takes a 2D vector (as a Point2Dd) and premultiplies it by the 2d transformation matrix.
-     *
-     * @param  vect   vector of doubles to be transformed
-     * @param  tVect  transformed vector
-     */
-    public final void transform(Point2Dd vect, Point2Dd tVect) {
-        tVect.x = (vect.x * matrix[0][0]) + (vect.y * matrix[0][1]) + matrix[0][2];
-        tVect.y = (vect.x * matrix[1][0]) + (vect.y * matrix[1][1]) + matrix[1][2];
-
-        return;
-    }
+//         return;
+//     }
 
     /**
-     * Takes a 2D vector (as a Vector3Dd) and premultiplies it by the 2d transformation matrix.
-     *
-     * @param  vect   vector of doubles to be transformed
-     * @param  tVect  transformed vector
-     */
-    public final void transform(Vector3Dd vect, Vector3Dd tVect) {
-        tVect.x = (vect.x * matrix[0][0]) + (vect.y * matrix[0][1]) + matrix[0][2];
-        tVect.y = (vect.x * matrix[1][0]) + (vect.y * matrix[1][1]) + matrix[1][2];
-        tVect.z = 1;
-
-        return;
-    }
-
-    /**
-     * Takes an array of Point2Df 2D vectors and multiplies them with the 2d transformation matrix.
+     * Takes an array of Point2Df 2D vectors and multiplies them with the 2d
+     * transformation matrix.
      *
      * @param  vects   float vectors to be transformed
      * @param  tVects  transformed vectors
      */
-    public final void transform(Point2Df[] vects, Point2Df[] tVects) {
+    public final void transformAsPoint2Df(Vector2f[] vects, Vector2f[] tVects) {
         int n;
         int length = vects.length;
 
         for (n = 0; n < length; n++) {
-            tVects[n].x = (float) (((double) vects[n].x * matrix[0][0]) + ((double) vects[n].y * matrix[0][1]) +
+            tVects[n].X = (float) (((double) vects[n].X * matrix[0][0]) +
+                                   ((double) vects[n].Y * matrix[0][1]) +
                                    matrix[0][2]);
-
-            tVects[n].y = (float) (((double) vects[n].x * matrix[1][0]) + ((double) vects[n].y * matrix[1][1]) +
+            
+            tVects[n].Y = (float) (((double) vects[n].X * matrix[1][0]) +
+                                   ((double) vects[n].Y * matrix[1][1]) +
                                    matrix[1][2]);
 
         }
@@ -1670,71 +1658,34 @@ public class TransMatrix extends Matrix // implements TableModelListener
     }
 
     /**
-     * Takes an array of Vector3Df 2D vectors and multiplies them with the 2d transformation matrix.
+     * Takes an array of Vector3Df 2D vectors and multiplies them with the 2d
+     * transformation matrix.
      *
      * @param  vects   float vectors to be transformed
      * @param  tVects  transformed vectors
      */
-    public final void transform(Vector3Df[] vects, Vector3Df[] tVects) {
+    public final void transformAsVector3Df(Vector3f[] vects, Vector3f[] tVects) {
         int n;
         int length = vects.length;
 
         for (n = 0; n < length; n++) {
-            tVects[n].x = (float) (((double) vects[n].x * matrix[0][0]) + ((double) vects[n].y * matrix[0][1]) +
+            tVects[n].X = (float) (((double) vects[n].X * matrix[0][0]) +
+                                   ((double) vects[n].Y * matrix[0][1]) +
                                    matrix[0][2]);
 
-            tVects[n].y = (float) (((double) vects[n].x * matrix[1][0]) + ((double) vects[n].y * matrix[1][1]) +
+            tVects[n].Y = (float) (((double) vects[n].X * matrix[1][0]) +
+                                   ((double) vects[n].Y * matrix[1][1]) +
                                    matrix[1][2]);
 
-            tVects[n].z = 1;
+            tVects[n].Z = 1;
         }
 
         return;
     }
 
     /**
-     * Takes an array of Point2Dd 2D vectors and multiplies them with the 2d transformation matrix.
-     *
-     * @param  vects   double vectors to be transformed
-     * @param  tVects  transformed vectors
-     */
-    public final void transform(Point2Dd[] vects, Point2Dd[] tVects) {
-        int n;
-        int length = vects.length;
-
-        for (n = 0; n < length; n++) {
-            tVects[n].x = (vects[n].x * matrix[0][0]) + (vects[n].y * matrix[0][1]) + matrix[0][2];
-
-            tVects[n].y = (vects[n].x * matrix[1][0]) + (vects[n].y * matrix[1][1]) + matrix[1][2];
-
-        }
-
-        return;
-    }
-
-    /**
-     * Takes an array of Vector3Dd 2D vectors and multiplies them with the 2d transformation matrix.
-     *
-     * @param  vects   double vectors to be transformed
-     * @param  tVects  transformed vectors
-     */
-    public final void transform(Vector3Dd[] vects, Vector3Dd[] tVects) {
-        int n;
-        int length = vects.length;
-
-        for (n = 0; n < length; n++) {
-            tVects[n].x = (vects[n].x * matrix[0][0]) + (vects[n].y * matrix[0][1]) + matrix[0][2];
-
-            tVects[n].y = (vects[n].x * matrix[1][0]) + (vects[n].y * matrix[1][1]) + matrix[1][2];
-
-            tVects[n].z = 1;
-        }
-
-        return;
-    }
-
-    /**
-     * Takes a 3D or 2D point (as a double array) and premultiplies it by the 3D transformation matrix.
+     * Takes a 3D or 2D point (as a double array) and premultiplies it by the
+     * 3D transformation matrix.
      *
      * @param  pt   coordinate to be transformed
      * @param  tPt  transformed point
@@ -1742,11 +1693,21 @@ public class TransMatrix extends Matrix // implements TableModelListener
     public final void transform(double[] pt, double[] tPt) {
 
         if (pt.length == 3) {
-            tPt[0] = (pt[0] * matrix[0][0]) + (pt[1] * matrix[0][1]) + (pt[2] * matrix[0][2]) + matrix[0][3];
+            tPt[0] = (pt[0] * matrix[0][0]) +
+                (pt[1] * matrix[0][1]) +
+                (pt[2] * matrix[0][2]) +
+                matrix[0][3];
 
-            tPt[1] = (pt[0] * matrix[1][0]) + (pt[1] * matrix[1][1]) + (pt[2] * matrix[1][2]) + matrix[1][3];
+            tPt[1] = (pt[0] * matrix[1][0]) +
+                (pt[1] * matrix[1][1]) +
+                (pt[2] * matrix[1][2]) +
+                matrix[1][3];
 
-            tPt[2] = (pt[0] * matrix[2][0]) + (pt[1] * matrix[2][1]) + (pt[2] * matrix[2][2]) + matrix[2][3];
+            tPt[2] = (pt[0] * matrix[2][0]) +
+                (pt[1] * matrix[2][1]) +
+                (pt[2] * matrix[2][2]) +
+                matrix[2][3];
+
         } else if (pt.length == 2) {
             tPt[0] = (pt[0] * matrix[0][0]) + (pt[1] * matrix[0][1]) + matrix[0][2];
             tPt[1] = (pt[0] * matrix[1][0]) + (pt[1] * matrix[1][1]) + matrix[1][2];
@@ -1756,198 +1717,154 @@ public class TransMatrix extends Matrix // implements TableModelListener
     }
 
     /**
-     * Takes a 3D point, as a float array, and premultiplies it by the 3D transformation matrix.
+     * Takes a 3D point, as a float array, and premultiplies it by the 3D
+     * transformation matrix.
      *
      * @param  pt   coordinate to be transformed
      * @param  tPt  the transformed point
      */
     public final void transform(float[] pt, float[] tPt) {
 
-        tPt[0] = (float) (((double) pt[0] * matrix[0][0]) + ((double) pt[1] * matrix[0][1]) +
-                          ((double) pt[2] * matrix[0][2]) + matrix[0][3]);
+        tPt[0] = (float) (((double) pt[0] * matrix[0][0]) +
+                          ((double) pt[1] * matrix[0][1]) +
+                          ((double) pt[2] * matrix[0][2]) +
+                          matrix[0][3]);
 
-        tPt[1] = (float) (((double) pt[0] * matrix[1][0]) + ((double) pt[1] * matrix[1][1]) +
-                          ((double) pt[2] * matrix[1][2]) + matrix[1][3]);
+        tPt[1] = (float) (((double) pt[0] * matrix[1][0]) +
+                          ((double) pt[1] * matrix[1][1]) +
+                          ((double) pt[2] * matrix[1][2]) +
+                          matrix[1][3]);
 
-        tPt[2] = (float) (((double) pt[0] * matrix[2][0]) + ((double) pt[1] * matrix[2][1]) +
-                          ((double) pt[2] * matrix[2][2]) + matrix[2][3]);
+        tPt[2] = (float) (((double) pt[0] * matrix[2][0]) +
+                          ((double) pt[1] * matrix[2][1]) +
+                          ((double) pt[2] * matrix[2][2]) +
+                          matrix[2][3]);
 
         return;
     }
 
     /**
-     * Takes a Point3Df 3D point and multiplies it by the 3D transformation matrix.
+     * Takes a Point3Df 3D point and multiplies it by the 3D transformation
+     * matrix.
      *
      * @param  pt   3D float point to be transformed
      * @param  tPt  transformed point
      */
-    public final void transform(Point3Df pt, Point3Df tPt) {
+    public final void transformAsPoint3Df(Vector3f pt, Vector3f tPt) {
 
-        tPt.x = (float) (((double) pt.x * matrix[0][0]) + ((double) pt.y * matrix[0][1]) +
-                         ((double) pt.z * matrix[0][2]) + matrix[0][3]);
+        tPt.X = (float) (((double) pt.X * matrix[0][0]) +
+                         ((double) pt.Y * matrix[0][1]) +
+                         ((double) pt.Z * matrix[0][2]) +
+                         matrix[0][3]);
 
-        tPt.y = (float) (((double) pt.x * matrix[1][0]) + ((double) pt.y * matrix[1][1]) +
-                         ((double) pt.z * matrix[1][2]) + matrix[1][3]);
+        tPt.Y = (float) (((double) pt.X * matrix[1][0]) +
+                         ((double) pt.Y * matrix[1][1]) +
+                         ((double) pt.Z * matrix[1][2]) +
+                         matrix[1][3]);
 
-        tPt.z = (float) (((double) pt.x * matrix[2][0]) + ((double) pt.y * matrix[2][1]) +
-                         ((double) pt.z * matrix[2][2]) + matrix[2][3]);
+        tPt.Z = (float) (((double) pt.X * matrix[2][0]) +
+                         ((double) pt.Y * matrix[2][1]) +
+                         ((double) pt.Z * matrix[2][2]) +
+                         matrix[2][3]);
 
         return;
     }
 
     /**
-     * Takes an array of Point3Df 3D points and premultiplies it by the 3D transformation matrix.
+     * Takes an array of Point3Df 3D points and premultiplies it by the 3D
+     * transformation matrix.
      *
      * @param  pt    3D float points to be transformed
      * @param  tPts  transformed points
      */
-    public final void transform(Point3Df[] pt, Point3Df[] tPts) {
-        int n;
-        int length = pt.length;
+//     public final void transform(Point3Df[] pt, Point3Df[] tPts) {
+//         int n;
+//         int length = pt.length;
 
-        for (n = 0; n < length; n++) {
-            tPts[n].x = (float) (((double) pt[n].x * matrix[0][0]) + ((double) pt[n].y * matrix[0][1]) +
-                                 ((double) pt[n].z * matrix[0][2]) + matrix[0][3]);
+//         for (n = 0; n < length; n++) {
+//             tPts[n].X = (float) (((double) pt[n].X * matrix[0][0]) +
+//                                  ((double) pt[n].Y * matrix[0][1]) +
+//                                  ((double) pt[n].Z * matrix[0][2]) +
+//                                  matrix[0][3]);
 
-            tPts[n].y = (float) (((double) pt[n].x * matrix[1][0]) + ((double) pt[n].y * matrix[1][1]) +
-                                 ((double) pt[n].z * matrix[1][2]) + matrix[1][3]);
+//             tPts[n].Y = (float) (((double) pt[n].X * matrix[1][0]) +
+//                                  ((double) pt[n].Y * matrix[1][1]) +
+//                                  ((double) pt[n].Z * matrix[1][2]) +
+//                                  matrix[1][3]);
 
-            tPts[n].z = (float) (((double) pt[n].x * matrix[2][0]) + ((double) pt[n].y * matrix[2][1]) +
-                                 ((double) pt[n].z * matrix[2][2]) + matrix[2][3]);
-        }
+//             tPts[n].Z = (float) (((double) pt[n].X * matrix[2][0]) +
+//                                  ((double) pt[n].Y * matrix[2][1]) +
+//                                  ((double) pt[n].Z * matrix[2][2]) +
+//                                  matrix[2][3]);
+//         }
 
-        return;
-    }
-
-    /**
-     * Takes a Point3Dd 3D point and premultiplies it by the 3D transformation matrix.
-     *
-     * @param  pt   3D double point to be transformed
-     * @param  Tpt  transformed point
-     */
-    public final void transform(Point3Dd pt, Point3Dd Tpt) {
-
-        Tpt.x = (pt.x * matrix[0][0]) + (pt.y * matrix[0][1]) + (pt.z * matrix[0][2]) + matrix[0][3];
-
-        Tpt.y = (pt.x * matrix[1][0]) + (pt.y * matrix[1][1]) + (pt.z * matrix[1][2]) + matrix[1][3];
-
-        Tpt.z = (pt.x * matrix[2][0]) + (pt.y * matrix[2][1]) + (pt.z * matrix[2][2]) + matrix[2][3];
-
-        return;
-    }
+//         return;
+//     }
 
     /**
-     * Takes an array of Point3Dd 3D points and premultiplies it by the 3D transformation matrix.
-     *
-     * @param  pt   3D double points to be transformed
-     * @param  tPt  transformed points
-     */
-    public final void transform(Point3Dd[] pt, Point3Dd[] tPt) {
-        int n;
-        int length = pt.length;
-
-        for (n = 0; n < length; n++) {
-            tPt[n].x = (pt[n].x * matrix[0][0]) + (pt[n].y * matrix[0][1]) + (pt[n].z * matrix[0][2]) + matrix[0][3];
-
-            tPt[n].y = (pt[n].x * matrix[1][0]) + (pt[n].y * matrix[1][1]) + (pt[n].z * matrix[1][2]) + matrix[1][3];
-
-            tPt[n].z = (pt[n].x * matrix[2][0]) + (pt[n].y * matrix[2][1]) + (pt[n].z * matrix[2][2]) + matrix[2][3];
-        }
-
-        return;
-    }
-
-    /**
-     * Takes a Vector4Df 3D vector and premultiplies it by the 3D transformation matrix.
+     * Takes a Vector4Df 3D vector and premultiplies it by the 3D
+     * transformation matrix.
      *
      * @param  vect   4D float vector to be transformd
      * @param  tVect  transformed vector
      */
-    public final void transform(Vector4Df vect, Vector4Df tVect) {
+//     public final void transform(Vector4Df vect, Vector4Df tVect) {
 
-        tVect.x = (float) (((double) vect.x * matrix[0][0]) + ((double) vect.y * matrix[0][1]) +
-                           ((double) vect.z * matrix[0][2]) + matrix[0][3]);
+//         tVect.X = (float) (((double) vect.X * matrix[0][0]) +
+//                            ((double) vect.Y * matrix[0][1]) +
+//                            ((double) vect.Z * matrix[0][2]) +
+//                            matrix[0][3]);
 
-        tVect.y = (float) (((double) vect.x * matrix[1][0]) + ((double) vect.y * matrix[1][1]) +
-                           ((double) vect.z * matrix[1][2]) + matrix[1][3]);
+//         tVect.Y = (float) (((double) vect.X * matrix[1][0]) +
+//                            ((double) vect.Y * matrix[1][1]) +
+//                            ((double) vect.Z * matrix[1][2]) +
+//                            matrix[1][3]);
 
-        tVect.z = (float) (((double) vect.x * matrix[2][0]) + ((double) vect.y * matrix[2][1]) +
-                           ((double) vect.z * matrix[2][2]) + matrix[2][3]);
-        tVect.w = 1;
+//         tVect.Z = (float) (((double) vect.X * matrix[2][0]) +
+//                            ((double) vect.Y * matrix[2][1]) +
+//                            ((double) vect.Z * matrix[2][2]) +
+//                            matrix[2][3]);
+//         tVect.w = 1;
 
-        return;
-    }
-
-    /**
-     * Takes a Vector4Dd 3D vector and premultiplies it by the 3D transformation matrix.
-     *
-     * @param  vect   4D double vector to be transformed
-     * @param  tVect  transformed vector
-     */
-    public final void transform(Vector4Dd vect, Vector4Dd tVect) {
-
-        tVect.x = (vect.x * matrix[0][0]) + (vect.y * matrix[0][1]) + (vect.z * matrix[0][2]) + matrix[0][3];
-
-        tVect.y = (vect.x * matrix[1][0]) + (vect.y * matrix[1][1]) + (vect.z * matrix[1][2]) + matrix[1][3];
-
-        tVect.z = (vect.x * matrix[2][0]) + (vect.y * matrix[2][1]) + (vect.z * matrix[2][2]) + matrix[2][3];
-        tVect.w = 1;
-
-        return;
-    }
+//         return;
+//     }
 
     /**
-     * Takes an array of Vector4Df 3D vectors and multiplies them with a 3D transformation matrix.
+     * Takes an array of Vector4Df 3D vectors and multiplies them with a 3D
+     * transformation matrix.
      *
      * @param  vects   4D float vectors to be transformed
      * @param  tVects  transformed vectors
      */
-    public final void transform(Vector4Df[] vects, Vector4Df[] tVects) {
-        int n;
-        int length = vects.length;
+//     public final void transform(Vector4Df[] vects, Vector4Df[] tVects) {
+//         int n;
+//         int length = vects.length;
 
-        for (n = 0; n < length; n++) {
-            tVects[n].x = (float) (((double) vects[n].x * matrix[0][0]) + ((double) vects[n].y * matrix[0][1]) +
-                                   ((double) vects[n].z * matrix[0][2]) + matrix[0][3]);
+//         for (n = 0; n < length; n++) {
+//             tVects[n].X = (float) (((double) vects[n].X * matrix[0][0]) +
+//                                    ((double) vects[n].Y * matrix[0][1]) +
+//                                    ((double) vects[n].Z * matrix[0][2]) +
+//                                    matrix[0][3]);
 
-            tVects[n].y = (float) (((double) vects[n].x * matrix[1][0]) + ((double) vects[n].y * matrix[1][1]) +
-                                   ((double) vects[n].z * matrix[1][2]) + matrix[1][3]);
+//             tVects[n].Y = (float) (((double) vects[n].X * matrix[1][0]) +
+//                                    ((double) vects[n].Y * matrix[1][1]) +
+//                                    ((double) vects[n].Z * matrix[1][2]) +
+//                                    matrix[1][3]);
 
-            tVects[n].z = (float) (((double) vects[n].x * matrix[2][0]) + ((double) vects[n].y * matrix[2][1]) +
-                                   ((double) vects[n].z * matrix[2][2]) + matrix[2][3]);
-            tVects[n].w = 1;
-        }
+//             tVects[n].Z = (float) (((double) vects[n].X * matrix[2][0]) +
+//                                    ((double) vects[n].Y * matrix[2][1]) +
+//                                    ((double) vects[n].Z * matrix[2][2]) +
+//                                    matrix[2][3]);
+//             tVects[n].w = 1;
+//         }
 
-        return;
-    }
+//         return;
+//     }
 
-    /**
-     * Takes an array of Vector4Dd 3D vectors and multiplies them with a 3D transformation matrix.
-     *
-     * @param  vects   4D double vectors to be transformed
-     * @param  tVects  transformed vectors
-     */
-    public final void transform(Vector4Dd[] vects, Vector4Dd[] tVects) {
-        int n;
-        int length = vects.length;
-
-        for (n = 0; n < length; n++) {
-            tVects[n].x = (vects[n].x * matrix[0][0]) + (vects[n].y * matrix[0][1]) + (vects[n].z * matrix[0][2]) +
-                          matrix[0][3];
-
-            tVects[n].y = (vects[n].x * matrix[1][0]) + (vects[n].y * matrix[1][1]) + (vects[n].z * matrix[1][2]) +
-                          matrix[1][3];
-
-            tVects[n].z = (vects[n].x * matrix[2][0]) + (vects[n].y * matrix[2][1]) + (vects[n].z * matrix[2][2]) +
-                          matrix[2][3];
-            tVects[n].w = 1;
-        }
-
-        return;
-    }
 
     /**
-     * Takes double components of a 2D point and premultiplies it by the 2d transformation matrix.
+     * Takes double components of a 2D point and premultiplies it by the 2d
+     * transformation matrix.
      *
      * @param  x    x coordinate to be transformd
      * @param  y    y coordinate to be transformd
@@ -1962,7 +1879,8 @@ public class TransMatrix extends Matrix // implements TableModelListener
     }
 
     /**
-     * Takes float components of a 2D point and premultiplies it by the 2d transformation matrix.
+     * Takes float components of a 2D point and premultiplies it by the 2d
+     * transformation matrix.
      *
      * @param  x    x coordinate to be transformed
      * @param  y    y coordinate to be transformed
@@ -1970,14 +1888,19 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transform(float x, float y, float[] tPt) {
 
-        tPt[0] = (float) (((double) x * matrix[0][0]) + ((double) y * matrix[0][1]) + matrix[0][2]);
-        tPt[1] = (float) (((double) x * matrix[1][0]) + ((double) y * matrix[1][1]) + matrix[1][2]);
+        tPt[0] = (float) (((double) x * matrix[0][0]) +
+                          ((double) y * matrix[0][1]) +
+                          matrix[0][2]);
+        tPt[1] = (float) (((double) x * matrix[1][0]) +
+                          ((double) y * matrix[1][1]) +
+                          matrix[1][2]);
 
         return;
     }
 
     /**
-     * Takes the double components of a 3D point and premultiplies it by the 3D transformation matrix.
+     * Takes the double components of a 3D point and premultiplies it by the
+     * 3D transformation matrix.
      *
      * @param  x    x coordinate to be transformed
      * @param  y    y coordinate to be transformed
@@ -1986,17 +1909,27 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transform(double x, double y, double z, double[] tPt) {
 
-        tPt[0] = (x * matrix[0][0]) + (y * matrix[0][1]) + (z * matrix[0][2]) + matrix[0][3];
+        tPt[0] = (x * matrix[0][0]) +
+            (y * matrix[0][1]) +
+            (z * matrix[0][2]) +
+            matrix[0][3];
 
-        tPt[1] = (x * matrix[1][0]) + (y * matrix[1][1]) + (z * matrix[1][2]) + matrix[1][3];
+        tPt[1] = (x * matrix[1][0]) +
+            (y * matrix[1][1]) +
+            (z * matrix[1][2]) +
+            matrix[1][3];
 
-        tPt[2] = (x * matrix[2][0]) + (y * matrix[2][1]) + (z * matrix[2][2]) + matrix[2][3];
+        tPt[2] = (x * matrix[2][0]) +
+            (y * matrix[2][1]) +
+            (z * matrix[2][2]) +
+            matrix[2][3];
 
         return;
     }
 
     /**
-     * Takes the float components of a 3D point and premultiplies it by the 3D transformation matrix.
+     * Takes the float components of a 3D point and premultiplies it by the 3D
+     * transformation matrix.
      *
      * @param  x    x coordinate to be transformed
      * @param  y    y coordinate to be transformed
@@ -2005,17 +1938,24 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transform(float x, float y, float z, float[] tPt) {
 
-        tPt[0] = (float) (((double) x * matrix[0][0]) + ((double) y * matrix[0][1]) + ((double) z * matrix[0][2]) +
+        tPt[0] = (float) (((double) x * matrix[0][0]) +
+                          ((double) y * matrix[0][1]) +
+                          ((double) z * matrix[0][2]) +
                           matrix[0][3]);
 
-        tPt[1] = (float) (((double) x * matrix[1][0]) + ((double) y * matrix[1][1]) + ((double) z * matrix[1][2]) +
+        tPt[1] = (float) (((double) x * matrix[1][0]) +
+                          ((double) y * matrix[1][1]) +
+                          ((double) z * matrix[1][2]) +
                           matrix[1][3]);
 
-        tPt[2] = (float) (((double) x * matrix[2][0]) + ((double) y * matrix[2][1]) + ((double) z * matrix[2][2]) +
+        tPt[2] = (float) (((double) x * matrix[2][0]) +
+                          ((double) y * matrix[2][1]) +
+                          ((double) z * matrix[2][2]) +
                           matrix[2][3]);
 
         return;
     }
+
 
     /**
      * Returns the transform ID associated with the matrix.
@@ -2172,9 +2112,9 @@ public class TransMatrix extends Matrix // implements TableModelListener
      *
      * @return  DOCUMENT ME!
      */
-    private Vector2Dd V2Combine(Vector2Dd a, Vector2Dd b, Vector2Dd result, double ascl, double bscl) {
-        result.x = (ascl * a.x) + (bscl * b.x);
-        result.y = (ascl * a.y) + (bscl * b.y);
+    private Vector2f V2Combine(Vector2f a, Vector2f b, Vector2f result, double ascl, double bscl) {
+        result.X = (float)((ascl * a.X) + (bscl * b.X));
+        result.Y = (float)((ascl * a.Y) + (bscl * b.Y));
 
         return (result);
     }
@@ -2187,8 +2127,8 @@ public class TransMatrix extends Matrix // implements TableModelListener
      *
      * @return  DOCUMENT ME!
      */
-    private double V2Dot(Vector2Dd a, Vector2Dd b) {
-        return ((a.x * b.x) + (a.y * b.y));
+    private double V2Dot(Vector2f a, Vector2f b) {
+        return ((a.X * b.X) + (a.Y * b.Y));
     }
 
     /**
@@ -2202,42 +2142,14 @@ public class TransMatrix extends Matrix // implements TableModelListener
      *
      * @return  DOCUMENT ME!
      */
-    private Vector3Dd V3Combine(Vector3Dd a, Vector3Dd b, Vector3Dd result, double ascl, double bscl) {
-        result.x = (ascl * a.x) + (bscl * b.x);
-        result.y = (ascl * a.y) + (bscl * b.y);
-        result.z = (ascl * a.z) + (bscl * b.z);
+    private Vector3f V3Combine(Vector3f a, Vector3f b, Vector3f result, double ascl, double bscl) {
+        result.X = (float)((ascl * a.X) + (bscl * b.X));
+        result.Y = (float)((ascl * a.Y) + (bscl * b.Y));
+        result.Z = (float)((ascl * a.Z) + (bscl * b.Z));
 
         return (result);
     }
 
-    /**
-     * return the cross product c = a cross b.
-     *
-     * @param   a  DOCUMENT ME!
-     * @param   b  DOCUMENT ME!
-     * @param   c  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private Vector3Dd V3Cross(Vector3Dd a, Vector3Dd b, Vector3Dd c) {
-        c.x = (a.y * b.z) - (a.z * b.y);
-        c.y = (a.z * b.x) - (a.x * b.z);
-        c.z = (a.x * b.y) - (a.y * b.x);
-
-        return (c);
-    }
-
-    /**
-     * return the dot product of vectors a and b.
-     *
-     * @param   a  DOCUMENT ME!
-     * @param   b  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private double V3Dot(Vector3Dd a, Vector3Dd b) {
-        return ((a.x * b.x) + (a.y * b.y) + (a.z * b.z));
-    }
 
     /**
      * multiply a hom. point by a matrix and return the transformed point
@@ -2246,15 +2158,15 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  m     DOCUMENT ME!
      * @param  pout  DOCUMENT ME!
      */
-    private void V4MulPointByMatrix(Vector4Dd pin, Matrix m, Vector4Dd pout) {
+    private void V4MulPointByMatrix(Vector4f pin, Matrix m, Vector4f pout) {
 
-        pout.x = (pin.x * m.get(0, 0)) + (pin.y * m.get(1, 0)) + (pin.z * m.get(2, 0)) + (pin.w * m.get(3, 0));
+        pout.X = (float)((pin.X * m.get(0, 0)) + (pin.Y * m.get(1, 0)) + (pin.Z * m.get(2, 0)) + (pin.W * m.get(3, 0)));
 
-        pout.y = (pin.x * m.get(0, 1)) + (pin.y * m.get(1, 1)) + (pin.z * m.get(2, 1)) + (pin.w * m.get(3, 1));
+        pout.Y = (float)((pin.X * m.get(0, 1)) + (pin.Y * m.get(1, 1)) + (pin.Z * m.get(2, 1)) + (pin.W * m.get(3, 1)));
 
-        pout.z = (pin.x * m.get(0, 2)) + (pin.y * m.get(1, 2)) + (pin.z * m.get(2, 2)) + (pin.w * m.get(3, 2));
+        pout.Z = (float)((pin.X * m.get(0, 2)) + (pin.Y * m.get(1, 2)) + (pin.Z * m.get(2, 2)) + (pin.W * m.get(3, 2)));
 
-        pout.w = (pin.x * m.get(0, 3)) + (pin.y * m.get(1, 3)) + (pin.z * m.get(2, 3)) + (pin.w * m.get(3, 3));
+        pout.W = (float)((pin.X * m.get(0, 3)) + (pin.Y * m.get(1, 3)) + (pin.Z * m.get(2, 3)) + (pin.W * m.get(3, 3)));
     }
 
 }

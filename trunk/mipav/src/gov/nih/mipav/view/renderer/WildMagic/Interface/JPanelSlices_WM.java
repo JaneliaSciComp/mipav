@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 import gov.nih.mipav.model.file.*;
@@ -42,7 +43,7 @@ public class JPanelSlices_WM extends JInterfaceBase
     /** Which time slice is currently displayed. */
     public int tSlice;
 
-    private Point3Df slicePosition = new Point3Df();
+    private Vector3f slicePosition = new Vector3f();
     /** Which slice is currently displayed in the ZY plane. */
     public int xSlice;
 
@@ -123,13 +124,13 @@ public class JPanelSlices_WM extends JInterfaceBase
         super(kVolumeViewer);
 
         int[] fileExtents = kVolumeViewer.getImageA().getExtents( );
-        Point3Df modelExtents = new Point3Df();
-        MipavCoordinateSystems.fileToModel( new Point3Df( fileExtents[0], fileExtents[1], fileExtents[2] ),
+        Vector3f modelExtents = new Vector3f();
+        MipavCoordinateSystems.fileToModel( new Vector3f( fileExtents[0], fileExtents[1], fileExtents[2] ),
                                             modelExtents, kVolumeViewer.getImageA() );
 
-        xDim = (int)modelExtents.x;
-        yDim = (int)modelExtents.y;
-        zDim = (int)modelExtents.z;
+        xDim = (int)modelExtents.X;
+        yDim = (int)modelExtents.Y;
+        zDim = (int)modelExtents.Z;
 
         xSlice = (xDim - 1) / 2;
         ySlice = (yDim - 1) / 2;
@@ -751,16 +752,16 @@ public class JPanelSlices_WM extends JInterfaceBase
      */
     public void setCenter( int x, int y, int z )
     {
-        Point3Df center = new Point3Df();
+        Vector3f center = new Vector3f();
         if ( m_kVolumeViewer != null )
         {
-            MipavCoordinateSystems.fileToModel( new Point3Df( x, y, z ), center,
+            MipavCoordinateSystems.fileToModel( new Vector3f( x, y, z ), center,
                                                 m_kVolumeViewer.getImageA() );
         }
 
-        setXSlicePos( (int)center.x );
-        setYSlicePos( (int)center.y );
-        setZSlicePos( (int)center.z );
+        setXSlicePos( (int)center.X );
+        setYSlicePos( (int)center.Y );
+        setZSlicePos( (int)center.Z );
     }
 
     /**
@@ -770,12 +771,12 @@ public class JPanelSlices_WM extends JInterfaceBase
      * @return, the center of the three orthogonal planes (the three slider
      * positions) in FileCoordinates.
      */
-    public Point3Df getCenter( )
+    public Vector3f getCenter( )
     {
-        Point3Df center = new Point3Df();
+        Vector3f center = new Vector3f();
         if ( m_kVolumeViewer != null )
         {
-            MipavCoordinateSystems.modelToFile( new Point3Df( xSlice, ySlice, zSlice ), center,
+            MipavCoordinateSystems.modelToFile( new Vector3f( xSlice, ySlice, zSlice ), center,
                                                 m_kVolumeViewer.getImageA() );
         }        
         return center;

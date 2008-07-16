@@ -1,6 +1,9 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
@@ -22,7 +25,7 @@ import gov.nih.mipav.view.*;
  *           colinear.
  *
  *           <p>USAGE: AlgorithmleastSquares LSMatch = new AlgorithmLeastSquares(coordsA, coordsB); LSMatch.run(); where
- *           coordsA = double[3][n] or Point3Dd[n]</p>
+ *           coordsA = double[3][n] or Vector3f[n]</p>
  *
  *           <p>USAGE FOR SUBSEQUENT EXECUTIONS: LSMatch.setup(coordsA, coordsB); LSMatch.run();</p>
  */
@@ -68,11 +71,11 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
     /**
      * AlgorithmRegLeastSquares - Constructor.
      *
-     * @param  coordsA3D  Point3Dd[n] 3D point set
-     * @param  coordsB3D  Point3Dd[n] 3D point set
+     * @param  coordsA3D  Vector3f[n] 3D point set
+     * @param  coordsB3D  Vector3f[n] 3D point set
      * @param  dim2or3    indicates whether data set is 2D or 3D
      */
-    public AlgorithmRegLeastSquares(Point3Dd[] coordsA3D, Point3Dd[] coordsB3D, int dim2or3) {
+    public AlgorithmRegLeastSquares(Vector3f[] coordsA3D, Vector3f[] coordsB3D, int dim2or3) {
         dim = dim2or3;
         numCoords = -1;
         pointSetA = null;
@@ -83,18 +86,18 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
         try {
 
             if (dim == 2) {
-                Point2Dd[] coordsA2D = new Point2Dd[coordsA3D.length];
-                Point2Dd[] coordsB2D = new Point2Dd[coordsB3D.length];
-                Preferences.debug("coordsA3D[0].x=" + coordsA3D[0].x + "\n");
+                Vector2f[] coordsA2D = new Vector2f[coordsA3D.length];
+                Vector2f[] coordsB2D = new Vector2f[coordsB3D.length];
+                Preferences.debug("coordsA3D[0].x=" + coordsA3D[0].X + "\n");
 
                 for (int i = 0; i < coordsA3D.length; i++) {
-                    coordsA2D[i] = new Point2Dd(coordsA3D[i].x, coordsA3D[i].y);
+                    coordsA2D[i] = new Vector2f((float)coordsA3D[i].X, (float)coordsA3D[i].Y);
                 }
 
                 Preferences.debug("assigned A" + "\n");
 
                 for (int i = 0; i < coordsB3D.length; i++) {
-                    coordsB2D[i] = new Point2Dd(coordsB3D[i].x, coordsB3D[i].y);
+                    coordsB2D[i] = new Vector2f((float)coordsB3D[i].X, (float)coordsB3D[i].Y);
                 }
 
                 setup(coordsA2D, coordsB2D);
@@ -497,7 +500,7 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
      *
      * @return  int distinguishing reason for error
      */
-    public int setup(Point3Dd[] coordsA, Point3Dd[] coordsB) {
+    public int setup(Vector3f[] coordsA, Vector3f[] coordsB) {
         int i, j;
         int n = coordsA.length;
 
@@ -520,12 +523,12 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
             }
 
             for (j = 0; j < numCoords; j++) {
-                pointSetA[0][j] = coordsA[j].x;
-                pointSetA[1][j] = coordsA[j].y;
-                pointSetA[2][j] = coordsA[j].z;
-                pointSetB[0][j] = coordsB[j].x;
-                pointSetB[1][j] = coordsB[j].y;
-                pointSetB[2][j] = coordsB[j].z;
+                pointSetA[0][j] = coordsA[j].X;
+                pointSetA[1][j] = coordsA[j].Y;
+                pointSetA[2][j] = coordsA[j].Z;
+                pointSetB[0][j] = coordsB[j].X;
+                pointSetB[1][j] = coordsB[j].Y;
+                pointSetB[2][j] = coordsB[j].Z;
             }
 
             for (i = 0; i < 3; i++) {
@@ -552,7 +555,7 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
      *
      * @return  int distinguishing reason for error
      */
-    public int setup(Point2Dd[] coordsA, Point2Dd[] coordsB) {
+    public int setup(Vector2f[] coordsA, Vector2f[] coordsB) {
         int i, j;
         int n = coordsA.length;
 
@@ -575,10 +578,10 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
             }
 
             for (j = 0; j < numCoords; j++) {
-                pointSetA[0][j] = coordsA[j].x;
-                pointSetA[1][j] = coordsA[j].y;
-                pointSetB[0][j] = coordsB[j].x;
-                pointSetB[1][j] = coordsB[j].y;
+                pointSetA[0][j] = coordsA[j].X;
+                pointSetA[1][j] = coordsA[j].Y;
+                pointSetB[0][j] = coordsB[j].X;
+                pointSetB[1][j] = coordsB[j].Y;
             }
 
             for (i = 0; i < 2; i++) {

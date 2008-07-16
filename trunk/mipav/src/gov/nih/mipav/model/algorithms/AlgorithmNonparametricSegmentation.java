@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.structures.*;
@@ -173,7 +174,7 @@ public class AlgorithmNonparametricSegmentation extends AlgorithmBase {
         ViewVOIVector VOIs = null;
         int nVOIs;
         int nPoints;
-        Point3Df[] points;
+        Vector3f[] points;
         int index;
         short[] principalLabel;
         int k;
@@ -427,9 +428,9 @@ public class AlgorithmNonparametricSegmentation extends AlgorithmBase {
                     if (points != null) {
 
                         for (j = 0; j < points.length; j++) {
-                            x = (int) points[j].x;
-                            y = (int) points[j].y;
-                            z = (int) points[j].z;
+                            x = (int) points[j].X;
+                            y = (int) points[j].Y;
+                            z = (int) points[j].Z;
                             index = (z * sliceLength) + (y * xDim) + x;
                             c1Index = (int) ((c1Buffer[index] - c1Min) / c1Divide);
                             c2Index = (int) ((c2Buffer[index] - c2Min) / c2Divide);
@@ -638,7 +639,7 @@ loop1:
         ViewVOIVector VOIs = null;
         int nVOIs;
         int nPoints;
-        Point3Df[] points;
+        Vector3f[] points;
         int index;
         short[] principalLabel;
         int k;
@@ -912,9 +913,9 @@ loop1:
                     if (points != null) {
 
                         for (j = 0; j < points.length; j++) {
-                            x = (int) points[j].x;
-                            y = (int) points[j].y;
-                            z = (int) points[j].z;
+                            x = (int) points[j].X;
+                            y = (int) points[j].Y;
+                            z = (int) points[j].Z;
                             index = (z * sliceLength) + (y * xDim) + x;
                             redIndex = (int) ((redBuffer[index] - redMin) / redDivide);
                             greenIndex = (int) ((greenBuffer[index] - greenMin) / greenDivide);
@@ -1140,7 +1141,7 @@ loop1:
         ViewVOIVector VOIs = null;
         int nVOIs;
         int nPoints;
-        Point3Df[] points;
+        Vector3f[] points;
         int index;
         short[] principalLabel;
         int k;
@@ -1385,9 +1386,9 @@ loop1:
                     if (points != null) {
 
                         for (j = 0; j < points.length; j++) {
-                            x = (int) points[j].x;
-                            y = (int) points[j].y;
-                            z = (int) points[j].z;
+                            x = (int) points[j].X;
+                            y = (int) points[j].Y;
+                            z = (int) points[j].Z;
                             index = (z * sliceLength) + (y * xDim) + x;
                             iIndex = (int) ((buffer[index] - imin) / iDivide);
                             lapIndex = (int) ((buffer2[index] - lapMin) * lapScale);

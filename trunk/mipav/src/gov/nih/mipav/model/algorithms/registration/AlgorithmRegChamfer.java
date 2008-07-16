@@ -1,6 +1,6 @@
 package gov.nih.mipav.model.algorithms.registration;
 
-
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -39,7 +39,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
     private ModelImage match, volume25D, edgeImg;
 
     /** DOCUMENT ME! */
-    private Vector3Df[] matchPts; // stores mm, not pixel!
+    private Vector3f[] matchPts; // stores mm, not pixel!
 
     /** DOCUMENT ME! */
     private int N; // # match pts
@@ -51,7 +51,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
     private int simplexDim;
 
     /** DOCUMENT ME! */
-    private Vector3Df[] TmatchPts; // stores mm, not pixel!
+    private Vector3f[] TmatchPts; // stores mm, not pixel!
 
     /** DOCUMENT ME! */
     private TransMatrix[] tMatrixMatchtoBase;
@@ -451,12 +451,12 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
 
         int i, j, k;
         int n = 0;
-        matchPts = new Vector3Df[N];
-        TmatchPts = new Vector3Df[N];
+        matchPts = new Vector3f[N];
+        TmatchPts = new Vector3f[N];
 
         for (i = 0; i < N; i++) {
-            matchPts[i] = new Vector3Df();
-            TmatchPts[i] = new Vector3Df();
+            matchPts[i] = new Vector3f();
+            TmatchPts[i] = new Vector3f();
         }
 
         if (DIM == 2) {
@@ -466,8 +466,8 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
                 for (j = 0; j < ydimM; j++) {
 
                     if (match.getFloat(i, j) != 0) { // if foreground
-                        matchPts[n].x = i * xresM;
-                        matchPts[n].y = j * xresM;
+                        matchPts[n].X = i * xresM;
+                        matchPts[n].Y = j * xresM;
                         n++;
                     }
                 }
@@ -481,9 +481,9 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
                     for (k = 0; k < zdimM; k++) {
 
                         if (match.getFloat(i, j, k) != 0) { // if foreground
-                            matchPts[n].x = i * xresM;
-                            matchPts[n].y = j * xresM;
-                            matchPts[n].z = k * xresM;
+                            matchPts[n].X = i * xresM;
+                            matchPts[n].Y = j * xresM;
+                            matchPts[n].Z = k * xresM;
                             n++;
                         }
                     }
@@ -502,12 +502,12 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
 
         int i, j, index;
         int n = 0;
-        matchPts = new Vector3Df[N];
-        TmatchPts = new Vector3Df[N];
+        matchPts = new Vector3f[N];
+        TmatchPts = new Vector3f[N];
 
         for (i = 0; i < N; i++) {
-            matchPts[i] = new Vector3Df();
-            TmatchPts[i] = new Vector3Df();
+            matchPts[i] = new Vector3f();
+            TmatchPts[i] = new Vector3f();
         }
 
         if (image25D == true) {
@@ -518,8 +518,8 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
                     index = i + (j * xdimM) + (matchSlice * xdimM * ydimM);
 
                     if (((entireImage == true) || mask.get(index)) && (edgeImg.getFloat(i, j, matchSlice) != 0)) { // if foreground
-                        matchPts[n].x = i * xresM;
-                        matchPts[n].y = j * xresM;
+                        matchPts[n].X = i * xresM;
+                        matchPts[n].Y = j * xresM;
                         n++;
                     }
                 }
@@ -820,16 +820,16 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
 
             // TransMatrix xfrm;
             getTransformFromX(x, tmpXfrm);
-            tmpXfrm.transform(matchPts, TmatchPts);
+            tmpXfrm.transformAsVector3Df(matchPts, TmatchPts);
 
             if (DIM == 2) {
 
                 for (n = 0; n < N; n++) {
                     value = 0; // remains zero if voxel is transformed out of bounds
-                    X = TmatchPts[n].x / xresB;
+                    X = TmatchPts[n].X / xresB;
 
                     if ((X >= 0) && (X < (xdimB - 1))) {
-                        Y = TmatchPts[n].y / yresB;
+                        Y = TmatchPts[n].Y / yresB;
 
                         if ((Y >= 0) && (Y < (ydimB - 1))) {
 
@@ -857,13 +857,13 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
 
                 for (n = 0; n < N; n++) {
                     value = 0; // remains zero if voxel is transformed out of bounds
-                    X = TmatchPts[n].x / xresB;
+                    X = TmatchPts[n].X / xresB;
 
                     if ((X >= 0) && (X < (xdimB - 1))) {
-                        Y = TmatchPts[n].y / yresB;
+                        Y = TmatchPts[n].Y / yresB;
 
                         if ((Y >= 0) && (Y < (ydimB - 1))) {
-                            Z = TmatchPts[n].z / zresB;
+                            Z = TmatchPts[n].Z / zresB;
 
                             if ((Z >= 0) && (Z < (zdimB - 1))) {
                                 x0 = X - (int) X;

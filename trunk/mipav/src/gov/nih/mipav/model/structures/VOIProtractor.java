@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.structures;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 
@@ -12,7 +13,7 @@ import java.awt.*;
 
 /**
  * This class is fundamental to the VOI class in which points are stored that describe a Protractor VOI. The points are
- * 3D and are floats (see Point3Df). It extends VOIBase and therefore it extends Vector. Point 0 is the common vertex of
+ * 3D and are floats (see Vector3f). It extends VOIBase and therefore it extends Vector. Point 0 is the common vertex of
  * the 2 intersecting lines, point 1 is the outer point of the initially shorter line, and point 2 is the outer point of
  * the intially longer line. This kind of VOI is used to measure angles.
  *
@@ -98,8 +99,8 @@ public class VOIProtractor extends VOIBase {
             }
 
             for (i = 0; i < nPts; i++) {
-                xPts[i] = ((Point3Df) (elementAt(i))).x;
-                yPts[i] = ((Point3Df) (elementAt(i))).y;
+                xPts[i] = ((Vector3f) (elementAt(i))).X;
+                yPts[i] = ((Vector3f) (elementAt(i))).Y;
             }
         }
 
@@ -470,7 +471,7 @@ public class VOIProtractor extends VOIBase {
      *
      * @return  null
      */
-    public Point3Df getActivePt() {
+    public Vector3f getActivePt() {
         return null;
     }
 
@@ -495,9 +496,9 @@ public class VOIProtractor extends VOIBase {
         z[1] = -1;
 
         for (i = 0; i < this.size(); i++) {
-            xx = Math.round(((Point3Df) (elementAt(i))).x);
-            yy = Math.round(((Point3Df) (elementAt(i))).y);
-            zz = Math.round(((Point3Df) (elementAt(i))).z);
+            xx = Math.round(((Vector3f) (elementAt(i))).X);
+            yy = Math.round(((Vector3f) (elementAt(i))).Y);
+            zz = Math.round(((Vector3f) (elementAt(i))).Z);
 
             if (xx < x[0]) {
                 x[0] = xx;
@@ -546,9 +547,9 @@ public class VOIProtractor extends VOIBase {
         z[1] = -1;
 
         for (i = 0; i < this.size(); i++) {
-            xx = ((Point3Df) (elementAt(i))).x;
-            yy = ((Point3Df) (elementAt(i))).y;
-            zz = ((Point3Df) (elementAt(i))).z;
+            xx = ((Vector3f) (elementAt(i))).X;
+            yy = ((Vector3f) (elementAt(i))).Y;
+            zz = ((Vector3f) (elementAt(i))).Z;
 
             if (xx < x[0]) {
                 x[0] = xx;
@@ -618,7 +619,7 @@ public class VOIProtractor extends VOIBase {
         this.removeAllElements();
 
         for (i = 0; i < n; i++) {
-            this.addElement(new Point3Df(x[i], y[i], z[i]));
+            this.addElement(new Vector3f(x[i], y[i], z[i]));
         }
     }
 
@@ -640,7 +641,7 @@ public class VOIProtractor extends VOIBase {
         this.removeAllElements();
 
         for (i = 0; i < n; i++) {
-            this.addElement(new Point3Df(x[i], y[i], z[i]));
+            this.addElement(new Vector3f(x[i], y[i], z[i]));
         }
     }
 
@@ -649,7 +650,7 @@ public class VOIProtractor extends VOIBase {
      *
      * @param  pt  array of points
      */
-    public void importPoints(Point3Df[] pt) {
+    public void importPoints(Vector3f[] pt) {
         int i;
 
         if (pt.length > 3) {
@@ -679,7 +680,7 @@ public class VOIProtractor extends VOIBase {
      * @param  y  y coordinate
      */
     public void movePt(int x, int y) {
-        replaceElement(x, y, ((Point3Df) (elementAt(nearPoint))).z);
+        replaceElement(x, y, ((Vector3f) (elementAt(nearPoint))).Z);
     }
 
     /**
@@ -733,8 +734,8 @@ public class VOIProtractor extends VOIBase {
         int xC, yC;
         float dist, minDistance = 100000;
         nearPoint = NOT_A_POINT;
-        xC = Math.round(((Point3Df) (elementAt(1))).x * zoom * resolutionX);
-        yC = Math.round(((Point3Df) (elementAt(1))).y * zoom * resolutionY);
+        xC = Math.round(((Vector3f) (elementAt(1))).X * zoom * resolutionX);
+        yC = Math.round(((Vector3f) (elementAt(1))).Y * zoom * resolutionY);
         dist = (float) MipavMath.distance(x, xC, y, yC);
 
         if ((dist < 3) && (dist < minDistance)) {
@@ -743,8 +744,8 @@ public class VOIProtractor extends VOIBase {
             // return true;
         }
 
-        xC = Math.round(((Point3Df) (elementAt(2))).x * zoom * resolutionX);
-        yC = Math.round(((Point3Df) (elementAt(2))).y * zoom * resolutionY);
+        xC = Math.round(((Vector3f) (elementAt(2))).X * zoom * resolutionX);
+        yC = Math.round(((Vector3f) (elementAt(2))).Y * zoom * resolutionY);
         dist = (float) MipavMath.distance(x, xC, y, yC);
 
         if ((dist < 3) && (dist < minDistance)) {
@@ -832,8 +833,8 @@ public class VOIProtractor extends VOIBase {
         int i;
 
         for (i = 0; i < 3; i++) {
-            ((Point3Df) (elementAt(i))).x += xT;
-            ((Point3Df) (elementAt(i))).y += yT;
+            ((Vector3f) (elementAt(i))).X += xT;
+            ((Vector3f) (elementAt(i))).Y += yT;
         }
     }
 
@@ -891,7 +892,7 @@ public class VOIProtractor extends VOIBase {
             }
 
             for (i = 0; i < 3; i++) {
-                this.addElement(new Point3Df(x[i], y[i], z[i]));
+                this.addElement(new Vector3f(x[i], y[i], z[i]));
             }
         } // if (snap)
 

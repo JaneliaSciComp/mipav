@@ -15,7 +15,10 @@ public class PItkImage3
 
     protected void finalize() {
         m_itkImageBase3 = null;
-        m_SmartPointer = null;
+        // avoid 'local variable never read' warning. Harmless.
+        if (m_SmartPointer != null) {
+        	m_SmartPointer = null;
+        }
     }
 
     /** Create instance of itkImage, matching Mipav image type, if possible.

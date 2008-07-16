@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -345,21 +346,21 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
         Vector pts = new Vector(50, 50);
 
         for (i = 0; i < xPts.length; i++) {
-            pts.addElement(new Point2Df(xPts[i], yPts[i]));
+            pts.addElement(new Vector2f(xPts[i], yPts[i]));
         }
 
         // add points to contour where points are separated by a some distance
         // also remove adjacent points
         for (i = 1; i < (pts.size() - 1); i++) {
 
-            distance = distance(((Point2Df) (pts.elementAt(i))).x, ((Point2Df) (pts.elementAt(i + 1))).x,
-                                ((Point2Df) (pts.elementAt(i))).y, ((Point2Df) (pts.elementAt(i + 1))).y);
+            distance = distance(((Vector2f) (pts.elementAt(i))).X, ((Vector2f) (pts.elementAt(i + 1))).X,
+                                ((Vector2f) (pts.elementAt(i))).Y, ((Vector2f) (pts.elementAt(i + 1))).Y);
 
             if (distance > 3) {
-                midX = (float) ((((Point2Df) (pts.elementAt(i))).x + ((Point2Df) (pts.elementAt(i + 1))).x) / 2.0);
-                midY = (float) ((((Point2Df) (pts.elementAt(i))).y + ((Point2Df) (pts.elementAt(i + 1))).y) / 2.0);
+                midX = (float) ((((Vector2f) (pts.elementAt(i))).X + ((Vector2f) (pts.elementAt(i + 1))).X) / 2.0);
+                midY = (float) ((((Vector2f) (pts.elementAt(i))).Y + ((Vector2f) (pts.elementAt(i + 1))).Y) / 2.0);
 
-                pts.insertElementAt(new Point2Df(midX, midY), i + 1);
+                pts.insertElementAt(new Vector2f(midX, midY), i + 1);
                 i--;
             } else if (distance > 1) { }
             else {
@@ -383,12 +384,12 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
 
             for (i = 0; i < end; i++) {
 
-                pt1x = ((Point2Df) (pts.elementAt(i))).x;
-                pt1y = ((Point2Df) (pts.elementAt(i))).y;
-                pt2x = ((Point2Df) (pts.elementAt(i + 1))).x;
-                pt2y = ((Point2Df) (pts.elementAt(i + 1))).y;
-                pt3x = ((Point2Df) (pts.elementAt(i + 2))).x;
-                pt3y = ((Point2Df) (pts.elementAt(i + 2))).y;
+                pt1x = ((Vector2f) (pts.elementAt(i))).X;
+                pt1y = ((Vector2f) (pts.elementAt(i))).Y;
+                pt2x = ((Vector2f) (pts.elementAt(i + 1))).X;
+                pt2y = ((Vector2f) (pts.elementAt(i + 1))).Y;
+                pt3x = ((Vector2f) (pts.elementAt(i + 2))).X;
+                pt3y = ((Vector2f) (pts.elementAt(i + 2))).Y;
 
                 v1x = pt1x - pt2x;
                 v1y = pt1y - pt2y;
@@ -451,7 +452,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
     protected void runSnake(float[] xPoints, float[] yPoints, float[] u, float[] v, Polygon resultGon) {
         int i, j;
         int nPts;
-        Point2Df interpPt = new Point2Df();
+        Vector2f interpPt = new Vector2f();
         float[] newXPts = null, newYPts = null;
         int position;
         boolean finished = false;
@@ -469,8 +470,8 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
                 yPoints = new float[ptsArray.size()];
 
                 for (i = 0; i < ptsArray.size(); i++) {
-                    xPoints[i] = ((Point2Df) (ptsArray.elementAt(i))).x;
-                    yPoints[i] = ((Point2Df) (ptsArray.elementAt(i))).y;
+                    xPoints[i] = ((Vector2f) (ptsArray.elementAt(i))).X;
+                    yPoints[i] = ((Vector2f) (ptsArray.elementAt(i))).Y;
                 }
 
                 nPts = xPoints.length;
@@ -479,19 +480,19 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
 
                 for (i = 1; i < (nPts - 1); i++) {
 
-                    interpPt.x = xPoints[i];
-                    interpPt.y = yPoints[i];
+                    interpPt.X = xPoints[i];
+                    interpPt.Y = yPoints[i];
 
-                    position = (int) interpPt.x + (xDim * (int) interpPt.y);
-                    newXPts[i] = interpPt.x +
-                                 getBilinear(position, interpPt.x - (int) interpPt.x, interpPt.y - (int) interpPt.y,
+                    position = (int) interpPt.X + (xDim * (int) interpPt.Y);
+                    newXPts[i] = interpPt.X +
+                                 getBilinear(position, interpPt.X - (int) interpPt.X, interpPt.Y - (int) interpPt.Y,
                                              extents, u);
 
-                    newYPts[i] = interpPt.y +
-                                 getBilinear(position, interpPt.x - (int) interpPt.x, interpPt.y - (int) interpPt.y,
+                    newYPts[i] = interpPt.Y +
+                                 getBilinear(position, interpPt.X - (int) interpPt.X, interpPt.Y - (int) interpPt.Y,
                                              extents, v);
 
-                    if ((Math.abs(newXPts[i] - interpPt.x) >= 0.02f) || (Math.abs(newYPts[i] - interpPt.y) >= 0.02f)) {
+                    if ((Math.abs(newXPts[i] - interpPt.X) >= 0.02f) || (Math.abs(newYPts[i] - interpPt.Y) >= 0.02f)) {
                         finished = false;
                     }
                 }

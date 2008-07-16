@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
@@ -273,10 +274,10 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
     protected void callAlgorithm() {
         int nPtsA = 0; // = baseImage.getVOIs().size();
         int nPtsB = 0; // = matchImage.getVOIs().size()
-        Point3Df[] tmpptA = null;
-        Point3Df[] tmpptB = null;
-        Point3Df[] ptA = null; // new Point3Df[nPtsA];
-        Point3Df[] ptB = null; // new Point3Df[nPtsB];
+        Vector3f[] tmpptA = null;
+        Vector3f[] tmpptB = null;
+        Vector3f[] ptA = null; // new Vector3f[nPtsA];
+        Vector3f[] ptB = null; // new Vector3f[nPtsB];
         int i, s, ptNum;
         Vector[] curves;
 
@@ -296,7 +297,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                     }
 
                     Preferences.debug("nPtsA = " + nPtsA + "\n");
-                    ptA = new Point3Df[nPtsA];
+                    ptA = new Vector3f[nPtsA];
 
                     for (s = 0; s < baseImage.getExtents()[2]; s++) {
                         tmpptA = baseImage.getVOIs().VOIAt(0).exportPoints(s);
@@ -321,7 +322,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                     }
 
                     Preferences.debug("nPtsB = " + nPtsB + "\n");
-                    ptB = new Point3Df[nPtsB];
+                    ptB = new Vector3f[nPtsB];
 
                     for (s = 0; s < matchImage.getExtents()[2]; s++) {
                         tmpptB = matchImage.getVOIs().VOIAt(0).exportPoints(s);
@@ -344,7 +345,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                     curves = baseImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
                     nPtsA = curves[0].size();
                     Preferences.debug("nPtsA = " + nPtsA + "\n");
-                    ptA = new Point3Df[nPtsA];
+                    ptA = new Vector3f[nPtsA];
                     tmpptA = baseImage.getVOIs().VOIAt(0).exportPoints(0);
 
                     for (i = 0; i < tmpptA.length; i++) {
@@ -362,7 +363,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                     }
 
                     Preferences.debug("nPtsB = " + nPtsB + "\n");
-                    ptB = new Point3Df[nPtsB];
+                    ptB = new Vector3f[nPtsB];
                     tmpptB = matchImage.getVOIs().VOIAt(0).exportPoints(0);
 
                     for (i = 0; i < tmpptB.length; i++) {
@@ -378,8 +379,8 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                 }
             }
 
-            Point3Dd[] ptAmm = new Point3Dd[nPtsA];
-            Point3Dd[] ptBmm = new Point3Dd[nPtsB];
+            Vector3f[] ptAmm = new Vector3f[nPtsA];
+            Vector3f[] ptBmm = new Vector3f[nPtsB];
             zresA = 1;
             xresA = baseImage.getFileInfo(0).getResolutions()[0];
             yresA = baseImage.getFileInfo(0).getResolutions()[1];
@@ -389,9 +390,9 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
             }
 
             for (i = 0; i < nPtsA; i++) {
-                ptAmm[i] = new Point3Dd((double) (ptA[i].x * xresA), (double) (ptA[i].y * yresA),
-                                        (double) (ptA[i].z * zresA));
-                Preferences.debug(ptAmm[i].x + ", " + ptAmm[i].y + ", " + ptAmm[i].z + "\n");
+                ptAmm[i] = new Vector3f((ptA[i].X * xresA), (ptA[i].Y * yresA),
+                                        (ptA[i].Z * zresA));
+                Preferences.debug(ptAmm[i].X + ", " + ptAmm[i].Y + ", " + ptAmm[i].Z + "\n");
             }
 
             xresB = matchImage.getFileInfo(0).getResolutions()[0];
@@ -402,9 +403,9 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
             }
 
             for (i = 0; i < nPtsB; i++) {
-                ptBmm[i] = new Point3Dd((double) (ptB[i].x * xresB), (double) (ptB[i].y * yresB),
-                                        (double) (ptB[i].z * zresB));
-                Preferences.debug(ptBmm[i].x + ", " + ptBmm[i].y + ", " + ptBmm[i].z + "\n");
+                ptBmm[i] = new Vector3f((ptB[i].X * xresB), (ptB[i].Y * yresB),
+                                        (ptB[i].Z * zresB));
+                Preferences.debug(ptBmm[i].X + ", " + ptBmm[i].Y + ", " + ptBmm[i].Z + "\n");
             }
 
             LSMatch = new AlgorithmRegLeastSquares(ptAmm, ptBmm, DIM);

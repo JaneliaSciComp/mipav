@@ -748,9 +748,9 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
         } else {
             TransferFunction tf = componentOpacityA.getOpacityTransferFunction();
 
-            opacitySliderLabelsA[0].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).x - 1), 1));
-            opacitySliderLabelsA[1].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).x), 1));
-            opacitySliderLabelsA[2].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).x + 1), 1));
+            opacitySliderLabelsA[0].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).X - 1), 1));
+            opacitySliderLabelsA[1].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).X), 1));
+            opacitySliderLabelsA[2].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).X + 1), 1));
         }
 
         Hashtable labels = new Hashtable();
@@ -785,9 +785,9 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
         } else {
             TransferFunction tf = componentOpacityB.getOpacityTransferFunction();
 
-            opacitySliderLabelsB[0].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).x - 5), 1)); // 5 is the range of the slider labels
-            opacitySliderLabelsB[1].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).x), 1));
-            opacitySliderLabelsB[2].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).x + 5), 1));
+            opacitySliderLabelsB[0].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).X - 5), 1)); // 5 is the range of the slider labels
+            opacitySliderLabelsB[1].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).X), 1));
+            opacitySliderLabelsB[2].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).X + 5), 1));
         }
 
         Hashtable labels = new Hashtable();
@@ -822,9 +822,9 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
         } else {
             TransferFunction tf = componentOpacityGM_A.getOpacityTransferFunction();
 
-            opacitySliderLabelsGM_A[0].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).x - 5), 1)); // 5 is the range of the slider labels
-            opacitySliderLabelsGM_A[1].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).x), 1));
-            opacitySliderLabelsGM_A[2].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).x + 5), 1));
+            opacitySliderLabelsGM_A[0].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).X - 5), 1)); // 5 is the range of the slider labels
+            opacitySliderLabelsGM_A[1].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).X), 1));
+            opacitySliderLabelsGM_A[2].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).X + 5), 1));
         }
 
         Hashtable labels = new Hashtable();
@@ -859,9 +859,9 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
         } else {
             TransferFunction tf = componentOpacityGM_B.getOpacityTransferFunction();
 
-            opacitySliderLabelsGM_B[0].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).x - 5), 1)); // 5 is the range of the slider labels
-            opacitySliderLabelsGM_B[1].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).x), 1));
-            opacitySliderLabelsGM_B[2].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).x + 5), 1));
+            opacitySliderLabelsGM_B[0].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).X - 5), 1)); // 5 is the range of the slider labels
+            opacitySliderLabelsGM_B[1].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).X), 1));
+            opacitySliderLabelsGM_B[2].setText(MipavUtil.makeFloatString((tf.getPoint(tfActiveIndex).X + 5), 1));
         }
 
         Hashtable labels = new Hashtable();

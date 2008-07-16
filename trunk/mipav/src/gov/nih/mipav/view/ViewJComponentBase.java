@@ -1,5 +1,7 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 import gov.nih.mipav.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -389,12 +391,12 @@ public abstract class ViewJComponentBase extends JComponent {
      * @param screenPoint, the transfromed localPoint, scaled with the image
      * pixel resolution and zoom.
      */
-    public void LocalToScreen( Point3Df localPoint, Point3Df screenPoint )
+    public void LocalToScreen( Vector3f localPoint, Vector3f screenPoint )
     {
-        screenPoint.x = localPoint.x * ( zoomX * resolutionX );
-        screenPoint.y = localPoint.y * ( zoomY * resolutionY );
+        screenPoint.X = localPoint.X * ( zoomX * resolutionX );
+        screenPoint.Y = localPoint.Y * ( zoomY * resolutionY );
         /* store but do not transform the z value (z = slice displayed) */
-        screenPoint.z = localPoint.z;
+        screenPoint.Z = localPoint.Z;
     }
 
     /**
@@ -405,12 +407,12 @@ public abstract class ViewJComponentBase extends JComponent {
      * @param localPoint, the transfromed point in local slice
      * coordinates. The z-value represents the current slice.
      */
-    public void ScreenToLocal( Point3Df screenPoint, Point3Df localPoint )
+    public void ScreenToLocal( Vector3f screenPoint, Vector3f localPoint )
     {
-        localPoint.x = screenPoint.x / ( zoomX * resolutionX );
-        localPoint.y = screenPoint.y / ( zoomY * resolutionY );
+        localPoint.X = screenPoint.X / ( zoomX * resolutionX );
+        localPoint.Y = screenPoint.Y / ( zoomY * resolutionY );
         /* store but do not transform the z value (z = slice displayed) */
-        localPoint.z = screenPoint.z;
+        localPoint.Z = screenPoint.Z;
     }
 
 

@@ -280,7 +280,6 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
 
     }
 
-    @Override
     public void algorithmPerformed(AlgorithmBase algorithm) {
         if(alg.isCompleted()) {
             alg = null;

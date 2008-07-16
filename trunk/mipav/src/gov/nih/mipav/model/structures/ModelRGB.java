@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.structures;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.view.*;
 
@@ -450,7 +451,7 @@ public class ModelRGB extends ModelStorageBase {
         int height = getExtents()[1]; // number of entries in the LUT (i.e. 256)
 
         for (j = 0; j < function.size(); j++) {
-            x[j] = ((Point2Df) (function.getPoint(j))).x;
+            x[j] = ((Vector2f) (function.getPoint(j))).X;
         }
 
         for (i = 0; i < height; i++) {

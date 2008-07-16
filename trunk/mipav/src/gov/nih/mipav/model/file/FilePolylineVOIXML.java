@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.file;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 
 import gov.nih.mipav.*;
 
@@ -62,9 +64,9 @@ public class FilePolylineVOIXML extends FileXML {
      *
      * @exception  IOException  if there is an error reading the file
      */
-    public Vector<Point3Df> readVOI(boolean doLabel) throws IOException {
+    public Vector<Vector3f> readVOI(boolean doLabel) throws IOException {
 
-    	Vector<Point3Df> coordVector = new Vector<Point3Df>();
+    	Vector<Vector3f> coordVector = new Vector<Vector3f>();
     	
     	if (!readXML(coordVector)) {
     		throw (new IOException("Open VOI failed."));
@@ -94,7 +96,7 @@ public class FilePolylineVOIXML extends FileXML {
     	return flip;
     }
     
-    private boolean readXML(Vector<Point3Df> coordVector) {
+    private boolean readXML(Vector<Vector3f> coordVector) {
 
         SAXParserFactory spf = SAXParserFactory.newInstance();
 
@@ -149,7 +151,7 @@ public class FilePolylineVOIXML extends FileXML {
     private class MyXMLHandler extends DefaultHandler {
 
         /** The contours of the VOI we are building. */
-        private Vector<Point3Df> coordVector;
+        private Vector<Vector3f> coordVector;
 
         /** The current XML tag we are parsing. */
         private String currentKey;
@@ -167,7 +169,7 @@ public class FilePolylineVOIXML extends FileXML {
          *
          * @param  voi  the VOI we should build from the XML file data
          */
-        public MyXMLHandler(Vector<Point3Df> cVector) {
+        public MyXMLHandler(Vector<Vector3f> cVector) {
             this.coordVector = cVector;
         }
 
@@ -210,7 +212,7 @@ public class FilePolylineVOIXML extends FileXML {
                     x = Float.parseFloat(st.nextToken());
                     y = Float.parseFloat(st.nextToken());
                     z = Float.parseFloat(st.nextToken());
-                    coordVector.addElement(new Point3Df(x, y, z));
+                    coordVector.addElement(new Vector3f(x, y, z));
                 /*
                 } catch (NumberFormatException nfex) {
                     Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);

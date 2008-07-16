@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
 
 import gov.nih.mipav.*;
 
@@ -11,8 +13,6 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 
 import java.util.*;
-
-import javax.vecmath.*;
 
 
 /**
@@ -65,10 +65,10 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     protected Vector3f[] m_akSTangent;
 
     /** Surface vertex list. */
-    protected Point3f[] m_akVertex;
+    protected Vector3f[] m_akVertex;
 
     /** Average vector. */
-    protected Point3f[] m_akVMean;
+    protected Vector3f[] m_akVMean;
 
     /** Vertex normal. */
     protected Vector3f[] m_akVNormal;
@@ -128,7 +128,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     protected int m_iXBound, m_iYBound, m_iZBound, m_iQuantity;
 
     /** initial ellipsoid parameters. */
-    protected Point3f m_kCenter = new Point3f();
+    protected Vector3f m_kCenter = new Vector3f();
 
     /** Edge map. */
     protected HashMap m_kEMap;
@@ -194,15 +194,15 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * @param  centerPoint      The center of the initial ellipsoid or sphere.
      */
     public AlgorithmBrainExtractor(ModelImage srcImg, int orientation, boolean runOneIteration, boolean estimateSphere,
-                                   Point3f centerPoint) {
+    		Vector3f centerPoint) {
         int i;
         float fMax, fMin;
         orientationFlag = orientation;
         runOneIter = runOneIteration;
         useSphere = estimateSphere;
-        m_kCenter.x = centerPoint.x;
-        m_kCenter.y = centerPoint.y;
-        m_kCenter.z = centerPoint.z;
+        m_kCenter.X = centerPoint.X;
+        m_kCenter.Y = centerPoint.Y;
+        m_kCenter.Z = centerPoint.Z;
 
 
         /* The number of levels to subdivide the initial
@@ -286,14 +286,14 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // S = VMean[i] - V[i].  SNormal[i] is the component of S in the
         // VNormal[i] direction and STangent[i] = S - SNormal[i].  The value
         // Curvature[i] is an estimate of the surface curvature at V[i].
-        m_akVMean = new Point3f[m_iVQuantity];
+        m_akVMean = new Vector3f[m_iVQuantity];
         m_akVNormal = new Vector3f[m_iVQuantity];
         m_akSNormal = new Vector3f[m_iVQuantity];
         m_akSTangent = new Vector3f[m_iVQuantity];
         m_afCurvature = new float[m_iVQuantity];
 
         for (i = 0; i < m_iVQuantity; i++) {
-            m_akVMean[i] = new Point3f();
+            m_akVMean[i] = new Vector3f();
             m_akVNormal[i] = new Vector3f();
             m_akSNormal[i] = new Vector3f();
             m_akSTangent[i] = new Vector3f();
@@ -749,14 +749,14 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // S = VMean[i] - V[i].  SNormal[i] is the component of S in the
         // VNormal[i] direction and STangent[i] = S - SNormal[i].  The value
         // Curvature[i] is an estimate of the surface curvature at V[i].
-        m_akVMean = new Point3f[m_iVQuantity];
+        m_akVMean = new Vector3f[m_iVQuantity];
         m_akVNormal = new Vector3f[m_iVQuantity];
         m_akSNormal = new Vector3f[m_iVQuantity];
         m_akSTangent = new Vector3f[m_iVQuantity];
         m_afCurvature = new float[m_iVQuantity];
 
         for (i = 0; i < m_iVQuantity; i++) {
-            m_akVMean[i] = new Point3f();
+            m_akVMean[i] = new Vector3f();
             m_akVNormal[i] = new Vector3f();
             m_akSNormal[i] = new Vector3f();
             m_akSTangent[i] = new Vector3f();
@@ -970,42 +970,47 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         int yDim = srcImage.getExtents()[1] - 1;
         int zDim = srcImage.getExtents()[2] - 1;
 
+        Vector3f kScale = new Vector3f();
+        
         // update the vertices
         for (int i = 0; i < m_iVQuantity; i++) {
-            Point3f kVertex = m_akVertex[i];
+        	Vector3f kVertex = m_akVertex[i];
 
             // tangential update
             fUpdate1 = 0.5f;
-            kVertex.scaleAdd(fUpdate1, m_akSTangent[i], kVertex);
+            kScale.Scale( fUpdate1, m_akSTangent[i] );
+            kVertex.Add(kScale, kVertex);
 
             // normal update
             float fUpdate2 = update2(i);
             float fUpdate3 = update3(i);
-            kVertex.scaleAdd(fUpdate2, m_akSNormal[i], kVertex);
-            kVertex.scaleAdd(fUpdate3, m_akVNormal[i], kVertex);
+            kScale.Scale( fUpdate2, m_akSNormal[i] );
+            kVertex.Add(kScale, kVertex);
+            kScale.Scale( fUpdate3, m_akVNormal[i] );
+            kVertex.Add(kScale, kVertex);
 
-            if (kVertex.x < 0) {
-                kVertex.x = 0;
+            if (kVertex.X < 0) {
+                kVertex.X = 0;
             }
 
-            if (kVertex.y < 0) {
-                kVertex.y = 0;
+            if (kVertex.Y < 0) {
+                kVertex.Y = 0;
             }
 
-            if (kVertex.z < 0) {
-                kVertex.z = 0;
+            if (kVertex.Z < 0) {
+                kVertex.Z = 0;
             }
 
-            if (kVertex.x > (xDim - 1)) {
-                kVertex.x = xDim - 1;
+            if (kVertex.X > (xDim - 1)) {
+                kVertex.X = xDim - 1;
             }
 
-            if (kVertex.y > (yDim - 1)) {
-                kVertex.y = yDim - 1;
+            if (kVertex.Y > (yDim - 1)) {
+                kVertex.Y = yDim - 1;
             }
 
-            if (kVertex.z > (zDim - 1)) {
-                kVertex.z = zDim - 1;
+            if (kVertex.Z > (zDim - 1)) {
+                kVertex.Z = zDim - 1;
             }
 
         }
@@ -1025,10 +1030,10 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             kEntry = (Map.Entry) kEIter.next();
 
             Edge kE = (Edge) kEntry.getKey();
-            Point3f kP0 = m_akVertex[kE.m_i0];
-            Point3f kP1 = m_akVertex[kE.m_i1];
-            kEdge.sub(kP1, kP0);
-            m_fMeanEdgeLength += kEdge.length();
+            Vector3f kP0 = m_akVertex[kE.m_i0];
+            Vector3f kP1 = m_akVertex[kE.m_i1];
+            kEdge.Sub(kP1, kP0);
+            m_fMeanEdgeLength += kEdge.Length();
         }
 
         m_fMeanEdgeLength /= m_kEMap.size();
@@ -1046,7 +1051,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         float fInvLength2 = 1.0f / m_afLength[2];
         int iIQuantity = 0;
         int[] aiIntensity = new int[m_iQuantity];
-        Point3f kP = new Point3f();
+        Vector3f kP = new Vector3f();
 
         for (int iZ = 0, i = 0; iZ < m_iZBound; iZ++) {
 
@@ -1058,18 +1063,18 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                     if (iIntensity > m_iBackThreshold) {
 
                         // transform to ellipsoid coordinates
-                        float fX = ((float) (iX)) - m_kCenter.x;
-                        float fY = ((float) (iY)) - m_kCenter.y;
-                        float fZ = ((float) (iZ)) - m_kCenter.z;
-                        kP.x = (fX * m_kRotate.m00) + (fY * m_kRotate.m10) + (fZ * m_kRotate.m20);
-                        kP.y = (fX * m_kRotate.m01) + (fY * m_kRotate.m11) + (fZ * m_kRotate.m21);
-                        kP.z = (fX * m_kRotate.m02) + (fY * m_kRotate.m12) + (fZ * m_kRotate.m22);
+                        float fX = ((float) (iX)) - m_kCenter.X;
+                        float fY = ((float) (iY)) - m_kCenter.Y;
+                        float fZ = ((float) (iZ)) - m_kCenter.Z;
+                        kP.X = (fX * m_kRotate.M00) + (fY * m_kRotate.M10) + (fZ * m_kRotate.M20);
+                        kP.Y = (fX * m_kRotate.M01) + (fY * m_kRotate.M11) + (fZ * m_kRotate.M21);
+                        kP.Z = (fX * m_kRotate.M02) + (fY * m_kRotate.M12) + (fZ * m_kRotate.M22);
 
-                        kP.x *= fInvLength0;
-                        kP.y *= fInvLength1;
-                        kP.z *= fInvLength2;
+                        kP.X *= fInvLength0;
+                        kP.Y *= fInvLength1;
+                        kP.Z *= fInvLength2;
 
-                        if (((kP.x * kP.x) + (kP.y * kP.y) + (kP.z * kP.z)) <= 1.0f) {
+                        if (((kP.X * kP.X) + (kP.Y * kP.Y) + (kP.Z * kP.Z)) <= 1.0f) {
 
                             // voxel is inside ellipsoid
                             aiIntensity[iIQuantity++] = iIntensity;
@@ -1101,7 +1106,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         int i;
 
         for (i = 0; i < m_iVQuantity; i++) {
-            m_akVMean[i].set(0.0f, 0.0f, 0.0f);
+            m_akVMean[i].Set(0.0f, 0.0f, 0.0f);
         }
 
         Vector3f kS = new Vector3f();
@@ -1113,18 +1118,18 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             UnorderedSetInt kAdj = m_akAdjacent[i];
 
             for (int j = 0; j < kAdj.getQuantity(); j++) {
-                m_akVMean[i].add(m_akVertex[kAdj.get(j)]);
+                m_akVMean[i].Add(m_akVertex[kAdj.get(j)]);
             }
 
-            m_akVMean[i].scale(1.0f / kAdj.getQuantity());
+            m_akVMean[i].Scale(1.0f / kAdj.getQuantity());
 
             // compute the normal and tangential components of mean-vertex
-            kS.sub(m_akVMean[i], m_akVertex[i]);
-            m_akSNormal[i].scale(kS.dot(m_akVNormal[i]), m_akVNormal[i]);
-            m_akSTangent[i].sub(kS, m_akSNormal[i]);
+            kS.Sub(m_akVMean[i], m_akVertex[i]);
+            m_akSNormal[i].Scale(kS.Dot(m_akVNormal[i]), m_akVNormal[i]);
+            m_akSTangent[i].Sub(kS, m_akSNormal[i]);
 
             // compute the curvature
-            float fLength = m_akSNormal[i].length();
+            float fLength = m_akSNormal[i].Length();
             m_afCurvature[i] = ((2.0f * fLength) * fInvMeanLength) * fInvMeanLength;
 
             if (m_afCurvature[i] < fMinCurvature) {
@@ -1151,7 +1156,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         int i;
 
         for (i = 0; i < m_iVQuantity; i++) {
-            m_akVNormal[i].set(0.0f, 0.0f, 0.0f);
+            m_akVNormal[i].Set(0.0f, 0.0f, 0.0f);
         }
 
         Vector3f kEdge1 = new Vector3f();
@@ -1164,23 +1169,23 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             int iP0 = m_aiConnect[3 * iT];
             int iP1 = m_aiConnect[(3 * iT) + 1];
             int iP2 = m_aiConnect[(3 * iT) + 2];
-            Point3f kP0 = m_akVertex[iP0];
-            Point3f kP1 = m_akVertex[iP1];
-            Point3f kP2 = m_akVertex[iP2];
+            Vector3f kP0 = m_akVertex[iP0];
+            Vector3f kP1 = m_akVertex[iP1];
+            Vector3f kP2 = m_akVertex[iP2];
 
             // compute the triangle normal
-            kEdge1.sub(kP1, kP0);
-            kEdge2.sub(kP2, kP0);
-            kNormal.cross(kEdge1, kEdge2);
+            kEdge1.Sub(kP1, kP0);
+            kEdge2.Sub(kP2, kP0);
+            kNormal.Cross(kEdge1, kEdge2);
 
             // the triangle normal partially contributes to each vertex normal
-            m_akVNormal[iP0].add(kNormal);
-            m_akVNormal[iP1].add(kNormal);
-            m_akVNormal[iP2].add(kNormal);
+            m_akVNormal[iP0].Add(kNormal);
+            m_akVNormal[iP1].Add(kNormal);
+            m_akVNormal[iP2].Add(kNormal);
         }
 
         for (i = 0; i < m_iVQuantity; i++) {
-            m_akVNormal[i].normalize();
+            m_akVNormal[i].Normalize();
         }
     }
 
@@ -1234,7 +1239,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 for (int iX = 0; iX < m_iXBound; iX++) {
 
                     if (m_aiImage[iIndex++] >= m_iBrightThreshold) {
-                        Point3f kVoxel = new Point3f(fInvBMax * iX, fInvBMax * iY, fInvBMax * iZ);
+                        Vector3f kVoxel = new Vector3f(fInvBMax * iX, fInvBMax * iY, fInvBMax * iZ);
 
                         if (orientationFlag == AlgorithmBrainExtractor.SAT_COR) {
 
@@ -1265,7 +1270,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         kQFit = new AlgorithmQuadraticFit(kLess);
 
         // get the orientation matrix
-        m_kRotate.set(kQFit.getOrient());
+        m_kRotate.Copy(kQFit.getOrient());
 
         // compute the semi-axis lengths
         m_afLength[0] = kQFit.getConstant() / kQFit.getDiagonal(0);
@@ -1319,7 +1324,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         m_kRotate = new Matrix3f();
         m_afLength = new float[3];
 
-        m_kRotate.setIdentity();
+        m_kRotate.MakeIdentity();
 
         int count = 0;
 
@@ -1507,23 +1512,23 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // algorithm.  The use of the HashMap m_kEMap is to store midpoint
         // information for edges so that triangles sharing an edge know what
         // the new vertices are for replacing themselves with subtriangles.
-        m_akVertex = new Point3f[m_iVQuantity];
+        m_akVertex = new Vector3f[m_iVQuantity];
         m_aiConnect = new int[3 * m_iTQuantity];
         m_akAdjacent = new UnorderedSetInt[m_iVQuantity];
 
         int i;
 
         for (i = 0; i < m_iVQuantity; i++) {
-            m_akVertex[i] = new Point3f();
+            m_akVertex[i] = new Vector3f();
             m_akAdjacent[i] = new UnorderedSetInt(6, 1);
         }
 
-        m_akVertex[0].set(+1.0f, 0.0f, 0.0f);
-        m_akVertex[1].set(-1.0f, 0.0f, 0.0f);
-        m_akVertex[2].set(0.0f, +1.0f, 0.0f);
-        m_akVertex[3].set(0.0f, -1.0f, 0.0f);
-        m_akVertex[4].set(0.0f, 0.0f, +1.0f);
-        m_akVertex[5].set(0.0f, 0.0f, -1.0f);
+        m_akVertex[0].Set(+1.0f, 0.0f, 0.0f);
+        m_akVertex[1].Set(-1.0f, 0.0f, 0.0f);
+        m_akVertex[2].Set(0.0f, +1.0f, 0.0f);
+        m_akVertex[3].Set(0.0f, -1.0f, 0.0f);
+        m_akVertex[4].Set(0.0f, 0.0f, +1.0f);
+        m_akVertex[5].Set(0.0f, 0.0f, -1.0f);
 
         m_aiConnect[0] = 4;
         m_aiConnect[1] = 0;
@@ -1579,14 +1584,14 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 kEntry = (Map.Entry) kEIter.next();
 
                 Edge kE = (Edge) kEntry.getKey();
-                Point3f kP0 = m_akVertex[kE.m_i0];
-                Point3f kP1 = m_akVertex[kE.m_i1];
-                Point3f kPMid = m_akVertex[iPNext];
-                kPMid.add(kP0, kP1);
+                Vector3f kP0 = m_akVertex[kE.m_i0];
+                Vector3f kP1 = m_akVertex[kE.m_i1];
+                Vector3f kPMid = m_akVertex[iPNext];
+                kPMid.Add(kP0, kP1);
 
                 float fInvLen = 1.0f /
-                                    (float) Math.sqrt((kPMid.x * kPMid.x) + (kPMid.y * kPMid.y) + (kPMid.z * kPMid.z));
-                kPMid.scale(fInvLen);
+                                    (float) Math.sqrt((kPMid.X * kPMid.X) + (kPMid.Y * kPMid.Y) + (kPMid.Z * kPMid.Z));
+                kPMid.Scale(fInvLen);
                 kEntry.setValue(new Integer(iPNext));
                 iPNext++;
             }
@@ -1664,33 +1669,33 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // rotate, scale, and translate sphere to get ellipsoid
         float resXFactor = m_fXDelta /
                                (float)
-                                   Math.sqrt((m_kRotate.m00 * m_kRotate.m00 * m_fXDelta * m_fXDelta) +
-                                                 (m_kRotate.m01 * m_kRotate.m01 * m_fYDelta * m_fYDelta) +
-                                                 (m_kRotate.m02 * m_kRotate.m02 * m_fZDelta * m_fZDelta));
+                                   Math.sqrt((m_kRotate.M00 * m_kRotate.M00 * m_fXDelta * m_fXDelta) +
+                                                 (m_kRotate.M01 * m_kRotate.M01 * m_fYDelta * m_fYDelta) +
+                                                 (m_kRotate.M02 * m_kRotate.M02 * m_fZDelta * m_fZDelta));
         float resYFactor = m_fYDelta /
                                (float)
-                                   Math.sqrt((m_kRotate.m10 * m_kRotate.m10 * m_fXDelta * m_fXDelta) +
-                                                 (m_kRotate.m11 * m_kRotate.m11 * m_fYDelta * m_fYDelta) +
-                                                 (m_kRotate.m12 * m_kRotate.m12 * m_fZDelta * m_fZDelta));
+                                   Math.sqrt((m_kRotate.M10 * m_kRotate.M10 * m_fXDelta * m_fXDelta) +
+                                                 (m_kRotate.M11 * m_kRotate.M11 * m_fYDelta * m_fYDelta) +
+                                                 (m_kRotate.M12 * m_kRotate.M12 * m_fZDelta * m_fZDelta));
         float resZFactor = m_fZDelta /
                                (float)
-                                   Math.sqrt((m_kRotate.m20 * m_kRotate.m20 * m_fXDelta * m_fXDelta) +
-                                                 (m_kRotate.m21 * m_kRotate.m21 * m_fYDelta * m_fYDelta) +
-                                                 (m_kRotate.m22 * m_kRotate.m22 * m_fZDelta * m_fZDelta));
+                                   Math.sqrt((m_kRotate.M20 * m_kRotate.M20 * m_fXDelta * m_fXDelta) +
+                                                 (m_kRotate.M21 * m_kRotate.M21 * m_fYDelta * m_fYDelta) +
+                                                 (m_kRotate.M22 * m_kRotate.M22 * m_fZDelta * m_fZDelta));
 
         for (i = 0; i < m_iVQuantity; i++) {
-            m_akVertex[i].x *= m_afLength[0];
-            m_akVertex[i].y *= m_afLength[1];
-            m_akVertex[i].z *= m_afLength[2];
+            m_akVertex[i].X *= m_afLength[0];
+            m_akVertex[i].Y *= m_afLength[1];
+            m_akVertex[i].Z *= m_afLength[2];
 
             // Transform for equal reslution units
-            m_kRotate.transform(m_akVertex[i]);
+            m_kRotate.Mult(m_akVertex[i], m_akVertex[i]);
 
             // Correct for unequal resolution units
-            m_akVertex[i].x *= resXFactor;
-            m_akVertex[i].y *= resYFactor;
-            m_akVertex[i].z *= resZFactor;
-            m_akVertex[i].add(m_kCenter);
+            m_akVertex[i].X *= resXFactor;
+            m_akVertex[i].Y *= resYFactor;
+            m_akVertex[i].Z *= resZFactor;
+            m_akVertex[i].Add(m_kCenter);
         }
     }
 
@@ -1726,49 +1731,49 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         for (int iT = 0; iT < m_iTQuantity; iT++) {
 
             // get the vertices of the triangle
-            Point3f kV0 = m_akVertex[m_aiConnect[3 * iT]];
-            Point3f kV1 = m_akVertex[m_aiConnect[(3 * iT) + 1]];
-            Point3f kV2 = m_akVertex[m_aiConnect[(3 * iT) + 2]];
+            Vector3f kV0 = m_akVertex[m_aiConnect[3 * iT]];
+            Vector3f kV1 = m_akVertex[m_aiConnect[(3 * iT) + 1]];
+            Vector3f kV2 = m_akVertex[m_aiConnect[(3 * iT) + 2]];
 
             // compute the axis-aligned bounding box of the triangle
-            float fXMin = kV0.x, fXMax = fXMin;
-            float fYMin = kV0.y, fYMax = fYMin;
-            float fZMin = kV0.z, fZMax = fZMin;
+            float fXMin = kV0.X, fXMax = fXMin;
+            float fYMin = kV0.Y, fYMax = fYMin;
+            float fZMin = kV0.Z, fZMax = fZMin;
 
-            if (kV1.x < fXMin) {
-                fXMin = kV1.x;
-            } else if (kV1.x > fXMax) {
-                fXMax = kV1.x;
+            if (kV1.X < fXMin) {
+                fXMin = kV1.X;
+            } else if (kV1.X > fXMax) {
+                fXMax = kV1.X;
             }
 
-            if (kV1.y < fYMin) {
-                fYMin = kV1.y;
-            } else if (kV1.y > fYMax) {
-                fYMax = kV1.y;
+            if (kV1.Y < fYMin) {
+                fYMin = kV1.Y;
+            } else if (kV1.Y > fYMax) {
+                fYMax = kV1.Y;
             }
 
-            if (kV1.z < fZMin) {
-                fZMin = kV1.z;
-            } else if (kV1.z > fZMax) {
-                fZMax = kV1.z;
+            if (kV1.Z < fZMin) {
+                fZMin = kV1.Z;
+            } else if (kV1.Z > fZMax) {
+                fZMax = kV1.Z;
             }
 
-            if (kV2.x < fXMin) {
-                fXMin = kV2.x;
-            } else if (kV2.x > fXMax) {
-                fXMax = kV2.x;
+            if (kV2.X < fXMin) {
+                fXMin = kV2.X;
+            } else if (kV2.X > fXMax) {
+                fXMax = kV2.X;
             }
 
-            if (kV2.y < fYMin) {
-                fYMin = kV2.y;
-            } else if (kV2.y > fYMax) {
-                fYMax = kV2.y;
+            if (kV2.Y < fYMin) {
+                fYMin = kV2.Y;
+            } else if (kV2.Y > fYMax) {
+                fYMax = kV2.Y;
             }
 
-            if (kV2.z < fZMin) {
-                fZMin = kV2.z;
-            } else if (kV2.z > fZMax) {
-                fZMax = kV2.z;
+            if (kV2.Z < fZMin) {
+                fZMin = kV2.Z;
+            } else if (kV2.Z > fZMax) {
+                fZMax = kV2.Z;
             }
 
             // Rasterize the triangle.  The rasterization is repeated in all
@@ -2229,7 +2234,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      *
      * @return  the x-value of the intersection
      */
-    protected int getIntersectX(Point3f kV0, Point3f kV1, Point3f kV2, int iY, int iZ) {
+    protected int getIntersectX(Vector3f kV0, Vector3f kV1, Vector3f kV2, int iY, int iZ) {
 
         // Compute the intersection, if any, by calculating barycentric
         // coordinates of the intersection of the line with the plane of
@@ -2237,9 +2242,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1.  The intersection
         // point with the plane is K0*V0+K1*V1+K2*V2.  The point is inside
         // the triangle whenever K0, K1, and K2 are all in the interval [0,1].
-        float fPu = iY - kV0.y, fPv = iZ - kV0.z;
-        float fE1u = kV1.y - kV0.y, fE1v = kV1.z - kV0.z;
-        float fE2u = kV2.y - kV0.y, fE2v = kV2.z - kV0.z;
+        float fPu = iY - kV0.Y, fPv = iZ - kV0.Z;
+        float fE1u = kV1.Y - kV0.Y, fE1v = kV1.Z - kV0.Z;
+        float fE2u = kV2.Y - kV0.Y, fE2v = kV2.Z - kV0.Z;
         float fE1dP = (fE1u * fPu) + (fE1v * fPv);
         float fE2dP = (fE2u * fPu) + (fE2v * fPv);
         float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
@@ -2271,7 +2276,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             return -1;
         }
 
-        return (int) MipavMath.round(((fC0 * kV0.x) + (fC1 * kV1.x) + (fC2 * kV2.x)) / fDet);
+        return (int) MipavMath.round(((fC0 * kV0.X) + (fC1 * kV1.X) + (fC2 * kV2.X)) / fDet);
     }
 
     /**
@@ -2287,7 +2292,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      *
      * @return  the y-value of the intersection
      */
-    protected int getIntersectY(Point3f kV0, Point3f kV1, Point3f kV2, int iX, int iZ) {
+    protected int getIntersectY(Vector3f kV0, Vector3f kV1, Vector3f kV2, int iX, int iZ) {
 
         // Compute the intersection, if any, by calculating barycentric
         // coordinates of the intersection of the line with the plane of
@@ -2295,9 +2300,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1.  The intersection
         // point with the plane is K0*V0+K1*V1+K2*V2.  The point is inside
         // the triangle whenever K0, K1, and K2 are all in the interval [0,1].
-        float fPu = iX - kV0.x, fPv = iZ - kV0.z;
-        float fE1u = kV1.x - kV0.x, fE1v = kV1.z - kV0.z;
-        float fE2u = kV2.x - kV0.x, fE2v = kV2.z - kV0.z;
+        float fPu = iX - kV0.X, fPv = iZ - kV0.Z;
+        float fE1u = kV1.X - kV0.X, fE1v = kV1.Z - kV0.Z;
+        float fE2u = kV2.X - kV0.X, fE2v = kV2.Z - kV0.Z;
         float fE1dP = (fE1u * fPu) + (fE1v * fPv);
         float fE2dP = (fE2u * fPu) + (fE2v * fPv);
         float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
@@ -2329,7 +2334,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             return -1;
         }
 
-        int iY = (int) MipavMath.round(((fC0 * kV0.y) + (fC1 * kV1.y) + (fC2 * kV2.y)) / fDet);
+        int iY = (int) MipavMath.round(((fC0 * kV0.Y) + (fC1 * kV1.Y) + (fC2 * kV2.Y)) / fDet);
 
         return iY;
     }
@@ -2347,7 +2352,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      *
      * @return  the z-value of the intersection
      */
-    protected int getIntersectZ(Point3f kV0, Point3f kV1, Point3f kV2, int iX, int iY) {
+    protected int getIntersectZ(Vector3f kV0, Vector3f kV1, Vector3f kV2, int iX, int iY) {
 
         // Compute the intersection, if any, by calculating barycentric
         // coordinates of the intersection of the line with the plane of
@@ -2355,9 +2360,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1.  The intersection
         // point with the plane is K0*V0+K1*V1+K2*V2.  The point is inside
         // the triangle whenever K0, K1, and K2 are all in the interval [0,1].
-        float fPu = iX - kV0.x, fPv = iY - kV0.y;
-        float fE1u = kV1.x - kV0.x, fE1v = kV1.y - kV0.y;
-        float fE2u = kV2.x - kV0.x, fE2v = kV2.y - kV0.y;
+        float fPu = iX - kV0.X, fPv = iY - kV0.Y;
+        float fE1u = kV1.X - kV0.X, fE1v = kV1.Y - kV0.Y;
+        float fE2u = kV2.X - kV0.X, fE2v = kV2.Y - kV0.Y;
         float fE1dP = (fE1u * fPu) + (fE1v * fPv);
         float fE2dP = (fE2u * fPu) + (fE2v * fPv);
         float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
@@ -2389,7 +2394,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             return -1;
         }
 
-        int iZ = (int) MipavMath.round(((fC0 * kV0.z) + (fC1 * kV1.z) + (fC2 * kV2.z)) / fDet);
+        int iZ = (int) MipavMath.round(((fC0 * kV0.Z) + (fC1 * kV1.Z) + (fC2 * kV2.Z)) / fDet);
 
         return iZ;
     }
@@ -2428,25 +2433,25 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             for (i = 0; i < m_iVQuantity; i++) {
 
                 // Change the voxel coordinate into millimeter space
-                coord[0] = m_akVertex[i].x * m_fXDelta;
-                coord[1] = m_akVertex[i].y * m_fYDelta;
-                coord[2] = m_akVertex[i].z * m_fZDelta;
+                coord[0] = m_akVertex[i].X * m_fXDelta;
+                coord[1] = m_akVertex[i].Y * m_fYDelta;
+                coord[2] = m_akVertex[i].Z * m_fZDelta;
 
                 // Convert the point to axial millimeter DICOM space
                 dicomMatrix.transform(coord, tCoord);
 
                 // Add in the DICOM origin
-                m_akVertex[i].x = startLocation[0] + tCoord[0];
-                m_akVertex[i].y = startLocation[1] + tCoord[1];
-                m_akVertex[i].z = startLocation[2] + tCoord[2];
+                m_akVertex[i].X = startLocation[0] + tCoord[0];
+                m_akVertex[i].Y = startLocation[1] + tCoord[1];
+                m_akVertex[i].Z = startLocation[2] + tCoord[2];
             }
         } // if (image.getFileInfo()[0].getTransformID() ==
         else {
 
             for (i = 0; i < m_iVQuantity; i++) {
-                m_akVertex[i].x = (m_akVertex[i].x * m_fXDelta * direction[0]) + startLocation[0];
-                m_akVertex[i].y = (m_akVertex[i].y * m_fYDelta * direction[1]) + startLocation[1];
-                m_akVertex[i].z = (m_akVertex[i].z * m_fZDelta * direction[2]) + startLocation[2];
+                m_akVertex[i].X = (m_akVertex[i].X * m_fXDelta * direction[0]) + startLocation[0];
+                m_akVertex[i].Y = (m_akVertex[i].Y * m_fYDelta * direction[1]) + startLocation[1];
+                m_akVertex[i].Z = (m_akVertex[i].Z * m_fZDelta * direction[2]) + startLocation[2];
             }
         } // else
 
@@ -2483,7 +2488,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * @return  the coefficient of VNormal[i] for the update
      */
     protected float update3(int i) {
-        Point3f kVertex = m_akVertex[i];
+    	Vector3f kVertex = m_akVertex[i];
         Vector3f kNormal = m_akVNormal[i];
 
         float fIMin = (float) m_iMedianIntensity;
@@ -2494,16 +2499,17 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // For now I'll just use the value as specified.  Later I need to
         // input the dx, dy, and dz terms for millimeters per voxel.
         Vector3f kDiff = new Vector3f();
-
+        Vector3f kScale = new Vector3f();
         for (int j = 0; j < m_iMaxDepth; j++) {
 
             // get point on ray emanating from vertex into bounded region
-            kDiff.scaleAdd(-m_fRayDelta * j, kNormal, kVertex);
+        	kScale.Scale( -m_fRayDelta * j, kNormal );
+            kDiff.Add(kScale, kVertex);
 
             // nearest neighbor interpolation
-            int iX = (int) (kDiff.x + 0.5f);
-            int iY = (int) (kDiff.y + 0.5f);
-            int iZ = (int) (kDiff.z + 0.5f);
+            int iX = (int) (kDiff.X + 0.5f);
+            int iY = (int) (kDiff.Y + 0.5f);
+            int iZ = (int) (kDiff.Z + 0.5f);
 
             if (iX < 0) {
                 iX = 0;

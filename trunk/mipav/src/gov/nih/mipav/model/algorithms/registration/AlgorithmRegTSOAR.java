@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms.registration;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
@@ -61,7 +62,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
     private MatrixListItem[] answer;
 
     /** Center of gravity of the reference volume. */
-    private Point3Dd cog;
+    private Vector3f cog;
 
     /** Choice of which cost function to use. */
     private int costChoice;
@@ -948,7 +949,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         TransMatrix matrix;
         float[] buffer = new float[imageInput.getSize()];
         ModelSimpleImage imageInputIso;
-        Point3Dd cogR;
+        Vector3f cogR;
 
         int count = 1;
         int offset = 0;
@@ -1057,9 +1058,9 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
             if (level == 8) {
                 cogR = AlgorithmRegOAR3D.calculateCenterOfMass3D(refImage, null, doColor);
-                initial[3] = cog.x - cogR.x;
-                initial[4] = cog.y - cogR.y;
-                initial[5] = cog.z - cogR.z;
+                initial[3] = cog.X - cogR.X;
+                initial[4] = cog.Y - cogR.Y;
+                initial[5] = cog.Z - cogR.Z;
             }
 
             if (previous != null) {
@@ -1156,9 +1157,9 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
             if (level == 8) {
                 cogR = AlgorithmRegOAR3D.calculateCenterOfMass3D(refImage, null, doColor);
-                initial[3] = cog.x - cogR.x;
-                initial[4] = cog.y - cogR.y;
-                initial[5] = cog.z - cogR.z;
+                initial[3] = cog.X - cogR.X;
+                initial[4] = cog.Y - cogR.Y;
+                initial[5] = cog.Z - cogR.Z;
             }
 
             if (previous != null) {

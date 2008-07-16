@@ -1,8 +1,9 @@
 package gov.nih.mipav.view.renderer.volumeview;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
-import gov.nih.mipav.model.structures.Point2Df;
 import gov.nih.mipav.util.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.renderer.ViewJFrameVolumeView;
@@ -372,10 +373,10 @@ public abstract class RayCastRenderer extends Renderer {
 		nPtsLUTFun = opacityFunctionA.getTransferFunction().size();
 
 		for (j = 0; j < nPtsLUTFun; j++) {
-			xLUTa[j] = ((Point2Df) (opacityFunctionA.getTransferFunction()
-					.getPoint(j))).x;
-			yLUTa[j] = 100 - ((Point2Df) (opacityFunctionA
-					.getTransferFunction().getPoint(j))).y;
+			xLUTa[j] = ((Vector2f) (opacityFunctionA.getTransferFunction()
+					.getPoint(j))).X;
+			yLUTa[j] = 100 - ((Vector2f) (opacityFunctionA
+					.getTransferFunction().getPoint(j))).Y;
 			// System.out.println("xLUT = " + xLUTa[j] + " yLUT = " + yLUTa[j]);
 		}
 
@@ -383,10 +384,10 @@ public abstract class RayCastRenderer extends Renderer {
 			nPtsLUTFun = opacityFunctionB.getTransferFunction().size();
 
 			for (j = 0; j < nPtsLUTFun; j++) {
-				xLUTb[j] = ((Point2Df) (opacityFunctionB.getTransferFunction()
-						.getPoint(j))).x;
-				yLUTb[j] = 100 - ((Point2Df) (opacityFunctionB
-						.getTransferFunction().getPoint(j))).y;
+				xLUTb[j] = ((Vector2f) (opacityFunctionB.getTransferFunction()
+						.getPoint(j))).X;
+				yLUTb[j] = 100 - ((Vector2f) (opacityFunctionB
+						.getTransferFunction().getPoint(j))).Y;
 			}
 		}
 	}

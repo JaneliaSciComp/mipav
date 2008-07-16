@@ -1,13 +1,10 @@
-
 package gov.nih.mipav.view.renderer.volumeview;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import java.awt.GraphicsConfiguration;
 import java.io.File;
 import java.io.IOException;
-
-import javax.vecmath.Vector3f;
-
-import com.sun.j3d.utils.universe.SimpleUniverse;
 
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Rendering.*;
@@ -804,8 +801,8 @@ public class VolumeShaderEffect extends ShaderEffect
         }
 
         int[] aiNormalAverageIndex = new int[]{ 0, -1, +1, -iXBound, +iXBound, -iXYBound, +iXYBound };
-        WildMagic.LibFoundation.Mathematics.Vector3f kNormal = new WildMagic.LibFoundation.Mathematics.Vector3f();
-        WildMagic.LibFoundation.Mathematics.Vector3f kNormalTmp = new WildMagic.LibFoundation.Mathematics.Vector3f();
+        Vector3f kNormal = new Vector3f();
+        Vector3f kNormalTmp = new Vector3f();
         byte[] acData = new byte[afData.length*3];
                    
         // Catch any zero-vector normals and replace them by an average of
@@ -818,7 +815,7 @@ public class VolumeShaderEffect extends ShaderEffect
                 for (iX = 1; iX < (iXBound - 1); iX++) {
                     int i = iX + offset;
 
-                    kNormal.Copy(WildMagic.LibFoundation.Mathematics.Vector3f.ZERO);
+                    kNormal.Copy(Vector3f.ZERO);
                     for ( int iN = 0; iN < aiNormalAverageIndex.length; iN++ )
                     {
                         int index = i + aiNormalAverageIndex[iN];

@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -559,21 +560,21 @@ public class AlgorithmSnake extends AlgorithmBase {
         Vector pts = new Vector(50, 50);
 
         for (i = 0; i < xPts.length; i++) {
-            pts.addElement(new Point2Df(xPts[i], yPts[i]));
+            pts.addElement(new Vector2f(xPts[i], yPts[i]));
         }
 
         // add points to contour where points are separated by a some distance
         // also remove adjacent points
         for (i = 1; i < (pts.size() - 1); i++) {
 
-            distance = distance(((Point2Df) (pts.elementAt(i))).x, ((Point2Df) (pts.elementAt(i + 1))).x,
-                                ((Point2Df) (pts.elementAt(i))).y, ((Point2Df) (pts.elementAt(i + 1))).y);
+            distance = distance(((Vector2f) (pts.elementAt(i))).X, ((Vector2f) (pts.elementAt(i + 1))).X,
+                                ((Vector2f) (pts.elementAt(i))).Y, ((Vector2f) (pts.elementAt(i + 1))).Y);
 
             if (distance > 3) {
-                midX = (float) ((((Point2Df) (pts.elementAt(i))).x + ((Point2Df) (pts.elementAt(i + 1))).x) / 2.0);
-                midY = (float) ((((Point2Df) (pts.elementAt(i))).y + ((Point2Df) (pts.elementAt(i + 1))).y) / 2.0);
+                midX = (float) ((((Vector2f) (pts.elementAt(i))).X + ((Vector2f) (pts.elementAt(i + 1))).X) / 2.0);
+                midY = (float) ((((Vector2f) (pts.elementAt(i))).Y + ((Vector2f) (pts.elementAt(i + 1))).Y) / 2.0);
 
-                pts.insertElementAt(new Point2Df(midX, midY), i + 1);
+                pts.insertElementAt(new Vector2f(midX, midY), i + 1);
                 i--;
             } else if (distance > 1) { }
             else {
@@ -598,12 +599,12 @@ public class AlgorithmSnake extends AlgorithmBase {
 
             for (i = 0; i < end; i++) {
 
-                pt1x = ((Point2Df) (pts.elementAt(i))).x;
-                pt1y = ((Point2Df) (pts.elementAt(i))).y;
-                pt2x = ((Point2Df) (pts.elementAt(i + 1))).x;
-                pt2y = ((Point2Df) (pts.elementAt(i + 1))).y;
-                pt3x = ((Point2Df) (pts.elementAt(i + 2))).x;
-                pt3y = ((Point2Df) (pts.elementAt(i + 2))).y;
+                pt1x = ((Vector2f) (pts.elementAt(i))).X;
+                pt1y = ((Vector2f) (pts.elementAt(i))).Y;
+                pt2x = ((Vector2f) (pts.elementAt(i + 1))).X;
+                pt2y = ((Vector2f) (pts.elementAt(i + 1))).Y;
+                pt3x = ((Vector2f) (pts.elementAt(i + 2))).X;
+                pt3y = ((Vector2f) (pts.elementAt(i + 2))).Y;
 
                 v1x = pt1x - pt2x;
                 v1y = pt1y - pt2y;
@@ -778,12 +779,12 @@ public class AlgorithmSnake extends AlgorithmBase {
     private float runSnake(float[] xPoints, float[] yPoints, float[] image, Polygon resultGon) {
         int i, j;
         int nPts;
-        Point2Df interpPt = new Point2Df();
-        Point2Df inNormPt = new Point2Df();
-        Point2Df outNormPt = new Point2Df();
-        Point2Df tangentDir = new Point2Df();
-        Point2Df normDir = new Point2Df();
-        Point2Df normStep = new Point2Df();
+        Vector2f interpPt = new Vector2f();
+        Vector2f inNormPt = new Vector2f();
+        Vector2f outNormPt = new Vector2f();
+        Vector2f tangentDir = new Vector2f();
+        Vector2f normDir = new Vector2f();
+        Vector2f normStep = new Vector2f();
         float[] newXPts = null, newYPts = null;
         float normLength;
         float stepPct = (float) 0.45;
@@ -804,8 +805,8 @@ public class AlgorithmSnake extends AlgorithmBase {
                 yPoints = new float[ptsArray.size()];
 
                 for (i = 0; i < ptsArray.size(); i++) {
-                    xPoints[i] = ((Point2Df) (ptsArray.elementAt(i))).x;
-                    yPoints[i] = ((Point2Df) (ptsArray.elementAt(i))).y;
+                    xPoints[i] = ((Vector2f) (ptsArray.elementAt(i))).X;
+                    yPoints[i] = ((Vector2f) (ptsArray.elementAt(i))).Y;
                 }
 
                 nPts = xPoints.length;
@@ -814,24 +815,24 @@ public class AlgorithmSnake extends AlgorithmBase {
 
                 for (i = 1; i < (nPts - 1); i++) {
 
-                    tangentDir.x = (xPoints[i] - xPoints[i - 1] + xPoints[i + 1] - xPoints[i]) / 2;
-                    tangentDir.y = (yPoints[i] - yPoints[i - 1] + yPoints[i + 1] - yPoints[i]) / 2;
+                    tangentDir.X = (xPoints[i] - xPoints[i - 1] + xPoints[i + 1] - xPoints[i]) / 2;
+                    tangentDir.Y = (yPoints[i] - yPoints[i - 1] + yPoints[i + 1] - yPoints[i]) / 2;
 
-                    interpPt.x = xPoints[i];
-                    interpPt.y = yPoints[i];
+                    interpPt.X = xPoints[i];
+                    interpPt.Y = yPoints[i];
 
-                    normLength = (float) Math.sqrt((tangentDir.x * tangentDir.x) + (tangentDir.y * tangentDir.y));
-                    normDir.x = -tangentDir.y / normLength;
-                    normDir.y = tangentDir.x / normLength;
+                    normLength = (float) Math.sqrt((tangentDir.X * tangentDir.X) + (tangentDir.Y * tangentDir.Y));
+                    normDir.X = -tangentDir.Y / normLength;
+                    normDir.Y = tangentDir.X / normLength;
 
-                    normStep.x = stepPct * normDir.x;
-                    normStep.y = stepPct * normDir.y;
+                    normStep.X = stepPct * normDir.X;
+                    normStep.Y = stepPct * normDir.Y;
 
-                    outNormPt.x = -normStep.x + interpPt.x;
-                    outNormPt.y = -normStep.y + interpPt.y;
+                    outNormPt.X = -normStep.X + interpPt.X;
+                    outNormPt.Y = -normStep.Y + interpPt.Y;
 
-                    inNormPt.x = normStep.x + interpPt.x;
-                    inNormPt.y = normStep.y + interpPt.y;
+                    inNormPt.X = normStep.X + interpPt.X;
+                    inNormPt.Y = normStep.Y + interpPt.Y;
 
                     ix = AlgorithmConvolver.convolve2DPt(interpPt, srcImage.getExtents(), image, kExtents, GxData);
                     iy = AlgorithmConvolver.convolve2DPt(interpPt, srcImage.getExtents(), image, kExtents, GyData);
@@ -862,17 +863,17 @@ public class AlgorithmSnake extends AlgorithmBase {
                     if ((outGradMag > gradMag) || (inGradMag > gradMag)) {
 
                         if (outGradMag > inGradMag) {
-                            newXPts[i] = outNormPt.x;
-                            newYPts[i] = outNormPt.y;
+                            newXPts[i] = outNormPt.X;
+                            newYPts[i] = outNormPt.Y;
                             energy += outGradMag;
                         } else {
-                            newXPts[i] = inNormPt.x;
-                            newYPts[i] = inNormPt.y;
+                            newXPts[i] = inNormPt.X;
+                            newYPts[i] = inNormPt.Y;
                             energy += inGradMag;
                         }
                     } else {
-                        newXPts[i] = interpPt.x;
-                        newYPts[i] = interpPt.y;
+                        newXPts[i] = interpPt.X;
+                        newYPts[i] = interpPt.Y;
                         energy += gradMag;
                     }
                 }

@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Vector4f;
 
 import gov.nih.mipav.*;
 
@@ -163,7 +165,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     private float sphereDiameter;
 
     /** DOCUMENT ME! */
-    private Point3Df[] ultErodeObjects = null;
+    private Vector3f[] ultErodeObjects = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -2586,8 +2588,8 @@ kernelLoop:
         int sliceSize = xDim * yDim;
         int volSize = xDim * yDim * zDim;
         int pix;
-        Point3Df bgPoint;
-        Point3Df[] seeds;
+        Vector3f bgPoint;
+        Vector3f[] seeds;
         int[] destExtents = null;
         ModelImage wsImage = null;
         ModelImage distanceImage = null;
@@ -2636,7 +2638,7 @@ kernelLoop:
 
         try {
             srcImage.exportData(0, volSize, imgBuffer);
-            bgPoint = new Point3Df(-1, -1, -1);
+            bgPoint = new Vector3f(-1, -1, -1);
             destExtents = new int[3];
         } catch (IOException error) {
             displayError("Algorithm Morphology3D.particleAnalysis: Image(s) locked");
@@ -2719,34 +2721,34 @@ kernelLoop:
         try {
 
             // form vector of seeds from ultimate erode points + point for background(should be first in list!)
-            seeds = new Point3Df[ultErodeObjects.length + 1];
-            seeds[0] = new Point3Df(1, 1, 1);
+            seeds = new Vector3f[ultErodeObjects.length + 1];
+            seeds[0] = new Vector3f(1, 1, 1);
 
             for (i = 0; i < ultErodeObjects.length; i++) {
-                seeds[i + 1] = new Point3Df(ultErodeObjects[i].x, ultErodeObjects[i].y, ultErodeObjects[i].z);
+                seeds[i + 1] = new Vector3f(ultErodeObjects[i].X, ultErodeObjects[i].Y, ultErodeObjects[i].Z);
             }
 
             for (i = 0; i < seeds.length; i++) {
 
-                if (seeds[i].x == 0) {
-                    seeds[i].x++;
-                } else if (seeds[i].x == (xDim - 1)) {
-                    seeds[i].x--;
+                if (seeds[i].X == 0) {
+                    seeds[i].X++;
+                } else if (seeds[i].X == (xDim - 1)) {
+                    seeds[i].X--;
                 }
 
-                if (seeds[i].y == 0) {
-                    seeds[i].y++;
-                } else if (seeds[i].y == (yDim - 1)) {
-                    seeds[i].y--;
+                if (seeds[i].Y == 0) {
+                    seeds[i].Y++;
+                } else if (seeds[i].Y == (yDim - 1)) {
+                    seeds[i].Y--;
                 }
 
-                if (seeds[i].z == 0) {
-                    seeds[i].z++;
-                } else if (seeds[i].z == (zDim - 1)) {
-                    seeds[i].z--;
+                if (seeds[i].Z == 0) {
+                    seeds[i].Z++;
+                } else if (seeds[i].Z == (zDim - 1)) {
+                    seeds[i].Z--;
                 }
 
-                Preferences.debug("Seed " + i + " = " + seeds[i].x + "," + seeds[i].y + "," + seeds[i].z);
+                Preferences.debug("Seed " + i + " = " + seeds[i].X + "," + seeds[i].Y + "," + seeds[i].Z);
             }
 
             wsImage = new ModelImage(ModelImage.USHORT, destExtents, "Watershed");
@@ -3046,10 +3048,10 @@ kernelLoop:
         float diffx, diffy;
         int z;
         int indexMax = 0;
-        Point3Df pt = null;
-        Point3Df maxPt = null;
-        Point4Df[] erodeObjs;
-        Point3Df[] erodeObjsOrdered;
+        Vector3f pt = null;
+        Vector3f maxPt = null;
+        Vector4f[] erodeObjs;
+        Vector3f[] erodeObjsOrdered;
         float max;
         float cPt;
         float xRes, xResSquared, yRes, yResSquared, zRes, zResSquared;
@@ -3067,7 +3069,7 @@ kernelLoop:
             edgePointsSlice = new Vector();
             uPointsSlice = new Vector();
             uPointsSliceOrdered = new Vector();
-            maxPt = new Point3Df();
+            maxPt = new Vector3f();
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.distanceMap: Out of memory");
             setCompleted(false);
@@ -3150,19 +3152,19 @@ kernelLoop:
             for (vox = z * sliceSize; vox < ((z + 1) * sliceSize); vox++) {
 
                 if (((vox % xDim) == 0) && (imgBuffer[vox] > 0)) {
-                    edgePointsSlice.addElement(new Point3Df(vox % xDim, (vox % sliceSize) / xDim, zDim));
+                    edgePointsSlice.addElement(new Vector3f(vox % xDim, (vox % sliceSize) / xDim, zDim));
                 } else if (((vox % xDim) == (xDim - 1)) && (imgBuffer[vox] > 0)) {
-                    edgePointsSlice.addElement(new Point3Df(vox % xDim, (vox % sliceSize) / xDim, zDim));
+                    edgePointsSlice.addElement(new Vector3f(vox % xDim, (vox % sliceSize) / xDim, zDim));
                 } else if (((vox % sliceSize) == (sliceSize - 1)) && (imgBuffer[vox] > 0)) {
-                    edgePointsSlice.addElement(new Point3Df(vox % xDim, (vox % sliceSize) / xDim, zDim));
+                    edgePointsSlice.addElement(new Vector3f(vox % xDim, (vox % sliceSize) / xDim, zDim));
                 } else if (((vox % sliceSize) < xDim) && (imgBuffer[vox] > 0)) {
-                    edgePointsSlice.addElement(new Point3Df(vox % xDim, (vox % sliceSize) / xDim, zDim));
+                    edgePointsSlice.addElement(new Vector3f(vox % xDim, (vox % sliceSize) / xDim, zDim));
                 } else if (((vox % sliceSize) > (sliceSize - xDim)) && (imgBuffer[vox] > 0)) {
-                    edgePointsSlice.addElement(new Point3Df(vox % xDim, (vox % sliceSize) / xDim, zDim));
+                    edgePointsSlice.addElement(new Vector3f(vox % xDim, (vox % sliceSize) / xDim, zDim));
                 } else if ((vox > xDim) && (vox < (volSize - sliceSize - xDim)) && (imgBuffer[vox] == 0) &&
                                ((imgBuffer[vox - xDim] != 0) || (imgBuffer[vox + 1] != 0) ||
                                     (imgBuffer[vox + xDim] != 0) || (imgBuffer[vox - 1] != 0))) {
-                    edgePointsSlice.addElement(new Point3Df(vox % xDim, (vox % sliceSize) / xDim, zDim));
+                    edgePointsSlice.addElement(new Vector3f(vox % xDim, (vox % sliceSize) / xDim, zDim));
                 }
             }
 
@@ -3178,10 +3180,10 @@ kernelLoop:
                         // Test the distace from point(x1, y1) to all edge points and
                         // put  the min. distance into the distance buffer
                         for (i = 0; i < edgePointsSlice.size(); i++) {
-                            pt = (Point3Df) (edgePointsSlice.elementAt(i));
+                            pt = (Vector3f) (edgePointsSlice.elementAt(i));
 
-                            diffx = pt.x - (vox % xDim);
-                            diffy = pt.y - (vox / xDim);
+                            diffx = pt.X - (vox % xDim);
+                            diffy = pt.Y - (vox / xDim);
 
                             dist = (diffx * diffx * xResSquared) + (diffy * diffy * yResSquared);
 
@@ -3217,7 +3219,7 @@ kernelLoop:
                             (cPt >= minDistanceBuffer[vox + xDim]) && (cPt >= minDistanceBuffer[vox + xDim - 1]) &&
                             (cPt >= minDistanceBuffer[vox - 1]) && (cPt >= minDistanceBuffer[vox - xDim - 1])) {
 
-                        uPointsSlice.addElement(new Point3Df(voxel, imgBuffer[voxel], minDistanceBuffer[vox]));
+                        uPointsSlice.addElement(new Vector3f(voxel, imgBuffer[voxel], minDistanceBuffer[vox]));
                     }
                 }
             }
@@ -3230,35 +3232,35 @@ kernelLoop:
             for (j = 0; j < size; j++) {
                 max = -1;
                 indexMax = j;
-                pt = (Point3Df) (uPointsSlice.elementAt(j));
-                maxPt.x = pt.x;
-                maxPt.y = pt.y;
-                maxPt.z = pt.z;
+                pt = (Vector3f) (uPointsSlice.elementAt(j));
+                maxPt.X = pt.X;
+                maxPt.Y = pt.Y;
+                maxPt.Z = pt.Z;
 
                 for (i = 0; i < size; i++) {
-                    pt = (Point3Df) (uPointsSlice.elementAt(i));
+                    pt = (Vector3f) (uPointsSlice.elementAt(i));
 
-                    if (pt.z > max) {
-                        max = pt.z;
-                        maxPt.x = pt.x;
-                        maxPt.y = pt.y;
-                        maxPt.z = pt.z;
+                    if (pt.Z > max) {
+                        max = pt.Z;
+                        maxPt.X = pt.X;
+                        maxPt.Y = pt.Y;
+                        maxPt.Z = pt.Z;
                         indexMax = i;
                     }
                 }
 
-                ((Point3Df) (uPointsSlice.elementAt(indexMax))).z = -2;
-                uPointsSliceOrdered.addElement(new Point3Df(maxPt.x, maxPt.y, maxPt.z));
+                ((Vector3f) (uPointsSlice.elementAt(indexMax))).Z = -2;
+                uPointsSliceOrdered.addElement(new Vector3f(maxPt.X, maxPt.Y, maxPt.Z));
             }
 
             // find points with dist <= max with in the same object and delete them
             // ie. one point per object on a slice
             for (j = 0; j < uPointsSliceOrdered.size(); j++) {
-                pt = (Point3Df) (uPointsSliceOrdered.elementAt(j));
+                pt = (Vector3f) (uPointsSliceOrdered.elementAt(j));
 
                 for (i = j + 1; i < uPointsSliceOrdered.size(); i++) {
 
-                    if (pt.y == ((Point3Df) (uPointsSliceOrdered.elementAt(i))).y) {
+                    if (pt.Y == ((Vector3f) (uPointsSliceOrdered.elementAt(i))).Y) {
                         uPointsSliceOrdered.removeElementAt(i);
                         i--;
                     }
@@ -3270,8 +3272,8 @@ kernelLoop:
             }
 
             for (i = 0; i < uPointsSliceOrdered.size(); i++) {
-                pt = (Point3Df) (uPointsSliceOrdered.elementAt(i));
-                imgBuffer[(int) pt.x] = (short) pt.z;
+                pt = (Vector3f) (uPointsSliceOrdered.elementAt(i));
+                imgBuffer[(int) pt.X] = (short) pt.Z;
             }
         }
 
@@ -3303,13 +3305,13 @@ kernelLoop:
         zResSquared = zRes * zRes;
 
         try {
-            erodeObjs = new Point4Df[nErodeObj];
-            erodeObjsOrdered = new Point3Df[nErodeObj];
+            erodeObjs = new Vector4f[nErodeObj];
+            erodeObjsOrdered = new Vector3f[nErodeObj];
 
             for (vox = 0, i = 0; vox < volSize; vox++) {
 
                 if (imgBuffer[vox] > 0) {
-                    erodeObjs[i] = new Point4Df(distanceMap[vox], vox % xDim, vox / xDim % yDim, vox / sliceSize);
+                    erodeObjs[i] = new Vector4f(distanceMap[vox], vox % xDim, vox / xDim % yDim, vox / sliceSize);
                     i++;
                 }
             }
@@ -3318,43 +3320,43 @@ kernelLoop:
             for (j = 0, index = 0; j < erodeObjs.length; j++) {
                 max = -1;
                 indexMax = j;
-                maxPt.x = erodeObjs[j].x;
-                maxPt.y = erodeObjs[j].y;
-                maxPt.z = erodeObjs[j].z;
+                maxPt.X = erodeObjs[j].X;
+                maxPt.Y = erodeObjs[j].Y;
+                maxPt.Z = erodeObjs[j].Z;
 
                 for (i = 0; i < erodeObjs.length; i++) {
 
-                    if (erodeObjs[i].w > max) {
-                        max = erodeObjs[i].w;
-                        maxPt.x = erodeObjs[i].x;
-                        maxPt.y = erodeObjs[i].y;
-                        maxPt.z = erodeObjs[i].z;
+                    if (erodeObjs[i].W > max) {
+                        max = erodeObjs[i].W;
+                        maxPt.X = erodeObjs[i].X;
+                        maxPt.Y = erodeObjs[i].Y;
+                        maxPt.Z = erodeObjs[i].Z;
                         indexMax = i;
                     }
                 }
 
-                erodeObjs[indexMax].w = -2;
-                erodeObjsOrdered[j] = new Point3Df(maxPt.x, maxPt.y, maxPt.z);
+                erodeObjs[indexMax].W = -2;
+                erodeObjsOrdered[j] = new Vector3f(maxPt.X, maxPt.Y, maxPt.Z);
             }
 
             for (i = 0; i < (erodeObjsOrdered.length - 1); i++) {
 
-                if (erodeObjsOrdered[i].x != -1) {
+                if (erodeObjsOrdered[i].X != -1) {
 
                     for (j = i + 1; j < erodeObjsOrdered.length; j++) {
 
-                        if (erodeObjsOrdered[j].x != -1) {
+                        if (erodeObjsOrdered[j].X != -1) {
 
-                            if (Math.sqrt(((erodeObjsOrdered[i].x - erodeObjsOrdered[j].x) *
-                                               (erodeObjsOrdered[i].x - erodeObjsOrdered[j].x)) +
-                                              ((erodeObjsOrdered[i].y - erodeObjsOrdered[j].y) *
-                                                   (erodeObjsOrdered[i].y - erodeObjsOrdered[j].y)) +
-                                              ((erodeObjsOrdered[i].z - erodeObjsOrdered[j].z) *
-                                                   (erodeObjsOrdered[i].z - erodeObjsOrdered[j].z))) < pixDist) {
+                            if (Math.sqrt(((erodeObjsOrdered[i].X - erodeObjsOrdered[j].X) *
+                                               (erodeObjsOrdered[i].X - erodeObjsOrdered[j].X)) +
+                                              ((erodeObjsOrdered[i].Y - erodeObjsOrdered[j].Y) *
+                                                   (erodeObjsOrdered[i].Y - erodeObjsOrdered[j].Y)) +
+                                              ((erodeObjsOrdered[i].Z - erodeObjsOrdered[j].Z) *
+                                                   (erodeObjsOrdered[i].Z - erodeObjsOrdered[j].Z))) < pixDist) {
 
-                                imgBuffer[(int) ((erodeObjsOrdered[j].z * sliceSize) + (erodeObjsOrdered[j].y * xDim) +
-                                                 erodeObjsOrdered[j].x)] = 0;
-                                erodeObjsOrdered[j].x = -1;
+                                imgBuffer[(int) ((erodeObjsOrdered[j].Z * sliceSize) + (erodeObjsOrdered[j].Y * xDim) +
+                                                 erodeObjsOrdered[j].X)] = 0;
+                                erodeObjsOrdered[j].X = -1;
                             }
                         }
                     }
@@ -3365,16 +3367,16 @@ kernelLoop:
 
             for (i = 0; i < erodeObjsOrdered.length; i++) {
 
-                if (erodeObjsOrdered[i].x != -1) {
+                if (erodeObjsOrdered[i].X != -1) {
                     nErodeObj++;
                 }
             }
 
-            ultErodeObjects = new Point3Df[nErodeObj];
+            ultErodeObjects = new Vector3f[nErodeObj];
 
             for (i = 0, j = 0; i < erodeObjsOrdered.length; i++) {
 
-                if (erodeObjsOrdered[i].x != -1) {
+                if (erodeObjsOrdered[i].X != -1) {
                     ultErodeObjects[j] = erodeObjsOrdered[i];
                     j++;
                 }

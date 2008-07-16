@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.volumeview;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -53,8 +54,8 @@ public class RendererMapIntensity {
         m_afLutOut = new float[iNumPoints];
 
         for (int i = 0; i < iNumPoints; i++) {
-            m_afLutIn[i] = ((Point2Df) (kLUT.getTransferFunction().getPoint(i))).x;
-            m_afLutOut[i] = 255.0f - ((Point2Df) (kLUT.getTransferFunction().getPoint(i))).y;
+            m_afLutIn[i] = ((Vector2f) (kLUT.getTransferFunction().getPoint(i))).X;
+            m_afLutOut[i] = 255.0f - ((Vector2f) (kLUT.getTransferFunction().getPoint(i))).Y;
         }
 
         // adjust the transfer function so that the input is rescaled to

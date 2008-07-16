@@ -166,7 +166,7 @@ public class SceneState implements Serializable {
             this.transformFunc = new TransferFunction();
 
             for (i = 0; i < transFuncLength; i++) {
-                this.transformFunc.addPoint(_transformFunc.getPoint(i).x, _transformFunc.getPoint(i).y);
+                this.transformFunc.addPoint(_transformFunc.getPoint(i).X, _transformFunc.getPoint(i).Y);
             }
         }
 

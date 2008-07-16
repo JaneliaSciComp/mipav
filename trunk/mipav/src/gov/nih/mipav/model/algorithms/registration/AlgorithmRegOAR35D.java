@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms.registration;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
@@ -517,12 +518,12 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
      *
      * @return  the center of mass as a 3D point
      */
-    public static Point3Dd calculateCenterOfMass3D(ModelSimpleImage image, ModelSimpleImage wgtImage, boolean isColor) {
+    public static Vector3f calculateCenterOfMass3D(ModelSimpleImage image, ModelSimpleImage wgtImage, boolean isColor) {
         int x, y, z, c;
         int sliceSize = image.xDim * image.yDim;
         float diff;
 
-        Point3Dd cogPt = new Point3Dd(0, 0, 0);
+        Vector3f cogPt = new Vector3f(0, 0, 0);
         double voxVal = 0.0, total = 0.0, wgtVal = 0.0;
 
         if (isColor) {
@@ -537,9 +538,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
                             for (c = 1; c <= 3; c++) {
                                 voxVal = image.data[(4 * ((z * sliceSize) + (y * image.xDim) + x)) + c];
-                                cogPt.x += voxVal * x;
-                                cogPt.y += voxVal * y;
-                                cogPt.z += voxVal * z;
+                                cogPt.X += voxVal * x;
+                                cogPt.Y += voxVal * y;
+                                cogPt.Z += voxVal * z;
                                 total += voxVal;
                             }
                         }
@@ -572,9 +573,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
                             for (c = 1; c <= 3; c++) {
                                 voxVal = image.data[(4 * ((z * sliceSize) + (y * image.xDim) + x)) + c];
-                                cogPt.x += wgtVal * voxVal * x;
-                                cogPt.y += wgtVal * voxVal * y;
-                                cogPt.z += wgtVal * voxVal * z;
+                                cogPt.X += wgtVal * voxVal * x;
+                                cogPt.Y += wgtVal * voxVal * y;
+                                cogPt.Z += wgtVal * voxVal * z;
                                 total += wgtVal * voxVal;
                             }
                         }
@@ -592,9 +593,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
                         for (x = 0; x < image.xDim; x++) {
                             voxVal = image.data[(z * sliceSize) + (y * image.xDim) + x] - image.min;
-                            cogPt.x += voxVal * x;
-                            cogPt.y += voxVal * y;
-                            cogPt.z += voxVal * z;
+                            cogPt.X += voxVal * x;
+                            cogPt.Y += voxVal * y;
+                            cogPt.Z += voxVal * z;
                             total += voxVal;
                         }
                     }
@@ -624,9 +625,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                         for (x = 0; x < image.xDim; x++) {
                             voxVal = image.data[(z * sliceSize) + (y * image.xDim) + x] - image.min;
                             wgtVal = wgtImage.data[(z * sliceSize) + (y * image.xDim) + x];
-                            cogPt.x += wgtVal * voxVal * x;
-                            cogPt.y += wgtVal * voxVal * y;
-                            cogPt.z += wgtVal * voxVal * z;
+                            cogPt.X += wgtVal * voxVal * x;
+                            cogPt.Y += wgtVal * voxVal * y;
+                            cogPt.Z += wgtVal * voxVal * z;
                             total += wgtVal * voxVal;
 
                         }
@@ -636,9 +637,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         } // grey
 
         if (total != 0) {
-            cogPt.x /= total;
-            cogPt.y /= total;
-            cogPt.z /= total;
+            cogPt.X /= total;
+            cogPt.Y /= total;
+            cogPt.Z /= total;
         } else { // Do nothing at the moment which will leave the COG
         }
 
@@ -1748,14 +1749,14 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 double diffZ = 0;
 
                 if (calcCOG == true) {
-                    Point3Dd cog = calculateCenterOfMass3D(simpleInput_1, simpleWeightI_1, doColor);
-                    Point3Dd cogR = calculateCenterOfMass3D(simpleRef_1, simpleWeightR_1, doColor);
+                    Vector3f cog = calculateCenterOfMass3D(simpleInput_1, simpleWeightI_1, doColor);
+                    Vector3f cogR = calculateCenterOfMass3D(simpleRef_1, simpleWeightR_1, doColor);
                     Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
                     Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n");
 
-                    diffX = (cog.x - cogR.x);
-                    diffY = (cog.y - cogR.y);
-                    diffZ = (cog.z - cogR.z);
+                    diffX = (cog.X - cogR.X);
+                    diffY = (cog.Y - cogR.Y);
+                    diffZ = (cog.Z - cogR.Z);
                 }
 
                 item.initial[0] = item.initial[1] = item.initial[2] = 0; // initial rotation
@@ -2821,8 +2822,8 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         double diffX = 0;
         double diffY = 0;
         double diffZ = 0;
-        Point3Dd cog = new Point3Dd(0, 0, 0);
-        Point3Dd cogR = new Point3Dd(0, 0, 0);
+        Vector3f cog = new Vector3f(0, 0, 0);
+        Vector3f cogR = new Vector3f(0, 0, 0);
 
         if (calcCOG == true) {
 
@@ -2837,9 +2838,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
             Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n");
 
-            diffX = (cog.x - cogR.x);
-            diffY = (cog.y - cogR.y);
-            diffZ = (cog.z - cogR.z);
+            diffX = (cog.X - cogR.X);
+            diffY = (cog.Y - cogR.Y);
+            diffZ = (cog.Z - cogR.Z);
         }
 
         double[][][][] transforms = new double[coarseNum][coarseNum][coarseNum][4];
@@ -3077,7 +3078,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             cost.setInputWgtImage(simpleWeightISub4_1);
         }
 
-        Point3Dd cog = new Point3Dd(0, 0, 0);
+        Vector3f cog = new Vector3f(0, 0, 0);
 
         if (calcCOG == true) {
             cog = calculateCenterOfMass3D(input, simpleWeightISub4_1, doColor);
@@ -3284,7 +3285,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             cost.setInputWgtImage(simpleWeightI_1);
         }
 
-        Point3Dd cog = new Point3Dd(0, 0, 0);
+        Vector3f cog = new Vector3f(0, 0, 0);
 
         if (calcCOG == true) {
             cog = calculateCenterOfMass3D(input, simpleWeightI_1, doColor);
@@ -3349,7 +3350,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             cost.setInputWgtImage(simpleWeightISub2_1);
         }
 
-        Point3Dd cog = new Point3Dd(0, 0, 0);
+        Vector3f cog = new Vector3f(0, 0, 0);
 
         if (calcCOG == true) {
             cog = calculateCenterOfMass3D(input, simpleWeightISub2_1, doColor);

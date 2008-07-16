@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 //import edu.jhmi.rad.medic.algorithms.*;
 //import edu.jhmi.rad.medic.structures.*;
@@ -53,15 +54,15 @@ public class JDialogACPC extends JDialogBase {
 	private boolean              haveFirstPt = false;
 	private boolean              haveAnotherPt = false;
     private int[]                orient;
-	private Point3Df             superiorEdgePt;
-	private Point3Df             posteriorMarginPt;
-	private Point3Df             inferiorEdgePt;
-	private Point3Df             firstMidSagPt;
-	private Point3Df             anotherMidSagPt;
+	private Vector3f             superiorEdgePt;
+	private Vector3f             posteriorMarginPt;
+	private Vector3f             inferiorEdgePt;
+	private Vector3f             firstMidSagPt;
+	private Vector3f             anotherMidSagPt;
 	private	int					 interpolation;
 	
-	private     Point3Df                 originalSuperiorEdge;
-	private     Point3Df                 originalPosteriorMargin;
+	private     Vector3f                 originalSuperiorEdge;
+	private     Vector3f                 originalPosteriorMargin;
 	private float voxelLength;
 	public	ModelImage ACPCImage = null;
         
@@ -85,48 +86,48 @@ public class JDialogACPC extends JDialogBase {
 		// check for the transform info
 		if (image.getTalairachTransformInfo()!=null) {
 			TalairachTransformInfo transf = image.getTalairachTransformInfo();
-			Point3Df pt = new Point3Df();
+			Vector3f pt = new Vector3f();
 			if (transf.isAcpc()) {
 				// check if the image is the original one
 				if ( (image.getExtents()[0]==transf.getOrigDim()[0]) && (image.getExtents()[1]==transf.getOrigDim()[1]) && (image.getExtents()[2]==transf.getOrigDim()[2]) ) {				
 					// set the points for AC, PC, mid sagittal
-					Point3Df ac = transf.getOrigAC();
-					Point3Df pc = transf.getOrigPC();
+					Vector3f ac = transf.getOrigAC();
+					Vector3f pc = transf.getOrigPC();
 					float[][] rot = transf.getOrigOrient();
 					float acpcRes = transf.getAcpcRes();
 					float[] origRes = transf.getOrigRes();
 					
-					pt.x = ac.x - origRes[0]*rot[1][0]/origRes[0]*acpcRes;
-					pt.y = ac.y - origRes[1]*rot[1][1]/origRes[1]*acpcRes;
-					pt.z = ac.z - origRes[2]*rot[1][2]/origRes[2]*acpcRes;
+					pt.X = ac.X - origRes[0]*rot[1][0]/origRes[0]*acpcRes;
+					pt.Y = ac.Y - origRes[1]*rot[1][1]/origRes[1]*acpcRes;
+					pt.Z = ac.Z - origRes[2]*rot[1][2]/origRes[2]*acpcRes;
 					setSuperiorEdge(pt);
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("ACS");
 					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.SUPERIOR_EDGE,pt);
 					
-					pt.x = ac.x - origRes[0]*rot[2][0]/origRes[0]*acpcRes;
-					pt.y = ac.y - origRes[1]*rot[2][1]/origRes[1]*acpcRes;
-					pt.z = ac.z - origRes[2]*rot[2][2]/origRes[2]*acpcRes;
+					pt.X = ac.X - origRes[0]*rot[2][0]/origRes[0]*acpcRes;
+					pt.Y = ac.Y - origRes[1]*rot[2][1]/origRes[1]*acpcRes;
+					pt.Z = ac.Z - origRes[2]*rot[2][2]/origRes[2]*acpcRes;
 					setPosteriorMargin(pt);
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("ACP");
 					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.POSTERIOR_MARGIN,pt);
 	
 					setInferiorEdge(pc);
-					pt.x = pc.x;
-					pt.y = pc.y;
-					pt.z = pc.z;
+					pt.X = pc.X;
+					pt.Y = pc.Y;
+					pt.Z = pc.Z;
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("PC");
 					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.INFERIOR_EDGE,pt);
 					
-					pt.x = ac.x + 50*rot[2][0]/origRes[0]*acpcRes;
-					pt.y = ac.y + 50*rot[2][1]/origRes[1]*acpcRes;
-					pt.z = ac.z + 50*rot[2][2]/origRes[2]*acpcRes;
+					pt.X = ac.X + 50*rot[2][0]/origRes[0]*acpcRes;
+					pt.Y = ac.Y + 50*rot[2][1]/origRes[1]*acpcRes;
+					pt.Z = ac.Z + 50*rot[2][2]/origRes[2]*acpcRes;
 					setFirstPt(pt);
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("MS1");
 					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.FIRST_PT,pt);
 					
-					pt.x = pc.x + 50*rot[2][0]/origRes[0]*acpcRes;
-					pt.y = pc.y + 50*rot[2][1]/origRes[1]*acpcRes;
-					pt.z = pc.z + 50*rot[2][2]/origRes[2]*acpcRes;
+					pt.X = pc.X + 50*rot[2][0]/origRes[0]*acpcRes;
+					pt.Y = pc.Y + 50*rot[2][1]/origRes[1]*acpcRes;
+					pt.Z = pc.Z + 50*rot[2][2]/origRes[2]*acpcRes;
 					setAnotherPt(pt);
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("MS2");
 					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.ANOTHER_PT,pt);
@@ -159,28 +160,28 @@ public class JDialogACPC extends JDialogBase {
 		// check for the transform info
 		if (image.getTalairachTransformInfo()!=null) {
 			TalairachTransformInfo transf = image.getTalairachTransformInfo();
-			Point3Df pt = new Point3Df();
+			Vector3f pt = new Vector3f();
 			if (transf.isAcpc()) {
 				// check if the image is the original one
 				if ( (image.getExtents()[0]==transf.getOrigDim()[0]) && (image.getExtents()[1]==transf.getOrigDim()[1]) && (image.getExtents()[2]==transf.getOrigDim()[2]) ) {				
 					// set the points for AC, PC, mid sagittal
-					Point3Df ac = transf.getOrigAC();
-					Point3Df pc = transf.getOrigPC();
+					Vector3f ac = transf.getOrigAC();
+					Vector3f pc = transf.getOrigPC();
 					float[][] rot = transf.getOrigOrient();
 					float acpcRes = transf.getAcpcRes();
 					float[] origRes = transf.getOrigRes();
 					
-					pt.x = ac.x - 1*rot[1][0]/origRes[0]*acpcRes;
-					pt.y = ac.y - 1*rot[1][1]/origRes[1]*acpcRes;
-					pt.z = ac.z - 1*rot[1][2]/origRes[2]*acpcRes;
+					pt.X = ac.X - 1*rot[1][0]/origRes[0]*acpcRes;
+					pt.Y = ac.Y - 1*rot[1][1]/origRes[1]*acpcRes;
+					pt.Z = ac.Z - 1*rot[1][2]/origRes[2]*acpcRes;
 					setSuperiorEdge(pt);
 					//pt = frame.toDicom(pt,image);
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("ACS");
 					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.SUPERIOR_EDGE,pt);
 					
-					pt.x = ac.x - 1*rot[2][0]/origRes[0]*acpcRes;
-					pt.y = ac.y - 1*rot[2][1]/origRes[1]*acpcRes;
-					pt.z = ac.z - 1*rot[2][2]/origRes[2]*acpcRes;
+					pt.X = ac.X - 1*rot[2][0]/origRes[0]*acpcRes;
+					pt.Y = ac.Y - 1*rot[2][1]/origRes[1]*acpcRes;
+					pt.Z = ac.Z - 1*rot[2][2]/origRes[2]*acpcRes;
 					setPosteriorMargin(pt);
 					//pt = frame.toDicom(pt,image);
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("ACP");
@@ -192,17 +193,17 @@ public class JDialogACPC extends JDialogBase {
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("PC");
 					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.INFERIOR_EDGE,pt);
 					
-					pt.x = ac.x + 40*rot[2][0]/origRes[0]*acpcRes;
-					pt.y = ac.y + 40*rot[2][1]/origRes[1]*acpcRes;
-					pt.z = ac.z + 40*rot[2][2]/origRes[2]*acpcRes;
+					pt.X = ac.X + 40*rot[2][0]/origRes[0]*acpcRes;
+					pt.Y = ac.Y + 40*rot[2][1]/origRes[1]*acpcRes;
+					pt.Z = ac.Z + 40*rot[2][2]/origRes[2]*acpcRes;
 					setFirstPt(pt);
 					//pt = frame.toDicom(pt,image);
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("MS1");
 					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.FIRST_PT,pt);
 					
-					pt.x = pc.x + 40*rot[2][0]/origRes[0]*acpcRes;
-					pt.y = pc.y + 40*rot[2][1]/origRes[1]*acpcRes;
-					pt.z = pc.z + 40*rot[2][2]/origRes[2]*acpcRes;
+					pt.X = pc.X + 40*rot[2][0]/origRes[0]*acpcRes;
+					pt.Y = pc.Y + 40*rot[2][1]/origRes[1]*acpcRes;
+					pt.Z = pc.Z + 40*rot[2][2]/origRes[2]*acpcRes;
 					setAnotherPt(pt);
 					//pt = frame.toDicom(pt,image);
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("MS2");
@@ -576,13 +577,13 @@ public class JDialogACPC extends JDialogBase {
         String command = event.getActionCommand();
         boolean found, success;
         int pointType;
-	    Point3Df pt;
+	    Vector3f pt;
 
         if (command.equals("setACPC")) {
             found = false;
-            pt = new Point3Df(frame.getSagittalComponentSlice(), frame.getCoronalComponentSlice(), frame.getAxialComponentSlice());
-            System.out.println("pt: " + (int)pt.x + "," + (int)pt.y + "," + (int)pt.z);
-			System.out.println("corrected pt: " + (int)toOriginal(pt).x + "," + (int)toOriginal(pt).y + "," + (int)toOriginal(pt).z);
+            pt = new Vector3f(frame.getSagittalComponentSlice(), frame.getCoronalComponentSlice(), frame.getAxialComponentSlice());
+            System.out.println("pt: " + (int)pt.X + "," + (int)pt.Y + "," + (int)pt.Z);
+			System.out.println("corrected pt: " + (int)toOriginal(pt).X + "," + (int)toOriginal(pt).Y + "," + (int)toOriginal(pt).Z);
 			if (superiorEdge.isSelected()) {
                 pointType = ViewJComponentTriImage.SUPERIOR_EDGE;
                 ((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("ACS");
@@ -895,15 +896,15 @@ public class JDialogACPC extends JDialogBase {
     *   Sets superior label based on the point.  Enables "Apply" if all points have been set.
     *   @param pt   Point that was set.
     */
-    private void setSuperiorEdge(Point3Df pt) {
+    private void setSuperiorEdge(Vector3f pt) {
         superiorEdge.setSelected(true);
         posteriorMargin.setSelected(false);
         inferiorEdge.setSelected(false);
         firstPt.setSelected(false);
         anotherPt.setSelected(false);
-        superiorEdgePt = new Point3Df(pt.x, pt.y, pt.z);
+        superiorEdgePt = new Vector3f(pt.X, pt.Y, pt.Z);
         haveSuperiorEdge = true;
-        superiorEdge.setText("AC superior edge " + (int)(pt.x+1) + "," + (int)(pt.y+1) + "," + (int)(pt.z+1));
+        superiorEdge.setText("AC superior edge " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
         setACPCButton.setEnabled(false);
         clearACPCButton.setEnabled(true);
         if ((haveSuperiorEdge) && (havePosteriorMargin) && (haveInferiorEdge) &&
@@ -916,15 +917,15 @@ public class JDialogACPC extends JDialogBase {
     *   Sets posterior label based on the point.  Enables "Apply" if all points have been set.
     *   @param pt   Point that was set.
     */
-    private void setPosteriorMargin(Point3Df pt) {
+    private void setPosteriorMargin(Vector3f pt) {
         superiorEdge.setSelected(false);
         posteriorMargin.setSelected(true);
         inferiorEdge.setSelected(false);
         firstPt.setSelected(false);
         anotherPt.setSelected(false);
-        posteriorMarginPt = new Point3Df(pt.x, pt.y, pt.z);
+        posteriorMarginPt = new Vector3f(pt.X, pt.Y, pt.Z);
         havePosteriorMargin = true;
-        posteriorMargin.setText("AC posterior margin " + (int)(pt.x+1) + "," + (int)(pt.y+1) + "," + (int)(pt.z+1));
+        posteriorMargin.setText("AC posterior margin " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
         setACPCButton.setEnabled(false);
         clearACPCButton.setEnabled(true);
         if ((haveSuperiorEdge) && (havePosteriorMargin) && (haveInferiorEdge) &&
@@ -937,15 +938,15 @@ public class JDialogACPC extends JDialogBase {
     *   Sets inferior label based on the point.  Enables "Apply" if all points have been set.
     *   @param pt   Point that was set.
     */
-    private void setInferiorEdge(Point3Df pt) {
+    private void setInferiorEdge(Vector3f pt) {
         superiorEdge.setSelected(false);
         posteriorMargin.setSelected(false);
         inferiorEdge.setSelected(true);
         firstPt.setSelected(false);
         anotherPt.setSelected(false);
-        inferiorEdgePt = new Point3Df(pt.x, pt.y, pt.z);
+        inferiorEdgePt = new Vector3f(pt.X, pt.Y, pt.Z);
         haveInferiorEdge = true;
-        inferiorEdge.setText("PC inferior edge " + (int)(pt.x+1) + "," + (int)(pt.y+1) + "," + (int)(pt.z+1));
+        inferiorEdge.setText("PC inferior edge " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
         setACPCButton.setEnabled(false);
         clearACPCButton.setEnabled(true);
         if ((haveSuperiorEdge) && (havePosteriorMargin) && (haveInferiorEdge) &&
@@ -958,15 +959,15 @@ public class JDialogACPC extends JDialogBase {
     *   Sets first label based on the point.  Enables "Apply" if all points have been set.
     *   @param pt   Point that was set.
     */
-    private void setFirstPt(Point3Df pt) {
+    private void setFirstPt(Vector3f pt) {
         superiorEdge.setSelected(false);
         posteriorMargin.setSelected(false);
         inferiorEdge.setSelected(false);
         firstPt.setSelected(true);
         anotherPt.setSelected(false);
-        firstMidSagPt = new Point3Df(pt.x, pt.y, pt.z);
+        firstMidSagPt = new Vector3f(pt.X, pt.Y, pt.Z);
         haveFirstPt = true;
-        firstPt.setText("First mid-sag pt " + (int)(pt.x+1) + "," + (int)(pt.y+1) + "," + (int)(pt.z+1));
+        firstPt.setText("First mid-sag pt " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
         setACPCButton.setEnabled(false);
         clearACPCButton.setEnabled(true);
         if ((haveSuperiorEdge) && (havePosteriorMargin) && (haveInferiorEdge) &&
@@ -979,15 +980,15 @@ public class JDialogACPC extends JDialogBase {
     *   Sets another label based on the point.  Enables "Apply" if all points have been set.
     *   @param pt   Point that was set.
     */
-    private void setAnotherPt(Point3Df pt) {
+    private void setAnotherPt(Vector3f pt) {
         superiorEdge.setSelected(false);
         posteriorMargin.setSelected(false);
         inferiorEdge.setSelected(false);
         firstPt.setSelected(false);
         anotherPt.setSelected(true);
-        anotherMidSagPt = new Point3Df(pt.x, pt.y, pt.z);
+        anotherMidSagPt = new Vector3f(pt.X, pt.Y, pt.Z);
         haveAnotherPt = true;
-        anotherPt.setText("Another mid-sag pt " + (int)(pt.x+1) + "," + (int)(pt.y+1) + "," + (int)(pt.z+1));
+        anotherPt.setText("Another mid-sag pt " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
         setACPCButton.setEnabled(false);
         clearACPCButton.setEnabled(true);
         if ((haveSuperiorEdge) && (havePosteriorMargin) && (haveInferiorEdge) &&
@@ -1005,8 +1006,8 @@ public class JDialogACPC extends JDialogBase {
 
 		// compute AC, PC and orientations
 		float[][] origOrient = new float[3][3];
-		Point3Df  origAC = new Point3Df(0.0f,0.0f,0.0f);
-		Point3Df  origPC = new Point3Df(inferiorEdgePt.x,inferiorEdgePt.y,inferiorEdgePt.z);
+		Vector3f  origAC = new Vector3f(0.0f,0.0f,0.0f);
+		Vector3f  origPC = new Vector3f(inferiorEdgePt.X,inferiorEdgePt.Y,inferiorEdgePt.Z);
 		float[] origRes = new float[3];
 		int[] origDim = image.getExtents();
 		float acpcRes = voxelLength;
@@ -1051,9 +1052,9 @@ public class JDialogACPC extends JDialogBase {
 		float[] tmp2 = new float[3];
 		float norm;
 		
-		beta[0] = (inferiorEdgePt.x - superiorEdgePt.x)*origRes[0];
-		beta[1] = (inferiorEdgePt.y - superiorEdgePt.y)*origRes[1];
-		beta[2] = (inferiorEdgePt.z - superiorEdgePt.z)*origRes[2];
+		beta[0] = (inferiorEdgePt.X - superiorEdgePt.X)*origRes[0];
+		beta[1] = (inferiorEdgePt.Y - superiorEdgePt.Y)*origRes[1];
+		beta[2] = (inferiorEdgePt.Z - superiorEdgePt.Z)*origRes[2];
 		norm = (float)Math.sqrt(beta[0]*beta[0]+beta[1]*beta[1]+beta[2]*beta[2]);
 		if (norm==0) {
 			MipavUtil.displayError("Error! The AC and PC are too close.");
@@ -1061,9 +1062,9 @@ public class JDialogACPC extends JDialogBase {
 		}
 		beta[0] /= norm; beta[1] /= norm; beta[2] /= norm;
 		
-		tmp1[0] = (firstMidSagPt.x - superiorEdgePt.x)*origRes[0];
-		tmp1[1] = (firstMidSagPt.y - superiorEdgePt.y)*origRes[1];
-		tmp1[2] = (firstMidSagPt.z - superiorEdgePt.z)*origRes[2];
+		tmp1[0] = (firstMidSagPt.X - superiorEdgePt.X)*origRes[0];
+		tmp1[1] = (firstMidSagPt.Y - superiorEdgePt.Y)*origRes[1];
+		tmp1[2] = (firstMidSagPt.Z - superiorEdgePt.Z)*origRes[2];
 		
 		alpha1[0] = beta[1]*tmp1[2] - beta[2]*tmp1[1];
 		alpha1[1] = beta[2]*tmp1[0] - beta[0]*tmp1[2];
@@ -1075,9 +1076,9 @@ public class JDialogACPC extends JDialogBase {
 		}
 		alpha1[0] /= norm; alpha1[1] /= norm; alpha1[2] /= norm;
 		
-		tmp2[0] = (firstMidSagPt.x - superiorEdgePt.x)*origRes[0];
-		tmp2[1] = (firstMidSagPt.y - superiorEdgePt.y)*origRes[1];
-		tmp2[2] = (firstMidSagPt.z - superiorEdgePt.z)*origRes[2];
+		tmp2[0] = (firstMidSagPt.X - superiorEdgePt.X)*origRes[0];
+		tmp2[1] = (firstMidSagPt.Y - superiorEdgePt.Y)*origRes[1];
+		tmp2[2] = (firstMidSagPt.Z - superiorEdgePt.Z)*origRes[2];
 		
 		alpha2[0] = beta[1]*tmp2[2] - beta[2]*tmp2[1];
 		alpha2[1] = beta[2]*tmp2[0] - beta[0]*tmp2[2];
@@ -1109,21 +1110,21 @@ public class JDialogACPC extends JDialogBase {
 		}
 		gamma[0] /= norm; gamma[1] /= norm; gamma[2] /= norm;
 		
-		norm = (superiorEdgePt.x - posteriorMarginPt.x)*gamma[0]
-			 + (superiorEdgePt.y - posteriorMarginPt.y)*gamma[1]
-			 + (superiorEdgePt.z - posteriorMarginPt.z)*gamma[2];
+		norm = (superiorEdgePt.X - posteriorMarginPt.X)*gamma[0]
+			 + (superiorEdgePt.Y - posteriorMarginPt.Y)*gamma[1]
+			 + (superiorEdgePt.Z - posteriorMarginPt.Z)*gamma[2];
 			 
-		tmp1[0] = posteriorMarginPt.x + norm*gamma[0];
-		tmp1[1] = posteriorMarginPt.y + norm*gamma[1];
-		tmp1[2] = posteriorMarginPt.z + norm*gamma[2];
+		tmp1[0] = posteriorMarginPt.X + norm*gamma[0];
+		tmp1[1] = posteriorMarginPt.Y + norm*gamma[1];
+		tmp1[2] = posteriorMarginPt.Z + norm*gamma[2];
 			 
-		norm = (superiorEdgePt.x - posteriorMarginPt.x)*beta[0]
-			 + (superiorEdgePt.y - posteriorMarginPt.y)*beta[1]
-			 + (superiorEdgePt.z - posteriorMarginPt.z)*beta[2];
+		norm = (superiorEdgePt.X - posteriorMarginPt.X)*beta[0]
+			 + (superiorEdgePt.Y - posteriorMarginPt.Y)*beta[1]
+			 + (superiorEdgePt.Z - posteriorMarginPt.Z)*beta[2];
 			 
-		tmp2[0] = superiorEdgePt.x - norm*beta[0];
-		tmp2[1] = superiorEdgePt.y - norm*beta[1];
-		tmp2[2] = superiorEdgePt.z - norm*beta[2];
+		tmp2[0] = superiorEdgePt.X - norm*beta[0];
+		tmp2[1] = superiorEdgePt.Y - norm*beta[1];
+		tmp2[2] = superiorEdgePt.Z - norm*beta[2];
 		
 		origOrient[0][0] = alpha[0];
 		origOrient[0][1] = alpha[1];
@@ -1135,9 +1136,9 @@ public class JDialogACPC extends JDialogBase {
 		origOrient[2][1] = gamma[1];
 		origOrient[2][2] = gamma[2];
 		
-		origAC.x = 0.5f*(tmp1[0] + tmp2[0]);
-		origAC.y = 0.5f*(tmp1[1] + tmp2[1]);
-		origAC.z = 0.5f*(tmp1[2] + tmp2[2]);
+		origAC.X = 0.5f*(tmp1[0] + tmp2[0]);
+		origAC.Y = 0.5f*(tmp1[1] + tmp2[1]);
+		origAC.Z = 0.5f*(tmp1[2] + tmp2[2]);
 		
 		transform.setOrigOrient(origOrient);
         transform.setOrigAC(origAC);
@@ -1145,7 +1146,7 @@ public class JDialogACPC extends JDialogBase {
         transform.setOrigRes(origRes);
         transform.setOrigDim(origDim);
         transform.setAcpcRes(acpcRes);
-		Point3Df pt = new Point3Df();
+		Vector3f pt = new Vector3f();
         transform.origToAcpc(origPC, pt);
 		transform.setAcpcPC(pt);
 		transform.isAcpc(true);
@@ -1207,88 +1208,88 @@ public class JDialogACPC extends JDialogBase {
 	}
 
 	/** to convert frame coordinates into the original image ones */
-	private Point3Df toOriginal(Point3Df in) {
+	private Vector3f toOriginal(Vector3f in) {
 		int[] orient = image.getFileInfo(0).getAxisOrientation();
         int xDim = image.getExtents()[0];
         int yDim = image.getExtents()[1];
         int zDim = image.getExtents()[2];
-        Point3Df out = new Point3Df( 0.0f, 0.0f, 0.0f );
+        Vector3f out = new Vector3f( 0.0f, 0.0f, 0.0f );
 
         switch ( orient[0] ) {
         case FileInfoBase.ORI_R2L_TYPE:
-            out.x = in.x;
+            out.X = in.X;
             break;
 
         case FileInfoBase.ORI_L2R_TYPE:
-            out.x = xDim - 1 - in.x;
+            out.X = xDim - 1 - in.X;
             break;
 
         case FileInfoBase.ORI_A2P_TYPE:
-            out.x = in.y;
+            out.X = in.Y;
             break;
 
         case FileInfoBase.ORI_P2A_TYPE:
-            out.x = xDim - 1 - in.y;
+            out.X = xDim - 1 - in.Y;
             break;
 
         case FileInfoBase.ORI_I2S_TYPE:
-            out.x = in.z;
+            out.X = in.Z;
             break;
 
         case FileInfoBase.ORI_S2I_TYPE:
-            out.x = xDim - 1 - in.z;
+            out.X = xDim - 1 - in.Z;
             break;
         }
 
         switch ( orient[1] ) {
         case FileInfoBase.ORI_R2L_TYPE:
-            out.y = in.x;
+            out.Y = in.X;
             break;
 
         case FileInfoBase.ORI_L2R_TYPE:
-            out.y = yDim - 1 - in.x;
+            out.Y = yDim - 1 - in.X;
             break;
 
         case FileInfoBase.ORI_A2P_TYPE:
-            out.y = in.y;
+            out.Y = in.Y;
             break;
 
         case FileInfoBase.ORI_P2A_TYPE:
-            out.y = yDim - 1 - in.y;
+            out.Y = yDim - 1 - in.Y;
             break;
 
         case FileInfoBase.ORI_I2S_TYPE:
-            out.y = in.z;
+            out.Y = in.Z;
             break;
 
         case FileInfoBase.ORI_S2I_TYPE:
-            out.y = yDim - 1 - in.z;
+            out.Y = yDim - 1 - in.Z;
             break;
         }
 
         switch ( orient[2] ) {
         case FileInfoBase.ORI_R2L_TYPE:
-            out.z = in.x;
+            out.Z = in.X;
             break;
 
         case FileInfoBase.ORI_L2R_TYPE:
-            out.z = zDim - 1 - in.x;
+            out.Z = zDim - 1 - in.X;
             break;
 
         case FileInfoBase.ORI_A2P_TYPE:
-            out.z = in.y;
+            out.Z = in.Y;
             break;
 
         case FileInfoBase.ORI_P2A_TYPE:
-            out.z = zDim - 1 - in.y;
+            out.Z = zDim - 1 - in.Y;
             break;
 
         case FileInfoBase.ORI_I2S_TYPE:
-            out.z = in.z;
+            out.Z = in.Z;
             break;
 
         case FileInfoBase.ORI_S2I_TYPE:
-            out.z = zDim - 1 - in.z;
+            out.Z = zDim - 1 - in.Z;
             break;
         }
 
@@ -1301,14 +1302,14 @@ public class JDialogACPC extends JDialogBase {
     *   @param pt2      Second point.
     *   @param resol    Resolutions of each dimension.
     */
-    private float dist(Point3Df pt1, Point3Df pt2, float[] resol) {
+    private float dist(Vector3f pt1, Vector3f pt2, float[] resol) {
        float distX, distY, distZ;
        float length;
-       distX = (pt1.x - pt2.x)*resol[0];
+       distX = (pt1.X - pt2.X)*resol[0];
        distX = distX * distX;
-       distY = (pt1.y - pt2.y)*resol[1];
+       distY = (pt1.Y - pt2.Y)*resol[1];
        distY = distY * distY;
-       distZ = (pt1.z - pt2.z)*resol[2];
+       distZ = (pt1.Z - pt2.Z)*resol[2];
        distZ = distZ * distZ;
        length = (float)Math.sqrt(distX + distY + distZ);
        return length;
@@ -1321,11 +1322,11 @@ public class JDialogACPC extends JDialogBase {
     *   @param pt2  Vector to be subtracted.
     *   @return     pt1 - pt2
     */
-    private Point3Df sub(Point3Df pt1, Point3Df pt2) {
-        Point3Df pt = new Point3Df(0.0f,0.0f,0.0f);
-        pt.x = pt1.x - pt2.x;
-        pt.y = pt1.y - pt2.y;
-        pt.z = pt1.z - pt2.z;
+    private Vector3f sub(Vector3f pt1, Vector3f pt2) {
+        Vector3f pt = new Vector3f(0.0f,0.0f,0.0f);
+        pt.X = pt1.X - pt2.X;
+        pt.Y = pt1.Y - pt2.Y;
+        pt.Z = pt1.Z - pt2.Z;
         return pt;
     }
 
@@ -1334,14 +1335,14 @@ public class JDialogACPC extends JDialogBase {
     *   @param pt   Vector to find normal to.
     *   @return     Normal of pt.
     */
-    private Point3Df norm(Point3Df pt) {
+    private Vector3f norm(Vector3f pt) {
         float scale;
-        Point3Df normPt = new Point3Df(0.0f,0.0f,0.0f);
-        scale = pt.x*pt.x + pt.y*pt.y + pt.z*pt.z;
+        Vector3f normPt = new Vector3f(0.0f,0.0f,0.0f);
+        scale = pt.X*pt.X + pt.Y*pt.Y + pt.Z*pt.Z;
         scale =(float)( (scale > 0)? (1.0/Math.sqrt(scale)) : 0);
-        normPt.x = pt.x * scale;
-        normPt.y = pt.y * scale;
-        normPt.z = pt.z * scale;
+        normPt.X = pt.X * scale;
+        normPt.Y = pt.Y * scale;
+        normPt.Z = pt.Z * scale;
         return normPt;
 
     }
@@ -1352,11 +1353,11 @@ public class JDialogACPC extends JDialogBase {
     *   @param pt2  Second vector
     *   @return     Cross product of pt1 and pt2.
     */
-    private Point3Df crossProduct(Point3Df pt1, Point3Df pt2) {
-        Point3Df crossPt = new Point3Df(0.0f,0.0f,0.0f);
-        crossPt.x = pt1.y * pt2.z - pt1.z * pt2.y;
-        crossPt.y = pt1.z * pt2.x - pt1.x * pt2.z;
-        crossPt.z = pt1.x * pt2.y - pt1.y * pt2.x;
+    private Vector3f crossProduct(Vector3f pt1, Vector3f pt2) {
+        Vector3f crossPt = new Vector3f(0.0f,0.0f,0.0f);
+        crossPt.X = pt1.Y * pt2.Z - pt1.Z * pt2.Y;
+        crossPt.Y = pt1.Z * pt2.X - pt1.X * pt2.Z;
+        crossPt.Z = pt1.X * pt2.Y - pt1.Y * pt2.X;
         return crossPt;
     }
 
@@ -1366,9 +1367,9 @@ public class JDialogACPC extends JDialogBase {
     *   @param pt2  Second vector
     *   @return     Dot product of pt1 and pt2.
     */
-    private float dotProduct(Point3Df pt1, Point3Df pt2) {
+    private float dotProduct(Vector3f pt1, Vector3f pt2) {
         float dot;
-        dot = pt1.x * pt2.x + pt1.y * pt2.y + pt1.z * pt2.z;
+        dot = pt1.X * pt2.X + pt1.Y * pt2.Y + pt1.Z * pt2.Z;
         return dot;
     }
 
@@ -1379,11 +1380,11 @@ public class JDialogACPC extends JDialogBase {
     *   @param fb   Scale for vector b.
     *   @param b    Vector b.
     */
-    private Point3Df sclAdd(float fa, Point3Df a, float fb, Point3Df b) {
-        Point3Df pt = new Point3Df(0.0f,0.0f,0.0f);
-        pt.x = fa * a.x + fb * b.x;
-        pt.y = fa * a.y + fb * b.y;
-        pt.z = fa * a.z + fb * b.z;
+    private Vector3f sclAdd(float fa, Vector3f a, float fb, Vector3f b) {
+        Vector3f pt = new Vector3f(0.0f,0.0f,0.0f);
+        pt.X = fa * a.X + fb * b.X;
+        pt.Y = fa * a.Y + fb * b.Y;
+        pt.Z = fa * a.Z + fb * b.Z;
         return pt;
     }
 
@@ -1393,11 +1394,11 @@ public class JDialogACPC extends JDialogBase {
     *   @param resol    Resolutions to use when converting.
     *   @return         Same point in mm.
     */
-    private Point3Df makemmPoint3Df(Point3Df pt, float[] resol) {
-        Point3Df mmPt = new Point3Df(0.0f,0.0f,0.0f);
-        mmPt.x = resol[0] * pt.x;
-        mmPt.y = resol[1] * pt.y;
-        mmPt.z = resol[2] * pt.z;
+    private Vector3f makemmVector3f(Vector3f pt, float[] resol) {
+        Vector3f mmPt = new Vector3f(0.0f,0.0f,0.0f);
+        mmPt.X = resol[0] * pt.X;
+        mmPt.Y = resol[1] * pt.Y;
+        mmPt.Z = resol[2] * pt.Z;
         return mmPt;
     }
 
@@ -1407,11 +1408,11 @@ public class JDialogACPC extends JDialogBase {
     *   @param resol    Resolutions to use when converting.
     *   @return         Same point in pixel space.
     */
-    private Point3Df makeVoxelCoord3Df(Point3Df pt, float[] resol) {
-        Point3Df voxelPt = new Point3Df(0.0f,0.0f,0.0f);
-        voxelPt.x = pt.x/resol[0];
-        voxelPt.y = pt.y/resol[1];
-        voxelPt.z = pt.z/resol[2];
+    private Vector3f makeVoxelCoord3Df(Vector3f pt, float[] resol) {
+        Vector3f voxelPt = new Vector3f(0.0f,0.0f,0.0f);
+        voxelPt.X = pt.X/resol[0];
+        voxelPt.Y = pt.Y/resol[1];
+        voxelPt.Z = pt.Z/resol[2];
         return voxelPt;
     }
 

@@ -1,6 +1,6 @@
 package gov.nih.mipav.model.structures;
 
-
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 /**
  * <p>Title: TransferFunction</p>
  *
@@ -27,7 +27,7 @@ public class TransferFunction extends ModelSerialCloneable {
     private int endPtr = 0;
 
     /** The array of 2D points that define the line. */
-    private Point2Df[] pts;
+    private Vector2f[] pts;
 
     /** The array of pre-calculated slope values. */
     private float[] slopes;
@@ -38,7 +38,7 @@ public class TransferFunction extends ModelSerialCloneable {
      * Simple class to hold an array of points that describe a transfer function.
      */
     public TransferFunction() {
-        pts = new Point2Df[capacity];
+        pts = new Vector2f[capacity];
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -48,11 +48,11 @@ public class TransferFunction extends ModelSerialCloneable {
      *
      * @param  pt  DOCUMENT ME!
      */
-    public synchronized void addPoint(Point2Df pt) {
+    public synchronized void addPoint(Vector2f pt) {
 
         checkSize();
 
-        pts[endPtr] = new Point2Df(pt.x, pt.y);
+        pts[endPtr] = new Vector2f(pt.X, pt.Y);
         endPtr++;
         recalculateSlopes();
     }
@@ -68,7 +68,7 @@ public class TransferFunction extends ModelSerialCloneable {
 
         checkSize();
 
-        pts[endPtr] = new Point2Df(x, y);
+        pts[endPtr] = new Vector2f(x, y);
         endPtr++;
         recalculateSlopes();
     }
@@ -108,8 +108,8 @@ public class TransferFunction extends ModelSerialCloneable {
         }
 
         for (i = 0; i < size(); i++) {
-            x[i] = ((Point2Df) (getPoint(i))).x;
-            y[i] = ((Point2Df) (getPoint(i))).y;
+            x[i] = ((Vector2f) (getPoint(i))).X;
+            y[i] = ((Vector2f) (getPoint(i))).Y;
         }
     }
 
@@ -118,7 +118,7 @@ public class TransferFunction extends ModelSerialCloneable {
      *
      * @return  the 2D point array of floats
      */
-    public synchronized Point2Df[] getFunction() {
+    public synchronized Vector2f[] getFunction() {
         return pts;
     }
 
@@ -129,7 +129,7 @@ public class TransferFunction extends ModelSerialCloneable {
      *
      * @return  the 2D point
      */
-    public synchronized Point2Df getPoint(int index) {
+    public synchronized Vector2f getPoint(int index) {
 
         if ((index >= 0) && (index < endPtr)) {
             return pts[index];
@@ -158,9 +158,9 @@ public class TransferFunction extends ModelSerialCloneable {
         }
 
         for (i = 0; i < (endPtr - 1); i++) {
-            ptX1 = pts[i].x;
-            ptX2 = pts[i + 1].x;
-            ptY1 = (height - 1) - pts[i].y;
+            ptX1 = pts[i].X;
+            ptX2 = pts[i + 1].X;
+            ptY1 = (height - 1) - pts[i].Y;
 
 
             if ((inputValue >= ptX1) && (inputValue <= ptX2)) {
@@ -207,7 +207,7 @@ public class TransferFunction extends ModelSerialCloneable {
      * @param  pt     the 2D point to be added to the function.
      * @param  index  the index the point is to be inserted.
      */
-    public synchronized void insertPoint(Point2Df pt, int index) {
+    public synchronized void insertPoint(Vector2f pt, int index) {
 
         checkSize();
 
@@ -215,7 +215,7 @@ public class TransferFunction extends ModelSerialCloneable {
             pts[i + 1] = pts[i];
         }
 
-        pts[index] = new Point2Df(pt.x, pt.y);
+        pts[index] = new Vector2f(pt.X, pt.Y);
         endPtr++;
         recalculateSlopes();
     }
@@ -235,7 +235,7 @@ public class TransferFunction extends ModelSerialCloneable {
             pts[i + 1] = pts[i];
         }
 
-        pts[index] = new Point2Df(x, y);
+        pts[index] = new Vector2f(x, y);
         endPtr++;
         recalculateSlopes();
     }
@@ -278,14 +278,14 @@ public class TransferFunction extends ModelSerialCloneable {
     /**
      * Replaces the point at param index with point of pt.
      *
-     * @param  pt     Point2Df the new point
+     * @param  pt     Vector2f the new point
      * @param  index  int the index of the point to be replaced
      */
-    public synchronized void replacePoint(Point2Df pt, int index) {
+    public synchronized void replacePoint(Vector2f pt, int index) {
 
         if ((index >= 0) && (index < pts.length)) {
-            pts[index].x = pt.x;
-            pts[index].y = pt.y;
+            pts[index].X = pt.X;
+            pts[index].Y = pt.Y;
         }
 
         recalculateSlopes();
@@ -301,8 +301,8 @@ public class TransferFunction extends ModelSerialCloneable {
     public synchronized void replacePoint(float x, float y, int index) {
 
         if ((index >= 0) && (index < pts.length)) {
-            pts[index].x = x;
-            pts[index].y = y;
+            pts[index].X = x;
+            pts[index].Y = y;
         }
 
         recalculateSlopes();
@@ -338,8 +338,8 @@ public class TransferFunction extends ModelSerialCloneable {
         if (endPtr == pts.length) {
             capacity = capacity + 10;
 
-            Point2Df[] tmpPts = pts;
-            pts = new Point2Df[capacity];
+            Vector2f[] tmpPts = pts;
+            pts = new Vector2f[capacity];
 
             for (int i = 0; i < endPtr; i++) {
                 pts[i] = tmpPts[i];
@@ -357,8 +357,8 @@ public class TransferFunction extends ModelSerialCloneable {
             float[] out = new float[endPtr];
 //System.err.println("Pts.length: " + pts.length + ", endPtr: " + endPtr);
             for (int i = 0; i < endPtr ; i++) {
-                in[i] = pts[i].x;
-                out[i] = 255.0f - (pts[i].y);
+                in[i] = pts[i].X;
+                out[i] = 255.0f - (pts[i].Y);
             }
 //System.err.println("endPtr - 1 = " + (endPtr - 1));
             slopes = new float[endPtr - 1];

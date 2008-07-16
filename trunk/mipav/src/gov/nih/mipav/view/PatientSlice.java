@@ -10,6 +10,10 @@ import gov.nih.mipav.view.renderer.*;
 
 import java.io.*;
 
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 
 /**
  * PatientSlice provides oriented or non-oriented interface to the ModelImage data for rendering, with LUT changes.
@@ -92,7 +96,7 @@ public class PatientSlice {
     private int[] m_aiRGBIndexBufferB = null;
 
     /** Color offset factor:. */
-    private Color3Df[] m_akOffset = { new Color3Df(0.0f, 0.0f, 0.0f), new Color3Df(0.0f, 0.0f, 0.0f) };
+    private ColorRGB[] m_akOffset = { new ColorRGB(0.0f, 0.0f, 0.0f), new ColorRGB(0.0f, 0.0f, 0.0f) };
 
     /** Flag indicating whether the slice is axis-aligned or diagonal (for RFA probe rotataions). */
     private boolean m_bAxisAligned = false;
@@ -110,13 +114,13 @@ public class PatientSlice {
     private boolean m_bUpdateImage = true;
 
     /** current slice positions in FileCoordinates:. */
-    private Point3Df m_kFilePoint = new Point3Df();
+    private Vector3f m_kFilePoint = new Vector3f();
 
     /** The rotated non-axis aligned corners of the slice, from the RFA probe rotation in the SurfaceRender:. */
-    private Point3Df[] m_kFourCorners = new Point3Df[4];
+    private Vector3f[] m_kFourCorners = new Vector3f[4];
 
     /** current slice positions in local coordinates:. */
-    private Point3Df m_kPatientPoint = new Point3Df();
+    private Vector3f m_kPatientPoint = new Vector3f();
 
     /**
      * This indicates which of the Patient coordinate systems the slice represents: either AXIAL, SAGITTAL, CORONAL, or
@@ -253,10 +257,10 @@ public class PatientSlice {
      *
      * @return  volume center in FileCoordinates
      */
-    public Point3Df getCenter() {
+    public Vector3f getCenter() {
         MipavCoordinateSystems.patientToFile(m_kPatientPoint, m_kFilePoint, imageA, orientation);
 
-        return new Point3Df(m_kFilePoint.x, m_kFilePoint.y, m_kFilePoint.z);
+        return new Vector3f(m_kFilePoint.X, m_kFilePoint.Y, m_kFilePoint.Z);
     }
 
     /**
@@ -344,17 +348,17 @@ public class PatientSlice {
      * @param  k  FileCoordinates volume center k
      */
     public void setCenter(int i, int j, int k) {
-        m_kFilePoint.x = i;
-        m_kFilePoint.y = j;
-        m_kFilePoint.z = k;
+        m_kFilePoint.X = i;
+        m_kFilePoint.Y = j;
+        m_kFilePoint.Z = k;
 
         MipavCoordinateSystems.fileToPatient(m_kFilePoint, m_kPatientPoint, imageA, orientation);
 
-        if (slice == (int) m_kPatientPoint.z) {
+        if (slice == (int) m_kPatientPoint.Z) {
             return;
         }
 
-        slice = (int) m_kPatientPoint.z;
+        slice = (int) m_kPatientPoint.Z;
         m_bUpdateImage = true;
     }
     
@@ -391,7 +395,7 @@ public class PatientSlice {
      *
      * @param  fourCorners  the bounding box of the diagonal slice in FileCoordinates
      */
-    public void setDiagonalVerts(Point3Df[] fourCorners) {
+    public void setDiagonalVerts(Vector3f[] fourCorners) {
 
         if (fourCorners == null) {
 
@@ -416,7 +420,7 @@ public class PatientSlice {
                         }
                     }
 
-                    m_kFourCorners[i] = new Point3Df(fourCorners[i].x, fourCorners[i].y, fourCorners[i].z);
+                    m_kFourCorners[i] = new Vector3f(fourCorners[i].X, fourCorners[i].Y, fourCorners[i].Z);
                     m_bShowDiagonal = true;
                 }
             }
@@ -606,11 +610,11 @@ public class PatientSlice {
         }
 
         if (imageA.isColorImage() == true) {
-            Color4Df colorMappedA = new Color4Df();
-            Color4Df colorMappedB = null;
+            ColorRGBA colorMappedA = new ColorRGBA();
+            ColorRGBA colorMappedB = null;
 
             if (imageB != null) {
-                colorMappedB = new Color4Df();
+                colorMappedB = new ColorRGBA();
             }
 
             fillImageBuffer(slice);
@@ -628,12 +632,12 @@ public class PatientSlice {
                         getColorMapped(RGBTB, m_aiRGBIndexBufferB, 1, imageBufferB, index, colorMappedB);
 
                         if (bBlend) {
-                            colorMappedA.x = (fAlpha * colorMappedA.x) + ((1.0f - fAlpha) * colorMappedB.x);
-                            colorMappedA.y = (fAlpha * colorMappedA.y) + ((1.0f - fAlpha) * colorMappedB.y);
-                            colorMappedA.z = (fAlpha * colorMappedA.z) + ((1.0f - fAlpha) * colorMappedB.z);
+                            colorMappedA.R = (fAlpha * colorMappedA.R) + ((1.0f - fAlpha) * colorMappedB.R);
+                            colorMappedA.G = (fAlpha * colorMappedA.G) + ((1.0f - fAlpha) * colorMappedB.G);
+                            colorMappedA.B = (fAlpha * colorMappedA.B) + ((1.0f - fAlpha) * colorMappedB.B);
                         } else {
-                            pixValue = 0xff000000 | ((int) (colorMappedB.x) << 16) | ((int) (colorMappedB.y) << 8) |
-                                           ((int) (colorMappedB.z));
+                            pixValue = 0xff000000 | ((int) (colorMappedB.R) << 16) | ((int) (colorMappedB.G) << 8) |
+                                           ((int) (colorMappedB.B));
                             bufferB[ind4] = pixValue;
                         }
                     }
@@ -644,17 +648,17 @@ public class PatientSlice {
                         if ((m_afMask[index] != 0) &&
                                 ((m_afMask[index + 1] != 0) || (m_afMask[index + 2] != 0) ||
                                      (m_afMask[index + 3] != 0))) {
-                            colorMappedA.x = (m_afMask[index] * m_afMask[index + 1]) +
-                                             ((1.0f - m_afMask[index]) * colorMappedA.x);
-                            colorMappedA.y = (m_afMask[index] * m_afMask[index + 2]) +
-                                             ((1.0f - m_afMask[index]) * colorMappedA.y);
-                            colorMappedA.z = (m_afMask[index] * m_afMask[index + 3]) +
-                                             ((1.0f - m_afMask[index]) * colorMappedA.z);
+                            colorMappedA.R = (m_afMask[index] * m_afMask[index + 1]) +
+                                             ((1.0f - m_afMask[index]) * colorMappedA.R);
+                            colorMappedA.G = (m_afMask[index] * m_afMask[index + 2]) +
+                                             ((1.0f - m_afMask[index]) * colorMappedA.G);
+                            colorMappedA.B = (m_afMask[index] * m_afMask[index + 3]) +
+                                             ((1.0f - m_afMask[index]) * colorMappedA.B);
                         }
                     }
 
-                    pixValue = 0xff000000 | ((int) (colorMappedA.x) << 16) | ((int) (colorMappedA.y) << 8) |
-                                   ((int) (colorMappedA.z));
+                    pixValue = 0xff000000 | ((int) (colorMappedA.R) << 16) | ((int) (colorMappedA.G) << 8) |
+                                   ((int) (colorMappedA.B));
                     bufferA[ind4] = pixValue;
                 }
             }
@@ -794,8 +798,8 @@ public class PatientSlice {
             newSlice = 0;
         }
 
-        if (newSlice != m_kPatientPoint.z) {
-            m_kPatientPoint.z = newSlice;
+        if (newSlice != m_kPatientPoint.Z) {
+            m_kPatientPoint.Z = newSlice;
             slice = newSlice;
             MipavCoordinateSystems.patientToFile(m_kPatientPoint, m_kFilePoint, imageA, orientation);
             m_bUpdateImage = true;
@@ -812,7 +816,7 @@ public class PatientSlice {
      * @return  true when the slice is axis-aligned, false otherwise.
      */
     private boolean axisAligned() {
-        Point3Df kPatientCorner = new Point3Df();
+        Vector3f kPatientCorner = new Vector3f();
 
         for (int i = 0; i < 4; i++) {
 
@@ -824,19 +828,19 @@ public class PatientSlice {
 
             MipavCoordinateSystems.fileToPatient(m_kFourCorners[i], kPatientCorner, imageA, orientation);
 
-            if (kPatientCorner.z != m_kPatientPoint.z) {
+            if (kPatientCorner.Z != m_kPatientPoint.Z) {
                 m_bAxisAligned = false;
 
                 return m_bAxisAligned;
             }
 
-            if ((kPatientCorner.x != 0) && (kPatientCorner.x != (localImageExtents[0] - 1))) {
+            if ((kPatientCorner.X != 0) && (kPatientCorner.X != (localImageExtents[0] - 1))) {
                 m_bAxisAligned = false;
 
                 return m_bAxisAligned;
             }
 
-            if ((kPatientCorner.y != 0) && (kPatientCorner.y != (localImageExtents[1] - 1))) {
+            if ((kPatientCorner.Y != 0) && (kPatientCorner.Y != (localImageExtents[1] - 1))) {
                 m_bAxisAligned = false;
 
                 return m_bAxisAligned;
@@ -866,21 +870,21 @@ public class PatientSlice {
 
             if (kImage.getMinR() < 0.0) {
                 fMaxColor = (float) (kImage.getMaxR() - kImage.getMinR());
-                m_akOffset[index].x = (float) (-kImage.getMinR());
+                m_akOffset[index].R = (float) (-kImage.getMinR());
             } else {
                 fMaxColor = (float) kImage.getMaxR();
             }
 
             if (kImage.getMinG() < 0.0) {
                 fMaxColor = Math.max((float) (kImage.getMaxG() - kImage.getMinG()), fMaxColor);
-                m_akOffset[index].y = (float) (-kImage.getMinG());
+                m_akOffset[index].G = (float) (-kImage.getMinG());
             } else {
                 fMaxColor = Math.max((float) kImage.getMaxG(), fMaxColor);
             }
 
             if (kImage.getMinB() < 0.0) {
                 fMaxColor = Math.max((float) (kImage.getMaxB() - kImage.getMinB()), fMaxColor);
-                m_akOffset[index].z = (float) (-kImage.getMinB());
+                m_akOffset[index].B = (float) (-kImage.getMinB());
             } else {
                 fMaxColor = Math.max((float) kImage.getMaxB(), fMaxColor);
             }
@@ -893,10 +897,10 @@ public class PatientSlice {
      * Calculate the volume center in PatientCoordinates and set the z-value for this slice.
      */
     private void center() {
-        m_kPatientPoint.x = localImageExtents[0] / 2;
-        m_kPatientPoint.y = localImageExtents[1] / 2;
-        m_kPatientPoint.z = localImageExtents[2] / 2;
-        slice = (int) m_kPatientPoint.z;
+        m_kPatientPoint.X = localImageExtents[0] / 2;
+        m_kPatientPoint.Y = localImageExtents[1] / 2;
+        m_kPatientPoint.Z = localImageExtents[2] / 2;
+        slice = (int) m_kPatientPoint.Z;
         MipavCoordinateSystems.patientToFile(m_kPatientPoint, m_kFilePoint, imageA, orientation);
     }
 
@@ -968,56 +972,56 @@ public class PatientSlice {
      * @param  colorMapped     the new color value
      */
     private void getColorMapped(ModelRGB modelRGBT, int[] RGBIndexBuffer, int imageIndex, float[] imageBuffer,
-                                int index, Color4Df colorMapped) {
+                                int index, ColorRGBA colorMapped) {
 
-        colorMapped.x = 0;
-        colorMapped.y = 0;
-        colorMapped.z = 0;
-        colorMapped.w = imageBuffer[index];
+        colorMapped.R = 0;
+        colorMapped.G = 0;
+        colorMapped.B = 0;
+        colorMapped.A = imageBuffer[index];
 
         if (modelRGBT != null) {
 
             if (modelRGBT.getROn()) {
-                colorMapped.x = (RGBIndexBuffer[(int) ((imageBuffer[index + 1] + m_akOffset[imageIndex].x) *
+                colorMapped.R = (RGBIndexBuffer[(int) ((imageBuffer[index + 1] + m_akOffset[imageIndex].R) *
                                                            m_afNormColor[imageIndex])] & 0x00ff0000) >> 16;
             }
 
             if (modelRGBT.getGOn()) {
-                colorMapped.y = (RGBIndexBuffer[(int) ((imageBuffer[index + 2] + m_akOffset[imageIndex].y) *
+                colorMapped.G = (RGBIndexBuffer[(int) ((imageBuffer[index + 2] + m_akOffset[imageIndex].G) *
                                                            m_afNormColor[imageIndex])] & 0x0000ff00) >> 8;
             }
 
             if (modelRGBT.getBOn()) {
-                colorMapped.z = (RGBIndexBuffer[(int) ((imageBuffer[index + 3] + m_akOffset[imageIndex].z) *
+                colorMapped.B = (RGBIndexBuffer[(int) ((imageBuffer[index + 3] + m_akOffset[imageIndex].B) *
                                                            m_afNormColor[imageIndex])] & 0x000000ff);
             }
         } else {
-            colorMapped.x = (imageBuffer[index + 1] + m_akOffset[imageIndex].x) * m_afNormColor[imageIndex];
-            colorMapped.y = (imageBuffer[index + 2] + m_akOffset[imageIndex].y) * m_afNormColor[imageIndex];
-            colorMapped.z = (imageBuffer[index + 3] + m_akOffset[imageIndex].z) * m_afNormColor[imageIndex];
+            colorMapped.R = (imageBuffer[index + 1] + m_akOffset[imageIndex].R) * m_afNormColor[imageIndex];
+            colorMapped.G = (imageBuffer[index + 2] + m_akOffset[imageIndex].G) * m_afNormColor[imageIndex];
+            colorMapped.B = (imageBuffer[index + 3] + m_akOffset[imageIndex].B) * m_afNormColor[imageIndex];
         }
 
         /* Threshold colors: */
         if (useRedThreshold && useGreenThreshold) {
 
             if ((imageBuffer[index + 1] < threshold1) || (imageBuffer[index + 2] < threshold2)) {
-                colorMapped.x = 0;
-                colorMapped.y = 0;
-                colorMapped.z = 0;
+                colorMapped.R = 0;
+                colorMapped.G = 0;
+                colorMapped.B = 0;
             }
         } else if (useRedThreshold && useBlueThreshold) {
 
             if ((imageBuffer[index + 1] < threshold1) || (imageBuffer[index + 3] < threshold2)) {
-                colorMapped.x = 0;
-                colorMapped.y = 0;
-                colorMapped.z = 0;
+                colorMapped.R = 0;
+                colorMapped.G = 0;
+                colorMapped.B = 0;
             }
         } else if (useGreenThreshold && useBlueThreshold) {
 
             if ((imageBuffer[index + 2] < threshold1) || (imageBuffer[index + 3] < threshold2)) {
-                colorMapped.x = 0;
-                colorMapped.y = 0;
-                colorMapped.z = 0;
+                colorMapped.R = 0;
+                colorMapped.G = 0;
+                colorMapped.B = 0;
             }
         }
     }

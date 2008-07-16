@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.*;
 
@@ -99,22 +100,22 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
         if (mode == RED) { // Add or remove points to red transfer function
 
             if ((addPointFlag == true) && (index != -99)) {
-                lut.getRedFunction().insertPoint(new Point2Df(mx, my), index + 1);
+                lut.getRedFunction().insertPoint(new Vector2f(mx, my), index + 1);
             }
         } else if (mode == GREEN) {
 
             if ((addPointFlag == true) && (index != -99)) {
-                lut.getGreenFunction().insertPoint(new Point2Df(mx, my), index + 1);
+                lut.getGreenFunction().insertPoint(new Vector2f(mx, my), index + 1);
             }
         } else if (mode == BLUE) {
 
             if ((addPointFlag == true) && (index != -99)) {
-                lut.getBlueFunction().insertPoint(new Point2Df(mx, my), index + 1);
+                lut.getBlueFunction().insertPoint(new Vector2f(mx, my), index + 1);
             }
         } else if (mode == ALPHA) {
 
             if ((addPointFlag == true) && (index != -99)) {
-                lut.getAlphaFunction().insertPoint(new Point2Df(mx, my), index + 1);
+                lut.getAlphaFunction().insertPoint(new Vector2f(mx, my), index + 1);
             }
         } else if (mode == LINEAR) {
 
@@ -122,7 +123,7 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
             mx = (float) (min + (mx / 255.0f * (max - min)));
 
             if ((addPointFlag == true) && (index != -99)) {
-                lut.getTransferFunction().insertPoint(new Point2Df(mx, my), index + 1);
+                lut.getTransferFunction().insertPoint(new Vector2f(mx, my), index + 1);
             }
         }
     }
@@ -1419,10 +1420,10 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
             index = i;
 
             for (j = 0; j < (nPts - 1); j++) {
-                ptX1 = ((Point2Df) (lut.getTransferFunction().getPoint(j))).x;
-                ptX2 = ((Point2Df) (lut.getTransferFunction().getPoint(j + 1))).x;
-                ptY1 = (dim.height - 1) - ((Point2Df) (lut.getTransferFunction().getPoint(j))).y;
-                ptY2 = (dim.height - 1) - ((Point2Df) (lut.getTransferFunction().getPoint(j + 1))).y;
+                ptX1 = ((Vector2f) (lut.getTransferFunction().getPoint(j))).X;
+                ptX2 = ((Vector2f) (lut.getTransferFunction().getPoint(j + 1))).X;
+                ptY1 = (dim.height - 1) - ((Vector2f) (lut.getTransferFunction().getPoint(j))).Y;
+                ptY2 = (dim.height - 1) - ((Vector2f) (lut.getTransferFunction().getPoint(j + 1))).Y;
 
                 if ((iNew >= ptX1) && (iNew < ptX2)) {
 
@@ -1647,8 +1648,8 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
 
             lut.getTransferFunction().importArrays(x, y, nPts);
 
-            float low = ((Point2Df) lut.getTransferFunction().getPoint(1)).x;
-            float high = ((Point2Df) lut.getTransferFunction().getPoint(4)).x;
+            float low = ((Vector2f) lut.getTransferFunction().getPoint(1)).X;
+            float high = ((Vector2f) lut.getTransferFunction().getPoint(4)).X;
 
             histogramParent.updateThresholdFields(low, high);
 
@@ -1821,8 +1822,8 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
 
             lut.getTransferFunction().importArrays(x, y, nPts);
 
-            float low = ((Point2Df) lut.getTransferFunction().getPoint(1)).x;
-            float high = ((Point2Df) lut.getTransferFunction().getPoint(4)).x;
+            float low = ((Vector2f) lut.getTransferFunction().getPoint(1)).X;
+            float high = ((Vector2f) lut.getTransferFunction().getPoint(4)).X;
 
             histogramParent.updateThresholdFields(low, high);
 

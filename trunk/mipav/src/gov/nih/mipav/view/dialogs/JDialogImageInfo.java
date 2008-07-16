@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
@@ -682,26 +683,26 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         TalairachTransformInfo tInfo = image.getTalairachTransformInfo();
 
         if (tInfo != null) {
-            origACFields[0].setText(Float.toString(tInfo.getOrigAC().x));
-            origACFields[1].setText(Float.toString(tInfo.getOrigAC().y));
-            origACFields[2].setText(Float.toString(tInfo.getOrigAC().z));
+            origACFields[0].setText(Float.toString(tInfo.getOrigAC().X));
+            origACFields[1].setText(Float.toString(tInfo.getOrigAC().Y));
+            origACFields[2].setText(Float.toString(tInfo.getOrigAC().Z));
 
-            origPCFields[0].setText(Float.toString(tInfo.getOrigPC().x));
-            origPCFields[1].setText(Float.toString(tInfo.getOrigPC().y));
-            origPCFields[2].setText(Float.toString(tInfo.getOrigPC().z));
+            origPCFields[0].setText(Float.toString(tInfo.getOrigPC().X));
+            origPCFields[1].setText(Float.toString(tInfo.getOrigPC().Y));
+            origPCFields[2].setText(Float.toString(tInfo.getOrigPC().Z));
 
             for (int i = 0; i < 3; i++) {
                 origDimFields[i].setText(Integer.toString(tInfo.getOrigDim()[i]));
                 origResFields[i].setText(Float.toString(tInfo.getOrigRes()[i]));
             }
 
-            acpcACFields[0].setText(Float.toString(tInfo.getAcpcAC().x));
-            acpcACFields[1].setText(Float.toString(tInfo.getAcpcAC().y));
-            acpcACFields[2].setText(Float.toString(tInfo.getAcpcAC().z));
+            acpcACFields[0].setText(Float.toString(tInfo.getAcpcAC().X));
+            acpcACFields[1].setText(Float.toString(tInfo.getAcpcAC().Y));
+            acpcACFields[2].setText(Float.toString(tInfo.getAcpcAC().Z));
 
-            acpcPCFields[0].setText(Float.toString(tInfo.getAcpcPC().x));
-            acpcPCFields[1].setText(Float.toString(tInfo.getAcpcPC().y));
-            acpcPCFields[2].setText(Float.toString(tInfo.getAcpcPC().z));
+            acpcPCFields[0].setText(Float.toString(tInfo.getAcpcPC().X));
+            acpcPCFields[1].setText(Float.toString(tInfo.getAcpcPC().Y));
+            acpcPCFields[2].setText(Float.toString(tInfo.getAcpcPC().Z));
 
             acpcResField.setText(Float.toString(tInfo.getAcpcRes()));
 
@@ -717,13 +718,13 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             }
 
             if (tInfo.isTlrc()) {
-                acpcMinFields[0].setText(Float.toString(tInfo.getAcpcMin().x));
-                acpcMinFields[1].setText(Float.toString(tInfo.getAcpcMin().y));
-                acpcMinFields[2].setText(Float.toString(tInfo.getAcpcMin().z));
+                acpcMinFields[0].setText(Float.toString(tInfo.getAcpcMin().X));
+                acpcMinFields[1].setText(Float.toString(tInfo.getAcpcMin().Y));
+                acpcMinFields[2].setText(Float.toString(tInfo.getAcpcMin().Z));
 
-                acpcMaxFields[0].setText(Float.toString(tInfo.getAcpcMax().x));
-                acpcMaxFields[1].setText(Float.toString(tInfo.getAcpcMax().y));
-                acpcMaxFields[2].setText(Float.toString(tInfo.getAcpcMax().z));
+                acpcMaxFields[0].setText(Float.toString(tInfo.getAcpcMax().X));
+                acpcMaxFields[1].setText(Float.toString(tInfo.getAcpcMax().Y));
+                acpcMaxFields[2].setText(Float.toString(tInfo.getAcpcMax().Z));
 
                 for (int i = 0; i < 7; i++) {
                     tlrcResFields[i].setText(Float.toString(tInfo.getTlrcRes()[i]));
@@ -731,13 +732,13 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             }
 
             // do these regardless b\c if AC is set, then these tlrc ones will be set as well
-            tlrcACFields[0].setText(Float.toString(tInfo.getTlrcAC().x));
-            tlrcACFields[1].setText(Float.toString(tInfo.getTlrcAC().y));
-            tlrcACFields[2].setText(Float.toString(tInfo.getTlrcAC().z));
+            tlrcACFields[0].setText(Float.toString(tInfo.getTlrcAC().X));
+            tlrcACFields[1].setText(Float.toString(tInfo.getTlrcAC().Y));
+            tlrcACFields[2].setText(Float.toString(tInfo.getTlrcAC().Z));
 
-            tlrcPCFields[0].setText(Float.toString(tInfo.getTlrcPC().x));
-            tlrcPCFields[1].setText(Float.toString(tInfo.getTlrcPC().y));
-            tlrcPCFields[2].setText(Float.toString(tInfo.getTlrcPC().z));
+            tlrcPCFields[0].setText(Float.toString(tInfo.getTlrcPC().X));
+            tlrcPCFields[1].setText(Float.toString(tInfo.getTlrcPC().Y));
+            tlrcPCFields[2].setText(Float.toString(tInfo.getTlrcPC().Z));
 
             for (int i = 0; i < 3; i++) {
                 tlrcDimFields[i].setText(Float.toString(tInfo.getTlrcDim()[i]));
@@ -2227,50 +2228,50 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             // 0  0 -1  0
             // 0  0  0  1
 
-            Point3Df cPt = image.getImageCentermm(false);
-            Point3Df cPtRS = resampleImage.getImageCentermm(false);
+            Vector3f cPt = image.getImageCentermm(false);
+            Vector3f cPtRS = resampleImage.getImageCentermm(false);
 
             if ((wcSystem == true) && (leftHandSystem == true)) {
 
                 // change to both the "left-hand" and world coordinate system.
-                mat.setTranslate(cPtRS.x, cPtRS.y, cPtRS.z);
+                mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
                 mat.timesEquals(rh_lhMatrix);
                 mat.timesEquals(wcMatrix);
-                mat.setTranslate(-cPtRS.x, -cPtRS.y, -cPtRS.z);
+                mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
                 mat.timesEquals(matrix);
 
-                mat.setTranslate(cPt.x, cPt.y, cPt.z);
+                mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
                 mat.timesEquals(wcMatrix);
                 mat.timesEquals(rh_lhMatrix);
-                mat.setTranslate(-cPt.x, -cPt.y, -cPt.z);
+                mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
 
                 // mat.print();
                 return mat;
             } else if (wcSystem == true) { // Change just to the world coordinate system
 
-                mat.setTranslate(cPtRS.x, cPtRS.y, cPtRS.z);
+                mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
                 mat.timesEquals(wcMatrix);
-                mat.setTranslate(-cPtRS.x, -cPtRS.y, -cPtRS.z);
+                mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
                 mat.timesEquals(matrix);
 
-                mat.setTranslate(cPt.x, cPt.y, cPt.z);
+                mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
                 mat.timesEquals(wcMatrix);
-                mat.setTranslate(-cPt.x, -cPt.y, -cPt.z);
+                mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
 
                 return mat;
             } else if (leftHandSystem == true) { // Change just to the "left-hand" system
 
-                mat.setTranslate(cPtRS.x, cPtRS.y, cPtRS.z);
+                mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
                 mat.timesEquals(rh_lhMatrix);
-                mat.setTranslate(-cPtRS.x, -cPtRS.y, -cPtRS.z);
+                mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
                 mat.timesEquals(matrix);
 
-                mat.setTranslate(cPt.x, cPt.y, cPt.z);
+                mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
                 mat.timesEquals(rh_lhMatrix);
-                mat.setTranslate(-cPt.x, -cPt.y, -cPt.z);
+                mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
 
                 return mat;
             } else {
@@ -3366,11 +3367,11 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         try {
             tInfo.isAcpc(true);
-            tInfo.setOrigAC(new Point3Df(Float.parseFloat(origACFields[0].getText()),
+            tInfo.setOrigAC(new Vector3f(Float.parseFloat(origACFields[0].getText()),
                                          Float.parseFloat(origACFields[1].getText()),
                                          Float.parseFloat(origACFields[2].getText())));
 
-            tInfo.setOrigPC(new Point3Df(Float.parseFloat(origPCFields[0].getText()),
+            tInfo.setOrigPC(new Vector3f(Float.parseFloat(origPCFields[0].getText()),
                                          Float.parseFloat(origPCFields[1].getText()),
                                          Float.parseFloat(origPCFields[2].getText())));
 
@@ -3385,7 +3386,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             tInfo.setOrigDim(origDim);
             tInfo.setOrigRes(origRes);
 
-            tInfo.setAcpcPC(new Point3Df(Float.parseFloat(acpcPCFields[0].getText()),
+            tInfo.setAcpcPC(new Vector3f(Float.parseFloat(acpcPCFields[0].getText()),
                                          Float.parseFloat(acpcPCFields[1].getText()),
                                          Float.parseFloat(acpcPCFields[2].getText())));
 
@@ -3406,11 +3407,11 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             if (tInfo.isTlrc()) {
 
-                tInfo.setAcpcMin(new Point3Df(Float.parseFloat(acpcMinFields[0].getText()),
+                tInfo.setAcpcMin(new Vector3f(Float.parseFloat(acpcMinFields[0].getText()),
                                               Float.parseFloat(acpcMinFields[1].getText()),
                                               Float.parseFloat(acpcMinFields[2].getText())));
 
-                tInfo.setAcpcMax(new Point3Df(Float.parseFloat(acpcMaxFields[0].getText()),
+                tInfo.setAcpcMax(new Vector3f(Float.parseFloat(acpcMaxFields[0].getText()),
                                               Float.parseFloat(acpcMaxFields[1].getText()),
                                               Float.parseFloat(acpcMaxFields[2].getText())));
 

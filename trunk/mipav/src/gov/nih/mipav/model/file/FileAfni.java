@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.file;
 
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
@@ -268,19 +270,19 @@ public class FileAfni extends FileBase {
     private float a, b;
 
     /** Anterior Comissure in acpc space. */
-    private Point3Df acpcAC = new Point3Df(95.0f, 95.0f, 70.0f);
+    private Vector3f acpcAC = new Vector3f(95.0f, 95.0f, 70.0f);
 
     /** DOCUMENT ME! */
-    private Point3Df acpcMaxPt = new Point3Df();
+    private Vector3f acpcMaxPt = new Vector3f();
 
     /** DOCUMENT ME! */
-    private Point3Df acpcMinPt = new Point3Df();
+    private Vector3f acpcMinPt = new Vector3f();
 
     /** DOCUMENT ME! */
     private String acpcName;
 
     /** DOCUMENT ME! */
-    private Point3Df acpcPC;
+    private Vector3f acpcPC;
 
     /** DOCUMENT ME! */
     private float acpcRes;
@@ -304,7 +306,7 @@ public class FileAfni extends FileBase {
     private boolean anatType; // true for Anat type, false for Func type
 
     /** DOCUMENT ME! */
-    private Point3Df anotherPtDicom;
+    private Vector3f anotherPtDicom;
 
     /** DOCUMENT ME! */
     private int botX, botY, botZ;
@@ -338,8 +340,8 @@ public class FileAfni extends FileBase {
 
     /**
      * Each BLT is defined by a struct that contains two 3x3 matrices and four 3-vectors (2*3*3 + 4*3 = the 30 numbers).
-     * These values are: [mfor] = 3x3 forward transformation matrix [0..8] 0,1,2 correspond to alpha.x, alpha.y, alpha.z
-     * 3,4,5 correspond to beta.x, beta.y, beta.z 6,7,8 correspond to gamma.x, gamma.y, gamma.z [mbac] = 3x3 backward
+     * These values are: [mfor] = 3x3 forward transformation matrix [0..8] 0,1,2 correspond to alpha.X, alpha.Y, alpha.Z
+     * 3,4,5 correspond to beta.X, beta.Y, beta.Z 6,7,8 correspond to gamma.X, gamma.Y, gamma.Z [mbac] = 3x3 backward
      * transformation matrix [0..17] [bvec] = 3-vector for forward transformation [18..20] [svec] = 3-vector for
      * backward transformation [21..23] [bot] [24..26] [top] [27..29] The matrices are stored in row major order; e.g.,
      * [ 0 1 2] [mfor] = [ 3 4 5] [ 6 7 8] the indices of the [mfor] matrix The forward transformation is [x_map] =
@@ -483,7 +485,7 @@ public class FileAfni extends FileBase {
     private String fileName;
 
     /** DOCUMENT ME! */
-    private Point3Df firstPtDicom;
+    private Vector3f firstPtDicom;
 
     /** DOCUMENT ME! */
     private int floatsPerTag; // number of floats stored per tag
@@ -654,7 +656,7 @@ public class FileAfni extends FileBase {
     private int[] orientSpecific = new int[3];
 
     /** DOCUMENT ME! */
-    private Point3Df origAC;
+    private Vector3f origAC;
 
     /** DOCUMENT ME! */
     private float[] origDelta = new float[3]; // delta read form +orig file in Dicom order, but not
@@ -697,16 +699,16 @@ public class FileAfni extends FileBase {
     private int origZDim; // dicom zDim from +orig header
 
     /** DOCUMENT ME! */
-    private Point3Df pcDicom; // pass +orig header info onto +acpc header read
+    private Vector3f pcDicom; // pass +orig header info onto +acpc header read
                               // This is the coordinate transformed pc inferior edge
 
     /** DOCUMENT ME! */
-    private Point3Df pointMarker; // For +orig to +ACPC transformations contains the marker xyz voxel numbers
+    private Vector3f pointMarker; // For +orig to +ACPC transformations contains the marker xyz voxel numbers
                                   // in dataset order and for +ACPC to +tlrc transformations contains the
                                   // xyz voxel markers in dicom order.
 
     /** DOCUMENT ME! */
-    private Point3Df posteriorMarginDicom; // pass +orig header info onto +acpc header read
+    private Vector3f posteriorMarginDicom; // pass +orig header info onto +acpc header read
 
     /** DOCUMENT ME! */
     private int presentViewType;
@@ -780,7 +782,7 @@ public class FileAfni extends FileBase {
                                 // in most AFNI programs this is called nvals
 
     /** DOCUMENT ME! */
-    private Point3Df superiorEdgeDicom; // pass +orig header info onto +acpc header read
+    private Vector3f superiorEdgeDicom; // pass +orig header info onto +acpc header read
 
     /**
      * The "p-values" for fico, fitt, and fizt datasets are 2-sided: that is, the value displayed by AFNI (below the
@@ -1320,21 +1322,21 @@ public class FileAfni extends FileBase {
     public ModelImage readImage() throws IOException {
         int iXdim, iYdim, iZdim;
         float iXres, iYres, iZres;
-        Point3Df rr = new Point3Df(0.0f, 0.0f, 0.0f);
-        Point3Df alpha = new Point3Df(0.0f, 0.0f, 0.0f);
-        Point3Df beta = new Point3Df(0.0f, 0.0f, 0.0f);
-        Point3Df gamma = new Point3Df(0.0f, 0.0f, 0.0f);
-        Point3Df center;
+        Vector3f rr = new Vector3f(0.0f, 0.0f, 0.0f);
+        Vector3f alpha = new Vector3f(0.0f, 0.0f, 0.0f);
+        Vector3f beta = new Vector3f(0.0f, 0.0f, 0.0f);
+        Vector3f gamma = new Vector3f(0.0f, 0.0f, 0.0f);
+        Vector3f center;
         TransMatrix xfrm;
         float oXres, oYres, oZres;
         int oXdim, oYdim, oZdim;
         double[][] M;
 
         // acpc
-        Point3Df TCenter = new Point3Df(0.0f, 0.0f, 0.0f);
+        Vector3f TCenter = new Vector3f(0.0f, 0.0f, 0.0f);
 
         // Talairach
-        Point3Df TalCenter = new Point3Df(0.0f, 0.0f, 0.0f);
+        Vector3f TalCenter = new Vector3f(0.0f, 0.0f, 0.0f);
         int i, j;
         double[][] frm;
         double Tx = 0.0;
@@ -1345,10 +1347,10 @@ public class FileAfni extends FileBase {
         float Talx, Taly, Talz;
         int[] AFNIOrigExtents = new int[3];
         float[] AFNIOrigResolutions = new float[3];
-        Point3Df translation = new Point3Df(0.0f, 0.0f, 0.0f); // last column of transformation matrix
+        Vector3f translation = new Vector3f(0.0f, 0.0f, 0.0f); // last column of transformation matrix
         String nextFileName;
         int nextViewType;
-        Point3Df rr1, rr2, dif, acpos, acsup, alpha1, alpha2;
+        Vector3f rr1, rr2, dif, acpos, acsup, alpha1, alpha2;
 
         if (alsoOrig) {
             nextFileName = fileName;
@@ -1383,34 +1385,34 @@ public class FileAfni extends FileBase {
             readImage1();
 
             // rr = -svec where rr is the Talairach center
-            rr.x = -warpData[21];
-            rr.y = -warpData[22];
-            rr.z = -warpData[23];
-            rr.x = (rr.x - origOrigin[0]) / origDelta[0];
+            rr.X = -warpData[21];
+            rr.Y = -warpData[22];
+            rr.Z = -warpData[23];
+            rr.X = (rr.X - origOrigin[0]) / origDelta[0];
 
             if (invertX) {
-                rr.x = origXDim - 1 - rr.x;
+                rr.X = origXDim - 1 - rr.X;
             }
 
-            rr.y = (rr.y - origOrigin[1]) / origDelta[1];
+            rr.Y = (rr.Y - origOrigin[1]) / origDelta[1];
 
             if (invertY) {
-                rr.y = origYDim - 1 - rr.y;
+                rr.Y = origYDim - 1 - rr.Y;
             }
 
-            rr.z = (rr.z - origOrigin[2]) / origDelta[2];
+            rr.Z = (rr.Z - origOrigin[2]) / origDelta[2];
 
             if (invertZ) {
-                rr.z = origZDim - 1 - rr.z;
+                rr.Z = origZDim - 1 - rr.Z;
             }
 
-            Preferences.debug("svec rr = " + rr.x + "," + rr.y + "," + rr.z + "\n");
+            Preferences.debug("svec rr = " + rr.X + "," + rr.Y + "," + rr.Z + "\n");
 
             xfrm = new TransMatrix(4);
-            center = new Point3Df();
-            center.x = (image.getExtents()[0] - 1) / 2.0f;
-            center.y = (image.getExtents()[1] - 1) / 2.0f;
-            center.z = (image.getExtents()[2] - 1) / 2.0f;
+            center = new Vector3f();
+            center.X = (image.getExtents()[0] - 1) / 2.0f;
+            center.Y = (image.getExtents()[1] - 1) / 2.0f;
+            center.Z = (image.getExtents()[2] - 1) / 2.0f;
             bufferSize = iXdim * iYdim * iZdim;
             imgBuffer = new float[bufferSize];
 
@@ -1426,23 +1428,23 @@ public class FileAfni extends FileBase {
             image = new ModelImage(type, imgExtents, originalFileName);
 
 
-            xfrm.setTranslate(center.x, center.y, center.z);
-            Preferences.debug("center.x = " + center.x + " center.y = " + center.y + " center.z = " + center.z + "\n");
+            xfrm.setTranslate(center.X, center.Y, center.Z);
+            Preferences.debug("center.X = " + center.X + " center.Y = " + center.Y + " center.Z = " + center.Z + "\n");
 
             // Since our interpolation routines are doing a output to input mapping, create the mbac
             // transformation matrix which is the transpose(also the inverse) of the mfor matrix.
-            alpha.x = warpData[9];
-            alpha.y = warpData[10];
-            alpha.z = warpData[11];
-            beta.x = warpData[12];
-            beta.y = warpData[13];
-            beta.z = warpData[14];
-            gamma.x = warpData[15];
-            gamma.y = warpData[16];
-            gamma.z = warpData[17];
-            Preferences.debug("mbac alpha = " + alpha.x + "," + alpha.y + "," + alpha.z + "\n");
-            Preferences.debug("mbac beta = " + beta.x + "," + beta.y + "," + beta.z + "\n");
-            Preferences.debug("mbac gamma = " + gamma.x + "," + gamma.y + "," + gamma.z + "\n");
+            alpha.X = warpData[9];
+            alpha.Y = warpData[10];
+            alpha.Z = warpData[11];
+            beta.X = warpData[12];
+            beta.Y = warpData[13];
+            beta.Z = warpData[14];
+            gamma.X = warpData[15];
+            gamma.Y = warpData[16];
+            gamma.Z = warpData[17];
+            Preferences.debug("mbac alpha = " + alpha.X + "," + alpha.Y + "," + alpha.Z + "\n");
+            Preferences.debug("mbac beta = " + beta.X + "," + beta.Y + "," + beta.Z + "\n");
+            Preferences.debug("mbac gamma = " + gamma.X + "," + gamma.Y + "," + gamma.Z + "\n");
             xfrm.setRotate(alpha, beta, gamma);
 
 
@@ -1462,9 +1464,9 @@ public class FileAfni extends FileBase {
             Preferences.debug("Talx = " + Talx + " Taly = " + Taly + " Talz = " + Talz + "\n");
 
             M = xfrm.getMatrix();
-            Tr03 = (iXres * rr.x) - (Talx * M[0][0]) - (Taly * M[0][1]) - (Talz * M[0][2]);
-            Tr13 = (iYres * rr.y) - (Talx * M[1][0]) - (Taly * M[1][1]) - (Talz * M[1][2]);
-            Tr23 = (iZres * rr.z) - (Talx * M[2][0]) - (Taly * M[2][1]) - (Talz * M[2][2]);
+            Tr03 = (iXres * rr.X) - (Talx * M[0][0]) - (Taly * M[0][1]) - (Talz * M[0][2]);
+            Tr13 = (iYres * rr.Y) - (Talx * M[1][0]) - (Taly * M[1][1]) - (Talz * M[1][2]);
+            Tr23 = (iZres * rr.Z) - (Talx * M[2][0]) - (Taly * M[2][1]) - (Talz * M[2][2]);
 
             /*
              * Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3] Tr13 = M[1][0] * Tx + M[1][1] * Ty + M[1][2]
@@ -1496,12 +1498,12 @@ public class FileAfni extends FileBase {
             /* Find the Talairach center, the new origin, in the newly transformed coordinates */
             /* X = (i*oXres*T00 + j*oYres*T01 + k*oZres*T02 + T03)/iXres
              * Y = (i*oXres*T10 + j*oYres*T11 + k*oZres*T12 + T13)/iYres Z = (i*oXres*T20 + j*oYres*T21 + k*oZres*T22 +
-             * T23)/iZres Wish to find i,j,k from X,Y,ZThat is, wish to find TCenter.x,TCenter.y,TCenter.z from
-             * rr.x,rr.y,rr.z */
+             * T23)/iZres Wish to find i,j,k from X,Y,ZThat is, wish to find TCenter.X,TCenter.Y,TCenter.Z from
+             * rr.X,rr.Y,rr.Z */
             M = xfrm.getMatrix();
-            translation.x = (float) M[0][3];
-            translation.y = (float) M[1][3];
-            translation.z = (float) M[2][3];
+            translation.X = (float) M[0][3];
+            translation.Y = (float) M[1][3];
+            translation.Z = (float) M[2][3];
 
             A = new Matrix(3, 3);
             A.set(0, 0, oXres * M[0][0] / iXres);
@@ -1515,23 +1517,23 @@ public class FileAfni extends FileBase {
             A.set(2, 2, oZres * M[2][2] / iZres);
             b = new Matrix(3, 1);
 
-            /* b.set(0,0,rr.x - M[0][3]/iXres);
-             * b.set(1,0,rr.y - M[1][3]/iYres); b.set(2,0,rr.z - M[2][3]/iZres); X = A.solve(b); TCenter.x =
-             * (float)(X.get(0,0)); TCenter.y = (float)(X.get(1,0)); TCenter.z = (float)(X.get(2,0)); */
-            TCenter.x = Talx / oXres;
-            TCenter.y = Taly / oYres;
-            TCenter.z = Talz / oZres;
-            Preferences.debug("Transformed Talairach origin = " + TCenter.x + "  " + TCenter.y + "  " + TCenter.z +
+            /* b.set(0,0,rr.X - M[0][3]/iXres);
+             * b.set(1,0,rr.Y - M[1][3]/iYres); b.set(2,0,rr.Z - M[2][3]/iZres); X = A.solve(b); TCenter.X =
+             * (float)(X.get(0,0)); TCenter.Y = (float)(X.get(1,0)); TCenter.Z = (float)(X.get(2,0)); */
+            TCenter.X = Talx / oXres;
+            TCenter.Y = Taly / oYres;
+            TCenter.Z = Talz / oZres;
+            Preferences.debug("Transformed Talairach origin = " + TCenter.X + "  " + TCenter.Y + "  " + TCenter.Z +
                               "\n");
 
             // Find the new pc inferior edge in the new coordinates
-            b.set(0, 0, pcDicom.x - (M[0][3] / iXres));
-            b.set(1, 0, pcDicom.y - (M[1][3] / iYres));
-            b.set(2, 0, pcDicom.z - (M[2][3] / iZres));
+            b.set(0, 0, pcDicom.X - (M[0][3] / iXres));
+            b.set(1, 0, pcDicom.Y - (M[1][3] / iYres));
+            b.set(2, 0, pcDicom.Z - (M[2][3] / iZres));
             X = A.solve(b);
-            pcDicom.x = (float) (X.get(0, 0));
-            pcDicom.y = (float) (X.get(1, 0));
-            pcDicom.z = (float) (X.get(2, 0));
+            pcDicom.X = (float) (X.get(0, 0));
+            pcDicom.Y = (float) (X.get(1, 0));
+            pcDicom.Z = (float) (X.get(2, 0));
 
             // Store the posterior commissure for the +acpc to +tlrc conversion
             fileInfo.setpcie(pcDicom);
@@ -1590,15 +1592,15 @@ public class FileAfni extends FileBase {
             }
 
             float[][] rotation = new float[3][3];
-            rotation[0][0] = alpha.x;
-            rotation[1][0] = alpha.y;
-            rotation[2][0] = alpha.z;
-            rotation[0][1] = beta.x;
-            rotation[1][1] = beta.y;
-            rotation[2][1] = beta.z;
-            rotation[0][2] = gamma.x;
-            rotation[1][2] = gamma.y;
-            rotation[2][2] = gamma.z;
+            rotation[0][0] = alpha.X;
+            rotation[1][0] = alpha.Y;
+            rotation[2][0] = alpha.Z;
+            rotation[0][1] = beta.X;
+            rotation[1][1] = beta.Y;
+            rotation[2][1] = beta.Z;
+            rotation[0][2] = gamma.X;
+            rotation[1][2] = gamma.Y;
+            rotation[2][2] = gamma.Z;
 
             // combine alignment with other quantities
             float[][] trans = new float[3][3];
@@ -1621,17 +1623,17 @@ public class FileAfni extends FileBase {
 
             /* compute the new y direction (beta) */
             beta = sub(pcDicom, superiorEdgeDicom);
-            beta = makemmPoint3Df(beta, absDelta);
+            beta = makemmVector3f(beta, absDelta);
             beta = norm(beta);
 
             /* Compute the new x direction (alpha) */
             rr = sub(firstPtDicom, superiorEdgeDicom);
-            rr = makemmPoint3Df(rr, absDelta);
+            rr = makemmVector3f(rr, absDelta);
             alpha1 = crossProduct(beta, rr);
             alpha1 = norm(alpha1);
 
             rr = sub(anotherPtDicom, superiorEdgeDicom);
-            rr = makemmPoint3Df(rr, absDelta);
+            rr = makemmVector3f(rr, absDelta);
             alpha2 = crossProduct(beta, rr);
             alpha2 = norm(alpha2);
 
@@ -1656,13 +1658,13 @@ public class FileAfni extends FileBase {
              * these is the Talairach centerof coordinates (rr). */
 
             dif = sub(superiorEdgeDicom, posteriorMarginDicom);
-            dif = makemmPoint3Df(dif, absDelta);
+            dif = makemmVector3f(dif, absDelta);
             size = dotProduct(dif, gamma);
-            acpos = makemmPoint3Df(posteriorMarginDicom, absDelta);
+            acpos = makemmVector3f(posteriorMarginDicom, absDelta);
             rr1 = sclAdd(1.0f, acpos, size, gamma);
 
             size = dotProduct(dif, beta);
-            acsup = makemmPoint3Df(superiorEdgeDicom, absDelta);
+            acsup = makemmVector3f(superiorEdgeDicom, absDelta);
             rr2 = sclAdd(1.0f, acsup, -size, beta);
 
             size = dist(rr1, rr2, absDelta);
@@ -1672,11 +1674,11 @@ public class FileAfni extends FileBase {
             rr = sclAdd(0.5f, rr1, 0.5f, rr2);
             rr = makeVoxelCoord3Df(rr, absDelta);
 
-            origAC = new Point3Df(rr.x, rr.y, rr.z);
+            origAC = new Vector3f(rr.X, rr.Y, rr.Z);
 
-            origAC.x = (alignment[0][0] * rr.x) + (alignment[0][1] * rr.y) + (alignment[0][2] * rr.z) + offset[0];
-            origAC.y = (alignment[1][0] * rr.x) + (alignment[1][1] * rr.y) + (alignment[1][2] * rr.z) + offset[1];
-            origAC.z = (alignment[2][0] * rr.x) + (alignment[2][1] * rr.y) + (alignment[2][2] * rr.z) + offset[2];
+            origAC.X = (alignment[0][0] * rr.X) + (alignment[0][1] * rr.Y) + (alignment[0][2] * rr.Z) + offset[0];
+            origAC.Y = (alignment[1][0] * rr.X) + (alignment[1][1] * rr.Y) + (alignment[1][2] * rr.Z) + offset[1];
+            origAC.Z = (alignment[2][0] * rr.X) + (alignment[2][1] * rr.Y) + (alignment[2][2] * rr.Z) + offset[2];
 
             tInfo.setOrigOrient(trans);
             tInfo.setOrigAC(origAC);
@@ -1719,53 +1721,53 @@ public class FileAfni extends FileBase {
 
             // rr = -svec where rr is the Talairach center
             if (warpData != null) {
-                rr.x = -warpData[21];
-                rr.y = -warpData[22];
-                rr.z = -warpData[23];
-                rr.x = (rr.x - origOrigin[0]) / origDelta[0];
+                rr.X = -warpData[21];
+                rr.Y = -warpData[22];
+                rr.Z = -warpData[23];
+                rr.X = (rr.X - origOrigin[0]) / origDelta[0];
 
                 if (invertX) {
-                    rr.x = origXDim - 1 - rr.x;
+                    rr.X = origXDim - 1 - rr.X;
                 }
 
-                rr.y = (rr.y - origOrigin[1]) / origDelta[1];
+                rr.Y = (rr.Y - origOrigin[1]) / origDelta[1];
 
                 if (invertY) {
-                    rr.y = origYDim - 1 - rr.y;
+                    rr.Y = origYDim - 1 - rr.Y;
                 }
 
-                rr.z = (rr.z - origOrigin[2]) / origDelta[2];
+                rr.Z = (rr.Z - origOrigin[2]) / origDelta[2];
 
                 if (invertZ) {
-                    rr.z = origZDim - 1 - rr.z;
+                    rr.Z = origZDim - 1 - rr.Z;
                 }
 
-                Preferences.debug("svec rr = " + rr.x + "," + rr.y + "," + rr.z + "\n");
+                Preferences.debug("svec rr = " + rr.X + "," + rr.Y + "," + rr.Z + "\n");
 
                 xfrm = new TransMatrix(4);
-                center = new Point3Df();
-                center.x = (origXDim - 1) / 2f;
-                center.y = (origYDim - 1) / 2f;
-                center.z = (origZDim - 1) / 2f;
+                center = new Vector3f();
+                center.X = (origXDim - 1) / 2f;
+                center.Y = (origYDim - 1) / 2f;
+                center.Z = (origZDim - 1) / 2f;
 
-                xfrm.setTranslate(center.x, center.y, center.z);
-                Preferences.debug("center.x = " + center.x + " center.y = " + center.y + " center.z = " + center.z +
+                xfrm.setTranslate(center.X, center.Y, center.Z);
+                Preferences.debug("center.X = " + center.X + " center.Y = " + center.Y + " center.Z = " + center.Z +
                                   "\n");
 
                 // Since our interpolation routines are doing a output to input mapping, create the mbac
                 // transformation matrix which is the transpose(also the inverse) of the mfor matrix.
-                alpha.x = warpData[9];
-                alpha.y = warpData[10];
-                alpha.z = warpData[11];
-                beta.x = warpData[12];
-                beta.y = warpData[13];
-                beta.z = warpData[14];
-                gamma.x = warpData[15];
-                gamma.y = warpData[16];
-                gamma.z = warpData[17];
-                Preferences.debug("mbac alpha = " + alpha.x + "," + alpha.y + "," + alpha.z + "\n");
-                Preferences.debug("mbac beta = " + beta.x + "," + beta.y + "," + beta.z + "\n");
-                Preferences.debug("mbac gamma = " + gamma.x + "," + gamma.y + "," + gamma.z + "\n");
+                alpha.X = warpData[9];
+                alpha.Y = warpData[10];
+                alpha.Z = warpData[11];
+                beta.X = warpData[12];
+                beta.Y = warpData[13];
+                beta.Z = warpData[14];
+                gamma.X = warpData[15];
+                gamma.Y = warpData[16];
+                gamma.Z = warpData[17];
+                Preferences.debug("mbac alpha = " + alpha.X + "," + alpha.Y + "," + alpha.Z + "\n");
+                Preferences.debug("mbac beta = " + beta.X + "," + beta.Y + "," + beta.Z + "\n");
+                Preferences.debug("mbac gamma = " + gamma.X + "," + gamma.Y + "," + gamma.Z + "\n");
                 xfrm.setRotate(alpha, beta, gamma);
 
                 /* Code to make cubic voxels required in acpc and Talairach space */
@@ -1780,9 +1782,9 @@ public class FileAfni extends FileBase {
                 Preferences.debug("Talx = " + Talx + " Taly = " + Taly + " Talz = " + Talz + "\n");
 
                 M = xfrm.getMatrix();
-                Tr03 = (iXres * rr.x) - (Talx * M[0][0]) - (Taly * M[0][1]) - (Talz * M[0][2]);
-                Tr13 = (iYres * rr.y) - (Talx * M[1][0]) - (Taly * M[1][1]) - (Talz * M[1][2]);
-                Tr23 = (iZres * rr.z) - (Talx * M[2][0]) - (Taly * M[2][1]) - (Talz * M[2][2]);
+                Tr03 = (iXres * rr.X) - (Talx * M[0][0]) - (Taly * M[0][1]) - (Talz * M[0][2]);
+                Tr13 = (iYres * rr.Y) - (Talx * M[1][0]) - (Taly * M[1][1]) - (Talz * M[1][2]);
+                Tr23 = (iZres * rr.Z) - (Talx * M[2][0]) - (Taly * M[2][1]) - (Talz * M[2][2]);
 
                 /*
                  *       Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3]      Tr13 = M[1][0] * Tx + M[1][1]
@@ -1800,14 +1802,14 @@ public class FileAfni extends FileBase {
                 A.set(2, 2, M[2][2]);
                 b = new Matrix(3, 1);
 
-                /* b.set(0,0,rr.x - M[0][3]/iXres);
-                 *       b.set(1,0,rr.y - M[1][3]/iYres);      b.set(2,0,rr.z - M[2][3]/iZres);      X = A.solve(b);
-                 * TCenter.x = (float)(X.get(0,0));      TCenter.y = (float)(X.get(1,0));      TCenter.z =
+                /* b.set(0,0,rr.X - M[0][3]/iXres);
+                 *       b.set(1,0,rr.Y - M[1][3]/iYres);      b.set(2,0,rr.Z - M[2][3]/iZres);      X = A.solve(b);
+                 * TCenter.X = (float)(X.get(0,0));      TCenter.Y = (float)(X.get(1,0));      TCenter.Z =
                  * (float)(X.get(2,0)); */
-                TCenter.x = Talx / oXres;
-                TCenter.y = Taly / oYres;
-                TCenter.z = Talz / oZres;
-                Preferences.debug("Transformed Talairach origin = " + TCenter.x + "  " + TCenter.y + "  " + TCenter.z +
+                TCenter.X = Talx / oXres;
+                TCenter.Y = Taly / oYres;
+                TCenter.Z = Talz / oZres;
+                Preferences.debug("Transformed Talairach origin = " + TCenter.X + "  " + TCenter.Y + "  " + TCenter.Z +
                                   "\n");
 
                 b.set(0, 0, Tr03 - M[0][3]);
@@ -1823,7 +1825,7 @@ public class FileAfni extends FileBase {
                 /* X = (i*oXres*T00 + j*oYres*T01 + k*oZres*T02 + T03)/iXres
                  * Y = (i*oXres*T10 + j*oYres*T11 + k*oZres*T12 + T13)/iYres Z = (i*oXres*T20 + j*oYres*T21 +
                  * k*oZres*T22 + T23)/iZres Wish to find i,j,k from X,Y,Z That is, wish to find
-                 * TCenter.x,TCenter.y,TCenter.z from rr.x,rr.y,rr.z */
+                 * TCenter.X,TCenter.Y,TCenter.Z from rr.X,rr.Y,rr.Z */
                 M = xfrm.getMatrix();
 
                 A = new Matrix(3, 3);
@@ -1839,13 +1841,13 @@ public class FileAfni extends FileBase {
                 b = new Matrix(3, 1);
 
                 // Find the new pc inferior edge in the new coordinates
-                b.set(0, 0, pcDicom.x - (M[0][3] / iXres));
-                b.set(1, 0, pcDicom.y - (M[1][3] / iYres));
-                b.set(2, 0, pcDicom.z - (M[2][3] / iZres));
+                b.set(0, 0, pcDicom.X - (M[0][3] / iXres));
+                b.set(1, 0, pcDicom.Y - (M[1][3] / iYres));
+                b.set(2, 0, pcDicom.Z - (M[2][3] / iZres));
                 X = A.solve(b);
-                pcDicom.x = (float) (X.get(0, 0));
-                pcDicom.y = (float) (X.get(1, 0));
-                pcDicom.z = (float) (X.get(2, 0));
+                pcDicom.X = (float) (X.get(0, 0));
+                pcDicom.Y = (float) (X.get(1, 0));
+                pcDicom.Z = (float) (X.get(2, 0));
 
                 // Store the posterior commissure for the +acpc to +tlrc conversion
                 fileInfo.setpcie(pcDicom);
@@ -1953,15 +1955,15 @@ public class FileAfni extends FileBase {
                 }
 
                 float[][] rotation = new float[3][3];
-                rotation[0][0] = alpha.x;
-                rotation[1][0] = alpha.y;
-                rotation[2][0] = alpha.z;
-                rotation[0][1] = beta.x;
-                rotation[1][1] = beta.y;
-                rotation[2][1] = beta.z;
-                rotation[0][2] = gamma.x;
-                rotation[1][2] = gamma.y;
-                rotation[2][2] = gamma.z;
+                rotation[0][0] = alpha.X;
+                rotation[1][0] = alpha.Y;
+                rotation[2][0] = alpha.Z;
+                rotation[0][1] = beta.X;
+                rotation[1][1] = beta.Y;
+                rotation[2][1] = beta.Z;
+                rotation[0][2] = gamma.X;
+                rotation[1][2] = gamma.Y;
+                rotation[2][2] = gamma.Z;
 
                 // combine alignment with other quantities
                 float[][] trans = new float[3][3];
@@ -1984,17 +1986,17 @@ public class FileAfni extends FileBase {
 
                 /* compute the new y direction (beta) */
                 beta = sub(pcDicom, superiorEdgeDicom);
-                beta = makemmPoint3Df(beta, absDelta);
+                beta = makemmVector3f(beta, absDelta);
                 beta = norm(beta);
 
                 /* Compute the new x direction (alpha) */
                 rr = sub(firstPtDicom, superiorEdgeDicom);
-                rr = makemmPoint3Df(rr, absDelta);
+                rr = makemmVector3f(rr, absDelta);
                 alpha1 = crossProduct(beta, rr);
                 alpha1 = norm(alpha1);
 
                 rr = sub(anotherPtDicom, superiorEdgeDicom);
-                rr = makemmPoint3Df(rr, absDelta);
+                rr = makemmVector3f(rr, absDelta);
                 alpha2 = crossProduct(beta, rr);
                 alpha2 = norm(alpha2);
 
@@ -2019,13 +2021,13 @@ public class FileAfni extends FileBase {
                  *  The average of these is the Talairach centerof coordinates (rr). */
 
                 dif = sub(superiorEdgeDicom, posteriorMarginDicom);
-                dif = makemmPoint3Df(dif, absDelta);
+                dif = makemmVector3f(dif, absDelta);
                 size = dotProduct(dif, gamma);
-                acpos = makemmPoint3Df(posteriorMarginDicom, absDelta);
+                acpos = makemmVector3f(posteriorMarginDicom, absDelta);
                 rr1 = sclAdd(1.0f, acpos, size, gamma);
 
                 size = dotProduct(dif, beta);
-                acsup = makemmPoint3Df(superiorEdgeDicom, absDelta);
+                acsup = makemmVector3f(superiorEdgeDicom, absDelta);
                 rr2 = sclAdd(1.0f, acsup, -size, beta);
 
                 size = dist(rr1, rr2, absDelta);
@@ -2034,11 +2036,11 @@ public class FileAfni extends FileBase {
 
                 rr = sclAdd(0.5f, rr1, 0.5f, rr2);
                 rr = makeVoxelCoord3Df(rr, absDelta);
-                origAC = new Point3Df(rr.x, rr.y, rr.z);
+                origAC = new Vector3f(rr.X, rr.Y, rr.Z);
 
-                origAC.x = (alignment[0][0] * rr.x) + (alignment[0][1] * rr.y) + (alignment[0][2] * rr.z) + offset[0];
-                origAC.y = (alignment[1][0] * rr.x) + (alignment[1][1] * rr.y) + (alignment[1][2] * rr.z) + offset[1];
-                origAC.z = (alignment[2][0] * rr.x) + (alignment[2][1] * rr.y) + (alignment[2][2] * rr.z) + offset[2];
+                origAC.X = (alignment[0][0] * rr.X) + (alignment[0][1] * rr.Y) + (alignment[0][2] * rr.Z) + offset[0];
+                origAC.Y = (alignment[1][0] * rr.X) + (alignment[1][1] * rr.Y) + (alignment[1][2] * rr.Z) + offset[1];
+                origAC.Z = (alignment[2][0] * rr.X) + (alignment[2][1] * rr.Y) + (alignment[2][2] * rr.Z) + offset[2];
 
                 tInfo.setOrigOrient(trans);
                 tInfo.setOrigAC(origAC);
@@ -2046,29 +2048,29 @@ public class FileAfni extends FileBase {
         } // if (alsoAcpc)
 
         if (readTLRC) {
-            Point3Df[] alphaArray = {
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f)
+            Vector3f[] alphaArray = {
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f)
             };
-            Point3Df[] betaArray = {
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f)
+            Vector3f[] betaArray = {
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f)
             };
-            Point3Df[] gammaArray = {
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f)
+            Vector3f[] gammaArray = {
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f)
             };
-            Point3Df[] rrArray = {
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f),
-                new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f), new Point3Df(0.0f, 0.0f, 0.0f)
+            Vector3f[] rrArray = {
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f),
+                new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(0.0f, 0.0f, 0.0f)
             };
             int[] botX = new int[12];
             int[] botY = new int[12];
@@ -2093,10 +2095,10 @@ public class FileAfni extends FileBase {
             presentViewType = viewType;
             readImage1();
             xfrm = new TransMatrix(4);
-            center = new Point3Df();
-            center.x = (image.getExtents()[0] - 1) / 2.0f;
-            center.y = (image.getExtents()[1] - 1) / 2.0f;
-            center.z = (image.getExtents()[2] - 1) / 2.0f;
+            center = new Vector3f();
+            center.X = (image.getExtents()[0] - 1) / 2.0f;
+            center.Y = (image.getExtents()[1] - 1) / 2.0f;
+            center.Z = (image.getExtents()[2] - 1) / 2.0f;
 
             bufferSize = iXdim * iYdim * iZdim;
             imgBuffer = new float[bufferSize];
@@ -2123,14 +2125,14 @@ public class FileAfni extends FileBase {
             // header file.  Then svec is -rr, the Talairach center.
             // If botY == ATLAS_AC_TO_PC, then the svec values are
             // a second separate distinct set.  Then svec is still -rr, the Talairach Center.
-            // In the Talairach image pcie.y = TCenter.y + ATLAS_AC_TO_PC
+            // In the Talairach image pcie.Y = TCenter.Y + ATLAS_AC_TO_PC
             // Use the transformation matrix to determine TCenter in the ACPC image from a
             // posterior section in the Talairach section.  Call this TCenter calculated back
             // from the Talairach posterior BTCenter.
-            // BTCenter.x = TCenter.x and BTCenter.z = TCenter.z
-            // However, BTCenter.y = pcie.y -(ATLAS_AC_TO_PC)/scale_P
+            // BTCenter.X = TCenter.X and BTCenter.Z = TCenter.Z
+            // However, BTCenter.Y = pcie.Y -(ATLAS_AC_TO_PC)/scale_P
             // This follows from the fact that in the Talairach image:
-            // TCenter.y = pcie.y - (ATLAS_AC_TO_PC)
+            // TCenter.Y = pcie.Y - (ATLAS_AC_TO_PC)
 
 
             /* Code to make cubic voxels required in acpc and Talairach space */
@@ -2153,42 +2155,42 @@ public class FileAfni extends FileBase {
             for (i = 0; i < 12; i++) {
                 j = i + 1;
                 fireProgressStateChanged("Transformation pass #" + j);
-                rrArray[i].x = -warpData[(i * 30) + 21];
-                rrArray[i].y = -warpData[(i * 30) + 22];
-                rrArray[i].z = -warpData[(i * 30) + 23];
-                rrArray[i].x = (rrArray[i].x - origOrigin[0]) / origDelta[0];
+                rrArray[i].X = -warpData[(i * 30) + 21];
+                rrArray[i].Y = -warpData[(i * 30) + 22];
+                rrArray[i].Z = -warpData[(i * 30) + 23];
+                rrArray[i].X = (rrArray[i].X - origOrigin[0]) / origDelta[0];
 
                 if (invertX) {
-                    rrArray[i].x = origXDim - 1 - rrArray[i].x;
+                    rrArray[i].X = origXDim - 1 - rrArray[i].X;
                 }
 
-                rrArray[i].y = (rrArray[i].y - origOrigin[1]) / origDelta[1];
+                rrArray[i].Y = (rrArray[i].Y - origOrigin[1]) / origDelta[1];
 
                 if (invertY) {
-                    rrArray[i].y = origYDim - 1 - rrArray[i].y;
+                    rrArray[i].Y = origYDim - 1 - rrArray[i].Y;
                 }
 
-                rrArray[i].z = (rrArray[i].z - origOrigin[2]) / origDelta[2];
+                rrArray[i].Z = (rrArray[i].Z - origOrigin[2]) / origDelta[2];
 
                 if (invertZ) {
-                    rrArray[i].z = origZDim - 1 - rrArray[i].z;
+                    rrArray[i].Z = origZDim - 1 - rrArray[i].Z;
                 }
 
-                Preferences.debug("svec rr = " + rrArray[i].x + "," + rrArray[i].y + "," + rrArray[i].z + "\n");
+                Preferences.debug("svec rr = " + rrArray[i].X + "," + rrArray[i].Y + "," + rrArray[i].Z + "\n");
                 xfrm.identity();
-                xfrm.setTranslate(center.x, center.y, center.z);
+                xfrm.setTranslate(center.X, center.Y, center.Z);
 
                 // Since our interpolation routines are doing a output to input mapping, create the mbac
                 // transformation matrix which is the transpose(also the inverse) of the mfor matrix.
-                alphaArray[i].x = warpData[(i * 30) + 9];
-                alphaArray[i].y = warpData[(i * 30) + 10];
-                alphaArray[i].z = warpData[(i * 30) + 11];
-                betaArray[i].x = warpData[(i * 30) + 12];
-                betaArray[i].y = warpData[(i * 30) + 13];
-                betaArray[i].z = warpData[(i * 30) + 14];
-                gammaArray[i].x = warpData[(i * 30) + 15];
-                gammaArray[i].y = warpData[(i * 30) + 16];
-                gammaArray[i].z = warpData[(i * 30) + 17];
+                alphaArray[i].X = warpData[(i * 30) + 9];
+                alphaArray[i].Y = warpData[(i * 30) + 10];
+                alphaArray[i].Z = warpData[(i * 30) + 11];
+                betaArray[i].X = warpData[(i * 30) + 12];
+                betaArray[i].Y = warpData[(i * 30) + 13];
+                betaArray[i].Z = warpData[(i * 30) + 14];
+                gammaArray[i].X = warpData[(i * 30) + 15];
+                gammaArray[i].Y = warpData[(i * 30) + 16];
+                gammaArray[i].Z = warpData[(i * 30) + 17];
                 xfrm.setRotate(alphaArray[i], betaArray[i], gammaArray[i]);
 
                 // Bounding values in the output
@@ -2201,9 +2203,9 @@ public class FileAfni extends FileBase {
                 Preferences.debug("botX = " + botX[i] + " botY = " + botY[i] + " botZ = " + botZ[i] + "\n");
                 Preferences.debug("topX = " + topX[i] + " topY = " + topY[i] + " topZ = " + topZ[i] + "\n");
                 M = xfrm.getMatrix();
-                Tr03 = (iXres * rrArray[i].x) - (Talx * M[0][0]) - (Taly * M[0][1]) - (Talz * M[0][2]);
-                Tr13 = (iYres * rrArray[i].y) - (Talx * M[1][0]) - (Taly * M[1][1]) - (Talz * M[1][2]);
-                Tr23 = (iZres * rrArray[i].z) - (Talx * M[2][0]) - (Taly * M[2][1]) - (Talz * M[2][2]);
+                Tr03 = (iXres * rrArray[i].X) - (Talx * M[0][0]) - (Taly * M[0][1]) - (Talz * M[0][2]);
+                Tr13 = (iYres * rrArray[i].Y) - (Talx * M[1][0]) - (Taly * M[1][1]) - (Talz * M[1][2]);
+                Tr23 = (iZres * rrArray[i].Z) - (Talx * M[2][0]) - (Taly * M[2][1]) - (Talz * M[2][2]);
 
                 /*
                  * Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3] Tr13 = M[1][0] * Tx + M[1][1] * Ty +
@@ -2244,16 +2246,16 @@ public class FileAfni extends FileBase {
                 A.set(2, 2, oZres * M[2][2] / iZres);
                 b = new Matrix(3, 1);
 
-                /*b.set(0,0,rrArray[i].x - M[0][3]/iXres);
-                 * b.set(1,0,rrArray[i].y - M[1][3]/iYres); b.set(2,0,rrArray[i].z - M[2][3]/iZres);
+                /*b.set(0,0,rrArray[i].X - M[0][3]/iXres);
+                 * b.set(1,0,rrArray[i].Y - M[1][3]/iYres); b.set(2,0,rrArray[i].Z - M[2][3]/iZres);
                  *
-                 * X = A.solve(b); TalCenter.x = (float)(X.get(0,0)); TalCenter.y = (float)(X.get(1,0));TalCenter.z =
+                 * X = A.solve(b); TalCenter.X = (float)(X.get(0,0)); TalCenter.Y = (float)(X.get(1,0));TalCenter.Z =
                  * (float)(X.get(2,0)); */
-                TalCenter.x = Talx / oXres;
-                TalCenter.y = Taly / oYres;
-                TalCenter.z = Talz / oZres;
-                Preferences.debug("Transformed Talairach origin = " + TalCenter.x + "  " + TalCenter.y + "  " +
-                                  TalCenter.z + "\n");
+                TalCenter.X = Talx / oXres;
+                TalCenter.Y = Taly / oYres;
+                TalCenter.Z = Talz / oZres;
+                Preferences.debug("Transformed Talairach origin = " + TalCenter.X + "  " + TalCenter.Y + "  " +
+                                  TalCenter.Z + "\n");
             } // for (i = 0; i < 12; i++)
 
             image.calcMinMax();
@@ -2287,15 +2289,15 @@ public class FileAfni extends FileBase {
         } // if (readTLRC)
 
         if (haveReadOrig && haveReadACPC && (acpcPC != null)) {
-            dist_ant = (acpcAC.y - acpcMinPt.y) * acpcRes;
-            dist_med = (acpcPC.y - acpcAC.y) * acpcRes;
-            dist_pos = (acpcMaxPt.y - acpcPC.y) * acpcRes;
+            dist_ant = (acpcAC.Y - acpcMinPt.Y) * acpcRes;
+            dist_med = (acpcPC.Y - acpcAC.Y) * acpcRes;
+            dist_pos = (acpcMaxPt.Y - acpcPC.Y) * acpcRes;
 
-            dist_sup = (acpcMaxPt.z - acpcAC.z) * acpcRes;
-            dist_inf = (acpcAC.z - acpcMinPt.z) * acpcRes;
+            dist_sup = (acpcMaxPt.Z - acpcAC.Z) * acpcRes;
+            dist_inf = (acpcAC.Z - acpcMinPt.Z) * acpcRes;
 
-            dist_lef = (acpcMaxPt.x - acpcAC.x) * acpcRes;
-            dist_rig = (acpcAC.x - acpcMinPt.x) * acpcRes;
+            dist_lef = (acpcMaxPt.X - acpcAC.X) * acpcRes;
+            dist_rig = (acpcAC.X - acpcMinPt.X) * acpcRes;
 
             scale_A = ATLAS_FRONT_TO_AC / dist_ant;
             scale_M = ViewJFrameTriImage.ATLAS_AC_TO_PC / dist_med;
@@ -2366,23 +2368,23 @@ public class FileAfni extends FileBase {
         int tmpInt;
         long tmpLong;
         FileInfoAfni fileInfoAfni = null;
-        Point3Df superiorEdge;
+        Vector3f superiorEdge;
         float superiorEdgeX = -999999;
         float superiorEdgeY = -999999;
         float superiorEdgeZ = -999999;
-        Point3Df posteriorMargin;
+        Vector3f posteriorMargin;
         float posteriorMarginX = -999999;
         float posteriorMarginY = -999999;
         float posteriorMarginZ = -999999;
-        Point3Df inferiorEdge;
+        Vector3f inferiorEdge;
         float inferiorEdgeX = -999999;
         float inferiorEdgeY = -999999;
         float inferiorEdgeZ = -999999;
-        Point3Df firstPt;
+        Vector3f firstPt;
         float firstPtX = -999999;
         float firstPtY = -999999;
         float firstPtZ = -999999;
-        Point3Df anotherPt;
+        Vector3f anotherPt;
         float anotherPtX = -999999;
         float anotherPtY = -999999;
         float anotherPtZ = -999999;
@@ -2397,27 +2399,27 @@ public class FileAfni extends FileBase {
 
         // 2 for AFNITypeString = 3DIM_GEN_ANAT
         int AFNITypeString = 2;
-        Point3Df anteriorPt;
+        Vector3f anteriorPt;
         float anteriorPtX = -999999;
         float anteriorPtY = -999999;
         float anteriorPtZ = -999999;
-        Point3Df posteriorPt;
+        Vector3f posteriorPt;
         float posteriorPtX = -999999;
         float posteriorPtY = -999999;
         float posteriorPtZ = -999999;
-        Point3Df superiorPt;
+        Vector3f superiorPt;
         float superiorPtX = -999999;
         float superiorPtY = -999999;
         float superiorPtZ = -999999;
-        Point3Df inferiorPt;
+        Vector3f inferiorPt;
         float inferiorPtX = -999999;
         float inferiorPtY = -999999;
         float inferiorPtZ = -999999;
-        Point3Df leftPt;
+        Vector3f leftPt;
         float leftPtX = -999999;
         float leftPtY = -999999;
         float leftPtZ = -999999;
-        Point3Df rightPt;
+        Vector3f rightPt;
         float rightPtX = -999999;
         float rightPtY = -999999;
         float rightPtZ = -999999;
@@ -2471,95 +2473,95 @@ public class FileAfni extends FileBase {
 
                 // +orig
                 superiorEdge = fileInfoAfni.getSuperiorEdge();
-                superiorEdgeX = superiorEdge.x;
+                superiorEdgeX = superiorEdge.X;
 
                 if (Float.isInfinite(superiorEdgeX) || Float.isNaN(superiorEdgeX)) {
                     superiorEdgeX = -999999;
                 }
 
-                superiorEdgeY = superiorEdge.y;
+                superiorEdgeY = superiorEdge.Y;
 
                 if (Float.isInfinite(superiorEdgeY) || Float.isNaN(superiorEdgeY)) {
                     superiorEdgeY = -999999;
                 }
 
-                superiorEdgeZ = superiorEdge.z;
+                superiorEdgeZ = superiorEdge.Z;
 
                 if (Float.isInfinite(superiorEdgeZ) || Float.isNaN(superiorEdgeZ)) {
                     superiorEdgeZ = -999999;
                 }
 
                 posteriorMargin = fileInfoAfni.getPosteriorMargin();
-                posteriorMarginX = posteriorMargin.x;
+                posteriorMarginX = posteriorMargin.X;
 
                 if (Float.isInfinite(posteriorMarginX) || Float.isNaN(posteriorMarginX)) {
                     posteriorMarginX = -999999;
                 }
 
-                posteriorMarginY = posteriorMargin.y;
+                posteriorMarginY = posteriorMargin.Y;
 
                 if (Float.isInfinite(posteriorMarginY) || Float.isNaN(posteriorMarginY)) {
                     posteriorMarginY = -999999;
                 }
 
-                posteriorMarginZ = posteriorMargin.z;
+                posteriorMarginZ = posteriorMargin.Z;
 
                 if (Float.isInfinite(posteriorMarginZ) || Float.isNaN(posteriorMarginZ)) {
                     posteriorMarginZ = -999999;
                 }
 
                 inferiorEdge = fileInfoAfni.getInferiorEdge();
-                inferiorEdgeX = inferiorEdge.x;
+                inferiorEdgeX = inferiorEdge.X;
 
                 if (Float.isInfinite(inferiorEdgeX) || Float.isNaN(inferiorEdgeX)) {
                     inferiorEdgeX = -999999;
                 }
 
-                inferiorEdgeY = inferiorEdge.y;
+                inferiorEdgeY = inferiorEdge.Y;
 
                 if (Float.isInfinite(inferiorEdgeY) || Float.isNaN(inferiorEdgeY)) {
                     inferiorEdgeY = -999999;
                 }
 
-                inferiorEdgeZ = inferiorEdge.z;
+                inferiorEdgeZ = inferiorEdge.Z;
 
                 if (Float.isInfinite(inferiorEdgeZ) || Float.isNaN(inferiorEdgeZ)) {
                     inferiorEdgeZ = -999999;
                 }
 
                 firstPt = fileInfoAfni.getFirstPt();
-                firstPtX = firstPt.x;
+                firstPtX = firstPt.X;
 
                 if (Float.isInfinite(firstPtX) || Float.isNaN(firstPtX)) {
                     firstPtX = -999999;
                 }
 
-                firstPtY = firstPt.y;
+                firstPtY = firstPt.Y;
 
                 if (Float.isInfinite(firstPtY) || Float.isNaN(firstPtY)) {
                     firstPtY = -999999;
                 }
 
-                firstPtZ = firstPt.z;
+                firstPtZ = firstPt.Z;
 
                 if (Float.isInfinite(firstPtZ) || Float.isNaN(firstPtZ)) {
                     firstPtZ = -999999;
                 }
 
                 anotherPt = fileInfoAfni.getAnotherPt();
-                anotherPtX = anotherPt.x;
+                anotherPtX = anotherPt.X;
 
                 if (Float.isInfinite(anotherPtX) || Float.isNaN(anotherPtX)) {
                     anotherPtX = -999999;
                 }
 
-                anotherPtY = anotherPt.y;
+                anotherPtY = anotherPt.Y;
 
                 if (Float.isInfinite(anotherPtY) || Float.isNaN(anotherPtY)) {
                     anotherPtY = -999999;
                 }
 
-                anotherPtZ = anotherPt.z;
+                anotherPtZ = anotherPt.Z;
 
                 if (Float.isInfinite(anotherPtZ) || Float.isNaN(anotherPtZ)) {
                     anotherPtZ = -999999;
@@ -2569,114 +2571,114 @@ public class FileAfni extends FileBase {
 
                 // 1 = +acpc
                 anteriorPt = fileInfoAfni.getAnteriorPt();
-                anteriorPtX = anteriorPt.x;
+                anteriorPtX = anteriorPt.X;
 
                 if (Float.isInfinite(anteriorPtX) || Float.isNaN(anteriorPtX)) {
                     anteriorPtX = -999999;
                 }
 
-                anteriorPtY = anteriorPt.y;
+                anteriorPtY = anteriorPt.Y;
 
                 if (Float.isInfinite(anteriorPtY) || Float.isNaN(anteriorPtY)) {
                     anteriorPtY = -999999;
                 }
 
-                anteriorPtZ = anteriorPt.z;
+                anteriorPtZ = anteriorPt.Z;
 
                 if (Float.isInfinite(anteriorPtZ) || Float.isNaN(anteriorPtZ)) {
                     anteriorPtZ = -999999;
                 }
 
                 posteriorPt = fileInfoAfni.getPosteriorPt();
-                posteriorPtX = posteriorPt.x;
+                posteriorPtX = posteriorPt.X;
 
                 if (Float.isInfinite(posteriorPtX) || Float.isNaN(posteriorPtX)) {
                     posteriorPtX = -999999;
                 }
 
-                posteriorPtY = posteriorPt.y;
+                posteriorPtY = posteriorPt.Y;
 
                 if (Float.isInfinite(posteriorPtY) || Float.isNaN(posteriorPtY)) {
                     posteriorPtY = -999999;
                 }
 
-                posteriorPtZ = posteriorPt.z;
+                posteriorPtZ = posteriorPt.Z;
 
                 if (Float.isInfinite(posteriorPtZ) || Float.isNaN(posteriorPtZ)) {
                     posteriorPtZ = -999999;
                 }
 
                 superiorPt = fileInfoAfni.getSuperiorPt();
-                superiorPtX = superiorPt.x;
+                superiorPtX = superiorPt.X;
 
                 if (Float.isInfinite(superiorPtX) || Float.isNaN(superiorPtX)) {
                     superiorPtX = -999999;
                 }
 
-                superiorPtY = superiorPt.y;
+                superiorPtY = superiorPt.Y;
 
                 if (Float.isInfinite(superiorPtY) || Float.isNaN(superiorPtY)) {
                     superiorPtY = -999999;
                 }
 
-                superiorPtZ = superiorPt.z;
+                superiorPtZ = superiorPt.Z;
 
                 if (Float.isInfinite(superiorPtZ) || Float.isNaN(superiorPtZ)) {
                     superiorPtZ = -999999;
                 }
 
                 inferiorPt = fileInfoAfni.getInferiorPt();
-                inferiorPtX = inferiorPt.x;
+                inferiorPtX = inferiorPt.X;
 
                 if (Float.isInfinite(inferiorPtX) || Float.isNaN(inferiorPtX)) {
                     inferiorPtX = -999999;
                 }
 
-                inferiorPtY = inferiorPt.y;
+                inferiorPtY = inferiorPt.Y;
 
                 if (Float.isInfinite(inferiorPtY) || Float.isNaN(inferiorPtY)) {
                     inferiorPtY = -999999;
                 }
 
-                inferiorPtZ = inferiorPt.z;
+                inferiorPtZ = inferiorPt.Z;
 
                 if (Float.isInfinite(inferiorPtZ) || Float.isNaN(inferiorPtZ)) {
                     inferiorPtZ = -999999;
                 }
 
                 leftPt = fileInfoAfni.getLeftPt();
-                leftPtX = leftPt.x;
+                leftPtX = leftPt.X;
 
                 if (Float.isInfinite(leftPtX) || Float.isNaN(leftPtX)) {
                     leftPtX = -999999;
                 }
 
-                leftPtY = leftPt.y;
+                leftPtY = leftPt.Y;
 
                 if (Float.isInfinite(leftPtY) || Float.isNaN(leftPtY)) {
                     leftPtY = -999999;
                 }
 
-                leftPtZ = leftPt.z;
+                leftPtZ = leftPt.Z;
 
                 if (Float.isInfinite(leftPtZ) || Float.isNaN(leftPtZ)) {
                     leftPtZ = -999999;
                 }
 
                 rightPt = fileInfoAfni.getRightPt();
-                rightPtX = rightPt.x;
+                rightPtX = rightPt.X;
 
                 if (Float.isInfinite(rightPtX) || Float.isNaN(rightPtX)) {
                     rightPtX = -999999;
                 }
 
-                rightPtY = rightPt.y;
+                rightPtY = rightPt.Y;
 
                 if (Float.isInfinite(rightPtY) || Float.isNaN(rightPtY)) {
                     rightPtY = -999999;
                 }
 
-                rightPtZ = rightPt.z;
+                rightPtZ = rightPt.Z;
 
                 if (Float.isInfinite(rightPtZ) || Float.isNaN(rightPtZ)) {
                     rightPtZ = -999999;
@@ -4111,7 +4113,7 @@ public class FileAfni extends FileBase {
                 break;
         }
 
-        pointMarker = new Point3Df((float) reorderedMarker[0], (float) reorderedMarker[1], (float) reorderedMarker[2]);
+        pointMarker = new Vector3f((float) reorderedMarker[0], (float) reorderedMarker[1], (float) reorderedMarker[2]);
 
     }
 
@@ -4131,11 +4133,11 @@ public class FileAfni extends FileBase {
      *
      * @return  Cross product of pt1 and pt2.
      */
-    private Point3Df crossProduct(Point3Df pt1, Point3Df pt2) {
-        Point3Df crossPt = new Point3Df(0.0f, 0.0f, 0.0f);
-        crossPt.x = (pt1.y * pt2.z) - (pt1.z * pt2.y);
-        crossPt.y = (pt1.z * pt2.x) - (pt1.x * pt2.z);
-        crossPt.z = (pt1.x * pt2.y) - (pt1.y * pt2.x);
+    private Vector3f crossProduct(Vector3f pt1, Vector3f pt2) {
+        Vector3f crossPt = new Vector3f(0.0f, 0.0f, 0.0f);
+        crossPt.X = (pt1.Y * pt2.Z) - (pt1.Z * pt2.Y);
+        crossPt.Y = (pt1.Z * pt2.X) - (pt1.X * pt2.Z);
+        crossPt.Z = (pt1.X * pt2.Y) - (pt1.Y * pt2.X);
 
         return crossPt;
     }
@@ -4147,15 +4149,15 @@ public class FileAfni extends FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    private Point3Df dataMarker(Point3Df pMarker) {
+    private Vector3f dataMarker(Vector3f pMarker) {
 
         // This expects the marker to be in dicom ordering
         // Reorders to dataset order
         float[] reorderedMarker = new float[3];
         float[] originalMarker = new float[3];
-        originalMarker[0] = pMarker.x;
-        originalMarker[1] = pMarker.y;
-        originalMarker[2] = pMarker.z;
+        originalMarker[0] = pMarker.X;
+        originalMarker[1] = pMarker.Y;
+        originalMarker[2] = pMarker.Z;
 
         switch (dataOrient[0]) {
 
@@ -4238,7 +4240,7 @@ public class FileAfni extends FileBase {
                 break;
         }
 
-        Point3Df dMarker = new Point3Df((float) reorderedMarker[0], (float) reorderedMarker[1],
+        Vector3f dMarker = new Vector3f((float) reorderedMarker[0], (float) reorderedMarker[1],
                                         (float) reorderedMarker[2]);
 
         return dMarker;
@@ -4252,15 +4254,15 @@ public class FileAfni extends FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    private Point3Df dicomMarker(Point3Df pMarker) {
+    private Vector3f dicomMarker(Vector3f pMarker) {
 
         // This expects the marker to be in dataset ordering
         // Reorders to dicom order
         int[] reorderedMarker = new int[3];
         int[] originalMarker = new int[3];
-        originalMarker[0] = (int) (pMarker.x + 0.5f);
-        originalMarker[1] = (int) (pMarker.y + 0.5f);
-        originalMarker[2] = (int) (pMarker.z + 0.5f);
+        originalMarker[0] = (int) (pMarker.X + 0.5f);
+        originalMarker[1] = (int) (pMarker.Y + 0.5f);
+        originalMarker[2] = (int) (pMarker.Z + 0.5f);
 
         switch (orientSpecific[0]) {
 
@@ -4343,7 +4345,7 @@ public class FileAfni extends FileBase {
                 break;
         }
 
-        Point3Df dMarker = new Point3Df((float) reorderedMarker[0], (float) reorderedMarker[1],
+        Vector3f dMarker = new Vector3f((float) reorderedMarker[0], (float) reorderedMarker[1],
                                         (float) reorderedMarker[2]);
 
         return dMarker;
@@ -4359,14 +4361,14 @@ public class FileAfni extends FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    private float dist(Point3Df pt1, Point3Df pt2, float[] resol) {
+    private float dist(Vector3f pt1, Vector3f pt2, float[] resol) {
         float distX, distY, distZ;
         float length;
-        distX = (pt1.x - pt2.x) * resol[0];
+        distX = (pt1.X - pt2.X) * resol[0];
         distX = distX * distX;
-        distY = (pt1.y - pt2.y) * resol[1];
+        distY = (pt1.Y - pt2.Y) * resol[1];
         distY = distY * distY;
-        distZ = (pt1.z - pt2.z) * resol[2];
+        distZ = (pt1.Z - pt2.Z) * resol[2];
         distZ = distZ * distZ;
         length = (float) Math.sqrt(distX + distY + distZ);
 
@@ -4381,9 +4383,9 @@ public class FileAfni extends FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    private float dotProduct(Point3Df pt1, Point3Df pt2) {
+    private float dotProduct(Vector3f pt1, Vector3f pt2) {
         float dot;
-        dot = (pt1.x * pt2.x) + (pt1.y * pt2.y) + (pt1.z * pt2.z);
+        dot = (pt1.X * pt2.X) + (pt1.Y * pt2.Y) + (pt1.Z * pt2.Z);
 
         return dot;
     }
@@ -4396,11 +4398,11 @@ public class FileAfni extends FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    private Point3Df makemmPoint3Df(Point3Df pt, float[] resol) {
-        Point3Df mmPt = new Point3Df(0.0f, 0.0f, 0.0f);
-        mmPt.x = resol[0] * pt.x;
-        mmPt.y = resol[1] * pt.y;
-        mmPt.z = resol[2] * pt.z;
+    private Vector3f makemmVector3f(Vector3f pt, float[] resol) {
+        Vector3f mmPt = new Vector3f(0.0f, 0.0f, 0.0f);
+        mmPt.X = resol[0] * pt.X;
+        mmPt.Y = resol[1] * pt.Y;
+        mmPt.Z = resol[2] * pt.Z;
 
         return mmPt;
     }
@@ -4413,11 +4415,11 @@ public class FileAfni extends FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    private Point3Df makeVoxelCoord3Df(Point3Df pt, float[] resol) {
-        Point3Df voxelPt = new Point3Df(0.0f, 0.0f, 0.0f);
-        voxelPt.x = pt.x / resol[0];
-        voxelPt.y = pt.y / resol[1];
-        voxelPt.z = pt.z / resol[2];
+    private Vector3f makeVoxelCoord3Df(Vector3f pt, float[] resol) {
+        Vector3f voxelPt = new Vector3f(0.0f, 0.0f, 0.0f);
+        voxelPt.X = pt.X / resol[0];
+        voxelPt.Y = pt.Y / resol[1];
+        voxelPt.Z = pt.Z / resol[2];
 
         return voxelPt;
     }
@@ -4429,14 +4431,14 @@ public class FileAfni extends FileBase {
      *
      * @return  Normal of pt.
      */
-    private Point3Df norm(Point3Df pt) {
+    private Vector3f norm(Vector3f pt) {
         float scale;
-        Point3Df normPt = new Point3Df(0.0f, 0.0f, 0.0f);
-        scale = (pt.x * pt.x) + (pt.y * pt.y) + (pt.z * pt.z);
+        Vector3f normPt = new Vector3f(0.0f, 0.0f, 0.0f);
+        scale = (pt.X * pt.X) + (pt.Y * pt.Y) + (pt.Z * pt.Z);
         scale = (float) ((scale > 0) ? (1.0 / Math.sqrt(scale)) : 0);
-        normPt.x = pt.x * scale;
-        normPt.y = pt.y * scale;
-        normPt.z = pt.z * scale;
+        normPt.X = pt.X * scale;
+        normPt.Y = pt.Y * scale;
+        normPt.Z = pt.Z * scale;
 
         return normPt;
 
@@ -6851,7 +6853,7 @@ public class FileAfni extends FileBase {
                                 acpcMinPt = tInfo.getAcpcMin();
                             }
 
-                            acpcMinPt.y = pointMarker.y;
+                            acpcMinPt.Y = pointMarker.Y;
                             tInfo.setAcpcMin(acpcMinPt);
                         }
                     } else if ((marksLabString[i]).equalsIgnoreCase("Most posterior poin")) {
@@ -6866,7 +6868,7 @@ public class FileAfni extends FileBase {
                                 acpcMaxPt = tInfo.getAcpcMax();
                             }
 
-                            acpcMaxPt.y = pointMarker.y;
+                            acpcMaxPt.Y = pointMarker.Y;
                             tInfo.setAcpcMax(acpcMaxPt);
                         }
                     } else if ((marksLabString[i]).equalsIgnoreCase("Most superior point")) {
@@ -6881,7 +6883,7 @@ public class FileAfni extends FileBase {
                                 acpcMaxPt = tInfo.getAcpcMax();
                             }
 
-                            acpcMaxPt.z = pointMarker.z;
+                            acpcMaxPt.Z = pointMarker.Z;
                             tInfo.setAcpcMax(acpcMaxPt);
                         }
                     } else if ((marksLabString[i]).equalsIgnoreCase("Most inferior point")) {
@@ -6896,7 +6898,7 @@ public class FileAfni extends FileBase {
                                 acpcMinPt = tInfo.getAcpcMin();
                             }
 
-                            acpcMinPt.z = pointMarker.z;
+                            acpcMinPt.Z = pointMarker.Z;
                             tInfo.setAcpcMin(acpcMinPt);
                         }
                     } else if ((marksLabString[i]).equalsIgnoreCase("Most left point")) {
@@ -6911,7 +6913,7 @@ public class FileAfni extends FileBase {
                                 acpcMaxPt = tInfo.getAcpcMax();
                             }
 
-                            acpcMaxPt.x = pointMarker.x;
+                            acpcMaxPt.X = pointMarker.X;
                             tInfo.setAcpcMax(acpcMaxPt);
                         }
                     } else if ((marksLabString[i]).equalsIgnoreCase("Most right point")) {
@@ -6926,7 +6928,7 @@ public class FileAfni extends FileBase {
                                 acpcMinPt = tInfo.getAcpcMin();
                             }
 
-                            acpcMinPt.x = pointMarker.x;
+                            acpcMinPt.X = pointMarker.X;
                             tInfo.setAcpcMin(acpcMinPt);
                         }
                     } else {
@@ -8011,10 +8013,10 @@ public class FileAfni extends FileBase {
                     break;
             }
 
-            pointMarker = new Point3Df((float) reorderedMarker[0], (float) reorderedMarker[1],
+            pointMarker = new Vector3f((float) reorderedMarker[0], (float) reorderedMarker[1],
                                        (float) reorderedMarker[2]);
         } else {
-            pointMarker = new Point3Df((float) originalMarker[0], (float) originalMarker[1], (float) originalMarker[2]);
+            pointMarker = new Vector3f((float) originalMarker[0], (float) originalMarker[1], (float) originalMarker[2]);
         }
     }
 
@@ -8028,11 +8030,11 @@ public class FileAfni extends FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    private Point3Df sclAdd(float fa, Point3Df a, float fb, Point3Df b) {
-        Point3Df pt = new Point3Df(0.0f, 0.0f, 0.0f);
-        pt.x = (fa * a.x) + (fb * b.x);
-        pt.y = (fa * a.y) + (fb * b.y);
-        pt.z = (fa * a.z) + (fb * b.z);
+    private Vector3f sclAdd(float fa, Vector3f a, float fb, Vector3f b) {
+        Vector3f pt = new Vector3f(0.0f, 0.0f, 0.0f);
+        pt.X = (fa * a.X) + (fb * b.X);
+        pt.Y = (fa * a.Y) + (fb * b.Y);
+        pt.Z = (fa * a.Z) + (fb * b.Z);
 
         return pt;
     }
@@ -8045,11 +8047,11 @@ public class FileAfni extends FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    private Point3Df sub(Point3Df pt1, Point3Df pt2) {
-        Point3Df pt = new Point3Df(0.0f, 0.0f, 0.0f);
-        pt.x = pt1.x - pt2.x;
-        pt.y = pt1.y - pt2.y;
-        pt.z = pt1.z - pt2.z;
+    private Vector3f sub(Vector3f pt1, Vector3f pt2) {
+        Vector3f pt = new Vector3f(0.0f, 0.0f, 0.0f);
+        pt.X = pt1.X - pt2.X;
+        pt.Y = pt1.Y - pt2.Y;
+        pt.Z = pt1.Z - pt2.Z;
 
         return pt;
     }

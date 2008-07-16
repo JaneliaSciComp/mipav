@@ -58,7 +58,7 @@ public class FilePolyline_WM {
         for (int i = 0; i < akFiles.length; i++) {
             String kName = akFiles[i].getName();
             if (kName.indexOf(".xml") != -1) {	           	 
-	           	Vector<Point3Df> coordVector = new Vector<Point3Df>();
+	           	Vector<Vector3f> coordVector = new Vector<Vector3f>();
             	
 	           	try {
             	   FilePolylineVOIXML polylineXML = new FilePolylineVOIXML(kName, akFiles[i].getParent());
@@ -89,7 +89,7 @@ public class FilePolyline_WM {
      * @param coordVector   polyline coordinate vector
      * @return  polyline     created
      */
-    public static Polyline createPolyline(ModelImage kImage, Vector<Point3Df> coordVector) {
+    public static Polyline createPolyline(ModelImage kImage, Vector<Vector3f> coordVector) {
 
 		int iType = 0, iQuantity = 0;
 		ColorRGB kColor1;
@@ -155,11 +155,11 @@ public class FilePolyline_WM {
 		VertexBuffer pkVBuffer = new VertexBuffer(kAttr, coordVector.size());
 		kColor1 = new ColorRGB(0.5f, 0f, 0f);
 		for (int i = 0; i < coordVector.size(); i++) {
-			Point3Df point = (Point3Df) (coordVector.elementAt(i));
+			Vector3f point = (Vector3f) (coordVector.elementAt(i));
 
-			fX = point.x;
-			fY = point.y;
-			fZ = point.z;
+			fX = point.X;
+			fY = point.Y;
+			fZ = point.Z;
 
 			
 			 if (dicom) {
