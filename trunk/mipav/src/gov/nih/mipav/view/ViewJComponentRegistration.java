@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.*;
@@ -686,7 +687,7 @@ public class ViewJComponentRegistration
      *
      * @param  adjPoint  a point VOI is generated from the 3D point
      */
-    public void makeAdjustableVOI(Point3Df adjPoint) {
+    public void makeAdjustableVOI(Vector3f adjPoint) {
         hue = 1.0f / 3.0f; // hue for green
 
         try {
@@ -696,8 +697,8 @@ public class ViewJComponentRegistration
 
             id = (short) imageActive.getVOIs().size();
             newVOI = new VOI(id, "point2d.voi", 1, VOI.POINT, hue);
-            x[0] = adjPoint.x;
-            y[0] = adjPoint.y;
+            x[0] = adjPoint.X;
+            y[0] = adjPoint.Y;
             z[0] = 0.0f;
             newVOI.importCurve(x, y, z, (int) z[0]);
         } catch (OutOfMemoryError error) {
@@ -709,8 +710,8 @@ public class ViewJComponentRegistration
         }
 
         adjMark++;
-        xOrg[id] = (int) adjPoint.x;
-        yOrg[id] = (int) adjPoint.y;
+        xOrg[id] = (int) adjPoint.X;
+        yOrg[id] = (int) adjPoint.Y;
         markerType[id] = ADJMARK;
         imageActive.registerVOI(newVOI);
 
@@ -727,7 +728,7 @@ public class ViewJComponentRegistration
      *
      * @param  refPoint  a point VOI is generated from the 3D point
      */
-    public void makeReferenceVOI(Point3Df refPoint) {
+    public void makeReferenceVOI(Vector3f refPoint) {
         hue = 0.0f; // hue for red
 
         try {
@@ -737,8 +738,8 @@ public class ViewJComponentRegistration
 
             id = (short) imageActive.getVOIs().size();
             newVOI = new VOI(id, "point2d.voi", 1, VOI.POINT, hue);
-            x[0] = refPoint.x;
-            y[0] = refPoint.y;
+            x[0] = refPoint.X;
+            y[0] = refPoint.Y;
             z[0] = 0.0f;
             newVOI.importCurve(x, y, z, (int) z[0]);
         } catch (OutOfMemoryError error) {
@@ -750,8 +751,8 @@ public class ViewJComponentRegistration
         }
 
         refMark++;
-        xOrg[id] = (int) refPoint.x;
-        yOrg[id] = (int) refPoint.y;
+        xOrg[id] = (int) refPoint.X;
+        yOrg[id] = (int) refPoint.Y;
         markerType[id] = REFMARK;
         imageActive.registerVOI(newVOI);
 

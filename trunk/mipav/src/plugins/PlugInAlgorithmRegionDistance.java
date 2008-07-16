@@ -1,3 +1,4 @@
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
@@ -2498,7 +2499,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float[][] sAxisCen;
         float scaleMax;
         float invMax;
-        Point3Df kVoxel;
+        Vector3f kVoxel;
         AlgorithmEllipsoidFit kF;
         Vector[] volPoints;
         double[] axes;
@@ -4459,7 +4460,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                         if ((dilateArray[i] == (byte) 1) && (byteBuffer[i] == (byte) 0)) {
                             boundaryArray[i] = (byte) id;
-                            kVoxel = new Point3Df(x * xRes * invMax, y * yRes * invMax, z * zRes * invMax);
+                            kVoxel = new Vector3f(x * xRes * invMax, y * yRes * invMax, z * zRes * invMax);
                             volPoints[id - 1].add(kVoxel);
                             distSqr = ((xCenter[id - 1] - x) * (xCenter[id - 1] - x) * xRes * xRes) +
                                       ((yCenter[id - 1] - y) * (yCenter[id - 1] - y) * yRes * yRes) +

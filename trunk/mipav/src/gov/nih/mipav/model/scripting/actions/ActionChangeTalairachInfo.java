@@ -1,11 +1,12 @@
 package gov.nih.mipav.model.scripting.actions;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.Point3Df;
 import gov.nih.mipav.model.structures.TalairachTransformInfo;
 import gov.nih.mipav.view.MipavUtil;
 
@@ -39,7 +40,7 @@ public class ActionChangeTalairachInfo extends ActionImageProcessorBase {
     public void insertScriptLine() {
     	TalairachTransformInfo tInfo = recordingInputImage.getTalairachTransformInfo();
 
-    	Point3Df tempPoint;
+    	Vector3f tempPoint;
     	
         try {
         	ParameterTable parameters = new ParameterTable();
@@ -48,17 +49,17 @@ public class ActionChangeTalairachInfo extends ActionImageProcessorBase {
         	parameters.put(ParameterFactory.newParameter("is_acpc", tInfo.isAcpc()));
         	tempPoint = tInfo.getOrigAC();
         	 
-        	 parameters.put(ParameterFactory.newParameter("orig_ac", new float[]{tempPoint.x, tempPoint.y, tempPoint.z}));
+        	 parameters.put(ParameterFactory.newParameter("orig_ac", new float[]{tempPoint.X, tempPoint.Y, tempPoint.Z}));
         	         	 
         	 tempPoint = tInfo.getOrigPC();
-        	 parameters.put(ParameterFactory.newParameter("orig_pc", new float[]{tempPoint.x, tempPoint.y, tempPoint.z}));
+        	 parameters.put(ParameterFactory.newParameter("orig_pc", new float[]{tempPoint.X, tempPoint.Y, tempPoint.Z}));
         	
         	 parameters.put(ParameterFactory.newParameter("orig_dim", tInfo.getOrigDim()));
            
         	 parameters.put(ParameterFactory.newParameter("orig_res", tInfo.getOrigRes()));
         	 
         	 tempPoint = tInfo.getAcpcPC();
-        	 parameters.put(ParameterFactory.newParameter("acpc_pc", new float[]{tempPoint.x, tempPoint.y, tempPoint.z}));
+        	 parameters.put(ParameterFactory.newParameter("acpc_pc", new float[]{tempPoint.X, tempPoint.Y, tempPoint.Z}));
         	 
         	 parameters.put(ParameterFactory.newParameter("acpc_res", tInfo.getAcpcRes()));
         	 
@@ -78,10 +79,10 @@ public class ActionChangeTalairachInfo extends ActionImageProcessorBase {
         	 if (tInfo.isTlrc()) {
         		 
         		 tempPoint = tInfo.getAcpcMin();
-        		 parameters.put(ParameterFactory.newParameter("acpc_min", new float[]{tempPoint.x, tempPoint.y, tempPoint.z}));
+        		 parameters.put(ParameterFactory.newParameter("acpc_min", new float[]{tempPoint.X, tempPoint.Y, tempPoint.Z}));
         		 
         		 tempPoint = tInfo.getAcpcMax();
-        		 parameters.put(ParameterFactory.newParameter("acpc_max", new float[]{tempPoint.x, tempPoint.y, tempPoint.z}));
+        		 parameters.put(ParameterFactory.newParameter("acpc_max", new float[]{tempPoint.X, tempPoint.Y, tempPoint.Z}));
         		 
         		 parameters.put(ParameterFactory.newParameter("tlrc_res", tInfo.getTlrcRes()));
         		 
@@ -115,16 +116,16 @@ public class ActionChangeTalairachInfo extends ActionImageProcessorBase {
         
         tInfo.isAcpc(parameters.getBoolean("is_acpc"));
         float [] origAC = parameters.getList("orig_ac").getAsFloatArray();
-        tInfo.setOrigAC(new Point3Df(origAC[0], origAC[1], origAC[2]));
+        tInfo.setOrigAC(new Vector3f(origAC[0], origAC[1], origAC[2]));
         
         float [] origPC = parameters.getList("orig_pc").getAsFloatArray();
-        tInfo.setOrigPC(new Point3Df(origPC[0], origPC[1], origPC[2]));
+        tInfo.setOrigPC(new Vector3f(origPC[0], origPC[1], origPC[2]));
         
         tInfo.setOrigDim(parameters.getList("orig_dim").getAsIntArray());
         tInfo.setOrigRes(parameters.getList("orig_res").getAsFloatArray());
         
         float [] acpcPC = parameters.getList("acpc_pc").getAsFloatArray();
-        tInfo.setAcpcPC(new Point3Df(acpcPC[0], acpcPC[1], acpcPC[2]));
+        tInfo.setAcpcPC(new Vector3f(acpcPC[0], acpcPC[1], acpcPC[2]));
         
         tInfo.setAcpcRes(parameters.getFloat("acpc_res"));
         
@@ -144,10 +145,10 @@ public class ActionChangeTalairachInfo extends ActionImageProcessorBase {
         if (tInfo.isTlrc()) {
         	
         	float [] acpcMin = parameters.getList("acpc_min").getAsFloatArray();
-        	tInfo.setAcpcMin(new Point3Df(acpcMin[0], acpcMin[1], acpcMin[2]));
+        	tInfo.setAcpcMin(new Vector3f(acpcMin[0], acpcMin[1], acpcMin[2]));
         	
         	float [] acpcMax = parameters.getList("acpc_max").getAsFloatArray();
-        	tInfo.setAcpcMax(new Point3Df(acpcMax[0], acpcMax[1], acpcMax[2]));
+        	tInfo.setAcpcMax(new Vector3f(acpcMax[0], acpcMax[1], acpcMax[2]));
         	
         	tInfo.setTlrcRes(parameters.getList("tlrc_res").getAsFloatArray());
         }

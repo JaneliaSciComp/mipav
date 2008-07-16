@@ -1,3 +1,4 @@
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.structures.*;
@@ -75,7 +76,7 @@ public class PlugInAlgorithmVOIIntensities
 
         int numPts;
         
-        Point3Df currentPt;
+        Vector3f currentPt;
         
         DecimalFormat df = new DecimalFormat("###.##");
         
@@ -102,10 +103,10 @@ public class PlugInAlgorithmVOIIntensities
 
                 	numPts = ((VOIBase) contours[i].elementAt(j)).size();
                 	for (k = 0; k < numPts; k++) {
-                		currentPt = (Point3Df)((VOIBase) contours[i].elementAt(j)).elementAt(k);
-                		x = (int)currentPt.x;
-                		y = (int)currentPt.y;
-                		raFile.writeBytes((int)currentPt.x + "\t\t" + (int)currentPt.y + "\t\t" + (i+1));
+                		currentPt = (Vector3f)((VOIBase) contours[i].elementAt(j)).elementAt(k);
+                		x = (int)currentPt.X;
+                		y = (int)currentPt.Y;
+                		raFile.writeBytes((int)currentPt.X + "\t\t" + (int)currentPt.Y + "\t\t" + (i+1));
                 		if (srcImage.isColorImage()) {
                 			colorLoc = 4 * ((y * xDim) + x);
                 			raFile.writeBytes("\t\t" +  df.format(imageBuffer[colorLoc + 1]) + "\t\t" +

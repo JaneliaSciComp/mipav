@@ -1,5 +1,7 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 
@@ -106,16 +108,16 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     private String[][] axisLabels = new String[3][2];
 
     /** Crop Bounding Box Corners in Screen Coordinates:. */
-    private Point3Df[] cornerCropPt = { new Point3Df(), new Point3Df() };
+    private Vector3f[] cornerCropPt = { new Vector3f(), new Vector3f() };
 
     /** Crop Bounding Box Colors:. */
     private Color[] cropColor = { Color.red, Color.green, Color.yellow };
 
     /** Crop Bounding Box in Screen Coordinates:. */
-    private Point2Df[] cropPoints = new Point2Df[4];
+    private Vector2f[] cropPoints = new Vector2f[4];
 
     /** The x and y coordinate of the cursor position in screen space of this component. */
-    private Point3Df crosshairPt = new Point3Df(0.0f, 0.0f, 0.0f);
+    private Vector3f crosshairPt = new Vector3f(0.0f, 0.0f, 0.0f);
 
     /**
      * Whether to show the center of rotation point in the volume and allow the user to change it. <code>doCenter</code>
@@ -146,13 +148,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     private int[] localImageExtents = new int[3];
 
     /** Lower Crop Bounding Box in Patient Coordinates:. */
-    private Point3Df m_kLocalCropLower = new Point3Df();
+    private Vector3f m_kLocalCropLower = new Vector3f();
 
     /** Upper Crop Bounding Box in Patient Coordinates:. */
-    private Point3Df m_kLocalCropUpper = new Point3Df();
+    private Vector3f m_kLocalCropUpper = new Vector3f();
 
     /** Cursor 3D point in FileCoordinates. */
-    private Point3Df m_kVolumePoint = new Point3Df();
+    private Vector3f m_kVolumePoint = new Vector3f();
 
     /**
      * Together with <code>moveProtractor</code>, ensures that the user can either move the protractor or the line VOI,
@@ -510,12 +512,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      *
      * @return  DOCUMENT ME!
      */
-    public Point3Df getCenter() {
-        Point3Df patientMousePoint = new Point3Df();
+    public Vector3f getCenter() {
+        Vector3f patientMousePoint = new Vector3f();
         super.ScreenToLocal(crosshairPt, patientMousePoint);
         MipavCoordinateSystems.patientToFile(patientMousePoint, m_kVolumePoint, imageActive, orientation);
 
-        return new Point3Df(m_kVolumePoint.x, m_kVolumePoint.y, m_kVolumePoint.z);
+        return new Vector3f(m_kVolumePoint.X, m_kVolumePoint.Y, m_kVolumePoint.Z);
     }
 
 
@@ -524,8 +526,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      *
      * @return  crosshairPt, the current cross-hair position in screen coordinates
      */
-    public Point2Df getCrosshairPoint() {
-        return new Point2Df(crosshairPt.x, crosshairPt.y);
+    public Vector2f getCrosshairPoint() {
+        return new Vector2f(crosshairPt.X, crosshairPt.Y);
     }
 
     /**
@@ -553,14 +555,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      *
      * @return  Point
      */
-    public Point2Df getScreenCoordinates(Point3Df point3d) {
-        Point3Df patientPt = new Point3Df();
+    public Vector2f getScreenCoordinates(Vector3f point3d) {
+        Vector3f patientPt = new Vector3f();
         MipavCoordinateSystems.fileToPatient(point3d, patientPt, imageActive, orientation);
 
-        Point3Df screenPt = new Point3Df();
+        Vector3f screenPt = new Vector3f();
         super.LocalToScreen(patientPt, screenPt);
 
-        return new Point2Df(screenPt.x, screenPt.y);
+        return new Vector2f(screenPt.X, screenPt.Y);
     }
 
 
@@ -584,8 +586,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @return  the point translated into the image volume
      */
     public final Point3D getVolumePosition(int x, int y, int z) {
-        Point3Df volumePt = getVolumePosition((float) x, (float) y, (float) z);
-        Point3D returnPt = new Point3D((int) volumePt.x, (int) volumePt.y, (int) volumePt.z);
+        Vector3f volumePt = getVolumePosition((float) x, (float) y, (float) z);
+        Point3D returnPt = new Point3D((int) volumePt.X, (int) volumePt.Y, (int) volumePt.Z);
 
         return returnPt;
     }
@@ -601,15 +603,15 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      *
      * @return  the point translated into the image volume
      */
-    public final Point3Df getVolumePosition(float x, float y, float z) {
-        Point3Df volumePt = new Point3Df();
-        MipavCoordinateSystems.patientToFile(new Point3Df(x, y, z), volumePt, imageActive, orientation);
+    public final Vector3f getVolumePosition(float x, float y, float z) {
+        Vector3f volumePt = new Vector3f();
+        MipavCoordinateSystems.patientToFile(new Vector3f(x, y, z), volumePt, imageActive, orientation);
 
         return volumePt;
     }
 
     /**
-     * Get the color for the crosshairPt.x crosshair.
+     * Get the color for the crosshairPt.X crosshair.
      *
      * @return  the x crosshair color
      */
@@ -757,7 +759,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     public void mouseClicked(MouseEvent mouseEvent) {
 
         if (((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0) && (mouseEvent.getClickCount() == 2)) {
-            ((ViewJFrameImage) triImageFrame.getParentFrame()).setSlice((int) m_kVolumePoint.z);
+            ((ViewJFrameImage) triImageFrame.getParentFrame()).setSlice((int) m_kVolumePoint.Z);
         }
 
     }
@@ -826,12 +828,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             if (doCenter) {
                 setCursor(MipavUtil.blankCursor);
 
-                Point3Df patientMousePoint = new Point3Df();
-                super.ScreenToLocal(new Point3Df(mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint);
+                Vector3f patientMousePoint = new Vector3f();
+                super.ScreenToLocal(new Vector3f(mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint);
 
-                Point3Df volumeMousePoint = new Point3Df();
+                Vector3f volumeMousePoint = new Vector3f();
                 MipavCoordinateSystems.patientToFile(patientMousePoint, volumeMousePoint, imageActive, orientation);
-                triImageFrame.setCenter((int) volumeMousePoint.x, (int) volumeMousePoint.y, (int) volumeMousePoint.z);
+                triImageFrame.setCenter((int) volumeMousePoint.X, (int) volumeMousePoint.Y, (int) volumeMousePoint.Z);
 
                 frame.updateImages();
 
@@ -854,10 +856,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 setCursor(MipavUtil.blankCursor);
             }
 
-            Point3Df patientMousePoint = new Point3Df();
-            super.ScreenToLocal(new Point3Df(mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint);
+            Vector3f patientMousePoint = new Vector3f();
+            super.ScreenToLocal(new Vector3f(mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint);
             MipavCoordinateSystems.patientToFile(patientMousePoint, m_kVolumePoint, imageActive, orientation);
-            triImageFrame.setCenter((int) m_kVolumePoint.x, (int) m_kVolumePoint.y, (int) m_kVolumePoint.z);
+            triImageFrame.setCenter((int) m_kVolumePoint.X, (int) m_kVolumePoint.Y, (int) m_kVolumePoint.Z);
 
             if (cursorMode == DEFAULT) {
                 return;
@@ -896,11 +898,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
 
                     if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-                        Point3Df patientMousePoint = new Point3Df();
-                        super.ScreenToLocal(new Point3Df(mouseEvent.getX(), mouseEvent.getY(), slice),
+                        Vector3f patientMousePoint = new Vector3f();
+                        super.ScreenToLocal(new Vector3f(mouseEvent.getX(), mouseEvent.getY(), slice),
                                             patientMousePoint);
 
-                        Point3Df volumeMousePoint = new Point3Df();
+                        Vector3f volumeMousePoint = new Vector3f();
                         MipavCoordinateSystems.patientToFile(patientMousePoint, volumeMousePoint, imageActive,
                                                              orientation);
                         found = true;
@@ -912,11 +914,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                         // surrounding slices) and thus makes it more easier to grab the point
                         for (int k = lastZOrg - 1; k <= lastZOrg; k++) {
 
-                            if ((k < 0) || (volumeMousePoint.z < 0)) {
+                            if ((k < 0) || (volumeMousePoint.Z < 0)) {
                                 continue;
                             }
 
-                            Point3Df[] voiPoints = VOIs.VOIAt(i).exportPoints(k);
+                            Vector3f[] voiPoints = VOIs.VOIAt(i).exportPoints(k);
 
                             for (j = 0; j < voiPoints.length; j++) {
 
@@ -931,19 +933,19 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                                         int[] y = new int[1];
                                         int[] z = new int[1];
 
-                                        x[0] = (int) volumeMousePoint.x;
-                                        y[0] = (int) volumeMousePoint.y;
-                                        z[0] = (int) volumeMousePoint.z;
+                                        x[0] = (int) volumeMousePoint.X;
+                                        y[0] = (int) volumeMousePoint.Y;
+                                        z[0] = (int) volumeMousePoint.Z;
 
                                         VOIBase pt = new VOIPoint();
 
                                         pt.importArrays(x, y, z, x.length);
-                                        VOIs.VOIAt(i).getCurves()[(int) volumeMousePoint.z].addElement(pt);
-                                        ((VOIPoint) (VOIs.VOIAt(i).getCurves()[(int) volumeMousePoint.z].lastElement()))
+                                        VOIs.VOIAt(i).getCurves()[(int) volumeMousePoint.Z].addElement(pt);
+                                        ((VOIPoint) (VOIs.VOIAt(i).getCurves()[(int) volumeMousePoint.Z].lastElement()))
                                             .setLabel(pointString);
-                                        ((VOIPoint) (VOIs.VOIAt(i).getCurves()[(int) volumeMousePoint.z].lastElement()))
+                                        ((VOIPoint) (VOIs.VOIAt(i).getCurves()[(int) volumeMousePoint.Z].lastElement()))
                                             .setActive(true);
-                                        lastZOrg = (int) volumeMousePoint.z;
+                                        lastZOrg = (int) volumeMousePoint.Z;
                                     }
                                 }
                             }
@@ -960,14 +962,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         } // end of else if (mode == MOVE_VOIPOINT)
         else if (cursorMode == CUBE_BOUNDS) {
 
-            Point2Df mousePoint = new Point2Df(mouseEvent.getX(), mouseEvent.getY());
+            Vector2f mousePoint = new Vector2f(mouseEvent.getX(), mouseEvent.getY());
 
             // if we are not already dragging a point, see if the mouse event is near one of the corners
             if (dragBBpt == -1) {
 
                 for (i = 0; i < cropPoints.length; i++) {
 
-                    if ((float) MipavMath.distance(cropPoints[i].x, mousePoint.x, cropPoints[i].y, mousePoint.y) < 5) {
+                    if ((float) MipavMath.distance(cropPoints[i].X, mousePoint.X, cropPoints[i].Y, mousePoint.Y) < 5) {
 
                         // if we are dragging near a box corner, set 'dragBBpt' to indicate that point
                         dragBBpt = i;
@@ -1029,7 +1031,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             }
         } // else if ((mode == LINE) && (startLine) &&
 
-        // ((anchorPt.x != xSOrg) || (anchorPt.y != ySOrg)))
+        // ((anchorPt.X != xSOrg) || (anchorPt.Y != ySOrg)))
         else if (cursorMode == MOVE_POINT) {
 
             if ((voiProtractor != null) && voiProtractor.isActive() && moveProtractor) {
@@ -1149,20 +1151,20 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         if (cursorMode == PAINT_CAN) {
 
             if (growDialog != null) {
-                Point3Df patientMousePoint = new Point3Df();
-                super.ScreenToLocal(new Point3Df(mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint);
+                Vector3f patientMousePoint = new Vector3f();
+                super.ScreenToLocal(new Vector3f(mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint);
 
-                Point3Df volumeMousePoint = new Point3Df();
+                Vector3f volumeMousePoint = new Vector3f();
                 MipavCoordinateSystems.patientToFile(patientMousePoint, volumeMousePoint, imageActive, orientation);
 
                 // the "++" here is to make the display 1-based, like the crosshairs, instead of 0-based
-                volumeMousePoint.x++;
-                volumeMousePoint.y++;
-                volumeMousePoint.z++;
+                volumeMousePoint.X++;
+                volumeMousePoint.Y++;
+                volumeMousePoint.Z++;
 
-                growDialog.setPositionText("  X: " + String.valueOf(volumeMousePoint.x) + " Y: " +
-                                           String.valueOf(volumeMousePoint.y) + " Z: " +
-                                           String.valueOf(volumeMousePoint.z) + "  Intensity:  " +
+                growDialog.setPositionText("  X: " + String.valueOf(volumeMousePoint.X) + " Y: " +
+                                           String.valueOf(volumeMousePoint.Y) + " Z: " +
+                                           String.valueOf(volumeMousePoint.Z) + "  Intensity:  " +
                                            String.valueOf(imageBufferActive[(yS * imageDim.width) + xS]));
             }
 
@@ -1245,8 +1247,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
             if (doCenter) {
 
-                if ((Math.abs(getScaledX(mouseEvent.getX()) - crosshairPt.x) < 6) &&
-                        (Math.abs(getScaledY(mouseEvent.getY()) - crosshairPt.y) < 6)) {
+                if ((Math.abs(getScaledX(mouseEvent.getX()) - crosshairPt.X) < 6) &&
+                        (Math.abs(getScaledY(mouseEvent.getY()) - crosshairPt.Y) < 6)) {
                     dragCenterPt = true;
                 } else {
                     dragCenterPt = false;
@@ -1448,15 +1450,15 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             setCursorMode(DEFAULT);
             imageActive.notifyImageDisplayListeners(null, true);
         } else if (cursorMode == PAINT_CAN) {
-            Point3Df patientMousePoint = new Point3Df();
-            super.ScreenToLocal(new Point3Df(mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint);
+            Vector3f patientMousePoint = new Vector3f();
+            super.ScreenToLocal(new Vector3f(mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint);
 
-            Point3Df volumeMousePoint = new Point3Df();
+            Vector3f volumeMousePoint = new Vector3f();
             MipavCoordinateSystems.patientToFile(patientMousePoint, volumeMousePoint, imageActive, orientation);
 
-            xPG = (short) volumeMousePoint.x;
-            yPG = (short) volumeMousePoint.y;
-            zPG = (short) volumeMousePoint.z;
+            xPG = (short) volumeMousePoint.X;
+            yPG = (short) volumeMousePoint.Y;
+            zPG = (short) volumeMousePoint.Z;
 
             if (imageActive.isColorImage()) {
                 int index = 4 * (yS + imageActive.getExtents()[0] + xS);
@@ -1474,15 +1476,15 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         else if (cursorMode == POINT_VOI) {
 
             if ((mouseEvent.getModifiers() & MouseEvent.BUTTON1_MASK) != 0) {
-                Point3Df patientMousePoint = new Point3Df();
-                super.ScreenToLocal(new Point3Df(mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint);
+                Vector3f patientMousePoint = new Vector3f();
+                super.ScreenToLocal(new Vector3f(mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint);
 
-                Point3Df volumeMousePoint = new Point3Df();
+                Vector3f volumeMousePoint = new Vector3f();
                 MipavCoordinateSystems.patientToFile(patientMousePoint, volumeMousePoint, imageActive, orientation);
 
-                xOrg = (int) volumeMousePoint.x;
-                yOrg = (int) volumeMousePoint.y;
-                zOrg = (int) volumeMousePoint.z;
+                xOrg = (int) volumeMousePoint.X;
+                yOrg = (int) volumeMousePoint.Y;
+                zOrg = (int) volumeMousePoint.Z;
 
                 imageActive = imageA;
 
@@ -1568,13 +1570,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     public boolean nearBoundsPoint(int mouseX, int mouseY, int boundsX, int boundsY) {
         double dist;
 
-        Point3Df patientMousePoint = new Point3Df();
-        super.ScreenToLocal(new Point3Df(mouseX, mouseY, slice), patientMousePoint);
+        Vector3f patientMousePoint = new Vector3f();
+        super.ScreenToLocal(new Vector3f(mouseX, mouseY, slice), patientMousePoint);
 
-        Point3Df volumeMousePoint = new Point3Df();
+        Vector3f volumeMousePoint = new Vector3f();
         MipavCoordinateSystems.patientToFile(patientMousePoint, volumeMousePoint, imageActive, orientation);
-        mouseX = (int) volumeMousePoint.x;
-        mouseY = (int) volumeMousePoint.y;
+        mouseX = (int) volumeMousePoint.X;
+        mouseY = (int) volumeMousePoint.Y;
 
         dist = Math.sqrt(((mouseX - boundsX) * (mouseX - boundsX)) + ((mouseY - boundsY) * (mouseY - boundsY)));
 
@@ -1632,7 +1634,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             if (showTalairachGrid) {
                 drawTalairachGrid_AXIAL(offscreenGraphics2d);
 
-                computeTalairachVoxelPosition((int) crosshairPt.x, (int) crosshairPt.y);
+                computeTalairachVoxelPosition((int) crosshairPt.X, (int) crosshairPt.Y);
             }
 
         } // end of if (orientation == AXIAL)
@@ -1641,7 +1643,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             if (showTalairachGrid) {
                 drawTalairachGrid_CORONAL(offscreenGraphics2d);
 
-                computeTalairachVoxelPosition((int) crosshairPt.x, (int) crosshairPt.y);
+                computeTalairachVoxelPosition((int) crosshairPt.X, (int) crosshairPt.Y);
             }
 
         } // end of else if (orientation == CORONAL)
@@ -1650,7 +1652,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             if (showTalairachGrid) {
                 drawTalairachGrid_SAGITTAL(offscreenGraphics2d);
 
-                computeTalairachVoxelPosition((int) crosshairPt.x, (int) crosshairPt.y);
+                computeTalairachVoxelPosition((int) crosshairPt.X, (int) crosshairPt.Y);
             } // if (showTalairach)
         } // end of else if (orientation == SAGITTAL)
 
@@ -1698,7 +1700,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
 
                 for (k = 0; (k < imageActive.getExtents()[2]) && (!found); k++) {
-                    Point3Df[] voiPoints = VOIs.VOIAt(i).exportPoints(k);
+                    Vector3f[] voiPoints = VOIs.VOIAt(i).exportPoints(k);
 
                     for (j = 0; (j < voiPoints.length) && (!found); j++) {
                         label2 = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).getLabel();
@@ -1726,15 +1728,15 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  k  FileCoordinates
      */
     public void setCenter(int i, int j, int k) {
-        m_kVolumePoint.x = i;
-        m_kVolumePoint.y = j;
-        m_kVolumePoint.z = k;
+        m_kVolumePoint.X = i;
+        m_kVolumePoint.Y = j;
+        m_kVolumePoint.Z = k;
 
         m_kPatientSlice.setCenter(i, j, k);
 
-        Point3Df kLocalPoint = new Point3Df();
+        Vector3f kLocalPoint = new Vector3f();
         MipavCoordinateSystems.fileToPatient(m_kVolumePoint, kLocalPoint, imageActive, orientation);
-        slice = (int) kLocalPoint.z;
+        slice = (int) kLocalPoint.Z;
 
         super.LocalToScreen(kLocalPoint, crosshairPt);
     }
@@ -1745,7 +1747,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  lower  the lower corner of the crop volume in FileCoordinates
      * @param  upper  the upper corner of the crop volume in FileCoordinates
      */
-    public void setCrop(Point3Df lower, Point3Df upper) {
+    public void setCrop(Vector3f lower, Vector3f upper) {
 
         /* convert to Patient coordinates, store in m_kLocalCropLower */
         MipavCoordinateSystems.fileToPatient(lower, m_kLocalCropLower, imageActive, orientation);
@@ -1832,20 +1834,20 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  pointType  the reference point type
      * @param  pt         the point position (in image volume space)
      */
-    public void setReferenceXY(int pointType, Point3Df pt) {
+    public void setReferenceXY(int pointType, Vector3f pt) {
         float[] x = new float[1];
         float[] y = new float[1];
         float[] z = new float[1];
         VOI newPointVOI;
 
-        // Point3Df localPoint = new Point3Df();
+        // Vector3f localPoint = new Vector3f();
         // MipavCoordinateSystems.FileToPatient( pt, localPoint, imageActive, orientation );
-        // x[0] = localPoint.x;
-        // y[0] = localPoint.y;
-        // z[0] = localPoint.z;
-        x[0] = pt.x;
-        y[0] = pt.y;
-        z[0] = pt.z;
+        // x[0] = localPoint.X;
+        // y[0] = localPoint.Y;
+        // z[0] = localPoint.Z;
+        x[0] = pt.X;
+        y[0] = pt.Y;
+        z[0] = pt.Z;
 
         try {
             voiHandler.setVOI_ID(imageActive.getVOIs().size());
@@ -1979,16 +1981,16 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         for (int i = 0; i < cropPoints.length; i++) {
 
             if (cropPoints[i] != null) {
-                cropPoints[i].x *= xRatio;
-                cropPoints[i].y *= yRatio;
+                cropPoints[i].X *= xRatio;
+                cropPoints[i].Y *= yRatio;
             }
         }
 
         for (int i = 0; i < cornerCropPt.length; i++) {
 
             if (cornerCropPt[i] != null) {
-                cornerCropPt[i].x *= xRatio;
-                cornerCropPt[i].y *= yRatio;
+                cornerCropPt[i].X *= xRatio;
+                cornerCropPt[i].Y *= yRatio;
             }
         }
     }
@@ -2055,8 +2057,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @see    #zSlice
      */
     public void updateCrosshairPosition(int x, int y) {
-        crosshairPt.x = x;
-        crosshairPt.y = y;
+        crosshairPt.X = x;
+        crosshairPt.Y = y;
     }
 
     /**
@@ -2091,18 +2093,18 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         opacityInt = opacityInt << 24;
 
         if (slice >= 0) {
-            Point3Df paintPoint = new Point3Df();
+            Vector3f paintPoint = new Vector3f();
             int iIndex;
             int[] iterFactors = imageActive.getVolumeIterationFactors();
 
             for (int iX = 0; iX < localImageExtents[0]; iX++) {
 
                 for (int iY = 0; iY < localImageExtents[1]; iY++) {
-                    MipavCoordinateSystems.patientToFile(new Point3Df(iX, iY, slice), paintPoint, imageActive,
+                    MipavCoordinateSystems.patientToFile(new Vector3f(iX, iY, slice), paintPoint, imageActive,
                                                          orientation);
 
-                    iIndex = (int) ((iterFactors[0] * paintPoint.x) + (iterFactors[1] * paintPoint.y) +
-                                    (iterFactors[2] * paintPoint.z));
+                    iIndex = (int) ((iterFactors[0] * paintPoint.X) + (iterFactors[1] * paintPoint.Y) +
+                                    (iterFactors[2] * paintPoint.Z));
 
                     if (paintBitmap.get(iIndex)) {
                         color = color & 0x00ffffff;
@@ -2132,8 +2134,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         int i, j, index;
         int[] iterFactors = imageActive.getVolumeIterationFactors();
 
-        Point3Df paintPoint = new Point3Df();
-        Point3Df patientPaintPoint = new Point3Df();
+        Vector3f paintPoint = new Vector3f();
+        Vector3f patientPaintPoint = new Vector3f();
         int xDim = imageActive.getExtents()[0];
         int yDim = imageActive.getExtents()[1];
         int zDim = imageActive.getExtents()[2];
@@ -2154,15 +2156,15 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 	int idx = ((heightCursor * brushXDim) + widthCursor);
                     if (paintBrush.get(idx)) {
 
-                        patientPaintPoint.x = (float)(x + width);
-                        patientPaintPoint.y = (float)(y + height);
-                        patientPaintPoint.z = slice;
+                        patientPaintPoint.X = (float)(x + width);
+                        patientPaintPoint.Y = (float)(y + height);
+                        patientPaintPoint.Z = slice;
                         MipavCoordinateSystems.patientToFile(patientPaintPoint, paintPoint, imageActive, orientation);
-                        if (((paintPoint.x <= (xDim - 1)) && (paintPoint.x >= 0)) && (paintPoint.y <= (yDim - 1)) &&
-                                (paintPoint.y >= 0) && (paintPoint.z <= (zDim - 1)) && (paintPoint.z >= 0)) {
+                        if (((paintPoint.X <= (xDim - 1)) && (paintPoint.X >= 0)) && (paintPoint.Y <= (yDim - 1)) &&
+                                (paintPoint.Y >= 0) && (paintPoint.Z <= (zDim - 1)) && (paintPoint.Z >= 0)) {
                             
-                            index = (int) ((iterFactors[0] * paintPoint.x) + (iterFactors[1] * paintPoint.y) +
-                                    (iterFactors[2] * paintPoint.z));
+                            index = (int) ((iterFactors[0] * paintPoint.X) + (iterFactors[1] * paintPoint.Y) +
+                                    (iterFactors[2] * paintPoint.Z));
 
 
                             if (paintPixels == true) {
@@ -2178,17 +2180,17 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
         } else {
 
-            // Point2Df scalePoint = new Point2Df( 1, 1 );
+            // Vector2f scalePoint = new Vector2f( 1, 1 );
             for (j = jMin; j <= jMax; j++) {
 
                 for (i = iMin; i <= iMax; i++) {
-                    patientPaintPoint.x = i;
-                    patientPaintPoint.y = j;
-                    patientPaintPoint.z =slice;
+                    patientPaintPoint.X = i;
+                    patientPaintPoint.Y = j;
+                    patientPaintPoint.Z =slice;
                     MipavCoordinateSystems.patientToFile(patientPaintPoint, paintPoint, imageActive, orientation);
 
-                    index = (int) ((iterFactors[0] * paintPoint.x) + (iterFactors[1] * paintPoint.y) +
-                            (iterFactors[2] * paintPoint.z));
+                    index = (int) ((iterFactors[0] * paintPoint.X) + (iterFactors[1] * paintPoint.Y) +
+                            (iterFactors[2] * paintPoint.Z));
 
                     if (paintPixels) {
                         paintBitmap.set(index);
@@ -2210,10 +2212,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * Creates the four corners of the crop bounding box, based on the two corner crop points:
      */
     private void cornerToCrop() {
-        cropPoints[0] = new Point2Df(cornerCropPt[0].x, cornerCropPt[0].y);
-        cropPoints[1] = new Point2Df(cornerCropPt[0].x, cornerCropPt[1].y);
-        cropPoints[2] = new Point2Df(cornerCropPt[1].x, cornerCropPt[1].y);
-        cropPoints[3] = new Point2Df(cornerCropPt[1].x, cornerCropPt[0].y);
+        cropPoints[0] = new Vector2f(cornerCropPt[0].X, cornerCropPt[0].Y);
+        cropPoints[1] = new Vector2f(cornerCropPt[0].X, cornerCropPt[1].Y);
+        cropPoints[2] = new Vector2f(cornerCropPt[1].X, cornerCropPt[1].Y);
+        cropPoints[3] = new Vector2f(cornerCropPt[1].X, cornerCropPt[0].Y);
     }
 
     /**
@@ -2279,9 +2281,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         graphics.setColor(cropColor[orientation]);
 
         for (int i = 0; i < 4; i++) {
-            graphics.drawLine((int) (cropPoints[i].x), (int) (cropPoints[i].y), (int) (cropPoints[(i + 1) % 4].x),
-                              (int) (cropPoints[(i + 1) % 4].y));
-            graphics.fillRect((int) (cropPoints[i].x) - 2, (int) (cropPoints[i].y) - 2, 4, 4);
+            graphics.drawLine((int) (cropPoints[i].X), (int) (cropPoints[i].Y), (int) (cropPoints[(i + 1) % 4].X),
+                              (int) (cropPoints[(i + 1) % 4].Y));
+            graphics.fillRect((int) (cropPoints[i].X) - 2, (int) (cropPoints[i].Y) - 2, 4, 4);
         }
     }
 
@@ -2293,8 +2295,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     private void drawCenterMark(Graphics2D offscreenGraphics2d) {
         offscreenGraphics2d.setColor(Color.yellow);
 
-        int centerXD = (int) crosshairPt.x;
-        int centerYD = (int) crosshairPt.y;
+        int centerXD = (int) crosshairPt.X;
+        int centerYD = (int) crosshairPt.Y;
         offscreenGraphics2d.drawLine(centerXD, centerYD - 5, centerXD, centerYD + 5);
         offscreenGraphics2d.drawLine(centerXD - 5, centerYD, centerXD + 5, centerYD);
         offscreenGraphics2d.setColor(Color.black);
@@ -2313,14 +2315,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     	
         // This snaps the crosshair to the voxel boundary
         offscreenGraphics2d.setColor(xColor[orientation]);
-        offscreenGraphics2d.drawLine((int) crosshairPt.x, 0, (int) crosshairPt.x, (int) crosshairPt.y - crosshairPixelGap);
-        offscreenGraphics2d.drawLine((int) crosshairPt.x, getSize().height, (int) crosshairPt.x,
-                                     (int) crosshairPt.y + crosshairPixelGap);
+        offscreenGraphics2d.drawLine((int) crosshairPt.X, 0, (int) crosshairPt.X, (int) crosshairPt.Y - crosshairPixelGap);
+        offscreenGraphics2d.drawLine((int) crosshairPt.X, getSize().height, (int) crosshairPt.X,
+                                     (int) crosshairPt.Y + crosshairPixelGap);
 
         offscreenGraphics2d.setColor(yColor[orientation]);
-        offscreenGraphics2d.drawLine(0, (int) crosshairPt.y, (int) crosshairPt.x - crosshairPixelGap, (int) crosshairPt.y);
-        offscreenGraphics2d.drawLine(getSize().width, (int) crosshairPt.y, (int) crosshairPt.x + crosshairPixelGap,
-                                     (int) crosshairPt.y);
+        offscreenGraphics2d.drawLine(0, (int) crosshairPt.Y, (int) crosshairPt.X - crosshairPixelGap, (int) crosshairPt.Y);
+        offscreenGraphics2d.drawLine(getSize().width, (int) crosshairPt.Y, (int) crosshairPt.X + crosshairPixelGap,
+                                     (int) crosshairPt.Y);
     }
 
     /**
@@ -2349,13 +2351,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
         // x stubs
         offscreenGraphics2d.setColor(xColor[orientation]);
-        offscreenGraphics2d.drawLine((int) crosshairPt.x, 0, (int) crosshairPt.x, 10);
-        offscreenGraphics2d.drawLine((int) crosshairPt.x, getSize().height, (int) crosshairPt.x, getSize().height - 10);
+        offscreenGraphics2d.drawLine((int) crosshairPt.X, 0, (int) crosshairPt.X, 10);
+        offscreenGraphics2d.drawLine((int) crosshairPt.X, getSize().height, (int) crosshairPt.X, getSize().height - 10);
 
         // y stubs
         offscreenGraphics2d.setColor(yColor[orientation]);
-        offscreenGraphics2d.drawLine(0, (int) crosshairPt.y, 10, (int) crosshairPt.y);
-        offscreenGraphics2d.drawLine(getSize().width, (int) crosshairPt.y, getSize().width - 10, (int) crosshairPt.y);
+        offscreenGraphics2d.drawLine(0, (int) crosshairPt.Y, 10, (int) crosshairPt.Y);
+        offscreenGraphics2d.drawLine(getSize().width, (int) crosshairPt.Y, getSize().width - 10, (int) crosshairPt.Y);
     }
 
     /**
@@ -2772,23 +2774,23 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
 
                     for (int k = 0; k < imageActive.getExtents()[2]; k++) {
-                        Point3Df[] voiPoints = VOIs.VOIAt(i).exportPoints(k);
+                        Vector3f[] voiPoints = VOIs.VOIAt(i).exportPoints(k);
 
                         for (int j = 0; j < voiPoints.length; j++) {
-                            Point3Df screenPt = new Point3Df();
-                            Point3Df patientPt = new Point3Df();
+                            Vector3f screenPt = new Vector3f();
+                            Vector3f patientPt = new Vector3f();
                             MipavCoordinateSystems.fileToPatient(voiPoints[j], patientPt, imageActive, orientation);
 
                             super.LocalToScreen(patientPt, screenPt);
 
-                            if ((!(((int) screenPt.x == -1) && ((int) screenPt.y == -1))) && (patientPt.z == slice)) {
+                            if ((!(((int) screenPt.X == -1) && ((int) screenPt.Y == -1))) && (patientPt.Z == slice)) {
                                 offscreenGraphics2d.setColor(VOIs.VOIAt(i).getColor());
 
                                 ((VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).drawAxialSelf(offscreenGraphics2d,
                                                                                                        (int)
-                                                                                                       screenPt.x,
+                                                                                                       screenPt.X,
                                                                                                        (int)
-                                                                                                       screenPt.y,
+                                                                                                       screenPt.Y,
 
                                                                                                        // voiPoints[j] );
                                                                                                        patientPt);
@@ -2865,7 +2867,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      */
     private void handleVOIProcessing(MouseEvent mouseEvent) {
         int j;
-        Point3Df pt;
+        Vector3f pt;
 
         ViewVOIVector VOIs = imageActive.getVOIs();
 
@@ -2883,17 +2885,17 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
             if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) // curve type is a VOI point
             {
-                Point3Df patientMousePoint = new Point3Df();
-                super.ScreenToLocal(new Point3Df(mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint);
+                Vector3f patientMousePoint = new Vector3f();
+                super.ScreenToLocal(new Vector3f(mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint);
 
-                Point3Df volumeMousePoint = new Point3Df();
+                Vector3f volumeMousePoint = new Vector3f();
                 MipavCoordinateSystems.patientToFile(patientMousePoint, volumeMousePoint, imageActive, orientation);
 
-                int zOrg = (int) volumeMousePoint.z;
+                int zOrg = (int) volumeMousePoint.Z;
 
                 pt = null;
 
-                Point3Df[] voiPoints;
+                Vector3f[] voiPoints;
 
                 for (int p = zOrg - 1; p < (zOrg + 2); p++) {
                     voiPoints = VOIs.VOIAt(i).exportPoints(p);
@@ -3049,32 +3051,32 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  index       the index of the bounding box that changed
      * @param  mousePoint  the screen-space coordinats of the changed bounding box point.
      */
-    private void updateCrop(int index, Point2Df mousePoint) {
+    private void updateCrop(int index, Vector2f mousePoint) {
 
         /* set the crop corners based on which point moved: */
         if (index == 0) {
-            cornerCropPt[0].x = mousePoint.x;
-            cornerCropPt[0].y = mousePoint.y;
+            cornerCropPt[0].X = mousePoint.X;
+            cornerCropPt[0].Y = mousePoint.Y;
         } else if (index == 1) {
-            cornerCropPt[0].x = mousePoint.x;
-            cornerCropPt[1].y = mousePoint.y;
+            cornerCropPt[0].X = mousePoint.X;
+            cornerCropPt[1].Y = mousePoint.Y;
         } else if (index == 2) {
-            cornerCropPt[1].x = mousePoint.x;
-            cornerCropPt[1].y = mousePoint.y;
+            cornerCropPt[1].X = mousePoint.X;
+            cornerCropPt[1].Y = mousePoint.Y;
         } else if (index == 3) {
-            cornerCropPt[1].x = mousePoint.x;
-            cornerCropPt[0].y = mousePoint.y;
+            cornerCropPt[1].X = mousePoint.X;
+            cornerCropPt[0].Y = mousePoint.Y;
         }
 
         /* convert from Screen -> Patient -> File */
         super.ScreenToLocal(cornerCropPt[0], m_kLocalCropLower);
 
-        Point3Df kFileCropLower = new Point3Df();
+        Vector3f kFileCropLower = new Vector3f();
         MipavCoordinateSystems.patientToFile(m_kLocalCropLower, kFileCropLower, imageActive, orientation);
 
         super.ScreenToLocal(cornerCropPt[1], m_kLocalCropUpper);
 
-        Point3Df kFileCropUpper = new Point3Df();
+        Vector3f kFileCropUpper = new Vector3f();
         MipavCoordinateSystems.patientToFile(m_kLocalCropUpper, kFileCropUpper, imageActive, orientation);
 
         /* update frame */
@@ -3091,7 +3093,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
         if (m_kPatientSlice.updateSlice(newSlice)) {
             m_kVolumePoint = m_kPatientSlice.getCenter();
-            triImageFrame.setCenter((int) m_kVolumePoint.x, (int) m_kVolumePoint.y, (int) m_kVolumePoint.z);
+            triImageFrame.setCenter((int) m_kVolumePoint.X, (int) m_kVolumePoint.Y, (int) m_kVolumePoint.Z);
         }
     }
 }

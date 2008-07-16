@@ -9,6 +9,10 @@ import javax.swing.*;
 
 public class ItkFilterSelectorDialog extends JDialog implements ActionListener {
     /**
+	 * 
+	 */
+	private static final long serialVersionUID = 6211274967141606057L;
+	/**
      * modal dialog instance
      */
     private static ItkFilterSelectorDialog dialog;

@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
@@ -343,7 +344,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     private VOI voi = null;
 
     /** DOCUMENT ME! */
-    private Point3Df[] VOIPoints;
+    private Vector3f[] VOIPoints;
 
     /** DOCUMENT ME! */
     private int xDim;

@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -221,7 +222,7 @@ public class RubberbandLine extends Rubberband {
             } // end if not a *new* VOI
 
         } else {
-        	new JDialogVOISplitter(image.getParentFrame(), image, new Point3Df(x[0],y[0],z[0]), new Point3Df(x[1],y[1],z[1])) ;
+        	new JDialogVOISplitter(image.getParentFrame(), image, new Vector3f(x[0],y[0],z[0]), new Vector3f(x[1],y[1],z[1])) ;
         }
     }
     }

@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.util.MipavUtil;
@@ -720,7 +721,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
      *
      * @return  the value of the pixel after convolution with the kernel
      */
-    public static final float convolve2DPt(Point2Df pt, int[] iExtents, float[] image, int[] kExtents, float[] kernel) {
+    public static final float convolve2DPt(Vector2f pt, int[] iExtents, float[] image, int[] kExtents, float[] kernel) {
 
         int i, j;
         float dx, dy;
@@ -737,10 +738,10 @@ public class AlgorithmConvolver extends AlgorithmBase {
         double sum;
         double norm = 0;
 
-        dx = pt.x - (int) pt.x;
-        dy = pt.y - (int) pt.y;
-        offsetX = (int) pt.x - (xKDim / 2);
-        offsetY = (int) pt.y - (yKDim / 2);
+        dx = pt.X - (int) pt.X;
+        dy = pt.Y - (int) pt.Y;
+        offsetX = (int) pt.X - (xKDim / 2);
+        offsetY = (int) pt.Y - (yKDim / 2);
         sum = 0;
         count = 0;
         startY = offsetY * xDim;

@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -165,7 +167,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         ViewVOIVector VOIs;
         int nVOI;
         VOI selectedVOI = null;
-        Point3Df center;
+        Vector3f center;
         double centerX;
         double centerY;
         double omega = 0.0;
@@ -247,8 +249,8 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         }
         
         center = selectedVOI.getGeometricCenter();
-        centerX = center.x;
-        centerY = center.y;
+        centerX = center.X;
+        centerY = center.Y;
         
         componentImage = srcImage.getParentFrame().getComponentImage();
         
@@ -818,7 +820,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         ViewVOIVector VOIs;
         int nVOI;
         VOI selectedVOI = null;
-        Point3Df center;
+        Vector3f center;
         double centerX;
         double centerY;
         double distX;
@@ -892,8 +894,8 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         }
         
         center = selectedVOI.getGeometricCenter();
-        centerX = center.x;
-        centerY = center.y;
+        centerX = center.X;
+        centerY = center.Y;
         
         componentImage = srcImage.getParentFrame().getComponentImage();
         

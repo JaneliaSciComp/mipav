@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.structures;
 
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.file.*;
@@ -974,18 +976,18 @@ public class ModelImage extends ModelStorageBase {
      *
      * @return  Center of image in pixels.
      */
-    public Point3Df getImageCenter() {
-        Point3Df center;
+    public Vector3f getImageCenter() {
+        Vector3f center;
 
         try {
-            center = new Point3Df();
-            center.x = (getExtents()[0] - 1) / 2f;
-            center.y = (getExtents()[1] - 1) / 2f;
+            center = new Vector3f();
+            center.X = (getExtents()[0] - 1) / 2f;
+            center.Y = (getExtents()[1] - 1) / 2f;
 
             if (getExtents().length > 2) {
-                center.z = (getExtents()[2] - 1) / 2f;
+                center.Z = (getExtents()[2] - 1) / 2f;
             } else {
-                center.z = 0f;
+                center.Z = 0f;
             }
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("getImageCenter: Out of memory error");
@@ -1003,19 +1005,19 @@ public class ModelImage extends ModelStorageBase {
      *
      * @return  Center of the image in millimeters (or other physical dimension).
      */
-    public Point3Df getImageCentermm(boolean useScanner) {
-        Point3Df center;
-        center = new Point3Df();
+    public Vector3f getImageCentermm(boolean useScanner) {
+        Vector3f center;
+        center = new Vector3f();
 
         if (useScanner && (getExtents().length > 2)) {
-            MipavCoordinateSystems.scannerToFile(new Point3Df(0f, 0f, 0f), center, this);
+            MipavCoordinateSystems.scannerToFile(new Vector3f(0f, 0f, 0f), center, this);
 
-            if ((center.x >= 0) && (center.x <= getExtents()[0]) && (center.y >= 0) && (center.y <= getExtents()[1]) &&
-                    (center.z >= 0) && (center.z <= getExtents()[2])) {
+            if ((center.X >= 0) && (center.X <= getExtents()[0]) && (center.Y >= 0) && (center.Y <= getExtents()[1]) &&
+                    (center.Z >= 0) && (center.Z <= getExtents()[2])) {
 
-                center.x *= fileInfo[0].getResolutions()[0];
-                center.y *= fileInfo[0].getResolutions()[1];
-                center.z *= fileInfo[0].getResolutions()[2];
+                center.X *= fileInfo[0].getResolutions()[0];
+                center.Y *= fileInfo[0].getResolutions()[1];
+                center.Z *= fileInfo[0].getResolutions()[2];
 
 
                 return center;
@@ -1025,14 +1027,14 @@ public class ModelImage extends ModelStorageBase {
 
         try {
 
-            center.x = (getExtents()[0] - 1) * fileInfo[0].getResolutions()[0] / 2f;
-            center.y = (getExtents()[1] - 1) * fileInfo[0].getResolutions()[1] / 2f;
+            center.X = (getExtents()[0] - 1) * fileInfo[0].getResolutions()[0] / 2f;
+            center.Y = (getExtents()[1] - 1) * fileInfo[0].getResolutions()[1] / 2f;
 
             if (getExtents().length > 2) {
-                center.z = (getExtents()[2] - 1) * fileInfo[0].getResolutions()[2] / 2f;
+                center.Z = (getExtents()[2] - 1) * fileInfo[0].getResolutions()[2] / 2f;
 
             } else {
-                center.z = 0f;
+                center.Z = 0f;
             }
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("GetImageCentermm: Out of memory error");
@@ -1259,7 +1261,7 @@ public class ModelImage extends ModelStorageBase {
      *
      * @return  a float buffer containing the extracted plane (size == image.getSliceSize() 2).
      */
-    public final float[] getPlane(Point3Df topLeft, Point3Df topRight, Point3Df botLeft, Point3Df botRight) {
+    public final float[] getPlane(Vector3f topLeft, Vector3f topRight, Vector3f botLeft, Vector3f botRight) {
         double x, y, z;
         int i, j, index;
 
@@ -1270,27 +1272,27 @@ public class ModelImage extends ModelStorageBase {
         float xRes = getFileInfo(0).getResolutions()[0];
         float yRes = getFileInfo(0).getResolutions()[1];
         float zRes = getFileInfo(0).getResolutions()[2];
-        topLeft.x *= xRes;
-        topLeft.y *= yRes;
-        topLeft.z *= zRes;
-        topRight.x *= xRes;
-        topRight.y *= yRes;
-        topRight.z *= zRes;
-        botLeft.x *= xRes;
-        botLeft.y *= yRes;
-        botLeft.z *= zRes;
-        botRight.x *= xRes;
-        botRight.y *= yRes;
-        botRight.z *= zRes;
+        topLeft.X *= xRes;
+        topLeft.Y *= yRes;
+        topLeft.Z *= zRes;
+        topRight.X *= xRes;
+        topRight.Y *= yRes;
+        topRight.Z *= zRes;
+        botLeft.X *= xRes;
+        botLeft.Y *= yRes;
+        botLeft.Z *= zRes;
+        botRight.X *= xRes;
+        botRight.Y *= yRes;
+        botRight.Z *= zRes;
 
         int planeLength = (int)
-                              MipavMath.round(Math.sqrt(((botLeft.x - topLeft.x) * (botLeft.x - topLeft.x)) +
-                                                        ((botLeft.y - topLeft.y) * (botLeft.y - topLeft.y)) +
-                                                        ((botLeft.z - topLeft.z) * (botLeft.z - topLeft.z))));
+                              MipavMath.round(Math.sqrt(((botLeft.X - topLeft.X) * (botLeft.X - topLeft.X)) +
+                                                        ((botLeft.Y - topLeft.Y) * (botLeft.Y - topLeft.Y)) +
+                                                        ((botLeft.Z - topLeft.Z) * (botLeft.Z - topLeft.Z))));
         int planeWidth = (int)
-                             MipavMath.round(Math.sqrt(((topRight.x - topLeft.x) * (topRight.x - topLeft.x)) +
-                                                       ((topRight.y - topLeft.y) * (topRight.y - topLeft.y)) +
-                                                       ((topRight.z - topLeft.z) * (topRight.z - topLeft.z))));
+                             MipavMath.round(Math.sqrt(((topRight.X - topLeft.X) * (topRight.X - topLeft.X)) +
+                                                       ((topRight.Y - topLeft.Y) * (topRight.Y - topLeft.Y)) +
+                                                       ((topRight.Z - topLeft.Z) * (topRight.Z - topLeft.Z))));
         int planeSize = planeLength * planeWidth;
         float[] plane = new float[planeSize];
 
@@ -1301,12 +1303,12 @@ public class ModelImage extends ModelStorageBase {
         double rowOffsetX = 0;
         double rowOffsetY = 0;
         double rowOffsetZ = 0;
-        float colDeltaX = topRight.x - topLeft.x;
-        float colDeltaY = topRight.y - topLeft.y;
-        float colDeltaZ = topRight.z - topLeft.z;
-        float rowDeltaX = botLeft.x - topLeft.x;
-        float rowDeltaY = botLeft.y - topLeft.y;
-        float rowDeltaZ = botLeft.z - topLeft.z;
+        float colDeltaX = topRight.X - topLeft.X;
+        float colDeltaY = topRight.Y - topLeft.Y;
+        float colDeltaZ = topRight.Z - topLeft.Z;
+        float rowDeltaX = botLeft.X - topLeft.X;
+        float rowDeltaY = botLeft.Y - topLeft.Y;
+        float rowDeltaZ = botLeft.Z - topLeft.Z;
 
         float invXRes = 1.0f / xRes;
         float invYRes = 1.0f / yRes;
@@ -1317,9 +1319,9 @@ public class ModelImage extends ModelStorageBase {
             for (colFactor = 0, j = 0; colFactor < 1; j++, colFactor = colStep * j, index++) {
 
                 // get point along horiz. line
-                x = topLeft.x + (colFactor * colDeltaX) + rowOffsetX;
-                y = topLeft.y + (colFactor * colDeltaY) + rowOffsetY;
-                z = topLeft.z + (colFactor * colDeltaZ) + rowOffsetZ;
+                x = topLeft.X + (colFactor * colDeltaX) + rowOffsetX;
+                y = topLeft.Y + (colFactor * colDeltaY) + rowOffsetY;
+                z = topLeft.Z + (colFactor * colDeltaZ) + rowOffsetZ;
 
                 x *= invXRes;
                 y *= invYRes;
@@ -1551,8 +1553,8 @@ public class ModelImage extends ModelStorageBase {
         int nContours, nPoints;
         int index = 1;
         Vector[] contours;
-        Point3Df[] points;
-        Point3Df[] point1 = new Point3Df[1];
+        Vector3f[] points;
+        Vector3f[] point1 = new Vector3f[1];
         VOI newVOI = null;
         VOI newPtVOI = null;
         VOI newPLineVOI = null;
@@ -1851,8 +1853,8 @@ public class ModelImage extends ModelStorageBase {
         int nSlices;
         int nContours, nPoints;
         Vector<VOIBase>[] contours;
-        Point3Df[] points;
-        Point3Df[] point1 = new Point3Df[1];
+        Vector3f[] points;
+        Vector3f[] point1 = new Vector3f[1];
 
         VOI newVOI = null;
         VOI newPtVOI = null;
@@ -2964,10 +2966,10 @@ public class ModelImage extends ModelStorageBase {
         VOI[] newProtractorVOI = null;
 
         Vector<VOIBase>[] contours;
-        Point3Df[] point1 = new Point3Df[1];
+        Vector3f[] point1 = new Vector3f[1];
         int nPoints;
         int nContours;
-        Point3Df[] points;
+        Vector3f[] points;
         short id = 0;
 
         // make a copy of the VOIs stored until the final step

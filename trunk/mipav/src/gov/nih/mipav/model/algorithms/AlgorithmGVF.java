@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -2032,7 +2033,7 @@ public class AlgorithmGVF extends AlgorithmBase implements AlgorithmInterface {
         int nPts;
         float pct;
         float index;
-        Point2Df interpPt = new Point2Df();
+        Vector2f interpPt = new Vector2f();
         float[] newXPts, newYPts;
         int position;
         boolean finished = false;
@@ -2059,18 +2060,18 @@ public class AlgorithmGVF extends AlgorithmBase implements AlgorithmInterface {
                 // The first and second derivatives were seen to be unscaled deriv2Dir   = bSpline.bSplineJetXY(2,
                 // index, xPoints, yPoints);
 
-                position = (int) interpPt.x + (xDim * (int) interpPt.y);
+                position = (int) interpPt.X + (xDim * (int) interpPt.Y);
 
-                newXPts[i + 2] = interpPt.x +
-                                 getBilinear(position, interpPt.x - (int) interpPt.x, interpPt.y - (int) interpPt.y,
+                newXPts[i + 2] = interpPt.X +
+                                 getBilinear(position, interpPt.X - (int) interpPt.X, interpPt.Y - (int) interpPt.Y,
                                              extents, u);
 
-                newYPts[i + 2] = interpPt.y +
-                                 getBilinear(position, interpPt.x - (int) interpPt.x, interpPt.y - (int) interpPt.y,
+                newYPts[i + 2] = interpPt.Y +
+                                 getBilinear(position, interpPt.X - (int) interpPt.X, interpPt.Y - (int) interpPt.Y,
                                              extents, v);
 
-                if ((Math.abs(newXPts[i + 2] - interpPt.x) >= 0.02f) ||
-                        (Math.abs(newYPts[i + 2] - interpPt.y) >= 0.02f)) {
+                if ((Math.abs(newXPts[i + 2] - interpPt.X) >= 0.02f) ||
+                        (Math.abs(newYPts[i + 2] - interpPt.Y) >= 0.02f)) {
                     finished = false;
                 }
 

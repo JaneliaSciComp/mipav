@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.structures;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.file.FileInfoBase;
@@ -1690,7 +1691,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportDiagonal(int tSlice, int slice, int[] extents, Point3Df[] verts,
+    public final synchronized void exportDiagonal(int tSlice, int slice, int[] extents, Vector3f[] verts,
                                                   float[] values, boolean bInterpolate) throws IOException {
 
         try {
@@ -1718,17 +1719,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
 
         /* Calculate the slopes for traversing the data in x,y,z: */
-        float xSlopeX = verts[1].x - verts[0].x;
-        float ySlopeX = verts[1].y - verts[0].y;
-        float zSlopeX = verts[1].z - verts[0].z;
+        float xSlopeX = verts[1].X - verts[0].X;
+        float ySlopeX = verts[1].Y - verts[0].Y;
+        float zSlopeX = verts[1].Z - verts[0].Z;
 
-        float xSlopeY = verts[3].x - verts[0].x;
-        float ySlopeY = verts[3].y - verts[0].y;
-        float zSlopeY = verts[3].z - verts[0].z;
+        float xSlopeY = verts[3].X - verts[0].X;
+        float ySlopeY = verts[3].Y - verts[0].Y;
+        float zSlopeY = verts[3].Z - verts[0].Z;
 
-        float x0 = verts[0].x;
-        float y0 = verts[0].y;
-        float z0 = verts[0].z;
+        float x0 = verts[0].X;
+        float y0 = verts[0].Y;
+        float z0 = verts[0].Z;
 
         xSlopeX /= (float) (iBound - 1);
         ySlopeX /= (float) (iBound - 1);

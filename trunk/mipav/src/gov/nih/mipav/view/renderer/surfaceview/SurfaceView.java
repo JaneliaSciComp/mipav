@@ -81,7 +81,7 @@ public class SurfaceView extends SurfaceRender {
     private ViewJComponentBoxSlice[] boxSlices = new ViewJComponentBoxSlice[3];
     /** The transformed boxSlices frames used to sample the volume data along
      * diagonal slices: */
-    private Point3Df[][] boxSliceVertices;
+    private Vector3f[][] boxSliceVertices;
 
     /** Buffer factor, 1 usually, 4 for color images. */
     private int bufferFactor = 1;
@@ -1451,7 +1451,7 @@ public class SurfaceView extends SurfaceRender {
      * PlaneRender class for the AXIAL, CORONAL, and SAGITTAL views.
      * @param center, the three slider values in File Coordinates
      */
-    public void setCenter( Point3Df center )
+    public void setCenter( Vector3f center )
     {
 
         /* update the sliders: */
@@ -1691,20 +1691,20 @@ public class SurfaceView extends SurfaceRender {
             outVertices[j] = new Point3f[4];
             if ( boxSliceVertices[j] == null )
             {
-                boxSliceVertices[j] = new Point3Df[4];
+                boxSliceVertices[j] = new Vector3f[4];
             }
             for (int i = 0; i < 4; i++)
             {
                 outVertices[j][i] = new Point3f();
                 if ( boxSliceVertices[j][i] == null )
                 {
-                    boxSliceVertices[j][i] = new Point3Df();
+                    boxSliceVertices[j][i] = new Vector3f();
                 }
 
                 /* Rotate the points in the bounding box: */
                 kTransform.transform( inVertices[j][i], outVertices[j][i] );
                 /* Convert the points to ModelImage space: */
-                ScreenToModel( new Point3Df( outVertices[j][i].x, outVertices[j][i].y, outVertices[j][i].z ),
+                ScreenToModel( new Vector3f( outVertices[j][i].x, outVertices[j][i].y, outVertices[j][i].z ),
                                boxSliceVertices[j][i] );
             }
         }
@@ -1715,7 +1715,7 @@ public class SurfaceView extends SurfaceRender {
      * @param screen the input point to be transformed from normalized plane coordinates
      * @param model the output point in Model coordinates
      */
-    private void ScreenToModel( Point3Df screen, Point3Df model )
+    private void ScreenToModel( Vector3f screen, Vector3f model )
     {
         model.x = Math.round(((screen.x + xBox) * ((float)xDim-1)) / (2.0f * xBox));
         model.y = Math.round(((screen.y - yBox) * ((float)yDim-1)) / (-2.0f * yBox));
@@ -1726,7 +1726,7 @@ public class SurfaceView extends SurfaceRender {
      * @param model the input point in Model coordinates
      * @param screen the output point in normalized plane coordinates
      */
-    public void ModelToScreen( Point3Df model, Point3Df screen )
+    public void ModelToScreen( Vector3f model, Vector3f screen )
     {
         screen.x = (2.0f * xBox) * (model.x / ((float)xDim-1)) - xBox;
         screen.y = (-2.0f * yBox) * (model.y / ((float)yDim-1)) + yBox;
@@ -1737,18 +1737,18 @@ public class SurfaceView extends SurfaceRender {
      * sets up the values for the ViewJComponentBoxSlice array. Reorders the
      * three boxSlice (x,y,z) coordinates and mode value into local
      * ModelCoordinates.
-     * @param Point3Df[] the reordered (x,y,z) coordinates for each boxSlice
+     * @param Vector3f[] the reordered (x,y,z) coordinates for each boxSlice
      * remapped into ModelCoordinates.
      * @param boxSliceConstants, the reordered mode value (X_SLICE, Y_SLICE,
      * Z_SLICE) remapped into ModelCoordinates
      */
-    private void getBoxSliceInScreen( Point3Df[] screenBoxPoints, int[] boxSliceConstants )
+    private void getBoxSliceInScreen( Vector3f[] screenBoxPoints, int[] boxSliceConstants )
     {
-        Point3Df modelIndex = new Point3Df();
-        MipavCoordinateSystems.fileToModel( new Point3Df( 0, 1, 2 ), modelIndex, imageA );
-        boxSliceConstants[0] = (int)modelIndex.x;
-        boxSliceConstants[1] = (int)modelIndex.y;
-        boxSliceConstants[2] = (int)modelIndex.z;
+    	WildMagic.LibFoundation.Mathematics.Vector3f modelIndex = new WildMagic.LibFoundation.Mathematics.Vector3f();
+        MipavCoordinateSystems.fileToModel( new WildMagic.LibFoundation.Mathematics.Vector3f( 0, 1, 2 ), modelIndex, imageA );
+        boxSliceConstants[0] = (int)modelIndex.X;
+        boxSliceConstants[1] = (int)modelIndex.Y;
+        boxSliceConstants[2] = (int)modelIndex.Z;
         
         float[][] boxPoints = new float[3][];
         for ( int i = 0; i < 3; i++ )
@@ -1763,7 +1763,7 @@ public class SurfaceView extends SurfaceRender {
         
         for ( int i = 0; i < 3; i++ )
         {
-            this.ModelToScreen( new Point3Df( boxPoints[i][0], boxPoints[i][1], boxPoints[i][2] ),
+            this.ModelToScreen( new Vector3f( boxPoints[i][0], boxPoints[i][1], boxPoints[i][2] ),
                                 screenBoxPoints[i] );
         }
     }
@@ -1873,12 +1873,12 @@ public class SurfaceView extends SurfaceRender {
 
         xfrm.identity();
 
-        Point3Df center = imageA.getImageCentermm(false);
+        WildMagic.LibFoundation.Mathematics.Vector3f center = imageA.getImageCentermm(false);
 
-        xfrm.setTranslate(center.x, center.y, center.z);
+        xfrm.setTranslate(center.X, center.Y, center.Z);
         xfrm.multMatrix(xfrm.getMatrix(), transMtx.getMatrix(), result);
         xfrm.setMatrix(result);
-        xfrm.setTranslate(-center.x, -center.y, -center.z);
+        xfrm.setTranslate(-center.X, -center.Y, -center.Z);
 
         // Step.4
         AlgorithmTransform algoTrans = new AlgorithmTransform(imageA, xfrm, interp, resols[0], resols[1], resols[2],
@@ -2366,7 +2366,7 @@ public class SurfaceView extends SurfaceRender {
         canvas = new VolumeCanvas3D(config);
         Preferences.debug("Canvas: " + canvas.queryProperties() + "\n");
 
-        boxSliceVertices = new Point3Df[3][];
+        boxSliceVertices = new Vector3f[3][];
         boxSliceVertices[0] = null;
         boxSliceVertices[1] = null;
         boxSliceVertices[2] = null;
@@ -2582,10 +2582,10 @@ public class SurfaceView extends SurfaceRender {
         zBox = zBox / maxBox;
 
         int[] boxSliceConstants = new int[3];
-        Point3Df[] screenBoxPoints = new Point3Df[3];
+        Vector3f[] screenBoxPoints = new Vector3f[3];
         for ( int i = 0; i < 3; i++ )
         {
-            screenBoxPoints[i] = new Point3Df();
+            screenBoxPoints[i] = new Vector3f();
         }
         getBoxSliceInScreen( screenBoxPoints, boxSliceConstants );
 

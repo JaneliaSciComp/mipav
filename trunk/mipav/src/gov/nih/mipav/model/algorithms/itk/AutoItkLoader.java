@@ -125,7 +125,7 @@ public class AutoItkLoader implements ActionListener {
         if (cls.getSimpleName().contains("ImageToImage")) return null;
         //String out = "";
         List<Method> out_list = new ArrayList<Method>();
-        boolean found_one = false;
+        //boolean found_one = false;
         boolean found_i2i_base = false;
         for (; cls != null; cls = cls.getSuperclass()) {
             // ImageToImageFilter seems to be a general base class for filters.
@@ -137,7 +137,7 @@ public class AutoItkLoader implements ActionListener {
             //out += "   " + cls.getSimpleName() + "\n";
             for (Method mthd : cls.getDeclaredMethods()) {
                 if (mthd.getName().startsWith("Set")) {
-                    found_one = true;
+                    //found_one = true;
                     out_list.add(mthd);
                 }
             }
@@ -516,9 +516,10 @@ public class AutoItkLoader implements ActionListener {
         // construct T_Pointer, and the New method.
       
         String pointer_class_name = cls.getName() + "_Pointer";
-        Class<?> t_ptr_cls = null;
+        //Class<?> t_ptr_cls = null;
         try {
-            t_ptr_cls = Class.forName(pointer_class_name);
+        	//t_ptr_cls = Class.forName(pointer_class_name);
+        	Class.forName(pointer_class_name);
             //System.out.println("Found " + t_ptr_cls.getName());
         }
         catch (ClassNotFoundException cnfe) {

@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -98,7 +99,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         int contourVOIs;
         Vector[] contours = null;
         int nContours = 0;
-        Point3Df geometricCenter;
+        Vector3f geometricCenter;
         // Use 1.0 for resolution regardless of actual units
         float xRes = 1.0f;
         float yRes = 1.0f;
@@ -220,8 +221,8 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         }
         
         geometricCenter = ((VOIContour)(contours[0].elementAt(0))).getGeometricCenter();
-        Preferences.debug("X center = " + geometricCenter.x + "\n");
-        Preferences.debug("Y center = " + geometricCenter.y + "\n");
+        Preferences.debug("X center = " + geometricCenter.X + "\n");
+        Preferences.debug("Y center = " + geometricCenter.Y + "\n");
         
         ((VOIContour)(contours[0].elementAt(0))).secondOrderAttributes(xDimSource, yDimSource, xRes, yRes, xUnits, yUnits,
                                                                        pAxis, eccentricity, majorAxis, minorAxis);
@@ -366,8 +367,8 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
                     xp = xp * ellipseRatio;
                     yp = yp * ellipseRatio;
                     // Translate to center of original ellipse
-                    xSrc = geometricCenter.x + xp;
-                    ySrc = geometricCenter.y + yp;
+                    xSrc = geometricCenter.X + xp;
+                    ySrc = geometricCenter.Y + yp;
                     // Use bilinear interpolation to find the contributions from the
                     // 4 nearest neighbors in the original ellipse space
                     if ((xSrc >= 0.0) && ((xSrc) <= (xDimSource - 1)) && (ySrc >= 0.0) && (ySrc <= (yDimSource - 1))) {

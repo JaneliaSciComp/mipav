@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -9,8 +10,6 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.dialogs.JDialogExtractBrain;
 
 import java.util.*;
-
-import javax.vecmath.Point3f;
 
 
 /**
@@ -235,7 +234,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
 
         fireProgressStateChanged(3);
         boolean showInitialEstimation = false;
-        Point3f initialCenter = JDialogExtractBrain.computeCenter(srcImage, betOrientation, estimateWithSphereBET);
+        Vector3f initialCenter = JDialogExtractBrain.computeCenter(srcImage, betOrientation, estimateWithSphereBET);
         int iterations = 500;
         int maxDepth = 5;
         boolean extractBrainToPaint = true;

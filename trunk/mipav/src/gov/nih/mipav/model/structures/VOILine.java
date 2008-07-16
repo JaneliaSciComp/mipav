@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.structures;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 
@@ -446,10 +447,10 @@ public class VOILine extends VOIBase {
         double myY, myX, yInc, xInc;
         double x0, x1, y0, y1;
         double xDist, yDist;
-        x0 = ((Point3Df) (elementAt(0))).x;
-        y0 = ((Point3Df) (elementAt(0))).y;
-        x1 = ((Point3Df) (elementAt(1))).x;
-        y1 = ((Point3Df) (elementAt(1))).y;
+        x0 = ((Vector3f) (elementAt(0))).X;
+        y0 = ((Vector3f) (elementAt(0))).Y;
+        x1 = ((Vector3f) (elementAt(1))).X;
+        y1 = ((Vector3f) (elementAt(1))).Y;
         distance = Math.sqrt(((x1 - x0) * (x1 - x0) * (resolutions[0]) * (resolutions[0])) +
                              ((y1 - y0) * (y1 - y0) * (resolutions[1]) * (resolutions[1])));
         myX = x0;
@@ -521,10 +522,10 @@ public class VOILine extends VOIBase {
         double x0, x1, y0, y1;
         float val;
         double xDist, yDist;
-        x0 = ((Point3Df) (elementAt(0))).x;
-        y0 = ((Point3Df) (elementAt(0))).y;
-        x1 = ((Point3Df) (elementAt(1))).x;
-        y1 = ((Point3Df) (elementAt(1))).y;
+        x0 = ((Vector3f) (elementAt(0))).X;
+        y0 = ((Vector3f) (elementAt(0))).Y;
+        x1 = ((Vector3f) (elementAt(1))).X;
+        y1 = ((Vector3f) (elementAt(1))).Y;
         distance = Math.sqrt(((x1 - x0) * (x1 - x0) * (resolutions[0]) * (resolutions[0])) +
                              ((y1 - y0) * (y1 - y0) * (resolutions[1]) * (resolutions[1])));
         myX = x0;
@@ -593,15 +594,15 @@ public class VOILine extends VOIBase {
     }
 
     /**
-     * Gets the active points location (point3df).
+     * Gets the active points location (Vector3f).
      *
-     * @return  Point3Df the location
+     * @return  Vector3f the location
      */
-    public Point3Df getActivePt() {
-        Point3Df pt = null;
+    public Vector3f getActivePt() {
+        Vector3f pt = null;
 
         if ((lastPoint >= 0) && (lastPoint < this.size())) {
-            pt = (Point3Df) (elementAt(lastPoint));
+            pt = (Vector3f) (elementAt(lastPoint));
         }
 
         return pt;
@@ -637,9 +638,9 @@ public class VOILine extends VOIBase {
         sortedZ[1] = -1;
 
         for (i = 0; i < this.size(); i++) {
-            xx = Math.round(((Point3Df) (elementAt(i))).x);
-            yy = Math.round(((Point3Df) (elementAt(i))).y);
-            zz = Math.round(((Point3Df) (elementAt(i))).z);
+            xx = Math.round(((Vector3f) (elementAt(i))).X);
+            yy = Math.round(((Vector3f) (elementAt(i))).Y);
+            zz = Math.round(((Vector3f) (elementAt(i))).Z);
 
             if (xx < sortedX[0]) {
                 sortedX[0] = xx;
@@ -688,9 +689,9 @@ public class VOILine extends VOIBase {
         sortedZ[1] = -1;
 
         for (i = 0; i < this.size(); i++) {
-            xx = ((Point3Df) (elementAt(i))).x;
-            yy = ((Point3Df) (elementAt(i))).y;
-            zz = ((Point3Df) (elementAt(i))).z;
+            xx = ((Vector3f) (elementAt(i))).X;
+            yy = ((Vector3f) (elementAt(i))).Y;
+            zz = ((Vector3f) (elementAt(i))).Z;
 
             if (xx < sortedX[0]) {
                 sortedX[0] = xx;
@@ -743,17 +744,17 @@ public class VOILine extends VOIBase {
      *
      * @return  the number of points in the position and intensity array that hava valid data.
      */
-    public int getPositionAndIntensity(Vector3Df[] position, float[] intensity, float[] imageBuffer, int xD) {
+    public int getPositionAndIntensity(Vector3f[] position, float[] intensity, float[] imageBuffer, int xD) {
         double distance;
         int i;
         int index, indexX = 0, indexY = 0;
         double myY, myX, yInc, xInc;
         double x0, x1, y0, y1;
         int len;
-        x0 = ((Point3Df) (elementAt(0))).x;
-        y0 = ((Point3Df) (elementAt(0))).y;
-        x1 = ((Point3Df) (elementAt(1))).x;
-        y1 = ((Point3Df) (elementAt(1))).y;
+        x0 = ((Vector3f) (elementAt(0))).X;
+        y0 = ((Vector3f) (elementAt(0))).Y;
+        x1 = ((Vector3f) (elementAt(1))).X;
+        y1 = ((Vector3f) (elementAt(1))).Y;
         distance = Math.sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
         myY = y0;
         myX = x0;
@@ -768,8 +769,8 @@ public class VOILine extends VOIBase {
             if ((indexX != Math.round(myX)) || (indexY != Math.round(myY))) {
                 indexY = (int) Math.round(myY);
                 indexX = (int) Math.round(myX);
-                position[pt].x = indexX;
-                position[pt].y = indexY;
+                position[pt].X = indexX;
+                position[pt].Y = indexY;
                 index = (indexY * xD) + indexX;
                 intensity[pt] = imageBuffer[index];
                 pt++;
@@ -799,10 +800,10 @@ public class VOILine extends VOIBase {
         double myY, myX, yInc, xInc;
         double x0, x1, y0, y1;
         int len;
-        x0 = ((Point3Df) (elementAt(0))).x;
-        y0 = ((Point3Df) (elementAt(0))).y;
-        x1 = ((Point3Df) (elementAt(1))).x;
-        y1 = ((Point3Df) (elementAt(1))).y;
+        x0 = ((Vector3f) (elementAt(0))).X;
+        y0 = ((Vector3f) (elementAt(0))).Y;
+        x1 = ((Vector3f) (elementAt(1))).X;
+        y1 = ((Vector3f) (elementAt(1))).Y;
         distance = Math.sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
         myY = y0;
         myX = x0;
@@ -848,7 +849,7 @@ public class VOILine extends VOIBase {
         this.removeAllElements();
 
         for (i = 0; i < n; i++) {
-            this.addElement(new Point3Df(newX[i], newY[i], newZ[i]));
+            this.addElement(new Vector3f(newX[i], newY[i], newZ[i]));
         }
     }
 
@@ -870,7 +871,7 @@ public class VOILine extends VOIBase {
         this.removeAllElements();
 
         for (i = 0; i < n; i++) {
-            this.addElement(new Point3Df(newX[i], newY[i], newZ[i]));
+            this.addElement(new Vector3f(newX[i], newY[i], newZ[i]));
         }
     }
 
@@ -879,7 +880,7 @@ public class VOILine extends VOIBase {
      *
      * @param  pt  array of points
      */
-    public void importPoints(Point3Df[] pt) {
+    public void importPoints(Vector3f[] pt) {
         int i;
 
         if (pt.length > 2) {
@@ -903,8 +904,8 @@ public class VOILine extends VOIBase {
     public void moveActivePt(int direction, int xD, int yD) {
 
         if ((lastPoint != NOT_A_POINT) && (this.size() > lastPoint) && (lastPoint >= 0)) {
-            float ptX = ((Point3Df) (elementAt(lastPoint))).x;
-            float ptY = ((Point3Df) (elementAt(lastPoint))).y;
+            float ptX = ((Vector3f) (elementAt(lastPoint))).X;
+            float ptY = ((Vector3f) (elementAt(lastPoint))).Y;
 
             switch (direction) {
 
@@ -929,8 +930,8 @@ public class VOILine extends VOIBase {
             }
 
             if ((ptX >= 0) && (ptX < xD) && (ptY >= 0) && (ptY < yD)) {
-                ((Point3Df) (elementAt(lastPoint))).x = ptX;
-                ((Point3Df) (elementAt(lastPoint))).y = ptY;
+                ((Vector3f) (elementAt(lastPoint))).X = ptX;
+                ((Vector3f) (elementAt(lastPoint))).Y = ptY;
             }
         }
     }
@@ -942,7 +943,7 @@ public class VOILine extends VOIBase {
      * @param  newEndPtY  y coordinate
      */
     public void movePt(int newEndPtX, int newEndPtY) {
-        replaceElement(newEndPtX, newEndPtY, ((Point3Df) (elementAt(nearPoint))).z);
+        replaceElement(newEndPtX, newEndPtY, ((Vector3f) (elementAt(nearPoint))).Z);
     }
 
     /**
@@ -1016,8 +1017,8 @@ public class VOILine extends VOIBase {
         int xC, yC;
         float dist, minDistance = 100000;
         nearPoint = NOT_A_POINT;
-        xC = Math.round(((Point3Df) (elementAt(0))).x * zoom * resolutionX);
-        yC = Math.round(((Point3Df) (elementAt(0))).y * zoom * resolutionY);
+        xC = Math.round(((Vector3f) (elementAt(0))).X * zoom * resolutionX);
+        yC = Math.round(((Vector3f) (elementAt(0))).Y * zoom * resolutionY);
         dist = (float) MipavMath.distance(testPtX, xC, testPtY, yC);
 
         if ((dist < 3) && (dist < minDistance)) {
@@ -1025,8 +1026,8 @@ public class VOILine extends VOIBase {
             nearPoint = 0;
         }
 
-        xC = Math.round(((Point3Df) (elementAt(1))).x * zoom * resolutionX);
-        yC = Math.round(((Point3Df) (elementAt(1))).y * zoom * resolutionY);
+        xC = Math.round(((Vector3f) (elementAt(1))).X * zoom * resolutionX);
+        yC = Math.round(((Vector3f) (elementAt(1))).Y * zoom * resolutionY);
         dist = (float) MipavMath.distance(testPtX, xC, testPtY, yC);
 
         if ((dist < 3) && (dist < minDistance)) {
@@ -1062,8 +1063,8 @@ public class VOILine extends VOIBase {
         int i;
 
         for (i = 0; i < 2; i++) {
-            ((Point3Df) (elementAt(i))).x += xT;
-            ((Point3Df) (elementAt(i))).y += yT;
+            ((Vector3f) (elementAt(i))).X += xT;
+            ((Vector3f) (elementAt(i))).Y += yT;
         }
     }
 

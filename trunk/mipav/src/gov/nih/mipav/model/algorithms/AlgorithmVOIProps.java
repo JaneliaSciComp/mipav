@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -736,14 +737,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         double totalMajorAxis = 0;
         double totalMinorAxis = 0;
         int nVox = 0, totalNVox = 0;
-        Point3Df totalC = new Point3Df(0, 0, 0); // geometric center
+        Vector3f totalC = new Vector3f(0, 0, 0); // geometric center
         float[] imgBuffer;
         float[] tmpPAxis = null;
         float[] tmpEcc = null;
         float[] tmpMajorAxis = null;
         float[] tmpMinorAxis = null;
         double totalPerimeter = 0;
-        Point3Df gCenter;
+        Vector3f gCenter;
         String comStr;
         int x;
         int y;
@@ -825,17 +826,17 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                              nf.format(tmpMinorAxis[0]));
 
                     gCenter = ((VOIContour) (contours[q].elementAt(r))).getGeometricCenter();
-                    z = (int)Math.round(gCenter.z);
-                    gCenter.x *= srcImage.getFileInfo(0).getResolutions()[0];
-                    gCenter.y *= srcImage.getFileInfo(0).getResolutions()[1];
+                    z = (int)Math.round(gCenter.Z);
+                    gCenter.X *= srcImage.getFileInfo(0).getResolutions()[0];
+                    gCenter.Y *= srcImage.getFileInfo(0).getResolutions()[1];
 
                     if (srcImage.getNDims() > 2) {
-                        gCenter.z *= srcImage.getFileInfo(0).getResolutions()[2];
+                        gCenter.Z *= srcImage.getFileInfo(0).getResolutions()[2];
                     }
 
 
-                    comStr = nf.format(gCenter.x) + "\t" + nf.format(gCenter.y) + "\t" +
-                                    nf.format(gCenter.z);
+                    comStr = nf.format(gCenter.X) + "\t" + nf.format(gCenter.Y) + "\t" +
+                                    nf.format(gCenter.Z);
                     statProperty.setProperty(VOIStatisticList.geometricCenterDescription + "0;" + r, comStr);
 
 
@@ -1205,10 +1206,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.majorAxisDescription + "Total", nf.format(totalMajorAxis));
                 statProperty.setProperty(VOIStatisticList.minorAxisDescription + "Total", nf.format(totalMinorAxis));
 
-                totalC.x *= srcImage.getFileInfo(0).getResolutions()[0];
-                totalC.y *= srcImage.getFileInfo(0).getResolutions()[1];
+                totalC.X *= srcImage.getFileInfo(0).getResolutions()[0];
+                totalC.Y *= srcImage.getFileInfo(0).getResolutions()[1];
 
-                comStr = nf.format(totalC.x) + "\t" + nf.format(totalC.y);
+                comStr = nf.format(totalC.X) + "\t" + nf.format(totalC.Y);
 
                 statProperty.setProperty(VOIStatisticList.geometricCenterDescription + "Total", comStr);
                 statProperty.setProperty(VOIStatisticList.areaDescription + "Total", nf.format(totalArea));
@@ -1339,12 +1340,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             statProperty.setProperty(VOIStatisticList.majorAxisDescription + "0;", nf.format(tmpMajorAxis[0]));
             statProperty.setProperty(VOIStatisticList.minorAxisDescription + "0;", nf.format(tmpMinorAxis[0]));
 
-            Point3Df selectedCOM = selectedVOI.getGeometricCenter();
+            Vector3f selectedCOM = selectedVOI.getGeometricCenter();
 
-            selectedCOM.x *= srcImage.getFileInfo(0).getResolutions()[0];
-            selectedCOM.y *= srcImage.getFileInfo(0).getResolutions()[1];
+            selectedCOM.X *= srcImage.getFileInfo(0).getResolutions()[0];
+            selectedCOM.Y *= srcImage.getFileInfo(0).getResolutions()[1];
 
-            comStr = nf.format(selectedCOM.x) + "\t" + nf.format(selectedCOM.y);
+            comStr = nf.format(selectedCOM.X) + "\t" + nf.format(selectedCOM.Y);
             statProperty.setProperty(VOIStatisticList.geometricCenterDescription + "0;", comStr);
 
             statProperty.setProperty(VOIStatisticList.axisDescription, nf.format(tmpPAxis[0]));
@@ -1677,7 +1678,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         double totalMajorAxis = 0;
         double totalMinorAxis = 0;
         int nVox = 0, totalNVox = 0;
-        Point3Df totalC = new Point3Df(0, 0, 0);
+        Vector3f totalC = new Vector3f(0, 0, 0);
         float[] imgBuffer;
         float[] tmpPAxis = null;
         float[] tmpEcc = null;
@@ -1793,16 +1794,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statProperty.setProperty(VOIStatisticList.majorAxisDescription + end, nf.format(tmpMajorAxis[0]));
                     statProperty.setProperty(VOIStatisticList.minorAxisDescription + end, nf.format(tmpMinorAxis[0]));
 
-                    Point3Df gCenter = ((VOIContour) (contours[q].elementAt(r))).getGeometricCenter();
-                    gCenter.x *= srcImage.getFileInfo(0).getResolutions()[0];
-                    gCenter.y *= srcImage.getFileInfo(0).getResolutions()[1];
+                    Vector3f gCenter = ((VOIContour) (contours[q].elementAt(r))).getGeometricCenter();
+                    gCenter.X *= srcImage.getFileInfo(0).getResolutions()[0];
+                    gCenter.Y *= srcImage.getFileInfo(0).getResolutions()[1];
 
                     if (srcImage.getNDims() > 2) {
-                        gCenter.z *= srcImage.getFileInfo(0).getResolutions()[2];
+                        gCenter.Z *= srcImage.getFileInfo(0).getResolutions()[2];
                     }
 
-                    String comStr = nf.format(gCenter.x) + "\t" + nf.format(gCenter.y) + "\t" +
-                                    nf.format(gCenter.z);
+                    String comStr = nf.format(gCenter.X) + "\t" + nf.format(gCenter.Y) + "\t" +
+                                    nf.format(gCenter.Z);
 
                     statProperty.setProperty(VOIStatisticList.geometricCenterDescription + end, comStr);
 
@@ -1844,20 +1845,20 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         ((VOIContour) (contours[q].elementAt(r))).setActive(false);
                     }
 
-                    Point3Df[] pts = selectedVOI.maxWidth();
+                    Vector3f[] pts = selectedVOI.maxWidth();
 
                     statProperty.setProperty(VOIStatisticList.maxWidthDescription + end,
-                                             nf.format(Math.sqrt(((pts[1].x - pts[0].x) *
+                                             nf.format(Math.sqrt(((pts[1].X - pts[0].X) *
                                                                       fileInfo[q].getResolutions()[0] *
-                                                                      (pts[1].x - pts[0].x) *
+                                                                      (pts[1].X - pts[0].X) *
                                                                       fileInfo[q].getResolutions()[0]) +
-                                                                 ((pts[1].y - pts[0].y) *
+                                                                 ((pts[1].Y - pts[0].Y) *
                                                                       fileInfo[q].getResolutions()[1] *
-                                                                      (pts[1].y - pts[0].y) *
+                                                                      (pts[1].Y - pts[0].Y) *
                                                                       fileInfo[q].getResolutions()[1]) +
-                                                                 ((pts[1].z - pts[0].z) *
+                                                                 ((pts[1].Z - pts[0].Z) *
                                                                       fileInfo[q].getResolutions()[2] *
-                                                                      (pts[1].z - pts[0].z) *
+                                                                      (pts[1].Z - pts[0].Z) *
                                                                       fileInfo[q].getResolutions()[2]))));
 
                     if (srcImage.isColorImage()) {
@@ -2203,14 +2204,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             if (showTotals == true) {
 
-                totalC.x *= srcImage.getFileInfo(0).getResolutions()[0];
-                totalC.y *= srcImage.getFileInfo(0).getResolutions()[1];
+                totalC.X *= srcImage.getFileInfo(0).getResolutions()[0];
+                totalC.Y *= srcImage.getFileInfo(0).getResolutions()[1];
 
                 if (srcImage.getNDims() > 2) {
-                    totalC.z *= srcImage.getFileInfo(0).getResolutions()[2];
+                    totalC.Z *= srcImage.getFileInfo(0).getResolutions()[2];
                 }
 
-                String comStr = nf.format(totalC.x) + "\t" + nf.format(totalC.y) + "\t" + nf.format(totalC.z);
+                String comStr = nf.format(totalC.X) + "\t" + nf.format(totalC.Y) + "\t" + nf.format(totalC.Z);
 
                 statProperty.setProperty(VOIStatisticList.axisDescription + "Total", nf.format(totalAxis));
                 statProperty.setProperty(VOIStatisticList.eccentricityDescription + "Total", nf.format(totalEcc));
@@ -2357,16 +2358,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             statProperty.setProperty(VOIStatisticList.majorAxisDescription, nf.format(tmpMajorAxis[0]));
             statProperty.setProperty(VOIStatisticList.minorAxisDescription, nf.format(tmpMinorAxis[0]));
 
-            Point3Df selectedCOM = selectedVOI.getGeometricCenter();
-            selectedCOM.x *= srcImage.getFileInfo(0).getResolutions()[0];
-            selectedCOM.y *= srcImage.getFileInfo(0).getResolutions()[1];
+            Vector3f selectedCOM = selectedVOI.getGeometricCenter();
+            selectedCOM.X *= srcImage.getFileInfo(0).getResolutions()[0];
+            selectedCOM.Y *= srcImage.getFileInfo(0).getResolutions()[1];
 
             if (srcImage.getNDims() > 2) {
-                selectedCOM.z *= srcImage.getFileInfo(0).getResolutions()[2];
+                selectedCOM.Z *= srcImage.getFileInfo(0).getResolutions()[2];
             }
 
-            String comStr = nf.format(selectedCOM.x) + "\t" + nf.format(selectedCOM.y) + "\t" +
-                            nf.format(selectedCOM.z);
+            String comStr = nf.format(selectedCOM.X) + "\t" + nf.format(selectedCOM.Y) + "\t" +
+                            nf.format(selectedCOM.Z);
 
             statProperty.setProperty(VOIStatisticList.geometricCenterDescription, comStr);
 

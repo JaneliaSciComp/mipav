@@ -1,10 +1,10 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.Point3Dd;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.FileUtil;
 import junit.framework.Assert;
@@ -54,7 +54,7 @@ public class AlgorithmPowellOpt3DTest extends TestCase {
     private int maxIter = 4;
     private int bracketBound = 10;
     private int interpolation = 0;
-    private Point3Dd cog;
+    private Vector3f cog;
     
     private TransMatrix toOrigin;
     private TransMatrix fromOrigin;

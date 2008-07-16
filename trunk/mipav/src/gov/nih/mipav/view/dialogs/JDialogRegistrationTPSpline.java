@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.*;
@@ -225,10 +226,10 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
 
         int nPtsA = 0; // = baseImage.getVOIs().size();
         int nPtsB = 0; // = matchImage.getVOIs().size()
-        Point3Df[] tmpptA = null;
-        Point3Df[] tmpptB = null;
-        Point3Df[] ptA = null; // new Point3Df[nPtsA];
-        Point3Df[] ptB = null; // new Point3Df[nPtsB];
+        Vector3f[] tmpptA = null;
+        Vector3f[] tmpptB = null;
+        Vector3f[] ptA = null; // new Vector3f[nPtsA];
+        Vector3f[] ptB = null; // new Vector3f[nPtsB];
         int i, s;
         int ptNum = 0;
         Vector[] curvesB;
@@ -252,8 +253,8 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
             Preferences.debug("nPtsB = " + nPtsB);
 
             try {
-                ptA = new Point3Df[nPtsA];
-                ptB = new Point3Df[nPtsB];
+                ptA = new Vector3f[nPtsA];
+                ptB = new Vector3f[nPtsB];
             } catch (OutOfMemoryError error) {
                 ptA = null;
                 ptB = null;
@@ -287,7 +288,7 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
 
             for (i = 0; (i < ptA.length) && coplanar; i++) {
 
-                if (ptA[i].z != ptB[i].z) {
+                if (ptA[i].Z != ptB[i].Z) {
                     coplanar = false;
                 }
             }
@@ -302,8 +303,8 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
             Preferences.debug("nPtsB = " + nPtsB);
 
             try {
-                ptA = new Point3Df[nPtsA];
-                ptB = new Point3Df[nPtsB];
+                ptA = new Vector3f[nPtsA];
+                ptB = new Vector3f[nPtsB];
             } catch (OutOfMemoryError error) {
                 ptA = null;
                 ptB = null;
@@ -350,13 +351,13 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
             }
 
             for (i = 0; i < nPtsA; i++) {
-                xSource[i] = ptA[i].x;
-                ySource[i] = ptA[i].y;
+                xSource[i] = ptA[i].X;
+                ySource[i] = ptA[i].Y;
             }
 
             for (i = 0; i < nPtsB; i++) {
-                xTar[i] = ptB[i].x;
-                yTar[i] = ptB[i].y;
+                xTar[i] = ptB[i].X;
+                yTar[i] = ptB[i].Y;
             }
 
             // 0.0f for no smoothing, with smoothing interpolation is not exact
@@ -399,15 +400,15 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
             }
 
             for (i = 0; i < nPtsA; i++) {
-                xSource[i] = ptA[i].x;
-                ySource[i] = ptA[i].y;
-                zSource[i] = ptA[i].z;
+                xSource[i] = ptA[i].X;
+                ySource[i] = ptA[i].Y;
+                zSource[i] = ptA[i].Z;
             }
 
             for (i = 0; i < nPtsB; i++) {
-                xTar[i] = ptB[i].x;
-                yTar[i] = ptB[i].y;
-                zTar[i] = ptB[i].z;
+                xTar[i] = ptB[i].X;
+                yTar[i] = ptB[i].Y;
+                zTar[i] = ptB[i].Z;
             }
 
             // 0.0f for no smoothing, with smoothing interpolation is not exact

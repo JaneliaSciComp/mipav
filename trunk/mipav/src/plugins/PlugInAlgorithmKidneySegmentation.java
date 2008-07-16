@@ -1,3 +1,4 @@
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -515,18 +516,18 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         double t;
         double xp;
         double yp;
-        Point3Df[] ptArray;
+        Vector3f[] ptArray;
         VOI VOIEllipse;
         VOI spineVOI;
-        Point3Df spinePt;
+        Vector3f spinePt;
         double xLKidCen;
         double xRKidCen;
         double yLKidCen;
         double yRKidCen;
         double costh;
         double sinth;
-        Point3Df[] ptArrayL;
-        Point3Df[] ptArrayR;
+        Vector3f[] ptArrayL;
+        Vector3f[] ptArrayR;
         double aKid;
         double bKid;
         double cosL;
@@ -1040,15 +1041,15 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         a = majorAxis / 2.0;
         b = minorAxis / 2.0;
 
-        /*ptArray = new Point3Df[360];
+        /*ptArray = new Vector3f[360];
          * for (i = 0; i < 360; i++) { t = i*(Math.PI/180.0); xp = a * Math.cos(t); yp = b * Math.sin(t); ptArray[i] =
-         * new Point3Df(); ptArray[i].x = (float)(m10 + costh*xp + sinth*yp); ptArray[i].y = (float)(m01 - sinth*xp +
+         * new Vector3f(); ptArray[i].x = (float)(m10 + costh*xp + sinth*yp); ptArray[i].y = (float)(m01 - sinth*xp +
          * costh*yp); ptArray[i].z = middleSlice; } VOIEllipse = new VOI((short)99, "ellipse", zDim, VOI.CONTOUR,
          * -1.0f); VOIEllipse.importCurve(ptArray, middleSlice);destImage.getVOIs().addVOI(VOIEllipse); */
         // Locate the spine at (0.5*majorAxis, 0.56*minorAxis) so the spine is on the minor axis. The minor axis goes
         // from (x',y') = (0,b) to (0,-b) (x,y) goes from (m10 + sin(theta)*b, m01 + cos(theta)*b) to (m10 -
         // sin(theta)*b, m01  - cos(theta)*b)
-        /*spinePt = new Point3Df();
+        /*spinePt = new Vector3f();
          * spinePt.x = (float)(m10 + 0.12*sinth*b); spinePt.y = (float)(m01 + 0.12*costh*b); spinePt.z = middleSlice;
          * spineVOI = new VOI((short)100, "spine", zDim, VOI.POINT, -1.0f); spineVOI.importPoint(spinePt,
          * middleSlice);destImage.getVOIs().addVOI(spineVOI); */
@@ -1071,21 +1072,21 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         sinL = Math.sin(theta + (Math.PI / 3.0));
         cosR = Math.cos(theta - (Math.PI / 3.0));
         sinR = Math.sin(theta - (Math.PI / 3.0));
-        ptArrayL = new Point3Df[360];
-        ptArrayR = new Point3Df[360];
+        ptArrayL = new Vector3f[360];
+        ptArrayR = new Vector3f[360];
 
         for (i = 0; i < 360; i++) {
             t = i * (Math.PI / 180.0);
             xp = aKid * Math.cos(t);
             yp = bKid * Math.sin(t);
-            ptArrayL[i] = new Point3Df();
-            ptArrayL[i].x = (float) (xLKidCen + (cosL * xp) + (sinL * yp));
-            ptArrayL[i].y = (float) (yLKidCen - (sinL * xp) + (cosL * yp));
-            ptArrayL[i].z = 0;
-            ptArrayR[i] = new Point3Df();
-            ptArrayR[i].x = (float) (xRKidCen + (cosR * xp) + (sinR * yp));
-            ptArrayR[i].y = (float) (yRKidCen - (sinR * xp) + (cosR * yp));
-            ptArrayR[i].z = 0;
+            ptArrayL[i] = new Vector3f();
+            ptArrayL[i].X = (float) (xLKidCen + (cosL * xp) + (sinL * yp));
+            ptArrayL[i].Y = (float) (yLKidCen - (sinL * xp) + (cosL * yp));
+            ptArrayL[i].Z = 0;
+            ptArrayR[i] = new Vector3f();
+            ptArrayR[i].X = (float) (xRKidCen + (cosR * xp) + (sinR * yp));
+            ptArrayR[i].Y = (float) (yRKidCen - (sinR * xp) + (cosR * yp));
+            ptArrayR[i].Z = 0;
         }
 
         VOIEllipseL = new VOI((short) 101, "ellipseL", 1, VOI.CONTOUR, -1.0f);
@@ -1154,8 +1155,8 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
 
 
         // Find the x center of mass of each of the 2 drawn curves
-        xcen1 = ((VOIContour) (curves[zc].elementAt(0))).getGeometricCenter().x;
-        xcen2 = ((VOIContour) (curves[zc].elementAt(1))).getGeometricCenter().x;
+        xcen1 = ((VOIContour) (curves[zc].elementAt(0))).getGeometricCenter().X;
+        xcen2 = ((VOIContour) (curves[zc].elementAt(1))).getGeometricCenter().X;
         contourVOIL = new VOI((short) 10, "contourL", zDim, VOI.CONTOUR, -1.0f);
         contourVOIR = new VOI((short) 11, "contourR", zDim, VOI.CONTOUR, -1.0f);
 
@@ -1860,8 +1861,8 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         }
 
         // Find the x center of mass of each of the 2 drawn curves
-        xcen1 = ((VOIContour) (curves[z].elementAt(0))).getGeometricCenter().x;
-        xcen2 = ((VOIContour) (curves[z].elementAt(1))).getGeometricCenter().x;
+        xcen1 = ((VOIContour) (curves[z].elementAt(0))).getGeometricCenter().X;
+        xcen2 = ((VOIContour) (curves[z].elementAt(1))).getGeometricCenter().X;
 
         contourVOI.setActive(true);
         algoVOIProps = new AlgorithmVOIProps(srcImage, AlgorithmVOIProps.PROCESS_PER_VOI,
@@ -2131,7 +2132,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             num2 = 0;
 
             for (i = 0; i < nCurves; i++) {
-                xcen = ((VOIContour) (curves2[z].elementAt(i))).getGeometricCenter().x;
+                xcen = ((VOIContour) (curves2[z].elementAt(i))).getGeometricCenter().X;
 
                 if (Math.abs(xcen - xcen1) < Math.abs(xcen - xcen2)) {
                     setMem[i] = 1;

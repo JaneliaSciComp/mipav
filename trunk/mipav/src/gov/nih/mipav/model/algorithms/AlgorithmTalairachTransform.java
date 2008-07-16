@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -572,7 +573,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
 
         // debug: UI.setGlobalDataText("\n-- "+transformType+" --\n");
 
-        Point3Df pt = new Point3Df();
+        Vector3f pt = new Vector3f();
         n = 0;
         mod = (nrx * nry * nrz) / 100;
 
@@ -630,23 +631,23 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                     }
 
                     if (interpolation == TRILINEAR) {
-                        computeTrilinearImage(img, pt.x, pt.y, pt.z, result, x, y, z);
+                        computeTrilinearImage(img, pt.X, pt.Y, pt.Z, result, x, y, z);
                     } else if (interpolation == NEAREST_NEIGHBOR) {
-                        computeNearestImage(img, pt.x, pt.y, pt.z, result, x, y, z);
+                        computeNearestImage(img, pt.X, pt.Y, pt.Z, result, x, y, z);
                     } else if ((interpolation == BSPLINE3) || (interpolation == BSPLINE4)) {
-                        computeBSplineImage(img, pt.x, pt.y, pt.z, result, x, y, z);
+                        computeBSplineImage(img, pt.X, pt.Y, pt.Z, result, x, y, z);
                     } // else if ((interpolation == BSPLINE3) || (interpolation == BSPLINE4))
                     else if (interpolation == CUBIC_LAGRANGIAN) {
-                        computeCubicLagrangian(img, pt.x, pt.y, pt.z, result, x, y, z);
+                        computeCubicLagrangian(img, pt.X, pt.Y, pt.Z, result, x, y, z);
                     } // else if (interpolation == CUBIC_LAGRANGIAN)
                     else if (interpolation == QUINTIC_LAGRANGIAN) {
-                        computeQuinticLagrangian(img, pt.x, pt.y, pt.z, result, x, y, z);
+                        computeQuinticLagrangian(img, pt.X, pt.Y, pt.Z, result, x, y, z);
                     } // else if (interpolation == QUINTIC_LAGRANGIAN)
                     else if (interpolation == HEPTIC_LAGRANGIAN) {
-                        computeHepticLagrangian(img, pt.x, pt.y, pt.z, result, x, y, z);
+                        computeHepticLagrangian(img, pt.X, pt.Y, pt.Z, result, x, y, z);
                     } // else if (interpolation == HEPTIC_LAGRANGIAN)
                     else if (interpolation == WSINC) {
-                        computeWSincImage(img, pt.x, pt.y, pt.z, result, x, y, z);
+                        computeWSincImage(img, pt.X, pt.Y, pt.Z, result, x, y, z);
                     } // else if (interpolation == WSINC)
 
                 }
@@ -742,9 +743,9 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                                     tInfo.origToTlrc(x, y, z, pt);
                                 }
 
-                                xi = Math.round(pt.x);
-                                yi = Math.round(pt.y);
-                                zi = Math.round(pt.z);
+                                xi = Math.round(pt.X);
+                                yi = Math.round(pt.Y);
+                                zi = Math.round(pt.Z);
 
                                 if ((xi > 0) && (xi < (nix - 1)) && (yi > 0) && (yi < (niy - 1)) && (zi > 0) &&
                                         (zi < (niz - 1))) {

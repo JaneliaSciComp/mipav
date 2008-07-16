@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.structures;
 
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.MipavUtil;
@@ -112,8 +113,8 @@ public class VOIText extends VOIBase {
 
         int x, y;
 
-        x = Math.round(((Point3Df) (elementAt(0))).x);
-        y = Math.round(((Point3Df) (elementAt(0))).y);
+        x = Math.round(((Vector3f) (elementAt(0))).X);
+        y = Math.round(((Vector3f) (elementAt(0))).Y);
         
         // the width tells us the width of the font as it has been drawn on screen (not the width of the font's
         // unzoomed size)
@@ -147,8 +148,8 @@ public class VOIText extends VOIBase {
     		return false;
     	}
     	
-    	xS = MipavMath.round(((Point3Df) (elementAt(1))).x * zoomX * resolutionX);
-        yS = MipavMath.round(((Point3Df) (elementAt(1))).y * zoomX * resolutionY);
+    	xS = MipavMath.round(((Vector3f) (elementAt(1))).X * zoomX * resolutionX);
+        yS = MipavMath.round(((Vector3f) (elementAt(1))).Y * zoomX * resolutionY);
         
     	float dist;       
         dist = (float) MipavMath.distance(xS, _x, yS, _y);
@@ -187,11 +188,11 @@ public class VOIText extends VOIBase {
 
         int xS, yS, xS2, yS2;
 
-        xS = Math.round(((Point3Df) (elementAt(0))).x * zoomX * resolutionX);
-        yS = Math.round(((Point3Df) (elementAt(0))).y * zoomY * resolutionY);
+        xS = Math.round(((Vector3f) (elementAt(0))).X * zoomX * resolutionX);
+        yS = Math.round(((Vector3f) (elementAt(0))).Y * zoomY * resolutionY);
       
-        xS2 = Math.round(((Point3Df) (elementAt(1))).x * zoomX * resolutionX);
-        yS2 = Math.round(((Point3Df) (elementAt(1))).y * zoomY * resolutionY);
+        xS2 = Math.round(((Vector3f) (elementAt(1))).X * zoomX * resolutionX);
+        yS2 = Math.round(((Vector3f) (elementAt(1))).Y * zoomY * resolutionY);
      
         
         // draw the arrow if useMarker is true
@@ -280,8 +281,8 @@ public class VOIText extends VOIBase {
      *
      * @return  3d point
      */
-    public Point3Df exportPoint() {
-        return (Point3Df) (elementAt(0));
+    public Vector3f exportPoint() {
+        return (Vector3f) (elementAt(0));
     }
 
     /**
@@ -289,7 +290,7 @@ public class VOIText extends VOIBase {
      *
      * @return  DOCUMENT ME!
      */
-    public Point3Df getActivePt() {
+    public Vector3f getActivePt() {
         return null;
     }
 
@@ -304,10 +305,10 @@ public class VOIText extends VOIBase {
      *            dimension
      */
     public void getBounds(float[] x, float[] y, float[] z) {
-        Point3Df pt = exportPoint();
-        x[0] = x[1] = pt.x;
-        y[0] = y[1] = pt.y;
-        z[0] = z[1] = pt.z;
+        Vector3f pt = exportPoint();
+        x[0] = x[1] = pt.X;
+        y[0] = y[1] = pt.Y;
+        z[0] = z[1] = pt.Z;
     }
 
     /**
@@ -361,7 +362,7 @@ public class VOIText extends VOIBase {
      * @return  String formatted location string
      */
     public String getLocationString() {
-        return new String(((Point3Df) (elementAt(0))).x + "," + ((Point3Df) (elementAt(0))).y);
+        return new String(((Vector3f) (elementAt(0))).X + "," + ((Vector3f) (elementAt(0))).Y);
     }
 
     /**
@@ -403,7 +404,7 @@ public class VOIText extends VOIBase {
             this.removeAllElements();
 
             for (i = 0; i < n; i++) {
-                this.addElement(new Point3Df(x[i], y[i], z[i]));
+                this.addElement(new Vector3f(x[i], y[i], z[i]));
             }
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -426,7 +427,7 @@ public class VOIText extends VOIBase {
             this.removeAllElements();
 
             for (i = 0; i < n; i++) {
-                this.addElement(new Point3Df(x[i], y[i], z[i]));
+                this.addElement(new Vector3f(x[i], y[i], z[i]));
             }
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -439,7 +440,7 @@ public class VOIText extends VOIBase {
      *
      * @param  pt  3D point
      */
-    public void importPoint(Point3Df pt) {
+    public void importPoint(Vector3f pt) {
         this.addElement(pt);
         System.err.println("size is: " + this.size());
     }
@@ -449,7 +450,7 @@ public class VOIText extends VOIBase {
      *
      * @param  pt  array of three dimensional points
      */
-    public void importPoints(Point3Df[] pt) {
+    public void importPoints(Vector3f[] pt) {
 
         this.removeAllElements();
 
@@ -475,7 +476,7 @@ public class VOIText extends VOIBase {
      * @param  y  y coordinate
      */
     public void movePt(int x, int y) {
-        replaceElement(x, y, ((Point3Df) (elementAt(nearPoint))).z);
+        replaceElement(x, y, ((Vector3f) (elementAt(nearPoint))).Z);
     }
 
     /**
@@ -490,20 +491,20 @@ public class VOIText extends VOIBase {
      */
     public void moveVOIPoint(int xM, int yM, int zM, int xDim, int yDim, int zDim) {
 
-        Point3Df pt = exportPoint();
+        Vector3f pt = exportPoint();
 
         // removed the bounds checking here because the text
         // should be allowed to be displayed anywhere (not necessary for 1st letter onscreen)
 
-        pt.x = pt.x + xM;
-        pt.y = pt.y + yM;
-        pt.z = pt.z + zM;
+        pt.X = pt.X + xM;
+        pt.Y = pt.Y + yM;
+        pt.Z = pt.Z + zM;
         
         //move the marker point
-      //  Point3Df pt2 = (Point3Df)elementAt(1);
-      //  pt2.x = pt2.x + xM;
-      //  pt2.y = pt2.y + yM;
-      //  pt2.z = pt2.z + zM;     
+      //  Vector3f pt2 = (Vector3f)elementAt(1);
+      //  pt2.X = pt2.X + xM;
+      //  pt2.Y = pt2.Y + yM;
+      //  pt2.Z = pt2.Z + zM;     
     }
     
     /**
@@ -519,10 +520,10 @@ public class VOIText extends VOIBase {
     public void moveMarkerPoint(int xM, int yM, int zM, int xDim, int yDim, int zDim) {
 
         //move the marker point
-        Point3Df pt2 = (Point3Df)elementAt(1);
-        pt2.x = xM;
-        pt2.y = yM;
-       // pt2.z = pt2.z + zM;      
+        Vector3f pt2 = (Vector3f)elementAt(1);
+        pt2.X = xM;
+        pt2.Y = yM;
+       // pt2.Z = pt2.Z + zM;      
         
     }
 
@@ -606,8 +607,8 @@ public class VOIText extends VOIBase {
         int i;
 
         for (i = 0; i < size(); i++) {
-            ((Point3Df) (elementAt(i))).x += xT;
-            ((Point3Df) (elementAt(i))).y += yT;
+            ((Vector3f) (elementAt(i))).X += xT;
+            ((Vector3f) (elementAt(i))).Y += yT;
         }
     }
     

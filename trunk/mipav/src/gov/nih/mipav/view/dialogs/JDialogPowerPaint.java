@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 
@@ -563,17 +564,17 @@ public class JDialogPowerPaint extends JDialogBase
 
             // triplanar image : XY panel
             int slice = image.getTriImageFrame().getAxialComponentSlice();
-            Point3Df patientMousePoint = new Point3Df();
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+            Vector3f patientMousePoint = new Vector3f();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).ScreenToLocal(new Vector3f(mouseEvent.getX(),
                                                                                                         mouseEvent.getY(),
                                                                                                         slice),
                                                                                            patientMousePoint);
 
-            Point3Df pt = new Point3Df();
+            Vector3f pt = new Vector3f();
             MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.AXIAL);
-            xS = (int) pt.x;
-            yS = (int) pt.y;
-            zS = (int) pt.z;
+            xS = (int) pt.X;
+            yS = (int) pt.Y;
+            zS = (int) pt.Z;
 
             int origDir = image.getImageOrientation();
 
@@ -588,17 +589,17 @@ public class JDialogPowerPaint extends JDialogBase
 
             // triplanar image : XZ panel
             int slice = image.getTriImageFrame().getCoronalComponentSlice();
-            Point3Df patientMousePoint = new Point3Df();
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+            Vector3f patientMousePoint = new Vector3f();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).ScreenToLocal(new Vector3f(mouseEvent.getX(),
                                                                                                           mouseEvent.getY(),
                                                                                                           slice),
                                                                                              patientMousePoint);
 
-            Point3Df pt = new Point3Df();
+            Vector3f pt = new Vector3f();
             MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.CORONAL);
-            xS = (int) pt.x;
-            yS = (int) pt.y;
-            zS = (int) pt.z;
+            xS = (int) pt.X;
+            yS = (int) pt.Y;
+            zS = (int) pt.Z;
 
             int origDir = image.getImageOrientation();
 
@@ -613,17 +614,17 @@ public class JDialogPowerPaint extends JDialogBase
 
             // triplanar image : ZY panel
             int slice = image.getTriImageFrame().getSagittalComponentSlice();
-            Point3Df patientMousePoint = new Point3Df();
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+            Vector3f patientMousePoint = new Vector3f();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).ScreenToLocal(new Vector3f(mouseEvent.getX(),
                                                                                                            mouseEvent.getY(),
                                                                                                            slice),
                                                                                               patientMousePoint);
 
-            Point3Df pt = new Point3Df();
+            Vector3f pt = new Vector3f();
             MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.SAGITTAL);
-            xS = (int) pt.x;
-            yS = (int) pt.y;
-            zS = (int) pt.z;
+            xS = (int) pt.X;
+            yS = (int) pt.Y;
+            zS = (int) pt.Z;
 
             int origDir = image.getImageOrientation();
 
@@ -638,17 +639,17 @@ public class JDialogPowerPaint extends JDialogBase
 
             // triplanar image : XY panel
             int slice = image.getTriImageFrame().getAxialComponentSlice();
-            Point3Df patientMousePoint = new Point3Df();
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+            Vector3f patientMousePoint = new Vector3f();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_B).ScreenToLocal(new Vector3f(mouseEvent.getX(),
                                                                                                         mouseEvent.getY(),
                                                                                                         slice),
                                                                                            patientMousePoint);
 
-            Point3Df pt = new Point3Df();
+            Vector3f pt = new Vector3f();
             MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.AXIAL);
-            xS = (int) pt.x;
-            yS = (int) pt.y;
-            zS = (int) pt.z;
+            xS = (int) pt.X;
+            yS = (int) pt.Y;
+            zS = (int) pt.Z;
 
             int origDir = image.getImageOrientation();
 
@@ -663,17 +664,17 @@ public class JDialogPowerPaint extends JDialogBase
 
             // triplanar image : XZ panel
             int slice = image.getTriImageFrame().getCoronalComponentSlice();
-            Point3Df patientMousePoint = new Point3Df();
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+            Vector3f patientMousePoint = new Vector3f();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_B).ScreenToLocal(new Vector3f(mouseEvent.getX(),
                                                                                                           mouseEvent.getY(),
                                                                                                           slice),
                                                                                              patientMousePoint);
 
-            Point3Df pt = new Point3Df();
+            Vector3f pt = new Vector3f();
             MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.CORONAL);
-            xS = (int) pt.x;
-            yS = (int) pt.y;
-            zS = (int) pt.z;
+            xS = (int) pt.X;
+            yS = (int) pt.Y;
+            zS = (int) pt.Z;
 
             int origDir = image.getImageOrientation();
 
@@ -688,17 +689,17 @@ public class JDialogPowerPaint extends JDialogBase
 
             // triplanar image : ZY panel
             int slice = image.getTriImageFrame().getSagittalComponentSlice();
-            Point3Df patientMousePoint = new Point3Df();
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+            Vector3f patientMousePoint = new Vector3f();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_B).ScreenToLocal(new Vector3f(mouseEvent.getX(),
                                                                                                            mouseEvent.getY(),
                                                                                                            slice),
                                                                                               patientMousePoint);
 
-            Point3Df pt = new Point3Df();
+            Vector3f pt = new Vector3f();
             MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.SAGITTAL);
-            xS = (int) pt.x;
-            yS = (int) pt.y;
-            zS = (int) pt.z;
+            xS = (int) pt.X;
+            yS = (int) pt.Y;
+            zS = (int) pt.Z;
 
             int origDir = image.getImageOrientation();
 
@@ -713,17 +714,17 @@ public class JDialogPowerPaint extends JDialogBase
 
             // triplanar image : XY panel
             int slice = image.getTriImageFrame().getAxialComponentSlice();
-            Point3Df patientMousePoint = new Point3Df();
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+            Vector3f patientMousePoint = new Vector3f();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_AB).ScreenToLocal(new Vector3f(mouseEvent.getX(),
                                                                                                         mouseEvent.getY(),
                                                                                                         slice),
                                                                                            patientMousePoint);
 
-            Point3Df pt = new Point3Df();
+            Vector3f pt = new Vector3f();
             MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.AXIAL);
-            xS = (int) pt.x;
-            yS = (int) pt.y;
-            zS = (int) pt.z;
+            xS = (int) pt.X;
+            yS = (int) pt.Y;
+            zS = (int) pt.Z;
 
             int origDir = image.getImageOrientation();
 
@@ -738,17 +739,17 @@ public class JDialogPowerPaint extends JDialogBase
 
             // triplanar image : XZ panel
             int slice = image.getTriImageFrame().getCoronalComponentSlice();
-            Point3Df patientMousePoint = new Point3Df();
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+            Vector3f patientMousePoint = new Vector3f();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).ScreenToLocal(new Vector3f(mouseEvent.getX(),
                                                                                                           mouseEvent.getY(),
                                                                                                           slice),
                                                                                              patientMousePoint);
 
-            Point3Df pt = new Point3Df();
+            Vector3f pt = new Vector3f();
             MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.CORONAL);
-            xS = (int) pt.x;
-            yS = (int) pt.y;
-            zS = (int) pt.z;
+            xS = (int) pt.X;
+            yS = (int) pt.Y;
+            zS = (int) pt.Z;
 
             int origDir = image.getImageOrientation();
 
@@ -763,17 +764,17 @@ public class JDialogPowerPaint extends JDialogBase
 
             // triplanar image : ZY panel
             int slice = image.getTriImageFrame().getSagittalComponentSlice();
-            Point3Df patientMousePoint = new Point3Df();
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+            Vector3f patientMousePoint = new Vector3f();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_AB).ScreenToLocal(new Vector3f(mouseEvent.getX(),
                                                                                                            mouseEvent.getY(),
                                                                                                            slice),
                                                                                               patientMousePoint);
 
-            Point3Df pt = new Point3Df();
+            Vector3f pt = new Vector3f();
             MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.SAGITTAL);
-            xS = (int) pt.x;
-            yS = (int) pt.y;
-            zS = (int) pt.z;
+            xS = (int) pt.X;
+            yS = (int) pt.Y;
+            zS = (int) pt.Z;
 
             int origDir = image.getImageOrientation();
 

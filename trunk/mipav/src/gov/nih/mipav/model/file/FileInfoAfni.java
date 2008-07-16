@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.file;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -139,24 +140,24 @@ public class FileInfoAfni extends FileInfoBase {
     private int AFNIViewType = -1;
 
     /** DOCUMENT ME! */
-    private Point3Df alpha = new Point3Df(0.0f, 0.0f, 0.0f);
+    private Vector3f alpha = new Vector3f(0.0f, 0.0f, 0.0f);
 
     /** arrays of 12 values used for Talairach conversions. */
-    private Point3Df[] alphaArray;
+    private Vector3f[] alphaArray;
 
     /** DOCUMENT ME! */
-    private Point3Df anotherPt = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
+    private Vector3f anotherPt = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                                               Float.POSITIVE_INFINITY);
 
     /** markers used for +ACPC to +tlrc transformation. */
-    private Point3Df anteriorPt = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
+    private Vector3f anteriorPt = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                                                Float.POSITIVE_INFINITY);
 
     /** DOCUMENT ME! */
-    private Point3Df beta = new Point3Df(0.0f, 0.0f, 0.0f);
+    private Vector3f beta = new Vector3f(0.0f, 0.0f, 0.0f);
 
     /** DOCUMENT ME! */
-    private Point3Df[] betaArray;
+    private Vector3f[] betaArray;
 
     /** DOCUMENT ME! */
     private int[] botX;
@@ -174,16 +175,16 @@ public class FileInfoAfni extends FileInfoBase {
     private String datasetName = null;
 
     /** DOCUMENT ME! */
-    private Point3Df firstPt = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
+    private Vector3f firstPt = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
 
     /** DOCUMENT ME! */
     private int funcType = 0;
 
     /** DOCUMENT ME! */
-    private Point3Df gamma = new Point3Df(0.0f, 0.0f, 0.0f);
+    private Vector3f gamma = new Vector3f(0.0f, 0.0f, 0.0f);
 
     /** DOCUMENT ME! */
-    private Point3Df[] gammaArray;
+    private Vector3f[] gammaArray;
 
     /** If planeGap is not -1, then gapArray contains the values at which zero filling gaps are present. */
     private int[] gapArray = null;
@@ -204,11 +205,11 @@ public class FileInfoAfni extends FileInfoBase {
     private String idcodeString = null;
 
     /** DOCUMENT ME! */
-    private Point3Df inferiorEdge = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
+    private Vector3f inferiorEdge = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                                                  Float.POSITIVE_INFINITY);
 
     /** DOCUMENT ME! */
-    private Point3Df inferiorPt = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
+    private Vector3f inferiorPt = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                                                Float.POSITIVE_INFINITY);
 
     /** DOCUMENT ME! */
@@ -221,7 +222,7 @@ public class FileInfoAfni extends FileInfoBase {
     private String label2 = null;
 
     /** DOCUMENT ME! */
-    private Point3Df leftPt = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
+    private Vector3f leftPt = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
 
     /** DOCUMENT ME! */
     private float lowXmm;
@@ -272,15 +273,15 @@ public class FileInfoAfni extends FileInfoBase {
     private boolean origDicom; // true if original is in dicom order
 
     /** DOCUMENT ME! */
-    private Point3Df OriginalPosteriorMargin = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
+    private Vector3f OriginalPosteriorMargin = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                                                             Float.POSITIVE_INFINITY);
 
     /** DOCUMENT ME! */
-    private Point3Df OriginalSuperiorEdge = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
+    private Vector3f OriginalSuperiorEdge = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                                                          Float.POSITIVE_INFINITY);
 
     /** The posterior commisure inferior edge. pcie is the coordinated transformed inferiorEdge */
-    private Point3Df pcie = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
+    private Vector3f pcie = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
 
     /**
      * Used to show a zero filling gap in functional AFNI images -1 if no gap is present, 0 = x gap, 1 = y gap, 2 = z
@@ -289,21 +290,21 @@ public class FileInfoAfni extends FileInfoBase {
     private int planeGap = -1;
 
     /** DOCUMENT ME! */
-    private Point3Df posteriorMargin = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
+    private Vector3f posteriorMargin = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                                                     Float.POSITIVE_INFINITY);
 
     /** DOCUMENT ME! */
-    private Point3Df posteriorPt = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
+    private Vector3f posteriorPt = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                                                 Float.POSITIVE_INFINITY);
 
     /** DOCUMENT ME! */
-    private Point3Df rightPt = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
+    private Vector3f rightPt = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
 
     /** rr is the dicom ordered original image Talairach center location. */
-    private Point3Df rr = new Point3Df(0.0f, 0.0f, 0.0f);
+    private Vector3f rr = new Vector3f(0.0f, 0.0f, 0.0f);
 
     /** DOCUMENT ME! */
-    private Point3Df[] rrArray;
+    private Vector3f[] rrArray;
 
     /** DOCUMENT ME! */
     private int slicesWithTimeOffsets = 0;
@@ -312,15 +313,15 @@ public class FileInfoAfni extends FileInfoBase {
     private float[] statAux = null;
 
     /** markers used for +orig to +ACPC transformation. */
-    private Point3Df superiorEdge = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
+    private Vector3f superiorEdge = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                                                  Float.POSITIVE_INFINITY);
 
     /** DOCUMENT ME! */
-    private Point3Df superiorPt = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
+    private Vector3f superiorPt = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                                                Float.POSITIVE_INFINITY);
 
     /** DOCUMENT ME! */
-    private Point3Df TalairachCenter = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
+    private Vector3f TalairachCenter = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                                                     Float.POSITIVE_INFINITY);
 
     /** If TAXIS_NUMS[1] > 0, then this array gives the time offsets of the */
@@ -347,7 +348,7 @@ public class FileInfoAfni extends FileInfoBase {
     private int[] topZ;
 
     /** DOCUMENT ME! */
-    private Point3Df translation = new Point3Df(0.0f, 0.0f, 0.0f);
+    private Vector3f translation = new Vector3f(0.0f, 0.0f, 0.0f);
 
     /** DOCUMENT ME! */
     private float zAxisOffset;
@@ -934,7 +935,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns alpha
      */
-    public Point3Df getAlpha() {
+    public Vector3f getAlpha() {
         return alpha;
     }
 
@@ -943,7 +944,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns alphaArray
      */
-    public Point3Df[] getAlphaArray() {
+    public Vector3f[] getAlphaArray() {
         return alphaArray;
     }
 
@@ -952,7 +953,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns marker point
      */
-    public Point3Df getAnotherPt() {
+    public Vector3f getAnotherPt() {
         return anotherPt;
     }
 
@@ -961,7 +962,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns marker point
      */
-    public Point3Df getAnteriorPt() {
+    public Vector3f getAnteriorPt() {
         return anteriorPt;
     }
 
@@ -970,7 +971,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns beta
      */
-    public Point3Df getBeta() {
+    public Vector3f getBeta() {
         return beta;
     }
 
@@ -979,7 +980,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns betaArray
      */
-    public Point3Df[] getBetaArray() {
+    public Vector3f[] getBetaArray() {
         return betaArray;
     }
 
@@ -1016,7 +1017,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns marker point
      */
-    public Point3Df getFirstPt() {
+    public Vector3f getFirstPt() {
         return firstPt;
     }
 
@@ -1034,7 +1035,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns gamma
      */
-    public Point3Df getGamma() {
+    public Vector3f getGamma() {
         return gamma;
     }
 
@@ -1043,7 +1044,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns gammaArray
      */
-    public Point3Df[] getGammaArray() {
+    public Vector3f[] getGammaArray() {
         return gammaArray;
     }
 
@@ -1088,7 +1089,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns marker point
      */
-    public Point3Df getInferiorEdge() {
+    public Vector3f getInferiorEdge() {
         return inferiorEdge;
     }
 
@@ -1097,7 +1098,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns marker point
      */
-    public Point3Df getInferiorPt() {
+    public Vector3f getInferiorPt() {
         return inferiorPt;
     }
 
@@ -1106,7 +1107,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns marker point
      */
-    public Point3Df getLeftPt() {
+    public Vector3f getLeftPt() {
         return leftPt;
     }
 
@@ -1161,7 +1162,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns marker point
      */
-    public Point3Df getOriginalPosteriorMargin() {
+    public Vector3f getOriginalPosteriorMargin() {
         return OriginalPosteriorMargin;
     }
 
@@ -1171,7 +1172,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns marker point
      */
-    public Point3Df getOriginalSuperiorEdge() {
+    public Vector3f getOriginalSuperiorEdge() {
         return OriginalSuperiorEdge;
     }
 
@@ -1180,7 +1181,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns marker point
      */
-    public Point3Df getpcie() {
+    public Vector3f getpcie() {
         return pcie;
     }
 
@@ -1198,7 +1199,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns marker point
      */
-    public Point3Df getPosteriorMargin() {
+    public Vector3f getPosteriorMargin() {
         return posteriorMargin;
     }
 
@@ -1207,7 +1208,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns marker point
      */
-    public Point3Df getPosteriorPt() {
+    public Vector3f getPosteriorPt() {
         return posteriorPt;
     }
 
@@ -1216,7 +1217,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns marker point
      */
-    public Point3Df getRightPt() {
+    public Vector3f getRightPt() {
         return rightPt;
     }
 
@@ -1225,7 +1226,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns rr
      */
-    public Point3Df getrr() {
+    public Vector3f getrr() {
         return rr;
     }
 
@@ -1234,7 +1235,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns rrArray
      */
-    public Point3Df[] getrrArray() {
+    public Vector3f[] getrrArray() {
         return rrArray;
     }
 
@@ -1252,7 +1253,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns marker point
      */
-    public Point3Df getSuperiorEdge() {
+    public Vector3f getSuperiorEdge() {
         return superiorEdge;
     }
 
@@ -1261,7 +1262,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns marker point
      */
-    public Point3Df getSuperiorPt() {
+    public Vector3f getSuperiorPt() {
         return superiorPt;
     }
 
@@ -1270,7 +1271,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns TalairachCenter
      */
-    public Point3Df getTalairachCenter() {
+    public Vector3f getTalairachCenter() {
         return TalairachCenter;
     }
 
@@ -1324,7 +1325,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @return  returns translation
      */
-    public Point3Df getTranslation() {
+    public Vector3f getTranslation() {
         return translation;
     }
 
@@ -1378,7 +1379,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the alpha point coordinates
      */
-    public void setAlpha(Point3Df pt) {
+    public void setAlpha(Vector3f pt) {
         alpha = pt;
     }
 
@@ -1387,7 +1388,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the array of alpha point coordinates
      */
-    public void setAlphaArray(Point3Df[] pt) {
+    public void setAlphaArray(Vector3f[] pt) {
         alphaArray = pt;
     }
 
@@ -1396,7 +1397,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the marker point coordinates
      */
-    public void setAnotherPt(Point3Df pt) {
+    public void setAnotherPt(Vector3f pt) {
         anotherPt = pt;
     }
 
@@ -1405,7 +1406,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the marker point coordinates
      */
-    public void setAnteriorPt(Point3Df pt) {
+    public void setAnteriorPt(Vector3f pt) {
         anteriorPt = pt;
     }
 
@@ -1414,7 +1415,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  -the beta point coordinates
      */
-    public void setBeta(Point3Df pt) {
+    public void setBeta(Vector3f pt) {
         beta = pt;
     }
 
@@ -1423,7 +1424,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  -the array of beta point coordinates
      */
-    public void setBetaArray(Point3Df[] pt) {
+    public void setBetaArray(Vector3f[] pt) {
         betaArray = pt;
     }
 
@@ -1478,7 +1479,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the marker point coordinates
      */
-    public void setFirstPt(Point3Df pt) {
+    public void setFirstPt(Vector3f pt) {
         firstPt = pt;
     }
 
@@ -1496,7 +1497,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  -the gamma point coordinates
      */
-    public void setGamma(Point3Df pt) {
+    public void setGamma(Vector3f pt) {
         gamma = pt;
     }
 
@@ -1505,7 +1506,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the array of gamma point coordinates
      */
-    public void setGammaArray(Point3Df[] pt) {
+    public void setGammaArray(Vector3f[] pt) {
         gammaArray = pt;
     }
 
@@ -1568,7 +1569,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  the marker point coordinates
      */
-    public void setInferiorEdge(Point3Df pt) {
+    public void setInferiorEdge(Vector3f pt) {
         inferiorEdge = pt;
     }
 
@@ -1577,7 +1578,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  the marker point coordinates
      */
-    public void setInferiorPt(Point3Df pt) {
+    public void setInferiorPt(Vector3f pt) {
         inferiorPt = pt;
     }
 
@@ -1604,7 +1605,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  the marker point coordinates
      */
-    public void setLeftPt(Point3Df pt) {
+    public void setLeftPt(Vector3f pt) {
         leftPt = pt;
     }
 
@@ -1766,7 +1767,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  the marker point coordinates
      */
-    public void setOriginalPosteriorMargin(Point3Df pt) {
+    public void setOriginalPosteriorMargin(Vector3f pt) {
         OriginalPosteriorMargin = pt;
     }
 
@@ -1776,7 +1777,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the marker point coordinates
      */
-    public void setOriginalSuperiorEdge(Point3Df pt) {
+    public void setOriginalSuperiorEdge(Vector3f pt) {
         OriginalSuperiorEdge = pt;
     }
 
@@ -1785,7 +1786,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  the marker point coordinates
      */
-    public void setpcie(Point3Df pt) {
+    public void setpcie(Vector3f pt) {
         pcie = pt;
     }
 
@@ -1803,7 +1804,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  the marker point coordinates
      */
-    public void setPosteriorMargin(Point3Df pt) {
+    public void setPosteriorMargin(Vector3f pt) {
         posteriorMargin = pt;
     }
 
@@ -1812,7 +1813,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the marker point coordinates
      */
-    public void setPosteriorPt(Point3Df pt) {
+    public void setPosteriorPt(Vector3f pt) {
         posteriorPt = pt;
     }
 
@@ -1821,7 +1822,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the marker point coordinates
      */
-    public void setRightPt(Point3Df pt) {
+    public void setRightPt(Vector3f pt) {
         rightPt = pt;
     }
 
@@ -1830,7 +1831,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the rr point coordinates
      */
-    public void setrr(Point3Df pt) {
+    public void setrr(Vector3f pt) {
         rr = pt;
     }
 
@@ -1839,7 +1840,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the array of rr point coordinates
      */
-    public void setrrArray(Point3Df[] pt) {
+    public void setrrArray(Vector3f[] pt) {
         rrArray = pt;
     }
 
@@ -1868,7 +1869,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the marker point coordinates
      */
-    public void setSuperiorEdge(Point3Df pt) {
+    public void setSuperiorEdge(Vector3f pt) {
         superiorEdge = pt;
     }
 
@@ -1877,7 +1878,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the marker point coordinates
      */
-    public void setSuperiorPt(Point3Df pt) {
+    public void setSuperiorPt(Vector3f pt) {
         superiorPt = pt;
     }
 
@@ -1886,7 +1887,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the Talairach center coordinates
      */
-    public void setTalairachCenter(Point3Df pt) {
+    public void setTalairachCenter(Vector3f pt) {
         TalairachCenter = pt;
     }
 
@@ -1949,7 +1950,7 @@ public class FileInfoAfni extends FileInfoBase {
      *
      * @param  pt  - the translation point coordinates
      */
-    public void setTranslation(Point3Df pt) {
+    public void setTranslation(Vector3f pt) {
         translation = pt;
     }
 

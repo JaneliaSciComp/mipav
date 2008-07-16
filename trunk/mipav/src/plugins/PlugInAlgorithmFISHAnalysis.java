@@ -1,3 +1,4 @@
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -467,19 +468,19 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
             // UI.setDataText("\n I'm here start");
             boolean flagVOI = false;
             VOI cRGVOIs = allRGVOIs.VOIAt(rgvoisCnt);
-            Point3Df geomCentercRGVOIs = cRGVOIs.getGeometricCenter();
+            Vector3f geomCentercRGVOIs = cRGVOIs.getGeometricCenter();
             int areacRGVOIs = cRGVOIs.area();
             Polygon[] cRGVOIsPoly = cRGVOIs.exportPolygons(0);
             // UI.setDataText("\n Number of polygons in C = " + rgvoisCnt + ", " + cRGVOIsPoly.length);
 
             for (int rgvoisCnt1 = rgvoisCnt + 1; rgvoisCnt1 < allRGVOIs.size(); rgvoisCnt1++) {
                 VOI nRGVOIs = allRGVOIs.VOIAt(rgvoisCnt1);
-                Point3Df centmassnRGVOIs = nRGVOIs.getGeometricCenter();
+                Vector3f centmassnRGVOIs = nRGVOIs.getGeometricCenter();
                 int areanRGVOIs = nRGVOIs.area();
                 Polygon[] nRGVOIsPoly = nRGVOIs.exportPolygons(0);
 
                 // UI.setDataText("\n  Number of polygons in N = "  + rgvoisCnt1 + ", " +  nRGVOIsPoly.length);
-                if (nRGVOIsPoly[0].contains(geomCentercRGVOIs.x, geomCentercRGVOIs.y)) {
+                if (nRGVOIsPoly[0].contains(geomCentercRGVOIs.X, geomCentercRGVOIs.Y)) {
 
                     if (areanRGVOIs < areacRGVOIs) {
                         newallRGVOIs.addElement(cRGVOIs);
@@ -493,7 +494,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
                         // UI.setDataText("\nAdding ie = " + rgvoisCnt1);
                         flagVOI = true;
                     }
-                } else if (cRGVOIsPoly[0].contains(centmassnRGVOIs.x, centmassnRGVOIs.y)) {
+                } else if (cRGVOIsPoly[0].contains(centmassnRGVOIs.X, centmassnRGVOIs.Y)) {
 
                     if (areacRGVOIs < areanRGVOIs) {
                         newallRGVOIs.addElement(nRGVOIs);

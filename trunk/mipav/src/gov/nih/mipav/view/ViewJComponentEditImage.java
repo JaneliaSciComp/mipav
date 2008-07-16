@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 
@@ -560,18 +561,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * 
      * @return An array of strings that represent patient position.
      */
-    public static final String[] getScannerPositionLabels(ModelImage image, Point3Df position) {
+    public static final String[] getScannerPositionLabels(ModelImage image, Vector3f position) {
         DecimalFormat nf = new DecimalFormat("#####0.0##");
-        Point3Df kOut = new Point3Df();
+        Vector3f kOut = new Vector3f();
         if (image.getNDims() < 3) {
             // return null;
         }
         MipavCoordinateSystems.fileToScanner(position, kOut, image);
 
         float[] tCoord = new float[3];
-        tCoord[0] = kOut.x;
-        tCoord[1] = kOut.y;
-        tCoord[2] = kOut.z;
+        tCoord[0] = kOut.X;
+        tCoord[1] = kOut.Y;
+        tCoord[2] = kOut.Z;
 
         String[] labels = {"R-L: ", "A-P: ", "I-S: "};
 
@@ -4370,7 +4371,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             if ( (imageActive.getOrigin()[0] != 0) || (imageActive.getOrigin()[1] != 0)
                     || ( (imageActive.getNDims() > 2) && (imageActive.getOrigin()[2] != 0))) {
-                String[] values = getScannerPositionLabels(imageActive, new Point3Df(xS, yS, slice));
+                String[] values = getScannerPositionLabels(imageActive, new Vector3f(xS, yS, slice));
 
                 if (values != null) {
 

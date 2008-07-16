@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -206,7 +207,7 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
 
         double angleInc = 0;
 
-        Point3Df centerPt = image.getVOIs().VOIAt(outerVOIIndex).getGeometricCenter();
+        Vector3f centerPt = image.getVOIs().VOIAt(outerVOIIndex).getGeometricCenter();
 
         float[] x;
         float[] y;
@@ -217,8 +218,8 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
         int[] xPtsOuter;
         int[] yPtsOuter;
 
-        int cX = (int) centerPt.x;
-        int cY = (int) centerPt.y;
+        int cX = (int) centerPt.X;
+        int cY = (int) centerPt.Y;
         int x2 = 0, y2 = 0;
 
         int dimX = image.getExtents()[0];
@@ -239,7 +240,7 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
 
         double angle = 0;
 
-        Point3Df secondPt = new Point3Df();
+        Vector3f secondPt = new Vector3f();
 
         VOIContour outerContour = (VOIContour)
                                       image.getVOIs().VOIAt(outerVOIIndex).getCurves()[currentSlice].elementAt(0);
@@ -260,7 +261,7 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
 
         boolean foundIntersection = false;
 
-        Point3Df intersectionPt = new Point3Df();
+        Vector3f intersectionPt = new Vector3f();
 
 
         int numPtsInfarction = infarctionContour.size();
@@ -277,50 +278,50 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
 
             // try looking at segment joining last and first pt in inner contour
             foundIntersection = VOICardiology.intersects(centerPt, secondPt,
-                                                         (Point3Df) innerContour.elementAt(numPtsInner - 1),
-                                                         (Point3Df) innerContour.elementAt(0), intersectionPt);
+                                                         (Vector3f) innerContour.elementAt(numPtsInner - 1),
+                                                         (Vector3f) innerContour.elementAt(0), intersectionPt);
 
             for (int j = 0; !foundIntersection && (j < (numPtsInner - 1)); j++) {
 
-                foundIntersection = VOICardiology.intersects(centerPt, secondPt, (Point3Df) innerContour.elementAt(j),
-                                                             (Point3Df) innerContour.elementAt(j + 1), intersectionPt);
+                foundIntersection = VOICardiology.intersects(centerPt, secondPt, (Vector3f) innerContour.elementAt(j),
+                                                             (Vector3f) innerContour.elementAt(j + 1), intersectionPt);
             }
 
             if (!foundIntersection) {
                 System.err.println("Could not find inner intersection for point " + (i + 1) + " for inner contour");
             } else {
-                x[0] = intersectionPt.x;
-                y[0] = intersectionPt.y;
+                x[0] = intersectionPt.X;
+                y[0] = intersectionPt.Y;
                 z[0] = 0;
 
-                xPtsInner[i] = (int) intersectionPt.x;
-                yPtsInner[i] = (int) intersectionPt.y;
-                // innerContour.insertElement( (int)intersectionPt.x, (int)intersectionPt.y, 0 );
+                xPtsInner[i] = (int) intersectionPt.X;
+                yPtsInner[i] = (int) intersectionPt.Y;
+                // innerContour.insertElement( (int)intersectionPt.X, (int)intersectionPt.Y, 0 );
             }
 
             // do the same for the outer contour
 
             // try looking at segment joining last and first pt in inner contour
             foundIntersection = VOICardiology.intersects(centerPt, secondPt,
-                                                         (Point3Df) outerContour.elementAt(numPtsOuter - 1),
-                                                         (Point3Df) outerContour.elementAt(0), intersectionPt);
+                                                         (Vector3f) outerContour.elementAt(numPtsOuter - 1),
+                                                         (Vector3f) outerContour.elementAt(0), intersectionPt);
 
             for (int j = 0; !foundIntersection && (j < (numPtsOuter - 1)); j++) {
 
-                foundIntersection = VOICardiology.intersects(centerPt, secondPt, (Point3Df) outerContour.elementAt(j),
-                                                             (Point3Df) outerContour.elementAt(j + 1), intersectionPt);
+                foundIntersection = VOICardiology.intersects(centerPt, secondPt, (Vector3f) outerContour.elementAt(j),
+                                                             (Vector3f) outerContour.elementAt(j + 1), intersectionPt);
             }
 
             if (!foundIntersection) {
                 System.err.println("Could not find outer intersection for point " + (i + 1) + " for inner contour");
             } else {
-                x[1] = intersectionPt.x;
-                y[1] = intersectionPt.y;
+                x[1] = intersectionPt.X;
+                y[1] = intersectionPt.Y;
                 z[1] = 0;
 
-                xPtsOuter[i] = (int) intersectionPt.x;
-                yPtsOuter[i] = (int) intersectionPt.y;
-                // outerContour.insertElement( (int)intersectionPt.x, (int)intersectionPt.y, 0 );
+                xPtsOuter[i] = (int) intersectionPt.X;
+                yPtsOuter[i] = (int) intersectionPt.Y;
+                // outerContour.insertElement( (int)intersectionPt.X, (int)intersectionPt.Y, 0 );
             }
 
             // now look for any section divider intersections along the infarction contour
@@ -330,8 +331,8 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
             // for (int j = 0; j < numPtsInfarction - 1 && !foundIntersection; j++) {
             for (int j = 0; j < (numPtsInfarction - 1); j++) {
                 foundIntersection = VOICardiology.intersects(centerPt, secondPt,
-                                                             (Point3Df) infarctionContour.elementAt(j),
-                                                             (Point3Df) infarctionContour.elementAt(j + 1),
+                                                             (Vector3f) infarctionContour.elementAt(j),
+                                                             (Vector3f) infarctionContour.elementAt(j + 1),
                                                              intersectionPt);
 
                 // if an intersection is found, mark it but continue looking through all points
@@ -342,7 +343,7 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
                         infSecIntersects[i] = new Vector();
                     }
 
-                    infSecIntersects[i].add(new Point3Df(intersectionPt.x, intersectionPt.y, 0));
+                    infSecIntersects[i].add(new Vector3f(intersectionPt.X, intersectionPt.Y, 0));
 
                     // System.err.println("found intersection along section " + i + " and added point to vector");
                     sectionCounter++;
@@ -351,7 +352,7 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
         }
 
         Vector currentVec = null;
-        Point3Df currentPt = null;
+        Vector3f currentPt = null;
 
         // add the new section intersection points to the infarction contour
         for (int k = 0; k < numSections; k++) {
@@ -361,11 +362,11 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
 
                 for (int j = 0; j < currentVec.size(); j++) {
 
-                    currentPt = (Point3Df) currentVec.elementAt(j);
+                    currentPt = (Vector3f) currentVec.elementAt(j);
                     numPtsInfarction = infarctionContour.size();
 
-                    if (infarctionContour.nearLine((int) currentPt.x, (int) currentPt.y)) {
-                        infarctionContour.insertElement((int) currentPt.x, (int) currentPt.y, 0);
+                    if (infarctionContour.nearLine((int) currentPt.X, (int) currentPt.Y)) {
+                        infarctionContour.insertElement((int) currentPt.X, (int) currentPt.Y, 0);
                     }
                 }
             }
@@ -375,21 +376,21 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
         for (int k = 0; k < (numPtsInfarction - 1); k++) {
 
             // check first between first & last pt of inner contour
-            foundIntersection = VOICardiology.intersects((Point3Df) innerContour.elementAt(numPtsInner - 1),
-                                                         (Point3Df) innerContour.elementAt(0),
-                                                         (Point3Df) infarctionContour.elementAt(k),
-                                                         (Point3Df) infarctionContour.elementAt(k + 1), intersectionPt);
+            foundIntersection = VOICardiology.intersects((Vector3f) innerContour.elementAt(numPtsInner - 1),
+                                                         (Vector3f) innerContour.elementAt(0),
+                                                         (Vector3f) infarctionContour.elementAt(k),
+                                                         (Vector3f) infarctionContour.elementAt(k + 1), intersectionPt);
 
             for (int j = 0; !foundIntersection && (j < (numPtsInner - 1)); j++) {
-                foundIntersection = VOICardiology.intersects((Point3Df) innerContour.elementAt(j),
-                                                             (Point3Df) innerContour.elementAt(j + 1),
-                                                             (Point3Df) infarctionContour.elementAt(k),
-                                                             (Point3Df) infarctionContour.elementAt(k + 1),
+                foundIntersection = VOICardiology.intersects((Vector3f) innerContour.elementAt(j),
+                                                             (Vector3f) innerContour.elementAt(j + 1),
+                                                             (Vector3f) infarctionContour.elementAt(k),
+                                                             (Vector3f) infarctionContour.elementAt(k + 1),
                                                              intersectionPt);
             }
 
             if (foundIntersection) {
-                infInnerIntersects.add(new Point3Df(intersectionPt.x, intersectionPt.y, 0));
+                infInnerIntersects.add(new Vector3f(intersectionPt.X, intersectionPt.Y, 0));
             }
 
         }
@@ -397,14 +398,14 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
         // add these new intersection points to the infarction contour
         // AND to the inner contour (mirrored points in both contours)
         for (int i = 0; i < infInnerIntersects.size(); i++) {
-            currentPt = (Point3Df) infInnerIntersects.elementAt(i);
+            currentPt = (Vector3f) infInnerIntersects.elementAt(i);
 
-            if (infarctionContour.nearLine((int) currentPt.x, (int) currentPt.y)) {
-                infarctionContour.insertElement((int) currentPt.x, (int) currentPt.y, 0);
+            if (infarctionContour.nearLine((int) currentPt.X, (int) currentPt.Y)) {
+                infarctionContour.insertElement((int) currentPt.X, (int) currentPt.Y, 0);
             }
 
-            if (innerContour.nearLine((int) currentPt.x, (int) currentPt.y)) {
-                innerContour.insertElement((int) currentPt.x, (int) currentPt.y, 0);
+            if (innerContour.nearLine((int) currentPt.X, (int) currentPt.Y)) {
+                innerContour.insertElement((int) currentPt.X, (int) currentPt.Y, 0);
             }
         }
 
@@ -437,9 +438,9 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
         int firstPt;
 
         for (firstPt = 0; firstPt < numPtsInner; firstPt++) {
-            currentPt = (Point3Df) innerContour.elementAt(firstPt);
+            currentPt = (Vector3f) innerContour.elementAt(firstPt);
 
-            if (((int) currentPt.x == xPtsInner[0]) && ((int) currentPt.y == yPtsInner[0])) {
+            if (((int) currentPt.X == xPtsInner[0]) && ((int) currentPt.Y == yPtsInner[0])) {
                 cardioVOI.addPoint(currentPt, VOICardiology.INNER, 0, true, false);
 
                 break;
@@ -450,12 +451,12 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
         int startPt = 1;
 
         for (int i = firstPt; i < numPtsInner; i++) {
-            currentPt = (Point3Df) innerContour.elementAt(i);
+            currentPt = (Vector3f) innerContour.elementAt(i);
 
             // see if it is one of the intersection points (already found pt 1)
             for (int j = startPt; j < numSections; j++) {
 
-                if (((int) currentPt.x == xPtsInner[j]) && ((int) currentPt.y == yPtsInner[j])) {
+                if (((int) currentPt.X == xPtsInner[j]) && ((int) currentPt.Y == yPtsInner[j])) {
                     isIntersection = true;
                     cardioVOI.addPoint(currentPt, VOICardiology.INNER, j, true, false);
                     startPt++;
@@ -468,8 +469,8 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
                 // look through infarction-inner intersection vector
                 for (int m = 0; m < infInnerIntersects.size(); m++) {
 
-                    if (((int) currentPt.x == (int) ((Point3Df) infInnerIntersects.elementAt(m)).x) &&
-                            ((int) currentPt.y == (int) ((Point3Df) infInnerIntersects.elementAt(m)).y)) {
+                    if (((int) currentPt.X == (int) ((Vector3f) infInnerIntersects.elementAt(m)).X) &&
+                            ((int) currentPt.Y == (int) ((Vector3f) infInnerIntersects.elementAt(m)).Y)) {
                         cardioVOI.addPoint(currentPt, VOICardiology.INNER, (startPt - 1), false, true);
                         isIntersection = true;
                         // System.err.println("found intersection pt for INNER and adding as a BOTH pt");
@@ -489,12 +490,12 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
         if (firstPt > 0) {
 
             for (int i = 0; i < firstPt; i++) {
-                currentPt = (Point3Df) innerContour.elementAt(i);
+                currentPt = (Vector3f) innerContour.elementAt(i);
 
                 // see if it is one of the intersection points (already found points before startPt)
                 for (int j = startPt; j < numSections; j++) {
 
-                    if (((int) currentPt.x == xPtsInner[j]) && ((int) currentPt.y == yPtsInner[j])) {
+                    if (((int) currentPt.X == xPtsInner[j]) && ((int) currentPt.Y == yPtsInner[j])) {
                         isIntersection = true;
                         cardioVOI.addPoint(currentPt, VOICardiology.INNER, j, true, false);
                         startPt++;
@@ -506,8 +507,8 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
                     // look through infarction-inner intersection vector
                     for (int m = 0; m < infInnerIntersects.size(); m++) {
 
-                        if (((int) currentPt.x == (int) ((Point3Df) infInnerIntersects.elementAt(m)).x) &&
-                                ((int) currentPt.y == (int) ((Point3Df) infInnerIntersects.elementAt(m)).y)) {
+                        if (((int) currentPt.X == (int) ((Vector3f) infInnerIntersects.elementAt(m)).X) &&
+                                ((int) currentPt.Y == (int) ((Vector3f) infInnerIntersects.elementAt(m)).Y)) {
                             cardioVOI.addPoint(currentPt, VOICardiology.INNER, (startPt - 1), false, true);
                             isIntersection = true;
                         }
@@ -528,9 +529,9 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
         numPtsOuter = outerContour.size();
 
         for (firstPt = 0; firstPt < numPtsOuter; firstPt++) {
-            currentPt = (Point3Df) outerContour.elementAt(firstPt);
+            currentPt = (Vector3f) outerContour.elementAt(firstPt);
 
-            if (((int) currentPt.x == xPtsOuter[0]) && ((int) currentPt.y == yPtsOuter[0])) {
+            if (((int) currentPt.X == xPtsOuter[0]) && ((int) currentPt.Y == yPtsOuter[0])) {
                 cardioVOI.addPoint(currentPt, VOICardiology.OUTER, 0, true, false);
 
                 break;
@@ -542,12 +543,12 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
         startPt = 1;
 
         for (int i = firstPt; i < numPtsOuter; i++) {
-            currentPt = (Point3Df) outerContour.elementAt(i);
+            currentPt = (Vector3f) outerContour.elementAt(i);
 
             // see if it is one of the intersection points (already found pt 1)
             for (int j = startPt; j < numSections; j++) {
 
-                if (((int) currentPt.x == xPtsOuter[j]) && ((int) currentPt.y == yPtsOuter[j])) {
+                if (((int) currentPt.X == xPtsOuter[j]) && ((int) currentPt.Y == yPtsOuter[j])) {
                     isIntersection = true;
                     cardioVOI.addPoint(currentPt, VOICardiology.OUTER, j, true, false);
                     startPt++;
@@ -566,12 +567,12 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
         if (firstPt > 0) {
 
             for (int i = 0; i < firstPt; i++) {
-                currentPt = (Point3Df) outerContour.elementAt(i);
+                currentPt = (Vector3f) outerContour.elementAt(i);
 
                 // see if it is one of the intersection points (already found points before startPt)
                 for (int j = startPt; j < numSections; j++) {
 
-                    if (((int) currentPt.x == xPtsOuter[j]) && ((int) currentPt.y == yPtsOuter[j])) {
+                    if (((int) currentPt.X == xPtsOuter[j]) && ((int) currentPt.Y == yPtsOuter[j])) {
                         isIntersection = true;
                         cardioVOI.addPoint(currentPt, VOICardiology.OUTER, j, true, false);
                         startPt++;
@@ -601,10 +602,10 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
 
         for (int i = 0; i < numPtsInfarction; i++) {
             isIntersection = false;
-            currentPt = (Point3Df) infarctionContour.elementAt(i);
+            currentPt = (Vector3f) infarctionContour.elementAt(i);
 
             // find in which section the infarction point should be placed
-            section = cardioVOI.getSection((int) currentPt.x, (int) currentPt.y);
+            section = cardioVOI.getSection((int) currentPt.X, (int) currentPt.Y);
 
             if (section < 0) {
                 System.err.println("error finding section for infarction point");
@@ -613,8 +614,8 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
             // look through infarction-inner intersection vector (shared point)
             for (int m = 0; m < infInnerIntersects.size(); m++) {
 
-                if (((int) currentPt.x == (int) ((Point3Df) infInnerIntersects.elementAt(m)).x) &&
-                        ((int) currentPt.y == (int) ((Point3Df) infInnerIntersects.elementAt(m)).y)) {
+                if (((int) currentPt.X == (int) ((Vector3f) infInnerIntersects.elementAt(m)).X) &&
+                        ((int) currentPt.Y == (int) ((Vector3f) infInnerIntersects.elementAt(m)).Y)) {
                     cardioVOI.addPoint(currentPt, VOICardiology.INFARCTION, section, false, true);
                     isIntersection = true;
                     insideInner = !insideInner;
@@ -633,8 +634,8 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
 
                         for (int k = 0; k < currentVector.size(); k++) {
 
-                            if (((int) currentPt.x == (int) ((Point3Df) currentVector.elementAt(k)).x) &&
-                                    ((int) currentPt.y == (int) ((Point3Df) currentVector.elementAt(k)).y)) {
+                            if (((int) currentPt.X == (int) ((Vector3f) currentVector.elementAt(k)).X) &&
+                                    ((int) currentPt.Y == (int) ((Vector3f) currentVector.elementAt(k)).Y)) {
                                 cardioVOI.addPoint(currentPt, VOICardiology.INFARCTION, m, true, false);
                                 isIntersection = true;
                                 infarctionCounter++;

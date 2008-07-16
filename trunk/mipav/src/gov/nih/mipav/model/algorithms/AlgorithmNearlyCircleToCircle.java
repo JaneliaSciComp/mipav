@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -118,7 +119,7 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
         int contourVOIs;
         Vector[] contours = null;
         int nContours = 0;
-        Point3Df geometricCenter;
+        Vector3f geometricCenter;
         VOI selectedVOI = null;
         double radSq;
         double theta[];
@@ -216,8 +217,8 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
         }
         
         geometricCenter = ((VOIContour)(contours[0].elementAt(0))).getGeometricCenter();
-        xcen = geometricCenter.x;
-        ycen = geometricCenter.y;
+        xcen = geometricCenter.X;
+        ycen = geometricCenter.Y;
         Preferences.debug("X center = " + xcen + "\n");
         Preferences.debug("Y center = " + ycen + "\n");
         gon = ((VOIContour)(contours[0].elementAt(0))).exportPolygon();

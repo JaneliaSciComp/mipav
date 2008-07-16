@@ -1,3 +1,5 @@
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+
 import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
@@ -2649,24 +2651,24 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			float max = (float)getActiveImage().getMax();
 			
 			TransferFunction transfer = new TransferFunction();
-			transfer.addPoint(new Point2Df(min, 255));
+			transfer.addPoint(new Vector2f(min, 255));
 			
 			//fat = blue
-			transfer.addPoint(new Point2Df(-190, 255));
-			transfer.addPoint(new Point2Df(-190, 254));
-			transfer.addPoint(new Point2Df(-30, 254));
+			transfer.addPoint(new Vector2f(-190, 255));
+			transfer.addPoint(new Vector2f(-190, 254));
+			transfer.addPoint(new Vector2f(-30, 254));
 			
 			//partial = white
-			transfer.addPoint(new Point2Df(-30, 5));
-			transfer.addPoint(new Point2Df(0, 5));
+			transfer.addPoint(new Vector2f(-30, 5));
+			transfer.addPoint(new Vector2f(0, 5));
 			
 			//muscle = red
-			transfer.addPoint(new Point2Df(0, 0));
-			transfer.addPoint(new Point2Df(100, 0));
+			transfer.addPoint(new Vector2f(0, 0));
+			transfer.addPoint(new Vector2f(100, 0));
 			
 			//rest is black
-			transfer.addPoint(new Point2Df(100, 255));
-			transfer.addPoint(new Point2Df(max, 255));
+			transfer.addPoint(new Vector2f(100, 255));
+			transfer.addPoint(new Vector2f(max, 255));
 			
 			getLUTa().makeCTThighTransferFunctions();
 			getLUTa().setTransferFunction(transfer);

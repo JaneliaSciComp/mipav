@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
@@ -486,20 +487,20 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
                     if (RGBTA.getRedFunction().size() == 6) {
                         r = new float[2];
-                        r[0] = ((Point2Df) (RGBTA.getRedFunction().getPoint(1))).x;
-                        r[1] = ((Point2Df) (RGBTA.getRedFunction().getPoint(3))).x;
+                        r[0] = ((Vector2f) (RGBTA.getRedFunction().getPoint(1))).X;
+                        r[1] = ((Vector2f) (RGBTA.getRedFunction().getPoint(3))).X;
                     }
 
                     if (RGBTA.getGreenFunction().size() == 6) {
                         g = new float[2];
-                        g[0] = ((Point2Df) (RGBTA.getGreenFunction().getPoint(1))).x;
-                        g[1] = ((Point2Df) (RGBTA.getGreenFunction().getPoint(3))).x;
+                        g[0] = ((Vector2f) (RGBTA.getGreenFunction().getPoint(1))).X;
+                        g[1] = ((Vector2f) (RGBTA.getGreenFunction().getPoint(3))).X;
                     }
 
                     if (RGBTA.getBlueFunction().size() == 6) {
                         b = new float[2];
-                        b[0] = ((Point2Df) (RGBTA.getBlueFunction().getPoint(1))).x;
-                        b[1] = ((Point2Df) (RGBTA.getBlueFunction().getPoint(3))).x;
+                        b[0] = ((Vector2f) (RGBTA.getBlueFunction().getPoint(1))).X;
+                        b[1] = ((Vector2f) (RGBTA.getBlueFunction().getPoint(3))).X;
                     }
 
                     JDialogThresholdRGB dialog = new JDialogThresholdRGB();
@@ -513,20 +514,20 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
                     if (RGBTB.getRedFunction().size() == 6) {
                         r = new float[2];
-                        r[0] = ((Point2Df) (RGBTB.getRedFunction().getPoint(1))).x;
-                        r[1] = ((Point2Df) (RGBTB.getRedFunction().getPoint(3))).x;
+                        r[0] = ((Vector2f) (RGBTB.getRedFunction().getPoint(1))).X;
+                        r[1] = ((Vector2f) (RGBTB.getRedFunction().getPoint(3))).X;
                     }
 
                     if (RGBTB.getGreenFunction().size() == 6) {
                         g = new float[2];
-                        g[0] = ((Point2Df) (RGBTB.getRedFunction().getPoint(1))).x;
-                        g[1] = ((Point2Df) (RGBTB.getRedFunction().getPoint(3))).x;
+                        g[0] = ((Vector2f) (RGBTB.getRedFunction().getPoint(1))).X;
+                        g[1] = ((Vector2f) (RGBTB.getRedFunction().getPoint(3))).X;
                     }
 
                     if (RGBTB.getBlueFunction().size() == 6) {
                         b = new float[2];
-                        b[0] = ((Point2Df) (RGBTB.getRedFunction().getPoint(1))).x;
-                        b[1] = ((Point2Df) (RGBTB.getRedFunction().getPoint(3))).x;
+                        b[0] = ((Vector2f) (RGBTB.getRedFunction().getPoint(1))).X;
+                        b[1] = ((Vector2f) (RGBTB.getRedFunction().getPoint(3))).X;
                     }
                 }
             }

@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -80,7 +81,7 @@ public class AlgorithmHessian extends AlgorithmBase {
      * @return  hessian matrix for the point (x,y)
      */
     public double[][] hessian2D(float x, float y) {
-        Point2Df pt = new Point2Df(x, y);
+        Vector2f pt = new Vector2f(x, y);
         int[] extents = srcImage.getExtents();
         int length = extents[0] * extents[1];
         float[] imgBuf = new float[length];
@@ -121,7 +122,7 @@ public class AlgorithmHessian extends AlgorithmBase {
      * @return  hessian matrix for the point (x,y,z)
      */
     public double[][] hessian2D(float[] imgBuf, int[] extents, float x, float y) {
-        Point2Df pt = new Point2Df(x, y);
+        Vector2f pt = new Vector2f(x, y);
 
         float ixx, ixy, iyy;
 

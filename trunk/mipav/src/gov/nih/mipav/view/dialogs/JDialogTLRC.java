@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 //import edu.jhmi.rad.medic.algorithms.*;
 //import edu.jhmi.rad.medic.structures.*;
 import javax.swing.*;
@@ -63,17 +64,17 @@ public class JDialogTLRC extends JDialogBase {
 	private     JButton                  setTalairachButton;
 	private     JButton                  clearTalairachButton;
 	private     int                      tOffset;
-	private     Point3Df                 superiorEdgeDicom;
-	private     Point3Df                 posteriorMarginDicom;
-	private     Point3Df                 inferiorEdgeDicom;
-	private     Point3Df                 firstPtDicom;
-	private     Point3Df                 anotherPtDicom;
-	private     Point3Df                 anteriorPt3Df;
-	private     Point3Df                 posteriorPt3Df;
-	private     Point3Df                 superiorPt3Df;
-	private     Point3Df                 inferiorPt3Df;
-	private     Point3Df                 leftPt3Df;
-	private     Point3Df                 rightPt3Df;
+	private     Vector3f                 superiorEdgeDicom;
+	private     Vector3f                 posteriorMarginDicom;
+	private     Vector3f                 inferiorEdgeDicom;
+	private     Vector3f                 firstPtDicom;
+	private     Vector3f                 anotherPtDicom;
+	private     Vector3f                 anteriorPt3Df;
+	private     Vector3f                 posteriorPt3Df;
+	private     Vector3f                 superiorPt3Df;
+	private     Vector3f                 inferiorPt3Df;
+	private     Vector3f                 leftPt3Df;
+	private     Vector3f                 rightPt3Df;
 	private     boolean                  haveAnteriorPt = false;
 	private     boolean                  havePosteriorPt = false;
 	private     boolean                  haveSuperiorPt = false;
@@ -104,53 +105,53 @@ public class JDialogTLRC extends JDialogBase {
 		// check for the transform info
 		if (acpcImage.getTalairachTransformInfo()!=null) {
 			TalairachTransformInfo transf = acpcImage.getTalairachTransformInfo();
-			Point3Df pt = new Point3Df();
+			Vector3f pt = new Vector3f();
 			if (transf.isTlrc()) {
 				// check if the image is the AC-PC one
 				if ( (acpcImage.getExtents()[0]==transf.getAcpcDim()[0]) && (acpcImage.getExtents()[1]==transf.getAcpcDim()[1]) && (acpcImage.getExtents()[2]==transf.getAcpcDim()[2]) ) {				
-					Point3Df ac = transf.getAcpcAC();
-					Point3Df pc = transf.getAcpcPC();
-					Point3Df min = transf.getAcpcMin();
-					Point3Df max = transf.getAcpcMax();
+					Vector3f ac = transf.getAcpcAC();
+					Vector3f pc = transf.getAcpcPC();
+					Vector3f min = transf.getAcpcMin();
+					Vector3f max = transf.getAcpcMax();
 					
-					pt.x = ac.x;
-					pt.y = min.y;
-					pt.z = ac.z;
+					pt.X = ac.X;
+					pt.Y = min.Y;
+					pt.Z = ac.Z;
 					setAnteriorPt(pt);
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("A");
 					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.ANTERIOR_PT,pt);
 					
-					pt.x = ac.x;
-					pt.y = max.y;
-					pt.z = ac.z;
+					pt.X = ac.X;
+					pt.Y = max.Y;
+					pt.Z = ac.Z;
 					setPosteriorPt(pt);
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("P");
 					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.POSTERIOR_PT,pt);
 					
-					pt.x = ac.x;
-					pt.y = ac.y;
-					pt.z = min.z;
+					pt.X = ac.X;
+					pt.Y = ac.Y;
+					pt.Z = min.Z;
 					setInferiorPt(pt);
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("I");
 					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.INFERIOR_PT,pt);
 					
-					pt.x = pc.x;
-					pt.y = pc.y;
-					pt.z = max.z;
+					pt.X = pc.X;
+					pt.Y = pc.Y;
+					pt.Z = max.Z;
 					setSuperiorPt(pt);
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("S");
 					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.SUPERIOR_PT,pt);
 					
-					pt.x = min.x;
-					pt.y = pc.y;
-					pt.z = pc.z;
+					pt.X = min.X;
+					pt.Y = pc.Y;
+					pt.Z = pc.Z;
 					setRightPt(pt);
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("R");
 					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.RIGHT_PT,pt);
 					
-					pt.x = max.x;
-					pt.y = pc.y;
-					pt.z = pc.z;
+					pt.X = max.X;
+					pt.Y = pc.Y;
+					pt.Z = pc.Z;
 					setLeftPt(pt);
 					((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("L");
 					((ViewJComponentTriImage)frame.getTriImage(0)).setReferenceXY(ViewJComponentTriImage.LEFT_PT,pt);
@@ -273,13 +274,13 @@ public class JDialogTLRC extends JDialogBase {
 	public void actionPerformed(ActionEvent event) {
 	    String command = event.getActionCommand();
         int pointType;
-	    Point3Df pt;
+	    Vector3f pt;
 	    boolean found;
      
       if (command.equals("setTalairach")) {
-            pt = new Point3Df(frame.getSagittalComponentSlice(), frame.getCoronalComponentSlice(), frame.getAxialComponentSlice());
-            System.out.println("pt: " + (int)pt.x + "," + (int)pt.y + "," + (int)pt.z);
-			System.out.println("corrected pt: " + (int)toOriginal(pt).x + "," + (int)toOriginal(pt).y + "," + (int)toOriginal(pt).z);
+            pt = new Vector3f(frame.getSagittalComponentSlice(), frame.getCoronalComponentSlice(), frame.getAxialComponentSlice());
+            System.out.println("pt: " + (int)pt.X + "," + (int)pt.Y + "," + (int)pt.Z);
+			System.out.println("corrected pt: " + (int)toOriginal(pt).X + "," + (int)toOriginal(pt).Y + "," + (int)toOriginal(pt).Z);
 			if (anteriorPt.isSelected()) {
                 pointType = ViewJComponentTriImage.ANTERIOR_PT;
                 ((ViewJComponentTriImage)frame.getTriImage(0)).removeReference("A");
@@ -513,16 +514,16 @@ public class JDialogTLRC extends JDialogBase {
     *   Sets anterior label based on the point.  Enables "Apply" if all points have been set.
     *   @param pt   Point that was set.
     */
-    private void setAnteriorPt(Point3Df pt) {
+    private void setAnteriorPt(Vector3f pt) {
         anteriorPt.setSelected(true);
         posteriorPt.setSelected(false);
         superiorPt.setSelected(false);
         inferiorPt.setSelected(false);
         leftPt.setSelected(false);
         rightPt.setSelected(false);
-        anteriorPt3Df = new Point3Df(pt.x, pt.y, pt.z);
+        anteriorPt3Df = new Vector3f(pt.X, pt.Y, pt.Z);
         haveAnteriorPt = true;
-        anteriorPt.setText("Most anterior point " + (int)(pt.x+1) + "," + (int)(pt.y+1) + "," + (int)(pt.z+1));
+        anteriorPt.setText("Most anterior point " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
         setTalairachButton.setEnabled(false);
         clearTalairachButton.setEnabled(true);
         if ((haveAnteriorPt) && (havePosteriorPt) && (haveSuperiorPt) && (haveInferiorPt) &&
@@ -535,16 +536,16 @@ public class JDialogTLRC extends JDialogBase {
     *   Sets posterior label based on the point.  Enables "Apply" if all points have been set.
     *   @param pt   Point that was set.
     */
-    private void setPosteriorPt(Point3Df pt) {
+    private void setPosteriorPt(Vector3f pt) {
         anteriorPt.setSelected(false);
         posteriorPt.setSelected(true);
         superiorPt.setSelected(false);
         inferiorPt.setSelected(false);
         leftPt.setSelected(false);
         rightPt.setSelected(false);
-        posteriorPt3Df = new Point3Df(pt.x, pt.y, pt.z);
+        posteriorPt3Df = new Vector3f(pt.X, pt.Y, pt.Z);
         havePosteriorPt = true;
-        posteriorPt.setText("Most posterior point " + (int)(pt.x+1) + "," + (int)(pt.y+1) + "," + (int)(pt.z+1));
+        posteriorPt.setText("Most posterior point " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
         setTalairachButton.setEnabled(false);
         clearTalairachButton.setEnabled(true);
         if ((haveAnteriorPt) && (havePosteriorPt) && (haveSuperiorPt) && (haveInferiorPt) &&
@@ -557,16 +558,16 @@ public class JDialogTLRC extends JDialogBase {
     *   Sets superior label based on the point.  Enables "Apply" if all points have been set.
     *   @param pt   Point that was set.
     */
-    private void setSuperiorPt(Point3Df pt) {
+    private void setSuperiorPt(Vector3f pt) {
         anteriorPt.setSelected(false);
         posteriorPt.setSelected(false);
         superiorPt.setSelected(true);
         inferiorPt.setSelected(false);
         leftPt.setSelected(false);
         rightPt.setSelected(false);
-        superiorPt3Df = new Point3Df(pt.x, pt.y, pt.z);
+        superiorPt3Df = new Vector3f(pt.X, pt.Y, pt.Z);
         haveSuperiorPt = true;
-        superiorPt.setText("Most superior point " + (int)(pt.x+1) + "," + (int)(pt.y+1) + "," + (int)(pt.z+1));
+        superiorPt.setText("Most superior point " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
         setTalairachButton.setEnabled(false);
         clearTalairachButton.setEnabled(true);
         if ((haveAnteriorPt) && (havePosteriorPt) && (haveSuperiorPt) && (haveInferiorPt) &&
@@ -579,16 +580,16 @@ public class JDialogTLRC extends JDialogBase {
     *   Sets inferior label based on the point.  Enables "Apply" if all points have been set.
     *   @param pt   Point that was set.
     */
-    private void setInferiorPt(Point3Df pt) {
+    private void setInferiorPt(Vector3f pt) {
         anteriorPt.setSelected(false);
         posteriorPt.setSelected(false);
         superiorPt.setSelected(false);
         inferiorPt.setSelected(true);
         leftPt.setSelected(false);
         rightPt.setSelected(false);
-        inferiorPt3Df = new Point3Df(pt.x, pt.y, pt.z);
+        inferiorPt3Df = new Vector3f(pt.X, pt.Y, pt.Z);
         haveInferiorPt = true;
-        inferiorPt.setText("Most inferior point " + (int)(pt.x+1) + "," + (int)(pt.y+1) + "," + (int)(pt.z+1));
+        inferiorPt.setText("Most inferior point " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
         setTalairachButton.setEnabled(false);
         clearTalairachButton.setEnabled(true);
         if ((haveAnteriorPt) && (havePosteriorPt) && (haveSuperiorPt) && (haveInferiorPt) &&
@@ -601,16 +602,16 @@ public class JDialogTLRC extends JDialogBase {
     *   Sets left label based on the point.  Enables "Apply" if all points have been set.
     *   @param pt   Point that was set.
     */
-    private void setLeftPt(Point3Df pt) {
+    private void setLeftPt(Vector3f pt) {
         anteriorPt.setSelected(false);
         posteriorPt.setSelected(false);
         superiorPt.setSelected(false);
         inferiorPt.setSelected(false);
         leftPt.setSelected(true);
         rightPt.setSelected(false);
-        leftPt3Df = new Point3Df(pt.x, pt.y, pt.z);
+        leftPt3Df = new Vector3f(pt.X, pt.Y, pt.Z);
         haveLeftPt = true;
-        leftPt.setText("Most left point " + (int)(pt.x+1) + "," + (int)(pt.y+1) + "," + (int)(pt.z+1));
+        leftPt.setText("Most left point " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
         setTalairachButton.setEnabled(false);
         clearTalairachButton.setEnabled(true);
         if ((haveAnteriorPt) && (havePosteriorPt) && (haveSuperiorPt) && (haveInferiorPt) &&
@@ -623,16 +624,16 @@ public class JDialogTLRC extends JDialogBase {
     *   Sets right label based on the point.  Enables "Apply" if all points have been set.
     *   @param pt   Point that was set.
     */
-    private void setRightPt(Point3Df pt) {
+    private void setRightPt(Vector3f pt) {
         anteriorPt.setSelected(false);
         posteriorPt.setSelected(false);
         superiorPt.setSelected(false);
         inferiorPt.setSelected(false);
         leftPt.setSelected(false);
         rightPt.setSelected(true);
-        rightPt3Df = new Point3Df(pt.x, pt.y, pt.z);
+        rightPt3Df = new Vector3f(pt.X, pt.Y, pt.Z);
         haveRightPt = true;
-        rightPt.setText("Most right point " + (int)(pt.x+1) + "," + (int)(pt.y+1) + "," + (int)(pt.z+1));
+        rightPt.setText("Most right point " + (int)(pt.X+1) + "," + (int)(pt.Y+1) + "," + (int)(pt.Z+1));
         setTalairachButton.setEnabled(false);
         clearTalairachButton.setEnabled(true);
         if ((haveAnteriorPt) && (havePosteriorPt) && (haveSuperiorPt) && (haveInferiorPt) &&
@@ -645,14 +646,14 @@ public class JDialogTLRC extends JDialogBase {
     *   Creates Talairach image based on points that were set in component images.
     */
     private void convertToTalairach() {
-		Point3Df ac = transform.getAcpcAC();
-		Point3Df pc = transform.getAcpcPC();
+		Vector3f ac = transform.getAcpcAC();
+		Vector3f pc = transform.getAcpcPC();
 		float acpcRes = transform.getAcpcRes();
 		float dist;
 		float scale_A,scale_M,scale_P,scale_S,scale_I,scale_L,scale_R;
         
         // Check anterior distance
-		dist = (ac.y - anteriorPt3Df.y)*acpcRes;
+		dist = (ac.Y - anteriorPt3Df.Y)*acpcRes;
         if ((dist/ATLAS_FRONT_TO_AC < MIN_ALLOWED_DEVIATION) ||
             (dist/ATLAS_FRONT_TO_AC > MAX_ALLOWED_DEVIATION)) {
             MipavUtil.displayError("Front to Anterior commissure distance outside allowed range dist = "
@@ -661,11 +662,11 @@ public class JDialogTLRC extends JDialogBase {
         }
 		scale_A = ATLAS_FRONT_TO_AC / dist;
 		
-		dist = (pc.y - ac.y)*acpcRes;
+		dist = (pc.Y - ac.Y)*acpcRes;
         scale_M = ViewJFrameTriImage.ATLAS_AC_TO_PC / dist;
         
 		// Check posterior distance
-		dist = (posteriorPt3Df.y - pc.y)*acpcRes;
+		dist = (posteriorPt3Df.Y - pc.Y)*acpcRes;
         if ((dist/ATLAS_PC_TO_BACK < MIN_ALLOWED_DEVIATION) ||
             (dist/ATLAS_PC_TO_BACK > MAX_ALLOWED_DEVIATION)) {
             MipavUtil.displayError("Posterior commissure to back distance outside allowed range dist = "
@@ -675,7 +676,7 @@ public class JDialogTLRC extends JDialogBase {
 		scale_P = ATLAS_PC_TO_BACK / dist;
         
         // Check inferior distance
-		dist = (ac.z - inferiorPt3Df.z)*acpcRes;
+		dist = (ac.Z - inferiorPt3Df.Z)*acpcRes;
         if ((dist/ATLAS_BOT_TO_AC < MIN_ALLOWED_DEVIATION) ||
             (dist/ATLAS_BOT_TO_AC > MAX_ALLOWED_DEVIATION)) {
             MipavUtil.displayError("Bottom to Anterior commissure distance outside allowed range dist = "
@@ -685,7 +686,7 @@ public class JDialogTLRC extends JDialogBase {
 		scale_I = ATLAS_BOT_TO_AC / dist;
         
         // Check superior distance
-		dist = (superiorPt3Df.z - ac.z)*acpcRes;
+		dist = (superiorPt3Df.Z - ac.Z)*acpcRes;
         if ((dist/ATLAS_AC_TO_TOP < MIN_ALLOWED_DEVIATION) ||
             (dist/ATLAS_AC_TO_TOP > MAX_ALLOWED_DEVIATION)) {
             MipavUtil.displayError("Anterior commissure to top distance outside allowed range dist = "
@@ -695,7 +696,7 @@ public class JDialogTLRC extends JDialogBase {
         scale_S = ATLAS_AC_TO_TOP / dist;
         
         // Check left distance
-		dist = (leftPt3Df.x - ac.x)*acpcRes;
+		dist = (leftPt3Df.X - ac.X)*acpcRes;
         if ((dist/ATLAS_AC_TO_LAT < MIN_ALLOWED_DEVIATION) ||
             (dist/ATLAS_AC_TO_LAT > MAX_ALLOWED_DEVIATION)) {
             MipavUtil.displayError("Anterior commissure to left distance outside allowed range dist = "
@@ -705,7 +706,7 @@ public class JDialogTLRC extends JDialogBase {
         scale_L = ATLAS_AC_TO_LAT / dist;
 		
         // Check right distance 
-		dist = (ac.x - rightPt3Df.x)*acpcRes;
+		dist = (ac.X - rightPt3Df.X)*acpcRes;
         if ((dist/ATLAS_AC_TO_LAT < MIN_ALLOWED_DEVIATION) ||
             (dist/ATLAS_AC_TO_LAT > MAX_ALLOWED_DEVIATION)) {
             MipavUtil.displayError("Anterior commissure to right distance outside allowed range dist = "
@@ -715,8 +716,8 @@ public class JDialogTLRC extends JDialogBase {
 		scale_R = ATLAS_AC_TO_LAT / dist;
         
 		// set the transform data
-		Point3Df min = new Point3Df(rightPt3Df.x, anteriorPt3Df.y, inferiorPt3Df.z);
-		Point3Df max = new Point3Df(leftPt3Df.x, posteriorPt3Df.y, superiorPt3Df.z);
+		Vector3f min = new Vector3f(rightPt3Df.X, anteriorPt3Df.Y, inferiorPt3Df.Z);
+		Vector3f max = new Vector3f(leftPt3Df.X, posteriorPt3Df.Y, superiorPt3Df.Z);
 		
 		transform.setAcpcMin(min);
 		transform.setAcpcMax(max);
@@ -788,88 +789,88 @@ public class JDialogTLRC extends JDialogBase {
 	}
     
 	/** to convert frame coordinates into the original image ones */
-	private Point3Df toOriginal(Point3Df in) {
+	private Vector3f toOriginal(Vector3f in) {
 		int[] orient = acpcImage.getFileInfo(0).getAxisOrientation();
         int xDim = acpcImage.getExtents()[0];
         int yDim = acpcImage.getExtents()[1];
         int zDim = acpcImage.getExtents()[2];
-        Point3Df out = new Point3Df( 0.0f, 0.0f, 0.0f );
+        Vector3f out = new Vector3f( 0.0f, 0.0f, 0.0f );
 
         switch ( orient[0] ) {
         case FileInfoBase.ORI_R2L_TYPE:
-            out.x = in.x;
+            out.X = in.X;
             break;
 
         case FileInfoBase.ORI_L2R_TYPE:
-            out.x = xDim - 1 - in.x;
+            out.X = xDim - 1 - in.X;
             break;
 
         case FileInfoBase.ORI_A2P_TYPE:
-            out.x = in.y;
+            out.X = in.Y;
             break;
 
         case FileInfoBase.ORI_P2A_TYPE:
-            out.x = xDim - 1 - in.y;
+            out.X = xDim - 1 - in.Y;
             break;
 
         case FileInfoBase.ORI_I2S_TYPE:
-            out.x = in.z;
+            out.X = in.Z;
             break;
 
         case FileInfoBase.ORI_S2I_TYPE:
-            out.x = xDim - 1 - in.z;
+            out.X = xDim - 1 - in.Z;
             break;
         }
 
         switch ( orient[1] ) {
         case FileInfoBase.ORI_R2L_TYPE:
-            out.y = in.x;
+            out.Y = in.X;
             break;
 
         case FileInfoBase.ORI_L2R_TYPE:
-            out.y = yDim - 1 - in.x;
+            out.Y = yDim - 1 - in.X;
             break;
 
         case FileInfoBase.ORI_A2P_TYPE:
-            out.y = in.y;
+            out.Y = in.Y;
             break;
 
         case FileInfoBase.ORI_P2A_TYPE:
-            out.y = yDim - 1 - in.y;
+            out.Y = yDim - 1 - in.Y;
             break;
 
         case FileInfoBase.ORI_I2S_TYPE:
-            out.y = in.z;
+            out.Y = in.Z;
             break;
 
         case FileInfoBase.ORI_S2I_TYPE:
-            out.y = yDim - 1 - in.z;
+            out.Y = yDim - 1 - in.Z;
             break;
         }
 
         switch ( orient[2] ) {
         case FileInfoBase.ORI_R2L_TYPE:
-            out.z = in.x;
+            out.Z = in.X;
             break;
 
         case FileInfoBase.ORI_L2R_TYPE:
-            out.z = zDim - 1 - in.x;
+            out.Z = zDim - 1 - in.X;
             break;
 
         case FileInfoBase.ORI_A2P_TYPE:
-            out.z = in.y;
+            out.Z = in.Y;
             break;
 
         case FileInfoBase.ORI_P2A_TYPE:
-            out.z = zDim - 1 - in.y;
+            out.Z = zDim - 1 - in.Y;
             break;
 
         case FileInfoBase.ORI_I2S_TYPE:
-            out.z = in.z;
+            out.Z = in.Z;
             break;
 
         case FileInfoBase.ORI_S2I_TYPE:
-            out.z = zDim - 1 - in.z;
+            out.Z = zDim - 1 - in.Z;
             break;
         }
 

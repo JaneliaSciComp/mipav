@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
@@ -15,8 +16,6 @@ import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
-
-import javax.vecmath.*;
 
 
 /**
@@ -38,7 +37,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
     private float aboveMedian;
 
     /** The volume's center of mass computed from <code>computeCenter(ModelImage, int, boolean)</code> */
-    private Point3f centerOfMass;
+    private Vector3f centerOfMass;
 
     /** The maximum depth within the brain's surface to sample image intensities, by default set to 5. */
     private int depth = 5;
@@ -71,7 +70,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
     private JTextField imageRatioTF;
 
     /** Either the volume's center of mass or a user indicated point depending on the value of <code>useCenterOfMass</code>. */
-    private Point3f initCenterPoint;
+    private Vector3f initCenterPoint;
 
     /** Used to denote the brain's center of mass y-coordinate.  By default set to zero. */
     private float initCenterX = 0;
@@ -185,9 +184,9 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         // use the center of mass if there was a problem with the defaults or the user wants to use it explicitly
         if (useCenterOfMass || (initCenterX == -1) || (initCenterY == -1) || (initCenterZ == -1)) {
             initCenterPoint = centerOfMass;
-            initCenterX = initCenterPoint.x;
-            initCenterY = initCenterPoint.y;
-            initCenterZ = initCenterPoint.z;
+            initCenterX = initCenterPoint.X;
+            initCenterY = initCenterPoint.Y;
+            initCenterZ = initCenterPoint.Z;
             initCenterXTF.setText("" + initCenterX);
             initCenterYTF.setText("" + initCenterY);
             initCenterZTF.setText("" + initCenterZ);
@@ -205,8 +204,8 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
      *
      * @return  the starting center point
      */
-    public static final Point3f computeCenter(ModelImage img, int orientation, boolean sphereFlag) {
-        Point3f centerPt = new Point3f();
+    public static final Vector3f computeCenter(ModelImage img, int orientation, boolean sphereFlag) {
+        Vector3f centerPt = new Vector3f();
 
         int xDim = img.getExtents()[0];
         int yDim = img.getExtents()[1];
@@ -242,17 +241,17 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
 
                         if (imgBuffer[iIndex++] >= backgroundThreshold) {
                             count++;
-                            centerPt.x += iIndex % xDim;
-                            centerPt.y += (iIndex % sliceSize) / xDim;
-                            centerPt.z += iIndex / sliceSize;
+                            centerPt.X += iIndex % xDim;
+                            centerPt.Y += (iIndex % sliceSize) / xDim;
+                            centerPt.Z += iIndex / sliceSize;
                         }
                     }
                 }
             }
 
-            centerPt.x = (centerPt.x / count++);
-            centerPt.y = (centerPt.y / count++);
-            centerPt.z = (centerPt.z / count++);
+            centerPt.X = (centerPt.X / count++);
+            centerPt.Y = (centerPt.Y / count++);
+            centerPt.Z = (centerPt.Z / count++);
         } else {
 
             // Make the estimation numerically robust by tracking voxel positions
@@ -288,7 +287,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
                     for (int iX = 0; iX < xDim; iX++) {
 
                         if (imgBuffer[iIndex++] >= backgroundThreshold) {
-                            Point3f kVoxel = new Point3f(fInvBMax * iX, fInvBMax * iY, fInvBMax * iZ);
+                            Vector3f kVoxel = new Vector3f(fInvBMax * iX, fInvBMax * iY, fInvBMax * iZ);
 
                             if (orientation == AlgorithmBrainExtractor.SAT_COR) {
 
@@ -319,23 +318,23 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
             kQFit = new AlgorithmQuadraticFit(kLess);
 
             // rescale from [-1,1]^3 to voxel coordinates
-            centerPt.scale(fBMax, kQFit.getCenter());
+            centerPt.Scale(fBMax, kQFit.getCenter());
 
-            if (centerPt.x >= img.getExtents()[0]) {
-                centerPt.x = img.getExtents()[0] / 2;
+            if (centerPt.X >= img.getExtents()[0]) {
+                centerPt.X = img.getExtents()[0] / 2;
             }
 
-            if (centerPt.y >= img.getExtents()[1]) {
-                centerPt.y = img.getExtents()[1] / 2;
+            if (centerPt.Y >= img.getExtents()[1]) {
+                centerPt.Y = img.getExtents()[1] / 2;
             }
 
-            if (centerPt.z >= img.getExtents()[2]) {
-                centerPt.z = img.getExtents()[2] / 2;
+            if (centerPt.Z >= img.getExtents()[2]) {
+                centerPt.Z = img.getExtents()[2] / 2;
             }
 
-            centerPt.y *= 0.90f; // move it up alittle on the y axis
+            centerPt.Y *= 0.90f; // move it up alittle on the y axis
 
-            // m_kCenter.y *= 1.2f; // move it up alittle on the y axis
+            // m_kCenter.Y *= 1.2f; // move it up alittle on the y axis
         }
 
         Preferences.debug("center of mass = " + centerPt + "\n");
@@ -594,9 +593,9 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
             initCenterZTF.setEnabled(!useCenterOfMass);
 
             if (useCenterOfMass) {
-                initCenterXTF.setText("" + centerOfMass.x);
-                initCenterYTF.setText("" + centerOfMass.y);
-                initCenterZTF.setText("" + centerOfMass.z);
+                initCenterXTF.setText("" + centerOfMass.X);
+                initCenterYTF.setText("" + centerOfMass.Y);
+                initCenterZTF.setText("" + centerOfMass.Z);
             }
         } else if (event.getSource() == useSphereCheckbox) {
             boolean flag = useSphereCheckbox.isSelected();
@@ -610,18 +609,18 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
                 orient = AlgorithmBrainExtractor.SAT_COR;
             }
 
-            Point3f oldPoint = new Point3f(Float.parseFloat(initCenterXTF.getText()),
+            Vector3f oldPoint = new Vector3f(Float.parseFloat(initCenterXTF.getText()),
                                            Float.parseFloat(initCenterYTF.getText()),
                                            Float.parseFloat(initCenterZTF.getText()));
-            Point3f point = computeCenter(image, orient, flag);
+            Vector3f point = computeCenter(image, orient, flag);
 
             if (oldPoint.equals(centerOfMass) || useCenterOfMass) {
 
                 // user hasn't changed the initial point from the center of mass (or has chosen to just use the center
                 // of mass), then we can change the values
-                initCenterXTF.setText("" + point.x);
-                initCenterYTF.setText("" + point.y);
-                initCenterZTF.setText("" + point.z);
+                initCenterXTF.setText("" + point.X);
+                initCenterYTF.setText("" + point.Y);
+                initCenterZTF.setText("" + point.Z);
             }
 
             centerOfMass = point;
@@ -636,18 +635,18 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
                 orient = AlgorithmBrainExtractor.SAT_COR;
             }
 
-            Point3f oldPoint = new Point3f(Float.parseFloat(initCenterXTF.getText()),
+            Vector3f oldPoint = new Vector3f(Float.parseFloat(initCenterXTF.getText()),
                                            Float.parseFloat(initCenterYTF.getText()),
                                            Float.parseFloat(initCenterZTF.getText()));
-            Point3f point = computeCenter(image, orient, useSphereCheckbox.isSelected());
+            Vector3f point = computeCenter(image, orient, useSphereCheckbox.isSelected());
 
             if (oldPoint.equals(centerOfMass) || useCenterOfMass) {
 
                 // user hasn't changed the initial point from the center of mass (or has chosen to just use the center
                 // of mass), then we can change the values
-                initCenterXTF.setText("" + point.x);
-                initCenterYTF.setText("" + point.y);
-                initCenterZTF.setText("" + point.z);
+                initCenterXTF.setText("" + point.X);
+                initCenterYTF.setText("" + point.Y);
+                initCenterZTF.setText("" + point.Z);
             }
 
             centerOfMass = point;
@@ -903,7 +902,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         if (useCenterOfMass) {
             initCenterPoint = centerOfMass;
         } else {
-            initCenterPoint = new Point3f(initCenterX, initCenterY, initCenterZ);
+            initCenterPoint = new Vector3f(initCenterX, initCenterY, initCenterZ);
         }
     }
 
@@ -929,8 +928,8 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_init_with_center_of_mass", useCenterOfMass));
         scriptParameters.getParams().put(ParameterFactory.newParameter("init_center_point",
                                                                        new float[] {
-                                                                           initCenterPoint.x, initCenterPoint.y,
-                                                                           initCenterPoint.z
+                                                                           initCenterPoint.X, initCenterPoint.Y,
+                                                                           initCenterPoint.Z
                                                                        }));
     }
 
@@ -1257,9 +1256,9 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         }
 
         if (useCenterOfMass) {
-            initCenterPoint = (Point3f) (centerOfMass.clone());
+            initCenterPoint = new Vector3f( centerOfMass );
         } else {
-            initCenterPoint = new Point3f(initCenterX, initCenterY, initCenterZ);
+            initCenterPoint = new Vector3f(initCenterX, initCenterY, initCenterZ);
         }
 
         return true;

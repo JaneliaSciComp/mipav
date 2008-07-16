@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
@@ -1665,17 +1666,17 @@ public class JDialogVOIStats extends JDialogBase
         contourTextArea.append("number of points: " + leadBase.size() + "\n");
 
         String[] positions = null;
-        Point3Df currentPt = null;
+        Vector3f currentPt = null;
         int currentX, currentY, currentZ;
 
         if ((image.getFileInfo(0).getOrigin()[0] != 0) || (image.getFileInfo(0).getOrigin()[1] != 0) ||
                 (image.getFileInfo(0).getOrigin()[2] != 0)) {
 
             for (i = 0; i < size; i++) {
-                currentPt = (Point3Df) leadBase.elementAt(i);
-                currentX = (int) currentPt.x;
-                currentY = (int) currentPt.y;
-                currentZ = (int) currentPt.z;
+                currentPt = (Vector3f) leadBase.elementAt(i);
+                currentX = (int) currentPt.X;
+                currentY = (int) currentPt.Y;
+                currentZ = (int) currentPt.Z;
 
                 if (((ViewJFrameImage) parentFrame).getComponentImage().getImageA().getNDims() > 2) {
                     ViewJComponentEditImage compImage = ((ViewJFrameImage) parentFrame).getComponentImage();
@@ -1702,10 +1703,10 @@ public class JDialogVOIStats extends JDialogBase
         } else {
 
             for (i = 0; i < size; i++) {
-                currentPt = (Point3Df) leadBase.elementAt(i);
-                currentX = (int) currentPt.x;
-                currentY = (int) currentPt.y;
-                currentZ = (int) currentPt.z;
+                currentPt = (Vector3f) leadBase.elementAt(i);
+                currentX = (int) currentPt.X;
+                currentY = (int) currentPt.Y;
+                currentZ = (int) currentPt.Z;
 
                 contourTextArea.append(" X: " + String.valueOf(currentX) + " Y: " + String.valueOf(currentY) +
                                        " Z: " + String.valueOf(currentZ) + "\n");

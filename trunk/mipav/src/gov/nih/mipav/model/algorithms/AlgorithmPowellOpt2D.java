@@ -1,7 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.structures.Point2Dd;
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.jama.Matrix;
 
@@ -36,17 +37,17 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
      * @param  _rigid           <code>true</code> means this was a rigid transformation
      * @param  bracketBound     DOCUMENT ME!
      */
-    public AlgorithmPowellOpt2D(AlgorithmBase parent, Point2Dd com, int degreeOfFreedom,
+    public AlgorithmPowellOpt2D(AlgorithmBase parent, Vector2f com, int degreeOfFreedom,
                                 AlgorithmOptimizeFunctionBase costFunc, double[] tols, int maxIter,
                                 boolean _rigid, int bracketBound) {
         super(parent, degreeOfFreedom, costFunc, tols, maxIter, 2, bracketBound);
 
         this.rigid = _rigid;
         toOrigin = new TransMatrix(3);
-        toOrigin.setTranslate(com.x, com.y);
+        toOrigin.setTranslate(com.X, com.Y);
 
         fromOrigin = new TransMatrix(3);
-        fromOrigin.setTranslate(-com.x, -com.y);
+        fromOrigin.setTranslate(-com.X, -com.Y);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

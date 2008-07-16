@@ -1,6 +1,6 @@
 package gov.nih.mipav.model.structures;
 
-
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.file.*;
@@ -22,7 +22,7 @@ import java.util.*;
  *           <p>$Logfile: /mipav/src/gov/nih/mipav/model/structures/VOIBase.java $ $Revision: 56 $ $Date: 2/24/06 3:34p
  *           $</p>
  */
-public abstract class VOIBase extends Vector<Point3Df> {
+public abstract class VOIBase extends Vector<Vector3f> {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -70,19 +70,19 @@ public abstract class VOIBase extends Vector<Point3Df> {
     protected Color black = new Color(0, 0, 0);
 
     /** Stores the geometric center of the contour of a VOI. */
-    protected Point3Df gcPt = new Point3Df(0, 0, 0);
+    protected Vector3f gcPt = new Vector3f(0, 0, 0);
     
     /** Stores the black and white center of mass of the contour of a VOI. */
-    protected Point3Df cenMassPt = new Point3Df(0, 0, 0);
+    protected Vector3f cenMassPt = new Vector3f(0, 0, 0);
     
     /** Stores the red center of mass of the contour of a VOI. */
-    protected Point3Df cenMassPtR = new Point3Df(0, 0, 0);
+    protected Vector3f cenMassPtR = new Vector3f(0, 0, 0);
     
     /** Stores the green center of mass of the contour of a VOI. */
-    protected Point3Df cenMassPtG = new Point3Df(0, 0, 0);
+    protected Vector3f cenMassPtG = new Vector3f(0, 0, 0);
     
     /** Stores the blue center of mass of the contour of a VOI. */
-    protected Point3Df cenMassPtB = new Point3Df(0, 0, 0);
+    protected Vector3f cenMassPtB = new Vector3f(0, 0, 0);
 
     /** DOCUMENT ME! */
     protected boolean doName = false;
@@ -181,11 +181,11 @@ public abstract class VOIBase extends Vector<Point3Df> {
                                   boolean boundingBox, FileInfoBase fileInfo, int dim, int thickness);
 
     /**
-     * Abstract method: gets the point3df of the active point.
+     * Abstract method: gets the Vector3f of the active point.
      *
-     * @return  Point3Df the active point's Point3Df
+     * @return  Vector3f the active point's Vector3f
      */
-    public abstract Point3Df getActivePt();
+    public abstract Vector3f getActivePt();
 
     /**
      * Return the VOI crop region's origin of rectangle.
@@ -225,7 +225,7 @@ public abstract class VOIBase extends Vector<Point3Df> {
      *
      * @param  pt  array of points
      */
-    public abstract void importPoints(Point3Df[] pt);
+    public abstract void importPoints(Vector3f[] pt);
 
     /**
      * Abstract method: moves the active point.
@@ -291,7 +291,7 @@ public abstract class VOIBase extends Vector<Point3Df> {
      * @param  z  z coordinate of point
      */
     public void addElement(int x, int y, int z) {
-        addElement(new Point3Df(x, y, z));
+        addElement(new Vector3f(x, y, z));
     }
 
     /**
@@ -302,7 +302,7 @@ public abstract class VOIBase extends Vector<Point3Df> {
      * @param  z  z coordinate of point
      */
     public void addElement(float x, float y, float z) {
-        addElement(new Point3Df(x, y, z));
+        addElement(new Vector3f(x, y, z));
     }
 
     /**
@@ -338,9 +338,9 @@ public abstract class VOIBase extends Vector<Point3Df> {
         }
 
         for (i = 0; i < size(); i++) {
-            x[i] = MipavMath.round(((Point3Df) (elementAt(i))).x);
-            y[i] = MipavMath.round(((Point3Df) (elementAt(i))).y);
-            z[i] = MipavMath.round(((Point3Df) (elementAt(i))).z);
+            x[i] = MipavMath.round(((Vector3f) (elementAt(i))).X);
+            y[i] = MipavMath.round(((Vector3f) (elementAt(i))).Y);
+            z[i] = MipavMath.round(((Vector3f) (elementAt(i))).Z);
         }
     }
 
@@ -363,9 +363,9 @@ public abstract class VOIBase extends Vector<Point3Df> {
         }
 
         for (i = 0; i < this.size(); i++) {
-            x[i] = ((Point3Df) (elementAt(i))).x;
-            y[i] = ((Point3Df) (elementAt(i))).y;
-            z[i] = ((Point3Df) (elementAt(i))).z;
+            x[i] = ((Vector3f) (elementAt(i))).X;
+            y[i] = ((Vector3f) (elementAt(i))).Y;
+            z[i] = ((Vector3f) (elementAt(i))).Z;
         }
     }
 
@@ -402,7 +402,7 @@ public abstract class VOIBase extends Vector<Point3Df> {
             if (this instanceof VOICardiology) {
                 ((VOICardiology) this).insertCardioPoint(x, y, z);
             } else {
-                insertElementAt(new Point3Df(x, y, z), nearPoint + 1);
+                insertElementAt(new Vector3f(x, y, z), nearPoint + 1);
                 nearPoint++;
                 nearPoint = NOT_A_POINT;
                 lastPoint = 0;
@@ -457,10 +457,10 @@ public abstract class VOIBase extends Vector<Point3Df> {
 
         // System.err.println("near line 2");
         for (i = 0; i < (size() - 1); i++) {
-            x1 = MipavMath.round(((Point3Df) (elementAt(i))).x);
-            y1 = MipavMath.round(((Point3Df) (elementAt(i))).y);
-            x2 = MipavMath.round(((Point3Df) (elementAt(i + 1))).x);
-            y2 = MipavMath.round(((Point3Df) (elementAt(i + 1))).y);
+            x1 = MipavMath.round(((Vector3f) (elementAt(i))).X);
+            y1 = MipavMath.round(((Vector3f) (elementAt(i))).Y);
+            x2 = MipavMath.round(((Vector3f) (elementAt(i + 1))).X);
+            y2 = MipavMath.round(((Vector3f) (elementAt(i + 1))).Y);
 
             if (testDistance(x, x1, x2, y, y1, y2, 5)) {
                 nearPoint = i;
@@ -469,10 +469,10 @@ public abstract class VOIBase extends Vector<Point3Df> {
             }
         }
 
-        x1 = MipavMath.round(((Point3Df) (elementAt(0))).x);
-        y1 = MipavMath.round(((Point3Df) (elementAt(0))).y);
-        x2 = MipavMath.round(((Point3Df) (elementAt(size() - 1))).x);
-        y2 = MipavMath.round(((Point3Df) (elementAt(size() - 1))).y);
+        x1 = MipavMath.round(((Vector3f) (elementAt(0))).X);
+        y1 = MipavMath.round(((Vector3f) (elementAt(0))).Y);
+        x2 = MipavMath.round(((Vector3f) (elementAt(size() - 1))).X);
+        y2 = MipavMath.round(((Vector3f) (elementAt(size() - 1))).Y);
 
         if (testDistance(x, x1, x2, y, y1, y2, 3)) {
             nearPoint = i;
@@ -501,10 +501,10 @@ public abstract class VOIBase extends Vector<Point3Df> {
 
         // System.err.println("near line");
         for (i = 0; i < (size() - 1); i++) {
-            x1 = MipavMath.round(((Point3Df) (elementAt(i))).x);
-            y1 = MipavMath.round(((Point3Df) (elementAt(i))).y);
-            x2 = MipavMath.round(((Point3Df) (elementAt(i + 1))).x);
-            y2 = MipavMath.round(((Point3Df) (elementAt(i + 1))).y);
+            x1 = MipavMath.round(((Vector3f) (elementAt(i))).X);
+            y1 = MipavMath.round(((Vector3f) (elementAt(i))).Y);
+            x2 = MipavMath.round(((Vector3f) (elementAt(i + 1))).X);
+            y2 = MipavMath.round(((Vector3f) (elementAt(i + 1))).Y);
 
             if (testDistance(x, x1, x2, y, y1, y2, tol)) {
                 nearPoint = i;
@@ -513,10 +513,10 @@ public abstract class VOIBase extends Vector<Point3Df> {
             }
         }
 
-        x1 = MipavMath.round(((Point3Df) (elementAt(0))).x);
-        y1 = MipavMath.round(((Point3Df) (elementAt(0))).y);
-        x2 = MipavMath.round(((Point3Df) (elementAt(size() - 1))).x);
-        y2 = MipavMath.round(((Point3Df) (elementAt(size() - 1))).y);
+        x1 = MipavMath.round(((Vector3f) (elementAt(0))).X);
+        y1 = MipavMath.round(((Vector3f) (elementAt(0))).Y);
+        x2 = MipavMath.round(((Vector3f) (elementAt(size() - 1))).X);
+        y2 = MipavMath.round(((Vector3f) (elementAt(size() - 1))).Y);
 
         if (testDistance(x, x1, x2, y, y1, y2, tol)) {
             nearPoint = i;
@@ -549,8 +549,8 @@ public abstract class VOIBase extends Vector<Point3Df> {
         nearPoint = NOT_A_POINT;
 
         for (i = 0; i < size(); i++) {
-            xC = MipavMath.round(((Point3Df) (elementAt(i))).x * zoom * resolutionX);
-            yC = MipavMath.round(((Point3Df) (elementAt(i))).y * zoom * resolutionY);
+            xC = MipavMath.round(((Vector3f) (elementAt(i))).X * zoom * resolutionX);
+            yC = MipavMath.round(((Vector3f) (elementAt(i))).Y * zoom * resolutionY);
 
             // System.err.println("xC is: " + xC + " yC is: " + yC + " x is: " + x + " y is: " + y);
             dist = (float) MipavMath.distance(x, xC, y, yC);
@@ -575,7 +575,7 @@ public abstract class VOIBase extends Vector<Point3Df> {
      *
      * @return  returns boolean result of test
      */
-    public boolean nearPointInPlane( Point3Df volPoint )
+    public boolean nearPointInPlane( Vector3f volPoint )
     {
         int i;
         int xC, yC, zC;
@@ -586,7 +586,7 @@ public abstract class VOIBase extends Vector<Point3Df> {
 
         for (i = 0; i < size(); i++)
         {
-            if ( MipavMath.distance( volPoint, (Point3Df)(elementAt(i)) ) < 5 )
+            if ( MipavMath.distance( volPoint, (Vector3f)(elementAt(i)) ) < 5 )
             {
                 nearPoint = i;
                 lastPoint = nearPoint;
@@ -623,10 +623,10 @@ public abstract class VOIBase extends Vector<Point3Df> {
         if ((nearPoint >= 0) && (nearPoint < size())) {
 
             // removeElementAt(nearPoint);
-            // insertElementAt(new Point3Df(x, y, z), nearPoint);
-            ((Point3Df) (elementAt(nearPoint))).x = x;
-            ((Point3Df) (elementAt(nearPoint))).y = y;
-            ((Point3Df) (elementAt(nearPoint))).z = z;
+            // insertElementAt(new Vector3f(x, y, z), nearPoint);
+            ((Vector3f) (elementAt(nearPoint))).X = x;
+            ((Vector3f) (elementAt(nearPoint))).Y = y;
+            ((Vector3f) (elementAt(nearPoint))).Z = z;
         }
     }
 

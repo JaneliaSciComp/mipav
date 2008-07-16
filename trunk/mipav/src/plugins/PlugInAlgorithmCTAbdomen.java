@@ -13,7 +13,6 @@ import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.CubeBounds;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.Point3Df;
 import gov.nih.mipav.model.structures.Point3Ds;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;

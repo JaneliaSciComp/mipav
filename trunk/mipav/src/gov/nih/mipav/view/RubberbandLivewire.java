@@ -1,5 +1,7 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 
 import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
@@ -9,7 +11,6 @@ import gov.nih.mipav.model.algorithms.AlgorithmLapMedianess;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitudeSep;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.Point3Df;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 
@@ -1091,10 +1092,10 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
             clickPoints.removeElementAt(clickPoints.size() - 1);
 
             // reanchor contour at last clicked point
-            Point newAnchor = new Point((int) ((int) ((Point3Df) (contour.lastElement())).x *
+            Point newAnchor = new Point((int) ((int) ((Vector3f) (contour.lastElement())).X *
                                                    (((ViewJComponentEditImage) (component)).getZoomX() *
                                                         ((ViewJComponentEditImage) (component)).getResolutionX())),
-                                        (int) ((int) ((Point3Df) (contour.lastElement())).y *
+                                        (int) ((int) ((Vector3f) (contour.lastElement())).Y *
                                                    (((ViewJComponentEditImage) (component)).getZoomY() *
                                                         ((ViewJComponentEditImage) (component)).getResolutionY())));
 
@@ -1116,17 +1117,17 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
             // draw boxes around the first and last points on the curve
             g.setXORMode(Color.black);
 
-            int ptx = (int) ((int) ((Point3Df) (contour.elementAt(0))).x *
+            int ptx = (int) ((int) ((Vector3f) (contour.elementAt(0))).X *
                                  (((ViewJComponentEditImage) (component)).getZoomX() *
                                       ((ViewJComponentEditImage) (component)).getResolutionX()));
-            int pty = (int) ((int) ((Point3Df) (contour.elementAt(0))).y *
+            int pty = (int) ((int) ((Vector3f) (contour.elementAt(0))).Y *
                                  (((ViewJComponentEditImage) (component)).getZoomY() *
                                       ((ViewJComponentEditImage) (component)).getResolutionY()));
             g.drawRect(ptx - 3, pty - 3, 6, 6);
-            ptx = (int) ((int) ((Point3Df) (contour.lastElement())).x *
+            ptx = (int) ((int) ((Vector3f) (contour.lastElement())).X *
                              (((ViewJComponentEditImage) (component)).getZoomX() *
                                   ((ViewJComponentEditImage) (component)).getResolutionX()));
-            pty = (int) ((int) ((Point3Df) (contour.lastElement())).y *
+            pty = (int) ((int) ((Vector3f) (contour.lastElement())).Y *
                              (((ViewJComponentEditImage) (component)).getZoomY() *
                                   ((ViewJComponentEditImage) (component)).getResolutionY()));
 
@@ -1139,15 +1140,15 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
         }
         // User clicked again on last point.  Finish off the contour, leave it open
         else if (isActive() && (contour.size() > 2) &&
-                     (distance(xxS, (int) ((Point3Df) (contour.lastElement())).x, yyS,
-                                   (int) ((Point3Df) (contour.lastElement())).y) < 3 /*&& mouseDragged == false*/)) {
+                     (distance(xxS, (int) ((Vector3f) (contour.lastElement())).X, yyS,
+                                   (int) ((Vector3f) (contour.lastElement())).Y) < 3 /*&& mouseDragged == false*/)) {
             open = true;
             done = true;
         }
         // User clicked back again on first point.  Finish off contour and close it.
         else if (isActive() && (contour.size() > 2) &&
-                     (distance(xxS, (int) ((Point3Df) (contour.elementAt(0))).x, yyS,
-                                   (int) ((Point3Df) (contour.elementAt(0))).y) < 3)) {
+                     (distance(xxS, (int) ((Vector3f) (contour.elementAt(0))).X, yyS,
+                                   (int) ((Vector3f) (contour.elementAt(0))).Y) < 3)) {
             open = false;
             done = true;
         } else {
@@ -1430,7 +1431,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
             if (isActive() && testPoint(pt) && ((xS != tmpPt.x) || (yS != tmpPt.y))) {
 
                 if (xPoints != null) {
-                    clickPoints.addElement(new Point3Df(xPoints[0] /
+                    clickPoints.addElement(new Vector3f(xPoints[0] /
                                                             (((ViewJComponentEditImage) (component)).getZoomX() *
                                                                  ((ViewJComponentEditImage) (component))
                                                                  .getResolutionX()),
@@ -1453,7 +1454,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                     }
                 } else {
                     contour.addElement(xS, yS, ((ViewJComponentEditImage) (component)).getSlice());
-                    clickPoints.addElement(new Point3Df(xS, yS, ((ViewJComponentEditImage) (component)).getSlice()));
+                    clickPoints.addElement(new Vector3f(xS, yS, ((ViewJComponentEditImage) (component)).getSlice()));
                 }
 
                 Graphics g = super.component.getGraphics();

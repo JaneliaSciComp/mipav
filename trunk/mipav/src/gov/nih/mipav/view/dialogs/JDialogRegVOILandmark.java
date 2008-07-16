@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
@@ -56,7 +57,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
     private JRadioButton minDiff, maxSum;
 
     /** DOCUMENT ME! */
-    private Vector3Df[] position = null;
+    private Vector3f[] position = null;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -82,7 +83,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
     private float[] tmpIntensity = null;
 
     /** DOCUMENT ME! */
-    private Vector3Df[] tmpPosition = null;
+    private Vector3f[] tmpPosition = null;
 
     /** DOCUMENT ME! */
     private ViewUserInterface UI;
@@ -326,7 +327,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
                                  Math.round(((VOIContour) (curves[0].elementAt(j))).getLengthPtToPt(resolutions) /
                                                 resolutions[0]);
 
-                tmpPosition = new Vector3Df[2 * length];
+                tmpPosition = new Vector3f[2 * length];
                 tmpIntensity = new float[2 * length];
 
                 Preferences.debug("VOI predicted array length = " + length + "\n");
@@ -336,10 +337,10 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
 
                 Preferences.debug("actual VOI length = " + length + "\n");
 
-                position = new Vector3Df[length];
+                position = new Vector3f[length];
 
                 for (i = 0; i < length; i++) {
-                    position[i] = new Vector3Df(tmpPosition[i].x, tmpPosition[i].y, tmpPosition[i].z);
+                    position[i] = new Vector3f(tmpPosition[i].X, tmpPosition[i].Y, tmpPosition[i].Z);
                 }
 
                 // Hide dialog

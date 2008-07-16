@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.structures.*;
 
@@ -813,7 +815,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
      *
      * @return  the Bspline interpolated data point
      */
-    public Point2Df bSplineJetXY(int derivOrder, float t, float[] dataX, float[] dataY) {
+    public Vector2f bSplineJetXY(int derivOrder, float t, float[] dataX, float[] dataY) {
         float tdiff, tdiff2;
         int tbase;
         int i;
@@ -880,7 +882,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
             y += dt[i] * geomy[i];
         }
 
-        return (new Point2Df(x, y));
+        return (new Vector2f(x, y));
     }
 
     /**
@@ -894,7 +896,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
      *
      * @return  the Bspline interpolated data point
      */
-    public Point3Df bSplineJetXYZ(int derivOrder, float t, float[] dataX, float[] dataY, float[] dataZ) {
+    public Vector3f bSplineJetXYZ(int derivOrder, float t, float[] dataX, float[] dataY, float[] dataZ) {
         float tdiff, tdiff2;
         int tbase;
         int i;
@@ -965,7 +967,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
             z += dt[i] * geomz[i];
         }
 
-        return (new Point3Df(x, y, z));
+        return (new Vector3f(x, y, z));
     }
 
     /**

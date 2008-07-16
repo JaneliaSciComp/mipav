@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -645,12 +646,12 @@ public class AlgorithmBSnake extends AlgorithmBase {
         int nPts;
         float pct;
         float index;
-        Point2Df interpPt = new Point2Df();
-        Point2Df inNormPt = new Point2Df();
-        Point2Df outNormPt = new Point2Df();
-        Point2Df tangentDir = new Point2Df();
-        Point2Df normDir = new Point2Df();
-        Point2Df normStep = new Point2Df();
+        Vector2f interpPt = new Vector2f();
+        Vector2f inNormPt = new Vector2f();
+        Vector2f outNormPt = new Vector2f();
+        Vector2f tangentDir = new Vector2f();
+        Vector2f normDir = new Vector2f();
+        Vector2f normStep = new Vector2f();
         float[] newXPts, newYPts;
         float normLength;
         float stepPct = (float) 0.75;
@@ -679,18 +680,18 @@ public class AlgorithmBSnake extends AlgorithmBase {
                 interpPt = bSpline.bSplineJetXY(0, index, xPoints, yPoints);
                 tangentDir = bSpline.bSplineJetXY(1, index, xPoints, yPoints);
 
-                normLength = (float) Math.sqrt((tangentDir.x * tangentDir.x) + (tangentDir.y * tangentDir.y));
-                normDir.x = -tangentDir.y / normLength;
-                normDir.y = tangentDir.x / normLength;
+                normLength = (float) Math.sqrt((tangentDir.X * tangentDir.X) + (tangentDir.Y * tangentDir.Y));
+                normDir.X = -tangentDir.Y / normLength;
+                normDir.Y = tangentDir.X / normLength;
 
-                normStep.x = stepPct * normDir.x;
-                normStep.y = stepPct * normDir.y;
+                normStep.X = stepPct * normDir.X;
+                normStep.Y = stepPct * normDir.Y;
 
-                outNormPt.x = normStep.x + interpPt.x;
-                outNormPt.y = normStep.y + interpPt.y;
+                outNormPt.X = normStep.X + interpPt.X;
+                outNormPt.Y = normStep.Y + interpPt.Y;
 
-                inNormPt.x = -normStep.x + interpPt.x;
-                inNormPt.y = -normStep.y + interpPt.y;
+                inNormPt.X = -normStep.X + interpPt.X;
+                inNormPt.Y = -normStep.Y + interpPt.Y;
 
                 ix = AlgorithmConvolver.convolve2DPt(interpPt, srcImage.getExtents(), image, kExtents, GxData);
                 iy = AlgorithmConvolver.convolve2DPt(interpPt, srcImage.getExtents(), image, kExtents, GyData);
@@ -714,17 +715,17 @@ public class AlgorithmBSnake extends AlgorithmBase {
                 if ((outGradMag > gradMag) || (inGradMag > gradMag)) {
 
                     if (outGradMag > inGradMag) {
-                        newXPts[i + 2] = outNormPt.x;
-                        newYPts[i + 2] = outNormPt.y;
+                        newXPts[i + 2] = outNormPt.X;
+                        newYPts[i + 2] = outNormPt.Y;
                         energy += outGradMag;
                     } else {
-                        newXPts[i + 2] = inNormPt.x;
-                        newYPts[i + 2] = inNormPt.y;
+                        newXPts[i + 2] = inNormPt.X;
+                        newYPts[i + 2] = inNormPt.Y;
                         energy += inGradMag;
                     }
                 } else {
-                    newXPts[i + 2] = interpPt.x;
-                    newYPts[i + 2] = interpPt.y;
+                    newXPts[i + 2] = interpPt.X;
+                    newYPts[i + 2] = interpPt.Y;
                     energy += gradMag;
                 }
             }

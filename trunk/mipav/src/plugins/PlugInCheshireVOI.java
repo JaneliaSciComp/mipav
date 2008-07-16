@@ -1,3 +1,4 @@
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -136,20 +137,20 @@ public class PlugInCheshireVOI implements PlugInGeneric {
                 if (voiListArr != null) {
 
                     for (int j = 0; j < voiListArr.length; j++) {
-                        Point3Df[] extrema = voiListArr[j].maxWidth();
+                        Vector3f[] extrema = voiListArr[j].maxWidth();
 
                         for (int k = 0; k < extrema.length; k++) {
 
-                            if (extrema[k].x > highX) {
-                                highX = extrema[k].x;
+                            if (extrema[k].X > highX) {
+                                highX = extrema[k].X;
                             }
 
-                            if (extrema[k].y > highY) {
-                                highY = extrema[k].y;
+                            if (extrema[k].Y > highY) {
+                                highY = extrema[k].Y;
                             }
 
-                            if (extrema[k].z > highZ) {
-                                highZ = extrema[k].z;
+                            if (extrema[k].Z > highZ) {
+                                highZ = extrema[k].Z;
                             }
                         }
                     }

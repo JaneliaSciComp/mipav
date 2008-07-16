@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
@@ -316,7 +317,7 @@ public class JDialogCircleToRectangle extends JDialogBase implements AlgorithmIn
         int i;
         Vector[] curves;
         int nPts;
-        Point3Df[] pts = null;
+        Vector3f[] pts = null;
 
         if (!testParameter(xText.getText(), 5, 1000000)) {
             xText.requestFocus();
@@ -360,8 +361,8 @@ public class JDialogCircleToRectangle extends JDialogBase implements AlgorithmIn
         pts = image.getVOIs().VOIAt(0).exportPoints(0);
 
         for (i = 0; i < 2; i++) {
-            xSource[i] = pts[i].x;
-            ySource[i] = pts[i].y;
+            xSource[i] = pts[i].X;
+            ySource[i] = pts[i].Y;
         }
 
         return true;

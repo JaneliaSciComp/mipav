@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
@@ -1251,7 +1252,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      * Calls the algorithm with the set variables.
      */
     protected void callAlgorithm() {
-        Point3Df center = null;
+        Vector3f center = null;
 
         if (doInvMat) {
         	xfrm.invert();
@@ -1346,19 +1347,19 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             transformType = scriptParameters.getParams().getInt("transform_type");
 
             float[] tempArray = scriptParameters.getParams().getList("acpc_PC").getAsFloatArray();
-            Point3Df acpcPC = new Point3Df(tempArray[0], tempArray[1], tempArray[2]);
+            Vector3f acpcPC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
             tInfo.setAcpcPC(acpcPC);
 
             tInfo.setAcpcRes(scriptParameters.getParams().getFloat("acpc_res"));
 
             tempArray = scriptParameters.getParams().getList("orig_AC").getAsFloatArray();
 
-            Point3Df origAC = new Point3Df(tempArray[0], tempArray[1], tempArray[2]);
+            Vector3f origAC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
             tInfo.setOrigAC(origAC);
 
             tempArray = scriptParameters.getParams().getList("orig_PC").getAsFloatArray();
 
-            Point3Df origPC = new Point3Df(tempArray[0], tempArray[1], tempArray[2]);
+            Vector3f origPC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
             tInfo.setOrigPC(origPC);
 
             tInfo.setOrigRes(scriptParameters.getParams().getList("orig_res").getAsFloatArray());
@@ -1376,12 +1377,12 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     (transformType == TLRC_TO_ACPC)) {
                 tempArray = scriptParameters.getParams().getList("acpc_min").getAsFloatArray();
 
-                Point3Df acpcMin = new Point3Df(tempArray[0], tempArray[1], tempArray[2]);
+                Vector3f acpcMin = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
                 tInfo.setAcpcMin(acpcMin);
 
                 tempArray = scriptParameters.getParams().getList("acpc_max").getAsFloatArray();
 
-                Point3Df acpcMax = new Point3Df(tempArray[0], tempArray[1], tempArray[2]);
+                Vector3f acpcMax = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
                 tInfo.setAcpcMax(acpcMax);
 
                 tInfo.setTlrcRes(scriptParameters.getParams().getList("tlrc_res").getAsFloatArray());
@@ -1574,18 +1575,18 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         if (doTalairach) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("transform_type", transformType));
 
-            Point3Df acpcPC = tInfo.getAcpcPC();
+            Vector3f acpcPC = tInfo.getAcpcPC();
             scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_PC",
-                                                                           new float[] { acpcPC.x, acpcPC.y, acpcPC.z }));
+                                                                           new float[] { acpcPC.X, acpcPC.Y, acpcPC.Z }));
             scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_res", tInfo.getAcpcRes()));
 
-            Point3Df origAC = tInfo.getOrigAC();
+            Vector3f origAC = tInfo.getOrigAC();
             scriptParameters.getParams().put(ParameterFactory.newParameter("orig_AC",
-                                                                           new float[] { origAC.x, origAC.y, origAC.z }));
+                                                                           new float[] { origAC.X, origAC.Y, origAC.Z }));
 
-            Point3Df origPC = tInfo.getOrigPC();
+            Vector3f origPC = tInfo.getOrigPC();
             scriptParameters.getParams().put(ParameterFactory.newParameter("orig_PC",
-                                                                           new float[] { origPC.x, origPC.y, origPC.z }));
+                                                                           new float[] { origPC.X, origPC.Y, origPC.Z }));
 
             scriptParameters.getParams().put(ParameterFactory.newParameter("orig_res", tInfo.getOrigRes()));
             scriptParameters.getParams().put(ParameterFactory.newParameter("orig_dim", tInfo.getOrigDim()));
@@ -1598,17 +1599,17 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) || (transformType == TLRC_TO_ORIG) ||
                     (transformType == TLRC_TO_ACPC)) {
-                Point3Df acpcMin = tInfo.getAcpcMin();
+                Vector3f acpcMin = tInfo.getAcpcMin();
 
                 scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_min",
                                                                                new float[] {
-                                                                                   acpcMin.x, acpcMin.y, acpcMin.z
+                                                                                   acpcMin.X, acpcMin.Y, acpcMin.Z
                                                                                }));
 
-                Point3Df acpcMax = tInfo.getAcpcMax();
+                Vector3f acpcMax = tInfo.getAcpcMax();
                 scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_max",
                                                                                new float[] {
-                                                                                   acpcMax.x, acpcMax.y, acpcMax.z
+                                                                                   acpcMax.X, acpcMax.Y, acpcMax.Z
                                                                                }));
 
                 scriptParameters.getParams().put(ParameterFactory.newParameter("tlrc_res", tInfo.getTlrcRes()));
@@ -3317,50 +3318,50 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             // 0  0 -1  0
             // 0  0  0  1
 
-            Point3Df cPt = image.getImageCentermm(false);
-            Point3Df cPtRS = resampleImage.getImageCentermm(false);
+            Vector3f cPt = image.getImageCentermm(false);
+            Vector3f cPtRS = resampleImage.getImageCentermm(false);
 
             if ((wcSystem == true) && (leftHandSystem == true)) {
 
                 // change from both the "left-hand" and world coordinate system.
-                mat.setTranslate(cPtRS.x, cPtRS.y, cPtRS.z);
+                mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
                 mat.timesEquals(rh_lhMatrix);
                 mat.timesEquals(wcMatrix);
-                mat.setTranslate(-cPtRS.x, -cPtRS.y, -cPtRS.z);
+                mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
                 mat.timesEquals(matrix);
 
-                mat.setTranslate(cPt.x, cPt.y, cPt.z);
+                mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
                 mat.timesEquals(wcMatrix);
                 mat.timesEquals(rh_lhMatrix);
-                mat.setTranslate(-cPt.x, -cPt.y, -cPt.z);
+                mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
 
                 // mat.print();
                 return mat;
             } else if (wcSystem == true) { // Change just from the world coordinate system
 
-                mat.setTranslate(cPtRS.x, cPtRS.y, cPtRS.z);
+                mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
                 mat.timesEquals(wcMatrix);
-                mat.setTranslate(-cPtRS.x, -cPtRS.y, -cPtRS.z);
+                mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
                 mat.timesEquals(matrix);
 
-                mat.setTranslate(cPt.x, cPt.y, cPt.z);
+                mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
                 mat.timesEquals(wcMatrix);
-                mat.setTranslate(-cPt.x, -cPt.y, -cPt.z);
+                mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
 
                 return mat;
             } else if (leftHandSystem == true) { // Change just from the "left-hand" system
 
-                mat.setTranslate(cPtRS.x, cPtRS.y, cPtRS.z);
+                mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
                 mat.timesEquals(rh_lhMatrix);
-                mat.setTranslate(-cPtRS.x, -cPtRS.y, -cPtRS.z);
+                mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
                 mat.timesEquals(matrix);
 
-                mat.setTranslate(cPt.x, cPt.y, cPt.z);
+                mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
                 mat.timesEquals(rh_lhMatrix);
-                mat.setTranslate(-cPt.x, -cPt.y, -cPt.z);
+                mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
 
                 return mat;
             } else {

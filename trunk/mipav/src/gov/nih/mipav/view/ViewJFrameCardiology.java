@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
@@ -2133,13 +2134,13 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
             MipavUtil.displayInfo("Adjusted image will be resized to match reference image");
 
             TransMatrix xfrm;
-            Point3Df center = image2load.getImageCentermm(false);
+            Vector3f center = image2load.getImageCentermm(false);
 
             xfrm = new TransMatrix(3);
             xfrm.identity();
 
-            xfrm.setTranslate(center.x, center.y);
-            xfrm.setTranslate(-center.x, -center.y);
+            xfrm.setTranslate(center.X, center.Y);
+            xfrm.setTranslate(-center.X, -center.Y);
 
             AlgorithmTransform trans = null;
 

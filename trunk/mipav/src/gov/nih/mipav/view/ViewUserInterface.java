@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import edu.sdsc.grid.io.GeneralFile;
 
@@ -89,7 +90,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     private TransMatrix clippedMatrix = null;
 
     /** DOCUMENT ME! */
-    private Vector<Vector<Point3Df>> clippedScannerVectors = new Vector<Vector<Point3Df>>();
+    private Vector<Vector<Vector3f>> clippedScannerVectors = new Vector<Vector<Vector3f>>();
 
     /** Vector to hold clipped VOIs (multiple). */
     private ViewVOIVector clippedVOIs = new ViewVOIVector();
@@ -821,7 +822,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param slice slice number
      * @param scannerPts a vector of all the VOI's points pre-converted to scanner coordinates
      */
-    public void addClippedScannerVOI(VOI voi, int slice, Vector<Point3Df> scannerPts) {
+    public void addClippedScannerVOI(VOI voi, int slice, Vector<Vector3f> scannerPts) {
 
         if (isClippedVOI2D == true) {
             clearClippedVOIs();
@@ -1260,7 +1261,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * 
      * @return DOCUMENT ME!
      */
-    public Vector<Vector<Point3Df>> getClippedScannerVectors() {
+    public Vector<Vector<Vector3f>> getClippedScannerVectors() {
         return this.clippedScannerVectors;
     }
 
