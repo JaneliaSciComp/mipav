@@ -316,7 +316,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         while(itr.hasNext()) {
         	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
-        	if(voi.calcEligible() && voi.area() > 0) {
+        	if(voi.calcEligible() && !voi.isEmpty()) {
         		long timeVOI = System.currentTimeMillis();
 		        voi.setLastModified(timeVOI);
         	}
@@ -326,7 +326,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         //always perform new calculation here, no need to check
         while(itr.hasNext()) {
         	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
-        	if(voi.calcEligible() && voi.area() > 0) {
+        	if(voi.calcEligible() && !voi.isEmpty()) {
 		        MuscleCalculation muscleCalc = new MuscleCalculation(voi, voi.getName());
 		        Thread calc = new Thread(calcGroup, muscleCalc, voi.getName());
 		        calc.start();
@@ -449,7 +449,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         while(itr.hasNext()) {
         	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
-        	if(voi.calcEligible() && voi.area() > 0) {
+        	if(voi.calcEligible() && !voi.isEmpty()) {
         		long timeVOI = System.currentTimeMillis();
 		        voi.setLastModified(timeVOI);
         	}
@@ -459,7 +459,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         //always perform new calculation here, no need to check
         while(itr.hasNext()) {
         	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
-        	if(voi.calcEligible() && voi.area() > 0) {
+        	if(voi.calcEligible() && !voi.isEmpty()) {
 		        MuscleCalculation muscleCalc = new MuscleCalculation(voi, voi.getName());
 		        Thread calc = new Thread(calcGroup, muscleCalc, voi.getName());
 		        calc.start();
@@ -527,26 +527,26 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     private void autoSegmentation() {
     	if(imageType.equals(ImageType.Thigh)) {
     		ModelImage srcImage = (ModelImage)getActiveImage().clone();
-    		if(voiBuffer.get("Left Bone").area() == 0 && voiBuffer.get("Right Bone").area() == 0) {
+    		if(voiBuffer.get("Left Bone").isEmpty() && voiBuffer.get("Right Bone").isEmpty()) {
 		        ModelImage resultImage = (ModelImage)srcImage.clone();
 		    	boneSeg = new PlugInAlgorithmCTBone(resultImage, srcImage, imageDir, voiBuffer.get("Left Bone").getColor());
 		    	performSegmentation(boneSeg, resultImage);
     		}
 	    	
-    		if(voiBuffer.get("Left Marrow").area() == 0 && voiBuffer.get("Right Marrow").area() == 0) {
+    		if(voiBuffer.get("Left Marrow").isEmpty() && voiBuffer.get("Right Marrow").isEmpty()) {
 		    	ModelImage resultImage2 = (ModelImage)srcImage.clone();
 		    	marrowSeg = new PlugInAlgorithmCTMarrow(resultImage2, srcImage, imageDir, voiBuffer.get("Left Marrow").getColor());
 		    	performSegmentation(marrowSeg, resultImage2);
     		}
 	    	
-    		if(voiBuffer.get("Left Thigh").area() == 0 && voiBuffer.get("Right Thigh").area() == 0) {
+    		if(voiBuffer.get("Left Thigh").isEmpty() && voiBuffer.get("Right Thigh").isEmpty()) {
 		    	ModelImage resultImage3 = (ModelImage)srcImage.clone();
 		    	thighSeg = new PlugInAlgorithmCTThigh(resultImage3, srcImage, imageDir, voiBuffer.get("Left Thigh").getColor());
 		    	performSegmentation(thighSeg, resultImage3);
     		}
     	} else if(imageType.equals(ImageType.Abdomen)) {
     		ModelImage srcImage = (ModelImage)getActiveImage().clone();
-    		if(voiBuffer.get("Abdomen").area() == 0) {
+    		if(voiBuffer.get("Abdomen").isEmpty()) {
     			String[] options = {"Yes", "No"};
     			String message = new String("The abdomen has not been segmented.  Would you like MIPAV to\n automatically segment"+
     											" the abdomen and subcutaneous area?");		
@@ -1334,11 +1334,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	Iterator<String> voiItr = voiBuffer.keySet().iterator();
     	
     	while(voiItr.hasNext()) {
-    		String name;
-    		PlugInSelectableVOI v = loadVOI(name = voiItr.next());
     		
+    		String name = voiItr.next();
+    		PlugInSelectableVOI v = loadVOI(name);
+    		System.out.println("Just loaded: "+v.getName()+"\t has area: "+v.isEmpty());
     		Color c = PlugInSelectableVOI.INVALID_COLOR;
-			
+			v.isEmpty();
 			if((c = v.getColor()).equals(PlugInSelectableVOI.INVALID_COLOR)) {
             	if((c = hasColor(v)).equals(PlugInSelectableVOI.INVALID_COLOR))
                     v.setColor(c = colorPick[colorChoice++ % colorPick.length]);
@@ -1347,7 +1348,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			} else
 				v.setColor(c);
 			voiBuffer.put(name, v);
-			System.out.println(v.getName() +" "+ v.getColor());
+			System.out.println(voiBuffer.get(v.getName()) +"\twith area: "+ voiBuffer.get(v.getName()).isEmpty());
     	}
     }
     
@@ -3040,27 +3041,26 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 			while(itr.hasNext()) {
 				Object itrObj = itr.next();
-				double totalAreaCalc = 0, totalAreaCount = 0, fatArea = 0, leanArea = 0;//, partialArea = 0;
+				double totalAreaCount = 0, fatArea = 0, leanArea = 0;//, partialArea = 0;
 				double meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
 				//pixels -> cm^2\
 				PlugInSelectableVOI temp;
-				if((temp = voiBuffer.get(itrObj)) != null && temp.getMeanFatH() != PlugInSelectableVOI.NOT_CALC) {
+				if((temp = voiBuffer.get(itrObj)) != null && temp.calcEligible()) {
 					
-					totalAreaCalc = temp.getTotalAreaCalc();
-					totalAreaCount = temp.getTotalAreaCount();
+					totalAreaCount = temp.getTotalArea();
 					fatArea = temp.getFatArea();
 					leanArea = temp.getLeanArea();
 					meanFatH = temp.getMeanFatH();
 					meanLeanH = temp.getMeanLeanH();
 					meanTotalH = temp.getMeanTotalH();
 					
-					System.out.println("Compare areas of "+temp.getName()+": "+totalAreaCalc+"\tcount: "+totalAreaCount);
+					System.out.println("Compare areas of "+temp.getName()+":\tcount: "+totalAreaCount);
 					
 					if (doSave) {
 						addToPDF((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH, wholeTable);
 						if(multipleSlices) {
 							for(int i=0; i<getActiveImage().getExtents()[2]; i++) {
-								totalAreaCount = temp.getTotalAreaCount(i);
+								totalAreaCount = temp.getTotalArea(i);
 								fatArea = temp.getFatArea(i);
 								leanArea = temp.getLeanArea(i);
 								meanFatH = temp.getMeanFatH(i);
@@ -3230,15 +3230,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					DecimalFormat dec = new DecimalFormat("0.0000");
 					//patient id
 					String id = (String)fileInfo.getTagTable().getValue("0010,0020");
-					sliceStr[i] += id != null ? id.trim() : "0"+"\t";
+					sliceStr[i] += (id != null ? id.trim() : "0")+"\t";
 					//slice number
 					sliceStr[i] += Integer.toString(i)+"\t";
 					//scan date
 					String dateStr = (String)fileInfo.getTagTable().getValue("0008,0020");
-					sliceStr[i] += dateStr != null ? dateStr.trim() : "0"+"\t";
+					sliceStr[i] += (dateStr != null ? dateStr.trim() : "0")+"\t";
 					//center
 					String center = (String)fileInfo.getTagTable().getValue("0008,0080");
-					sliceStr[i] += center != null ? center.trim() : "0"+"\t";
+					sliceStr[i] += (center != null ? center.trim() : "0")+"\t";
 					//analysis date
 					sliceStr[i] += dateFormat.format(date)+"\t";
 					//analyst
@@ -3267,7 +3267,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					for(int j=0; j<orderedCalcItems.size(); j++) {
 						temp = orderedCalcItems.get(j);
 						if(temp.isCreated()) {
-							sliceStr[i] += dec.format(temp.getTotalAreaCount(i))+"\t";
+							sliceStr[i] += dec.format(temp.getTotalArea(i))+"\t";
 							sliceStr[i] += dec.format(temp.getFatArea(i))+"\t";
 							sliceStr[i] += dec.format(temp.getLeanArea(i))+"\t";
 							sliceStr[i] += dec.format(temp.getMeanFatH(i))+"\t";
@@ -3373,23 +3373,20 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			double fatArea = getPieceCount(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*wholeMultiplier;
 			double partialArea = getPieceCount(v, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*wholeMultiplier; 
 			double leanArea = getPieceCount(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*wholeMultiplier; 
-			double totalAreaCalc = getTotalAreaCalc(v)*wholeMultiplier;
 			double totalAreaCount = getTotalAreaCount(v)*wholeMultiplier;
-			double fatAreaLarge = fatArea, leanAreaLarge = leanArea, totalAreaLarge = totalAreaCalc;
+			double fatAreaLarge = fatArea, leanAreaLarge = leanArea, totalAreaLarge = totalAreaCount;
 			//corrected area = abs(oldArea - sum(residual areas))
 			for(int j=0; j<residuals.size(); j++) {
 				fatArea = Math.abs(fatArea - residuals.get(j).getFatArea());
 				partialArea = Math.abs(partialArea - residuals.get(j).getPartialArea());
 				leanArea = Math.abs(leanArea - residuals.get(j).getLeanArea());
-				totalAreaCalc = Math.abs(totalAreaCalc - residuals.get(j).getTotalAreaCalc());
-				totalAreaCount = Math.abs(totalAreaCount - residuals.get(j).getTotalAreaCount());
+				totalAreaCount = Math.abs(totalAreaCount - residuals.get(j).getTotalArea());
 			}
 			
 			temp.setFatArea(fatArea);
 			temp.setPartialArea(partialArea);
 			temp.setLeanArea(leanArea);
-			temp.setTotalAreaCalc(totalAreaCalc);
-			temp.setTotalAreaCount(totalAreaCount);
+			temp.setTotalArea(totalAreaCount);
 			
 			double meanFatH = getMeanH(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND);// + OFFSET;
 			double meanLeanH = getMeanH(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND);// + OFFSET;
@@ -3400,12 +3397,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		    for(int j=0; j<residuals.size(); j++) {
 		    	meanFatHResidual += residuals.get(j).getMeanFatH()*residuals.get(j).getFatArea();
 		    	meanLeanHResidual += residuals.get(j).getMeanLeanH()*residuals.get(j).getLeanArea();
-		    	meanTotalHResidual += residuals.get(j).getMeanTotalH()*residuals.get(j).getTotalAreaCalc();
+		    	meanTotalHResidual += residuals.get(j).getMeanTotalH()*residuals.get(j).getTotalArea();
 		    }
 		    
 		    meanFatH = (meanFatH*fatAreaLarge - meanFatHResidual) / fatArea;
 		    meanLeanH = (meanLeanH*leanAreaLarge - meanLeanHResidual) / leanArea;
-		    meanTotalH = (meanTotalH*totalAreaLarge - meanTotalHResidual) / totalAreaCalc;
+		    meanTotalH = (meanTotalH*totalAreaLarge - meanTotalHResidual) / totalAreaCount;
 		    
 		    //sign errors result from adding areas that should've been subtracted
 		    if(meanFatH > 0) {
@@ -3437,25 +3434,21 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     			fatArea = getPieceCount(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*sliceMultiplier;
     			partialArea = getPieceCount(v2, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*sliceMultiplier; 
     			leanArea = getPieceCount(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*sliceMultiplier; 
-    			totalAreaCalc = getTotalAreaCalc(v2)*sliceMultiplier;
     			totalAreaCount = getTotalAreaCount(v2)*sliceMultiplier;
     			fatAreaLarge = fatArea;
     			leanAreaLarge = leanArea; 
-    			totalAreaLarge = totalAreaCalc;
+    			totalAreaLarge = totalAreaCount;
     			//corrected area = abs(oldArea - sum(residual areas))
     			for(int j=0; j<residuals.size(); j++) {
     				fatArea = Math.abs(fatArea - residuals.get(j).getFatArea(k));
     				partialArea = Math.abs(partialArea - residuals.get(j).getPartialArea(k));
     				leanArea = Math.abs(leanArea - residuals.get(j).getLeanArea(k));
-    				totalAreaCalc = Math.abs(totalAreaCalc - residuals.get(j).getTotalAreaCalc(k));
-    				totalAreaCount = Math.abs(totalAreaCount - residuals.get(j).getTotalAreaCount(k));
+    				totalAreaCount = Math.abs(totalAreaCount - residuals.get(j).getTotalArea(k));
     			}
     			
     			temp.setFatArea(fatArea, k);
     			temp.setPartialArea(partialArea, k);
-    			temp.setLeanArea(leanArea, k);
-    			temp.setTotalAreaCalc(totalAreaCalc, k);
-    			temp.setTotalAreaCount(totalAreaCount, k);
+    			temp.setTotalArea(totalAreaCount, k);
     			
     			meanFatH = getMeanH(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND);// + OFFSET;
     			meanLeanH = getMeanH(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND);// + OFFSET;
@@ -3468,12 +3461,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     		    for(int j=0; j<residuals.size(); j++) {
     		    	meanFatHResidual += residuals.get(j).getMeanFatH(k)*residuals.get(j).getFatArea(k);
     		    	meanLeanHResidual += residuals.get(j).getMeanLeanH(k)*residuals.get(j).getLeanArea(k);
-    		    	meanTotalHResidual += residuals.get(j).getMeanTotalH(k)*residuals.get(j).getTotalAreaCalc(k);
+    		    	meanTotalHResidual += residuals.get(j).getMeanTotalH(k)*residuals.get(j).getTotalArea(k);
     		    }
     		    
     		    meanFatH = (meanFatH*fatAreaLarge - meanFatHResidual) / fatArea;
     		    meanLeanH = (meanLeanH*leanAreaLarge - meanLeanHResidual) / leanArea;
-    		    meanTotalH = (meanTotalH*totalAreaLarge - meanTotalHResidual) / totalAreaCalc;
+    		    meanTotalH = (meanTotalH*totalAreaLarge - meanTotalHResidual) / totalAreaCount;
     		    
     		    if(meanFatH > 0) {
     		    	meanFatH = -meanFatH;
@@ -3522,13 +3515,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					area++;	
 			}
 			return area;
-		}
-		
-		/**
-		 * Gets MIPAV calculated number of pixels that are in the area of the VOI.
-		 */
-		private double getTotalAreaCalc(VOI v) {
-			return v.area(); //returns volume in 3D
 		}
 	
 		/**
@@ -4554,7 +4540,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	                if(activeCalc == null) {
 	                	VOIVector createdVOIs = new VOIVector();
 	                	for(int i=0; i<imageActive.getVOIs().size(); i++) 
-	                		if(imageActive.getVOIs().get(i).area() > 0)
+	                		if(!imageActive.getVOIs().get(i).isEmpty())
 	                			createdVOIs.add(imageActive.getVOIs().get(i));
 	                	imageStatList = new PlugInVOIStatistics(createdVOIs);
 	                	imageStatList.setVisible(true);
@@ -4813,8 +4799,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    	                    	VOI v = (VOI) list.getElementAt(i);
 	    	                    	if(v instanceof PlugInSelectableVOI && ((PlugInSelectableVOI)v).calcEligible()) {
 	    	                    		if(allNames[k].equals(TOTAL_AREA)) {
-	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getTotalAreaCalc(slice));
-	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getTotalAreaCalc(slice));
+	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getTotalArea(slice));
+	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getTotalArea(slice));
 	    	                    		} else if(allNames[k].equals(FAT_AREA)) {
 	                        				rowData[count] = dec.format(((PlugInSelectableVOI)v).getFatArea(slice));
 	                        				logTotalData[count] = dec.format(((PlugInSelectableVOI)v).getFatArea(slice));
@@ -4976,7 +4962,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	                    	VOI v = (VOI) list.getElementAt(i);
 	                    	if(v instanceof PlugInSelectableVOI && ((PlugInSelectableVOI)v).calcEligible()) {
 	                    		if(allNames[k].equals(TOTAL_AREA)) {
-                    				rowData[count] = dec.format(((PlugInSelectableVOI)v).getTotalAreaCalc());
+                    				rowData[count] = dec.format(((PlugInSelectableVOI)v).getTotalArea());
 	                    		} else if(allNames[k].equals(FAT_AREA)) {
                     				rowData[count] = dec.format(((PlugInSelectableVOI)v).getFatArea());
 	                    		} else if(allNames[k].equals(LEAN_AREA)) {
