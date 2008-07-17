@@ -832,7 +832,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	((AnalysisPrompt)tabs[resultTabLoc]).enableCalcOutput();
         } else if (!(command.equals(DialogPrompt.OUTPUT) ||
         		command.equals(DialogPrompt.SAVE) ||
-        		command.equals(DialogPrompt.OUTPUT_ALL))) {
+        		command.equals(DialogPrompt.SELECT_ALL))) {
         	if(command.equals(DialogPrompt.CANCEL)) {
         		unlockToPanel(voiTabLoc);
         		initMuscleImage(activeTab);
@@ -1520,7 +1520,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	public static final String HELP = "Help";
     	public static final String CALCULATE = "Calculate";
     	public static final String SAVE = "Save";
-    	public static final String OUTPUT_ALL = "Output All";
+    	public static final String SELECT_ALL = "Select all";
     	public static final String TOGGLE_LUT = "Toggle LUT";
     	public static final String OUTPUT = "Output";
     	public static final String BACK = "Back";
@@ -2534,7 +2534,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	
     	public static final String LOAD_VOI = "Load VOI";
     	
-    	private final String[] buttonStringList = {OUTPUT, OUTPUT_ALL, SAVE, TOGGLE_LUT, HELP, BACK};
+    	private final String[] buttonStringList = {OUTPUT, SELECT_ALL, SAVE, TOGGLE_LUT, HELP, BACK};
 	
     	//~ Instance fields -------------------------------------------------------------------------------------
     	
@@ -2567,6 +2567,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		/**Whether the custom lookup table is being displayed*/
 		private boolean lutOn = false;
+		
+		
+		/**Whether the SELECT_ALL button is in hide or select all mode*/
+		private boolean selectOn = true;
 		
 		/**A mapping of names to color panels for easy referencing. */
 		private TreeMap<String,ColorButtonPanel> checkBoxLocationTree;
@@ -2766,7 +2770,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        		buttonGroup[i].setText("Show LUT");
 	        	else if(buttonGroup[i].getText().equals(OUTPUT)) {
 	        		buttonGroup[i].setEnabled(false);
-	        	} else if(buttonGroup[i].getText().equals(OUTPUT_ALL)) {
+	        	} else if(buttonGroup[i].getText().equals(SELECT_ALL)) {
 	        		buttonGroup[i].setEnabled(false);
 	        	} else if(buttonGroup[i].getText().equals(SAVE)) {
 	        		buttonGroup[i].setEnabled(false);
@@ -2921,16 +2925,20 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    public void actionPerformed(ActionEvent e) {
 	    	System.out.println("Caught 2: "+e.getActionCommand());
 	    	String command = e.getActionCommand();
-	        if(command.equals(HIDE_ALL)) {
-	            //clear all VOIs drawn
-	        	muscleFrame.getImageA().unregisterAllVOIs();
-	        	muscleFrame.updateImages();
-	        } else {
+	        
 	
 	            if (command.equals(OUTPUT)) {
 	            	processCalculations(false, false);
-	            } else if (command.equals(OUTPUT_ALL)) { 
-	            	processCalculations(true, false);
+	            } else if (command.equals(SELECT_ALL)) { 
+	            	pressAvailableButtons();
+	            	//((JButton)e.getSource()).setText(HIDE_ALL);
+	            	//((JButton)e.getSource()).setActionCommand(HIDE_ALL);
+	            	selectOn = false;
+	            //} else if (command.equals(HIDE_ALL)) {
+	            //	pressAvailableButtons(false);
+	            //	((JButton)e.getSource()).setText(SELECT_ALL);
+	            //	((JButton)e.getSource()).setActionCommand(SELECT_ALL);
+	            //	selectOn = true;
 	            } else if (command.equals(SAVE)) {
 	            	setVisible(false);
 	            	getActiveImage().getParentFrame().requestFocus();
@@ -2951,6 +2959,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            	else //image is of type abdomen
 	            		MipavUtil.showHelp("MS00080");
 	            } else if (command.equals(LOAD_VOI)) {
+	            	//checkAndProcessForAllButtonsPressed();	
 	            	String text = ((JButton)e.getSource()).getText();
 	            	VOIVector vec = getActiveImage().getVOIs();
 	            	boolean exists = false;
@@ -2961,6 +2970,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	            			exists = true;
 	            			checkBoxLocationTree.get(text).setColor(Color.BLACK);
 	            			checkBoxLocationTree.get(text).repaint();
+	            			((JButton)e.getSource()).setSelected(false);
 	            		}
 	            	if(!exists) {
 	            		VOI rec = voiBuffer.get(text);
@@ -2979,14 +2989,46 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	                    	rec.setDisplayMode(VOI.SOLID);
 	                    	rec.setOpacity((float)0.7);
 	                    }
-	            		
+	            		((JButton)e.getSource()).setSelected(true);
 	            		getActiveImage().registerVOI(rec);
 	            	}
 	            		
 	            	updateImages(true);
 	            }
-	        }
 	        
+	    }
+	    
+	    private boolean checkAndProcessForAllButtonsPressed() {
+	    	boolean emptyButton = false;
+	    	boolean stateChanged = false;
+	    	for(int i=0; i<mirrorButtonArr.length; i++) {
+				for(int j=0; j<mirrorButtonArr[i].length; j++) {
+					if(mirrorButtonArr[i][j].isEnabled() && !mirrorButtonArr[i][j].isSelected()) {
+						emptyButton = true;
+					}	
+				}
+			}
+			for(int i=0; i<noMirrorButtonArr.length; i++) {
+				for(int j=0; j<noMirrorButtonArr[i].length; j++) {
+					if(noMirrorButtonArr[i][j].isEnabled() && !noMirrorButtonArr[i][j].isSelected()) {
+						emptyButton = true;
+					}	
+				}
+			}
+			
+			if(!emptyButton) {
+				for(int i=0; i<buttonGroup.length; i++) {
+					if(buttonGroup[i].getText().equals(SHOW_ALL)) {
+						buttonGroup[i].setText(HIDE_ALL);
+						buttonGroup[i].setActionCommand(HIDE_ALL);
+						selectOn = true;
+						stateChanged = true;
+					}
+				}
+			}
+			
+			return stateChanged;
+			
 	    }
 	    
 	    /**
@@ -3136,13 +3178,37 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		}
 		
 		/**
+		 * Presses all enabled buttons.  Boolean selectMode has following actions:
+		 * when true - any available unselected buttons are pressed
+		 * when false - any available selected buttons are pressed
+		 */
+		public void pressAvailableButtons() {
+			for(int i=0; i<mirrorButtonArr.length; i++) {
+				for(int j=0; j<mirrorButtonArr[i].length; j++) {
+					if(mirrorButtonArr[i][j].isEnabled() && !mirrorButtonArr[i][j].isSelected()) {
+						mirrorButtonArr[i][j].doClick();
+						mirrorButtonArr[i][j].setSelected(true);
+					}	
+				}
+			}
+			for(int i=0; i<noMirrorButtonArr.length; i++) {
+				for(int j=0; j<noMirrorButtonArr[i].length; j++) {
+					if(noMirrorButtonArr[i][j].isEnabled() && !noMirrorButtonArr[i][j].isSelected()) {
+						noMirrorButtonArr[i][j].doClick();
+						noMirrorButtonArr[i][j].setSelected(true);
+					}	
+				}
+			}
+		}
+		
+		/**
 		 * Enables buttons that rely on calculating being completed.
 		 */
 		public void enableCalcOutput() {
 			for(int i=0; i<buttonGroup.length; i++) {
 	        	if(buttonGroup[i].getText().equals(OUTPUT)) {
 	        		buttonGroup[i].setEnabled(true);
-	        	} else if(buttonGroup[i].getText().equals(OUTPUT_ALL)) {
+	        	} else if(buttonGroup[i].getText().equals(SELECT_ALL)) {
 	        		buttonGroup[i].setEnabled(true);
 	        	} else if(buttonGroup[i].getText().equals(SAVE)) {
 	        		buttonGroup[i].setEnabled(true);
