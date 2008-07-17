@@ -32,11 +32,8 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 	
 	private boolean created = false;
 	
-	/** Total area of this VOI using calculating method. */
-	private double[] totalAreaCalc;
-	
 	/** Total area of this VOI using counting method (subject to partial voluming). */
-	private double[] totalAreaCount;
+	private double[] totalArea;
 	
 	/** Total area of this VOI that is neither muscle or fat. */
 	private double[] partialArea;
@@ -86,8 +83,7 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 		this.computerGenerated = false;
 		this.outputLoc = outputLoc;
 		
-		this.totalAreaCalc = new double[imageSize+1];
-		this.totalAreaCount = new double[imageSize+1];
+		this.totalArea = new double[imageSize+1];
 		this.partialArea = new double[imageSize+1];
 		this.fatArea = new double[imageSize+1];
 		this.leanArea = new double[imageSize+1];
@@ -96,8 +92,7 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 		this.meanTotalH = new double[imageSize+1];
 		
 		for(int i=0; i<imageSize+1; i++) {
-			totalAreaCalc[i] = Double.MIN_VALUE;
-			totalAreaCount[i] = Double.MIN_VALUE;
+			totalArea[i] = Double.MIN_VALUE;
 			partialArea[i] = Double.MIN_VALUE;
 			fatArea[i] = Double.MIN_VALUE;
 			leanArea[i] = Double.MIN_VALUE;
@@ -141,8 +136,8 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 		return calcEligible;
 	}
 
-	public double getTotalAreaCalc() {
-		return totalAreaCalc[getZDim()];
+	public double getTotalArea() {
+		return totalArea[getZDim()];
 	}
 	
 	/**
@@ -150,38 +145,12 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 	 * @param slice zero based slice number
 	 * @return
 	 */
-	public double getTotalAreaCalc(int slice) {
-		return totalAreaCalc[slice];
-	}
-
-	public void setTotalAreaCalc(double totalAreaCalc) {
-		this.totalAreaCalc[getZDim()] = totalAreaCalc;
+	public double getTotalArea(int slice) {
+		return totalArea[slice];
 	}
 	
-	/**
-	 * 
-	 * @param totalAreaCalc
-	 * @param slice zero based slice number
-	 */
-	public void setTotalAreaCalc(double totalAreaCalc, int slice) {
-		this.totalAreaCalc[slice] = totalAreaCalc;
-	}
-
-	public double getTotalAreaCount() {
-		return totalAreaCount[getZDim()];
-	}
-	
-	/**
-	 * 
-	 * @param slice zero based slice number
-	 * @return
-	 */
-	public double getTotalAreaCount(int slice) {
-		return totalAreaCount[slice];
-	}
-	
-	public void setTotalAreaCount(double totalAreaCount) {
-		this.totalAreaCount[getZDim()] = totalAreaCount;
+	public void setTotalArea(double totalAreaCount) {
+		this.totalArea[getZDim()] = totalAreaCount;
 	}
 	
 	/**
@@ -189,8 +158,8 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 	 * @param totalAreaCount
 	 * @param slice zero based slice number
 	 */
-	public void setTotalAreaCount(double totalAreaCount, int slice) {
-		this.totalAreaCount[slice] = totalAreaCount;
+	public void setTotalArea(double totalAreaCount, int slice) {
+		this.totalArea[slice] = totalAreaCount;
 	}
 
 	public double getPartialArea() {
