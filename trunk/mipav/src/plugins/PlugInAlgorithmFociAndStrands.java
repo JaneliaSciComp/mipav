@@ -269,7 +269,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         redFrame = new ViewJFrameImage(redImage);
         redFrame.setTitle(srcImage.getImageName() + "_red");
         
-        byte [] redIDArray = new byte[length];
+        short [] redIDArray = new short[length];
 
         try {
             grayImage.exportData(0, length, redIDArray);
