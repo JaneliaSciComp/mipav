@@ -31,6 +31,8 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
     
     private JLabel contourLabel;
     
+    private JLabel pointsLabel;
+    
     /** Minimum number of pixels in a focus */
     private int redMin = 1;
     
@@ -287,7 +289,7 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Foci and Strands  07/16/08");
+        setTitle("Foci and Strands  07/17/08");
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
@@ -310,6 +312,13 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
         gbc.gridx = 0;
         gbc.gridy = yPos++;
         mainPanel.add(contourLabel, gbc);
+        
+        pointsLabel = new JLabel("Place a point on or near each strand measured for foci distances");
+        pointsLabel.setForeground(Color.black);
+        pointsLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos++;
+        mainPanel.add(pointsLabel, gbc);
         
         redMinLabel = new JLabel("Minimum red pixel count");
         redMinLabel.setForeground(Color.black);
