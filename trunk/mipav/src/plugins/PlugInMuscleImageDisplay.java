@@ -3732,6 +3732,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         if(Symmetry.LEFT_RIGHT == Symmetry.LEFT_RIGHT) {
         	side1 = "Left";
         	side2 = "Right";
+        } else if (Symmetry.TOP_BOTTOM == Symmetry.TOP_BOTTOM) {
+        	side1 = "Top";
+        	side2 = "Bottom";
         }
         String testName = new String();
         while(voiListItr.hasNext() && !colorFound) {
@@ -3876,6 +3879,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 e.printStackTrace();
             }
             if(voiVec.length > 1) {
+            	//though VOI could contain multiple curves, no file loaded should contain multiple VOIs
                 MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+name);
             } else {
             	Vector <VOIBase>[] voiVecTemp = voiVec[0].getCurves();
