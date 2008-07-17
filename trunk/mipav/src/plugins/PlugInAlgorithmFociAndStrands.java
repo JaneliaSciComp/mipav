@@ -176,7 +176,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
 
         FileInfoBase fileInfo;
         int numGreenObjects = 0;
-        byte[] greenIDArray = null;
+        short[] greenIDArray = null;
         
         long time;
         int fileNameLength;
@@ -335,7 +335,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         grayImage.calcMinMax();
         numGreenObjects = (int) grayImage.getMax();
         Preferences.debug("numGreenObjects = " + numGreenObjects + "\n");
-        greenIDArray = new byte[length];
+        greenIDArray = new short[length];
         
         greenImage = (ModelImage)grayImage.clone();
         greenImage.setImageName(srcImage.getImageName() + "_green");
@@ -450,8 +450,8 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         FileInfoBase fileInfo;
         int numRedObjects = 0;
         int numGreenObjects = 0;
-        byte[] redIDArray = null;
-        byte[] greenIDArray = null;
+        short[] redIDArray = null;
+        short[] greenIDArray = null;
         
         int index2;
         
@@ -544,7 +544,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         grayImage.calcMinMax();
         numRedObjects = (int) grayImage.getMax();
         Preferences.debug("numRedObjects = " + numRedObjects + "\n");
-        redIDArray = new byte[totLength];
+        redIDArray = new short[totLength];
         
         redImage = (ModelImage)grayImage.clone();
         redImage.setImageName(srcImage.getImageName() + "_red");
@@ -618,7 +618,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         grayImage.calcMinMax();
         numGreenObjects = (int) grayImage.getMax();
         Preferences.debug("numGreenObjects = " + numGreenObjects + "\n");
-        greenIDArray = new byte[totLength];
+        greenIDArray = new short[totLength];
         
         greenImage = (ModelImage)grayImage.clone();
         greenImage.setImageName(srcImage.getImageName() + "_green");
