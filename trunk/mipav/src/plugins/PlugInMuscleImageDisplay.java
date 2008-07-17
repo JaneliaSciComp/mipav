@@ -3626,7 +3626,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			if(imageType.equals(ImageType.Abdomen)) {
 				if(v.getName().equals("Subcutaneous area")) {
 					arr.add(voiBuffer.get("Abdomen"));
-				} 
+				} else if(v.getName().equals("Liver")) {
+					arr.add(voiBuffer.get("Liver cysts"));
+				}
 			} else if(imageType.equals(ImageType.Thigh)) {
 				if(v.getName().equals("Left Thigh")) {
 					arr.add(voiBuffer.get("Left Bone"));
