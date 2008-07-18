@@ -11,11 +11,12 @@ import java.io.*;
 import java.text.*;
 
 import java.util.*;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
  *
- * @version  July 16, 2008
+ * @version  July 17, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -163,7 +164,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int itersErosion;
         int numPruningPixels;
         int edgingType;
-        int i;
+        int i, j;
         int x, y;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
@@ -181,6 +182,10 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         long time;
         int fileNameLength;
         Font courier = MipavUtil.courier12;
+        Vector3f[] points;
+        int numPoints;
+        int ptX[];
+        int ptY[];
 
         time = System.currentTimeMillis();
         
@@ -386,6 +391,22 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
             }
         }
         Preferences.debug(numRedColocalize + " of " + numRedObjects + " red foci co-localize with green strands\n");
+        
+        for (i = 0; i < VOIs.size(); i++) {
+            if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
+                points = VOIs.VOIAt(i).exportPoints(0);
+                numPoints = points.length;
+                if (numPoints > 0) {
+                    ptX = new int[numPoints];
+                    ptY = new int[numPoints];
+                    for (j = 0; j < numPoints; j++) {
+                        ptX[j] = Math.round(points[j].X);   
+                        ptY[j] = Math.round(points[j].Y);
+                        Preferences.debug("Point " + (j+1) + " is at (" + ptX[j] + "," + ptY[j] + ")\n");
+                    }
+                }
+            }
+        }
 
         srcImage.notifyImageDisplayListeners();
         
@@ -435,7 +456,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int itersErosion;
         int numPruningPixels;
         int edgingType;
-        int i;
+        int i, j;
         int x, y, z;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
@@ -458,6 +479,11 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         long time;
         int fileNameLength;
         Font courier = MipavUtil.courier12;
+        Vector3f[] points;
+        int numPoints;
+        int ptX[];
+        int ptY[];
+        int ptZ[];
         
         
         time = System.currentTimeMillis();
@@ -680,6 +706,19 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         }
         Preferences.debug(numRedColocalize + " of " + numRedObjects + " red foci co-localize with green strands\n");
 
+        for (i = 0; i < VOIs.size(); i++) {
+            if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
+                numPoints = VOIs.VOIAt(i).getNumPoints();
+                if (numPoints > 0) {
+                    ptX = new int[numPoints];
+                    ptY = new int[numPoints];
+                    ptZ = new int[numPoints];
+                    for (j = 0; j < numPoints; j++) {
+                    }
+                        
+                }
+            }
+        }
         
         srcImage.notifyImageDisplayListeners();
         
