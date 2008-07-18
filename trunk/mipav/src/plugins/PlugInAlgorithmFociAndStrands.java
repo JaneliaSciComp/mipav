@@ -16,7 +16,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  *
- * @version  July 17, 2008
+ * @version  July 18, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -150,10 +150,14 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
     private void calc2D() {
 
         BitSet imageMask = null;
-        boolean redOnGreen[];
+        int redIDMinus1;
+        short redOnGreen[];
+        float redX[];
+        float redY[];
+        float redTotal[];
         int numRedColocalize;
         int length; // total number of data-elements (pixels) in image
-        float[] buffer;
+        float[] redBuffer;
         ModelImage grayImage;
         float threshold;
         boolean wholeImage;
@@ -164,7 +168,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int itersErosion;
         int numPruningPixels;
         int edgingType;
-        int i, j;
+        int i;
         int x, y;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
@@ -172,26 +176,34 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         byte[] byteBuffer;
         float[] greenBuffer = null;
         ViewVOIVector VOIs = null;
+        int nVOIs;
         int index;
         ViewUserInterface UI = ViewUserInterface.getReference();
+        VOI newPtVOI;
+        float[] xArr = new float[1];
+        float[] yArr = new float[1];
+        float[] zArr = new float[1];
 
         FileInfoBase fileInfo;
         int numGreenObjects = 0;
         short[] greenIDArray = null;
+        int numGreenStrandFoci[];
+        int greenIDMinus1;
+        float avgFociOnStrands;
+        int greenStrandFocus1[];
+        int greenStrandFocus2[];
         
         long time;
         int fileNameLength;
         Font courier = MipavUtil.courier12;
-        Vector3f[] points;
-        int numPoints;
-        int ptX[];
-        int ptY[];
+        DecimalFormat df = new DecimalFormat("0.000E0");
+        DecimalFormat dfFract = new DecimalFormat("0.000");
 
         time = System.currentTimeMillis();
         
         // image length is length in 2 dims
         length = xDim * yDim;
-        buffer = new float[length];
+        redBuffer = new float[length];
         byteBuffer = new byte[length];
 
         fireProgressStateChanged("Processing image ...");
@@ -199,9 +211,9 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         fireProgressStateChanged("Creating red image");
         fireProgressStateChanged(30);
         try {
-            srcImage.exportRGBData(1, 0, length, buffer); // export red data
+            srcImage.exportRGBData(1, 0, length, redBuffer); // export red data
         } catch (IOException error) {
-            buffer = null;
+            redBuffer = null;
             greenBuffer = null;
             errorCleanUp("Algorithm CenterDistance reports: source image locked", true);
 
@@ -219,8 +231,9 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         Preferences.debug("red threshold = " + threshold + "\n");
         
         VOIs = srcImage.getVOIs();
+        nVOIs = VOIs.size();
         wholeImage = true;
-        for (i = 0; i < VOIs.size(); i++) {
+        for (i = 0; i < nVOIs; i++) {
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 imageMask = srcImage.generateVOIMask();
                 wholeImage = false;
@@ -229,7 +242,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         }
         
         for (i = 0; i < length; i++) {
-            if ((wholeImage || imageMask.get(i)) && (buffer[i] >= threshold)) {
+            if ((wholeImage || imageMask.get(i)) && (redBuffer[i] >= threshold)) {
                 byteBuffer[i] = 1;
             }
             else {
@@ -269,10 +282,10 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int numRedObjects = (int) grayImage.getMax();
         Preferences.debug("numRedObjects = " + numRedObjects + "\n");
         
-        redImage = (ModelImage)grayImage.clone();
+        /*redImage = (ModelImage)grayImage.clone();
         redImage.setImageName(srcImage.getImageName() + "_red");
         redFrame = new ViewJFrameImage(redImage);
-        redFrame.setTitle(srcImage.getImageName() + "_red");
+        redFrame.setTitle(srcImage.getImageName() + "_red");*/
         
         short [] redIDArray = new short[length];
 
@@ -312,6 +325,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 byteBuffer[i] = 0;
             }
         }
+        srcImage.clearMask();
         
         try {
             grayImage.importData(0, byteBuffer, true);
@@ -360,53 +374,70 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         grayImage.disposeLocal();
         grayImage = null;
         
-        redOnGreen = new boolean[numRedObjects];
+        redOnGreen = new short[numRedObjects];
+        redX = new float[numRedObjects];
+        redY = new float[numRedObjects];
+        redTotal = new float[numRedObjects];
+        numGreenStrandFoci = new int[numGreenObjects];
+        greenStrandFocus1 = new int[numGreenObjects];
+        greenStrandFocus2 = new int[numGreenObjects];
         for (y = 0; y < yDim; y++) {
             index = y * xDim;
             for (x = 0; x < xDim; x++) {
                 i = index + x;
                 if (redIDArray[i] != 0) {
-                    if (greenIDArray[i] != 0) {
-                        redOnGreen[redIDArray[i] - 1] = true;
-                    }
-                    else if ((x >= 1) && (greenIDArray[i-1] != 0)) {
-                        redOnGreen[redIDArray[i] - 1] = true;
-                    }
-                    else if ((x <= xDim - 2) && (greenIDArray[i+1] != 0)) {
-                        redOnGreen[redIDArray[i] - 1] = true;
-                    }
-                    else if ((y >= 1) && (greenIDArray[i - xDim] != 0)) {
-                        redOnGreen[redIDArray[i] - 1] = true;
-                    }
-                    else if ((y <= yDim - 2) && (greenIDArray[i + xDim] != 0)) {
-                        redOnGreen[redIDArray[i] - 1] = true;
+                    redIDMinus1 = redIDArray[i] - 1;
+                    redX[redIDMinus1] += x * redBuffer[i];
+                    redY[redIDMinus1] += y * redBuffer[i];
+                    redTotal[redIDMinus1] += redBuffer[i];
+                    if (redOnGreen[redIDMinus1] == 0) {
+                        if (greenIDArray[i] != 0) {
+                            redOnGreen[redIDMinus1] = greenIDArray[i];
+                        }
+                        else if ((x >= 1) && (greenIDArray[i-1] != 0)) {
+                            redOnGreen[redIDMinus1] = greenIDArray[i-1];
+                        }
+                        else if ((x <= xDim - 2) && (greenIDArray[i+1] != 0)) {
+                            redOnGreen[redIDMinus1] = greenIDArray[i+1];
+                        }
+                        else if ((y >= 1) && (greenIDArray[i - xDim] != 0)) {
+                            redOnGreen[redIDMinus1] = greenIDArray[i-xDim];
+                        }
+                        else if ((y <= yDim - 2) && (greenIDArray[i + xDim] != 0)) {
+                            redOnGreen[redIDMinus1] = greenIDArray[i+xDim];
+                        }
                     }
                 }
             }
         }
         numRedColocalize = 0;
         for (i = 0; i < numRedObjects; i++) {
-            if (redOnGreen[i]) {
+            redX[i] = redX[i]/redTotal[i];
+            redY[i] = redY[i]/redTotal[i];
+            if (redOnGreen[i] != 0) {
+                greenIDMinus1 = redOnGreen[i] - 1;
+                numGreenStrandFoci[greenIDMinus1]++;
+                if (numGreenStrandFoci[greenIDMinus1] == 1) {
+                    greenStrandFocus1[greenIDMinus1] = numRedColocalize + 1;
+                }
+                else if (numGreenStrandFoci[greenIDMinus1] == 2) {
+                    greenStrandFocus2[greenIDMinus1] = numRedColocalize + 1;
+                }
+                newPtVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1), 1, VOI.POINT, -1.0f);
+                newPtVOI.setColor(Color.white);
+                xArr[0] = redX[i];
+                yArr[0] = redY[i];
+                zArr[0] = 0.0f;
+                newPtVOI.importCurve(xArr, yArr, zArr, 0);
+                ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(numRedColocalize + 1));
+                srcImage.registerVOI(newPtVOI);
                 numRedColocalize++;
             }
         }
         Preferences.debug(numRedColocalize + " of " + numRedObjects + " red foci co-localize with green strands\n");
         
-        for (i = 0; i < VOIs.size(); i++) {
-            if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-                points = VOIs.VOIAt(i).exportPoints(0);
-                numPoints = points.length;
-                if (numPoints > 0) {
-                    ptX = new int[numPoints];
-                    ptY = new int[numPoints];
-                    for (j = 0; j < numPoints; j++) {
-                        ptX[j] = Math.round(points[j].X);   
-                        ptY[j] = Math.round(points[j].Y);
-                        Preferences.debug("Point " + (j+1) + " is at (" + ptX[j] + "," + ptY[j] + ")\n");
-                    }
-                }
-            }
-        }
+        avgFociOnStrands = (float)numRedColocalize/(float)numGreenObjects;
 
         srcImage.notifyImageDisplayListeners();
         
@@ -422,7 +453,15 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         }
         UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", " \tNFoci\tNFociOnStrands\tNStrands\tAvgFociOnStrands\n");
         UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands",
-                srcImage.getFileInfo(0).getFileName() + " \t" + numRedObjects + "\t" + numRedColocalize + "\n");
+                srcImage.getFileInfo(0).getFileName() + " \t" + numRedObjects + "\t" + numRedColocalize + "\t\t" +
+                numGreenObjects + "\t\t" + dfFract.format(avgFociOnStrands) + "\n");
+        UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", "Focus1\tFocus2\tDistance\n");
+        for (i = 0; i < numGreenObjects; i++) {
+            if (numGreenStrandFoci[i] == 2) {
+                UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", greenStrandFocus1[i] + "\t" +
+                                             greenStrandFocus2[i] + "\n");     
+            }
+        }
         
 
         if (threadStopped) {
@@ -442,10 +481,10 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
     private void calc3D() {
 
         BitSet imageMask = null;
-        boolean redOnGreen[];
+        short redOnGreen[];
         int numRedColocalize;
         int totLength, sliceLength;
-        float[] buffer;
+        float[] redBuffer;
         ModelImage grayImage;
         float threshold;
         boolean wholeImage;
@@ -465,6 +504,10 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         byte[] byteBuffer;
         float[] greenBuffer = null;
         ViewVOIVector VOIs = null;
+        int nVOIs;
+        float[] xArr = new float[1];
+        float[] yArr = new float[1];
+        float[] zArr = new float[1];
         int index;
         ViewUserInterface UI = ViewUserInterface.getReference();
 
@@ -479,12 +522,19 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         long time;
         int fileNameLength;
         Font courier = MipavUtil.courier12;
-        Vector3f[] points;
-        int numPoints;
-        int ptX[];
-        int ptY[];
-        int ptZ[];
-        
+        DecimalFormat df = new DecimalFormat("0.000E0");
+        DecimalFormat dfFract = new DecimalFormat("0.000");
+        float redX[];
+        float redY[];
+        float redZ[];
+        float redTotal[];
+        int numGreenStrandFoci[];
+        int greenStrandFocus1[];
+        int greenStrandFocus2[];
+        int redIDMinus1;
+        int greenIDMinus1;
+        VOI newPtVOI;
+        float avgFociOnStrands;
         
         time = System.currentTimeMillis();
 
@@ -492,7 +542,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         
         sliceLength = xDim * yDim;
         totLength = sliceLength * zDim;
-        buffer = new float[totLength];
+        redBuffer = new float[totLength];
         byteBuffer = new byte[totLength];
 
         
@@ -500,9 +550,9 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         fireProgressStateChanged("Creating red image");
         fireProgressStateChanged(30);
         try {
-            srcImage.exportRGBData(1, 0, totLength, buffer); // export red data       
+            srcImage.exportRGBData(1, 0, totLength, redBuffer); // export red data       
         } catch (IOException error) {
-            buffer = null;
+            redBuffer = null;
             errorCleanUp("Algorithm CenterDistance reports: source image locked", true);
 
             return;
@@ -520,8 +570,9 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         Preferences.debug("red threshold = " + threshold + "\n");
         
         VOIs = srcImage.getVOIs();
+        nVOIs = VOIs.size();
         wholeImage = true;
-        for (i = 0; i < VOIs.size(); i++) {
+        for (i = 0; i < nVOIs; i++) {
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 imageMask = srcImage.generateVOIMask();
                 wholeImage = false;
@@ -530,7 +581,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         }
         
         for (i = 0; i < totLength; i++) {
-            if ((wholeImage || imageMask.get(i)) && (buffer[i] >= threshold)) {
+            if ((wholeImage || imageMask.get(i)) && (redBuffer[i] >= threshold)) {
                 byteBuffer[i] = 1;
             }
             else {
@@ -541,7 +592,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         try {
             grayImage.importData(0, byteBuffer, true);
         } catch (IOException error) {
-            buffer = null;
+            redBuffer = null;
             errorCleanUp("Error on grayImage.importData", true);
 
             return;
@@ -572,10 +623,10 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         Preferences.debug("numRedObjects = " + numRedObjects + "\n");
         redIDArray = new short[totLength];
         
-        redImage = (ModelImage)grayImage.clone();
+        /*redImage = (ModelImage)grayImage.clone();
         redImage.setImageName(srcImage.getImageName() + "_red");
         redFrame = new ViewJFrameImage(redImage);
-        redFrame.setTitle(srcImage.getImageName() + "_red");
+        redFrame.setTitle(srcImage.getImageName() + "_red");*/
 
         try {
             grayImage.exportData(0, totLength, redIDArray);
@@ -665,7 +716,14 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         grayImage.disposeLocal();
         grayImage = null;
         
-        redOnGreen = new boolean[numRedObjects];
+        redOnGreen = new short[numRedObjects];
+        redX = new float[numRedObjects];
+        redY = new float[numRedObjects];
+        redZ = new float[numRedObjects];
+        redTotal = new float[numRedObjects];
+        numGreenStrandFoci = new int[numGreenObjects];
+        greenStrandFocus1 = new int[numGreenObjects];
+        greenStrandFocus2 = new int[numGreenObjects];
         for (z = 0; z < zDim; z++) {
             index2 = z *sliceLength;
             for (y = 0; y < yDim; y++) {
@@ -673,53 +731,69 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 for (x = 0; x < xDim; x++) {
                     i = index + x;
                     if (redIDArray[i] != 0) {
-                        if (greenIDArray[i] != 0) {
-                            redOnGreen[redIDArray[i] - 1] = true;
-                        }
-                        else if ((x >= 1) && (greenIDArray[i-1] != 0)) {
-                            redOnGreen[redIDArray[i] - 1] = true;
-                        }
-                        else if ((x <= xDim - 2) && (greenIDArray[i+1] != 0)) {
-                            redOnGreen[redIDArray[i] - 1] = true;
-                        }
-                        else if ((y >= 1) && (greenIDArray[i - xDim] != 0)) {
-                            redOnGreen[redIDArray[i] - 1] = true;
-                        }
-                        else if ((y <= yDim - 2) && (greenIDArray[i + xDim] != 0)) {
-                            redOnGreen[redIDArray[i] - 1] = true;
-                        }
-                        else if ((z >= 1) && (greenIDArray[i - sliceLength] != 0)) {
-                            redOnGreen[redIDArray[i] - 1] = true;
-                        }
-                        else if ((z <= zDim - 2) && (greenIDArray[i + sliceLength] != 0)) {
-                            redOnGreen[redIDArray[i] - 1] = true;
+                        redIDMinus1 = redIDArray[i] - 1;
+                        redX[redIDMinus1] += x * redBuffer[i];
+                        redY[redIDMinus1] += y * redBuffer[i];
+                        redZ[redIDMinus1] += z * redBuffer[i];
+                        redTotal[redIDMinus1] += redBuffer[i];
+                        if (redOnGreen[redIDMinus1] == 0) {
+                            if (greenIDArray[i] != 0) {
+                                redOnGreen[redIDArray[i] - 1] = greenIDArray[i];
+                            }
+                            else if ((x >= 1) && (greenIDArray[i-1] != 0)) {
+                                redOnGreen[redIDArray[i] - 1] = greenIDArray[i-1];
+                            }
+                            else if ((x <= xDim - 2) && (greenIDArray[i+1] != 0)) {
+                                redOnGreen[redIDArray[i] - 1] = greenIDArray[i+1];
+                            }
+                            else if ((y >= 1) && (greenIDArray[i - xDim] != 0)) {
+                                redOnGreen[redIDArray[i] - 1] = greenIDArray[i-xDim];
+                            }
+                            else if ((y <= yDim - 2) && (greenIDArray[i + xDim] != 0)) {
+                                redOnGreen[redIDArray[i] - 1] = greenIDArray[i+xDim];
+                            }
+                            else if ((z >= 1) && (greenIDArray[i - sliceLength] != 0)) {
+                                redOnGreen[redIDArray[i] - 1] = greenIDArray[i-sliceLength];
+                            }
+                            else if ((z <= zDim - 2) && (greenIDArray[i + sliceLength] != 0)) {
+                                redOnGreen[redIDArray[i] - 1] = greenIDArray[i + sliceLength];
+                            }
                         }
                     }
-                }
-            }
-        }
-        numRedColocalize = 0;
-        for (i = 0; i < numRedObjects; i++) {
-            if (redOnGreen[i]) {
-                numRedColocalize++;
-            }
-        }
-        Preferences.debug(numRedColocalize + " of " + numRedObjects + " red foci co-localize with green strands\n");
-
-        for (i = 0; i < VOIs.size(); i++) {
-            if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-                numPoints = VOIs.VOIAt(i).getNumPoints();
-                if (numPoints > 0) {
-                    ptX = new int[numPoints];
-                    ptY = new int[numPoints];
-                    ptZ = new int[numPoints];
-                    for (j = 0; j < numPoints; j++) {
-                    }
-                        
                 }
             }
         }
         
+        numRedColocalize = 0;
+        for (i = 0; i < numRedObjects; i++) {
+            redX[i] = redX[i]/redTotal[i];
+            redY[i] = redY[i]/redTotal[i];
+            redZ[i] = redZ[i]/redTotal[i];
+            if (redOnGreen[i] != 0) {
+                greenIDMinus1 = redOnGreen[i] - 1;
+                numGreenStrandFoci[greenIDMinus1]++;
+                if (numGreenStrandFoci[greenIDMinus1] == 1) {
+                    greenStrandFocus1[greenIDMinus1] = numRedColocalize + 1;
+                }
+                else if (numGreenStrandFoci[greenIDMinus1] == 2) {
+                    greenStrandFocus2[greenIDMinus1] = numRedColocalize + 1;
+                }
+                newPtVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1), zDim, VOI.POINT, -1.0f);
+                newPtVOI.setColor(Color.white);
+                xArr[0] = redX[i];
+                yArr[0] = redY[i];
+                zArr[0] = Math.round(redZ[i]);
+                newPtVOI.importCurve(xArr, yArr, zArr, (int)zArr[0]);
+                ((VOIPoint) (newPtVOI.getCurves()[(int)zArr[0]].elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves()[(int)zArr[0]].elementAt(0))).setLabel(Integer.toString(numRedColocalize + 1));
+                srcImage.registerVOI(newPtVOI);
+                numRedColocalize++;
+            }
+        }
+        Preferences.debug(numRedColocalize + " of " + numRedObjects + " red foci co-localize with green strands\n");
+        
+        avgFociOnStrands = (float)numRedColocalize/(float)numGreenObjects;
+
         srcImage.notifyImageDisplayListeners();
         
         UI.getMessageFrame().addTab("PlugInAlgorithmFociAndStrands");
@@ -734,7 +808,15 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         }
         UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", " \tNFoci\tNFociOnStrands\tNStrands\tAvgFociOnStrands\n");
         UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands",
-                srcImage.getFileInfo(0).getFileName() + " \t" + numRedObjects + "\t" + numRedColocalize + "\n");
+                srcImage.getFileInfo(0).getFileName() + " \t" + numRedObjects + "\t" + numRedColocalize + "\t\t" +
+                numGreenObjects + "\t\t" + dfFract.format(avgFociOnStrands) + "\n");
+        UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", "Focus1\tFocus2\tDistance\n");
+        for (i = 0; i < numGreenObjects; i++) {
+            if (numGreenStrandFoci[i] == 2) {
+                UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", greenStrandFocus1[i] + "\t" +
+                                             greenStrandFocus2[i] + "\n");     
+            }
+        }
         
         if (threadStopped) {
             finalize();
