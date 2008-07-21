@@ -16,7 +16,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  *
- * @version  July 18, 2008
+ * @version  July 21, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -95,6 +95,8 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
     private ViewJFrameImage redFrame;
     private ModelImage greenImage;
     private ViewJFrameImage greenFrame;
+    //** Radius of circles drawn around colocalized foci */
+    private float radius;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -103,15 +105,19 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
      *
      * @param  srcImg         Source image model.
      * @param  redMin
+     * @param  redFraction
      * @param  greenMin
+     * @param  greenFraction
+     * @param  radius
      */
     public PlugInAlgorithmFociAndStrands(ModelImage srcImg, int redMin, float redFraction, int greenMin,
-                                         float greenFraction) {
+                                         float greenFraction, float radius) {
         super(null, srcImg);
         this.redMin = redMin;
         this.redFraction = redFraction;
         this.greenMin = greenMin;
         this.greenFraction = greenFraction;
+        this.radius = radius;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -168,7 +174,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int itersErosion;
         int numPruningPixels;
         int edgingType;
-        int i;
+        int i, j;
         int x, y;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
@@ -179,11 +185,13 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int nVOIs;
         int index;
         ViewUserInterface UI = ViewUserInterface.getReference();
-        VOI newPtVOI;
-        float[] xArr = new float[1];
-        float[] yArr = new float[1];
-        float[] zArr = new float[1];
-
+        //VOI newPtVOI;
+        VOI newCircleVOI;
+        int maxCirclePoints = (int)Math.ceil(2.0 * Math.PI * radius);
+        float[] xArr = new float[maxCirclePoints];
+        float[] yArr = new float[maxCirclePoints];
+        float[] zArr = new float[maxCirclePoints];
+        double theta;
         FileInfoBase fileInfo;
         int numGreenObjects = 0;
         short[] greenIDArray = null;
@@ -423,15 +431,33 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 else if (numGreenStrandFoci[greenIDMinus1] == 2) {
                     greenStrandFocus2[greenIDMinus1] = numRedColocalize + 1;
                 }
-                newPtVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1), 1, VOI.POINT, -1.0f);
-                newPtVOI.setColor(Color.white);
-                xArr[0] = redX[i];
-                yArr[0] = redY[i];
-                zArr[0] = 0.0f;
-                newPtVOI.importCurve(xArr, yArr, zArr, 0);
-                ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
-                ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(numRedColocalize + 1));
-                srcImage.registerVOI(newPtVOI);
+                //newPtVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1), 1, VOI.POINT, -1.0f);
+                //newPtVOI.setColor(Color.white);
+                //xArr[0] = redX[i];
+                //yArr[0] = redY[i];
+                //zArr[0] = 0.0f;
+                //newPtVOI.importCurve(xArr, yArr, zArr, 0);
+                //((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
+                //((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(numRedColocalize + 1));
+                //srcImage.registerVOI(newPtVOI);
+                newCircleVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1),
+                                        1, VOI.CONTOUR, -1.0f);
+                newCircleVOI.setColor(Color.white);
+                for (j = 0; j < maxCirclePoints; j++) {
+                    theta = j * 2.0 * Math.PI/maxCirclePoints;  
+                    xArr[j] = (float)(redX[i] + radius * Math.cos(theta));
+                    yArr[j] = (float)(redY[i] + radius * Math.sin(theta));
+                    zArr[j] = 0.0f;
+                }
+                newCircleVOI.importCurve(xArr, yArr, zArr, 0);
+                ((VOIContour)(newCircleVOI.getCurves()[0].elementAt(0))).setFixed(true);
+                newCircleVOI.setActive(false);
+                ((VOIContour)(newCircleVOI.getCurves()[0].elementAt(0))).setActive(false);
+                ((VOIContour)(newCircleVOI.getCurves()[0].elementAt(0))).setDoGeometricCenterLabel(true);
+                ((VOIContour)(newCircleVOI.getCurves()[0].elementAt(0))).setClosed(true);
+                ((VOIContour) (newCircleVOI).getCurves()[0].elementAt(0)).setLabel(Integer.toString(numRedColocalize + 1));
+                ((VOIContour) (newCircleVOI.getCurves()[0].elementAt(0))).setName(Integer.toString(numRedColocalize + 1));
+                srcImage.registerVOI(newCircleVOI);
                 numRedColocalize++;
             }
         }
@@ -505,9 +531,12 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         float[] greenBuffer = null;
         ViewVOIVector VOIs = null;
         int nVOIs;
-        float[] xArr = new float[1];
-        float[] yArr = new float[1];
-        float[] zArr = new float[1];
+        VOI newCircleVOI;
+        int maxCirclePoints = (int)Math.ceil(2.0 * Math.PI * radius);
+        float[] xArr = new float[maxCirclePoints];
+        float[] yArr = new float[maxCirclePoints];
+        float[] zArr = new float[maxCirclePoints];
+        double theta;
         int index;
         ViewUserInterface UI = ViewUserInterface.getReference();
 
@@ -533,7 +562,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int greenStrandFocus2[];
         int redIDMinus1;
         int greenIDMinus1;
-        VOI newPtVOI;
+        //VOI newPtVOI;
         float avgFociOnStrands;
         
         time = System.currentTimeMillis();
@@ -778,15 +807,34 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 else if (numGreenStrandFoci[greenIDMinus1] == 2) {
                     greenStrandFocus2[greenIDMinus1] = numRedColocalize + 1;
                 }
-                newPtVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1), zDim, VOI.POINT, -1.0f);
-                newPtVOI.setColor(Color.white);
-                xArr[0] = redX[i];
-                yArr[0] = redY[i];
-                zArr[0] = Math.round(redZ[i]);
-                newPtVOI.importCurve(xArr, yArr, zArr, (int)zArr[0]);
-                ((VOIPoint) (newPtVOI.getCurves()[(int)zArr[0]].elementAt(0))).setFixed(true);
-                ((VOIPoint) (newPtVOI.getCurves()[(int)zArr[0]].elementAt(0))).setLabel(Integer.toString(numRedColocalize + 1));
-                srcImage.registerVOI(newPtVOI);
+                //newPtVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1), zDim, VOI.POINT, -1.0f);
+                //newPtVOI.setColor(Color.white);
+                //xArr[0] = redX[i];
+                //yArr[0] = redY[i];
+                //zArr[0] = Math.round(redZ[i]);
+                //newPtVOI.importCurve(xArr, yArr, zArr, (int)zArr[0]);
+                //((VOIPoint) (newPtVOI.getCurves()[(int)zArr[0]].elementAt(0))).setFixed(true);
+                //((VOIPoint) (newPtVOI.getCurves()[(int)zArr[0]].elementAt(0))).setLabel(Integer.toString(numRedColocalize + 1));
+                //srcImage.registerVOI(newPtVOI);
+                newCircleVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1),
+                        zDim, VOI.CONTOUR, -1.0f);
+                newCircleVOI.setColor(Color.white);
+                for (j = 0; j < maxCirclePoints; j++) {
+                    theta = j * 2.0 * Math.PI/maxCirclePoints;  
+                    xArr[j] = (float)(redX[i] + radius * Math.cos(theta));
+                    yArr[j] = (float)(redY[i] + radius * Math.sin(theta));
+                    zArr[j] = Math.round(redZ[i]);
+                }
+                newCircleVOI.importCurve(xArr, yArr, zArr, (int)zArr[0]);
+                ((VOIContour)(newCircleVOI.getCurves()[(int)zArr[0]].elementAt(0))).setFixed(true);
+                newCircleVOI.setActive(false);
+                ((VOIContour)(newCircleVOI.getCurves()[(int)zArr[0]].elementAt(0))).setActive(false);
+                ((VOIContour)(newCircleVOI.getCurves()[(int)zArr[0]].elementAt(0))).setDoGeometricCenterLabel(true);
+                ((VOIContour)(newCircleVOI.getCurves()[(int)zArr[0]].elementAt(0))).setClosed(true);
+                ((VOIContour) (newCircleVOI).getCurves()[(int)zArr[0]].elementAt(0)).setLabel(Integer.toString(numRedColocalize + 1));
+                ((VOIContour) (newCircleVOI.getCurves()[(int)zArr[0]].elementAt(0))).setName(Integer.toString(numRedColocalize + 1));
+                srcImage.registerVOI(newCircleVOI);
+                
                 numRedColocalize++;
             }
         }
