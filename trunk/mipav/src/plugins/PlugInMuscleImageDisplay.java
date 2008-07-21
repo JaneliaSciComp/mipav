@@ -805,6 +805,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             initVoiImage(); //replacing current image and updating
         } else if(command.equals(DialogPrompt.CALCULATE)) {
         	lockToPanel(resultTabLoc, "Analysis"); //includes making visible
+        	if(imageType.equals(ImageType.Abdomen) && voiBuffer.get("Liver").getTotalArea() != 0) {
+        		MuscleCalculation muscleCalc = new MuscleCalculation(voiBuffer.get("Liver"), "Liver");
+                Thread calc = new Thread(calcGroup, muscleCalc, "Liver");
+                calc.start();
+        	}
         	getActiveImage().unregisterAllVOIs();
 	    	updateImages(true);
 	    	boolean leftMarrow = false, rightMarrow = false, rightBone = false, leftBone = false, abdomen = false;
@@ -3626,7 +3631,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			if(imageType.equals(ImageType.Abdomen)) {
 				if(v.getName().equals("Subcutaneous area")) {
 					arr.add(voiBuffer.get("Abdomen"));
-				} 
+				} else if(v.getName().equals("Liver")) {
+					arr.add(voiBuffer.get("Liver cysts"));
+				}
 			} else if(imageType.equals(ImageType.Thigh)) {
 				if(v.getName().equals("Left Thigh")) {
 					arr.add(voiBuffer.get("Left Bone"));
