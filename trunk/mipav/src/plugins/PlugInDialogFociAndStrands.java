@@ -8,12 +8,13 @@ import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.text.DecimalFormat;
 
 import javax.swing.*;
 
 
 /**
- * @version  July 18, 2008
+ * @version  July 21, 2008
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -62,6 +63,15 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
     private JLabel greenMinLabel;
     
     private JTextField greenMinText;
+    
+    private JLabel radiusLabel;
+    
+    private JTextField radiusText;
+    
+    /** Radius of circles drawn around colocalized foci */
+    private float radius;
+    
+    private int minLength;
     
     /** DOCUMENT ME! */
     private ModelImage image; // source image   
@@ -169,6 +179,7 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
         str += redFraction + delim;
         str += greenMin + delim;
         str += greenFraction + delim;
+        str += radius + delim;
 
         return str;
     }
@@ -209,6 +220,15 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
     public void setGreenFraction(float greenFraction) {
         this.greenFraction = greenFraction;
     }
+    
+    /**
+     * Accesor that sets the radius variable, the radius of circle
+     * drawn around colocalized foci
+     * @param radius
+     */
+    public void setRadius(float radius) {
+        this.radius = radius;
+    }
 
     
     /**
@@ -219,7 +239,8 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
 
         try {
 
-            fociAndStrandsAlgo = new PlugInAlgorithmFociAndStrands(image, redMin, redFraction, greenMin, greenFraction);
+            fociAndStrandsAlgo = new PlugInAlgorithmFociAndStrands(image, redMin, redFraction, greenMin, greenFraction,
+                                                                   radius);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -269,6 +290,7 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
         setRedFraction(scriptParameters.getParams().getFloat("red_fraction"));
         setGreenMin(scriptParameters.getParams().getInt("green_min"));
         setGreenFraction(scriptParameters.getParams().getFloat("green_fraction"));
+        setRadius(scriptParameters.getParams().getFloat("circle_radius"));
     }
 
     /**
@@ -280,14 +302,16 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
         scriptParameters.getParams().put(ParameterFactory.newParameter("red_fraction", redFraction));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_min", greenMin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_fraction", greenFraction));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("circle_radius", radius));
     }
 
     /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
+        DecimalFormat df = new DecimalFormat("0.00");
         setForeground(Color.black);
-        setTitle("Foci and Strands  07/17/08");
+        setTitle("Foci and Strands  07/21/08");
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
@@ -318,7 +342,7 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
         gbc.gridy = yPos;
         mainPanel.add(redMinLabel, gbc);
 
-        redMinText = new JTextField(5);
+        redMinText = new JTextField(10);
         redMinText.setText("1");
         redMinText.setFont(serif12);
         gbc.gridx = 1;
@@ -332,7 +356,7 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
         gbc.gridy = yPos;
         mainPanel.add(redFractionLabel, gbc);
         
-        redFractionText = new JTextField(5);
+        redFractionText = new JTextField(10);
         redFractionText.setText("0.30");
         redFractionText.setFont(serif12);
         gbc.gridx = 1;
@@ -346,7 +370,7 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
         gbc.gridy = yPos;
         mainPanel.add(greenMinLabel, gbc);
 
-        greenMinText = new JTextField(5);
+        greenMinText = new JTextField(10);
         greenMinText.setText("50");
         greenMinText.setFont(serif12);
         gbc.gridx = 1;
@@ -360,12 +384,33 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
         gbc.gridy = yPos;
         mainPanel.add(greenFractionLabel, gbc);
         
-        greenFractionText = new JTextField(5);
+        greenFractionText = new JTextField(10);
         greenFractionText.setText("0.10");
         greenFractionText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(greenFractionText, gbc);
+        
+        radiusLabel = new JLabel("Radius of circles drawn around colocalized foci");
+        radiusLabel.setForeground(Color.black);
+        radiusLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos;
+        mainPanel.add(radiusLabel, gbc);
+        
+        minLength = Math.min(image.getExtents()[0],image.getExtents()[1]);        
+        radiusText = new JTextField(10);
+        if (minLength/4.0 > 4.0) {
+            radius = 4.0f;
+        }
+        else {
+            radius = minLength/4.0f;
+        }
+        radiusText.setText(df.format(radius));
+        radiusText.setFont(serif12);
+        gbc.gridx = 1;
+        gbc.gridy = yPos++;
+        mainPanel.add(radiusText, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -385,9 +430,10 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
     private boolean setVariables() {
         String tmpStr;
         int i;
+        int totLength;
         
-        int totLength = image.getExtents()[0];
-
+        
+        totLength = image.getExtents()[0];
         for (i = 1; i < image.getNDims(); i++) {
             totLength *= image.getExtents()[i];
         }
@@ -458,6 +504,19 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
             greenFractionText.selectAll();
 
             return false;
+        }
+        
+        tmpStr = radiusText.getText();
+        radius = Float.parseFloat(tmpStr);
+        if (radius <= 0.0) {
+            MipavUtil.displayError("radius must be greater than 0");
+            radiusText.requestFocus();
+            radiusText.selectAll();
+        }
+        else if (radius > minLength/2.0f) {
+            MipavUtil.displayError("radius must be <= " + (minLength/2.0f));
+            radiusText.requestFocus();
+            radiusText.selectAll();
         }
         
         return true;
