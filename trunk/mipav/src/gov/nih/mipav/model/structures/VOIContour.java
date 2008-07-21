@@ -85,6 +85,10 @@ public class VOIContour extends VOIBase {
      * Stores the z coordinates for the bounding box. The upper left corner and the lower right corner, respectively.
      */
     private float[] zBounds = new float[2];
+    
+    /** If doGeometricCenterLabel = true and if active == false and if closed = true,
+     *  execute drawGeometricCenterLabel when in drawSelf */
+    private boolean doGeometricCenterLabel = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -591,6 +595,46 @@ public class VOIContour extends VOIBase {
             g.drawString(label, xS - 10, yS - 5);
         }
     }
+    
+    /**
+     * Draws geometric center of contour (2D).  No crosshair for point
+     *
+     * @param  scaleX       scale for the x coordinate
+     * @param  scaleY       scale for the y coordinate
+     * @param  resolutionX  X resolution (aspect ratio)
+     * @param  resolutionY  Y resolution (aspect ratio)
+     * @param  g            graphics to paint in
+     */
+    public void drawGeometricCenterLabel(float scaleX, float scaleY, float resolutionX, float resolutionY, Graphics g) {
+        int xS, yS;
+
+        if (g == null) {
+            MipavUtil.displayError("VOIContour.drawGeometricCenter: grapics = null");
+
+            return;
+        }
+
+        getGeometricCenter();
+        xS = MipavMath.round(gcPt.X * scaleX * resolutionX);
+        yS = MipavMath.round(gcPt.Y * scaleY * resolutionY);
+
+        doName = (Preferences.is(Preferences.PREF_SHOW_VOI_NAME) && (name != null));
+
+        if (doName) {
+            g.drawString(name, xS - 10, yS - 5);
+        } else if (label != null) {
+            g.drawString(label, xS - 10, yS - 5);
+        }
+    }
+    
+    /**
+     * If doGeometricCenterLabel = true and active == false and closed = true, 
+     * execute drawGeometricCenterLabel when in drawSelf
+     * @param doGeometricCenterLabel
+     */
+    public void setDoGeometricCenterLabel(boolean doGeometricCenterLabel) {
+        this.doGeometricCenterLabel = doGeometricCenterLabel;
+    }
 
     /**
      * Draws the length of open contour (Polyline).
@@ -715,6 +759,9 @@ public class VOIContour extends VOIBase {
         		drawLength(g, zoomX, zoomY, unitsOfMeasure, resols);
         	}
 		}
+        else if (doGeometricCenterLabel && closed) {
+            drawGeometricCenterLabel(zoomX, zoomY, resolutionX, resolutionY, g);    
+        }
         
         if (thickness == 1) {
         	if (closed == true) {
@@ -1096,6 +1143,9 @@ public class VOIContour extends VOIBase {
         		drawLength(g, zoomX, zoomY, unitsOfMeasure, resols);
         	}
 		}
+        else if (doGeometricCenterLabel && closed) {
+            drawGeometricCenterLabel(zoomX, zoomY, resolutionX, resolutionY, g);    
+        }
         
         if (thickness == 1) {
         	if (closed == true) {
