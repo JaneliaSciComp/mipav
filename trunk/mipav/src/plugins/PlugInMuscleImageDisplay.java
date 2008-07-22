@@ -339,9 +339,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      * for setting up the image rather than ViewJFrameImage's init()
      * @param image the model image
      * @param titles
-     * @param mirrorArr
+     * @param mirrorCalcItemsArr
      * @param mirrorZ
-     * @param noMirrorArr
+     * @param noMirrorCalcItemsArr
      * @param noMirrorZ
      * @param imageType
      * @param symmetry
@@ -2547,22 +2547,22 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		private JLabel[] instructionLabel;
 
 		/** Text for muscles where a mirror muscle may exist. */
-		private String[][] mirrorArr;
+		private String[][] mirrorCalcItemsArr;
 
 		/** Text for muscles where mirror muscles are not considered. */
-		private String[][] noMirrorArr;
+		private String[][] noMirrorCalcItemsArr;
 		
 		/** Side check box for all symmetric objects. */
-		private ColorButtonPanel[][] mirrorCheckArr;
+		private ColorButtonPanel[][] mirrorCheckCalcItemsArr;
 		
 		/** Side check box for all non-symmetric objects. */
 		private ColorButtonPanel[][] noMirrorCheckArr;
 		
 		/** Buttons for all symmetric objects. */
-		private JButton[][] mirrorButtonArr;
+		private JButton[][] mirrorButtonCalcItemsArr;
 		
 		/** Buttons for all non-symmetric objects. */
-		private JButton[][] noMirrorButtonArr;
+		private JButton[][] noMirrorButtonCalcItemsArr;
 		
 		/**Seed for random color chooser for VOIs that have not had a color assigned to them. */
 		private int colorChoice = 0;
@@ -2595,8 +2595,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
 	        //by looking at calculations up here, this process can be done independent
 	        //of the multiple symmetries that may exist within a given body.
-	        this.noMirrorArr = getCalcItems(noMirrorArr);
-	        this.mirrorArr = getCalcItems(mirrorArr);
+	        this.noMirrorCalcItemsArr = getCalcItems(noMirrorArr);
+	        this.mirrorCalcItemsArr = getCalcItems(mirrorArr);
 	        
 	        checkBoxLocationTree = new TreeMap<String, ColorButtonPanel>();
 
@@ -2637,18 +2637,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				}
 			}
 			boolean voiExists = false;
-			for(int index=0; index<mirrorButtonArr.length; index++) {
-				for(int i=0; i<mirrorButtonArr[index].length; i++) {
-					mirrorButtonArr[index][i].setEnabled(voiExists = voiExists(mirrorButtonArr[index][i].getText(), slice));
-					mirrorButtonArr[index][i].setForeground(Color.BLACK);
-					if(voiExists && voiBuffer.get(mirrorButtonArr[index][i].getText()).isComputerGenerated())
-						mirrorButtonArr[index][i].setForeground(Color.RED);
+			for(int index=0; index<mirrorButtonCalcItemsArr.length; index++) {
+				for(int i=0; i<mirrorButtonCalcItemsArr[index].length; i++) {
+					mirrorButtonCalcItemsArr[index][i].setEnabled(voiExists = voiExists(mirrorButtonCalcItemsArr[index][i].getText(), slice));
+					mirrorButtonCalcItemsArr[index][i].setForeground(Color.BLACK);
+					if(voiExists && voiBuffer.get(mirrorButtonCalcItemsArr[index][i].getText()).isComputerGenerated())
+						mirrorButtonCalcItemsArr[index][i].setForeground(Color.RED);
 				}
-				for(int i=0; i<noMirrorButtonArr[index].length; i++) {
-					noMirrorButtonArr[index][i].setEnabled(voiExists(noMirrorButtonArr[index][i].getText(), slice));
-					noMirrorButtonArr[index][i].setForeground(Color.BLACK);
-					if(voiExists && voiBuffer.get(noMirrorButtonArr[index][i].getText()).isComputerGenerated())
-						noMirrorButtonArr[index][i].setForeground(Color.RED);
+				for(int i=0; i<noMirrorButtonCalcItemsArr[index].length; i++) {
+					noMirrorButtonCalcItemsArr[index][i].setEnabled(voiExists(noMirrorButtonCalcItemsArr[index][i].getText(), slice));
+					noMirrorButtonCalcItemsArr[index][i].setForeground(Color.BLACK);
+					if(voiExists && voiBuffer.get(noMirrorButtonCalcItemsArr[index][i].getText()).isComputerGenerated())
+						noMirrorButtonCalcItemsArr[index][i].setForeground(Color.RED);
 				}
 			}
 		}
@@ -2725,25 +2725,22 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        
 	        JPanel instructionPanel = initInstructionPanel();
 	        
-	        JScrollPane mirrorPanel[] = new JScrollPane[mirrorArr.length];
-	        
-	        //JPanel noMirrorPanel[] = new JPanel[noMirrorArr.length];
+	        JScrollPane mirrorPanel[] = new JScrollPane[mirrorCalcItemsArr.length];
 	        
 	        JPanel mainPanel = new JPanel();
 	        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 	        
 	        mainPanel.add(instructionPanel);
+
+	        mirrorCheckCalcItemsArr = new ColorButtonPanel[mirrorCalcItemsArr.length][];
+	        mirrorButtonCalcItemsArr = new JButton[mirrorCalcItemsArr.length][];
 	        
-	        //list = new JList[mirrorArr.length];
-	        mirrorCheckArr = new ColorButtonPanel[mirrorArr.length][];
-	        mirrorButtonArr = new JButton[mirrorArr.length][];
-	        
-	        noMirrorCheckArr = new ColorButtonPanel[noMirrorArr.length][];
-	        noMirrorButtonArr = new JButton[noMirrorArr.length][];
+	        noMirrorCheckArr = new ColorButtonPanel[noMirrorCalcItemsArr.length][];
+	        noMirrorButtonCalcItemsArr = new JButton[noMirrorCalcItemsArr.length][];
 
 	        String title = "";
 	        //guaranteed (for now) that mirrorArr.length = noMirrorArr.length
-	        for(int i=0; i<mirrorArr.length; i++) {
+	        for(int i=0; i<mirrorCalcItemsArr.length; i++) {
 	        	
 	        	JPanel subPanel = initSymmetricalObjects(i);
 	        	initNonSymmetricalObjects(subPanel, i);
@@ -2820,14 +2817,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 */
 		private JPanel initSymmetricalObjects(int index) {
 
-            mirrorCheckArr[index] = new ColorButtonPanel[mirrorArr[index].length * 2];
-            mirrorButtonArr[index] = new JButton[mirrorArr[index].length * 2];
+            mirrorCheckCalcItemsArr[index] = new ColorButtonPanel[mirrorCalcItemsArr[index].length * 2];
+            mirrorButtonCalcItemsArr[index] = new JButton[mirrorCalcItemsArr[index].length * 2];
 			JPanel subPanel = new JPanel(new GridBagLayout());
             subPanel.setForeground(Color.black);
 
-			String[] mirrorString = new String[mirrorArr[index].length * 2];
+			String[] mirrorString = new String[mirrorCalcItemsArr[index].length * 2];
 	        
-	        for(int i=0; i<mirrorArr[index].length * 2; i++) {
+	        for(int i=0; i<mirrorCalcItemsArr[index].length * 2; i++) {
 	            String symmetry1 = "", symmetry2 = "";
 	            if(symmetry.equals(Symmetry.LEFT_RIGHT)) {
 	                symmetry1 = "Left ";
@@ -2837,8 +2834,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	                symmetry2 = "Bottom ";
 	            }
 	            
-	            mirrorString[i] = (i % 2) == 0 ? new String(symmetry1+mirrorArr[index][i/2]) : 
-	                                                        new String(symmetry2+mirrorArr[index][i/2]);
+	            mirrorString[i] = (i % 2) == 0 ? new String(symmetry1+mirrorCalcItemsArr[index][i/2]) : 
+	                                                        new String(symmetry2+mirrorCalcItemsArr[index][i/2]);
 	        }
 	        
 	        GridBagConstraints gbc = new GridBagConstraints();
@@ -2849,17 +2846,17 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             gbc.gridx = 0;
             gbc.gridy = 0;
             
-            for(int i=0; i<mirrorArr[index].length * 2; i++) {
+            for(int i=0; i<mirrorCalcItemsArr[index].length * 2; i++) {
                                
-            	mirrorCheckArr[index][i] = new ColorButtonPanel(Color.BLACK, mirrorString[i]);
+            	mirrorCheckCalcItemsArr[index][i] = new ColorButtonPanel(Color.BLACK, mirrorString[i]);
                 
-                checkBoxLocationTree.put(mirrorString[i], mirrorCheckArr[index][i]);
+                checkBoxLocationTree.put(mirrorString[i], mirrorCheckCalcItemsArr[index][i]);
                 
-                mirrorButtonArr[index][i] = new JButton(mirrorString[i]);
-                mirrorButtonArr[index][i].setEnabled(voiExists(mirrorString[i]));
-                mirrorButtonArr[index][i].setFont(MipavUtil.font12B);
-                mirrorButtonArr[index][i].setActionCommand(LOAD_VOI);
-                mirrorButtonArr[index][i].addActionListener(this);
+                mirrorButtonCalcItemsArr[index][i] = new JButton(mirrorString[i]);
+                mirrorButtonCalcItemsArr[index][i].setEnabled(voiExists(mirrorString[i]));
+                mirrorButtonCalcItemsArr[index][i].setFont(MipavUtil.font12B);
+                mirrorButtonCalcItemsArr[index][i].setActionCommand(LOAD_VOI);
+                mirrorButtonCalcItemsArr[index][i].addActionListener(this);
                 
                 if(i != 0 && i % 2 == 0) {
                     gbc.gridy++;
@@ -2867,11 +2864,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 }
                 gbc.weightx = 0;
                 gbc.insets = new Insets(0, 10, 0, 0);
-                subPanel.add(mirrorCheckArr[index][i], gbc);
+                subPanel.add(mirrorCheckCalcItemsArr[index][i], gbc);
                 gbc.insets = new Insets(0, 0, 0, 0);
                 gbc.gridx++;
                 gbc.weightx = 1;
-                subPanel.add(mirrorButtonArr[index][i], gbc);
+                subPanel.add(mirrorButtonCalcItemsArr[index][i], gbc);
                 gbc.gridx++;
                 
             }          
@@ -2884,8 +2881,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 */
 	    private JPanel initNonSymmetricalObjects(JPanel subPanel, int index) {
       
-	    	noMirrorCheckArr[index] = new ColorButtonPanel[noMirrorArr[index].length];
-            noMirrorButtonArr[index] = new JButton[noMirrorArr[index].length];
+	    	noMirrorCheckArr[index] = new ColorButtonPanel[noMirrorCalcItemsArr[index].length];
+            noMirrorButtonCalcItemsArr[index] = new JButton[noMirrorCalcItemsArr[index].length];
 	    	
 	    	GridBagConstraints gbc = new GridBagConstraints();
             gbc.anchor = GridBagConstraints.WEST;
@@ -2893,19 +2890,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             gbc.weightx = 1;
             gbc.weighty = 0;
             gbc.gridx = 0;
-            gbc.gridy = mirrorArr[index].length;
+            gbc.gridy = noMirrorCalcItemsArr[index].length;
             
-            for(int i=0; i<noMirrorArr[index].length; i++) {
+            for(int i=0; i<noMirrorCalcItemsArr[index].length; i++) {
                                
-            	noMirrorCheckArr[index][i] = new ColorButtonPanel(Color.BLACK, noMirrorArr[index][i]);
+            	noMirrorCheckArr[index][i] = new ColorButtonPanel(Color.BLACK, noMirrorCalcItemsArr[index][i]);
                 
-                checkBoxLocationTree.put(noMirrorArr[index][i], noMirrorCheckArr[index][i]);
+                checkBoxLocationTree.put(noMirrorCalcItemsArr[index][i], noMirrorCheckArr[index][i]);
                 
-                noMirrorButtonArr[index][i] = new JButton(noMirrorArr[index][i]);
-                noMirrorButtonArr[index][i].setEnabled(voiExists(noMirrorArr[index][i]));
-                noMirrorButtonArr[index][i].setFont(MipavUtil.font12B);
-                noMirrorButtonArr[index][i].setActionCommand(LOAD_VOI);
-                noMirrorButtonArr[index][i].addActionListener(this);
+                noMirrorButtonCalcItemsArr[index][i] = new JButton(noMirrorCalcItemsArr[index][i]);
+                noMirrorButtonCalcItemsArr[index][i].setEnabled(voiExists(noMirrorCalcItemsArr[index][i]));
+                noMirrorButtonCalcItemsArr[index][i].setFont(MipavUtil.font12B);
+                noMirrorButtonCalcItemsArr[index][i].setActionCommand(LOAD_VOI);
+                noMirrorButtonCalcItemsArr[index][i].addActionListener(this);
                 
                 if(i != 0 && i % 2 == 0) {
                     gbc.gridy++;
@@ -2917,7 +2914,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 gbc.insets = new Insets(0, 0, 0, 0);
                 gbc.gridx++;
                 gbc.weightx = 1;
-                subPanel.add(noMirrorButtonArr[index][i], gbc);
+                subPanel.add(noMirrorButtonCalcItemsArr[index][i], gbc);
                 gbc.gridx++;   
             }          
 	        
@@ -3006,16 +3003,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    private boolean checkAndProcessForAllButtonsPressed() {
 	    	boolean emptyButton = false;
 	    	boolean stateChanged = false;
-	    	for(int i=0; i<mirrorButtonArr.length; i++) {
-				for(int j=0; j<mirrorButtonArr[i].length; j++) {
-					if(mirrorButtonArr[i][j].isEnabled() && !mirrorButtonArr[i][j].isSelected()) {
+	    	for(int i=0; i<mirrorButtonCalcItemsArr.length; i++) {
+				for(int j=0; j<mirrorButtonCalcItemsArr[i].length; j++) {
+					if(mirrorButtonCalcItemsArr[i][j].isEnabled() && !mirrorButtonCalcItemsArr[i][j].isSelected()) {
 						emptyButton = true;
 					}	
 				}
 			}
-			for(int i=0; i<noMirrorButtonArr.length; i++) {
-				for(int j=0; j<noMirrorButtonArr[i].length; j++) {
-					if(noMirrorButtonArr[i][j].isEnabled() && !noMirrorButtonArr[i][j].isSelected()) {
+			for(int i=0; i<noMirrorButtonCalcItemsArr.length; i++) {
+				for(int j=0; j<noMirrorButtonCalcItemsArr[i].length; j++) {
+					if(noMirrorButtonCalcItemsArr[i][j].isEnabled() && !noMirrorButtonCalcItemsArr[i][j].isSelected()) {
 						emptyButton = true;
 					}	
 				}
@@ -3070,16 +3067,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				itr = voiBuffer.keySet().iterator();
 			else {
 				ArrayList<String> totalList = new ArrayList<String>(), subList = new ArrayList<String>();
-				for (int listNum = 0; listNum < mirrorButtonArr.length; listNum++, subList = new ArrayList<String>())  {   	
-	    			for(int i=0; i<mirrorButtonArr[listNum].length; i++) 
-	    				if(mirrorCheckArr[listNum][i].isSelected())
-	    					subList.add(mirrorButtonArr[listNum][i].getText());
+				for (int listNum = 0; listNum < mirrorButtonCalcItemsArr.length; listNum++, subList = new ArrayList<String>())  {   	
+	    			for(int i=0; i<mirrorButtonCalcItemsArr[listNum].length; i++) 
+	    				if(mirrorCheckCalcItemsArr[listNum][i].isSelected())
+	    					subList.add(mirrorButtonCalcItemsArr[listNum][i].getText());
 	    			totalList.addAll(subList);
 		    	}
-				for (int listNum = 0; listNum < noMirrorButtonArr.length; listNum++, subList = new ArrayList<String>())  {   	
-	    			for(int i=0; i<noMirrorButtonArr[listNum].length; i++) 
+				for (int listNum = 0; listNum < noMirrorButtonCalcItemsArr.length; listNum++, subList = new ArrayList<String>())  {   	
+	    			for(int i=0; i<noMirrorButtonCalcItemsArr[listNum].length; i++) 
 	    				if(noMirrorCheckArr[listNum][i].isSelected())
-	    					subList.add(noMirrorButtonArr[listNum][i].getText());
+	    					subList.add(noMirrorButtonCalcItemsArr[listNum][i].getText());
 	    			totalList.addAll(subList);
 		    	}
 	    		itr = totalList.iterator();
@@ -3136,16 +3133,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				
 				//now load all VOIs at once:
 				ArrayList<String> totalList = new ArrayList<String>(), subList = new ArrayList<String>();
-				for (int listNum = 0; listNum < mirrorButtonArr.length; listNum++, subList = new ArrayList<String>())  {   	
-	    			for(int i=0; i<mirrorButtonArr[listNum].length; i++) 
-	    				if(mirrorButtonArr[listNum][i].isEnabled())
-	    					subList.add(mirrorButtonArr[listNum][i].getText());
+				for (int listNum = 0; listNum < mirrorButtonCalcItemsArr.length; listNum++, subList = new ArrayList<String>())  {   	
+	    			for(int i=0; i<mirrorButtonCalcItemsArr[listNum].length; i++) 
+	    				if(mirrorButtonCalcItemsArr[listNum][i].isEnabled())
+	    					subList.add(mirrorButtonCalcItemsArr[listNum][i].getText());
 	    			totalList.addAll(subList);
 		    	}
-				for (int listNum = 0; listNum < noMirrorButtonArr.length; listNum++, subList = new ArrayList<String>())  {   	
-	    			for(int i=0; i<noMirrorButtonArr[listNum].length; i++) 
-	    				if(noMirrorButtonArr[listNum][i].isEnabled())
-	    					subList.add(noMirrorButtonArr[listNum][i].getText());
+				for (int listNum = 0; listNum < noMirrorButtonCalcItemsArr.length; listNum++, subList = new ArrayList<String>())  {   	
+	    			for(int i=0; i<noMirrorButtonCalcItemsArr[listNum].length; i++) 
+	    				if(noMirrorButtonCalcItemsArr[listNum][i].isEnabled())
+	    					subList.add(noMirrorButtonCalcItemsArr[listNum][i].getText());
 	    			totalList.addAll(subList);
 		    	}
 				String[] allStrings = new String[totalList.size()];
@@ -3188,19 +3185,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 * when false - any available selected buttons are pressed
 		 */
 		public void pressAvailableButtons() {
-			for(int i=0; i<mirrorButtonArr.length; i++) {
-				for(int j=0; j<mirrorButtonArr[i].length; j++) {
-					if(mirrorButtonArr[i][j].isEnabled() && !mirrorButtonArr[i][j].isSelected()) {
-						mirrorButtonArr[i][j].doClick();
-						mirrorButtonArr[i][j].setSelected(true);
+			for(int i=0; i<mirrorButtonCalcItemsArr.length; i++) {
+				for(int j=0; j<mirrorButtonCalcItemsArr[i].length; j++) {
+					if(mirrorButtonCalcItemsArr[i][j].isEnabled() && !mirrorButtonCalcItemsArr[i][j].isSelected()) {
+						mirrorButtonCalcItemsArr[i][j].doClick();
+						mirrorButtonCalcItemsArr[i][j].setSelected(true);
 					}	
 				}
 			}
-			for(int i=0; i<noMirrorButtonArr.length; i++) {
-				for(int j=0; j<noMirrorButtonArr[i].length; j++) {
-					if(noMirrorButtonArr[i][j].isEnabled() && !noMirrorButtonArr[i][j].isSelected()) {
-						noMirrorButtonArr[i][j].doClick();
-						noMirrorButtonArr[i][j].setSelected(true);
+			for(int i=0; i<noMirrorButtonCalcItemsArr.length; i++) {
+				for(int j=0; j<noMirrorButtonCalcItemsArr[i].length; j++) {
+					if(noMirrorButtonCalcItemsArr[i][j].isEnabled() && !noMirrorButtonCalcItemsArr[i][j].isSelected()) {
+						noMirrorButtonCalcItemsArr[i][j].doClick();
+						noMirrorButtonCalcItemsArr[i][j].setSelected(true);
 					}	
 				}
 			}
