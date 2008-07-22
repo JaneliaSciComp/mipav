@@ -62,6 +62,8 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  *           
  *           <p>13.) If a point is not a focus and has only 1 branch, then prune it.  Keep repeating the
  *           process until no more pruning can occur.
+ *           
+ *           <p>14.) Find the distance between the 2 foci.
  */
 public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
 
