@@ -174,7 +174,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	    titles[0] = "Thigh";
 	    titles[1] = "Bone";
 	    titles[2] = "Muscles";
-	    
+	     
 	    this.symmetry = PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT;
 	    
 	    if (ViewUserInterface.getReference().isAppFrameVisible()) {

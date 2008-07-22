@@ -840,18 +840,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         		command.equals(DialogPrompt.SELECT_ALL))) {
         	if(command.equals(DialogPrompt.CANCEL)) {
         		unlockToPanel(voiTabLoc);
-        		initMuscleImage(activeTab);
+        		//initMuscleImage(activeTab);
         	} else if(command.equals(DialogPrompt.HIDE_ALL)) {
         		getActiveImage().unregisterAllVOIs();
         		updateImages(true);
         	} else if(command.equals(DialogPrompt.OK) && 
         			tabs[voiTabLoc].completed() == true) {
         		unlockToPanel(voiTabLoc);
-        		initMuscleImage(activeTab);
+        		//initMuscleImage(activeTab);
         	} else if(command.equals(DialogPrompt.BACK)) {
         		unlockToPanel(resultTabLoc);
         		getActiveImage().unregisterAllVOIs();
-        		initMuscleImage(activeTab);
+        		//initMuscleImage(activeTab);
         	} else if(command.equals(DialogPrompt.EXIT)) {
             	close();
         	} else if(command.equals(DialogPrompt.HELP)) {
