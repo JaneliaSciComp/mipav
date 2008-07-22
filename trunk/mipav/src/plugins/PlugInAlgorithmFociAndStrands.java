@@ -16,7 +16,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  *
- * @version  July 21, 2008
+ * @version  July 22, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -29,33 +29,36 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  *           4. Calculate the average number of foci per strand.
  *           5. For cases where there are two foci per strand, measure the distance between the foci
  *              along the strand.</p>
+ *           Use a contour VOI if you wish to process only a portion of the image.
  *           
  *           <p>1.) Obtain the red portion of the image.
- *           
- *           <p>2.) Obtain a red histogram.  Set the threshold so that the redFraction
- *           portion of the cumulative histogram is at or above threshold for the fuzzy c means.
- *           
- *           <p>3.) Perform a 3 level fuzzy c means segmentation on the red image.  Values below threshold
- *           are set equal to 0 and values >= threshold are assigned values of 1, 2, and 3
  *            
- *           <p>4.) Convert the red fuzzy segmented value of 3 to 1 and the other values to 0. 
+ *           <p>2.) red threshold = red minimum + red fraction * (red maximum - red minimum)
+ *           if (redBuffer[i] >= red threshold), set byteBuffer equal to 1.  Otherwise byteBuffer is 0.  
  *           
- *           <p>5.) ID objects in red segmented image which have at least redMin pixels.
+ *           <p>3.) ID objects in red thresholded image which have at least redMin pixels.
  *           
- *           <p>6.) Export the green portion of the image to greenBuffer.
+ *           <p>4.) Export the green portion of the image to greenBuffer.
  *
- *           <p>7.) Obtain histogram information on the green image. Set the threshold so that the greenFraction
- *           portion of the cumulative histogram is at or above threshold for the fuzzy c means. 
+ *           <p>5.) green threshold = green minimum + green fraction * (green maximum - green minimum)
+ *           if (greenBuffer[i] >= green threshold), set byteBuffer equal to 1.  Otherwise byteBuffer is 0.  
  *           
- *           <p>8.) Perform a 3 level fuzzy c means segmentation on the green image.  Green values below threshold
- *           are set to 0, and green values >= threshold are set to values of 1, 2, and 3.
+ *           <p>6.) ID objects in green thresholded image which have at least greenMin pixels
  *           
- *           <p>9.) Create an image in which all the green values originally equal to 3 in the fuzzy
- *           c means segmentation are set to 1 and all the other green values are set to 0.
+ *           <p>7.) For each red object find a green object, if any, with which it colocalizes.
+ *           Calculate the center of mass of the red object.
  *           
- *           <p>10.) ID objects in this green segmented image which have at least greenMin pixels.
+ *           <p>8.) For each green strand store the number of red foci on it.  Store the positions of
+ *           focus 1 and focus 2, if present.
  *           
+ *           <p>9.) Display the positions of the colocalized red foci on the source image with circles.
  *           
+ *           <p>10.) Remove all green strands except those with 2 foci.
+ *           
+ *           <p>11.) Skeletonize the green strands with 2 foci.
+ *           
+ *           <p>12.) Find the points on the skeletonized green strands nearest their 2 colocalized red foci.
+ *           Use these points on the skeletonized green strands in the distance calculations.
  */
 public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
 
@@ -95,6 +98,8 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
     private ViewJFrameImage redFrame;
     private ModelImage greenImage;
     private ViewJFrameImage greenFrame;
+    private ModelImage skeletonizeImage;
+    private ViewJFrameImage skeletonizeFrame;
     //** Radius of circles drawn around colocalized foci */
     private float radius;
 
@@ -160,6 +165,10 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         short redOnGreen[];
         float redX[];
         float redY[];
+        float redColocX1[];
+        float redColocY1[];
+        float redColocX2[];
+        float redColocY2[];
         float redTotal[];
         int numRedColocalize;
         int length; // total number of data-elements (pixels) in image
@@ -174,18 +183,19 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int itersErosion;
         int numPruningPixels;
         int edgingType;
-        int i, j;
+        int i, j, k;
         int x, y;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
         AlgorithmMorphology2D idObjectsAlgo2D;
+        AlgorithmMorphology2D skeletonizeAlgo2D;
         byte[] byteBuffer;
         float[] greenBuffer = null;
         ViewVOIVector VOIs = null;
         int nVOIs;
         int index;
         ViewUserInterface UI = ViewUserInterface.getReference();
-        //VOI newPtVOI;
+        VOI newPtVOI;
         VOI newCircleVOI;
         int maxCirclePoints = (int)Math.ceil(2.0 * Math.PI * radius);
         float[] xArr = new float[maxCirclePoints];
@@ -195,11 +205,27 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         FileInfoBase fileInfo;
         int numGreenObjects = 0;
         short[] greenIDArray = null;
+        short[] skeletonizedArray = null;
         int numGreenStrandFoci[];
         int greenIDMinus1;
         float avgFociOnStrands;
         int greenStrandFocus1[];
         int greenStrandFocus2[];
+        int greenLeft[];
+        int greenRight[];
+        int greenTop[];
+        int greenBottom[];
+        double distX;
+        double distY;
+        double distance;
+        double minDistance1;
+        double minDistance2;
+        int redSkelX[];
+        int redSkelY[];
+        int xInt[] = new int[1];
+        int yInt[] = new int[1];
+        int zInt[] = new int[1];
+        int numRedColocalize2;
         
         long time;
         int fileNameLength;
@@ -379,9 +405,6 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
             return;
         }
         
-        grayImage.disposeLocal();
-        grayImage = null;
-        
         redOnGreen = new short[numRedObjects];
         redX = new float[numRedObjects];
         redY = new float[numRedObjects];
@@ -419,6 +442,10 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
             }
         }
         numRedColocalize = 0;
+        redColocX1 = new float[numGreenObjects];
+        redColocY1 = new float[numGreenObjects];
+        redColocX2 = new float[numGreenObjects];
+        redColocY2 = new float[numGreenObjects];
         for (i = 0; i < numRedObjects; i++) {
             redX[i] = redX[i]/redTotal[i];
             redY[i] = redY[i]/redTotal[i];
@@ -427,9 +454,13 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 numGreenStrandFoci[greenIDMinus1]++;
                 if (numGreenStrandFoci[greenIDMinus1] == 1) {
                     greenStrandFocus1[greenIDMinus1] = numRedColocalize + 1;
+                    redColocX1[greenIDMinus1] = redX[i];
+                    redColocY1[greenIDMinus1] = redY[i];
                 }
                 else if (numGreenStrandFoci[greenIDMinus1] == 2) {
                     greenStrandFocus2[greenIDMinus1] = numRedColocalize + 1;
+                    redColocX2[greenIDMinus1] = redX[i];
+                    redColocY2[greenIDMinus1] = redY[i];
                 }
                 //newPtVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1), 1, VOI.POINT, -1.0f);
                 //newPtVOI.setColor(Color.white);
@@ -463,9 +494,153 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         }
         Preferences.debug(numRedColocalize + " of " + numRedObjects + " red foci co-localize with green strands\n");
         
+        numRedColocalize2 = 0;
+        for (i = 0; i < numGreenObjects; i++) {
+          if (numGreenStrandFoci[i] == 2) {
+              numRedColocalize2 += 2;
+          }
+        }
+        Preferences.debug(numRedColocalize2 + " of red foci are on green strands with 2 red foci\n");
+        
         avgFociOnStrands = (float)numRedColocalize/(float)numGreenObjects;
+        
+        // Remove all green strands but those with 2 foci
+        for (y = 0; y < yDim; y++) {
+            index = y * xDim;
+            for (x = 0; x < xDim; x++) {
+                i = index + x;
+                if (greenIDArray[i] != 0) {
+                    greenIDMinus1 = greenIDArray[i] - 1;
+                    if (numGreenStrandFoci[greenIDMinus1] != 2) {
+                        greenIDArray[i] = 0;
+                    }
+                }
+            }
+        }
+        
+        try {
+            grayImage.importData(0, greenIDArray, true);
+        }
+        catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+            return;
+        }
+        
+        // Skeletonize the green strands with 2 foci
+        method = AlgorithmMorphology2D.SKELETONIZE;
+        numPruningPixels = 0;
+        skeletonizeAlgo2D = new AlgorithmMorphology2D(grayImage, 0, 0.0f, method, 0,
+                0, numPruningPixels, 0, true);
+        skeletonizeAlgo2D.run();
+        skeletonizeAlgo2D.finalize();
+        skeletonizeAlgo2D = null;
+        
+        // Find the points on the skeletonized green strands nearest their 2 colocalized red foci
+        skeletonizedArray = new short[length];
+        try {
+            grayImage.exportData(0, length, skeletonizedArray);
+        } catch (IOException error) {
+            byteBuffer = null;
+            greenIDArray = null;
+            errorCleanUp("Error on grayImage.exportData", true);
+
+            return;
+        }
+        greenLeft = new int[numGreenObjects];
+        greenRight = new int[numGreenObjects];
+        greenTop = new int[numGreenObjects];
+        greenBottom = new int[numGreenObjects];
+        for (i = 0; i < numGreenObjects; i++) {
+            greenLeft[i] = xDim - 1;
+            greenTop[i] = yDim - 1;
+        }
+        for (y = 0; y < yDim; y++) {
+            index = y * xDim;
+            for (x = 0; x < xDim; x++) {
+                i = index + x;
+                if (skeletonizedArray[i] != 0) {
+                    greenIDMinus1 = skeletonizedArray[i] - 1;
+                    if (numGreenStrandFoci[greenIDMinus1] == 2) {
+                        if (x < greenLeft[greenIDMinus1]) {
+                            greenLeft[greenIDMinus1] = x;
+                        }
+                        if (x > greenRight[greenIDMinus1]) {
+                            greenRight[greenIDMinus1] = x;
+                        }
+                        if (y < greenTop[greenIDMinus1]) {
+                            greenTop[greenIDMinus1] = y;
+                        }
+                        if (y > greenBottom[greenIDMinus1]) {
+                            greenBottom[greenIDMinus1] = y;
+                        } 
+                    }
+                }
+            }
+        }
+        
+        skeletonizeImage = (ModelImage)grayImage.clone();
+        skeletonizeImage.setImageName(srcImage.getImageName() + "_skeletonize");
+        skeletonizeFrame = new ViewJFrameImage(skeletonizeImage);
+        skeletonizeFrame.setTitle(srcImage.getImageName() + "_skeletonize");
+        
+        redSkelX = new int[numRedColocalize2];
+        redSkelY = new int[numRedColocalize2];
+        for (i = 0, k = 0; i < numGreenObjects; i++) {
+            minDistance1 = Double.MAX_VALUE;
+            minDistance2 = Double.MAX_VALUE;
+            if (numGreenStrandFoci[i] == 2) {
+                for (y = greenTop[i]; y <= greenBottom[i]; y++) {
+                    index = y * xDim;
+                    for (x = greenLeft[i]; x <= greenRight[i]; x++) {
+                        j = index + x;
+                        if (skeletonizedArray[j] == (i+1)) {
+                            distX = redColocX1[i] - x;
+                            distY = redColocY1[i] - y;
+                            distance = Math.sqrt(distX * distX + distY * distY);
+                            if (distance < minDistance1) {
+                                minDistance1 = distance;
+                                redSkelX[k] = x;
+                                redSkelY[k] = y;
+                            }
+                            distX = redColocX2[i] - x;
+                            distY = redColocY2[i] - y;
+                            distance = Math.sqrt(distX * distX + distY * distY);
+                            if (distance < minDistance2) {
+                                minDistance2 = distance;
+                                redSkelX[k+1] = x;
+                                redSkelY[k+1] = y;
+                            }
+                        }
+                    }
+                }
+                newPtVOI = new VOI((short) (greenStrandFocus1[i]), Integer.toString(greenStrandFocus1[i]), 1, VOI.POINT, -1.0f);
+                newPtVOI.setColor(Color.white);
+                xInt[0] = redSkelX[k];
+                yInt[0] = redSkelY[k];
+                zInt[0] = 0;
+                newPtVOI.importCurve(xInt, yInt, zInt, 0);
+                ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(greenStrandFocus1[i]));
+                skeletonizeImage.registerVOI(newPtVOI);
+                newPtVOI = new VOI((short) (greenStrandFocus2[i]), Integer.toString(greenStrandFocus2[i]), 1, VOI.POINT, -1.0f);
+                newPtVOI.setColor(Color.white);
+                xInt[0] = redSkelX[k+1];
+                yInt[0] = redSkelY[k+1];
+                zInt[0] = 0;
+                newPtVOI.importCurve(xInt, yInt, zInt, 0);
+                ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(greenStrandFocus2[i]));
+                skeletonizeImage.registerVOI(newPtVOI);
+                k += 2;
+            } // if (numGreenStrandFoci[i] == 2)
+        } // for (i = 0, k = 0; i < numGreenObjects; i++)
+        
+        grayImage.disposeLocal();
+        grayImage = null;
 
         srcImage.notifyImageDisplayListeners();
+        skeletonizeImage.notifyImageDisplayListeners();
         
         UI.getMessageFrame().addTab("PlugInAlgorithmFociAndStrands");
         UI.getMessageFrame().setFont("PlugInAlgorithmFociAndStrands", courier);
@@ -509,6 +684,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         BitSet imageMask = null;
         short redOnGreen[];
         int numRedColocalize;
+        int numRedColocalize2;
         int totLength, sliceLength;
         float[] redBuffer;
         ModelImage grayImage;
@@ -521,12 +697,13 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int itersErosion;
         int numPruningPixels;
         int edgingType;
-        int i, j;
+        int i, j, k;
         int x, y, z;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
         int zDim = srcImage.getExtents()[2];
         AlgorithmMorphology3D idObjectsAlgo3D;
+        AlgorithmMorphology3D skeletonizeAlgo3D;
         byte[] byteBuffer;
         float[] greenBuffer = null;
         ViewVOIVector VOIs = null;
@@ -545,7 +722,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int numGreenObjects = 0;
         short[] redIDArray = null;
         short[] greenIDArray = null;
-        
+        short[] skeletonizedArray = null;
         int index2;
         
         long time;
@@ -562,8 +739,32 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int greenStrandFocus2[];
         int redIDMinus1;
         int greenIDMinus1;
-        //VOI newPtVOI;
+        VOI newPtVOI;
         float avgFociOnStrands;
+        float redColocX1[];
+        float redColocX2[];
+        float redColocY1[];
+        float redColocY2[];
+        float redColocZ1[];
+        float redColocZ2[];
+        int greenLeft[];
+        int greenRight[];
+        int greenTop[];
+        int greenBottom[];
+        int greenFront[];
+        int greenBack[];
+        int redSkelX[];
+        int redSkelY[];
+        int redSkelZ[];
+        double minDistance1;
+        double minDistance2;
+        double distX;
+        double distY;
+        double distZ;
+        double distance;
+        int xInt[] = new int[1];
+        int yInt[] = new int[1];
+        int zInt[] = new int[1];
         
         time = System.currentTimeMillis();
 
@@ -741,10 +942,6 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
             return;
         }
         
-        
-        grayImage.disposeLocal();
-        grayImage = null;
-        
         redOnGreen = new short[numRedObjects];
         redX = new float[numRedObjects];
         redY = new float[numRedObjects];
@@ -794,6 +991,12 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         }
         
         numRedColocalize = 0;
+        redColocX1 = new float[numGreenObjects];
+        redColocY1 = new float[numGreenObjects];
+        redColocX2 = new float[numGreenObjects];
+        redColocY2 = new float[numGreenObjects];
+        redColocZ1 = new float[numGreenObjects];
+        redColocZ2 = new float[numGreenObjects];
         for (i = 0; i < numRedObjects; i++) {
             redX[i] = redX[i]/redTotal[i];
             redY[i] = redY[i]/redTotal[i];
@@ -803,9 +1006,15 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 numGreenStrandFoci[greenIDMinus1]++;
                 if (numGreenStrandFoci[greenIDMinus1] == 1) {
                     greenStrandFocus1[greenIDMinus1] = numRedColocalize + 1;
+                    redColocX1[greenIDMinus1] = redX[i];
+                    redColocY1[greenIDMinus1] = redY[i];
+                    redColocZ1[greenIDMinus1] = redZ[i];
                 }
                 else if (numGreenStrandFoci[greenIDMinus1] == 2) {
                     greenStrandFocus2[greenIDMinus1] = numRedColocalize + 1;
+                    redColocX2[greenIDMinus1] = redX[i];
+                    redColocY2[greenIDMinus1] = redY[i];
+                    redColocZ2[greenIDMinus1] = redZ[i];
                 }
                 //newPtVOI = new VOI((short) (numRedColocalize + nVOIs), Integer.toString(numRedColocalize+1), zDim, VOI.POINT, -1.0f);
                 //newPtVOI.setColor(Color.white);
@@ -841,8 +1050,176 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         Preferences.debug(numRedColocalize + " of " + numRedObjects + " red foci co-localize with green strands\n");
         
         avgFociOnStrands = (float)numRedColocalize/(float)numGreenObjects;
+        
+        numRedColocalize2 = 0;
+        for (i = 0; i < numGreenObjects; i++) {
+          if (numGreenStrandFoci[i] == 2) {
+              numRedColocalize2 += 2;
+          }
+        }
+        Preferences.debug(numRedColocalize2 + " of red foci are on green strands with 2 red foci\n");
+        
+        avgFociOnStrands = (float)numRedColocalize/(float)numGreenObjects;
+        
+        // Remove all green strands but those with 2 foci
+        for (z = 0; z < zDim; z++) {
+            index2 = z * sliceLength;
+            for (y = 0; y < yDim; y++) {
+                index = index2 + y * xDim;
+                for (x = 0; x < xDim; x++) {
+                    i = index + x;
+                    if (greenIDArray[i] != 0) {
+                        greenIDMinus1 = greenIDArray[i] - 1;
+                        if (numGreenStrandFoci[greenIDMinus1] != 2) {
+                            greenIDArray[i] = 0;
+                        }
+                    }
+                }
+            }
+        }
+        
+        try {
+            grayImage.importData(0, greenIDArray, true);
+        }
+        catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+            return;
+        }
+        
+        // Skeletonize the green strands with 2 foci
+        method = AlgorithmMorphology3D.SKELETONIZE;
+        numPruningPixels = 0;
+        skeletonizeAlgo3D = new AlgorithmMorphology3D(grayImage, 0, 0.0f, method, 0,
+                0, numPruningPixels, 0, true);
+        skeletonizeAlgo3D.run();
+        skeletonizeAlgo3D.finalize();
+        skeletonizeAlgo3D = null;
+        
+        // Find the points on the skeletonized green strands nearest their 2 colocalized red foci
+        skeletonizedArray = new short[totLength];
+        try {
+            grayImage.exportData(0, totLength, skeletonizedArray);
+        } catch (IOException error) {
+            byteBuffer = null;
+            greenIDArray = null;
+            errorCleanUp("Error on grayImage.exportData", true);
+
+            return;
+        }
+        greenLeft = new int[numGreenObjects];
+        greenRight = new int[numGreenObjects];
+        greenTop = new int[numGreenObjects];
+        greenBottom = new int[numGreenObjects];
+        greenFront = new int[numGreenObjects];
+        greenBack = new int[numGreenObjects];
+        for (i = 0; i < numGreenObjects; i++) {
+            greenLeft[i] = xDim - 1;
+            greenTop[i] = yDim - 1;
+            greenFront[i] = zDim - 1;
+        }
+        for (z = 0; z < zDim; z++) {
+            for (y = 0; y < yDim; y++) {
+                index = y * xDim;
+                for (x = 0; x < xDim; x++) {
+                    i = index + x;
+                    if (skeletonizedArray[i] != 0) {
+                        greenIDMinus1 = skeletonizedArray[i] - 1;
+                        if (numGreenStrandFoci[greenIDMinus1] == 2) {
+                            if (x < greenLeft[greenIDMinus1]) {
+                                greenLeft[greenIDMinus1] = x;
+                            }
+                            if (x > greenRight[greenIDMinus1]) {
+                                greenRight[greenIDMinus1] = x;
+                            }
+                            if (y < greenTop[greenIDMinus1]) {
+                                greenTop[greenIDMinus1] = y;
+                            }
+                            if (y > greenBottom[greenIDMinus1]) {
+                                greenBottom[greenIDMinus1] = y;
+                            } 
+                            if (z < greenFront[greenIDMinus1]) {
+                                greenFront[greenIDMinus1] = z;
+                            }
+                            if (z > greenBack[greenIDMinus1]) {
+                                greenBack[greenIDMinus1] = z;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        skeletonizeImage = (ModelImage)grayImage.clone();
+        skeletonizeImage.setImageName(srcImage.getImageName() + "_skeletonize");
+        skeletonizeFrame = new ViewJFrameImage(skeletonizeImage);
+        skeletonizeFrame.setTitle(srcImage.getImageName() + "_skeletonize");
+        
+        redSkelX = new int[numRedColocalize2];
+        redSkelY = new int[numRedColocalize2];
+        redSkelZ = new int[numRedColocalize2];
+        for (i = 0, k = 0; i < numGreenObjects; i++) {
+            minDistance1 = Double.MAX_VALUE;
+            minDistance2 = Double.MAX_VALUE;
+            if (numGreenStrandFoci[i] == 2) {
+                for (z = greenFront[i]; z <= greenBack[i]; z++) {
+                    index2 = z * sliceLength;
+                    for (y = greenTop[i]; y <= greenBottom[i]; y++) {
+                        index = index2 + y * xDim;
+                        for (x = greenLeft[i]; x <= greenRight[i]; x++) {
+                            j = index + x;
+                            if (skeletonizedArray[j] == (i+1)) {
+                                distX = redColocX1[i] - x;
+                                distY = redColocY1[i] - y;
+                                distZ = redColocZ1[i] - z;
+                                distance = Math.sqrt(distX * distX + distY * distY + distZ * distZ);
+                                if (distance < minDistance1) {
+                                    minDistance1 = distance;
+                                    redSkelX[k] = x;
+                                    redSkelY[k] = y;
+                                    redSkelZ[k] = z;
+                                }
+                                distX = redColocX2[i] - x;
+                                distY = redColocY2[i] - y;
+                                distZ = redColocZ2[i] - z;
+                                distance = Math.sqrt(distX * distX + distY * distY + distZ * distZ);
+                                if (distance < minDistance2) {
+                                    minDistance2 = distance;
+                                    redSkelX[k+1] = x;
+                                    redSkelY[k+1] = y;
+                                    redSkelZ[k+1] = z;
+                                }
+                            }
+                        }
+                    }
+                }
+                newPtVOI = new VOI((short) (greenStrandFocus1[i]), Integer.toString(greenStrandFocus1[i]), zDim, VOI.POINT, -1.0f);
+                newPtVOI.setColor(Color.white);
+                xInt[0] = redSkelX[k];
+                yInt[0] = redSkelY[k];
+                zInt[0] = redSkelZ[k];
+                newPtVOI.importCurve(xInt, yInt, zInt, zInt[0]);
+                ((VOIPoint) (newPtVOI.getCurves()[zInt[0]].elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves()[zInt[0]].elementAt(0))).setLabel(Integer.toString(greenStrandFocus1[i]));
+                skeletonizeImage.registerVOI(newPtVOI);
+                newPtVOI = new VOI((short) (greenStrandFocus2[i]), Integer.toString(greenStrandFocus2[i]), zDim, VOI.POINT, -1.0f);
+                newPtVOI.setColor(Color.white);
+                xInt[0] = redSkelX[k+1];
+                yInt[0] = redSkelY[k+1];
+                zInt[0] = redSkelZ[k+1];
+                newPtVOI.importCurve(xInt, yInt, zInt, zInt[0]);
+                ((VOIPoint) (newPtVOI.getCurves()[zInt[0]].elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves()[zInt[0]].elementAt(0))).setLabel(Integer.toString(greenStrandFocus2[i]));
+                skeletonizeImage.registerVOI(newPtVOI);
+                k += 2;
+            } // if (numGreenStrandFoci[i] == 2)
+        } // for (i = 0, k = 0; i < numGreenObjects; i++)
+        
+        grayImage.disposeLocal();
+        grayImage = null;
 
         srcImage.notifyImageDisplayListeners();
+        skeletonizeImage.notifyImageDisplayListeners();
         
         UI.getMessageFrame().addTab("PlugInAlgorithmFociAndStrands");
         UI.getMessageFrame().setFont("PlugInAlgorithmFociAndStrands", courier);
