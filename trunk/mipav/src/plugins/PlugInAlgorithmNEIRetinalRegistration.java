@@ -23,6 +23,7 @@ import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import javax.swing.JTextArea;
 import java.lang.Math;
@@ -54,7 +55,9 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     private float[] sigma = new float[2];
  
     /** bitset of eye **/
-    private BitSet eyebitset = new BitSet();  
+    private BitSet eyebitset = new BitSet();
+    
+    private BitSet trimzone = new BitSet();
 
     /** Algorithm which converts to float **/
     AlgorithmChangeType algoType;
@@ -91,6 +94,8 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         this.epsY = epsY;
         this.epsB = epsB;
         this.dPerP = dPerP;
+        
+        
  
     }
 
@@ -145,6 +150,10 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         
         //select eye for registration
         eyebitset = eyeballSelect(reference, eyebitset, 7);
+        trimzone = eyeballSelect(reference, trimzone, -1);
+        removeBack(reference);
+        
+        
         
         
         //file write options
@@ -173,6 +182,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
             outputbox.append("** Loading Yellow " + listOfFiles1[j].getName() + " :\n");
             outputbox.setCaretPosition( outputbox.getText().length() );
             toBeReg = fileIO.readImage((String)imgLoc1.get(j));
+            removeBack(toBeReg);
             opts.setFileName("YellowRegistered" + (j+1));
             
             //register image
@@ -254,9 +264,10 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         
         //reister blue images
         for(int j = 0; j<imgLoc2.size(); j++){
-            outputbox.append("** Loading Blue " + listOfFiles1[j].getName() + " :\n");
+            outputbox.append("** Loading Blue " + listOfFiles2[j].getName() + " :\n");
             outputbox.setCaretPosition( outputbox.getText().length() );
             toBeReg = fileIO.readImage((String)imgLoc2.get(j));
+            removeBack(toBeReg);
             opts.setFileName("BlueRegistered" + (j+1));
             
             //register images
@@ -354,7 +365,6 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         float[] yBuffer = null, bBuffer, newBuffer;
         for (int i = 0; i < listOfYellow.length; i ++){ //yellow images
             yellow = fileIO.readImage(listOfYellow[i].getAbsoluteFile().toString());
-            eyebitset = eyeballSelect(yellow, eyebitset, -1); //set for finding min/max
             int length = yellow.getExtents(0)[0] * yellow.getExtents(0)[1];
             yBuffer =  new float[length];
             
@@ -365,7 +375,9 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 System.out.println("IO exception");
                 return;
             }
-            yMax = findTrueMax(yBuffer); 
+            yMax = (float) yellow.getMax();
+            //yMax = findTrueMax(yBuffer); 
+            //yMin = (float) yellow.getMin();
             yMin = findTrueMin(yBuffer);
             
 
@@ -382,8 +394,9 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                     System.out.println("IO exception");
                     return;
                 }
-                eyebitset = eyeballSelect(blue, eyebitset, -1); //set for finding min/max
-                bMax = findTrueMax(bBuffer);
+                bMax = (float) blue.getMax();
+                //bMax = findTrueMax(bBuffer);
+                //bMin = (float) blue.getMin();
                 bMin = findTrueMin(bBuffer);
                 outputbox.append("**Creating MPmap " + counter + " of " + listOfBlue.length * listOfYellow.length + "......");
                 outputbox.setCaretPosition( outputbox.getText().length() );
@@ -615,13 +628,30 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     }
 
     /** Finds Min while ignoring "outliers" **/
-    public float findTrueMin(float[] buffer)
+    public float findTrueMin(float[] bufferOrig)
     {
-       float min = 10000;
+       float buffer[] = bufferOrig.clone();
+       Arrays.sort(buffer);
+       int count = 0;
        for (int i = 0; i < buffer.length; i++){
-           if (buffer[i] < min && eyebitset.get(i) && buffer[i] > 100)
-              min = buffer[i];
+           if (buffer[i] == 0){
+               count++;
+           }
        }
+       float newBuffer[] = new float[buffer.length - count];
+       
+       int bottomOne = (int) newBuffer.length / 100;
+       float bottomOneTotal = 0;
+       
+       for (int i = count, j = 0; i < buffer.length; i++, j++){
+           newBuffer[j] = buffer[i];
+           if (j < bottomOne){
+               bottomOneTotal = bottomOneTotal + newBuffer[j];
+           }
+       }
+       
+       float min = bottomOneTotal / bottomOne;
+
        System.out.println(min);
        return min;
     }
@@ -630,7 +660,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     {
        float max = 0;
        for (int i = 0; i < buffer.length; i++){
-           if (buffer[i] > max && eyebitset.get(i))
+           if (buffer[i] > max)
               max = buffer[i];
        }
        System.out.println(max);
@@ -640,23 +670,13 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     /** generates MPmap by using supplied formula **/
     public float[] MPmaper(float[] yBuffer, float[] bBuffer, float yMax, float yMin, float bMax, float bMin){
         float[] newBuffer = new float[yBuffer.length];
-        
+        float constant = 1/(epsB - epsY);
         for (int i = 0; i < newBuffer.length; i++){
-            if ((epsB == epsY) || (bBuffer[i] == bMin) || (yBuffer[i] == yMin)){//remove outlieing pixels
-                newBuffer[i] = 0;
-            }
-            else{
-            newBuffer[i] = (1/(epsB - epsY)) * (float)(Math.log(((double)bMax - (double)bMin) / ((double)bBuffer[i] - (double)bMin)) - Math.log(((double)yMax - (double)yMin) / ((double)yBuffer[i] - (double)yMin)));
-            
-            }
-            if (newBuffer[i] < -100 || newBuffer[i] > 100){//remove outlieing pixels
-                newBuffer[i] = 0;
-            }
-                
-                         
-        }
-        
-        
+            float num1 = (float) Math.log((bMax - bMin)/(bBuffer[i] - bMin));
+            float num2 = (float) Math.log((yMax - yMin)/(yBuffer[i] - yMin));
+            newBuffer[i] = constant * (num1- num2);       
+            }         
+
         return newBuffer;
     }
     
@@ -676,10 +696,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         } catch (IOException e) {
             
         }
-        for(int i = 0; i < mean.length; i++){ //remove outlieing pixels
-            if (mean[i] < -100 || mean[i] > 100)
-                mean[i] = 0;
-        }
+
         try {
             avg.importData(0, mean, true);
         } catch (IOException e) {
@@ -703,9 +720,6 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         for (int i = 0; i < total.length; i++){
             total[i] = total[i]/imgs.length;
             total[i] = (float) Math.sqrt(total[i]);
-            if (total[i] < -100 || total[i] > 100){
-                total[i] = 0;
-            }
         }
         
         
@@ -725,4 +739,30 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         
         
     }
+    
+    public void removeBack(ModelImage img){
+        float buffer[] = new float[img.getSize()];
+        
+        
+        
+        try {
+            img.exportData(0, img.getSize(), buffer);
+        } catch (IOException e) {
+            
+        }
+        
+        for (int i = 0; i < buffer.length; i++){
+            if (!trimzone.get(i))
+                buffer[i] = 0;         
+        }
+        
+        try {
+            img.importData(0, buffer, true);
+        } catch (IOException e) {
+        }
+        
+        
+    }
 }
+
+
