@@ -58,7 +58,10 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  *           <p>11.) Skeletonize the green strands with 2 foci.
  *           
  *           <p>12.) Find the points on the skeletonized green strands nearest their 2 colocalized red foci.
- *           Use these points on the skeletonized green strands in the distance calculations.
+ *           Use these points as the foci on the skeletonized green strands in the distance calculations.
+ *           
+ *           <p>13.) If a point is not a focus and has only 1 branch, then prune it.  Keep repeating the
+ *           process until no more pruning can occur.
  */
 public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
 
@@ -98,8 +101,10 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
     private ViewJFrameImage redFrame;
     private ModelImage greenImage;
     private ViewJFrameImage greenFrame;
-    private ModelImage skeletonizeImage;
-    private ViewJFrameImage skeletonizeFrame;
+    private ModelImage skeletonizedImage;
+    private ViewJFrameImage skeletonizedFrame;
+    private ModelImage prunedImage;
+    private ViewJFrameImage prunedFrame;
     //** Radius of circles drawn around colocalized foci */
     private float radius;
 
@@ -217,15 +222,29 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int greenBottom[];
         double distX;
         double distY;
-        double distance;
-        double minDistance1;
-        double minDistance2;
+        double distanceSq;
+        double minDistanceSq1;
+        double minDistanceSq2;
         int redSkelX[];
         int redSkelY[];
         int xInt[] = new int[1];
         int yInt[] = new int[1];
         int zInt[] = new int[1];
         int numRedColocalize2;
+        float resX = srcImage.getFileInfo()[0].getResolutions()[0];
+        float resY = srcImage.getFileInfo()[0].getResolutions()[1];
+        double resDiag = Math.sqrt(resX*resX + resY*resY);
+        boolean branchPruned;
+        int redSkelIndex1;
+        int redSkelIndex2;
+        int numBranches;
+        boolean xplus;
+        boolean xminus;
+        boolean yplus;
+        boolean yminus;
+        boolean found[];
+        double fociDistance[];
+        boolean loop[];
         
         long time;
         int fileNameLength;
@@ -259,7 +278,6 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         fileInfo.setResolutions(srcImage.getFileInfo()[0].getResolutions());
         fileInfo.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
         grayImage.setFileInfo(fileInfo, 0);
-
         
         threshold = (float)(srcImage.getMinR() + redFraction * (srcImage.getMaxR() - srcImage.getMinR()));
         Preferences.debug("red threshold = " + threshold + "\n");
@@ -579,16 +597,16 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
             }
         }
         
-        skeletonizeImage = (ModelImage)grayImage.clone();
-        skeletonizeImage.setImageName(srcImage.getImageName() + "_skeletonize");
-        skeletonizeFrame = new ViewJFrameImage(skeletonizeImage);
-        skeletonizeFrame.setTitle(srcImage.getImageName() + "_skeletonize");
+        skeletonizedImage = (ModelImage)grayImage.clone();
+        skeletonizedImage.setImageName(srcImage.getImageName() + "_skeletonized");
+        skeletonizedFrame = new ViewJFrameImage(skeletonizedImage);
+        skeletonizedFrame.setTitle(srcImage.getImageName() + "_skeletonized");
         
         redSkelX = new int[numRedColocalize2];
         redSkelY = new int[numRedColocalize2];
         for (i = 0, k = 0; i < numGreenObjects; i++) {
-            minDistance1 = Double.MAX_VALUE;
-            minDistance2 = Double.MAX_VALUE;
+            minDistanceSq1 = Double.MAX_VALUE;
+            minDistanceSq2 = Double.MAX_VALUE;
             if (numGreenStrandFoci[i] == 2) {
                 for (y = greenTop[i]; y <= greenBottom[i]; y++) {
                     index = y * xDim;
@@ -597,17 +615,17 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                         if (skeletonizedArray[j] == (i+1)) {
                             distX = redColocX1[i] - x;
                             distY = redColocY1[i] - y;
-                            distance = Math.sqrt(distX * distX + distY * distY);
-                            if (distance < minDistance1) {
-                                minDistance1 = distance;
+                            distanceSq = (distX * distX + distY * distY);
+                            if (distanceSq < minDistanceSq1) {
+                                minDistanceSq1 = distanceSq;
                                 redSkelX[k] = x;
                                 redSkelY[k] = y;
                             }
                             distX = redColocX2[i] - x;
                             distY = redColocY2[i] - y;
-                            distance = Math.sqrt(distX * distX + distY * distY);
-                            if (distance < minDistance2) {
-                                minDistance2 = distance;
+                            distanceSq = (distX * distX + distY * distY);
+                            if (distanceSq < minDistanceSq2) {
+                                minDistanceSq2 = distanceSq;
                                 redSkelX[k+1] = x;
                                 redSkelY[k+1] = y;
                             }
@@ -622,7 +640,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 newPtVOI.importCurve(xInt, yInt, zInt, 0);
                 ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
                 ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(greenStrandFocus1[i]));
-                skeletonizeImage.registerVOI(newPtVOI);
+                skeletonizedImage.registerVOI(newPtVOI);
                 newPtVOI = new VOI((short) (greenStrandFocus2[i]), Integer.toString(greenStrandFocus2[i]), 1, VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xInt[0] = redSkelX[k+1];
@@ -631,7 +649,199 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 newPtVOI.importCurve(xInt, yInt, zInt, 0);
                 ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
                 ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(greenStrandFocus2[i]));
-                skeletonizeImage.registerVOI(newPtVOI);
+                skeletonizedImage.registerVOI(newPtVOI);
+                k += 2;
+            } // if (numGreenStrandFoci[i] == 2)
+        } // for (i = 0, k = 0; i < numGreenObjects; i++)
+        
+        // If a point is not a focus and has only 1 branch, then prune it.
+        // Keep repeating the process until no more pruning can occur
+        for (i = 0, k = 0; i < numGreenObjects; i++) {
+            if (numGreenStrandFoci[i] == 2) {
+                branchPruned = true;
+                redSkelIndex1 = redSkelX[k] + xDim * redSkelY[k];
+                redSkelIndex2 = redSkelX[k+1] + xDim * redSkelY[k+1];
+                while(branchPruned) {
+                    branchPruned = false; 
+                    for (y = greenTop[i]; y <= greenBottom[i]; y++) {
+                        index = y * xDim;
+                        for (x = greenLeft[i]; x <= greenRight[i]; x++) {
+                            j = index + x;
+                            if ((skeletonizedArray[j] == (i+1)) && (j != redSkelIndex1) && (j != redSkelIndex2)) {
+                                numBranches = 0;
+                                xplus = false;
+                                xminus = false;
+                                yplus = false;
+                                yminus = false;
+                                if (x > 0) {
+                                    if (skeletonizedArray[j-1] == (i+1)) {
+                                        numBranches++;
+                                        xminus = true;
+                                    }
+                                } // if (x > 0)
+                                if (x < xDim - 1) {
+                                    if (skeletonizedArray[j+1] == (i+1)) {
+                                        numBranches++;
+                                        xplus = true;
+                                    }
+                                } // if (x < xDim - 1)
+                                if (y > 0) {
+                                    if (skeletonizedArray[j - xDim] == (i+1)) {
+                                        numBranches++;
+                                        yminus = true;
+                                    }
+                                } // if ( y > 0)
+                                if (y < yDim - 1) {
+                                    if (skeletonizedArray[j + xDim] == (i+1)) {
+                                        numBranches++;
+                                        yplus = true;
+                                    }    
+                                } // if (y < yDim - 1)
+                                if ((!xplus) && (!yplus)) {
+                                    if (skeletonizedArray[j + xDim + 1] == (i+1)) {
+                                        numBranches++;
+                                    }
+                                }
+                                if ((!xplus) && (!yminus)) {
+                                    if (skeletonizedArray[j - xDim + 1] == (i+1)) {
+                                        numBranches++;
+                                    }
+                                }
+                                if ((!xminus) && (!yplus)) {
+                                    if (skeletonizedArray[j + xDim - 1] == (i+1)) {
+                                        numBranches++;
+                                    }
+                                }
+                                if ((!xminus) && (!yminus)) {
+                                    if (skeletonizedArray[j - xDim - 1] == (i+1)) {
+                                        numBranches++;
+                                    }
+                                }
+                                if (numBranches == 1) {
+                                    branchPruned = true;
+                                    skeletonizedArray[j] = 0;
+                                }
+                            } // if ((skeletonizedArray[j] == (i+1)) && (j != redSkelIndex1) && (j != redSkelIndex2))
+                        } // for (x = greenLeft[i]; x <= greenRight[i]; x++)
+                    } // for (y = greenTop[i]; y <= greenBottom[i]; y++)
+                } //  while(branchPruned)
+                k += 2;
+            } // if (numGreenStrandFoci[i] == 2)
+        } // for (i = 0, k = 0; i < numGreenObjects; i++)
+        
+        try {
+            grayImage.importData(0, skeletonizedArray, true);
+        } catch (IOException error) {
+            byteBuffer = null;
+            greenIDArray = null;
+            errorCleanUp("Error on grayImage.importData", true);
+
+            return;
+        }
+        
+        prunedImage = (ModelImage)grayImage.clone();
+        prunedImage.setImageName(srcImage.getImageName() + "_pruned");
+        prunedFrame = new ViewJFrameImage(prunedImage);
+        prunedFrame.setTitle(srcImage.getImageName() + "_pruned");
+        
+        for (i = 0, k = 0; i < numGreenObjects; i++) {
+            if (numGreenStrandFoci[i]  == 2) {
+                newPtVOI = new VOI((short) (greenStrandFocus1[i]), Integer.toString(greenStrandFocus1[i]), 1, VOI.POINT, -1.0f);
+                newPtVOI.setColor(Color.white);
+                xInt[0] = redSkelX[k];
+                yInt[0] = redSkelY[k];
+                zInt[0] = 0;
+                newPtVOI.importCurve(xInt, yInt, zInt, 0);
+                ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(greenStrandFocus1[i]));
+                prunedImage.registerVOI(newPtVOI);
+                newPtVOI = new VOI((short) (greenStrandFocus2[i]), Integer.toString(greenStrandFocus2[i]), 1, VOI.POINT, -1.0f);
+                newPtVOI.setColor(Color.white);
+                xInt[0] = redSkelX[k+1];
+                yInt[0] = redSkelY[k+1];
+                zInt[0] = 0;
+                newPtVOI.importCurve(xInt, yInt, zInt, 0);
+                ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(greenStrandFocus2[i]));
+                prunedImage.registerVOI(newPtVOI);
+                k += 2;
+            } // if (numGreenStrandFoci[i] == 2)
+        } // for (i = 0, k = 0; i < numGreenObjects; i++)
+        
+        found = new boolean[length];
+        fociDistance = new double[numRedColocalize2/2];
+        loop = new boolean[numRedColocalize2/2];
+        for (i = 0, k = 0; i < numGreenObjects; i++) {
+            if (numGreenStrandFoci[i] == 2) {
+                for (j = 0; j < length; j++) {
+                    found[j] = false;
+                }
+                x = redSkelX[k];
+                y = redSkelY[k];
+                index = redSkelX[k] + xDim * redSkelY[k];
+                found[index] = true;
+                while ((x != redSkelX[k+1]) && (y != redSkelY[k+1])) {
+                    if ((x > 0) && (skeletonizedArray[index - 1] == (i+1)) && (!found[index-1])) {
+                        index = index - 1;
+                        x = x - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resX;
+                    }
+                    else if ((x < xDim - 1) && (skeletonizedArray[index + 1] == (i+1)) && (!found[index+1])) {
+                        index = index + 1;
+                        x = x + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resX;
+                    }
+                    else if ((y > 0) && (skeletonizedArray[index - xDim] == (i+1)) && (!found[index-xDim])) {
+                        index = index - xDim;
+                        y = y - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resY;
+                    }
+                    else if ((y < yDim - 1) && (skeletonizedArray[index + xDim] == (i+1)) && (!found[index+xDim])) {
+                        index = index + xDim;
+                        y = y + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resY;
+                    }
+                    else if ((x > 0) && (y > 0) && (skeletonizedArray[index - xDim - 1] == (i+1)) && (!found[index-xDim-1])) {
+                        index = index - xDim - 1;
+                        x = x - 1;
+                        y = y - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resDiag;
+                    }
+                    else if ((x < xDim - 1) && (y > 0) && (skeletonizedArray[index - xDim + 1] == (i+1)) &&
+                             (!found[index - xDim + 1])) {
+                        index = index - xDim + 1;
+                        x = x + 1;
+                        y = y - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resDiag;
+                    }
+                    else if ((x > 0) && (y < yDim - 1) && (skeletonizedArray[index + xDim - 1] == (i+1)) &&
+                             (!found[index + xDim - 1])) {
+                        index = index + xDim - 1;
+                        x = x - 1;
+                        y = y + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resDiag;
+                    }
+                    else if ((x < xDim - 1) && (y < yDim - 1) && (skeletonizedArray[index + xDim + 1] == (i+1)) &&
+                             (!found[index + xDim + 1])) {
+                        index = index + xDim + 1;
+                        x = x +1;
+                        y = y + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resDiag;
+                    }
+                    else {
+                        loop[k/2] = true;
+                        break;
+                    }
+                }
+                
                 k += 2;
             } // if (numGreenStrandFoci[i] == 2)
         } // for (i = 0, k = 0; i < numGreenObjects; i++)
@@ -640,7 +850,8 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         grayImage = null;
 
         srcImage.notifyImageDisplayListeners();
-        skeletonizeImage.notifyImageDisplayListeners();
+        skeletonizedImage.notifyImageDisplayListeners();
+        prunedImage.notifyImageDisplayListeners();
         
         UI.getMessageFrame().addTab("PlugInAlgorithmFociAndStrands");
         UI.getMessageFrame().setFont("PlugInAlgorithmFociAndStrands", courier);
@@ -657,10 +868,17 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 srcImage.getFileInfo(0).getFileName() + " \t" + numRedObjects + "\t" + numRedColocalize + "\t\t" +
                 numGreenObjects + "\t\t" + dfFract.format(avgFociOnStrands) + "\n");
         UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", "Focus1\tFocus2\tDistance\n");
-        for (i = 0; i < numGreenObjects; i++) {
+        for (i = 0, k = 0; i < numGreenObjects; i++) {
             if (numGreenStrandFoci[i] == 2) {
-                UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", greenStrandFocus1[i] + "\t" +
-                                             greenStrandFocus2[i] + "\n");     
+                if (loop[k]) {
+                    UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", greenStrandFocus1[i] + "\t" +
+                                                 greenStrandFocus2[i] + "\n"); 
+                }
+                else {
+                    UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", greenStrandFocus1[i] + "\t" +
+                            greenStrandFocus2[i] +  "\t" + df.format(fociDistance[k]) + "\n");     
+                }
+                k++;
             }
         }
         
@@ -756,12 +974,12 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int redSkelX[];
         int redSkelY[];
         int redSkelZ[];
-        double minDistance1;
-        double minDistance2;
+        double minDistanceSq1;
+        double minDistanceSq2;
         double distX;
         double distY;
         double distZ;
-        double distance;
+        double distanceSq;
         int xInt[] = new int[1];
         int yInt[] = new int[1];
         int zInt[] = new int[1];
@@ -1150,17 +1368,17 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
             }
         }
         
-        skeletonizeImage = (ModelImage)grayImage.clone();
-        skeletonizeImage.setImageName(srcImage.getImageName() + "_skeletonize");
-        skeletonizeFrame = new ViewJFrameImage(skeletonizeImage);
-        skeletonizeFrame.setTitle(srcImage.getImageName() + "_skeletonize");
+        skeletonizedImage = (ModelImage)grayImage.clone();
+        skeletonizedImage.setImageName(srcImage.getImageName() + "_skeletonized");
+        skeletonizedFrame = new ViewJFrameImage(skeletonizedImage);
+        skeletonizedFrame.setTitle(srcImage.getImageName() + "_skeletonized");
         
         redSkelX = new int[numRedColocalize2];
         redSkelY = new int[numRedColocalize2];
         redSkelZ = new int[numRedColocalize2];
         for (i = 0, k = 0; i < numGreenObjects; i++) {
-            minDistance1 = Double.MAX_VALUE;
-            minDistance2 = Double.MAX_VALUE;
+            minDistanceSq1 = Double.MAX_VALUE;
+            minDistanceSq2 = Double.MAX_VALUE;
             if (numGreenStrandFoci[i] == 2) {
                 for (z = greenFront[i]; z <= greenBack[i]; z++) {
                     index2 = z * sliceLength;
@@ -1172,9 +1390,9 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                                 distX = redColocX1[i] - x;
                                 distY = redColocY1[i] - y;
                                 distZ = redColocZ1[i] - z;
-                                distance = Math.sqrt(distX * distX + distY * distY + distZ * distZ);
-                                if (distance < minDistance1) {
-                                    minDistance1 = distance;
+                                distanceSq = (distX * distX + distY * distY + distZ * distZ);
+                                if (distanceSq < minDistanceSq1) {
+                                    minDistanceSq1 = distanceSq;
                                     redSkelX[k] = x;
                                     redSkelY[k] = y;
                                     redSkelZ[k] = z;
@@ -1182,9 +1400,9 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                                 distX = redColocX2[i] - x;
                                 distY = redColocY2[i] - y;
                                 distZ = redColocZ2[i] - z;
-                                distance = Math.sqrt(distX * distX + distY * distY + distZ * distZ);
-                                if (distance < minDistance2) {
-                                    minDistance2 = distance;
+                                distanceSq = (distX * distX + distY * distY + distZ * distZ);
+                                if (distanceSq < minDistanceSq2) {
+                                    minDistanceSq2 = distanceSq;
                                     redSkelX[k+1] = x;
                                     redSkelY[k+1] = y;
                                     redSkelZ[k+1] = z;
@@ -1201,7 +1419,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 newPtVOI.importCurve(xInt, yInt, zInt, zInt[0]);
                 ((VOIPoint) (newPtVOI.getCurves()[zInt[0]].elementAt(0))).setFixed(true);
                 ((VOIPoint) (newPtVOI.getCurves()[zInt[0]].elementAt(0))).setLabel(Integer.toString(greenStrandFocus1[i]));
-                skeletonizeImage.registerVOI(newPtVOI);
+                skeletonizedImage.registerVOI(newPtVOI);
                 newPtVOI = new VOI((short) (greenStrandFocus2[i]), Integer.toString(greenStrandFocus2[i]), zDim, VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xInt[0] = redSkelX[k+1];
@@ -1210,7 +1428,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 newPtVOI.importCurve(xInt, yInt, zInt, zInt[0]);
                 ((VOIPoint) (newPtVOI.getCurves()[zInt[0]].elementAt(0))).setFixed(true);
                 ((VOIPoint) (newPtVOI.getCurves()[zInt[0]].elementAt(0))).setLabel(Integer.toString(greenStrandFocus2[i]));
-                skeletonizeImage.registerVOI(newPtVOI);
+                skeletonizedImage.registerVOI(newPtVOI);
                 k += 2;
             } // if (numGreenStrandFoci[i] == 2)
         } // for (i = 0, k = 0; i < numGreenObjects; i++)
@@ -1219,7 +1437,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         grayImage = null;
 
         srcImage.notifyImageDisplayListeners();
-        skeletonizeImage.notifyImageDisplayListeners();
+        skeletonizedImage.notifyImageDisplayListeners();
         
         UI.getMessageFrame().addTab("PlugInAlgorithmFociAndStrands");
         UI.getMessageFrame().setFont("PlugInAlgorithmFociAndStrands", courier);
