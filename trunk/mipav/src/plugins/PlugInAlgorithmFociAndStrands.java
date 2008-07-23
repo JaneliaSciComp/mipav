@@ -16,7 +16,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  *
- * @version  July 22, 2008
+ * @version  July 23, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -63,7 +63,12 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  *           <p>13.) If a point is not a focus and has only 1 branch, then prune it.  Keep repeating the
  *           process until no more pruning can occur.
  *           
- *           <p>14.) Find the distance between the 2 foci.
+ *           <p>14.) Find the distance between the 2 foci.  Record the number of branches on the path.  If there are
+ *           2 branches, then push the index onto branchIndex and the distance so far onto distanceVector.  If there
+ *           are 3 branches, then push the index twice onto branchIndex and push the distance twice onto distanceVector.
+ *           If there are no branches, then we have looped back to a point we already went over, so pop the first 
+ *           element from branchIndex to return to the first untried branch and pop the first element from distanceVector
+ *           to restore the distance traveled at the point.
  */
 public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
 
@@ -247,6 +252,18 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         boolean found[];
         double fociDistance[];
         boolean loop[];
+        boolean incomplete[];
+        IntVector branchIndex = new IntVector(100,100);
+        boolean branch1;
+        boolean branch2;
+        boolean branch3;
+        boolean branch4;
+        boolean branch5;
+        boolean branch6;
+        boolean branch7;
+        boolean branch8;
+        Vector <Double> distanceVector = new Vector(100,100);
+        boolean noPushIndex[];
         
         long time;
         int fileNameLength;
@@ -771,76 +788,145 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         } // for (i = 0, k = 0; i < numGreenObjects; i++)
         
         found = new boolean[length];
+        noPushIndex = new boolean[length];
         fociDistance = new double[numRedColocalize2/2];
         loop = new boolean[numRedColocalize2/2];
+        incomplete = new boolean[numRedColocalize/2];
         for (i = 0, k = 0; i < numGreenObjects; i++) {
             if (numGreenStrandFoci[i] == 2) {
                 for (j = 0; j < length; j++) {
                     found[j] = false;
+                    noPushIndex[j] = false;
                 }
+                branchIndex.removeAllElements();
+                distanceVector.removeAllElements();
                 x = redSkelX[k];
                 y = redSkelY[k];
                 index = redSkelX[k] + xDim * redSkelY[k];
                 found[index] = true;
                 while ((x != redSkelX[k+1]) && (y != redSkelY[k+1])) {
+                    numBranches = 0;
+                    branch1 = false;
+                    branch2 = false;
+                    branch3 = false;
+                    branch4 = false;
+                    branch5 = false;
+                    branch6 = false;
+                    branch7 = false;
+                    branch8 = false;
                     if ((x > 0) && (skeletonizedArray[index - 1] == (i+1)) && (!found[index-1])) {
+                        branch1 = true;
+                        numBranches++;
+                    }
+                    if ((x < xDim - 1) && (skeletonizedArray[index + 1] == (i+1)) && (!found[index+1])) {
+                        branch2 = true;
+                        numBranches++;
+                    }
+                    if ((y > 0) && (skeletonizedArray[index - xDim] == (i+1)) && (!found[index-xDim])) {
+                        branch3 = true;
+                        numBranches++;
+                    }
+                    if ((y < yDim - 1) && (skeletonizedArray[index + xDim] == (i+1)) && (!found[index+xDim])) {
+                        branch4 = true;
+                        numBranches++;
+                    }
+                    if ((x > 0) && (y > 0) && (!branch1) && (!branch3) && (skeletonizedArray[index - xDim - 1] == (i+1)) &&
+                             (!found[index-xDim-1])) {
+                        branch5 = true;
+                        numBranches++;
+                    }
+                    if ((x < xDim - 1) && (y > 0) && (!branch2) && (!branch3) && (skeletonizedArray[index - xDim + 1] == (i+1)) &&
+                             (!found[index - xDim + 1])) {
+                        branch6 = true;
+                        numBranches++;
+                    }
+                    if ((x > 0) && (y < yDim - 1) && (!branch1) && (!branch4) && (skeletonizedArray[index + xDim - 1] == (i+1)) &&
+                             (!found[index + xDim - 1])) {
+                        branch7 = true;
+                        numBranches++;
+                    }
+                    if ((x < xDim - 1) && (y < yDim - 1) && (!branch2) && (!branch4) &&
+                             (skeletonizedArray[index + xDim + 1] == (i+1)) && (!found[index + xDim + 1])) {
+                        branch8 = true;
+                        numBranches++;
+                    }
+                    if (numBranches == 0) {
+                        loop[k/2] = true;
+                        if (!branchIndex.isEmpty()) {
+                            index = branchIndex.popFirstIn();
+                            x = index % xDim;
+                            y = index / xDim;
+                            fociDistance[k/2] = distanceVector.remove(0).doubleValue();
+                            continue;
+                        }
+                        else {
+                            incomplete[k/2] = true;
+                            break;
+                        }
+                    }
+                    if ((numBranches == 2) && (!noPushIndex[index])) {
+                        branchIndex.push(index);
+                        distanceVector.add(Double.valueOf(fociDistance[k/2]));
+                        noPushIndex[index] = true;
+                    }
+                    else if ((numBranches == 3) && (!noPushIndex[index])) {
+                        branchIndex.push(index);
+                        branchIndex.push(index);
+                        distanceVector.add(Double.valueOf(fociDistance[k/2]));
+                        distanceVector.add(Double.valueOf(fociDistance[k/2]));
+                        noPushIndex[index] = true;
+                    }
+                    if (branch1) {
                         index = index - 1;
                         x = x - 1;
                         found[index] = true;
-                        fociDistance[k/2] += resX;
+                        fociDistance[k/2] += resX;    
                     }
-                    else if ((x < xDim - 1) && (skeletonizedArray[index + 1] == (i+1)) && (!found[index+1])) {
+                    else if (branch2) {
                         index = index + 1;
                         x = x + 1;
                         found[index] = true;
                         fociDistance[k/2] += resX;
                     }
-                    else if ((y > 0) && (skeletonizedArray[index - xDim] == (i+1)) && (!found[index-xDim])) {
+                    else if (branch3) {
                         index = index - xDim;
                         y = y - 1;
                         found[index] = true;
-                        fociDistance[k/2] += resY;
+                        fociDistance[k/2] += resY;    
                     }
-                    else if ((y < yDim - 1) && (skeletonizedArray[index + xDim] == (i+1)) && (!found[index+xDim])) {
+                    else if (branch4) {
                         index = index + xDim;
                         y = y + 1;
                         found[index] = true;
                         fociDistance[k/2] += resY;
                     }
-                    else if ((x > 0) && (y > 0) && (skeletonizedArray[index - xDim - 1] == (i+1)) && (!found[index-xDim-1])) {
+                    else if (branch5) {
                         index = index - xDim - 1;
                         x = x - 1;
                         y = y - 1;
                         found[index] = true;
                         fociDistance[k/2] += resDiag;
                     }
-                    else if ((x < xDim - 1) && (y > 0) && (skeletonizedArray[index - xDim + 1] == (i+1)) &&
-                             (!found[index - xDim + 1])) {
+                    else if (branch6) {
                         index = index - xDim + 1;
                         x = x + 1;
                         y = y - 1;
                         found[index] = true;
                         fociDistance[k/2] += resDiag;
                     }
-                    else if ((x > 0) && (y < yDim - 1) && (skeletonizedArray[index + xDim - 1] == (i+1)) &&
-                             (!found[index + xDim - 1])) {
+                    else if (branch7) {
                         index = index + xDim - 1;
                         x = x - 1;
                         y = y + 1;
                         found[index] = true;
                         fociDistance[k/2] += resDiag;
                     }
-                    else if ((x < xDim - 1) && (y < yDim - 1) && (skeletonizedArray[index + xDim + 1] == (i+1)) &&
-                             (!found[index + xDim + 1])) {
+                    else if (branch8) {
                         index = index + xDim + 1;
-                        x = x +1;
+                        x = x + 1;
                         y = y + 1;
                         found[index] = true;
                         fociDistance[k/2] += resDiag;
-                    }
-                    else {
-                        loop[k/2] = true;
-                        break;
                     }
                 }
                 
@@ -872,13 +958,17 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", "Focus1\tFocus2\tDistance\n");
         for (i = 0, k = 0; i < numGreenObjects; i++) {
             if (numGreenStrandFoci[i] == 2) {
-                if (loop[k]) {
+                if (incomplete[k]) {
                     UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", greenStrandFocus1[i] + "\t" +
                                                  greenStrandFocus2[i] + "\n"); 
                 }
-                else {
+                else if (!loop[k] ){
                     UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", greenStrandFocus1[i] + "\t" +
                             greenStrandFocus2[i] +  "\t" + df.format(fociDistance[k]) + "\n");     
+                }
+                else {
+                    UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", greenStrandFocus1[i] + "\t" +
+                            greenStrandFocus2[i] +  "\t" + df.format(fociDistance[k]) + "\t" + "loop\n");         
                 }
                 k++;
             }
