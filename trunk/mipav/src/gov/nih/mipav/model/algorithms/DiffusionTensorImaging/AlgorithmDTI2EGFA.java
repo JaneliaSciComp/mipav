@@ -8,7 +8,6 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.ViewJProgressBar;
 import WildMagic.LibFoundation.Mathematics.*;
-import gov.nih.mipav.model.structures.jama.*;
 
 
 /**

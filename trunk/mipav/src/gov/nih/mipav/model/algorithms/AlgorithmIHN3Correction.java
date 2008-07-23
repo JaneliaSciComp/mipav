@@ -2,7 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
 import gov.nih.mipav.view.*;
 
@@ -55,9 +55,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     public static final int spline = 4; // splines are cubic
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private Matrix AMat, XMat, BMat;
 
     /** DOCUMENT ME! */
     private float[][] AtA;
@@ -1207,7 +1204,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             }
         }
 
-        // solve a system of equations (J)(coef) = AtF for coef whiere J is symmetric
+        // solve a system of equations (J)(coef) = AtF for coef where J is symmetric
         // The diagonal pivoting method is used to factor J as
         // J = U * D * U**T
         // where U is a product of permutation and unit upper triangular matrices, and
@@ -1218,10 +1215,10 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         // Compute the factorization J = U*D*U'
         // A = new Matrix(J);
         // B = new Matrix(AtF);
-        AMat.setArray(JArray);
-        BMat.setArray(AtF);
-        XMat = AMat.solve(BMat);
-        coef = XMat.getArray();
+        JamaMatrix AMat = new JamaMatrix(JArray);
+        JamaMatrix BMat = new JamaMatrix(AtF);
+        JamaMatrix XMat = AMat.solve(BMat);
+        coef = XMat.getArrayCopy();
 
     }
 
@@ -1694,10 +1691,11 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
         // A = new Matrix(J);
         // B = new Matrix(AtF);
-        AMat.setArray(JArray);
-        BMat.setArray(AtF);
-        XMat = AMat.solve(BMat);
-        coef = XMat.getArray();
+        // B = new Matrix(AtF);
+        JamaMatrix AMat = new JamaMatrix(JArray);
+        JamaMatrix BMat = new JamaMatrix(AtF);
+        JamaMatrix XMat = AMat.solve(BMat);
+        coef = XMat.getArrayCopy();
     }
 
     /**
@@ -3650,8 +3648,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             momentR = new float[padded_size];
             momentI = new float[padded_size];
 
-            AMat = new Matrix(JArray);
-            BMat = new Matrix(AtF);
         } catch (OutOfMemoryError e) {
             cleanUp();
             System.gc();

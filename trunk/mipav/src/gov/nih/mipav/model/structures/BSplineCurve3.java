@@ -1,8 +1,7 @@
 package gov.nih.mipav.model.structures;
 
 
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import Jama.*;
 
 import javax.vecmath.*;
 
@@ -103,7 +102,7 @@ public class BSplineCurve3 extends IntervalLengthCurve3 {
 
         // Use the inverse of A to find the solution which tells us
         // the location of each of the control points.
-        kA.invert();
+        kA = kA.inverse();
 
         Point3f[] akControl = new Point3f[iNumControlPoints];
 
@@ -171,7 +170,7 @@ public class BSplineCurve3 extends IntervalLengthCurve3 {
 
         // Use the inverse of A to find the solution which tells us
         // the location of each of the control points.
-        kA.invert();
+        kA = kA.inverse();
 
         Point3f[] akControl = new Point3f[iNumControlPoints];
 

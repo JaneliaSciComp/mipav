@@ -2,7 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import Jama.*;
 import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.*;

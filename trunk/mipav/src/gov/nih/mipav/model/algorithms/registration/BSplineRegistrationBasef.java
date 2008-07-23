@@ -3,7 +3,7 @@ package gov.nih.mipav.model.algorithms.registration;
 
 import gov.nih.mipav.model.structures.BSplineBasisDiscretef;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
-import gov.nih.mipav.model.structures.jama.Matrix;
+import gov.nih.mipav.model.structures.jama.JamaMatrix;
 import gov.nih.mipav.util.MipavUtil;
 
 /**
@@ -153,8 +153,8 @@ public class BSplineRegistrationBasef {
             // and then solve (A^T * A) * X = A^T * B.
             // Fill both A and B with zeros as we will compute their
             // entries by summing into them.
-            Matrix kA = new Matrix(iNumControlPoints, iNumControlPoints, 0.0);
-            Matrix kB = new Matrix(iNumControlPoints, 1, 0.0);
+            JamaMatrix kA = new JamaMatrix(iNumControlPoints, iNumControlPoints, 0.0);
+            JamaMatrix kB = new JamaMatrix(iNumControlPoints, 1, 0.0);
 
             for (int iSample = 0; iSample < iNumSamples; iSample++) {
                 float fT = iSample / (float) (iNumSamples - 1);
@@ -171,7 +171,7 @@ public class BSplineRegistrationBasef {
             }
 
             // Find the solution.
-            Matrix kX = kA.solve(kB);
+            JamaMatrix kX = kA.solve(kB);
 
             // Copy the control point positions.
             for (int i = 0; i < iNumControlPoints; i++) {

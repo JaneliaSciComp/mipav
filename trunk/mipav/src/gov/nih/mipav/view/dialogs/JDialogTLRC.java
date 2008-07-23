@@ -9,7 +9,7 @@ import java.io.*;
 import java.awt.event.ActionEvent;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import Jama.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;

@@ -105,7 +105,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     private double base;
 
     /** DOCUMENT ME! */
-    private boolean doOnce = true;
+    //private boolean doOnce = true;
     // To set up for testing the software integrity:
     // GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
     // ge.dsygv_test();
@@ -24214,13 +24214,13 @@ loop4:
 
 primary:  {
 
-loop1:
+//loop1:
             do {
 
-loop2:
+//loop2:
                 do {
 
-loop3:
+//loop3:
                     do {
 
                         if (L1 > n) {
@@ -24360,7 +24360,7 @@ set5:            {
 
 // QL iteration
 // Look for small subdiagonal element
-loop6:
+//loop6:
                         do {
 
 loop7:
@@ -24518,7 +24518,7 @@ set8:                            {
 
 // QR iteration
 // Look for small superdiagonal element
-loop9:
+//loop9:
                         do {
 
 loop10:

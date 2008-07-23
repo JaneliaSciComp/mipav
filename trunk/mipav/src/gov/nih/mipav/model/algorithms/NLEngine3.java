@@ -1,7 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.structures.jama.*;
+import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
 import gov.nih.mipav.view.*;
 
@@ -63,7 +63,7 @@ public abstract class NLEngine3 {
     private double[][] J; // Jacobian
 
     /** DOCUMENT ME! */
-    private Matrix Jplus;
+    private JamaMatrix Jplus;
 
     /** DOCUMENT ME! */
     private int maxiter;
@@ -78,7 +78,7 @@ public abstract class NLEngine3 {
     private double[] rnew;
 
     /** DOCUMENT ME! */
-    private Matrix rplus;
+    private JamaMatrix rplus;
 
     /** DOCUMENT ME! */
     private double rtol;
@@ -96,7 +96,7 @@ public abstract class NLEngine3 {
     private double sseold;
 
     /** DOCUMENT ME! */
-    private Matrix St;
+    private JamaMatrix St;
 
     /** DOCUMENT ME! */
     private double[] step;
@@ -179,8 +179,8 @@ public abstract class NLEngine3 {
 
             delta = new double[ma];
             aplus = new double[ma];
-            Jplus = new Matrix(nPts + ma, ma);
-            rplus = new Matrix(nPts + ma, 1);
+            Jplus = new JamaMatrix(nPts + ma, ma, 0.0);
+            rplus = new JamaMatrix(nPts + ma, 1, 0.0);
             step = new double[ma];
             yfitnew = new double[nPts];
             rnew = new double[nPts];

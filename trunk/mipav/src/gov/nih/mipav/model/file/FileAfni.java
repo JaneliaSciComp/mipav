@@ -4,7 +4,7 @@ package gov.nih.mipav.model.file;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -267,7 +267,7 @@ public class FileAfni extends FileBase {
      * FUNC_ZT_TYPE Standard Normal -- none -- FUNC_CT_TYPE Chi-squared DOF FUNC_BT_TYPE Incomplete Beta Parameters "a"
      * and "b".
      */
-    private float a, b;
+    //private float a, b;
 
     /** Anterior Comissure in acpc space. */
     private Vector3f acpcAC = new Vector3f(95.0f, 95.0f, 70.0f);
@@ -309,7 +309,7 @@ public class FileAfni extends FileBase {
     private Vector3f anotherPtDicom;
 
     /** DOCUMENT ME! */
-    private int botX, botY, botZ;
+    //private int botX, botY, botZ;
 
     /** DOCUMENT ME! */
     private float[] brickFloatFacs = null; // There should be subBrickNumber(DATASET_RANK[1] or nvals) values here. For
@@ -595,7 +595,7 @@ public class FileAfni extends FileBase {
     // anat+ACPC.HEAD has DICOM order.
 
     /** FUNC_PT_TYPE Poisson Mean. */
-    private float mean;
+    //private float mean;
 
     /** FUNC_FT_TYPE F ratio Numerator DOF, Denominator DOF. */
     private int ndof;
@@ -714,7 +714,7 @@ public class FileAfni extends FileBase {
     private int presentViewType;
 
     /** DOCUMENT ME! */
-    private float prob;
+    //private float prob;
 
     /** DOCUMENT ME! */
     private boolean readACPC = false;
@@ -723,13 +723,13 @@ public class FileAfni extends FileBase {
     private boolean readTLRC = false;
 
     /** DOCUMENT ME! */
-    private float resolution;
+    //private float resolution;
 
     /** DOCUMENT ME! */
     private float scale_A, scale_M, scale_P, scale_S, scale_I, scale_L, scale_R;
 
     /** FUNC_GT_TYPE Gamma Shape, Scale. */
-    private float shape, scale;
+    //private float shape, scale;
 
     /** DOCUMENT ME! */
     private float[] skip;
@@ -857,7 +857,7 @@ public class FileAfni extends FileBase {
     private float[] tlrcRes;
 
     /** DOCUMENT ME! */
-    private int topX, topY, topZ;
+    //private int topX, topY, topZ;
 
     /** DOCUMENT ME! */
     private String typeString; // one of 3DIM_FileInfoAfni.HEAD_ANAT or 3DIM_FileInfoAfni.HEAD_FUNC or
@@ -1342,7 +1342,7 @@ public class FileAfni extends FileBase {
         double Tx = 0.0;
         double Ty = 0.0;
         double Tz = 0.0;
-        Matrix A, b, X;
+        JamaMatrix A, b, X;
         double Tr03, Tr13, Tr23;
         float Talx, Taly, Talz;
         int[] AFNIOrigExtents = new int[3];
@@ -1472,7 +1472,7 @@ public class FileAfni extends FileBase {
              * Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3] Tr13 = M[1][0] * Tx + M[1][1] * Ty + M[1][2]
              * Tz + M[1][3] Tr23 = M[2][2] * Tx + M[2][1] * Ty + M[2][2] * Tz + M[2][3]
              */
-            A = new Matrix(3, 3);
+            A = new JamaMatrix(3, 3, 0.0);
             A.set(0, 0, M[0][0]);
             A.set(0, 1, M[0][1]);
             A.set(0, 2, M[0][2]);
@@ -1482,7 +1482,7 @@ public class FileAfni extends FileBase {
             A.set(2, 0, M[2][0]);
             A.set(2, 1, M[2][1]);
             A.set(2, 2, M[2][2]);
-            b = new Matrix(3, 1);
+            b = new JamaMatrix(3, 1, 0.0);
             b.set(0, 0, Tr03 - M[0][3]);
             b.set(1, 0, Tr13 - M[1][3]);
             b.set(2, 0, Tr23 - M[2][3]);
@@ -1505,7 +1505,7 @@ public class FileAfni extends FileBase {
             translation.Y = (float) M[1][3];
             translation.Z = (float) M[2][3];
 
-            A = new Matrix(3, 3);
+            A = new JamaMatrix(3, 3, 0.0);
             A.set(0, 0, oXres * M[0][0] / iXres);
             A.set(0, 1, oYres * M[0][1] / iXres);
             A.set(0, 2, oZres * M[0][2] / iXres);
@@ -1515,7 +1515,7 @@ public class FileAfni extends FileBase {
             A.set(2, 0, oXres * M[2][0] / iZres);
             A.set(2, 1, oYres * M[2][1] / iZres);
             A.set(2, 2, oZres * M[2][2] / iZres);
-            b = new Matrix(3, 1);
+            b = new JamaMatrix(3, 1, 0.0);
 
             /* b.set(0,0,rr.X - M[0][3]/iXres);
              * b.set(1,0,rr.Y - M[1][3]/iYres); b.set(2,0,rr.Z - M[2][3]/iZres); X = A.solve(b); TCenter.X =
@@ -1790,7 +1790,7 @@ public class FileAfni extends FileBase {
                  *       Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3]      Tr13 = M[1][0] * Tx + M[1][1]
                  * Ty + M[1][2] * Tz + M[1][3]      Tr23 = M[2][2] * Tx + M[2][1] * Ty + M[2][2] * Tz + M[2][3]
                  */
-                A = new Matrix(3, 3);
+                A = new JamaMatrix(3, 3, 0.0);
                 A.set(0, 0, M[0][0]);
                 A.set(0, 1, M[0][1]);
                 A.set(0, 2, M[0][2]);
@@ -1800,7 +1800,7 @@ public class FileAfni extends FileBase {
                 A.set(2, 0, M[2][0]);
                 A.set(2, 1, M[2][1]);
                 A.set(2, 2, M[2][2]);
-                b = new Matrix(3, 1);
+                b = new JamaMatrix(3, 1, 0.0);
 
                 /* b.set(0,0,rr.X - M[0][3]/iXres);
                  *       b.set(1,0,rr.Y - M[1][3]/iYres);      b.set(2,0,rr.Z - M[2][3]/iZres);      X = A.solve(b);
@@ -1828,7 +1828,7 @@ public class FileAfni extends FileBase {
                  * TCenter.X,TCenter.Y,TCenter.Z from rr.X,rr.Y,rr.Z */
                 M = xfrm.getMatrix();
 
-                A = new Matrix(3, 3);
+                A = new JamaMatrix(3, 3, 0.0);
                 A.set(0, 0, oXres * M[0][0] / iXres);
                 A.set(0, 1, oYres * M[0][1] / iXres);
                 A.set(0, 2, oZres * M[0][2] / iXres);
@@ -1838,7 +1838,7 @@ public class FileAfni extends FileBase {
                 A.set(2, 0, oXres * M[2][0] / iZres);
                 A.set(2, 1, oYres * M[2][1] / iZres);
                 A.set(2, 2, oZres * M[2][2] / iZres);
-                b = new Matrix(3, 1);
+                b = new JamaMatrix(3, 1, 0.0);
 
                 // Find the new pc inferior edge in the new coordinates
                 b.set(0, 0, pcDicom.X - (M[0][3] / iXres));
@@ -2211,7 +2211,7 @@ public class FileAfni extends FileBase {
                  * Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3] Tr13 = M[1][0] * Tx + M[1][1] * Ty +
                  * M[1][2] * Tz + M[1][3] Tr23 = M[2][2] * Tx + M[2][1] * Ty + M[2][2] * Tz + M[2][3]
                  */
-                A = new Matrix(3, 3);
+                A = new JamaMatrix(3, 3, 0.0);
                 A.set(0, 0, M[0][0]);
                 A.set(0, 1, M[0][1]);
                 A.set(0, 2, M[0][2]);
@@ -2221,7 +2221,7 @@ public class FileAfni extends FileBase {
                 A.set(2, 0, M[2][0]);
                 A.set(2, 1, M[2][1]);
                 A.set(2, 2, M[2][2]);
-                b = new Matrix(3, 1);
+                b = new JamaMatrix(3, 1, 0.0);
                 b.set(0, 0, Tr03 - M[0][3]);
                 b.set(1, 0, Tr13 - M[1][3]);
                 b.set(2, 0, Tr23 - M[2][3]);
@@ -2234,7 +2234,7 @@ public class FileAfni extends FileBase {
                 transformTalairachTrilinear(imgBuffer, frm, iXres, iYres, iZres, iXdim, iYdim, iZdim, oXres, oYres,
                                             oZres, oXdim, botX[i], botY[i], botZ[i], topX[i], topY[i], topZ[i]);
                 M = xfrm.getMatrix();
-                A = new Matrix(3, 3);
+                A = new JamaMatrix(3, 3, 0.0);
                 A.set(0, 0, oXres * M[0][0] / iXres);
                 A.set(0, 1, oYres * M[0][1] / iXres);
                 A.set(0, 2, oZres * M[0][2] / iXres);
@@ -2244,7 +2244,7 @@ public class FileAfni extends FileBase {
                 A.set(2, 0, oXres * M[2][0] / iZres);
                 A.set(2, 1, oYres * M[2][1] / iZres);
                 A.set(2, 2, oZres * M[2][2] / iZres);
-                b = new Matrix(3, 1);
+                b = new JamaMatrix(3, 1, 0.0);
 
                 /*b.set(0,0,rrArray[i].X - M[0][3]/iXres);
                  * b.set(1,0,rrArray[i].Y - M[1][3]/iYres); b.set(2,0,rrArray[i].Z - M[2][3]/iZres);
@@ -5916,12 +5916,12 @@ public class FileAfni extends FileBase {
                                                           " for number of parameters that follow\n");
                                         i++;
                                         brickStatAux[i] = floatVar[i];
-                                        a = floatVar[i];
+                                        //a = floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + brickStatAux[i] +
                                                           " for parameter a\n");
                                         i++;
                                         brickStatAux[i] = floatVar[i];
-                                        b = floatVar[i];
+                                        //b = floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + brickStatAux[i] +
                                                           " for parameter b\n");
                                         i++;
@@ -5949,7 +5949,7 @@ public class FileAfni extends FileBase {
                                                           " number of trials\n");
                                         i++;
                                         brickStatAux[i] = floatVar[i];
-                                        prob = floatVar[i];
+                                        //prob = floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + brickStatAux[i] +
                                                           " for probability per trial\n");
                                         i++;
@@ -5972,12 +5972,12 @@ public class FileAfni extends FileBase {
                                                           " for number of parameters that follow\n");
                                         i++;
                                         brickStatAux[i] = floatVar[i];
-                                        shape = floatVar[i];
+                                        //shape = floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + brickStatAux[i] +
                                                           " for shape\n");
                                         i++;
                                         brickStatAux[i] = floatVar[i];
-                                        scale = floatVar[i];
+                                        //scale = floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + brickStatAux[i] +
                                                           " for scale\n");
                                         i++;
@@ -6000,7 +6000,7 @@ public class FileAfni extends FileBase {
                                                           " for number of parameters that follow\n");
                                         i++;
                                         brickStatAux[i] = floatVar[i];
-                                        mean = floatVar[i];
+                                        //mean = floatVar[i];
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + brickStatAux[i] +
                                                           " for mean\n");
                                         i++;
