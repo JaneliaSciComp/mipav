@@ -195,7 +195,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int itersErosion;
         int numPruningPixels;
         int edgingType;
-        int i, j, k;
+        int i, j, k, m;
         int x, y;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
@@ -240,28 +240,24 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int numRedColocalize2;
         float resX = srcImage.getFileInfo()[0].getResolutions()[0];
         float resY = srcImage.getFileInfo()[0].getResolutions()[1];
-        double resDiag = Math.sqrt(resX*resX + resY*resY);
+        double resXY = Math.sqrt(resX*resX + resY*resY);
         boolean branchPruned;
         int redSkelIndex1;
         int redSkelIndex2;
         int numBranches;
-        boolean xplus;
-        boolean xminus;
-        boolean yplus;
-        boolean yminus;
         boolean found[];
         double fociDistance[];
         boolean loop[];
         boolean incomplete[];
         IntVector branchIndex = new IntVector(100,100);
-        boolean branch1;
-        boolean branch2;
-        boolean branch3;
-        boolean branch4;
-        boolean branch5;
-        boolean branch6;
-        boolean branch7;
-        boolean branch8;
+        boolean bxp;
+        boolean bxm;
+        boolean byp;
+        boolean bym;
+        boolean bxpyp;
+        boolean bxpym;
+        boolean bxmyp;
+        boolean bxmym;
         Vector <Double> distanceVector = new Vector(100,100);
         boolean noPushIndex[];
         
@@ -688,51 +684,51 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                             j = index + x;
                             if ((skeletonizedArray[j] == (i+1)) && (j != redSkelIndex1) && (j != redSkelIndex2)) {
                                 numBranches = 0;
-                                xplus = false;
-                                xminus = false;
-                                yplus = false;
-                                yminus = false;
+                                bxp = false;
+                                bxm = false;
+                                byp = false;
+                                bym = false;
                                 if (x > 0) {
                                     if (skeletonizedArray[j-1] == (i+1)) {
                                         numBranches++;
-                                        xminus = true;
+                                        bxm = true;
                                     }
                                 } // if (x > 0)
                                 if (x < xDim - 1) {
                                     if (skeletonizedArray[j+1] == (i+1)) {
                                         numBranches++;
-                                        xplus = true;
+                                        bxp = true;
                                     }
                                 } // if (x < xDim - 1)
                                 if (y > 0) {
                                     if (skeletonizedArray[j - xDim] == (i+1)) {
                                         numBranches++;
-                                        yminus = true;
+                                        bym = true;
                                     }
                                 } // if ( y > 0)
                                 if (y < yDim - 1) {
                                     if (skeletonizedArray[j + xDim] == (i+1)) {
                                         numBranches++;
-                                        yplus = true;
+                                        byp = true;
                                     }    
                                 } // if (y < yDim - 1)
-                                if ((!xplus) && (!yplus)) {
-                                    if (skeletonizedArray[j + xDim + 1] == (i+1)) {
+                                if ((x > 0) && (y > 0) && (!bxm) && (!bym)) {
+                                    if (skeletonizedArray[j - xDim - 1] == (i+1)) {
                                         numBranches++;
                                     }
                                 }
-                                if ((!xplus) && (!yminus)) {
-                                    if (skeletonizedArray[j - xDim + 1] == (i+1)) {
-                                        numBranches++;
-                                    }
-                                }
-                                if ((!xminus) && (!yplus)) {
+                                if ((x > 0) && (y < yDim - 1) && (!bxm) && (!byp)) {
                                     if (skeletonizedArray[j + xDim - 1] == (i+1)) {
                                         numBranches++;
                                     }
                                 }
-                                if ((!xminus) && (!yminus)) {
-                                    if (skeletonizedArray[j - xDim - 1] == (i+1)) {
+                                if ((x < xDim - 1) && (y > 0) && (!bxp) && (!bym)) {
+                                    if (skeletonizedArray[j - xDim + 1] == (i+1)) {
+                                        numBranches++;
+                                    }
+                                }
+                                if ((x < xDim -1) && (y < yDim - 1) && (!bxp) && (!byp)) {
+                                    if (skeletonizedArray[j + xDim + 1] == (i+1)) {
                                         numBranches++;
                                     }
                                 }
@@ -806,48 +802,48 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 found[index] = true;
                 while ((x != redSkelX[k+1]) && (y != redSkelY[k+1])) {
                     numBranches = 0;
-                    branch1 = false;
-                    branch2 = false;
-                    branch3 = false;
-                    branch4 = false;
-                    branch5 = false;
-                    branch6 = false;
-                    branch7 = false;
-                    branch8 = false;
+                    bxm = false;
+                    bxp = false;
+                    bym = false;
+                    byp = false;
+                    bxmym = false;
+                    bxmyp = false;
+                    bxpym = false;
+                    bxpyp = false;
                     if ((x > 0) && (skeletonizedArray[index - 1] == (i+1)) && (!found[index-1])) {
-                        branch1 = true;
+                        bxm = true;
                         numBranches++;
                     }
                     if ((x < xDim - 1) && (skeletonizedArray[index + 1] == (i+1)) && (!found[index+1])) {
-                        branch2 = true;
+                        bxp = true;
                         numBranches++;
                     }
                     if ((y > 0) && (skeletonizedArray[index - xDim] == (i+1)) && (!found[index-xDim])) {
-                        branch3 = true;
+                        bym = true;
                         numBranches++;
                     }
                     if ((y < yDim - 1) && (skeletonizedArray[index + xDim] == (i+1)) && (!found[index+xDim])) {
-                        branch4 = true;
+                        byp = true;
                         numBranches++;
                     }
-                    if ((x > 0) && (y > 0) && (!branch1) && (!branch3) && (skeletonizedArray[index - xDim - 1] == (i+1)) &&
+                    if ((x > 0) && (y > 0) && (!bxm) && (!bym) && (skeletonizedArray[index - xDim - 1] == (i+1)) &&
                              (!found[index-xDim-1])) {
-                        branch5 = true;
+                        bxmym = true;
                         numBranches++;
                     }
-                    if ((x < xDim - 1) && (y > 0) && (!branch2) && (!branch3) && (skeletonizedArray[index - xDim + 1] == (i+1)) &&
+                    if ((x > 0) && (y < yDim - 1) && (!bxm) && (!byp) && (skeletonizedArray[index + xDim - 1] == (i+1)) &&
+                            (!found[index + xDim - 1])) {
+                       bxmyp = true;
+                       numBranches++;
+                    }
+                    if ((x < xDim - 1) && (y > 0) && (!bxp) && (!bym) && (skeletonizedArray[index - xDim + 1] == (i+1)) &&
                              (!found[index - xDim + 1])) {
-                        branch6 = true;
+                        bxpym = true;
                         numBranches++;
                     }
-                    if ((x > 0) && (y < yDim - 1) && (!branch1) && (!branch4) && (skeletonizedArray[index + xDim - 1] == (i+1)) &&
-                             (!found[index + xDim - 1])) {
-                        branch7 = true;
-                        numBranches++;
-                    }
-                    if ((x < xDim - 1) && (y < yDim - 1) && (!branch2) && (!branch4) &&
+                    if ((x < xDim - 1) && (y < yDim - 1) && (!bxp) && (!byp) &&
                              (skeletonizedArray[index + xDim + 1] == (i+1)) && (!found[index + xDim + 1])) {
-                        branch8 = true;
+                        bxpyp = true;
                         numBranches++;
                     }
                     if (numBranches == 0) {
@@ -864,69 +860,64 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                             break;
                         }
                     }
-                    if ((numBranches == 2) && (!noPushIndex[index])) {
-                        branchIndex.push(index);
-                        distanceVector.add(Double.valueOf(fociDistance[k/2]));
+                    if ((numBranches >= 2) && (!noPushIndex[index])) {
+                        for (m = 0; m < numBranches - 1; m++) {
+                            branchIndex.push(index);
+                            distanceVector.add(Double.valueOf(fociDistance[k/2]));
+                        }
                         noPushIndex[index] = true;
                     }
-                    else if ((numBranches == 3) && (!noPushIndex[index])) {
-                        branchIndex.push(index);
-                        branchIndex.push(index);
-                        distanceVector.add(Double.valueOf(fociDistance[k/2]));
-                        distanceVector.add(Double.valueOf(fociDistance[k/2]));
-                        noPushIndex[index] = true;
-                    }
-                    if (branch1) {
+                    if (bxm) {
                         index = index - 1;
                         x = x - 1;
                         found[index] = true;
                         fociDistance[k/2] += resX;    
                     }
-                    else if (branch2) {
+                    else if (bxp) {
                         index = index + 1;
                         x = x + 1;
                         found[index] = true;
                         fociDistance[k/2] += resX;
                     }
-                    else if (branch3) {
+                    else if (bym) {
                         index = index - xDim;
                         y = y - 1;
                         found[index] = true;
                         fociDistance[k/2] += resY;    
                     }
-                    else if (branch4) {
+                    else if (byp) {
                         index = index + xDim;
                         y = y + 1;
                         found[index] = true;
                         fociDistance[k/2] += resY;
                     }
-                    else if (branch5) {
+                    else if (bxmym) {
                         index = index - xDim - 1;
                         x = x - 1;
                         y = y - 1;
                         found[index] = true;
-                        fociDistance[k/2] += resDiag;
+                        fociDistance[k/2] += resXY;
                     }
-                    else if (branch6) {
-                        index = index - xDim + 1;
-                        x = x + 1;
-                        y = y - 1;
-                        found[index] = true;
-                        fociDistance[k/2] += resDiag;
-                    }
-                    else if (branch7) {
+                    else if (bxmyp) {
                         index = index + xDim - 1;
                         x = x - 1;
                         y = y + 1;
                         found[index] = true;
-                        fociDistance[k/2] += resDiag;
+                        fociDistance[k/2] += resXY;
                     }
-                    else if (branch8) {
+                    else if (bxpym) {
+                        index = index - xDim + 1;
+                        x = x + 1;
+                        y = y - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXY;
+                    }
+                    else if (bxpyp) {
                         index = index + xDim + 1;
                         x = x + 1;
                         y = y + 1;
                         found[index] = true;
-                        fociDistance[k/2] += resDiag;
+                        fociDistance[k/2] += resXY;
                     }
                 }
                 
@@ -1007,7 +998,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int itersErosion;
         int numPruningPixels;
         int edgingType;
-        int i, j, k;
+        int i, j, k, m;
         int x, y, z;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
@@ -1075,6 +1066,50 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         int xInt[] = new int[1];
         int yInt[] = new int[1];
         int zInt[] = new int[1];
+        boolean branchPruned;
+        int redSkelIndex1;
+        int redSkelIndex2;
+        int numBranches;
+        boolean bxm;
+        boolean bxp;
+        boolean bym;
+        boolean byp;
+        boolean bzm;
+        boolean bzp;
+        boolean bxmym;
+        boolean bxmyp;
+        boolean bxpym;
+        boolean bxpyp;
+        boolean bxmzm;
+        boolean bxmzp;
+        boolean bxpzm;
+        boolean bxpzp;
+        boolean bymzm;
+        boolean bymzp;
+        boolean bypzm;
+        boolean bypzp;
+        boolean bxmymzm;
+        boolean bxmymzp;
+        boolean bxmypzm;
+        boolean bxmypzp;
+        boolean bxpymzm;
+        boolean bxpymzp;
+        boolean bxpypzm;
+        boolean bxpypzp;
+        boolean found[];
+        boolean noPushIndex[];
+        double fociDistance[];
+        boolean loop[];
+        boolean incomplete[];
+        IntVector branchIndex = new IntVector(100,100);
+        Vector <Double> distanceVector = new Vector(100,100);
+        float resX = srcImage.getFileInfo()[0].getResolutions()[0];
+        float resY = srcImage.getFileInfo()[0].getResolutions()[1];
+        float resZ = srcImage.getFileInfo()[0].getResolutions()[2];
+        double resXY = Math.sqrt(resX*resX + resY*resY);
+        double resXZ = Math.sqrt(resX*resX + resZ*resZ);
+        double resYZ = Math.sqrt(resY*resY + resZ*resZ);
+        double resXYZ = Math.sqrt(resX*resX + resY*resY + resZ*resZ);
         
         time = System.currentTimeMillis();
 
@@ -1525,11 +1560,637 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
             } // if (numGreenStrandFoci[i] == 2)
         } // for (i = 0, k = 0; i < numGreenObjects; i++)
         
+        // If a point is not a focus and has only 1 branch, then prune it.
+        // Keep repeating the process until no more pruning can occur
+        for (i = 0, k = 0; i < numGreenObjects; i++) {
+            if (numGreenStrandFoci[i] == 2) {
+                branchPruned = true;
+                redSkelIndex1 = redSkelX[k] + xDim * redSkelY[k] + sliceLength * redSkelZ[k];
+                redSkelIndex2 = redSkelX[k+1] + xDim * redSkelY[k+1] + sliceLength * redSkelZ[k+1];
+                while(branchPruned) {
+                    branchPruned = false; 
+                    for (z = greenFront[i]; z <= greenBack[i]; z++) {
+                        index2 = z * sliceLength;
+                        for (y = greenTop[i]; y <= greenBottom[i]; y++) {
+                            index = index2 + y * xDim;
+                            for (x = greenLeft[i]; x <= greenRight[i]; x++) {
+                                j = index + x;
+                                if ((skeletonizedArray[j] == (i+1)) && (j != redSkelIndex1) && (j != redSkelIndex2)) {
+                                    numBranches = 0;
+                                    bxm = false;
+                                    bxp = false;
+                                    bym = false;
+                                    byp = false;
+                                    bzm = false;
+                                    bzp = false;
+                                    bxmym = false;
+                                    bxmyp = false;
+                                    bxpym = false;
+                                    bxpyp = false;
+                                    bxmzm = false;
+                                    bxmzp = false;
+                                    bxpzm = false;
+                                    bxpzp = false;
+                                    bymzm = false;
+                                    bymzp = false;
+                                    bypzm = false;
+                                    bypzp = false;
+                                    if (x > 0) {
+                                        if (skeletonizedArray[j-1] == (i+1)) {
+                                            numBranches++;
+                                            bxm = true;
+                                        }
+                                    } // if (x > 0)
+                                    if (x < xDim - 1) {
+                                        if (skeletonizedArray[j+1] == (i+1)) {
+                                            numBranches++;
+                                            bxp = true;
+                                        }
+                                    } // if (x < xDim - 1)
+                                    if (y > 0) {
+                                        if (skeletonizedArray[j - xDim] == (i+1)) {
+                                            numBranches++;
+                                            bym = true;
+                                        }
+                                    } // if ( y > 0)
+                                    if (y < yDim - 1) {
+                                        if (skeletonizedArray[j + xDim] == (i+1)) {
+                                            numBranches++;
+                                            byp = true;
+                                        }    
+                                    } // if (y < yDim - 1)
+                                    if (z > 0) {
+                                        if (skeletonizedArray[j - sliceLength] == (i+1)) {
+                                            numBranches++;
+                                            bzm = true;
+                                        }
+                                    }
+                                    if (z < zDim - 1) {
+                                        if (skeletonizedArray[j + sliceLength] == (i+1)) {
+                                            numBranches++;
+                                            bzp = true;
+                                        }
+                                    }
+                                    if ((x > 0) && (y > 0) && (!bxm) && (!bym)) {
+                                        if (skeletonizedArray[j - xDim - 1] == (i+1)) {
+                                            numBranches++;
+                                            bxmym = true;
+                                        }
+                                    }
+                                    if ((x > 0) && (y < yDim - 1) && (!bxm) && (!byp)) {
+                                        if (skeletonizedArray[j + xDim - 1] == (i+1)) {
+                                            numBranches++;
+                                            bxmyp = true;
+                                        }
+                                    }
+                                    if ((x < xDim - 1) && (y > 0) && (!bxp) && (!bym)) {
+                                        if (skeletonizedArray[j - xDim + 1] == (i+1)) {
+                                            numBranches++;
+                                            bxpym = true;
+                                        }
+                                    }
+                                    if ((x < xDim -1) && (y < yDim - 1) && (!bxp) && (!byp)) {
+                                        if (skeletonizedArray[j + xDim + 1] == (i+1)) {
+                                            numBranches++;
+                                            bxpyp = true;
+                                        }
+                                    }
+                                    if ((x > 0) && (z > 0) && (!bxm) && (!bzm)) {
+                                        if (skeletonizedArray[j - sliceLength - 1] == (i+1)) {
+                                            numBranches++;
+                                            bxmzm = true;
+                                        }
+                                    }
+                                    if ((x > 0) && (z < zDim - 1) && (!bxm) && (!bzp)) {
+                                        if (skeletonizedArray[j + sliceLength - 1] == (i+1)) {
+                                            numBranches++;
+                                            bxmzp = true;
+                                        }
+                                    }
+                                    if ((x < xDim - 1) && (z > 0) && (!bxp) && (!bzm)) {
+                                        if (skeletonizedArray[j - sliceLength + 1] == (i+1)) {
+                                            numBranches++;
+                                            bxpzm = true;
+                                        }
+                                    }
+                                    if ((x < xDim - 1) && (z < zDim - 1) && (!bxp) && (!bzp)) {
+                                        if (skeletonizedArray[j + sliceLength + 1] == (i+1)) {
+                                            numBranches++;
+                                            bxpzp = true;
+                                        }
+                                    }
+                                    if ((y > 0) && (z > 0) && (!bym) && (!bzm)) {
+                                        if (skeletonizedArray[j - sliceLength - xDim] == (i+1)) {
+                                            numBranches++;
+                                            bymzm = true;
+                                        }
+                                    }
+                                    if ((y > 0) && (z < zDim - 1) && (!bym) && (!bzp)) {
+                                        if (skeletonizedArray[j + sliceLength - xDim] == (i+1)) {
+                                            numBranches++;
+                                            bymzp = true;
+                                        }
+                                    }
+                                    if ((y < yDim - 1) && (z > 0) && (!byp) && (!bzm)) {
+                                        if (skeletonizedArray[j - sliceLength + xDim] == (i+1)) {
+                                            numBranches++;
+                                            bypzm = true;
+                                        }
+                                    }
+                                    if ((y < yDim - 1) && (z < zDim - 1) && (!byp) && (!bzp)) {
+                                        if (skeletonizedArray[j + sliceLength + xDim] == (i+1)) {
+                                            numBranches++;
+                                            bypzp = true;
+                                        }
+                                    }
+                                    if ((x > 0) && (y > 0) && (z > 0) && (!bxm) && (!bym) && (!bzm) && (!bxmym) && (!bxmzm) && (!bymzm)) {
+                                        if (skeletonizedArray[j - sliceLength - xDim - 1] == (i+1)) {
+                                            numBranches++;
+                                        }
+                                    }
+                                    if ((x > 0) && (y > 0) && (z < zDim - 1) && (!bxm) && (!bym) && (!bzp) && (!bxmym) &&
+                                        (!bxmzp) && (!bymzp)) {
+                                        if (skeletonizedArray[j + sliceLength - xDim - 1] == (i+1)) {
+                                            numBranches++;
+                                        }
+                                    }
+                                    if ((x > 0) && (y < yDim - 1) && (z > 0) && (!bxm) && (!byp) && (!bzm) && (!bxmyp) && 
+                                        (!bxmzm) && (!bypzm)) {
+                                        if (skeletonizedArray[j - sliceLength + xDim - 1] == (i+1)) {
+                                            numBranches++;
+                                        }
+                                    }
+                                    if ((x > 0) && (y < yDim - 1) && (z < zDim - 1) && (!bxm) && (!byp) && (!bzp) &&
+                                        (!bxmyp) && (!bxmzp) && (!bypzp)) {
+                                        if (skeletonizedArray[j + sliceLength + xDim - 1] == (i+1)) {
+                                            numBranches++;
+                                        }
+                                    }
+                                    if ((x < xDim - 1) && (y > 0) && (z > 0) && (!bxp) && (!bym) && (!bzm) && (!bxpym) &&
+                                        (!bxpzm) && (!bymzm)) {
+                                        if (skeletonizedArray[j - sliceLength - xDim + 1] == (i+1)) {
+                                            numBranches++;
+                                        }
+                                    }
+                                    if ((x < xDim - 1) && (y > 0) && (z < zDim - 1) && (!bxp) && (!bym) && (!bzp) &&
+                                        (!bxpym) && (!bxpzp) && (!bymzp)) {
+                                        if (skeletonizedArray[j + sliceLength - xDim + 1] == (i+1)) {
+                                            numBranches++;
+                                        }
+                                    }
+                                    if ((x < xDim - 1) && (y < yDim - 1) && (z > 0) && (!bxp) && (!byp) && (!bzm) && 
+                                        (!bxpyp) && (!bxpzm) && (!bypzm)) {
+                                        if (skeletonizedArray[j - sliceLength + xDim + 1] == (i+1)) {
+                                            numBranches++;
+                                        }
+                                    }
+                                    if ((x < xDim - 1) && (y < yDim - 1) && (z < zDim - 1) && (!bxp) && (!byp) &&
+                                        (!bzp) && (!bxpyp) && (!bxpzp) && (!bypzp)) {
+                                        if (skeletonizedArray[j + sliceLength + xDim + 1] == (i+1)) {
+                                            numBranches++;
+                                        }
+                                    }
+                                    if (numBranches == 1) {
+                                        branchPruned = true;
+                                        skeletonizedArray[j] = 0;
+                                    }
+                                } // if ((skeletonizedArray[j] == (i+1)) && (j != redSkelIndex1) && (j != redSkelIndex2))
+                            } // for (x = greenLeft[i]; x <= greenRight[i]; x++)
+                        } // for (y = greenTop[i]; y <= greenBottom[i]; y++)
+                    } // for (z = greenFront[i]; z <= greenBack[i]; z++)
+                } //  while(branchPruned)
+                k += 2;
+            } // if (numGreenStrandFoci[i] == 2)
+        } // for (i = 0, k = 0; i < numGreenObjects; i++)
+        
+        try {
+            grayImage.importData(0, skeletonizedArray, true);
+        } catch (IOException error) {
+            byteBuffer = null;
+            greenIDArray = null;
+            errorCleanUp("Error on grayImage.importData", true);
+
+            return;
+        }
+        
+        prunedImage = (ModelImage)grayImage.clone();
+        prunedImage.setImageName(srcImage.getImageName() + "_pruned");
+        prunedFrame = new ViewJFrameImage(prunedImage);
+        prunedFrame.setTitle(srcImage.getImageName() + "_pruned");
+        
+        for (i = 0, k = 0; i < numGreenObjects; i++) {
+            if (numGreenStrandFoci[i]  == 2) {
+                newPtVOI = new VOI((short) (greenStrandFocus1[i]), Integer.toString(greenStrandFocus1[i]), zDim, VOI.POINT, -1.0f);
+                newPtVOI.setColor(Color.white);
+                xInt[0] = redSkelX[k];
+                yInt[0] = redSkelY[k];
+                zInt[0] = redSkelZ[k];
+                newPtVOI.importCurve(xInt, yInt, zInt, zInt[0]);
+                ((VOIPoint) (newPtVOI.getCurves()[zInt[0]].elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves()[zInt[0]].elementAt(0))).setLabel(Integer.toString(greenStrandFocus1[i]));
+                prunedImage.registerVOI(newPtVOI);
+                newPtVOI = new VOI((short) (greenStrandFocus2[i]), Integer.toString(greenStrandFocus2[i]), zDim, VOI.POINT, -1.0f);
+                newPtVOI.setColor(Color.white);
+                xInt[0] = redSkelX[k+1];
+                yInt[0] = redSkelY[k+1];
+                zInt[0] = redSkelZ[k+1];
+                newPtVOI.importCurve(xInt, yInt, zInt, zInt[0]);
+                ((VOIPoint) (newPtVOI.getCurves()[zInt[0]].elementAt(0))).setFixed(true);
+                ((VOIPoint) (newPtVOI.getCurves()[zInt[0]].elementAt(0))).setLabel(Integer.toString(greenStrandFocus2[i]));
+                prunedImage.registerVOI(newPtVOI);
+                k += 2;
+            } // if (numGreenStrandFoci[i] == 2)
+        } // for (i = 0, k = 0; i < numGreenObjects; i++)
+        
+        found = new boolean[totLength];
+        noPushIndex = new boolean[totLength];
+        fociDistance = new double[numRedColocalize2/2];
+        loop = new boolean[numRedColocalize2/2];
+        incomplete = new boolean[numRedColocalize/2];
+        for (i = 0, k = 0; i < numGreenObjects; i++) {
+            if (numGreenStrandFoci[i] == 2) {
+                for (j = 0; j < totLength; j++) {
+                    found[j] = false;
+                    noPushIndex[j] = false;
+                }
+                branchIndex.removeAllElements();
+                distanceVector.removeAllElements();
+                x = redSkelX[k];
+                y = redSkelY[k];
+                z = redSkelZ[k];
+                index = redSkelX[k] + xDim * redSkelY[k] + sliceLength * redSkelZ[k];
+                found[index] = true;
+                while ((x != redSkelX[k+1]) && (y != redSkelY[k+1]) && (z != redSkelZ[k])) {
+                    numBranches = 0;
+                    bxm = false;
+                    bxp = false;
+                    bym = false;
+                    byp = false;
+                    bzm = false;
+                    bzp = false;
+                    bxmym = false;
+                    bxmyp = false;
+                    bxpym = false;
+                    bxpyp = false;
+                    bxmzm = false;
+                    bxmzp = false;
+                    bxpzm = false;
+                    bxpzp = false;
+                    bymzm = false;
+                    bymzp = false;
+                    bypzm = false;
+                    bypzp = false;
+                    bxmymzm = false;
+                    bxmymzp = false;
+                    bxmypzm = false;
+                    bxmypzp = false;
+                    bxpymzm = false;
+                    bxpymzp = false;
+                    bxpypzm = false;
+                    bxpypzp = false;
+                    if ((x > 0) && (skeletonizedArray[index - 1] == (i+1)) && (!found[index-1])) {
+                        bxm = true;
+                        numBranches++;
+                    }
+                    if ((x < xDim - 1) && (skeletonizedArray[index + 1] == (i+1)) && (!found[index+1])) {
+                        bxp = true;
+                        numBranches++;
+                    }
+                    if ((y > 0) && (skeletonizedArray[index - xDim] == (i+1)) && (!found[index-xDim])) {
+                        bym = true;
+                        numBranches++;
+                    }
+                    if ((y < yDim - 1) && (skeletonizedArray[index + xDim] == (i+1)) && (!found[index+xDim])) {
+                        byp = true;
+                        numBranches++;
+                    }
+                    if ((z > 0) && (skeletonizedArray[index - sliceLength] == (i+1)) && (!found[index - sliceLength])) {
+                        bzm = true;
+                        numBranches++;
+                    }
+                    if ((z < zDim - 1) && (skeletonizedArray[index + sliceLength] == (i+1)) && (!found[index + sliceLength])) {
+                        bzp = true;
+                        numBranches++;
+                    }
+                    if ((x > 0) && (y > 0) && (!bxm) && (!bym) && (skeletonizedArray[index - xDim - 1] == (i+1)) &&
+                             (!found[index-xDim-1])) {
+                        bxmym = true;
+                        numBranches++;
+                    }
+                    if ((x > 0) && (y < yDim - 1) && (!bxm) && (!byp) && (skeletonizedArray[index + xDim - 1] == (i+1)) &&
+                            (!found[index + xDim - 1])) {
+                       bxmyp = true;
+                       numBranches++;
+                    }
+                    if ((x < xDim - 1) && (y > 0) && (!bxp) && (!bym) && (skeletonizedArray[index - xDim + 1] == (i+1)) &&
+                             (!found[index - xDim + 1])) {
+                        bxpym = true;
+                        numBranches++;
+                    }
+                    if ((x < xDim - 1) && (y < yDim - 1) && (!bxp) && (!byp) &&
+                             (skeletonizedArray[index + xDim + 1] == (i+1)) && (!found[index + xDim + 1])) {
+                        bxpyp = true;
+                        numBranches++;
+                    }
+                    if ((x > 0) && (z > 0) && (!bxm) && (!bzm) && (skeletonizedArray[index - sliceLength - 1] == (i+1)) &&
+                             (!found[index-sliceLength-1])) {
+                        bxmzm = true;
+                        numBranches++;
+                    }
+                    if ((x > 0) && (z < zDim - 1) && (!bxm) && (!bzp) && (skeletonizedArray[index + sliceLength - 1] == (i+1)) &&
+                            (!found[index + sliceLength - 1])) {
+                       bxmzp = true;
+                       numBranches++;
+                    }
+                    if ((x < xDim - 1) && (z > 0) && (!bxp) && (!bzm) && (skeletonizedArray[index - sliceLength + 1] == (i+1)) &&
+                             (!found[index - sliceLength + 1])) {
+                        bxpzm = true;
+                        numBranches++;
+                    }
+                    if ((x < xDim - 1) && (z < zDim - 1) && (!bxp) && (!bzp) &&
+                             (skeletonizedArray[index + sliceLength + 1] == (i+1)) && (!found[index + sliceLength + 1])) {
+                        bxpzp = true;
+                        numBranches++;
+                    }
+                    if ((y > 0) && (z > 0) && (!bym) && (!bzm) && (skeletonizedArray[index - sliceLength - xDim] == (i+1)) &&
+                             (!found[index-sliceLength-xDim])) {
+                        bymzm = true;
+                        numBranches++;
+                    }
+                    if ((y > 0) && (z < zDim - 1) && (!bym) && (!bzp) && (skeletonizedArray[index + sliceLength - xDim] == (i+1)) &&
+                            (!found[index + sliceLength - xDim])) {
+                       bymzp = true;
+                       numBranches++;
+                    }
+                    if ((y < yDim - 1) && (z > 0) && (!byp) && (!bzm) && (skeletonizedArray[index - sliceLength + xDim] == (i+1)) &&
+                             (!found[index - sliceLength + xDim])) {
+                        bypzm = true;
+                        numBranches++;
+                    }
+                    if ((y < yDim - 1) && (z < zDim - 1) && (!byp) && (!bzp) &&
+                             (skeletonizedArray[index + sliceLength + xDim] == (i+1)) && (!found[index + sliceLength + xDim])) {
+                        bypzp = true;
+                        numBranches++;
+                    }
+                    if ((x > 0) && (y > 0) && (z > 0) && (!bxm) && (!bym) && (!bzm) && (!bxmym) && (!bxmzm) && (!bymzm) &&
+                        (skeletonizedArray[index - sliceLength - xDim - 1] == (i+1)) && (!found[index - sliceLength - xDim - 1])) {
+                        bxmymzm = true;
+                        numBranches++;
+                    }
+                    if ((x > 0) && (y > 0) && (z < zDim - 1) && (!bxm) && (!bym) && (!bzp) && (!bxmym) && (!bxmzp) && (!bymzp) &&
+                        (skeletonizedArray[index + sliceLength - xDim - 1] == (i+1)) && (!found[index + sliceLength - xDim - 1])) {
+                        bxmymzp = true;
+                        numBranches++;
+                    }
+                    if ((x > 0) && (y < yDim - 1) && (z > 0) && (!bxm) && (!byp) && (!bzm) && (!bxmyp) && (!bxmzm) && (!bypzm) &&
+                        (skeletonizedArray[index - sliceLength + xDim - 1] == (i+1)) && (!found[index - sliceLength + xDim - 1])) {
+                        bxmypzm = true;
+                        numBranches++;
+                    }
+                    if ((x > 0) && (y < yDim - 1) && (z < zDim - 1) && (!bxm) && (!byp) && (!bzp) && (!bxmyp) && (!bxmzp) && (!bypzp) &&
+                        (skeletonizedArray[index + sliceLength + xDim - 1] == (i+1)) && (!found[index + sliceLength + xDim - 1])) {
+                        bxmypzp = true;
+                        numBranches++;
+                    }
+                    if ((x < xDim - 1) && (y > 0) && (z > 0) && (!bxp) && (!bym) && (!bzm) && (!bxpym) && (!bxpzm) && (!bymzm) &&
+                        (skeletonizedArray[index - sliceLength - xDim + 1] == (i+1)) && (!found[index - sliceLength - xDim + 1])) {
+                        bxpymzm = true;
+                        numBranches++;
+                    }
+                    if ((x < xDim - 1) && (y > 0) && (z < zDim - 1) && (!bxp) && (!bym) && (!bzp) && (!bxpym) && (!bxpzp) && (!bymzp) &&
+                        (skeletonizedArray[index + sliceLength - xDim + 1] == (i+1)) && (!found[index + sliceLength - xDim + 1])) {
+                        bxpymzp = true;
+                        numBranches++;
+                    }
+                    if ((x < xDim - 1) && (y < yDim - 1) && (z > 0) && (!bxp) && (!byp) && (!bzm) && (!bxpyp) && (!bxpzm) && (!bypzm) &&
+                        (skeletonizedArray[index - sliceLength + xDim + 1] == (i+1)) && (!found[index - sliceLength + xDim + 1])) {
+                        bxpypzm = true;
+                        numBranches++;
+                    }
+                    if ((x < xDim - 1) && (y < yDim - 1) && (z < zDim - 1) && (!bxp) && (!byp) && (!bzp) && (!bxpyp) && (!bxpzp) &&
+                        (!bypzp) &&
+                        (skeletonizedArray[index + sliceLength + xDim + 1] == (i+1)) && (!found[index + sliceLength + xDim + 1])) {
+                        bxpypzp = true;
+                        numBranches++;
+                    }
+                    if (numBranches == 0) {
+                        loop[k/2] = true;
+                        if (!branchIndex.isEmpty()) {
+                            index = branchIndex.popFirstIn();
+                            x = (index % sliceLength) % xDim;
+                            y = (index % sliceLength) / xDim;
+                            z = index / sliceLength;
+                            fociDistance[k/2] = distanceVector.remove(0).doubleValue();
+                            continue;
+                        }
+                        else {
+                            incomplete[k/2] = true;
+                            break;
+                        }
+                    }
+                    if ((numBranches >= 2) && (!noPushIndex[index])) {
+                        for (m = 0; m < numBranches - 1; m++) {
+                            branchIndex.push(index);
+                            distanceVector.add(Double.valueOf(fociDistance[k/2]));
+                        }
+                        noPushIndex[index] = true;
+                    }
+                    if (bxm) {
+                        index = index - 1;
+                        x = x - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resX;    
+                    }
+                    else if (bxp) {
+                        index = index + 1;
+                        x = x + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resX;
+                    }
+                    else if (bym) {
+                        index = index - xDim;
+                        y = y - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resY;    
+                    }
+                    else if (byp) {
+                        index = index + xDim;
+                        y = y + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resY;
+                    }
+                    else if (bzm) {
+                        index = index - sliceLength;
+                        z = z - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resZ;
+                    }
+                    else if (bzp) {
+                        index = index + sliceLength;
+                        z = z + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resZ;
+                    }
+                    else if (bxmym) {
+                        index = index - xDim - 1;
+                        x = x - 1;
+                        y = y - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXY;
+                    }
+                    else if (bxmyp) {
+                        index = index + xDim - 1;
+                        x = x - 1;
+                        y = y + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXY;
+                    }
+                    else if (bxpym) {
+                        index = index - xDim + 1;
+                        x = x + 1;
+                        y = y - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXY;
+                    }
+                    else if (bxpyp) {
+                        index = index + xDim + 1;
+                        x = x + 1;
+                        y = y + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXY;
+                    }
+                    else if (bxmzm) {
+                        index = index - sliceLength - 1;
+                        x = x - 1;
+                        z = z - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXZ;
+                    }
+                    else if (bxmzp) {
+                        index = index + sliceLength - 1;
+                        x = x - 1;
+                        z = z + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXZ;
+                    }
+                    else if (bxpzm) {
+                        index = index - sliceLength + 1;
+                        x = x + 1;
+                        z = z - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXZ;
+                    }
+                    else if (bxpzp) {
+                        index = index + sliceLength + 1;
+                        x = x + 1;
+                        z = z + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXZ;
+                    }
+                    else if (bymzm) {
+                        index = index - sliceLength - xDim;
+                        y = y - 1;
+                        z = z - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resYZ;
+                    }
+                    else if (bymzp) {
+                        index = index + sliceLength - xDim;
+                        y = y - 1;
+                        z = z + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resYZ;
+                    }
+                    else if (bypzm) {
+                        index = index - sliceLength + xDim;
+                        y = y + 1;
+                        z = z - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resYZ;
+                    }
+                    else if (bypzp) {
+                        index = index + sliceLength + xDim;
+                        y = y + 1;
+                        z = z + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resYZ;
+                    }
+                    else if (bxmymzm) {
+                        index = index - sliceLength - xDim - 1;
+                        x = x - 1;
+                        y = y - 1;
+                        z = z - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXYZ;
+                    }
+                    else if (bxmymzp) {
+                        index = index + sliceLength - xDim - 1;
+                        x = x - 1;
+                        y = y - 1;
+                        z = z + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXYZ;
+                    }
+                    else if (bxmypzm) {
+                        index = index - sliceLength + xDim - 1;
+                        x = x - 1;
+                        y = y + 1;
+                        z = z - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXYZ;
+                    }
+                    else if (bxmypzp) {
+                        index = index + sliceLength + xDim - 1;
+                        x = x - 1;
+                        y = y + 1;
+                        z = z + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXYZ;
+                    }
+                    else if (bxpymzm) {
+                        index = index - sliceLength - xDim + 1;
+                        x = x + 1;
+                        y = y - 1;
+                        z = z - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXYZ;
+                    }
+                    else if (bxpymzp) {
+                        index = index + sliceLength - xDim + 1;
+                        x = x + 1;
+                        y = y - 1;
+                        z = z + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXYZ;
+                    }
+                    else if (bxpypzm) {
+                        index = index - sliceLength + xDim + 1;
+                        x = x + 1;
+                        y = y + 1;
+                        z = z - 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXYZ;
+                    }
+                    else if (bxpypzp) {
+                        index = index + sliceLength + xDim + 1;
+                        x = x + 1;
+                        y = y + 1;
+                        z = z + 1;
+                        found[index] = true;
+                        fociDistance[k/2] += resXYZ;
+                    }
+                }
+                
+                k += 2;
+            } // if (numGreenStrandFoci[i] == 2)
+        } // for (i = 0, k = 0; i < numGreenObjects; i++)
+        
         grayImage.disposeLocal();
         grayImage = null;
 
         srcImage.notifyImageDisplayListeners();
         skeletonizedImage.notifyImageDisplayListeners();
+        prunedImage.notifyImageDisplayListeners();
         
         UI.getMessageFrame().addTab("PlugInAlgorithmFociAndStrands");
         UI.getMessageFrame().setFont("PlugInAlgorithmFociAndStrands", courier);
@@ -1546,10 +2207,21 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 srcImage.getFileInfo(0).getFileName() + " \t" + numRedObjects + "\t" + numRedColocalize + "\t\t" +
                 numGreenObjects + "\t\t" + dfFract.format(avgFociOnStrands) + "\n");
         UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", "Focus1\tFocus2\tDistance\n");
-        for (i = 0; i < numGreenObjects; i++) {
+        for (i = 0, k = 0; i < numGreenObjects; i++) {
             if (numGreenStrandFoci[i] == 2) {
-                UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", greenStrandFocus1[i] + "\t" +
-                                             greenStrandFocus2[i] + "\n");     
+                if (incomplete[k]) {
+                    UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", greenStrandFocus1[i] + "\t" +
+                                                 greenStrandFocus2[i] + "\n"); 
+                }
+                else if (!loop[k] ){
+                    UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", greenStrandFocus1[i] + "\t" +
+                            greenStrandFocus2[i] +  "\t" + df.format(fociDistance[k]) + "\n");     
+                }
+                else {
+                    UI.getMessageFrame().append("PlugInAlgorithmFociAndStrands", greenStrandFocus1[i] + "\t" +
+                            greenStrandFocus2[i] +  "\t" + df.format(fociDistance[k]) + "\t" + "loop\n");         
+                }
+                k++;
             }
         }
         
