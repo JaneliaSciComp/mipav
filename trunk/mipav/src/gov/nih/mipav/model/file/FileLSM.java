@@ -2,7 +2,7 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
 import gov.nih.mipav.view.*;
 
@@ -1067,7 +1067,7 @@ public class FileLSM extends FileBase {
     private int samplesPerPixel = 1;
 
     /** DOCUMENT ME! */
-    private String[] scanString = null;
+    //private String[] scanString = null;
 
     /** DOCUMENT ME! */
     private int secondAddress;
@@ -1249,7 +1249,7 @@ public class FileLSM extends FileBase {
         LUT = null;
         lzwDecoder = null;
         redArray = null;
-        scanString = null;
+        //scanString = null;
         software = null;
         str = null;
         tileByteCounts = null;
@@ -2021,8 +2021,8 @@ public class FileLSM extends FileBase {
                             photoBleachedVOI = new VOI(id, "Photobleached", zDim, VOI.CONTOUR, 0.0f);
 
                             // Find the x values of the control points
-                            Matrix A = new Matrix(2 * nPts, 2 * nPts);
-                            Matrix b = new Matrix(2 * nPts, 1);
+                            JamaMatrix A = new JamaMatrix(2 * nPts, 2 * nPts);
+                            JamaMatrix b = new JamaMatrix(2 * nPts, 1);
 
                             // p0Ax = 2p0x - pn-1Bx
                             // p0Bx = pn-1Ax + 4p0x - 4pn-1Bx
@@ -2052,7 +2052,7 @@ public class FileLSM extends FileBase {
                                 b.set((2 * i) + 1, 0, 4 * bleachKnotX[i]);
                             }
 
-                            Matrix controlX = A.solve(b);
+                            JamaMatrix controlX = A.solve(b);
                             b.set(0, 0, 2 * bleachKnotY[0]);
                             b.set(1, 0, 4 * bleachKnotY[0]);
 
@@ -2061,7 +2061,7 @@ public class FileLSM extends FileBase {
                                 b.set((2 * i) + 1, 0, 4 * bleachKnotY[i]);
                             }
 
-                            Matrix controlY = A.solve(b);
+                            JamaMatrix controlY = A.solve(b);
                             int[] x = new int[10 * nPts];
                             int[] y = new int[10 * nPts];
                             int[] z = new int[10 * nPts];
@@ -3223,7 +3223,7 @@ public class FileLSM extends FileBase {
             }
 
             if (haveOffset) {
-                dataOffsets[imageSlice] = new Vector();
+                dataOffsets[imageSlice] = new Vector<Index>();
 
                 for (i1 = 0; i1 < offsetCountTemp; i1++) {
                     dataOffsets[imageSlice].addElement(new Index(offsetTemp[i1]));

@@ -2,7 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import Jama.*;
 
 import java.awt.*;
 
@@ -15,10 +15,10 @@ import javax.vecmath.*;
  * <p>"Active Contours for Cell Tracking", by Nilanjan Ray and Scott T. Acton. 5th IEEE Southwest Symposium on Image
  * Analysis and Interpretation (SSIAI'02), 2002.</p>
  *
- * <p>Most funcionality is inherited from AlgorithmAGVF, the runSnake function is optimized with the following
+ * <p>Most functionality is inherited from AlgorithmAGVF, the runSnake function is optimized with the following
  * constraints for cell-tracking:</p>
  *
- * <p>1). Constrained Gradient Vector Flow: using a Dirichlet boundray contition, the gradient inside the initial
+ * <p>1). Constrained Gradient Vector Flow: using a Dirichlet boundary condition, the gradient inside the initial
  * user-defined snake is set to a user-defined velocity vector.</p>
  *
  * <p>2). Shape-size constraint: the shape and size of the snake is constrained to be circular with a user-defined cell
@@ -27,7 +27,7 @@ import javax.vecmath.*;
  * <p>3). Implicit Resampling: the points along the snake curve are minimized such that they maintain an equal distance
  * between points.</p>
  *
- * <p>The graident vector flow is calculated for each frame in the image sequence. Once the GVF is calculated, the
+ * <p>The gradient vector flow is calculated for each frame in the image sequence. Once the GVF is calculated, the
  * points inside the initial snake (either the user-defined snake for frame 0, or the snake for the previous frame) are
  * set to the velocity vector. runSnake then minimizes the shape-size and resampling constraints for the new GVF, based
  * on the user-defined constraint contributions (see the Lambda member variable). The output snake is used as the
@@ -47,15 +47,15 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
     private float[] m_afY = null;
 
     /**
-     * whether or not to dialate the cell contour before solving for the cell on the next frame (dilation helps capture
+     * whether or not to dilate the cell contour before solving for the cell on the next frame (dilation helps capture
      * cells that are moving fast).
      */
     private boolean m_bDilate = true;
 
-    /** boolean when true, use the velocit vector:. */
+    /** boolean when true, use the velocity vector:. */
     private boolean m_bUseVelocity = true;
 
-    /** Amount to dialate the cell (multiple of the cell radius). */
+    /** Amount to dilate the cell (multiple of the cell radius). */
     private float m_fDilationFactor = 2.0f;
 
     /** expected cell radius:. */
@@ -89,7 +89,7 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
     /** Previous snake polygon:. */
     private Polygon m_kPreviousSnake = null;
 
-    /** Q Matrix, equation 24 (inverse calculated once per image sequence on the iniital frame):. */
+    /** Q Matrix, equation 24 (inverse calculated once per image sequence on the inital frame):. */
     private Matrix m_kQ = null;
 
     /** Sin matrix: = sin( 2*pi*i/n). */
@@ -119,7 +119,7 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
      * @param  shapeConstraint       The contribution of the shape constraint in the minimization
      * @param  sizeConstraint        The contribution of the size constraint in the minimization
      * @param  resamplingConstraint  The contribution of the resampling constraint in the minimization
-     * @param  bDilate               Whether to dialate the cell radius before optimizing
+     * @param  bDilate               Whether to dilate the cell radius before optimizing
      * @param  fDilation             dilation factor (multiple of the cell radius)
      * @param  fDx                   The initial cell velocity (x-component)
      * @param  fDy                   The initial cell velocity (y-component)
@@ -466,7 +466,7 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
         m_kQ.plusEquals(kLambda1);
         m_kH.timesEquals(m_fLambda3);
         m_kQ.plusEquals(m_kH);
-        m_kQ.invert();
+        m_kQ = m_kQ.inverse();
     }
 
 }

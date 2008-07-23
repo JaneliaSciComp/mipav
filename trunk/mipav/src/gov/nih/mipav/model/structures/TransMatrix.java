@@ -6,7 +6,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Vector4f;
 
 import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.structures.jama.*;
+import Jama.*;
 
 import gov.nih.mipav.view.*;
 
@@ -207,8 +207,8 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @return  a TransMatrix object.
      */
     public Object clone() {
-        TransMatrix tMat = new TransMatrix(this.mRow, transformID, isNIFTI, isQform);
-        tMat.matrix = this.getArrayCopy();
+        TransMatrix tMat = new TransMatrix(this.m, transformID, isNIFTI, isQform);
+        tMat.A = this.getArrayCopy();
 
         return tMat;
     }
@@ -219,7 +219,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  b  Matrix to be cast
      */
     public void convertFromMatrix(Matrix b) {
-        matrix = b.getArray();
+        A = b.getArray();
     }
 
     /**
@@ -230,10 +230,10 @@ public class TransMatrix extends Matrix // implements TableModelListener
     public void decodeMatrixString(String str) {
         StringTokenizer tok = new StringTokenizer(str);
 
-        for (int i = 0; i < matrix.length; i++) {
+        for (int i = 0; i < A.length; i++) {
 
-            for (int j = 0; j < matrix[0].length; j++) {
-                matrix[i][j] = Double.valueOf((String) tok.nextElement()).doubleValue();
+            for (int j = 0; j < A[0].length; j++) {
+                A[i][j] = Double.valueOf((String) tok.nextElement()).doubleValue();
             }
         }
     }
@@ -250,17 +250,11 @@ public class TransMatrix extends Matrix // implements TableModelListener
         tran = new double[16];
 
         int i, j;
-        Matrix locmat;
-        Matrix pmat, invpmat, tinvpmat;
+        Matrix locmat = new Matrix(4, 4);
 
-        locmat = new Matrix(4, 4);
-        pmat = new Matrix(4, 4);
-        invpmat = new Matrix(4, 4);
-        tinvpmat = new Matrix(4, 4);
-
-        pmat.identity(4, 4);
-        invpmat.identity(4, 4);
-        tinvpmat.identity(4, 4);
+        Matrix pmat = Matrix.identity(4, 4);
+        Matrix invpmat = Matrix.identity(4, 4);
+        Matrix tinvpmat = Matrix.identity(4, 4);
 
         /* Vector4 type and functions need to be added to the common set. */
         Vector4f prhs, psol;
@@ -443,17 +437,11 @@ public class TransMatrix extends Matrix // implements TableModelListener
         tran = new double[16];
 
         int i, j;
-        Matrix locmat;
-        Matrix pmat, invpmat, tinvpmat;
+        Matrix locmat = new Matrix(3, 3);
 
-        locmat = new Matrix(3, 3);
-        pmat = new Matrix(3, 3);
-        invpmat = new Matrix(3, 3);
-        tinvpmat = new Matrix(3, 3);
-
-        pmat.identity(3, 3);
-        invpmat.identity(3, 3);
-        tinvpmat.identity(3, 3);
+        Matrix pmat = Matrix.identity(3, 3);
+        Matrix invpmat = Matrix.identity(3, 3);
+        Matrix tinvpmat = Matrix.identity(3, 3);
 
         /* Vector3 type and functions need to be added to the common set. */
         Vector3f prhs, psol;
@@ -591,7 +579,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @return  transformation matrix
      */
     public double[][] getMatrix() {
-        return matrix;
+        return A;
     }
 
     /**
@@ -600,7 +588,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @return  number of cols
      */
     public int getNCols() {
-        return nCol;
+        return n;
     }
 
     /**
@@ -609,7 +597,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @return  number of rows
      */
     public int getNRows() {
-        return mRow;
+        return m;
     }
 
     /**
@@ -730,9 +718,9 @@ public class TransMatrix extends Matrix // implements TableModelListener
             for (c = 0; c < cDim; c++) {
 
                 if (r == c) {
-                    matrix[r][c] = (float) 1.0;
+                    A[r][c] = (float) 1.0;
                 } else {
-                    matrix[r][c] = (float) 0.0;
+                    A[r][c] = (float) 0.0;
                 }
             }
         }
@@ -757,12 +745,12 @@ public class TransMatrix extends Matrix // implements TableModelListener
 
                 if (r == c) {
 
-                    if ((matrix[r][c] < (1.0f - epsilon)) || (matrix[r][c] > (1.0f + epsilon))) {
+                    if ((A[r][c] < (1.0f - epsilon)) || (A[r][c] > (1.0f + epsilon))) {
                         isId = false;
                     }
                 } else {
 
-                    if ((matrix[r][c] < (0.0f - epsilon)) || (matrix[r][c] > (0.0f + epsilon))) {
+                    if ((A[r][c] < (0.0f - epsilon)) || (A[r][c] > (0.0f + epsilon))) {
                         isId = false;
                     }
                 }
@@ -896,15 +884,15 @@ public class TransMatrix extends Matrix // implements TableModelListener
                     reConstruct(r, c); // reallocate matrix to row, col sizes
                     if(isXFM) {
                     	for (i = 0; i < 3; i++) {
-	                        decodeLine(raFile, i, matrix);
+	                        decodeLine(raFile, i, A);
 	                    }
-                    	matrix[3][0] = 0;
-                    	matrix[3][1] = 0;
-                    	matrix[3][2] = 0;
-                    	matrix[3][3] = 1.0;
+                    	A[3][0] = 0;
+                    	A[3][1] = 0;
+                    	A[3][2] = 0;
+                    	A[3][3] = 1.0;
                     }else {
 	                    for (i = 0; i < r; i++) {
-	                        decodeLine(raFile, i, matrix);
+	                        decodeLine(raFile, i, A);
 	                    }
                     }
                 } else {
@@ -972,13 +960,13 @@ public class TransMatrix extends Matrix // implements TableModelListener
 
         if (raFile != null) {
             try {
-                raFile.writeBytes(Integer.toString(mRow) + "\n"); // write number of rows
-                raFile.writeBytes(Integer.toString(nCol) + "\n"); // write number of columns
+                raFile.writeBytes(Integer.toString(m) + "\n"); // write number of rows
+                raFile.writeBytes(Integer.toString(n) + "\n"); // write number of columns
 
-                for (r = 0; r < mRow; r++) {
+                for (r = 0; r < m; r++) {
 
-                    for (c = 0; c < nCol; c++) {
-                        raFile.writeBytes(Double.toString(matrix[r][c]) + " ");
+                    for (c = 0; c < n; c++) {
+                        raFile.writeBytes(Double.toString(A[r][c]) + " ");
                     }
 
                     raFile.writeBytes("\n");
@@ -1010,7 +998,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
                 for (int r = 0; r < 3; r++) {
 
                     for (int c = 0; c < 4; c++) {
-                        raFile.writeBytes(Double.toString(matrix[r][c]));
+                        raFile.writeBytes(Double.toString(A[r][c]));
                         if(r == 2 && c == 3) {
                         	raFile.writeBytes(";");
                         }else {
@@ -1071,13 +1059,13 @@ public class TransMatrix extends Matrix // implements TableModelListener
         if (raFile != null) {
 
             try {
-                raFile.writeBytes(Integer.toString(mRow) + "\n"); // write number of rows
-                raFile.writeBytes(Integer.toString(nCol) + "\n"); // write number of columns
+                raFile.writeBytes(Integer.toString(m) + "\n"); // write number of rows
+                raFile.writeBytes(Integer.toString(n) + "\n"); // write number of columns
 
-                for (r = 0; r < mRow; r++) {
+                for (r = 0; r < m; r++) {
 
-                    for (c = 0; c < nCol; c++) {
-                        raFile.writeBytes(Double.toString(matrix[r][c]) + " ");
+                    for (c = 0; c < n; c++) {
+                        raFile.writeBytes(Double.toString(A[r][c]) + " ");
                     }
 
                     raFile.writeBytes("\n");
@@ -1100,7 +1088,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
      *                    add bounds checking in the future
      */
     public void setMatrix(double[][] newMatrix) {
-        matrix = newMatrix;
+        A = newMatrix;
     }
 
     /**
@@ -1114,7 +1102,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
     public void setMatrix(double newval, int row, int col) {
 
         try {
-            matrix[row][col] = newval;
+            A[row][col] = newval;
         } catch (ArrayIndexOutOfBoundsException aioobe) { /*doing nothing*/
         }
     }
@@ -1143,12 +1131,12 @@ public class TransMatrix extends Matrix // implements TableModelListener
         rotateMatrix[0][1] = -sinTheta;
         rotateMatrix[1][0] = sinTheta;
 
-        multMatrix(matrix, rotateMatrix, tmpMatrix);
+        multMatrix(A, rotateMatrix, tmpMatrix);
 
         for (int i = 0; i <= 2; i++) {
 
             for (int j = 0; j <= 2; j++) {
-                matrix[i][j] = tmpMatrix[i][j];
+                A[i][j] = tmpMatrix[i][j];
             }
         }
     }
@@ -1185,12 +1173,12 @@ public class TransMatrix extends Matrix // implements TableModelListener
         for (r = 0; r < rDim; r++) {
 
             for (c = 0; c < cDim; c++) {
-                tmpMatrix[r][c] = matrix[r][c];
-                matrix[r][c] = 0;
+                tmpMatrix[r][c] = A[r][c];
+                A[r][c] = 0;
             }
         }
 
-        multMatrix(tmpMatrix, rotateMatrix, matrix);
+        multMatrix(tmpMatrix, rotateMatrix, A);
     }
 
     /**
@@ -1270,12 +1258,12 @@ public class TransMatrix extends Matrix // implements TableModelListener
         for (r = 0; r < rDim; r++) {
 
             for (c = 0; c < cDim; c++) {
-                tmpMatrix[r][c] = matrix[r][c];
-                matrix[r][c] = 0;
+                tmpMatrix[r][c] = A[r][c];
+                A[r][c] = 0;
             }
         }
 
-        multMatrix(tmpMatrix, rotateMatrix, matrix);
+        multMatrix(tmpMatrix, rotateMatrix, A);
     }
 
     /**
@@ -1287,14 +1275,14 @@ public class TransMatrix extends Matrix // implements TableModelListener
     public void setSkew(double x, double y) {
         double[][] tmpMtx = new double[3][3];
 
-        for (int i = 0; i < matrix.length; i++) {
-            tmpMtx[i] = matrix[i];
+        for (int i = 0; i < A.length; i++) {
+            tmpMtx[i] = A[i];
         }
 
-        matrix[0][0] = tmpMtx[0][0] + (y * tmpMtx[0][1]);
-        matrix[1][0] = tmpMtx[1][0] + (y * tmpMtx[1][1]);
-        matrix[0][1] = (x * tmpMtx[0][0]) + tmpMtx[0][1];
-        matrix[1][1] = (x * tmpMtx[1][0]) + tmpMtx[1][1];
+        A[0][0] = tmpMtx[0][0] + (y * tmpMtx[0][1]);
+        A[1][0] = tmpMtx[1][0] + (y * tmpMtx[1][1]);
+        A[0][1] = (x * tmpMtx[0][0]) + tmpMtx[0][1];
+        A[1][1] = (x * tmpMtx[1][0]) + tmpMtx[1][1];
     }
 
     /**
@@ -1305,12 +1293,12 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  z  z skew
      */
     public void setSkew(double x, double y, double z) {
-        matrix[0][1] = (x * matrix[0][0]) + matrix[0][1];
-        matrix[0][2] = (y * matrix[0][0]) + (z * matrix[0][1]) + matrix[0][2];
-        matrix[1][1] = (x * matrix[1][0]) + matrix[1][1];
-        matrix[1][2] = (y * matrix[1][0]) + (z * matrix[1][1]) + matrix[1][2];
-        matrix[2][1] = (x * matrix[2][0]) + matrix[2][1];
-        matrix[2][2] = (y * matrix[2][0]) + (z * matrix[2][1]) + matrix[2][2];
+        A[0][1] = (x * A[0][0]) + A[0][1];
+        A[0][2] = (y * A[0][0]) + (z * A[0][1]) + A[0][2];
+        A[1][1] = (x * A[1][0]) + A[1][1];
+        A[1][2] = (y * A[1][0]) + (z * A[1][1]) + A[1][2];
+        A[2][1] = (x * A[2][0]) + A[2][1];
+        A[2][2] = (y * A[2][0]) + (z * A[2][1]) + A[2][2];
     }
 
     /**
@@ -1326,18 +1314,18 @@ public class TransMatrix extends Matrix // implements TableModelListener
         cosR = Math.cos((r / 180.0) * Math.PI);
         sinR = Math.sin((r / 180.0) * Math.PI);
 
-        matrix[0][0] = cosR;
-        matrix[0][1] = -sinR;
-        matrix[0][2] = tX;
-        matrix[1][0] = sinR;
-        matrix[1][1] = cosR;
-        matrix[1][2] = tY;
+        A[0][0] = cosR;
+        A[0][1] = -sinR;
+        A[0][2] = tX;
+        A[1][0] = sinR;
+        A[1][1] = cosR;
+        A[1][2] = tY;
 
         for (j = 0; j < 2; j++) {
-            matrix[2][j] = 0;
+            A[2][j] = 0;
         }
 
-        matrix[2][2] = 1;
+        A[2][2] = 1;
 
         return;
     }
@@ -1362,24 +1350,24 @@ public class TransMatrix extends Matrix // implements TableModelListener
         cosrZ = Math.cos((rZ / 180.0) * Math.PI);
         sinrZ = Math.sin((rZ / 180.0) * Math.PI);
 
-        matrix[0][0] = cosrZ * cosrY;
-        matrix[0][1] = -sinrZ * cosrY;
-        matrix[0][2] = sinrY;
-        matrix[0][3] = tX;
-        matrix[1][0] = (cosrZ * sinrY * sinrX) + (sinrZ * cosrX);
-        matrix[1][1] = (-sinrZ * sinrY * sinrX) + (cosrZ * cosrX);
-        matrix[1][2] = -cosrY * sinrX;
-        matrix[1][3] = tY;
-        matrix[2][0] = (-cosrZ * sinrY * cosrX) + (sinrZ * sinrX);
-        matrix[2][1] = (sinrZ * sinrY * cosrX) + (cosrZ * sinrX);
-        matrix[2][2] = cosrY * cosrX;
-        matrix[2][3] = tZ;
+        A[0][0] = cosrZ * cosrY;
+        A[0][1] = -sinrZ * cosrY;
+        A[0][2] = sinrY;
+        A[0][3] = tX;
+        A[1][0] = (cosrZ * sinrY * sinrX) + (sinrZ * cosrX);
+        A[1][1] = (-sinrZ * sinrY * sinrX) + (cosrZ * cosrX);
+        A[1][2] = -cosrY * sinrX;
+        A[1][3] = tY;
+        A[2][0] = (-cosrZ * sinrY * cosrX) + (sinrZ * sinrX);
+        A[2][1] = (sinrZ * sinrY * cosrX) + (cosrZ * sinrX);
+        A[2][2] = cosrY * cosrX;
+        A[2][3] = tZ;
 
         for (j = 0; j < 3; j++) {
-            matrix[3][j] = 0;
+            A[3][j] = 0;
         }
 
-        matrix[3][3] = 1;
+        A[3][3] = 1;
 
         return;
     }
@@ -1408,24 +1396,24 @@ public class TransMatrix extends Matrix // implements TableModelListener
         cosrZ = Math.cos((rZ / 180.0) * Math.PI);
         sinrZ = Math.sin((rZ / 180.0) * Math.PI);
 
-        matrix[0][0] = cosrZ * cosrY * sX;
-        matrix[0][1] = -sinrZ * cosrY * sY;
-        matrix[0][2] = sinrY * sZ;
-        matrix[0][3] = tX;
-        matrix[1][0] = ((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * sX;
-        matrix[1][1] = ((-sinrZ * sinrY * sinrX) + (cosrZ * cosrX)) * sY;
-        matrix[1][2] = -cosrY * sinrX * sZ;
-        matrix[1][3] = tY;
-        matrix[2][0] = ((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * sX;
-        matrix[2][1] = ((sinrZ * sinrY * cosrX) + (cosrZ * sinrX)) * sY;
-        matrix[2][2] = cosrY * cosrX * sZ;
-        matrix[2][3] = tZ;
+        A[0][0] = cosrZ * cosrY * sX;
+        A[0][1] = -sinrZ * cosrY * sY;
+        A[0][2] = sinrY * sZ;
+        A[0][3] = tX;
+        A[1][0] = ((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * sX;
+        A[1][1] = ((-sinrZ * sinrY * sinrX) + (cosrZ * cosrX)) * sY;
+        A[1][2] = -cosrY * sinrX * sZ;
+        A[1][3] = tY;
+        A[2][0] = ((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * sX;
+        A[2][1] = ((sinrZ * sinrY * cosrX) + (cosrZ * sinrX)) * sY;
+        A[2][2] = cosrY * cosrX * sZ;
+        A[2][3] = tZ;
 
         for (j = 0; j < 3; j++) {
-            matrix[3][j] = 0;
+            A[3][j] = 0;
         }
 
-        matrix[3][3] = 1;
+        A[3][3] = 1;
 
         return;
     }
@@ -1457,28 +1445,28 @@ public class TransMatrix extends Matrix // implements TableModelListener
         cosrZ = Math.cos((rZ / 180.0) * Math.PI);
         sinrZ = Math.sin((rZ / 180.0) * Math.PI);
 
-        matrix[0][0] = cosrZ * cosrY * sX;
-        matrix[0][1] = ((cosrZ * cosrY * skX) - (sinrZ * cosrY)) * sY;
-        matrix[0][2] = ((cosrZ * cosrY * skY) - (sinrZ * cosrY * skZ) + sinrY) * sZ;
-        matrix[0][3] = tX;
-        matrix[1][0] = ((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * sX;
-        matrix[1][1] = ((((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * skX) - (sinrZ * sinrY * sinrX) +
+        A[0][0] = cosrZ * cosrY * sX;
+        A[0][1] = ((cosrZ * cosrY * skX) - (sinrZ * cosrY)) * sY;
+        A[0][2] = ((cosrZ * cosrY * skY) - (sinrZ * cosrY * skZ) + sinrY) * sZ;
+        A[0][3] = tX;
+        A[1][0] = ((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * sX;
+        A[1][1] = ((((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * skX) - (sinrZ * sinrY * sinrX) +
                         (cosrZ * cosrX)) * sY;
-        matrix[1][2] = ((((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * skY) +
+        A[1][2] = ((((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * skY) +
                         (((-sinrZ * sinrY * sinrX) + (cosrZ * cosrX)) * skZ) - (cosrY * sinrX)) * sZ;
-        matrix[1][3] = tY;
-        matrix[2][0] = ((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * sX;
-        matrix[2][1] = ((((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * skX) + (sinrZ * sinrY * cosrX) +
+        A[1][3] = tY;
+        A[2][0] = ((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * sX;
+        A[2][1] = ((((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * skX) + (sinrZ * sinrY * cosrX) +
                         (cosrZ * sinrX)) * sY;
-        matrix[2][2] = ((((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * skY) +
+        A[2][2] = ((((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * skY) +
                         (((sinrZ * sinrY * cosrX) + (cosrZ * sinrX)) * skZ) + (cosrY * cosrX)) * sZ;
-        matrix[2][3] = tZ;
+        A[2][3] = tZ;
 
         for (j = 0; j < 3; j++) {
-            matrix[3][j] = 0;
+            A[3][j] = 0;
         }
 
-        matrix[3][3] = 1;
+        A[3][3] = 1;
 
         return;
     }
@@ -1490,8 +1478,8 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  y  y translation
      */
     public void setTranslate(double x, double y) {
-        matrix[0][2] = (x * matrix[0][0]) + (y * matrix[0][1]) + matrix[0][2];
-        matrix[1][2] = (x * matrix[1][0]) + (y * matrix[1][1]) + matrix[1][2];
+        A[0][2] = (x * A[0][0]) + (y * A[0][1]) + A[0][2];
+        A[1][2] = (x * A[1][0]) + (y * A[1][1]) + A[1][2];
     }
 
     /**
@@ -1502,9 +1490,9 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  z  z translation
      */
     public void setTranslate(double x, double y, double z) {
-        matrix[0][3] = (x * matrix[0][0]) + (y * matrix[0][1]) + (z * matrix[0][2]) + matrix[0][3];
-        matrix[1][3] = (x * matrix[1][0]) + (y * matrix[1][1]) + (z * matrix[1][2]) + matrix[1][3];
-        matrix[2][3] = (x * matrix[2][0]) + (y * matrix[2][1]) + (z * matrix[2][2]) + matrix[2][3];
+        A[0][3] = (x * A[0][0]) + (y * A[0][1]) + (z * A[0][2]) + A[0][3];
+        A[1][3] = (x * A[1][0]) + (y * A[1][1]) + (z * A[1][2]) + A[1][3];
+        A[2][3] = (x * A[2][0]) + (y * A[2][1]) + (z * A[2][2]) + A[2][3];
     }
 
     /**
@@ -1515,11 +1503,11 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public void setZoom(double sx, double sy) {
 
-        matrix[0][0] = sx * matrix[0][0];
-        matrix[1][0] = sx * matrix[1][0];
+        A[0][0] = sx * A[0][0];
+        A[1][0] = sx * A[1][0];
 
-        matrix[0][1] = sy * matrix[0][1];
-        matrix[1][1] = sy * matrix[1][1];
+        A[0][1] = sy * A[0][1];
+        A[1][1] = sy * A[1][1];
     }
 
     /**
@@ -1531,17 +1519,17 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public void setZoom(double sx, double sy, double sz) {
 
-        matrix[0][0] = sx * matrix[0][0];
-        matrix[1][0] = sx * matrix[1][0];
-        matrix[2][0] = sx * matrix[2][0];
+        A[0][0] = sx * A[0][0];
+        A[1][0] = sx * A[1][0];
+        A[2][0] = sx * A[2][0];
 
-        matrix[0][1] = sy * matrix[0][1];
-        matrix[1][1] = sy * matrix[1][1];
-        matrix[2][1] = sy * matrix[2][1];
+        A[0][1] = sy * A[0][1];
+        A[1][1] = sy * A[1][1];
+        A[2][1] = sy * A[2][1];
 
-        matrix[0][2] = sz * matrix[0][2];
-        matrix[1][2] = sz * matrix[1][2];
-        matrix[2][2] = sz * matrix[2][2];
+        A[0][2] = sz * A[0][2];
+        A[1][2] = sz * A[1][2];
+        A[2][2] = sz * A[2][2];
     }
 
     /**
@@ -1558,11 +1546,11 @@ public class TransMatrix extends Matrix // implements TableModelListener
         format.setMinimumFractionDigits(4);
         format.setGroupingUsed(false);
 
-        for (int i = 0; i < mRow; i++) {
+        for (int i = 0; i < m; i++) {
             s += "  ";
 
-            for (int j = 0; j < nCol; j++) {
-                s += format.format(matrix[i][j]); // format the number
+            for (int j = 0; j < n; j++) {
+                s += format.format(A[i][j]); // format the number
                 s = s + "  ";
             }
 
@@ -1586,8 +1574,8 @@ public class TransMatrix extends Matrix // implements TableModelListener
         int newX, newY;
 
         for (n = 0; n < length; n++) {
-            newX = (int) Math.round((gon.xpoints[n] * matrix[0][0]) + (gon.ypoints[n] * matrix[0][1]) + matrix[0][2]);
-            newY = (int) Math.round((gon.xpoints[n] * matrix[1][0]) + (gon.ypoints[n] * matrix[1][1]) + matrix[1][2]);
+            newX = (int) Math.round((gon.xpoints[n] * A[0][0]) + (gon.ypoints[n] * A[0][1]) + A[0][2]);
+            newY = (int) Math.round((gon.xpoints[n] * A[1][0]) + (gon.ypoints[n] * A[1][1]) + A[1][2]);
             newGon.addPoint(newX, newY);
         }
 
@@ -1604,11 +1592,11 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
 //     public final void transform(Point2Df vect, Point2Df tVect) {
 
-//         tVect.x = (float) (((double) vect.x * matrix[0][0]) +
-//                            ((double) vect.Y * matrix[0][1]) + matrix[0][2]);
+//         tVect.x = (float) (((double) vect.x * A[0][0]) +
+//                            ((double) vect.Y * A[0][1]) + A[0][2]);
 
-//         tVect.Y = (float) (((double) vect.x * matrix[1][0]) +
-//                            ((double) vect.Y * matrix[1][1]) + matrix[1][2]);
+//         tVect.Y = (float) (((double) vect.x * A[1][0]) +
+//                            ((double) vect.Y * A[1][1]) + A[1][2]);
 
 //         return;
 //     }
@@ -1622,11 +1610,11 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
 //     public final void transform(Vector3Df vect, Vector3Df tVect) {
 
-//         tVect.x = (float) (((double) vect.x * matrix[0][0]) +
-//                            ((double) vect.Y * matrix[0][1]) + matrix[0][2]);
+//         tVect.x = (float) (((double) vect.x * A[0][0]) +
+//                            ((double) vect.Y * A[0][1]) + A[0][2]);
 
-//         tVect.Y = (float) (((double) vect.x * matrix[1][0]) +
-//                            ((double) vect.Y * matrix[1][1]) + matrix[1][2]);
+//         tVect.Y = (float) (((double) vect.x * A[1][0]) +
+//                            ((double) vect.Y * A[1][1]) + A[1][2]);
 //         tVect.Z = 1;
 
 //         return;
@@ -1644,13 +1632,13 @@ public class TransMatrix extends Matrix // implements TableModelListener
         int length = vects.length;
 
         for (n = 0; n < length; n++) {
-            tVects[n].X = (float) (((double) vects[n].X * matrix[0][0]) +
-                                   ((double) vects[n].Y * matrix[0][1]) +
-                                   matrix[0][2]);
+            tVects[n].X = (float) (((double) vects[n].X * A[0][0]) +
+                                   ((double) vects[n].Y * A[0][1]) +
+                                   A[0][2]);
             
-            tVects[n].Y = (float) (((double) vects[n].X * matrix[1][0]) +
-                                   ((double) vects[n].Y * matrix[1][1]) +
-                                   matrix[1][2]);
+            tVects[n].Y = (float) (((double) vects[n].X * A[1][0]) +
+                                   ((double) vects[n].Y * A[1][1]) +
+                                   A[1][2]);
 
         }
 
@@ -1669,13 +1657,13 @@ public class TransMatrix extends Matrix // implements TableModelListener
         int length = vects.length;
 
         for (n = 0; n < length; n++) {
-            tVects[n].X = (float) (((double) vects[n].X * matrix[0][0]) +
-                                   ((double) vects[n].Y * matrix[0][1]) +
-                                   matrix[0][2]);
+            tVects[n].X = (float) (((double) vects[n].X * A[0][0]) +
+                                   ((double) vects[n].Y * A[0][1]) +
+                                   A[0][2]);
 
-            tVects[n].Y = (float) (((double) vects[n].X * matrix[1][0]) +
-                                   ((double) vects[n].Y * matrix[1][1]) +
-                                   matrix[1][2]);
+            tVects[n].Y = (float) (((double) vects[n].X * A[1][0]) +
+                                   ((double) vects[n].Y * A[1][1]) +
+                                   A[1][2]);
 
             tVects[n].Z = 1;
         }
@@ -1693,24 +1681,24 @@ public class TransMatrix extends Matrix // implements TableModelListener
     public final void transform(double[] pt, double[] tPt) {
 
         if (pt.length == 3) {
-            tPt[0] = (pt[0] * matrix[0][0]) +
-                (pt[1] * matrix[0][1]) +
-                (pt[2] * matrix[0][2]) +
-                matrix[0][3];
+            tPt[0] = (pt[0] * A[0][0]) +
+                (pt[1] * A[0][1]) +
+                (pt[2] * A[0][2]) +
+                A[0][3];
 
-            tPt[1] = (pt[0] * matrix[1][0]) +
-                (pt[1] * matrix[1][1]) +
-                (pt[2] * matrix[1][2]) +
-                matrix[1][3];
+            tPt[1] = (pt[0] * A[1][0]) +
+                (pt[1] * A[1][1]) +
+                (pt[2] * A[1][2]) +
+                A[1][3];
 
-            tPt[2] = (pt[0] * matrix[2][0]) +
-                (pt[1] * matrix[2][1]) +
-                (pt[2] * matrix[2][2]) +
-                matrix[2][3];
+            tPt[2] = (pt[0] * A[2][0]) +
+                (pt[1] * A[2][1]) +
+                (pt[2] * A[2][2]) +
+                A[2][3];
 
         } else if (pt.length == 2) {
-            tPt[0] = (pt[0] * matrix[0][0]) + (pt[1] * matrix[0][1]) + matrix[0][2];
-            tPt[1] = (pt[0] * matrix[1][0]) + (pt[1] * matrix[1][1]) + matrix[1][2];
+            tPt[0] = (pt[0] * A[0][0]) + (pt[1] * A[0][1]) + A[0][2];
+            tPt[1] = (pt[0] * A[1][0]) + (pt[1] * A[1][1]) + A[1][2];
         }
 
         return;
@@ -1725,20 +1713,20 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transform(float[] pt, float[] tPt) {
 
-        tPt[0] = (float) (((double) pt[0] * matrix[0][0]) +
-                          ((double) pt[1] * matrix[0][1]) +
-                          ((double) pt[2] * matrix[0][2]) +
-                          matrix[0][3]);
+        tPt[0] = (float) (((double) pt[0] * A[0][0]) +
+                          ((double) pt[1] * A[0][1]) +
+                          ((double) pt[2] * A[0][2]) +
+                          A[0][3]);
 
-        tPt[1] = (float) (((double) pt[0] * matrix[1][0]) +
-                          ((double) pt[1] * matrix[1][1]) +
-                          ((double) pt[2] * matrix[1][2]) +
-                          matrix[1][3]);
+        tPt[1] = (float) (((double) pt[0] * A[1][0]) +
+                          ((double) pt[1] * A[1][1]) +
+                          ((double) pt[2] * A[1][2]) +
+                          A[1][3]);
 
-        tPt[2] = (float) (((double) pt[0] * matrix[2][0]) +
-                          ((double) pt[1] * matrix[2][1]) +
-                          ((double) pt[2] * matrix[2][2]) +
-                          matrix[2][3]);
+        tPt[2] = (float) (((double) pt[0] * A[2][0]) +
+                          ((double) pt[1] * A[2][1]) +
+                          ((double) pt[2] * A[2][2]) +
+                          A[2][3]);
 
         return;
     }
@@ -1752,20 +1740,20 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transformAsPoint3Df(Vector3f pt, Vector3f tPt) {
 
-        tPt.X = (float) (((double) pt.X * matrix[0][0]) +
-                         ((double) pt.Y * matrix[0][1]) +
-                         ((double) pt.Z * matrix[0][2]) +
-                         matrix[0][3]);
+        tPt.X = (float) (((double) pt.X * A[0][0]) +
+                         ((double) pt.Y * A[0][1]) +
+                         ((double) pt.Z * A[0][2]) +
+                         A[0][3]);
 
-        tPt.Y = (float) (((double) pt.X * matrix[1][0]) +
-                         ((double) pt.Y * matrix[1][1]) +
-                         ((double) pt.Z * matrix[1][2]) +
-                         matrix[1][3]);
+        tPt.Y = (float) (((double) pt.X * A[1][0]) +
+                         ((double) pt.Y * A[1][1]) +
+                         ((double) pt.Z * A[1][2]) +
+                         A[1][3]);
 
-        tPt.Z = (float) (((double) pt.X * matrix[2][0]) +
-                         ((double) pt.Y * matrix[2][1]) +
-                         ((double) pt.Z * matrix[2][2]) +
-                         matrix[2][3]);
+        tPt.Z = (float) (((double) pt.X * A[2][0]) +
+                         ((double) pt.Y * A[2][1]) +
+                         ((double) pt.Z * A[2][2]) +
+                         A[2][3]);
 
         return;
     }
@@ -1782,20 +1770,20 @@ public class TransMatrix extends Matrix // implements TableModelListener
 //         int length = pt.length;
 
 //         for (n = 0; n < length; n++) {
-//             tPts[n].X = (float) (((double) pt[n].X * matrix[0][0]) +
-//                                  ((double) pt[n].Y * matrix[0][1]) +
-//                                  ((double) pt[n].Z * matrix[0][2]) +
-//                                  matrix[0][3]);
+//             tPts[n].X = (float) (((double) pt[n].X * A[0][0]) +
+//                                  ((double) pt[n].Y * A[0][1]) +
+//                                  ((double) pt[n].Z * A[0][2]) +
+//                                  A[0][3]);
 
-//             tPts[n].Y = (float) (((double) pt[n].X * matrix[1][0]) +
-//                                  ((double) pt[n].Y * matrix[1][1]) +
-//                                  ((double) pt[n].Z * matrix[1][2]) +
-//                                  matrix[1][3]);
+//             tPts[n].Y = (float) (((double) pt[n].X * A[1][0]) +
+//                                  ((double) pt[n].Y * A[1][1]) +
+//                                  ((double) pt[n].Z * A[1][2]) +
+//                                  A[1][3]);
 
-//             tPts[n].Z = (float) (((double) pt[n].X * matrix[2][0]) +
-//                                  ((double) pt[n].Y * matrix[2][1]) +
-//                                  ((double) pt[n].Z * matrix[2][2]) +
-//                                  matrix[2][3]);
+//             tPts[n].Z = (float) (((double) pt[n].X * A[2][0]) +
+//                                  ((double) pt[n].Y * A[2][1]) +
+//                                  ((double) pt[n].Z * A[2][2]) +
+//                                  A[2][3]);
 //         }
 
 //         return;
@@ -1810,20 +1798,20 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
 //     public final void transform(Vector4Df vect, Vector4Df tVect) {
 
-//         tVect.X = (float) (((double) vect.X * matrix[0][0]) +
-//                            ((double) vect.Y * matrix[0][1]) +
-//                            ((double) vect.Z * matrix[0][2]) +
-//                            matrix[0][3]);
+//         tVect.X = (float) (((double) vect.X * A[0][0]) +
+//                            ((double) vect.Y * A[0][1]) +
+//                            ((double) vect.Z * A[0][2]) +
+//                            A[0][3]);
 
-//         tVect.Y = (float) (((double) vect.X * matrix[1][0]) +
-//                            ((double) vect.Y * matrix[1][1]) +
-//                            ((double) vect.Z * matrix[1][2]) +
-//                            matrix[1][3]);
+//         tVect.Y = (float) (((double) vect.X * A[1][0]) +
+//                            ((double) vect.Y * A[1][1]) +
+//                            ((double) vect.Z * A[1][2]) +
+//                            A[1][3]);
 
-//         tVect.Z = (float) (((double) vect.X * matrix[2][0]) +
-//                            ((double) vect.Y * matrix[2][1]) +
-//                            ((double) vect.Z * matrix[2][2]) +
-//                            matrix[2][3]);
+//         tVect.Z = (float) (((double) vect.X * A[2][0]) +
+//                            ((double) vect.Y * A[2][1]) +
+//                            ((double) vect.Z * A[2][2]) +
+//                            A[2][3]);
 //         tVect.w = 1;
 
 //         return;
@@ -1841,20 +1829,20 @@ public class TransMatrix extends Matrix // implements TableModelListener
 //         int length = vects.length;
 
 //         for (n = 0; n < length; n++) {
-//             tVects[n].X = (float) (((double) vects[n].X * matrix[0][0]) +
-//                                    ((double) vects[n].Y * matrix[0][1]) +
-//                                    ((double) vects[n].Z * matrix[0][2]) +
-//                                    matrix[0][3]);
+//             tVects[n].X = (float) (((double) vects[n].X * A[0][0]) +
+//                                    ((double) vects[n].Y * A[0][1]) +
+//                                    ((double) vects[n].Z * A[0][2]) +
+//                                    A[0][3]);
 
-//             tVects[n].Y = (float) (((double) vects[n].X * matrix[1][0]) +
-//                                    ((double) vects[n].Y * matrix[1][1]) +
-//                                    ((double) vects[n].Z * matrix[1][2]) +
-//                                    matrix[1][3]);
+//             tVects[n].Y = (float) (((double) vects[n].X * A[1][0]) +
+//                                    ((double) vects[n].Y * A[1][1]) +
+//                                    ((double) vects[n].Z * A[1][2]) +
+//                                    A[1][3]);
 
-//             tVects[n].Z = (float) (((double) vects[n].X * matrix[2][0]) +
-//                                    ((double) vects[n].Y * matrix[2][1]) +
-//                                    ((double) vects[n].Z * matrix[2][2]) +
-//                                    matrix[2][3]);
+//             tVects[n].Z = (float) (((double) vects[n].X * A[2][0]) +
+//                                    ((double) vects[n].Y * A[2][1]) +
+//                                    ((double) vects[n].Z * A[2][2]) +
+//                                    A[2][3]);
 //             tVects[n].w = 1;
 //         }
 
@@ -1872,8 +1860,8 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transform(double x, double y, double[] tPt) {
 
-        tPt[0] = (x * matrix[0][0]) + (y * matrix[0][1]) + matrix[0][2];
-        tPt[1] = (x * matrix[1][0]) + (y * matrix[1][1]) + matrix[1][2];
+        tPt[0] = (x * A[0][0]) + (y * A[0][1]) + A[0][2];
+        tPt[1] = (x * A[1][0]) + (y * A[1][1]) + A[1][2];
 
         return;
     }
@@ -1888,12 +1876,12 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transform(float x, float y, float[] tPt) {
 
-        tPt[0] = (float) (((double) x * matrix[0][0]) +
-                          ((double) y * matrix[0][1]) +
-                          matrix[0][2]);
-        tPt[1] = (float) (((double) x * matrix[1][0]) +
-                          ((double) y * matrix[1][1]) +
-                          matrix[1][2]);
+        tPt[0] = (float) (((double) x * A[0][0]) +
+                          ((double) y * A[0][1]) +
+                          A[0][2]);
+        tPt[1] = (float) (((double) x * A[1][0]) +
+                          ((double) y * A[1][1]) +
+                          A[1][2]);
 
         return;
     }
@@ -1909,20 +1897,20 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transform(double x, double y, double z, double[] tPt) {
 
-        tPt[0] = (x * matrix[0][0]) +
-            (y * matrix[0][1]) +
-            (z * matrix[0][2]) +
-            matrix[0][3];
+        tPt[0] = (x * A[0][0]) +
+            (y * A[0][1]) +
+            (z * A[0][2]) +
+            A[0][3];
 
-        tPt[1] = (x * matrix[1][0]) +
-            (y * matrix[1][1]) +
-            (z * matrix[1][2]) +
-            matrix[1][3];
+        tPt[1] = (x * A[1][0]) +
+            (y * A[1][1]) +
+            (z * A[1][2]) +
+            A[1][3];
 
-        tPt[2] = (x * matrix[2][0]) +
-            (y * matrix[2][1]) +
-            (z * matrix[2][2]) +
-            matrix[2][3];
+        tPt[2] = (x * A[2][0]) +
+            (y * A[2][1]) +
+            (z * A[2][2]) +
+            A[2][3];
 
         return;
     }
@@ -1938,20 +1926,20 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transform(float x, float y, float z, float[] tPt) {
 
-        tPt[0] = (float) (((double) x * matrix[0][0]) +
-                          ((double) y * matrix[0][1]) +
-                          ((double) z * matrix[0][2]) +
-                          matrix[0][3]);
+        tPt[0] = (float) (((double) x * A[0][0]) +
+                          ((double) y * A[0][1]) +
+                          ((double) z * A[0][2]) +
+                          A[0][3]);
 
-        tPt[1] = (float) (((double) x * matrix[1][0]) +
-                          ((double) y * matrix[1][1]) +
-                          ((double) z * matrix[1][2]) +
-                          matrix[1][3]);
+        tPt[1] = (float) (((double) x * A[1][0]) +
+                          ((double) y * A[1][1]) +
+                          ((double) z * A[1][2]) +
+                          A[1][3]);
 
-        tPt[2] = (float) (((double) x * matrix[2][0]) +
-                          ((double) y * matrix[2][1]) +
-                          ((double) z * matrix[2][2]) +
-                          matrix[2][3]);
+        tPt[2] = (float) (((double) x * A[2][0]) +
+                          ((double) y * A[2][1]) +
+                          ((double) z * A[2][2]) +
+                          A[2][3]);
 
         return;
     }
@@ -2059,7 +2047,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
     		}
             index = 0;
 
-            for (c = 0; c < nCol; c++) {
+            for (c = 0; c < n; c++) {
 
                 if (str.indexOf("  ", index) > 0) {
                     nextIndex = str.indexOf("  ", index); // - handle FSL matrix files with two spaces
@@ -2078,18 +2066,18 @@ public class TransMatrix extends Matrix // implements TableModelListener
                     }
 
                     if (tmpStr.indexOf(".") != -1) {
-                        matrix[row][c] = (Double.valueOf(tmpStr).doubleValue());
+                        A[row][c] = (Double.valueOf(tmpStr).doubleValue());
                     } else {
-                        matrix[row][c] = (Integer.valueOf(tmpStr).doubleValue());
+                        A[row][c] = (Integer.valueOf(tmpStr).doubleValue());
                     }
                 } else { // spaces trimmed from end
                     tmpStr = str.substring(index, str.length()).trim();
                     index = nextIndex;
 
                     if (tmpStr.indexOf(".") != -1) {
-                        matrix[row][c] = (Double.valueOf(tmpStr).doubleValue());
+                        A[row][c] = (Double.valueOf(tmpStr).doubleValue());
                     } else {
-                        matrix[row][c] = (Integer.valueOf(tmpStr).doubleValue());
+                        A[row][c] = (Integer.valueOf(tmpStr).doubleValue());
                     }
                 }
             }
@@ -2168,5 +2156,58 @@ public class TransMatrix extends Matrix // implements TableModelListener
 
         pout.W = (float)((pin.X * m.get(0, 3)) + (pin.Y * m.get(1, 3)) + (pin.Z * m.get(2, 3)) + (pin.W * m.get(3, 3)));
     }
+    
+    /**
+     * Reallocates memory for matrix without constructing a new object a new object.
+     *
+     * @param  r  Number of rows.
+     * @param  c  Number of colums.
+     */
+    protected void reConstruct(int r, int c) {
+        this.m = r;
+        this.n = c;
+        A = new double[m][n];
+    }
+
+    /**
+     * Matrix inversion that replaces this objects matrix with an inverted matrix. This method calls this classes
+     * inverse() method.
+     */
+    public void invert() {
+        A = inverse().getArray();
+    }
+    
+    /**
+     * Produces a string of the matrix values.
+     *
+     * @param   w  Column width.
+     * @param   d  Number of digits after the decimal.
+     *
+     * @return  String containing the values from the matrix.
+     */
+    public String matrixToString(int w, int d) {
+        String s = new String();
+        int i, j;
+        DecimalFormat format = new DecimalFormat();
+        format.setMinimumIntegerDigits(1);
+        format.setMaximumFractionDigits(d);
+        format.setMinimumFractionDigits(d);
+        format.setGroupingUsed(false);
+
+        for (i = 0; i < m; i++) {
+            s += "  ";
+
+            for (j = 0; j < n; j++) {
+                s += format.format(A[i][j]); // format the number
+                s = s + "  ";
+            }
+
+            s = s + "\n";
+        }
+
+        return s;
+    }
+
+
 
 }

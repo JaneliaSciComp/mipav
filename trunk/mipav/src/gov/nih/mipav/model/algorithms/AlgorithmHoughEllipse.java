@@ -2,11 +2,11 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.*;
+//import gov.nih.mipav.*;
 
 import java.io.*;
 
@@ -347,9 +347,9 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         float tangenty23;
         float slope23;
         float intercept23 = 0.0f;
-        Matrix A;
-        Matrix B;
-        Matrix X = null;
+        JamaMatrix A;
+        JamaMatrix B;
+        JamaMatrix X = null;
         double a = 1.0;
         double b = 0.0;
         double c = 1.0;
@@ -1336,8 +1336,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         randomGen = new RandomNumberGen();
         minDistanceSquared = minPointDistance * minPointDistance;
         maxDistanceSquared = maxPointDistance * maxPointDistance;
-        A = new Matrix(3,3);
-        B = new Matrix(3,1);
+        A = new JamaMatrix(3,3, 0.0);
+        B = new JamaMatrix(3,1, 0.0);
         foundPoint = new byte[numPoints];
         testedArray = new boolean[numBins];
         while (ellipseFindCycles < maxEllipseFindCycles) {
@@ -1517,6 +1517,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     // Matrix is singular
                     continue;
                 }
+                if (X == null) continue;
                 // Obtain the remaining 3 ellipse parameters, a, b, and c
                 // where a*x**2 + 2*b*x*y + c*y**2 = 1
                 // in the now zero centered ellipse
@@ -1780,16 +1781,19 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         slopeArray = null;
         interceptArray = null;
         testedArray = null;
-        try {
-            A.finalize();
-            B.finalize();
-            if (X != null) {
-                X.finalize();
-            }
-        }
-        catch (Throwable e) {
-            
-        }
+//        try {
+//            A.finalize();
+//            B.finalize();
+//            if (X != null) {
+//                X.finalize();
+//            }
+//        }
+//        catch (Throwable e) {
+//            
+//        }
+        A = null;
+        B = null;
+        X = null;
         randomGen = null;
         
         

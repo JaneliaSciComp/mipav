@@ -3,7 +3,7 @@ package gov.nih.mipav.model.algorithms;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import Jama.*;
 
 import gov.nih.mipav.view.*;
 

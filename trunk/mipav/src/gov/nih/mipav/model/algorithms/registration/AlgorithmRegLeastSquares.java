@@ -6,7 +6,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import Jama.*;
 
 import gov.nih.mipav.view.*;
 
@@ -356,7 +356,7 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
                     vArray[0][2] = -vArray[0][2];
                     vArray[1][2] = -vArray[1][2];
                     vArray[2][2] = -vArray[2][2];
-                    V.setArray(vArray);
+                    //V.setArray(vArray);
                     X = V.times(SVD.getU().transpose());
                     rotateBA = X.copy();
                     xfrmBA = buildXfrm(p1, p2, rotateBA);

@@ -33,7 +33,7 @@ Project Leader:
 
 Current MIPAV contributors:
 
-     Alexandra Bokinsky, Ph.D., Geometric Software
+     Alexandra Bokinsky, Ph.D., Geometric Tools Inc.
      Ruida Cheng, ISL, NIH
      William Gandler, ISL, NIH
      Paul Hemler, Ph.D., Hampden-Sydney College

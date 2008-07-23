@@ -1049,10 +1049,10 @@ public class FileInfoAnalyze extends FileInfoBase {
      */
     public void setDataType(short dtype) {
 
-        if ((dtype == this.DT_UNSIGNED_SHORT) || (dtype == this.DT_NONE) || (dtype == this.DT_UNKNOWN) ||
-                (dtype == this.DT_BINARY) || (dtype == this.DT_UNSIGNED_CHAR) || (dtype == this.DT_SIGNED_SHORT) ||
-                (dtype == this.DT_SIGNED_INT) || (dtype == this.DT_FLOAT) || (dtype == this.DT_COMPLEX) ||
-                (dtype == this.DT_RGB) || (dtype == this.DT_ALL)) {
+        if ((dtype == DT_UNSIGNED_SHORT) || (dtype == DT_NONE) || (dtype == DT_UNKNOWN) ||
+                (dtype == DT_BINARY) || (dtype == DT_UNSIGNED_CHAR) || (dtype == DT_SIGNED_SHORT) ||
+                (dtype == DT_SIGNED_INT) || (dtype == DT_FLOAT) || (dtype == DT_COMPLEX) ||
+                (dtype == DT_RGB) || (dtype == DT_ALL)) {
             datatype = dtype;
         } else if (dtype == 6) { // Old illegal label for DT_UNSIGNED_SHORT
             datatype = DT_SIGNED_SHORT;

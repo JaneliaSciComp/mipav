@@ -6,7 +6,7 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
 import gov.nih.mipav.view.dialogs.*;
 
@@ -822,7 +822,7 @@ public abstract class ViewJFrameBase extends JFrame
             // if voiDir does not exist, then return
             // if voiDir exists, then get list of voi's from directory (*.voi)
             File voiFileDir = new File(voiDir);
-            Vector filenames = new Vector();
+            Vector<String> filenames = new Vector<String>();
 
             if (voiFileDir.exists() && voiFileDir.isDirectory()) {
 
@@ -832,7 +832,7 @@ public abstract class ViewJFrameBase extends JFrame
                 for (int k = 0; k < files.length; k++) {
 
                     if (files[k].getName().endsWith(".voi") || files[k].getName().endsWith(".xml")) {
-                        filenames.addElement(files[k].getName());
+                        filenames.add(files[k].getName());
                     }
                 }
             } else { // voiFileDir either doesn't exist, or isn't a directory
@@ -5299,7 +5299,7 @@ public abstract class ViewJFrameBase extends JFrame
              * Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3] Tr13 = M[1][0] * Tx + M[1][1] * Ty + M[1][2]
              * Tz + M[1][3] Tr23 = M[2][2] * Tx + M[2][1] * Ty + M[2][2] * Tz + M[2][3]
              */
-            Matrix A = new Matrix(3, 3);
+            JamaMatrix A = new JamaMatrix(3, 3);
 
             A.set(0, 0, M[0][0]);
             A.set(0, 1, M[0][1]);
@@ -5311,13 +5311,13 @@ public abstract class ViewJFrameBase extends JFrame
             A.set(2, 1, M[2][1]);
             A.set(2, 2, M[2][2]);
 
-            Matrix b = new Matrix(3, 1);
+            JamaMatrix b = new JamaMatrix(3, 1);
 
             b.set(0, 0, Tr03 - M[0][3]);
             b.set(1, 0, Tr13 - M[1][3]);
             b.set(2, 0, Tr23 - M[2][3]);
 
-            Matrix X = A.solve(b);
+            JamaMatrix X = A.solve(b);
             double Tx = X.get(0, 0);
             double Ty = X.get(1, 0);
             double Tz = X.get(2, 0);
@@ -5539,7 +5539,7 @@ public abstract class ViewJFrameBase extends JFrame
                  * Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3] Tr13 = M[1][0] * Tx + M[1][1] * Ty +
                  * M[1][2] * Tz + M[1][3] Tr23 = M[2][2] * Tx + M[2][1] * Ty + M[2][2] * Tz + M[2][3]
                  */
-                Matrix A = new Matrix(3, 3);
+                JamaMatrix A = new JamaMatrix(3, 3);
 
                 A.set(0, 0, M[0][0]);
                 A.set(0, 1, M[0][1]);
@@ -5551,13 +5551,13 @@ public abstract class ViewJFrameBase extends JFrame
                 A.set(2, 1, M[2][1]);
                 A.set(2, 2, M[2][2]);
 
-                Matrix b = new Matrix(3, 1);
+                JamaMatrix b = new JamaMatrix(3, 1);
 
                 b.set(0, 0, Tr03 - M[0][3]);
                 b.set(1, 0, Tr13 - M[1][3]);
                 b.set(2, 0, Tr23 - M[2][3]);
 
-                Matrix X = A.solve(b);
+                JamaMatrix X = A.solve(b);
                 double Tx = X.get(0, 0);
                 double Ty = X.get(1, 0);
                 double Tz = X.get(2, 0);

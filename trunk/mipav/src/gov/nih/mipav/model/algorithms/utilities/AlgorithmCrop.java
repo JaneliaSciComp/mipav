@@ -7,7 +7,7 @@ import gov.nih.mipav.*;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import Jama.*;
 
 import java.io.*;
 import java.util.*;

@@ -4,7 +4,8 @@ package gov.nih.mipav.model.algorithms.utilities;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Matrix2f;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -53,7 +54,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
     private boolean doOrigins = true;
 
     /** DOCUMENT ME! */
-    private double[] endImg_A, endImg_B;
+    //private double[] endImg_A, endImg_B;
 
     /** DOCUMENT ME! */
     private double[] endLPS_A, endLPS_B;
@@ -156,8 +157,8 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             origImg_B = new double[nDims];
             endLPS_A = new double[nDims];
             endLPS_B = new double[nDims];
-            endImg_A = new double[nDims];
-            endImg_B = new double[nDims];
+            //endImg_A = new double[nDims];
+            //endImg_B = new double[nDims];
             reverse = new boolean[nDims];
         } catch (OutOfMemoryError e) {
             System.gc();
@@ -569,13 +570,10 @@ public class AlgorithmMatchImages extends AlgorithmBase {
     }
 
     /**
-     * DOCUMENT ME!
+     * Get rid of space hogs.
      */
     public void disposeLocal() {
 
-        /**
-         *   Get rid of space hogs.
-         */
         sourceImgA = null;
         sourceImgB = null;
     }
@@ -666,7 +664,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
         if (doOrients) {
 
-            // The only way this can be false is if it's explicity set to be.  JDialogMatchImages
+            // The only way this can be false is if it's explicitly set to be.  JDialogMatchImages
             // do not given an option not to match orientations.
             // Match orientations.
             if (!sameOrient) {
@@ -799,14 +797,14 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         int[] axisOrientation = new int[3];
         double[][] array;
         double xi, xj, xk, yi, yj, yk, zi, zj, zk, val;
-        Matrix Q;
+        Matrix3f Q;
         double detQ;
         double vbest;
         int ibest, jbest, kbest, pbest, qbest, rbest;
         int i, j, k, p, q, r;
-        Matrix P;
+        Matrix3f P;
         double detP;
-        Matrix M;
+        Matrix3f M = new Matrix3f();
 
         array = mat.getMatrix(0, 2, 0, 2).getArray();
 
@@ -1116,8 +1114,10 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         array[2][2] = zk;
 
         // At this point, Q is the rotation matrix from the (i,j,k) to the (x,y,z) axes
-        Q = new Matrix(array);
-        detQ = Q.det();
+        Q = new Matrix3f((float)xi, (float)xj, (float)xk, 
+        		(float)yi, (float)yj, (float)yk, 
+        		(float)zi, (float)zj, (float)zk);
+        detQ = Q.Determinant();
 
         if (detQ == 0.0) {
             MipavUtil.displayError("detQ == 0.0 in getAxisOrientation");
@@ -1162,28 +1162,28 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                     array[2][0] = 0.0;
                     array[2][1] = 0.0;
                     array[2][2] = 0.0;
-                    P = new Matrix(array);
+                    P = new Matrix3f(); // zero matrix
 
                     for (p = -1; p <= 1; p += 2) { // p,q,r are -1 or +1 and go into rows #1,2,3
 
                         for (q = -1; q <= 1; q += 2) {
 
                             for (r = -1; r <= 1; r += 2) {
-                                P.set(0, i - 1, p);
-                                P.set(1, j - 1, q);
-                                P.set(2, k - 1, r);
-                                detP = P.det();
+                                P.Set(0, i - 1, p);
+                                P.Set(1, j - 1, q);
+                                P.Set(2, k - 1, r);
+                                detP = P.Determinant();
 
                                 // sign of permutation doesn't match sign of Q
                                 if ((detP * detQ) <= 0.0) {
                                     continue;
                                 }
 
-                                M = P.times(Q);
+                                M.Mult(P, Q);
 
                                 // angle of M rotation = 2.0*acos(0.5*sqrt(1.0+trace(M)))
                                 // we want largest trace(M) == smallest angle == M nearest to I
-                                val = M.get(0, 0) + M.get(1, 1) + M.get(2, 2); // trace
+                                val = M.Get(0, 0) + M.Get(1, 1) + M.Get(2, 2); // trace
 
                                 if (val > vbest) {
                                     vbest = val;
@@ -1300,7 +1300,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
     }
 
     /**
-     * Return the 2 axis orientation codes that correspond to the closest standard anatomical orientation of the (i,j)
+     * @return the 2 axis orientation codes that correspond to the closest standard anatomical orientation of the (i,j)
      * axes.
      *
      * @param   mat  3x3 matrix that transforms (i,j) indexes to x,y coordinates where +x = Left, +y = Posterior Only
@@ -1308,20 +1308,19 @@ public class AlgorithmMatchImages extends AlgorithmBase {
      *               has the smallest angle to the (i,j) axes directions, which are columns of the input matrix Errors:
      *               The codes returned will be zero.
      *
-     * @return  DOCUMENT ME!
      */
     private int[] getAxisOrientation2D(TransMatrix mat) {
         int[] axisOrientation = new int[2];
         double[][] array;
         double xi, xj, yi, yj, val;
-        Matrix Q;
+        Matrix2f Q;
         double detQ;
         double vbest;
         int ibest, jbest, pbest, qbest;
         int i, j, p, q;
-        Matrix P;
+        Matrix2f P;
         double detP;
-        Matrix M;
+        Matrix2f M = new Matrix2f();
 
         array = mat.getMatrix(0, 1, 0, 1).getArray();
 
@@ -1473,8 +1472,8 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         array[1][1] = yj;
 
         // At this point, Q is the rotation matrix from the (i,j,k) to the (x,y,z) axes
-        Q = new Matrix(array);
-        detQ = Q.det();
+        Q = new Matrix2f((float)xi, (float)xj, (float)yi, (float)yj );
+        detQ = Q.Determinant();
 
         if (detQ == 0.0) {
             MipavUtil.displayError("detQ == 0.0 in getAxisOrientation");
@@ -1505,25 +1504,25 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 array[0][1] = 0.0;
                 array[1][0] = 0.0;
                 array[1][1] = 0.0;
-                P = new Matrix(array);
+                P = new Matrix2f();
 
                 for (p = -1; p <= 1; p += 2) { // p,q are -1 or +1 and go into rows #1,2
 
                     for (q = -1; q <= 1; q += 2) {
-                        P.set(0, i - 1, p);
-                        P.set(1, j - 1, q);
-                        detP = P.det();
+                        P.Set(0, i - 1, p);
+                        P.Set(1, j - 1, q);
+                        detP = P.Determinant();
 
                         // sign of permutation doesn't match sign of Q
                         if ((detP * detQ) <= 0.0) {
                             continue;
                         }
 
-                        M = P.times(Q);
+                        M.Mult(P, Q);
 
                         // angle of M rotation = 2.0*acos(0.5*sqrt(1.0+trace(M)))
                         // we want largest trace(M) == smallest angle == M nearest to I
-                        val = M.get(0, 0) + M.get(1, 1); // trace
+                        val = M.Get(0, 0) + M.Get(1, 1); // trace
 
                         if (val > vbest) {
                             vbest = val;
@@ -2757,6 +2756,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
      * @param  start  DOCUMENT ME!
      * @param  tID    DOCUMENT ME!
      */
+    /*
     private void updateFileInfo(ModelImage image, int[] dim, double[] res, double[] start, int tID) {
         int[] tempI3 = new int[nDims];
         float[] tempF3 = new float[nDims];
@@ -2800,5 +2800,5 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             } // if (nDims == 3)
         }
     }
-
+    */
 }
