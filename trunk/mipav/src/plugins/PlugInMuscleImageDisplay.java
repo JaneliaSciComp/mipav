@@ -3379,7 +3379,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		//~ Instance fields -------------------------------------------------------------------------------------
 		
 		/**The current VOI being calculated.*/
-		private VOI currentVOI;
+		private VOI calculateVOI;
 		
 		/**Whether the Runnable has completed.*/
 		private boolean done = false;
@@ -3394,7 +3394,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 */
 		public MuscleCalculation(VOI newVOI, String name) {
 			super();
-			this.currentVOI = newVOI;
+			this.calculateVOI = newVOI;
 			this.name = name;
 		}
 		
@@ -3407,7 +3407,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			long time = System.currentTimeMillis();
 			
 			ArrayList<PlugInSelectableVOI> residuals = new ArrayList<PlugInSelectableVOI>();
-			VOI v = currentVOI;
+			VOI v = calculateVOI;
 			double wholeMultiplier = 0.0, sliceMultiplier = 0.0;
 			wholeMultiplier = sliceMultiplier = Math.pow(getActiveImage().getResolutions(0)[0]*0.1, 2);
 			if(multipleSlices)
@@ -3515,6 +3515,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     			}
     			
     			temp.setFatArea(fatArea, k);
+    			temp.setLeanArea(leanArea, k);
     			temp.setPartialArea(partialArea, k);
     			temp.setTotalArea(totalAreaCount, k);
     			
@@ -3557,7 +3558,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			//only place where calculations are generated, setLastCalculated should only appear here
 			temp.setLastCalculated(System.currentTimeMillis());
 			
-			System.out.println("Finished "+currentVOI.getName()+" in "+time);
+			System.out.println("Finished "+calculateVOI.getName()+" in "+time);
 			done = true;
 		}
 		
@@ -3692,14 +3693,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 * Gets the VOI being calculated in this runnable.
 		 */
 		public VOI getCurrentVOI() {
-			return currentVOI;
+			return calculateVOI;
 		}
 		
 		/**
 		 * Sets the VOI being calculated in this runnable to a new value. Also resets name.
 		 */
 		public void setCurrentVOI(VOI currentVOI) {
-			this.currentVOI = currentVOI;
+			this.calculateVOI = currentVOI;
 			this.name = currentVOI.getName();
 		}
 	}
