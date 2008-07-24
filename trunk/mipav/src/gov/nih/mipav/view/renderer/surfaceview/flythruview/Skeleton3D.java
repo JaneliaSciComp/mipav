@@ -385,6 +385,132 @@ public class Skeleton3D {
 
         return kPathGraph;
     }
+    
+    /**
+     * Given previously determined starting point, compute the tree-structured skeleton path through the volume where no
+     * branch is shorter than the specified amount.
+     *
+     * @param   iMaxBranches      int Maximum number of branches to extract.
+     * @param   fMinBranchLength  float All branches must be longer than this length.
+     *
+     * @return  FlyPathGraphSamples A tree-structured skeleton path where each path is represented by its samples.
+     */
+    public short[] getSkeletonizedArray(int iMaxBranches, float fMinBranchLength) {
+
+        // What is the total number of samples in the volume.
+        final int iNumSamples = m_kVolumeLayout.getNumSamples();
+
+        // Reset tags assigned to all samples previously marked as being
+        // part of the skeleton.
+        for (int iIndex = 0; iIndex < iNumSamples; ++iIndex) {
+
+            if (RESULT_MASK_CONNECTED == (RESULT_MASK_CONNECTED & m_asVolumeData[iIndex])) {
+                m_asVolumeData[iIndex] &= ~(RESULT_MASK_SKELETON_NEIGHBOR | RESULT_MASK_SKELETON);
+            }
+        }
+
+        // Create the path graph.
+        FlyPathGraphSamples kPathGraph = new FlyPathGraphSamples();
+
+        for (int iBranch = 0; iBranch < iMaxBranches; ++iBranch) {
+
+            // Section 4.1.8.  Compute Penalized Distance from Root Field.
+            // The root sample in the volume is the first centerline endpoint
+            // found by the previous step.  This time we use a penalty volume
+            // where the positive distance values are replaced with their
+            // additive inverses added to the maximum distance for any
+            // sample found in the volume.
+            // kProgress.setMessage("Extracting branch " + Integer.toString(iBranch+1) + " ...");
+            DijkstraMinCostPath kMinCostPath = new DijkstraMinCostPath(m_kVolumeLayout, m_asVolumeData,
+                                                                       RESULT_MASK_CONNECTED, m_iIndexPathStart,
+                                                                       m_afBoundarySampleDistMin, RESULT_MASK_SKELETON,
+                                                                       RESULT_MASK_SKELETON_NEIGHBOR);
+            int[] aiIndexPath = kMinCostPath.getIndexPath();
+            kMinCostPath = null;
+
+            // Section 4.1.9.  Minimum Cost Path (Centerline).
+            // Trace the path through the connected sample between the
+            // endpoints that were identified by the Dijkstra minimum
+            // cost path algorithms.  Extract the samples that belong
+            // to the path, but start from the end with the first
+            // sample that is part of a previously defined skeleton.
+            // Compute the length of the path (by length of polyline segments).
+            int iNumPathSamples = 0;
+
+            for (int iPath = aiIndexPath.length - 1; iPath >= 0; iPath--) {
+                ++iNumPathSamples;
+
+                // Get linear array index of next sample along the path.
+                int iIndex = aiIndexPath[iPath];
+
+                if (RESULT_MASK_SKELETON == (RESULT_MASK_SKELETON & m_asVolumeData[iIndex])) {
+                    break;
+                }
+            }
+
+            int[] aiPathIndex = new int[iNumPathSamples];
+            Point3f[] akPathPoint = new Point3f[iNumPathSamples];
+            float[] afPathPointBoundaryMinDist = new float[iNumPathSamples];
+            float fPathLength = 0.0f;
+
+            for (int iPath = 0; iPath < iNumPathSamples; ++iPath) {
+
+                // Get linear array index of next sample along the path.
+                int iIndex = aiIndexPath[iPath + aiIndexPath.length - iNumPathSamples];
+                aiPathIndex[iPath] = iIndex;
+
+                // Get the real sample coordinates for the path point.
+                // Since we are walking from the end back to the starting
+                // point, we fill in the path point array starting at
+                // the end.
+                int iX = m_kVolumeLayout.getIndexX(iIndex);
+                int iY = m_kVolumeLayout.getIndexY(iIndex);
+                int iZ = m_kVolumeLayout.getIndexZ(iIndex);
+                Point3f kPathPoint = new Point3f();
+                m_kVolumeLayout.getRealPoint(iX, iY, iZ, kPathPoint);
+                akPathPoint[iPath] = kPathPoint;
+
+                // Get the distance of this point to the nearest and
+                // furthest boundaries.
+                afPathPointBoundaryMinDist[iPath] = m_afBoundarySampleDistMin[iIndex];
+
+                // Accumulate the distance between this point and the previous
+                // along the path as an estimate of the total length of
+                // this branch.
+                if (iPath > 0) {
+                    fPathLength += akPathPoint[iPath].distance(akPathPoint[iPath - 1]);
+                }
+            }
+
+            // Only keep track of the longest path.
+            if (fPathLength > fMinBranchLength) {
+
+                // Once we add a branch to the path, then transform the
+                // samples along the branch to being part of the skeleton.
+                for (int iPath = 0; iPath < akPathPoint.length; iPath++) {
+                    markSkeletonPoint(aiPathIndex[iPath], 1.25f * afPathPointBoundaryMinDist[iPath]);
+                }
+
+                kPathGraph.add(aiPathIndex, akPathPoint);
+            } else {
+                break;
+            }
+        }
+
+
+        short[] asVolumeOutput = new short[iNumSamples];
+
+        for (int iIndex = 0; iIndex < iNumSamples; ++iIndex) {
+
+            if (RESULT_MASK_SKELETON == (RESULT_MASK_SKELETON & m_asVolumeData[iIndex])) {
+                asVolumeOutput[iIndex] = 1;
+            } else {
+                asVolumeOutput[iIndex] = 0;
+            }
+        }
+
+        return asVolumeOutput;
+    }
 
     /**
      * Compute the Euclidean distance from each sample "inside" the volume to the nearest point on the surface
