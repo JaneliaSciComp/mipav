@@ -2066,18 +2066,18 @@ public class TransMatrix extends Matrix // implements TableModelListener
                     }
 
                     if (tmpStr.indexOf(".") != -1) {
-                        A[row][c] = (Double.valueOf(tmpStr).doubleValue());
+                    	matrix[row][c] = (Double.valueOf(tmpStr).doubleValue());
                     } else {
-                        A[row][c] = (Integer.valueOf(tmpStr).doubleValue());
+                    	matrix[row][c] = (Integer.valueOf(tmpStr).doubleValue());
                     }
                 } else { // spaces trimmed from end
                     tmpStr = str.substring(index, str.length()).trim();
                     index = nextIndex;
 
                     if (tmpStr.indexOf(".") != -1) {
-                        A[row][c] = (Double.valueOf(tmpStr).doubleValue());
+                    	matrix[row][c] = (Double.valueOf(tmpStr).doubleValue());
                     } else {
-                        A[row][c] = (Integer.valueOf(tmpStr).doubleValue());
+                    	matrix[row][c] = (Integer.valueOf(tmpStr).doubleValue());
                     }
                 }
             }
