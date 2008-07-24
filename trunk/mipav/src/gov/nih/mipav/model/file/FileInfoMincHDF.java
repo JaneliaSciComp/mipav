@@ -279,7 +279,7 @@ public class FileInfoMincHDF extends FileInfoBase {
     public final double[] getConvertStartLocationsToDICOM(double[] step, double[][]cosines, 
 	    boolean[]isCentered, int slice, double [] mincStartLoc) {
 
-	double[] startLocs = new double[getExtents().length];
+    	double[] startLocs = new double[getExtents().length];
 
 	if (startLocs.length == 2) {
 	    startLocs[0] = mincStartLoc[0];
@@ -321,19 +321,46 @@ public class FileInfoMincHDF extends FileInfoBase {
 	} else if (getExtents().length == 3) {
 	    matrix.transform(startLocs[0], startLocs[1], startLocs[2], transformedPt);
 	}
+	
+	
+	//Appears that this transformed Pt...is in the following order....xspace, yspace, zspace
+	//in minc, xspace cooresponds to l/r, yspace corresponds to a/p, zspace corresponds to i/s
+	//get the transformed point in the right mipav space order
+	
+	double[] transformedPtReordered = new double[getExtents().length];
 
+	if (getImageOrientation() == FileInfoBase.SAGITTAL) {
+		//saggital is a/p, i/s, l/r in mipav space
+		transformedPtReordered[0] = transformedPt[1];
+		transformedPtReordered[1] = transformedPt[2];
+		transformedPtReordered[2] = transformedPt[0];
+	}else if (getImageOrientation() == FileInfoBase.AXIAL) {
+		//axial is l/r, a/p, i/s in mipav space
+		transformedPtReordered[0] = transformedPt[0];
+		transformedPtReordered[1] = transformedPt[1];
+		transformedPtReordered[2] = transformedPt[2];
+	}else if (getImageOrientation() == FileInfoBase.CORONAL) {
+		//coronal is l/r, i/s, a/p in mipav space
+		transformedPtReordered[0] = transformedPt[0];
+		transformedPtReordered[1] = transformedPt[2];
+		transformedPtReordered[2] = transformedPt[1];
+	}
+
+	
 	if (startLocs.length == 3) {
 
 	    if (getImageOrientation() == FileInfoBase.SAGITTAL) {
-		transformedPt[0] = -transformedPt[0];
-		transformedPt[2] = -transformedPt[2];
+	    	transformedPtReordered[0] = -transformedPtReordered[0];
+	    	transformedPtReordered[2] = -transformedPtReordered[2];
 	    } else if (getImageOrientation() == FileInfoBase.AXIAL) {
-		transformedPt[0] = -transformedPt[0];
-		transformedPt[1] = -transformedPt[1];
+	    	transformedPtReordered[0] = -transformedPtReordered[0];
+	    	transformedPtReordered[1] = -transformedPtReordered[1];
 	    } else if (getImageOrientation() == FileInfoBase.CORONAL) {
-		transformedPt[0] = -transformedPt[0];
-		transformedPt[2] = -transformedPt[2];
+	    	transformedPtReordered[0] = -transformedPtReordered[0];
+	    	transformedPtReordered[2] = -transformedPtReordered[2];
 	    }
+	    
+	    transformedPt = transformedPtReordered;
 	}
 
 	// System.err.println("convert: result[" + slice + "]:\t" + transformedPt[0] + " " + transformedPt[1] + " " +

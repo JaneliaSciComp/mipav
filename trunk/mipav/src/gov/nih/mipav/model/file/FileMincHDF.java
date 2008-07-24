@@ -54,9 +54,15 @@ public class FileMincHDF extends FileBase {
 
     /** the image node of the HDF file tree that contains the image data, and min max per slice information */
     private DefaultMutableTreeNode imageNode;
+    
+    private String[] dimStringsReordered = null;
+    
+    private String[] dimStrings = null;
 
     /** MINC resolution (can be negative) */
     private double[] step = null;
+    
+    private double[] stepReordered = null;
 
     /** direction cosines matrix */
     private double[][] dirCosines = null;
@@ -82,6 +88,8 @@ public class FileMincHDF extends FileBase {
     private H5File h5File;
 
     private FileInfoMincHDF fileInfo;
+    
+    private int[] dimReorderIndexes = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -249,6 +257,7 @@ public class FileMincHDF extends FileBase {
 		}
 
 		int [] axisOrientation = new int[fileInfo.getExtents().length];
+		
 		if (axisOrientation.length == 3) {
 		    axisOrientation[0] = FileInfoMinc.setOrientType(dimOrder[2], (step[2] > 0));
 		    axisOrientation[1] = FileInfoMinc.setOrientType(dimOrder[1], (step[1] > 0));
@@ -272,30 +281,67 @@ public class FileMincHDF extends FileBase {
 	int [] units = new int[totalDims];
 	mincStartLoc = new double[totalDims];
 	step = new double[totalDims];
+	stepReordered = new double[totalDims];
 	isCentered = new boolean[totalDims];
 	dirCosines = new double[totalDims][totalDims];
+	dimStringsReordered = new String[totalDims];
+	dimStrings = new String[totalDims];
 	
-	int[] dimReorderIndexes = new int[dimOrder.length];
+	dimReorderIndexes = new int[dimOrder.length];
+
 	for (int i = 0; i < dimOrder.length; i++) {
 	    if (dimOrder[i].equals(LEAF_X_SPACE)) {
 		dimReorderIndexes[i] = 2;
+
 	    } else if (dimOrder[i].equals(LEAF_Y_SPACE)) {
 		dimReorderIndexes[i] = 1;
+
 	    } else if (dimOrder[i].equals(LEAF_Z_SPACE)) {
 		dimReorderIndexes[i] = 0;
+
 	    }
 	}
 	
+	//following is needed to determine the order of the axes
+	//this is needed when setting up the axes orientations in mipav
+	//which uses the dimString and the step
+	int order = -1;
 	for (int i = 0; i < dimensionNode.getChildCount(); i++) {
 	    currentDimNode = (DefaultMutableTreeNode)dimensionNode.getChildAt(i);
+	    if(currentDimNode.toString().equals(LEAF_X_SPACE)){
+	    	for(int k=0;k<dimReorderIndexes.length;k++) {
+	    		if(dimReorderIndexes[k] == 2) {
+	    			order = k;
+	    			break;
+	    		}
+	    	}
+	    	
+	    }else if(currentDimNode.toString().equals(LEAF_Y_SPACE)) {
+	    	for(int k=0;k<dimReorderIndexes.length;k++) {
+	    		if(dimReorderIndexes[k] == 1) {
+	    			order = k;
+	    			break;
+	    		}
+	    	}
+	    	
+	    }else if(currentDimNode.toString().equals(LEAF_Z_SPACE)) {
+	    	for(int k=0;k<dimReorderIndexes.length;k++) {
+	    		if(dimReorderIndexes[k] == 0) {
+	    			order = k;
+	    			break;
+	    		}
+	    	}
+	    }
 	    
-	    //System.err.println("userobject: " + currentDimNode.getUserObject());
 	    
+	    dimStringsReordered[order] = currentDimNode.toString();
+	    dimStrings[dimReorderIndexes[i]] = currentDimNode.toString();
 	    List<Attribute> metaData = ((HObject)currentDimNode.getUserObject()).getMetadata();
 	    Iterator<Attribute> it = metaData.iterator();
 	    while(it.hasNext()) {
 		Attribute attr = it.next();
 		String attrName = attr.getName();
+		
 		if (attrName.equals(ATTR_DIM_UNITS)) {
 		    units[dimReorderIndexes[i]] = FileInfoBase.getUnitsOfMeasureFromStr(((String[])attr.getValue())[0]);
 		} else if (attrName.equals(ATTR_DIM_START)) {
@@ -307,13 +353,15 @@ public class FileMincHDF extends FileBase {
 		} else if (attrName.equals(ATTR_DIM_SPACETYPE)) {
 
 		} else if (attrName.equals(ATTR_DIM_STEP)) {
+
 		    step[dimReorderIndexes[i]] = ((double[])attr.getValue())[0];
+		    stepReordered[order] = ((double[])attr.getValue())[0];
 		} else if (attrName.equals(ATTR_DIM_ALIGNMENT)) {
 		    isCentered[dimReorderIndexes[i]] = ((String[])attr.getValue())[0].equals("centre");
-		}
+		}	
 	    }
 	}
-
+	
 	// determine the resolutions (from the step)
 	float [] res = new float[totalDims];
 	for (int i = 0; i < totalDims; i++) {
@@ -384,11 +432,11 @@ public class FileMincHDF extends FileBase {
 			    FileDicomTag tag = new FileDicomTag(info);
 			    
 			    if (attr.getValue() instanceof byte[]) {
-				tag.setValue(attr.getValue());
+			    	tag.setValue(attr.getValue());
 			    } else {
-				tag.setValue(((Object[])attr.getValue())[0]);
+			    	tag.setValue(((Object[])attr.getValue())[0]);
 			    }
-			    
+
 			    fileInfo.getDicomTable().put(key, tag);
 			} catch (Exception e) {
 			    e.printStackTrace();
@@ -481,9 +529,6 @@ public class FileMincHDF extends FileBase {
 		    String attrName = imageAttr.getName();
 		    if (attrName.equals(ATTR_IMAGE_DIM_ORDER)) {
 			String dimOrder = ((String[])imageAttr.getValue())[0];
-			
-			//System.err.println("Dim order string: " + dimOrder);
-
 			if (dimOrder.startsWith("zspace")) {
 			    fileInfo.setImageOrientation(FileInfoBase.AXIAL);
 			} else if (dimOrder.startsWith("xspace")) {
@@ -491,20 +536,14 @@ public class FileMincHDF extends FileBase {
 			} else if (dimOrder.startsWith("yspace")) {
 			    fileInfo.setImageOrientation(FileInfoBase.CORONAL);
 			}
-			
-			StringTokenizer tokens = new StringTokenizer(dimOrder, ",");
-			String[] dimStrings = new String[fileInfo.getExtents().length];
-			int dimCount = 0;
-			while(tokens.hasMoreTokens()) {
-			    dimStrings[dimCount] = tokens.nextToken();
-			    dimCount++;
-			}
+
 			int [] axisOrientation = new int[fileInfo.getExtents().length];
 
 			if (axisOrientation.length == 3) {
-			    axisOrientation[0] = FileInfoMinc.setOrientType(dimStrings[2], (step[2] > 0));
-			    axisOrientation[1] = FileInfoMinc.setOrientType(dimStrings[1], (step[1] > 0));
-			    axisOrientation[2] = FileInfoMinc.setOrientType(dimStrings[0], (step[0] > 0));
+
+			    axisOrientation[0] = FileInfoMinc.setOrientType(dimStringsReordered[2], (stepReordered[2] > 0));
+			    axisOrientation[1] = FileInfoMinc.setOrientType(dimStringsReordered[1], (stepReordered[1] > 0));
+			    axisOrientation[2] = FileInfoMinc.setOrientType(dimStringsReordered[0], (stepReordered[0] > 0));
 			}
 			fileInfo.setAxisOrientation(axisOrientation);
 
