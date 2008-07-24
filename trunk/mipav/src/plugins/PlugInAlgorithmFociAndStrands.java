@@ -3,6 +3,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.surfaceview.flythruview.*;
 
 import java.awt.*;
 
@@ -16,7 +17,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  *
- * @version  July 23, 2008
+ * @version  July 24, 2008
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -68,7 +69,8 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  *           are 3 branches, then push the index twice onto branchIndex and push the distance twice onto distanceVector.
  *           If there are no branches, then we have looped back to a point we already went over, so pop the first 
  *           element from branchIndex to return to the first untried branch and pop the first element from distanceVector
- *           to restore the distance traveled at the point.
+ *           to restore the distance traveled at the point.  For 2D there can be up to 3 branches.  For 3D there can
+ *           be up to 5 branches.
  */
 public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
 
@@ -102,10 +104,8 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
     /** Minimum number of pixels in green strand */
     private int greenMin = 50;
     
-    private float interpolationDivisor = 24.0f;
-    
-    private ModelImage redImage;
-    private ViewJFrameImage redFrame;
+    //private ModelImage redImage;
+    //private ViewJFrameImage redFrame;
     private ModelImage greenImage;
     private ViewJFrameImage greenFrame;
     private ModelImage skeletonizedImage;
@@ -800,7 +800,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 y = redSkelY[k];
                 index = redSkelX[k] + xDim * redSkelY[k];
                 found[index] = true;
-                while ((x != redSkelX[k+1]) && (y != redSkelY[k+1])) {
+                while ((x != redSkelX[k+1]) || (y != redSkelY[k+1])) {
                     numBranches = 0;
                     bxm = false;
                     bxp = false;
@@ -1110,6 +1110,17 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
         double resXZ = Math.sqrt(resX*resX + resZ*resZ);
         double resYZ = Math.sqrt(resY*resY + resZ*resZ);
         double resXYZ = Math.sqrt(resX*resX + resY*resY + resZ*resZ);
+        ModelImage3DLayout volumeLayout;
+        ModelImage objectImage;
+        int objectExtents[] = new int[3];
+        short objectArray[];
+        int objectSlice;
+        int index2ob;
+        int indexob;
+        int job;
+        Skeleton3D objectSkeleton;
+        int maxBranches = 50;
+        float minBranchLength = 1.0f;
         
         time = System.currentTimeMillis();
 
@@ -1423,35 +1434,6 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
             }
         }
         
-        try {
-            grayImage.importData(0, greenIDArray, true);
-        }
-        catch (IOException error) {
-            byteBuffer = null;
-            errorCleanUp("Error on grayImage.importData", true);
-            return;
-        }
-        
-        // Skeletonize the green strands with 2 foci
-        method = AlgorithmMorphology3D.SKELETONIZE;
-        numPruningPixels = 0;
-        skeletonizeAlgo3D = new AlgorithmMorphology3D(grayImage, 0, 0.0f, method, 0,
-                0, numPruningPixels, 0, true);
-        skeletonizeAlgo3D.run();
-        skeletonizeAlgo3D.finalize();
-        skeletonizeAlgo3D = null;
-        
-        // Find the points on the skeletonized green strands nearest their 2 colocalized red foci
-        skeletonizedArray = new short[totLength];
-        try {
-            grayImage.exportData(0, totLength, skeletonizedArray);
-        } catch (IOException error) {
-            byteBuffer = null;
-            greenIDArray = null;
-            errorCleanUp("Error on grayImage.exportData", true);
-
-            return;
-        }
         greenLeft = new int[numGreenObjects];
         greenRight = new int[numGreenObjects];
         greenTop = new int[numGreenObjects];
@@ -1468,8 +1450,8 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 index = y * xDim;
                 for (x = 0; x < xDim; x++) {
                     i = index + x;
-                    if (skeletonizedArray[i] != 0) {
-                        greenIDMinus1 = skeletonizedArray[i] - 1;
+                    if (greenIDArray[i] != 0) {
+                        greenIDMinus1 = greenIDArray[i] - 1;
                         if (numGreenStrandFoci[greenIDMinus1] == 2) {
                             if (x < greenLeft[greenIDMinus1]) {
                                 greenLeft[greenIDMinus1] = x;
@@ -1495,11 +1477,79 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
             }
         }
         
-        skeletonizedImage = (ModelImage)grayImage.clone();
-        skeletonizedImage.setImageName(srcImage.getImageName() + "_skeletonized");
+        // Skeletonize the green strands with 2 foci
+        skeletonizedArray = new short[totLength];
+        for (i = 0; i < numGreenObjects; i++) {
+            if (numGreenStrandFoci[i] == 2) {
+                objectExtents[0] = greenRight[i] - greenLeft[i] + 1;
+                objectExtents[1] = greenBottom[i] - greenTop[i] + 1;
+                objectSlice = objectExtents[0] * objectExtents[1];
+                objectExtents[2] = greenBack[i] - greenFront[i] + 1;
+                volumeLayout = new ModelImage3DLayout(objectExtents[0], objectExtents[1], objectExtents[2], resX, resY, resZ, 0, 0, 0);
+                objectImage = new ModelImage(ModelStorageBase.SHORT, objectExtents, srcImage.getImageName() + "_object");
+                objectArray = new short[objectSlice*objectExtents[2]];
+                for (z = greenFront[i]; z <= greenBack[i]; z++) {
+                    index2 = z * sliceLength;
+                    index2ob = (z - greenFront[i]) * objectSlice;
+                    for (y = greenTop[i]; y <= greenBottom[i]; y++) {
+                        index = index2 + y * xDim;
+                        indexob = index2ob + (y - greenTop[i]) * objectExtents[0];
+                        for (x = greenLeft[i]; x <= greenRight[i]; x++) {
+                            j = index + x;
+                            job = indexob + (x - greenLeft[i]);
+                            if (greenIDArray[j] == (i+1)) {
+                                objectArray[job] = 1;
+                            }
+                        }
+                    }
+                }
+                try {
+                    objectImage.importData(0, objectArray, true);
+                }
+                catch (IOException error) {
+                    byteBuffer = null;
+                    errorCleanUp("Error on objectImage.importData", true);
+                    return;
+                }
+                objectSkeleton = new Skeleton3D(objectImage, volumeLayout);
+                objectArray = objectSkeleton.getSkeletonizedArray(maxBranches, minBranchLength);
+                objectSkeleton.dispose();
+                for (z = greenFront[i]; z <= greenBack[i]; z++) {
+                    index2 = z * sliceLength;
+                    index2ob = (z - greenFront[i]) * objectSlice;
+                    for (y = greenTop[i]; y <= greenBottom[i]; y++) {
+                        index = index2 + y * xDim;
+                        indexob = index2ob + (y - greenTop[i]) * objectExtents[0];
+                        for (x = greenLeft[i]; x <= greenRight[i]; x++) {
+                            j = index + x;
+                            job = indexob + (x - greenLeft[i]);
+                            if (objectArray[job] != 0) {
+                                skeletonizedArray[j] = (short)(i+1);
+                            }
+                            else {
+                                skeletonizedArray[j] = 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        skeletonizedImage = new ModelImage(ModelStorageBase.SHORT, srcImage.getExtents(),
+                                           srcImage.getImageName() + "_skeletonized");
+        try {
+            skeletonizedImage.importData(0, skeletonizedArray, true);
+        }
+        catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on skeletonizedImage.importData", true);
+            return;
+        }
         skeletonizedFrame = new ViewJFrameImage(skeletonizedImage);
         skeletonizedFrame.setTitle(srcImage.getImageName() + "_skeletonized");
+       
         
+        // Find the points on the skeletonized green strands nearest their 2 colocalized red foci  
         redSkelX = new int[numRedColocalize2];
         redSkelY = new int[numRedColocalize2];
         redSkelZ = new int[numRedColocalize2];
@@ -1820,7 +1870,7 @@ public class PlugInAlgorithmFociAndStrands extends AlgorithmBase {
                 z = redSkelZ[k];
                 index = redSkelX[k] + xDim * redSkelY[k] + sliceLength * redSkelZ[k];
                 found[index] = true;
-                while ((x != redSkelX[k+1]) && (y != redSkelY[k+1]) && (z != redSkelZ[k])) {
+                while ((x != redSkelX[k+1]) || (y != redSkelY[k+1]) || (z != redSkelZ[k+1])) {
                     numBranches = 0;
                     bxm = false;
                     bxp = false;
