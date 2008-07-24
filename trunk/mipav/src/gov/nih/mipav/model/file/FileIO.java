@@ -9863,7 +9863,7 @@ public class FileIO {
             mincFile = new FileMincHDF(options.getFileName(), options.getFileDirectory());
             createProgressBar(mincFile, options.getFileName(), FILE_READ);
 
-            if ( ! (image.getFileInfo()[0] instanceof FileInfoMincHDF)) {
+            //if ( ! (image.getFileInfo()[0] instanceof FileInfoMincHDF)) {
                 JDialogSaveMinc dialog = new JDialogSaveMinc(UI.getMainFrame(), image.getFileInfo()[0], options);
                 dialog.setVisible(true);
 
@@ -9872,14 +9872,14 @@ public class FileIO {
                 }
 
                 options = dialog.getOptions();
-            }
+            //}
 
-            if (image.getFileInfo()[0] instanceof FileInfoDicom) {
+            //if (image.getFileInfo()[0] instanceof FileInfoDicom) {
 
-                if ( !dataConversion( ((FileInfoDicom) image.getFileInfo()[0]), mincFile.getFileInfo())) {
+                //if ( !dataConversion( ((FileInfoDicom) image.getFileInfo()[0]), mincFile.getFileInfo())) {
                     // do nothing
-                }
-            }
+                //}
+            //}
 
             mincFile.writeImage(image, options);
             mincFile.finalize();
