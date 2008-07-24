@@ -3622,6 +3622,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		/**
 		 * Produces residuals of a given VOI that are used to subtract out irrelevant portions of that VOI
+		 * Also see getDependents(VOI v)
 		 */
 		
 		private ArrayList<PlugInSelectableVOI> getResiduals(VOI v) {
@@ -3643,6 +3644,34 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					arr.add(voiBuffer.get("Left Marrow"));
 				} else if(v.getName().equals("Right Bone")) {
 					arr.add(voiBuffer.get("Right Marrow"));
+				} 
+			}
+			return arr;
+		}
+		
+		/**
+		 * Produces dependents of a given VOI.  A dependent requires that the given (passed)\
+		 * VOI be created in order for calculations to be performed properly. 
+		 */
+		public ArrayList<PlugInSelectableVOI> getDependents(VOI v) {
+			ArrayList<PlugInSelectableVOI> arr = new ArrayList<PlugInSelectableVOI>();
+			if(imageType.equals(ImageType.Abdomen)) {
+				if(v.getName().equals("Abdomen")) {
+					arr.add(voiBuffer.get("Subcutaneous area"));
+				} else if(v.getName().equals("Liver cysts")) {
+					arr.add(voiBuffer.get("Liver"));
+				}
+			} else if(imageType.equals(ImageType.Thigh)) {
+				if(v.getName().equals("Left Marrow")) {
+					arr.add(voiBuffer.get("Left Bone"));
+					arr.add(voiBuffer.get("Left Thigh"));
+				} else if(v.getName().equals("Right Marrow")) {
+					arr.add(voiBuffer.get("Right Bone"));
+					arr.add(voiBuffer.get("Right Thigh"));
+				} else if(v.getName().equals("Left Bone")) {
+					arr.add(voiBuffer.get("Left Thigh"));
+				} else if(v.getName().equals("Right Bone")) {
+					arr.add(voiBuffer.get("Right Thigh"));
 				} 
 			}
 			return arr;
