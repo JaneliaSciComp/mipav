@@ -305,9 +305,9 @@ public class ViewMenuBar {
                 // false)}),
                 // menuBuilder.buildMenuItem("Stereo depth", "StereoDepth", 0, null, false),
                 menuBuilder.makeMenu("Shading correction", false, new JMenuItem[] {
-                        menuBuilder.buildMenuItem("Entropy minimization", "entropyMin", 0, null, false),
-                        menuBuilder.buildMenuItem("Inhomogeneity N3 correction", "N3Correction", 0, null, false),
-                        menuBuilder.buildMenuItem("MRI combined info", "MRICorrection", 0, null, false)}),
+                        //menuBuilder.buildMenuItem("Entropy minimization", "entropyMin", 0, null, false),
+                        menuBuilder.buildMenuItem("Inhomogeneity N3 correction", "N3Correction", 0, null, false)}),
+                        //menuBuilder.buildMenuItem("MRI combined info", "MRICorrection", 0, null, false)}),
                 menuBuilder.makeMenu("SNR", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Single MRI image", "SMRISNR", 0, null, false),
                         menuBuilder.buildMenuItem("Two MRI images", "DMRISNR", 0, null, false),}),
