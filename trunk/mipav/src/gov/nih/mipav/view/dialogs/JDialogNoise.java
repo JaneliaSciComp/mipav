@@ -21,8 +21,9 @@ import javax.swing.*;
 /**
  * DOCUMENT ME!
  *
- * @version  1.0 Jan 9, 1999
- * @author   Matthew J. McAuliffe, Ph.D.
+ * @version  2.0 July 25, 2008
+ * @author   GAUSSIAN and UNIFORM, Matthew J. McAuliffe, Ph.D.
+ *           POISSON William Gandler
  */
 public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
 
@@ -33,9 +34,13 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
 
     /** DOCUMENT ME! */
     public static final int GAUSSIAN = 0;
+    
+    public static final int POISSON = 1;
 
     /** DOCUMENT ME! */
-    public static final int UNIFORM = 1;
+    public static final int UNIFORM = 2;
+    
+    
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -58,7 +63,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     private JLabel imageRangeLabel;
 
     /** DOCUMENT ME! */
-    private double maximumNoise;
+    private double maximumNoise = 0.0;
 
     /** DOCUMENT ME! */
     private double min, max;
@@ -73,13 +78,17 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     private JPanel panelImageType;
 
     /** DOCUMENT ME! */
-    private JPanel panelRange;
+    private JPanel panelGU;
+    
+    private JPanel panelPO;
 
     /** DOCUMENT ME! */
     private JRadioButton radioGaussian;
 
     /** DOCUMENT ME! */
     private JRadioButton radioUniform;
+    
+    private JRadioButton radioPoisson;
 
     /** DOCUMENT ME! */
     private AlgorithmNoise randomAlgo;
@@ -92,6 +101,14 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
 
     /** DOCUMENT ME! */
     private JLabel start;
+    
+    private JTextField backgroundText;
+    
+    private double background = 0.0;
+    
+    private JTextField gainText;
+    
+    private double gain = 1.0;
 
     /** DOCUMENT ME! */
     private JTextField textStart;
@@ -255,6 +272,22 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     public void setNoiseType(int n) {
         noiseType = n;
     }
+    
+    /**
+     * 
+     * @param background
+     */
+    public void setBackground(double background) {
+        this.background = background;
+    }
+    
+    /**
+     * 
+     * @param gain
+     */
+    public void setGain(double gain) {
+        this.gain = gain;
+    }
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
@@ -287,7 +320,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                 }
 
                 // Make algorithm
-                randomAlgo = new AlgorithmNoise(resultImage, image, noiseType, maximumNoise);
+                randomAlgo = new AlgorithmNoise(resultImage, image, noiseType, maximumNoise, background, gain);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -324,7 +357,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
             try {
 
                 // Make algorithm
-                randomAlgo = new AlgorithmNoise(image, noiseType, maximumNoise);
+                randomAlgo = new AlgorithmNoise(image, noiseType, maximumNoise, background, gain);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -393,6 +426,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
 
         setNoiseType(scriptParameters.getParams().getInt("noise_type"));
         setNoiseLevel(scriptParameters.getParams().getDouble("starting_range"));
+        setBackground(scriptParameters.getParams().getDouble("poisson_background"));
+        setGain(scriptParameters.getParams().getDouble("poisson_gain"));
     }
 
     /**
@@ -404,6 +439,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("noise_type", noiseType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("starting_range", min));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("poisson_background", background));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("poisson_gain", gain));
     }
 
 
@@ -414,38 +451,113 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         setForeground(Color.black);
 
         cancelFlag = false;
-        getContentPane().setLayout(new BorderLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        int yPos = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = yPos;
+        
+        
+        getContentPane().setLayout(new GridBagLayout());
+        setTitle("Noise");
+        
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        int yPos2 = 0;
+        gbc2.gridwidth = 1;
+        gbc2.gridheight = 1;
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.weightx = 1;
+        gbc2.insets = new Insets(3, 3, 3, 3);
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
+        gbc2.gridx = 0;
+        gbc2.gridy = yPos2;
+        
+        panelGU = new JPanel(new GridBagLayout());
+        panelGU.setForeground(Color.black);
+        panelGU.setBorder(buildTitledBorder("Gaussian and Uniform"));
+        gbc.gridy = yPos++;
+        getContentPane().add(panelGU, gbc);
+        
+        JLabel plusMinusLabel = new JLabel("Image(i) = Image(i) +/- noise");
+        plusMinusLabel.setFont(serif12);
+        plusMinusLabel.setForeground(Color.black);
+        gbc2.gridy = yPos2++;
+        panelGU.add(plusMinusLabel, gbc2);
 
-        setTitle("Additive noise");
-
-        panelRange = new JPanel(new BorderLayout());
-        panelRange.setForeground(Color.black);
-        panelRange.setBorder(buildTitledBorder("Image(i) = Image(i) +/- noise"));
-        getContentPane().add(panelRange, BorderLayout.NORTH);
-
-        JPanel optPanel = new JPanel(new GridLayout(1, 2));
         start = new JLabel("Starting range (0 to end):  ");
         start.setFont(serif12);
         start.setForeground(Color.black);
-        optPanel.add(start);
+        gbc2.gridy = yPos2;
+        panelGU.add(start, gbc2);
 
-        textStart = new JTextField();
+        textStart = new JTextField(10);
         textStart.setText("0");
         textStart.setFont(serif12);
         textStart.addFocusListener(this);
-        optPanel.add(textStart);
+        gbc2.gridx = 1;
+        gbc2.gridy = yPos2++;
+        panelGU.add(textStart, gbc2);
 
         JLabel gaussLabel = new JLabel("Maximum noise for Gaussian is at 4 standard deviations");
         gaussLabel.setFont(serif12);
         gaussLabel.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = yPos2++;
+        panelGU.add(gaussLabel, gbc2);
 
         imageRangeLabel = new JLabel("Image: ( min = " + image.getMin() + "  max = " + image.getMax() + " )");
         imageRangeLabel.setFont(serif12);
         imageRangeLabel.setForeground(Color.black);
-
-        panelRange.add(optPanel, BorderLayout.NORTH);
-        panelRange.add(gaussLabel, BorderLayout.CENTER);
-        panelRange.add(imageRangeLabel, BorderLayout.SOUTH);
+        gbc2.gridy = yPos2++;
+        panelGU.add(imageRangeLabel, gbc2);
+        
+        panelPO = new JPanel(new GridBagLayout());
+        panelPO.setForeground(Color.black);
+        panelPO.setBorder(buildTitledBorder("Poisson"));
+        gbc.gridy = yPos++;
+        getContentPane().add(panelPO, gbc);
+        
+        JLabel poissonLabel = new JLabel("Out = Poisson((in + background)*gain) / gain");
+        poissonLabel.setFont(serif12);
+        poissonLabel.setForeground(Color.black);
+        gbc2.gridx = 0;
+        yPos2 = 0;
+        gbc2.gridy = yPos2++;
+        panelPO.add(poissonLabel, gbc2);
+        
+        JLabel backgroundLabel = new JLabel("Background");
+        backgroundLabel.setFont(serif12);
+        backgroundLabel.setForeground(Color.black);
+        gbc2.gridy = yPos2;
+        panelPO.add(backgroundLabel, gbc2);
+        
+        backgroundText = new JTextField(10);
+        backgroundText.setText("0.0");
+        backgroundText.setFont(serif12);
+        backgroundText.setForeground(Color.black);
+        gbc2.gridx = 1;
+        gbc2.gridy = yPos2++;
+        panelPO.add(backgroundText, gbc2);
+        
+        JLabel gainLabel = new JLabel("Gain");
+        gainLabel.setFont(serif12);
+        gainLabel.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = yPos2;
+        panelPO.add(gainLabel, gbc2);
+        
+        gainText = new JTextField(10);
+        gainText.setText("1.0");
+        gainText.setFont(serif12);
+        gainText.setForeground(Color.black);
+        gbc2.gridx = 1;
+        gbc2.gridy = yPos2++;
+        panelPO.add(gainText, gbc2);
 
         JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
         panelImageType = new JPanel(new BorderLayout());
@@ -459,12 +571,18 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         radioGaussian.addItemListener(this);
         group1.add(radioGaussian);
         panelImageType.add(radioGaussian, BorderLayout.NORTH);
+        
+        radioPoisson = new JRadioButton("Poisson", false);
+        radioPoisson.setFont(serif12);
+        radioPoisson.addItemListener(this);
+        group1.add(radioPoisson);
+        panelImageType.add(radioPoisson, BorderLayout.CENTER);
 
         radioUniform = new JRadioButton("Uniform", false);
         radioUniform.setFont(serif12);
         radioUniform.addItemListener(this);
         group1.add(radioUniform);
-        panelImageType.add(radioUniform, BorderLayout.CENTER);
+        panelImageType.add(radioUniform, BorderLayout.SOUTH);
 
         destinationPanel = new JPanel(new BorderLayout());
         destinationPanel.setForeground(Color.black);
@@ -497,8 +615,10 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
          */
         buttonPanel.add(buildButtons());
 
-        getContentPane().add(outputOptPanel, BorderLayout.CENTER);
-        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+        gbc.gridy = yPos++;
+        getContentPane().add(outputOptPanel, gbc);
+        gbc.gridy = yPos++;
+        getContentPane().add(buttonPanel, gbc);
         pack();
         setResizable(true);
         setVisible(true);
@@ -541,6 +661,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
 
         if (radioGaussian.isSelected()) {
             noiseType = GAUSSIAN;
+        } else if (radioPoisson.isSelected()) {
+            noiseType = POISSON;
         } else if (radioUniform.isSelected()) {
             noiseType = UNIFORM;
         }
@@ -551,16 +673,24 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
             displayLoc = NEW;
         }
 
-        tmpStr = textStart.getText();
-
-        if (testParameter(tmpStr, min, max)) {
-            maximumNoise = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textStart.requestFocus();
-            textStart.selectAll();
-
-            return false;
-        }
+        if ((noiseType == GAUSSIAN) || (noiseType == UNIFORM)) {
+            tmpStr = textStart.getText();
+            if (testParameter(tmpStr, min, max)) {
+                maximumNoise = Double.valueOf(tmpStr).doubleValue();
+            } else {
+                textStart.requestFocus();
+                textStart.selectAll();
+    
+                return false;
+            }
+        } // if ((noiseType == GAUSSIAN) || (noiseType == UNIFORM))
+        
+        if (noiseType == POISSON) {
+            tmpStr = backgroundText.getText();
+            background = Double.valueOf(tmpStr).doubleValue();
+            tmpStr = gainText.getText();
+            gain = Double.valueOf(tmpStr).doubleValue();
+        } // if (noiseType == POISSON)
 
         return true;
     }
