@@ -244,6 +244,17 @@ public class RandomNumberGen extends Random {
     public final double genUniformRandomNum(double stRange, double endRange) {
         return ((nextDouble() * (endRange - stRange)) + stRange);
     }
+    
+    public final double genPoissonRandomNum(double inputValue, double background, double gain) {
+        double v;
+        double outputValue = 0.0;
+        // Random number seed
+        long seed = System.currentTimeMillis();
+        
+        v = gain * (inputValue + background);
+        //outputValue = inputValue + (poidev(v, seed) - v)/ gain;
+        return outputValue;
+    }
 
     /**
      * Calculates the Poisson probability function.
