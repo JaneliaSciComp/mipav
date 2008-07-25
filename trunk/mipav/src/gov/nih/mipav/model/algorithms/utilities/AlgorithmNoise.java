@@ -10,12 +10,13 @@ import java.io.*;
 
 
 /**
- * Algorithm used to add Gaussian or Uniform noise to an image. The additive noise is clamped to the lowest or highest
+ * Algorithm used to add Gaussian, Poisson, or Uniform noise to an image. The additive noise is clamped to the lowest or highest
  * value is the source image type. For example a byte image where the source pixel = 120 + noise = 15 would be clamped
  * to 127 the maximum pixel value for a byte image.
  *
- * @version  1.0 June 15, 1999
+ * @version  2.0 July 25, 2008
  * @author   Matthew J. McAuliffe, Ph.D.
+ *           William Gandler
  * @see      RandomNumberGen
  */
 public class AlgorithmNoise extends AlgorithmBase {
@@ -24,20 +25,28 @@ public class AlgorithmNoise extends AlgorithmBase {
 
     /** Used to indicate Gaussian distribution of noise. */
     public static final int GAUSSIAN = 0;
+    
+    /** Used to indicate added Poisson noise */
+    public static final int POISSON = 1;
 
     /** Used to indicate Uniform distribution of noise. */
-    public static final int UNIFORM = 1;
+    public static final int UNIFORM = 2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Used to store string representation of the noise type. */
-    private String[] algorithmName = { "GAUSSIAN", "UNIFORM" };
+    private String[] algorithmName = { "GAUSSIAN", "POISSON", "UNIFORM" };
 
     /** Noise level to be added to the image. Default in NaN. */
     private double level = Double.NaN;
 
     /** Storage or min and max values. */
     private double min, max;
+    
+    /** For Poisson out = Poisson((in + background)*gain) / gain */
+    private double background;
+    
+    private double gain;
 
     /** Noise type. Defaults to uniform. */
     private int noiseType = UNIFORM;
@@ -53,12 +62,16 @@ public class AlgorithmNoise extends AlgorithmBase {
      * @param  srcImg      source image model
      * @param  _noiseType  gaussian noise or uniform noise
      * @param  _level      level of noise
+     * @param  background  For poisson: out = Poisson((in + background)*gain)/ gain
+     * @param  gain
      */
-    public AlgorithmNoise(ModelImage srcImg, int _noiseType, double _level) {
+    public AlgorithmNoise(ModelImage srcImg, int _noiseType, double _level, double background, double gain) {
 
         super(null, srcImg);
         noiseType = _noiseType;
         level = _level;
+        this.background = background;
+        this.gain = gain;
         randomGen = new RandomNumberGen();
         setRange();
     }
@@ -70,12 +83,16 @@ public class AlgorithmNoise extends AlgorithmBase {
      * @param  srcImg      source image model
      * @param  _noiseType  gaussian noise or uniform noise
      * @param  _level      level of noise
+     * @param  background  For poisson: out = Poisson((in + background)*gain)/ gain
+     * @param  gain
      */
-    public AlgorithmNoise(ModelImage destImg, ModelImage srcImg, int _noiseType, double _level) {
+    public AlgorithmNoise(ModelImage destImg, ModelImage srcImg, int _noiseType, double _level, double background, double gain) {
 
         super(destImg, srcImg);
         noiseType = _noiseType;
         level = _level;
+        this.background = background;
+        this.gain = gain;
         randomGen = new RandomNumberGen();
         setRange();
     }
@@ -166,11 +183,15 @@ public class AlgorithmNoise extends AlgorithmBase {
 
             if (noiseType == UNIFORM) {
                 noise = randomGen.genUniformRandomNum(-level, level);
-            } else {
+                pixel = buffer[i] + noise;
+            } else if (noiseType == GAUSSIAN){
                 noise = randomGen.genGaussianRandomNum(-level, level);
+                pixel = buffer[i] + noise;
+            }
+            else {
+                pixel = randomGen.genPoissonRandomNum(buffer[i], background, gain);
             }
 
-            pixel = buffer[i] + noise;
 
             // clamp noise to image type
             if (pixel > max) {
@@ -242,11 +263,14 @@ public class AlgorithmNoise extends AlgorithmBase {
 
             if (noiseType == UNIFORM) {
                 noise = randomGen.genUniformRandomNum(-level, level);
-            } else {
+                pixel = buffer[i] + noise;
+            } else if (noiseType == GAUSSIAN){
                 noise = randomGen.genGaussianRandomNum(-level, level);
+                pixel = buffer[i] + noise;
             }
-
-            pixel = buffer[i] + noise;
+            else {
+                pixel = randomGen.genPoissonRandomNum(buffer[i], background, gain);
+            }
 
             // clamp noise to image type
             if (pixel > max) {
@@ -325,12 +349,15 @@ public class AlgorithmNoise extends AlgorithmBase {
 
             if (noiseType == UNIFORM) {
                 noise = randomGen.genUniformRandomNum(-level, level);
-            } else {
+                pixel = buffer[i] + noise;
+            } else if (noiseType == GAUSSIAN){
                 noise = randomGen.genGaussianRandomNum(-level, level);
+                pixel = buffer[i] + noise;
             }
-
-            pixel = buffer[i] + noise;
-
+            else {
+                pixel = randomGen.genPoissonRandomNum(buffer[i], background, gain);
+            }
+            
             // clamp noise to image type
             if (pixel > max) {
                 pixel = max;
@@ -404,12 +431,15 @@ public class AlgorithmNoise extends AlgorithmBase {
 
             if (noiseType == UNIFORM) {
                 noise = randomGen.genUniformRandomNum(-level, level);
-            } else {
+                pixel = buffer[i] + noise;
+            } else if (noiseType == GAUSSIAN){
                 noise = randomGen.genGaussianRandomNum(-level, level);
+                pixel = buffer[i] + noise;
             }
-
-            pixel = buffer[i] + noise;
-
+            else {
+                pixel = randomGen.genPoissonRandomNum(buffer[i], background, gain);
+            }
+            
             // clamp noise to image type
             if (pixel > max) {
                 pixel = max;
