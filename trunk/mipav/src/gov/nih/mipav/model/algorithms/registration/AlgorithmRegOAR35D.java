@@ -1717,7 +1717,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
                 Preferences.debug(" Starting level 4 ************************************************\n");
 
-                Vector minima = levelFour(simpleRefSub4_1, simpleInputSub4_1, minimas[0], minimas[1]);
+                Vector<MatrixListItem> minima = levelFour(simpleRefSub4_1, simpleInputSub4_1, minimas[0], minimas[1]);
                 time = System.currentTimeMillis() - time;
                 Preferences.debug(" Level 4  min = " + ((float) time / 60000.0f) + "\n");
                 time = System.currentTimeMillis();
@@ -1808,13 +1808,13 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 rot[0][iNumber] = (float) (answer.initial[0]);
                 rot[1][iNumber] = (float) (answer.initial[1]);
                 rot[2][iNumber] = (float) (answer.initial[2]);
-                OARmat = answer.matrix.getMatrix();
-                trans[0][iNumber] = (float) OARmat[0][3];
-                trans[1][iNumber] = (float) OARmat[1][3];
-                trans[2][iNumber] = (float) OARmat[2][3];
+                //OARmat = answer.matrix.getMatrix();
+                trans[0][iNumber] = answer.matrix.Get(0, 3);
+                trans[1][iNumber] = answer.matrix.Get(1, 3);
+                trans[2][iNumber] = answer.matrix.Get(2, 3);
             } // if (doGraph)
 
-            answer.matrix.invert();
+            answer.matrix.Inverse();
             transform = new AlgorithmTransform(input1, answer.matrix, interp2, iResols[0], iResols[1], iResols[2],
                                                iExtents[0], iExtents[1], iExtents[2], false, true, false);
             transform.run();
@@ -3090,14 +3090,14 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         MatrixListItem item = null;
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
-            item = ((MatrixListItem) en.nextElement());
+            item = en.nextElement();
             item.initial[3] *= level4FactorXY;
             item.initial[4] *= level4FactorXY;
             item.initial[5] *= level4FactorZ;
         }
 
         for (Enumeration<MatrixListItem> en = optMinima.elements(); en.hasMoreElements();) {
-            item = ((MatrixListItem) en.nextElement());
+            item = en.nextElement();
             item.initial[3] *= level4FactorXY;
             item.initial[4] *= level4FactorXY;
             item.initial[5] *= level4FactorZ;
@@ -3173,7 +3173,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             for (int i = 0; i < (2 * total); i++) {
 
                 // Current "initial" is element for this i.
-                initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
+                initial = (double[]) newMinima.elementAt(i).initial.clone();
 
                 // Output to debug window.
                 if (((i + 1) % 2) == 0) {
@@ -3211,7 +3211,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             for (int j = 0; (j < 4) && !threadStopped; j++) {
 
                 for (int i = 0; (i < (2 * total)) && !threadStopped; i++) {
-                    initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
+                    initial = (double[]) newMinima.elementAt(i).initial.clone();
 
                     if (j == 1) {
                         scaleDelta = 0.9f;
@@ -3359,7 +3359,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         MatrixListItem item = null;
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
-            item = ((MatrixListItem) en.nextElement());
+            item = en.nextElement();
             item.initial[3] *= level2FactorXY;
             item.initial[4] *= level2FactorXY;
             item.initial[5] *= level2FactorZ;

@@ -855,7 +855,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         int[] extentsIso = null;
         float[] resIso = null;
         int sliceSize;
-        double[][] OARmat;
+        //double[][] OARmat;
         VOIVector VOIs = null;
         VOIVector VOI2s = null;
         int nVOIs = 0;
@@ -1505,7 +1505,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
                 Preferences.debug(" Starting level 4 ************************************************\n");
 
-                Vector minima = levelFour(simpleRefSub4_1, simpleInputSub4_1, minimas[0], minimas[1]);
+                Vector<MatrixListItem> minima = levelFour(simpleRefSub4_1, simpleInputSub4_1, minimas[0], minimas[1]);
                 time = System.currentTimeMillis() - time;
                 Preferences.debug(" Level 4  min = " + ((float) time / 60000.0f) + "\n");
                 time = System.currentTimeMillis();
@@ -1648,12 +1648,12 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     rot[iNumber] = (float) (answer.initial[0]);
                 }
 
-                OARmat = answer.matrix.getMatrix();
-                trans[0][iNumber] = (float) OARmat[0][2];
-                trans[1][iNumber] = (float) OARmat[1][2];
+                //OARmat = answer.matrix.getMatrix();
+                trans[0][iNumber] = answer.matrix.Get(0, 2);
+                trans[1][iNumber] = answer.matrix.Get(1, 2);
             } // if (doGraph)
 
-            answer.matrix.invert();
+            answer.matrix.Inverse();
             transform = new AlgorithmTransform(input1, answer.matrix, interp2, iResols[0], iResols[1], iExtents[0],
                                                iExtents[1], transformVOIs, true, false);
             transform.run();
@@ -2874,7 +2874,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         for (int j = 0; (j < 2) && !threadStopped; j++) {
 
             for (int i = 0; (i < total) && !threadStopped; i++) {
-                initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
+                initial = (double[]) newMinima.elementAt(i).initial.clone();
 
                 // Preferences.debug("Perturbing initial[0] by ");
                 if (j == 0) { // Preferences.debug("No fineDelta added or subtracted\n");
@@ -2903,7 +2903,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             for (int j = 0; (j < 4) && !threadStopped; j++) {
 
                 for (int i = 0; (i < (2 * total)) && !threadStopped; i++) {
-                    initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
+                    initial = (double[]) newMinima.elementAt(i).initial.clone();
 
                     if (j == 1) {
                         scaleDelta = 0.9f;

@@ -227,7 +227,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     private JLabel labelReferenceSlice, labelAdjustedSlice;
 
     /** DOCUMENT ME! */
-    private Hashtable labelTable, labelTable2;
+    private Hashtable<Integer, JLabel> labelTable, labelTable2;
 
     /** DOCUMENT ME! */
     private JButton leftButton;
@@ -350,22 +350,16 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     private int xDim;
 
     /** DOCUMENT ME! */
-    private TransMatrix xfrm;
+    private TransMatrix xfrm = null;
 
     /** DOCUMENT ME! */
-    private float[][] xfrmA = null;
+    private TransMatrix xfrmBA = null;
 
     /** DOCUMENT ME! */
-    private TransMatrix xfrmBA;
+    private TransMatrix xfrmD = null;
 
     /** DOCUMENT ME! */
-    private double[][] xfrmD = null;
-
-    /** DOCUMENT ME! */
-    private TransMatrix xfrmH;
-
-    /** DOCUMENT ME! */
-    private double[][] xfrmR = null;
+    private TransMatrix xfrmH = null;
 
     /** DOCUMENT ME! */
     private int[] xOrg;
@@ -638,16 +632,9 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         } else if (command.equals("up")) {
 
             if (mode == ViewJComponentBase.TRANSLATE) {
-                xfrmH.identity();
+                xfrmH.MakeIdentity();
                 xfrmH.setTranslate(0, -pixelIncrement * yRes);
-                multMatrix(xfrmH.getArray(), xfrm.getArray(), xfrmR);
-
-                for (i = 0; i < 3; i++) {
-
-                    for (j = 0; j < 3; j++) {
-                        xfrm.set(i, j, xfrmR[i][j]);
-                    }
-                }
+                xfrm.Mult(xfrmH, xfrm);
 
                 if (bufferFactor == 1) {
                     transform();
@@ -660,16 +647,9 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         } else if (command.equals("down")) {
 
             if (mode == ViewJComponentBase.TRANSLATE) {
-                xfrmH.identity();
+                xfrmH.MakeIdentity();
                 xfrmH.setTranslate(0, pixelIncrement * yRes);
-                multMatrix(xfrmH.getArray(), xfrm.getArray(), xfrmR);
-
-                for (i = 0; i < 3; i++) {
-
-                    for (j = 0; j < 3; j++) {
-                        xfrm.set(i, j, xfrmR[i][j]);
-                    }
-                }
+                xfrm.Mult(xfrmH, xfrm);
 
                 if (bufferFactor == 1) {
                     transform();
@@ -682,16 +662,9 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         } else if (command.equals("right")) {
 
             if (mode == ViewJComponentBase.TRANSLATE) {
-                xfrmH.identity();
+                xfrmH.MakeIdentity();
                 xfrmH.setTranslate(pixelIncrement * xRes, 0);
-                multMatrix(xfrmH.getArray(), xfrm.getArray(), xfrmR);
-
-                for (i = 0; i < 3; i++) {
-
-                    for (j = 0; j < 3; j++) {
-                        xfrm.set(i, j, xfrmR[i][j]);
-                    }
-                }
+                xfrm.Mult(xfrmH, xfrm);
 
                 if (bufferFactor == 1) {
                     transform();
@@ -704,16 +677,9 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         } else if (command.equals("left")) {
 
             if (mode == ViewJComponentBase.TRANSLATE) {
-                xfrmH.identity();
+                xfrmH.MakeIdentity();
                 xfrmH.setTranslate(-pixelIncrement * xRes, 0);
-                multMatrix(xfrmH.getArray(), xfrm.getArray(), xfrmR);
-
-                for (i = 0; i < 3; i++) {
-
-                    for (j = 0; j < 3; j++) {
-                        xfrm.set(i, j, xfrmR[i][j]);
-                    }
-                }
+                xfrm.Mult(xfrmH, xfrm);
 
                 if (bufferFactor == 1) {
                     transform();
@@ -785,18 +751,11 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             componentImage.setAdjMark(false);
             componentImage.setRefMark(false);
             componentImage.setCenter(false);
-            xfrmH.identity();
+            xfrmH.MakeIdentity();
             xfrmH.setTranslate(xRotation, yRotation);
             xfrmH.setRotate(degreeIncrement);
             xfrmH.setTranslate(-xRotation, -yRotation);
-            multMatrix(xfrmH.getArray(), xfrm.getArray(), xfrmR);
-
-            for (i = 0; i < 3; i++) {
-
-                for (j = 0; j < 3; j++) {
-                    xfrm.set(i, j, xfrmR[i][j]);
-                }
-            }
+            xfrm.Mult(xfrmH, xfrm);
 
             if (bufferFactor == 1) {
                 transform();
@@ -813,18 +772,11 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             componentImage.setAdjMark(false);
             componentImage.setRefMark(false);
             componentImage.setCenter(false);
-            xfrmH.identity();
+            xfrmH.MakeIdentity();
             xfrmH.setTranslate(xRotation, yRotation);
             xfrmH.setRotate(-degreeIncrement);
             xfrmH.setTranslate(-xRotation, -yRotation);
-            multMatrix(xfrmH.getArray(), xfrm.getArray(), xfrmR);
-
-            for (i = 0; i < 3; i++) {
-
-                for (j = 0; j < 3; j++) {
-                    xfrm.set(i, j, xfrmR[i][j]);
-                }
-            }
+            xfrm.Mult(xfrmH, xfrm);
 
             if (bufferFactor == 1) {
                 transform();
@@ -850,7 +802,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                 MipavUtil.displayError("ViewJFrameRegistration: IOException Error on imageB.importData");
             }
 
-            xfrm.identity();
+            xfrm.MakeIdentity();
             imageB.calcMinMax();
             componentImage.deleteVOIs();
             xRotation = xRes * (image.getExtents()[0] / 2);
@@ -920,7 +872,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                 xfrmb.set(i, 2, T[i]); // set last col of xfrm to T
             }
 
-            xfrmb.setMatrix(0, 1, 0, 1, R); // copy R into dimxdim elements of xfrm
+            xfrmb.setMatrix(0, 1, 0, 1, R.getArray()); // copy R into dimxdim elements of xfrm
 
             for (j = 0; j < 2; j++) {
                 xfrmb.set(2, j, 0); // set last row of xfrm to 0,0,0,1
@@ -987,8 +939,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         extents = null;
         newExtents = null;
         xfrmD = null;
-        xfrmR = null;
-        xfrmA = null;
         xfrm = null;
         xfrmH = null;
 
@@ -1340,16 +1290,9 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         if (mode == ViewJComponentBase.TRANSLATE) {
             deltaX = xFinish - xStart;
             deltaY = yFinish - yStart;
-            xfrmH.identity();
+            xfrmH.MakeIdentity();
             xfrmH.setTranslate(deltaX, deltaY);
-            multMatrix(xfrmH.getArray(), xfrm.getArray(), xfrmR);
-
-            for (i = 0; i < 3; i++) {
-
-                for (j = 0; j < 3; j++) {
-                    xfrm.set(i, j, xfrmR[i][j]);
-                }
-            }
+            xfrm.Mult(xfrmH, xfrm);
 
             if (bufferFactor == 1) {
                 transform();
@@ -1371,18 +1314,11 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             deltaY = yFinish - yRotation;
             theta2 = java.lang.Math.atan2((double) deltaX, (double) deltaY);
             deltaTheta = (float) ((180.0 / Math.PI) * (theta1 - theta2));
-            xfrmH.identity();
+            xfrmH.MakeIdentity();
             xfrmH.setTranslate(xRotation, yRotation);
             xfrmH.setRotate(deltaTheta);
             xfrmH.setTranslate(-xRotation, -yRotation);
-            multMatrix(xfrmH.getArray(), xfrm.getArray(), xfrmR);
-
-            for (i = 0; i < 3; i++) {
-
-                for (j = 0; j < 3; j++) {
-                    xfrm.set(i, j, xfrmR[i][j]);
-                }
-            }
+            xfrm.Mult(xfrmH, xfrm);
 
             if (bufferFactor == 1) {
                 transform();
@@ -1561,7 +1497,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                     MipavUtil.displayError("ViewJFrameRegistration: IOException Error on exportData - importData sequence");
                 }
 
-                xfrm.identity();
+                xfrm.MakeIdentity();
                 componentImage.deleteAdjRotVOIs();
                 xRotation = xRes * (image.getExtents()[0] / 2);
                 yRotation = yRes * (image.getExtents()[1] / 2);
@@ -1873,7 +1809,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             slider.setPaintTicks(true);
             slider.addChangeListener(this);
             slider.setVisible(true);
-            labelTable = new Hashtable();
+            labelTable = new Hashtable<Integer, JLabel>();
             labelTable.put(new Integer(0), createLabel("0"));
             labelTable.put(new Integer(zSlice), createLabel(String.valueOf(zSlice)));
             labelTable.put(new Integer(nImage-1), createLabel(String.valueOf(nImage-1)));
@@ -1910,7 +1846,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             slider2.setPaintTicks(true);
             slider2.addChangeListener(this);
             slider2.setVisible(true);
-            labelTable2 = new Hashtable();
+            labelTable2 = new Hashtable<Integer, JLabel>();
             labelTable2.put(new Integer(0), createLabel("0"));
             labelTable2.put(new Integer(zSlice), createLabel(String.valueOf(zSlice)));
             labelTable2.put(new Integer(nImage-1), createLabel(String.valueOf(nImage-1)));
@@ -1937,7 +1873,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         addControlPanel(labelAlphaBlend, cpGBC, 0, 2, 2, 1);
 
         // Make labels to be used in display in the alpha blending slider
-        Hashtable dictionary = new Hashtable();
+        Hashtable<Integer, JLabel> dictionary = new Hashtable<Integer, JLabel>();
         JLabel label1 = new JLabel("Ref. R");
         label1.setForeground(Color.black);
         label1.setFont(font12);
@@ -2602,14 +2538,12 @@ public class ViewJFrameRegistration extends ViewJFrameBase
 
         xfrm = new TransMatrix(3);
         xfrmH = new TransMatrix(3);
-        xfrmD = new double[3][3];
-        xfrmR = new double[3][3];
+        xfrmD = new TransMatrix(3);
         xOrg = new int[40];
         yOrg = new int[40];
         xPres = new int[40];
         yPres = new int[40];
         markerType = new int[40];
-        xfrmA = new float[3][3];
 
         // builds image panel and puts it into a scrollpane
         buildScrollPane();
@@ -2751,14 +2685,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             if ((det >= 0.99) && (det <= 1.01)) {
                 rotateBA = X.copy();
                 xfrmBA = buildXfrm(p1, p2, rotateBA);
-                multMatrix(xfrm.getArray(), xfrmBA.getArray(), xfrmR);
-
-                for (i = 0; i < 3; i++) {
-
-                    for (j = 0; j < 3; j++) {
-                        xfrm.set(i, j, xfrmR[i][j]);
-                    }
-                }
+                xfrm.Mult(xfrmH, xfrm);
 
                 doneLeastSquares = true;
 
@@ -2801,28 +2728,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         return (separator);
     }
 
-    /**
-     * multMatrix - multiplies two matrices together. General in nature for two-dimensional matrices but specifically
-     * used here to concatenate matrices.
-     *
-     * @param  oneMatrix     two-dimensional input matrix
-     * @param  twoMatrix     two-dimensional input matrix
-     * @param  resultMatrix  contains result of the multiplication of the two input matrices
-     */
-    private void multMatrix(double[][] oneMatrix, double[][] twoMatrix, double[][] resultMatrix) {
-        int i, j, k;
-
-        for (i = 0; i < 3; i++) {
-
-            for (j = 0; j < 3; j++) {
-                resultMatrix[j][i] = 0;
-
-                for (k = 0; k < 3; k++) {
-                    resultMatrix[j][i] += oneMatrix[j][k] * twoMatrix[k][i];
-                }
-            }
-        }
-    }
 
     /**
      * Thin-plate registration method.
@@ -3085,14 +2990,14 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         int n;
         float frm00, frm01, frm02, frm10, frm11, frm12;
 
-        xfrmD = (xfrm.inverse()).getArray();
+        xfrmD.Inverse(xfrm);
 
-        frm00 = (float) xfrmD[0][0];
-        frm01 = (float) xfrmD[0][1];
-        frm02 = (float) xfrmD[0][2];
-        frm10 = (float) xfrmD[1][0];
-        frm11 = (float) xfrmD[1][1];
-        frm12 = (float) xfrmD[1][2];
+        frm00 = xfrmD.Get(0, 0);
+        frm01 = xfrmD.Get(0, 1);
+        frm02 = xfrmD.Get(0, 2);
+        frm10 = xfrmD.Get(1, 0);
+        frm11 = xfrmD.Get(1, 1);
+        frm12 = xfrmD.Get(1, 2);
 
         int position;
         float dx, dy, dx1, dy1;
@@ -3168,24 +3073,18 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             markerType = componentImage.getMarkerType();
 
             if (doneLeastSquares) {
-                xfrmD = xfrmBA.getArray();
+                xfrmD.Copy(xfrmBA);
             } else {
-                xfrmD = xfrm.getArray();
+                xfrmD.Copy(xfrm);
             }
 
-            for (i = 0; i < 3; i++) {
-
-                for (j = 0; j < 3; j++) {
-                    xfrmA[i][j] = (float) (xfrmD[i][j]);
-                }
-            }
         } // end of if (nVOI > 0)
 
         for (n = 0; n < nVOI; n++) {
 
             if ((markerType[n] != REFMARK) && (markerType[n] != ROTATIONCENTER)) {
-                i = Math.round((xOrg[n] * xfrmA[0][0]) + (yOrg[n] * xfrmA[0][1]) + xfrmA[0][2]);
-                j = Math.round((xOrg[n] * xfrmA[1][0]) + (yOrg[n] * xfrmA[1][1]) + xfrmA[1][2]);
+                i = Math.round((xOrg[n] * xfrmD.Get(0, 0)) + (yOrg[n] * xfrmD.Get(0, 1)) + xfrmD.Get(0, 2));
+                j = Math.round((xOrg[n] * xfrmD.Get(1, 0)) + (yOrg[n] * xfrmD.Get(1, 1)) + xfrmD.Get(1, 2));
                 componentImage.moveVOITo(n, i, j);
             } // end of if (markerType[n] != REFMARK)
         } // end of for (n = 0; n < nVOI; n++)
@@ -3220,13 +3119,13 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         int n;
         float frm00, frm01, frm02, frm10, frm11, frm12;
 
-        xfrmD = (xfrm.inverse()).getArray();
-        frm00 = (float) xfrmD[0][0];
-        frm01 = (float) xfrmD[0][1];
-        frm02 = (float) xfrmD[0][2];
-        frm10 = (float) xfrmD[1][0];
-        frm11 = (float) xfrmD[1][1];
-        frm12 = (float) xfrmD[1][2];
+        xfrmD.Inverse(xfrm);
+        frm00 = xfrmD.Get(0, 0);
+        frm01 = xfrmD.Get(0, 1);
+        frm02 = xfrmD.Get(0, 2);
+        frm10 = xfrmD.Get(1, 0);
+        frm11 = xfrmD.Get(1, 1);
+        frm12 = xfrmD.Get(1, 2);
 
         int iXdim1 = xDim - 1;
         int iYdim1 = yDim - 1;
@@ -3311,24 +3210,17 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             markerType = componentImage.getMarkerType();
 
             if (doneLeastSquares) {
-                xfrmD = xfrmBA.getArray();
+                xfrmD.Copy(xfrmBA);
             } else {
-                xfrmD = xfrm.getArray();
-            }
-
-            for (i = 0; i < 3; i++) {
-
-                for (j = 0; j < 3; j++) {
-                    xfrmA[i][j] = (float) (xfrmD[i][j]);
-                }
+                xfrmD.Copy(xfrm);
             }
         } // end of if (nVOI > 0)
 
         for (n = 0; n < nVOI; n++) {
 
             if ((markerType[n] != REFMARK) && (markerType[n] != ROTATIONCENTER)) {
-                i = Math.round((xOrg[n] * xfrmA[0][0]) + (yOrg[n] * xfrmA[0][1]) + xfrmA[0][2]);
-                j = Math.round((xOrg[n] * xfrmA[1][0]) + (yOrg[n] * xfrmA[1][1]) + xfrmA[1][2]);
+                i = Math.round((xOrg[n] * xfrmD.Get(0, 0)) + (yOrg[n] * xfrmD.Get(0, 1)) + xfrmD.Get(0, 2));
+                j = Math.round((xOrg[n] * xfrmD.Get(1, 0)) + (yOrg[n] * xfrmD.Get(1, 1)) + xfrmD.Get(1, 2));
                 componentImage.moveVOITo(n, i, j);
             } // end of if (markerType[n] != REFMARK)
         } // end of for (n = 0; n < nVOI; n++)

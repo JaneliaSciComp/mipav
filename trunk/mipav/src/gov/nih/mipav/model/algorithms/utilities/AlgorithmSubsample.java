@@ -6,7 +6,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.Dimension;
 import java.io.*;
 
 
@@ -213,7 +212,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         resultImage.calcMinMax();
 
         if (transformVOI) {
-            float[][] xfrm = null;
+            TransMatrix xfrm = null;
             int imgLength;
             float[] imgBuf;
             fireProgressStateChanged("Subsample on VOIs");
@@ -1605,7 +1604,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
      * @param  imgBuffer  Image array
      * @param  xfrm       Transformation matrix to be applied
      */
-    private void transform2DVOI(ModelImage image, float[] imgBuffer, float[][] xfrm) {
+    private void transform2DVOI(ModelImage image, float[] imgBuffer, TransMatrix xfrm) {
 
         int i, j;
         int X0pos, Y0pos;
@@ -1625,12 +1624,12 @@ public class AlgorithmSubsample extends AlgorithmBase {
         ModelImage tmpMask;
         ModelImage maskImage;
 
-        T00 = (float) xfrm[0][0];
-        T01 = (float) xfrm[0][1];
-        T02 = (float) xfrm[0][2];
-        T10 = (float) xfrm[1][0];
-        T11 = (float) xfrm[1][1];
-        T12 = (float) xfrm[1][2];
+        T00 = xfrm.Get(0, 0);
+        T01 = xfrm.Get(0, 1);
+        T02 = xfrm.Get(0, 2);
+        T10 = xfrm.Get(1, 0);
+        T11 = xfrm.Get(1, 1);
+        T12 = xfrm.Get(1, 2);
 
         maskImage = image.generateShortImage(1);
         tmpMask = new ModelImage(ModelImage.SHORT, resultExtents, null);
@@ -1701,7 +1700,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
      * @param  imgBuffer  Image array
      * @param  xfrm       Transformation matrix to be applied
      */
-    private void transform3DVOI(ModelImage image, float[] imgBuffer, float[][] xfrm) {
+    private void transform3DVOI(ModelImage image, float[] imgBuffer, TransMatrix xfrm) {
 
         int i, j, k;
         int X0pos, Y0pos, Z0pos;
@@ -1727,18 +1726,18 @@ public class AlgorithmSubsample extends AlgorithmBase {
         ModelImage tmpMask;
         ModelImage maskImage;
 
-        T00 = (float) xfrm[0][0];
-        T01 = (float) xfrm[0][1];
-        T02 = (float) xfrm[0][2];
-        T03 = (float) xfrm[0][3];
-        T10 = (float) xfrm[1][0];
-        T11 = (float) xfrm[1][1];
-        T12 = (float) xfrm[1][2];
-        T13 = (float) xfrm[1][3];
-        T20 = (float) xfrm[2][0];
-        T21 = (float) xfrm[2][1];
-        T22 = (float) xfrm[2][2];
-        T23 = (float) xfrm[2][3];
+        T00 = xfrm.Get(0, 0);
+        T01 = xfrm.Get(0, 1);
+        T02 = xfrm.Get(0, 2);
+        T03 = xfrm.Get(0, 3);
+        T10 = xfrm.Get(1, 0);
+        T11 = xfrm.Get(1, 1);
+        T12 = xfrm.Get(1, 2);
+        T13 = xfrm.Get(1, 3);
+        T20 = xfrm.Get(2, 0);
+        T21 = xfrm.Get(2, 1);
+        T22 = xfrm.Get(2, 2);
+        T23 = xfrm.Get(2, 3);
 
         
         maskImage = image.generateShortImage(1);

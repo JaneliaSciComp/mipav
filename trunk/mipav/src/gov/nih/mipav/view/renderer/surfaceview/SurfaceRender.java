@@ -2422,13 +2422,10 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
 
         TransMatrix xfrm = new TransMatrix(4);
 
-        xfrm.identity();
-
         WildMagic.LibFoundation.Mathematics.Vector3f center = imageA.getImageCentermm(false);
 
         xfrm.setTranslate(center.X, center.Y, center.Z);
-        xfrm.multMatrix(xfrm.getMatrix(), transMtx.getMatrix(), result);
-        xfrm.setMatrix(result);
+        xfrm.Mult(transMtx);
         xfrm.setTranslate(-center.X, -center.Y, -center.Z);
 
         // Step.4

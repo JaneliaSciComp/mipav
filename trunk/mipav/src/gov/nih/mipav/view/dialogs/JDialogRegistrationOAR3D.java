@@ -447,7 +447,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         float resX;
         float resY;
         float resZ;
-        double M[][];
         String comStr;
         DecimalFormat nf;
         ViewUserInterface UI = ViewUserInterface.getReference();
@@ -470,7 +469,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     // System.err.println("OAR3D Matrix: " + finalMatrix);
                     // System.err.println("LS Matrix: "  + lsMatrix);
 
-                    finalMatrix.timesEquals(lsMatrix);
+                    finalMatrix.Mult(lsMatrix);
                     // System.err.println("OAR3D x LS: " + finalMatrix);
                 }
 
@@ -534,10 +533,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     xCen = xOrig * resX;
                     yCen = yOrig * resY;
                     zCen = zOrig * resZ;
-                    M = finalMatrix.inverse().getArray();
-                    xCenNew = xCen*M[0][0] + yCen*M[0][1] + zCen*M[0][2] + M[0][3];
-                    yCenNew = xCen*M[1][0] + yCen*M[1][1] + zCen*M[1][2] + M[1][3];
-                    zCenNew = xCen*M[2][0] + yCen*M[2][1] + zCen*M[2][2] + M[2][3];
+                    finalMatrix.Inverse();
+                    xCenNew = xCen*finalMatrix.Get(0, 0) + yCen*finalMatrix.Get(0, 1) + zCen*finalMatrix.Get(0, 2) + finalMatrix.Get(0, 3);
+                    yCenNew = xCen*finalMatrix.Get(1, 0) + yCen*finalMatrix.Get(1, 1) + zCen*finalMatrix.Get(1, 2) + finalMatrix.Get(1, 3);
+                    zCenNew = xCen*finalMatrix.Get(2, 0) + yCen*finalMatrix.Get(2, 1) + zCen*finalMatrix.Get(2, 2) + finalMatrix.Get(2, 3);
                     Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
                                        + xCen + ", " + yCen + ", " + zCen + ")\n");
                     comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + 

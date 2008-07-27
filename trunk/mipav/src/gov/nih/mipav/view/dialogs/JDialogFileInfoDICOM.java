@@ -1007,7 +1007,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         int nextIndex = 0, index = 0;
         String subStr = new String();
 
-        for (int ii = 0; ii < imageA.getMatrix().getNRows(); ii++) {
+        for (int ii = 0; ii < imageA.getMatrix().getDim(); ii++) {
             i++;
             nextIndex = matrixString.indexOf("\n", index);
 

@@ -298,7 +298,7 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
         simplex.setRunningInSeparateThread(runningInSeparateThread);
         simplex.run();
         xfrm = getTransform(p[0]); // lowest cost row
-        xfrm.invert();
+        xfrm.Inverse();
 
         return xfrm.transform(inputGon);
     }

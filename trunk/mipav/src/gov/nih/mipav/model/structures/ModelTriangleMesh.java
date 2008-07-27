@@ -528,7 +528,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             long c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0, c8 = 0;
             long tmpLong;
             int j;
-            double[][] inverseDicomArray;
+            //double[][] inverseDicomArray;
             TransMatrix inverseDicomMatrix = new TransMatrix(4);
             float[] tCoord = new float[3];
             float[] coord = new float[3];
@@ -614,7 +614,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                 buffer = new byte[128];
                 kIn.read(buffer);
                 index = 0;
-                inverseDicomArray = new double[4][4];
+                //inverseDicomArray = new double[4][4];
 
                 for (i = 0; i <= 3; i++) {
 
@@ -629,11 +629,10 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                         c8 = buffer[index++] & 0xffL;
                         tmpLong = ((c1 << 56) | (c2 << 48) | (c3 << 40) | (c4 << 32) | (c5 << 24) | (c6 << 16) |
                                        (c7 << 8) | c8);
-                        inverseDicomArray[i][j] = Double.longBitsToDouble(tmpLong);
+                        inverseDicomMatrix.set(i,j, Double.longBitsToDouble(tmpLong));
                     }
                 }
 
-                inverseDicomMatrix.setMatrix(inverseDicomArray);
             } // if (dicom)
 
 
@@ -800,7 +799,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             long c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0, c8 = 0;
             long tmpLong;
             int j;
-            double[][] inverseDicomArray;
+            //double[][] inverseDicomArray;
             TransMatrix inverseDicomMatrix = new TransMatrix(4);
             float[] tCoord = new float[3];
             float[] coord = new float[3];
@@ -886,7 +885,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                 buffer = new byte[128];
                 kIn.read(buffer);
                 index = 0;
-                inverseDicomArray = new double[4][4];
+                //inverseDicomArray = new double[4][4];
 
                 for (i = 0; i <= 3; i++) {
 
@@ -901,11 +900,10 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                         c8 = buffer[index++] & 0xffL;
                         tmpLong = ((c1 << 56) | (c2 << 48) | (c3 << 40) | (c4 << 32) | (c5 << 24) | (c6 << 16) |
                                        (c7 << 8) | c8);
-                        inverseDicomArray[i][j] = Double.longBitsToDouble(tmpLong);
+                        inverseDicomMatrix.set(i,j, Double.longBitsToDouble(tmpLong));
                     }
                 }
 
-                inverseDicomMatrix.setMatrix(inverseDicomArray);
 
             } // if (dicom)
 
@@ -1116,13 +1114,13 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 	 * @param      direction          either 1 or -1 for each axis
 	 * @param      startLocation      DOCUMENT ME!
 	 * @param      box                (dim-1)*res
-	 * @param      inverseDicomArray  DOCUMENT ME!
+	 * @param      inverseDicomMatrix  dicom transform
 	 * @param 	   perVertexColorArray  color per vertex array.
 	 *
 	 * @exception  IOException  if there is an error writing to the file
 	 */
 	public static void save(String kName, ModelTriangleMesh[] akComponent, boolean flip, int[] direction,
-	                        float[] startLocation, float[] box, double[][] inverseDicomArray, Color4f[][] perVertexColorArray) throws IOException {
+	                        float[] startLocation, float[] box, TransMatrix inverseDicomMatrix, Color4f[][] perVertexColorArray) throws IOException {
 	
 	    if (akComponent.length == 0) {
 	        return;
@@ -1148,9 +1146,9 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 	
 	            for (i = 0; i < akComponent.length; i++) {
 	            	if (perVertexColorArray != null)
-	            		akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomArray, perVertexColorArray[i]);
+	            		akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomMatrix, perVertexColorArray[i]);
 	            	else
-	            		akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomArray, null);
+	            		akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomMatrix, null);
 	            }
 	        }
 	    }
@@ -2325,12 +2323,12 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      * @param      direction          equal 1 or -1 for each axis
      * @param      startLocation      DOCUMENT ME!
      * @param      box                (dim-1)*res
-     * @param      inverseDicomArray  DOCUMENT ME!
+     * @param      inverseDicomMatrix  DOCUMENT ME!
      *
      * @exception  IOException  if the specified file could not be opened for writing
      */
     public void save(String kName, boolean flip, int[] direction, float[] startLocation, float[] box,
-                     double[][] inverseDicomArray) throws IOException {
+    				TransMatrix inverseDicomMatrix) throws IOException {
 
 
         int i = kName.lastIndexOf('.');
@@ -2361,7 +2359,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                 RandomAccessFile kOut = new RandomAccessFile(new File(kName), "rw");
                 kOut.writeInt(0); // object is ModelTriangleMesh
                 kOut.writeInt(1); // one component
-                save(kOut, flip, direction, startLocation, box, inverseDicomArray, null);
+                save(kOut, flip, direction, startLocation, box, inverseDicomMatrix, null);
                 kOut.close();
             } else if (extension.equals("xml")) {
             	// saveAsXML( kName, direction, startLocation, box);
@@ -2370,7 +2368,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             	RandomAccessFile kOut = new RandomAccessFile(new File(surfaceFileName), "rw");
                 kOut.writeInt(0); // object is ModelTriangleMesh
                 kOut.writeInt(1); // one component
-                save(kOut, flip, direction, startLocation, box, inverseDicomArray, null);
+                save(kOut, flip, direction, startLocation, box, inverseDicomMatrix, null);
                 kOut.close();
             } else if (extension.equals("vtp")) {
             	saveAsVTKXML(kName);
@@ -3479,13 +3477,13 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      * @exception  IOException  if there is an error writing to the file
      */
     protected void save(RandomAccessFile kOut, boolean flip, int[] direction, float[] startLocation, float[] box,
-                        double[][] inverseDicomArray, Color4f[] perVertexColorArray) throws IOException {
+    			TransMatrix inverseDicomMatrix, Color4f[] perVertexColorArray) throws IOException {
         Point3f[] akVertex = getVertexCopy();
         Point3f kVertex = new Point3f();
         Vector3f kNormal = new Vector3f();
 
         
-        if (inverseDicomArray == null) {
+        if (inverseDicomMatrix == null) {
 
             if (flip) {
                 kOut.writeInt(1);
@@ -3544,14 +3542,14 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         buffer[index++] = (byte) (tmpInt & 0xff);
         kOut.write(buffer);
 
-        if (inverseDicomArray != null) {
+        if (inverseDicomMatrix != null) {
             buffer = new byte[128];
             index = 0;
 
             for (i = 0; i <= 3; i++) {
 
                 for (j = 0; j <= 3; j++) {
-                    tmpLong = Double.doubleToLongBits(inverseDicomArray[i][j]);
+                    tmpLong = Double.doubleToLongBits(inverseDicomMatrix.get(i, j));
                     buffer[index++] = (byte) (tmpLong >>> 56);
                     buffer[index++] = (byte) (tmpLong >>> 48);
                     buffer[index++] = (byte) (tmpLong >>> 40);

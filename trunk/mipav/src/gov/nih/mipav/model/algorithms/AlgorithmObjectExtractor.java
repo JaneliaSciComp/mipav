@@ -1691,7 +1691,6 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
     protected void saveMesh(boolean flip) throws IOException {
         TransMatrix dicomMatrix;
         TransMatrix inverseDicomMatrix = null;
-        double[][] inverseDicomArray = null;
         float[] coord;
         float[] tCoord;
         int i;
@@ -1702,14 +1701,12 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
 
             // Get the DICOM transform that describes the transformation from
             // axial to this image orientation
-            dicomMatrix = (TransMatrix) (image.getMatrix().clone());
-            inverseDicomMatrix = (TransMatrix) (image.getMatrix().clone());
-            inverseDicomMatrix.invert();
+            dicomMatrix = srcImage.getMatrix();
+            inverseDicomMatrix = new TransMatrix(srcImage.getMatrix());
+            inverseDicomMatrix.Inverse();
 
             // tDir corrects for the image orientation by putting the reference
             // point into the axial orientation
-            inverseDicomArray = inverseDicomMatrix.getMatrix();
-            inverseDicomMatrix = null;
             coord = new float[3];
             tCoord = new float[3];
 
@@ -1741,7 +1738,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         ModelTriangleMesh[] newMesh = new ModelTriangleMesh[1];
         newMesh[0] = new ModelTriangleMesh(m_akVertex, m_aiConnect);
 
-        ModelTriangleMesh.save(kName, newMesh, flip, direction, startLocation, box, inverseDicomArray, null);
+        ModelTriangleMesh.save(kName, newMesh, flip, direction, startLocation, box, inverseDicomMatrix, null);
     }
 
     /**

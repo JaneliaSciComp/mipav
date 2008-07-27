@@ -791,11 +791,11 @@ public class AlgorithmMatchImages extends AlgorithmBase {
      *               of (x,y,z) which has the smallest angle to the (i,j,k) axes directions, which are columns of the
      *               input matrix Errors: The codes returned will be zero.
      *
-     * @return  DOCUMENT ME!
+     * @return  codes
      */
-    private int[] getAxisOrientation(TransMatrix mat) {
+    public static int[] getAxisOrientation(TransMatrix mat) {
         int[] axisOrientation = new int[3];
-        double[][] array;
+        //double[][] array;
         double xi, xj, xk, yi, yj, yk, zi, zj, zk, val;
         Matrix3f Q;
         double detQ;
@@ -806,17 +806,17 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         double detP;
         Matrix3f M = new Matrix3f();
 
-        array = mat.getMatrix(0, 2, 0, 2).getArray();
+        //array = mat.getMatrix(0, 2, 0, 2).getArray();
 
-        xi = array[0][0];
-        xj = array[0][1];
-        xk = array[0][2];
-        yi = array[1][0];
-        yj = array[1][1];
-        yk = array[1][2];
-        zi = array[2][0];
-        zj = array[2][1];
-        zk = array[2][2];
+        xi = mat.Get(0, 0);
+        xj = mat.Get(0, 1);
+        xk = mat.Get(0, 2);
+        yi = mat.Get(1, 0);
+        yj = mat.Get(1, 1);
+        yk = mat.Get(1, 2);
+        zi = mat.Get(2, 0);
+        zj = mat.Get(2, 1);
+        zk = mat.Get(2, 2);
 
         int izero = 0;
         int jzero = 0;
@@ -1103,15 +1103,15 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             return axisOrientation;
         }
 
-        array[0][0] = xi;
-        array[0][1] = xj;
-        array[0][2] = xk;
-        array[1][0] = yi;
-        array[1][1] = yj;
-        array[1][2] = yk;
-        array[2][0] = zi;
-        array[2][1] = zj;
-        array[2][2] = zk;
+        mat.set(0, 0, xi);
+        mat.set(0, 1, xj);
+        mat.set(0, 2, xk);
+        mat.set(1, 0, yi);
+        mat.set(1, 1, yj);
+        mat.set(1, 2, yk);
+        mat.set(2, 0, zi);
+        mat.set(2, 1, zj);
+        mat.set(2, 2, zk);
 
         // At this point, Q is the rotation matrix from the (i,j,k) to the (x,y,z) axes
         Q = new Matrix3f((float)xi, (float)xj, (float)xk, 
@@ -1153,15 +1153,15 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                         continue;
                     }
 
-                    array[0][0] = 0.0;
-                    array[0][1] = 0.0;
-                    array[0][2] = 0.0;
-                    array[1][0] = 0.0;
-                    array[1][1] = 0.0;
-                    array[1][2] = 0.0;
-                    array[2][0] = 0.0;
-                    array[2][1] = 0.0;
-                    array[2][2] = 0.0;
+                    mat.set(0, 0, 0.0);
+                    mat.set(0, 1, 0.0);
+                    mat.set(0, 2, 0.0);
+                    mat.set(1, 0, 0.0);
+                    mat.set(1, 1, 0.0);
+                    mat.set(1, 2, 0.0);
+                    mat.set(2, 0, 0.0);
+                    mat.set(2, 1, 0.0);
+                    mat.set(2, 2, 0.0);
                     P = new Matrix3f(); // zero matrix
 
                     for (p = -1; p <= 1; p += 2) { // p,q,r are -1 or +1 and go into rows #1,2,3
@@ -1311,7 +1311,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
      */
     private int[] getAxisOrientation2D(TransMatrix mat) {
         int[] axisOrientation = new int[2];
-        double[][] array;
+        //double[][] array;
         double xi, xj, yi, yj, val;
         Matrix2f Q;
         double detQ;
@@ -1322,12 +1322,12 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         double detP;
         Matrix2f M = new Matrix2f();
 
-        array = mat.getMatrix(0, 1, 0, 1).getArray();
+        //array = mat.getMatrix(0, 1, 0, 1).getArray();
 
-        xi = array[0][0];
-        xj = array[0][1];
-        yi = array[1][0];
-        yj = array[1][1];
+        xi = mat.Get(0, 0);
+        xj = mat.Get(0, 1);
+        yi = mat.Get(1, 0);
+        yj = mat.Get(1, 1);
 
         int izero = 0;
         int jzero = 0;
@@ -1466,10 +1466,10 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             return axisOrientation;
         }
 
-        array[0][0] = xi;
-        array[0][1] = xj;
-        array[1][0] = yi;
-        array[1][1] = yj;
+        mat.set(0, 0, xi);
+        mat.set(0, 1, xj);
+        mat.set(1, 0, yi);
+        mat.set(1, 1, yj);
 
         // At this point, Q is the rotation matrix from the (i,j,k) to the (x,y,z) axes
         Q = new Matrix2f((float)xi, (float)xj, (float)yi, (float)yj );
@@ -1500,10 +1500,10 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                     continue;
                 }
 
-                array[0][0] = 0.0;
-                array[0][1] = 0.0;
-                array[1][0] = 0.0;
-                array[1][1] = 0.0;
+                mat.set(0, 0, 0.0);
+                mat.set(0, 1, 0.0);
+                mat.set(1, 0, 0.0);
+                mat.set(1, 1, 0.0);
                 P = new Matrix2f();
 
                 for (p = -1; p <= 1; p += 2) { // p,q are -1 or +1 and go into rows #1,2

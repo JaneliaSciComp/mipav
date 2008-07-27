@@ -560,7 +560,7 @@ public class FileSurface_WM {
                     }
                 }
 
-                inverseDicomMatrix.setMatrix(inverseDicomArray);
+                inverseDicomMatrix.copyMatrix(inverseDicomArray);
 
             } // if (dicom)
 
@@ -946,7 +946,7 @@ public class FileSurface_WM {
             }
 
             ArrayList<Vector3f> vertexPts = new ArrayList<Vector3f>(1000);
-            ArrayList<Integer> connArray = new ArrayList(1000);
+            ArrayList<Integer> connArray = new ArrayList<Integer>(1000);
 
             boolean readMore = true;
             Vector3f fPt;
@@ -1330,15 +1330,15 @@ public class FileSurface_WM {
 //                 }
 
                 if (isSur == true) {
-                    double[][] inverseDicomArray = null;
-
+                    //double[][] inverseDicomArray = null;
+                	TransMatrix inverse_DicomMatrix = null;
                     if (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
-                        TransMatrix inverseDicomMatrix = (TransMatrix) (kImage.getMatrix().clone());
-                        inverseDicomMatrix.invert();
-                        inverseDicomArray = inverseDicomMatrix.getMatrix();
+                        inverse_DicomMatrix = (TransMatrix) (kImage.getMatrix().clone());
+                        inverse_DicomMatrix.Inverse();
+                        //inverseDicomArray = inverseDicomMatrix.getMatrix();
                     }
 
-                    save(name, kMesh, kVBuffer, true, direction, startLocation, box, inverseDicomArray);
+                    save(name, kMesh, kVBuffer, true, direction, startLocation, box, inverse_DicomMatrix);
                 } else {
                     saveAsVRML(name, kMesh, kVBuffer, true, direction, startLocation, box );
                 }
@@ -1754,20 +1754,20 @@ public class FileSurface_WM {
      * @param      direction          either 1 or -1 for each axis
      * @param      startLocation      DOCUMENT ME!
      * @param      box                (dim-1)*res
-     * @param      inverseDicomArray  DOCUMENT ME!
+     * @param      inverseDicomMatrix  DOCUMENT ME!
      * @param 	   perVertexColorArray   color per vertex array.
      *
      * @exception  IOException  if there is an error writing to the file
      */
     protected static void save(String kName, TriMesh kMesh, VertexBuffer kVBuffer, boolean flip, int[] direction, float[] startLocation, float[] box,
-                        double[][] inverseDicomArray)
+                        TransMatrix inverseDicomMatrix)
         throws IOException
     {
         RandomAccessFile kOut = new RandomAccessFile(new File(kName), "rw");
         kOut.writeInt(0); // objects are ModelTriangleMesh
         kOut.writeInt(1);
         
-        if (inverseDicomArray == null) {
+        if (inverseDicomMatrix == null) {
             
             if (flip) {
                 kOut.writeInt(1);
@@ -1825,14 +1825,14 @@ public class FileSurface_WM {
         buffer[index++] = (byte) (tmpInt & 0xff);
         kOut.write(buffer);
 
-        if (inverseDicomArray != null) {
+        if (inverseDicomMatrix != null) {
             buffer = new byte[128];
             index = 0;
 
             for (i = 0; i <= 3; i++) {
 
                 for (j = 0; j <= 3; j++) {
-                    tmpLong = Double.doubleToLongBits(inverseDicomArray[i][j]);
+                    tmpLong = Double.doubleToLongBits(inverseDicomMatrix.Get(i, j));
                     buffer[index++] = (byte) (tmpLong >>> 56);
                     buffer[index++] = (byte) (tmpLong >>> 48);
                     buffer[index++] = (byte) (tmpLong >>> 40);

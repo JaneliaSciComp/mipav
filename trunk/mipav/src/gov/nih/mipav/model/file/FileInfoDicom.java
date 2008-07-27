@@ -2,7 +2,6 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.structures.*;
-import Jama.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -368,7 +367,7 @@ public class FileInfoDicom extends FileInfoBase {
             dirCos[3][2] = 0;
             dirCos[3][3] = 1;
 
-            xfrm.timesEquals(Matrix.constructWithCopy(dirCos));
+            xfrm.copyMatrix(dirCos);
             // if (Preferences.isDebug()) xfrm.print();
             return xfrm;
         } catch (OutOfMemoryError error) {

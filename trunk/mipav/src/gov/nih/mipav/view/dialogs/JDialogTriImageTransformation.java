@@ -49,9 +49,6 @@ public class JDialogTriImageTransformation extends JDialogBase {
     /** DOCUMENT ME! */
     private double thetaXY, thetaXZ, thetaZY; // rotation angles in degrees, the negative of these
 
-    /** DOCUMENT ME! */
-    private double[][] xfrmD = new double[4][4]; // (xfrm.inverse()).getArray()
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -344,7 +341,7 @@ public class JDialogTriImageTransformation extends JDialogBase {
             }
 
             TransMatrix xfrm = new TransMatrix(4);
-            xfrm.identity();
+            //xfrm.MakeIdentity();
 
             xfrm.setTranslate(centerX * image.getFileInfo()[0].getResolutions()[0],
                               centerY * image.getFileInfo()[0].getResolutions()[1],
@@ -380,7 +377,7 @@ public class JDialogTriImageTransformation extends JDialogBase {
                     if (!image.isColorImage()) {
                         image = doTrilinear(clonedImage, null, imgBuffer, xfrm, progressBar); // black and white
                     } else {
-                        image = AlgorithmTransform.transformTrilinearC(image, clonedImage, imgBuffer, xfrm, xfrmD,
+                        image = AlgorithmTransform.transformTrilinearC(image, clonedImage, imgBuffer, xfrm, 
                                                                        progressBar); // color
                     }
                 } else if (boxIndex == 1) {

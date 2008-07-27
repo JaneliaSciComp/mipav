@@ -505,19 +505,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double b1, b2;
         double value;
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
@@ -750,19 +749,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
@@ -1008,19 +1006,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
@@ -1317,19 +1314,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double[] sumY2 = new double[nBins];
 
         // get transformation matrix into quick access variables.
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
@@ -1534,19 +1530,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double[] sumY2 = new double[nBins];
 
         // get transformation matrix into quick access variables.
-        double [][]xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -1777,19 +1772,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double[] sumY = new double[nBins];
         double[] sumY2 = new double[nBins];
 
-        double [][]xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -2225,19 +2219,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double sum = 0.0;
         long count = 0;
 
-        double [][]xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -2373,19 +2366,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double sum = 0.0;
         long count = 0;
 
-        double [][]xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -2537,19 +2529,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double [][]xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -2720,19 +2711,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double [][]xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -2910,19 +2900,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double [][]xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -3103,19 +3092,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double [][]xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -3412,19 +3400,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double countSqr = 0;
         double varX, varY, varXY;
 
-        double [][]xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -3575,19 +3562,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double varX, varY, varXY;
         double countSqr = 0;
 
-        double [][]xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -3734,19 +3720,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double [][]xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation
@@ -3952,19 +3937,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
         invSmoothZ = 1.0 / smoothZ;
 
-        double [][]xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T03 = xfrm[0][3];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
-        double T13 = xfrm[1][3];
-        double T20 = xfrm[2][0];
-        double T21 = xfrm[2][1];
-        double T22 = xfrm[2][2];
-        double T23 = xfrm[2][3];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T03 = tMatrix.M03;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
+        double T13 = tMatrix.M13;
+        double T20 = tMatrix.M20;
+        double T21 = tMatrix.M21;
+        double T22 = tMatrix.M22;
+        double T23 = tMatrix.M23;
 
         // the next variable are used in the "findRangeX" method. They are calculated only once to
         // speed up the cost function calculation

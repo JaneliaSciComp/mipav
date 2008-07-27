@@ -2,7 +2,6 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.structures.*;
-import Jama.*;
 
 import gov.nih.mipav.view.*;
 
@@ -492,17 +491,17 @@ public class FileMGH extends FileBase {
         }
 
         fileInfo.setResolutions(resolutions);
-        matrix.setMatrix((double) -xr * resolutions[0], 0, 0);
-        matrix.setMatrix((double) -yr * resolutions[1], 0, 1);
-        matrix.setMatrix((double) -zr * resolutions[2], 0, 2);
+        matrix.set(0, 0, (double) -xr * resolutions[0]);
+        matrix.set(0, 1, (double) -yr * resolutions[1]);
+        matrix.set(0, 2, (double) -zr * resolutions[2]);
 
-        matrix.setMatrix((double) -xa * resolutions[0], 1, 0);
-        matrix.setMatrix((double) -ya * resolutions[1], 1, 1);
-        matrix.setMatrix((double) -za * resolutions[2], 1, 2);
+        matrix.set(1, 0, (double) -xa * resolutions[0]);
+        matrix.set(1, 1, (double) -ya * resolutions[1]);
+        matrix.set(1, 2, (double) -za * resolutions[2]);
 
-        matrix.setMatrix((double) xs * resolutions[0], 2, 0);
-        matrix.setMatrix((double) ys * resolutions[1], 2, 1);
-        matrix.setMatrix((double) zs * resolutions[2], 2, 2);
+        matrix.set(2, 0, (double) xs * resolutions[0]);
+        matrix.set(2, 1, (double) ys * resolutions[1]);
+        matrix.set(2, 2, (double) zs * resolutions[2]);
 
 
         axisOrientation = getAxisOrientation(matrix);
@@ -539,9 +538,9 @@ public class FileMGH extends FileBase {
         }
 
         fileInfo.setOrigin(origin);
-        matrix.setMatrix((double) origin[0], 0, 3);
-        matrix.setMatrix((double) origin[1], 1, 3);
-        matrix.setMatrix((double) origin[2], 2, 3);
+        matrix.set(0, 3, (double) origin[0]);
+        matrix.set(1, 3, (double) origin[1]);
+        matrix.set(2, 3, (double) origin[2]);
         Preferences.debug("matrix = \n" + matrix + "\n");
         fileInfo.setMatrix(matrix);
 
@@ -1177,29 +1176,29 @@ public class FileMGH extends FileBase {
      *
      * @return  DOCUMENT ME!
      */
-    private int[] getAxisOrientation(TransMatrix mat) {
+    public static int[] getAxisOrientation(TransMatrix mat) {
         int[] axisOrientation = new int[3];
-        double[][] array;
+        //double[][] array;
         double xi, xj, xk, yi, yj, yk, zi, zj, zk, val;
-        Matrix Q;
+        TransMatrix Q;
         double detQ;
         double vbest;
         int ibest, jbest, kbest, pbest, qbest, rbest;
         int i, j, k, p, q, r;
-        Matrix P;
+        TransMatrix P;
         double detP;
-        Matrix M;
+        TransMatrix M = new TransMatrix(mat.getDim());
 
-        array = mat.getMatrix(0, 2, 0, 2).getArray();
-        xi = array[0][0];
-        xj = array[0][1];
-        xk = array[0][2];
-        yi = array[1][0];
-        yj = array[1][1];
-        yk = array[1][2];
-        zi = array[2][0];
-        zj = array[2][1];
-        zk = array[2][2];
+        //array = mat.getMatrix(0, 2, 0, 2).getArray();
+        xi = mat.Get(0, 0);
+        xj = mat.Get(0, 1);
+        xk = mat.Get(0, 2);
+        yi = mat.Get(1, 0);
+        yj = mat.Get(1, 1);
+        yk = mat.Get(1, 2);
+        zi = mat.Get(2, 0);
+        zj = mat.Get(2, 1);
+        zk = mat.Get(2, 2);
 
         int izero = 0;
         int jzero = 0;
@@ -1401,19 +1400,20 @@ public class FileMGH extends FileBase {
             zk /= val;
         }
 
-        array[0][0] = xi;
-        array[0][1] = xj;
-        array[0][2] = xk;
-        array[1][0] = yi;
-        array[1][1] = yj;
-        array[1][2] = yk;
-        array[2][0] = zi;
-        array[2][1] = zj;
-        array[2][2] = zk;
+        mat.set(0, 0, xi);
+        mat.set(0, 1, xj);
+        mat.set(0, 2, xk);
+        mat.set(1, 0, yi);
+        mat.set(1, 1, yj);
+        mat.set(1, 2, yk);
+        mat.set(2, 0, zi);
+        mat.set(2, 1, zj);
+        mat.set(2, 2, zk);
 
         // At this point, Q is the rotation matrix from the (i,j,k) to the (x,y,z) axes
-        Q = new Matrix(array);
-        detQ = Q.det();
+        Q = new TransMatrix(mat);
+        P = new TransMatrix(mat);
+        detQ = Q.Determinant();
 
         if (detQ == 0.0) {
             MipavUtil.displayError("detQ == 0.0 in getAxisOrientation");
@@ -1449,16 +1449,17 @@ public class FileMGH extends FileBase {
                         continue;
                     }
 
-                    array[0][0] = 0.0;
-                    array[0][1] = 0.0;
-                    array[0][2] = 0.0;
-                    array[1][0] = 0.0;
-                    array[1][1] = 0.0;
-                    array[1][2] = 0.0;
-                    array[2][0] = 0.0;
-                    array[2][1] = 0.0;
-                    array[2][2] = 0.0;
-                    P = new Matrix(array);
+//                     mat.set(0, 0, 0.0);
+//                     mat.set(0, 1, 0.0);
+//                     mat.set(0, 2, 0.0);
+//                     mat.set(1, 0, 0.0);
+//                     mat.set(1, 1, 0.0);
+//                     mat.set(1, 2, 0.0);
+//                     mat.set(2, 0, 0.0);
+//                     mat.set(2, 1, 0.0);
+//                     mat.set(2, 2, 0.0);
+                    P.MakeZero();
+
 
                     for (p = -1; p <= 1; p += 2) { // p,q,r are -1 or +1 and go into rows #1,2,3
 
@@ -1468,14 +1469,14 @@ public class FileMGH extends FileBase {
                                 P.set(0, i - 1, p);
                                 P.set(1, j - 1, q);
                                 P.set(2, k - 1, r);
-                                detP = P.det();
+                                detP = P.Determinant();
 
                                 // sign of permutation doesn't match sign of Q
                                 if ((detP * detQ) <= 0.0) {
                                     continue;
                                 }
 
-                                M = P.times(Q);
+                                M.Mult(P, Q);
 
                                 // angle of M rotation = 2.0*acos(0.5*sqrt(1.0+trace(M)))
                                 // we want largest trace(M) == smallest angle == M nearest to I

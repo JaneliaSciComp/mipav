@@ -122,7 +122,7 @@ public class FilePolyline_WM {
 
             dicom = true;
             
-            inverseDicomMatrix.setMatrix(inverseDicomArray);
+            inverseDicomMatrix.copyMatrix(inverseDicomArray);
         }
 		
         if (dicom == false) {

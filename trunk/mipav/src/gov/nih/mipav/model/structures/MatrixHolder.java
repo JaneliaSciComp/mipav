@@ -15,12 +15,15 @@ public class MatrixHolder extends ModelSerialCloneable {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** The composite matrix formed by multiplying (in reverse order) all stored matrices. */
+	private static final long serialVersionUID = 6886161945452841455L;
+
+
+	/** The composite matrix formed by multiplying (in reverse order) all stored matrices. */
     private TransMatrix compositeMatrix = null;
 
 
     /** Linked hash map that will store all of the images associated matrices. */
-    private LinkedHashMap matrixMap;
+    private LinkedHashMap<String, TransMatrix> matrixMap;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -30,7 +33,7 @@ public class MatrixHolder extends ModelSerialCloneable {
      * @param  nDims  dimensions of image
      */
     public MatrixHolder(int nDims) {
-        this.matrixMap = new LinkedHashMap();
+        this.matrixMap = new LinkedHashMap<String, TransMatrix>();
 
 
         // go ahead and set the composite matrix
@@ -38,8 +41,10 @@ public class MatrixHolder extends ModelSerialCloneable {
 
         if (nDims == 2) {
             compositeMatrix = new TransMatrix(3, TransMatrix.TRANSFORM_COMPOSITE);
-        } else {
+        } else if (nDims == 3) {
             compositeMatrix = new TransMatrix(4, TransMatrix.TRANSFORM_COMPOSITE);
+        } else {
+        	throw new IllegalArgumentException("Dims must be 2 or 3");
         }
     }
 
@@ -86,18 +91,18 @@ public class MatrixHolder extends ModelSerialCloneable {
     public TransMatrix [] getNIFTICompositeMatrices() {
     	TransMatrix [] composites = new TransMatrix[2];
     	
-    	 Iterator iter = matrixMap.keySet().iterator();
+    	 Iterator<String> iter = matrixMap.keySet().iterator();
          String nextKey = null;
          
          TransMatrix tempMatrix = null;
          
          int idx = 0;
          while (iter.hasNext()) {
-         	nextKey = (String)iter.next();
-         	tempMatrix = (TransMatrix)matrixMap.get(nextKey);
+         	nextKey = iter.next();
+         	tempMatrix = matrixMap.get(nextKey);
          	if (tempMatrix.isNIFTI() && idx < 2) {
-         		composites[idx] = (TransMatrix)tempMatrix.clone();
-         		composites[idx].setMatrix(getCompositeMatrix(true).times(tempMatrix).getArray());
+         		composites[idx] = new TransMatrix(getCompositeMatrix(true));
+         		composites[idx].Mult(tempMatrix);
          		idx++;
          	}
          }
@@ -133,10 +138,10 @@ public class MatrixHolder extends ModelSerialCloneable {
      */
     public boolean containsType(int type) {
 
-        Iterator iter = matrixMap.keySet().iterator();
+        Iterator<String> iter = matrixMap.keySet().iterator();
         String nextKey = null;
         while (iter.hasNext()) {
-        	nextKey = (String)iter.next();
+        	nextKey = iter.next();
         	
             if (nextKey.startsWith(TransMatrix.getTransformIDStr(type))) {
                 return true;
@@ -157,26 +162,27 @@ public class MatrixHolder extends ModelSerialCloneable {
 
         // here we will dynamically create the composite matrix, with or without DICOM (scanner anatomical) if present
 
-        compositeMatrix.identity();
+        compositeMatrix.MakeIdentity();
 
-        Set keySet = matrixMap.keySet();
-        Object[] keys = keySet.toArray();
+        Set<String> keySet = matrixMap.keySet();
+        String[] keys = keySet.toArray(new String[] { });
         TransMatrix tempMatrix = null;
 
         for (int i = keys.length - 1; i >= 0; i--) {
-            tempMatrix = (TransMatrix) matrixMap.get(keys[i]);
+            tempMatrix = matrixMap.get(keys[i]);
                      
             //if the composite matrix is not the same size as the matrix stored, change the composite matrix to be 
             //   the correct size
-            if (compositeMatrix.getNCols() != tempMatrix.getNCols()) {
-            	compositeMatrix = new TransMatrix(tempMatrix.getNCols(), TransMatrix.TRANSFORM_COMPOSITE);
-            	compositeMatrix.identity();
+            if (compositeMatrix.getDim() != tempMatrix.getDim()) {
+            	compositeMatrix = new TransMatrix(tempMatrix.getDim(), TransMatrix.TRANSFORM_COMPOSITE);
+            	compositeMatrix.MakeIdentity();
             }
             
             //do not include a nifti associated matrices (matrices loaded w\ a NIFTI image)
             if (((tempMatrix.getTransformID() != TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) || useDICOM)
             		&& (!tempMatrix.isNIFTI())) {
-                compositeMatrix.setMatrix((tempMatrix).times(compositeMatrix).getArray());
+            	compositeMatrix.Copy(tempMatrix);
+                compositeMatrix.Mult(compositeMatrix);
             }
         }
 
@@ -194,7 +200,7 @@ public class MatrixHolder extends ModelSerialCloneable {
     public TransMatrix getMatrix(Object key) {
     	TransMatrix mat = null;
     	try {
-    		mat = (TransMatrix)matrixMap.get(key);
+    		mat = matrixMap.get(key);
     	} catch (Exception e) {
     	}
     	
@@ -207,14 +213,14 @@ public class MatrixHolder extends ModelSerialCloneable {
      *
      * @return  Vector of image's matrices
      */
-    public Vector getMatrices() {
-        Vector tempV = new Vector();
+    public Vector<TransMatrix> getMatrices() {
+        Vector<TransMatrix> tempV = new Vector<TransMatrix>();
 
-        Iterator iter = matrixMap.keySet().iterator();
+        Iterator<String> iter = matrixMap.keySet().iterator();
         TransMatrix tempM = null;
 
         while (iter.hasNext()) {
-            tempM = (TransMatrix) ((TransMatrix) matrixMap.get(iter.next())).clone();
+            tempM = new TransMatrix(matrixMap.get(iter.next()));
 
             // System.err.println("getting matrix from src image, type: " + tempM.getTransformID());
             tempV.add(tempM);
@@ -228,7 +234,7 @@ public class MatrixHolder extends ModelSerialCloneable {
      *
      * @return  the matrix map
      */
-    public LinkedHashMap getMatrixMap() {
+    public LinkedHashMap<String, TransMatrix> getMatrixMap() {
         return matrixMap;
     }
 
@@ -266,9 +272,9 @@ public class MatrixHolder extends ModelSerialCloneable {
      * @param  key        the key for the matrix
      * @param  newMatrix  the new matrix
      */
-    public void replaceMatrix(Object key, TransMatrix newMatrix) {
+    public void replaceMatrix(String key, TransMatrix newMatrix) {
 
-        if (((String) key).indexOf(TransMatrix.getTransformIDStr(newMatrix.getTransformID())) == -1) {
+        if (key.indexOf(TransMatrix.getTransformIDStr(newMatrix.getTransformID())) == -1) {
 
             // we are replacing via key something of the wrong type.  key and tID do not match
             System.err.println("Replacing wrong type, aborting replaceMatrix()");
@@ -282,7 +288,7 @@ public class MatrixHolder extends ModelSerialCloneable {
     public String toString() {
     	String desc = new String("MatrixHolder: ");
     	desc += "\n\tNumber of matrices: " + matrixMap.size();
-    	 Iterator iter = matrixMap.keySet().iterator();
+    	 Iterator<String> iter = matrixMap.keySet().iterator();
 
          int count = 0;
          while (iter.hasNext()) {

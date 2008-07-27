@@ -211,7 +211,6 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
         int length, bufferSize, sliceSize;
         TransMatrix dicomMatrix = null;
         TransMatrix inverseDicomMatrix = null;
-        double[][] inverseDicomArray = null;
 
 
         AlgorithmGaussianBlur blurAlgo;
@@ -324,11 +323,9 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
                 // Get the DICOM transform that describes the transformation from
                 // axial to this image orientation
-                dicomMatrix = (TransMatrix) (srcImage.getMatrix().clone());
-                inverseDicomMatrix = (TransMatrix) (srcImage.getMatrix().clone());
-                inverseDicomMatrix.invert();
-                inverseDicomArray = inverseDicomMatrix.getMatrix();
-                inverseDicomMatrix = null;
+                dicomMatrix = srcImage.getMatrix();
+                inverseDicomMatrix = new TransMatrix(srcImage.getMatrix());
+                inverseDicomMatrix.Inverse();
             }
 
             ModelSurfaceExtractor kExtractor = new ModelSurfaceExtractor(iXDim, iYDim, iZDim + 2, buffer2, fXRes, fYRes,
@@ -406,11 +403,11 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
                 System.gc();
                 fireProgressStateChanged("Saving surface");
-                ModelClodMesh.save(surfaceFileName, akClod, true, direction, origin, box, inverseDicomArray);
+                ModelClodMesh.save(surfaceFileName, akClod, true, direction, origin, box, inverseDicomMatrix);
             } else {
                 fireProgressStateChanged(75);
                 fireProgressStateChanged("Saving surface");
-                kMesh.save(surfaceFileName, true, direction, origin, box, inverseDicomArray);
+                kMesh.save(surfaceFileName, true, direction, origin, box, inverseDicomMatrix);
 
             }
         } catch (IOException error) {

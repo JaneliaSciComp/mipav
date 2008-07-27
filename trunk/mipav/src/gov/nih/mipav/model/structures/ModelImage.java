@@ -13,8 +13,6 @@ import gov.nih.mipav.model.provenance.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 import java.util.*;
@@ -58,7 +56,7 @@ public class ModelImage extends ModelStorageBase {
      * image. The transient keyword is used to indicate that the frame list should NOT be cloned when the image is
      * cloned. The new cloned image should build up its own list of frame(s) where it is displayed.
      */
-    private transient Vector frameList = null;
+    private transient Vector<ViewImageUpdateInterface> frameList = null;
 
     /**
      * ImageName is patient's name when using DICOM images. It is filename for any other image something other than
@@ -196,7 +194,7 @@ public class ModelImage extends ModelStorageBase {
             }
         }
 
-        frameList = new Vector();
+        frameList = new Vector<ViewImageUpdateInterface>();
         voiVector = new VOIVector();
     }
 
@@ -244,7 +242,7 @@ public class ModelImage extends ModelStorageBase {
     public void addImageDisplayListener(ViewImageUpdateInterface obj) {
 
         if (frameList == null) {
-            frameList = new Vector();
+            frameList = new Vector<ViewImageUpdateInterface>();
         }
 
         for (int i = 0; i < frameList.size(); i++) {
@@ -487,7 +485,7 @@ public class ModelImage extends ModelStorageBase {
     public Object clone() {
         ModelImage image = (ModelImage) this.clone(null);
 
-        image.frameList = new Vector();
+        image.frameList = new Vector<ViewImageUpdateInterface>();
 
         return ((Object) image);
     }
@@ -1079,7 +1077,7 @@ public class ModelImage extends ModelStorageBase {
      *
      * @return  image frame vector
      */
-    public Vector getImageFrameVector() {
+    public Vector<ViewImageUpdateInterface> getImageFrameVector() {
 
         if (Preferences.debugLevel(Preferences.DEBUG_MINOR)) {
             Preferences.debug("Model Image Registered frames to image list:" + this.getImageName() + "\n");
@@ -2098,7 +2096,7 @@ public class ModelImage extends ModelStorageBase {
         for (int i = 0; i < frameList.size(); i++) {
 
             if ((frameList.elementAt(i) instanceof ViewJFrameBase)) {
-                ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages();
+                frameList.elementAt(i).updateImages();
             }
         }
     }
@@ -2121,9 +2119,9 @@ public class ModelImage extends ModelStorageBase {
                     ModelImage imgB = ((ViewJFrameBase) frameList.elementAt(i)).getImageB();
 
                     if (this == imgA) {
-                        ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(LUT, null, forceShow, -1);
+                        frameList.elementAt(i).updateImages(LUT, null, forceShow, -1);
                     } else if (this == imgB) {
-                        ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, LUT, forceShow, -1);
+                        frameList.elementAt(i).updateImages(null, LUT, forceShow, -1);
                     }
                 } /* LUT update of a non-ModelImage data strucuture: */
                 else if ((frameList.elementAt(i) instanceof
@@ -2134,9 +2132,9 @@ public class ModelImage extends ModelStorageBase {
                             frameList.elementAt(i)).getImageB();
 
                     if (this == imgA) {
-                        ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(LUT, null, forceShow, -1);
+                        frameList.elementAt(i).updateImages(LUT, null, forceShow, -1);
                     } else if (this == imgB) {
-                        ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, LUT, forceShow, -1);
+                        frameList.elementAt(i).updateImages(null, LUT, forceShow, -1);
                     }
                 } 
                 else if ((frameList.elementAt(i) instanceof
@@ -2147,9 +2145,9 @@ public class ModelImage extends ModelStorageBase {
                                            frameList.elementAt(i)).getImageB();
 
                     if (this == imgA) {
-                        ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(LUT, null, forceShow, -1);
+                        frameList.elementAt(i).updateImages(LUT, null, forceShow, -1);
                     } else if (this == imgB) {
-                        ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, LUT, forceShow, -1);
+                        frameList.elementAt(i).updateImages(null, LUT, forceShow, -1);
                     }
                 } else if ((frameList.elementAt(i) instanceof
                                 gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)) {
@@ -2159,9 +2157,9 @@ public class ModelImage extends ModelStorageBase {
                                            frameList.elementAt(i)).getImageLink();
 
                     if (this == imgS) {
-                        ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(LUT, null, forceShow, -1);
+                        frameList.elementAt(i).updateImages(LUT, null, forceShow, -1);
                     } else if (this == imgL) {
-                        ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, LUT, forceShow, -1);
+                        frameList.elementAt(i).updateImages(null, LUT, forceShow, -1);
                     }
                 }  else if ((frameList.elementAt(i) instanceof
                                 gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM)) {
@@ -2171,11 +2169,11 @@ public class ModelImage extends ModelStorageBase {
                                            frameList.elementAt(i)).getImageLink();
 
                     if (this == imgS) {
-                        ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(LUT, null, forceShow, -1);
+                        frameList.elementAt(i).updateImages(LUT, null, forceShow, -1);
                     }
                 } else if ((frameList.elementAt(i) instanceof
                         gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI)) {
-                    ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages();
+                    frameList.elementAt(i).updateImages();
                 }
 
             }
@@ -2226,7 +2224,7 @@ public class ModelImage extends ModelStorageBase {
                     ((ViewJFrameBase) frameList.elementAt(i)).setRGBTB(RGBT);
                 }
 
-                ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, null, forceShow, -1);
+                frameList.elementAt(i).updateImages(null, null, forceShow, -1);
             } else if ((frameList.elementAt(i) instanceof
                             gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)) {
                 ModelImage imgS = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i))
@@ -2297,9 +2295,9 @@ public class ModelImage extends ModelStorageBase {
                 ((ViewJFrameBase) frameList.elementAt(i)).setAlphaBlend(alphaBlend);
 
                 if (this == imgA) {
-                    ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(LUT, null, forceShow, interpMode);
+                    frameList.elementAt(i).updateImages(LUT, null, forceShow, interpMode);
                 } else if (this == imgB) {
-                    ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, LUT, forceShow, interpMode);
+                    frameList.elementAt(i).updateImages(null, LUT, forceShow, interpMode);
                 }
             }
         }
@@ -2336,7 +2334,7 @@ public class ModelImage extends ModelStorageBase {
         for (int i = 0; i < frameList.size(); i++) {
 
             if ((frameList.elementAt(i) instanceof ViewJFrameBase)) {
-                ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImageExtents();
+                frameList.elementAt(i).updateImageExtents();
             }
         }
     }
@@ -2562,11 +2560,10 @@ public class ModelImage extends ModelStorageBase {
             	//we need to convert matrix to left hand system when for saving as .xfm
             	TransMatrix mat = new TransMatrix(4);
                 TransMatrix rh_lhMatrix = new TransMatrix(4);
-                double[][] dMat;
 
-                dMat = rh_lhMatrix.getArray(); // Identity
-                dMat[2][2] = -1; // right handed to left handed or left handed to right handed coordinate systems
-
+                // right handed to left handed or left handed to right handed coordinate systems
+                rh_lhMatrix.Set(2, 2, -1);
+                
                 // p.223 Foley, Van Dam ...
                 // Flipping only z axis
                 // 1  0  0  0
@@ -2574,9 +2571,9 @@ public class ModelImage extends ModelStorageBase {
                 // 0  0 -1  0
                 // 0  0  0  1
 
-                mat.timesEquals(rh_lhMatrix);
-                mat.timesEquals(matrix);
-                mat.timesEquals(rh_lhMatrix);
+                mat.Mult(rh_lhMatrix);
+                mat.Mult(matrix);
+                mat.Mult(rh_lhMatrix);
                 
             	mat.saveXFMMatrix(raFile);
             }else {
@@ -2822,7 +2819,7 @@ public class ModelImage extends ModelStorageBase {
         }
 
         for (int i = 0; i < frameList.size(); i++) {
-            ((ViewImageUpdateInterface) frameList.elementAt(i)).setSlice(slice);
+            frameList.elementAt(i).setSlice(slice);
         }
     }
 
@@ -2847,7 +2844,7 @@ public class ModelImage extends ModelStorageBase {
         }
 
         for (int i = 0; i < frameList.size(); i++) {
-            ((ViewImageUpdateInterface) frameList.elementAt(i)).setTimeSlice(tSlice);
+            frameList.elementAt(i).setTimeSlice(tSlice);
         }
     }
 

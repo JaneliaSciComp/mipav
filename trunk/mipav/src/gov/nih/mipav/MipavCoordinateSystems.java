@@ -129,7 +129,7 @@ public class MipavCoordinateSystems {
 
             float[] afResolutions = kImage.getResolutions(0);
 
-            TransMatrix dicomMatrix = (TransMatrix) (((ModelImage) kImage).getMatrix().clone());
+            TransMatrix dicomMatrix = ((ModelImage) kImage).getMatrix();
 
            // System.err.println("DICOM MATRIX (fileToScanner): " + dicomMatrix);
            // System.err.println("axial origin: " + afAxialOrigin[0] + ", " + afAxialOrigin[1] + ", " + afAxialOrigin[2]);
@@ -502,8 +502,8 @@ public class MipavCoordinateSystems {
                 (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
 
             // Invert the dicomMatrix Transform
-            TransMatrix dicomMatrix = (TransMatrix) (((ModelImage) kImage).getMatrix().clone());
-            dicomMatrix.invert();
+            TransMatrix dicomMatrix = new TransMatrix(((ModelImage) kImage).getMatrix());
+            dicomMatrix.Inverse();
 
             // convert the point from DICOM space
             dicomMatrix.transformAsPoint3Df(new Vector3f(kTemp.X, kTemp.Y, kTemp.Z), kTemp);

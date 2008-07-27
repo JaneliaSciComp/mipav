@@ -2,7 +2,6 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.structures.*;
-import Jama.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -423,7 +422,7 @@ public class FileInfoMinc extends FileInfoBase {
      * @return  a tag-value hashtable
      */
     public Hashtable convertTagsToTable() {
-        Hashtable table = new Hashtable();
+        Hashtable<String, String> table = new Hashtable<String, String>();
 
         String groupPrefix = "dicom_0x";
         String elemPrefix = "el_0x";
@@ -621,7 +620,7 @@ public class FileInfoMinc extends FileInfoBase {
         // System.out.println("convert: locs:\t" + startLocs[0] + " " + startLocs[1] + " " + startLocs[2]);
 
         TransMatrix matrix = new TransMatrix(getExtents().length + 1);
-        matrix.identity();
+        matrix.MakeIdentity();
 
         for (int i = 0; i < varArray.length; i++) {
 
@@ -654,7 +653,7 @@ public class FileInfoMinc extends FileInfoBase {
 
         // System.out.println("convert: matrix:\t" + matrix.matrixToString(24, 16));
 
-        matrix.invert();
+        matrix.Inverse();
 
         // System.out.println("convert: invmat:\t" + matrix.matrixToString(24, 16));
 
@@ -1071,15 +1070,15 @@ public class FileInfoMinc extends FileInfoBase {
 
         if ((varArray[ix].cosines != null) && (varArray[iy].cosines != null) && (varArray[iz].cosines != null)) {
             TransMatrix mat = new TransMatrix(3);
-            mat.setMatrix(varArray[ix].cosines[0], 0, 0);
-            mat.setMatrix(varArray[ix].cosines[1], 1, 0);
-            mat.setMatrix(varArray[ix].cosines[2], 2, 0);
-            mat.setMatrix(varArray[iy].cosines[0], 0, 1);
-            mat.setMatrix(varArray[iy].cosines[1], 1, 1);
-            mat.setMatrix(varArray[iy].cosines[2], 2, 1);
-            mat.setMatrix(varArray[iz].cosines[0], 0, 2);
-            mat.setMatrix(varArray[iz].cosines[1], 1, 2);
-            mat.setMatrix(varArray[iz].cosines[2], 2, 2);
+            mat.set(0, 0, varArray[ix].cosines[0]);
+            mat.set(1, 0, varArray[ix].cosines[1]);
+            mat.set(2, 0, varArray[ix].cosines[2]);
+            mat.set(0, 1, varArray[iy].cosines[0]);
+            mat.set(1, 1, varArray[iy].cosines[1]);
+            mat.set(2, 1, varArray[iy].cosines[2]);
+            mat.set(0, 2, varArray[iz].cosines[0]);
+            mat.set(1, 2, varArray[iz].cosines[1]);
+            mat.set(2, 2, varArray[iz].cosines[2]);
             axisOrientation = getAxisOrientation(mat);
 
             if (varArray[ix].step < 0) {
@@ -1335,32 +1334,26 @@ public class FileInfoMinc extends FileInfoBase {
      *               of (x,y,z) which has the smallest angle to the (i,j,k) axes directions, which are columns of the
      *               input matrix Errors: The codes returned will be zero.
      *
-     * @return  DOCUMENT ME!
+     * @return  codes
      */
     public static int[] getAxisOrientation(TransMatrix mat) {
         int[] axisOrientation = new int[3];
-        double[][] array;
         double xi, xj, xk, yi, yj, yk, zi, zj, zk, val;
-        Matrix Q;
         double detQ;
         double vbest;
         int ibest, jbest, kbest, pbest, qbest, rbest;
         int i, j, k, p, q, r;
-        Matrix P;
         double detP;
-        Matrix M;
 
-        array = mat.getArray();
-
-        xi = array[0][0];
-        xj = array[0][1];
-        xk = array[0][2];
-        yi = array[1][0];
-        yj = array[1][1];
-        yk = array[1][2];
-        zi = array[2][0];
-        zj = array[2][1];
-        zk = array[2][2];
+        xi = mat.Get(0, 0);
+        xj = mat.Get(0, 1);
+        xk = mat.Get(0, 2);
+        yi = mat.Get(1, 0);
+        yj = mat.Get(1, 1);
+        yk = mat.Get(1, 2);
+        zi = mat.Get(2, 0);
+        zj = mat.Get(2, 1);
+        zk = mat.Get(2, 2);
 
         int izero = 0;
         int jzero = 0;
@@ -1647,19 +1640,21 @@ public class FileInfoMinc extends FileInfoBase {
             return axisOrientation;
         }
 
-        array[0][0] = xi;
-        array[0][1] = xj;
-        array[0][2] = xk;
-        array[1][0] = yi;
-        array[1][1] = yj;
-        array[1][2] = yk;
-        array[2][0] = zi;
-        array[2][1] = zj;
-        array[2][2] = zk;
+        mat.set(0, 0, xi);
+        mat.set(0, 1, xj);
+        mat.set(0, 2, xk);
+        mat.set(1, 0, yi);
+        mat.set(1, 1, yj);
+        mat.set(1, 2, yk);
+        mat.set(2, 0, zi);
+        mat.set(2, 1, zj);
+        mat.set(2, 2, zk);
 
         // At this point, Q is the rotation matrix from the (i,j,k) to the (x,y,z) axes
-        Q = new Matrix(array);
-        detQ = Q.det();
+        TransMatrix Q = new TransMatrix(mat);
+        detQ = Q.Determinant();
+        TransMatrix P = new TransMatrix(mat.getDim());
+        TransMatrix M = new TransMatrix(mat.getDim());
 
         if (detQ == 0.0) {
             MipavUtil.displayError("detQ == 0.0 in getAxisOrientation");
@@ -1695,16 +1690,7 @@ public class FileInfoMinc extends FileInfoBase {
                         continue;
                     }
 
-                    array[0][0] = 0.0;
-                    array[0][1] = 0.0;
-                    array[0][2] = 0.0;
-                    array[1][0] = 0.0;
-                    array[1][1] = 0.0;
-                    array[1][2] = 0.0;
-                    array[2][0] = 0.0;
-                    array[2][1] = 0.0;
-                    array[2][2] = 0.0;
-                    P = new Matrix(array);
+                    P.MakeZero();
 
                     for (p = -1; p <= 1; p += 2) { // p,q,r are -1 or +1 and go into rows #1,2,3
 
@@ -1714,14 +1700,15 @@ public class FileInfoMinc extends FileInfoBase {
                                 P.set(0, i - 1, p);
                                 P.set(1, j - 1, q);
                                 P.set(2, k - 1, r);
-                                detP = P.det();
+                                detP = P.Determinant();
 
                                 // sign of permutation doesn't match sign of Q
                                 if ((detP * detQ) <= 0.0) {
                                     continue;
                                 }
 
-                                M = P.times(Q);
+                                M.Copy(P);
+                                M.Mult(Q);
 
                                 // angle of M rotation = 2.0*acos(0.5*sqrt(1.0+trace(M)))
                                 // we want largest trace(M) == smallest angle == M nearest to I

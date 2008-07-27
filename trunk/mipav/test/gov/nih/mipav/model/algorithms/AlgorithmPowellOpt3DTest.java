@@ -61,9 +61,14 @@ public class AlgorithmPowellOpt3DTest extends TestCase {
     @Before
     protected void setUp() throws Exception {
         toOrigin = new TransMatrix(4);
-        toOrigin.setMatrix(new double[][]{{1.0, 0.0, 0.0, 17.314208192569254},{0.0, 1.0, 0.0, 21.140626155237523},{0.0, 0.0, 1.0, 11.527512442322395},{0.0, 0.0, 0.0, 1.0}});
-        fromOrigin = new TransMatrix(4);
-        fromOrigin.setMatrix(new double[][]{{1.0, 0.0, 0.0, -17.314208192569254},{0.0, 1.0, 0.0, -21.140626155237523},{0.0, 0.0, 1.0, -11.527512442322395},{0.0, 0.0, 0.0, 1.0}});
+        toOrigin.Set(1.0f, 0.0f, 0.0f, 17.314208192569254f,
+                     0.0f, 1.0f, 0.0f, 21.140626155237523f,
+                     0.0f, 0.0f, 1.0f, 11.527512442322395f,
+                     0.0f, 0.0f, 0.0f, 1.0f);
+        fromOrigin = new TransMatrix(toOrigin);
+        fromOrigin.Set(0, 3, -toOrigin.Get(0,3));
+        fromOrigin.Set(1, 3, -toOrigin.Get(1,3));
+        fromOrigin.Set(2, 3, -toOrigin.Get(2,3));
 
         short[] data = FileUtil.readRawFileShort(refImageFileName, false);
         refImage = new ModelImage(ModelStorageBase.SHORT, new int[]{256, 256, 198}, "33175_3_concat_with_same_resolution");
@@ -92,11 +97,12 @@ public class AlgorithmPowellOpt3DTest extends TestCase {
     public void testConvertToMatrix(){
         double[] point = {-30.0, -30.0, -30.0, 2.1839247649369415, 3.0813184180912216, -0.1371298864664574, 1.05, 1.05, 1.05, 0.0, 0.0, 0.0};
         TransMatrix refMatrix = new TransMatrix(4);
-        refMatrix.setMatrix(new double[][]{{0.7875000000000002,0.45466333698683026,-0.5249999999999999,2.303270404345806},
-                {-0.22733166849341516,0.9187500000000002,0.45466333698683026,3.4939248560798895},
-                {0.65625,-0.22733166849341516,0.7875000000000002,-4.2440488019808456},
-                {0.0,0.0,0.0,1.0}});
+        refMatrix.Set(0.7875000000000002f, 0.45466333698683026f, -0.5249999999999999f, 2.303270404345806f, 
+                      -0.22733166849341516f, 0.9187500000000002f, 0.45466333698683026f, 3.4939248560798895f, 
+                      0.65625f, -0.22733166849341516f, 0.7875000000000002f, -4.2440488019808456f, 
+                      0.0f, 0.0f, 0.0f, 1.0f);
         TransMatrix testMatrix = powell.convertToMatrix(toOrigin, fromOrigin, point);
+        // TODO does TransMatrix define a useful equals method?
         Assert.assertTrue(refMatrix.equals(testMatrix));
     }
 

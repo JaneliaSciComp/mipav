@@ -460,7 +460,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     private int transformDir;
 
     /** DOCUMENT ME! */
-    private TransMatrix transMatrix;
+    //private TransMatrix transMatrix;
 
     /** DOCUMENT ME! */
     private int[] upper;
@@ -496,7 +496,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     private float xf;
 
     /** DOCUMENT ME! */
-    private float[][] xfrm;
+    //private float[][] xfrm;
 
     /** DOCUMENT ME! */
     private int xo, xyo;
@@ -608,30 +608,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         }
     }
 
-    /**
-     * matrixtoInverseArray.
-     *
-     * @param   transMatrix  DOCUMENT ME!
-     *
-     * @return  the array
-     */
-    private static float[][] matrixtoInverseArray(TransMatrix transMatrix) {
-        int i, j;
-        float[][] xfrm = null;
-        int dim = transMatrix.getNRows();
-        xfrm = new float[dim][dim];
-
-        double[][] xfrmD = (transMatrix.inverse()).getArray();
-
-        for (i = 0; i < dim; i++) {
-
-            for (j = 0; j < dim; j++) {
-                xfrm[i][j] = (float) xfrmD[i][j];
-            }
-        }
-
-        return xfrm;
-    }
 
     /**
      * Prepares this class for destruction.
@@ -1775,10 +1751,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 }
 
                 newSliceSize = newDim[0] * newDim[1];
-                transMatrix = new TransMatrix(3);
-                transMatrix.setZoom(Sx, Sy);
-                xfrm = new float[3][3];
-                xfrm = matrixtoInverseArray(transMatrix);
+                TransMatrix xfrm = new TransMatrix(3);
+                //xfrm.setZoom(Sx, Sy); xfrm.Inverse();
+                xfrm.setZoom(1.0f/Sx, 1.0f/Sy);
                 transformNearestNeighbor2D(buffer, xfrm);
             } // if (shrink != 1.0f)
             else {
@@ -2332,10 +2307,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         } else {
             Sx = (orgDim[0] * orgResol[0]) / (newDim[0] * newResol[0]);
             Sy = (orgDim[1] * orgResol[1]) / (newDim[1] * newResol[1]);
-            transMatrix = new TransMatrix(3);
-            transMatrix.setZoom(Sx, Sy);
-            xfrm = new float[3][3];
-            xfrm = matrixtoInverseArray(transMatrix);
+            TransMatrix xfrm = new TransMatrix(3);
+            //xfrm.setZoom(Sx, Sy); xfrm.Inverse();
+            xfrm.setZoom(1.0f/Sx, 1.0f/Sy);
             transformBilinear(workingBuffer, xfrm);
         } // else shrink != 1.0f
 
@@ -2488,10 +2462,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
                 newSliceSize = newDim[0] * newDim[1];
                 newVolSize = newSliceSize * newDim[2];
-                transMatrix = new TransMatrix(4);
-                transMatrix.setZoom(Sx, Sy, Sz);
-                xfrm = new float[4][4];
-                xfrm = matrixtoInverseArray(transMatrix);
+                TransMatrix xfrm = new TransMatrix(4);
+                //xfrm.setZoom(Sx, Sy, Sz); xfrm.Inverse();
+                xfrm.setZoom(1.0f/Sx, 1.0f/Sy, 1.0f/Sz);
                 transformNearestNeighbor3D(buffer, xfrm);
             } // if (shrink != 1.0f)
             else {
@@ -3056,11 +3029,11 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             Sx = (orgDim[0] * orgResol[0]) / (newDim[0] * newResol[0]);
             Sy = (orgDim[1] * orgResol[1]) / (newDim[1] * newResol[1]);
             Sz = (orgDim[2] * orgResol[2]) / (newDim[2] * newResol[2]);
-            transMatrix = new TransMatrix(4);
-            transMatrix.setZoom(Sx, Sy, Sz);
-            // xfrm = new float[4][4];
-            //xfrm = matrixtoInverseArray(transMatrix);
-            transformTrilinear(workingBuffer, transMatrix);
+            TransMatrix xfrm = new TransMatrix(4);
+            //xfrm.setZoom(Sx, Sy, Sz); xfrm.Inverse();
+            xfrm.setZoom(1.0f/Sx, 1.0f/Sy, 1.0f/Sz);
+            // XXX This didn't have the inverse, so I changed it to be consistent.
+            transformTrilinear(workingBuffer, xfrm);
         } // else shrink != 1.0f
 
         workingBuffer = null;
@@ -3298,7 +3271,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
      * @param  imgBuf  - image array
      * @param  xfrm    - TransMatrix to be applied
      */
-    private void transformBilinear(float[] imgBuf, float[][] xfrm) {
+    private void transformBilinear(float[] imgBuf, TransMatrix xfrm) {
         int i, j;
         int X0pos, Y0pos;
         int X1pos, Y1pos;
@@ -3314,12 +3287,12 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         // int mod = orgDim[0]/50;
         // int counter = 0; //used for progress bar
         float T00, T01, T02, T10, T11, T12;
-        T00 = (float) xfrm[0][0];
-        T01 = (float) xfrm[0][1];
-        T02 = (float) xfrm[0][2];
-        T10 = (float) xfrm[1][0];
-        T11 = (float) xfrm[1][1];
-        T12 = (float) xfrm[1][2];
+        T00 = xfrm.Get(0, 0);
+        T01 = xfrm.Get(0, 1);
+        T02 = xfrm.Get(0, 2);
+        T10 = xfrm.Get(1, 0);
+        T11 = xfrm.Get(1, 1);
+        T12 = xfrm.Get(1, 2);
 
         for (i = 0; i < orgDim[0]; i++) {
 
@@ -3379,7 +3352,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
      * @param  imgBuf  image array
      * @param  xfrm    transformation matrix to be applied
      */
-    private void transformNearestNeighbor2D(float[] imgBuf, float[][] xfrm) {
+    private void transformNearestNeighbor2D(float[] imgBuf, TransMatrix xfrm) {
         int i, j;
         float X, Y;
         int roundX, roundY;
@@ -3390,12 +3363,12 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         // int   counter = 0; //used for progress bar
         float T00, T01, T02, T10, T11, T12;
 
-        T00 = (float) xfrm[0][0];
-        T01 = (float) xfrm[0][1];
-        T02 = (float) xfrm[0][2];
-        T10 = (float) xfrm[1][0];
-        T11 = (float) xfrm[1][1];
-        T12 = (float) xfrm[1][2];
+        T00 = xfrm.Get(0, 0);
+        T01 = xfrm.Get(0, 1);
+        T02 = xfrm.Get(0, 2);
+        T10 = xfrm.Get(1, 0);
+        T11 = xfrm.Get(1, 1);
+        T12 = xfrm.Get(1, 2);
 
         sBuffer = new float[newSliceSize];
 
@@ -3451,7 +3424,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
      * @param  imgBuf  image array
      * @param  xfrm    transformation matrix to be applied
      */
-    private void transformNearestNeighbor3D(float[] imgBuf, float[][] xfrm) {
+    private void transformNearestNeighbor3D(float[] imgBuf, TransMatrix xfrm) {
         int i, j, k;
         float X, Y, Z;
         int xOffset, yOffset, zOffset;
@@ -3462,18 +3435,18 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         // int counter = 0; //used for progress bar
         float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = (float) xfrm[0][0];
-        T01 = (float) xfrm[0][1];
-        T02 = (float) xfrm[0][2];
-        T03 = (float) xfrm[0][3];
-        T10 = (float) xfrm[1][0];
-        T11 = (float) xfrm[1][1];
-        T12 = (float) xfrm[1][2];
-        T13 = (float) xfrm[1][3];
-        T20 = (float) xfrm[2][0];
-        T21 = (float) xfrm[2][1];
-        T22 = (float) xfrm[2][2];
-        T23 = (float) xfrm[2][3];
+        T00 = xfrm.Get(0, 0);
+        T01 = xfrm.Get(0, 1);
+        T02 = xfrm.Get(0, 2);
+        T03 = xfrm.Get(0, 3);
+        T10 = xfrm.Get(1, 0);
+        T11 = xfrm.Get(1, 1);
+        T12 = xfrm.Get(1, 2);
+        T13 = xfrm.Get(1, 3);
+        T20 = xfrm.Get(2, 0);
+        T21 = xfrm.Get(2, 1);
+        T22 = xfrm.Get(2, 2);
+        T23 = xfrm.Get(2, 3);
 
         sBuffer = new float[newVolSize];
 

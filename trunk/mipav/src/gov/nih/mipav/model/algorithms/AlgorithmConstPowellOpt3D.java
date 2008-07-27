@@ -150,10 +150,10 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
         TransMatrix matrix = new TransMatrix(4);
 
         matrix.setTransform(transX, transY, transZ, rotX, rotY, rotZ, scaleX, scaleY, scaleZ, skewX, skewY, skewZ);
-
-        Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
-
-        matrix.convertFromMatrix(mtx);
+        
+        matrix.MultLeft(toOrigin);
+        matrix.Mult(fromOrigin);
+        //Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
 
         return matrix;
     }
@@ -237,9 +237,11 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
 
         matrix.setTransform(transX, transY, transZ, rotX, rotY, rotZ, scaleX, scaleY, scaleZ, skewX, skewY, skewZ);
 
-        Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
+        matrix.MultLeft(toOrigin);
+        matrix.Mult(fromOrigin);
+       //Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
 
-        matrix.convertFromMatrix(mtx);
+        //matrix.convertFromMatrix(mtx);
 
         return matrix;
     }
@@ -324,9 +326,11 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
 
         matrix.setTransform(transX, transY, transZ, rotX, rotY, rotZ, scaleX, scaleY, scaleZ, skewX, skewY, skewZ);
 
-        Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
+        matrix.MultLeft(toOrigin);
+        matrix.Mult(fromOrigin);
+        //Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
 
-        matrix.convertFromMatrix(mtx);
+        //matrix.convertFromMatrix(mtx);
 
         return matrix;
     }
@@ -386,9 +390,9 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
         if (nDims <= 12) {
             TransMatrix mat = convertToMatrix(point);
 
-            transX = mat.get(0, 3) * sample;
-            transY = mat.get(1, 3) * sample;
-            transZ = mat.get(2, 3) * sample;
+            transX = mat.Get(0, 3) * sample;
+            transY = mat.Get(1, 3) * sample;
+            transZ = mat.Get(2, 3) * sample;
         }
 
         if (nDims == 3) {
@@ -424,7 +428,7 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
     }
 
     /**
-     * Accessor that returns the matrix representing the best tranformation.
+     * Accessor that returns the matrix representing the best transformation.
      *
      * @return  matrix representing the best transformation.
      */
@@ -433,7 +437,7 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
     }
 
     /**
-     * Accessor that returns the matrix representing the best tranformation. The passed in parameter represents the
+     * Accessor that returns the matrix representing the best transformation. The passed in parameter represents the
      * resolution (same in all directions and for both input and reference images, since resampled isotropically). Since
      * the optimization was done in pixel space, not millimeter space, the translation parameters need to be scaled by
      * the sample value.
@@ -446,9 +450,9 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
 
         // will resolution affect scale??
         TransMatrix mat = convertToMatrix(point);
-        double transX = mat.get(0, 3) * sample;
-        double transY = mat.get(1, 3) * sample;
-        double transZ = mat.get(2, 3) * sample;
+        float transX = mat.get(0, 3) * sample;
+        float transY = mat.get(1, 3) * sample;
+        float transZ = mat.get(2, 3) * sample;
 
         mat.set(0, 3, transX);
         mat.set(1, 3, transY);
@@ -481,9 +485,9 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
 
         // will resolution affect scale??
         TransMatrix mat = convertToMatrixHalf(point);
-        double transX = mat.get(0, 3) * sample;
-        double transY = mat.get(1, 3) * sample;
-        double transZ = mat.get(2, 3) * sample;
+        float transX = mat.get(0, 3) * sample;
+        float transY = mat.get(1, 3) * sample;
+        float transZ = mat.get(2, 3) * sample;
 
         mat.set(0, 3, transX);
         mat.set(1, 3, transY);
@@ -517,9 +521,9 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
 
         // will resolution affect scale??
         TransMatrix mat = convertToMatrixMidsagittal(point);
-        double transX = mat.get(0, 3) * sample;
-        double transY = mat.get(1, 3) * sample;
-        double transZ = mat.get(2, 3) * sample;
+        float transX = mat.get(0, 3) * sample;
+        float transY = mat.get(1, 3) * sample;
+        float transZ = mat.get(2, 3) * sample;
 
         mat.set(0, 3, transX);
         mat.set(1, 3, transY);

@@ -11,17 +11,22 @@ import java.io.*;
 
 /**
  * Some of this code is derived from FITS.java in ImageJ.
- * In A User's Guide for the Flexible Image Transport System (FITS) Version 4.0, Section 4.1 Indexes and Physical
- * Coordinates, the text says, "Historically, astronomers have generally assumed that the index point in a
- * FITS file represents the center of a pixel.  This interpretation is endorsed by GC.  It differs from the
- * common practice in computer graphics of treating the center of a pixel as a half-integral point."
- * For CRPIXn in FITS: The center of the first pixel is 1 and the center of the last pixel is NAXISn.
- * In MIPAV the center of the first pixel is 0.5 and the center of the last pixel is NAXISn - 0.5.
- * So subtract 0.5 to go from FITS to MIPAV.
- * " ...recommend that FITS writers order pixels starting in the lower left hand corner
- * of the image, with the first axis increasing to the right, as in the rectangular coordinate x-axis, and the 
- * second increasing upward (the y-axis)."  MIPAV uses the upper left hand corner as the origin and has the y axis
- * going downward.  Therefore, the image is flipped after reading and flipped before writing.
+ *
+ * In A User's Guide for the Flexible Image Transport System (FITS) Version
+ * 4.0, Section 4.1 Indexes and Physical Coordinates, the text says,
+ * "Historically, astronomers have generally assumed that the index point in a
+ * FITS file represents the center of a pixel.  This interpretation is
+ * endorsed by GC.  It differs from the common practice in computer graphics
+ * of treating the center of a pixel as a half-integral point."  For CRPIXn in
+ * FITS: The center of the first pixel is 1 and the center of the last pixel
+ * is NAXISn.  In MIPAV the center of the first pixel is 0.5 and the center of
+ * the last pixel is NAXISn - 0.5.  So subtract 0.5 to go from FITS to MIPAV.
+ * " ...recommend that FITS writers order pixels starting in the lower left
+ * hand corner of the image, with the first axis increasing to the right, as
+ * in the rectangular coordinate x-axis, and the second increasing upward (the
+ * y-axis)."  MIPAV uses the upper left hand corner as the origin and has the
+ * y axis going downward.  Therefore, the image is flipped after reading and
+ * flipped before writing.
  */
 public class FileFits extends FileBase {
 
@@ -1354,8 +1359,8 @@ public class FileFits extends FileBase {
             
             matrix = new TransMatrix(Math.min(4,nDimensions+1));
             for (i = 0; i < Math.min(3, nDimensions); i++) {
-                matrix.setMatrix(scale[i], i, i);
-                matrix.setMatrix(origin[i], i, Math.min(nDimensions, 3));
+                matrix.set( i, i, scale[i]);
+                matrix.set(i, Math.min(nDimensions, 3), origin[i]);
             }
             matrix.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
 
@@ -1495,7 +1500,7 @@ public class FileFits extends FileBase {
         int zDim;
         int tDim;
         int count;
-        double array[][];
+        //double array[][];
         
         flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
         flipAlgo.run();
@@ -1733,7 +1738,7 @@ public class FileFits extends FileBase {
 
         raFile.write(cardImage);
         
-        array = image.getMatrix().getArray();
+        TransMatrix image_TM = image.getMatrix();
 
         for (i = 0; i < 80; i++) {
             cardImage[i] = 32; // fill with ascii spaces
@@ -1747,7 +1752,7 @@ public class FileFits extends FileBase {
         cardImage[5] = 49; // 1
         cardImage[8] = 61; // =
 
-        resString = Double.toString(array[0][0]);
+        resString = Double.toString(image_TM.Get(0, 0));
         resBytes = resString.getBytes();
 
         for (i = 0; i < resString.length(); i++) {
@@ -1789,7 +1794,7 @@ public class FileFits extends FileBase {
         cardImage[5] = 49; // 1
         cardImage[8] = 61; // =
 
-        resString = Double.toString(array[0][Math.min(image.getNDims(),3)]);
+        resString = Double.toString(image_TM.Get(0, Math.min(image.getNDims(),3)));
         resBytes = resString.getBytes();
 
         for (i = 0; i < resString.length(); i++) {
@@ -1810,7 +1815,7 @@ public class FileFits extends FileBase {
         cardImage[5] = 50; // 2
         cardImage[8] = 61; // =
 
-        resString = Double.toString(array[1][1]);
+        resString = Double.toString(image_TM.Get(1, 1));
         resBytes = resString.getBytes();
 
         for (i = 0; i < resString.length(); i++) {
@@ -1852,7 +1857,7 @@ public class FileFits extends FileBase {
         cardImage[5] = 50; // 2
         cardImage[8] = 61; // =
 
-        resString = Double.toString(array[1][Math.min(image.getNDims(),3)]);
+        resString = Double.toString(image_TM.Get(1, Math.min(image.getNDims(),3)));
         resBytes = resString.getBytes();
 
         for (i = 0; i < resString.length(); i++) {
@@ -1879,7 +1884,7 @@ public class FileFits extends FileBase {
                 resString = "1.0";
             }
             else {
-                resString = Double.toString(array[2][2]);
+                resString = Double.toString(image_TM.Get(2, 2));
             }
             resBytes = resString.getBytes();
 
@@ -1928,7 +1933,7 @@ public class FileFits extends FileBase {
             cardImage[5] = 51; // 3
             cardImage[8] = 61; // =
 
-            resString = Double.toString(array[2][Math.min(image.getNDims(),3)]);
+            resString = Double.toString(image_TM.Get(2, Math.min(image.getNDims(),3)));
             resBytes = resString.getBytes();
 
             for (i = 0; i < resString.length(); i++) {

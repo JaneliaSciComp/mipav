@@ -96,7 +96,7 @@ public class AlgorithmConvertOldXML extends AlgorithmBase {
      * DOCUMENT ME!
      */
     public void runAlgorithm() {
-        Vector fileVector = new Vector();
+        Vector<String> fileVector = new Vector<String>();
 
         System.err.println("Top directory is: " + dirPath);
         addFilesToVector(dirPath, fileVector);
@@ -108,7 +108,7 @@ public class AlgorithmConvertOldXML extends AlgorithmBase {
         for (int i = 0; i < size; i++) {
 
             // System.err.println("Converting: " + i);
-            runConversion((String) fileVector.elementAt(i));
+            runConversion(fileVector.elementAt(i));
         }
 
         System.err.println("Number of XML headers converted: " + numConverted);
@@ -120,7 +120,7 @@ public class AlgorithmConvertOldXML extends AlgorithmBase {
      * @param  name  The name of either file or directory
      * @param  vec   Vector that holds all files to be processed
      */
-    private void addFilesToVector(String name, Vector vec) {
+    private void addFilesToVector(String name, Vector<String> vec) {
         File tempFile = new File(name);
 
         if (tempFile.isDirectory()) {
@@ -317,7 +317,7 @@ public class AlgorithmConvertOldXML extends AlgorithmBase {
                             inString = bReader.readLine();
 
                             // System.err.println(inString.substring(9, inString.indexOf("</Data>")));
-                            mat.setMatrix(Double.parseDouble(inString.substring(9, inString.indexOf("</Data>"))), i, j);
+                            mat.set(i, j, Double.parseDouble(inString.substring(9, inString.indexOf("</Data>"))));
                         }
                     }
 
@@ -327,17 +327,17 @@ public class AlgorithmConvertOldXML extends AlgorithmBase {
                         if (isSagittal) {
 
                             if (extents == 2) {
-                                mat.setMatrix(sagittal2dfix);
+                                mat.copyMatrix(sagittal2dfix);
                             } else if ((extents == 3) || (extents == 4)) {
-                                mat.setMatrix(sagittal3dfix);
+                                mat.copyMatrix(sagittal3dfix);
                             }
                         } // coronal
                         else {
 
                             if (extents == 2) {
-                                mat.setMatrix(coronal2dfix);
+                                mat.copyMatrix(coronal2dfix);
                             } else if ((extents == 3) || (extents == 4)) {
-                                mat.setMatrix(coronal3dfix);
+                                mat.copyMatrix(coronal3dfix);
                             }
                         }
 
@@ -358,7 +358,7 @@ public class AlgorithmConvertOldXML extends AlgorithmBase {
                     } else if (isSagittal) {
 
                         boolean changeMat = false;
-                        double[][] tempDoub = mat.getMatrix();
+                        //double[][] tempDoub = mat.getMatrix();
 
                         if (extents == 2) {
 
@@ -366,7 +366,7 @@ public class AlgorithmConvertOldXML extends AlgorithmBase {
 
                                 for (int b = 0; b < 2; b++) {
 
-                                    if (tempDoub[a][b] != sagittal2dold[a][b]) {
+                                    if (mat.get(a, b) != sagittal2dold[a][b]) {
                                         return;
                                     }
                                 }
@@ -377,7 +377,7 @@ public class AlgorithmConvertOldXML extends AlgorithmBase {
 
                                 for (int b = 0; b < 3; b++) {
 
-                                    if (tempDoub[a][b] != sagittal3dold[a][b]) {
+                                    if (mat.get(a, b) != sagittal3dold[a][b]) {
                                         return;
                                     }
                                 }
@@ -387,9 +387,9 @@ public class AlgorithmConvertOldXML extends AlgorithmBase {
                         isOldXML = true;
 
                         if (extents == 2) {
-                            mat.setMatrix(sagittal2dfix);
+                            mat.copyMatrix(sagittal2dfix);
                         } else {
-                            mat.setMatrix(sagittal3dfix);
+                            mat.copyMatrix(sagittal3dfix);
                         }
 
                         outString += matrixLine + "\n";

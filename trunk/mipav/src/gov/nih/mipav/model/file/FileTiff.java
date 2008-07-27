@@ -1764,12 +1764,10 @@ public class FileTiff extends FileBase {
             T02 = inx1 - outx1 * newXResolution * Sx;
             T12 = iny1 - outy1 * newYResolution * Sy;
             xfrm = new TransMatrix(3);
-            xfrm.identity();
             xfrm.setZoom(Sx, Sy);
             xfrm.setTranslate(T02, T12);
             if (!xfrm.isIdentity()) {
-                double inverseMat[][] = (xfrm.inverse()).getArray();
-                xfrm.setMatrix(inverseMat);
+                xfrm.Inverse();
             }
             
             originalImage = new ModelImage(ModelStorageBase.INTEGER, originalExtents, "originalImage");

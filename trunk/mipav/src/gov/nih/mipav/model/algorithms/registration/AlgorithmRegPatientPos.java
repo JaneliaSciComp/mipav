@@ -7,7 +7,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import Jama.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -52,7 +51,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
     private int[] index2Axial, index2ImgA, sign2Axial, sign2ImgA;
 
     /** DOCUMENT ME! */
-    private Matrix orientA, orientB, orientA_inv, orientB_inv;
+    private TransMatrix orientA, orientB, orientA_inv, orientB_inv;
 
     /** DOCUMENT ME! */
     private double[][] orientMatrixA, orientMatrixB;
@@ -293,7 +292,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
     private void getIndices() {
         double[][] orderB2A, orderB2Ax, orderAx2A;
         TransMatrix tmpTransMat;
-        Matrix matAx2A;
+        TransMatrix matAx2A;
 
         try {
             orderB2Ax = new double[4][4];
@@ -312,9 +311,9 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             return;
         }
 
-        orderB2Ax = orientB_inv.getArrayCopy();
-        orderAx2A = orientA.getArrayCopy();
-        matAx2A = new Matrix(orderAx2A, 4, 4);
+        orientB_inv.copyMatrix(orderB2Ax);
+        orientA.copyMatrix(orderAx2A);
+        matAx2A = new TransMatrix(orientA);
 
         for (int i = 0; i < 3; i++) {
 
@@ -332,10 +331,10 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
         // System.out.println("\n" +"Sign to axial: " +sign2Axial[0] +" " +sign2Axial[1] +" " +sign2Axial[2]);
         // System.out.println("Order to axial: " +index2Axial[0] +" " +index2Axial[1] +" " +index2Axial[2]);
 
-        tmpTransMat.identity();
-        tmpTransMat.setMatrix(orderB2Ax);
-        tmpTransMat.timesEquals(matAx2A);
-        orderB2A = tmpTransMat.getMatrix();
+        tmpTransMat.Copy(orientB_inv);
+        
+        tmpTransMat.Mult(matAx2A);
+        tmpTransMat.copyMatrix(orderB2A);
 
         for (int i = 0; i < 3; i++) {
 
@@ -363,14 +362,14 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             xOrientA = new double[] { 0, 0, 0 };
             yOrientA = new double[] { 0, 0, 0 };
             zOrientA = new double[] { 0, 0, 0 };
-            orientA = new Matrix(4, 4);
-            orientA_inv = new Matrix(4, 4);
+            orientA = new TransMatrix(4);
+            orientA_inv = new TransMatrix(4);
 
             xOrientB = new double[] { 0, 0, 0 };
             yOrientB = new double[] { 0, 0, 0 };
             zOrientB = new double[] { 0, 0, 0 };
-            orientB = new Matrix(4, 4);
-            orientB_inv = new Matrix(4, 4);
+            orientB = new TransMatrix(4);
+            orientB_inv = new TransMatrix(4);
 
             alignmentXfrm = new TransMatrix(4);
             coordB = new double[] { 0, 0, 0 };
@@ -412,13 +411,15 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
         Preferences.debug("B: patientOrientZ = " + zOrientB[0] + ", " + zOrientB[1] + ", " + zOrientB[2] + "\n");
 
         // Figure out the transformation to reorient Image B.
-        alignmentXfrm.identity();
-        orientA = Matrix.constructWithCopy(orientMatrixA);
-        orientA_inv = orientA.inverse();
-        alignmentXfrm.timesEquals(orientA);
-        orientB = Matrix.constructWithCopy(orientMatrixB);
-        orientB_inv = orientB.inverse();
-        alignmentXfrm.timesEquals(orientB_inv);
+        alignmentXfrm.MakeIdentity();
+        orientA.copyMatrix(orientMatrixA);
+        orientA_inv.Copy(orientA);
+        orientA_inv.Inverse();
+        alignmentXfrm.Mult(orientA);
+        orientB.copyMatrix(orientMatrixB);
+        orientB_inv.Copy(orientB);
+        orientB_inv.Inverse();
+        alignmentXfrm.Mult(orientB_inv);
 
         Preferences.debug("Transformation Matrix = \n");
         Preferences.debug(alignmentXfrm.toString());

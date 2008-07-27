@@ -69,16 +69,16 @@ public class FileImageXML extends FileXML {
     private Enumeration additionalSets = null;
 
     /** DOCUMENT ME! */
-    private Vector annotationVector = new Vector();
+    private Vector<VOI> annotationVector = new Vector<VOI>();
 
     /** Index of LUT function when reading xml header. */
     private int functionIndex = -1;
 
     /** Vector to store the LUT functions when reading xml header. */
-    private Vector functionVector = new Vector();
+    private Vector<Vector2f> functionVector = new Vector<Vector2f>();
 
     /** Vector to hold matrices while they are being read in for the header (until they are added to the image */
-    private Vector matrixVector = new Vector();
+    private Vector<TransMatrix> matrixVector = new Vector<TransMatrix>();
 
     /** Model Image associated with the file. */
     private ModelImage image;
@@ -93,7 +93,7 @@ public class FileImageXML extends FileXML {
     private ModelLUT LUT;
 
     /** Vector to store LUT values when reading xml header. */
-    private Vector lutVector = new Vector();
+    private Vector<LUValue> lutVector = new Vector<LUValue>();
 
     /** RGB lookup table associated with the file. */
     private ModelRGB modelRGB;
@@ -556,7 +556,7 @@ public class FileImageXML extends FileXML {
 
             for (int i = 0; i < annotationVector.size(); i++) {
                 currentVOI = null;
-                currentVOI = (VOI) annotationVector.elementAt(i);
+                currentVOI = annotationVector.elementAt(i);
                 image.registerVOI(currentVOI);
             }
 
@@ -982,13 +982,12 @@ public class FileImageXML extends FileXML {
             currentKey = (String) iter.next();
 
             TransMatrix tMatrix = (TransMatrix) matrixMap.get(currentKey);
-            if (tMatrix != null && tMatrix.getNCols() >= img.getNDims()) {
+            if (tMatrix != null && tMatrix.getDim() >= img.getNDims()) {
                 openTag(datasetAttributesStr[13], true);
 
                 // if the dimensions arent correct for image/matrix, switch it to correct dim and identity
-                if (tMatrix.getNCols() != Math.min( (nDims + 1), 4)) {
+                if (tMatrix.getDim() != Math.min( (nDims + 1), 4)) {
                     tMatrix = new TransMatrix(Math.min(nDims + 1, 4), TransMatrix.TRANSFORM_ANOTHER_DATASET);
-                    tMatrix.identity();
                 }
 
                 closedTag("Transform-ID", TransMatrix.getTransformIDStr(tMatrix.getTransformID()));
@@ -1000,31 +999,26 @@ public class FileImageXML extends FileXML {
                 if (tMatrix.isIdentity()) {
 
                     if (orient == FileInfoBase.SAGITTAL) {
-
-                        if (tMatrix.getNCols() == 3) {
-                            tMatrix.setMatrix(new double[][] { {0, 1, 0}, {0, 0, -1}, { -1, 0, 0}});
-                        } else if (tMatrix.getNCols() == 4) {
-                            tMatrix.setMatrix(new double[][] { {0, 1, 0, 0}, {0, 0, -1, 0}, { -1, 0, 0, 0},
-                                    {0, 0, 0, 1}});
-                        }
+                        // same for 2D or 3D, 2D doesn't use last row/col
+                        tMatrix.Set(0, 1, 0, 0,
+                                    0, 0, -1, 0,
+                                    -1, 0, 0, 0,
+                                    0, 0, 0, 1);
+                       
                     } else if (orient == FileInfoBase.CORONAL) {
-
-                        if (tMatrix.getNCols() == 3) {
-                            tMatrix.setMatrix(new double[][] { {1, 0, 0}, {0, 0, -1}, {0, 1, 0}});
-
-                        } else if (tMatrix.getNCols() == 4) {
-                            tMatrix
-                                    .setMatrix(new double[][] { {1, 0, 0, 0}, {0, 0, -1, 0}, {0, 1, 0, 0}, {0, 0, 0, 1}});
-                        }
+                        // same for 2D or 3D, 2D doesn't use last row/col
+                        tMatrix.Set(1, 0, 0, 0, 
+                                    0, 0, -1, 0, 
+                                    0, 1, 0, 0, 
+                                    0, 0, 0, 1);
+                        
                     }
                 }
 
-                double[][] matrix = tMatrix.getMatrix();
+                for (i = 0; i < tMatrix.getDim(); i++) {
 
-                for (i = 0; i < tMatrix.getNRows(); i++) {
-
-                    for (j = 0; j < tMatrix.getNCols(); j++) {
-                        closedTag("Data", new Double(matrix[i][j]).toString());
+                    for (j = 0; j < tMatrix.getDim(); j++) {
+                        closedTag("Data", new Double(tMatrix.Get(i,j)).toString());
                     }
                 }
 
@@ -1746,8 +1740,8 @@ public class FileImageXML extends FileXML {
         Preferences.debug("Function Points:" + "\n", Preferences.DEBUG_FILEIO);
 
         for (n = 0; n < functionVector.size(); n++) {
-            x[n] = ((Vector2f) functionVector.elementAt(n)).X;
-            y[n] = ((Vector2f) functionVector.elementAt(n)).Y;
+            x[n] = functionVector.elementAt(n).X;
+            y[n] = functionVector.elementAt(n).Y;
             z[n] = 0;
 
             Preferences.debug("x: " + x[n] + ", y: " + y[n] + "\n", Preferences.DEBUG_FILEIO);
@@ -1800,8 +1794,8 @@ public class FileImageXML extends FileXML {
         Preferences.debug("Function Points:" + "\n", Preferences.DEBUG_FILEIO);
 
         for (n = 0; n < functionVector.size(); n++) {
-            x[n] = ((Vector2f) functionVector.elementAt(n)).X;
-            y[n] = ((Vector2f) functionVector.elementAt(n)).Y;
+            x[n] = functionVector.elementAt(n).X;
+            y[n] = functionVector.elementAt(n).Y;
             z[n] = 0;
 
             Preferences.debug("x: " + x[n] + ", y: " + y[n] + "\n", Preferences.DEBUG_FILEIO);
@@ -1912,7 +1906,7 @@ public class FileImageXML extends FileXML {
         int m;
 
         for (m = 0; m < height; m++) {
-            lv = (LUValue) lutVector.elementAt(m);
+            lv = lutVector.elementAt(m);
             Preferences.debug(TAB + m + " alpha: " + lv.alpha + ", red: " + lv.red + ", green: " + lv.green
                     + ", blue: " + lv.blue + "\n", Preferences.DEBUG_FILEIO);
 
@@ -1938,7 +1932,7 @@ public class FileImageXML extends FileXML {
         int m;
 
         for (m = 0; m < height; m++) {
-            lv = (LUValue) lutVector.elementAt(m);
+            lv = lutVector.elementAt(m);
             Preferences.debug(TAB + m + " alpha: " + lv.alpha + ", red: " + lv.red + ", green: " + lv.green
                     + ", blue: " + lv.blue + "\n", Preferences.DEBUG_FILEIO);
             modelRGB.set(0, m, lv.alpha);
@@ -2396,7 +2390,7 @@ public class FileImageXML extends FileXML {
         int annotationSlice = 0;
 
         /** DOCUMENT ME! */
-        Vector annotationVector;
+        Vector<VOI> annotationVector;
 
         /** DOCUMENT ME! */
         VOI annotationVOI;
@@ -2422,7 +2416,7 @@ public class FileImageXML extends FileXML {
         /** DOCUMENT ME! */
         boolean isColor = false;
 
-        Vector matrixVector = null;
+        Vector<TransMatrix> matrixVector = null;
 
         /** DOCUMENT ME! */
         TransMatrix matrix;
@@ -2533,7 +2527,7 @@ public class FileImageXML extends FileXML {
          * @param anVector DOCUMENT ME!
          * @param tal DOCUMENT ME!
          */
-        public MyXMLHandler(FileInfoImageXML fInfo, Vector anVector, Vector mVector, TalairachTransformInfo tal) {
+        public MyXMLHandler(FileInfoImageXML fInfo, Vector<VOI> anVector, Vector<TransMatrix> mVector, TalairachTransformInfo tal) {
             fileInfo = fInfo;
             annotationVector = anVector;
             matrixVector = mVector;
@@ -2654,7 +2648,7 @@ public class FileImageXML extends FileXML {
             } else if (currentKey.equals("Data")) {
                 matrixCol++;
 
-                if ( (matrixCol % matrix.getNCols()) == 0) {
+                if ( (matrixCol % matrix.getDim()) == 0) {
                     matrixCol = 0;
                     matrixRow++;
                 }

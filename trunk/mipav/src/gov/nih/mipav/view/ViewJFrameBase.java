@@ -5283,39 +5283,39 @@ public abstract class ViewJFrameBase extends JFrame
 
             xfrm.setRotate(alpha, beta, gamma);
 
-            double[][] M = xfrm.getMatrix();
+            //double[][] M = xfrm.getMatrix();
 
             // Remember this is an output to input mapping so find the translation needed
             // to map the transformed Talairach center to the original dicom ordered functional
             // image rr
-            double Tr03 = rr.X - (TalairachCenter.X * M[0][0]) - (TalairachCenter.Y * M[0][1]) -
-                          (TalairachCenter.Z * M[0][2]);
-            double Tr13 = rr.Y - (TalairachCenter.X * M[1][0]) - (TalairachCenter.Y * M[1][1]) -
-                          (TalairachCenter.Z * M[1][2]);
-            double Tr23 = rr.Z - (TalairachCenter.X * M[2][0]) - (TalairachCenter.Y * M[2][1]) -
-                          (TalairachCenter.Z * M[2][2]);
+            double Tr03 = rr.X - (TalairachCenter.X * xfrm.Get(0, 0)) - (TalairachCenter.Y * xfrm.Get(0, 1)) -
+                          (TalairachCenter.Z * xfrm.Get(0, 2));
+            double Tr13 = rr.Y - (TalairachCenter.X * xfrm.Get(1, 0)) - (TalairachCenter.Y * xfrm.Get(1, 1)) -
+                          (TalairachCenter.Z * xfrm.Get(1, 2));
+            double Tr23 = rr.Z - (TalairachCenter.X * xfrm.Get(2, 0)) - (TalairachCenter.Y * xfrm.Get(2, 1)) -
+                          (TalairachCenter.Z * xfrm.Get(2, 2));
 
             /*
-             * Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3] Tr13 = M[1][0] * Tx + M[1][1] * Ty + M[1][2]
-             * Tz + M[1][3] Tr23 = M[2][2] * Tx + M[2][1] * Ty + M[2][2] * Tz + M[2][3]
+             * Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3) Tr13 = xfrm.Get(1, 0) * Tx + xfrm.Get(1, 1) * Ty + xfrm.Get(1, 2)
+             * Tz + xfrm.Get(1, 3) Tr23 = xfrm.Get(2, 2) * Tx + xfrm.Get(2, 1) * Ty + xfrm.Get(2, 2) * Tz + xfrm.Get(2, 3)
              */
             JamaMatrix A = new JamaMatrix(3, 3);
 
-            A.set(0, 0, M[0][0]);
-            A.set(0, 1, M[0][1]);
-            A.set(0, 2, M[0][2]);
-            A.set(1, 0, M[1][0]);
-            A.set(1, 1, M[1][1]);
-            A.set(1, 2, M[1][2]);
-            A.set(2, 0, M[2][0]);
-            A.set(2, 1, M[2][1]);
-            A.set(2, 2, M[2][2]);
+            A.set(0, 0, xfrm.Get(0, 0));
+            A.set(0, 1, xfrm.Get(0, 1));
+            A.set(0, 2, xfrm.Get(0, 2));
+            A.set(1, 0, xfrm.Get(1, 0));
+            A.set(1, 1, xfrm.Get(1, 1));
+            A.set(1, 2, xfrm.Get(1, 2));
+            A.set(2, 0, xfrm.Get(2, 0));
+            A.set(2, 1, xfrm.Get(2, 1));
+            A.set(2, 2, xfrm.Get(2, 2));
 
             JamaMatrix b = new JamaMatrix(3, 1);
 
-            b.set(0, 0, Tr03 - M[0][3]);
-            b.set(1, 0, Tr13 - M[1][3]);
-            b.set(2, 0, Tr23 - M[2][3]);
+            b.set(0, 0, Tr03 - xfrm.Get(0, 3));
+            b.set(1, 0, Tr13 - xfrm.Get(1, 3));
+            b.set(2, 0, Tr23 - xfrm.Get(2, 3));
 
             JamaMatrix X = A.solve(b);
             double Tx = X.get(0, 0);
@@ -5324,7 +5324,7 @@ public abstract class ViewJFrameBase extends JFrame
 
             xfrm.setTranslate(Tx, Ty, Tz);
 
-            transformACPC(image, imgBuffer, xfrm.getMatrix(), xResB, yResB, zResB, xDimB, yDimB, zDimB, tDimB, planeGap,
+            transformACPC(image, imgBuffer, xfrm, xResB, yResB, zResB, xDimB, yDimB, zDimB, tDimB, planeGap,
                           gapArray, doNN, xResA, yResA, zResA, xDimA, yDimA, zDimA);
             image.calcMinMax();
             minimum = image.getMin();
@@ -5523,39 +5523,39 @@ public abstract class ViewJFrameBase extends JFrame
 
                 afniProgressBar.setMessage("Talairach transformation pass #" + j);
 
-                xfrm.identity();
+                xfrm.MakeIdentity();
                 xfrm.setTranslate(center.X, center.Y, center.Z);
                 xfrm.setRotate(alphaArray[i], betaArray[i], gammaArray[i]);
 
-                double[][] M = xfrm.getMatrix();
-                double Tr03 = rrArray[i].X - (TalairachCenter.X * M[0][0]) - (TalairachCenter.Y * M[0][1]) -
-                              (TalairachCenter.Z * M[0][2]);
-                double Tr13 = rrArray[i].Y - (TalairachCenter.X * M[1][0]) - (TalairachCenter.Y * M[1][1]) -
-                              (TalairachCenter.Z * M[1][2]);
-                double Tr23 = rrArray[i].Z - (TalairachCenter.X * M[2][0]) - (TalairachCenter.Y * M[2][1]) -
-                              (TalairachCenter.Z * M[2][2]);
+                
+                double Tr03 = rrArray[i].X - (TalairachCenter.X * xfrm.Get(0, 0)) - (TalairachCenter.Y * xfrm.Get(0, 1)) -
+                              (TalairachCenter.Z * xfrm.Get(0, 2));
+                double Tr13 = rrArray[i].Y - (TalairachCenter.X * xfrm.Get(1, 0)) - (TalairachCenter.Y * xfrm.Get(1, 1)) -
+                              (TalairachCenter.Z * xfrm.Get(1, 2));
+                double Tr23 = rrArray[i].Z - (TalairachCenter.X * xfrm.Get(2, 0)) - (TalairachCenter.Y * xfrm.Get(2, 1)) -
+                              (TalairachCenter.Z * xfrm.Get(2, 2));
 
                 /*
-                 * Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3] Tr13 = M[1][0] * Tx + M[1][1] * Ty +
-                 * M[1][2] * Tz + M[1][3] Tr23 = M[2][2] * Tx + M[2][1] * Ty + M[2][2] * Tz + M[2][3]
+                 * Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3) Tr13 = xfrm.Get(1, 0) * Tx + xfrm.Get(1, 1) * Ty +
+                 * xfrm.Get(1, 2) * Tz + xfrm.Get(1, 3) Tr23 = xfrm.Get(2, 2) * Tx + xfrm.Get(2, 1) * Ty + xfrm.Get(2, 2) * Tz + xfrm.Get(2, 3)
                  */
                 JamaMatrix A = new JamaMatrix(3, 3);
 
-                A.set(0, 0, M[0][0]);
-                A.set(0, 1, M[0][1]);
-                A.set(0, 2, M[0][2]);
-                A.set(1, 0, M[1][0]);
-                A.set(1, 1, M[1][1]);
-                A.set(1, 2, M[1][2]);
-                A.set(2, 0, M[2][0]);
-                A.set(2, 1, M[2][1]);
-                A.set(2, 2, M[2][2]);
+                A.set(0, 0, xfrm.Get(0, 0));
+                A.set(0, 1, xfrm.Get(0, 1));
+                A.set(0, 2, xfrm.Get(0, 2));
+                A.set(1, 0, xfrm.Get(1, 0));
+                A.set(1, 1, xfrm.Get(1, 1));
+                A.set(1, 2, xfrm.Get(1, 2));
+                A.set(2, 0, xfrm.Get(2, 0));
+                A.set(2, 1, xfrm.Get(2, 1));
+                A.set(2, 2, xfrm.Get(2, 2));
 
                 JamaMatrix b = new JamaMatrix(3, 1);
 
-                b.set(0, 0, Tr03 - M[0][3]);
-                b.set(1, 0, Tr13 - M[1][3]);
-                b.set(2, 0, Tr23 - M[2][3]);
+                b.set(0, 0, Tr03 - xfrm.Get(0, 3));
+                b.set(1, 0, Tr13 - xfrm.Get(1, 3));
+                b.set(2, 0, Tr23 - xfrm.Get(2, 3));
 
                 JamaMatrix X = A.solve(b);
                 double Tx = X.get(0, 0);
@@ -5563,7 +5563,7 @@ public abstract class ViewJFrameBase extends JFrame
                 double Tz = X.get(2, 0);
 
                 xfrm.setTranslate(Tx, Ty, Tz);
-                transformTalairach(image, imgBuffer, xfrm.getMatrix(), xResB, yResB, zResB, xDimB, yDimB, zDimB, tDimB,
+                transformTalairach(image, imgBuffer, xfrm, xResB, yResB, zResB, xDimB, yDimB, zDimB, tDimB,
                                    planeGap, gapArray, doNN, xResA, yResA, zResA, xDimA, yDimA, zDimA, botX[i], botY[i],
                                    botZ[i], topX[i], topY[i], topZ[i]);
             } // for (i = 0; i < 12; i++)
@@ -5651,7 +5651,7 @@ public abstract class ViewJFrameBase extends JFrame
      * @param  oYdim      output y dimension
      * @param  oZdim      output z dimension
      */
-    private void transformACPC(ModelImage image, float[] imgBuffer, double[][] xfrm, float iXres, float iYres,
+    private void transformACPC(ModelImage image, float[] imgBuffer, TransMatrix xfrm, float iXres, float iYres,
                                float iZres, int iXdim, int iYdim, int iZdim, int iTdim, int planeGap, int[] gapArray,
                                boolean doNN, float oXres, float oYres, float oZres, int oXdim, int oYdim, int oZdim) {
         // This routine is designed to transform AFNI functional images which have already been
@@ -5704,22 +5704,22 @@ public abstract class ViewJFrameBase extends JFrame
         int mod = oXdim / 50;
         int tLast;
 
-        T00 = (float) xfrm[0][0];
-        T01 = (float) xfrm[0][1];
-        T02 = (float) xfrm[0][2];
-        T03 = (float) xfrm[0][3];
-        T10 = (float) xfrm[1][0];
-        T11 = (float) xfrm[1][1];
-        T12 = (float) xfrm[1][2];
-        T13 = (float) xfrm[1][3];
-        T20 = (float) xfrm[2][0];
-        T21 = (float) xfrm[2][1];
-        T22 = (float) xfrm[2][2];
-        T23 = (float) xfrm[2][3];
-        T30 = (float) xfrm[3][0];
-        T31 = (float) xfrm[3][1];
-        T32 = (float) xfrm[3][2];
-        T33 = (float) xfrm[3][3];
+        T00 = xfrm.Get(0, 0);
+        T01 = xfrm.Get(0, 1);
+        T02 = xfrm.Get(0, 2);
+        T03 = xfrm.Get(0, 3);
+        T10 = xfrm.Get(1, 0);
+        T11 = xfrm.Get(1, 1);
+        T12 = xfrm.Get(1, 2);
+        T13 = xfrm.Get(1, 3);
+        T20 = xfrm.Get(2, 0);
+        T21 = xfrm.Get(2, 1);
+        T22 = xfrm.Get(2, 2);
+        T23 = xfrm.Get(2, 3);
+        T30 = xfrm.Get(3, 0);
+        T31 = xfrm.Get(3, 1);
+        T32 = xfrm.Get(3, 2);
+        T33 = xfrm.Get(3, 3);
 
         tLast = Math.max(1, iTdim);
 
@@ -6474,7 +6474,7 @@ public abstract class ViewJFrameBase extends JFrame
      * @param  topY       highest y output value in this 1 of the 12 Talairach regions
      * @param  topZ       highest z output value in this 1 of the 12 Talairach regions
      */
-    private void transformTalairach(ModelImage image, float[] imgBuffer, double[][] xfrm, float iXres, float iYres,
+    private void transformTalairach(ModelImage image, float[] imgBuffer, TransMatrix xfrm, float iXres, float iYres,
                                     float iZres, int iXdim, int iYdim, int iZdim, int iTdim, int planeGap,
                                     int[] gapArray, boolean doNN, float oXres, float oYres, float oZres, int oXdim,
                                     int oYdim, int oZdim, int botX, int botY, int botZ, int topX, int topY, int topZ) {
@@ -6528,22 +6528,22 @@ public abstract class ViewJFrameBase extends JFrame
         int mod = oXdim / 50;
         int tLast;
 
-        T00 = (float) xfrm[0][0];
-        T01 = (float) xfrm[0][1];
-        T02 = (float) xfrm[0][2];
-        T03 = (float) xfrm[0][3];
-        T10 = (float) xfrm[1][0];
-        T11 = (float) xfrm[1][1];
-        T12 = (float) xfrm[1][2];
-        T13 = (float) xfrm[1][3];
-        T20 = (float) xfrm[2][0];
-        T21 = (float) xfrm[2][1];
-        T22 = (float) xfrm[2][2];
-        T23 = (float) xfrm[2][3];
-        T30 = (float) xfrm[3][0];
-        T31 = (float) xfrm[3][1];
-        T32 = (float) xfrm[3][2];
-        T33 = (float) xfrm[3][3];
+        T00 = xfrm.Get(0, 0);
+        T01 = xfrm.Get(0, 1);
+        T02 = xfrm.Get(0, 2);
+        T03 = xfrm.Get(0, 3);
+        T10 = xfrm.Get(1, 0);
+        T11 = xfrm.Get(1, 1);
+        T12 = xfrm.Get(1, 2);
+        T13 = xfrm.Get(1, 3);
+        T20 = xfrm.Get(2, 0);
+        T21 = xfrm.Get(2, 1);
+        T22 = xfrm.Get(2, 2);
+        T23 = xfrm.Get(2, 3);
+        T30 = xfrm.Get(3, 0);
+        T31 = xfrm.Get(3, 1);
+        T32 = xfrm.Get(3, 2);
+        T33 = xfrm.Get(3, 3);
 
         tLast = Math.max(1, iTdim);
 

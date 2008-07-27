@@ -209,9 +209,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
     private void extractSurface() {
         int i;
         int length;
-        TransMatrix dicomMatrix = null;
-        TransMatrix inverseDicomMatrix = null;
-        double[][] inverseDicomArray = null;
+        //double[][] inverseDicomArray = null;
 
         AlgorithmGaussianBlur blurAlgo;
         float[] sigmas = { blurSigma, blurSigma, blurSigma };
@@ -297,15 +295,15 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
 
             // Build surface extractor class
             // Build surface extractor class
+            TransMatrix dicomMatrix = null;
+            TransMatrix inverseDicomMatrix = null;
             if (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
 
                 // Get the DICOM transform that describes the transformation from
                 // axial to this image orientation
-                dicomMatrix = (TransMatrix) (srcImage.getMatrix().clone());
-                inverseDicomMatrix = (TransMatrix) (srcImage.getMatrix().clone());
-                inverseDicomMatrix.invert();
-                inverseDicomArray = inverseDicomMatrix.getMatrix();
-                inverseDicomMatrix = null;
+                dicomMatrix = srcImage.getMatrix();
+                inverseDicomMatrix = new TransMatrix(srcImage.getMatrix());
+                inverseDicomMatrix.Inverse();
             }
 
             ModelSurfaceExtractorCubes kExtractor = new ModelSurfaceExtractorCubes(iXDim, iYDim, iZDim, buffer, fXRes,
@@ -380,11 +378,11 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
 
                 System.gc();
                 fireProgressStateChanged("Saving surface");
-                ModelClodMesh.save(surfaceFileName, akClod, true, direction, startLocation, box, inverseDicomArray);
+                ModelClodMesh.save(surfaceFileName, akClod, true, direction, startLocation, box, inverseDicomMatrix);
             } else {
                 fireProgressStateChanged(75);
                 fireProgressStateChanged("Saving surface");
-                kMesh.save(surfaceFileName, true, direction, startLocation, box, inverseDicomArray);
+                kMesh.save(surfaceFileName, true, direction, startLocation, box, inverseDicomMatrix);
 
             }
         } catch (IOException error) {

@@ -373,7 +373,7 @@ public class FileMincHDF extends FileBase {
 	fileInfo.setUnitsOfMeasure(units);
 
 	TransMatrix axisMat = new TransMatrix(3);
-	axisMat.setMatrix(dirCosines);
+	axisMat.copyMatrix(dirCosines);
 
 	fileInfo.setAxisOrientation(FileInfoMinc.getAxisOrientation(axisMat));
     }

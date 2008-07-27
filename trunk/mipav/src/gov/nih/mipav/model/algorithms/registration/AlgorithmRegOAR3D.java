@@ -1767,7 +1767,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             return;
         }
 
-        answer.matrix.invert();
+        answer.matrix.Inverse();
         fireProgressStateChanged(100);
         disposeLocal();
         finalize();
