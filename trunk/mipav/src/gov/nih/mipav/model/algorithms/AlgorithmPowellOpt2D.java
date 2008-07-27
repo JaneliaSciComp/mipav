@@ -4,7 +4,6 @@ package gov.nih.mipav.model.algorithms;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.structures.TransMatrix;
-import Jama.Matrix;
 
 
 /**
@@ -122,9 +121,8 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
 		matrix.setSkew(vector[5], vector[6]);
 		matrix.setZoom(vector[3], vector[4]);
 
-		Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
-
-		matrix.convertFromMatrix(mtx);
+        matrix.MultLeft(toOrigin);
+        matrix.Mult(fromOrigin);
 
 		return matrix;
 	}
@@ -170,8 +168,8 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
      * @see AlgorithmPowellOptBase#adjustTranslation(TransMatrix, float)
      */
     public void adjustTranslation(TransMatrix mat, float sample){
-        double transX = mat.get(0, 2) * sample;
-        double transY = mat.get(1, 2) * sample;
+        float transX = mat.get(0, 2) * sample;
+        float transY = mat.get(1, 2) * sample;
 
         mat.set(0, 2, transX);
         mat.set(1, 2, transY);

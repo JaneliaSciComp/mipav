@@ -255,7 +255,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
                     if (matchSlice > 1) {
                         Preferences.debug("Transform for slice " + matchSlice + " after concatenation =\n");
 
-                        tMatrixMatchtoBase[matchSlice].timesEquals(tMatrixMatchtoBase[matchSlice - 1]);
+                        tMatrixMatchtoBase[matchSlice].Mult(tMatrixMatchtoBase[matchSlice - 1]);
                         System.out.println(tMatrixMatchtoBase[matchSlice]);
                     }
 
@@ -292,7 +292,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
 
         for (int i = matchSlice - 1; i > 0; i--) {
 
-            tMatrixMatchtoBase[matchSlice].timesEquals(tMatrixMatchtoBase[i]);
+            tMatrixMatchtoBase[matchSlice].Mult(tMatrixMatchtoBase[i]);
         }
     }
 

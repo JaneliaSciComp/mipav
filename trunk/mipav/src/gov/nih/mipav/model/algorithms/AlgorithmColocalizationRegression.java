@@ -3856,7 +3856,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         int length;
         int x, y;
         int numSquares;
-        Vector vectRand;
+        Vector<Integer> vectRand;
         RandomNumberGen randomGen;
         int randNum;
         Integer randSquare;
@@ -3966,13 +3966,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 xfrm = reg2.getTransform();
                 reg2.disposeLocal();
                 reg2 = null;
-                mat = xfrm.getMatrix();
-                mat[0][1] = mat[0][1] / 2.0;
-                mat[0][2] = mat[0][2] / 2.0;
-                mat[1][0] = mat[1][0] / 2.0;
-                mat[1][2] = mat[1][2] / 2.0;
-                xfrm.setMatrix(mat);
-
+                
+                xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
+                xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
+                xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
+                xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                
                 float xresA = baseImage.getFileInfo(0).getResolutions()[0];
                 float yresA = baseImage.getFileInfo(0).getResolutions()[1];
 
@@ -3996,13 +3995,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 xfrm = reg2.getTransform();
                 reg2.disposeLocal();
                 reg2 = null;
-                mat = xfrm.getMatrix();
-                mat[0][1] = mat[0][1] / 2.0;
-                mat[0][2] = mat[0][2] / 2.0;
-                mat[1][0] = mat[1][0] / 2.0;
-                mat[1][2] = mat[1][2] / 2.0;
-                xfrm.setMatrix(mat);
-
+                
+                xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
+                xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
+                xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
+                xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                
                 xresA = srcImage.getFileInfo(0).getResolutions()[0];
                 yresA = srcImage.getFileInfo(0).getResolutions()[1];
 
@@ -4403,7 +4401,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 yRemainder = yDim % fwhm;
                 numSquares = numXValues * numYValues;
                 randomGen = new RandomNumberGen();
-                vectRand = new Vector();
+                vectRand = new Vector<Integer>();
 
                 int idx;
                 int end;
@@ -4420,7 +4418,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                         xEnd = xDim - (xRemainder - xStart);
                         yStart = randomGen.genUniformRandomNum(0, yRemainder);
                         yEnd = yDim - (yRemainder - yStart);
-                        randSquare = (Integer) vectRand.elementAt(randNum);
+                        randSquare = vectRand.elementAt(randNum);
                         vectRand.removeElementAt(randNum);
                         y = (fwhm * (randSquare.intValue() / numXValues)) + yStart;
                         x = (fwhm * (randSquare.intValue() % numXValues)) + xStart;
@@ -6085,7 +6083,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         int totPos;
         int x, y, z;
         int numCubes;
-        Vector vectRand;
+        Vector<Integer> vectRand;
         RandomNumberGen randomGen;
         int randNum;
         Integer randCube;
@@ -6236,12 +6234,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     xfrm = reg2.getTransform();
                     reg2.disposeLocal();
                     reg2 = null;
-                    mat = xfrm.getMatrix();
-                    mat[0][1] = mat[0][1] / 2.0;
-                    mat[0][2] = mat[0][2] / 2.0;
-                    mat[1][0] = mat[1][0] / 2.0;
-                    mat[1][2] = mat[1][2] / 2.0;
-                    xfrm.setMatrix(mat);
+                    
+                    xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
+                    xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
+                    xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
+                    xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                    
                     transform = new AlgorithmTransform(inputImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA,
                                                        xDim, yDim, transformVOI, clip, false);
                     transform.run();
@@ -6265,12 +6263,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     xfrm = reg2.getTransform();
                     reg2.disposeLocal();
                     reg2 = null;
-                    mat = xfrm.getMatrix();
-                    mat[0][1] = mat[0][1] / 2.0;
-                    mat[0][2] = mat[0][2] / 2.0;
-                    mat[1][0] = mat[1][0] / 2.0;
-                    mat[1][2] = mat[1][2] / 2.0;
-                    xfrm.setMatrix(mat);
+                    
+                    xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
+                    xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
+                    xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
+                    xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                           
                     transform = new AlgorithmTransform(refImage, xfrm, AlgorithmTransform.BILINEAR, xresB, yresB, xDim,
                                                        yDim, transformVOI, clip, false);
 
@@ -6700,7 +6698,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 sliceCubes = numXValues * numYValues;
                 numCubes = sliceCubes * numZValues;
                 randomGen = new RandomNumberGen();
-                vectRand = new Vector();
+                vectRand = new Vector<Integer>();
 
                 for (i = 0; i < 200; i++) {
 
@@ -6716,7 +6714,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                         yEnd = yDim - (yRemainder - yStart);
                         zStart = randomGen.genUniformRandomNum(0, zRemainder);
                         zEnd = zDim - (zRemainder - zStart);
-                        randCube = (Integer) vectRand.elementAt(randNum);
+                        randCube = vectRand.elementAt(randNum);
                         vectRand.removeElementAt(randNum);
                         z = (fwhm * (randCube.intValue() / sliceCubes)) + zStart;
                         y = (fwhm * ((randCube.intValue() % sliceCubes) / numXValues)) + yStart;
@@ -8432,7 +8430,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         int length;
         int x, y;
         int numSquares;
-        Vector vectRand;
+        Vector<Integer> vectRand;
         RandomNumberGen randomGen;
         int randNum;
         Integer randSquare;
@@ -8623,13 +8621,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 xfrm = reg2.getTransform();
                 reg2.disposeLocal();
                 reg2 = null;
-                mat = xfrm.getMatrix();
-                mat[0][1] = mat[0][1] / 2.0;
-                mat[0][2] = mat[0][2] / 2.0;
-                mat[1][0] = mat[1][0] / 2.0;
-                mat[1][2] = mat[1][2] / 2.0;
-                xfrm.setMatrix(mat);
-
+                
+                xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
+                xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
+                xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
+                xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                
                 float xresA = srcImage.getFileInfo(0).getResolutions()[0];
                 float yresA = srcImage.getFileInfo(0).getResolutions()[1];
 
@@ -8649,13 +8646,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 xfrm = reg2.getTransform();
                 reg2.disposeLocal();
                 reg2 = null;
-                mat = xfrm.getMatrix();
-                mat[0][1] = mat[0][1] / 2.0;
-                mat[0][2] = mat[0][2] / 2.0;
-                mat[1][0] = mat[1][0] / 2.0;
-                mat[1][2] = mat[1][2] / 2.0;
-                xfrm.setMatrix(mat);
-
+                
+                xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
+                xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
+                xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
+                xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                
                 transform = new AlgorithmTransform(refImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA, xDim,
                                                    yDim, transformVOI, clip, false);
                 transform.run();
@@ -9131,7 +9127,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 yRemainder = yDim % fwhm;
                 numSquares = numXValues * numYValues;
                 randomGen = new RandomNumberGen();
-                vectRand = new Vector();
+                vectRand = new Vector<Integer>();
 
                 int idx;
                 int end;
@@ -9148,7 +9144,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                         xEnd = xDim - (xRemainder - xStart);
                         yStart = randomGen.genUniformRandomNum(0, yRemainder);
                         yEnd = yDim - (yRemainder - yStart);
-                        randSquare = (Integer) vectRand.elementAt(randNum);
+                        randSquare = vectRand.elementAt(randNum);
                         vectRand.removeElementAt(randNum);
                         y = (fwhm * (randSquare.intValue() / numXValues)) + yStart;
                         x = (fwhm * (randSquare.intValue() % numXValues)) + xStart;
@@ -10924,7 +10920,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         int totPos;
         int x, y, z;
         int numCubes;
-        Vector vectRand;
+        Vector<Integer> vectRand;
         RandomNumberGen randomGen;
         int randNum;
         Integer randCube;
@@ -11132,12 +11128,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     xfrm = reg2.getTransform();
                     reg2.disposeLocal();
                     reg2 = null;
-                    mat = xfrm.getMatrix();
-                    mat[0][1] = mat[0][1] / 2.0;
-                    mat[0][2] = mat[0][2] / 2.0;
-                    mat[1][0] = mat[1][0] / 2.0;
-                    mat[1][2] = mat[1][2] / 2.0;
-                    xfrm.setMatrix(mat);
+                    
+                    xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
+                    xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
+                    xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
+                    xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                           
                     transform = new AlgorithmTransform(inputImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA,
                                                        xDim, yDim, transformVOI, clip, false);
                     transform.run();
@@ -11151,12 +11147,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     xfrm = reg2.getTransform();
                     reg2.disposeLocal();
                     reg2 = null;
-                    mat = xfrm.getMatrix();
-                    mat[0][1] = mat[0][1] / 2.0;
-                    mat[0][2] = mat[0][2] / 2.0;
-                    mat[1][0] = mat[1][0] / 2.0;
-                    mat[1][2] = mat[1][2] / 2.0;
-                    xfrm.setMatrix(mat);
+                    
+                    xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
+                    xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
+                    xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
+                    xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                    
                     transform = new AlgorithmTransform(refImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA, xDim,
                                                        yDim, transformVOI, clip, false);
                     transform.run();
@@ -11658,7 +11654,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 sliceCubes = numXValues * numYValues;
                 numCubes = sliceCubes * numZValues;
                 randomGen = new RandomNumberGen();
-                vectRand = new Vector();
+                vectRand = new Vector<Integer>();
 
                 int idxZ, idx;
 
@@ -11676,7 +11672,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                         yEnd = yDim - (yRemainder - yStart);
                         zStart = randomGen.genUniformRandomNum(0, zRemainder);
                         zEnd = zDim - (zRemainder - zStart);
-                        randCube = (Integer) vectRand.elementAt(randNum);
+                        randCube = vectRand.elementAt(randNum);
                         vectRand.removeElementAt(randNum);
                         z = (fwhm * (randCube.intValue() / sliceCubes)) + zStart;
                         y = (fwhm * ((randCube.intValue() % sliceCubes) / numXValues)) + yStart;

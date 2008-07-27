@@ -2409,9 +2409,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * @exception  IOException  if there is an error writing to the file
      */
     protected void saveMesh(boolean flip) throws IOException {
-        TransMatrix dicomMatrix;
+        TransMatrix dicomMatrix = null;
         TransMatrix inverseDicomMatrix = null;
-        double[][] inverseDicomArray = null;
+        //double[][] inverseDicomArray = null;
         float[] coord;
         float[] tCoord;
         int i;
@@ -2422,11 +2422,11 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
             // Get the DICOM transform that describes the transformation from
             // axial to this image orientation
-            dicomMatrix = (TransMatrix) (srcImage.getMatrix().clone());
-            inverseDicomMatrix = (TransMatrix) (srcImage.getMatrix().clone());
-            inverseDicomMatrix.invert();
-            inverseDicomArray = inverseDicomMatrix.getMatrix();
-            inverseDicomMatrix = null;
+            dicomMatrix = srcImage.getMatrix();
+            inverseDicomMatrix = new TransMatrix(srcImage.getMatrix());
+            inverseDicomMatrix.Inverse();
+            //inverseDicomArray = inverseDicomMatrix.getMatrix();
+            //inverseDicomMatrix = null;
             coord = new float[3];
             tCoord = new float[3];
 
@@ -2458,7 +2458,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         ModelTriangleMesh[] newMesh = new ModelTriangleMesh[1];
         newMesh[0] = new ModelTriangleMesh(m_akVertex, m_aiConnect);
 
-        ModelTriangleMesh.save(kName, newMesh, flip, direction, startLocation, box, inverseDicomArray, null);
+        ModelTriangleMesh.save(kName, newMesh, flip, direction, startLocation, box, inverseDicomMatrix, null);
     }
 
     /**

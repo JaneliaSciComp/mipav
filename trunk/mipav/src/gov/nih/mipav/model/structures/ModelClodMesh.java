@@ -230,7 +230,7 @@ public class ModelClodMesh {
                 buffer = new byte[128];
                 kIn.read(buffer);
                 index = 0;
-                inverseDicomArray = new double[4][4];
+                //inverseDicomArray = new double[4][4];
 
                 for (i = 0; i <= 3; i++) {
 
@@ -245,11 +245,10 @@ public class ModelClodMesh {
                         c8 = buffer[index++] & 0xffL;
                         tmpLong = ((c1 << 56) | (c2 << 48) | (c3 << 40) | (c4 << 32) | (c5 << 24) | (c6 << 16) |
                                        (c7 << 8) | c8);
-                        inverseDicomArray[i][j] = Double.longBitsToDouble(tmpLong);
+                        inverseDicomMatrix.set(i,j, Double.longBitsToDouble(tmpLong));
                     }
                 }
 
-                inverseDicomMatrix.setMatrix(inverseDicomArray);
             } // if (dicom)
 
             // read vertices
@@ -435,7 +434,7 @@ public class ModelClodMesh {
             long c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0, c8 = 0;
             long tmpLong;
             int j;
-            double[][] inverseDicomArray;
+            //double[][] inverseDicomArray;
             TransMatrix inverseDicomMatrix = new TransMatrix(4);
             float[] tCoord = new float[3];
             float[] coord = new float[3];
@@ -521,7 +520,7 @@ public class ModelClodMesh {
                 buffer = new byte[128];
                 kIn.read(buffer);
                 index = 0;
-                inverseDicomArray = new double[4][4];
+                //inverseDicomArray = new double[4][4];
 
                 for (i = 0; i <= 3; i++) {
 
@@ -536,11 +535,10 @@ public class ModelClodMesh {
                         c8 = buffer[index++] & 0xffL;
                         tmpLong = ((c1 << 56) | (c2 << 48) | (c3 << 40) | (c4 << 32) | (c5 << 24) | (c6 << 16) |
                                        (c7 << 8) | c8);
-                        inverseDicomArray[i][j] = Double.longBitsToDouble(tmpLong);
+                        inverseDicomMatrix.set(i,j, Double.longBitsToDouble(tmpLong));
                     }
                 }
 
-                inverseDicomMatrix.setMatrix(inverseDicomArray);
             } // if (dicom)
 
             // read vertices
@@ -756,12 +754,12 @@ public class ModelClodMesh {
      * @param      direction          1 or -1 for each axis
      * @param      startLocation      DOCUMENT ME!
      * @param      box                (dim-1)*res
-     * @param      inverseDicomArray  DOCUMENT ME!
+     * @param      inverseDicomMatrix 
      *
      * @exception  IOException  if there is an error writing to the file
      */
     public static void save(String kName, ModelClodMesh[] akComponent, boolean flip, int[] direction,
-                            float[] startLocation, float[] box, double[][] inverseDicomArray) throws IOException {
+                            float[] startLocation, float[] box, TransMatrix inverseDicomMatrix) throws IOException {
 
         if (akComponent.length == 0) {
             return;
@@ -773,7 +771,7 @@ public class ModelClodMesh {
         kOut.writeInt(akComponent.length);
 
         for (int i = 0; i < akComponent.length; i++) {
-            akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomArray);
+            akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomMatrix);
         }
 
         kOut.close();
@@ -972,13 +970,13 @@ public class ModelClodMesh {
      * @param      direction          1 or -1 for each axis
      * @param      startLocation      DOCUMENT ME!
      * @param      box                (dim-1)*res
-     * @param      inverseDicomArray  DOCUMENT ME!
+     * @param      inverseDicomMatrix  DOCUMENT ME!
      *
      * @exception  IOException  if there is an error writing to the file
      */
     protected void save(RandomAccessFile kOut, boolean flip, int[] direction, float[] startLocation, float[] box,
-                        double[][] inverseDicomArray) throws IOException {
-        m_kMesh.save(kOut, flip, direction, startLocation, box, inverseDicomArray, null);
+    			TransMatrix inverseDicomMatrix) throws IOException {
+        m_kMesh.save(kOut, flip, direction, startLocation, box, inverseDicomMatrix, null);
 
         // write collapse records
         kOut.writeInt(m_akRecord.length);

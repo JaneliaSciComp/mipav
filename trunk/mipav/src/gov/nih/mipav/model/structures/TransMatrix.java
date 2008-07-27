@@ -3,10 +3,10 @@ package gov.nih.mipav.model.structures;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibFoundation.Mathematics.Vector4f;
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
+import WildMagic.LibFoundation.Mathematics.Mathf;
 
 import gov.nih.mipav.model.file.FileInfoBase;
-import Jama.*;
 
 import gov.nih.mipav.view.*;
 
@@ -17,62 +17,100 @@ import java.io.*;
 import java.text.*;
 
 import java.util.*;
+import java.lang.IllegalArgumentException;
 
 
 /**
- * Transformation matrix class is an affine homogenous class that can be used to rotate objects like images and VOIs. It
- * can constructed as a 2D(3x3) or 3D(4x4) homogenous matrix for transform (rotation, translation, skew and zoom)
- * images/VOIs. Skew is not commonly used.
- *
- * <p>The MIPAV 3D model for 4 X 4 transformations is:<br>
+ * Transformation matrix class is an affine homogeneous class that can be used
+ * to rotate objects like images and VOIs. It can constructed as a 2D(3x3) or
+ * 3D(4x4) homogeneous matrix for transform (rotation, translation, skew and
+ * zoom) images/VOIs. Skew is not commonly used.
+ * 
+ * <p>
+ * The MIPAV 3D model for 4 X 4 transformations is:<br>
  * </p>
- *
+ * 
  * <pre>
-        [ m00 m01 m02 m03 ]   [ x ]   [ x' ]
-        [ m10 m11 m12 m13 ] . [ y ] = [ y' ]
-        [ m20 m21 m22 m23 ]   [ z ]   [ z' ]
-        [ m30 m31 m32 m33 ]   [ w ]   [ w' ]
-
-        x' = m00*x + m01*y + m02*z + m03*w
-        y' = m10*x + m11*y + m12*z + m13*w
-        z' = m20*x + m21*y + m22*z + m23*w
-        w' = m30*x + m31*y + m32*z + m33*w
- *  </pre>
+ *         [ m00 m01 m02 m03 ]   [ x ]   [ x' ]
+ *         [ m10 m11 m12 m13 ] . [ y ] = [ y' ]
+ *         [ m20 m21 m22 m23 ]   [ z ]   [ z' ]
+ *         [ m30 m31 m32 m33 ]   [ w ]   [ w' ]
+ * 
+ *         x' = m00*x + m01*y + m02*z + m03*w
+ *         y' = m10*x + m11*y + m12*z + m13*w
+ *         z' = m20*x + m21*y + m22*z + m23*w
+ *         w' = m30*x + m31*y + m32*z + m33*w
+ * </pre>
  *
- * <p>ORDER OF TRANSFORMATIONS = TRANSLATE, ROTATE, ZOOM or TRANSLATE, ROTATE, SKEW, ZOOM<br>
+ * <p> However, because the transform type is limited, we can always set the
+ * third row to [ 0 0 0 1] and write instead: </p>
+ * <pre>
+ *         [ m00 m01 m02 ]   [ x ]   [ t0 ]   [ x' ]
+ *         [ m10 m11 m12 ] . [ y ] + [ t1 ] = [ y' ]
+ *         [ m20 m21 m22 ]   [ z ]   [ t2 ]   [ z' ]
+ * 
+ *         x' = m00*x + m01*y + m02*z + t0
+ *         y' = m10*x + m11*y + m12*z + t1
+ *         z' = m20*x + m21*y + m22*z + t2
+ * </pre>
+ *
+ * <p> We still represent 4x4 m with a WildMagic Matrix4f, because of the
+ * existing implementations that assume a 4x4 matrix, and the use of the upper
+ * 3x3 matrix as a 2D transform.</p>
+ *
+ * <p> We considered representing m with a WildMagic Matrix3f, and t with a
+ * Vector3f, as encapsulated in the WildMagic Transformation class, but it
+ * does not match typical Mipav usage.</p>
+ * 
+ * <p>
+ * ORDER OF TRANSFORMATIONS = TRANSLATE, ROTATE, ZOOM or TRANSLATE, ROTATE,
+ * SKEW, ZOOM<br>
  * Row, Col format - right hand rule<br>
  * 2D Example<br>
  * </p>
- *
+ * 
  * <pre>
-         zoom_x    theta    tx
-         theta     zoom_y   ty
-         0         0         1
- *   </pre>
+ *          zoom_x    theta    tx
+ *          theta     zoom_y   ty
+ *          0         0         1
+ * represented in 3D by leaving Z the identity transform:
+ *          zoom_x    theta    0    tx
+ *          theta     zoom_y   0    ty
+ *          0         0        1    0
+ *          0         0        0    1
  *
- * <p>Note for 3D - ref. Foley, Van Dam p. 214</p>
+ * </pre>
  *
+ * <p> Note that for 2D, the tx and ty components are stored in M02 and M12,
+ * and not in M03 and M13, as might be guessed by the use of a Matrix4f to
+ * store both 2D and 3D transforms. </p>
+ *
+ * <p>
+ * Note for 3D - ref. Foley, Van Dam p. 214
+ * </p>
+ * 
  * <pre>
-         Axis of rotation            Direction of positive rotation is
-             x                               y to z
-             y                               z to x
-             z                               x to y
- *   </pre>
- *
+ *          Axis of rotation            Direction of positive rotation is
+ *              x                               y to z
+ *              y                               z to x
+ *              z                               x to y
+ * </pre>
+ * 
  * <pre>
-         Order of rotation is important (i.e. not communitive)
-         Rx Ry Ry != Ry Rx Rz
-
-
- *   </pre>
- *
- * @version  0.1 Nov 15, 1997
- * @author   Matthew J. McAuliffe, Ph.D.
+ *          Order of rotation is important (i.e. not commutative)
+ *          Rx Ry Ry != Ry Rx Rz
+ * 
+ * 
+ * </pre>
+ * 
+ * @version 2, July 24, 2008, original 0.1 Nov 15, 1997
+ * @author Matthew J. McAuliffe, Ph.D., changes Aron Helser, Geometric Tools
+ * 
  */
-public class TransMatrix extends Matrix // implements TableModelListener
+public class TransMatrix extends Matrix4f
 {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    //~ Static fields/initializers ---------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 5604493833934574127L;
@@ -99,83 +137,36 @@ public class TransMatrix extends Matrix // implements TableModelListener
     public static final int TRANSFORM_NIFTI_SCANNER_ANATOMICAL = 6;
     
     /** Array of transform ID strings. */
-    private static final String[] transformIDStr = {
+    private static final String[] TRANSFORM_ID_STR = {
         "Unknown", "Scanner Anatomical", "Another Dataset", "Talairach Tournoux", "MNI 152", "Composite",
         "Scanner Anatomical"
     };
     
-    /** DOCUMENT ME! */
+    /** used for setting rotation */
     public static final int DEGREES = 0;
 
-    /** DOCUMENT ME! */
+    /** used for setting rotation */
     public static final int RADIANS = 1;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private double[] tran;
-
-    /** DOCUMENT ME! */
-    private int U_PERSPW = 15;
-
-    /** DOCUMENT ME! */
-    private int U_PERSPX = 12;
-
-    /** DOCUMENT ME! */
-    private int U_PERSPY = 13;
-
-    /** DOCUMENT ME! */
-    private int U_PERSPZ = 14;
-
-    /** DOCUMENT ME! */
-    private int U_ROTATEX = 6;
-
-    /** DOCUMENT ME! */
-    private int U_ROTATEY = 7;
-
-    /** DOCUMENT ME! */
-    private int U_ROTATEZ = 8;
-
-    /** DOCUMENT ME! */
-    private int U_SCALEX = 0;
-
-    /** DOCUMENT ME! */
-    private int U_SCALEY = 1;
-
-    /** DOCUMENT ME! */
-    private int U_SCALEZ = 2;
-
-    /** DOCUMENT ME! */
-    private int U_SHEARXY = 3;
-
-    /** DOCUMENT ME! */
-    private int U_SHEARXZ = 4;
-
-    /** DOCUMENT ME! */
-    private int U_SHEARYZ = 5;
-
-    /** DOCUMENT ME! */
-    private int U_TRANSX = 9;
-
-    /** DOCUMENT ME! */
-    private int U_TRANSY = 10;
-
-    /** DOCUMENT ME! */
-    private int U_TRANSZ = 11;
+    //~ Instance fields -----------------------------------------------------------
 
     /** Transform ID associated with the matrix. */
-    private int transformID = TRANSFORM_COMPOSITE;
+    private int m_TransformID = TRANSFORM_COMPOSITE;
     
-    /** boolean indicating whether this matrix is associated with a NIFTI image (special case handling)*/
-    private boolean isNIFTI = false;
+    /** boolean indicating whether this matrix is associated with a NIFTI
+     * image (special case handling) */
+    private boolean m_IsNIFTI = false;
     
     /** If true, nifti matrix codes for a qform matrix
      *  If false, nifti matrix codes for a sform matrix 
      *  Value has no effect if not a nifti matrix 
      */
-    private boolean isQform = true;
+    private boolean m_IsQform = true;
     
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    /** Transform was constructed to transform 2D vectors, instead of 3D */
+    private boolean m_Is2D = false;
+
+    //~ Constructors ------------------------------------------------------------
 
     /**
      * Construct a transformation matrix.
@@ -191,36 +182,70 @@ public class TransMatrix extends Matrix // implements TableModelListener
     }
     
     public TransMatrix(int dim, int id, boolean is_nifti, boolean isQform) {
-    	super(dim, dim);
-    	identity();
-    	this.transformID = id;
-    	this.isNIFTI = is_nifti;
-        this.isQform = isQform;
+        // start with Identity matrix, ones along diagonal.
+    	super(false);  // calls MakeIdentity(); 
+
+        if (dim == 3) {
+            m_Is2D = true;
+        } else if (dim != 4) {
+            throw new IllegalArgumentException("Dimension must be 3 or 4");
+        }
+    	this.m_TransformID = id;
+    	this.m_IsNIFTI = is_nifti;
+        this.m_IsQform = isQform;
+    }
+
+    /** copy constructor.
+     * @param rkTM, matrix to copy
+     */
+    public TransMatrix(TransMatrix rkTM) {
+        Copy(rkTM);
     }
     
-    
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    //~ Methods -----------------------------------------------------------------
 
     /**
-     * Make a deep copy (i.e. clone of the matrix).
-     *
-     * @return  a TransMatrix object.
+     * Return dimension passed to constructor.
+     * @return 3 for 2D transform, 4 for 3D transform.
      */
-    public Object clone() {
-        TransMatrix tMat = new TransMatrix(this.m, transformID, isNIFTI, isQform);
-        tMat.A = this.getArrayCopy();
-
-        return tMat;
+    public int getDim() {
+        if (m_Is2D) return 3;
+        return 4;
     }
 
-    /**
-     * Replaces casting Matrix to TransMatrix.
-     *
-     * @param  b  Matrix to be cast
-     */
-    public void convertFromMatrix(Matrix b) {
-        A = b.getArray();
+    /** method alias, @see Get */
+    public final float get(int i, int j) {
+        return Get(i, j);
     }
+
+    /** method alias, but accepts double value. @see Set */
+    public final void set( int i, int j, double fValue )
+    {
+        Set(i, j, (float)fValue);
+    }
+
+    /** 
+     * @note this doesn't conform to the Cloneable interface, because it returns
+     * TransMatrix instead of Object. 
+     * @return deep copy of this. 
+     */
+    public TransMatrix clone() {
+        TransMatrix kTM = new TransMatrix(this);
+        return kTM;
+    }
+
+
+    /** copy, overwrite this. 
+     * @param rkTM, matrix to copy
+     */
+    public void Copy(TransMatrix rkTM) {
+        m_Is2D = rkTM.m_Is2D;
+        m_TransformID = rkTM.m_TransformID;
+    	m_IsNIFTI = rkTM.m_IsNIFTI;
+        m_IsQform = rkTM.m_IsQform;
+        super.Copy(rkTM);
+    }
+
 
     /**
      * Decodes the matrix from a string into the matrix array.
@@ -229,51 +254,46 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public void decodeMatrixString(String str) {
         StringTokenizer tok = new StringTokenizer(str);
+        int dim = getDim();
+        for (int i = 0; i < dim; i++) {
 
-        for (int i = 0; i < A.length; i++) {
-
-            for (int j = 0; j < A[0].length; j++) {
-                A[i][j] = Double.valueOf((String) tok.nextElement()).doubleValue();
+            for (int j = 0; j < dim; j++) {
+                Set(i, j, Float.valueOf((String) tok.nextElement()).floatValue());
             }
         }
     }
 
     /**
-     * Decomposing a matrix into simple transformations TransMatrix transformation sequence: Scale(Sx, Sy,
-     * Sz)*ShearXY*ShearXZ*ShearYZ*RotateX*RotateY*RotateZ*Translate(tx, ty, tz)*Perspective(Px, Py, Pz, Pw).
+     * Decomposing a matrix into simple transformations TransMatrix
+     * transformation sequence: 
+     * Scale(Sx, Sy, Sz)*ShearXY*ShearXZ*ShearYZ*
+     * RotateX*RotateY*RotateZ*Translate(tx, ty, tz)
+     * ( *Perspective(Px, Py, Pz, Pw), no longer supported)
+     * @param rotate rotation about x, y, z axis, in radians
+     * @param trans translation
+     * @param scale scale, for each dimension
+     * @param shear shear.X is XY, shear.Y is XZ, shear.Z is YZ
      *
-     * @param   mat  TransMatrix to decompose.
-     *
-     * @return  successfully decompose or not.
+     * @return true if decompose was successful.
      */
-    public boolean decomposeMatrix(Matrix mat) {
-        tran = new double[16];
-
+    
+    public boolean decomposeMatrix(Vector3f rotate, Vector3f trans, Vector3f scale, 
+                                   Vector3f shear) {
         int i, j;
-        Matrix locmat = new Matrix(4, 4);
+        // Make a copy of our data, so we can change it.
+        TransMatrix locmat = new TransMatrix(this);
 
-        Matrix pmat = Matrix.identity(4, 4);
-        Matrix invpmat = Matrix.identity(4, 4);
-        Matrix tinvpmat = Matrix.identity(4, 4);
+        TransMatrix pmat = new TransMatrix(4);
 
-        /* Vector4 type and functions need to be added to the common set. */
-        Vector4f prhs, psol;
-        prhs = new Vector4f();
-        psol = new Vector4f();
-
-        Vector3f[] row;
-        Vector3f pdum3;
-        row = new Vector3f[3];
-        pdum3 = new Vector3f();
+        Vector3f[] row = new Vector3f[3];
+        Vector3f pdum3 = new Vector3f();
 
         for (i = 0; i < 3; i++) {
             row[i] = new Vector3f();
         }
 
-        locmat = (Matrix) mat.clone();
-        // locmat = mat;
 
-        /* Normalize the matrix. */
+        // Normalize the matrix. 
         if (locmat.get(3, 3) == 0) {
             return false;
         }
@@ -281,95 +301,81 @@ public class TransMatrix extends Matrix // implements TableModelListener
         for (i = 0; i < 4; i++) {
 
             for (j = 0; j < 4; j++) {
-                double val;
-                val = locmat.get(i, j) / locmat.get(3, 3);
-                locmat.set(i, j, val);
+                float val = locmat.get(i, j) / locmat.get(3, 3);
+                locmat.Set(i, j, val);
             }
         }
 
         // pmat is used to solve for perspective, but it also provides
         // an easy way to test for singularity of the upper 3x3 component.
-        pmat = (Matrix) locmat.clone();
+        pmat.Copy(locmat);
 
-        // pmat = locmat;
+        // zero out translation.
         for (i = 0; i < 3; i++) {
-            pmat.set(i, 3, 0);
+            pmat.Set(i, 3, 0);
         }
 
-        pmat.set(3, 3, 1);
+        pmat.Set(3, 3, 1);
 
-        if (pmat.getMatrix(0, 2, 0, 2).det() == 0.0) {
+        if (pmat.Determinant() == 0.0) {
             return false;
         }
-
-        /// removed perspective code -- we shouldn't need to do this since our transforms are affine
-        /*
-         * // First, isolate perspective.  This is the messiest. if ( locmat.get( 0, 3 ) != 0 || locmat.get( 1, 3 ) != 0
-         * || locmat.get( 2, 3 ) != 0 ) {
-         *
-         * // prhs is the right hand side of the equation. prhs.x = locmat.get( 0, 3 ); prhs.Y = locmat.get( 1, 3 );
-         * prhs.Z = locmat.get( 2, 3 ); prhs.w = locmat.get( 3, 3 );
-         *
-         * // Solve the equation by inverting pmat and multiplying // prhs by the inverse.  (This is the easiest way, not
-         * // necessarily the best.) // inverse function (and det4x4, above) from the Matrix // Inversion gem in the
-         * first volume.
-         *
-         * // inverse( &pmat, &invpmat ); invpmat = pmat.inverse(); // TransposeMatrix4( &invpmat, &tinvpmat ); tinvpmat =
-         * invpmat.transpose(); V4MulPointByMatrix( prhs, tinvpmat, psol );
-         *
-         * // Stuff the answer away. tran[U_PERSPX] = psol.x; tran[U_PERSPY] = psol.Y; tran[U_PERSPZ] = psol.Z;
-         * tran[U_PERSPW] = psol.w;
-         *
-         * tran[U_TRANSX] = psol.x; tran[U_TRANSY] = psol.Y; tran[U_TRANSZ] = psol.Z;
-         *
-         * // Clear the perspective partition. locmat.set( 0, 3, 0 ); locmat.set( 1, 3, 0 ); locmat.set( 2, 3, 0 );
-         * locmat.set( 3, 3, 1 ); } else { // No perspective. tran[U_PERSPX] = tran[U_PERSPY] = tran[U_PERSPZ] =
-         * tran[U_PERSPW] = 0;}*/
+        // allocate args, if they haven't been:
+        if (rotate == null) rotate = new Vector3f();
+        if (trans == null) trans = new Vector3f();
+        if (scale == null) scale = new Vector3f();
+        if (shear == null) shear = new Vector3f();
 
         // Next take care of translation (easy).
+        trans.Set(locmat.get(0, 3), locmat.get(1, 3), locmat.get(2, 3));
         for (i = 0; i < 3; i++) {
-
-            //            tran[U_TRANSX + i] = locmat.get(3, i);
-            //            locmat.set(3, i, 0);
-            tran[U_TRANSX + i] = locmat.get(i, 3);
-            locmat.set(i, 3, 0);
+            locmat.Set(i, 3, 0);
         }
 
         // Now get scale and shear.
         for (i = 0; i < 3; i++) {
-            row[i].X = (float)locmat.get(i, 0);
-            row[i].Y = (float)locmat.get(i, 1);
-            row[i].Z = (float)locmat.get(i, 2);
+            row[i].X = locmat.Get(i, 0);
+            row[i].Y = locmat.Get(i, 1);
+            row[i].Z = locmat.Get(i, 2);
         }
 
         // Compute X scale factor and normalize first row.
-        tran[U_SCALEX] = row[0].Length();
+        scale.X = row[0].Length();
 
         // row[0] = *V3Scale(&row[0], 1.0);
         row[0].Scale(1.0f);
+        // XXX Should this be row[0].Normalize()??
 
         // Compute XY shear factor and make 2nd row orthogonal to 1st.
-        tran[U_SHEARXY] = row[0].Dot(row[1]);
-        V3Combine(row[1], row[0], row[1], 1.0, -tran[U_SHEARXY]);
+        // shear.X is XY, shear.Y is XZ, shear.Z is YZ
+        shear.X = row[0].Dot(row[1]);
+        // row[1] += -shear.X * row[0]
+        pdum3.Scale(-shear.X, row[0]);
+        row[1].Add(pdum3);
 
         // Now, compute Y scale and normalize 2nd row.
-        // tran[U_SCALEY] = V3Length(&row[1]);
-        tran[U_SCALEY] = row[1].Length();
+        scale.Y = row[1].Length();
         row[1].Scale(1.0f);
-        tran[U_SHEARXY] /= tran[U_SCALEY];
+        // XXX Should this be row[1].Normalize()??
+        shear.X /= scale.Y;
 
         // Compute XZ and YZ shears, orthogonalize 3rd row.
-        tran[U_SHEARXZ] = row[0].Dot(row[2]);
-        V3Combine(row[2], row[0], row[2], 1.0, -tran[U_SHEARXZ]);
-        tran[U_SHEARYZ] = row[1].Dot(row[2]);
-        V3Combine(row[2], row[1], row[2], 1.0, -tran[U_SHEARYZ]);
+        shear.Y = row[0].Dot(row[2]);
+        // row[2] += -shear.Y * row[0]
+        pdum3.Scale(-shear.Y, row[0]);
+        row[2].Add(pdum3);
+
+        shear.Z = row[1].Dot(row[2]);
+        // row[2] += -shear.Z * row[1]
+        pdum3.Scale(-shear.Z, row[1]);
+        row[2].Add(pdum3);
 
         // Next, get Z scale and normalize 3rd row.
-        // tran[U_SCALEZ] = V3Length(&row[2]);
-        tran[U_SCALEZ] = row[2].Length();
+        scale.Z = row[2].Length();
         row[2].Scale(1.0f);
-        tran[U_SHEARXZ] /= tran[U_SCALEZ];
-        tran[U_SHEARYZ] /= tran[U_SCALEZ];
+        // XXX Should this be row[2].Normalize()??
+        shear.Y /= scale.Z;
+        shear.Z /= scale.Z;
 
         // At this point, the matrix (in rows[]) is orthonormal.
         // Check for a coordinate system flip.  If the determinant
@@ -377,8 +383,8 @@ public class TransMatrix extends Matrix // implements TableModelListener
         pdum3.Cross( row[1], row[2] );
         if (row[0].Dot(pdum3) < 0) {
 
+            scale.Neg();
             for (i = 0; i < 3; i++) {
-                tran[U_SCALEX + i] *= -1;
                 row[i].X *= -1;
                 row[i].Y *= -1;
                 row[i].Z *= -1;
@@ -407,357 +413,47 @@ public class TransMatrix extends Matrix // implements TableModelListener
         //
         // -cos(A)sin(B)cos(G)     cos(A)sin(B)sin(G)    cos(A)cos(B)
         // +sin(A)sin(G)           +sin(A)cos(G)
-        tran[U_ROTATEY] = Math.asin(row[0].Z);
+        rotate.Y = (float)Math.asin(row[0].Z);
 
-        if (Math.cos(tran[U_ROTATEY]) != 0) {
-            tran[U_ROTATEX] = -Math.atan2(row[1].Z, row[2].Z);
-            tran[U_ROTATEZ] = -Math.atan2(row[0].Y, row[0].X);
+        if (Math.cos(rotate.Y) != 0) {
+            rotate.X = (float)-Math.atan2(row[1].Z, row[2].Z);
+            rotate.Z = (float)-Math.atan2(row[0].Y, row[0].X);
         } else {
-            tran[U_ROTATEX] = Math.atan2(row[2].Y, row[1].Y);
-            tran[U_ROTATEZ] = 0;
+            rotate.X = (float)Math.atan2(row[2].Y, row[1].Y);
+            rotate.Z = 0;
         }
-
-        // System.out.println( "transform:" ); System.out.println( "rot x: " + getRotateX() + " rot y: " + getRotateY()
-        // + " rot z: " + getRotateZ() ); System.out.println( "scl x: " + getScaleX() + " scl y: " + getScaleY() + " scl
-        // z: " + getScaleZ() ); System.out.println( "trn x: " + getTranslateX() + " trn y: " + getTranslateY() + " trn
-        // z: " + getTranslateZ() );
 
         return true;
     }
 
-    /**
-     * Decomposing a matrix into simple transformations TransMatrix transformation sequence: Scale(Sx,
-     * Sy)*ShearXY*RotateZ*Translate(tx, ty)*Perspective(Px, Py, Pw).
-     *
-     * @param   mat  TransMatrix to decompose.
-     *
-     * @return  successfully decompose or not.
-     */
-    public boolean decomposeMatrix2D(Matrix mat) {
-        tran = new double[16];
-
-        int i, j;
-        Matrix locmat = new Matrix(3, 3);
-
-        Matrix pmat = Matrix.identity(3, 3);
-        Matrix invpmat = Matrix.identity(3, 3);
-        Matrix tinvpmat = Matrix.identity(3, 3);
-
-        /* Vector3 type and functions need to be added to the common set. */
-        Vector3f prhs, psol;
-        prhs = new Vector3f();
-        psol = new Vector3f();
-
-        Vector2f[] row;
-        Vector2f pdum2;
-        row = new Vector2f[2];
-        pdum2 = new Vector2f();
-
-        for (i = 0; i < 2; i++) {
-            row[i] = new Vector2f();
-        }
-
-        locmat = (Matrix) mat.clone();
-        // locmat = mat;
-
-        /* Normalize the matrix. */
-        if (locmat.get(2, 2) == 0) {
-            return false;
-        }
-
-        for (i = 0; i < 3; i++) {
-
-            for (j = 0; j < 3; j++) {
-                double val;
-                val = locmat.get(i, j) / locmat.get(2, 2);
-                locmat.set(i, j, val);
-            }
-        }
-
-        // pmat is used to solve for perspective, but it also provides
-        // an easy way to test for singularity of the upper 3x3 component.
-        pmat = (Matrix) locmat.clone();
-
-        // pmat = locmat;
-        for (i = 0; i < 2; i++) {
-            pmat.set(i, 2, 0);
-        }
-
-        pmat.set(2, 2, 1);
-
-        if (pmat.getMatrix(0, 1, 0, 1).det() == 0.0) {
-            return false;
-        }
-
-        /// removed perspective code -- we shouldn't need to do this since our transforms are affine
-        /*
-         * // First, isolate perspective.  This is the messiest. if ( locmat.get( 0, 2 ) != 0 || locmat.get( 1, 2 ) !=
-         * 0) {
-         *
-         * // prhs is the right hand side of the equation. prhs.x = locmat.get( 0, 2 ); prhs.Y = locmat.get( 1, 2 );
-         * prhs.w = locmat.get( 2, 2 );
-         *
-         * // Solve the equation by inverting pmat and multiplying // prhs by the inverse.  (This is the easiest way, not
-         * // necessarily the best.) // inverse function (and det3x3, above) from the Matrix // Inversion gem in the
-         * first volume.
-         *
-         * // inverse( &pmat, &invpmat ); invpmat = pmat.inverse(); // TransposeMatrix3( &invpmat, &tinvpmat ); tinvpmat =
-         * invpmat.transpose(); V3MulPointByMatrix( prhs, tinvpmat, psol );
-         *
-         * // Stuff the answer away. tran[U_PERSPX] = psol.x; tran[U_PERSPY] = psol.Y; tran[U_PERSPW] = psol.w;
-         *
-         * tran[U_TRANSX] = psol.x; tran[U_TRANSY] = psol.Y;
-         *
-         * // Clear the perspective partition. locmat.set( 0, 2, 0 ); locmat.set( 1, 2, 0 ); locmat.set( 2, 2, 1 ); } else
-         * { // No perspective. tran[U_PERSPX] = tran[U_PERSPY] = tran[U_PERSPW] = 0;}*/
-
-        // Next take care of translation (easy).
-        for (i = 0; i < 2; i++) {
-
-            //            tran[U_TRANSX + i] = locmat.get(2, i);
-            //            locmat.set(2, i, 0);
-            tran[U_TRANSX + i] = locmat.get(i, 2);
-            locmat.set(i, 2, 0);
-        }
-
-        // Now get scale and shear.
-        for (i = 0; i < 2; i++) {
-            row[i].X = (float)locmat.get(i, 0);
-            row[i].Y = (float)locmat.get(i, 1);
-        }
-
-        // Compute X scale factor and normalize first row.
-        tran[U_SCALEX] = row[0].Length();
-
-        // row[0] = *V2Scale(&row[0], 1.0);
-        row[0].Normalize();
-
-        // Compute XY shear factor and make 2nd row orthogonal to 1st.
-        tran[U_SHEARXY] = V2Dot(row[0], row[1]);
-        V2Combine(row[1], row[0], row[1], 1.0, -tran[U_SHEARXY]);
-
-        // Now, compute Y scale and normalize 2nd row.
-        // tran[U_SCALEY] = V3Length(&row[1]);
-        tran[U_SCALEY] = row[1].Length();
-        row[1].Normalize();
-        tran[U_SHEARXY] /= tran[U_SCALEY];
-
-        // At this point, the matrix (in rows[]) is orthonormal.
-        // Check for a coordinate system flip.  If the determinant
-        // is positive, then negate the matrix and the scaling factors.
-        if (((row[0].X * row[1].Y) - row[1].X - row[0].Y) < 0) {
-
-            for (i = 0; i < 2; i++) {
-                tran[U_SCALEX + i] *= -1;
-                row[i].X *= -1;
-                row[i].Y *= -1;
-            }
-        }
-
-        // Now, get the rotation out, similar to gem
-        // but gem uses  a different rotation matrix then we do
-        // In going between our rotation matrix and the
-        // gem rotation matrix the sine and -sine reverse
-        // positions.  We have:
-        // rz = cos(G)   -sin(G)   0
-        // sin(G)   cos(G)    0
-        // 0        0         1
-
-        tran[U_ROTATEZ] = Math.asin(row[1].X);
-
-        // System.out.println( "transform:" );
-        // System.out.println( "rot z: " + getRotateZ() );
-        // System.out.println( "scl x: " + getScaleX() + " scl y: " + getScaleY());
-        // System.out.println( "trn x: " + getTranslateX() + " trn y: " + getTranslateY());
-
-        return true;
-    }
 
     /**
-     * Accessor that returns the transformation matrix.
+     * Reports whether transform is Identity transform, to within a small epsilon.
      *
-     * @return  transformation matrix
-     */
-    public double[][] getMatrix() {
-        return A;
-    }
-
-    /**
-     * Accessor that returns the number of cols.
-     *
-     * @return  number of cols
-     */
-    public int getNCols() {
-        return n;
-    }
-
-    /**
-     * Accessor that returns the number of rows.
-     *
-     * @return  number of rows
-     */
-    public int getNRows() {
-        return m;
-    }
-
-    /**
-     * Returns the rotation about the X axis from the decomposed matrix.
-     *
-     * @return  the rotation about the X axis in degrees
-     *
-     * @see     decomposeMatrix
-     */
-    public double getRotateX() {
-        double tempRotX = tran[U_ROTATEX] * 180 / Math.PI;
-
-        return tempRotX;
-    }
-
-    /**
-     * Returns the rotation about the Y axis from the decomposed matrix.
-     *
-     * @return  the roation about the Y axis in degrees
-     *
-     * @see     decomposeMatrix
-     */
-    public double getRotateY() {
-        double tempRotY = tran[U_ROTATEY] * 180 / Math.PI;
-
-        return tempRotY;
-    }
-
-    /**
-     * Returns the rotation about the Z axis from the decomposed matrix.
-     *
-     * @return  the roation about the Z axis in degrees
-     *
-     * @see     decomposeMatrix
-     */
-    public double getRotateZ() {
-        double tempRotZ = tran[U_ROTATEZ] * 180 / Math.PI;
-
-        return tempRotZ;
-    }
-
-    /**
-     * Returns the scaling factor of the X axis calculated by decomposing the matrix.
-     *
-     * @return  the scaling factor for the X axis
-     *
-     * @see     decomposeMatrix
-     */
-    public double getScaleX() {
-        return tran[U_SCALEX];
-    }
-
-    /**
-     * Returns the scaling factor of the Y axis calculated by decomposing the matrix.
-     *
-     * @return  the scaling factor for the Y axis
-     *
-     * @see     decomposeMatrix
-     */
-    public double getScaleY() {
-        return tran[U_SCALEY];
-    }
-
-    /**
-     * Returns the scaling factor of the Z axis calculated by decomposing the matrix.
-     *
-     * @return  the scaling factor for the Z axis
-     *
-     * @see     decomposeMatrix
-     */
-    public double getScaleZ() {
-        return tran[U_SCALEZ];
-    }
-
-    /**
-     * Returns the translation for the X axis calculated by decomposing the matrix.
-     *
-     * @return  the translation in voxels for the X axis
-     *
-     * @see     decomposeMatrix
-     */
-    public double getTranslateX() {
-        return tran[U_TRANSX];
-    }
-
-    /**
-     * Returns the translation for the Y axis calculated by decomposing the matrix.
-     *
-     * @return  the translation in voxels for the Y axis
-     *
-     * @see     decomposeMatrix
-     */
-    public double getTranslateY() {
-        return tran[U_TRANSY];
-    }
-
-    /**
-     * Returns the translation for the Z axis calculated by decomposing the matrix.
-     *
-     * @return  the translation in voxels for the Z axis
-     *
-     * @see     decomposeMatrix
-     */
-    public double getTranslateZ() {
-        return tran[U_TRANSZ];
-    }
-
-    /**
-     * Makes simple identity matrix ( ones on the diagonal, zeros every place else.
-     */
-    public void identity() {
-        int r, c;
-        int rDim = getRowDimension();
-        int cDim = getColumnDimension();
-
-        for (r = 0; r < rDim; r++) {
-
-            for (c = 0; c < cDim; c++) {
-
-                if (r == c) {
-                    A[r][c] = (float) 1.0;
-                } else {
-                    A[r][c] = (float) 0.0;
-                }
-            }
-        }
-    }
-
-    /**
-     * Reports whether matrix is Identity matrix.
-     *
-     * @return  DOCUMENT ME!
+     * @return true iff identity
      */
     public boolean isIdentity() {
-        int r, c;
-        int rDim = getRowDimension();
-        int cDim = getColumnDimension();
-
-        boolean isId = true;
         float epsilon = 0.0001f;
 
-        for (r = 0; r < rDim; r++) {
-
-            for (c = 0; c < cDim; c++) {
-
-                if (r == c) {
-
-                    if ((A[r][c] < (1.0f - epsilon)) || (A[r][c] > (1.0f + epsilon))) {
-                        isId = false;
-                    }
-                } else {
-
-                    if ((A[r][c] < (0.0f - epsilon)) || (A[r][c] > (0.0f + epsilon))) {
-                        isId = false;
-                    }
-                }
-            }
+        if (Math.abs(M00 - 1.0f) > epsilon) return false;
+        if (Math.abs(M01) > epsilon) return false;
+        if (Math.abs(M02) > epsilon) return false;
+        if (Math.abs(M10) > epsilon) return false;
+        if (Math.abs(M11 - 1.0f) > epsilon) return false;
+        if (Math.abs(M12) > epsilon) return false;
+        if (Math.abs(M20) > epsilon) return false;
+        if (Math.abs(M21) > epsilon) return false;
+        if (Math.abs(M22 - 1.0f) > epsilon) return false;
+        if (!m_Is2D) {
+            if (Math.abs(M03) > epsilon) return false;
+            if (Math.abs(M13) > epsilon) return false;
+            if (Math.abs(M23) > epsilon) return false;
+            if (Math.abs(M30) > epsilon) return false;
+            if (Math.abs(M31) > epsilon) return false;
+            if (Math.abs(M32) > epsilon) return false;
+            if (Math.abs(M33 - 1.0f) > epsilon) return false;
         }
-
-        return isId;
+        return true;
     }
 
     /**
@@ -767,217 +463,228 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @return is this a nifti matrix
      */
     public boolean isNIFTI() {
-    	return this.isNIFTI;
+    	return this.m_IsNIFTI;
     }
     
     /**
      * Accessor that sets whether or not the matrix is a NIFTI matrix.
-     * @param isNIFTI
+     * @param is_NIFTI val to set
      */
-    public void setIsNIFTI(boolean isNIFTI) {
-        this.isNIFTI = isNIFTI;
+    public void setIsNIFTI(boolean is_NIFTI) {
+        this.m_IsNIFTI = is_NIFTI;
     }
     
     /**
      * Tells whether a NIFTI matrix is a qform matrix or a sform matrix
-     * @return
+     * @return true if qform, false if sform.
      */
     public boolean isQform() {
-        return this.isQform;
+        return this.m_IsQform;
     }
     
     /**
      * Accessor that sets whether a nifti matrix is a qform matrix or a 
      * sform matrix.
-     * @param isQform
+     * @param is_Qform val to set
      */
-    public void setIsQform(boolean isQform) {
-        this.isQform = isQform;
+    public void setIsQform(boolean is_Qform) {
+        this.m_IsQform = is_Qform;
     }
     
-    /**
-     * Multiplies two matrices together. General in nature for two-dimensional matrices but specifically used here to
-     * concatenate matrices.
-     *
-     * @param  oneMatrix     two-dimensional input matrix
-     * @param  twoMatrix     two-dimensional input matrix
-     * @param  resultMatrix  contains result of the multiplication of the two input matrices
-     */
-    public void multMatrix(double[][] oneMatrix, double[][] twoMatrix, double[][] resultMatrix) {
-        int i, j, k;
-        int cDim = getColumnDimension();
-        int rDim = getRowDimension();
-
-        for (i = 0; i < cDim; i++) {
-
-            for (j = 0; j < rDim; j++) {
-
-                for (k = 0; k < cDim; k++) {
-                    resultMatrix[j][i] += oneMatrix[j][k] * twoMatrix[k][i];
-                }
-            }
-        }
-    }
 
     /**
      * Reads transformation matrix to a text file.
      *
-     * <p>This method reads two formats MIPAV format 4 // number of rows in matrix 4 // number of cols in matrix 0.234
-     * 0.33 0.22 5.0 // matrix info separated by a space 0.234 0.33 0.22 10.0 // matrix info separated by a space 0.234
-     * 0.33 0.22 12.0 // matrix info separated by a space 0.0 0.0 0.0 1.0 // matrix info separated by a space</p>
+     * <p>This method reads two formats MIPAV format</p>
+     * <pre>
+     * 4                    // number of rows in matrix 
+     * 4                    // number of cols in matrix 
+     * 0.234 0.33 0.22 5.0  // matrix info separated by a space 
+     * 0.234 0.33 0.22 10.0 // matrix info separated by a space 
+     * 0.234 0.33 0.22 12.0 // matrix info separated by a space 
+     * 0.0 0.0 0.0 1.0      // matrix info separated by a space.
+     * <optional message goes here>
+     * </pre>
      *
      * <p>Note the above is a homogenous transformation matrix</p>
      *
-     * <p>FSL or alternate format supported 0.234 0.33 0.22 5.0 // matrix info separated by 2 spaces 0.234 0.33 0.22 5.0
-     * // matrix info separated by 2 spaces 0.234 0.33 0.22 5.0 // matrix info separated by 2 spaces 0 0 0 1 // matrix
-     * info separated by 2 spaces also note integer values</p>
+     * <p>FSL or alternate format supported </p>
+     * <pre>
+     * 0.234  0.33  0.22  5.0 // matrix info separated by 2 spaces 
+     * 0.234  0.33  0.22  5.0 // matrix info separated by 2 spaces 
+     * 0.234  0.33  0.22  5.0 // matrix info separated by 2 spaces
+     * 0  0  0  1             // matrix info separated by 2 spaces
+     * </pre>
+     * <p>also note integer values</p>
      *
      * @param  raFile     random access file pointer
-     * @param  composite  if true make a composite matrix of the by multipling this matrix with the one to be read from
-     *                    the file. If false replace this object matrix with a new matrix read from the file.
+     * @param composite if true make a composite matrix of the by multipling
+     * this matrix with the one to be read from the file. If false replace
+     * this object matrix with a new matrix read from the file.
      */
     public void readMatrix(RandomAccessFile raFile, boolean composite) {
-        int i, r, c;
-        r=4;
-        c=4;
+        int i, r = 4, c = 4;
         String str;
+        // is MNI transformation matrix, leaves out last row.
         boolean isXFM = false;
 
-        if (raFile != null) {
+        if (raFile == null) return;
 
-            try {
+        try {
+            str = raFile.readLine().trim();
+            if(str.equalsIgnoreCase("MNI Transform File")) {
+                isXFM = true;
+                //make sure that this is a linear transform type file
+                boolean isLinearTransform = false;
                 str = raFile.readLine().trim();
-                if(str.equalsIgnoreCase("MNI Transform File")) {
-                	isXFM = true;
-                	//make sure that this is a linear transform type file
-                	boolean isLinearTransform = false;
-                	str = raFile.readLine().trim();
-                	while(str != null) {
-        	    		if(str.equalsIgnoreCase("Transform_Type = Linear;")) {
-        	    			isLinearTransform = true;
-        	    			//read next line in which should be "Linear_Transform =" to set the file pointer to the next line
-        	    			raFile.readLine();
-        	    			break;
-        	    		}
-        	    		str = raFile.readLine().trim();
-        	    	}
-                	if(!isLinearTransform) {
-                		MipavUtil.displayError("Matrix file must be a linear transform type");
-                        return;
-                	}
-                	r = 4;
-                	c = 4;
-                }else {
-
-	                if (str.length() > 1) { // assume FSL matrix file and 4 x 4
-	                    r = 4;
-	                    c = 4;
-	                    raFile.seek(0);
-	                } else {
-	                    raFile.seek(0);
-	                    r = Integer.valueOf(raFile.readLine().trim()).intValue();
-	                    c = Integer.valueOf(raFile.readLine().trim()).intValue();
-	                }
-                }
-
-                if (composite == false) {
-                    reConstruct(r, c); // reallocate matrix to row, col sizes
-                    if(isXFM) {
-                    	for (i = 0; i < 3; i++) {
-	                        decodeLine(raFile, i, A);
-	                    }
-                    	A[3][0] = 0;
-                    	A[3][1] = 0;
-                    	A[3][2] = 0;
-                    	A[3][3] = 1.0;
-                    }else {
-	                    for (i = 0; i < r; i++) {
-	                        decodeLine(raFile, i, A);
-	                    }
+                while(str != null) {
+                    if(str.equalsIgnoreCase("Transform_Type = Linear;")) {
+                        isLinearTransform = true;
+                        //read next line in which should be 
+                        // "Linear_Transform =" to set the file pointer to the next line
+                        raFile.readLine();
+                        break;
                     }
+                    str = raFile.readLine().trim();
+                }
+                if(!isLinearTransform) {
+                    MipavUtil.displayError("Matrix file must be a linear transform type");
+                    return;
+                }
+                r = 4;
+                c = 4;
+            } else {
+                if (str.length() > 1) { // assume FSL matrix file and 4 x 4
+                    r = 4;
+                    c = 4;
+                    raFile.seek(0);
                 } else {
-                    double[][] mat = new double[4][4];
-                    if(isXFM) {
-                    	for (i = 0; i < 3; i++) {
-                            decodeLine(raFile, i, mat);
-                        }
-                    	mat[3][0] = 0;
-                    	mat[3][1] = 0;
-                    	mat[3][2] = 0;
-                    	mat[3][3] = 1.0;
-                    }else {
-                    	for (i = 0; i < r; i++) {
-                            decodeLine(raFile, i, mat);
-                        }	
-                    }
-                    
-
-                    // need to composite here.
-                    Matrix tmpMatrix = Matrix.constructWithCopy(mat);
-                    timesEquals(tmpMatrix);
+                    raFile.seek(0);
+                    r = Integer.valueOf(raFile.readLine().trim()).intValue();
+                    c = Integer.valueOf(raFile.readLine().trim()).intValue();
                 }
-            } catch (IOException error) {
-                MipavUtil.displayError("Matrix save error " + error);
-
+            }
+            if ( r != c || ! (r == 3 || r == 4) ) {
+                MipavUtil.displayError("Matrix file must be a linear transform type, dimensions incompatible, must be 3 or 4.");
                 return;
             }
+            
+            Matrix4f mat = null;
+            if (!composite) {
+                mat = this;
+            } else {
+                mat = new Matrix4f();
+            }
+            if(isXFM) {
+                for (i = 0; i < 3; i++) {
+                    decodeLine(raFile, i, mat);
+                }
+                //Third row is already zero
+                mat.M33 = 1.0f;
+            } else {
+                for (i = 0; i < r; i++) {
+                    decodeLine(raFile, i, mat);
+                }
+            }
+
+            if (composite) {
+                Mult(mat);
+            }
+        } catch (IOException error) {
+            MipavUtil.displayError("Matrix save error " + error);
+            
+            return;
         }
         // this.print(4, 4);
     }
 
     /**
-     * Saves transformation matrix to a text file MIPAV format 4 // number of rows in matrix 4 // number of cols in
-     * matrix 0.234 0.33 0.22 5.0 // matrix info separated by a space 0.234 0.33 0.22 10.0 // matrix info separated by a
-     * space 0.234 0.33 0.22 12.0 // matrix info separated by a space 0.0 0.0 0.0 1.0 // matrix info separated by a
-     * space.
-     *
+     * Saves transformation matrix to a text file MIPAV format 
+     * @see saveMatrix(RandomAccessFile raFile)
      * @param  fileName  - file name, including the path
      */
     public void saveMatrix(String fileName) {
+        saveMatrix(fileName, null);
+    }
+
+    /**
+     * Saves transformation matrix to a text file MIPAV format 
+     * @see saveMatrix(RandomAccessFile raFile, String message)
+     * @param  fileName  - file name, including the path
+     * @param  message   String, may be null for no message.
+     */
+    public void saveMatrix(String fileName, String message) {
 
         try {
             File file = new File(fileName);
             RandomAccessFile raFile = new RandomAccessFile(file, "rw");
-            saveMatrix(raFile);
+            saveMatrix(raFile, message);
             raFile.close();
         } catch (IOException error) {
-            MipavUtil.displayError("Matrix save error");
+            MipavUtil.displayError("Matrix save error " + error);
 
             return;
         }
     }
 
     /**
-     * Saves transformation matrix to a text file MIPAV format 4 // number of rows in matrix 4 // number of cols in
-     * matrix 0.234 0.33 0.22 5.0 // matrix info separated by a space 0.234 0.33 0.22 10.0 // matrix info separated by a
-     * space 0.234 0.33 0.22 12.0 // matrix info separated by a space 0.0 0.0 0.0 1.0 // matrix info separated by a
-     * space.
+     * Saves transformation matrix to a text file MIPAV format
+     * <pre>
+     * 4                    // number of rows in matrix 
+     * 4                    // number of cols in matrix 
+     * 0.234 0.33 0.22 5.0  // matrix info separated by a space 
+     * 0.234 0.33 0.22 10.0 // matrix info separated by a space 
+     * 0.234 0.33 0.22 12.0 // matrix info separated by a space 
+     * 0.0 0.0 0.0 1.0      // matrix info separated by a space.
+     * </pre>
      *
+     * @see saveMatrix(RandomAccessFile raFile, String message)
      * @param  raFile  random access file pointer
      */
     public void saveMatrix(RandomAccessFile raFile) {
+        saveMatrix(raFile, null);
+    }
+
+    /**
+     * Saves transformation matrix to a text file MIPAV format
+     * <pre>
+     * 4                    // number of rows in matrix 
+     * 4                    // number of cols in matrix 
+     * 0.234 0.33 0.22 5.0  // matrix info separated by a space 
+     * 0.234 0.33 0.22 10.0 // matrix info separated by a space 
+     * 0.234 0.33 0.22 12.0 // matrix info separated by a space 
+     * 0.0 0.0 0.0 1.0      // matrix info separated by a space.
+     * <optional message goes here>
+     * </pre>
+     *
+     *
+     * @param  raFile  random access file pointer
+     * @param  message  String, may be null for no message.
+     */
+    public void saveMatrix(RandomAccessFile raFile, String message) {
         int r, c;
 
-        if (raFile != null) {
-            try {
-                raFile.writeBytes(Integer.toString(m) + "\n"); // write number of rows
-                raFile.writeBytes(Integer.toString(n) + "\n"); // write number of columns
+        if (raFile == null) return;
 
-                for (r = 0; r < m; r++) {
-
-                    for (c = 0; c < n; c++) {
-                        raFile.writeBytes(Double.toString(A[r][c]) + " ");
-                    }
-
-                    raFile.writeBytes("\n");
+        try {
+            raFile.writeBytes(Integer.toString(getDim()) + "\n"); // write number of rows
+            raFile.writeBytes(Integer.toString(getDim()) + "\n"); // write number of columns
+            int dim = getDim();
+            for (r = 0; r < dim; r++) {
+                for (c = 0; c < dim; c++) {
+                    raFile.writeBytes(Float.toString(Get(r, c)) + " ");
                 }
-
+                    
                 raFile.writeBytes("\n");
-            } catch (IOException error) {
-                MipavUtil.displayError("Matrix save error " + error);
-
-                return;
             }
+            raFile.writeBytes("\n");
+            if (message != null) {
+                raFile.writeBytes(message);
+            }
+        } catch (IOException error) {
+            MipavUtil.displayError("Matrix save error " + error);
+            
+            return;
         }
     }
     
@@ -988,197 +695,139 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  raFile  random access file pointer
      */
     public void saveXFMMatrix(RandomAccessFile raFile) {
-        if (raFile != null) {
-            try {
-                raFile.writeBytes("MNI Transform File" + "\n" + "\n");
-                raFile.writeBytes("Transform_Type = Linear;" + "\n");
-                raFile.writeBytes("Linear_Transform =" + "\n");
-                
+        if (raFile == null) return;
 
-                for (int r = 0; r < 3; r++) {
-
-                    for (int c = 0; c < 4; c++) {
-                        raFile.writeBytes(Double.toString(A[r][c]));
-                        if(r == 2 && c == 3) {
-                        	raFile.writeBytes(";");
-                        }else {
-                        	raFile.writeBytes(" ");
-                        }
-                    }
-                
-                    raFile.writeBytes("\n");
-                }
-
-                raFile.writeBytes("\n");
-            } catch (IOException error) {
-                MipavUtil.displayError("Matrix save error " + error);
-
-                return;
-            }
+        if (m_Is2D) {
+            MipavUtil.displayError("saveXFMMatrix of 2D transform, aborting.");
+            return;
         }
-    }
-    
-    
-    
-
-    /**
-     * Saves transformation matrix and a message to a text file MIPAV format 4 // number of rows in matrix 4 // number
-     * of cols in matrix 0.234 0.33 0.22 5.0 // matrix info separated by a space 0.234 0.33 0.22 10.0 // matrix info
-     * separated by a space 0.234 0.33 0.22 12.0 // matrix info separated by a space 0.0 0.0 0.0 1.0 // matrix info
-     * separated by a space <message goes here>.
-     *
-     * @param  fileName  - file name, including the path
-     * @param  message   String
-     */
-    public void saveMatrix(String fileName, String message) {
 
         try {
-            File file = new File(fileName);
-            RandomAccessFile raFile = new RandomAccessFile(file, "rw");
-            saveMatrix(raFile, message);
-            raFile.close();
+            raFile.writeBytes("MNI Transform File" + "\n" + "\n");
+            raFile.writeBytes("Transform_Type = Linear;" + "\n");
+            raFile.writeBytes("Linear_Transform =" + "\n");
+            
+            for (int r = 0; r < 3; r++) {
+                
+                for (int c = 0; c < 4; c++) {
+                    raFile.writeBytes(Float.toString(Get(r, c)));
+                    if (r == 2 && c == 3) {
+                        raFile.writeBytes(";");
+                    } else {
+                        raFile.writeBytes(" ");
+                    }
+                }
+                
+                raFile.writeBytes("\n");
+            }
+            
+            raFile.writeBytes("\n");
         } catch (IOException error) {
-            MipavUtil.displayError("Matrix save error");
-
+            MipavUtil.displayError("Matrix save error " + error);
+            
             return;
         }
     }
-
+    
+    
     /**
-     * Saves transformation matrix and message to a text file MIPAV format 4 // number of rows in matrix 4 // number of
-     * cols in matrix 0.234 0.33 0.22 5.0 // matrix info separated by a space 0.234 0.33 0.22 10.0 // matrix info
-     * separated by a space 0.234 0.33 0.22 12.0 // matrix info separated by a space 0.0 0.0 0.0 1.0 // matrix info
-     * separated by a space <message goes here>.
+     * Copies provided transformation matrix.
      *
-     * @param  raFile   random access file pointer
-     * @param  message  String
+     * @param newMatrix 2D array to copy, 3x3 or 4x4
      */
-    public void saveMatrix(RandomAccessFile raFile, String message) {
-        int r, c;
+     public void copyMatrix(double[][] newMatrix) {
+         assert(newMatrix != null);
+         int dim = getDim();
+         for (int r = 0; r < dim; r++) {
+             for (int c = 0; c < dim; c++) {
+                 Set(r, c, (float)newMatrix[r][c]);
+             }
+         }
+     }
 
-        if (raFile != null) {
-
-            try {
-                raFile.writeBytes(Integer.toString(m) + "\n"); // write number of rows
-                raFile.writeBytes(Integer.toString(n) + "\n"); // write number of columns
-
-                for (r = 0; r < m; r++) {
-
-                    for (c = 0; c < n; c++) {
-                        raFile.writeBytes(Double.toString(A[r][c]) + " ");
-                    }
-
-                    raFile.writeBytes("\n");
-                }
-
-                raFile.writeBytes("\n");
-                raFile.writeBytes(message);
-            } catch (IOException error) {
-                MipavUtil.displayError("Matrix save error " + error);
-
-                return;
-            }
-        }
-    }
-
-    /**
-     * Replaces transformation matrix.
-     *
-     * @param  newMatrix  replaces transformation matrix with a new matrix assumes users has correct size matrix Will
-     *                    add bounds checking in the future
+    /** Copy our data into the provided double array
+     * @param r row to copy
+     * @param column place to put column data, length 3 or 4
      */
-    public void setMatrix(double[][] newMatrix) {
-        A = newMatrix;
-    }
+     public void getColumn(int r, double[] column) {
+         for (int c = 0; c < getDim(); c++) {
+             column[c] = Get(r, c);
+         }
+     }
 
-    /**
-     * Replaces a value in the matrix. Row and column start indexing with zero. Any Array IndexOutOfBoundsExceptions
-     * caught, are ignored and matrix is left unchanged.
-     *
-     * @param  newval  DOCUMENT ME!
-     * @param  row     DOCUMENT ME!
-     * @param  col     DOCUMENT ME!
+
+    /** Set a submatrix. Borrowed from Jama, useful for copying a Jama
+     * matrix M by passing in M.getArray() for param X
+     *  @param i0   Initial row index
+     *  @param i1   Final row index
+     *  @param j0   Initial column index
+     *  @param j1   Final column index
+     *  @param X    A(i0:i1,j0:j1)
+     *  @exception  ArrayIndexOutOfBoundsException Submatrix indices
      */
-    public void setMatrix(double newval, int row, int col) {
-
+    
+    public void setMatrix (int i0, int i1, int j0, int j1, double[][] X) {
         try {
-            A[row][col] = newval;
-        } catch (ArrayIndexOutOfBoundsException aioobe) { /*doing nothing*/
+            for (int r = i0; r <= i1; r++) {
+                for (int c = j0; c <= j1; c++) {
+                    Set(r, c, (float)X[r-i0][c-j0]);
+                }
+            }
+        } catch(ArrayIndexOutOfBoundsException e) {
+            throw new ArrayIndexOutOfBoundsException("Submatrix indices");
         }
     }
 
     /**
      * Sets the rotation (2D) of transformation matrix.
      *
-     * @param  theta  angle of rotation
+     * @param  theta  angle of rotation, in degrees
      */
     public void setRotate(double theta) {
-        double sinTheta;
-        double cosTheta;
-        double[][] rotateMatrix = new double[3][3];
-        double[][] tmpMatrix = new double[3][3];
-
-        if (getRowDimension() != 3) {
+        assert(m_Is2D);
+        if (getDim() != 3) {
             return;
         }
 
-        cosTheta = Math.cos((theta / 180.0) * Math.PI);
-        sinTheta = Math.sin((theta / 180.0) * Math.PI);
+        float cosTheta, sinTheta;
+        TransMatrix axis_rot = new TransMatrix(3);
 
-        rotateMatrix[0][0] = cosTheta;
-        rotateMatrix[1][1] = cosTheta;
-        rotateMatrix[2][2] = 1;
-        rotateMatrix[0][1] = -sinTheta;
-        rotateMatrix[1][0] = sinTheta;
+        cosTheta = (float)Math.cos((theta / 180.0) * Math.PI);
+        sinTheta = (float)Math.sin((theta / 180.0) * Math.PI);
 
-        multMatrix(A, rotateMatrix, tmpMatrix);
+        axis_rot.Set(0, 0, cosTheta);
+        axis_rot.Set(1, 1, cosTheta);
+        axis_rot.Set(2, 2, 1);
+        axis_rot.Set(0, 1, -sinTheta);
+        axis_rot.Set(1, 0, sinTheta);
 
-        for (int i = 0; i <= 2; i++) {
-
-            for (int j = 0; j <= 2; j++) {
-                A[i][j] = tmpMatrix[i][j];
-            }
-        }
+        // compose with our current matrix.
+        Mult(axis_rot);
     }
 
-    // ***************************   Three dimensional  ******************************
-
     /**
-     * Sets rotation of transformation matrix.
+     * Sets rotation (3D) of transformation matrix.
      *
-     * @param  alpha  DOCUMENT ME!
-     * @param  beta   DOCUMENT ME!
-     * @param  gamma  DOCUMENT ME!
+     * @param  alpha  row0
+     * @param  beta   row1
+     * @param  gamma  row2
      */
     public void setRotate(Vector3f alpha, Vector3f beta, Vector3f gamma) {
+        TransMatrix axis_rot = new TransMatrix(4);
 
-        double[][] tmpMatrix = new double[4][4];
-        double[][] rotateMatrix = new double[4][4];
-        int rDim = getRowDimension();
-        int cDim = getColumnDimension();
+        axis_rot.Set(0, 0, alpha.X);
+        axis_rot.Set(0, 1, alpha.Y);
+        axis_rot.Set(0, 2, alpha.Z);
+        axis_rot.Set(1, 0, beta.X);
+        axis_rot.Set(1, 1, beta.Y);
+        axis_rot.Set(1, 2, beta.Z);
+        axis_rot.Set(2, 0, gamma.X);
+        axis_rot.Set(2, 1, gamma.Y);
+        axis_rot.Set(2, 2, gamma.Z);
+        axis_rot.Set(3, 3, 1);
 
-        rotateMatrix[0][0] = alpha.X;
-        rotateMatrix[0][1] = alpha.Y;
-        rotateMatrix[0][2] = alpha.Z;
-        rotateMatrix[1][0] = beta.X;
-        rotateMatrix[1][1] = beta.Y;
-        rotateMatrix[1][2] = beta.Z;
-        rotateMatrix[2][0] = gamma.X;
-        rotateMatrix[2][1] = gamma.Y;
-        rotateMatrix[2][2] = gamma.Z;
-        rotateMatrix[3][3] = 1;
-
-        int r, c;
-
-        for (r = 0; r < rDim; r++) {
-
-            for (c = 0; c < cDim; c++) {
-                tmpMatrix[r][c] = A[r][c];
-                A[r][c] = 0;
-            }
-        }
-
-        multMatrix(tmpMatrix, rotateMatrix, A);
+        // compose with our current matrix.
+        Mult(axis_rot);
     }
 
     /**
@@ -1187,83 +836,69 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  thetaX          angle (degrees or radians) of rotation about the X axis;
      * @param  thetaY          angle (degrees or radians) of rotation about the Y axis;
      * @param  thetaZ          angle (degrees or radians) of rotation about the Z axis;
-     * @param  degreeORradian  DOCUMENT ME!
+     * @param  degreeORradian  DEGREES or RADIANS
      */
     public void setRotate(double thetaX, double thetaY, double thetaZ, int degreeORradian) {
-        double cosTheta, sinTheta;
-        double[][] matrixX;
-        double[][] matrixY;
-        double[][] matrixZ;
-        double[][] tmpMatrix = new double[4][4];
-        double[][] rotateMatrix = new double[4][4];
-        int rDim = getRowDimension();
-        int cDim = getColumnDimension();
+        float cosTheta, sinTheta;
+        TransMatrix axis_rot = new TransMatrix(4);
 
-        matrixX = new double[4][4];
+        TransMatrix tmpMatrix = new TransMatrix(4);
 
         if (degreeORradian == DEGREES) {
-            cosTheta = Math.cos((thetaX / 180.0) * Math.PI);
-            sinTheta = Math.sin((thetaX / 180.0) * Math.PI);
+            cosTheta = (float)Math.cos((thetaZ / 180.0) * Math.PI);
+            sinTheta = (float)Math.sin((thetaZ / 180.0) * Math.PI);
         } else {
-            cosTheta = Math.cos(thetaX);
-            sinTheta = Math.sin(thetaX);
+            cosTheta = (float)Math.cos(thetaZ);
+            sinTheta = (float)Math.sin(thetaZ);
         }
 
-        matrixX[0][0] = 1;
-        matrixX[1][1] = cosTheta;
-        matrixX[2][2] = cosTheta;
-        matrixX[3][3] = 1;
-        matrixX[2][1] = sinTheta;
-        matrixX[1][2] = -sinTheta;
+        axis_rot.Set(0, 0, cosTheta);
+        axis_rot.Set(1, 1, cosTheta);
+        axis_rot.Set(2, 2, 1);
+        axis_rot.Set(3, 3, 1);
+        axis_rot.Set(0, 1, -sinTheta);
+        axis_rot.Set(1, 0, sinTheta);
 
-        matrixY = new double[4][4];
+        tmpMatrix.Copy(axis_rot);
+
+        axis_rot.MakeZero();
 
         if (degreeORradian == DEGREES) {
-            cosTheta = Math.cos((thetaY / 180.0) * Math.PI);
-            sinTheta = Math.sin((thetaY / 180.0) * Math.PI);
+            cosTheta = (float)Math.cos((thetaY / 180.0) * Math.PI);
+            sinTheta = (float)Math.sin((thetaY / 180.0) * Math.PI);
         } else {
-            cosTheta = Math.cos(thetaY);
-            sinTheta = Math.sin(thetaY);
+            cosTheta = (float)Math.cos(thetaY);
+            sinTheta = (float)Math.sin(thetaY);
         }
 
-        matrixY[0][0] = cosTheta;
-        matrixY[1][1] = 1;
-        matrixY[2][2] = cosTheta;
-        matrixY[3][3] = 1;
-        matrixY[0][2] = sinTheta;
-        matrixY[2][0] = -sinTheta;
+        axis_rot.Set(0, 0, cosTheta);
+        axis_rot.Set(1, 1, 1);
+        axis_rot.Set(2, 2, cosTheta);
+        axis_rot.Set(3, 3, 1);
+        axis_rot.Set(0, 2, sinTheta);
+        axis_rot.Set(2, 0, -sinTheta);
 
-        matrixZ = new double[4][4];
+        tmpMatrix.Mult(axis_rot);
+        axis_rot.MakeZero();
 
         if (degreeORradian == DEGREES) {
-            cosTheta = Math.cos((thetaZ / 180.0) * Math.PI);
-            sinTheta = Math.sin((thetaZ / 180.0) * Math.PI);
+            cosTheta = (float)Math.cos((thetaX / 180.0) * Math.PI);
+            sinTheta = (float)Math.sin((thetaX / 180.0) * Math.PI);
         } else {
-            cosTheta = Math.cos(thetaZ);
-            sinTheta = Math.sin(thetaZ);
+            cosTheta = (float)Math.cos(thetaX);
+            sinTheta = (float)Math.sin(thetaX);
         }
 
-        matrixZ[0][0] = cosTheta;
-        matrixZ[1][1] = cosTheta;
-        matrixZ[2][2] = 1;
-        matrixZ[3][3] = 1;
-        matrixZ[0][1] = -sinTheta;
-        matrixZ[1][0] = sinTheta;
+        axis_rot.Set(0, 0, 1);
+        axis_rot.Set(1, 1, cosTheta);
+        axis_rot.Set(2, 2, cosTheta);
+        axis_rot.Set(3, 3, 1);
+        axis_rot.Set(2, 1, sinTheta);
+        axis_rot.Set(1, 2, -sinTheta);
 
-        multMatrix(matrixY, matrixX, tmpMatrix);
-        multMatrix(matrixZ, tmpMatrix, rotateMatrix);
-
-        int r, c;
-
-        for (r = 0; r < rDim; r++) {
-
-            for (c = 0; c < cDim; c++) {
-                tmpMatrix[r][c] = A[r][c];
-                A[r][c] = 0;
-            }
-        }
-
-        multMatrix(tmpMatrix, rotateMatrix, A);
+        tmpMatrix.Mult(axis_rot);
+        // compose with our current matrix.
+        Mult(tmpMatrix);
     }
 
     /**
@@ -1273,16 +908,15 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  y  Skew y parameter.
      */
     public void setSkew(double x, double y) {
-        double[][] tmpMtx = new double[3][3];
+        assert(m_Is2D);
+        float 
+            tmpM00 = M00, tmpM01 = M01, 
+            tmpM10 = M10, tmpM11 = M11;
 
-        for (int i = 0; i < A.length; i++) {
-            tmpMtx[i] = A[i];
-        }
-
-        A[0][0] = tmpMtx[0][0] + (y * tmpMtx[0][1]);
-        A[1][0] = tmpMtx[1][0] + (y * tmpMtx[1][1]);
-        A[0][1] = (x * tmpMtx[0][0]) + tmpMtx[0][1];
-        A[1][1] = (x * tmpMtx[1][0]) + tmpMtx[1][1];
+        M00 = tmpM00 + (float)(y * tmpM01);
+        M10 = tmpM10 + (float)(y * tmpM11);
+        M01 = (float)(x * tmpM00) + tmpM01;
+        M11 = (float)(x * tmpM10) + tmpM11;
     }
 
     /**
@@ -1293,39 +927,38 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  z  z skew
      */
     public void setSkew(double x, double y, double z) {
-        A[0][1] = (x * A[0][0]) + A[0][1];
-        A[0][2] = (y * A[0][0]) + (z * A[0][1]) + A[0][2];
-        A[1][1] = (x * A[1][0]) + A[1][1];
-        A[1][2] = (y * A[1][0]) + (z * A[1][1]) + A[1][2];
-        A[2][1] = (x * A[2][0]) + A[2][1];
-        A[2][2] = (y * A[2][0]) + (z * A[2][1]) + A[2][2];
+        // XXX not all elements are set, some referenced after being set, 
+        // NOT the same as 2D case. Is this really right???
+        M01 = (float)((x * M00) + M01);
+        M02 = (float)((y * M00) + (z * M01) + M02);
+        M11 = (float)((x * M10) + M11);
+        M12 = (float)((y * M10) + (z * M11) + M12);
+        M21 = (float)((x * M20) + M21);
+        M22 = (float)((y * M20) + (z * M21) + M22);
     }
 
     /**
-     * Sets 2D transformation matrix [3x3].
+     * Sets 2D transformation matrix.
      *
      * @param  tX  x translation
      * @param  tY  y translation
      * @param  r   rotation angle in degrees, about unseen z axis
      */
     public void setTransform(double tX, double tY, double r) {
-        int j;
-        double sinR, cosR;
-        cosR = Math.cos((r / 180.0) * Math.PI);
-        sinR = Math.sin((r / 180.0) * Math.PI);
+        assert(m_Is2D);
+        float sinR, cosR;
+        cosR = (float)Math.cos((r / 180.0) * Math.PI);
+        sinR = (float)Math.sin((r / 180.0) * Math.PI);
 
-        A[0][0] = cosR;
-        A[0][1] = -sinR;
-        A[0][2] = tX;
-        A[1][0] = sinR;
-        A[1][1] = cosR;
-        A[1][2] = tY;
+        M00 = cosR;
+        M01 = -sinR;
+        M02 = (float)tX;
+        M10 = sinR;
+        M11 = cosR;
+        M12 = (float)tY;
 
-        for (j = 0; j < 2; j++) {
-            A[2][j] = 0;
-        }
-
-        A[2][2] = 1;
+        M20 = M21 = 0;
+        M22 = 1;
 
         return;
     }
@@ -1341,82 +974,75 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  rZ  z rotation angle in degrees
      */
     public void setTransform(double tX, double tY, double tZ, double rX, double rY, double rZ) {
-        int j;
-        double sinrX, sinrY, sinrZ, cosrX, cosrY, cosrZ;
-        cosrX = Math.cos((rX / 180.0) * Math.PI);
-        sinrX = Math.sin((rX / 180.0) * Math.PI);
-        cosrY = Math.cos((rY / 180.0) * Math.PI);
-        sinrY = Math.sin((rY / 180.0) * Math.PI);
-        cosrZ = Math.cos((rZ / 180.0) * Math.PI);
-        sinrZ = Math.sin((rZ / 180.0) * Math.PI);
+        float sinrX, sinrY, sinrZ, cosrX, cosrY, cosrZ;
+        cosrX = (float)Math.cos((rX / 180.0) * Math.PI);
+        sinrX = (float)Math.sin((rX / 180.0) * Math.PI);
+        cosrY = (float)Math.cos((rY / 180.0) * Math.PI);
+        sinrY = (float)Math.sin((rY / 180.0) * Math.PI);
+        cosrZ = (float)Math.cos((rZ / 180.0) * Math.PI);
+        sinrZ = (float)Math.sin((rZ / 180.0) * Math.PI);
 
-        A[0][0] = cosrZ * cosrY;
-        A[0][1] = -sinrZ * cosrY;
-        A[0][2] = sinrY;
-        A[0][3] = tX;
-        A[1][0] = (cosrZ * sinrY * sinrX) + (sinrZ * cosrX);
-        A[1][1] = (-sinrZ * sinrY * sinrX) + (cosrZ * cosrX);
-        A[1][2] = -cosrY * sinrX;
-        A[1][3] = tY;
-        A[2][0] = (-cosrZ * sinrY * cosrX) + (sinrZ * sinrX);
-        A[2][1] = (sinrZ * sinrY * cosrX) + (cosrZ * sinrX);
-        A[2][2] = cosrY * cosrX;
-        A[2][3] = tZ;
+        M00 = cosrZ * cosrY;
+        M01 = -sinrZ * cosrY;
+        M02 = sinrY;
+        M03 = (float)tX;
+        M10 = (cosrZ * sinrY * sinrX) + (sinrZ * cosrX);
+        M11 = (-sinrZ * sinrY * sinrX) + (cosrZ * cosrX);
+        M12 = -cosrY * sinrX;
+        M13 = (float)tY;
+        M20 = (-cosrZ * sinrY * cosrX) + (sinrZ * sinrX);
+        M21 = (sinrZ * sinrY * cosrX) + (cosrZ * sinrX);
+        M22 = cosrY * cosrX;
+        M23 = (float)tZ;
 
-        for (j = 0; j < 3; j++) {
-            A[3][j] = 0;
-        }
-
-        A[3][3] = 1;
+        M30 = M31 = M32 = 0;
+        M33 = 1;
 
         return;
     }
 
-    /**
-     * Sets the 3D transformation matrix [4x4].
-     *
-     * @param  tX  x translation
-     * @param  tY  y translation
-     * @param  tZ  z translation
-     * @param  rX  x rotation angle in degrees
-     * @param  rY  y rotation angle in degrees
-     * @param  rZ  z rotation angle in degrees
-     * @param  sX  x scale
-     * @param  sY  y scale
-     * @param  sZ  z scale
-     */
-    public void setTransform(double tX, double tY, double tZ, double rX, double rY, double rZ, double sX, double sY,
-                             double sZ) {
-        int j;
-        double sinrX, sinrY, sinrZ, cosrX, cosrY, cosrZ;
-        cosrX = Math.cos((rX / 180.0) * Math.PI);
-        sinrX = Math.sin((rX / 180.0) * Math.PI);
-        cosrY = Math.cos((rY / 180.0) * Math.PI);
-        sinrY = Math.sin((rY / 180.0) * Math.PI);
-        cosrZ = Math.cos((rZ / 180.0) * Math.PI);
-        sinrZ = Math.sin((rZ / 180.0) * Math.PI);
+    // Unused:
+//     /**
+//      * Sets the 3D transformation matrix [4x4].
+//      *
+//      * @param  tX  x translation
+//      * @param  tY  y translation
+//      * @param  tZ  z translation
+//      * @param  rX  x rotation angle in degrees
+//      * @param  rY  y rotation angle in degrees
+//      * @param  rZ  z rotation angle in degrees
+//      * @param  sX  x scale
+//      * @param  sY  y scale
+//      * @param  sZ  z scale
+//      */
+//     public void setTransform(double tX, double tY, double tZ, double rX, double rY, double rZ, double sX, double sY,
+//                              double sZ) {
+//         float sinrX, sinrY, sinrZ, cosrX, cosrY, cosrZ;
+//         cosrX = (float)Math.cos((rX / 180.0) * Math.PI);
+//         sinrX = (float)Math.sin((rX / 180.0) * Math.PI);
+//         cosrY = (float)Math.cos((rY / 180.0) * Math.PI);
+//         sinrY = (float)Math.sin((rY / 180.0) * Math.PI);
+//         cosrZ = (float)Math.cos((rZ / 180.0) * Math.PI);
+//         sinrZ = (float)Math.sin((rZ / 180.0) * Math.PI);
 
-        A[0][0] = cosrZ * cosrY * sX;
-        A[0][1] = -sinrZ * cosrY * sY;
-        A[0][2] = sinrY * sZ;
-        A[0][3] = tX;
-        A[1][0] = ((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * sX;
-        A[1][1] = ((-sinrZ * sinrY * sinrX) + (cosrZ * cosrX)) * sY;
-        A[1][2] = -cosrY * sinrX * sZ;
-        A[1][3] = tY;
-        A[2][0] = ((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * sX;
-        A[2][1] = ((sinrZ * sinrY * cosrX) + (cosrZ * sinrX)) * sY;
-        A[2][2] = cosrY * cosrX * sZ;
-        A[2][3] = tZ;
+//         M00 = cosrZ * cosrY * sX;
+//         M01 = -sinrZ * cosrY * sY;
+//         M02 = sinrY * sZ;
+//         M03 = (float)tX;
+//         M10 = ((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * sX;
+//         M11 = ((-sinrZ * sinrY * sinrX) + (cosrZ * cosrX)) * sY;
+//         M12 = -cosrY * sinrX * sZ;
+//         M13 = (float)tY;
+//         M20 = ((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * sX;
+//         M21 = ((sinrZ * sinrY * cosrX) + (cosrZ * sinrX)) * sY;
+//         M22 = cosrY * cosrX * sZ;
+//         M23 = (float)tZ;
 
-        for (j = 0; j < 3; j++) {
-            A[3][j] = 0;
-        }
+//         M30 = M31 = M32 = 0;
+//         M33 = 1;
 
-        A[3][3] = 1;
-
-        return;
-    }
+//         return;
+//     }
 
     /**
      * Sets the 3D transformation matrix [4x4].
@@ -1436,40 +1062,37 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public void setTransform(double tX, double tY, double tZ, double rX, double rY, double rZ, double sX, double sY,
                              double sZ, double skX, double skY, double skZ) {
-        int j;
-        double sinrX, sinrY, sinrZ, cosrX, cosrY, cosrZ;
-        cosrX = Math.cos((rX / 180.0) * Math.PI);
-        sinrX = Math.sin((rX / 180.0) * Math.PI);
-        cosrY = Math.cos((rY / 180.0) * Math.PI);
-        sinrY = Math.sin((rY / 180.0) * Math.PI);
-        cosrZ = Math.cos((rZ / 180.0) * Math.PI);
-        sinrZ = Math.sin((rZ / 180.0) * Math.PI);
+        float sinrX, sinrY, sinrZ, cosrX, cosrY, cosrZ;
+        cosrX = (float)Math.cos((rX / 180.0) * Math.PI);
+        sinrX = (float)Math.sin((rX / 180.0) * Math.PI);
+        cosrY = (float)Math.cos((rY / 180.0) * Math.PI);
+        sinrY = (float)Math.sin((rY / 180.0) * Math.PI);
+        cosrZ = (float)Math.cos((rZ / 180.0) * Math.PI);
+        sinrZ = (float)Math.sin((rZ / 180.0) * Math.PI);
 
-        A[0][0] = cosrZ * cosrY * sX;
-        A[0][1] = ((cosrZ * cosrY * skX) - (sinrZ * cosrY)) * sY;
-        A[0][2] = ((cosrZ * cosrY * skY) - (sinrZ * cosrY * skZ) + sinrY) * sZ;
-        A[0][3] = tX;
-        A[1][0] = ((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * sX;
-        A[1][1] = ((((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * skX) - (sinrZ * sinrY * sinrX) +
-                        (cosrZ * cosrX)) * sY;
-        A[1][2] = ((((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * skY) +
-                        (((-sinrZ * sinrY * sinrX) + (cosrZ * cosrX)) * skZ) - (cosrY * sinrX)) * sZ;
-        A[1][3] = tY;
-        A[2][0] = ((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * sX;
-        A[2][1] = ((((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * skX) + (sinrZ * sinrY * cosrX) +
-                        (cosrZ * sinrX)) * sY;
-        A[2][2] = ((((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * skY) +
-                        (((sinrZ * sinrY * cosrX) + (cosrZ * sinrX)) * skZ) + (cosrY * cosrX)) * sZ;
-        A[2][3] = tZ;
+        M00 = (float)(cosrZ * cosrY * sX);
+        M01 = (float)(((cosrZ * cosrY * skX) - (sinrZ * cosrY)) * sY);
+        M02 = (float)(((cosrZ * cosrY * skY) - (sinrZ * cosrY * skZ) + sinrY) * sZ);
+        M03 = (float)(tX);
+        M10 = (float)(((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * sX);
+        M11 = (float)(((((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * skX) - (sinrZ * sinrY * sinrX) +
+                        (cosrZ * cosrX)) * sY);
+        M12 = (float)(((((cosrZ * sinrY * sinrX) + (sinrZ * cosrX)) * skY) +
+                        (((-sinrZ * sinrY * sinrX) + (cosrZ * cosrX)) * skZ) - (cosrY * sinrX)) * sZ);
+        M13 = (float)(tY);
+        M20 = (float)(((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * sX);
+        M21 = (float)(((((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * skX) + (sinrZ * sinrY * cosrX) +
+                        (cosrZ * sinrX)) * sY);
+        M22 = (float)(((((-cosrZ * sinrY * cosrX) + (sinrZ * sinrX)) * skY) +
+                        (((sinrZ * sinrY * cosrX) + (cosrZ * sinrX)) * skZ) + (cosrY * cosrX)) * sZ);
+        M23 = (float)(tZ);
 
-        for (j = 0; j < 3; j++) {
-            A[3][j] = 0;
-        }
-
-        A[3][3] = 1;
+        M30 = M31 = M32 = 0;
+        M33 = 1;
 
         return;
     }
+
 
     /**
      * Sets translation parts of 2D matrix.
@@ -1478,8 +1101,9 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  y  y translation
      */
     public void setTranslate(double x, double y) {
-        A[0][2] = (x * A[0][0]) + (y * A[0][1]) + A[0][2];
-        A[1][2] = (x * A[1][0]) + (y * A[1][1]) + A[1][2];
+        assert(m_Is2D);
+        M02 = (float)((x * M00) + (y * M01) + M02);
+        M12 = (float)((x * M10) + (y * M11) + M12);
     }
 
     /**
@@ -1490,9 +1114,9 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  z  z translation
      */
     public void setTranslate(double x, double y, double z) {
-        A[0][3] = (x * A[0][0]) + (y * A[0][1]) + (z * A[0][2]) + A[0][3];
-        A[1][3] = (x * A[1][0]) + (y * A[1][1]) + (z * A[1][2]) + A[1][3];
-        A[2][3] = (x * A[2][0]) + (y * A[2][1]) + (z * A[2][2]) + A[2][3];
+        M03 = (float)((x * M00) + (y * M01) + (z * M02) + M03);
+        M13 = (float)((x * M10) + (y * M11) + (z * M12) + M13);
+        M23 = (float)((x * M20) + (y * M21) + (z * M22) + M23);
     }
 
     /**
@@ -1502,12 +1126,13 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  sy  zoom in the y coordinate
      */
     public void setZoom(double sx, double sy) {
+        assert(m_Is2D);
 
-        A[0][0] = sx * A[0][0];
-        A[1][0] = sx * A[1][0];
+        M00 = (float)sx * M00;
+        M10 = (float)sx * M10;
 
-        A[0][1] = sy * A[0][1];
-        A[1][1] = sy * A[1][1];
+        M01 = (float)sy * M01;
+        M11 = (float)sy * M11;
     }
 
     /**
@@ -1519,23 +1144,23 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public void setZoom(double sx, double sy, double sz) {
 
-        A[0][0] = sx * A[0][0];
-        A[1][0] = sx * A[1][0];
-        A[2][0] = sx * A[2][0];
+        M00 = (float)sx * M00;
+        M10 = (float)sx * M10;
+        M20 = (float)sx * M20;
 
-        A[0][1] = sy * A[0][1];
-        A[1][1] = sy * A[1][1];
-        A[2][1] = sy * A[2][1];
+        M01 = (float)sy * M01;
+        M11 = (float)sy * M11;
+        M21 = (float)sy * M21;
 
-        A[0][2] = sz * A[0][2];
-        A[1][2] = sz * A[1][2];
-        A[2][2] = sz * A[2][2];
+        M02 = (float)sz * M02;
+        M12 = (float)sz * M12;
+        M22 = (float)sz * M22;
     }
 
     /**
      * Produces a string of the matrix values, rows separated by tabs.
      *
-     * @return  DOCUMENT ME!
+     * @return  formatted string
      */
     public String toDialogString() {
         String s = new String();
@@ -1546,11 +1171,11 @@ public class TransMatrix extends Matrix // implements TableModelListener
         format.setMinimumFractionDigits(4);
         format.setGroupingUsed(false);
 
-        for (int i = 0; i < m; i++) {
+        for (int i = 0; i < getDim(); i++) {
             s += "  ";
 
-            for (int j = 0; j < n; j++) {
-                s += format.format(A[i][j]); // format the number
+            for (int j = 0; j < getDim(); j++) {
+                s += format.format(Get(i, j)); // format the number
                 s = s + "  ";
             }
 
@@ -1561,64 +1186,26 @@ public class TransMatrix extends Matrix // implements TableModelListener
     }
 
     /**
-     * Tranposes a Polygon (2D).
+     * Tranforms a Polygon (2D).
      *
      * @param   gon  input polygon
      *
-     * @return  returns the
+     * @return  returns new transformed Polygon
      */
     public final Polygon transform(Polygon gon) {
         Polygon newGon = new Polygon();
-        int n;
         int length = gon.npoints;
         int newX, newY;
 
-        for (n = 0; n < length; n++) {
-            newX = (int) Math.round((gon.xpoints[n] * A[0][0]) + (gon.ypoints[n] * A[0][1]) + A[0][2]);
-            newY = (int) Math.round((gon.xpoints[n] * A[1][0]) + (gon.ypoints[n] * A[1][1]) + A[1][2]);
+        for (int n = 0; n < length; n++) {
+            newX = (int) Math.round((gon.xpoints[n] * M00) + (gon.ypoints[n] * M01) + M02);
+            newY = (int) Math.round((gon.xpoints[n] * M10) + (gon.ypoints[n] * M11) + M12);
             newGon.addPoint(newX, newY);
         }
 
         return newGon;
     }
 
-
-    /**
-     * Takes a 2D vector (as a Point2Df) and premultiplies it by the 2d
-     * transformation matrix.
-     *
-     * @param  vect   vector of floats to be transformed
-     * @param  tVect  transformed vector
-     */
-//     public final void transform(Point2Df vect, Point2Df tVect) {
-
-//         tVect.x = (float) (((double) vect.x * A[0][0]) +
-//                            ((double) vect.Y * A[0][1]) + A[0][2]);
-
-//         tVect.Y = (float) (((double) vect.x * A[1][0]) +
-//                            ((double) vect.Y * A[1][1]) + A[1][2]);
-
-//         return;
-//     }
-
-    /**
-     * Takes a 2D vector (as a Vector3Df) and premultiplies it by the 2d
-     * transformation matrix.
-     *
-     * @param  vect   vector of floats to be transformed
-     * @param  tVect  transformed vector
-     */
-//     public final void transform(Vector3Df vect, Vector3Df tVect) {
-
-//         tVect.x = (float) (((double) vect.x * A[0][0]) +
-//                            ((double) vect.Y * A[0][1]) + A[0][2]);
-
-//         tVect.Y = (float) (((double) vect.x * A[1][0]) +
-//                            ((double) vect.Y * A[1][1]) + A[1][2]);
-//         tVect.Z = 1;
-
-//         return;
-//     }
 
     /**
      * Takes an array of Point2Df 2D vectors and multiplies them with the 2d
@@ -1632,13 +1219,13 @@ public class TransMatrix extends Matrix // implements TableModelListener
         int length = vects.length;
 
         for (n = 0; n < length; n++) {
-            tVects[n].X = (float) (((double) vects[n].X * A[0][0]) +
-                                   ((double) vects[n].Y * A[0][1]) +
-                                   A[0][2]);
+            tVects[n].X = (float) (((double) vects[n].X * M00) +
+                                   ((double) vects[n].Y * M01) +
+                                   M02);
             
-            tVects[n].Y = (float) (((double) vects[n].X * A[1][0]) +
-                                   ((double) vects[n].Y * A[1][1]) +
-                                   A[1][2]);
+            tVects[n].Y = (float) (((double) vects[n].X * M10) +
+                                   ((double) vects[n].Y * M11) +
+                                   M12);
 
         }
 
@@ -1657,13 +1244,13 @@ public class TransMatrix extends Matrix // implements TableModelListener
         int length = vects.length;
 
         for (n = 0; n < length; n++) {
-            tVects[n].X = (float) (((double) vects[n].X * A[0][0]) +
-                                   ((double) vects[n].Y * A[0][1]) +
-                                   A[0][2]);
+            tVects[n].X = (float) (((double) vects[n].X * M00) +
+                                   ((double) vects[n].Y * M01) +
+                                   M02);
 
-            tVects[n].Y = (float) (((double) vects[n].X * A[1][0]) +
-                                   ((double) vects[n].Y * A[1][1]) +
-                                   A[1][2]);
+            tVects[n].Y = (float) (((double) vects[n].X * M10) +
+                                   ((double) vects[n].Y * M11) +
+                                   M12);
 
             tVects[n].Z = 1;
         }
@@ -1681,24 +1268,24 @@ public class TransMatrix extends Matrix // implements TableModelListener
     public final void transform(double[] pt, double[] tPt) {
 
         if (pt.length == 3) {
-            tPt[0] = (pt[0] * A[0][0]) +
-                (pt[1] * A[0][1]) +
-                (pt[2] * A[0][2]) +
-                A[0][3];
+            tPt[0] = (pt[0] * M00) +
+                (pt[1] * M01) +
+                (pt[2] * M02) +
+                M03;
 
-            tPt[1] = (pt[0] * A[1][0]) +
-                (pt[1] * A[1][1]) +
-                (pt[2] * A[1][2]) +
-                A[1][3];
+            tPt[1] = (pt[0] * M10) +
+                (pt[1] * M11) +
+                (pt[2] * M12) +
+                M13;
 
-            tPt[2] = (pt[0] * A[2][0]) +
-                (pt[1] * A[2][1]) +
-                (pt[2] * A[2][2]) +
-                A[2][3];
+            tPt[2] = (pt[0] * M20) +
+                (pt[1] * M21) +
+                (pt[2] * M22) +
+                M23;
 
         } else if (pt.length == 2) {
-            tPt[0] = (pt[0] * A[0][0]) + (pt[1] * A[0][1]) + A[0][2];
-            tPt[1] = (pt[0] * A[1][0]) + (pt[1] * A[1][1]) + A[1][2];
+            tPt[0] = (pt[0] * M00) + (pt[1] * M01) + M02;
+            tPt[1] = (pt[0] * M10) + (pt[1] * M11) + M12;
         }
 
         return;
@@ -1713,20 +1300,20 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transform(float[] pt, float[] tPt) {
 
-        tPt[0] = (float) (((double) pt[0] * A[0][0]) +
-                          ((double) pt[1] * A[0][1]) +
-                          ((double) pt[2] * A[0][2]) +
-                          A[0][3]);
+        tPt[0] = (float) (((double) pt[0] * M00) +
+                          ((double) pt[1] * M01) +
+                          ((double) pt[2] * M02) +
+                          M03);
 
-        tPt[1] = (float) (((double) pt[0] * A[1][0]) +
-                          ((double) pt[1] * A[1][1]) +
-                          ((double) pt[2] * A[1][2]) +
-                          A[1][3]);
+        tPt[1] = (float) (((double) pt[0] * M10) +
+                          ((double) pt[1] * M11) +
+                          ((double) pt[2] * M12) +
+                          M13);
 
-        tPt[2] = (float) (((double) pt[0] * A[2][0]) +
-                          ((double) pt[1] * A[2][1]) +
-                          ((double) pt[2] * A[2][2]) +
-                          A[2][3]);
+        tPt[2] = (float) (((double) pt[0] * M20) +
+                          ((double) pt[1] * M21) +
+                          ((double) pt[2] * M22) +
+                          M23);
 
         return;
     }
@@ -1740,114 +1327,23 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transformAsPoint3Df(Vector3f pt, Vector3f tPt) {
 
-        tPt.X = (float) (((double) pt.X * A[0][0]) +
-                         ((double) pt.Y * A[0][1]) +
-                         ((double) pt.Z * A[0][2]) +
-                         A[0][3]);
+        tPt.X = (float) (((double) pt.X * M00) +
+                         ((double) pt.Y * M01) +
+                         ((double) pt.Z * M02) +
+                         M03);
 
-        tPt.Y = (float) (((double) pt.X * A[1][0]) +
-                         ((double) pt.Y * A[1][1]) +
-                         ((double) pt.Z * A[1][2]) +
-                         A[1][3]);
+        tPt.Y = (float) (((double) pt.X * M10) +
+                         ((double) pt.Y * M11) +
+                         ((double) pt.Z * M12) +
+                         M13);
 
-        tPt.Z = (float) (((double) pt.X * A[2][0]) +
-                         ((double) pt.Y * A[2][1]) +
-                         ((double) pt.Z * A[2][2]) +
-                         A[2][3]);
+        tPt.Z = (float) (((double) pt.X * M20) +
+                         ((double) pt.Y * M21) +
+                         ((double) pt.Z * M22) +
+                         M23);
 
         return;
     }
-
-    /**
-     * Takes an array of Point3Df 3D points and premultiplies it by the 3D
-     * transformation matrix.
-     *
-     * @param  pt    3D float points to be transformed
-     * @param  tPts  transformed points
-     */
-//     public final void transform(Point3Df[] pt, Point3Df[] tPts) {
-//         int n;
-//         int length = pt.length;
-
-//         for (n = 0; n < length; n++) {
-//             tPts[n].X = (float) (((double) pt[n].X * A[0][0]) +
-//                                  ((double) pt[n].Y * A[0][1]) +
-//                                  ((double) pt[n].Z * A[0][2]) +
-//                                  A[0][3]);
-
-//             tPts[n].Y = (float) (((double) pt[n].X * A[1][0]) +
-//                                  ((double) pt[n].Y * A[1][1]) +
-//                                  ((double) pt[n].Z * A[1][2]) +
-//                                  A[1][3]);
-
-//             tPts[n].Z = (float) (((double) pt[n].X * A[2][0]) +
-//                                  ((double) pt[n].Y * A[2][1]) +
-//                                  ((double) pt[n].Z * A[2][2]) +
-//                                  A[2][3]);
-//         }
-
-//         return;
-//     }
-
-    /**
-     * Takes a Vector4Df 3D vector and premultiplies it by the 3D
-     * transformation matrix.
-     *
-     * @param  vect   4D float vector to be transformd
-     * @param  tVect  transformed vector
-     */
-//     public final void transform(Vector4Df vect, Vector4Df tVect) {
-
-//         tVect.X = (float) (((double) vect.X * A[0][0]) +
-//                            ((double) vect.Y * A[0][1]) +
-//                            ((double) vect.Z * A[0][2]) +
-//                            A[0][3]);
-
-//         tVect.Y = (float) (((double) vect.X * A[1][0]) +
-//                            ((double) vect.Y * A[1][1]) +
-//                            ((double) vect.Z * A[1][2]) +
-//                            A[1][3]);
-
-//         tVect.Z = (float) (((double) vect.X * A[2][0]) +
-//                            ((double) vect.Y * A[2][1]) +
-//                            ((double) vect.Z * A[2][2]) +
-//                            A[2][3]);
-//         tVect.w = 1;
-
-//         return;
-//     }
-
-    /**
-     * Takes an array of Vector4Df 3D vectors and multiplies them with a 3D
-     * transformation matrix.
-     *
-     * @param  vects   4D float vectors to be transformed
-     * @param  tVects  transformed vectors
-     */
-//     public final void transform(Vector4Df[] vects, Vector4Df[] tVects) {
-//         int n;
-//         int length = vects.length;
-
-//         for (n = 0; n < length; n++) {
-//             tVects[n].X = (float) (((double) vects[n].X * A[0][0]) +
-//                                    ((double) vects[n].Y * A[0][1]) +
-//                                    ((double) vects[n].Z * A[0][2]) +
-//                                    A[0][3]);
-
-//             tVects[n].Y = (float) (((double) vects[n].X * A[1][0]) +
-//                                    ((double) vects[n].Y * A[1][1]) +
-//                                    ((double) vects[n].Z * A[1][2]) +
-//                                    A[1][3]);
-
-//             tVects[n].Z = (float) (((double) vects[n].X * A[2][0]) +
-//                                    ((double) vects[n].Y * A[2][1]) +
-//                                    ((double) vects[n].Z * A[2][2]) +
-//                                    A[2][3]);
-//             tVects[n].w = 1;
-//         }
-
-//         return;
-//     }
 
 
     /**
@@ -1860,8 +1356,8 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transform(double x, double y, double[] tPt) {
 
-        tPt[0] = (x * A[0][0]) + (y * A[0][1]) + A[0][2];
-        tPt[1] = (x * A[1][0]) + (y * A[1][1]) + A[1][2];
+        tPt[0] = (x * M00) + (y * M01) + M02;
+        tPt[1] = (x * M10) + (y * M11) + M12;
 
         return;
     }
@@ -1876,12 +1372,12 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transform(float x, float y, float[] tPt) {
 
-        tPt[0] = (float) (((double) x * A[0][0]) +
-                          ((double) y * A[0][1]) +
-                          A[0][2]);
-        tPt[1] = (float) (((double) x * A[1][0]) +
-                          ((double) y * A[1][1]) +
-                          A[1][2]);
+        tPt[0] = (float) (((double) x * M00) +
+                          ((double) y * M01) +
+                          M02);
+        tPt[1] = (float) (((double) x * M10) +
+                          ((double) y * M11) +
+                          M12);
 
         return;
     }
@@ -1897,20 +1393,20 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transform(double x, double y, double z, double[] tPt) {
 
-        tPt[0] = (x * A[0][0]) +
-            (y * A[0][1]) +
-            (z * A[0][2]) +
-            A[0][3];
+        tPt[0] = (x * M00) +
+            (y * M01) +
+            (z * M02) +
+            M03;
 
-        tPt[1] = (x * A[1][0]) +
-            (y * A[1][1]) +
-            (z * A[1][2]) +
-            A[1][3];
+        tPt[1] = (x * M10) +
+            (y * M11) +
+            (z * M12) +
+            M13;
 
-        tPt[2] = (x * A[2][0]) +
-            (y * A[2][1]) +
-            (z * A[2][2]) +
-            A[2][3];
+        tPt[2] = (x * M20) +
+            (y * M21) +
+            (z * M22) +
+            M23;
 
         return;
     }
@@ -1926,20 +1422,20 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public final void transform(float x, float y, float z, float[] tPt) {
 
-        tPt[0] = (float) (((double) x * A[0][0]) +
-                          ((double) y * A[0][1]) +
-                          ((double) z * A[0][2]) +
-                          A[0][3]);
+        tPt[0] = (float) (((double) x * M00) +
+                          ((double) y * M01) +
+                          ((double) z * M02) +
+                          M03);
 
-        tPt[1] = (float) (((double) x * A[1][0]) +
-                          ((double) y * A[1][1]) +
-                          ((double) z * A[1][2]) +
-                          A[1][3]);
+        tPt[1] = (float) (((double) x * M10) +
+                          ((double) y * M11) +
+                          ((double) z * M12) +
+                          M13);
 
-        tPt[2] = (float) (((double) x * A[2][0]) +
-                          ((double) y * A[2][1]) +
-                          ((double) z * A[2][2]) +
-                          A[2][3]);
+        tPt[2] = (float) (((double) x * M20) +
+                          ((double) y * M21) +
+                          ((double) z * M22) +
+                          M23);
 
         return;
     }
@@ -1951,7 +1447,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @return  int transform ID
      */
     public final int getTransformID() {
-        return transformID;
+        return m_TransformID;
     }
     
     /**
@@ -1966,7 +1462,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
         // look through the array of strings to see if there's a match.
         try {
 
-            for (int i = 0; i < transformIDStr.length; i++) {
+            for (int i = 0; i < TRANSFORM_ID_STR.length; i++) {
 
                 if (TransMatrix.getTransformIDStr(i).regionMatches(true, 0, s, 0,
                 		TransMatrix.getTransformIDStr(i).length())) {
@@ -1987,7 +1483,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @return  string [] of transform ID
      */
     public static String[] getTransformIDStr() {
-        return transformIDStr;
+        return TRANSFORM_ID_STR;
     }
 
     /**
@@ -2000,7 +1496,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
     public static String getTransformIDStr(int m) {
 
         try {
-            return TransMatrix.transformIDStr[m];
+            return TransMatrix.TRANSFORM_ID_STR[m];
         } catch (ArrayIndexOutOfBoundsException aie) { }
 
         return "";
@@ -2012,18 +1508,21 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  t_id  transform ID
      */
     public void setTransformID(int t_id) {
-        transformID = t_id;
+        m_TransformID = t_id;
     }
     
     /**
-     * ToString method that includes the matrix printout as well as the transform ID of the transmatrix
+     * ToString method that includes the matrix printout as well as the
+     * transform ID of the transmatrix
+     * @return printout
      */
     public String toString() {
-    	String desc = new String("TransMatrix: ");
-    	desc+="\n\ttransform id: " + TransMatrix.getTransformIDStr(this.transformID);
-    	desc+=super.toString();
-    	
-    	return desc;
+    	String s = new String("TransMatrix: ");
+    	s += "\n\ttransform id: " + TransMatrix.getTransformIDStr(this.m_TransformID);
+        s += "\n";
+        s += matrixToString(10, 4);
+
+    	return s;
     }
     
     /**
@@ -2033,7 +1532,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  row     row reference to store transformation matrix
      * @param  matrix  the matrix where the data is to be stored
      */
-    private void decodeLine(RandomAccessFile raFile, int row, double[][] matrix) {
+    private void decodeLine(RandomAccessFile raFile, int row, Matrix4f matrix) {
         int c;
         int index, nextIndex;
         String str, tmpStr;
@@ -2043,11 +1542,11 @@ public class TransMatrix extends Matrix // implements TableModelListener
             str = raFile.readLine().trim();
             //xfm files have a ";" at end of matrix...so get rid of it
             if(str.indexOf(";") != -1) {
-    			str = str.substring(0, str.indexOf(";"));
-    		}
+                str = str.substring(0, str.indexOf(";"));
+            }
             index = 0;
 
-            for (c = 0; c < n; c++) {
+            for (c = 0; c < getDim(); c++) {
 
                 if (str.indexOf("  ", index) > 0) {
                     nextIndex = str.indexOf("  ", index); // - handle FSL matrix files with two spaces
@@ -2064,21 +1563,14 @@ public class TransMatrix extends Matrix // implements TableModelListener
                     } else {
                         index = nextIndex + 1;
                     }
-
-                    if (tmpStr.indexOf(".") != -1) {
-                    	matrix[row][c] = (Double.valueOf(tmpStr).doubleValue());
-                    } else {
-                    	matrix[row][c] = (Integer.valueOf(tmpStr).doubleValue());
-                    }
                 } else { // spaces trimmed from end
                     tmpStr = str.substring(index, str.length()).trim();
                     index = nextIndex;
-
-                    if (tmpStr.indexOf(".") != -1) {
-                    	matrix[row][c] = (Double.valueOf(tmpStr).doubleValue());
-                    } else {
-                    	matrix[row][c] = (Integer.valueOf(tmpStr).doubleValue());
-                    }
+                }
+                if (tmpStr.indexOf(".") != -1) {
+                    matrix.Set(row, c, Float.valueOf(tmpStr).floatValue());
+                } else {
+                    matrix.Set(row, c, Integer.valueOf(tmpStr).floatValue());
                 }
             }
 
@@ -2088,95 +1580,65 @@ public class TransMatrix extends Matrix // implements TableModelListener
             return;
         }
     }
-
-    /**
-     * make a linear combination of two vectors and return the result. result = (a * ascl) + (b * bscl)
-     *
-     * @param   a       DOCUMENT ME!
-     * @param   b       DOCUMENT ME!
-     * @param   result  DOCUMENT ME!
-     * @param   ascl    DOCUMENT ME!
-     * @param   bscl    DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private Vector2f V2Combine(Vector2f a, Vector2f b, Vector2f result, double ascl, double bscl) {
-        result.X = (float)((ascl * a.X) + (bscl * b.X));
-        result.Y = (float)((ascl * a.Y) + (bscl * b.Y));
-
-        return (result);
-    }
-
-    /**
-     * return the dot product of vectors a and b.
-     *
-     * @param   a  DOCUMENT ME!
-     * @param   b  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private double V2Dot(Vector2f a, Vector2f b) {
-        return ((a.X * b.X) + (a.Y * b.Y));
-    }
-
-    /**
-     * make a linear combination of two vectors and return the result. result = (a * ascl) + (b * bscl)
-     *
-     * @param   a       DOCUMENT ME!
-     * @param   b       DOCUMENT ME!
-     * @param   result  DOCUMENT ME!
-     * @param   ascl    DOCUMENT ME!
-     * @param   bscl    DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private Vector3f V3Combine(Vector3f a, Vector3f b, Vector3f result, double ascl, double bscl) {
-        result.X = (float)((ascl * a.X) + (bscl * b.X));
-        result.Y = (float)((ascl * a.Y) + (bscl * b.Y));
-        result.Z = (float)((ascl * a.Z) + (bscl * b.Z));
-
-        return (result);
-    }
-
-
-    /**
-     * multiply a hom. point by a matrix and return the transformed point
-     *
-     * @param  pin   DOCUMENT ME!
-     * @param  m     DOCUMENT ME!
-     * @param  pout  DOCUMENT ME!
-     */
-    private void V4MulPointByMatrix(Vector4f pin, Matrix m, Vector4f pout) {
-
-        pout.X = (float)((pin.X * m.get(0, 0)) + (pin.Y * m.get(1, 0)) + (pin.Z * m.get(2, 0)) + (pin.W * m.get(3, 0)));
-
-        pout.Y = (float)((pin.X * m.get(0, 1)) + (pin.Y * m.get(1, 1)) + (pin.Z * m.get(2, 1)) + (pin.W * m.get(3, 1)));
-
-        pout.Z = (float)((pin.X * m.get(0, 2)) + (pin.Y * m.get(1, 2)) + (pin.Z * m.get(2, 2)) + (pin.W * m.get(3, 2)));
-
-        pout.W = (float)((pin.X * m.get(0, 3)) + (pin.Y * m.get(1, 3)) + (pin.Z * m.get(2, 3)) + (pin.W * m.get(3, 3)));
-    }
     
     /**
-     * Reallocates memory for matrix without constructing a new object a new object.
-     *
-     * @param  r  Number of rows.
-     * @param  c  Number of colums.
+     * Matrix inversion that replaces this objects matrix with an inverted
+     * matrix. Special handling for 2D vs 3D cases.
      */
-    protected void reConstruct(int r, int c) {
-        this.m = r;
-        this.n = c;
-        A = new double[m][n];
-    }
+    public void Inverse ()
+    {
+        if (m_Is2D) {
+            // borrow code from Matrix3f,
+            // so that we don't construct and destroy a Matrix 3f.
+        float inverse_M00 =
+            M11*M22 - M12*M21;
+        float inverse_M01 =
+            M02*M21 - M01*M22;
+        float inverse_M02 =
+            M01*M12 - M02*M11;
+        float inverse_M10 =
+            M12*M20 - M10*M22;
+        float inverse_M11 =
+            M00*M22 - M02*M20;
+        float inverse_M12 =
+            M02*M10 - M00*M12;
+        float inverse_M20 =
+            M10*M21 - M11*M20;
+        float inverse_M21 =
+            M01*M20 - M00*M21;
+        float inverse_M22 =
+            M00*M11 - M01*M10;
 
-    /**
-     * Matrix inversion that replaces this objects matrix with an inverted matrix. This method calls this classes
-     * inverse() method.
-     */
-    public void invert() {
-        A = inverse().getArray();
-    }
-    
+        float fDet =
+            M00*inverse_M00 +
+            M01*inverse_M10 +
+            M02*inverse_M20;
+
+        if (Math.abs(fDet) <= Mathf.ZERO_TOLERANCE)
+        {
+            Copy(Matrix4f.ZERO);
+        }
+
+        float fInvDet = 1.0f/fDet;
+        inverse_M00 *= fInvDet;
+        inverse_M01 *= fInvDet;
+        inverse_M02 *= fInvDet;
+        inverse_M10 *= fInvDet;
+        inverse_M11 *= fInvDet;
+        inverse_M12 *= fInvDet;
+        inverse_M20 *= fInvDet;
+        inverse_M21 *= fInvDet;
+        inverse_M22 *= fInvDet;
+        // Set 4x4, even though we're only using a 3x3
+        Set( inverse_M00, inverse_M01, inverse_M02, 0.0f,
+             inverse_M10, inverse_M11, inverse_M12, 0.0f,
+             inverse_M20, inverse_M21, inverse_M22, 0.0f, 
+             0.0f, 0.0f, 0.0f, 1.0f);
+        } else {
+            super.Inverse();
+        }
+    }    
+
     /**
      * Produces a string of the matrix values.
      *
@@ -2194,15 +1656,15 @@ public class TransMatrix extends Matrix // implements TableModelListener
         format.setMinimumFractionDigits(d);
         format.setGroupingUsed(false);
 
-        for (i = 0; i < m; i++) {
+        for (i = 0; i < getDim(); i++) {
             s += "  ";
 
-            for (j = 0; j < n; j++) {
-                s += format.format(A[i][j]); // format the number
-                s = s + "  ";
+            for (j = 0; j < getDim(); j++) {
+                s += format.format(Get(i,j)); // format the number
+                s += "  ";
             }
 
-            s = s + "\n";
+            s += "\n";
         }
 
         return s;

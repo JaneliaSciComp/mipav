@@ -1444,15 +1444,13 @@ public class AlgorithmCrop extends AlgorithmBase {
      */
     private float[] originImg2LPS(float[] origImg, ModelImage img) {
         float[] origLPS = new float[3];
-        Matrix img2LPS = new Matrix(4, 4);
-
-        img2LPS = (Matrix) img.getMatrix();
+        TransMatrix img2LPS = img.getMatrix();
 
         for (int i = 0; i < 3; i++) { // i's are the rows
 
             for (int j = 0; j < 3; j++) { // j's are the columns
 
-                if (img2LPS.get(i, j) != 0) {
+                if (img2LPS.Get(i, j) != 0) {
                     origLPS[i] = origImg[j];
                 }
             }
@@ -1471,15 +1469,14 @@ public class AlgorithmCrop extends AlgorithmBase {
      */
     private float[] originLPS2Img(float[] origLPS, ModelImage img) {
         float[] origImg = new float[3];
-        Matrix LPS2img = new Matrix(4, 4);
-
-        LPS2img = (Matrix) img.getMatrix().inverse();
+        TransMatrix LPS2img = img.getMatrix().clone();
+        LPS2img.Inverse();
 
         for (int i = 0; i < 3; i++) { // i's are the rows
 
             for (int j = 0; j < 3; j++) { // j's are the columns
 
-                if (LPS2img.get(i, j) != 0) {
+                if (LPS2img.Get(i, j) != 0) {
                     origImg[i] = origLPS[j];
                 }
             }

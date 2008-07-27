@@ -15,6 +15,11 @@ import ncsa.hdf.object.HObject;
 
 
 public class FileInfoMincHDF extends FileInfoBase {
+	/**
+     * 
+     */
+    private static final long serialVersionUID = 1372818551072422068L;
+    
     /**
      * The dimension tree node that holds xspace, yspace, and (optionally) zspace nodes
      */
@@ -291,7 +296,7 @@ public class FileInfoMincHDF extends FileInfoBase {
 	}
 
 	TransMatrix matrix = new TransMatrix(getExtents().length + 1);
-	matrix.identity();
+	matrix.MakeIdentity();
 
 	for (int i = 0; i < 3; i++) {
 	    for (int j = 0; j < cosines[i].length; j++) {
@@ -300,7 +305,7 @@ public class FileInfoMincHDF extends FileInfoBase {
 
 	}
 
-	matrix.invert();
+	matrix.Inverse();
 
 	double[] transformedPt = new double[getExtents().length];
 

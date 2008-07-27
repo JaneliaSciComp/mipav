@@ -508,7 +508,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
 
         if ((nx != nxB) || (ny != nyB) || (nz != nzB) || (xdel != xdelB) || (ydel != ydelB) || (zdel != zdelB)) {
             xfrm = new TransMatrix(4);
-            xfrm.timesEquals(imageB.getMatrix());
+            xfrm.Mult(imageB.getMatrix());
 
             if (VL_resam == AlgorithmTransform.HEPTIC_LAGRANGIAN) {
                 interp = AlgorithmTransform.HEPTIC_LAGRANGIAN;

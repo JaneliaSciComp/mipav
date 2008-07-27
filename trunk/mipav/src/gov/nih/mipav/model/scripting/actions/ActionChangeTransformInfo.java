@@ -47,19 +47,12 @@ public class ActionChangeTransformInfo extends ActionImageProcessorBase {
      * {@inheritDoc}
      */
     public void insertScriptLine() {
-    	double [][] matrix = transMatrix.getMatrix();
+    	//double [][] matrix = transMatrix.getMatrix();
     	
-    	int len = matrix.length;
-    	double [] tMat = new double [len * len];
+    	int len = transMatrix.getDim();
+    	float [] tMat = new float [len * len];
     	
-    	int index = 0;
-    	
-    	for (int i = 0; i < len; i++) {
-
-            for (int j = 0; j < len; j++, index++) {
-            	tMat[index] = matrix[i][j];
-            }
-        }
+    	transMatrix.GetData(tMat);
     	
         ParameterTable parameters = new ParameterTable();
         try {
@@ -84,19 +77,19 @@ public class ActionChangeTransformInfo extends ActionImageProcessorBase {
     public void scriptRun(ParameterTable parameters) {
         ModelImage inputImage = parameters.getImage(INPUT_IMAGE_LABEL);
         
-        double [] tMat =parameters.getList(TRANSFORM_MATRIX).getAsDoubleArray();
+        float [] tMat =parameters.getList(TRANSFORM_MATRIX).getAsFloatArray();
         int transformID = parameters.getInt(TRANSFORM_ID);
         
         int nDims = inputImage.getNDims();
         
         transMatrix = new TransMatrix(nDims+1, transformID);
         
-        double[][] matrix = transMatrix.getMatrix();
+        
         int index = 0;
         
         for (int i = 0; i < (nDims+1); i++) {
         	for (int j = 0; j < (nDims+1); j++, index++) {
-        		matrix[i][j] = tMat[index];
+        		transMatrix.Set(i, j, tMat[index]);
         	}
         }
        inputImage.getMatrixHolder().addMatrix(transMatrix);

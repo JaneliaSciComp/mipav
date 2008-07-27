@@ -1642,7 +1642,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             return;
         }
 
-        answer.matrix.invert();
+        answer.matrix.Inverse();
 
         disposeLocal();
         finalize();
@@ -2045,7 +2045,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         /* Sort the list of costs, take the minimum and return: */
         Collections.sort(minima);
         answer = (MatrixListItem) minima.firstElement();
-        answer.matrix.invert();
+        answer.matrix.Inverse();
         Preferences.debug("Min transform:\n" + answer.matrix + " cost = " + answer.cost + " min cost = " + dMinCost +
                           "\n", Preferences.DEBUG_ALGORITHM);
 

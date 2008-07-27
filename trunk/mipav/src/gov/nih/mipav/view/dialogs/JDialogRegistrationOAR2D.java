@@ -7,7 +7,6 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
-import Jama.*;
 
 import gov.nih.mipav.view.*;
 
@@ -570,7 +569,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         float resX;
         float resY;
         TransMatrix xfrm = null;
-        double M[][];
+        //double M[][];
         String comStr;
         DecimalFormat nf;
         ViewUserInterface UI = ViewUserInterface.getReference();
@@ -645,9 +644,9 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                     resY = matchImage.getFileInfo()[0].getResolutions()[1];
                     xCen = xOrig * resX;
                     yCen = yOrig * resY;
-                    M = xfrm.inverse().getArray();
-                    xCenNew = xCen*M[0][0] + yCen*M[0][1] + M[0][2];
-                    yCenNew = xCen*M[1][0] + yCen*M[1][1] + M[1][2];
+                    xfrm.Inverse();
+                    xCenNew = xCen*xfrm.Get(0, 0) + yCen*xfrm.Get(0, 1) + xfrm.Get(0, 2);
+                    yCenNew = xCen*xfrm.Get(1, 0) + yCen*xfrm.Get(1, 1) + xfrm.Get(1, 2);
                     Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
                                        + xCen + ", " + yCen + ")\n");
                     comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ") in " +

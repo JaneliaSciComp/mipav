@@ -345,7 +345,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
             }
 
             xfrm = getTransform(p[0]); // lowest cost row
-            xfrm.invert();
+            xfrm.Inverse();
             Preferences.debug("Transformation for slice " + t + " =\n");
 
             // xfrm.print()

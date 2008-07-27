@@ -1946,7 +1946,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             return;
         }
 
-        answer.matrix.invert();
+        answer.matrix.Inverse();
 
 
         disposeLocal();

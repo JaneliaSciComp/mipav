@@ -682,15 +682,15 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                 rot[0][i] = (float) (answer[i].initial[0]);
                 rot[1][i] = (float) (answer[i].initial[1]);
                 rot[2][i] = (float) (answer[i].initial[2]);
-                trans[0][i] = (float) (answer[i].matrix.getMatrix()[0][3]);
-                trans[1][i] = (float) (answer[i].matrix.getMatrix()[1][3]);
-                trans[2][i] = (float) (answer[i].matrix.getMatrix()[2][3]);
+                trans[0][i] = (float) (answer[i].matrix.Get(0, 3));
+                trans[1][i] = (float) (answer[i].matrix.Get(1, 3));
+                trans[2][i] = (float) (answer[i].matrix.Get(2, 3));
             } // if (doGraph)
 
             if ((i != refNum) || (reference == false)) {
 
                 if (answer[i] != null) {
-                    answer[i].matrix.invert();
+                    answer[i].matrix.Inverse();
                 }
             }
         }

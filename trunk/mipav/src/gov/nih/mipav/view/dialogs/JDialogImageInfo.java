@@ -388,11 +388,11 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText("Matrix loaded from Image info dialog:\n");
                 ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText(result.toString());
 
-                double[][] mat = image.getMatrix().getMatrix();
+                int dim = image.getMatrix().getDim();
 
-                for (int i = 0; i < mat.length; i++) {
+                for (int i = 0; i < dim; i++) {
 
-                    for (int j = 0; j < mat[0].length; j++) {
+                    for (int j = 0; j < dim; j++) {
                         textMatrix[i][j].setText(Double.toString(result.get(i, j)));
                         textMatrix[i][j].setCaretPosition(0);
                     }
@@ -497,14 +497,14 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             if (setVariables()) {
                 updateTransformInfo(invertedMatrix);
-                invertedMatrix.invert();
+                invertedMatrix.Inverse();
                 updateMatrixFields(invertedMatrix);
                 validate();
             }
         } else if (command.equals("Identity")) {
             TransMatrix newMatrix = new TransMatrix(image.getNDims() + 1);
 
-            newMatrix.identity();
+            newMatrix.MakeIdentity();
 
             updateMatrixFields(newMatrix);
 
@@ -525,18 +525,20 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             updateTransformInfo(m);
 
 
-            m.decomposeMatrix(m);
-            ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText("\n\nRotation X: " + m.getRotateX() +
-                                                                                 "   Rotation Y: " + m.getRotateY() +
-                                                                                 "   Rotation Z: " + m.getRotateZ());
-            ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText("\nX scale: " + m.getScaleX() +
-                                                                                 "   Y scale: " + m.getScaleY() +
-                                                                                 "   Z scale: " + m.getScaleZ());
-            ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText("\nTranslate X: " + m.getTranslateX() +
-                                                                                 "   Translate Y: " +
-                                                                                 m.getTranslateY() +
-                                                                                 "   Translate Z: " +
-                                                                                 m.getTranslateZ());
+            Vector3f rotate = new Vector3f(), 
+                trans = new Vector3f(), 
+                scale = new Vector3f();
+            // if decompose fails, we'll display all zeros.
+            m.decomposeMatrix(rotate, trans, scale, null);
+            ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText("\n\nRotation X: " + rotate.X +
+                                                                                 "   Rotation Y: " + rotate.Y +
+                                                                                 "   Rotation Z: " + rotate.Z);
+            ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText("\nX scale: " + scale.X +
+                                                                                 "   Y scale: " + scale.Y +
+                                                                                 "   Z scale: " + scale.Z);
+            ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText("\nTranslate X: " + trans.X +
+                                                                                 "   Translate Y: " + trans.Y +
+                                                                                 "   Translate Z: " + trans.Z);
         } else if (command.equals("Close")) {
             dispose();
         } else if (command.equals("addReplaceMatrix")) {
@@ -757,7 +759,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      */
     public void readTransformMatrixFile(String fileName) {
         TransMatrix matrix = new TransMatrix(DIM + 1);
-        matrix.identity();
+        //matrix.MakeIdentity();
 
         if (fileName == null) {
             MipavUtil.displayError("filename = null");
@@ -776,25 +778,25 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
         } catch (IOException error) {
             MipavUtil.displayError("Matrix read error");
-            fileTransMatrix.identity();
+            fileTransMatrix.MakeIdentity();
         }
     }
 
     /**
      * Sets the left-hand coordinate flag. If true, change matrix to the left-hand coordinate system.
      *
-     * @param  leftHandSys  DOCUMENT ME!
+     * @param  leftHandSys  true for left-handed
      */
     public void setLeftHandSystem(boolean leftHandSys) {
         leftHandSystem = leftHandSys;
     }
 
     /**
-     * DOCUMENT ME!
+     * update matrix and text matrix
      *
-     * @param  newMatrix  DOCUMENT ME!
+     * @param  newMatrix  matrix to copy
      */
-    public void setMatrix(double[][] newMatrix) {
+    public void setMatrix(TransMatrix newMatrix) {
 
         try {
 
@@ -803,8 +805,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 for (int i = 0; i < matrix.length; i++) {
 
                     for (int j = 0; j < matrix[i].length; j++) {
-                        matrix[i][j] = newMatrix[i][j];
-                        textMatrix[i][j].setText(String.valueOf(newMatrix[i][j]));
+                        matrix[i][j] = newMatrix.Get(i, j);
+                        textMatrix[i][j].setText(String.valueOf(newMatrix.Get(i, j)));
                     }
                 }
             } else {
@@ -1132,9 +1134,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         }
 
 
-        double[][] mat = defaultMatrix.getMatrix();
+        //double[][] mat = defaultMatrix.getMatrix();
+        int dim = defaultMatrix.getDim();
 
-        textMatrix = new JTextField[mat.length][mat[0].length];
+        textMatrix = new JTextField[dim][dim];
 
         JPanel transformPanel = new JPanel(new BorderLayout());
 
@@ -1223,12 +1226,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         gbc.gridwidth = 1;
 
-        for (int i = 0; i < mat.length; i++) {
+        for (int i = 0; i < dim; i++) {
 
-            for (int j = 0; j < mat[0].length; j++) {
+            for (int j = 0; j < dim; j++) {
                 gbc.gridx = j;
                 gbc.gridy = i + 3;
-                textMatrix[i][j] = new JTextField(Double.toString(mat[i][j]), 5);
+                textMatrix[i][j] = new JTextField(Double.toString(defaultMatrix.get(i,j)), 5);
                 textMatrix[i][j].setHorizontalAlignment(JTextField.LEFT);
                 textMatrix[i][j].setCaretPosition(0);
                 MipavUtil.makeNumericsOnly(textMatrix[i][j], true, true);
@@ -1426,8 +1429,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         orientationBox3.setFont(MipavUtil.font12);
         orientationBox3.setSelectedIndex(axisOrient[2]);
 
-        gbc.anchor = gbc.NORTHWEST;
-        gbc.fill = gbc.BOTH;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.gridx = 0;
@@ -1436,8 +1439,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         gbc.gridheight = 2;
         orientPanel.add(orientIconLabel, gbc);
 
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
@@ -1471,7 +1474,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         orientPanel.add(dim4, gbc);
 
         gbc.weightx = 2;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridx = 3;
         gbc.gridy = 3;
         orientPanel.add(textSt1, gbc);
@@ -2195,93 +2198,15 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     }
 
     /**
-     * Reorient the matix to world and left-hand coordinate systems if required. Note at the moment the voxel
-     * resolutions are handled in the transformation algorithm. At some future point we should adjust for voxel
-     * resolutions in the transformation matrix - its faster.
-     *
-     * @param   matrix  the matrix to be converted to the
-     *
-     * @return  DOCUMENT ME!
+     * Re-orient the matrix to world and left-hand coordinate systems if required. 
+     * @see reorientCoordSystem
+     * @param   rkMatrix  the matrix to be converted
+     * @return result
      */
-    private TransMatrix reorientCoordSystem(TransMatrix matrix) {
-
-        try {
-            TransMatrix mat = new TransMatrix(4);
-            TransMatrix wcMatrix = new TransMatrix(4);
-            TransMatrix rh_lhMatrix = new TransMatrix(4);
-            double[][] dMat;
-
-            dMat = rh_lhMatrix.getArray(); // Identity
-            dMat[2][2] = -1; // R-> L or L -> R  p.223 Foley, Van Dam ...
-
-            // 1  0  0  0
-            // 0  1  0  0
-            // 0  0 -1  0
-            // 0  0  0  1
-
-            dMat = wcMatrix.getArray(); // Identity
-            dMat[1][1] = -1;
-            dMat[2][2] = -1; // world coordinate
-
-            // 1  0  0  0
-            // 0 -1  0  0
-            // 0  0 -1  0
-            // 0  0  0  1
-
-            Vector3f cPt = image.getImageCentermm(false);
-            Vector3f cPtRS = resampleImage.getImageCentermm(false);
-
-            if ((wcSystem == true) && (leftHandSystem == true)) {
-
-                // change to both the "left-hand" and world coordinate system.
-                mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
-                mat.timesEquals(rh_lhMatrix);
-                mat.timesEquals(wcMatrix);
-                mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
-
-                mat.timesEquals(matrix);
-
-                mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
-                mat.timesEquals(wcMatrix);
-                mat.timesEquals(rh_lhMatrix);
-                mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
-
-                // mat.print();
-                return mat;
-            } else if (wcSystem == true) { // Change just to the world coordinate system
-
-                mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
-                mat.timesEquals(wcMatrix);
-                mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
-
-                mat.timesEquals(matrix);
-
-                mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
-                mat.timesEquals(wcMatrix);
-                mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
-
-                return mat;
-            } else if (leftHandSystem == true) { // Change just to the "left-hand" system
-
-                mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
-                mat.timesEquals(rh_lhMatrix);
-                mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
-
-                mat.timesEquals(matrix);
-
-                mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
-                mat.timesEquals(rh_lhMatrix);
-                mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
-
-                return mat;
-            } else {
-                return matrix;
-            }
-        } catch (OutOfMemoryError error) {
-            MipavUtil.displayError("Out of memory: Orient matrix.");
-
-            return matrix;
-        }
+    private TransMatrix reorientCoordSystem(TransMatrix rkMatrix)
+    {
+    	return JDialogScriptableTransform.reorientCoordSystem(rkMatrix, image, resampleImage, wcSystem, leftHandSystem);
+    	
     }
 
     /**
@@ -3157,16 +3082,16 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     private void updateMatrixFields(TransMatrix newMatrix) {
 
         if (newMatrix != null) {
-            double[][] mat = newMatrix.getMatrix();
+            int dim = newMatrix.getDim();
 
-            if (mat.length != textMatrix.length) {
+            if (dim != textMatrix.length) {
                 return;
             }
 
-            for (int i = 0; i < mat.length; i++) {
+            for (int i = 0; i < dim; i++) {
 
-                for (int j = 0; j < mat[0].length; j++) {
-                    textMatrix[i][j].setText(Double.toString(newMatrix.get(i, j)));
+                for (int j = 0; j < dim; j++) {
+                    textMatrix[i][j].setText(Double.toString(newMatrix.Get(i, j)));
                     textMatrix[i][j].setCaretPosition(0);
                 }
             }
@@ -3183,7 +3108,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         TransMatrix tMat = new TransMatrix(matrix.length, transformIDBox.getSelectedIndex());
         updateTransformInfo(tMat);
-        image.getMatrixHolder().replaceMatrix(matrixBox.getSelectedItem(), tMat);
+        image.getMatrixHolder().replaceMatrix((String)matrixBox.getSelectedItem(), tMat);
 
         // script line if recording
         ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image, tMat));
@@ -3446,14 +3371,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      * @param  tMat  DOCUMENT ME!
      */
     private void updateTransformInfo(TransMatrix tMat) {
-        double[][] mat = tMat.getMatrix();
-
-        for (int i = 0; i < mat.length; i++) {
-
-            for (int j = 0; j < mat[0].length; j++) {
-                mat[i][j] = matrix[i][j];
-            }
-        }
+    	tMat.copyMatrix(matrix);
     }
 
     /**

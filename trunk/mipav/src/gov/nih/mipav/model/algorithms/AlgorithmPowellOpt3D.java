@@ -117,26 +117,27 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
     /**
      * Convert a 12-dimension transformation vector to a 4x4 transformation matrix.
      * 
-     * @param vector	a 12-dimension transformation vector including 3 rotations, translations, scalings and skews.
+     * @param vector 	a 12-dimension transformation vector including 3
+     * rotations, translations, scalings and skews.
      * @return			a 4x4 transformation matrix
      */
-    public TransMatrix convertToMatrix(TransMatrix toOrigin, TransMatrix fromOrigin, double[] vector) {
-		if (vector == null || vector.length != 12) {
-			return null;
-		}
-		TransMatrix matrix = new TransMatrix(4);
-
-		matrix.setTransform(vector[3], vector[4], vector[5], vector[0],
-				vector[1], vector[2], vector[6], vector[7], vector[8],
-				vector[9], vector[10], vector[11]);
-
-		Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
-
-		matrix.convertFromMatrix(mtx);
-
-		return matrix;
-
-	} 
+    public TransMatrix convertToMatrix(TransMatrix toOrigin, TransMatrix fromOrigin, 
+                                       double[] vector) {
+        if (vector == null || vector.length != 12) {
+            return null;
+        }
+        TransMatrix matrix = new TransMatrix(4);
+        
+        matrix.setTransform(vector[3], vector[4], vector[5], vector[0],
+                            vector[1], vector[2], vector[6], vector[7], vector[8],
+                            vector[9], vector[10], vector[11]);
+        
+        matrix.MultLeft(toOrigin);
+        matrix.Mult(fromOrigin);
+        
+        return matrix;
+        
+    } 
 
     /**
      * Extract the partial or full transformation vector from the start transformation vector,
@@ -200,9 +201,9 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
      * @see AlgorithmPowellOptBase#adjustTranslation(TransMatrix, float)
      */
     public void adjustTranslation(TransMatrix mat, float sample){
-        double transX = mat.get(0, 3) * sample;
-        double transY = mat.get(1, 3) * sample;
-        double transZ = mat.get(2, 3) * sample;
+        float transX = mat.get(0, 3) * sample;
+        float transY = mat.get(1, 3) * sample;
+        float transZ = mat.get(2, 3) * sample;
 
         mat.set(0, 3, transX);
         mat.set(1, 3, transY);
@@ -229,9 +230,9 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
     public TransMatrix getMatrixHalf(int index, float sample) {
         double[] point = scalePoint(index, 0.5);
         TransMatrix mat = convertToMatrix(point);
-        double transX = mat.get(0, 3) * sample;
-        double transY = mat.get(1, 3) * sample;
-        double transZ = mat.get(2, 3) * sample;
+        float transX = mat.get(0, 3) * sample;
+        float transY = mat.get(1, 3) * sample;
+        float transZ = mat.get(2, 3) * sample;
 
         mat.set(0, 3, transX);
         mat.set(1, 3, transY);

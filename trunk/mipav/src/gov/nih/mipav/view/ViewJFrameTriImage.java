@@ -3850,7 +3850,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     parentFrame.setActiveImage(ViewJComponentBase.IMAGE_A);
 
                     JDialogImageInfo infoDialogB = parentFrame.getImageInfoDialogB();
-                    infoDialogB.setMatrix(transMatrix.getMatrix());
+                    infoDialogB.setMatrix(transMatrix);
 
                     updateImages();
 

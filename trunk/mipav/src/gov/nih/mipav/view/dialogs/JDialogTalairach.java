@@ -491,7 +491,7 @@ public class JDialogTalairach extends JDialogBase {
         int[] topX = new int[12];
         int[] topY = new int[12];
         int[] topZ = new int[12];
-        double[][] Mat;
+        //double[][] Mat;
         float bot_A, bot_M, bot_P, bot_R, bot_L, bot_I, bot_S;
         float top_A, top_M, top_P, top_R, top_L, top_I, top_S;
 
@@ -790,10 +790,10 @@ public class JDialogTalairach extends JDialogBase {
             AFNIOrigResols = afniInfo.getAFNIOrigResolutions();
 
             // Create the transformation that goes from +acpc to +orig
-            xfrm.identity();
+            xfrm.MakeIdentity();
             xfrm.setTranslate(translation.X, translation.Y, translation.Z);
             xfrm.setRotate(alpha, beta, gamma);
-            Mat = xfrm.getMatrix();
+            //Mat = xfrm.getMatrix();
 
             // There are 2 rr needed with the +orig image for the +orig to +tlrc transformation
             // One rr is the back projection in +orig of a Talairach origin in anterior and
@@ -802,12 +802,12 @@ public class JDialogTalairach extends JDialogBase {
             BTCenter.X = TCenter.X;
             BTCenter.Y = pcie.Y - ((ViewJFrameTriImage.ATLAS_AC_TO_PC) / scale_P);
             BTCenter.Z = TCenter.Z;
-            posrr.X = (float) ((BTCenter.X * vlength * Mat[0][0]) + (BTCenter.Y * vlength * Mat[0][1]) +
-                               (BTCenter.Z * vlength * Mat[0][2]) + Mat[0][3]) / AFNIOrigResols[0];
-            posrr.Y = (float) ((BTCenter.X * vlength * Mat[1][0]) + (BTCenter.Y * vlength * Mat[1][1]) +
-                               (BTCenter.Z * vlength * Mat[1][2]) + Mat[1][3]) / AFNIOrigResols[1];
-            posrr.Z = (float) ((BTCenter.X * vlength * Mat[2][0]) + (BTCenter.Y * vlength * Mat[2][1]) +
-                               (BTCenter.Z * vlength * Mat[2][2]) + Mat[2][3]) / AFNIOrigResols[2];
+            posrr.X = (float) ((BTCenter.X * vlength * xfrm.Get(0, 0)) + (BTCenter.Y * vlength * xfrm.Get(0, 1)) +
+                               (BTCenter.Z * vlength * xfrm.Get(0, 2)) + xfrm.Get(0, 3)) / AFNIOrigResols[0];
+            posrr.Y = (float) ((BTCenter.X * vlength * xfrm.Get(1, 0)) + (BTCenter.Y * vlength * xfrm.Get(1, 1)) +
+                               (BTCenter.Z * vlength * xfrm.Get(1, 2)) + xfrm.Get(1, 3)) / AFNIOrigResols[1];
+            posrr.Z = (float) ((BTCenter.X * vlength * xfrm.Get(2, 0)) + (BTCenter.Y * vlength * xfrm.Get(2, 1)) +
+                               (BTCenter.Z * vlength * xfrm.Get(2, 2)) + xfrm.Get(2, 3)) / AFNIOrigResols[2];
             Preferences.debug("posrr = " + posrr.X + " " + posrr.Y + " " + posrr.Z + "\n");
 
             progressBar = new ViewJProgressBar(afniInfo.getFileName(), "Transformation pass #" + 1, 0, 100, false, null,
@@ -817,7 +817,7 @@ public class JDialogTalairach extends JDialogBase {
 
             for (int i = 0; i < 12; i++) {
                 progressBar.setMessage("Transformation pass #" + (i + 1));
-                xfrm.identity();
+                xfrm.MakeIdentity();
                 xfrm.setTranslate(center.X, center.Y, center.Z);
 
                 switch (i) {
@@ -995,9 +995,9 @@ public class JDialogTalairach extends JDialogBase {
 
                 xfrm.setTranslate((TCenter.X - (ViewJFrameTriImage.ATLAS_BBOX_LAT * Sx) - center.X) / Sx, Ty,
                                   (TCenter.Z - (ViewJFrameTriImage.ATLAS_BBOX_INF_NEW * Sz) - center.Z) / Sz);
-                Mat = xfrm.getMatrix();
+                
 
-                transformTalairachTrilinear(imgBuffer, Mat, vlength, image.getExtents()[0], image.getExtents()[1],
+                transformTalairachTrilinear(imgBuffer, xfrm, vlength, image.getExtents()[0], image.getExtents()[1],
                                             image.getExtents()[2], oXres, oYres, oZres, oXdim, oYdim, oZdim, botX[i],
                                             botY[i], botZ[i], topX[i], topY[i], topZ[i], progressBar, talairachImage);
 
@@ -1056,12 +1056,12 @@ public class JDialogTalairach extends JDialogBase {
              * xfrm.setZoom(Sx,Sy,Sz); xfrm.setTranslate((TCenter.X - ViewJFrameTriImage.ATLAS_BBOX_LAT*Sx -
              * center.X)/Sx,              (TCenter.Y - ViewJFrameTriImage.ATLAS_BBOX_ANT*Sy - center.Y)/Sy, (TCenter.Z -
              * ViewJFrameTriImage.ATLAS_BBOX_INF_NEW*Sz -center.Z)/Sz); Mat = xfrm.getMatrix(); Matrix Ac = new
-             * Matrix(3,3); Ac.set(0,0,oXres*Mat[0][0]/vlength); Ac.set(0,1,oYres*Mat[0][1]/vlength);
-             * Ac.set(0,2,oZres*Mat[0][2]/vlength); Ac.set(1,0,oXres*Mat[1][0]/vlength);
-             * Ac.set(1,1,oYres*Mat[1][1]/vlength); Ac.set(1,2,oZres*Mat[1][2]/vlength);
-             * Ac.set(2,0,oXres*Mat[2][0]/vlength); Ac.set(2,1,oYres*Mat[2][1]/vlength);
-             * Ac.set(2,2,oZres*Mat[2][2]/vlength); Matrix b = new Matrix(3,1); b.set(0,0,TCenter.X -
-             * Mat[0][3]/vlength); b.set(1,0,TCenter.Y - Mat[1][3]/vlength); b.set(2,0,TCenter.Z - Mat[2][3]/vlength);
+             * Matrix(3,3); Ac.set(0,0,oXres*xfrm.Get(0, 0)/vlength); Ac.set(0,1,oYres*xfrm.Get(0, 1)/vlength);
+             * Ac.set(0,2,oZres*xfrm.Get(0, 2)/vlength); Ac.set(1,0,oXres*xfrm.Get(1, 0)/vlength);
+             * Ac.set(1,1,oYres*xfrm.Get(1, 1)/vlength); Ac.set(1,2,oZres*xfrm.Get(1, 2)/vlength);
+             * Ac.set(2,0,oXres*xfrm.Get(2, 0)/vlength); Ac.set(2,1,oYres*xfrm.Get(2, 1)/vlength);
+             * Ac.set(2,2,oZres*xfrm.Get(2, 2)/vlength); Matrix b = new Matrix(3,1); b.set(0,0,TCenter.X -
+             * xfrm.Get(0, 3)/vlength); b.set(1,0,TCenter.Y - xfrm.Get(1, 3)/vlength); b.set(2,0,TCenter.Z - xfrm.Get(2, 3)/vlength);
              * Matrix X = Ac.solve(b); // Note that the final tranformed Talairach origin in millimeters should be at //
              * (ViewJFrameTriImage.ATLAS_BBOX_LAT, ViewJFrameTriImage.ATLAS_BBOX_ANT,
              * ViewJFrameTriImage.ATLAS_BBOX_INF_NEW) = (80,80,65) Preferences.debug("Non rounded T = " + X.get(0,0) +
@@ -1075,12 +1075,12 @@ public class JDialogTalairach extends JDialogBase {
              * xfrm.setTranslate((TCenter.X - ViewJFrameTriImage.ATLAS_BBOX_LAT*Sx - center.X)/Sx,              (pcie.Y
              * - (ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC)*Sy - center.Y)/Sy, (TCenter.Z -
              * ViewJFrameTriImage.ATLAS_BBOX_INF_NEW*Sz -center.Z)/Sz); Mat = xfrm.getMatrix(); Ac = new Matrix(3,3);
-             * Ac.set(0,0,oXres*Mat[0][0]/vlength); Ac.set(0,1,oYres*Mat[0][1]/vlength);
-             * Ac.set(0,2,oZres*Mat[0][2]/vlength); Ac.set(1,0,oXres*Mat[1][0]/vlength);
-             * Ac.set(1,1,oYres*Mat[1][1]/vlength); Ac.set(1,2,oZres*Mat[1][2]/vlength);
-             * Ac.set(2,0,oXres*Mat[2][0]/vlength); Ac.set(2,1,oYres*Mat[2][1]/vlength);
-             * Ac.set(2,2,oZres*Mat[2][2]/vlength); b = new Matrix(3,1); b.set(0,0,pcie.X - Mat[0][3]/vlength);
-             * b.set(1,0,pcie.Y - Mat[1][3]/vlength); b.set(2,0,pcie.Z - Mat[2][3]/vlength); X = Ac.solve(b);
+             * Ac.set(0,0,oXres*xfrm.Get(0, 0)/vlength); Ac.set(0,1,oYres*xfrm.Get(0, 1)/vlength);
+             * Ac.set(0,2,oZres*xfrm.Get(0, 2)/vlength); Ac.set(1,0,oXres*xfrm.Get(1, 0)/vlength);
+             * Ac.set(1,1,oYres*xfrm.Get(1, 1)/vlength); Ac.set(1,2,oZres*xfrm.Get(1, 2)/vlength);
+             * Ac.set(2,0,oXres*xfrm.Get(2, 0)/vlength); Ac.set(2,1,oYres*xfrm.Get(2, 1)/vlength);
+             * Ac.set(2,2,oZres*xfrm.Get(2, 2)/vlength); b = new Matrix(3,1); b.set(0,0,pcie.X - xfrm.Get(0, 3)/vlength);
+             * b.set(1,0,pcie.Y - xfrm.Get(1, 3)/vlength); b.set(2,0,pcie.Z - xfrm.Get(2, 3)/vlength); X = Ac.solve(b);
              *
              * Preferences.debug("Non rounded pcie = " + X.get(0,0) + "," +                              X.get(1,0) + ","
              * + X.get(2,0) + "\n"); tpcie.X = (int)Math.round(X.get(0,0)); tpcie.Y = (int)Math.round(X.get(1,0));
@@ -1368,7 +1368,7 @@ public class JDialogTalairach extends JDialogBase {
      * @param  progressBar  Progress bar.
      * @param  image        Image.
      */
-    private void transformTalairachTrilinear(float[] imgBuffer, double[][] xfrm, float ires, int iXdim, int iYdim,
+    private void transformTalairachTrilinear(float[] imgBuffer, TransMatrix xfrm, float ires, int iXdim, int iYdim,
                                              int iZdim, float oXres, float oYres, float oZres, int oXdim, int oYdim,
                                              int oZdim, int oXlow, int oYlow, int oZlow, int oXhigh, int oYhigh,
                                              int oZhigh, ViewJProgressBar progressBar, ModelImage image) {
@@ -1390,22 +1390,22 @@ public class JDialogTalairach extends JDialogBase {
         boolean doTransform;
 
 
-        T00 = (float) xfrm[0][0];
-        T01 = (float) xfrm[0][1];
-        T02 = (float) xfrm[0][2];
-        T03 = (float) xfrm[0][3];
-        T10 = (float) xfrm[1][0];
-        T11 = (float) xfrm[1][1];
-        T12 = (float) xfrm[1][2];
-        T13 = (float) xfrm[1][3];
-        T20 = (float) xfrm[2][0];
-        T21 = (float) xfrm[2][1];
-        T22 = (float) xfrm[2][2];
-        T23 = (float) xfrm[2][3];
-        T30 = (float) xfrm[3][0];
-        T31 = (float) xfrm[3][1];
-        T32 = (float) xfrm[3][2];
-        T33 = (float) xfrm[3][3];
+        T00 = xfrm.Get(0, 0);
+        T01 = xfrm.Get(0, 1);
+        T02 = xfrm.Get(0, 2);
+        T03 = xfrm.Get(0, 3);
+        T10 = xfrm.Get(1, 0);
+        T11 = xfrm.Get(1, 1);
+        T12 = xfrm.Get(1, 2);
+        T13 = xfrm.Get(1, 3);
+        T20 = xfrm.Get(2, 0);
+        T21 = xfrm.Get(2, 1);
+        T22 = xfrm.Get(2, 2);
+        T23 = xfrm.Get(2, 3);
+        T30 = xfrm.Get(3, 0);
+        T31 = xfrm.Get(3, 1);
+        T32 = xfrm.Get(3, 2);
+        T33 = xfrm.Get(3, 3);
 
 
         for (i = oXlow; i <= oXhigh; i++) {

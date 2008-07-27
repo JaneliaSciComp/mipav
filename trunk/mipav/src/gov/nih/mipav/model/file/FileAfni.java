@@ -1463,36 +1463,36 @@ public class FileAfni extends FileBase {
             Talz = Math.abs(dicomOrigin[2]);
             Preferences.debug("Talx = " + Talx + " Taly = " + Taly + " Talz = " + Talz + "\n");
 
-            M = xfrm.getMatrix();
-            Tr03 = (iXres * rr.X) - (Talx * M[0][0]) - (Taly * M[0][1]) - (Talz * M[0][2]);
-            Tr13 = (iYres * rr.Y) - (Talx * M[1][0]) - (Taly * M[1][1]) - (Talz * M[1][2]);
-            Tr23 = (iZres * rr.Z) - (Talx * M[2][0]) - (Taly * M[2][1]) - (Talz * M[2][2]);
+            
+            Tr03 = (iXres * rr.X) - (Talx * xfrm.Get(0, 0)) - (Taly * xfrm.Get(0, 1)) - (Talz * xfrm.Get(0, 2));
+            Tr13 = (iYres * rr.Y) - (Talx * xfrm.Get(1, 0)) - (Taly * xfrm.Get(1, 1)) - (Talz * xfrm.Get(1, 2));
+            Tr23 = (iZres * rr.Z) - (Talx * xfrm.Get(2, 0)) - (Taly * xfrm.Get(2, 1)) - (Talz * xfrm.Get(2, 2));
 
             /*
-             * Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3] Tr13 = M[1][0] * Tx + M[1][1] * Ty + M[1][2]
-             * Tz + M[1][3] Tr23 = M[2][2] * Tx + M[2][1] * Ty + M[2][2] * Tz + M[2][3]
+             * Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3) Tr13 = xfrm.Get(1, 0) * Tx + xfrm.Get(1, 1) * Ty + xfrm.Get(1, 2)
+             * Tz + xfrm.Get(1, 3) Tr23 = xfrm.Get(2, 2) * Tx + xfrm.Get(2, 1) * Ty + xfrm.Get(2, 2) * Tz + xfrm.Get(2, 3)
              */
             A = new JamaMatrix(3, 3, 0.0);
-            A.set(0, 0, M[0][0]);
-            A.set(0, 1, M[0][1]);
-            A.set(0, 2, M[0][2]);
-            A.set(1, 0, M[1][0]);
-            A.set(1, 1, M[1][1]);
-            A.set(1, 2, M[1][2]);
-            A.set(2, 0, M[2][0]);
-            A.set(2, 1, M[2][1]);
-            A.set(2, 2, M[2][2]);
+            A.set(0, 0, xfrm.Get(0, 0));
+            A.set(0, 1, xfrm.Get(0, 1));
+            A.set(0, 2, xfrm.Get(0, 2));
+            A.set(1, 0, xfrm.Get(1, 0));
+            A.set(1, 1, xfrm.Get(1, 1));
+            A.set(1, 2, xfrm.Get(1, 2));
+            A.set(2, 0, xfrm.Get(2, 0));
+            A.set(2, 1, xfrm.Get(2, 1));
+            A.set(2, 2, xfrm.Get(2, 2));
             b = new JamaMatrix(3, 1, 0.0);
-            b.set(0, 0, Tr03 - M[0][3]);
-            b.set(1, 0, Tr13 - M[1][3]);
-            b.set(2, 0, Tr23 - M[2][3]);
+            b.set(0, 0, Tr03 - xfrm.Get(0, 3));
+            b.set(1, 0, Tr13 - xfrm.Get(1, 3));
+            b.set(2, 0, Tr23 - xfrm.Get(2, 3));
             X = A.solve(b);
             Tx = X.get(0, 0);
             Ty = X.get(1, 0);
             Tz = X.get(2, 0);
             xfrm.setTranslate(Tx, Ty, Tz);
-            frm = xfrm.getMatrix();
-            transformACPCTrilinear(imgBuffer, frm, iXres, iYres, iZres, iXdim, iYdim, iZdim, oXres, oYres, oZres, oXdim,
+            
+            transformACPCTrilinear(imgBuffer, xfrm, iXres, iYres, iZres, iXdim, iYdim, iZdim, oXres, oYres, oZres, oXdim,
                                    oYdim, oZdim);
 
             /* Find the Talairach center, the new origin, in the newly transformed coordinates */
@@ -1500,25 +1500,25 @@ public class FileAfni extends FileBase {
              * Y = (i*oXres*T10 + j*oYres*T11 + k*oZres*T12 + T13)/iYres Z = (i*oXres*T20 + j*oYres*T21 + k*oZres*T22 +
              * T23)/iZres Wish to find i,j,k from X,Y,ZThat is, wish to find TCenter.X,TCenter.Y,TCenter.Z from
              * rr.X,rr.Y,rr.Z */
-            M = xfrm.getMatrix();
-            translation.X = (float) M[0][3];
-            translation.Y = (float) M[1][3];
-            translation.Z = (float) M[2][3];
+            
+            translation.X = (float) xfrm.Get(0, 3);
+            translation.Y = (float) xfrm.Get(1, 3);
+            translation.Z = (float) xfrm.Get(2, 3);
 
             A = new JamaMatrix(3, 3, 0.0);
-            A.set(0, 0, oXres * M[0][0] / iXres);
-            A.set(0, 1, oYres * M[0][1] / iXres);
-            A.set(0, 2, oZres * M[0][2] / iXres);
-            A.set(1, 0, oXres * M[1][0] / iYres);
-            A.set(1, 1, oYres * M[1][1] / iYres);
-            A.set(1, 2, oZres * M[1][2] / iYres);
-            A.set(2, 0, oXres * M[2][0] / iZres);
-            A.set(2, 1, oYres * M[2][1] / iZres);
-            A.set(2, 2, oZres * M[2][2] / iZres);
+            A.set(0, 0, oXres * xfrm.Get(0, 0) / iXres);
+            A.set(0, 1, oYres * xfrm.Get(0, 1) / iXres);
+            A.set(0, 2, oZres * xfrm.Get(0, 2) / iXres);
+            A.set(1, 0, oXres * xfrm.Get(1, 0) / iYres);
+            A.set(1, 1, oYres * xfrm.Get(1, 1) / iYres);
+            A.set(1, 2, oZres * xfrm.Get(1, 2) / iYres);
+            A.set(2, 0, oXres * xfrm.Get(2, 0) / iZres);
+            A.set(2, 1, oYres * xfrm.Get(2, 1) / iZres);
+            A.set(2, 2, oZres * xfrm.Get(2, 2) / iZres);
             b = new JamaMatrix(3, 1, 0.0);
 
-            /* b.set(0,0,rr.X - M[0][3]/iXres);
-             * b.set(1,0,rr.Y - M[1][3]/iYres); b.set(2,0,rr.Z - M[2][3]/iZres); X = A.solve(b); TCenter.X =
+            /* b.set(0,0,rr.X - xfrm.Get(0, 3)/iXres);
+             * b.set(1,0,rr.Y - xfrm.Get(1, 3)/iYres); b.set(2,0,rr.Z - xfrm.Get(2, 3)/iZres); X = A.solve(b); TCenter.X =
              * (float)(X.get(0,0)); TCenter.Y = (float)(X.get(1,0)); TCenter.Z = (float)(X.get(2,0)); */
             TCenter.X = Talx / oXres;
             TCenter.Y = Taly / oYres;
@@ -1527,9 +1527,9 @@ public class FileAfni extends FileBase {
                               "\n");
 
             // Find the new pc inferior edge in the new coordinates
-            b.set(0, 0, pcDicom.X - (M[0][3] / iXres));
-            b.set(1, 0, pcDicom.Y - (M[1][3] / iYres));
-            b.set(2, 0, pcDicom.Z - (M[2][3] / iZres));
+            b.set(0, 0, pcDicom.X - (xfrm.Get(0, 3) / iXres));
+            b.set(1, 0, pcDicom.Y - (xfrm.Get(1, 3) / iYres));
+            b.set(2, 0, pcDicom.Z - (xfrm.Get(2, 3) / iZres));
             X = A.solve(b);
             pcDicom.X = (float) (X.get(0, 0));
             pcDicom.Y = (float) (X.get(1, 0));
@@ -1781,29 +1781,29 @@ public class FileAfni extends FileBase {
                 Talz = Math.abs(origin[2]);
                 Preferences.debug("Talx = " + Talx + " Taly = " + Taly + " Talz = " + Talz + "\n");
 
-                M = xfrm.getMatrix();
-                Tr03 = (iXres * rr.X) - (Talx * M[0][0]) - (Taly * M[0][1]) - (Talz * M[0][2]);
-                Tr13 = (iYres * rr.Y) - (Talx * M[1][0]) - (Taly * M[1][1]) - (Talz * M[1][2]);
-                Tr23 = (iZres * rr.Z) - (Talx * M[2][0]) - (Taly * M[2][1]) - (Talz * M[2][2]);
+                
+                Tr03 = (iXres * rr.X) - (Talx * xfrm.Get(0, 0)) - (Taly * xfrm.Get(0, 1)) - (Talz * xfrm.Get(0, 2));
+                Tr13 = (iYres * rr.Y) - (Talx * xfrm.Get(1, 0)) - (Taly * xfrm.Get(1, 1)) - (Talz * xfrm.Get(1, 2));
+                Tr23 = (iZres * rr.Z) - (Talx * xfrm.Get(2, 0)) - (Taly * xfrm.Get(2, 1)) - (Talz * xfrm.Get(2, 2));
 
                 /*
-                 *       Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3]      Tr13 = M[1][0] * Tx + M[1][1]
-                 * Ty + M[1][2] * Tz + M[1][3]      Tr23 = M[2][2] * Tx + M[2][1] * Ty + M[2][2] * Tz + M[2][3]
+                 *       Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3)      Tr13 = xfrm.Get(1, 0) * Tx + xfrm.Get(1, 1)
+                 * Ty + xfrm.Get(1, 2) * Tz + xfrm.Get(1, 3)      Tr23 = xfrm.Get(2, 2) * Tx + xfrm.Get(2, 1) * Ty + xfrm.Get(2, 2) * Tz + xfrm.Get(2, 3)
                  */
                 A = new JamaMatrix(3, 3, 0.0);
-                A.set(0, 0, M[0][0]);
-                A.set(0, 1, M[0][1]);
-                A.set(0, 2, M[0][2]);
-                A.set(1, 0, M[1][0]);
-                A.set(1, 1, M[1][1]);
-                A.set(1, 2, M[1][2]);
-                A.set(2, 0, M[2][0]);
-                A.set(2, 1, M[2][1]);
-                A.set(2, 2, M[2][2]);
+                A.set(0, 0, xfrm.Get(0, 0));
+                A.set(0, 1, xfrm.Get(0, 1));
+                A.set(0, 2, xfrm.Get(0, 2));
+                A.set(1, 0, xfrm.Get(1, 0));
+                A.set(1, 1, xfrm.Get(1, 1));
+                A.set(1, 2, xfrm.Get(1, 2));
+                A.set(2, 0, xfrm.Get(2, 0));
+                A.set(2, 1, xfrm.Get(2, 1));
+                A.set(2, 2, xfrm.Get(2, 2));
                 b = new JamaMatrix(3, 1, 0.0);
 
-                /* b.set(0,0,rr.X - M[0][3]/iXres);
-                 *       b.set(1,0,rr.Y - M[1][3]/iYres);      b.set(2,0,rr.Z - M[2][3]/iZres);      X = A.solve(b);
+                /* b.set(0,0,rr.X - xfrm.Get(0, 3)/iXres);
+                 *       b.set(1,0,rr.Y - xfrm.Get(1, 3)/iYres);      b.set(2,0,rr.Z - xfrm.Get(2, 3)/iZres);      X = A.solve(b);
                  * TCenter.X = (float)(X.get(0,0));      TCenter.Y = (float)(X.get(1,0));      TCenter.Z =
                  * (float)(X.get(2,0)); */
                 TCenter.X = Talx / oXres;
@@ -1812,9 +1812,9 @@ public class FileAfni extends FileBase {
                 Preferences.debug("Transformed Talairach origin = " + TCenter.X + "  " + TCenter.Y + "  " + TCenter.Z +
                                   "\n");
 
-                b.set(0, 0, Tr03 - M[0][3]);
-                b.set(1, 0, Tr13 - M[1][3]);
-                b.set(2, 0, Tr23 - M[2][3]);
+                b.set(0, 0, Tr03 - xfrm.Get(0, 3));
+                b.set(1, 0, Tr13 - xfrm.Get(1, 3));
+                b.set(2, 0, Tr23 - xfrm.Get(2, 3));
                 X = A.solve(b);
                 Tx = X.get(0, 0);
                 Ty = X.get(1, 0);
@@ -1826,24 +1826,24 @@ public class FileAfni extends FileBase {
                  * Y = (i*oXres*T10 + j*oYres*T11 + k*oZres*T12 + T13)/iYres Z = (i*oXres*T20 + j*oYres*T21 +
                  * k*oZres*T22 + T23)/iZres Wish to find i,j,k from X,Y,Z That is, wish to find
                  * TCenter.X,TCenter.Y,TCenter.Z from rr.X,rr.Y,rr.Z */
-                M = xfrm.getMatrix();
+                
 
                 A = new JamaMatrix(3, 3, 0.0);
-                A.set(0, 0, oXres * M[0][0] / iXres);
-                A.set(0, 1, oYres * M[0][1] / iXres);
-                A.set(0, 2, oZres * M[0][2] / iXres);
-                A.set(1, 0, oXres * M[1][0] / iYres);
-                A.set(1, 1, oYres * M[1][1] / iYres);
-                A.set(1, 2, oZres * M[1][2] / iYres);
-                A.set(2, 0, oXres * M[2][0] / iZres);
-                A.set(2, 1, oYres * M[2][1] / iZres);
-                A.set(2, 2, oZres * M[2][2] / iZres);
+                A.set(0, 0, oXres * xfrm.Get(0, 0) / iXres);
+                A.set(0, 1, oYres * xfrm.Get(0, 1) / iXres);
+                A.set(0, 2, oZres * xfrm.Get(0, 2) / iXres);
+                A.set(1, 0, oXres * xfrm.Get(1, 0) / iYres);
+                A.set(1, 1, oYres * xfrm.Get(1, 1) / iYres);
+                A.set(1, 2, oZres * xfrm.Get(1, 2) / iYres);
+                A.set(2, 0, oXres * xfrm.Get(2, 0) / iZres);
+                A.set(2, 1, oYres * xfrm.Get(2, 1) / iZres);
+                A.set(2, 2, oZres * xfrm.Get(2, 2) / iZres);
                 b = new JamaMatrix(3, 1, 0.0);
 
                 // Find the new pc inferior edge in the new coordinates
-                b.set(0, 0, pcDicom.X - (M[0][3] / iXres));
-                b.set(1, 0, pcDicom.Y - (M[1][3] / iYres));
-                b.set(2, 0, pcDicom.Z - (M[2][3] / iZres));
+                b.set(0, 0, pcDicom.X - (xfrm.Get(0, 3) / iXres));
+                b.set(1, 0, pcDicom.Y - (xfrm.Get(1, 3) / iYres));
+                b.set(2, 0, pcDicom.Z - (xfrm.Get(2, 3) / iZres));
                 X = A.solve(b);
                 pcDicom.X = (float) (X.get(0, 0));
                 pcDicom.Y = (float) (X.get(1, 0));
@@ -2177,7 +2177,7 @@ public class FileAfni extends FileBase {
                 }
 
                 Preferences.debug("svec rr = " + rrArray[i].X + "," + rrArray[i].Y + "," + rrArray[i].Z + "\n");
-                xfrm.identity();
+                xfrm.MakeIdentity();
                 xfrm.setTranslate(center.X, center.Y, center.Z);
 
                 // Since our interpolation routines are doing a output to input mapping, create the mbac
@@ -2202,52 +2202,52 @@ public class FileAfni extends FileBase {
                 topZ[i] = Math.min(dicomZDim - 1, Math.round((warpData[(i * 30) + 29] - origin[2]) / delta[2]));
                 Preferences.debug("botX = " + botX[i] + " botY = " + botY[i] + " botZ = " + botZ[i] + "\n");
                 Preferences.debug("topX = " + topX[i] + " topY = " + topY[i] + " topZ = " + topZ[i] + "\n");
-                M = xfrm.getMatrix();
-                Tr03 = (iXres * rrArray[i].X) - (Talx * M[0][0]) - (Taly * M[0][1]) - (Talz * M[0][2]);
-                Tr13 = (iYres * rrArray[i].Y) - (Talx * M[1][0]) - (Taly * M[1][1]) - (Talz * M[1][2]);
-                Tr23 = (iZres * rrArray[i].Z) - (Talx * M[2][0]) - (Taly * M[2][1]) - (Talz * M[2][2]);
+                
+                Tr03 = (iXres * rrArray[i].X) - (Talx * xfrm.Get(0, 0)) - (Taly * xfrm.Get(0, 1)) - (Talz * xfrm.Get(0, 2));
+                Tr13 = (iYres * rrArray[i].Y) - (Talx * xfrm.Get(1, 0)) - (Taly * xfrm.Get(1, 1)) - (Talz * xfrm.Get(1, 2));
+                Tr23 = (iZres * rrArray[i].Z) - (Talx * xfrm.Get(2, 0)) - (Taly * xfrm.Get(2, 1)) - (Talz * xfrm.Get(2, 2));
 
                 /*
-                 * Tr03 = M[0][0] * Tx + M[0][1] * Ty + M[0][2] * Tz + M[0][3] Tr13 = M[1][0] * Tx + M[1][1] * Ty +
-                 * M[1][2] * Tz + M[1][3] Tr23 = M[2][2] * Tx + M[2][1] * Ty + M[2][2] * Tz + M[2][3]
+                 * Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3) Tr13 = xfrm.Get(1, 0) * Tx + xfrm.Get(1, 1) * Ty +
+                 * xfrm.Get(1, 2) * Tz + xfrm.Get(1, 3) Tr23 = xfrm.Get(2, 2) * Tx + xfrm.Get(2, 1) * Ty + xfrm.Get(2, 2) * Tz + xfrm.Get(2, 3)
                  */
                 A = new JamaMatrix(3, 3, 0.0);
-                A.set(0, 0, M[0][0]);
-                A.set(0, 1, M[0][1]);
-                A.set(0, 2, M[0][2]);
-                A.set(1, 0, M[1][0]);
-                A.set(1, 1, M[1][1]);
-                A.set(1, 2, M[1][2]);
-                A.set(2, 0, M[2][0]);
-                A.set(2, 1, M[2][1]);
-                A.set(2, 2, M[2][2]);
+                A.set(0, 0, xfrm.Get(0, 0));
+                A.set(0, 1, xfrm.Get(0, 1));
+                A.set(0, 2, xfrm.Get(0, 2));
+                A.set(1, 0, xfrm.Get(1, 0));
+                A.set(1, 1, xfrm.Get(1, 1));
+                A.set(1, 2, xfrm.Get(1, 2));
+                A.set(2, 0, xfrm.Get(2, 0));
+                A.set(2, 1, xfrm.Get(2, 1));
+                A.set(2, 2, xfrm.Get(2, 2));
                 b = new JamaMatrix(3, 1, 0.0);
-                b.set(0, 0, Tr03 - M[0][3]);
-                b.set(1, 0, Tr13 - M[1][3]);
-                b.set(2, 0, Tr23 - M[2][3]);
+                b.set(0, 0, Tr03 - xfrm.Get(0, 3));
+                b.set(1, 0, Tr13 - xfrm.Get(1, 3));
+                b.set(2, 0, Tr23 - xfrm.Get(2, 3));
                 X = A.solve(b);
                 Tx = X.get(0, 0);
                 Ty = X.get(1, 0);
                 Tz = X.get(2, 0);
                 xfrm.setTranslate(Tx, Ty, Tz);
-                frm = xfrm.getMatrix();
-                transformTalairachTrilinear(imgBuffer, frm, iXres, iYres, iZres, iXdim, iYdim, iZdim, oXres, oYres,
+                
+                transformTalairachTrilinear(imgBuffer, xfrm, iXres, iYres, iZres, iXdim, iYdim, iZdim, oXres, oYres,
                                             oZres, oXdim, botX[i], botY[i], botZ[i], topX[i], topY[i], topZ[i]);
-                M = xfrm.getMatrix();
+                
                 A = new JamaMatrix(3, 3, 0.0);
-                A.set(0, 0, oXres * M[0][0] / iXres);
-                A.set(0, 1, oYres * M[0][1] / iXres);
-                A.set(0, 2, oZres * M[0][2] / iXres);
-                A.set(1, 0, oXres * M[1][0] / iYres);
-                A.set(1, 1, oYres * M[1][1] / iYres);
-                A.set(1, 2, oZres * M[1][2] / iYres);
-                A.set(2, 0, oXres * M[2][0] / iZres);
-                A.set(2, 1, oYres * M[2][1] / iZres);
-                A.set(2, 2, oZres * M[2][2] / iZres);
+                A.set(0, 0, oXres * xfrm.Get(0, 0) / iXres);
+                A.set(0, 1, oYres * xfrm.Get(0, 1) / iXres);
+                A.set(0, 2, oZres * xfrm.Get(0, 2) / iXres);
+                A.set(1, 0, oXres * xfrm.Get(1, 0) / iYres);
+                A.set(1, 1, oYres * xfrm.Get(1, 1) / iYres);
+                A.set(1, 2, oZres * xfrm.Get(1, 2) / iYres);
+                A.set(2, 0, oXres * xfrm.Get(2, 0) / iZres);
+                A.set(2, 1, oYres * xfrm.Get(2, 1) / iZres);
+                A.set(2, 2, oZres * xfrm.Get(2, 2) / iZres);
                 b = new JamaMatrix(3, 1, 0.0);
 
-                /*b.set(0,0,rrArray[i].X - M[0][3]/iXres);
-                 * b.set(1,0,rrArray[i].Y - M[1][3]/iYres); b.set(2,0,rrArray[i].Z - M[2][3]/iZres);
+                /*b.set(0,0,rrArray[i].X - xfrm.Get(0, 3)/iXres);
+                 * b.set(1,0,rrArray[i].Y - xfrm.Get(1, 3)/iYres); b.set(2,0,rrArray[i].Z - xfrm.Get(2, 3)/iZres);
                  *
                  * X = A.solve(b); TalCenter.X = (float)(X.get(0,0)); TalCenter.Y = (float)(X.get(1,0));TalCenter.Z =
                  * (float)(X.get(2,0)); */
@@ -8074,7 +8074,7 @@ public class FileAfni extends FileBase {
      * @param  oYdim      DOCUMENT ME!
      * @param  oZdim      DOCUMENT ME!
      */
-    private void transformACPCTrilinear(float[] imgBuffer, double[][] xfrm, float iXres, float iYres, float iZres,
+    private void transformACPCTrilinear(float[] imgBuffer, TransMatrix xfrm, float iXres, float iYres, float iZres,
                                         int iXdim, int iYdim, int iZdim, float oXres, float oYres, float oZres,
                                         int oXdim, int oYdim, int oZdim) {
         int i, j, k;
@@ -8090,18 +8090,18 @@ public class FileAfni extends FileBase {
 
         int mod = oXdim / 50;
 
-        T00 = (float) xfrm[0][0];
-        T01 = (float) xfrm[0][1];
-        T02 = (float) xfrm[0][2];
-        T03 = (float) xfrm[0][3];
-        T10 = (float) xfrm[1][0];
-        T11 = (float) xfrm[1][1];
-        T12 = (float) xfrm[1][2];
-        T13 = (float) xfrm[1][3];
-        T20 = (float) xfrm[2][0];
-        T21 = (float) xfrm[2][1];
-        T22 = (float) xfrm[2][2];
-        T23 = (float) xfrm[2][3];
+        T00 = xfrm.Get(0, 0);
+        T01 = xfrm.Get(0, 1);
+        T02 = xfrm.Get(0, 2);
+        T03 = xfrm.Get(0, 3);
+        T10 = xfrm.Get(1, 0);
+        T11 = xfrm.Get(1, 1);
+        T12 = xfrm.Get(1, 2);
+        T13 = xfrm.Get(1, 3);
+        T20 = xfrm.Get(2, 0);
+        T21 = xfrm.Get(2, 1);
+        T22 = xfrm.Get(2, 2);
+        T23 = xfrm.Get(2, 3);
 
         int position1, position2;
         float b1, b2;
@@ -8206,7 +8206,7 @@ public class FileAfni extends FileBase {
      * @param  topY       DOCUMENT ME!
      * @param  topZ       DOCUMENT ME!
      */
-    private void transformTalairachTrilinear(float[] imgBuffer, double[][] xfrm, float iXres, float iYres, float iZres,
+    private void transformTalairachTrilinear(float[] imgBuffer, TransMatrix xfrm, float iXres, float iYres, float iZres,
                                              int iXdim, int iYdim, int iZdim, float oXres, float oYres, float oZres,
                                              int oXdim, int botX, int botY, int botZ, int topX, int topY, int topZ) {
 
@@ -8224,18 +8224,18 @@ public class FileAfni extends FileBase {
 
         int mod = oXdim / 50;
 
-        T00 = (float) xfrm[0][0];
-        T01 = (float) xfrm[0][1];
-        T02 = (float) xfrm[0][2];
-        T03 = (float) xfrm[0][3];
-        T10 = (float) xfrm[1][0];
-        T11 = (float) xfrm[1][1];
-        T12 = (float) xfrm[1][2];
-        T13 = (float) xfrm[1][3];
-        T20 = (float) xfrm[2][0];
-        T21 = (float) xfrm[2][1];
-        T22 = (float) xfrm[2][2];
-        T23 = (float) xfrm[2][3];
+        T00 = xfrm.Get(0, 0);
+        T01 = xfrm.Get(0, 1);
+        T02 = xfrm.Get(0, 2);
+        T03 = xfrm.Get(0, 3);
+        T10 = xfrm.Get(1, 0);
+        T11 = xfrm.Get(1, 1);
+        T12 = xfrm.Get(1, 2);
+        T13 = xfrm.Get(1, 3);
+        T20 = xfrm.Get(2, 0);
+        T21 = xfrm.Get(2, 1);
+        T22 = xfrm.Get(2, 2);
+        T23 = xfrm.Get(2, 3);
 
         int position1, position2;
         float b1, b2;

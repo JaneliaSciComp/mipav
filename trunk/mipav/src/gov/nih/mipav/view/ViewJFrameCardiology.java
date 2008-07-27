@@ -2137,7 +2137,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
             Vector3f center = image2load.getImageCentermm(false);
 
             xfrm = new TransMatrix(3);
-            xfrm.identity();
+            xfrm.MakeIdentity();
 
             xfrm.setTranslate(center.X, center.Y);
             xfrm.setTranslate(-center.X, -center.Y);

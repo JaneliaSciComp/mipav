@@ -10,7 +10,6 @@ import gov.nih.mipav.model.structures.*;
 import Jama.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -23,29 +22,44 @@ import javax.swing.event.*;
 
 
 /**
- * Dialog to get user input, then call algorithmTransform. User may select resample or transform. User may input matrix
- * or use image's associated transformation matrix. User may input desired resolutions and dims. User may select
- * interpolation method. Creates new volume.
+ * Dialog to get user input, then call algorithmTransform. User may select
+ * resample or transform. User may input matrix or use image's associated
+ * transformation matrix. User may input desired resolutions and dims. User
+ * may select interpolation method. Creates new volume.
  * 
- * * You can choose either of 2 goals in bilinear or trilinear interpolation, but you cannot choose both.
+ * You can choose either of 2 goals in bilinear or trilinear interpolation,
+ *    but you cannot choose both.
  * You can choose to:
- * 1.) Match the start row, column, and slice in the original image with the start row, column, and
- * slice in the transformed image with no duplication of start values and match the end row, column, and slice in
- * the original image with the end row column, and slice in the transformed image with no duplication of end values
- * with a smooth interpolation occurring between the beginning and end.  For a smooth bilinear or trilinear interpolation
- * you must map from 0 to n1t - 1 in the transformed image to 0 to n1 - 1 in the original image.  Mapping from n1t - 1
- * to n1t in the transformed image to n1 - 1 to n1 in the source image would lead to multiple identical transformed copies
- * for source image values between n1 - 1 and n1 - 0.5 and identical or out of bounds transformed values for source values
- * from n1 - 0.5 to n1. This necessitates using equations of the form (dim - 1) * res = (transformedDim - 1) * transformedRes.
+
+ * 1.) Match the start row, column, and slice in the original image with the
+ * start row, column, and slice in the transformed image with no duplication
+ * of start values and match the end row, column, and slice in the original
+ * image with the end row column, and slice in the transformed image with no
+ * duplication of end values with a smooth interpolation occurring between the
+ * beginning and end.  For a smooth bilinear or trilinear interpolation you
+ * must map from 0 to n1t - 1 in the transformed image to 0 to n1 - 1 in the
+ * original image.  Mapping from n1t - 1 to n1t in the transformed image to n1
+ * - 1 to n1 in the source image would lead to multiple identical transformed
+ * copies for source image values between n1 - 1 and n1 - 0.5 and identical or
+ * out of bounds transformed values for source values from n1 - 0.5 to
+ * n1. This necessitates using equations of the form (dim - 1) * res =
+ * (transformedDim - 1) * transformedRes.
+
  * Since the field of view = dim * res, this does not preserve field of view.
- * If a user wishes to reslice an image and have the beginning and end slices match without duplication,
- * then this would be the method to select
- * 2.) If a user simply wishes to magnify the field of view and is not worried about duplicate beginning and end values,
- * then preserve the field of view = dim * res = transformedDim * transformedRes.
+
+ * If a user wishes to reslice an image and have the beginning and end slices
+ * match without duplication, then this would be the method to select
+
+ * 2.) If a user simply wishes to magnify the field of view and is not worried
+ * about duplicate beginning and end values, then preserve the field of view =
+ * dim * res = transformedDim * transformedRes.
  * 
- * If the interpolation is not bilinear or trilinear, then the purpose of interpolation is always to preserve the FOV.
- * For either interpolation purpose, note that if the user selects the new dimension, then the floating point 
- * resolution can be perfectly adjusted, but if the user selects the new resolution, since dimensions are integers,
+ * If the interpolation is not bilinear or trilinear, then the purpose of
+ * interpolation is always to preserve the FOV.
+
+ * For either interpolation purpose, note that if the user selects the new
+ * dimension, then the floating point resolution can be perfectly adjusted,
+ * but if the user selects the new resolution, since dimensions are integers,
  * the new dimension value may not be perfectly adjusted.
  *
  * @version  0.1 Nov. 19, 1999
@@ -1000,7 +1014,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      */
     public void readTransformMatrixFile(String fileName) {
         TransMatrix matrix = new TransMatrix(image.getNDims() + 1);
-        matrix.identity();
+        matrix.MakeIdentity();
 
         if (fileName == null) {
             MipavUtil.displayError("filename = null");
@@ -1024,7 +1038,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             //new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
         } catch (IOException error) {
             MipavUtil.displayError("Matrix read error");
-            fileTransMatrix.identity();
+            fileTransMatrix.MakeIdentity();
         }
     }
 
@@ -1255,7 +1269,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         Vector3f center = null;
 
         if (doInvMat) {
-        	xfrm.invert();
+        	xfrm.Inverse();
         }
         //if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
         //    xfrm.invert();
@@ -1400,9 +1414,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             //boolean useImageMatrix = scriptParameters.getParams().getBoolean("use_image_matrix");
             boolean useImageMatrix = false;
 			
-            double[][] xMat = null;
-
-            xMat = new double[image.getNDims()+1][image.getNDims()+1];
+            double[] xCol = new double[image.getNDims()+1];
             
             if ((image.getNDims() == 2) || do25D) {
                 transMat = new TransMatrix(3);
@@ -1416,10 +1428,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 oYdim = outputDim[1];
 
                 if (!useImageMatrix) {
-                	xMat = new double[3][3];
+                	xCol = new double[3];
 
                 	for (int i = 0; i < 3; i++) {
-                		xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
+                		xCol = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
                 	}
                 }
             } else {
@@ -1522,31 +1534,29 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 				if (transformSource.equals("file")) {
 					String matrixFile = scriptParameters.getParams().getString("transform_file");
 					readTransformMatrixFile(matrixFile);
-					transMat.identity();
-					transMat.timesEquals(fileTransMatrix);
+					transMat.MakeIdentity();
+					transMat.Mult(fileTransMatrix);
 					xfrm = transMat;
 				} else if (transformSource.equals("user")) {
-                	xMat = new double[4][4];
+                	double[][] xMat = new double[4][4];
 
                 	for (int i = 0; i < 4; i++) {
                 		xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
                 	}
-					transMat.setMatrix(xMat);
+					transMat.copyMatrix(xMat);
 					xfrm = transMat;
 				} else if (transformSource.equals("self")) {
-					transMat.identity();
+					transMat.MakeIdentity();
 					xfrm = transMat;
 					if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
 						isSATransform = true;
 					}
             
-					TransMatrix imageMatrix = null;
-          
-					imageMatrix = image.getMatrix();
+					TransMatrix imageMatrix = image.getMatrix();
 					
-					xfrm.timesEquals(imageMatrix);
+					xfrm.Mult(imageMatrix);
 				} else if (transformSource.equals("none")) {
-					transMat.identity();
+					transMat.MakeIdentity();
 					xfrm = transMat;
 				}
 					
@@ -1623,17 +1633,17 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             scriptParameters.getParams().put(ParameterFactory.newParameter("do_pad", doPad));
             scriptParameters.getParams().put(ParameterFactory.newParameter("pad_value", padValue));
 
-            double[][] xMat;
-            xMat = xfrm.getMatrix();
-
             if ((image.getNDims() == 2) || do25D) {
                 scriptParameters.getParams().put(ParameterFactory.newParameter("output_res",
                                                                                new float[] { oXres, oYres }));
                 scriptParameters.getParams().put(ParameterFactory.newParameter("output_dim",
                                                                                new int[] { oXdim, oYdim }));
 
+                double[] xCol = new double[3];
+
                 for (int i = 0; i < 3; i++) {
-                    scriptParameters.getParams().put(ParameterFactory.newParameter("x_mat" + i, xMat[i]));
+                    xfrm.getColumn(i, xCol);
+                    scriptParameters.getParams().put(ParameterFactory.newParameter("x_mat" + i, xCol));
                 }
 
             } else {
@@ -1662,9 +1672,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 				} else if (userDefinedMatrix.isSelected()) {
 					transformSource = "user";
 					scriptParameters.getParams().put(ParameterFactory.newParameter("transform_source", transformSource));
-					xMat = xfrm.getMatrix();
+                                        double[] xCol = new double[4];
 					for (int i = 0; i < 4; i++) {
-						scriptParameters.getParams().put(ParameterFactory.newParameter("x_mat" + i, xMat[i]));
+                                            xfrm.getColumn(i, xCol);
+                                            scriptParameters.getParams().put(ParameterFactory.newParameter("x_mat" + i, xCol));
 					}
 				} else if (storedMatrix.isSelected()) {
 					transformSource = "self";
@@ -3281,24 +3292,43 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     }
 
     /**
-     * Reorient the matix to world and left-hand coordinate systems if required. Note at the moment the voxel
-     * resolutions are handled in the transformation algorithm. At some future point we should adjust for voxel
-     * resolutions in the transformation matrix - its faster.
-     *
-     * @param   matrix  the matrix to be converted to the
-     *
-     * @return  DOCUMENT ME!
+     * Re-orient the matrix to world and left-hand coordinate systems if required. 
+     * @see reorientCoordSystem
+     * @param   rkMatrix  the matrix to be converted
+     * @return result
      */
-    private TransMatrix reorientCoordSystem(TransMatrix matrix) {
+    private TransMatrix reorientCoordSystem(TransMatrix rkMatrix)
+    {
+    	return JDialogScriptableTransform.reorientCoordSystem(rkMatrix, image, resampleImage, wcSystem, leftHandSystem);
+    	
+    }
+    
+    /**
+     * Re-orient the matrix to world and left-hand coordinate systems if
+     * required. Note at the moment the voxel resolutions are handled in the
+     * transformation algorithm. At some future point we should adjust for
+     * voxel resolutions in the transformation matrix - its faster.
+     *
+     * @param rkMatrix  the matrix to be converted
+     * @param rkImage main image
+     * @param rkResampleImage resampled image
+     * @param bWcSystem true if world coord system
+     * @param bLeftHandSystem true if left-handed system.
+     * @return result
+     */
+    public static TransMatrix reorientCoordSystem(TransMatrix rkMatrix, 
+    		ModelImage rkImage, ModelImage rkResampleImage, 
+    		boolean bWcSystem, boolean bLeftHandSystem) {
 
         try {
             TransMatrix mat = new TransMatrix(4);
             TransMatrix wcMatrix = new TransMatrix(4);
             TransMatrix rh_lhMatrix = new TransMatrix(4);
-            double[][] dMat;
+            //double[][] dMat;
 
-            dMat = rh_lhMatrix.getArray(); // Identity
-            dMat[2][2] = -1; // right handed to left handed or left handed to right handed coordinate systems
+            // right handed to left handed or left handed to right handed
+            // coordinate systems
+            rh_lhMatrix.Set(2, 2, -1);
 
             // p.223 Foley, Van Dam ...
             // Flipping only z axis
@@ -3307,9 +3337,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             // 0  0 -1  0
             // 0  0  0  1
 
-            dMat = wcMatrix.getArray(); // Identity
-            dMat[1][1] = -1;
-            dMat[2][2] = -1; // world coordinate
+            wcMatrix.Set(1, 1, -1);
+            wcMatrix.Set(2, 2, -1);
 
             // Flipping y and z axes
             // Left handed cooordinates will remain left handed and right handed will remain right handed
@@ -3318,59 +3347,59 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             // 0  0 -1  0
             // 0  0  0  1
 
-            Vector3f cPt = image.getImageCentermm(false);
-            Vector3f cPtRS = resampleImage.getImageCentermm(false);
+            Vector3f cPt = rkImage.getImageCentermm(false);
+            Vector3f cPtRS = rkResampleImage.getImageCentermm(false);
 
-            if ((wcSystem == true) && (leftHandSystem == true)) {
+            if ((bWcSystem == true) && (bLeftHandSystem == true)) {
 
                 // change from both the "left-hand" and world coordinate system.
                 mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
-                mat.timesEquals(rh_lhMatrix);
-                mat.timesEquals(wcMatrix);
+                mat.Mult(rh_lhMatrix);
+                mat.Mult(wcMatrix);
                 mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
-                mat.timesEquals(matrix);
+                mat.Mult(rkMatrix);
 
                 mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
-                mat.timesEquals(wcMatrix);
-                mat.timesEquals(rh_lhMatrix);
+                mat.Mult(wcMatrix);
+                mat.Mult(rh_lhMatrix);
                 mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
 
                 // mat.print();
                 return mat;
-            } else if (wcSystem == true) { // Change just from the world coordinate system
+            } else if (bWcSystem == true) { // Change just from the world coordinate system
 
                 mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
-                mat.timesEquals(wcMatrix);
+                mat.Mult(wcMatrix);
                 mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
-                mat.timesEquals(matrix);
+                mat.Mult(rkMatrix);
 
                 mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
-                mat.timesEquals(wcMatrix);
+                mat.Mult(wcMatrix);
                 mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
 
                 return mat;
-            } else if (leftHandSystem == true) { // Change just from the "left-hand" system
+            } else if (bLeftHandSystem == true) { // Change just from the "left-hand" system
 
                 mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
-                mat.timesEquals(rh_lhMatrix);
+                mat.Mult(rh_lhMatrix);
                 mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
-                mat.timesEquals(matrix);
+                mat.Mult(rkMatrix);
 
                 mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
-                mat.timesEquals(rh_lhMatrix);
+                mat.Mult(rh_lhMatrix);
                 mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
 
                 return mat;
             } else {
-                return matrix;
+                return rkMatrix;
             }
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: Orient matrix.");
 
-            return matrix;
+            return rkMatrix;
         }
     }
 
@@ -3490,7 +3519,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             xfrm = new TransMatrix(4);
         }
 
-        xfrm.identity();
+        xfrm.MakeIdentity();
 
         iXres = image.getFileInfo(0).getResolutions()[0];
         iYres = image.getFileInfo(0).getResolutions()[1];
@@ -3663,10 +3692,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         
         if (fileMatrix.isSelected()) { // read matrix from file
 
-            // xfrm.timesEquals(readTransformMatrixFile(matrixFile));
+            // xfrm.Mult(readTransformMatrixFile(matrixFile));
             ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText("Matrix loaded from Transform dialog:\n");
             ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText(reorientCoordSystem(fileTransMatrix).toString());
-            xfrm.timesEquals(reorientCoordSystem(fileTransMatrix));
+            xfrm.Mult(reorientCoordSystem(fileTransMatrix));
         } else if (userDefinedMatrix.isSelected()) { // user matrix
 
             // user stuff
@@ -3830,31 +3859,23 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             }
                                     
             if (!do25D) {
-                xfrm.timesEquals(imageMatrix);
+                xfrm.Mult(imageMatrix);
             } else {
-                TransMatrix xfrmB = new TransMatrix(4);
-                xfrmB = imageMatrix;
-
-                double[][] matB = new double[4][4];
-                matB = xfrmB.getMatrix();
-
-                double[][] mat25 = new double[3][3];
-                mat25[0][0] = matB[0][0];
-                mat25[0][1] = matB[0][1];
-                mat25[0][2] = matB[0][3];
-                mat25[1][0] = matB[1][0];
-                mat25[1][1] = matB[1][1];
-                mat25[1][2] = matB[1][3];
-                mat25[2][0] = 0.0;
-                mat25[2][1] = 0.0;
-                mat25[2][2] = 1.0;
-
                 TransMatrix xfrm25 = new TransMatrix(3);
-                xfrm25.setMatrix(mat25);
-                xfrm.timesEquals(xfrm25);
+                xfrm25.Set(0, 0, imageMatrix.Get(0, 0));
+                xfrm25.Set(0, 1, imageMatrix.Get(0, 1));
+                xfrm25.Set(0, 2, imageMatrix.Get(0, 3));
+                xfrm25.Set(1, 0, imageMatrix.Get(1, 0));
+                xfrm25.Set(1, 1, imageMatrix.Get(1, 1));
+                xfrm25.Set(1, 2, imageMatrix.Get(1, 3));
+                xfrm25.Set(2, 0, 0.0f);
+                xfrm25.Set(2, 1, 0.0f);
+                xfrm25.Set(2, 2, 1.0f);
+
+                xfrm.Mult(xfrm25);
             }
         } else if (noTransform.isSelected()) { // no transform
-            xfrm.identity();
+            xfrm.MakeIdentity();
         }
 
        

@@ -445,13 +445,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double b1, b2;
         double value;
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;
@@ -650,13 +649,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         invSmoothX = 1.0 / smoothX;
         invSmoothY = 1.0 / smoothY;
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;
@@ -867,13 +865,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         invSmoothX = 1.0 / smoothX;
         invSmoothY = 1.0 / smoothY;
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;
@@ -1081,13 +1078,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double[] sumY = new double[nBins];
         double[] sumY2 = new double[nBins];
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;
@@ -1254,13 +1250,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double[] sumY = new double[nBins];
         double[] sumY2 = new double[nBins];
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;
@@ -1468,13 +1463,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double[] sumY = new double[nBins];
         double[] sumY2 = new double[nBins];
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;
@@ -1727,13 +1721,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double sum = 0.0;
         long count = 0;
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;
@@ -1835,13 +1828,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double sum = 0.0;
         long count = 0;
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;
@@ -1954,13 +1946,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         invSmoothX = 1.0 / smoothX;
         invSmoothY = 1.0 / smoothY;
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;
@@ -2090,13 +2081,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         invSmoothY = 1.0 / smoothY;
 
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;
@@ -2228,13 +2218,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         invSmoothX = 1.0 / smoothX;
         invSmoothY = 1.0 / smoothY;
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;
@@ -2368,13 +2357,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         invSmoothX = 1.0 / smoothX;
         invSmoothY = 1.0 / smoothY;
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;
@@ -2620,13 +2608,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double countSqr = 0;
         double varX, varY, varXY;
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;
@@ -2760,13 +2747,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         invSmoothX = 1.0 / smoothX;
         invSmoothY = 1.0 / smoothY;
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;
@@ -2930,13 +2916,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         invSmoothX = 1.0 / smoothX;
         invSmoothY = 1.0 / smoothY;
 
-        double[][] xfrm = tMatrix.getArray();
-        double T00 = xfrm[0][0];
-        double T01 = xfrm[0][1];
-        double T02 = xfrm[0][2];
-        double T10 = xfrm[1][0];
-        double T11 = xfrm[1][1];
-        double T12 = xfrm[1][2];
+        double T00 = tMatrix.M00;
+        double T01 = tMatrix.M01;
+        double T02 = tMatrix.M02;
+        double T10 = tMatrix.M10;
+        double T11 = tMatrix.M11;
+        double T12 = tMatrix.M12;
 
         double aT00 = T00;
         double aT10 = T10;

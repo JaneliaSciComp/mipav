@@ -1132,7 +1132,7 @@ public class FileIO {
             TransMatrix invMatrix = ((TransMatrix) (matrix.clone()));
 
             try {
-                invMatrix.invert();
+                invMatrix.Inverse();
                 invMatrix.setTransformID(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
 
                 image.getMatrixHolder().addMatrix(invMatrix);
@@ -1143,7 +1143,7 @@ public class FileIO {
                 // image.getFileInfo(m).setTransformID(FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL);
                 // }
             } catch (RuntimeException rte) {
-                invMatrix.identity();
+                invMatrix.MakeIdentity();
                 // MipavUtil.displayError("Error = " + rte);
             }
         }
@@ -8811,7 +8811,7 @@ public class FileIO {
                }
 
                TransMatrix invMatrix = (TransMatrix) matrix.clone();
-               invMatrix.invert();
+               invMatrix.Inverse();
         	   
                float[] imageOrg = originalFileInfo.getOrigin();
                double[] imageOrgDbl = new double[imageOrg.length];
@@ -9272,7 +9272,7 @@ public class FileIO {
                 }
 
                 TransMatrix invMatrix = (TransMatrix) matrix.clone();
-                invMatrix.invert();
+                invMatrix.Inverse();
 
                 float[] imageOrg = image.getFileInfo(0).getOrigin();
                 double[] imageOrgDbl = new double[imageOrg.length];

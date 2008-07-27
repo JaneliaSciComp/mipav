@@ -12,7 +12,6 @@ import java.io.*;
 
 import java.util.*;
 
-import javax.media.j3d.Material;
 import javax.swing.*;
 
 import javax.vecmath.*;
@@ -717,15 +716,15 @@ public class FileSurface {
                 }
 
                 if (isSur == true) {
-                    double[][] inverseDicomArray = null;
+                	TransMatrix inverseDicomMatrix = null;
 
                     if (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
-                        TransMatrix inverseDicomMatrix = (TransMatrix) (kImage.getMatrix().clone());
-                        inverseDicomMatrix.invert();
-                        inverseDicomArray = inverseDicomMatrix.getMatrix();
+                        inverseDicomMatrix = (TransMatrix) (kImage.getMatrix().clone());
+                        inverseDicomMatrix.Inverse();
+                        //inverseDicomArray = inverseDicomMatrix.getMatrix();
                     }
 
-                    ModelTriangleMesh.save(name, meshesCopy, true, direction, startLocation, box, inverseDicomArray, perVertexColorArray);
+                    ModelTriangleMesh.save(name, meshesCopy, true, direction, startLocation, box, inverseDicomMatrix, perVertexColorArray);
                 } else {
                     ModelTriangleMesh.saveAsVRML(name, meshesCopy, true, direction, startLocation, box,
                                                  new Color3f(color.x, color.y, color.z));

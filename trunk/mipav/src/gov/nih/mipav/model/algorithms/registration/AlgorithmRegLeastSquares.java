@@ -135,7 +135,7 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    public TransMatrix buildXfrm(double[] p1, double[] p2, Matrix R) {
+    private TransMatrix buildXfrm(double[] p1, double[] p2, Matrix R) {
         int i, j;
 
         try {
@@ -151,10 +151,10 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
 
             for (i = 0; i < dim; i++) {
                 T[i] = p2[i] - P1.get(i, 0); // T=p2-R*p1
-                xfrm.set(i, dim, T[i]); // set last col of xfrm to T
+                xfrm.set(i, dim, (float)T[i]); // set last col of xfrm to T
             }
 
-            xfrm.setMatrix(0, dim - 1, 0, dim - 1, R); // copy R into dimxdim elements of xfrm
+            xfrm.setMatrix(0, dim - 1, 0, dim - 1, R.getArray()); // copy R into dimxdim elements of xfrm
 
             for (j = 0; j < dim; j++) {
                 xfrm.set(dim, j, 0); // set last row of xfrm to 0,0,0,1
@@ -435,12 +435,12 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
     }
 
     /**
-     * Accesses xfrm from point set A to point set B.
+     * Set transform from point set A to point set B.
      *
-     * @param  xfrm  DOCUMENT ME!
+     * @param  xfrm  transform to copy
      */
     public void setTransformBtoA(TransMatrix xfrm) {
-        xfrmBA = (TransMatrix) xfrm.copy();
+        xfrmBA = new TransMatrix( xfrm );
     }
 
     /**
@@ -449,7 +449,7 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
      * @param   coordsA  first 3D point set
      * @param   coordsB  second 3D point set
      *
-     * @return  int distinguishing reason for error
+     * @return  distinguishing reason for error
      */
     public int setup(double[][] coordsA, double[][] coordsB) {
         int i, j;

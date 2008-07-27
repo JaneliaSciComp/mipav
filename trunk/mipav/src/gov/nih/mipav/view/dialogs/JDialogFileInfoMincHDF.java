@@ -316,7 +316,7 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 	int nextIndex = 0, index = 0;
 	String subStr = new String();
 
-	for (int i = 0; i < imageA.getMatrix().getNRows(); i++) {
+	for (int i = 0; i < imageA.getMatrix().getDim(); i++) {
 	    nextIndex = matrixString.indexOf("\n", index);
 
 	    if (nextIndex != -1) {

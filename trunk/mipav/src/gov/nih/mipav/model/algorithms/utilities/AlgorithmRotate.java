@@ -131,7 +131,6 @@ public class AlgorithmRotate extends AlgorithmBase {
         boolean[] axisFlip = { false, false, false, false };
 
         TransMatrix rotMatrix = new TransMatrix(4);
-        rotMatrix.identity();
 
         if (rotateAxis == X_AXIS_180) {
             axisFlip[1] = true;
@@ -534,13 +533,11 @@ public class AlgorithmRotate extends AlgorithmBase {
                 System.err.println("doing new matrix operation");
                 destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
-                TransMatrix tMat = new TransMatrix(rotMatrix.getColumnDimension());
-                tMat.identity();
+                TransMatrix tMat = new TransMatrix(rotMatrix);
                 tMat.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
-                tMat.timesEquals(rotMatrix);
-                tMat.setMatrix(newFileInfo[0].getOrigin()[0], 0, 3);
-                tMat.setMatrix(newFileInfo[0].getOrigin()[1], 1, 3);
-                tMat.setMatrix(newFileInfo[0].getOrigin()[2], 2, 3);
+                tMat.Set(0, 3, newFileInfo[0].getOrigin()[0]);
+                tMat.Set(1, 3, newFileInfo[0].getOrigin()[1]);
+                tMat.Set(2, 3, newFileInfo[0].getOrigin()[2]);
                 System.err.println("new matrix added: " + tMat);
                 destImage.getMatrixHolder().addMatrix(tMat);
             }
@@ -569,7 +566,7 @@ public class AlgorithmRotate extends AlgorithmBase {
             matrix = oldDicomInfo.getPatientOrientation();
 
             if (matrix != null) {
-                rotMatrix.timesEquals(matrix);
+                rotMatrix.Mult(matrix);
                 imageOrient = matrixToDICOMString(rotMatrix);
             }
 
@@ -672,13 +669,11 @@ public class AlgorithmRotate extends AlgorithmBase {
             if (srcImage.getNDims() >= 3) {
                 destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
-                TransMatrix tMat = new TransMatrix(rotMatrix.getColumnDimension());
-                tMat.identity();
+                TransMatrix tMat = new TransMatrix(rotMatrix);
                 tMat.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
-                tMat.timesEquals(rotMatrix);
-                tMat.setMatrix(newDicomInfo[0].getOrigin()[0], 0, 3);
-                tMat.setMatrix(newDicomInfo[0].getOrigin()[1], 1, 3);
-                tMat.setMatrix(newDicomInfo[0].getOrigin()[2], 2, 3);
+                tMat.Set(0, 3, newDicomInfo[0].getOrigin()[0]);
+                tMat.Set(1, 3, newDicomInfo[0].getOrigin()[1]);
+                tMat.Set(2, 3, newDicomInfo[0].getOrigin()[2]);
                 System.err.println("new matrix added: " + tMat);
                 destImage.getMatrixHolder().addMatrix(tMat);
             }
@@ -815,13 +810,12 @@ public class AlgorithmRotate extends AlgorithmBase {
      *          the matrix delimited by "\")
      */
     private String matrixToDICOMString(TransMatrix matrix) {
-        double[][] dMatrix = matrix.getArray();
         String strMatrix = new String();
 
         DecimalFormat nf = new DecimalFormat("##0.0000000");
 
-        strMatrix = nf.format(dMatrix[0][0]) + "\\" + nf.format(dMatrix[0][1]) + "\\" + nf.format(dMatrix[0][2]) +
-                    "\\" + nf.format(dMatrix[1][0]) + "\\" + nf.format(dMatrix[1][1]) + "\\" + nf.format(dMatrix[1][2]);
+        strMatrix = nf.format(matrix.Get(0, 0)) + "\\" + nf.format(matrix.Get(0, 1)) + "\\" + nf.format(matrix.Get(0, 2)) +
+                    "\\" + nf.format(matrix.Get(1, 0)) + "\\" + nf.format(matrix.Get(1, 1)) + "\\" + nf.format(matrix.Get(1, 2));
 
         return strMatrix;
     }
