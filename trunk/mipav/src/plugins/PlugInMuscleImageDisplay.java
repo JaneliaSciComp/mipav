@@ -339,9 +339,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      * for setting up the image rather than ViewJFrameImage's init()
      * @param image the model image
      * @param titles
-     * @param mirrorVoiItemsArr
+     * @param mirrorCalcItemsArr
      * @param mirrorZ
-     * @param noMirrorVoiItemsArr
+     * @param noMirrorCalcItemsArr
      * @param noMirrorZ
      * @param imageType
      * @param symmetry
@@ -1531,7 +1531,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	public static final String BACK = "Back";
     	public static final String RESET = "Reset";
     	public static final String HIDE_ONE = "Hide except";
-    	public static final String LOAD_VOI = "Load VOI";
     	
     	/** default button list*/
     	protected String buttonStringList[] = {OK, HIDE_ALL, HELP};
@@ -1710,29 +1709,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         /**Buffer for hide/show functions related to HIDE_ALL button**/
         private VOIVector voiPromptBuffer;
         
-        /**Panel with buttons to show previous VOIs, will eventually have Livewire implications*/
-        private JPanel previousPaneVOIs;
-        
         /**Snake algorithm for 3D propagating operation/ */
         private AlgorithmSnake snakeAlgo;
-        
-        /** Text for muscles where a mirror muscle may exist. */
-		private String[] mirrorVoiItemsArr;
-
-		/** Text for muscles where mirror muscles are not considered. */
-		private String[] noMirrorVoiItemsArr;
-		
-		/** Side check box for all symmetric objects. */
-		private ColorButtonPanel[] mirrorCheckVoiItemsArr;
-		
-		/** Side check box for all non-symmetric objects. */
-		private ColorButtonPanel[] noMirrorCheckVoiItemsArr;
-		
-		/** Buttons for all symmetric objects. */
-		private JButton[] mirrorButtonVoiItemsArr;
-		
-		/** Buttons for all non-symmetric objects. */
-		private JButton[] noMirrorButtonVoiItemsArr;
         
         /**Progress bar for snake algorithm*/
         private ViewJProgressBar snakeProgress;
@@ -1740,14 +1718,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         /**Propagation menu for smoothing if 3D image*/
         private JMenu propMenu;
         
-        /**pane from which VOI was pressed*/
-        private int callingPane;
-        
         /**VOI under investigation, to be replaced if cancel button is pressed.*/
         private PlugInSelectableVOI voiInvestigated = null;
-        
-        /**A mapping of names to color panels for easy referencing. */
-		private TreeMap<String,ColorButtonPanel> checkBoxLocationTree;
         
         /**
          * Constructor that only requires containing frame. Title equals "VOI"
@@ -1756,12 +1728,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         public VoiDialogPrompt(PlugInMuscleImageDisplay theParentFrame) {
             super(theParentFrame, "VOI");
            
-            this.callingPane = 0;
             setButtons(buttonStringList);
             
             voiPromptBuffer = new VOIVector();
-            
-            checkBoxLocationTree = new TreeMap<String, ColorButtonPanel>();
             
             initDialog();
         }
@@ -1887,39 +1856,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 	decSlice();
                 } else if (command.equals("PropVOIAll")) {
                 	performSnake(AlgorithmSnake.PROP_ALL);
-                } else if (command.equals(LOAD_VOI)) {
-	            	//checkAndProcessForAllButtonsPressed();	
-	            	String text = ((JButton)e.getSource()).getText();
-	            	VOIVector vec = getActiveImage().getVOIs();
-	            	boolean exists = false;
-	            	for(int i=0; i<vec.size(); i++) 
-	            		if(vec.get(i).getName().equals(text)) {
-	            			vec.get(i).removeVOIListener(checkBoxLocationTree.get(text).getColorButton());
-	            			vec.remove(i);
-	            			exists = true;
-	            			checkBoxLocationTree.get(text).setColor(Color.BLACK);
-	            			checkBoxLocationTree.get(text).repaint();
-	            			((JButton)e.getSource()).setSelected(false);
-	            		}
-	            	if(!exists) {
-	            		VOI rec = voiBuffer.get(text);
-	            		Color c = null;
-	            		if((c = voiBuffer.get(rec.getName()).getColor()).equals(PlugInSelectableVOI.INVALID_COLOR) && 
-	            				(c = hasColor(rec)).equals(PlugInSelectableVOI.INVALID_COLOR)) {
-	                		c = colorPick[colorChoice++ % colorPick.length];
-	                	}
-	            		rec.removeVOIListener(checkBoxLocationTree.get(text).getColorButton());
-	            		rec.addVOIListener(checkBoxLocationTree.get(text).getColorButton());
-	            		
-	                	rec.setColor(c);
-	            		rec.setThickness(2);
-	            		
-	            		((JButton)e.getSource()).setSelected(true);
-	            		getActiveImage().registerVOI(rec);
-	            	}
-	            		
-	            	updateImages(true);
-	            }
+                } 
             }
             
         /**Method for dealing with algorithms*/
@@ -1937,8 +1874,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				snakeProgress.dispose();
 			}
 		}
-        
-        
 
 		/**
          * Performs snaking operation on a pre-selected VOI of given tape propagation type
@@ -1995,9 +1930,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
          * Prepares to leave voi dialog, clears the voiPromptBuffer.
          */
         public void takeDownDialog() {
-        	previousPaneVOIs.removeAll();
-        	
-        	previousPaneVOIs = new JPanel();
         	
         	removeAll();
         	voiPromptBuffer.removeAllElements();
@@ -2012,8 +1944,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	this.objectName = name;
         	this.closedVoi = voiBuffer.get(objectName).isClosed();
         	this.numVoi = voiBuffer.get(objectName).getMaxCurvesPerSlice();
-        	this.callingPane = voiBuffer.get(objectName).getLocation();
-        	
         	warningText.setText("");
         	
         	voiPromptBuffer.removeAllElements();
@@ -2028,22 +1958,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        		buttonGroup[i].setPreferredSize(new Dimension(185, 30));
 	        	}
 	        }
-
-        	if(callingPane > 0) {
-        		//initilize mirrorVOI and noMirrorVOI to previous pane
-        		mirrorVoiItemsArr = new String[mirrorArr[callingPane-1].length];
-        		noMirrorVoiItemsArr = new String[noMirrorArr[callingPane-1].length];
-        		
-        		for(int i=0; i < mirrorVoiItemsArr.length; i++) 
-        			mirrorVoiItemsArr[i] = mirrorArr[callingPane-1][i];
-        		
-        		for(int i=0; i < noMirrorVoiItemsArr.length; i++) 
-        			noMirrorVoiItemsArr[i] = noMirrorArr[callingPane-1][i];
-        		
-        		previousPaneVOIs.add(initSymmetricalObjects(), BorderLayout.NORTH);
-        		previousPaneVOIs.add(initNonSymmetricalObjects(), BorderLayout.SOUTH);
-        		System.out.println("Take buttons from pane number "+(callingPane-1));
-        	}
             
             updateSelectionLabel();
             
@@ -2057,117 +1971,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         public String getObjectName() {
             return objectName;
         }
-        
-        /**
-		 * Initializes the symmetric buttons from a particular pane.
-		 */
-		private JPanel initSymmetricalObjects() {
-
-            mirrorCheckVoiItemsArr = new ColorButtonPanel[mirrorVoiItemsArr.length * 2];
-            mirrorButtonVoiItemsArr = new JButton[mirrorVoiItemsArr.length * 2];
-			JPanel subPanel = new JPanel(new GridBagLayout());
-            subPanel.setForeground(Color.black);
-
-			String[] mirrorString = new String[mirrorVoiItemsArr.length * 2];
-	        
-	        for(int i=0; i<mirrorVoiItemsArr.length * 2; i++) {
-	            String symmetry1 = "", symmetry2 = "";
-	            if(symmetry.equals(Symmetry.LEFT_RIGHT)) {
-	                symmetry1 = "Left ";
-	                symmetry2 = "Right ";
-	            } else if(symmetry.equals(Symmetry.TOP_BOTTOM)) {
-	                symmetry1 = "Top ";
-	                symmetry2 = "Bottom ";
-	            }
-	            
-	            mirrorString[i] = (i % 2) == 0 ? new String(symmetry1+mirrorVoiItemsArr[i/2]) : 
-	                                                        new String(symmetry2+mirrorVoiItemsArr[i/2]);
-	        }
-	        
-	        GridBagConstraints gbc = new GridBagConstraints();
-            gbc.anchor = GridBagConstraints.WEST;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.weightx = 1;
-            gbc.weighty = 0;
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-            
-            for(int i=0; i<mirrorVoiItemsArr.length * 2; i++) {
-                               
-            	mirrorCheckVoiItemsArr[i] = new ColorButtonPanel(Color.BLACK, mirrorString[i]);
-                
-                checkBoxLocationTree.put(mirrorString[i], mirrorCheckVoiItemsArr[i]);
-                
-                mirrorButtonVoiItemsArr[i] = new JButton(mirrorString[i]);
-                mirrorButtonVoiItemsArr[i].setEnabled(voiExists(mirrorString[i]));
-                mirrorButtonVoiItemsArr[i].setFont(MipavUtil.font12B);
-                mirrorButtonVoiItemsArr[i].setActionCommand(LOAD_VOI);
-                mirrorButtonVoiItemsArr[i].addActionListener(this);
-                
-                if(i != 0 && i % 2 == 0) {
-                    gbc.gridy++;
-                    gbc.gridx = 0;
-                }
-                gbc.weightx = 0;
-                gbc.insets = new Insets(0, 10, 0, 0);
-                subPanel.add(mirrorCheckVoiItemsArr[i], gbc);
-                gbc.insets = new Insets(0, 0, 0, 0);
-                gbc.gridx++;
-                gbc.weightx = 1;
-                subPanel.add(mirrorButtonVoiItemsArr[i], gbc);
-                gbc.gridx++;
-                
-            }          
-	        
-	        return subPanel;         
-	    }
-	    
-		/**
-		 * Initializes the non-symmetric buttons from a particular pane.
-		 */
-	    private JPanel initNonSymmetricalObjects() {
-      
-	    	JPanel subPanel = new JPanel(new GridBagLayout());
-	    	
-	    	noMirrorCheckVoiItemsArr = new ColorButtonPanel[noMirrorVoiItemsArr.length];
-            noMirrorButtonVoiItemsArr = new JButton[noMirrorVoiItemsArr.length];
-	    	
-	    	GridBagConstraints gbc = new GridBagConstraints();
-            gbc.anchor = GridBagConstraints.WEST;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.weightx = 1;
-            gbc.weighty = 0;
-            gbc.gridx = 0;
-            gbc.gridy = noMirrorVoiItemsArr.length;
-            
-            for(int i=0; i<noMirrorVoiItemsArr.length; i++) {
-                               
-            	noMirrorCheckVoiItemsArr[i] = new ColorButtonPanel(Color.BLACK, noMirrorVoiItemsArr[i]);
-                
-                checkBoxLocationTree.put(noMirrorVoiItemsArr[i], noMirrorCheckVoiItemsArr[i]);
-                
-                noMirrorButtonVoiItemsArr[i] = new JButton(noMirrorVoiItemsArr[i]);
-                noMirrorButtonVoiItemsArr[i].setEnabled(voiExists(noMirrorVoiItemsArr[i]));
-                noMirrorButtonVoiItemsArr[i].setFont(MipavUtil.font12B);
-                noMirrorButtonVoiItemsArr[i].setActionCommand(LOAD_VOI);
-                noMirrorButtonVoiItemsArr[i].addActionListener(this);
-                
-                if(i != 0 && i % 2 == 0) {
-                    gbc.gridy++;
-                    gbc.gridx = 0;
-                }
-                gbc.weightx = 0;
-                gbc.insets = new Insets(0, 10, 0, 0);
-                subPanel.add(noMirrorCheckVoiItemsArr[i], gbc);
-                gbc.insets = new Insets(0, 0, 0, 0);
-                gbc.gridx++;
-                gbc.weightx = 1;
-                subPanel.add(noMirrorButtonVoiItemsArr[i], gbc);
-                gbc.gridx++;   
-            }          
-	        
-	        return subPanel;
-	    }
         
         /**
          * Updates the selection label for each VOI.  The calling method will have updated 
@@ -2262,11 +2065,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             
             buttonPanel.add(buildButtons(), BorderLayout.CENTER);
 
-            previousPaneVOIs = new JPanel();
-            
             add(mainPanel, BorderLayout.NORTH);
             add(buttonPanel, BorderLayout.CENTER);
-            add(previousPaneVOIs, BorderLayout.SOUTH);
             //gbc.gridy++;
         }
         
@@ -2360,35 +2160,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             return voiBuffer.get(objectName);
         }
 
-        /**
-         * Implemented abstract method for dealing with slice changes, currently sets buttons of VOIs that
-         * have curves in the given slice to ENABLED, disables buttons where a VOI has no curve on that slice.
-         */
+		@Override
 		public void setSlice(int slice) {
-			if(callingPane > 0) {
-				if (checkBoxLocationTree != null) {
-					Set<String> keySet = checkBoxLocationTree.keySet();
-					Iterator<String> it = keySet.iterator();
-					while(it.hasNext()) {
-						//Stays black until pressed.
-						checkBoxLocationTree.get(it.next()).setColor(Color.BLACK);
-					}
-				}
-				boolean voiExists = false;
-				for(int i=0; i<mirrorButtonVoiItemsArr.length; i++) {
-					mirrorButtonVoiItemsArr[i].setEnabled(voiExists = voiExists(mirrorButtonVoiItemsArr[i].getText(), slice));
-					mirrorButtonVoiItemsArr[i].setForeground(Color.BLACK);
-					if(voiExists && voiBuffer.get(mirrorButtonVoiItemsArr[i].getText()).isComputerGenerated())
-						mirrorButtonVoiItemsArr[i].setForeground(Color.RED);
-				}
-				for(int i=0; i<noMirrorButtonVoiItemsArr.length; i++) {
-					noMirrorButtonVoiItemsArr[i].setEnabled(voiExists(noMirrorButtonVoiItemsArr[i].getText(), slice));
-					noMirrorButtonVoiItemsArr[i].setForeground(Color.BLACK);
-					if(voiExists && voiBuffer.get(noMirrorButtonVoiItemsArr[i].getText()).isComputerGenerated())
-						noMirrorButtonVoiItemsArr[i].setForeground(Color.RED);
-				}
-			}
-		}
+			//Do nothing since this dialog does not depend on a changing slice (though could in the future)
+		}   
     }
     
     /**
@@ -2761,6 +2536,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     private class AnalysisPrompt extends DialogPrompt implements ActionListener {
 		
     	//~ Static fields/initializers -------------------------------------------------------------------------------------
+    	
+    	public static final String LOAD_VOI = "Load VOI";
     	
     	private final String[] buttonStringList = {OUTPUT, SELECT_ALL, SAVE, TOGGLE_LUT, HELP, BACK};
 	
