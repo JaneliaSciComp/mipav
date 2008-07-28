@@ -245,9 +245,18 @@ public class RandomNumberGen extends Random {
         return ((nextDouble() * (endRange - stRange)) + stRange);
     }
     
+    /**
+     * Derived from STSDAS Help Pages Space Telescope Science Institute
+     * From 2 lines in procedure mkpnoise in t_mknoise
+     * Seen at http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?mknoise.src
+     * @param inputValue
+     * @param background
+     * @param gain
+     * @return
+     */
     public final double genPoissonRandomNum(double inputValue, double background, double gain) {
         double v;
-        double outputValue = 0.0;
+        double outputValue;
         // Random number seed
         long seed = System.currentTimeMillis();
         
