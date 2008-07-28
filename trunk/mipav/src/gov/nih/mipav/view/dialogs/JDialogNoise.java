@@ -21,7 +21,7 @@ import javax.swing.*;
 /**
  * DOCUMENT ME!
  *
- * @version  2.0 July 25, 2008
+ * @version  2.0 July 28, 2008
  * @author   GAUSSIAN and UNIFORM, Matthew J. McAuliffe, Ph.D.
  *           POISSON William Gandler
  */
@@ -544,7 +544,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         gbc2.gridy = yPos2++;
         panelPO.add(backgroundText, gbc2);
         
-        JLabel gainLabel = new JLabel("Gain");
+        JLabel gainLabel = new JLabel("Gain (> 0.0)");
         gainLabel.setFont(serif12);
         gainLabel.setForeground(Color.black);
         gbc2.gridx = 0;
@@ -690,6 +690,12 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
             background = Double.valueOf(tmpStr).doubleValue();
             tmpStr = gainText.getText();
             gain = Double.valueOf(tmpStr).doubleValue();
+            if (gain <= 0.0) {
+                MipavUtil.displayError("Gain must be > 0");
+                gainText.requestFocus();
+                gainText.selectAll();
+                return false;
+            }
         } // if (noiseType == POISSON)
 
         return true;
