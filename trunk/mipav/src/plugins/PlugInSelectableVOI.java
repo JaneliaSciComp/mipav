@@ -91,6 +91,10 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 		this.meanLeanH = new double[imageSize+1];
 		this.meanTotalH = new double[imageSize+1];
 		
+		this.lastCalculated = new Date(System.currentTimeMillis()-1000);
+		this.lastModified = new Date(System.currentTimeMillis());
+		
+		
 		for(int i=0; i<imageSize+1; i++) {
 			totalArea[i] = Double.MIN_VALUE;
 			partialArea[i] = Double.MIN_VALUE;
