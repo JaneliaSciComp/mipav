@@ -3418,7 +3418,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			ArrayList<Thread> calc = new ArrayList<Thread>(residuals.size());
 			Thread tempThread = null;
 			for(int i=0; i<residuals.size(); i++) {
-				if(residuals.get(i).getLastCalculated() == null || 
+				if(residuals.get(i).getLastCalculated() == null || residuals.get(i).getLastModified() == null || 
 						residuals.get(i).getLastCalculated().compareTo(residuals.get(i).getLastModified()) < 0) {
 					MuscleCalculation muscleCalc = new MuscleCalculation(residuals.get(i), residuals.get(i).getName());
 		            //No thread group this time since just joining all later
