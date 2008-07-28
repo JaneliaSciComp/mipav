@@ -252,8 +252,90 @@ public class RandomNumberGen extends Random {
         long seed = System.currentTimeMillis();
         
         v = gain * (inputValue + background);
-        //outputValue = inputValue + (poidev(v, seed) - v)/ gain;
+        outputValue = inputValue + (poidev(v, seed) - v)/ gain;
         return outputValue;
+    }
+    
+    /** From Numerical Recipes in C The Art of Scientific Computing Second Edition by William H. Press,
+     *  Saul A. Teukolsky, William T.Vetterling, and Brian P. Flannery, pp. 293-295 Poisson Deviates
+     *  routine poidev adapted with minor changes
+     *  Returns as a double an integer value that is a random deviate drawn from a Poisson distribution
+     *  of mean xm
+     * @param xm
+     * @param seed
+     * @return
+     */
+    public final double poidev(double xm, long seed) {
+        double g;
+        double em;
+        double t;
+        double sq;
+        double alxm;
+        double result[] = new double[1];
+        //  0 for ln(gamma(x)), 1 for gamma(x)
+        int functionCode = 0;
+        Gamma gammaln;
+        double y;
+        // smallest positive nonzero value 2**-1074
+        double smallestUniformValue = Double.MIN_VALUE;
+        double largestUniformValue = 1.0;
+        double eps = Double.MIN_VALUE;
+        while (largestUniformValue == 1.0) {
+            largestUniformValue = largestUniformValue - eps;
+            eps = 2.0 * eps;
+        }
+        if (xm < 12.0) {
+            // Use direct method
+            g = Math.exp(-xm);
+            em = -1.0;
+            t = 1.0;
+            do {
+                // Instead of adding exponential deviates it is equivalent to multiply uniform deviates.
+                // We never actually have to take the log, merely compare to the pre-computed exponential.
+                ++em;
+                t *= genUniformRandomNum(smallestUniformValue, largestUniformValue);
+            } while (t > g);
+        } // if (xm < 12.0)
+        else {
+            // Use rejection method
+            sq = Math.sqrt(2.0 * xm);
+            alxm = Math.log(xm);
+            gammaln = new Gamma(xm+1.0, functionCode, result);
+            gammaln.run();
+            try {
+                gammaln.finalize();
+            }
+            catch (Throwable ex) {
+                MipavUtil.displayError("Exception on Gamma.finalize()");
+                return 0;
+            }
+            g = xm * alxm - result[0];
+            do {
+                do {
+                    // y is a deviate from a Lorentzian comparison function
+                    y = Math.tan(Math.PI * genUniformRandomNum(smallestUniformValue, largestUniformValue)); 
+                    // em is y, shifted and scaled.
+                    em = sq*y + xm;
+                    // Reject if in regime of zero probability
+                } while (em < 0.0);
+                // The trick for integer-valued distributions.
+                em = Math.floor(em);
+                gammaln = new Gamma(em+1.0, functionCode, result);
+                gammaln.run();
+                try {
+                    gammaln.finalize();
+                }
+                catch (Throwable ex) {
+                    MipavUtil.displayError("Exception on Gamma.finalize()");
+                    return 0;
+                }
+                t = 0.9*(1.0 + y*y)*Math.exp(em*alxm - result[0] - g);
+                // The ratio of the desired distribution to the comparison function;  we accept or 
+                // reject by comparing it to another uniform deviate.  The factor of 0.9 is chosen so
+                // that t never exceeds 1.
+            } while (genUniformRandomNum(smallestUniformValue, largestUniformValue) > t);
+        } // else
+        return em;
     }
 
     /**
