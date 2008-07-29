@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
+import java.awt.Color;
 import java.io.*;
 import java.util.*;
 
@@ -157,6 +158,11 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         int numErrors = 0;
         double sinr[] = new double[1];
         double sini[] = new double[1];
+        boolean test = false;
+        
+        if (test) {
+            selfTest();
+        }
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -164,8 +170,6 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
 
             return;
         }
-
-        
 
         fireProgressStateChanged(srcImage.getImageName(), "Ellipse to circle ...");
 
@@ -589,4 +593,136 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         var = (Math.exp(x) - Math.exp(-x))/2.0;
         return var;
     }
+    
+    private void selfTest() {
+        // Lines have perpindicular intersections in ellipse
+        // Intersections should remain perpindicular in circle
+        int xDim = 512;
+        int yDim = 512;
+        int sliceSize = xDim * yDim;
+        int extents[] = new int[2];
+        extents[0] = xDim;
+        extents[1] = yDim;
+        byte buffer[] = new byte[sliceSize];
+        int xs;
+        int ys;
+        int index;
+        double xDist;
+        double yDist;
+        double r;
+        int xCen = 255;
+        int yCen = 255;
+        VOI newEllipseVOI;
+        int maxEllipsePoints;
+        // semimajor axis a
+        double a = 200;
+        // semiminor axis b
+        double b = 100;
+        // eccentricity
+        double e = Math.sqrt(a*a - b*b)/a;
+        // The circumference c of an ellipse is 4*a*E(e), where the function E is the complete elliptic integral of the second kind.
+        EllipticIntegral ei;
+        double first[] = new double[1];
+        double second[] = new double[1];
+        ei = new EllipticIntegral(e, first, second);
+        ei.run();
+        maxEllipsePoints = (int)Math.ceil(4.0 * a * second[0]);
+        float xArr[] = new float[maxEllipsePoints];
+        float yArr[] = new float[maxEllipsePoints];
+        float zArr[] = new float[maxEllipsePoints];
+        int j;
+        double theta;
+        // Angle ellipse is rotated by
+        double phi = -30.0;
+        AlgorithmTransform algoTrans;
+        TransMatrix xfrm;
+        int interp;
+        float oXres;
+        float oYres;
+        int oXdim;
+        int oYdim;
+        int units[];
+        boolean doVOI;
+        boolean doClip;
+        boolean doPad;
+        boolean doRotateCenter;
+        Vector3f center;
+        boolean useSACenter = false;
+        int padValue = 0;
+        boolean doUpdateOrigin = false;
+        ModelImage resultImage;
+        for (ys = 155; ys <= 355; ys++) {
+            for (xs = 55; xs <= 455; xs++) {
+                index = xs + ys * xDim;
+                xDist = xs - xCen;
+                yDist = ys - yCen;
+                r = Math.sqrt(xDist*xDist + 4.0*yDist*yDist);
+                if ((xs == 155) || (xs == 205) || (xs == 255) || (xs == 305) || (xs == 355) ||
+                    (ys == 205) || (ys == 230) || (ys == 255) || (ys == 280) || (ys == 305)) {
+                    buffer[index] = 0;
+                }
+                else if (r <= 200.0) {
+                    buffer[index] = (byte)255;
+                }
+            } // for (xs = 55; xs <= 455; xs++)
+        } // for (ys = 155; ys <= 355; ys++)
+        if ((srcImage.getExtents()[0] != extents[0]) || (srcImage.getExtents()[1] != extents[1])) {
+            srcImage.changeExtents(extents);
+            srcImage.recomputeDataSize();
+        }
+        srcImage.getParentFrame().dispose();
+        srcImage.getVOIs().removeAllElements();
+        try {
+            srcImage.importData(0, buffer, true);
+        }
+        catch(IOException ex) {
+            MipavUtil.displayError("IOException on srcImage.importData");
+        }
+        
+        newEllipseVOI = new VOI((short) (1), Integer.toString(1),
+                1, VOI.CONTOUR, -1.0f);
+        newEllipseVOI.setColor(Color.blue);
+        for (j = 0; j < maxEllipsePoints; j++) {
+            theta = j * 2.0 * Math.PI/maxEllipsePoints; 
+            xArr[j] = (float)(xCen + a * Math.cos(theta));
+            yArr[j] = (float)(yCen + b * Math.sin(theta));
+            zArr[j] = 0.0f;
+        }
+        newEllipseVOI.importCurve(xArr, yArr, zArr, 0);
+        ((VOIContour)(newEllipseVOI.getCurves()[0].elementAt(0))).setFixed(true);
+        newEllipseVOI.setActive(false);
+        ((VOIContour)(newEllipseVOI.getCurves()[0].elementAt(0))).setActive(false);
+        ((VOIContour)(newEllipseVOI.getCurves()[0].elementAt(0))).setClosed(true);
+        ((VOIContour) (newEllipseVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(1));
+        ((VOIContour) (newEllipseVOI.getCurves()[0].elementAt(0))).setName(Integer.toString(1));
+        srcImage.registerVOI(newEllipseVOI);
+        if (phi != 0.0) {
+            xfrm = new TransMatrix(3);
+            xfrm.setRotate(phi);
+            interp = AlgorithmTransform.BILINEAR;
+            oXres = 1.0f;
+            oYres = 1.0f;
+            oXdim = srcImage.getExtents()[0];
+            oYdim = srcImage.getExtents()[1];
+            units = srcImage.getFileInfo()[0].getUnitsOfMeasure();
+            doVOI = true;
+            doClip = true;
+            doPad = false;
+            doRotateCenter = true;
+            center = srcImage.getImageCentermm(useSACenter);
+            algoTrans = new AlgorithmTransform(srcImage, xfrm, interp, oXres, oYres, oXdim, oYdim,
+                                               units, doVOI, doClip, doPad, doRotateCenter, center);
+            algoTrans.setPadValue(padValue);
+            algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+            algoTrans.run();
+            resultImage = algoTrans.getTransformedImage();
+            algoTrans.finalize();
+            algoTrans = null;
+            srcImage.disposeLocal();
+            srcImage = null;
+            srcImage = resultImage;
+        } // if (phi != 0.0)
+        
+        new ViewJFrameImage(srcImage);
+    } // private void selfTest()
 }
