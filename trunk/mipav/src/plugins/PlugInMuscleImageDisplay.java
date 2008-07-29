@@ -1422,7 +1422,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			spTable.addCell("Pixel Size: (mm)");
 			spTable.addCell(Double.toString(getActiveImage().getResolutions(0)[0]));
 			spTable.addCell("Slice Thickness: (mm)");
-			spTable.addCell(Float.toString(getActiveImage().getFileInfo()[getViewableSlice()].getSliceThickness()));
+			spTable.addCell(Float.toString(getActiveImage().getResolutions(0)[2]));
 			spTable.addCell("Table Height: (cm)");
 			String height = (String)fileInfo.getTagTable().getValue("0018,1130");
 			spTable.addCell((height != null ? height.trim() : "Unknown"));
