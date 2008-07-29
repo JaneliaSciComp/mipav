@@ -397,11 +397,15 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         
         dims[0] = image.getFileInfo()[0].getExtents()[0];
         dims[1] = image.getFileInfo()[0].getExtents()[1];
-        dims[2] = image.getFileInfo()[0].getExtents()[2];
+        if (image.getNDims() > 2) {
+            dims[2] = image.getFileInfo()[0].getExtents()[2];
+        }
         
         resols[0] = image.getFileInfo()[0].getResolutions()[0];
         resols[1] = image.getFileInfo()[0].getResolutions()[1];
-        resols[2] = image.getFileInfo()[0].getResolutions()[2];
+        if (image.getNDims() > 2) {
+            resols[2] = image.getFileInfo()[0].getResolutions()[2];
+        }
 
         
         tempTextField = (JTextField) source;
