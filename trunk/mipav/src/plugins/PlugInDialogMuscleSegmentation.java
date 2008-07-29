@@ -66,14 +66,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         image = im;
         imageType = detectImageType(im);
         if(image.getNDims() < 3) {
-        	imageFile = detectImageSequence(im);
-	        if(imageFile != null && imageFile.length > 1) {
-	        	image = createImage(imageFile);
-	        	float[] origin = {0, 0, 0};
-	        	image.getFileInfo()[0].setOrigin(origin);
-	        	image.getFileInfo()[0].setFileFormat(FileUtility.XML);
-	        	multipleSlices = true;
-	        }
+        	multipleSlices = false;
         } else
         	multipleSlices = true;
         if(imageType == PlugInMuscleImageDisplay.ImageType.Unknown)

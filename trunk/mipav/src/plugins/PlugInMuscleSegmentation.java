@@ -11,7 +11,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Vector;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
@@ -63,29 +65,26 @@ public class PlugInMuscleSegmentation implements PlugInAlgorithm, PlugInGeneric 
     
     /**
      * Method for calling this from the command line (PlugInGeneric implementation)
-     *   user selects a file, no changes mecessary for 3D impl.
+     *   user selects a file, refitted for 3D impl.
      */
     public void run() {
 //    	if run from the command line, can be self-contained
+    	ViewOpenFileUI ui = new ViewOpenFileUI(true);
     	
+    	ArrayList<Vector<String>> openImagesArrayList = ui.open(false, false);
     	
-    	ViewUserInterface.getReference().setExitCmdLineOnError(false);
-    	ViewUserInterface.getReference().setPlugInFrameVisible(!ViewUserInterface.getReference().isAppFrameVisible());
-    	ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
-        JFileChooser chooser = fileChooser.getFileChooser();
-        chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-        chooser.setMultiSelectionEnabled(false);
+    	if (openImagesArrayList != null) {
+            for (int i = 0; i < openImagesArrayList.size(); i++) {
+                
+            	Vector<String> openImageNames = openImagesArrayList.get(i);
 
-        int returnVal = chooser.showOpenDialog(null);
-
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File imageFile = chooser.getSelectedFile();
-            ViewUserInterface.getReference().setDefaultDirectory(imageFile.getParent());
-          
-            FileIO fileIO = new FileIO();
-           
-             new PlugInDialogMuscleSegmentation(ViewUserInterface.getReference().getMainFrame(),
-            		 fileIO.readImage(imageFile.getAbsolutePath()));
-        }
+                // if open failed, then imageNames will be null
+                if (openImageNames == null) {
+                    return;
+                }
+            }
+    	}
+    	
+        new PlugInDialogMuscleSegmentation(ViewUserInterface.getReference().getMainFrame(), ui.getImage());
     }
 }
