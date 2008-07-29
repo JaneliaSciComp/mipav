@@ -108,11 +108,7 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 		setColor(INVALID_COLOR);
 	}
 
-	public boolean isClosed() {
-		return closed;
-	}
-	
-	public boolean isCreated() {
+	public boolean getCreated() {
 		return created;
 	}
 	
@@ -132,11 +128,11 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 		this.paneNum = loc;
 	}
 
-	public boolean fillEligible() {
+	public boolean getFillEligible() {
 		return fillEligible;
 	}
 	
-	public boolean calcEligible() {
+	public boolean getCalcEligible() {
 		return calcEligible;
 	}
 
@@ -320,6 +316,10 @@ public class PlugInSelectableVOI extends VOI{//extends VOI{
 	 */
 	public void setMeanTotalH(double meanTotalH, int slice) {
 		this.meanTotalH[slice] = meanTotalH;
+	}
+
+	public boolean isClosed() {
+		return closed;
 	}
 
 	public boolean isComputerGenerated() {
