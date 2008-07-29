@@ -15,12 +15,10 @@ import gov.nih.mipav.model.scripting.actions.ActionCloseFrame;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.event.*;
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.CustomUIBuilder.UIParams;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 import gov.nih.mipav.view.dialogs.JDialogVOIStats;
 import gov.nih.mipav.view.dialogs.JDialogWinLevel;
-import gov.nih.mipav.view.dialogs.JDialogVOIStatistics.JPanelStatisticsOptions;
 
 import com.lowagie.text.*;
 import com.lowagie.text.Font;
@@ -80,10 +78,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     /** Text for muscles where mirror muscles are not considered. */
     private String[][] noMirrorArr;
 
-    /** 
-     * Denotes the anatomical part represented in the image. Implemented here in case 
-     * this class is moved to its own class at a later time.
-     */
+    /**Denotes the anatomical part represented in the image. Implemented here in case 
+     * this class is moved to its own class at a later time. */
     private ImageType imageType;
 
     /** Whether this image has mirror image muscles (eg VIEWS of thighs, abdomen. */
@@ -202,18 +198,17 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
         
-        this.setImageA(image);
-        this.setActiveImage(IMAGE_A);
-        this.titles = titles;
-        this.mirrorArr = new String[voiList.length][];
-        this.noMirrorArr = new String[voiList.length][];
-        this.calcTree = new TreeMap<String, Boolean>();
-        this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>());
-        this.imageType = imageType;
-        this.symmetry = symmetry;
-        this.multipleSlices = multipleSlices;
+        this.setImageA(image); //y
+        this.titles = titles; //y
+        this.mirrorArr = new String[voiList.length][]; //y
+        this.noMirrorArr = new String[voiList.length][]; //y
+        this.calcTree = new TreeMap<String, Boolean>(); //y
+        this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>()); //y
+        this.imageType = imageType; //y
+        this.symmetry = symmetry; //y
+        this.multipleSlices = multipleSlices; //y
         this.currentSlice = getViewableSlice();
-        this.standAlone = false;
+        this.standAlone = false; //y
         
         //already added from super constructor
         //image.addImageDisplayListener(this);
@@ -242,6 +237,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	for(int j=0; j<noMirrorArr[i].length; j++) 
         		noMirrorArr[i][j] = (String)noMirrorArrList.get(j);
         }
+        
+        //same up to here
         
         if (imageA == null) {
             return;
@@ -304,6 +301,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         }
     }
     
+    private void commonConstructor() {
+    	
+    }
+    
     /**
      * Constructor for calling this as a stand-alone.  will invoke the class's own init() function
      * for setting up the image rather than ViewJFrameImage's init()
@@ -324,16 +325,21 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	// calls the super that will not call ViewJFrameImage's init() function
     	super(image, null, null, false, false);
     	this.setImageA(image);
-        
-    	ViewJProgressBar progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
-    	setVisible(false);
-    	progressBar.setVisible(true);
-        this.titles = titles;
+    	this.titles = titles;
         this.mirrorArr = new String[voiList.length][];
         this.noMirrorArr = new String[voiList.length][];
         this.calcTree = new TreeMap<String, Boolean>();
         this.voiBuffer = new TreeMap<String, PlugInSelectableVOI>();
         this.standAlone = standAlone;
+        this.imageType = imageType;
+        this.symmetry = symmetry;
+        this.multipleSlices = multipleSlices;
+        this.currentSlice = getViewableSlice();
+        
+    	ViewJProgressBar progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
+    	setVisible(false);
+    	progressBar.setVisible(true);
+        
         
         createVOIBuffer();
         
@@ -363,9 +369,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	for(int j=0; j<noMirrorArr[i].length; j++) 
         		noMirrorArr[i][j] = (String)noMirrorArrList.get(j);
         }
-        this.imageType = imageType;
-        this.symmetry = symmetry;
-        this.multipleSlices = multipleSlices;
+        
         
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
 
