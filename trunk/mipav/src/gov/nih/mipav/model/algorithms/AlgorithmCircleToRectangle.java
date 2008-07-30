@@ -3,6 +3,8 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.structures.*;
 import Jama.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.*;
@@ -42,8 +44,8 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
      *
      * @param  destImg  DOCUMENT ME!
      * @param  srcImg   DOCUMENT ME!
-     * @param  x        array with x coordinates of 4 sector boundary points
-     * @param  y        array with y coordinates of 4 sector boundary points
+     * @param  x        array with x coordinates of circle center and point on radius
+     * @param  y        array with y coordinates of circle center and point on radius
      */
     public AlgorithmCircleToRectangle(ModelImage destImg, ModelImage srcImg, double[] x, double[] y) {
         super(destImg, srcImg);
@@ -109,6 +111,11 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         double second[] = new double[1];
         double K;
         double Kp;
+        boolean test = false;
+        
+        if (test) {
+            selfTest();
+        }
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -854,4 +861,62 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
 
         return;
     } // private void sqrtc
+    
+    private void selfTest() {
+        // In a 512 x 512 image create an image which is a circle with intersecting perpindicular lines
+        // Should see intersecting perpindicular lines in transformed image if the scaling between the 2 rectangles
+        // is the same in x and y.
+        int xDim = 512;
+        int yDim = 512;
+        int sliceSize = xDim * yDim;
+        int extents[] = new int[2];
+        extents[0] = xDim;
+        extents[1] = yDim;
+        byte buffer[] = new byte[sliceSize];
+        int xs;
+        int ys;
+        int index;
+        double xDist;
+        double yDist;
+        double r;
+        double xCen = 255.5;
+        double yCen = 255.5;
+        double radius = 150;
+        x[0] = xCen;
+        y[0] = yCen;
+        x[1] = xCen + radius;
+        y[1] = yCen;
+        for (ys = 105; ys <= 411; ys++) {
+            for (xs = 105; xs <= 411; xs++) {
+                index = xs + ys * xDim;
+                xDist = xs - xCen;
+                yDist = ys - yCen;
+                r = Math.sqrt(xDist*xDist + yDist*yDist);
+                // Note here theta = 0 for xDist = 0
+                if ((xs == 150) || (xs == 200) || (xs == 250) || (xs == 300) || (xs == 350) ||
+                    (ys == 150) || (ys == 200) || (ys == 250) || (ys == 300) || (ys == 350)) {
+                    buffer[index] = 0;
+                }
+                else if (r <= radius) {
+                    buffer[index] = (byte)255;
+                } // else if ((r <= radius)
+            } // for (xs = 105; xs <= 411; xs++)
+        } // for (ys = 105; ys <= 411; ys++)
+        if ((srcImage.getExtents()[0] != extents[0]) || (srcImage.getExtents()[1] != extents[1])) {
+            srcImage.changeExtents(extents);
+            srcImage.recomputeDataSize();
+        }
+        srcImage.getParentFrame().dispose();
+        srcImage.getVOIs().removeAllElements();
+        try {
+            srcImage.importData(0, buffer, true);
+        }
+        catch(IOException e) {
+            MipavUtil.displayError("IOException on srcImage.importData");
+        }
+        
+        
+        
+        new ViewJFrameImage(srcImage);    
+    }
 }
