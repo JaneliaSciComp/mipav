@@ -4000,10 +4000,27 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			for(int i=0; i<residuals.size(); i++) {
 				if(residuals.get(i).getLastCalculated() == null || residuals.get(i).getLastModified() == null || 
 						residuals.get(i).getLastCalculated().compareTo(residuals.get(i).getLastModified()) < 0) {
-					MuscleCalculation muscleCalc = new MuscleCalculation(residuals.get(i), residuals.get(i).getName());
-		            //No thread group this time since just joining all later
-					calc.add(tempThread = new Thread(muscleCalc));
-		            tempThread.start();
+					//since enumerate silently ignores threads greater than array size
+					//worst case scenario is extra calculation performed
+					Thread[] activeGroup = new Thread[calcGroup.activeCount()];
+					calcGroup.enumerate(activeGroup);
+					//still check for nulls in case thread has been disposed
+					boolean activeFound = false;
+					for(int j=0; j<activeGroup.length; j++) {
+						System.out.println("About to compare "+ activeGroup[j].getName() +" to "+residuals.get(i).getName());
+						if(activeGroup[j] != null && activeGroup[j].getName().equals(residuals.get(i).getName())) {
+							calc.add(activeGroup[j]);
+							System.out.println("Might avoid duplicate calculation "+activeGroup[j]);
+							activeFound = true;
+						}
+					}
+					if(!activeFound) {
+						MuscleCalculation muscleCalc = new MuscleCalculation(residuals.get(i), residuals.get(i).getName());
+			            //No thread group this time since just joining all later
+						calc.add(tempThread = new Thread(muscleCalc));
+			            tempThread.start();
+					}
+		            
 				} else
 					System.out.println("Just avoided calculating "+residuals.get(i).getName());
 			}
