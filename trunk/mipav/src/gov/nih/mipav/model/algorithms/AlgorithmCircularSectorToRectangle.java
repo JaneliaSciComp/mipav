@@ -164,8 +164,8 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         
         
         if (test) {
-            testOrientation = testLeft;
-            selfTest2();
+            testOrientation = testTop;
+            selfTest3();
         }
 
         if (srcImage == null) {
@@ -755,5 +755,166 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         } // else if (testOrientation == testLeft)
         
         new ViewJFrameImage(srcImage);
+    }
+    
+    private void selfTest3() {
+        // Maximum radius on top originally
+        // Put maximum radius on bottom with testOrientation == testBottom
+        // Put maximum radius on right with testOrientation == testRight
+        // Put maximum radius on left with testOrienation == testLeft
+        // Call up JDialogCircularSectorToRectangle with any image
+        // In a 512 x 512 image create an image which is a circular sector going from -45 degrees to 45 degrees with
+        // intersecting perpindicular lines in source image.
+        // Should see intersecting perpindicular lines in transformed image if the scaling between the 2 rectangles
+        // is the same in x and y.
+        // In testTop and testBottom a rectangle of width xDim and length yDim is transformed to a rectangle of width 1 and 
+        // length log(rmax/rmin)/theta.  So for equal scaling in x and y must make yDim = log(rmax/rmin)/theta * xDim;
+        // In testRight and testLeft a rectangle of width xDim and length yDim is transformed to a rectangle where the
+        // length yDim is transformed to the width 1 and the width xDim is transformed to the length log(rmax/rmin)/theta.
+        // So for equal scaling in x and y must make xDim = log(rmax/rmin)/theta * yDim;
+        int xDim = 512;
+        int yDim = 512;
+        int sliceSize = xDim * yDim;
+        int extents[] = new int[2];
+        extents[0] = xDim;
+        extents[1] = yDim;
+        int destExtents[] = new int[2];
+        byte buffer[] = new byte[sliceSize];
+        int xs;
+        int ys;
+        int index;
+        double xDist;
+        double yDist;
+        double r;
+        double theta;
+        double thetaAbs;
+        AlgorithmFlip flipx;
+        AlgorithmRotate rotateAlgo;
+        double tempX;
+        double tempY;
+        double xCen;
+        double yCen;
+        int i;
+        double tMax = Math.PI/4.0;
+        for (ys = 35; ys <= 180; ys++) {
+            for (xs = 100; xs <= 411; xs++) {
+                index = xs + ys * xDim;
+                xDist = xs - 255.5;
+                yDist = 255.5 - ys;
+                r = Math.sqrt(xDist*xDist + yDist*yDist);
+                // Note here theta = 0 for xDist = 0
+                theta = Math.atan2(xDist, yDist);
+                thetaAbs = Math.abs(theta);
+                if ((xs == 150) || (xs == 200) || (xs == 250) || (xs == 300) || (xs == 350) ||
+                    (ys == 50) || (ys == 75) || (ys == 100) || (ys == 125) || (ys == 150)) {
+                    buffer[index] = 0;
+                }
+                else if ((r >= 106.7731239) && (r <= 219.91020894)  && (thetaAbs <= tMax)) {
+                    buffer[index] = (byte)255;
+                } // else if ((r >= 106.7731239) && (r <= 219.91020894) && (thetaAbs <= tMax))
+            } // for (x = 100; x <= 411; x++)
+        } // for (y = 36; y <= 180; y++)
+        if ((srcImage.getExtents()[0] != extents[0]) || (srcImage.getExtents()[1] != extents[1])) {
+            srcImage.changeExtents(extents);
+            srcImage.recomputeDataSize();
+        }
+        srcImage.getParentFrame().dispose();
+        srcImage.getVOIs().removeAllElements();
+        try {
+            srcImage.importData(0, buffer, true);
+        }
+        catch(IOException e) {
+            MipavUtil.displayError("IOException on srcImage.importData");
+        }
+        if ((testOrientation == testTop) || (testOrientation == testBottom)) {
+            destExtents[0] = destImage.getExtents()[0];
+            destExtents[1] = (int)Math.round(destExtents[0] * Math.log(219.91020894/106.7731239)/(2.0 * tMax));
+            if (destImage.getExtents()[1] != destExtents[1]) {
+                destImage.changeExtents(destExtents);
+                destImage.recomputeDataSize();
+            }
+        } // if ((testOrientation == testTop) || (testOrientation == testBottom))
+        else {
+            destExtents[1] = destImage.getExtents()[1];
+            destExtents[0] = (int)Math.round(destExtents[1] * Math.log(219.91020894/106.7731239)/(2.0 * tMax));
+            if (destImage.getExtents()[0] != destExtents[0]) {
+                destImage.changeExtents(destExtents);
+                destImage.recomputeDataSize();
+            }    
+        }
+        
+        x = new double[4];
+        y = new double[4];
+        x[0] = 411.0;
+        x[1] = 100.0;
+        x[2] = 180.0;
+        x[3] = 331.0;
+        y[0] = 100.0;
+        y[1] = 100.0;
+        y[2] = 180.0;
+        y[3] = 180.0;
+        
+        if (testOrientation == testBottom) {
+            flipx = new AlgorithmFlip(srcImage, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
+            flipx.run();
+            flipx.finalize();
+            flipx = null;
+            // 1 -> 0, 0 -> 1, 2 -> 3, 3 -> 2
+            tempX = x[1];
+            tempY = extents[1] - 1 - y[1];
+            x[1] = x[0];
+            y[1] = extents[1] - 1 - y[0];
+            x[0] = tempX;
+            y[0] = tempY;
+            
+            tempX = x[3];
+            tempY = extents[1] - 1 - y[3];
+            x[3] = x[2];
+            y[3] = extents[1] - 1 - y[2];
+            x[2] = tempX;
+            y[2] = tempY;
+        } // if (testOrientation == testBottom)
+        else if (testOrientation == testRight) {
+            xCen = (xDim - 1.0)/2.0;
+            yCen = (yDim - 1.0)/2.0;
+            for (i = 0; i < 4; i++) {
+                x[i] = x[i] - xCen;
+                y[i] = y[i] - yCen;
+                tempX = -y[i];
+                y[i] = x[i];
+                x[i] = tempX;
+                x[i] = x[i] + xCen;
+                y[i] = y[i] + yCen;
+            }
+            rotateAlgo = new AlgorithmRotate(srcImage, AlgorithmRotate.Z_AXIS_PLUS);
+            rotateAlgo.run();
+            srcImage.disposeLocal();
+            srcImage = null;
+            srcImage = rotateAlgo.returnImage();
+            rotateAlgo.finalize();
+            rotateAlgo = null;  
+        } // else if (testOrientation == testRight)
+        else if (testOrientation == testLeft) {
+            xCen = (xDim - 1.0)/2.0;
+            yCen = (yDim - 1.0)/2.0;
+            for (i = 0; i < 4; i++) {
+                x[i] = x[i] - xCen;
+                y[i] = y[i] - yCen;
+                tempX = y[i];
+                y[i] = -x[i];
+                x[i] = tempX;
+                x[i] = x[i] + xCen;
+                y[i] = y[i] + yCen;
+            }
+            rotateAlgo = new AlgorithmRotate(srcImage, AlgorithmRotate.Z_AXIS_MINUS);
+            rotateAlgo.run();
+            srcImage.disposeLocal();
+            srcImage = null;
+            srcImage = rotateAlgo.returnImage();
+            rotateAlgo.finalize();
+            rotateAlgo = null;      
+        } // else if (testOrientation == testLeft)
+        
+        new ViewJFrameImage(srcImage);    
     }
 }
