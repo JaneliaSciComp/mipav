@@ -16,7 +16,7 @@ public class CustomUIBuilder {
             "</html>", "pointROI", true);
 	public static final UIParams PARAM_VOI_POLY_SLICE = new UIParams("Draw Poly-slice VOI","Polyslice", UIParams.INVALID_MNEMONIC, "Draw inter-slice polyline", "polyframe", true);
 	public static final UIParams PARAM_VOI_LINE = new UIParams("Draw Line VOI","Line", UIParams.INVALID_MNEMONIC, "Draw line VOI", "linear", true);
-	public static final UIParams PARAM_VOI_PROTRACTOR = new UIParams("Draw Protractor VOI","Protractor", UIParams.INVALID_MNEMONIC, "Protractor tool", "protractor", true);
+	public static final UIParams PARAM_VOI_PROTRACTOR = new UIParams("Draw Protractor VOI","protractor", UIParams.INVALID_MNEMONIC, "Protractor tool", "protractor", true);
 	public static final UIParams PARAM_VOI_RECTANGLE = new UIParams("Draw Rectangle VOI","RectVOI", UIParams.INVALID_MNEMONIC,
             "<html>" + "Draw rectangle VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
             "</html>", "rect", true);
