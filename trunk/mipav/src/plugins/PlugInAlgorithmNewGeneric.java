@@ -1,11 +1,20 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJProgressBar;
 
 
 
-public class PlugInAlgorithmNewGeneric extends AlgorithmBase {
+public class PlugInAlgorithmNewGeneric extends AlgorithmBase implements AlgorithmInterface {
     
-    /** X dimension of the CT image */
+    public void algorithmPerformed(AlgorithmBase algorithm) {
+		System.out.println("Alhgorithm performed");
+		
+	}
+
+	/** X dimension of the CT image */
     private int xDim;
 
     /** Y dimension of the CT image */
@@ -54,7 +63,22 @@ public class PlugInAlgorithmNewGeneric extends AlgorithmBase {
     }
     
     private void calc2D() {
-        
+    	
+    	AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(srcImage);
+    	   VOIExtractionAlgo.addListener(this);
+    	   ViewJProgressBar progressBar = new ViewJProgressBar(srcImage.getImageName(), "Extracting VOI ...", 0, 100, true);
+    	   
+    	           
+    	      progressBar.setSeparateThread(false);
+    	      VOIExtractionAlgo.addProgressChangeListener(progressBar);
+    	      VOIExtractionAlgo.setProgressValues(0, 100);
+    	       
+    	          if (VOIExtractionAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+    	        MipavUtil.displayError("A thread is already running on this object");
+    	   }
+    	
+    	  
+    	
     }
     
     private void calc3D() {
