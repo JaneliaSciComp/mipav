@@ -345,6 +345,10 @@ public class JDialogCircularSectorToRectangle extends JDialogBase
             yDim = Integer.valueOf(yText.getText()).intValue();
         }
 
+        if ((image.getVOIs() == null) || (image.getVOIs().size() == 0)) {
+            MipavUtil.displayError("4 points must be entered");
+            return false;
+        }
         curves = image.getVOIs().VOIAt(0).getCurves();
         nPts = curves[0].size();
 
