@@ -870,6 +870,7 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         int yDim = 512;
         int sliceSize = xDim * yDim;
         int extents[] = new int[2];
+        int destExtents[] = new int[2];
         extents[0] = xDim;
         extents[1] = yDim;
         byte buffer[] = new byte[sliceSize];
@@ -905,6 +906,12 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         if ((srcImage.getExtents()[0] != extents[0]) || (srcImage.getExtents()[1] != extents[1])) {
             srcImage.changeExtents(extents);
             srcImage.recomputeDataSize();
+        }
+        if (destImage.getExtents()[0] != destImage.getExtents()[1]) {
+            destExtents[0] = destImage.getExtents()[0];
+            destExtents[1] = destImage.getExtents()[0];
+            destImage.changeExtents(destExtents);
+            destImage.recomputeDataSize();
         }
         srcImage.getParentFrame().dispose();
         srcImage.getVOIs().removeAllElements();
