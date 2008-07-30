@@ -94,7 +94,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     /**All tabs within this plugin. */
     private DialogPrompt[] tabs;
     
-    /**The current slice of a 3D image.*/
+    /**The current slice of a 3D image, should be same as getViewableSlice().*/
     private int currentSlice = 0;
     
     /**Whether the algorithm is dealing with a 3D CT image. */
@@ -484,7 +484,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         				"Note that only muscle calculations will be correct.\n"+createStr);
         	}
         	((AnalysisPrompt)tabs[resultTabLoc]).setSlice(getViewableSlice());
-
+        	((AnalysisPrompt)tabs[resultTabLoc]).setUpDialog();
         	((AnalysisPrompt)tabs[resultTabLoc]).enableCalcOutput();
         } else if (!(command.equals(DialogPrompt.OUTPUT) ||
         		command.equals(DialogPrompt.SAVE) ||
@@ -3298,6 +3298,23 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					noMirrorButtonCalcItemsArr[index][i].setForeground(Color.BLACK);
 					if(voiExists && voiBuffer.get(noMirrorButtonCalcItemsArr[index][i].getText()).isComputerGenerated())
 						noMirrorButtonCalcItemsArr[index][i].setForeground(Color.RED);
+				}
+			}
+		}
+		
+		public void setUpDialog() {
+			for(int i=0; i<mirrorButtonCalcItemsArr.length; i++) {
+				for(int j=0; j<mirrorButtonCalcItemsArr[i].length; j++) {
+					if(mirrorButtonCalcItemsArr[i][j].isEnabled()) {
+						mirrorButtonCalcItemsArr[i][j].setSelected(false);
+					}	
+				}
+			}
+			for(int i=0; i<noMirrorButtonCalcItemsArr.length; i++) {
+				for(int j=0; j<noMirrorButtonCalcItemsArr[i].length; j++) {
+					if(noMirrorButtonCalcItemsArr[i][j].isEnabled()) {
+						noMirrorButtonCalcItemsArr[i][j].setSelected(false);
+					}	
 				}
 			}
 		}
