@@ -153,6 +153,11 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
         double xmult[] = new double[1];
         double ymult[] = new double[1];
         double con;
+        boolean test = false;
+        
+        if (test) {
+            selfTest();
+        }
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -467,4 +472,85 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
 
         return;
     }
+    
+    private void selfTest() {
+        // Lines have perpindicular intersections in near circle
+        // Intersections remain perpindicular in circle
+        int xDim = 512;
+        int yDim = 512;
+        int sliceSize = xDim * yDim;
+        int extents[] = new int[2];
+        extents[0] = xDim;
+        extents[1] = yDim;
+        byte buffer[] = new byte[sliceSize];
+        int xs;
+        int ys;
+        int index;
+        double xDist;
+        double yDist;
+        double r;
+        int xCen = 255;
+        int yCen = 255;
+        VOI newVOI;
+        int maxPoints = (int)Math.ceil(360.0 * Math.PI);
+        float xArr[] = new float[maxPoints];
+        float yArr[] = new float[maxPoints];
+        float zArr[] = new float[maxPoints];
+        double multFactor;
+        int j;
+        double theta;
+        for (ys = 35; ys <= 475; ys++) {
+            for (xs = 35; xs <= 475; xs++) {
+                index = xs + ys * xDim;
+                xDist = xs - xCen;
+                yDist = ys - yCen;
+                theta = Math.atan2(yDist, xDist);
+                r = Math.sqrt(xDist*xDist + yDist*yDist);
+                if ((xs == 45) || (xs == 55) || (xs == 65) || (xs == 75) || (xs == 105) || (xs == 155) || (xs == 205) ||
+                    (xs == 255) ||(xs == 305) || (xs == 355) || (xs == 405) || (xs == 435) || (xs == 445) ||
+                    (xs == 455) || (xs == 465) ||
+                    (ys == 45) || (ys == 55) || (ys == 65) || (ys == 75) || (ys == 105) || (ys == 155) || (ys == 205) ||
+                    (ys == 255) ||(ys == 305) || (ys == 355) || (ys == 405) || (ys == 435) || (ys == 445) ||
+                    (ys == 455) || (ys == 465)) {
+                    buffer[index] = 0;
+                }
+                else if (r <= 180.0*(1.0 + 0.2*Math.cos(4.0 * theta))) {
+                    buffer[index] = (byte)255;
+                }
+            } // for (xs = 35; xs <= 475; xs++)
+        } // for (ys = 35; ys <= 475; ys++)
+        if ((srcImage.getExtents()[0] != extents[0]) || (srcImage.getExtents()[1] != extents[1])) {
+            srcImage.changeExtents(extents);
+            srcImage.recomputeDataSize();
+        }
+        srcImage.getParentFrame().dispose();
+        srcImage.getVOIs().removeAllElements();
+        try {
+            srcImage.importData(0, buffer, true);
+        }
+        catch(IOException ex) {
+            MipavUtil.displayError("IOException on srcImage.importData");
+        }
+        
+        newVOI = new VOI((short) (1), Integer.toString(1),
+                1, VOI.CONTOUR, -1.0f);
+        newVOI.setColor(Color.blue);
+        for (j = 0; j < maxPoints; j++) {
+            theta = j * 2.0 * Math.PI/maxPoints; 
+            multFactor = 1.0 + 0.2*Math.cos(4.0 * theta);
+            xArr[j] = (float)(xCen + 180.0 * Math.cos(theta) * multFactor);
+            yArr[j] = (float)(yCen + 180.0 * Math.sin(theta) * multFactor);
+            zArr[j] = 0.0f;
+        }
+        newVOI.importCurve(xArr, yArr, zArr, 0);
+        ((VOIContour)(newVOI.getCurves()[0].elementAt(0))).setFixed(true);
+        newVOI.setActive(false);
+        ((VOIContour)(newVOI.getCurves()[0].elementAt(0))).setActive(false);
+        ((VOIContour)(newVOI.getCurves()[0].elementAt(0))).setClosed(true);
+        ((VOIContour) (newVOI.getCurves()[0].elementAt(0))).setLabel(Integer.toString(1));
+        ((VOIContour) (newVOI.getCurves()[0].elementAt(0))).setName(Integer.toString(1));
+        srcImage.registerVOI(newVOI);
+        
+        new ViewJFrameImage(srcImage);
+    } // private void selfTest()
 }
