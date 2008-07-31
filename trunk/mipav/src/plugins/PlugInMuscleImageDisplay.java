@@ -198,17 +198,17 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
         
-        this.setImageA(image); //y
-        this.titles = titles; //y
-        this.mirrorArr = new String[voiList.length][]; //y
-        this.noMirrorArr = new String[voiList.length][]; //y
-        this.calcTree = new TreeMap<String, Boolean>(); //y
-        this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>()); //y
-        this.imageType = imageType; //y
-        this.symmetry = symmetry; //y
-        this.multipleSlices = multipleSlices; //y
+        this.setImageA(image); 
+        this.titles = titles; 
+        this.mirrorArr = new String[voiList.length][]; 
+        this.noMirrorArr = new String[voiList.length][]; 
+        this.calcTree = new TreeMap<String, Boolean>(); 
+        this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>()); 
+        this.imageType = imageType; 
+        this.symmetry = symmetry; 
+        this.multipleSlices = multipleSlices; 
         this.currentSlice = getViewableSlice();
-        this.standAlone = false; //y
+        this.standAlone = false; 
         
         //already added from super constructor
         //image.addImageDisplayListener(this);
@@ -3887,7 +3887,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					//pixel size
 					sliceStr[i] += dec.format(getActiveImage().getResolutions(0)[0]*.1)+"\t";
 					//slice thickness (mm)
-					sliceStr[i] += dec.format(getActiveImage().getFileInfo()[getViewableSlice()].getSliceThickness())+"\t";
+					sliceStr[i] += dec.format(getActiveImage().getResolutions(0)[2])+"\t";
 					//table height (cm)
 					String heightUnformat = (String)fileInfo.getTagTable().getValue("0018,1130");
 					String height = heightUnformat != null ? dec.format(Double.valueOf(heightUnformat.trim())) : "0";
