@@ -1,9 +1,15 @@
 package gov.nih.mipav;
 
+import java.util.Iterator;
+import java.util.Set;
+
+import javax.swing.JComboBox;
+
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.MipavUtil;
 
 
 /**
@@ -114,6 +120,7 @@ public class MipavCoordinateSystems {
         pOut.Z = MipavMath.round(patientPoint[2]);
     }
 
+    
     /**
      * Translates the input point into ScannerCoordinates, based on the input image, kImage.
      *
@@ -126,20 +133,21 @@ public class MipavCoordinateSystems {
 
         if ((kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) ||
                 (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
-
+           
             float[] afResolutions = kImage.getResolutions(0);
 
-            TransMatrix dicomMatrix = ((ModelImage) kImage).getMatrix();
-
-           // System.err.println("DICOM MATRIX (fileToScanner): " + dicomMatrix);
-           // System.err.println("axial origin: " + afAxialOrigin[0] + ", " + afAxialOrigin[1] + ", " + afAxialOrigin[2]);
-            
+            // TransMatrix dicomMatrix = ((ModelImage) kImage).getMatrix();
+            Iterator iter = ((ModelImage)kImage).getMatrixHolder().getMatrixMap().keySet().iterator();
+            TransMatrix dicomMatrix = (TransMatrix) kImage.getMatrixHolder().getMatrixMap().get(iter.next());
+           
+            // System.err.println("DICOM MATRIX (fileToScanner): " + dicomMatrix);
+            // System.err.println("axial origin: " + afAxialOrigin[0] + ", " + afAxialOrigin[1] + ", " + afAxialOrigin[2]);
             
             // Finally convert the point to axial millimeter DICOM space.
             dicomMatrix.transformAsPoint3Df(new Vector3f(kInput.X * afResolutions[0], kInput.Y * afResolutions[1],
                                                kInput.Z * afResolutions[2]), kOutput);
         } else {
-        	//System.err.println("not dicom");
+        	System.err.println("not dicom");
             float[] afAxialRes = kImage.getResolutions(0, FileInfoBase.AXIAL);
 
             MipavCoordinateSystems.fileToPatient(kInput, kOutput, kImage, FileInfoBase.AXIAL, false);
