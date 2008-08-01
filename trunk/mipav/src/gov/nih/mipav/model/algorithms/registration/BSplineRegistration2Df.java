@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 
+import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.structures.*;
 
 import javax.vecmath.*;
@@ -83,9 +84,9 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         m_iNumSamplesSrcY = iNumSamplesSrcY;
 
         // create B-spline lattice
-        m_kBSplineBasisX = new BSplineBasisDiscretef(kBasisX.getNumControlPoints(), kBasisX.getDegree(),
+        m_kBSplineBasisX = new BSplineBasisDiscretef(kBasisX.GetNumCtrlPoints(), kBasisX.GetDegree(),
                                                      kImageTrg.extents[0]);
-        m_kBSplineBasisY = new BSplineBasisDiscretef(kBasisY.getNumControlPoints(), kBasisY.getDegree(),
+        m_kBSplineBasisY = new BSplineBasisDiscretef(kBasisY.GetNumCtrlPoints(), kBasisY.GetDegree(),
                                                      kImageTrg.extents[1]);
         m_kBSpline2D = new BSplineLattice2Df(m_kBSplineBasisX, m_kBSplineBasisY);
 
@@ -97,9 +98,9 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         float[] afControlPointY = createIdentityMapControlPoints(m_kBSplineBasisY);
         Point2f kPoint = new Point2f();
 
-        for (int iControlX = 0; iControlX < m_kBSplineBasisX.getNumControlPoints(); iControlX++) {
+        for (int iControlX = 0; iControlX < m_kBSplineBasisX.GetNumCtrlPoints(); iControlX++) {
 
-            for (int iControlY = 0; iControlY < m_kBSplineBasisY.getNumControlPoints(); iControlY++) {
+            for (int iControlY = 0; iControlY < m_kBSplineBasisY.GetNumCtrlPoints(); iControlY++) {
                 kPoint.x = afControlPointX[iControlX];
                 kPoint.y = afControlPointY[iControlY];
                 m_kBSpline2D.setControlPoint(iControlX, iControlY, kPoint);
@@ -123,8 +124,8 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
      */
     public ModelSimpleImage createImageDeformation() {
 
-        float fDX = 1.0f / (m_kBSplineBasisX.getNumSamples() - 1);
-        float fDY = 1.0f / (m_kBSplineBasisY.getNumSamples() - 1);
+        float fDX = 1.0f / (m_kBSplineBasisX.GetNumSamples() - 1);
+        float fDY = 1.0f / (m_kBSplineBasisY.GetNumSamples() - 1);
 
         ModelSimpleImage kDeformation = new ModelSimpleImage(m_kImageTrg.extents, m_kImageTrg.resolutions);
 
@@ -132,7 +133,7 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         Point2f kDiffX = new Point2f();
         Point2f kDiffY = new Point2f();
 
-        for (int iY = 0; iY < m_kBSplineBasisY.getNumSamples(); iY++) {
+        for (int iY = 0; iY < m_kBSplineBasisY.GetNumSamples(); iY++) {
 
             // Determine the indexes to use for the finite differences.
             // Use a central difference everywhere except for the first
@@ -142,11 +143,11 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
 
             if (iY0 < 0) {
                 iY0 = 0;
-            } else if (iY1 >= m_kBSplineBasisY.getNumSamples()) {
-                iY1 = m_kBSplineBasisY.getNumSamples() - 1;
+            } else if (iY1 >= m_kBSplineBasisY.GetNumSamples()) {
+                iY1 = m_kBSplineBasisY.GetNumSamples() - 1;
             }
 
-            for (int iX = 0; iX < m_kBSplineBasisX.getNumSamples(); iX++) {
+            for (int iX = 0; iX < m_kBSplineBasisX.GetNumSamples(); iX++) {
 
                 // Determine the indexes to use for the finite differences.
                 // Use a central difference everywhere except for the first
@@ -156,8 +157,8 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
 
                 if (iX0 < 0) {
                     iX0 = 0;
-                } else if (iX1 >= m_kBSplineBasisX.getNumSamples()) {
-                    iX1 = m_kBSplineBasisX.getNumSamples() - 1;
+                } else if (iX1 >= m_kBSplineBasisX.GetNumSamples()) {
+                    iX1 = m_kBSplineBasisX.GetNumSamples() - 1;
                 }
 
 
@@ -216,10 +217,10 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
 
         ModelSimpleImage[] akSourceMap = createImageSourceMap();
 
-        for (int iY = 0; iY < m_kBSplineBasisY.getNumSamples(); iY++) {
+        for (int iY = 0; iY < m_kBSplineBasisY.GetNumSamples(); iY++) {
             float fSrcY = iY * fTrgDY;
 
-            for (int iX = 0; iX < m_kBSplineBasisX.getNumSamples(); iX++) {
+            for (int iX = 0; iX < m_kBSplineBasisX.GetNumSamples(); iX++) {
                 float fSrcX = iX * fTrgDX;
 
                 // Sample in 2D array.
@@ -274,10 +275,10 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
 
         // Use the BSpline discrete bases for this instance to create
         // new one based on the resampling.
-        BSplineBasisf kBasisX = new BSplineBasisf(this.m_kBSplineBasisX.getNumControlPoints(),
-                                                  this.m_kBSplineBasisX.getDegree());
-        BSplineBasisf kBasisY = new BSplineBasisf(this.m_kBSplineBasisY.getNumControlPoints(),
-                                                  this.m_kBSplineBasisY.getDegree());
+        BSplineBasisf kBasisX = new BSplineBasisf(this.m_kBSplineBasisX.GetNumCtrlPoints(),
+                                                  this.m_kBSplineBasisX.GetDegree());
+        BSplineBasisf kBasisY = new BSplineBasisf(this.m_kBSplineBasisY.GetNumCtrlPoints(),
+                                                  this.m_kBSplineBasisY.GetDegree());
 
         // Create a new registration instance using the resampling.
         BSplineRegistration2Df kReg = new BSplineRegistration2Df(this.m_kImageSrc, kImageTrg, kBasisX, kBasisY,
@@ -288,9 +289,9 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         // This works because we are just resampling the [0,1] interval.
         Point2f kPoint = new Point2f();
 
-        for (int iControlX = 0; iControlX < m_kBSplineBasisX.getNumControlPoints(); iControlX++) {
+        for (int iControlX = 0; iControlX < m_kBSplineBasisX.GetNumCtrlPoints(); iControlX++) {
 
-            for (int iControlY = 0; iControlY < m_kBSplineBasisY.getNumControlPoints(); iControlY++) {
+            for (int iControlY = 0; iControlY < m_kBSplineBasisY.GetNumCtrlPoints(); iControlY++) {
                 this.m_kBSpline2D.getControlPoint(iControlX, iControlY, kPoint);
                 kReg.m_kBSpline2D.setControlPoint(iControlX, iControlY, kPoint);
             }
@@ -322,7 +323,7 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         // If the input BSpline basis is the same as that for the
         // basis used for this instance, then just address the issue
         // of the resampled target image.
-        if (kBasisX.isSameAs(this.m_kBSplineBasisX) && kBasisY.isSameAs(this.m_kBSplineBasisY)) {
+        if (kBasisX.IsSameAs(this.m_kBSplineBasisX) && kBasisY.IsSameAs(this.m_kBSplineBasisY)) {
             return createSameMapping(kImageTrg);
         }
 
@@ -342,9 +343,9 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         // original source image.
         Point2f kPoint = new Point2f();
 
-        for (int iControlX = 0; iControlX < kBasisX.getNumControlPoints(); iControlX++) {
+        for (int iControlX = 0; iControlX < kBasisX.GetNumCtrlPoints(); iControlX++) {
 
-            for (int iControlY = 0; iControlY < kBasisY.getNumControlPoints(); iControlY++) {
+            for (int iControlY = 0; iControlY < kBasisY.GetNumCtrlPoints(); iControlY++) {
 
                 kReg.m_kBSpline2D.getControlPoint(iControlX, iControlY, kPoint);
                 this.m_kBSpline2D.getPosition(kPoint.x, kPoint.y, kPoint);
@@ -398,11 +399,11 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
 
         // Only allowed to move control points which are not anchored
         // to the boundary.
-        if ((iControlX <= 0) || (iControlX >= (m_kBSplineBasisX.getNumControlPoints() - 1))) {
+        if ((iControlX <= 0) || (iControlX >= (m_kBSplineBasisX.GetNumCtrlPoints() - 1))) {
             return;
         }
 
-        if ((iControlY <= 0) || (iControlY >= (m_kBSplineBasisY.getNumControlPoints() - 1))) {
+        if ((iControlY <= 0) || (iControlY >= (m_kBSplineBasisY.GetNumCtrlPoints() - 1))) {
             return;
         }
 
@@ -674,8 +675,8 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
     protected void getErrorDeriv(int iControlX, int iControlY, Vector2f kDeriv) {
 
         // Compute the step of half a sample in each direction.
-        float fSmallStepX = 0.5f / (float) (m_kBSplineBasisX.getNumSamples() - 1);
-        float fSmallStepY = 0.5f / (float) (m_kBSplineBasisY.getNumSamples() - 1);
+        float fSmallStepX = 0.5f / (float) (m_kBSplineBasisX.GetNumSamples() - 1);
+        float fSmallStepY = 0.5f / (float) (m_kBSplineBasisY.GetNumSamples() - 1);
 
         // Get the coordinates of the current control point.
         Point2f kOrigin = new Point2f();
@@ -735,10 +736,10 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
      * @param  iControlY  int Identifies the control point in the 2D lattice.
      */
     protected void updateControlPointSamples(int iControlX, int iControlY) {
-        updateSamples(m_kBSplineBasisX.getControlPointSampleIndexMin(iControlX),
-                      m_kBSplineBasisX.getControlPointSampleIndexMax(iControlX),
-                      m_kBSplineBasisY.getControlPointSampleIndexMin(iControlY),
-                      m_kBSplineBasisY.getControlPointSampleIndexMax(iControlY));
+        updateSamples(m_kBSplineBasisX.GetControlPointSampleIndexMin(iControlX),
+                      m_kBSplineBasisX.GetControlPointSampleIndexMax(iControlX),
+                      m_kBSplineBasisY.GetControlPointSampleIndexMin(iControlY),
+                      m_kBSplineBasisY.GetControlPointSampleIndexMax(iControlY));
     }
 
     /**

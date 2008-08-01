@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.dialogs;
 
 
+import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.scripting.*;
@@ -1197,7 +1198,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             String tmpStr;
 
             // Number of control points.
-            int iNumControlPointsMin = BSplineBasisf.getMinNumControlPoints(kOptions.iBSplineDegree);
+            int iNumControlPointsMin = BSplineBasisf.GetMinNumControlPoints(kOptions.iBSplineDegree);
             int iNumControlPointsMax = iExtentMin / 2;
             tmpStr = kTextBSplineNumControlPoints.getText();
 

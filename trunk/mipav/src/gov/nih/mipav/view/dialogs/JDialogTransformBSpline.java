@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.dialogs;
 
 
+import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -460,7 +461,7 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
                 stoken = new StringTokenizer(str);
                 numControlPoints = Integer.valueOf(stoken.nextToken()).intValue();
 
-                int iNumControlPointsMin = BSplineBasisf.getMinNumControlPoints(splineDegree);
+                int iNumControlPointsMin = BSplineBasisf.GetMinNumControlPoints(splineDegree);
 
                 if (have25D) {
                     iNumControlPointsMax = srcMinExtent / 2;

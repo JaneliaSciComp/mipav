@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 
+import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -330,7 +331,7 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
             line = lineString.getBytes();
             raFile.write(line);
 
-            lineString = new String(String.valueOf(kBasisX.getDegree()) + " " + String.valueOf(kBasisY.getDegree()) +
+            lineString = new String(String.valueOf(kBasisX.GetDegree()) + " " + String.valueOf(kBasisY.GetDegree()) +
                                     "\n");
             line = lineString.getBytes();
             raFile.write(line);
@@ -339,8 +340,8 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
             line = lineString.getBytes();
             raFile.write(line);
 
-            lineString = new String(String.valueOf(kBasisX.getNumControlPoints()) + " " +
-                                    String.valueOf(kBasisY.getNumControlPoints()) + "\n");
+            lineString = new String(String.valueOf(kBasisX.GetNumCtrlPoints()) + " " +
+                                    String.valueOf(kBasisY.GetNumCtrlPoints()) + "\n");
             line = lineString.getBytes();
             raFile.write(line);
 
@@ -351,9 +352,9 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
             BSplineLattice2Df kBSpline2D = kReg.getLattice();
             Point2f control2D = new Point2f();
 
-            for (int iControlX = 0; iControlX < kBasisX.getNumControlPoints(); iControlX++) {
+            for (int iControlX = 0; iControlX < kBasisX.GetNumCtrlPoints(); iControlX++) {
 
-                for (int iControlY = 0; iControlY < kBasisY.getNumControlPoints(); iControlY++) {
+                for (int iControlY = 0; iControlY < kBasisY.GetNumCtrlPoints(); iControlY++) {
                     lineString = new String("# iControlX = " + String.valueOf(iControlX) + " iControlY = " +
                                             String.valueOf(iControlY) + "\n");
                     line = lineString.getBytes();

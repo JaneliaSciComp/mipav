@@ -3,9 +3,8 @@ package gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM;
 
 import gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.*;
 import java.util.*;
-import javax.vecmath.Point3f;
 import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Meshes.*;
+import WildMagic.LibFoundation.Meshes.*;
 import WildMagic.LibFoundation.Intersection.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 
@@ -518,10 +517,10 @@ public class MjCorticalMesh_WM {
         m_afMeanCurvature = new float[iVQuantity];
 
 
-        Point3f[] akPoint = new Point3f[iVQuantity]; 
+        Vector3f[] akPoint = new Vector3f[iVQuantity]; 
         for ( int i = 0; i < iVQuantity; i++ )
         {
-            akPoint[i] = new Point3f( m_kMesh.VBuffer.GetPosition3fX(i),
+            akPoint[i] = new Vector3f( m_kMesh.VBuffer.GetPosition3fX(i),
                     m_kMesh.VBuffer.GetPosition3fY(i),
                     m_kMesh.VBuffer.GetPosition3fZ(i) );
                     
@@ -530,11 +529,10 @@ public class MjCorticalMesh_WM {
         int[] aiConnect = m_kMesh.IBuffer.GetData();
         
 
-        MjMeshCurvature kMG = new MjMeshCurvature(iVQuantity, akPoint, iTQuantity, aiConnect);
+        MeshCurvature kMG = new MeshCurvature(iVQuantity, akPoint, iTQuantity, aiConnect);
 
-        //MeshCurvature kMG = new MeshCurvature(m_kMesh, kCenter);
-        float[] afMinCurv = kMG.getMinCurvatures();
-        float[] afMaxCurv = kMG.getMaxCurvatures();
+        float[] afMinCurv = kMG.GetMinCurvatures();
+        float[] afMaxCurv = kMG.GetMaxCurvatures();
         m_fMinMeanCurvature = afMinCurv[0] + afMaxCurv[0];
         m_fMaxMeanCurvature = m_fMinMeanCurvature;
 
@@ -1630,44 +1628,44 @@ public class MjCorticalMesh_WM {
         float fE2 = (fDX10 * fDY20) - (fDX20 * fDY10);
 
         Polynomial1f kP0 = new Polynomial1f(6);
-        kP0.setCoeff(0, 0.0f);
-        kP0.setCoeff(1, 0.0f);
-        kP0.setCoeff(2, fE0 * fE0);
-        kP0.setCoeff(3, (fC0 * fC0) + (fD0 * fD0) + (2.0f * fE0 * fE1));
-        kP0.setCoeff(4, (2.0f * ((fC0 * fC1) + (fD0 * fD1) + (fE0 * fE1))) + (fE1 * fE1));
-        kP0.setCoeff(5, (fC1 * fC1) + (fD1 * fD1) + (2.0f * fE1 * fE2));
-        kP0.setCoeff(6, fE2 * fE2);
+        kP0.SetCoeff(0, 0.0f);
+        kP0.SetCoeff(1, 0.0f);
+        kP0.SetCoeff(2, fE0 * fE0);
+        kP0.SetCoeff(3, (fC0 * fC0) + (fD0 * fD0) + (2.0f * fE0 * fE1));
+        kP0.SetCoeff(4, (2.0f * ((fC0 * fC1) + (fD0 * fD1) + (fE0 * fE1))) + (fE1 * fE1));
+        kP0.SetCoeff(5, (fC1 * fC1) + (fD1 * fD1) + (2.0f * fE1 * fE2));
+        kP0.SetCoeff(6, fE2 * fE2);
 
         Polynomial1f kQ0 = new Polynomial1f(1);
-        kQ0.setCoeff(0, fR0Sqr);
-        kQ0.setCoeff(1, 1.0f);
+        kQ0.SetCoeff(0, fR0Sqr);
+        kQ0.SetCoeff(1, 1.0f);
 
         Polynomial1f kQ1 = new Polynomial1f(1);
-        kQ1.setCoeff(0, fR1Sqr);
-        kQ1.setCoeff(1, 1.0f);
+        kQ1.SetCoeff(0, fR1Sqr);
+        kQ1.SetCoeff(1, 1.0f);
 
         Polynomial1f kQ2 = new Polynomial1f(1);
-        kQ2.setCoeff(0, fR2Sqr);
-        kQ2.setCoeff(1, 1.0f);
+        kQ2.SetCoeff(0, fR2Sqr);
+        kQ2.SetCoeff(1, 1.0f);
 
         float fTmp = fAreaFraction * (float) Math.PI;
         float fAmp = fTmp * fTmp;
         Polynomial1f kP1 = new Polynomial1f();
-        kP1.set(kQ0);
-        kP1.scale(fAmp);
-        kP1.mul(kP1, kQ0);
-        kP1.mul(kP1, kQ0);
-        kP1.mul(kP1, kQ0);
-        kP1.mul(kP1, kQ1);
-        kP1.mul(kP1, kQ1);
-        kP1.mul(kP1, kQ2);
-        kP1.mul(kP1, kQ2);
+        kP1.Copy(kQ0);
+        kP1.Scale(fAmp);
+        kP1.Mult(kP1, kQ0);
+        kP1.Mult(kP1, kQ0);
+        kP1.Mult(kP1, kQ0);
+        kP1.Mult(kP1, kQ1);
+        kP1.Mult(kP1, kQ1);
+        kP1.Mult(kP1, kQ2);
+        kP1.Mult(kP1, kQ2);
 
         Polynomial1f kFinal = new Polynomial1f();
-        kFinal.sub(kP1, kP0);
-        assert (kFinal.getDegree() <= 8);
+        kFinal.Sub(kP1, kP0);
+        assert (kFinal.GetDegree() <= 8);
 
-        return kFinal.getRootBisection();
+        return kFinal.GetRootBisection();
     }
 
     /**
@@ -1746,10 +1744,10 @@ public class MjCorticalMesh_WM {
         /* total vector of vertex positions and D is the normalized gradient */
         /* vector. */
         Polynomial1f kPoly = new Polynomial1f(4);
-        kPoly.setCoeff(0, fError);
+        kPoly.SetCoeff(0, fError);
 
         for (int j = 1; j <= 4; j++) {
-            kPoly.setCoeff(j, 0.0f);
+            kPoly.SetCoeff(j, 0.0f);
         }
 
         for (int i0 = 0; i0 < iVQuantity; i0++) {
@@ -1776,28 +1774,28 @@ public class MjCorticalMesh_WM {
                 float fTmp0 = fC - (fValue * fValue);
                 float fTmp1 = 1.0f + (fWeight * fTmp0);
 
-                kPoly.setCoeff(1, kPoly.getCoeff(1) + (4.0f * fB * fTmp1));
-                kPoly.setCoeff(2, kPoly.getCoeff(2) + (4.0f * fWeight * fB * fB) + (2.0f * fA * fTmp1));
-                kPoly.setCoeff(3, kPoly.getCoeff(3) + (4.0f * fWeight * fA * fB));
-                kPoly.setCoeff(4, kPoly.getCoeff(4) + (fWeight * fA * fA));
+                kPoly.SetCoeff(1, kPoly.GetCoeff(1) + (4.0f * fB * fTmp1));
+                kPoly.SetCoeff(2, kPoly.GetCoeff(2) + (4.0f * fWeight * fB * fB) + (2.0f * fA * fTmp1));
+                kPoly.SetCoeff(3, kPoly.GetCoeff(3) + (4.0f * fWeight * fA * fB));
+                kPoly.SetCoeff(4, kPoly.GetCoeff(4) + (fWeight * fA * fA));
             }
         }
 
         for (int j = 1; j <= 4; j++) {
-            kPoly.setCoeff(j, kPoly.getCoeff(j) * fInvQuantity);
+            kPoly.SetCoeff(j, kPoly.GetCoeff(j) * fInvQuantity);
         }
 
-        Polynomial1f kDPoly = kPoly.getDerivative();
+        Polynomial1f kDPoly = kPoly.GetDerivative();
 
         float[] afRoot = new float[3];
-        int iCount = kDPoly.rootsDegree3(afRoot);
+        int iCount = kDPoly.RootsDegree3(afRoot);
         assert (iCount > 0);
 
         int iMin = -1;
 
         for (int i = 0; i < iCount; i++) {
-            float fTest = kDPoly.eval(afRoot[i]);
-            float fValue = kPoly.eval(afRoot[i]);
+            float fTest = kDPoly.Eval(afRoot[i]);
+            float fValue = kPoly.Eval(afRoot[i]);
             assert (fValue >= 0.0f);
 
             if (fValue < fError) {

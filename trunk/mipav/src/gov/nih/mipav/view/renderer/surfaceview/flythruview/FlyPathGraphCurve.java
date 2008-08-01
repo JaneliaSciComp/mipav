@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.surfaceview.flythruview;
 
 
+import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.structures.*;
 
 import java.util.*;
@@ -21,7 +22,7 @@ public class FlyPathGraphCurve extends FlyPathGraph {
      * correspond for the same index. The size of these arrays must also match the size of the arrays in the base class,
      * and must correspond for the same index.
      */
-    protected ArrayList m_kListCurvePosition; // array of Curve3
+    protected ArrayList<BSplineCurve3f> m_kListCurvePosition; // array of Curve3
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -49,7 +50,7 @@ public class FlyPathGraphCurve extends FlyPathGraph {
         super(kGraphSamples);
 
         // Allocate storage for curves
-        m_kListCurvePosition = new ArrayList();
+        m_kListCurvePosition = new ArrayList<BSplineCurve3f>();
 
         // Iterate over each curve in the input graph.
         int iNumBranches = kGraphSamples.getNumBranches();
@@ -66,10 +67,16 @@ public class FlyPathGraphCurve extends FlyPathGraph {
             // Make sure the minimum number of control points are used
             // given the degree of the BSpline.
             int iNumControlPoints = (int) Math.ceil(akPointPosition.length * fFractionNumControlPoints);
-            iNumControlPoints = Math.max(iNumControlPoints, BSplineBasisf.getMinNumControlPoints(iDegree));
+            iNumControlPoints = Math.max(iNumControlPoints, BSplineBasisf.GetMinNumControlPoints(iDegree));
 
             // Create each curve approximation and add it to the graph.
-            m_kListCurvePosition.add(BSplineCurve3.createApproximation(akPointPosition, iNumControlPoints, iDegree));
+            WildMagic.LibFoundation.Mathematics.Vector3f[] akVec = 
+            	new WildMagic.LibFoundation.Mathematics.Vector3f[akPointPosition.length];
+            for ( int i = 0; i < akPointPosition.length; i++ )
+            {
+            	akVec[i] = new WildMagic.LibFoundation.Mathematics.Vector3f( akPointPosition[i].x, akPointPosition[i].y, akPointPosition[i].z );
+            }
+            m_kListCurvePosition.add(BSplineCurve3f.CreateApproximation(akVec, iNumControlPoints, iDegree));
         }
     }
 
@@ -81,10 +88,10 @@ public class FlyPathGraphCurve extends FlyPathGraph {
      *
      * @return  Curve3[] Array of parameterized curves for 3D positions.
      */
-    public Curve3[] getArrayCurvePosition() {
-        Curve3[] akCurve = new Curve3[getNumBranches()];
+    public Curve3f[] getArrayCurvePosition() {
+        Curve3f[] akCurve = new Curve3f[getNumBranches()];
 
-        return (Curve3[]) m_kListCurvePosition.toArray(akCurve);
+        return (Curve3f[]) m_kListCurvePosition.toArray(akCurve);
     }
 
     /**
@@ -94,7 +101,7 @@ public class FlyPathGraphCurve extends FlyPathGraph {
      *
      * @return  Curve3 Parameterized curve for 3D positions.
      */
-    public Curve3 getCurvePosition(int iIndex) {
-        return (Curve3) m_kListCurvePosition.get(iIndex);
+    public Curve3f getCurvePosition(int iIndex) {
+        return (Curve3f) m_kListCurvePosition.get(iIndex);
     }
 }

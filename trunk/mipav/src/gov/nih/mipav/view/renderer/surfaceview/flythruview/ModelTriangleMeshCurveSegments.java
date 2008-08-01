@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.surfaceview.flythruview;
 
 
+import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.renderer.*;
@@ -56,7 +57,7 @@ public class ModelTriangleMeshCurveSegments {
     private int[] m_aiNumBreakPoints;
 
     /** The array of possible curves to use for segmenting the mesh. */
-    private Curve3[] m_akCurvePosition;
+    private Curve3f[] m_akCurvePosition;
 
     /** The number of curves. */
     private int m_iNumCurves;
@@ -202,7 +203,7 @@ public class ModelTriangleMeshCurveSegments {
      *
      * @return  Curve3
      */
-    public Curve3 getCurve(int iCurve) {
+    public Curve3f getCurve(int iCurve) {
         return m_akCurvePosition[iCurve];
     }
 
@@ -353,7 +354,8 @@ public class ModelTriangleMeshCurveSegments {
                 /* The Normal direction perpendicular to the tangent at the
                  * position on the curve.
                  */
-                kNormal = m_akCurvePosition[iCurve].getSecondDerivative(fRelativeLength);
+                WildMagic.LibFoundation.Mathematics.Vector3f kVec = m_akCurvePosition[iCurve].GetSecondDerivative(fRelativeLength);
+                kNormal = new Vector3f(kVec.X, kVec.Y, kVec.Z);
 
                 if (kNormal.lengthSquared() > 0.0f) {
                     kNormal.normalize();
@@ -615,7 +617,7 @@ public class ModelTriangleMeshCurveSegments {
             /* Initialize th number of segment points
              */
             m_aiNumBreakPoints[iCurve] = 0;
-            fTotalCurveLength = m_akCurvePosition[iCurve].getTotalLength();
+            fTotalCurveLength = m_akCurvePosition[iCurve].GetTotalLength();
 
 
             /* Loop over the sample points and determine where to segment the
@@ -636,7 +638,8 @@ public class ModelTriangleMeshCurveSegments {
                 /* The position on the curve at the time fTime is stored for
                  * use in later functions.
                  */
-                m_aakCurvePos[iCurve][iSample] = m_akCurvePosition[iCurve].getPosition(fTime);
+                WildMagic.LibFoundation.Mathematics.Vector3f kVec = m_akCurvePosition[iCurve].GetPosition(fTime);
+                m_aakCurvePos[iCurve][iSample] = new Point3f(kVec.X, kVec.Y, kVec.Z);
 
                 /* If this is the first time through the loop, save the first
                  * point and index, also set the first CurveBreakPoint to this fTime.
@@ -659,7 +662,8 @@ public class ModelTriangleMeshCurveSegments {
                     /* Use the tangent of the Curve at the current fTime to
                      * determine curvature. It is stored in a data member for use in later functions.
                      */
-                    m_aakTangent[iCurve][iSample] = m_akCurvePosition[iCurve].getTangent(fTime);
+                	kVec = m_akCurvePosition[iCurve].GetTangent(fTime);
+                    m_aakTangent[iCurve][iSample] = new Vector3f(kVec.X, kVec.Y, kVec.Z);
 
                     /* Calculate the difference vector between the current
                      *  point and the last point where the curve was segmented.

@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.structures;
 
 
+import WildMagic.LibFoundation.Curves.*;
 import javax.vecmath.*;
 
 
@@ -33,8 +34,8 @@ public class BSplineLattice2Df {
         m_kBasisX = kBasisX;
         m_kBasisY = kBasisY;
 
-        int iNumControlX = kBasisX.getNumControlPoints();
-        int iNumControlY = kBasisY.getNumControlPoints();
+        int iNumControlX = kBasisX.GetNumCtrlPoints();
+        int iNumControlY = kBasisY.GetNumCtrlPoints();
 
         // Allocate the equally spaced control points.
         m_aakControlPoint = new Point2f[iNumControlY][iNumControlX];
@@ -135,8 +136,8 @@ public class BSplineLattice2Df {
      */
     public void getControlPoint(int iControlX, int iControlY, Point2f kPoint) {
 
-        if ((0 <= iControlX) && (iControlX < m_kBasisX.getNumControlPoints()) && (0 <= iControlY) &&
-                (iControlY < m_kBasisY.getNumControlPoints())) {
+        if ((0 <= iControlX) && (iControlX < m_kBasisX.GetNumCtrlPoints()) && (0 <= iControlY) &&
+                (iControlY < m_kBasisY.GetNumCtrlPoints())) {
 
             kPoint.set(m_aakControlPoint[iControlY][iControlX]);
         }
@@ -153,20 +154,20 @@ public class BSplineLattice2Df {
      * @param  kPos      Point2f 2D coordinates resulting from evaluation.
      */
     public void getPosition(int iSampleX, int iSampleY, Point2f kPos) {
-        float fX = (float) iSampleX / (float) (m_kBasisX.getNumSamples() - 1);
-        int iControlMaxX = m_kBasisX.getKnotIndex(fX);
-        int iControlMinX = iControlMaxX - m_kBasisX.getDegree();
+        float fX = (float) iSampleX / (float) (m_kBasisX.GetNumSamples() - 1);
+        int iControlMaxX = m_kBasisX.GetKnotIndex(fX);
+        int iControlMinX = iControlMaxX - m_kBasisX.GetDegree();
 
-        float fY = (float) iSampleY / (float) (m_kBasisY.getNumSamples() - 1);
-        int iControlMaxY = m_kBasisY.getKnotIndex(fY);
-        int iControlMinY = iControlMaxY - m_kBasisY.getDegree();
+        float fY = (float) iSampleY / (float) (m_kBasisY.GetNumSamples() - 1);
+        int iControlMaxY = m_kBasisY.GetKnotIndex(fY);
+        int iControlMinY = iControlMaxY - m_kBasisY.GetDegree();
 
         kPos.set(0.0f, 0.0f);
 
         for (int iControlX = iControlMinX; iControlX <= iControlMaxX; iControlX++) {
 
             for (int iControlY = iControlMinY; iControlY <= iControlMaxY; iControlY++) {
-                float fTmp = m_kBasisX.getD0(iControlX, iSampleX) * m_kBasisY.getD0(iControlY, iSampleY);
+                float fTmp = m_kBasisX.GetD0(iControlX, iSampleX) * m_kBasisY.GetD0(iControlY, iSampleY);
                 kPos.scaleAdd(fTmp, m_aakControlPoint[iControlY][iControlX], kPos);
             }
         }
@@ -183,17 +184,17 @@ public class BSplineLattice2Df {
      */
     public void getPosition(float fX, float fY, Point2f kPos) {
 
-        int iControlMaxX = m_kBasisX.getKnotIndex(fX);
-        int iControlMinX = iControlMaxX - m_kBasisX.getDegree();
+        int iControlMaxX = m_kBasisX.GetKnotIndex(fX);
+        int iControlMinX = iControlMaxX - m_kBasisX.GetDegree();
 
-        int iControlMaxY = m_kBasisY.getKnotIndex(fY);
-        int iControlMinY = iControlMaxY - m_kBasisY.getDegree();
+        int iControlMaxY = m_kBasisY.GetKnotIndex(fY);
+        int iControlMinY = iControlMaxY - m_kBasisY.GetDegree();
 
-        float[] afD0X = new float[m_kBasisX.getNumControlPoints()];
-        float[] afD0Y = new float[m_kBasisY.getNumControlPoints()];
+        float[] afD0X = new float[m_kBasisX.GetNumCtrlPoints()];
+        float[] afD0Y = new float[m_kBasisY.GetNumCtrlPoints()];
 
-        m_kBasisX.compute(fX, afD0X, null, null);
-        m_kBasisY.compute(fY, afD0Y, null, null);
+        m_kBasisX.Compute(fX, afD0X, null, null);
+        m_kBasisY.Compute(fY, afD0Y, null, null);
 
         kPos.set(0.0f, 0.0f);
 
@@ -219,8 +220,8 @@ public class BSplineLattice2Df {
      */
     public void setControlPoint(int iControlX, int iControlY, Point2f kPoint) {
 
-        if ((0 <= iControlX) && (iControlX < m_kBasisX.getNumControlPoints()) && (0 <= iControlY) &&
-                (iControlY < m_kBasisY.getNumControlPoints())) {
+        if ((0 <= iControlX) && (iControlX < m_kBasisX.GetNumCtrlPoints()) && (0 <= iControlY) &&
+                (iControlY < m_kBasisY.GetNumCtrlPoints())) {
 
             m_aakControlPoint[iControlY][iControlX].set(kPoint);
         }

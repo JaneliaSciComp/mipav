@@ -1,7 +1,7 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 
-import gov.nih.mipav.model.structures.BSplineBasisDiscretef;
+import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.jama.JamaMatrix;
 import gov.nih.mipav.util.MipavUtil;
@@ -121,12 +121,12 @@ public class BSplineRegistrationBasef {
     protected float[] createIdentityMapControlPoints(BSplineBasisDiscretef kBasis) {
 
         // Create the array to store the control point positions.
-        int iNumControlPoints = kBasis.getNumControlPoints();
+        int iNumControlPoints = kBasis.GetNumCtrlPoints();
         float[] afControlPoint = new float[iNumControlPoints];
 
         // In the case of degree 1, evenly spacing the control points
         // always yields the identity map.
-        if (1 == kBasis.getDegree()) {
+        if (1 == kBasis.GetDegree()) {
 
             for (int i = 0; i < iNumControlPoints; i++) {
                 afControlPoint[i] = (float) i / (float) (iNumControlPoints - 1);
@@ -140,7 +140,7 @@ public class BSplineRegistrationBasef {
         else {
 
             // How many samples are defined for discretized BSpline already?
-            int iNumSamples = kBasis.getNumSamples();
+            int iNumSamples = kBasis.GetNumSamples();
 
             // Setup linear systems in form of a matrix equation.  The matrix
             // A contains the contribution of each control point for each
@@ -160,11 +160,11 @@ public class BSplineRegistrationBasef {
                 float fT = iSample / (float) (iNumSamples - 1);
 
                 for (int iRow = 0; iRow < iNumControlPoints; iRow++) {
-                    double dBi = kB.get(iRow, 0) + (fT * kBasis.getD0(iRow, iSample));
+                    double dBi = kB.get(iRow, 0) + (fT * kBasis.GetD0(iRow, iSample));
                     kB.set(iRow, 0, dBi);
 
                     for (int iCol = 0; iCol < iNumControlPoints; iCol++) {
-                        double dAij = kA.get(iRow, iCol) + (kBasis.getD0(iRow, iSample) * kBasis.getD0(iCol, iSample));
+                        double dAij = kA.get(iRow, iCol) + (kBasis.GetD0(iRow, iSample) * kBasis.GetD0(iCol, iSample));
                         kA.set(iRow, iCol, dAij);
                     }
                 }

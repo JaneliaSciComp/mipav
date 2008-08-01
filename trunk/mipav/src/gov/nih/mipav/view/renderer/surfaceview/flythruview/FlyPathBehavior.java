@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.surfaceview.flythruview;
 
 
+import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.structures.*;
 
 import java.awt.*;
@@ -213,7 +214,7 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
      *
      * @return  Curve3 Reference to Curve3 instance in path graph.
      */
-    public Curve3 getBranchCurve() {
+    public Curve3f getBranchCurve() {
         return m_kBranchState.m_kBranchCurve;
     }
 
@@ -298,7 +299,7 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
      * @return  float Length of the path.
      */
     public float getPathLength() {
-        return m_kBranchState.m_kBranchCurve.getTotalLength();
+        return m_kBranchState.m_kBranchCurve.GetTotalLength();
     }
 
     /**
@@ -967,9 +968,10 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
 
         // Get the path point (position and tangent) based on distance.
         // It needs to be double precision for the view to use.
-        Curve3 kCurve = m_kBranchState.m_kBranchCurve;
-        float fTime = kCurve.getTime(fDist, 100, 1e-02f);
-        Point3d kViewPoint = new Point3d(kCurve.getPosition(fTime));
+        Curve3f kCurve = m_kBranchState.m_kBranchCurve;
+        float fTime = kCurve.GetTime(fDist, 100, 1e-02f);
+        WildMagic.LibFoundation.Mathematics.Vector3f kVec = kCurve.GetPosition(fTime);
+        Point3d kViewPoint = new Point3d(kVec.X, kVec.Y, kVec.Z);
 
         // If the gaze distance is zero, then use the tangent vector
         // to the curve.
@@ -983,14 +985,16 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
             float fTimeGazeDist = m_kBranchState.getForwardNormalizedTime(m_fGazeDist);
 
             if (fTime != fTimeGazeDist) {
-                kLookatVector.sub(new Point3d(kCurve.getPosition(fTimeGazeDist)), kViewPoint);
+            	kVec = kCurve.GetPosition(fTimeGazeDist);
+                kLookatVector.sub(new Point3d(kVec.X, kVec.Y, kVec.Z), kViewPoint);
                 kLookatVector.normalize();
                 bLookatVectorUseTangent = false;
             }
         }
 
         if (bLookatVectorUseTangent) {
-            kLookatVector.set(kCurve.getTangent(fTime));
+        	kVec = kCurve.GetTangent(fTime);
+            kLookatVector.set(kVec.X, kVec.Y, kVec.Z);
 
             if (!m_kBranchState.m_bMoveForward) {
                 kLookatVector.negate();
@@ -1404,7 +1408,7 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
         public int m_iParentBranchIndex;
 
         /** DOCUMENT ME! */
-        public Curve3 m_kBranchCurve;
+        public Curve3f m_kBranchCurve;
 
         /** DOCUMENT ME! */
         private float m_fDistUnvisitedMax;
@@ -1504,7 +1508,9 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
          * @return  Point3f Coordinates of the 3D point further down along the curve.
          */
         public Point3f getForwardNormalizedPosition(float fDist) {
-            return m_kBranchCurve.getPosition(getForwardNormalizedTime(fDist));
+        	WildMagic.LibFoundation.Mathematics.Vector3f kVec = m_kBranchCurve.GetPosition(getForwardNormalizedTime(fDist));
+        	Point3f kPos = new Point3f( kVec.X, kVec.Y, kVec.Z );
+            return kPos;
         }
 
         /**
@@ -1518,10 +1524,10 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
         public float getForwardNormalizedTime(float fForwardDist) {
 
             // Normalize the input distance.
-            float fPathDist = m_fNormalizedPathDist * m_kBranchCurve.getTotalLength();
+            float fPathDist = m_fNormalizedPathDist * m_kBranchCurve.GetTotalLength();
 
-            return m_bMoveForward ? m_kBranchCurve.getTime(fPathDist + fForwardDist, 100, 1e-02f)
-                                  : m_kBranchCurve.getTime(fPathDist - fForwardDist, 100, 1e-02f);
+            return m_bMoveForward ? m_kBranchCurve.GetTime(fPathDist + fForwardDist, 100, 1e-02f)
+                                  : m_kBranchCurve.GetTime(fPathDist - fForwardDist, 100, 1e-02f);
 
         }
 
