@@ -3,6 +3,7 @@
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmCenterOfMass;
 import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitudeSep;
@@ -13,9 +14,11 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcat;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.VOI;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -38,6 +41,10 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     
     /** Path of reference directory */
     private String refPath;
+    
+    private AlgorithmCenterOfMass algoFindCM;
+    
+    Point cm;
     
     /** Output box */
     private JTextArea outputbox;
@@ -65,6 +72,8 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     
     FileIO fileIO = new FileIO();
     
+    private int dPerp;
+    
     /** Stores concatnated image **/
     ModelImage concated;
     
@@ -80,10 +89,23 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     /** Mean MPmap image **/
     private ModelImage avg;
     
-    private float dPerP;
+    private float ymin;
+    
+    private float ymax;
+    
+    private float bmin;
+    
+    private float bmax;
+    
+    private boolean preReg;
+    
+    private File mpMapFile;
+    
+    private File voiFile;
     
 
-    public PlugInAlgorithmNEIRetinalRegistration(String imageDir1, String imageDir2, JTextArea outputbox, String refPath, boolean toConcat, float epsY, float epsB, float dPerP) {
+    public PlugInAlgorithmNEIRetinalRegistration(String imageDir1, String imageDir2, JTextArea outputbox, String refPath, boolean toConcat, float epsY,
+            float epsB, float ymin, float ymax,float bmin, float bmax, boolean registered) {
         sigma[0] = 6;
         sigma[1] = 6;
         this.imagePath1 = imageDir1;
@@ -93,12 +115,79 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         this.shouldConcat = toConcat;
         this.epsY = epsY;
         this.epsB = epsB;
-        this.dPerP = dPerP;
+        this.ymin = ymin;
+        this.ymax = ymax;
+        this.bmin = bmin;
+        this.bmax = bmax;
+        this.preReg = registered;
+        
         
         
  
     }
+    
+    public PlugInAlgorithmNEIRetinalRegistration(String mpMapLoc, String voiLoc, int dPerp, JTextArea outbox2){
+        mpMapFile = new File(mpMapLoc);
+        
+        voiFile = new File(voiLoc);
+        this.outputbox = outbox2;
+        this.dPerp = dPerp;
+        
+    }
 
+    public void mpData(){
+        
+        fileIO.setQuiet(true);
+        
+        ModelImage image = fileIO.readImage(mpMapFile.getAbsolutePath());
+        FileVOI voiIO;
+        try {
+            voiIO = new FileVOI(voiFile.getName(), voiFile.getParent() + voiFile.separator, image);
+
+        
+        VOI voi[] = voiIO.readVOI(false);
+        
+        for (int i = 0; i < voi.length; i++) {
+            image.registerVOI(voi[i]);
+        }
+        
+        } catch (IOException e) {
+            MipavUtil.displayError("Error loading VOI to MPmap!");
+            setCompleted(true);
+            this.notifyListeners(this);
+            return;
+        }
+        
+
+        float threshold[] = new float[2];
+        threshold[0] = (float)image.getMin();
+        threshold[1] = (float)image.getMax();
+        algoFindCM = new AlgorithmCenterOfMass(image, threshold, true);
+        algoFindCM.run();
+        cm = new Point((int)((float)algoFindCM.getCenterOfMass()[0]/image.getResolutions(0)[0]),(int)((float)algoFindCM.getCenterOfMass()[1]/image.getResolutions(0)[1]));
+        Point current;
+        float r = (float).1, total;
+        do{
+            total = 0;
+            for(int theta = 0; theta < 360; theta++){
+                current = new Point((int)(r*Math.sin(theta)), (int)(r*Math.cos(theta)));
+                current.translate((int)cm.getX(), (int)cm.getY());
+                total = total + image.getFloat((int)current.getX(), (int)current.getY());
+            }
+            total = total / 360;
+            System.out.println(total);
+            r = r + (float).1;
+        
+        }while(!Float.isNaN(total));
+        
+        
+        
+        
+        setCompleted(true);
+        this.notifyListeners(this);
+        return;
+        
+    }
     @Override
     public void runAlgorithm() {
         
@@ -129,40 +218,46 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 imgLoc2.add(testFile.getAbsolutePath());
                 
             }
-        }
-            
+        } 
+        fileIO.setQuiet(true);
+        if (!preReg){
             //Read in reference
             outputbox.append("** Loading " + refPath + " in as Reference Image: \n");
-            fileIO.setQuiet(true);
             reference = fileIO.readImage(refPath);
             reference.setImageName("reference");
+        }
         
         
         //make 3 new folders
         File outputfolder = new File(f2.getParent(), "Output");
         outputfolder.mkdir();
         
-        File outputfolder2 = new File(f2.getParent(), "YellowReg");
-        outputfolder2.mkdir();
+        File outputfolder2 = null, outputfolder3 = null;
+        FileWriteOptions opts = new FileWriteOptions(true);
+        opts.setFileType(FileUtility.TIFF);
+        opts.setBeginSlice(0);
+        opts.setEndSlice(0);
+        opts.setOptionsSet(true);
+        if (!preReg){
+            outputfolder2 = new File(f2.getParent(), "YellowReg");
+            outputfolder2.mkdir();
+            
+            outputfolder3 = new File(f2.getParent(), "BlueReg");
+            outputfolder3.mkdir();
+            
+            //select eye for registration
+            eyebitset = eyeballSelect(reference, eyebitset, 7);
+            trimzone = eyeballSelect(reference, trimzone, -1);
+       
+            removeBack(reference);
         
-        File outputfolder3 = new File(f2.getParent(), "BlueReg");
-        outputfolder3.mkdir();
-        
-        //select eye for registration
-        eyebitset = eyeballSelect(reference, eyebitset, 7);
-        trimzone = eyeballSelect(reference, trimzone, -1);
-        removeBack(reference);
         
         
         
         
         //file write options
         
-        FileWriteOptions opts = new FileWriteOptions(true);
-        opts.setFileType(FileUtility.TIFF);
-        opts.setBeginSlice(0);
-        opts.setEndSlice(0);
-        opts.setOptionsSet(true);
+
         opts.setFileDirectory(outputfolder2 + outputfolder2.separator);
         ModelImage toBeReg, doneReg, convDoneReg;
         outputbox.append("        ** Calculating Gradient Magnitude for Registration**\n");
@@ -355,10 +450,20 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
             reference.disposeLocal();
             reference = null;
         }
+        }
         
         //build MPmaps
-        File[] listOfYellow = outputfolder2.listFiles() ;
-        File[] listOfBlue = outputfolder3.listFiles() ;
+        File[] listOfYellow, listOfBlue;
+        
+        if (!preReg){
+            listOfYellow = outputfolder2.listFiles() ;
+            listOfBlue = outputfolder3.listFiles() ;
+        }
+        else{
+            listOfYellow = f1.listFiles() ;
+            listOfBlue = f2.listFiles() ;
+        }
+        
         float bMax, bMin, yMax = 0, yMin = 0;
         int counter = 1;
         ModelImage yellow = null, blue = null, mpMap = null;
@@ -375,10 +480,15 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 System.out.println("IO exception");
                 return;
             }
-            yMax = (float) yellow.getMax();
-            //yMax = findTrueMax(yBuffer); 
-            //yMin = (float) yellow.getMin();
-            yMin = findTrueMin(yBuffer);
+            if (ymin ==-1 || ymax== -1){
+                yMax = (float) yellow.getMax();
+                yMin = findTrueMin(yBuffer);              
+            }
+            else{  
+                yMax = ymax;
+                yMin = ymin;
+            }
+
             
 
             
@@ -394,10 +504,16 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                     System.out.println("IO exception");
                     return;
                 }
-                bMax = (float) blue.getMax();
-                //bMax = findTrueMax(bBuffer);
-                //bMin = (float) blue.getMin();
-                bMin = findTrueMin(bBuffer);
+                if (bmin ==-1 || bmax== -1){
+                    bMax = (float) blue.getMax();
+                    bMin = findTrueMin(bBuffer);             
+                }
+                else{  
+                    bMax = bmax;
+                    bMin = bmin;
+                }
+
+                
                 outputbox.append("**Creating MPmap " + counter + " of " + listOfBlue.length * listOfYellow.length + "......");
                 outputbox.setCaretPosition( outputbox.getText().length() );
                 //create mpMap
@@ -440,40 +556,41 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         }
         
         //find mean/st dev image
-    outputbox.append("**Calculating Mean Image and St Dev......");
-    outputbox.setCaretPosition( outputbox.getText().length() );    
-    File[] listOfMP = outputfolder.listFiles();
-    ModelImage allMPs[] = new ModelImage[listOfMP.length];
-    for (int i = 0; i < listOfMP.length; i++){
-        allMPs[i] = fileIO.readImage(listOfMP[i].getAbsoluteFile().toString());
-    }
-    
-    //save them
-    ModelImage stDevImg = stDev(allMPs);
-    opts.setFileName("MPMap Average");
-    fileIO.writeImage(avg, opts);
-    opts.setFileName("MPMap StDev");
-    fileIO.writeImage(stDevImg, opts);
-    
-    outputbox.append("done \n");
-    outputbox.setCaretPosition( outputbox.getText().length() );  
-    
-    
-    if (stDevImg != null){
-        stDevImg.disposeLocal();
-        stDevImg = null;
-    }
-    
-        
-    for (int i = 0; i < allMPs.length; i++){ //close images
-        if (allMPs[i] != null){
-            allMPs[i].disposeLocal();
-            allMPs[i] = null;
+        File[] listOfMP = outputfolder.listFiles();
+        if(listOfMP.length != 1){
+            outputbox.append("**Calculating Mean Image and St Dev......");
+            outputbox.setCaretPosition( outputbox.getText().length() );    
+            ModelImage allMPs[] = new ModelImage[listOfMP.length];
+            for (int i = 0; i < listOfMP.length; i++){
+                allMPs[i] = fileIO.readImage(listOfMP[i].getAbsoluteFile().toString());
+            }
+            
+            //save them
+            ModelImage stDevImg = stDev(allMPs);
+            opts.setFileName("MPMap Average");
+            fileIO.writeImage(avg, opts);
+            opts.setFileName("MPMap StDev");
+            fileIO.writeImage(stDevImg, opts);
+            
+            outputbox.append("done \n");
+            outputbox.setCaretPosition( outputbox.getText().length() );  
+            
+            
+            if (stDevImg != null){
+                stDevImg.disposeLocal();
+                stDevImg = null;
+            }
+            
+                
+            for (int i = 0; i < allMPs.length; i++){ //close images
+                if (allMPs[i] != null){
+                    allMPs[i].disposeLocal();
+                    allMPs[i] = null;
+                }
+            }
+            
+            
         }
-    }
-    
-    
-    
     
     
         
@@ -652,7 +769,6 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
        
        float min = bottomOneTotal / bottomOne;
 
-       System.out.println(min);
        return min;
     }
     /** Finds Max while ignoring "outliers" **/   
@@ -663,7 +779,6 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
            if (buffer[i] > max)
               max = buffer[i];
        }
-       System.out.println(max);
        return max;
     }
     
@@ -672,8 +787,8 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         float[] newBuffer = new float[yBuffer.length];
         float constant = 1/(epsB - epsY);
         for (int i = 0; i < newBuffer.length; i++){
-            float num1 = (float) Math.log((bMax - bMin)/(bBuffer[i] - bMin));
-            float num2 = (float) Math.log((yMax - yMin)/(yBuffer[i] - yMin));
+            float num1 = (float) Math.log10((bMax - bMin)/(bBuffer[i] - bMin));
+            float num2 = (float) Math.log10((yMax - yMin)/(yBuffer[i] - yMin));
             newBuffer[i] = constant * (num1- num2);       
             }         
 
@@ -682,6 +797,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     
     /** generates mean image while finding and saving St Dev image **/
     public ModelImage stDev(ModelImage[] imgs){
+        
         ModelImage avgImg = new ModelImage(ModelStorageBase.FLOAT, imgs[0].getExtents(), "Average");
         int length = imgs[0].getSize();
         float mean[] = new float[length], current[]= new float[length], total[]= new float[length];
