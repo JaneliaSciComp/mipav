@@ -9,9 +9,6 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Vector;
 
-import javax.media.j3d.*;
-import javax.vecmath.Color3f;
-
 import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.model.algorithms.*;
@@ -177,9 +174,6 @@ public class JDialogDTIInput extends JInterfaceBase
     /** User-control over the number of ellipsoids displayed in GPUVolumeRender */
     private JSlider m_kDisplaySlider;
 
-    /** Index Line array map for display in Surface render */
-    private HashMap<Integer,BranchGroup> m_kLineArrayMap = null;
-
     /** Slice thickness read from .list file */
     private float m_fResX = 1f, m_fResY = 1f, m_fResZ = 1f;
     /** Set to true if the slice resolution is read from the .list file: (xRes) */
@@ -263,7 +257,6 @@ public class JDialogDTIInput extends JInterfaceBase
         m_aiMatrixEntries = null;
         m_kBundleList = null;
         m_kParentDialog = null;
-        m_kLineArrayMap = null;
         m_kRawFormat = null;
         m_kParentDir = null;
         dispose();
@@ -1299,8 +1292,7 @@ public class JDialogDTIInput extends JInterfaceBase
         rightPanel.setLayout(new BorderLayout());
         rightPanel.add(optionsPanel, BorderLayout.NORTH);
 
-        // distinguish between the swing Box and the j3d Box
-        javax.swing.Box contentBox = new javax.swing.Box(BoxLayout.Y_AXIS);
+        Box contentBox = new Box(BoxLayout.Y_AXIS);
 
         contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         contentBox.add(listPanel);
@@ -1649,10 +1641,6 @@ public class JDialogDTIInput extends JInterfaceBase
         if (fMaxZ > fMax) {
             fMax = fMaxZ;
         }
-        float fXScale = fMaxX/fMax;
-        float fYScale = fMaxY/fMax;
-        float fZScale = fMaxZ/fMax;
-
 
         Attributes kAttr = new Attributes();
         kAttr.SetPChannels(3);
@@ -1660,12 +1648,7 @@ public class JDialogDTIInput extends JInterfaceBase
         kAttr.SetCChannels(1,3);
         VertexBuffer pkVBuffer = new VertexBuffer(kAttr,iVQuantity);                        
 
-        int iTractCount = 0;
-        LineArray kLine = new LineArray(2 * (iVQuantity - 1),
-                                        GeometryArray.COORDINATES | GeometryArray.COLOR_3);
-
         float fR = 0, fG = 0, fB = 0;
-
         for (int i = 0; i < iVQuantity; i++)
         {
             int iIndex = kTract.get(i);
@@ -1703,35 +1686,11 @@ public class JDialogDTIInput extends JInterfaceBase
                                    (float)(fX-.5f), (float)(fY-.5f), (float)(fZ-.5f) );
             pkVBuffer.SetColor3(0,i, new ColorRGB(fX, fY, fZ));
             pkVBuffer.SetColor3(1,i, kColor1 );
-
-
-            fY = 1 - fY;
-            fZ = 1 - fZ;
-            fX = 2*(fX-.5f);
-            fY = 2*(fY -.5f);
-            fZ = 2*(fZ-.5f);
-
-            fX *= fXScale;
-            fY *= fYScale;
-            fZ *= fZScale;
-
-            kLine.setCoordinate(iTractCount, new float[]{fX, fY, fZ});
-            kLine.setColor(iTractCount, new Color3f(fR, fG, fB));
-            if ( (i != 0) && (i != iVQuantity-1) )
-            {
-                iTractCount++;
-                kLine.setCoordinate(iTractCount, new float[]{fX, fY, fZ});
-                kLine.setColor(iTractCount, new Color3f(fR, fG, fB));
-            }
-            iTractCount++;
-
         }
         boolean bClosed = false;
         boolean bContiguous = true;
-        // addPolyline( new Polyline(pkVBuffer,bClosed,bContiguous) );
      // apply B-spline filter to smooth the track
         addPolyline(new Polyline(smoothTrack(pkVBuffer, kTract,iVQuantity, iDimX, iDimY, iDimZ), bClosed, bContiguous ));
-        addLineArray(kLine);
     }
 
 	/**
@@ -1873,27 +1832,6 @@ public class JDialogDTIInput extends JInterfaceBase
         }
     }
 
-    /** Add a LineArray to the JPanelSurface.
-     * @param kLine, the Polyline to add.
-     */
-    protected void addLineArray( LineArray kLine )
-    {
-        if ( m_kSurfaceDialog == null )
-        {
-            return;
-        }
-        if ( m_kLineArrayMap == null )
-        {
-            m_kLineArrayMap = new HashMap<Integer,BranchGroup>();
-        }
-
-        BranchGroup kBranch = m_kSurfaceDialog.addLineArray( kLine, m_iBundleCount );
-        if ( kBranch != null )
-        {
-            m_kLineArrayMap.put( new Integer(m_iBundleCount), kBranch );
-        }
-    }
-
     /** Updates the number of fiber bundle tract groups. */
     protected void updateTractCount()
     {
@@ -2025,12 +1963,6 @@ public class JDialogDTIInput extends JInterfaceBase
                 int iLength = kName.length();
                 int iGroup = (new Integer(kName.substring( iHeaderLength, iLength ))).intValue();
                 rayBasedRenderWM.removePolyline( iGroup );
-
-                if ( m_kSurfaceDialog != null )
-                {
-                    BranchGroup kBranch = m_kLineArrayMap.get( new Integer(iGroup) );
-                    m_kSurfaceDialog.removeLineArray( kBranch );
-                }
                 m_kBundleList.remove( new Integer( iGroup ) );
             }           
             kList.remove( aiSelected[i] );

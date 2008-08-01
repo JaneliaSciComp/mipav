@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 
+import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -339,8 +340,8 @@ public class AlgorithmRegBSpline3D extends AlgorithmRegBSpline {
             line = lineString.getBytes();
             raFile.write(line);
 
-            lineString = new String(String.valueOf(kBasisX.getDegree()) + " " + String.valueOf(kBasisY.getDegree()) +
-                                    " " + String.valueOf(kBasisZ.getDegree()) + "\n");
+            lineString = new String(String.valueOf(kBasisX.GetDegree()) + " " + String.valueOf(kBasisY.GetDegree()) +
+                                    " " + String.valueOf(kBasisZ.GetDegree()) + "\n");
             line = lineString.getBytes();
             raFile.write(line);
 
@@ -348,9 +349,9 @@ public class AlgorithmRegBSpline3D extends AlgorithmRegBSpline {
             line = lineString.getBytes();
             raFile.write(line);
 
-            lineString = new String(String.valueOf(kBasisX.getNumControlPoints()) + " " +
-                                    String.valueOf(kBasisY.getNumControlPoints()) + " " +
-                                    String.valueOf(kBasisZ.getNumControlPoints()) + "\n");
+            lineString = new String(String.valueOf(kBasisX.GetNumCtrlPoints()) + " " +
+                                    String.valueOf(kBasisY.GetNumCtrlPoints()) + " " +
+                                    String.valueOf(kBasisZ.GetNumCtrlPoints()) + "\n");
             line = lineString.getBytes();
             raFile.write(line);
 
@@ -361,11 +362,11 @@ public class AlgorithmRegBSpline3D extends AlgorithmRegBSpline {
             BSplineLattice3Df kBSpline3D = kReg.getLattice();
             Point3f control3D = new Point3f();
 
-            for (int iControlX = 0; iControlX < kBasisX.getNumControlPoints(); iControlX++) {
+            for (int iControlX = 0; iControlX < kBasisX.GetNumCtrlPoints(); iControlX++) {
 
-                for (int iControlY = 0; iControlY < kBasisY.getNumControlPoints(); iControlY++) {
+                for (int iControlY = 0; iControlY < kBasisY.GetNumCtrlPoints(); iControlY++) {
 
-                    for (int iControlZ = 0; iControlZ < kBasisZ.getNumControlPoints(); iControlZ++) {
+                    for (int iControlZ = 0; iControlZ < kBasisZ.GetNumCtrlPoints(); iControlZ++) {
                         lineString = new String("# iControlX = " + String.valueOf(iControlX) + " iControlY = " +
                                                 String.valueOf(iControlY) + " iControlZ = " +
                                                 String.valueOf(iControlZ) + "\n");

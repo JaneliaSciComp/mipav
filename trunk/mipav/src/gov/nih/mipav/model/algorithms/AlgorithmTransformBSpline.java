@@ -1,6 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
-
+import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;

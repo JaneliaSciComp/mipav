@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.surfaceview.flythruview;
 
 
+import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -1595,24 +1596,29 @@ public class FlythruRender extends SurfaceRender
         int iBranchParent = m_kFlyPathGraphCurve.getBranchParentIndex(iBranch);
 
         // Set the point for the start of the child branch.
-        Curve3 kCurveChild = m_kFlyPathGraphCurve.getCurvePosition(iBranch);
-        float fTimeChild = kCurveChild.getTime(0.0f, 100, 1e-02f);
+        Curve3f kCurveChild = m_kFlyPathGraphCurve.getCurvePosition(iBranch);
+        float fTimeChild = kCurveChild.GetTime(0.0f, 100, 1e-02f);
 
-        kLineArray.setCoordinate(0, kCurveChild.getPosition(fTimeChild));
+        WildMagic.LibFoundation.Mathematics.Vector3f kVec = kCurveChild.GetPosition(fTimeChild);
+        Point3f kPos = new Point3f( kVec.X, kVec.Y, kVec.Z );
+        kLineArray.setCoordinate(0, kPos);
 
         // If there is no parent, then replicate the child start point
         if (iBranchParent < 0) {
-            kLineArray.setCoordinate(1, kCurveChild.getPosition(fTimeChild));
+        	kVec = kCurveChild.GetPosition(fTimeChild);
+        	kPos = new Point3f( kVec.X, kVec.Y, kVec.Z );
+            kLineArray.setCoordinate(1, kPos);
         } // Otherwise, set the point for the position along the parent
 
         // branch where the child branch starts.
         else {
             float fParentNormalizedDist = m_kFlyPathGraphCurve.getBranchParentNormalizedDist(iBranch);
-            Curve3 kCurveParent = m_kFlyPathGraphCurve.getCurvePosition(iBranchParent);
-            float fTimeParent = kCurveParent.getTime(kCurveParent.getTotalLength() * fParentNormalizedDist, 100,
+            Curve3f kCurveParent = m_kFlyPathGraphCurve.getCurvePosition(iBranchParent);
+            float fTimeParent = kCurveParent.GetTime(kCurveParent.GetTotalLength() * fParentNormalizedDist, 100,
                                                      1e-02f);
-
-            kLineArray.setCoordinate(1, kCurveParent.getPosition(fTimeParent));
+            kVec = kCurveParent.GetPosition(fTimeParent);
+        	kPos = new Point3f( kVec.X, kVec.Y, kVec.Z );
+            kLineArray.setCoordinate(1, kPos);
         }
 
         return kLineArray;
@@ -1638,14 +1644,16 @@ public class FlythruRender extends SurfaceRender
         kLineStripArray.setCapability(GeometryArray.ALLOW_COLOR_WRITE);
         kLineStripArray.setCapability(GeometryArray.ALLOW_COUNT_READ);
 
-        Curve3 kCurve = m_kFlyPathGraphCurve.getCurvePosition(iBranch);
-        float fStep = kCurve.getTotalLength() / (float) (iNumVertex - 1);
+        Curve3f kCurve = m_kFlyPathGraphCurve.getCurvePosition(iBranch);
+        float fStep = kCurve.GetTotalLength() / (float) (iNumVertex - 1);
 
         for (int iPoint = 0; iPoint < iNumVertex; ++iPoint) {
             float fDist = iPoint * fStep;
-            float fTime = kCurve.getTime(fDist, 100, 1e-02f);
+            float fTime = kCurve.GetTime(fDist, 100, 1e-02f);
 
-            kLineStripArray.setCoordinate(iPoint, kCurve.getPosition(fTime));
+            WildMagic.LibFoundation.Mathematics.Vector3f kVec = kCurve.GetPosition(fTime);
+            Point3f kPos = new Point3f( kVec.X, kVec.Y, kVec.Z );
+            kLineStripArray.setCoordinate(iPoint, kPos);
             kLineStripArray.setColor(iPoint, m_kNormalColorPathUnvisited);
         }
 
@@ -1674,8 +1682,8 @@ public class FlythruRender extends SurfaceRender
         kLineStripArray.setCapability(GeometryArray.ALLOW_COLOR_WRITE);
         kLineStripArray.setCapability(GeometryArray.ALLOW_COUNT_READ);
 
-        Curve3 kCurve = m_kFlyPathGraphCurve.getCurvePosition(iBranch);
-        float fStep = kCurve.getTotalLength() / (float) (iNumVertex - 1);
+        Curve3f kCurve = m_kFlyPathGraphCurve.getCurvePosition(iBranch);
+        float fStep = kCurve.GetTotalLength() / (float) (iNumVertex - 1);
 
         int[] aiExtents = kImage.getExtents();
         float[] afResolutions = kImage.getFileInfo(0).getResolutions();
@@ -1693,8 +1701,9 @@ public class FlythruRender extends SurfaceRender
 
         for (int iPoint = 0; iPoint < iNumVertex; ++iPoint) {
             float fDist = iPoint * fStep;
-            float fTime = kCurve.getTime(fDist, 100, 1e-02f);
-            Point3f kPoint = kCurve.getPosition(fTime);
+            float fTime = kCurve.GetTime(fDist, 100, 1e-02f);      
+            WildMagic.LibFoundation.Mathematics.Vector3f kVec = kCurve.GetPosition(fTime);
+            Point3f kPoint = new Point3f( kVec.X, kVec.Y, kVec.Z );
 
             kPoint.x = ((2.0f * (kPoint.x - afOrigins[0]) / aiDirections[0]) - ((xDim - 1) * afResolutions[0])) /
                            maxBox;

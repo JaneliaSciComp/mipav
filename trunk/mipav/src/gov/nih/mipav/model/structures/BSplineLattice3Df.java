@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.structures;
 
 
+import WildMagic.LibFoundation.Curves.*;
 import javax.vecmath.*;
 
 
@@ -40,9 +41,9 @@ public class BSplineLattice3Df {
         m_kBasisY = kBasisY;
         m_kBasisZ = kBasisZ;
 
-        int iNumControlX = kBasisX.getNumControlPoints();
-        int iNumControlY = kBasisY.getNumControlPoints();
-        int iNumControlZ = kBasisZ.getNumControlPoints();
+        int iNumControlX = kBasisX.GetNumCtrlPoints();
+        int iNumControlY = kBasisY.GetNumCtrlPoints();
+        int iNumControlZ = kBasisZ.GetNumCtrlPoints();
 
         // Allocate the equally spaced control points.
         m_aaakControlPoint = new Point3f[iNumControlZ][iNumControlY][iNumControlX];
@@ -171,9 +172,9 @@ public class BSplineLattice3Df {
      */
     public void getControlPoint(int iControlX, int iControlY, int iControlZ, Point3f kPoint) {
 
-        if ((0 <= iControlX) && (iControlX < m_kBasisX.getNumControlPoints()) && (0 <= iControlY) &&
-                (iControlY < m_kBasisY.getNumControlPoints()) && (0 <= iControlZ) &&
-                (iControlZ < m_kBasisZ.getNumControlPoints())) {
+        if ((0 <= iControlX) && (iControlX < m_kBasisX.GetNumCtrlPoints()) && (0 <= iControlY) &&
+                (iControlY < m_kBasisY.GetNumCtrlPoints()) && (0 <= iControlZ) &&
+                (iControlZ < m_kBasisZ.GetNumCtrlPoints())) {
 
             kPoint.set(m_aaakControlPoint[iControlZ][iControlY][iControlX]);
         }
@@ -193,17 +194,17 @@ public class BSplineLattice3Df {
      */
     public void getPosition(int iSampleX, int iSampleY, int iSampleZ, Point3f kPos) {
 
-        float fX = (float) iSampleX / (float) (m_kBasisX.getNumSamples() - 1);
-        int iControlMaxX = m_kBasisX.getKnotIndex(fX);
-        int iControlMinX = iControlMaxX - m_kBasisX.getDegree();
+        float fX = (float) iSampleX / (float) (m_kBasisX.GetNumSamples() - 1);
+        int iControlMaxX = m_kBasisX.GetKnotIndex(fX);
+        int iControlMinX = iControlMaxX - m_kBasisX.GetDegree();
 
-        float fY = (float) iSampleY / (float) (m_kBasisY.getNumSamples() - 1);
-        int iControlMaxY = m_kBasisY.getKnotIndex(fY);
-        int iControlMinY = iControlMaxY - m_kBasisY.getDegree();
+        float fY = (float) iSampleY / (float) (m_kBasisY.GetNumSamples() - 1);
+        int iControlMaxY = m_kBasisY.GetKnotIndex(fY);
+        int iControlMinY = iControlMaxY - m_kBasisY.GetDegree();
 
-        float fZ = (float) iSampleZ / (float) (m_kBasisZ.getNumSamples() - 1);
-        int iControlMaxZ = m_kBasisZ.getKnotIndex(fZ);
-        int iControlMinZ = iControlMaxZ - m_kBasisZ.getDegree();
+        float fZ = (float) iSampleZ / (float) (m_kBasisZ.GetNumSamples() - 1);
+        int iControlMaxZ = m_kBasisZ.GetKnotIndex(fZ);
+        int iControlMinZ = iControlMaxZ - m_kBasisZ.GetDegree();
 
         kPos.set(0.0f, 0.0f, 0.0f);
 
@@ -212,8 +213,8 @@ public class BSplineLattice3Df {
             for (int iControlY = iControlMinY; iControlY <= iControlMaxY; iControlY++) {
 
                 for (int iControlZ = iControlMinZ; iControlZ <= iControlMaxZ; iControlZ++) {
-                    float fTmp = m_kBasisX.getD0(iControlX, iSampleX) * m_kBasisY.getD0(iControlY, iSampleY) *
-                                     m_kBasisZ.getD0(iControlZ, iSampleZ);
+                    float fTmp = m_kBasisX.GetD0(iControlX, iSampleX) * m_kBasisY.GetD0(iControlY, iSampleY) *
+                                     m_kBasisZ.GetD0(iControlZ, iSampleZ);
                     kPos.scaleAdd(fTmp, m_aaakControlPoint[iControlZ][iControlY][iControlX], kPos);
                 }
             }
@@ -232,22 +233,22 @@ public class BSplineLattice3Df {
      */
     public void getPosition(float fX, float fY, float fZ, Point3f kPos) {
 
-        int iControlMaxX = m_kBasisX.getKnotIndex(fX);
-        int iControlMinX = iControlMaxX - m_kBasisX.getDegree();
+        int iControlMaxX = m_kBasisX.GetKnotIndex(fX);
+        int iControlMinX = iControlMaxX - m_kBasisX.GetDegree();
 
-        int iControlMaxY = m_kBasisY.getKnotIndex(fY);
-        int iControlMinY = iControlMaxY - m_kBasisY.getDegree();
+        int iControlMaxY = m_kBasisY.GetKnotIndex(fY);
+        int iControlMinY = iControlMaxY - m_kBasisY.GetDegree();
 
-        int iControlMaxZ = m_kBasisZ.getKnotIndex(fZ);
-        int iControlMinZ = iControlMaxZ - m_kBasisZ.getDegree();
+        int iControlMaxZ = m_kBasisZ.GetKnotIndex(fZ);
+        int iControlMinZ = iControlMaxZ - m_kBasisZ.GetDegree();
 
-        float[] afD0X = new float[m_kBasisX.getNumControlPoints()];
-        float[] afD0Y = new float[m_kBasisY.getNumControlPoints()];
-        float[] afD0Z = new float[m_kBasisZ.getNumControlPoints()];
+        float[] afD0X = new float[m_kBasisX.GetNumCtrlPoints()];
+        float[] afD0Y = new float[m_kBasisY.GetNumCtrlPoints()];
+        float[] afD0Z = new float[m_kBasisZ.GetNumCtrlPoints()];
 
-        m_kBasisX.compute(fX, afD0X, null, null);
-        m_kBasisY.compute(fY, afD0Y, null, null);
-        m_kBasisZ.compute(fZ, afD0Z, null, null);
+        m_kBasisX.Compute(fX, afD0X, null, null);
+        m_kBasisY.Compute(fY, afD0Y, null, null);
+        m_kBasisZ.Compute(fZ, afD0Z, null, null);
 
         kPos.set(0.0f, 0.0f, 0.0f);
 
@@ -278,9 +279,9 @@ public class BSplineLattice3Df {
      */
     public void setControlPoint(int iControlX, int iControlY, int iControlZ, Point3f kPoint) {
 
-        if ((0 <= iControlX) && (iControlX < m_kBasisX.getNumControlPoints()) && (0 <= iControlY) &&
-                (iControlY < m_kBasisY.getNumControlPoints()) && (0 <= iControlZ) &&
-                (iControlZ < m_kBasisZ.getNumControlPoints())) {
+        if ((0 <= iControlX) && (iControlX < m_kBasisX.GetNumCtrlPoints()) && (0 <= iControlY) &&
+                (iControlY < m_kBasisY.GetNumCtrlPoints()) && (0 <= iControlZ) &&
+                (iControlZ < m_kBasisZ.GetNumCtrlPoints())) {
 
             m_aaakControlPoint[iControlZ][iControlY][iControlX].set(kPoint);
         }

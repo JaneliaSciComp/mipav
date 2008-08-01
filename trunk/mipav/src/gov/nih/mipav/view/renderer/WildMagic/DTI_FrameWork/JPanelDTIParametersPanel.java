@@ -926,8 +926,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         rightPanel.setLayout(new BorderLayout());
         rightPanel.add(optionsPanel, BorderLayout.NORTH);
 
-        // distinguish between the swing Box and the j3d Box
-        javax.swing.Box contentBox = new javax.swing.Box(BoxLayout.Y_AXIS);
+        Box contentBox = new Box(BoxLayout.Y_AXIS);
 
         contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         contentBox.add(listPanel);

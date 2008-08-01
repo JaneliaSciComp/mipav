@@ -981,8 +981,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         // tabbedPane.addTab("Polyline", null, listPanelPolyline);
         tabbedPane.setSelectedIndex(0);
      
-        // distinguish between the swing Box and the j3d Box
-        javax.swing.Box contentBox = new javax.swing.Box(BoxLayout.Y_AXIS);
+        Box contentBox = new Box(BoxLayout.Y_AXIS);
 
         contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         contentBox.add(tabbedPane);
