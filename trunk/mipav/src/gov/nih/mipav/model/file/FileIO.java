@@ -9708,6 +9708,8 @@ public class FileIO {
 
             ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().show(0, i, true);
 
+            ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().createImg(i);
+            
             Image im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getImage();
 
             if ( (i < 9) && (endSlice != beginSlice)) {

@@ -394,6 +394,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
     /** flag indicating whether there is 0 to 1 LUT Adjustment * */
     private boolean zeroToOneLUTAdj = false;
+    
+    private int[] paintBuffer;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -546,6 +548,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
 
         }
+        int imageSize = extents[0] * extents[1];
+        paintBuffer = new int[imageSize];
     }
 
     // ~ Methods
@@ -5045,6 +5049,23 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 magSettings.setVisible(true);
             }
         }
+    }
+    
+    /**
+     * Creates the Java image to be displayed from the model image. Makes it
+     * from the appropriate slice.
+     *
+     * @param   slice  Slice of image to create java image from.
+     *
+     * @return  Flag indicating success or failure.
+     */
+    public boolean createImg(int slice) {
+    	m_kPatientSlice.updateSlice( slice );
+        
+        if ( m_kPatientSlice.showUsingOrientation( 0, paintBuffer,null, true,false, 0, false ) ) {
+            importImage(paintBuffer);
+        }
+        return true;
     }
 
     /**
