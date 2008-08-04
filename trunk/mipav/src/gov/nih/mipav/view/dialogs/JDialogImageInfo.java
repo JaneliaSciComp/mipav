@@ -267,10 +267,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         if (image.getNDims() == 3) {
             resIndex = zSlice;
-            addTitle = Integer.toString(zSlice + 1);
+            addTitle = Integer.toString(zSlice);
         } else if (image.getNDims() > 3) {
             resIndex = (zSlice * image.getExtents()[3]) + tSlice;
-            addTitle = Integer.toString(zSlice + 1) + " : " + Integer.toString(tSlice + 1);
+            addTitle = Integer.toString(zSlice) + " : " + Integer.toString(tSlice);
         }
 
         font12B = MipavUtil.font12B;
@@ -836,10 +836,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         if (image.getNDims() == 3) {
             resIndex = z;
-            addTitle = Integer.toString(z + 1);
+            addTitle = Integer.toString(z);
         } else if (image.getNDims() > 3) {
             resIndex = (z * image.getExtents()[3]) + t;
-            addTitle = Integer.toString(z + 1) + " : " + Integer.toString(t + 1);
+            addTitle = Integer.toString(z) + " : " + Integer.toString(t);
         }
 
         setTitle("Image Attributes: " + image.getImageName() + " " + addTitle);
