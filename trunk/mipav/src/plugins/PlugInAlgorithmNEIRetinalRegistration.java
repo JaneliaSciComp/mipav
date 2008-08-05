@@ -24,6 +24,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import java.awt.Point;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,10 +43,6 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     /** Path of reference directory */
     private String refPath;
     
-    private AlgorithmCenterOfMass algoFindCM;
-    
-    Point cm;
-    
     /** Output box */
     private JTextArea outputbox;
     
@@ -53,7 +50,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     private ModelImage reference;
     
     /** Array holding nonRegistered Images **/
-    ArrayList notReg = new ArrayList();
+    private ArrayList notReg = new ArrayList();
     
     /** Cost of current images **/
     private double currCost; //alert
@@ -67,21 +64,19 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     private BitSet trimzone = new BitSet();
 
     /** Algorithm which converts to float **/
-    AlgorithmChangeType algoType;
-    
-    
-    FileIO fileIO = new FileIO();
-    
-    private int dPerp;
+    private AlgorithmChangeType algoType;
+
+    /** File IO **/
+    private FileIO fileIO = new FileIO();
     
     /** Stores concatnated image **/
-    ModelImage concated;
+    private ModelImage concated;
     
     /** if true generates concatnated image **/
     private boolean shouldConcat;    
     
     /** concatnated algorithm **/
-    AlgorithmConcat algoConcat;
+    private AlgorithmConcat algoConcat;
     
     /** user inputed variables **/
     private float epsY, epsB;
@@ -89,23 +84,26 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     /** Mean MPmap image **/
     private ModelImage avg;
     
+    /** Yellow Min Intensity **/
     private float ymin;
     
+    /** Yellow Max Intensity **/
     private float ymax;
     
+    /** Blue Min Intensity **/
     private float bmin;
     
+    /** Blue Max Intensity **/
     private float bmax;
     
+    /** Is the image registered **/
     private boolean preReg;
-    
-    private File mpMapFile;
-    
-    private File voiFile;
     
 
     public PlugInAlgorithmNEIRetinalRegistration(String imageDir1, String imageDir2, JTextArea outputbox, String refPath, boolean toConcat, float epsY,
             float epsB, float ymin, float ymax,float bmin, float bmax, boolean registered) {
+        
+        //Set all variables
         sigma[0] = 6;
         sigma[1] = 6;
         this.imagePath1 = imageDir1;
@@ -126,68 +124,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
  
     }
     
-    public PlugInAlgorithmNEIRetinalRegistration(String mpMapLoc, String voiLoc, int dPerp, JTextArea outbox2){
-        mpMapFile = new File(mpMapLoc);
-        
-        voiFile = new File(voiLoc);
-        this.outputbox = outbox2;
-        this.dPerp = dPerp;
-        
-    }
 
-    public void mpData(){
-        
-        fileIO.setQuiet(true);
-        
-        ModelImage image = fileIO.readImage(mpMapFile.getAbsolutePath());
-        FileVOI voiIO;
-        try {
-            voiIO = new FileVOI(voiFile.getName(), voiFile.getParent() + voiFile.separator, image);
-
-        
-        VOI voi[] = voiIO.readVOI(false);
-        
-        for (int i = 0; i < voi.length; i++) {
-            image.registerVOI(voi[i]);
-        }
-        
-        } catch (IOException e) {
-            MipavUtil.displayError("Error loading VOI to MPmap!");
-            setCompleted(true);
-            this.notifyListeners(this);
-            return;
-        }
-        
-
-        float threshold[] = new float[2];
-        threshold[0] = (float)image.getMin();
-        threshold[1] = (float)image.getMax();
-        algoFindCM = new AlgorithmCenterOfMass(image, threshold, true);
-        algoFindCM.run();
-        cm = new Point((int)((float)algoFindCM.getCenterOfMass()[0]/image.getResolutions(0)[0]),(int)((float)algoFindCM.getCenterOfMass()[1]/image.getResolutions(0)[1]));
-        Point current;
-        float r = (float).1, total;
-        do{
-            total = 0;
-            for(int theta = 0; theta < 360; theta++){
-                current = new Point((int)(r*Math.sin(theta)), (int)(r*Math.cos(theta)));
-                current.translate((int)cm.getX(), (int)cm.getY());
-                total = total + image.getFloat((int)current.getX(), (int)current.getY());
-            }
-            total = total / 360;
-            System.out.println(total);
-            r = r + (float).1;
-        
-        }while(!Float.isNaN(total));
-        
-        
-        
-        
-        setCompleted(true);
-        this.notifyListeners(this);
-        return;
-        
-    }
     @Override
     public void runAlgorithm() {
         
@@ -220,7 +157,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
             }
         } 
         fileIO.setQuiet(true);
-        if (!preReg){
+        if (!preReg){ //do if the images need to be registered
             //Read in reference
             outputbox.append("** Loading " + refPath + " in as Reference Image: \n");
             reference = fileIO.readImage(refPath);
@@ -229,7 +166,10 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         
         
         //make 3 new folders
+        
         File outputfolder = new File(f2.getParent(), "Output");
+        if (outputfolder.exists())
+            outputfolder.delete();
         outputfolder.mkdir();
         
         File outputfolder2 = null, outputfolder3 = null;
@@ -238,7 +178,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         opts.setBeginSlice(0);
         opts.setEndSlice(0);
         opts.setOptionsSet(true);
-        if (!preReg){
+        if (!preReg){//do if the images need to be registered
             outputfolder2 = new File(f2.getParent(), "YellowReg");
             outputfolder2.mkdir();
             
@@ -249,212 +189,209 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
             eyebitset = eyeballSelect(reference, eyebitset, 7);
             trimzone = eyeballSelect(reference, trimzone, -1);
        
+            //remove border
             removeBack(reference);
         
-        
-        
-        
-        
-        //file write options
-        
+            //file write options
 
-        opts.setFileDirectory(outputfolder2 + outputfolder2.separator);
-        ModelImage toBeReg, doneReg, convDoneReg;
-        outputbox.append("        ** Calculating Gradient Magnitude for Registration**\n");
-        //find gradient magnitude
-        AlgorithmGradientMagnitudeSep algogMag = new AlgorithmGradientMagnitudeSep(reference, sigma, true, false);
-        algogMag.run();
-        try{
-            reference.importData(0, algogMag.getResultBuffer(), true);
-        }catch(IOException e){
-            MipavUtil.displayError("FileIO Error");
-        }
-
-
-        
-        //for all yellow images
-        for(int j = 0; j<imgLoc1.size(); j++){
-            outputbox.append("** Loading Yellow " + listOfFiles1[j].getName() + " :\n");
-            outputbox.setCaretPosition( outputbox.getText().length() );
-            toBeReg = fileIO.readImage((String)imgLoc1.get(j));
-            removeBack(toBeReg);
-            opts.setFileName("YellowRegistered" + (j+1));
+            opts.setFileDirectory(outputfolder2 + outputfolder2.separator);
+            ModelImage toBeReg, doneReg, convDoneReg;
+            outputbox.append("        ** Calculating Gradient Magnitude for Registration**\n");
             
-            //register image
-            doneReg = registration(reference, toBeReg);
             
-            if (toBeReg != null){
-                toBeReg.disposeLocal();
-                toBeReg = null;
+            //find gradient magnitude
+            AlgorithmGradientMagnitudeSep algogMag = new AlgorithmGradientMagnitudeSep(reference, sigma, true, false);
+            algogMag.run();
+            
+            try{
+                reference.importData(0, algogMag.getResultBuffer(), true);
+            }catch(IOException e){
+                MipavUtil.displayError("FileIO Error");
+            }
+
+
+
+            //for all yellow images
+            for(int j = 0; j<imgLoc1.size(); j++){
+                outputbox.append("** Loading Yellow " + listOfFiles1[j].getName() + " :\n");
+                outputbox.setCaretPosition( outputbox.getText().length() );
+                toBeReg = fileIO.readImage((String)imgLoc1.get(j));
+                removeBack(toBeReg); //remove border
+                opts.setFileName("YellowRegistered" + (j+1));
+
+                //register image
+                doneReg = registration(reference, toBeReg);
+
+                if (toBeReg != null){
+                    toBeReg.disposeLocal();
+                    toBeReg = null;
+                }
+
+                //build conatnated image if true
+                if (shouldConcat){
+                    if (j == 0){ //is this the first iamge
+                        concated = (ModelImage)doneReg.clone();
+                    }
+                    else{
+                        int[] dims = new int[3];
+                        dims[0] = concated.getExtents()[0];
+                        dims[1] = concated.getExtents()[1];
+                        if (concated.getExtents().length == 2) //is this the second image
+                            dims[2] = 2; //add third dimension
+                        else
+                            dims[2] = concated.getExtents()[2]+1;
+                    
+                        ModelImage temp = new ModelImage(ModelStorageBase.USHORT, dims, "Concated");
+                    
+                        algoConcat = new AlgorithmConcat(doneReg, concated, temp);
+                        algoConcat.runAlgorithm();
+                    
+                        if (concated != null){
+                            concated.disposeLocal();
+                            concated = null;             
+                        }
+                    
+                        concated = (ModelImage) temp.clone();
+                    
+                        if (temp != null){
+                            temp.disposeLocal();
+                            temp = null; 
+                        }
+                    
+                        if (algoConcat != null){
+                        algoConcat.finalize();
+                        algoConcat = null;                     
+                        } 
+                }
             }
             
-            //build conatnated image
-            if (shouldConcat){
-                if (j == 0){ //is this the first iamge
-                    concated = (ModelImage)doneReg.clone();
+                //convert image to float
+                convDoneReg = new ModelImage(ModelStorageBase.FLOAT,doneReg.getExtents(), doneReg.getImageName());
+                convDoneReg.getFileInfo(0).setEndianess(false);
+            
+                algoType = new AlgorithmChangeType(convDoneReg, doneReg, doneReg.getMin(), doneReg.getMax(), doneReg.getMin(), doneReg.getMax(), false);
+                algoType.run();
+            
+                //save image
+                fileIO.writeImage(convDoneReg, opts);
+                if (convDoneReg != null){
+                    convDoneReg.disposeLocal();
+                    convDoneReg = null;
                 }
-                else{
+            
+                if (currCost > .35){  //may not be registered, alert user
+                    notReg.add("YellowRegistered" + (j+1));
+                }
+                
+                outputbox.append("        ** Cost = " + currCost + " **\n");
+                imgLoc1.set(j, new File(outputfolder2, "YellowRegistered" + (j+1)).toString());   
+                if (doneReg!=null){
+                    doneReg.disposeLocal();
+                    doneReg=null;
+                }
+            }
+            opts.setFileDirectory(outputfolder3 + outputfolder3.separator);
+        
+        //reister blue images
+            for(int j = 0; j<imgLoc2.size(); j++){
+                outputbox.append("** Loading Blue " + listOfFiles2[j].getName() + " :\n");
+                outputbox.setCaretPosition( outputbox.getText().length() );
+                toBeReg = fileIO.readImage((String)imgLoc2.get(j));
+                removeBack(toBeReg);
+                opts.setFileName("BlueRegistered" + (j+1));
+            
+                //register images
+                doneReg = registration(reference, toBeReg);
+                
+                if (toBeReg != null){
+                    toBeReg.disposeLocal();
+                    toBeReg = null;
+                }
+            
+                if (shouldConcat){ //build concatnated image if true
                     int[] dims = new int[3];
                     dims[0] = concated.getExtents()[0];
                     dims[1] = concated.getExtents()[1];
-                    if (concated.getExtents().length == 2) //is this the second image
-                        dims[2] = 2; //add third dimension
+                    if (concated.getExtents().length == 2)
+                        dims[2] = 2;
                     else
                         dims[2] = concated.getExtents()[2]+1;
-                    
+                
                     ModelImage temp = new ModelImage(ModelStorageBase.USHORT, dims, "Concated");
-                    
+                
                     algoConcat = new AlgorithmConcat(doneReg, concated, temp);
                     algoConcat.runAlgorithm();
-                    
                     if (concated != null){
                         concated.disposeLocal();
                         concated = null;             
                     }
-                    
+    
                     concated = (ModelImage) temp.clone();
-                    
                     if (temp != null){
                         temp.disposeLocal();
                         temp = null; 
                     }
-                    
+                
                     if (algoConcat != null){
                         algoConcat.finalize();
                         algoConcat = null;                     
                     }
-
-                    
-                    
-                    
-                }
-            }
-            
-            //convert image to float
-            convDoneReg = new ModelImage(ModelStorageBase.FLOAT,doneReg.getExtents(), doneReg.getImageName());
-            convDoneReg.getFileInfo(0).setEndianess(false);
-            
-            algoType = new AlgorithmChangeType(convDoneReg, doneReg, doneReg.getMin(), doneReg.getMax(), doneReg.getMin(), doneReg.getMax(), false);
-            algoType.run();
-            
-            //save image
-            fileIO.writeImage(convDoneReg, opts);
-            if (convDoneReg != null){
-                convDoneReg.disposeLocal();
-                convDoneReg = null;
-            }
-            
-            if (currCost > .35){  //may not be registered, alert user
-                notReg.add("YellowRegistered" + (j+1));
-            }
-            
-            outputbox.append("        ** Cost = " + currCost + " **\n");
-            imgLoc1.set(j, new File(outputfolder2, "YellowRegistered" + (j+1)).toString());   
-            if (doneReg!=null){
-                doneReg.disposeLocal();
-                doneReg=null;
-            }
-            }
-        opts.setFileDirectory(outputfolder3 + outputfolder3.separator);
-        
-        //reister blue images
-        for(int j = 0; j<imgLoc2.size(); j++){
-            outputbox.append("** Loading Blue " + listOfFiles2[j].getName() + " :\n");
-            outputbox.setCaretPosition( outputbox.getText().length() );
-            toBeReg = fileIO.readImage((String)imgLoc2.get(j));
-            removeBack(toBeReg);
-            opts.setFileName("BlueRegistered" + (j+1));
-            
-            //register images
-            doneReg = registration(reference, toBeReg);
-            
-            if (toBeReg != null){
-                toBeReg.disposeLocal();
-                toBeReg = null;
-            }
-            
-            if (shouldConcat){ //build concatnated image if true
-                int[] dims = new int[3];
-                dims[0] = concated.getExtents()[0];
-                dims[1] = concated.getExtents()[1];
-                if (concated.getExtents().length == 2)
-                    dims[2] = 2;
-                else
-                    dims[2] = concated.getExtents()[2]+1;
                 
-                ModelImage temp = new ModelImage(ModelStorageBase.USHORT, dims, "Concated");
-                
-                algoConcat = new AlgorithmConcat(doneReg, concated, temp);
-                algoConcat.runAlgorithm();
-                if (concated != null){
-                    concated.disposeLocal();
-                    concated = null;             
                 }
-
-                concated = (ModelImage) temp.clone();
-                if (temp != null){
-                    temp.disposeLocal();
-                    temp = null; 
+    
+                //convert to float
+                convDoneReg = new ModelImage(ModelStorageBase.FLOAT,doneReg.getExtents(), doneReg.getImageName());
+                convDoneReg.getFileInfo(0).setEndianess(false);
+        
+                algoType = new AlgorithmChangeType(convDoneReg, doneReg, doneReg.getMin(), doneReg.getMax(), doneReg.getMin(), doneReg.getMax(), false);
+                algoType.run();
+        
+        
+                fileIO.writeImage(convDoneReg, opts);
+        
+                if (convDoneReg != null){
+                              convDoneReg.disposeLocal();
+                              convDoneReg = null;
                 }
-                
-                if (algoConcat != null){
-                    algoConcat.finalize();
-                    algoConcat = null;                     
+        
+    
+        
+                if (currCost > .35) //warn user if it may not be registered
+                    notReg.add("BlueRegistered" + (j+1));
+    
+                outputbox.append("        ** Cost= " + currCost + " **\n");
+                outputbox.setCaretPosition( outputbox.getText().length() );
+                if (doneReg!=null){
+                    doneReg.disposeLocal();
+                    doneReg=null;
                 }
-                
+                imgLoc2.set(j, new File(outputfolder3, "BlueRegistered" + (j+1)).toString());
             }
-
-        //convert to float
-        convDoneReg = new ModelImage(ModelStorageBase.FLOAT,doneReg.getExtents(), doneReg.getImageName());
-        convDoneReg.getFileInfo(0).setEndianess(false);
-        
-        algoType = new AlgorithmChangeType(convDoneReg, doneReg, doneReg.getMin(), doneReg.getMax(), doneReg.getMin(), doneReg.getMax(), false);
-        algoType.run();
-        
-        
-        fileIO.writeImage(convDoneReg, opts);
-        
-        if (convDoneReg != null){
-            convDoneReg.disposeLocal();
-            convDoneReg = null;
-        }
-        
-
-        
-        if (currCost > .35) //warn user if it may not be registered
-            notReg.add("BlueRegistered" + (j+1));
-
-        outputbox.append("        ** Cost= " + currCost + " **\n");
-        outputbox.setCaretPosition( outputbox.getText().length() );
-        if (doneReg!=null){
-            doneReg.disposeLocal();
-            doneReg=null;
-        }
-        imgLoc2.set(j, new File(outputfolder3, "BlueRegistered" + (j+1)).toString());
-    }
-        if (notReg.size() == 0){//alert
-            outputbox.append("** All images are Registered **\n");//alert
-            outputbox.setCaretPosition( outputbox.getText().length() );
-        }
-        else{
-            for (int i = 0; i<notReg.size() ; i ++){
-                outputbox.append("** " + notReg.get(i) + " does not seemed to be registered, please register manually using reference **\n");
+            if (notReg.size() == 0){//alert
+                outputbox.append("** All images are Registered **\n");//alert
                 outputbox.setCaretPosition( outputbox.getText().length() );
             }
-        }
-        if (shouldConcat){ //show concatnated image
-            new ViewJFrameImage(concated);
-
+            else{
+                for (int i = 0; i<notReg.size() ; i ++){
+                    outputbox.append("** " + notReg.get(i) + " does not seemed to be registered, please register manually using reference **\n");
+                    outputbox.setCaretPosition( outputbox.getText().length() );
+                }
             }
-        if (reference != null){
-            reference.disposeLocal();
-            reference = null;
-        }
+            if (shouldConcat){ //show concatnated image
+                new ViewJFrameImage(concated);
+            }
+            
+            if (reference != null){
+                reference.disposeLocal();
+                reference = null;
+            }
         }
         
         //build MPmaps
         File[] listOfYellow, listOfBlue;
         
+        
+        //determine where registered images are
         if (!preReg){
             listOfYellow = outputfolder2.listFiles() ;
             listOfBlue = outputfolder3.listFiles() ;
@@ -468,6 +405,8 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         int counter = 1;
         ModelImage yellow = null, blue = null, mpMap = null;
         float[] yBuffer = null, bBuffer, newBuffer;
+        
+        
         for (int i = 0; i < listOfYellow.length; i ++){ //yellow images
             yellow = fileIO.readImage(listOfYellow[i].getAbsoluteFile().toString());
             int length = yellow.getExtents(0)[0] * yellow.getExtents(0)[1];
@@ -480,6 +419,8 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 System.out.println("IO exception");
                 return;
             }
+            
+            //set min/max
             if (ymin ==-1 || ymax== -1){
                 yMax = (float) yellow.getMax();
                 yMin = findTrueMin(yBuffer);              
@@ -489,9 +430,6 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 yMin = ymin;
             }
 
-            
-
-            
             
             for ( int j = 0; j < listOfBlue.length; j++){ //blue images
                 blue = fileIO.readImage(listOfBlue[j].getAbsoluteFile().toString());
@@ -504,6 +442,9 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                     System.out.println("IO exception");
                     return;
                 }
+                
+                
+                //find min/max
                 if (bmin ==-1 || bmax== -1){
                     bMax = (float) blue.getMax();
                     bMin = findTrueMin(bBuffer);             
@@ -557,7 +498,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         
         //find mean/st dev image
         File[] listOfMP = outputfolder.listFiles();
-        if(listOfMP.length != 1){
+        if(listOfMP.length != 1){ //do if more than 1 mpMap
             outputbox.append("**Calculating Mean Image and St Dev......");
             outputbox.setCaretPosition( outputbox.getText().length() );    
             ModelImage allMPs[] = new ModelImage[listOfMP.length];
@@ -580,6 +521,10 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 stDevImg.disposeLocal();
                 stDevImg = null;
             }
+            if (avg != null){
+                avg.disposeLocal();
+                avg = null;
+            }
             
                 
             for (int i = 0; i < allMPs.length; i++){ //close images
@@ -594,11 +539,11 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     
     
         
-    outputbox.append("** Ending Algorithm v0.5 **\n");
-    outputbox.setCaretPosition( outputbox.getText().length() );    
-    setCompleted(true);
-    return;
-
+          outputbox.append("** Ending Algorithm v0.5 **\n");
+          outputbox.setCaretPosition( outputbox.getText().length() );    
+          setCompleted(true);
+          return;
+          
     }
     /** makes circle mask around the center of eye, and saves it as bitset **/
     public BitSet eyeballSelect(ModelImage eye,  BitSet bitset, float size){
@@ -606,7 +551,6 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         //finds center of eye and puts a mask of certain size
 
         AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(eye, 1.0f, 1.0f);
-
         regionGrowAlgo.setRunningInSeparateThread(false);
 
         
@@ -615,22 +559,34 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         int xDim = eye.getExtents()[0];
 
 
-        
+        // find far left non border value
         for (int i = 0, maxpixl = 0 ; maxpixl< 1000; i++){
             maxpixl = eye.get(i, Midy).intValue();
             lpix = i;
         }
+        
+        //find far right non border value
         for (int j = xDim, maxpixr = 0 ; maxpixr < 1000; j--){
             maxpixr = eye.get(j, Midy).intValue();
             rpix = j;
         }
         
+        //calculate center pixel
         int centerX = (rpix + lpix)/2;
-
-
-
-       regionGrowAlgo.regionGrow2D(bitset, new Point(centerX, Midy), -1,false, false, null, 850,3500, -1, size, false);
-
+        
+        
+        int min,max;
+        if (size == -1){
+            min = 250;
+            max = 10000;
+        }
+        else{
+            min = 0;
+            max = 10000;
+        }
+        
+        //grab region as bitset
+        regionGrowAlgo.regionGrow2D(bitset, new Point(centerX, Midy), -1,false, false, null, min,max, -1, size, false);
 
         return bitset;
     }
@@ -639,6 +595,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     public ModelImage registration(ModelImage ref, ModelImage match){
         
         ModelImage temp = (ModelImage) match.clone();
+        
         //convert to GM for registration
         outputbox.append("        ** Calculating Gradient Magnitude for Registration **\n");
         outputbox.setCaretPosition( outputbox.getText().length() );
@@ -654,13 +611,13 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
 
 
         float[] refRes = new float[] {
-                       ref.getFileInfo(0).getResolutions()[0],
-                       ref.getFileInfo(0).getResolutions()[1]
-                    };
-       float[] matchRes = new float[] {
-                         match.getFileInfo(0).getResolutions()[0],
-                          match.getFileInfo(0).getResolutions()[1]
-                      };
+                ref.getFileInfo(0).getResolutions()[0],
+                ref.getFileInfo(0).getResolutions()[1]
+        };
+        float[] matchRes = new float[] {
+                match.getFileInfo(0).getResolutions()[0],
+                match.getFileInfo(0).getResolutions()[1]
+        };
         
         ModelImage refWeightImage = new ModelImage(1, ref.getExtents(), "VOI ref");
         ModelImage inputWeightImage = new ModelImage(1, match.getExtents(), "VOI match");
@@ -675,22 +632,21 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         
         for (int i = 0; i < imageSize; i++) {
         
-        if (!mask.get(i)) {
-           refWeightImage.set(i, 0);
-        } else {
-           refWeightImage.set(i, 1);
-        }
+        if (!mask.get(i)) 
+            refWeightImage.set(i, 0);
+         else 
+            refWeightImage.set(i, 1);
         }
         imageSize = match.getSliceSize();
         
         for (int i = 0; i < imageSize; i++) {
         
-        if (!mask.get(i)) {
-           inputWeightImage.set(i, 0);
-        } else {
-           inputWeightImage.set(i, 1);
+        if (!mask.get(i))
+            inputWeightImage.set(i, 0);
+        else
+            inputWeightImage.set(i, 1);
         }
-        }
+        
         outputbox.append("        ** Registering to Reference Image **\n");
         outputbox.setCaretPosition( outputbox.getText().length() );
         AlgorithmRegOAR2D reg2 = new AlgorithmRegOAR2D(ref, temp, refWeightImage, inputWeightImage, 0, 3, 1,(float) -10, (float) 10,(float)  3, (float) 2, true, 10,2, 3);
@@ -747,6 +703,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     /** Finds Min while ignoring "outliers" **/
     public float findTrueMin(float[] bufferOrig)
     {
+        //find low 1% and avg to get min
        float buffer[] = bufferOrig.clone();
        Arrays.sort(buffer);
        int count = 0;
@@ -771,16 +728,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
 
        return min;
     }
-    /** Finds Max while ignoring "outliers" **/   
-    public float findTrueMax(float[] buffer)
-    {
-       float max = 0;
-       for (int i = 0; i < buffer.length; i++){
-           if (buffer[i] > max)
-              max = buffer[i];
-       }
-       return max;
-    }
+
     
     /** generates MPmap by using supplied formula **/
     public float[] MPmaper(float[] yBuffer, float[] bBuffer, float yMax, float yMin, float bMax, float bMin){
@@ -801,6 +749,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         ModelImage avgImg = new ModelImage(ModelStorageBase.FLOAT, imgs[0].getExtents(), "Average");
         int length = imgs[0].getSize();
         float mean[] = new float[length], current[]= new float[length], total[]= new float[length];
+        
         //find average image
         AlgorithmImageCalculator algoAvg = new AlgorithmImageCalculator(avgImg, imgs, AlgorithmImageCalculator.AVERAGE, 0);
         algoAvg.runAlgorithm();
@@ -855,20 +804,19 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         
         
     }
-    
+    /** Remove black border with BitSet data **/
     public void removeBack(ModelImage img){
         float buffer[] = new float[img.getSize()];
-        
-        
-        
+
         try {
             img.exportData(0, img.getSize(), buffer);
         } catch (IOException e) {
             
         }
         
+        //if its not in the trimzone or registration area then cut it out
         for (int i = 0; i < buffer.length; i++){
-            if (!trimzone.get(i))
+            if (!trimzone.get(i) && !eyebitset.get(i))
                 buffer[i] = 0;         
         }
         

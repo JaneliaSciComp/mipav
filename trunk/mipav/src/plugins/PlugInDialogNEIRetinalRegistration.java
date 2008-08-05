@@ -40,7 +40,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
     private PlugInAlgorithmNEIRetinalRegistration alg;
     
     /** handle to the second algorithm**/
-    private PlugInAlgorithmNEIRetinalRegistration alg2;
+    private PlugInAlgorithmNEIRetinalRegistration2 alg2;
     
     /** path to first image dir **/
     private JTextField ImageDirTextField1; 
@@ -426,51 +426,63 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
     
     @Override
     protected void callAlgorithm() {
-        outputTextArea.append("*Beginning Retinal Registration* \n");
-        float ymin = -1, ymax = -1,bmin = -1, bmax = -1;
-        if (!autoMinMax.isSelected()){
-            ymin = Float.parseFloat(yminText.getText().trim());
-            ymax = Float.parseFloat(ymaxText.getText().trim());
-            bmin = Float.parseFloat(bminText.getText().trim());
-            bmax = Float.parseFloat(bmaxText.getText().trim());
-        }
         
-        alg = new PlugInAlgorithmNEIRetinalRegistration(imagePath1, imagePath2, outputTextArea, refPath, toConcat.isSelected(), Float.parseFloat(epsYText.getText().trim()), 
-                Float.parseFloat(epsBText.getText().trim()),ymin,ymax, bmin, bmax, preReg.isSelected());
-        alg.addListener(this);
-        
-        if (isRunInSeparateThread()) {
-
-            // Start the thread as a low priority because we wish to still
-            // have user interface work fast.
-            if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
+        if (tabs.getSelectedIndex() == 0) //if on registration tab
+        { 
+            outputTextArea.append("*Beginning Retinal Registration* \n");
+            float ymin = -1, ymax = -1,bmin = -1, bmax = -1;
+            if (!autoMinMax.isSelected()){
+                ymin = Float.parseFloat(yminText.getText().trim());
+                ymax = Float.parseFloat(ymaxText.getText().trim());
+                bmin = Float.parseFloat(bminText.getText().trim());
+                bmax = Float.parseFloat(bmaxText.getText().trim());
             }
-        } else {
-            alg.run();
+            
+            alg = new PlugInAlgorithmNEIRetinalRegistration(imagePath1, imagePath2, outputTextArea, refPath, toConcat.isSelected(), Float.parseFloat(epsYText.getText().trim()), 
+                    Float.parseFloat(epsBText.getText().trim()),ymin,ymax, bmin, bmax, preReg.isSelected());
+            alg.addListener(this);
+            
+            if (isRunInSeparateThread()) {
+    
+                // Start the thread as a low priority because we wish to still
+                // have user interface work fast.
+                if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+                alg.run();
+            }
         }
+        else{
+            
+            OKButton.setEnabled(false);
+            VOIBrowseButton.setEnabled(false);
+            mapBrowseButton.setEnabled(false);
+            tabs.setEnabledAt(0, false);
+            
+            
+            
+            
+            alg2 = new PlugInAlgorithmNEIRetinalRegistration2(mpMapText.getText().trim(), VOIText.getText().trim(),  
+                    Integer.parseInt(dPerPText.getText().trim()), outputTextArea2);
+            alg2.addListener(this);
+            
 
+            if (isRunInSeparateThread()) {
+                
+                // Start the thread as a low priority because we wish to still
+                // have user interface work fast.
+                if (alg2.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+                alg2.run();
+            }
+
+            
+        }
     }
     
-    protected void callAlgorithm2() {
-        
-        OKButton.setEnabled(false);
-        VOIBrowseButton.setEnabled(false);
-        mapBrowseButton.setEnabled(false);
-        tabs.setEnabledAt(0, false);
-        
-        outputTextArea2.append("*Beginning MPmap Analysis* \n");
-        
-        
-        alg2 = new PlugInAlgorithmNEIRetinalRegistration(mpMapText.getText().trim(), VOIText.getText().trim(),  
-                Integer.parseInt(dPerPText.getText().trim()), outputTextArea2);
-        alg2.addListener(this);
-        
-
-        alg2.mpData();
-        
-
-    }
 
     @Override
     protected void setGUIFromParams() {
@@ -517,7 +529,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
                    
                     
                 }
-                outputTextArea2.append("*End MPmap Analysis* \n"); 
+                
             }
         }
             
@@ -537,7 +549,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
             int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 ImageDirTextField1.setText(chooser.getSelectedFile().getAbsolutePath());
-                currDir = chooser.getSelectedFile().getAbsolutePath();
+                currDir = chooser.getSelectedFile().getParent();
             }
         }
         else if(command.equalsIgnoreCase("preReg")){
@@ -569,7 +581,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
             int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 ImageDirTextField2.setText(chooser.getSelectedFile().getAbsolutePath());
-                currDir = chooser.getSelectedFile().getAbsolutePath();
+                currDir = chooser.getSelectedFile().getParent();
             }
         }
         else if(command.equalsIgnoreCase("mapBrowse")) {
@@ -656,7 +668,6 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
                 refPathBrowseButton.setEnabled(false);
                 tabs.setEnabledAt(1, false);
                 setimagePaths(ImageDirTextField1.getText().trim(), ImageDirTextField2.getText().trim(), RefTextField.getText().trim());
-                callAlgorithm();
             }
             
         
@@ -686,12 +697,13 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
                 dPerPText.setText("");
                 return;
             }
-            callAlgorithm2();
+            
         }
         
-
+            callAlgorithm();
          
     }
+        
     }
     
     public boolean validateFilePaths() {
