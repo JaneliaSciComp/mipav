@@ -69,6 +69,9 @@ public class FileAvi extends FileBase {
 
     /** If true use Microsoft video 1 compression. */
     private boolean doMSVC = false;
+    
+    /** Cinepak (CVID) */
+    private boolean doCVID = false;
 
     /** true for big-endian and false for little-endian. */
     private boolean endianess;
@@ -357,6 +360,7 @@ public class FileAvi extends FileBase {
         int indexBytesRead = 0;
         long firstDataSignature;
         boolean firstRun;
+        byte[] uiclp = null;
 
         boolean wasCompressed = false;
 
@@ -586,12 +590,24 @@ public class FileAvi extends FileBase {
                 moreExtents = imgExtents;
             }
 
-            if ((bitCount == 16) || (bitCount == 24) || (bitCount == 32) || doMSVC) {
+            if ((bitCount == 16) || (bitCount == 24) || (bitCount == 32) || doMSVC || (doCVID && (bitCount == 12))) {
                 fileInfo.setDataType(ModelStorageBase.ARGB);
                 imageA = new ModelImage(ModelStorageBase.ARGB, moreExtents, fileName);
             } else if ((bitCount == 4) || (bitCount == 8)) {
                 fileInfo.setDataType(ModelStorageBase.UBYTE);
                 imageA = new ModelImage(ModelStorageBase.UBYTE, moreExtents, fileName);
+            }
+            if (doCVID) {
+                uiclp = new byte[1024];
+                for (k = 0; k < 512; k++) {
+                    uiclp[k] = 0;
+                }
+                for (k = 512; k < 768; k++) {
+                    uiclp[k] = (byte)(k - 512);
+                }
+                for (k = 768; k < 1024; k++) {
+                    uiclp[k] = (byte)255;
+                }
             }
 
             // Now that the image is created this second read thru actually imports the data into the image.
@@ -1527,7 +1543,7 @@ public class FileAvi extends FileBase {
                     } // if (haveMoviSubchunk && (subchunkBlocksRead == streams))
                 } // while ((totalBytesRead < totalDataArea) && chunkRead)
             } // else if (doMSVC && (bitCount == 8))
-            else { // doMSVC && (bitCount == 16)
+            else if (doMSVC && (bitCount == 16)) {
                 bufferSize = 4 * imgExtents[0] * imgExtents[1];
                 imgBuffer = new byte[bufferSize];
                 dataSignature = new byte[4];
@@ -1897,7 +1913,1043 @@ public class FileAvi extends FileBase {
                         }
                     } // if (haveMoviSubchunk && (subchunkBlocksRead == streams))
                 } // while ((totalBytesRead < totalDataArea) && chunkRead)
-            } // else for doMSVC && (bitCount == 16)
+            } // else if (doMSVC && (bitCount == 16))
+            else if (doCVID && (bitCount == 24)) {
+                int y_bottom;
+                byte frame_flags;
+                int len;
+                int i;
+                int j;
+                int cv_width;
+                int cv_height;
+                int strips;
+                int oldStrips = -1;
+                // strips, 260
+                byte v4y0[][] = null;
+                byte v4y1[][] = null;
+                byte v4y2[][] = null;
+                byte v4y3[][] = null;
+                byte v4u[][] = null;
+                byte v4v[][] = null;
+                // strips, 260, 4
+                byte v4r[][][] = null;
+                byte v4g[][][] = null;
+                byte v4b[][][] = null;
+                // strips, 260
+                byte v1y0[][] = null;
+                byte v1y1[][] = null;
+                byte v1y2[][] = null;
+                byte v1y3[][] = null;
+                byte v1u[][] = null;
+                byte v1v[][] = null;
+                // strips, 260, 4
+                byte v1r[][][] = null;
+                byte v1g[][][] = null;
+                byte v1b[][][] = null;
+                int cur_strip;
+                int strip_id;
+                int top_size;
+                int x0;
+                int x1;
+                int y0;
+                int y1;
+                int chunk_id;
+                int chunk_size;
+                int cnum;
+                int uvr;
+                int uvg;
+                int uvb;
+                int ci;
+                int flag;
+                int d0;
+                int d1;
+                int d2;
+                int d3;
+                int row_inc = 4 * (imgExtents[0] - 4);
+                int pixelIndex;
+                int index;
+                int mask;
+                bufferSize = 4 * imgExtents[0] * imgExtents[1];
+                imgBuffer = new byte[bufferSize];
+                dataSignature = new byte[4];
+                totalDataArea = LIST2Size - 4; // Subtract out 4 'movi' bytes
+                totalBytesRead = 0;
+
+                // Have encountered LiST2Size > raFile.length(), an impossibility
+                remainingFileLength = (int) (raFile.length() - startPosition);
+
+                if (totalDataArea > remainingFileLength) {
+                    totalDataArea = remainingFileLength;
+                }
+
+                totalBytesRead = 0;
+
+                // Check for LIST rec<sp> subchunks
+                if (!AVIF_MUSTUSEINDEX) {
+                    signature = getInt(endianess);
+
+                    if (signature == 0x5453494C) {
+
+                        // have read LIST
+                        LIST2subchunkSize = getInt(endianess);
+                        moviSubchunkPosition = raFile.getFilePointer();
+                        CHUNKtype = getInt(endianess);
+
+                        if (CHUNKtype == 0x20636572) {
+
+                            // have read rec<sp>
+                            haveMoviSubchunk = true;
+                            subchunkDataArea = LIST2subchunkSize - 4;
+                            subchunkBytesRead = 0;
+                            subchunkBlocksRead = 0;
+                        } else {
+                            raFile.close();
+                            throw new IOException("CHUNK type in second LIST sub CHUNK is an illegal = " + CHUNKtype);
+                        }
+                    } else {
+                        raFile.seek(startPosition);
+                    }
+                } // if (!AVIF_MUSTUSEINDEX)
+
+                x = 0;
+                y = 0;
+                z = 0;
+                y_bottom = 0;
+                chunkRead = true;
+                pixelIndex = 0;
+
+                loop6:
+                while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
+                           (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
+
+                    if (AVIF_MUSTUSEINDEX) {
+                        raFile.seek(indexPointer);
+                        dataFound = false;
+
+                        while (!dataFound) {
+                            raFile.read(dataSignature);
+
+                            if ((dataSignature[2] != 0x64 /*d */) || (dataSignature[3] < 0x62 /* b */) ||
+                                    (dataSignature[3] > 0x63 /* c */)) {
+                                indexPointer = indexPointer + 16;
+                                indexBytesRead += 16;
+                                if (indexBytesRead >= indexSize) {
+                                    break loop6;
+                                }
+                                raFile.seek(indexPointer);
+                            } else {
+                                dataFound = true;
+                            }
+                        } // while (!dataFound)
+
+                        indexPointer = indexPointer + 8;
+                        raFile.seek(indexPointer);
+                        moviOffset = getInt(endianess);
+                        indexPointer = indexPointer + 8;
+                        indexBytesRead += 16;
+                        raFile.seek(moviPosition + (long) moviOffset);
+                    } // if (AVIFMUSTINDEX)
+
+                    raFile.read(dataSignature);
+                    totalBytesRead = totalBytesRead + 4;
+                    subchunkBytesRead += 4;
+
+                    if ((dataSignature[2] != 0x64 /*d */) || (dataSignature[3] < 0x62 /* b */) ||
+                            (dataSignature[3] > 0x63 /* c */)) {
+                        dataLength = getInt(endianess);
+
+                        if ((dataLength % 2) == 1) {
+                            dataLength++;
+                        }
+
+                        totalBytesRead = totalBytesRead + 4;
+                        subchunkBytesRead += 4;
+
+                        long ptr = raFile.getFilePointer();
+                        raFile.seek(ptr + dataLength);
+                        totalBytesRead = totalBytesRead + dataLength;
+                        subchunkBytesRead += 4;
+                    } else {
+                        
+                        dataLength = getInt(endianess);
+                        Preferences.debug("dataLength = " + dataLength + "\n");
+
+                        if ((dataLength % 2) == 1) {
+                            dataLength++;
+                        }
+
+                        totalBytesRead = totalBytesRead + 4;
+                        subchunkBytesRead += 4;
+
+                        if ((dataLength > 0) && ((totalBytesRead + dataLength) <= totalDataArea)) {
+
+                            if (one && (z != middleSlice)) {
+                                long ptr = raFile.getFilePointer();
+                                raFile.seek(ptr + dataLength);
+                                totalBytesRead = totalBytesRead + dataLength;
+                                subchunkBytesRead += dataLength;
+                                z++;
+                            } else {
+                                fileBuffer = new byte[dataLength];
+                                raFile.read(fileBuffer);
+                                totalBytesRead = totalBytesRead + dataLength;
+                                subchunkBytesRead += dataLength;
+
+                                j = 0;
+                                x = 0;
+                                y = 0;
+                                y_bottom = 0;
+                                frame_flags = fileBuffer[j++];
+                                len = (fileBuffer[j++] & 0xff) << 16;
+                                len |= (fileBuffer[j++] & 0xff) << 8;
+                                len |= (fileBuffer[j++] & 0xff);
+                                if ((len % 2) == 1) {
+                                    len++;
+                                }
+                                Preferences.debug("Length of CVID data = " + len + "\n");
+                                cv_width = (fileBuffer[j++] & 0xff) << 8;
+                                cv_width |= (fileBuffer[j++] & 0xff);
+                                Preferences.debug("Width of coded frame = " + cv_width + "\n");
+                                cv_height = (fileBuffer[j++] & 0xff) << 8;
+                                cv_height |= (fileBuffer[j++] & 0xff);
+                                Preferences.debug("Height of coded frame = " + cv_height + "\n");
+                                strips = (fileBuffer[j++] & 0xff) << 8;
+                                strips |= (fileBuffer[j++] & 0xff);
+                                Preferences.debug("Number of coded strips = " + strips + "\n");
+                                
+                                if (oldStrips != strips) {
+                                    oldStrips = strips;
+                                    v4y0 = new byte[strips][260];
+                                    v4y1 = new byte[strips][260];
+                                    v4y2 = new byte[strips][260];
+                                    v4y3 = new byte[strips][260];
+                                    v4u = new byte[strips][260];
+                                    v4v = new byte[strips][260];
+                                    v4r = new byte[strips][260][4];
+                                    v4g = new byte[strips][260][4];
+                                    v4b = new byte[strips][260][4];
+                                    v1y0 = new byte[strips][260];
+                                    v1y1 = new byte[strips][260];
+                                    v1y2 = new byte[strips][260];
+                                    v1y3 = new byte[strips][260];
+                                    v1u = new byte[strips][260];
+                                    v1v = new byte[strips][260];
+                                    v1r = new byte[strips][260][4];
+                                    v1g = new byte[strips][260][4];
+                                    v1b = new byte[strips][260][4];
+                                } // if (oldStrips != strips)
+                                for (cur_strip = 0; cur_strip < strips; cur_strip++) {
+                                    if ((cur_strip > 0) && ((frame_flags & 0x01) == 0)) {
+                                      for (i = 0; i < 260; i++) {
+                                          v4y0[cur_strip][i] = v4y0[cur_strip-1][i];
+                                          v4y1[cur_strip][i] = v4y1[cur_strip-1][i];
+                                          v4y2[cur_strip][i] = v4y2[cur_strip-1][i];
+                                          v4y3[cur_strip][i] = v4y3[cur_strip-1][i];
+                                          v4u[cur_strip][i] = v4u[cur_strip-1][i];
+                                          v4v[cur_strip][i] = v4v[cur_strip-1][i];
+                                          v1y0[cur_strip][i] = v1y0[cur_strip-1][i];
+                                          v1y1[cur_strip][i] = v1y1[cur_strip-1][i];
+                                          v1y2[cur_strip][i] = v1y2[cur_strip-1][i];
+                                          v1y3[cur_strip][i] = v1y3[cur_strip-1][i];
+                                          v1u[cur_strip][i] = v1u[cur_strip-1][i];
+                                          v1v[cur_strip][i] = v1v[cur_strip-1][i];
+                                          for (k = 0; k < 4; k++) {
+                                              v4r[cur_strip][i][k] = v4r[cur_strip-1][i][k]; 
+                                              v4g[cur_strip][i][k] = v4g[cur_strip-1][i][k];
+                                              v4b[cur_strip][i][k] = v4b[cur_strip-1][i][k];
+                                              v1r[cur_strip][i][k] = v1r[cur_strip-1][i][k]; 
+                                              v1g[cur_strip][i][k] = v1g[cur_strip-1][i][k];
+                                              v1b[cur_strip][i][k] = v1b[cur_strip-1][i][k];
+                                          }
+                                      }
+                                    } // if ((cur_strip > 0) && ((frame_flags & 0x01) == 0))
+                                    /* 1000 = key strip, 1100 = iter strip */
+                                    strip_id = (fileBuffer[j++] & 0xff) << 8;
+                                    strip_id |= (fileBuffer[j++] & 0xff);
+                                    top_size = (fileBuffer[j++] & 0xff) << 8;
+                                    top_size |= (fileBuffer[j++] & 0xff);
+                                    y0 = (fileBuffer[j++] & 0xff) << 8;
+                                    y0 |= (fileBuffer[j++] & 0xff);
+                                    x0 = (fileBuffer[j++] & 0xff) << 8;
+                                    x0 |= (fileBuffer[j++] & 0xff);
+                                    y1 = (fileBuffer[j++] & 0xff) << 8;
+                                    y1 |= (fileBuffer[j++] & 0xff);
+                                    x1 = (fileBuffer[j++] & 0xff) << 8;
+                                    x1 |= (fileBuffer[j++] & 0xff);
+                                    
+                                    y_bottom += y1;
+                                    top_size -= 12;
+                                    x = 0;
+                                    if (x1 != imgExtents[0]) {
+                                        Preferences.debug("Warning x1 = " + x1 + " instead of " + imgExtents[0] + "\n");
+                                    }
+                                    while (top_size > 0) {
+                                        chunk_id = (fileBuffer[j++] & 0xff) << 8;
+                                        chunk_id |= (fileBuffer[j++] & 0xff);
+                                        chunk_size = (fileBuffer[j++] & 0xff) << 8;
+                                        chunk_size |= (fileBuffer[j++] & 0xff);
+                                        top_size -= chunk_size;
+                                        chunk_size -= 4;
+                                        
+                                        switch(chunk_id) {
+                                            /* Codebook entries */
+                                            case 0x2000:
+                                                // List of blocks in 12 bit V4 codebook
+                                                cnum = chunk_size/6;
+                                                for (i = 0; i < cnum; i++) {
+                                                    v4y0[cur_strip][i] = fileBuffer[j++]; // luma
+                                                    v4y1[cur_strip][i] = fileBuffer[j++];
+                                                    v4y2[cur_strip][i] = fileBuffer[j++];
+                                                    v4y3[cur_strip][i] = fileBuffer[j++];
+                                                    v4u[cur_strip][i] = fileBuffer[j++]; // chroma
+                                                    v4v[cur_strip][i] = fileBuffer[j++];
+                                                    
+                                                    uvr = v4v[cur_strip][i] << 1;
+                                                    uvg = -((v4u[cur_strip][i] + 1) >> 1) - v4v[cur_strip][i];
+                                                    uvb = v4u[cur_strip][i] << 1;
+                                                    
+                                                    v4r[cur_strip][i][0] = uiclp[(v4y0[cur_strip][i] & 0xff) +
+                                                                                  uvr + 512];
+                                                    v4g[cur_strip][i][0] = uiclp[(v4y0[cur_strip][i] & 0xff) +
+                                                                                 uvg + 512];
+                                                    v4b[cur_strip][i][0] = uiclp[(v4y0[cur_strip][i] & 0xff) +
+                                                                                 uvb + 512];
+                                                    v4r[cur_strip][i][1] = uiclp[(v4y1[cur_strip][i] & 0xff) +
+                                                                                 uvr + 512];
+                                                    v4g[cur_strip][i][1] = uiclp[(v4y1[cur_strip][i] & 0xff) +
+                                                                                uvg + 512];
+                                                    v4b[cur_strip][i][1] = uiclp[(v4y1[cur_strip][i] & 0xff) +
+                                                                                uvb + 512];
+                                                    v4r[cur_strip][i][2] = uiclp[(v4y2[cur_strip][i] & 0xff) +
+                                                                                 uvr + 512];
+                                                    v4g[cur_strip][i][2] = uiclp[(v4y2[cur_strip][i] & 0xff) +
+                                                                                uvg + 512];
+                                                    v4b[cur_strip][i][2] = uiclp[(v4y2[cur_strip][i] & 0xff) +
+                                                                                uvb + 512];
+                                                    v4r[cur_strip][i][3] = uiclp[(v4y3[cur_strip][i] & 0xff) +
+                                                                                 uvr + 512];
+                                                    v4g[cur_strip][i][3] = uiclp[(v4y3[cur_strip][i] & 0xff) +
+                                                                                uvg + 512];
+                                                    v4b[cur_strip][i][3] = uiclp[(v4y3[cur_strip][i] & 0xff) +
+                                                                                uvb + 512];
+                                                } // for (i = 0; i < cnum; i++)
+                                                break;
+                                            case 0x2200:
+                                                // List of blocks in 12 bit V1 codebook
+                                                cnum = chunk_size/6;
+                                                for (i = 0; i < cnum; i++) {
+                                                    v1y0[cur_strip][i] = fileBuffer[j++]; // luma
+                                                    v1y1[cur_strip][i] = fileBuffer[j++];
+                                                    v1y2[cur_strip][i] = fileBuffer[j++];
+                                                    v1y3[cur_strip][i] = fileBuffer[j++];
+                                                    v1u[cur_strip][i] = fileBuffer[j++]; // chroma
+                                                    v1v[cur_strip][i] = fileBuffer[j++];
+                                                    
+                                                    uvr = v1v[cur_strip][i] << 1;
+                                                    uvg = -((v1u[cur_strip][i] + 1) >> 1) - v1v[cur_strip][i];
+                                                    uvb = v1u[cur_strip][i] << 1;
+                                                    
+                                                    v1r[cur_strip][i][0] = uiclp[(v1y0[cur_strip][i] & 0xff) +
+                                                                                  uvr + 512];
+                                                    v1g[cur_strip][i][0] = uiclp[(v1y0[cur_strip][i] & 0xff) +
+                                                                                 uvg + 512];
+                                                    v1b[cur_strip][i][0] = uiclp[(v1y0[cur_strip][i] & 0xff) +
+                                                                                 uvb + 512];
+                                                    v1r[cur_strip][i][1] = uiclp[(v1y1[cur_strip][i] & 0xff) +
+                                                                                 uvr + 512];
+                                                    v1g[cur_strip][i][1] = uiclp[(v1y1[cur_strip][i] & 0xff) +
+                                                                                uvg + 512];
+                                                    v1b[cur_strip][i][1] = uiclp[(v1y1[cur_strip][i] & 0xff) +
+                                                                                uvb + 512];
+                                                    v1r[cur_strip][i][2] = uiclp[(v1y2[cur_strip][i] & 0xff) +
+                                                                                 uvr + 512];
+                                                    v1g[cur_strip][i][2] = uiclp[(v1y2[cur_strip][i] & 0xff) +
+                                                                                uvg + 512];
+                                                    v1b[cur_strip][i][2] = uiclp[(v1y2[cur_strip][i] & 0xff) +
+                                                                                uvb + 512];
+                                                    v1r[cur_strip][i][3] = uiclp[(v1y3[cur_strip][i] & 0xff) +
+                                                                                 uvr + 512];
+                                                    v1g[cur_strip][i][3] = uiclp[(v1y3[cur_strip][i] & 0xff) +
+                                                                                uvg + 512];
+                                                    v1b[cur_strip][i][3] = uiclp[(v1y3[cur_strip][i] & 0xff) +
+                                                                                uvb + 512];
+                                                } // for (i = 0; i < cnum; i++)
+                                                break;
+                                            case 0x2100:
+                                                // Selective list of blocks to update 12 bit V4 codebook
+                                                ci = 0;
+                                                while (chunk_size > 0) {
+                                                    flag = (fileBuffer[j++] & 0xff) << 24;
+                                                    flag |= (fileBuffer[j++] & 0xff) << 16;
+                                                    flag |= (fileBuffer[j++] & 0xff) << 8;
+                                                    flag |= (fileBuffer[j++] & 0xff);
+                                                    chunk_size -= 4;
+                                                    
+                                                    for (i = 0; i < 32; i++) {
+                                                        if ((flag & 0x80000000)!= 0) {
+                                                            chunk_size -= 6;
+                                                            v4y0[cur_strip][ci] = fileBuffer[j++]; // luma
+                                                            v4y1[cur_strip][ci] = fileBuffer[j++];
+                                                            v4y2[cur_strip][ci] = fileBuffer[j++];
+                                                            v4y3[cur_strip][ci] = fileBuffer[j++];
+                                                            v4u[cur_strip][ci] = fileBuffer[j++]; // chroma
+                                                            v4v[cur_strip][ci] = fileBuffer[j++];
+                                                            
+                                                            uvr = v4v[cur_strip][ci] << 1;
+                                                            uvg = -((v4u[cur_strip][ci] + 1) >> 1) - v4v[cur_strip][ci];
+                                                            uvb = v4u[cur_strip][ci] << 1;
+                                                            
+                                                            v4r[cur_strip][ci][0] = uiclp[(v4y0[cur_strip][ci] & 0xff) +
+                                                                                          uvr + 512];
+                                                            v4g[cur_strip][ci][0] = uiclp[(v4y0[cur_strip][ci] & 0xff) +
+                                                                                         uvg + 512];
+                                                            v4b[cur_strip][ci][0] = uiclp[(v4y0[cur_strip][ci] & 0xff) +
+                                                                                         uvb + 512];
+                                                            v4r[cur_strip][ci][1] = uiclp[(v4y1[cur_strip][ci] & 0xff) +
+                                                                                         uvr + 512];
+                                                            v4g[cur_strip][ci][1] = uiclp[(v4y1[cur_strip][ci] & 0xff) +
+                                                                                        uvg + 512];
+                                                            v4b[cur_strip][ci][1] = uiclp[(v4y1[cur_strip][ci] & 0xff) +
+                                                                                        uvb + 512];
+                                                            v4r[cur_strip][ci][2] = uiclp[(v4y2[cur_strip][ci] & 0xff) +
+                                                                                         uvr + 512];
+                                                            v4g[cur_strip][ci][2] = uiclp[(v4y2[cur_strip][ci] & 0xff) +
+                                                                                        uvg + 512];
+                                                            v4b[cur_strip][ci][2] = uiclp[(v4y2[cur_strip][ci] & 0xff) +
+                                                                                        uvb + 512];
+                                                            v4r[cur_strip][ci][3] = uiclp[(v4y3[cur_strip][ci] & 0xff) +
+                                                                                         uvr + 512];
+                                                            v4g[cur_strip][ci][3] = uiclp[(v4y3[cur_strip][ci] & 0xff) +
+                                                                                        uvg + 512];
+                                                            v4b[cur_strip][ci][3] = uiclp[(v4y3[cur_strip][ci] & 0xff) +
+                                                                                        uvb + 512];
+                                                        } // if ((flag & 0x80000000) != 0)
+                                                        ci++;
+                                                        flag <<= 1;
+                                                    } // for (i = 0; i < 32; i++)
+                                                } // while (chunk_size > 0)
+                                                while (chunk_size > 0) {
+                                                    // Skip byte
+                                                    j++;
+                                                    chunk_size--;
+                                                }
+                                                break;
+                                            case 0x2300:
+                                                // Selective list of blocks to update 12 bit V1 codebook
+                                                ci = 0;
+                                                while (chunk_size > 0) {
+                                                    flag = (fileBuffer[j++] & 0xff) << 24;
+                                                    flag |= (fileBuffer[j++] & 0xff) << 16;
+                                                    flag |= (fileBuffer[j++] & 0xff) << 8;
+                                                    flag |= (fileBuffer[j++] & 0xff);
+                                                    chunk_size -= 4;
+                                                    
+                                                    for (i = 0; i < 32; i++) {
+                                                        if ((flag & 0x80000000)!= 0) {
+                                                            chunk_size -= 6;
+                                                            v1y0[cur_strip][ci] = fileBuffer[j++]; // luma
+                                                            v1y1[cur_strip][ci] = fileBuffer[j++];
+                                                            v1y2[cur_strip][ci] = fileBuffer[j++];
+                                                            v1y3[cur_strip][ci] = fileBuffer[j++];
+                                                            v1u[cur_strip][ci] = fileBuffer[j++]; // chroma
+                                                            v1v[cur_strip][ci] = fileBuffer[j++];
+                                                            
+                                                            uvr = v1v[cur_strip][ci] << 1;
+                                                            uvg = -((v1u[cur_strip][ci] + 1) >> 1) - v1v[cur_strip][ci];
+                                                            uvb = v1u[cur_strip][ci] << 1;
+                                                            
+                                                            v1r[cur_strip][ci][0] = uiclp[(v1y0[cur_strip][ci] & 0xff) +
+                                                                                          uvr + 512];
+                                                            v1g[cur_strip][ci][0] = uiclp[(v1y0[cur_strip][ci] & 0xff) +
+                                                                                         uvg + 512];
+                                                            v1b[cur_strip][ci][0] = uiclp[(v1y0[cur_strip][ci] & 0xff) +
+                                                                                         uvb + 512];
+                                                            v1r[cur_strip][ci][1] = uiclp[(v1y1[cur_strip][ci] & 0xff) +
+                                                                                         uvr + 512];
+                                                            v1g[cur_strip][ci][1] = uiclp[(v1y1[cur_strip][ci] & 0xff) +
+                                                                                        uvg + 512];
+                                                            v1b[cur_strip][ci][1] = uiclp[(v1y1[cur_strip][ci] & 0xff) +
+                                                                                        uvb + 512];
+                                                            v1r[cur_strip][ci][2] = uiclp[(v1y2[cur_strip][ci] & 0xff) +
+                                                                                         uvr + 512];
+                                                            v1g[cur_strip][ci][2] = uiclp[(v1y2[cur_strip][ci] & 0xff) +
+                                                                                        uvg + 512];
+                                                            v1b[cur_strip][ci][2] = uiclp[(v1y2[cur_strip][ci] & 0xff) +
+                                                                                        uvb + 512];
+                                                            v1r[cur_strip][ci][3] = uiclp[(v1y3[cur_strip][ci] & 0xff) +
+                                                                                         uvr + 512];
+                                                            v1g[cur_strip][ci][3] = uiclp[(v1y3[cur_strip][ci] & 0xff) +
+                                                                                        uvg + 512];
+                                                            v1b[cur_strip][ci][3] = uiclp[(v1y3[cur_strip][ci] & 0xff) +
+                                                                                        uvb + 512];
+                                                        } // if ((flag & 0x80000000) != 0)
+                                                        ci++;
+                                                        flag <<= 1;
+                                                    } // for (i = 0; i < 32; i++)
+                                                } // while (chunk_size > 0)
+                                                while (chunk_size > 0) {
+                                                    // Skip byte
+                                                    j++;
+                                                    chunk_size--;
+                                                }
+                                                break;
+                                            case 0x3000:
+                                                // Vectors used to encode a frame
+                                                while ((chunk_size > 0) && (y < y_bottom)) {
+                                                    flag = (fileBuffer[j++] & 0xff) << 24;
+                                                    flag |= (fileBuffer[j++] & 0xff) << 16;
+                                                    flag |= (fileBuffer[j++] & 0xff) << 8;
+                                                    flag |= (fileBuffer[j++] & 0xff);
+                                                    chunk_size -= 4;
+                                                    
+                                                    for (i = 0; i < 32; i++) {
+                                                        if (y >= y_bottom) {
+                                                            break;
+                                                        }
+                                                        if ((flag & 0x80000000) != 0) {
+                                                            // 4 bytes per block
+                                                            d0 = fileBuffer[j++] & 0xff;
+                                                            d1 = fileBuffer[j++] & 0xff;
+                                                            d2 = fileBuffer[j++] & 0xff;
+                                                            d3 = fileBuffer[j++] & 0xff;
+                                                            chunk_size -= 4;
+                                                            pixelIndex = 4 * imgExtents[0] * y + 4 * x;
+                                                            
+                                                            imgBuffer[pixelIndex + 1] = v4r[cur_strip][d0][0];
+                                                            imgBuffer[pixelIndex + 2] = v4g[cur_strip][d0][0];
+                                                            imgBuffer[pixelIndex + 3] = v4b[cur_strip][d0][0];
+                                                            pixelIndex += 4;
+                                                            imgBuffer[pixelIndex + 1] = v4r[cur_strip][d0][1];
+                                                            imgBuffer[pixelIndex + 2] = v4g[cur_strip][d0][1];
+                                                            imgBuffer[pixelIndex + 3] = v4b[cur_strip][d0][1];
+                                                            pixelIndex += 4;
+                                                            imgBuffer[pixelIndex + 1] = v4r[cur_strip][d1][0];
+                                                            imgBuffer[pixelIndex + 2] = v4g[cur_strip][d1][0];
+                                                            imgBuffer[pixelIndex + 3] = v4b[cur_strip][d1][0];
+                                                            pixelIndex += 4;
+                                                            imgBuffer[pixelIndex + 1] = v4r[cur_strip][d1][1];
+                                                            imgBuffer[pixelIndex + 2] = v4g[cur_strip][d1][1];
+                                                            imgBuffer[pixelIndex + 3] = v4b[cur_strip][d1][1];
+                                                            pixelIndex += 4;
+                                                            pixelIndex += row_inc;
+                                                            if (pixelIndex < bufferSize) {
+                                                                imgBuffer[pixelIndex + 1] = v4r[cur_strip][d0][2];
+                                                                imgBuffer[pixelIndex + 2] = v4g[cur_strip][d0][2];
+                                                                imgBuffer[pixelIndex + 3] = v4b[cur_strip][d0][2];
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v4r[cur_strip][d0][3];
+                                                                imgBuffer[pixelIndex + 2] = v4g[cur_strip][d0][3];
+                                                                imgBuffer[pixelIndex + 3] = v4b[cur_strip][d0][3];
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v4r[cur_strip][d1][2];
+                                                                imgBuffer[pixelIndex + 2] = v4g[cur_strip][d1][2];
+                                                                imgBuffer[pixelIndex + 3] = v4b[cur_strip][d1][2];
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v4r[cur_strip][d1][3];
+                                                                imgBuffer[pixelIndex + 2] = v4g[cur_strip][d1][3];
+                                                                imgBuffer[pixelIndex + 3] = v4b[cur_strip][d1][3];
+                                                                pixelIndex += 4;
+                                                                pixelIndex += row_inc;
+                                                                if (pixelIndex < bufferSize) {
+                                                                    imgBuffer[pixelIndex + 1] = v4r[cur_strip][d2][0];
+                                                                    imgBuffer[pixelIndex + 2] = v4g[cur_strip][d2][0];
+                                                                    imgBuffer[pixelIndex + 3] = v4b[cur_strip][d2][0];
+                                                                    pixelIndex += 4;
+                                                                    imgBuffer[pixelIndex + 1] = v4r[cur_strip][d2][1];
+                                                                    imgBuffer[pixelIndex + 2] = v4g[cur_strip][d2][1];
+                                                                    imgBuffer[pixelIndex + 3] = v4b[cur_strip][d2][1];
+                                                                    pixelIndex += 4;
+                                                                    imgBuffer[pixelIndex + 1] = v4r[cur_strip][d3][0];
+                                                                    imgBuffer[pixelIndex + 2] = v4g[cur_strip][d3][0];
+                                                                    imgBuffer[pixelIndex + 3] = v4b[cur_strip][d3][0];
+                                                                    pixelIndex += 4;
+                                                                    imgBuffer[pixelIndex + 1] = v4r[cur_strip][d3][1];
+                                                                    imgBuffer[pixelIndex + 2] = v4g[cur_strip][d3][1];
+                                                                    imgBuffer[pixelIndex + 3] = v4b[cur_strip][d3][1];
+                                                                    pixelIndex += 4;
+                                                                    pixelIndex += row_inc;
+                                                                    if (pixelIndex < bufferSize) {
+                                                                        imgBuffer[pixelIndex + 1] = v4r[cur_strip][d2][2];
+                                                                        imgBuffer[pixelIndex + 2] = v4g[cur_strip][d2][2];
+                                                                        imgBuffer[pixelIndex + 3] = v4b[cur_strip][d2][2];
+                                                                        pixelIndex += 4;
+                                                                        imgBuffer[pixelIndex + 1] = v4r[cur_strip][d2][3];
+                                                                        imgBuffer[pixelIndex + 2] = v4g[cur_strip][d2][3];
+                                                                        imgBuffer[pixelIndex + 3] = v4b[cur_strip][d2][3];
+                                                                        pixelIndex += 4;
+                                                                        imgBuffer[pixelIndex + 1] = v4r[cur_strip][d3][2];
+                                                                        imgBuffer[pixelIndex + 2] = v4g[cur_strip][d3][2];
+                                                                        imgBuffer[pixelIndex + 3] = v4b[cur_strip][d3][2];
+                                                                        pixelIndex += 4;
+                                                                        imgBuffer[pixelIndex + 1] = v4r[cur_strip][d3][3];
+                                                                        imgBuffer[pixelIndex + 2] = v4g[cur_strip][d3][3];
+                                                                        imgBuffer[pixelIndex + 3] = v4b[cur_strip][d3][3];
+                                                                        pixelIndex += 4;
+                                                                    }
+                                                                }
+                                                            }
+                                                        } // if ((flag & 0x80000000) != 0)
+                                                        else {
+                                                            // 1 byte per block
+                                                            index = fileBuffer[j++] & 0xff;
+                                                            pixelIndex = 4 * imgExtents[0] * y + 4 * x;
+                                                            imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
+                                                            imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
+                                                            imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][0];
+                                                            pixelIndex += 4;
+                                                            imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
+                                                            imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
+                                                            imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][0];
+                                                            pixelIndex += 4;
+                                                            imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][1];
+                                                            imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][1];
+                                                            imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][1];
+                                                            pixelIndex += 4;
+                                                            imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][1];
+                                                            imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][1];
+                                                            imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][1];
+                                                            pixelIndex += 4;
+                                                            pixelIndex += row_inc;
+                                                            if (pixelIndex < bufferSize) {
+                                                                imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
+                                                                imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
+                                                                imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][0];
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
+                                                                imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
+                                                                imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][0];
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][1];
+                                                                imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][1];
+                                                                imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][1];
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][1];
+                                                                imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][1];
+                                                                imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][1];
+                                                                pixelIndex += 4;
+                                                                pixelIndex += row_inc;
+                                                                if (pixelIndex < bufferSize) {
+                                                                    imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][2];
+                                                                    imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][2];
+                                                                    imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                                    pixelIndex += 4;
+                                                                    imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][2];
+                                                                    imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][2];
+                                                                    imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                                    pixelIndex += 4;
+                                                                    imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][3];
+                                                                    imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][3];
+                                                                    imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][3];
+                                                                    pixelIndex += 4;
+                                                                    imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][3];
+                                                                    imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][3];
+                                                                    imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][3];
+                                                                    pixelIndex += 4;
+                                                                    pixelIndex += row_inc;
+                                                                    if (pixelIndex < bufferSize) {
+                                                                        imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][2];
+                                                                        imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][2];
+                                                                        imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                                        pixelIndex += 4;
+                                                                        imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][2];
+                                                                        imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][2];
+                                                                        imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                                        pixelIndex += 4;
+                                                                        imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][3];
+                                                                        imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][3];
+                                                                        imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                                        pixelIndex += 4;
+                                                                        imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][3];
+                                                                        imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][3];
+                                                                        imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][3];
+                                                                        pixelIndex += 4;
+                                                                    }
+                                                                }
+                                                            }
+                                                            chunk_size--;
+                                                        } // else 1 byte per block
+                                                        x += 4;
+                                                        if (x >= imgExtents[0]) {
+                                                            x = 0;
+                                                            y += 4;
+                                                        }
+                                                        flag <<= 1;
+                                                    } // for (i = 0; i < 32; i++)
+                                                } // while ((chunk_size > 0) && (y >= 0))
+                                                while (chunk_size > 0) {
+                                                    // skip byte
+                                                    j++;
+                                                    chunk_size--;
+                                                }
+                                                break;
+                                            case 0x3100:
+                                                // Selective set of vectors use to encode a frame
+                                                while ((chunk_size > 0) && (y < y_bottom)) {
+                                                    /* flag bits: 0 = SKIP, 10 = V1, 11 = V4 */ 
+                                                    flag = (fileBuffer[j++] & 0xff) << 24;
+                                                    flag |= (fileBuffer[j++] & 0xff) << 16;
+                                                    flag |= (fileBuffer[j++] & 0xff) << 8;
+                                                    flag |= (fileBuffer[j++] & 0xff);
+                                                    chunk_size -= 4;
+                                                    mask = 0x80000000;
+                                                    while ((mask != 0) && (y < y_bottom)) {
+                                                        if ((flag & mask) != 0) {
+                                                            if (mask == 1) {
+                                                                if (chunk_size < 0) {
+                                                                    break;
+                                                                }
+                                                                flag = (fileBuffer[j++] & 0xff) << 24;
+                                                                flag |= (fileBuffer[j++] & 0xff) << 16;
+                                                                flag |= (fileBuffer[j++] & 0xff) << 8;
+                                                                flag |= (fileBuffer[j++] & 0xff);
+                                                                chunk_size -= 4;
+                                                                mask = 0x80000000;
+                                                            } // if (mask == 1)
+                                                            else {
+                                                                mask >>>= 1;
+                                                            }
+                                                            if ((flag & mask) != 0) {
+                                                                // V4
+                                                                d0 = fileBuffer[j++] & 0xff;
+                                                                d1 = fileBuffer[j++] & 0xff;
+                                                                d2 = fileBuffer[j++] & 0xff;
+                                                                d3 = fileBuffer[j++] & 0xff;
+                                                                chunk_size -= 4;
+                                                                pixelIndex = 4 * imgExtents[0] * y + 4 * x;
+                                                                
+                                                                imgBuffer[pixelIndex + 1] = v4r[cur_strip][d0][0];
+                                                                imgBuffer[pixelIndex + 2] = v4g[cur_strip][d0][0];
+                                                                imgBuffer[pixelIndex + 3] = v4b[cur_strip][d0][0];
+                                                                
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v4r[cur_strip][d0][1];
+                                                                imgBuffer[pixelIndex + 2] = v4g[cur_strip][d0][1];
+                                                                imgBuffer[pixelIndex + 3] = v4b[cur_strip][d0][1];
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v4r[cur_strip][d1][0];
+                                                                imgBuffer[pixelIndex + 2] = v4g[cur_strip][d1][0];
+                                                                imgBuffer[pixelIndex + 3] = v4b[cur_strip][d1][0];
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v4r[cur_strip][d1][1];
+                                                                imgBuffer[pixelIndex + 2] = v4g[cur_strip][d1][1];
+                                                                imgBuffer[pixelIndex + 3] = v4b[cur_strip][d1][1];
+                                                                pixelIndex += 4;
+                                                                pixelIndex += row_inc;
+                                                                if (pixelIndex < bufferSize) {
+                                                                    imgBuffer[pixelIndex + 1] = v4r[cur_strip][d0][2];
+                                                                    imgBuffer[pixelIndex + 2] = v4g[cur_strip][d0][2];
+                                                                    imgBuffer[pixelIndex + 3] = v4b[cur_strip][d0][2];
+                                                                    pixelIndex += 4;
+                                                                    imgBuffer[pixelIndex + 1] = v4r[cur_strip][d0][3];
+                                                                    imgBuffer[pixelIndex + 2] = v4g[cur_strip][d0][3];
+                                                                    imgBuffer[pixelIndex + 3] = v4b[cur_strip][d0][3];
+                                                                    pixelIndex += 4;
+                                                                    imgBuffer[pixelIndex + 1] = v4r[cur_strip][d1][2];
+                                                                    imgBuffer[pixelIndex + 2] = v4g[cur_strip][d1][2];
+                                                                    imgBuffer[pixelIndex + 3] = v4b[cur_strip][d1][2];
+                                                                    pixelIndex += 4;
+                                                                    imgBuffer[pixelIndex + 1] = v4r[cur_strip][d1][3];
+                                                                    imgBuffer[pixelIndex + 2] = v4g[cur_strip][d1][3];
+                                                                    imgBuffer[pixelIndex + 3] = v4b[cur_strip][d1][3];
+                                                                    pixelIndex += 4;
+                                                                    pixelIndex += row_inc;
+                                                                    if (pixelIndex < bufferSize) {
+                                                                        imgBuffer[pixelIndex + 1] = v4r[cur_strip][d2][0];
+                                                                        imgBuffer[pixelIndex + 2] = v4g[cur_strip][d2][0];
+                                                                        imgBuffer[pixelIndex + 3] = v4b[cur_strip][d2][0];
+                                                                        pixelIndex += 4;
+                                                                        imgBuffer[pixelIndex + 1] = v4r[cur_strip][d2][1];
+                                                                        imgBuffer[pixelIndex + 2] = v4g[cur_strip][d2][1];
+                                                                        imgBuffer[pixelIndex + 3] = v4b[cur_strip][d2][1];
+                                                                        pixelIndex += 4;
+                                                                        imgBuffer[pixelIndex + 1] = v4r[cur_strip][d3][0];
+                                                                        imgBuffer[pixelIndex + 2] = v4g[cur_strip][d3][0];
+                                                                        imgBuffer[pixelIndex + 3] = v4b[cur_strip][d3][0];
+                                                                        pixelIndex += 4;
+                                                                        imgBuffer[pixelIndex + 1] = v4r[cur_strip][d3][1];
+                                                                        imgBuffer[pixelIndex + 2] = v4g[cur_strip][d3][1];
+                                                                        imgBuffer[pixelIndex + 3] = v4b[cur_strip][d3][1];
+                                                                        pixelIndex += 4;
+                                                                        pixelIndex += row_inc;
+                                                                        if (pixelIndex < bufferSize) {
+                                                                            imgBuffer[pixelIndex + 1] = v4r[cur_strip][d2][2];
+                                                                            imgBuffer[pixelIndex + 2] = v4g[cur_strip][d2][2];
+                                                                            imgBuffer[pixelIndex + 3] = v4b[cur_strip][d2][2];
+                                                                            pixelIndex += 4;
+                                                                            imgBuffer[pixelIndex + 1] = v4r[cur_strip][d2][3];
+                                                                            imgBuffer[pixelIndex + 2] = v4g[cur_strip][d2][3];
+                                                                            imgBuffer[pixelIndex + 3] = v4b[cur_strip][d2][3];
+                                                                            pixelIndex += 4;
+                                                                            imgBuffer[pixelIndex + 1] = v4r[cur_strip][d3][2];
+                                                                            imgBuffer[pixelIndex + 2] = v4g[cur_strip][d3][2];
+                                                                            imgBuffer[pixelIndex + 3] = v4b[cur_strip][d3][2];
+                                                                            pixelIndex += 4;
+                                                                            imgBuffer[pixelIndex + 1] = v4r[cur_strip][d3][3];
+                                                                            imgBuffer[pixelIndex + 2] = v4g[cur_strip][d3][3];
+                                                                            imgBuffer[pixelIndex + 3] = v4b[cur_strip][d3][3];
+                                                                            pixelIndex += 4;
+                                                                        }
+                                                                    }
+                                                                }
+                                                            } // if ((flag & mask) != 0)
+                                                            else {
+                                                                // V1
+                                                                chunk_size--;
+                                                                index = fileBuffer[j++] & 0xff;
+                                                                pixelIndex = 4 * imgExtents[0] * y + 4 * x;
+                                                                
+                                                                imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
+                                                                imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
+                                                                imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][0];
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
+                                                                imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
+                                                                imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][0];
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][1];
+                                                                imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][1];
+                                                                imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][1];
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][1];
+                                                                imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][1];
+                                                                imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][1];
+                                                                pixelIndex += 4;
+                                                                pixelIndex += row_inc;
+                                                                if (pixelIndex < bufferSize) {
+                                                                    imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
+                                                                    imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
+                                                                    imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][0];
+                                                                    pixelIndex += 4;
+                                                                    imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
+                                                                    imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
+                                                                    imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][0];
+                                                                    pixelIndex += 4;
+                                                                    imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][1];
+                                                                    imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][1];
+                                                                    imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][1];
+                                                                    pixelIndex += 4;
+                                                                    imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][1];
+                                                                    imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][1];
+                                                                    imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][1];
+                                                                    pixelIndex += 4;
+                                                                    pixelIndex += row_inc;
+                                                                    if (pixelIndex < bufferSize) {
+                                                                        imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][2];
+                                                                        imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][2];
+                                                                        imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                                        pixelIndex += 4;
+                                                                        imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][2];
+                                                                        imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][2];
+                                                                        imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                                        pixelIndex += 4;
+                                                                        imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][3];
+                                                                        imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][3];
+                                                                        imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][3];
+                                                                        pixelIndex += 4;
+                                                                        imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][3];
+                                                                        imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][3];
+                                                                        imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][3];
+                                                                        pixelIndex += 4;
+                                                                        pixelIndex += row_inc;
+                                                                        if (pixelIndex < bufferSize) {
+                                                                            imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][2];
+                                                                            imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][2];
+                                                                            imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                                            pixelIndex += 4;
+                                                                            imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][2];
+                                                                            imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][2];
+                                                                            imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                                            pixelIndex += 4;
+                                                                            imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][3];
+                                                                            imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][3];
+                                                                            imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                                            pixelIndex += 4;
+                                                                            imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][3];
+                                                                            imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][3];
+                                                                            imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][3];
+                                                                            pixelIndex += 4;
+                                                                        } // if (pixelIndex < bufferSize)
+                                                                    } // if (pixelIndex < bufferSize)
+                                                                } // if (pixelIndex < bufferSize)
+                                                            } // else V1
+                                                        } // if ((flag & mask) != 0)
+                                                        mask >>>= 1;
+                                                        x += 4;
+                                                        if (x >= imgExtents[0]) {
+                                                            x = 0;
+                                                            y += 4;
+                                                        }
+                                                    } // while ((mask != 0) && (y < y_bottom))
+                                                } // while ((chunk_size > 0) && (y < y_bottom)
+                                                while (chunk_size > 0) {
+                                                    // skip byte
+                                                    j++;
+                                                    chunk_size--;
+                                                }
+                                                break;
+                                            case 0x3200:
+                                                // List of blocks from only the V1 codebook
+                                                while((chunk_size > 0) && (y < y_bottom)) {
+                                                    index = fileBuffer[j++] & 0xff;
+                                                    pixelIndex = 4 * imgExtents[0] * y + 4 * x;
+                                                    
+                                                    imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
+                                                    imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
+                                                    imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][0];
+                                                    pixelIndex += 4;
+                                                    imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
+                                                    imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
+                                                    imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][0];
+                                                    pixelIndex += 4;
+                                                    imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][1];
+                                                    imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][1];
+                                                    imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][1];
+                                                    pixelIndex += 4;
+                                                    imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][1];
+                                                    imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][1];
+                                                    imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][1];
+                                                    pixelIndex += 4;
+                                                    pixelIndex += row_inc;
+                                                    if (pixelIndex < bufferSize) {
+                                                        imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
+                                                        imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
+                                                        imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][0];
+                                                        pixelIndex += 4;
+                                                        imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
+                                                        imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
+                                                        imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][0];
+                                                        pixelIndex += 4;
+                                                        imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][1];
+                                                        imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][1];
+                                                        imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][1];
+                                                        pixelIndex += 4;
+                                                        imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][1];
+                                                        imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][1];
+                                                        imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][1];
+                                                        pixelIndex += 4;
+                                                        pixelIndex += row_inc;
+                                                        if (pixelIndex < bufferSize) {
+                                                            imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][2];
+                                                            imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][2];
+                                                            imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                            pixelIndex += 4;
+                                                            imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][2];
+                                                            imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][2];
+                                                            imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                            pixelIndex += 4;
+                                                            imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][3];
+                                                            imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][3];
+                                                            imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][3];
+                                                            pixelIndex += 4;
+                                                            imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][3];
+                                                            imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][3];
+                                                            imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][3];
+                                                            pixelIndex += 4;
+                                                            pixelIndex += row_inc;
+                                                            if (pixelIndex < bufferSize) {
+                                                                imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][2];
+                                                                imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][2];
+                                                                imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][2];
+                                                                imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][2];
+                                                                imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][3];
+                                                                imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][3];
+                                                                imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][2];
+                                                                pixelIndex += 4;
+                                                                imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][3];
+                                                                imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][3];
+                                                                imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][3];
+                                                                pixelIndex += 4;
+                                                            } // if (pixelIndex < bufferSize)
+                                                        } // if (pixelIndex < bufferSize)
+                                                    } // if (pixelIndex < bufferSize)
+                                                    chunk_size--;
+                                                    x += 4;
+                                                    if (x >= imgExtents[0]) {
+                                                        x = 0;
+                                                        y += 4;
+                                                    }
+                                                } // while ((chunk_size > 0) && (y < y_bottom))
+                                                while (chunk_size > 0) {
+                                                    // skip byte
+                                                    j++;
+                                                    chunk_size--;
+                                                }
+                                                break;
+                                            default:
+                                                Preferences.debug("CVID: unknown chunk_id = " + chunk_id + "\n");
+                                                while (chunk_size > 0) {
+                                                    // skip byte
+                                                    j++;
+                                                    chunk_size--;
+                                                }
+                                        } // switch(chunk_id)
+                                        
+                                    } // while (top_size > 0)
+                                } // for (cur_strip = 0; cur_strip < strips; cur_strip++)
+
+                                if (one) {
+                                    imageA.importData(0, imgBuffer, false);
+                                } else {
+                                    imageA.importData(z * bufferSize, imgBuffer, false);
+                                }
+
+                                if (actualFrames > 1) {
+                                    fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
+                                }
+                                x = 0;
+                                y = 0;
+                                y_bottom = 0;
+                                j = 0;
+                                pixelIndex = 0;
+                                z++;
+                            } // else
+                        } // if ((dataLength > 0) && ((totalBytesRead + dataLength) <= totalDataArea))
+                    } // else
+
+                    subchunkBlocksRead++;
+
+                    if (haveMoviSubchunk && (subchunkBlocksRead == streams) && (totalBytesRead < totalDataArea)) {
+                        totalBytesRead += moviSubchunkPosition + LIST2subchunkSize - raFile.getFilePointer();
+                        raFile.seek(moviSubchunkPosition + LIST2subchunkSize);
+
+                        // Check for LIST rec<sp> subchunks
+                        signature = getInt(endianess);
+                        totalBytesRead += 4;
+
+                        if (signature == 0x5453494C) {
+
+                            // have read LIST
+                            LIST2subchunkSize = getInt(endianess);
+                            totalBytesRead += 4;
+                            moviSubchunkPosition = raFile.getFilePointer();
+                            CHUNKtype = getInt(endianess);
+
+                            if (CHUNKtype == 0x20636572) {
+
+                                // have read rec<sp>
+                                totalBytesRead += 4;
+                                subchunkDataArea = LIST2subchunkSize - 4;
+                                subchunkBytesRead = 0;
+                                subchunkBlocksRead = 0;
+                            } else {
+                                raFile.close();
+                                throw new IOException("CHunktype for LIST2sbuchunk is an illegal = " + CHUNKtype);
+                            }
+                        } else {
+                            chunkRead = false;
+                        }
+                    } // if (haveMoviSubchunk && (subchunkBlocksRead == streams))
+                } // while ((totalBytesRead < (totalDataArea-8)) && chunkRead)
+                
+                
+            } // else if (doCVID && (bitCount == 24))    
+            else if (doCVID && (bitCount == 40)) {
+                
+            } // else if (doCVID && (bitCount == 40))
 
             raFile.close();
 
@@ -3975,6 +5027,9 @@ public class FileAvi extends FileBase {
                     Preferences.debug("Microsoft video 1 compression\n", Preferences.DEBUG_FILEIO);
                     // Microsoft video 1 compression
                     doMSVC = true;
+                } else if (handlerString.toUpperCase().startsWith("CVID")) {
+                    Preferences.debug("Cinepak (CVID) encoding\n", Preferences.DEBUG_FILEIO);
+                    doCVID = true;
                 } else if (handlerString.toUpperCase().startsWith("MP42")) {
                     return AlgorithmTranscode.TRANSCODE_MP42;
                 } else if (handlerString.toUpperCase().startsWith("MJPG")) {
@@ -3989,8 +5044,8 @@ public class FileAvi extends FileBase {
                     return AlgorithmTranscode.TRANSCODE_IV41;
                 } else if (handlerString.toUpperCase().startsWith("IV50")) {
                     return AlgorithmTranscode.TRANSCODE_IV50;
-                } else if (handlerString.toUpperCase().startsWith("CVID")) {
-                    return AlgorithmTranscode.TRANSCODE_CVID;
+                //} else if (handlerString.toUpperCase().startsWith("CVID")) {
+                    //return AlgorithmTranscode.TRANSCODE_CVID;
                 } else if (handlerString.toUpperCase().startsWith("GEOV")) {
                     return AlgorithmTranscode.TRANSCODE_GEOV;
                 } else {
@@ -4151,6 +5206,9 @@ public class FileAvi extends FileBase {
                 } else if (compression == 1296126531) {
                     Preferences.debug("compression is Microsoft video 1\n", Preferences.DEBUG_FILEIO);
                     doMSVC = true;
+                } else if (compression == 1684633187) {
+                    Preferences.debug("compression is Cinepak (CVID)\n", Preferences.DEBUG_FILEIO);
+                    doCVID = true;
                 } else {
                     raFile.close();
                     throw new IOException("Unknown compression with value = " + compression);
@@ -4161,7 +5219,8 @@ public class FileAvi extends FileBase {
                 if (((compression == 0) &&
                          ((bitCount == 4) || (bitCount == 8) || (bitCount == 16) || (bitCount == 24) || (bitCount == 32))) ||
                         ((compression == 1) && (bitCount == 8)) || (doMSVC && (bitCount == 8)) ||
-                        (doMSVC && (bitCount == 16))) {
+                        (doMSVC && (bitCount == 16)) || (doCVID && (bitCount == 24)) || 
+                        (doCVID && (bitCount == 40))) {
                     // OK
                 } else {
                     raFile.close();
