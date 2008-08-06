@@ -1,6 +1,6 @@
 package gov.nih.mipav.model.structures;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.*;
 
 import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.file.FileInfoBase;
@@ -12,9 +12,6 @@ import java.lang.reflect.Array;
 import java.util.BitSet;
 import java.util.Vector;
 
-import javax.vecmath.Color4f;
-import javax.vecmath.Point3d;
-import javax.vecmath.Point3i;
 
 
 /**
@@ -374,7 +371,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  kMaskColors  the per-voxel colors for the mask
      * @param  kColor       the overall mask color if per-voxel mask colors are not defined.
      */
-    public void addSurfaceMask(int index, BitSet kMask, Color4f[] kMaskColors, Color4f kColor) {
+    public void addSurfaceMask(int index, BitSet kMask, ColorRGBA[] kMaskColors, ColorRGBA kColor) {
 
         if (kColor != null) {
 
@@ -953,7 +950,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     int index = (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor);
 
                     /* surface Mask? */
-                    Color4f kMaskColor = null;
+                    ColorRGBA kMaskColor = null;
 
                     if (m_kMaskVector != null) {
 
@@ -967,11 +964,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
                                 }
 
                                 if (m_kColorVector.size() > iMask) {
-                                    kMaskColor = ((Color4f) m_kColorVector.elementAt(iMask));
+                                    kMaskColor = ((ColorRGBA) m_kColorVector.elementAt(iMask));
                                 }
 
                                 if (m_kMaskColorVector.size() > iMask) {
-                                    Color4f[] kMaskColors = (Color4f[]) m_kMaskColorVector.elementAt(iMask);
+                                	ColorRGBA[] kMaskColors = (ColorRGBA[]) m_kMaskColorVector.elementAt(iMask);
 
                                     if (kMaskColors[index] != null) {
                                         kMaskColor = kMaskColors[index];
@@ -979,10 +976,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
                                 }
 
                                 if (kMaskColor != null) {
-                                    fReturn[(((j * iBound) + i) * 4) + 0] = kMaskColor.w;
-                                    fReturn[(((j * iBound) + i) * 4) + 1] = 255 * kMaskColor.x;
-                                    fReturn[(((j * iBound) + i) * 4) + 2] = 255 * kMaskColor.y;
-                                    fReturn[(((j * iBound) + i) * 4) + 3] = 255 * kMaskColor.z;
+                                    fReturn[(((j * iBound) + i) * 4) + 0] = kMaskColor.A;
+                                    fReturn[(((j * iBound) + i) * 4) + 1] = 255 * kMaskColor.R;
+                                    fReturn[(((j * iBound) + i) * 4) + 2] = 255 * kMaskColor.G;
+                                    fReturn[(((j * iBound) + i) * 4) + 3] = 255 * kMaskColor.B;
                                 }
                             }
                         }
@@ -4131,10 +4128,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @return  the BitSet mask
      */
-    public Color4f getSurfaceMaskColor(int index) {
+    public ColorRGBA getSurfaceMaskColor(int index) {
 
         if (m_kColorVector.size() > index) {
-            return (Color4f) m_kColorVector.get(index);
+            return (ColorRGBA) m_kColorVector.get(index);
         }
 
         return null;

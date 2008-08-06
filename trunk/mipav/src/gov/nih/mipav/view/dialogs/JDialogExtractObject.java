@@ -1,11 +1,14 @@
 package gov.nih.mipav.view.dialogs;
 
+import WildMagic.LibGraphics.Detail.*;
+import WildMagic.LibGraphics.SceneGraph.*;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -94,7 +97,7 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
     private String[] titles;
 
     /** DOCUMENT ME! */
-    private ModelTriangleMesh triMesh = null;
+    private TriMesh triMesh = null;
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
@@ -615,7 +618,7 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
             try {
                 in = new RandomAccessFile(surFile, "r");
                 iType = 0;
-                iQuantity = ModelTriangleMesh.parseVRMLMesh(in);
+                iQuantity = FileSurface_WM.parseVRMLMesh(in);
                 in.seek(0);
                 isSur = false;
             } catch (NoSuchElementException e) {
@@ -640,9 +643,9 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
 
                 // meshes are type TriangleMesh
                 if (isSur == true) {
-                    triMesh = ModelTriangleMesh.loadTMesh(in, progress, 0, 1, true);
+                    triMesh = FileSurface_WM.loadTMesh(in, progress, 0, 1, true, null, 1.0f, null, 1, null, null, null);
                 } else {
-                    triMesh = ModelTriangleMesh.loadVRMLMesh(in, progress, 0, 1, true);
+                    triMesh = FileSurface_WM.loadVRMLMesh(in, progress, 0, 1, true, null, null, null);
                 }
 
                 if (triMesh == null) {
@@ -653,9 +656,10 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
             } else {
 
                 // meshes are type ClodMesh
-                ModelClodMesh kClod = ModelClodMesh.loadCMesh(in, progress, 0, 1);
-                kClod.setLOD(kClod.getMaximumLOD());
-                triMesh = kClod.getMesh();
+                ClodMesh kClod = FileSurface_WM.loadCMesh(in, null, 0, 1);
+                kClod.TargetRecord(kClod.GetMaximumLOD());
+                kClod.SelectLevelOfDetail();
+                triMesh = kClod;
             }
         } catch (IOException e) {
             return;

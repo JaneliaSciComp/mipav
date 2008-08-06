@@ -1,12 +1,11 @@
 package gov.nih.mipav.model.algorithms;
 
-
+import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.model.structures.*;
 import Jama.*;
 
 import java.awt.*;
 
-import javax.vecmath.*;
 
 
 /**
@@ -143,7 +142,7 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
         if ((fDx == 0) && (fDy == 0)) {
             m_bUseVelocity = false;
         } else {
-            m_kVelocity.normalize();
+            m_kVelocity.Normalize();
         }
     }
 
@@ -213,8 +212,8 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
              * the calculated
              * GVF : */
             if (m_bUseVelocity && m_kPreviousSnake.contains(kX.get(i, 0), kY.get(i, 0))) {
-                kFx.set(i, 0, m_kVelocity.x);
-                kFy.set(i, 0, m_kVelocity.y);
+                kFx.set(i, 0, m_kVelocity.X);
+                kFy.set(i, 0, m_kVelocity.Y);
             } else {
                 fX = (float) Math.min(xDim - 1, Math.max(kX.get(i, 0), 0));
                 fY = (float) Math.min(yDim - 1, Math.max(kY.get(i, 0), 0));
@@ -234,7 +233,7 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
         float fYBar = (float) (kY.norm1() / (float) iNPoints);
 
         /* Store the center point of the current snake: */
-        Point2f kCenter = new Point2f(fXBar, fYBar);
+        Vector2f kCenter = new Vector2f(fXBar, fYBar);
 
         /* Equation 11: */
         /* kR used to compute the average radius: */
@@ -340,8 +339,8 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
                  * use the calculated
                  * GVF : */
                 if (m_bUseVelocity && m_kPreviousSnake.contains(kX.get(i, 0), kY.get(i, 0))) {
-                    kFx.set(i, 0, m_kVelocity.x);
-                    kFy.set(i, 0, m_kVelocity.y);
+                    kFx.set(i, 0, m_kVelocity.X);
+                    kFy.set(i, 0, m_kVelocity.Y);
                 } else {
                     fX = (float) Math.min(xDim - 1, Math.max(kX.get(i, 0), 0));
                     fY = (float) Math.min(yDim - 1, Math.max(kY.get(i, 0), 0));
@@ -392,13 +391,13 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
             m_kPreviousSnake.addPoint(Math.round((float) kX.get(i, 0)), Math.round((float) kY.get(i, 0)));
 
             if (m_bDilate) {
-                kVec.x = (float) kX.get(i, 0) - fXBar;
-                kVec.y = (float) kY.get(i, 0) - fYBar;
-                fLength = kVec.length();
-                kVec.normalize();
+                kVec.X = (float) kX.get(i, 0) - fXBar;
+                kVec.Y = (float) kY.get(i, 0) - fYBar;
+                fLength = kVec.Length();
+                kVec.Normalize();
 
-                m_afX[i] = fXBar + (kVec.x * fLength * m_fDilationFactor);
-                m_afY[i] = fYBar + (kVec.y * fLength * m_fDilationFactor);
+                m_afX[i] = fXBar + (kVec.X * fLength * m_fDilationFactor);
+                m_afY[i] = fYBar + (kVec.Y * fLength * m_fDilationFactor);
             } else {
                 m_afX[i] = (float) kX.get(i, 0);
                 m_afY[i] = (float) kY.get(i, 0);
@@ -406,9 +405,9 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
         }
 
         /* update velocity: */
-        m_kVelocity.x = fXBar - kCenter.x;
-        m_kVelocity.y = fYBar - kCenter.y;
-        m_kVelocity.normalize();
+        m_kVelocity.X = fXBar - kCenter.X;
+        m_kVelocity.Y = fYBar - kCenter.Y;
+        m_kVelocity.Normalize();
 
         return;
     }

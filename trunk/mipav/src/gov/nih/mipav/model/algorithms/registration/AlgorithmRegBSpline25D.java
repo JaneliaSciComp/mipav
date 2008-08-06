@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms.registration;
 
 
 import WildMagic.LibFoundation.Curves.*;
+import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -9,8 +10,6 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 
 import java.text.*;
-
-import javax.vecmath.*;
 
 
 /**
@@ -367,7 +366,7 @@ iteration:
             line = lineString.getBytes();
             raFile.write(line);
 
-            Point2f control2D = new Point2f();
+            Vector2f control2D = new Vector2f();
 
             for (int iSlice = 0; iSlice < m_kImageSource.getExtents()[2]; iSlice++) {
                 lineString = new String("# Final values of control points for slice " + String.valueOf(iSlice) + "\n");
@@ -384,7 +383,7 @@ iteration:
                         line = lineString.getBytes();
                         raFile.write(line);
                         kBSpline2D.getControlPoint(iControlX, iControlY, control2D);
-                        lineString = new String(Float.toString(control2D.x) + "  " + Float.toString(control2D.y) +
+                        lineString = new String(Float.toString(control2D.X) + "  " + Float.toString(control2D.Y) +
                                                 "\n");
                         line = lineString.getBytes();
                         raFile.write(line);

@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms.registration;
 
 
 import WildMagic.LibFoundation.Curves.*;
+import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -9,8 +10,6 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 
 import java.text.*;
-
-import javax.vecmath.*;
 
 
 /**
@@ -350,7 +349,7 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
             raFile.write(line);
 
             BSplineLattice2Df kBSpline2D = kReg.getLattice();
-            Point2f control2D = new Point2f();
+            Vector2f control2D = new Vector2f();
 
             for (int iControlX = 0; iControlX < kBasisX.GetNumCtrlPoints(); iControlX++) {
 
@@ -360,7 +359,7 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
                     line = lineString.getBytes();
                     raFile.write(line);
                     kBSpline2D.getControlPoint(iControlX, iControlY, control2D);
-                    lineString = new String(Float.toString(control2D.x) + "  " + Float.toString(control2D.y) + "\n");
+                    lineString = new String(Float.toString(control2D.X) + "  " + Float.toString(control2D.Y) + "\n");
                     line = lineString.getBytes();
                     raFile.write(line);
                 }

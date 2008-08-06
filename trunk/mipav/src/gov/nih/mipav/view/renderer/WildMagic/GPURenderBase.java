@@ -18,7 +18,7 @@ import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 import WildMagic.LibRenderers.OpenGLRenderer.*;
 
-import gov.nih.mipav.view.renderer.GeneralLight;
+import gov.nih.mipav.view.renderer.J3D.GeneralLight;
 
 
 public abstract class GPURenderBase extends JavaApplication3D

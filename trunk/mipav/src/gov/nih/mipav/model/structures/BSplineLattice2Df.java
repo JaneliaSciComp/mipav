@@ -2,7 +2,7 @@ package gov.nih.mipav.model.structures;
 
 
 import WildMagic.LibFoundation.Curves.*;
-import javax.vecmath.*;
+import WildMagic.LibFoundation.Mathematics.*;
 
 
 /**
@@ -13,7 +13,7 @@ public class BSplineLattice2Df {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    protected Point2f[][] m_aakControlPoint; // [iNumCtrlPointsY][iNumCtrlPointsX]
+    protected Vector2f[][] m_aakControlPoint; // [iNumCtrlPointsY][iNumCtrlPointsX]
 
     /** DOCUMENT ME! */
     protected BSplineBasisDiscretef m_kBasisX; // X axis B-Spline basis
@@ -38,14 +38,14 @@ public class BSplineLattice2Df {
         int iNumControlY = kBasisY.GetNumCtrlPoints();
 
         // Allocate the equally spaced control points.
-        m_aakControlPoint = new Point2f[iNumControlY][iNumControlX];
+        m_aakControlPoint = new Vector2f[iNumControlY][iNumControlX];
 
         for (int iControlX = 0; iControlX < iNumControlX; iControlX++) {
             float fX = iControlX / (iNumControlX - 1.0f);
 
             for (int iControlY = 0; iControlY < iNumControlY; iControlY++) {
                 float fY = iControlY / (iNumControlY - 1.0f);
-                m_aakControlPoint[iControlY][iControlX] = new Point2f(fX, fY);
+                m_aakControlPoint[iControlY][iControlX] = new Vector2f(fX, fY);
             }
         }
     }
@@ -70,7 +70,7 @@ public class BSplineLattice2Df {
                                         };
         int iNumSamplesX = iSizeX;
 
-        Point2f kPos = new Point2f();
+        Vector2f kPos = new Vector2f();
 
         for (int iY = 0; iY < iSizeY; iY++) {
 
@@ -79,8 +79,8 @@ public class BSplineLattice2Df {
                 getPosition(iX, iY, kPos);
 
                 int iIndex = iX + (iY * iNumSamplesX);
-                akImageMap[0].data[iIndex] = kPos.x;
-                akImageMap[1].data[iIndex] = kPos.y;
+                akImageMap[0].data[iIndex] = kPos.X;
+                akImageMap[1].data[iIndex] = kPos.Y;
             }
         }
 
@@ -134,12 +134,12 @@ public class BSplineLattice2Df {
      * @param  iControlY  int Identifies control point in 2D lattice.
      * @param  kPoint     Point2f Where the current coordinates of the control point will be stored upon return.
      */
-    public void getControlPoint(int iControlX, int iControlY, Point2f kPoint) {
+    public void getControlPoint(int iControlX, int iControlY, Vector2f kPoint) {
 
         if ((0 <= iControlX) && (iControlX < m_kBasisX.GetNumCtrlPoints()) && (0 <= iControlY) &&
                 (iControlY < m_kBasisY.GetNumCtrlPoints())) {
 
-            kPoint.set(m_aakControlPoint[iControlY][iControlX]);
+            kPoint.Copy(m_aakControlPoint[iControlY][iControlX]);
         }
     }
 
@@ -153,7 +153,7 @@ public class BSplineLattice2Df {
      *                   B-Spline basis evaluation.
      * @param  kPos      Point2f 2D coordinates resulting from evaluation.
      */
-    public void getPosition(int iSampleX, int iSampleY, Point2f kPos) {
+    public void getPosition(int iSampleX, int iSampleY, Vector2f kPos) {
         float fX = (float) iSampleX / (float) (m_kBasisX.GetNumSamples() - 1);
         int iControlMaxX = m_kBasisX.GetKnotIndex(fX);
         int iControlMinX = iControlMaxX - m_kBasisX.GetDegree();
@@ -162,13 +162,14 @@ public class BSplineLattice2Df {
         int iControlMaxY = m_kBasisY.GetKnotIndex(fY);
         int iControlMinY = iControlMaxY - m_kBasisY.GetDegree();
 
-        kPos.set(0.0f, 0.0f);
-
+        kPos.Set(0.0f, 0.0f);
+        Vector2f kTemp = new Vector2f();
         for (int iControlX = iControlMinX; iControlX <= iControlMaxX; iControlX++) {
 
             for (int iControlY = iControlMinY; iControlY <= iControlMaxY; iControlY++) {
                 float fTmp = m_kBasisX.GetD0(iControlX, iSampleX) * m_kBasisY.GetD0(iControlY, iSampleY);
-                kPos.scaleAdd(fTmp, m_aakControlPoint[iControlY][iControlX], kPos);
+                kTemp.Scale(fTmp, m_aakControlPoint[iControlY][iControlX]);
+                kPos.Add(kTemp);
             }
         }
     }
@@ -182,7 +183,7 @@ public class BSplineLattice2Df {
      * @param  fY    float Sample in [0,1] range for the Y axis evaluation of the B-Spline basis.
      * @param  kPos  Point2f 2D coordinates resulting from evaluation.
      */
-    public void getPosition(float fX, float fY, Point2f kPos) {
+    public void getPosition(float fX, float fY, Vector2f kPos) {
 
         int iControlMaxX = m_kBasisX.GetKnotIndex(fX);
         int iControlMinX = iControlMaxX - m_kBasisX.GetDegree();
@@ -196,13 +197,14 @@ public class BSplineLattice2Df {
         m_kBasisX.Compute(fX, afD0X, null, null);
         m_kBasisY.Compute(fY, afD0Y, null, null);
 
-        kPos.set(0.0f, 0.0f);
-
+        kPos.Set(0.0f, 0.0f);
+        Vector2f kTemp = new Vector2f();
         for (int iControlX = iControlMinX; iControlX <= iControlMaxX; iControlX++) {
 
             for (int iControlY = iControlMinY; iControlY <= iControlMaxY; iControlY++) {
                 float fTmp = afD0X[iControlX] * afD0Y[iControlY];
-                kPos.scaleAdd(fTmp, m_aakControlPoint[iControlY][iControlX], kPos);
+                kTemp.Scale(fTmp, m_aakControlPoint[iControlY][iControlX]);
+                kPos.Add(kTemp);
             }
         }
 
@@ -218,12 +220,12 @@ public class BSplineLattice2Df {
      * @param  iControlY  int Identifies control point in 2D lattice.
      * @param  kPoint     Point2f New coordinates of the control point.
      */
-    public void setControlPoint(int iControlX, int iControlY, Point2f kPoint) {
+    public void setControlPoint(int iControlX, int iControlY, Vector2f kPoint) {
 
         if ((0 <= iControlX) && (iControlX < m_kBasisX.GetNumCtrlPoints()) && (0 <= iControlY) &&
                 (iControlY < m_kBasisY.GetNumCtrlPoints())) {
 
-            m_aakControlPoint[iControlY][iControlX].set(kPoint);
+            m_aakControlPoint[iControlY][iControlX].Copy(kPoint);
         }
     }
 }

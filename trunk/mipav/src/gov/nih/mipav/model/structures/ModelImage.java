@@ -2125,10 +2125,10 @@ public class ModelImage extends ModelStorageBase {
                     }
                 } /* LUT update of a non-ModelImage data strucuture: */
                 else if ((frameList.elementAt(i) instanceof
-                        gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)) {
-                    ModelImage imgA = ((gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)
+                        gov.nih.mipav.view.renderer.J3D.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)) {
+                    ModelImage imgA = ((gov.nih.mipav.view.renderer.J3D.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)
                             frameList.elementAt(i)).getImageA();
-                    ModelImage imgB = ((gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)
+                    ModelImage imgB = ((gov.nih.mipav.view.renderer.J3D.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)
                             frameList.elementAt(i)).getImageB();
 
                     if (this == imgA) {
@@ -2150,10 +2150,10 @@ public class ModelImage extends ModelStorageBase {
                         frameList.elementAt(i).updateImages(null, LUT, forceShow, -1);
                     }
                 } else if ((frameList.elementAt(i) instanceof
-                                gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)) {
-                    ModelImage imgS = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)
+                                gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture)) {
+                    ModelImage imgS = ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture)
                                            frameList.elementAt(i)).getImageSeparate();
-                    ModelImage imgL = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)
+                    ModelImage imgL = ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture)
                                            frameList.elementAt(i)).getImageLink();
 
                     if (this == imgS) {
@@ -2226,16 +2226,16 @@ public class ModelImage extends ModelStorageBase {
 
                 frameList.elementAt(i).updateImages(null, null, forceShow, -1);
             } else if ((frameList.elementAt(i) instanceof
-                            gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)) {
-                ModelImage imgS = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i))
+                            gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture)) {
+                ModelImage imgS = ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i))
                                       .getImageSeparate();
-                ModelImage imgL = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i))
+                ModelImage imgL = ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i))
                                       .getImageLink();
 
                 if (this == imgS) {
-                    ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i)).setRGBTA(RGBT);
+                    ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i)).setRGBTA(RGBT);
                 } else if (this == imgL) {
-                    ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i)).setRGBTB(RGBT);
+                    ((gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i)).setRGBTB(RGBT);
                 }
             } else if ((frameList.elementAt(i) instanceof
                             gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM)) {

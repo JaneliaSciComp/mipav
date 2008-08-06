@@ -1,7 +1,5 @@
 package gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM;
 
-
-import gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.*;
 import java.util.*;
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibFoundation.Meshes.*;

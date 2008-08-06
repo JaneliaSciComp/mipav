@@ -3,11 +3,6 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.*;
-import javax.media.j3d.*;
-import javax.vecmath.*;
-
-
-import WildMagic.LibGraphics.Rendering.*;
 
 /**
  * This structure contains the information that describes how an XML surface (see surface.xsd and FileSurfaceXML.java)
@@ -17,7 +12,7 @@ import WildMagic.LibGraphics.Rendering.*;
  * @see  FileInfoXML
  * @see  FileSurfaceXML
  */
-public class FileInfoSurfaceRefXML extends FileInfoXML {
+public abstract class FileInfoSurfaceRefXML extends FileInfoXML {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -29,9 +24,6 @@ public class FileInfoSurfaceRefXML extends FileInfoXML {
     /** Unique ID, for the surface:. */
     private int m_iUnique_ID;
 
-    /** Material properties of the surface:. */
-    private Material m_kMaterial = null;
-    
     /** .sur file name. */
     private String filename;
     
@@ -58,9 +50,6 @@ public class FileInfoSurfaceRefXML extends FileInfoXML {
      */
     public FileInfoSurfaceRefXML(String name, String directory, int format) {
         super(name, directory, format);
-        m_kMaterial = new Material();
-        m_kMaterial.setCapability(Material.ALLOW_COMPONENT_READ);
-        m_kMaterial.setCapability(Material.ALLOW_COMPONENT_WRITE);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -78,7 +67,6 @@ public class FileInfoSurfaceRefXML extends FileInfoXML {
      */
     public void finalize() {
         filename = null;
-        m_kMaterial = null;
         m_kType = null;
         
         super.finalize();
@@ -92,36 +80,6 @@ public class FileInfoSurfaceRefXML extends FileInfoXML {
      */
     public int getID() {
         return m_iUnique_ID;
-    }
-
-    /**
-     * Returns the material properties for the surface:
-     *
-     * @return  DOCUMENT ME!
-     */
-    public Material getMaterial() {
-        return m_kMaterial;
-    }
-    
-
-    /**
-     * Returns the material properties for the surface:
-     *
-     * @return  DOCUMENT ME!
-     */
-    public MaterialState getMaterialWM() {
-        MaterialState kMaterialState = new MaterialState();
-        Color3f kColor = new Color3f();
-        m_kMaterial.getAmbientColor(kColor);
-        kMaterialState.Ambient.Set( kColor.x, kColor.y, kColor.z );
-        m_kMaterial.getDiffuseColor(kColor);
-        kMaterialState.Diffuse.Set( kColor.x, kColor.y, kColor.z );
-        m_kMaterial.getEmissiveColor(kColor);
-        kMaterialState.Emissive.Set( kColor.x, kColor.y, kColor.z );
-        m_kMaterial.getSpecularColor(kColor);
-        kMaterialState.Specular.Set( kColor.x, kColor.y, kColor.z );
-        kMaterialState.Shininess = m_kMaterial.getShininess();        
-        return kMaterialState;
     }
 
     /**
@@ -161,57 +119,12 @@ public class FileInfoSurfaceRefXML extends FileInfoXML {
     }
 
     /**
-     * Sets the ambient color of the surface:
-     *
-     * @param  kColor  DOCUMENT ME!
-     */
-    public void setAmbient(Color3f kColor) {
-        m_kMaterial.setAmbientColor(kColor);
-    }
-    
-    /**
-     * Sets the diffuse color of the surface:
-     *
-     * @param  kColor  DOCUMENT ME!
-     */
-    public void setDiffuse(Color3f kColor) {
-        m_kMaterial.setDiffuseColor(kColor);
-    }
-
-    /**
-     * Sets the emissive color of the surface:
-     *
-     * @param  kColor  DOCUMENT ME!
-     */
-    public void setEmissive(Color3f kColor) {
-        m_kMaterial.setEmissiveColor(kColor);
-    }
-
-    /**
      * Set the unique id for the surface:
      *
      * @param  iID  DOCUMENT ME!
      */
     public void setID(int iID) {
         m_iUnique_ID = iID;
-    }
-
-    /**
-     * Sets the material properties for the surface:
-     *
-     * @param  kMaterial  DOCUMENT ME!
-     */
-    public void setMaterial(Material kMaterial) {
-        m_kMaterial = kMaterial;
-    }
-    
-    /**
-     * Sets the surface shininess:
-     *
-     * @param  fShininess  DOCUMENT ME!
-     */
-    public void setShininess(float fShininess) {
-        m_kMaterial.setShininess(fShininess);
     }
 
     /**
@@ -230,15 +143,6 @@ public class FileInfoSurfaceRefXML extends FileInfoXML {
      */
     public void setLevelDetail(int levelDetail) {
       m_kLevelDetail = levelDetail;
-    }
-
-    /**
-     * Sets the specular color of the surface:
-     *
-     * @param  kColor  DOCUMENT ME!
-     */
-    public void setSpecular(Color3f kColor) {
-        m_kMaterial.setSpecularColor(kColor);
     }
 
     /**
@@ -272,11 +176,10 @@ public class FileInfoSurfaceRefXML extends FileInfoXML {
         }
 
         fInfo.setImageDescription(this.getImageDescription());
-        ((FileInfoSurfaceXML) fInfo).setID(this.getID());
-        ((FileInfoSurfaceXML) fInfo).setMaterial(this.getMaterial());
-        ((FileInfoSurfaceXML) fInfo).setType(this.getType());
-        ((FileInfoSurfaceXML) fInfo).setOpacity(this.getOpacity());
-        ((FileInfoSurfaceXML) fInfo).setLevelDetail(this.getLevelDetail());
+        ((FileInfoSurfaceRefXML) fInfo).setID(this.getID());
+        ((FileInfoSurfaceRefXML) fInfo).setType(this.getType());
+        ((FileInfoSurfaceRefXML) fInfo).setOpacity(this.getOpacity());
+        ((FileInfoSurfaceRefXML) fInfo).setLevelDetail(this.getLevelDetail());
         ((FileInfoSurfaceRefXML) fInfo).setSurfaceFileName(this.getSurfaceFileName());
     }
 }

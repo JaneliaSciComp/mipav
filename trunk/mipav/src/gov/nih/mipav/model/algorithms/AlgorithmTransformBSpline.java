@@ -1,13 +1,13 @@
 package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Curves.*;
+import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
 import java.io.*;
 
-import javax.vecmath.*;
 
 
 /**
@@ -234,7 +234,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
                                                              m_kSimpleImageSource.extents[1]);
                 m_kBSpline2D = new BSplineLattice2Df(m_kBSplineBasisX, m_kBSplineBasisY);
 
-                Point2f kPoint = new Point2f();
+                Vector2f kPoint = new Vector2f();
 
                 for (int slice = 0; slice < numberSlices; slice++) {
                     fireProgressStateChanged(100 * slice / numberSlices);
@@ -247,8 +247,8 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
                     for (int iControlX = 0; iControlX < m_iBSplineNumControlPoints; iControlX++) {
 
                         for (int iControlY = 0; iControlY < m_iBSplineNumControlPoints; iControlY++) {
-                            kPoint.x = controlMat25D[slice][index][0];
-                            kPoint.y = controlMat25D[slice][index++][1];
+                            kPoint.X = controlMat25D[slice][index][0];
+                            kPoint.Y = controlMat25D[slice][index++][1];
                             m_kBSpline2D.setControlPoint(iControlX, iControlY, kPoint);
                         }
                     }
@@ -320,15 +320,15 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
                                                                  destExtents[1]);
                     m_kBSpline2D = new BSplineLattice2Df(m_kBSplineBasisX, m_kBSplineBasisY);
 
-                    Point2f kPoint = new Point2f();
+                    Vector2f kPoint = new Vector2f();
 
                     int index = 0;
 
                     for (int iControlX = 0; iControlX < m_iBSplineNumControlPoints; iControlX++) {
 
                         for (int iControlY = 0; iControlY < m_iBSplineNumControlPoints; iControlY++) {
-                            kPoint.x = controlMat[index][0];
-                            kPoint.y = controlMat[index++][1];
+                            kPoint.X = controlMat[index][0];
+                            kPoint.Y = controlMat[index++][1];
                             m_kBSpline2D.setControlPoint(iControlX, iControlY, kPoint);
                         }
                     }
@@ -368,7 +368,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
                                                                  destExtents[2]);
                     m_kBSpline3D = new BSplineLattice3Df(m_kBSplineBasisX, m_kBSplineBasisY, m_kBSplineBasisZ);
 
-                    Point3f kPoint = new Point3f();
+                    Vector3f kPoint = new Vector3f();
 
                     int index = 0;
 
@@ -377,9 +377,9 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
                         for (int iControlY = 0; iControlY < m_iBSplineNumControlPoints; iControlY++) {
 
                             for (int iControlZ = 0; iControlZ < m_iBSplineNumControlPoints; iControlZ++) {
-                                kPoint.x = controlMat[index][0];
-                                kPoint.y = controlMat[index][1];
-                                kPoint.z = controlMat[index++][2];
+                                kPoint.X = controlMat[index][0];
+                                kPoint.Y = controlMat[index][1];
+                                kPoint.Z = controlMat[index++][2];
                                 m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kPoint);
                             }
                         }

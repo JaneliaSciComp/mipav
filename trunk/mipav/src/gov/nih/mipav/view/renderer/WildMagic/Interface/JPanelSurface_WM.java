@@ -5,7 +5,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.WildMagic.*;
-import gov.nih.mipav.view.renderer.surfaceview.JDialogSmoothMesh;
+import gov.nih.mipav.view.renderer.J3D.surfaceview.JDialogSmoothMesh;
 import gov.nih.mipav.view.renderer.WildMagic.Decimate.*;
 
 import java.awt.*;

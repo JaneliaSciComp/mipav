@@ -32,7 +32,7 @@ import WildMagic.LibGraphics.SceneGraph.*;
 import WildMagic.LibGraphics.Shaders.*;
 import WildMagic.LibRenderers.OpenGLRenderer.*;
 
-//import gov.nih.mipav.view.renderer.volumeview.*;
+//import gov.nih.mipav.view.renderer.J3D.volumeview.*;
 
 
 public class Multieffects extends JavaApplication3D

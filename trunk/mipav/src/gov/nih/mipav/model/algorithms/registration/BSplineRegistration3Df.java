@@ -2,16 +2,12 @@ package gov.nih.mipav.model.algorithms.registration;
 
 
 import WildMagic.LibFoundation.Curves.*;
+import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.model.structures.BSplineLattice3Df;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.util.MipavUtil;
 
 import java.util.concurrent.CountDownLatch;
-
-import javax.vecmath.Point2f;
-import javax.vecmath.Point3f;
-import javax.vecmath.Vector2f;
-import javax.vecmath.Vector3f;
 
 
 /**
@@ -140,16 +136,16 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         float[] afControlPointX = createIdentityMapControlPoints(m_kBSplineBasisX);
         float[] afControlPointY = createIdentityMapControlPoints(m_kBSplineBasisY);
         float[] afControlPointZ = createIdentityMapControlPoints(m_kBSplineBasisZ);
-        Point3f kPoint = new Point3f();
+        Vector3f kPoint = new Vector3f();
 
         for (int iControlX = 0; iControlX < m_kBSplineBasisX.GetNumCtrlPoints(); iControlX++) {
 
             for (int iControlY = 0; iControlY < m_kBSplineBasisY.GetNumCtrlPoints(); iControlY++) {
 
                 for (int iControlZ = 0; iControlZ < m_kBSplineBasisZ.GetNumCtrlPoints(); iControlZ++) {
-                    kPoint.x = afControlPointX[iControlX];
-                    kPoint.y = afControlPointY[iControlY];
-                    kPoint.z = afControlPointZ[iControlZ];
+                    kPoint.X = afControlPointX[iControlX];
+                    kPoint.Y = afControlPointY[iControlY];
+                    kPoint.Z = afControlPointZ[iControlZ];
                     m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kPoint);
                 }
             }
@@ -183,9 +179,9 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         ModelSimpleImage kDeformation = new ModelSimpleImage(m_kImageTrg.extents, m_kImageTrg.resolutions);
 
         ModelSimpleImage[] akSourceMap = createImageSourceMap();
-        Point3f kDiffX = new Point3f();
-        Point3f kDiffY = new Point3f();
-        Point3f kDiffZ = new Point3f();
+        Vector3f kDiffX = new Vector3f();
+        Vector3f kDiffY = new Vector3f();
+        Vector3f kDiffZ = new Vector3f();
 
         for (int iZ = 0; iZ < m_kBSplineBasisZ.GetNumSamples(); iZ++) {
 
@@ -231,9 +227,9 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
 
                     // Use finite differences to build the Jacobian as follows:
                     //
-                    // | d(V.x)/dx  d(V.x)/dy   d(V.x)/dz |    | a b c |
-                    // | d(V.y)/dx  d(V.y)/dy   d(V.y)/dz |  = | d e f |
-                    // | d(V.z)/dx  d(V.z)/dy   d(V.z)/dz |    | g h i |
+                    // | d(V.X)/dx  d(V.X)/dy   d(V.X)/dz |    | a b c |
+                    // | d(V.Y)/dx  d(V.Y)/dy   d(V.Y)/dz |  = | d e f |
+                    // | d(V.Z)/dx  d(V.Z)/dy   d(V.Z)/dz |    | g h i |
                     //
                     // where the determinant is
                     // Note that the determinant is the same if the
@@ -244,28 +240,28 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                     int iDY1 = iX + (iY1 * m_iNumSamplesTrgX) + (iZ * m_iNumSamplesTrgXY);
                     int iDZ0 = iX + (iY * m_iNumSamplesTrgX) + (iZ0 * m_iNumSamplesTrgXY);
                     int iDZ1 = iX + (iY * m_iNumSamplesTrgX) + (iZ1 * m_iNumSamplesTrgXY);
-                    kDiffX.x = akSourceMap[0].data[iDX1] - akSourceMap[0].data[iDX0];
-                    kDiffX.y = akSourceMap[1].data[iDX1] - akSourceMap[1].data[iDX0];
-                    kDiffX.z = akSourceMap[2].data[iDX1] - akSourceMap[2].data[iDX0];
-                    kDiffY.x = akSourceMap[0].data[iDY1] - akSourceMap[0].data[iDY0];
-                    kDiffY.y = akSourceMap[1].data[iDY1] - akSourceMap[1].data[iDY0];
-                    kDiffY.z = akSourceMap[2].data[iDY1] - akSourceMap[2].data[iDY0];
-                    kDiffZ.x = akSourceMap[0].data[iDZ1] - akSourceMap[0].data[iDZ0];
-                    kDiffZ.y = akSourceMap[1].data[iDZ1] - akSourceMap[1].data[iDZ0];
-                    kDiffZ.z = akSourceMap[2].data[iDZ1] - akSourceMap[2].data[iDZ0];
-                    kDiffX.scale(1.0f / ((iX1 - iX0) * fDX));
-                    kDiffY.scale(1.0f / ((iY1 - iY0) * fDY));
-                    kDiffZ.scale(1.0f / ((iZ1 - iZ0) * fDZ));
+                    kDiffX.X = akSourceMap[0].data[iDX1] - akSourceMap[0].data[iDX0];
+                    kDiffX.Y = akSourceMap[1].data[iDX1] - akSourceMap[1].data[iDX0];
+                    kDiffX.Z = akSourceMap[2].data[iDX1] - akSourceMap[2].data[iDX0];
+                    kDiffY.X = akSourceMap[0].data[iDY1] - akSourceMap[0].data[iDY0];
+                    kDiffY.Y = akSourceMap[1].data[iDY1] - akSourceMap[1].data[iDY0];
+                    kDiffY.Z = akSourceMap[2].data[iDY1] - akSourceMap[2].data[iDY0];
+                    kDiffZ.X = akSourceMap[0].data[iDZ1] - akSourceMap[0].data[iDZ0];
+                    kDiffZ.Y = akSourceMap[1].data[iDZ1] - akSourceMap[1].data[iDZ0];
+                    kDiffZ.Z = akSourceMap[2].data[iDZ1] - akSourceMap[2].data[iDZ0];
+                    kDiffX.Scale(1.0f / ((iX1 - iX0) * fDX));
+                    kDiffY.Scale(1.0f / ((iY1 - iY0) * fDY));
+                    kDiffZ.Scale(1.0f / ((iZ1 - iZ0) * fDZ));
 
-                    float a = kDiffX.x;
-                    float b = kDiffY.x;
-                    float c = kDiffZ.x;
-                    float d = kDiffX.y;
-                    float e = kDiffY.y;
-                    float f = kDiffZ.y;
-                    float g = kDiffX.z;
-                    float h = kDiffY.z;
-                    float i = kDiffZ.z;
+                    float a = kDiffX.X;
+                    float b = kDiffY.X;
+                    float c = kDiffZ.X;
+                    float d = kDiffX.Y;
+                    float e = kDiffY.Y;
+                    float f = kDiffZ.Y;
+                    float g = kDiffX.Z;
+                    float h = kDiffY.Z;
+                    float i = kDiffZ.Z;
 
                     int iIndex = iX + (iY * m_iNumSamplesTrgX) + (iZ * m_iNumSamplesTrgXY);
                     kDeformation.data[iIndex] = (a * ((e * i) - (f * h))) + (b * ((f * g) - (d * i))) +
@@ -381,7 +377,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         // Use the same control points since the number of control
         // points and the degree of the BSpline basis did not change.
         // This works because we are just resampling the [0,1] interval.
-        Point3f kPoint = new Point3f();
+        Vector3f kPoint = new Vector3f();
 
         for (int iControlX = 0; iControlX < m_kBSplineBasisX.GetNumCtrlPoints(); iControlX++) {
 
@@ -445,7 +441,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         // should reposition the control point to no longer provide the
         // "identity" map but to provide the registration map to the
         // original source image.
-        Point3f kPoint = new Point3f();
+        Vector3f kPoint = new Vector3f();
 
         for (int iControlX = 0; iControlX < kBasisX.GetNumCtrlPoints(); iControlX++) {
 
@@ -454,7 +450,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                 for (int iControlZ = 0; iControlZ < kBasisZ.GetNumCtrlPoints(); iControlZ++) {
 
                     kReg.m_kBSpline3D.getControlPoint(iControlX, iControlY, iControlZ, kPoint);
-                    this.m_kBSpline3D.getPosition(kPoint.x, kPoint.y, kPoint.z, kPoint);
+                    this.m_kBSpline3D.getPosition(kPoint.X, kPoint.Y, kPoint.Z, kPoint);
                     kReg.m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kPoint);
                 }
             }
@@ -533,13 +529,13 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         getErrorDeriv(iControlX, iControlY, iControlZ, kDirection);
 //        System.out.println("Time consumed by getErrorDeriv() is " + (System.currentTimeMillis()-currentTime));
         
-        kDirection.negate();
+        kDirection.Neg();
 
-        if (0.0f == kDirection.length()) {
+        if (0.0f == kDirection.Length()) {
             return;
         }
 
-        kDirection.normalize();
+        kDirection.Normalize();
 
         // Compute how far the current control point is from the
         // boundary formed by its neighbor control points in the
@@ -552,18 +548,18 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         // small steps up to the boundary formed by the neighboring
         // control points and then keep track of where the minimum
         // was found.
-        Point3f kOrigin = new Point3f();
+        Vector3f kOrigin = new Vector3f();
         m_kBSpline3D.getControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
         double dMinError = getError();
 
 
         float fMinErrorT = 0.0f;
-        Point3f kNewPoint = new Point3f();
+        Vector3f kNewPoint = new Vector3f();
         
 //        currentTime = System.currentTimeMillis();
         for (float fT = fStepSize; fT <= fMaxDist; fT += fStepSize) {
-            kNewPoint.scaleAdd(fT, kDirection, kOrigin);
+            kNewPoint.ScaleAdd(fT, kDirection, kOrigin);
             m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
             updateControlPointSamples(iControlX, iControlY, iControlZ);
 
@@ -578,7 +574,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
        
         // Set the control point to the point along the ray where
         // the minimum was found.
-        kNewPoint.scaleAdd(fMinErrorT, kDirection, kOrigin);
+        kNewPoint.ScaleAdd(fMinErrorT, kDirection, kOrigin);
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
 //        currentTime = System.currentTimeMillis();
         updateControlPointSamples(iControlX, iControlY, iControlZ);
@@ -599,29 +595,29 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
      *
      * @return  float The distance between the updated control point position and its position before being modified.
      */
-    public float moveControlPoint(int iControlX, int iControlY, int iControlZ, Point3f kPoint) {
+    public float moveControlPoint(int iControlX, int iControlY, int iControlZ, Vector3f kPoint) {
 
         // Create vector from current control point coordinates to the
         // newly specified one.  Clip the new control point coordinates
         // to a point along the ray inside the neighboring control point
         // polygon.
-        Point3f kOrigin = new Point3f();
+    	Vector3f kOrigin = new Vector3f();
         m_kBSpline3D.getControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
         Vector3f kDirection = new Vector3f();
-        kDirection.sub(kPoint, kOrigin);
+        kDirection.Sub(kPoint, kOrigin);
 
-        float fDist = kDirection.length();
+        float fDist = kDirection.Length();
 
         if (0.0f == fDist) {
             return fDist;
         }
 
-        kDirection.normalize();
+        kDirection.Normalize();
         fDist = getControlPointMaxMoveDist(iControlX, iControlY, iControlZ, kDirection, fDist);
 
-        Point3f kNewPoint = new Point3f();
-        kNewPoint.scaleAdd(fDist, kDirection, kOrigin);
+        Vector3f kNewPoint = new Vector3f();
+        kNewPoint.ScaleAdd(fDist, kDirection, kOrigin);
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
         updateControlPointSamples(iControlX, iControlY, iControlZ);
 
@@ -646,7 +642,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                                                float fMaxDesiredDist) {
 
         // Get the origin for the specified control point.
-        Point3f kP = new Point3f();
+    	Vector3f kP = new Vector3f();
         m_kBSpline3D.getControlPoint(iControlX, iControlY, iControlZ, kP);
 
         // Loop through each triangle in the neighboring control point polyhedron.
@@ -654,18 +650,18 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         // the closest one.
         boolean bRayIntersect = false;
         float fMaxMoveDist = 0.0f;
-        Point3f kP0 = new Point3f();
-        Point3f kP1 = new Point3f();
-        Point3f kP2 = new Point3f();
-        Point3f kPT = new Point3f();
+        Vector3f kP0 = new Vector3f();
+        Vector3f kP1 = new Vector3f();
+        Vector3f kP2 = new Vector3f();
+        Vector3f kPT = new Vector3f();
         Vector3f kV1 = new Vector3f();
         Vector3f kV2 = new Vector3f();
         Vector3f kN = new Vector3f();
         Vector3f kV = new Vector3f();
-        Point2f kPP0 = new Point2f();
-        Point2f kPP1 = new Point2f();
-        Point2f kPP2 = new Point2f();
-        Point2f kPP = new Point2f();
+        Vector2f kPP0 = new Vector2f();
+        Vector2f kPP1 = new Vector2f();
+        Vector2f kPP2 = new Vector2f();
+        Vector2f kPP = new Vector2f();
         Vector2f kPV = new Vector2f();
         Vector2f kPVPerp = new Vector2f();
 
@@ -683,14 +679,14 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                                          ms_aaaiPolyhedronTriangleControlPointOffset[2][2][iTriangle] + iControlZ, kP2);
 
             // Create vectors which define plane containing the triangle vertices.
-            kV1.sub(kP1, kP0);
-            kV2.sub(kP2, kP0);
-            kV1.normalize();
-            kV2.normalize();
+            kV1.Sub(kP1, kP0);
+            kV2.Sub(kP2, kP0);
+            kV1.Normalize();
+            kV2.Normalize();
             
             // Create the normal vector of the triangle plane.
-            kN.cross(kV1, kV2);
-            kN.normalize();
+            kN.Cross(kV1, kV2);
+            kN.Normalize();
 
             // Find the intersection of the ray with the plane.
             //
@@ -702,7 +698,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
             // ((BxC)*A - (BxC)*D)
             // t = -------------------
             // ((BxC)*E)
-            float fNdD = kN.dot(kRayDirection);
+            float fNdD = kN.Dot(kRayDirection);
 
             if (0.0f == fNdD) {
 
@@ -710,9 +706,9 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                 continue;
             }
 
-            kV.sub(kP0, kP);
+            kV.Sub(kP0, kP);
 
-            float fT = kN.dot(kV) / fNdD;
+            float fT = kN.Dot(kV) / fNdD;
 
             if (fT <= 0.0f) {
 
@@ -721,48 +717,48 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                 continue;
             }
 
-            kPT.scaleAdd(fT, kRayDirection, kP);
+            kPT.ScaleAdd(fT, kRayDirection, kP);
 
             // Project each triangle vertex and ray-plane intersection vertex
             // onto the orthogonal axis plane which is most parallel to the
             // plane defined by the three vertices.  This axis is identified
             // by the axis of the plane normal vector with the largest magnitude.
-            if ((Math.abs(kN.x) > Math.abs(kN.y)) && (Math.abs(kN.x) > Math.abs(kN.z))) {
-                kPP0.set(kP0.y, kP0.z);
-                kPP1.set(kP1.y, kP1.z);
-                kPP2.set(kP2.y, kP2.z);
-                kPP.set(kPT.y, kPT.z);
-            } else if (Math.abs(kN.y) > Math.abs(kN.z)) {
-                kPP0.set(kP0.x, kP0.z);
-                kPP1.set(kP1.x, kP1.z);
-                kPP2.set(kP2.x, kP2.z);
-                kPP.set(kPT.x, kPT.z);
+            if ((Math.abs(kN.X) > Math.abs(kN.Y)) && (Math.abs(kN.X) > Math.abs(kN.Z))) {
+                kPP0.Set(kP0.Y, kP0.Z);
+                kPP1.Set(kP1.Y, kP1.Z);
+                kPP2.Set(kP2.Y, kP2.Z);
+                kPP.Set(kPT.Y, kPT.Z);
+            } else if (Math.abs(kN.Y) > Math.abs(kN.Z)) {
+                kPP0.Set(kP0.X, kP0.Z);
+                kPP1.Set(kP1.X, kP1.Z);
+                kPP2.Set(kP2.X, kP2.Z);
+                kPP.Set(kPT.X, kPT.Z);
             } else {
-                kPP0.set(kP0.x, kP0.y);
-                kPP1.set(kP1.x, kP1.y);
-                kPP2.set(kP2.x, kP2.y);
-                kPP.set(kPT.x, kPT.y);
+                kPP0.Set(kP0.X, kP0.Y);
+                kPP1.Set(kP1.X, kP1.Y);
+                kPP2.Set(kP2.X, kP2.Y);
+                kPP.Set(kPT.X, kPT.Y);
             }
 
             // Determine if this point is inside the triangle.
-            kPV.sub(kPP1, kPP0);
-            kPVPerp.x = +kPV.y;
-            kPVPerp.y = -kPV.x;
-            kPV.sub(kPP, kPP0);
+            kPV.Sub(kPP1, kPP0);
+            kPVPerp.X = +kPV.Y;
+            kPVPerp.Y = -kPV.X;
+            kPV.Sub(kPP, kPP0);
 
-            float fC0 = kPVPerp.dot(kPV);
-            kPV.sub(kPP2, kPP1);
-            kPVPerp.x = +kPV.y;
-            kPVPerp.y = -kPV.x;
-            kPV.sub(kPP, kPP1);
+            float fC0 = kPVPerp.Dot(kPV);
+            kPV.Sub(kPP2, kPP1);
+            kPVPerp.X = +kPV.Y;
+            kPVPerp.Y = -kPV.X;
+            kPV.Sub(kPP, kPP1);
 
-            float fC1 = kPVPerp.dot(kPV);
-            kPV.sub(kPP0, kPP2);
-            kPVPerp.x = +kPV.y;
-            kPVPerp.y = -kPV.x;
-            kPV.sub(kPP, kPP2);
+            float fC1 = kPVPerp.Dot(kPV);
+            kPV.Sub(kPP0, kPP2);
+            kPVPerp.X = +kPV.Y;
+            kPVPerp.Y = -kPV.X;
+            kPV.Sub(kPP, kPP2);
 
-            float fC2 = kPVPerp.dot(kPV);
+            float fC2 = kPVPerp.Dot(kPV);
 
             if (((fC0 * fC1) >= 0.0f) && ((fC0 * fC2) >= 0.0f)) {
 
@@ -794,7 +790,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         while ((fMaxDesiredDist * 0.01) < (fIterMoveDistMax - fIterMoveDistMin)) {
 
             // Where will the control point be moved to?
-            kPT.scaleAdd(fIterMoveDist, kRayDirection, kP);
+            kPT.ScaleAdd(fIterMoveDist, kRayDirection, kP);
 
             // Look at each tetrahedron formed by the center control point
             // and the triangles on the face of the polyhedron formed by
@@ -826,17 +822,17 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                 // Volume of tetrahedron is 1/6 times the (absolute value of the)
                 // determinant of the following matrix:
                 //
-                // | P0.x P0.y P0.z  1 |
-                // | P1.x P1.y P1.z  1 |
-                // | P2.x P2.y P2.z  1 |
-                // | PT.x PT.y PT.z  1 |
+                // | P0.X P0.Y P0.Z  1 |
+                // | P1.X P1.Y P1.Z  1 |
+                // | P2.X P2.Y P2.Z  1 |
+                // | PT.X PT.Y PT.Z  1 |
                 //
                 // If the determinant is negative, then the control points
                 // are ordered such that "folding" occurs.
-                float a0 = kP0.x, a1 = kP0.y, a2 = kP0.z;
-                float b0 = kP1.x, b1 = kP1.y, b2 = kP1.z;
-                float c0 = kP2.x, c1 = kP2.y, c2 = kP2.z;
-                float d0 = kPT.x, d1 = kPT.y, d2 = kPT.z;
+                float a0 = kP0.X, a1 = kP0.Y, a2 = kP0.Z;
+                float b0 = kP1.X, b1 = kP1.Y, b2 = kP1.Z;
+                float c0 = kP2.X, c1 = kP2.Y, c2 = kP2.Z;
+                float d0 = kPT.X, d1 = kPT.Y, d2 = kPT.Z;
                 float fDet = (-b0 * c1 * d2) + (a0 * c1 * d2) + (b1 * c0 * d2) - (a1 * c0 * d2) - (a0 * b1 * d2) +
                              (a1 * b0 * d2) + (b0 * c2 * d1) - (a0 * c2 * d1) - (b2 * c0 * d1) + (a2 * c0 * d1) +
                              (a0 * b2 * d1) - (a2 * b0 * d1) - (b1 * c2 * d0) + (a1 * c2 * d0) + (b2 * c1 * d0) -
@@ -893,14 +889,14 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         float fSmallStepZ = 0.5f / (float) (m_kBSplineBasisZ.GetNumSamples() - 1);
 
         // Get the coordinates of the current control point.
-        Point3f kOrigin = new Point3f();
+        Vector3f kOrigin = new Vector3f();
         m_kBSpline3D.getControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
-        Point3f kNewPoint = new Point3f();
+        Vector3f kNewPoint = new Vector3f();
 
         // Compute the error in the +X direction.
-        kNewPoint.set(+fSmallStepX, 0.0f, 0.0f);
-        kNewPoint.add(kOrigin);
+        kNewPoint.Set(+fSmallStepX, 0.0f, 0.0f);
+        kNewPoint.Add(kOrigin);
 
         float fStepXPos = moveControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
         
@@ -908,40 +904,40 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
         // Compute the error in the -X direction.
-        kNewPoint.set(-fSmallStepX, 0.0f, 0.0f);
-        kNewPoint.add(kOrigin);
+        kNewPoint.Set(-fSmallStepX, 0.0f, 0.0f);
+        kNewPoint.Add(kOrigin);
 
         float fStepXNeg = moveControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
         double dErrorXNeg = m_kRegMeasure.getError();
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
         // Compute the error in the +Y direction.
-        kNewPoint.set(0.0f, +fSmallStepY, 0.0f);
-        kNewPoint.add(kOrigin);
+        kNewPoint.Set(0.0f, +fSmallStepY, 0.0f);
+        kNewPoint.Add(kOrigin);
 
         float fStepYPos = moveControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
         double dErrorYPos = m_kRegMeasure.getError();
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
         // Compute the error in the -Y direction.
-        kNewPoint.set(0.0f, -fSmallStepY, 0.0f);
-        kNewPoint.add(kOrigin);
+        kNewPoint.Set(0.0f, -fSmallStepY, 0.0f);
+        kNewPoint.Add(kOrigin);
 
         float fStepYNeg = moveControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
         double dErrorYNeg = m_kRegMeasure.getError();
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
         // Compute the error in the +Z direction.
-        kNewPoint.set(0.0f, 0.0f, +fSmallStepZ);
-        kNewPoint.add(kOrigin);
+        kNewPoint.Set(0.0f, 0.0f, +fSmallStepZ);
+        kNewPoint.Add(kOrigin);
 
         float fStepZPos = moveControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
         double dErrorZPos = m_kRegMeasure.getError();
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
         // Compute the error in the -Z direction.
-        kNewPoint.set(0.0f, 0.0f, -fSmallStepZ);
-        kNewPoint.add(kOrigin);
+        kNewPoint.Set(0.0f, 0.0f, -fSmallStepZ);
+        kNewPoint.Add(kOrigin);
 
         float fStepZNeg = moveControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
         double dErrorZNeg = m_kRegMeasure.getError();
@@ -954,9 +950,9 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         float fStepX = fStepXPos + fStepXNeg;
         float fStepY = fStepYPos + fStepYNeg;
         float fStepZ = fStepZPos + fStepZNeg;
-        kDeriv.x = (fStepX > 0.0f) ? ((float) (dErrorXPos - dErrorXNeg) / fStepX) : 0.0f;
-        kDeriv.y = (fStepY > 0.0f) ? ((float) (dErrorYPos - dErrorYNeg) / fStepY) : 0.0f;
-        kDeriv.z = (fStepZ > 0.0f) ? ((float) (dErrorZPos - dErrorZNeg) / fStepZ) : 0.0f;
+        kDeriv.X = (fStepX > 0.0f) ? ((float) (dErrorXPos - dErrorXNeg) / fStepX) : 0.0f;
+        kDeriv.Y = (fStepY > 0.0f) ? ((float) (dErrorYPos - dErrorYNeg) / fStepY) : 0.0f;
+        kDeriv.Z = (fStepZ > 0.0f) ? ((float) (dErrorZPos - dErrorZNeg) / fStepZ) : 0.0f;
     } 
 
     /**
@@ -1003,7 +999,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         int iLimitZ = m_iNumSamplesSrcZ - 1;
 
         // compute local change to registered source
-        Point3f kPos = new Point3f();
+        Vector3f kPos = new Vector3f();
 
         for (int iZ = iMinZ; iZ <= iMaxZ; iZ++) {
 
@@ -1014,9 +1010,9 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                     // evaulate spline and setup for trilinear interpolation
                     m_kBSpline3D.getPosition(iX, iY, iZ, kPos);
 
-                    float fX = iLimitX * kPos.x;
-                    float fY = iLimitY * kPos.y;
-                    float fZ = iLimitZ * kPos.z;
+                    float fX = iLimitX * kPos.X;
+                    float fY = iLimitY * kPos.Y;
+                    float fZ = iLimitZ * kPos.Z;
                     int iX0 = (int) fX;
                     int iY0 = (int) fY;
                     int iZ0 = (int) fZ;
@@ -1129,7 +1125,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         int iLimitZ = m_iNumSamplesSrcZ - 1;
 
         // compute local change to registered source
-        Point3f kPos = new Point3f();
+        Vector3f kPos = new Vector3f();
 
         for (int iZ = iMinZ; iZ < iMaxZ; iZ++) {
 
@@ -1140,9 +1136,9 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                     // evaulate spline and setup for trilinear interpolation
                     m_kBSpline3D.getPosition(iX, iY, iZ, kPos);
 
-                    float fX = iLimitX * kPos.x;
-                    float fY = iLimitY * kPos.y;
-                    float fZ = iLimitZ * kPos.z;
+                    float fX = iLimitX * kPos.X;
+                    float fY = iLimitY * kPos.Y;
+                    float fZ = iLimitZ * kPos.Z;
                     int iX0 = (int) fX;
                     int iY0 = (int) fY;
                     int iZ0 = (int) fZ;

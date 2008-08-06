@@ -147,7 +147,7 @@ public class CustomToolBarBuilder extends ViewToolBarBuilder {
             "<html>" + "Increments image slice" + "<br>" +
             "Hold SHIFT to sync other images" + "</html>", "rightarrow");
 	public static final ButtonParams PARAM_IMAGE_LINK = new ButtonParams("ScrollLink", 
-			"Link images of like-dimensions for scrolling. (or hold <SHIFT> while scrolling) ", "link_broken.gif");
+			"Link images of like-dimensions for scrolling.", "link_broken.gif");
 	
 	/** Image Magnifying related buttons */
 	public static final ButtonParams PARAM_IMAGE_MAG = new ButtonParams("MagImage",

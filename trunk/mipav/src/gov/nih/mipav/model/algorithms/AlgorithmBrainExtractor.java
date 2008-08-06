@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibGraphics.SceneGraph.*;
 
 import gov.nih.mipav.*;
 
@@ -9,6 +10,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
 
 import java.io.*;
 
@@ -2455,10 +2457,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             }
         } // else
 
-        ModelTriangleMesh[] newMesh = new ModelTriangleMesh[1];
-        newMesh[0] = new ModelTriangleMesh(m_akVertex, m_aiConnect);
-
-        ModelTriangleMesh.save(kName, newMesh, flip, direction, startLocation, box, inverseDicomMatrix, null);
+        TriMesh kMeshes = new TriMesh(new VertexBuffer(m_akVertex), new IndexBuffer(m_aiConnect));
+        FileSurface_WM.saveSingleMesh(kName, srcImage, true, kMeshes);
     }
 
     /**

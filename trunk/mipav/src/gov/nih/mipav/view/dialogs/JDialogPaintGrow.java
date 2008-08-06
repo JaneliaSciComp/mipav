@@ -5,7 +5,7 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.surfaceview.*;
+import gov.nih.mipav.view.renderer.J3D.surfaceview.*;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
 
 import java.awt.*;

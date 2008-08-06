@@ -1,6 +1,6 @@
 package gov.nih.mipav.model.algorithms.registration;
 
-import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.*;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
@@ -13,6 +13,7 @@ import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
+import gov.nih.mipav.model.structures.Point3D;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -26,10 +27,6 @@ import java.util.Enumeration;
 import java.util.Vector;
 
 import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
-import javax.vecmath.Point3i;
-
-
 /**
  * This is an automatic registration method based on FLIRT. FLIRT stands for FMRIB's Linear Image Registration Tool. For
  * more information on FLIRT, visit their homepage at <a href="http://www.fmrib.ox.ac.uk/fsl/flirt/">
@@ -874,11 +871,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         return answer.matrix;
     }
 
-    public void drawLine(int xdim, int ydim, int zdim, float[] image, float value, Vector<Point3i> path){
+    public void drawLine(int xdim, int ydim, int zdim, float[] image, float value, Vector<Point3D> path){
     	if(path == null)
     		return;
     	for(int i = 0; i < path.size(); i++){
-    		Point3i p3i = path.elementAt(i);
+    		Point3D p3i = path.elementAt(i);
     		if(image[p3i.z*xdim*ydim+p3i.y*xdim+p3i.x] >300){
     			image[p3i.z*xdim*ydim+p3i.y*xdim+p3i.x] = value-100;
     		}else{
@@ -887,42 +884,42 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     	}
     }
     
-    public Vector<Point3f> param2Coordinates(double startX, double endX, double stepX,
+    public Vector<Vector3f> param2Coordinates(double startX, double endX, double stepX,
     		double startY, double endY, double stepY, 
     		double startZ, double endZ, double stepZ, Vector<Point3d> path){
     	if(path == null){
     		return null;
     	}
     	
-    	Vector<Point3f> coordPath = new Vector<Point3f>(path.size());
+    	Vector<Vector3f> coordPath = new Vector<Vector3f>(path.size());
     	for(int i = 0; i < path.size(); i++){
     		Point3d p3d = path.elementAt(i);
-    		Point3f p3f = new Point3f();
-    		p3f.x = (float)((p3d.y-startX)/stepX);
-    		p3f.y = (float)((p3d.z-startY)/stepY);
-    		p3f.z = (float)((p3d.x-startZ)/stepZ);
+    		Vector3f p3f = new Vector3f();
+    		p3f.X = (float)((p3d.y-startX)/stepX);
+    		p3f.Y = (float)((p3d.z-startY)/stepY);
+    		p3f.Z = (float)((p3d.x-startZ)/stepZ);
     		coordPath.add(p3f);
     	}
     	return coordPath;
     }
     
-    public Vector<Point3i> findPointsOfLine(Vector<Point3f> realPath){
+    public Vector<Point3D> findPointsOfLine(Vector<Vector3f> realPath){
     	if(realPath == null){
     		return null;
     	}
     	
-    	Vector<Point3i> imagePath = new Vector<Point3i>(realPath.size()*2);
+    	Vector<Point3D> imagePath = new Vector<Point3D>(realPath.size()*2);
     	for(int i = 0; i < realPath.size()-1; i++){
-    		Point3f p3fFrom = realPath.elementAt(i);
-    		Point3f p3fTo = realPath.elementAt(i+1);
+    		Vector3f p3fFrom = realPath.elementAt(i);
+    		Vector3f p3fTo = realPath.elementAt(i+1);
     		if(p3fFrom.equals(p3fTo))
     			continue;
     		midpointLine(p3fFrom, p3fTo, imagePath);    		
     	}
-    	Point3i previousPoint = imagePath.elementAt(0);
+    	Point3D previousPoint = imagePath.elementAt(0);
     	
     	for(int i = 1; i < imagePath.size(); i++){
-    		Point3i currentPoint = imagePath.elementAt(i);
+    		Point3D currentPoint = imagePath.elementAt(i);
     		if(currentPoint.equals(previousPoint)){
     			imagePath.remove(i--);
     		}else{
@@ -932,19 +929,19 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     	return imagePath;
     }
     
-    public void midpointLine(Point3f p0, Point3f p1, Vector<Point3i> imagePath){
-    	if(Math.abs(p1.x-p0.x)>=Math.abs(p1.y-p0.y) && Math.abs(p1.x-p0.x)>=Math.abs(p1.z-p0.z)){
-			float a1 = (p1.y - p0.y) / (p1.x - p0.x);
-			float b1 = p0.y - a1 * p0.x;
-			float a2 = (p1.z - p0.z) / (p1.x - p0.x);
-			float b2 = p0.z - a2 * p0.x;
-			int x = (int) (p0.x + 0.5);
-			float fy = p0.y;
-			float fz = p0.z;
-			int y = (int) p0.y;
-			int z = (int) p0.z;
+    public void midpointLine(Vector3f p0, Vector3f p1, Vector<Point3D> imagePath){
+    	if(Math.abs(p1.X-p0.X)>=Math.abs(p1.Y-p0.Y) && Math.abs(p1.X-p0.X)>=Math.abs(p1.Z-p0.Z)){
+			float a1 = (p1.Y - p0.Y) / (p1.X - p0.X);
+			float b1 = p0.Y - a1 * p0.X;
+			float a2 = (p1.Z - p0.Z) / (p1.X - p0.X);
+			float b2 = p0.Z - a2 * p0.X;
+			int x = (int) (p0.X + 0.5);
+			float fy = p0.Y;
+			float fz = p0.Z;
+			int y = (int) p0.Y;
+			int z = (int) p0.Z;
 
-			while (x < p1.x) {
+			while (x < p1.X) {
 				float d1 = line(a1, b1, x, y + 0.5f);
 				if (d1 < 0) {
 					y++;
@@ -953,7 +950,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 				if (d2 < 0) {
 					z++;
 				}
-				Point3i p3i = new Point3i(x, y, z);
+				Point3D p3i = new Point3D(x, y, z);
 				imagePath.add(p3i);
 				fy += a1;
 				fz += a2;
@@ -961,18 +958,18 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 				y = (int) fy;
 				z = (int) fz;
 			}
-		}else if(Math.abs(p1.y-p0.y)>=Math.abs(p1.x-p0.x) && Math.abs(p1.y-p0.y)>=Math.abs(p1.z-p0.z)){
-			float a1 = (p1.x - p0.x) / (p1.y - p0.y);
-			float b1 = p0.x - a1 * p0.y;
-			float a2 = (p1.z - p0.z) / (p1.y - p0.y);
-			float b2 = p0.z - a2 * p0.y;
-			int y = (int) (p0.y + 0.5);
-			float fx = p0.x;
-			float fz = p0.z;
-			int x = (int) p0.x;
-			int z = (int) p0.z;
+		}else if(Math.abs(p1.Y-p0.Y)>=Math.abs(p1.X-p0.X) && Math.abs(p1.Y-p0.Y)>=Math.abs(p1.Z-p0.Z)){
+			float a1 = (p1.X - p0.X) / (p1.Y - p0.Y);
+			float b1 = p0.X - a1 * p0.Y;
+			float a2 = (p1.Z - p0.Z) / (p1.Y - p0.Y);
+			float b2 = p0.Z - a2 * p0.Y;
+			int y = (int) (p0.Y + 0.5);
+			float fx = p0.X;
+			float fz = p0.Z;
+			int x = (int) p0.X;
+			int z = (int) p0.Z;
 
-			while (y < p1.y) {
+			while (y < p1.Y) {
 				float d1 = line(a1, b1, y, x + 0.5f);
 				if (d1 < 0) {
 					x++;
@@ -981,7 +978,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 				if (d2 < 0) {
 					z++;
 				}
-				Point3i p3i = new Point3i(x, y, z);
+				Point3D p3i = new Point3D(x, y, z);
 				imagePath.add(p3i);
 				fx += a1;
 				fz += a2;
@@ -990,17 +987,17 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 				z = (int) fz;
 			}
 		}else{
-			float a1 = (p1.x - p0.x) / (p1.z - p0.z);
-			float b1 = p0.x - a1 * p0.z;
-			float a2 = (p1.y - p0.y) / (p1.z - p0.z);
-			float b2 = p0.z - a2 * p0.y;
-			int z = (int) (p0.z + 0.5);
-			float fy = p0.y;
-			float fx = p0.x;
-			int y = (int) p0.y;
-			int x = (int) p0.x;
+			float a1 = (p1.X - p0.X) / (p1.Z - p0.Z);
+			float b1 = p0.X - a1 * p0.Z;
+			float a2 = (p1.Y - p0.Y) / (p1.Z - p0.Z);
+			float b2 = p0.Z - a2 * p0.Y;
+			int z = (int) (p0.Z + 0.5);
+			float fy = p0.Y;
+			float fx = p0.X;
+			int y = (int) p0.Y;
+			int x = (int) p0.X;
 
-			while (z < p1.z) {
+			while (z < p1.Z) {
 				float d1 = line(a1, b1, z, x + 0.5f);
 				if (d1 < 0) {
 					x++;
@@ -1009,7 +1006,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 				if (d2 < 0) {
 					y++;
 				}
-				Point3i p3i = new Point3i(x, y, z);
+				Point3D p3i = new Point3D(x, y, z);
 				imagePath.add(p3i);
 				fx += a1;
 				fy += a2;
@@ -1681,17 +1678,17 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 		float zFrom = 7.2f;
 		float zTo = 32.81f;
 		float zStep = 0.2f;
-		Vector<Point3f> realPath = param2Coordinates(xFrom, xTo, xStep,
+		Vector<Vector3f> realPath = param2Coordinates(xFrom, xTo, xStep,
 				yFrom, yTo, yStep, zFrom, zTo, zStep, optimalPath);
-		Vector<Point3i> imagePath = findPointsOfLine(realPath);
+		Vector<Point3D> imagePath = findPointsOfLine(realPath);
 		print(imagePath, "Final Path:");
 		Vector<Point3d> originalPath2 = new Vector<Point3d>(30);
 		for(int j = 0; j < originalPath.length; j++){
 			originalPath2.add(originalPath[j]);
 		}
-		Vector<Point3f> origRealPath = param2Coordinates(xFrom, xTo, xStep,
+		Vector<Vector3f> origRealPath = param2Coordinates(xFrom, xTo, xStep,
 				yFrom, yTo, yStep, zFrom, zTo, zStep, originalPath2);
-		Vector<Point3i> origImagePath = findPointsOfLine(origRealPath);
+		Vector<Point3D> origImagePath = findPointsOfLine(origRealPath);
 		print(origImagePath, "Original Final Path:");
 		AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog,
 				DOF, cost, getTolerance(DOF), maxIter, rigidFlag,
@@ -1793,8 +1790,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 				sb.append(p3d.y);
 				sb.append(",");
 				sb.append(p3d.z);
-			}else if(obj instanceof Point3i){
-				Point3i p3i = (Point3i) data.get(i);
+			}else if(obj instanceof Point3D){
+				Point3D p3i = (Point3D) data.get(i);
 				sb.append(p3i.x);
 				sb.append(",");
 				sb.append(p3i.y);
