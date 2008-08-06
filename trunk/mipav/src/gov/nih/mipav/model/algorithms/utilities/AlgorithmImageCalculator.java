@@ -183,6 +183,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     
     /** when performing bulk operations via Image Calculator (Bulk Images) dialog, this array is populated */
     private ModelImage[] srcImages;
+    
+    private ViewJProgressBar progressBar;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -214,6 +216,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         if (srcImageA.isColorImage()) {
             colorFactor = 4;
         }
+
     }
 
     /**
@@ -507,6 +510,12 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 	                return;
 	            }
 	        }
+	        
+	        //create progress bar
+	        progressBar = new ViewJProgressBar(srcImageA.getImageName(), "...", 0, 100, true);
+	        progressBar.setSeparateThread(true);
+	        this.addProgressChangeListener(progressBar);
+	        this.setProgressValues(0, 100);
 	
 	        if (destImage != null) {
 	            calcStoreInDest();
