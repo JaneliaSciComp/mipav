@@ -16,7 +16,7 @@ import gov.nih.mipav.plugins.*;
 
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.*;
-import gov.nih.mipav.view.renderer.surfaceview.plotterview.*;
+import gov.nih.mipav.view.renderer.J3D.surfaceview.plotterview.*;
 
 import java.awt.*;
 import java.awt.event.*;

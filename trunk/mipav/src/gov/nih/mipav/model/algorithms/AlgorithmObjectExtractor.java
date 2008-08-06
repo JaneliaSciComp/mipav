@@ -2,6 +2,9 @@ package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 import gov.nih.mipav.*;
 
@@ -10,6 +13,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
 
 import java.awt.*;
 
@@ -126,7 +130,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
     protected Matrix3f m_kRotate;
 
     /** DOCUMENT ME! */
-    protected ModelTriangleMesh triMesh = null;
+    protected TriMesh triMesh = null;
 
     /** DOCUMENT ME! */
     private int[] axisOrientation;
@@ -194,7 +198,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
      * @param  wVal      z component of GVF field
      */
     public AlgorithmObjectExtractor(ModelImage srcImg, VOI voi, boolean justInit, boolean saveGVF,
-                                    ModelTriangleMesh triMesh, float[] uVal, float[] vVal, float[] wVal) {
+                                    TriMesh triMesh, float[] uVal, float[] vVal, float[] wVal) {
         int i;
         onlyInit = justInit;
         this.saveGVF = saveGVF;
@@ -443,23 +447,17 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
      * Starts the program.
      */
     public void runAlgorithm() {
-        int i;
-
         if (image == null) {
             displayError("Source Image is null");
             finalize();
-
             return;
         }
 
         if (image.getNDims() != 3) {
             displayError("Source Image must be 3D");
             finalize();
-
             return;
-        }
-
-        
+        }     
 
         if ((uVal == null) || (vVal == null) || (wVal == null)) {
             calcGVF3D();
@@ -468,14 +466,23 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         if (triMesh == null) {
             estimateEllipsoid();
             generateEllipsoidMesh();
-        } else { // triMesh != null
-            m_akVertex = triMesh.getVertexCopyAsVector3f();
-            m_iVQuantity = m_akVertex.length;
-            m_aiConnect = triMesh.getIndexCopy();
-            m_iTQuantity = m_aiConnect.length / 3;
+        } 
+        else { // triMesh != null
+            m_iVQuantity = triMesh.VBuffer.GetVertexQuantity();
+            m_akVertex = new Vector3f[m_iVQuantity];
+            for ( int i = 0; i < m_iVQuantity; i++ )
+            {
+            	m_akVertex[i] = triMesh.VBuffer.GetPosition3(i);
+            }
+            m_aiConnect = new int[triMesh.IBuffer.GetIndexQuantity()];
+            for ( int i = 0; i < triMesh.IBuffer.GetIndexQuantity(); i++ )
+            {
+            	m_aiConnect[i] = triMesh.IBuffer.GetData()[i];
+            }
+            m_iTQuantity = triMesh.GetTriangleQuantity();
             m_akAdjacent = new UnorderedSetInt[m_iVQuantity];
 
-            for (i = 0; i < m_iVQuantity; i++) {
+            for (int i = 0; i < m_iVQuantity; i++) {
                 m_akAdjacent[i] = new UnorderedSetInt(6, 1);
             }
 
@@ -531,7 +538,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         m_akSTangent = new Vector3f[m_iVQuantity];
         m_afCurvature = new float[m_iVQuantity];
 
-        for (i = 0; i < m_iVQuantity; i++) {
+        for (int i = 0; i < m_iVQuantity; i++) {
             m_akVMean[i] = new Vector3f();
             m_akVNormal[i] = new Vector3f();
             m_akSNormal[i] = new Vector3f();
@@ -1734,11 +1741,8 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
                 m_akVertex[i].Z = (m_akVertex[i].Z * m_fZDelta * direction[2]) + startLocation[2];
             }
         } // else
-
-        ModelTriangleMesh[] newMesh = new ModelTriangleMesh[1];
-        newMesh[0] = new ModelTriangleMesh(m_akVertex, m_aiConnect);
-
-        ModelTriangleMesh.save(kName, newMesh, flip, direction, startLocation, box, inverseDicomMatrix, null);
+        TriMesh kMeshes = new TriMesh(new VertexBuffer(m_akVertex), new IndexBuffer(m_aiConnect));
+        FileSurface_WM.saveSingleMesh(kName, srcImage, true, kMeshes);
     }
 
     /**

@@ -7,7 +7,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 import gov.nih.mipav.view.renderer.*;
-import gov.nih.mipav.view.renderer.volumeview.*;
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Rendering.*;

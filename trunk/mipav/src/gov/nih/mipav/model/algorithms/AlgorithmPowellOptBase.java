@@ -1,14 +1,12 @@
 package gov.nih.mipav.model.algorithms;
 
-
+import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.MipavUtil;
 
 import java.util.Hashtable;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
-
-import javax.vecmath.Point3d;
 
 
 /**
@@ -113,7 +111,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
     /**
      * Store the paths for every thread.
      */
-    protected Hashtable<Long, Vector<Vector<Point3d>>> paths = new Hashtable<Long, Vector<Vector<Point3d>>>();
+    protected Hashtable<Long, Vector<Vector<Vector3f>>> paths = new Hashtable<Long, Vector<Vector<Vector3f>>>();
 
     /**
      * The flag to indicate whether the searching path need to be recorded.
@@ -781,9 +779,9 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
         /**
          * Prepare for recording the search path.
          */
-        Vector<Point3d> path = null;
+        Vector<Vector3f> path = null;
         if (pathRecorded && (dof == 3)) {
-            path = new Vector<Point3d>();
+            path = new Vector<Vector3f>();
         }
 
         if (parallelPowell) {
@@ -867,7 +865,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
 
                     point[index] = pts[index][index];
                     if (pathRecorded && dof == 3) {
-                        path.add(new Point3d(point));
+                        path.add(new Vector3f((float)point[0], (float)point[1], (float)point[2]));
                     }
                 } // end of nDims loop
 
@@ -924,7 +922,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
                         keepGoing = true;
                     }
                     if (pathRecorded && dof == 3) {
-                        path.add(new Point3d(point));
+                        path.add(new Vector3f((float)point[0], (float)point[1], (float)point[2]));
                     }
                 } // end of nDims loop
 
@@ -942,9 +940,9 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
 
         if (pathRecorded && dof == 3) {
             long threadId = Thread.currentThread().getId();
-            Vector<Vector<Point3d>> pathList = paths.get(threadId);
+            Vector<Vector<Vector3f>> pathList = paths.get(threadId);
             if (pathList == null) {
-                pathList = new Vector<Vector<Point3d>>();
+                pathList = new Vector<Vector<Vector3f>>();
                 paths.put(threadId, pathList);
             }
             pathList.add(path);

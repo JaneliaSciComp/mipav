@@ -4,6 +4,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.J3D.*;
 
 import java.awt.*;
 import java.awt.event.*;

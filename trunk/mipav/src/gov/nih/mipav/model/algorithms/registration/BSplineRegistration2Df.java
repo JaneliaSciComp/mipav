@@ -2,9 +2,8 @@ package gov.nih.mipav.model.algorithms.registration;
 
 
 import WildMagic.LibFoundation.Curves.*;
+import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.model.structures.*;
-
-import javax.vecmath.*;
 
 
 /**
@@ -96,13 +95,13 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         // the same as the input value.  Then place these control points.
         float[] afControlPointX = createIdentityMapControlPoints(m_kBSplineBasisX);
         float[] afControlPointY = createIdentityMapControlPoints(m_kBSplineBasisY);
-        Point2f kPoint = new Point2f();
+        Vector2f kPoint = new Vector2f();
 
         for (int iControlX = 0; iControlX < m_kBSplineBasisX.GetNumCtrlPoints(); iControlX++) {
 
             for (int iControlY = 0; iControlY < m_kBSplineBasisY.GetNumCtrlPoints(); iControlY++) {
-                kPoint.x = afControlPointX[iControlX];
-                kPoint.y = afControlPointY[iControlY];
+                kPoint.X = afControlPointX[iControlX];
+                kPoint.Y = afControlPointY[iControlY];
                 m_kBSpline2D.setControlPoint(iControlX, iControlY, kPoint);
             }
         }
@@ -130,8 +129,8 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         ModelSimpleImage kDeformation = new ModelSimpleImage(m_kImageTrg.extents, m_kImageTrg.resolutions);
 
         ModelSimpleImage[] akSourceMap = createImageSourceMap();
-        Point2f kDiffX = new Point2f();
-        Point2f kDiffY = new Point2f();
+        Vector2f kDiffX = new Vector2f();
+        Vector2f kDiffY = new Vector2f();
 
         for (int iY = 0; iY < m_kBSplineBasisY.GetNumSamples(); iY++) {
 
@@ -174,17 +173,17 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
                 int iDX1 = iX1 + (iY * m_iNumSamplesTrgX);
                 int iDY0 = iX + (iY0 * m_iNumSamplesTrgX);
                 int iDY1 = iX + (iY1 * m_iNumSamplesTrgX);
-                kDiffX.x = akSourceMap[0].data[iDX1] - akSourceMap[0].data[iDX0];
-                kDiffX.y = akSourceMap[1].data[iDX1] - akSourceMap[1].data[iDX0];
-                kDiffY.x = akSourceMap[0].data[iDY1] - akSourceMap[0].data[iDY0];
-                kDiffY.y = akSourceMap[1].data[iDY1] - akSourceMap[1].data[iDY0];
-                kDiffX.scale(1.0f / ((iX1 - iX0) * fDX));
-                kDiffY.scale(1.0f / ((iY1 - iY0) * fDY));
+                kDiffX.X = akSourceMap[0].data[iDX1] - akSourceMap[0].data[iDX0];
+                kDiffX.Y = akSourceMap[1].data[iDX1] - akSourceMap[1].data[iDX0];
+                kDiffY.X = akSourceMap[0].data[iDY1] - akSourceMap[0].data[iDY0];
+                kDiffY.Y = akSourceMap[1].data[iDY1] - akSourceMap[1].data[iDY0];
+                kDiffX.Scale(1.0f / ((iX1 - iX0) * fDX));
+                kDiffY.Scale(1.0f / ((iY1 - iY0) * fDY));
 
-                float a = kDiffX.x;
-                float b = kDiffY.x;
-                float c = kDiffX.y;
-                float d = kDiffY.y;
+                float a = kDiffX.X;
+                float b = kDiffY.X;
+                float c = kDiffX.Y;
+                float d = kDiffY.Y;
 
                 int iIndex = iX + (iY * m_iNumSamplesTrgX);
                 kDeformation.data[iIndex] = (a * d) - (b * c);
@@ -287,7 +286,7 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         // Use the same control points since the number of control
         // points and the degree of the BSpline basis did not change.
         // This works because we are just resampling the [0,1] interval.
-        Point2f kPoint = new Point2f();
+        Vector2f kPoint = new Vector2f();
 
         for (int iControlX = 0; iControlX < m_kBSplineBasisX.GetNumCtrlPoints(); iControlX++) {
 
@@ -341,14 +340,14 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         // should reposition the control point to no longer provide the
         // "identity" map but to provide the registration map to the
         // original source image.
-        Point2f kPoint = new Point2f();
+        Vector2f kPoint = new Vector2f();
 
         for (int iControlX = 0; iControlX < kBasisX.GetNumCtrlPoints(); iControlX++) {
 
             for (int iControlY = 0; iControlY < kBasisY.GetNumCtrlPoints(); iControlY++) {
 
                 kReg.m_kBSpline2D.getControlPoint(iControlX, iControlY, kPoint);
-                this.m_kBSpline2D.getPosition(kPoint.x, kPoint.y, kPoint);
+                this.m_kBSpline2D.getPosition(kPoint.X, kPoint.Y, kPoint);
                 kReg.m_kBSpline2D.setControlPoint(iControlX, iControlY, kPoint);
             }
         }
@@ -413,13 +412,13 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         // Compute the error derivative at the specified control point.
         Vector2f kDirection = new Vector2f();
         getErrorDeriv(iControlX, iControlY, kDirection);
-        kDirection.negate();
+        kDirection.Neg();
 
-        if (0.0f == kDirection.length()) {
+        if (0.0f == kDirection.Length()) {
             return;
         }
 
-        kDirection.normalize();
+        kDirection.Normalize();
 
         // Compute how far the current control point is from the
         // boundary formed by its neighbor control points in the
@@ -431,15 +430,15 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         // small steps up to the boundary formed by the neighboring
         // control points and then keep track of where the minimum
         // was found.
-        Point2f kOrigin = new Point2f();
+        Vector2f kOrigin = new Vector2f();
         m_kBSpline2D.getControlPoint(iControlX, iControlY, kOrigin);
 
         double dMinError = getError();
         float fMinErrorT = 0.0f;
-        Point2f kNewPoint = new Point2f();
+        Vector2f kNewPoint = new Vector2f();
 
         for (float fT = fStepSize; fT <= fMaxDist; fT += fStepSize) {
-            kNewPoint.scaleAdd(fT, kDirection, kOrigin);
+            kNewPoint.ScaleAdd(fT, kDirection, kOrigin);
             m_kBSpline2D.setControlPoint(iControlX, iControlY, kNewPoint);
             updateControlPointSamples(iControlX, iControlY);
 
@@ -453,7 +452,7 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
 
         // Set the control point to the point along the ray where
         // the minimum was found.
-        kNewPoint.scaleAdd(fMinErrorT, kDirection, kOrigin);
+        kNewPoint.ScaleAdd(fMinErrorT, kDirection, kOrigin);
         m_kBSpline2D.setControlPoint(iControlX, iControlY, kNewPoint);
         updateControlPointSamples(iControlX, iControlY);
     }
@@ -471,29 +470,29 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
      *
      * @return  float The distance between the updated control point position and its position before being modified.
      */
-    public float moveControlPoint(int iControlX, int iControlY, Point2f kPoint) {
+    public float moveControlPoint(int iControlX, int iControlY, Vector2f kPoint) {
 
         // Create vector from current control point coordinates to the
         // newly specified one.  Clip the new control point coordinates
         // to a point along the ray inside the neighboring control point
         // polygon.
-        Point2f kOrigin = new Point2f();
+    	Vector2f kOrigin = new Vector2f();
         m_kBSpline2D.getControlPoint(iControlX, iControlY, kOrigin);
 
         Vector2f kDirection = new Vector2f();
-        kDirection.sub(kPoint, kOrigin);
+        kDirection.Sub(kPoint, kOrigin);
 
-        float fDist = kDirection.length();
+        float fDist = kDirection.Length();
 
         if (0.0f == fDist) {
             return fDist;
         }
 
-        kDirection.normalize();
+        kDirection.Normalize();
         fDist = getControlPointMaxMoveDist(iControlX, iControlY, kDirection, fDist);
 
-        Point2f kNewPoint = new Point2f();
-        kNewPoint.scaleAdd(fDist, kDirection, kOrigin);
+        Vector2f kNewPoint = new Vector2f();
+        kNewPoint.ScaleAdd(fDist, kDirection, kOrigin);
         m_kBSpline2D.setControlPoint(iControlX, iControlY, kNewPoint);
         updateControlPointSamples(iControlX, iControlY);
 
@@ -517,24 +516,24 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
                                                float fMaxDesiredDist) {
 
         // Get the origin for the specified control point.
-        Point2f kP = new Point2f();
+    	Vector2f kP = new Vector2f();
         m_kBSpline2D.getControlPoint(iControlX, iControlY, kP);
 
         // Compute vector perpendicular to the direction vector.
         Vector2f kRayDirectionPerp = new Vector2f();
-        kRayDirectionPerp.x = +kRayDirection.y;
-        kRayDirectionPerp.y = -kRayDirection.x;
+        kRayDirectionPerp.X = +kRayDirection.Y;
+        kRayDirectionPerp.Y = -kRayDirection.X;
 
         // Loop through polygon of control point neighbors determining
         // which one intersects the ray.  Counterclockwise order.
         boolean bRayIntersect = false;
         float fMaxMoveDist = 0.0f;
-        Point2f kP0 = new Point2f();
-        Point2f kP1 = new Point2f();
-        Point2f kPT = new Point2f();
+        Vector2f kP0 = new Vector2f();
+        Vector2f kP1 = new Vector2f();
+        Vector2f kPT = new Vector2f();
         Vector2f kSegmentDirection = new Vector2f();
         Vector2f kV = new Vector2f();
-        Point2f kIntersect = new Point2f();
+        Vector2f kIntersect = new Vector2f();
 
         for (int iPolyPoint = 0; iPolyPoint < 8; iPolyPoint++) {
 
@@ -543,24 +542,24 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
                                          iControlY + m_scControlPointPolygonY[iPolyPoint], kP0);
             m_kBSpline2D.getControlPoint(iControlX + m_scControlPointPolygonX[iPolyPoint + 1],
                                          iControlY + m_scControlPointPolygonY[iPolyPoint + 1], kP1);
-            kSegmentDirection.sub(kP1, kP0);
+            kSegmentDirection.Sub(kP1, kP0);
 
             // Find point of intersection between ray and line segment.
-            float fDenom = kSegmentDirection.dot(kRayDirectionPerp);
+            float fDenom = kSegmentDirection.Dot(kRayDirectionPerp);
 
             if (0.0f != fDenom) {
-                kV.sub(kP, kP0);
+                kV.Sub(kP, kP0);
 
-                float fSegmentT = kV.dot(kRayDirectionPerp) / fDenom;
+                float fSegmentT = kV.Dot(kRayDirectionPerp) / fDenom;
 
                 // Does the ray intersect within the line segment bounds?
                 if ((0.0f <= fSegmentT) && (fSegmentT <= 1.0f)) {
-                    kIntersect.scaleAdd(fSegmentT, kSegmentDirection, kP0);
+                    kIntersect.ScaleAdd(fSegmentT, kSegmentDirection, kP0);
 
                     // Is the segment on the "direction" side of the ray?
-                    kV.sub(kIntersect, kP);
+                    kV.Sub(kIntersect, kP);
 
-                    float fT = kV.dot(kRayDirection);
+                    float fT = kV.Dot(kRayDirection);
 
                     if (fT > 0.0f) {
 
@@ -594,7 +593,7 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         while ((fMaxDesiredDist * 0.01) < (fIterMoveDistMax - fIterMoveDistMin)) {
 
             // Where will the control point be moved to?
-            kPT.scaleAdd(fIterMoveDist, kRayDirection, kP);
+            kPT.ScaleAdd(fIterMoveDist, kRayDirection, kP);
 
             // Look at each triangle formed by the center control point
             // and each pair of neighboring line segments on the perimeter
@@ -625,9 +624,9 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
                 //
                 // If the determinant is negative, then the control points
                 // are ordered such that "folding" occurs.
-                float a0 = kP0.x, a1 = kP0.y;
-                float b0 = kP1.x, b1 = kP1.y;
-                float c0 = kPT.x, c1 = kPT.y;
+                float a0 = kP0.X, a1 = kP0.Y;
+                float b0 = kP1.X, b1 = kP1.Y;
+                float c0 = kPT.X, c1 = kPT.Y;
                 float fDet = (a0 * b1) - (a1 * b0) + (a1 * c0) - (a0 * c1) + (b0 * c1) - (b1 * c0);
 
                 if (fDet < 0.0f) {
@@ -679,38 +678,38 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         float fSmallStepY = 0.5f / (float) (m_kBSplineBasisY.GetNumSamples() - 1);
 
         // Get the coordinates of the current control point.
-        Point2f kOrigin = new Point2f();
+        Vector2f kOrigin = new Vector2f();
         m_kBSpline2D.getControlPoint(iControlX, iControlY, kOrigin);
 
-        Point2f kNewPoint = new Point2f();
+        Vector2f kNewPoint = new Vector2f();
 
         // Compute the error in the +X direction.
-        kNewPoint.set(+fSmallStepX, 0.0f);
-        kNewPoint.add(kOrigin);
+        kNewPoint.Set(+fSmallStepX, 0.0f);
+        kNewPoint.Add(kOrigin);
 
         float fStepXPos = moveControlPoint(iControlX, iControlY, kNewPoint);
         double dErrorXPos = m_kRegMeasure.getError();
         m_kBSpline2D.setControlPoint(iControlX, iControlY, kOrigin);
 
         // Compute the error in the -X direction.
-        kNewPoint.set(-fSmallStepX, 0.0f);
-        kNewPoint.add(kOrigin);
+        kNewPoint.Set(-fSmallStepX, 0.0f);
+        kNewPoint.Add(kOrigin);
 
         float fStepXNeg = moveControlPoint(iControlX, iControlY, kNewPoint);
         double dErrorXNeg = m_kRegMeasure.getError();
         m_kBSpline2D.setControlPoint(iControlX, iControlY, kOrigin);
 
         // Compute the error in the +Y direction.
-        kNewPoint.set(0.0f, +fSmallStepY);
-        kNewPoint.add(kOrigin);
+        kNewPoint.Set(0.0f, +fSmallStepY);
+        kNewPoint.Add(kOrigin);
 
         float fStepYPos = moveControlPoint(iControlX, iControlY, kNewPoint);
         double dErrorYPos = m_kRegMeasure.getError();
         m_kBSpline2D.setControlPoint(iControlX, iControlY, kOrigin);
 
         // Compute the error in the -Y direction.
-        kNewPoint.set(0.0f, -fSmallStepY);
-        kNewPoint.add(kOrigin);
+        kNewPoint.Set(0.0f, -fSmallStepY);
+        kNewPoint.Add(kOrigin);
 
         float fStepYNeg = moveControlPoint(iControlX, iControlY, kNewPoint);
         double dErrorYNeg = m_kRegMeasure.getError();
@@ -723,8 +722,8 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         // Compute gradient terms.
         float fStepX = fStepXPos + fStepXNeg;
         float fStepY = fStepYPos + fStepYNeg;
-        kDeriv.x = (fStepX > 0.0f) ? ((float) (dErrorXPos - dErrorXNeg) / fStepX) : 0.0f;
-        kDeriv.y = (fStepY > 0.0f) ? ((float) (dErrorYPos - dErrorYNeg) / fStepY) : 0.0f;
+        kDeriv.X = (fStepX > 0.0f) ? ((float) (dErrorXPos - dErrorXNeg) / fStepX) : 0.0f;
+        kDeriv.Y = (fStepY > 0.0f) ? ((float) (dErrorYPos - dErrorYNeg) / fStepY) : 0.0f;
     }
 
     /**
@@ -756,7 +755,7 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
         int iLimitY = m_iNumSamplesSrcY - 1;
 
         // compute local change to registered source
-        Point2f kPos = new Point2f();
+        Vector2f kPos = new Vector2f();
 
         for (int iY = iMinY; iY <= iMaxY; iY++) {
 
@@ -765,8 +764,8 @@ public class BSplineRegistration2Df extends BSplineRegistrationBasef {
                 // evaulate spline and setup for bilinear interpolation
                 m_kBSpline2D.getPosition(iX, iY, kPos);
 
-                float fX = iLimitX * kPos.x;
-                float fY = iLimitY * kPos.y;
+                float fX = iLimitX * kPos.X;
+                float fY = iLimitY * kPos.Y;
                 int iX0 = (int) fX;
                 int iY0 = (int) fY;
 

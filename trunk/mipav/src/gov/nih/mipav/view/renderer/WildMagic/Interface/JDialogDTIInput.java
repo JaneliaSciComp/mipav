@@ -17,8 +17,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.WildMagic.*;
-import gov.nih.mipav.view.renderer.surfaceview.JPanelSurface;
-import gov.nih.mipav.view.renderer.surfaceview.SurfaceRender;
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 
@@ -123,7 +121,7 @@ public class JDialogDTIInput extends JInterfaceBase
     private int m_iType;
 
     /** JPanelSurface object for loading fiber bundle tracts. */
-    private JPanelSurface m_kSurfaceDialog;
+    private JPanelSurface_WM m_kSurfaceDialog;
     /** Image displayed in the GPUVolumeRender and SurfaceRender*/
     private ModelImage m_kImage;
 
@@ -377,22 +375,14 @@ public class JDialogDTIInput extends JInterfaceBase
         } 
 	else if ( kCommand.equals("UseEllipsoids") )
 	{
-            if ( m_kSurfaceDialog != null )
-            {
-                ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
-            }
-            else if ( rayBasedRenderWM != null )
+            if ( rayBasedRenderWM != null )
             {
                 rayBasedRenderWM.setDisplayEllipsoids( m_kUseEllipsoids.isSelected() );
             }
 	}
 	else if ( kCommand.equals("AllEllipsoids") )
 	{
-            if ( m_kSurfaceDialog != null )
-            {
-                ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
-            }
-            else if ( rayBasedRenderWM != null )
+            if ( rayBasedRenderWM != null )
             {
                 rayBasedRenderWM.setDisplayAllEllipsoids( m_kAllEllipsoids.isSelected() );
             }

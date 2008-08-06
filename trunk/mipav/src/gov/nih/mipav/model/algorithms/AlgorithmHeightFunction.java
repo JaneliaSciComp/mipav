@@ -1,15 +1,15 @@
 package gov.nih.mipav.model.algorithms;
 
-
+import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
 
 import java.io.*;
-
-import javax.vecmath.*;
 
 
 /**
@@ -36,9 +36,6 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
     private int mesh;
 
     /** DOCUMENT ME! */
-    private ModelQuadMesh qMesh;
-
-    /** DOCUMENT ME! */
     private int sampleSize = 1;
 
     /** DOCUMENT ME! */
@@ -46,9 +43,6 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private String surfaceFileName;
-
-    /** DOCUMENT ME! */
-    private ModelTriangleMesh tMesh;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -75,9 +69,6 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
      * DOCUMENT ME!
      */
     public void finalize() {
-
-        tMesh = null;
-        qMesh = null;
         super.finalize();
     }
 
@@ -112,14 +103,14 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
         int length;
         int xDim, yDim;
         float[] buffer;
-        Point3f[] cVertex = null;
+        Vector3f[] cVertex = null;
         int[] cConnect = null;
 
         try {
             xDim = srcImage.getExtents()[0];
             yDim = srcImage.getExtents()[1];
             length = xDim * yDim;
-            cVertex = new Point3f[length / sampleSize];
+            cVertex = new Vector3f[length / sampleSize];
             cConnect = new int[length * 4 / sampleSize];
             buffer = new float[length];
             fireProgressStateChanged(srcImage.getImageName(), "Generating surface ...");
@@ -185,7 +176,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
 
                 height = (((buffer[(y * xDim) + x] - min) / range) * maxBox) - (maxBox / 2.0f); // Set function height
                                                                                                 // relative image size
-                cVertex[i++] = new Point3f(x - (xDim / 2), -(y - (yDim / 2)), height);
+                cVertex[i++] = new Vector3f(x - (xDim / 2), -(y - (yDim / 2)), height);
             }
         }
 
@@ -201,15 +192,14 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
         fireProgressStateChanged(90);
 
         try {
-            qMesh = new ModelQuadMesh(cVertex, cConnect, length2, length1, null, maxBox);
+            TriMesh kTriMesh = new TriMesh(new VertexBuffer(cVertex), new IndexBuffer(cConnect));
 
             if (surfaceFileName.endsWith(".sur") == false) {
                 surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + surfaceFileName + ".sur";
             } else {
                 surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + surfaceFileName;
             }
-
-            qMesh.save(surfaceFileName, getProgressChangeListener(), 90, 10);
+            FileSurface_WM.save(surfaceFileName, kTriMesh, 2, kTriMesh.VBuffer, true, null, null, null, null);
         } catch (IOException e) {
             System.gc();
             displayError("AlgorithmHeightFunction: " + e);
@@ -240,8 +230,8 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
         int xDim, yDim;
         int vCnt; // vertex count;
         float[] buffer;
-        Point3f[] cVertex = null;
-        Point3f[] vertex = null;
+        Vector3f[] cVertex = null;
+        Vector3f[] vertex = null;
         int[] cConnect = null;
         int[] connect = null;
 
@@ -250,7 +240,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             yDim = srcImage.getExtents()[1];
             length = xDim * yDim;
             vCnt = xDim * yDim;
-            cVertex = new Point3f[vCnt / sampleSize];
+            cVertex = new Vector3f[vCnt / sampleSize];
             cConnect = new int[length * 6 / sampleSize];
             buffer = new float[length];
             fireProgressStateChanged(srcImage.getImageName(), "Generating surface ...");
@@ -343,7 +333,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
 
                 height = (((buffer[(y * xDim) + x] - min) / range) * maxBox) - (maxBox / 2.0f); // Set function height
                                                                                                 // relative image size
-                cVertex[i++] = new Point3f(x - (xDim / 2), -(y - (yDim / 2)), height);
+                cVertex[i++] = new Vector3f(x - (xDim / 2), -(y - (yDim / 2)), height);
             }
         }
 
@@ -357,13 +347,13 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
         fireProgressStateChanged(90);
 
         try {
-            vertex = new Point3f[i];
+            vertex = new Vector3f[i];
 
             for (int n = 0; n < i; n++) {
-                vertex[n] = new Point3f(cVertex[n]);
+                vertex[n] = new Vector3f(cVertex[n]);
             }
 
-            tMesh = new ModelTriangleMesh(vertex, connect);
+            TriMesh kTriMesh = new TriMesh(new VertexBuffer(vertex), new IndexBuffer(connect));
 
             if (surfaceFileName.endsWith(".sur") == false) {
                 surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + surfaceFileName + ".sur";
@@ -371,7 +361,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
                 surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + surfaceFileName;
             }
 
-            tMesh.save(surfaceFileName, true, direction, startLocation, box, null);
+            FileSurface_WM.save(surfaceFileName, kTriMesh, 0, kTriMesh.VBuffer, true, direction, startLocation, box, null);
         } catch (IOException e) {
             System.gc();
             displayError("AlgorithmHeightFunction: " + e);

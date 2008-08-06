@@ -1,6 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
-
+import WildMagic.LibFoundation.Meshes.*;
+import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibGraphics.Detail.*;
+import WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.algorithms.filters.*;
@@ -8,10 +11,11 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
 
 import java.io.*;
-
-import javax.vecmath.*;
+import java.util.Vector;
 
 
 /**
@@ -306,70 +310,46 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                 inverseDicomMatrix.Inverse();
             }
 
-            ModelSurfaceExtractorCubes kExtractor = new ModelSurfaceExtractorCubes(iXDim, iYDim, iZDim, buffer, fXRes,
+            SurfaceExtractorCubes kExtractor = new SurfaceExtractorCubes(iXDim, iYDim, iZDim, buffer, fXRes,
                                                                                    fYRes, fZRes, direction,
                                                                                    startLocation, dicomMatrix);
 
             fireProgressStateChanged("Starting surface extraction");
 
-            ModelTriangleMesh kMesh = kExtractor.getLevelSurface(level, getProgressChangeListener());
+            TriMesh kMesh = kExtractor.getLevelSurface(level);
 
             buffer = null;
             System.gc();
             fireProgressStateChanged(50);
 
             if (triangleConsistencyMode == ADJ_MODE) {
-                kMesh.getConsistentComponents();
+                //kMesh.getConsistentComponents();
             } else if (triangleConsistencyMode == SMOOTH_MODE) {
-                kMesh.smoothTwo(2, 0.03f, true, 0.01f, false);
+                //kMesh.smoothTwo(2, 0.03f, true, 0.01f, false);
             }
 
             if (smoothMeshFlag) {
-                kMesh.smoothThree(smoothIterations, smoothLambda, smoothMu, false);
+                //kMesh.smoothThree(smoothIterations, smoothLambda, smoothMu, false);
             }
 
             if (decimateFlag == true) {
-                ModelTriangleMesh[] akComponent = null;
-                int iVMaxQuantity = 0, iTMaxQuantity = 0;
-
                 fireProgressStateChanged("Initializing surface.");
-                akComponent = kMesh.getComponents();
-                kMesh = null;
-                System.gc();
-
-                iVMaxQuantity = 0;
-                iTMaxQuantity = 0;
-
-                for (i = 0; (i < akComponent.length) && !threadStopped; i++) {
-                    int iVQuantity = akComponent[i].getVertexCount();
-
-                    if (iVQuantity > iVMaxQuantity) {
-                        iVMaxQuantity = iVQuantity;
-                    }
-
-                    int iTQuantity = akComponent[i].getIndexCount() / 3;
-
-                    if (iTQuantity > iTMaxQuantity) {
-                        iTMaxQuantity = iTQuantity;
-                    }
-                }
-
-                ModelClodMesh[] akClod = new ModelClodMesh[akComponent.length];
-
+                VETMesh kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
+                		2 * kMesh.IBuffer.GetIndexQuantity(), .9f,
+                		2 * kMesh.GetTriangleQuantity(), .9f,
+                		kMesh.IBuffer.GetData() );
+                Vector<VETMesh> kComponents = new Vector<VETMesh>();
+                kVETMesh.GetComponents(kComponents);
+                int iNumComponents = kComponents.size();
+                ClodMesh[] akClod = new ClodMesh[iNumComponents];
                 fireProgressStateChanged("Surface decimation in progress");
-
-                ModelSurfaceDecimator kDecimator = new ModelSurfaceDecimator(iVMaxQuantity, iTMaxQuantity);
-
-                for (i = 0; (i < akComponent.length) && !threadStopped; i++) {
-                    Point3f[] akVertex = akComponent[i].getVertexCopy();
-                    int[] aiConnect = akComponent[i].getIndexCopy();
-
-                    kDecimator.decimate(akVertex, aiConnect, getProgressChangeListener(),
-                                        50 + (i * 50 / akComponent.length), akComponent.length * 2);
-
-                    akClod[i] = new ModelClodMesh(akVertex, aiConnect, kDecimator.getRecords());
+                for (i = 0; (i < iNumComponents) && !threadStopped; i++) {
+                	VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
+                	IndexBuffer kIBuffer = new IndexBuffer(kComponents.get(i).GetTriangles());
+                    CreateClodMesh kDecimator = new CreateClodMesh(kVBuffer, kIBuffer);
+                    kDecimator.decimate();
+                    akClod[i] = new ClodMesh(kVBuffer, kIBuffer, kDecimator.getRecords());
                 }
-
                 if (threadStopped) {
                     finalize();
 
@@ -378,11 +358,11 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
 
                 System.gc();
                 fireProgressStateChanged("Saving surface");
-                ModelClodMesh.save(surfaceFileName, akClod, true, direction, startLocation, box, inverseDicomMatrix);
+                FileSurface_WM.saveClodMesh(surfaceFileName, akClod, true, direction, startLocation, box, inverseDicomMatrix);
             } else {
                 fireProgressStateChanged(75);
                 fireProgressStateChanged("Saving surface");
-                kMesh.save(surfaceFileName, true, direction, startLocation, box, inverseDicomMatrix);
+                FileSurface_WM.save(surfaceFileName, kMesh, 0, kMesh.VBuffer, true, direction, startLocation, box, inverseDicomMatrix);
 
             }
         } catch (IOException error) {
