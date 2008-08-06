@@ -208,6 +208,10 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 				if( buttonGrid[i][j].isSelected()) {
 					if (xStart == -1) {
 						xStart = j;
+					}else {
+						if(j < xStart) {
+							xStart = j;
+						}
 					}
 					if (yStart == -1) {
 						yStart = i;
