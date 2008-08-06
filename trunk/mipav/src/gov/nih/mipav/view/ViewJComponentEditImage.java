@@ -5031,7 +5031,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             performPaint(mouseEvent, true);
             imageActive.notifyImageDisplayListeners();
         } else if (cursorMode == PAINT_VOI) {
-
             // backup paintBitmap to paintBitmapBU
             backupPaintBitmap();
 
@@ -5107,7 +5106,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
                 for (int width = 0; width < brushXDim; width++, counter++) {
 
-                    if (paintBrush.get( (height * brushYDim) + width)) {
+                    if (paintBrush.get(counter)) {
 
                         if ( ( (xS + width) < xDim) && ( (yS + height) < yDim)) {
                             int st = ( (yS + height) * imageActive.getExtents()[0]) + (xS + width);
