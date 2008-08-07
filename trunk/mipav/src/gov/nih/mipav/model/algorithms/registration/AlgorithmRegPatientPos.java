@@ -161,6 +161,13 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             FileInfoBase fileInfo = (FileInfoBase) (image.getFileInfo(0));
             int[] iOrient = new int[2];
             double[][] dOrient = new double[2][3];
+            
+            for (int i = 0; i < 2; i++) {
+                if (fileInfo.getAxisOrientation(i) == FileInfoBase.ORI_UNKNOWN_TYPE) {
+                    MipavUtil.displayError(image.getImageName() + " has unknown orientation for axis = " + i + "\n");
+                    return;
+                }
+            }
 
             for (int i = 0; i < 2; i++) {
                 iOrient[i] = fileInfo.getAxisOrientation(i);
@@ -412,7 +419,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
 
         // Figure out the transformation to reorient Image B.
         alignmentXfrm.MakeIdentity();
-        orientA.copyMatrix(orientMatrixA);
+        orientA.copyMatrix(orientMatrixA);  
         orientA_inv.Copy(orientA);
         orientA_inv.Inverse();
         alignmentXfrm.Mult(orientA);
@@ -600,9 +607,16 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
         }
 
         orientedImgB = algoTransform.getTransformedImage(); // AlgorithmTransform creates new ModelImage destImage
+        
 
         if (algoTransform != null) {
             algoTransform.finalize();
+        }
+        boolean test = true;
+        if (test) {
+            resultImg = orientedImgB;
+            setCompleted(true);
+            return;
         }
 
         // Get updated resolutions and dimensions.
