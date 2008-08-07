@@ -110,6 +110,8 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     /** Is min/max percentile? **/
     private boolean percentile;
     
+    /** matrix of the image resolution to ensure regionGrow works **/
+    private float resol[] = new float[2];
 
     public PlugInAlgorithmNEIRetinalRegistration(String imageDir1, String imageDir2, JTextArea outputbox, String refPath, boolean toConcat, float epsY,
             float epsB, float ymin, float ymax,float bmin, float bmax, boolean registered, boolean percentile) {
@@ -117,6 +119,8 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         //Set all variables
         sigma[0] = 6;
         sigma[1] = 6;
+        resol[0] = (float) 0.013888889;
+        resol[1] = (float) 0.013888889;
         this.imagePath1 = imageDir1;
         this.imagePath2 = imageDir2;
         this.refPath = refPath;
@@ -174,6 +178,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
             outputbox.append("** Loading " + refPath + " in as Reference Image: \n");
             reference = fileIO.readImage(refPath);
             reference.setImageName("reference");
+            reference.setResolutions(0, resol);
         }
         
         
@@ -198,7 +203,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
             outputfolder3.mkdir();
             
             //select eye for registration
-            eyebitset = eyeballSelect(reference, eyebitset, 7);
+            eyebitset = eyeballSelect(reference, eyebitset, 6);
             trimzone = eyeballSelect(reference, trimzone, -1);
        
             //remove border
@@ -215,6 +220,8 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
             AlgorithmGradientMagnitudeSep algogMag = new AlgorithmGradientMagnitudeSep(reference, sigma, true, false);
             algogMag.run();
             
+            
+            
             try{
                 reference.importData(0, algogMag.getResultBuffer(), true);
             }catch(IOException e){
@@ -228,6 +235,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 outputbox.append("** Loading Yellow " + listOfFiles1[j].getName() + " :\n");
                 outputbox.setCaretPosition( outputbox.getText().length() );
                 toBeReg = fileIO.readImage((String)imgLoc1.get(j));
+                toBeReg.setResolutions(0, resol);
                 removeBack(toBeReg); //remove border
                 opts.setFileName("YellowRegistered" + (j+1));
 
@@ -313,6 +321,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 outputbox.append("** Loading Blue " + listOfFiles2[j].getName() + " :\n");
                 outputbox.setCaretPosition( outputbox.getText().length() );
                 toBeReg = fileIO.readImage((String)imgLoc2.get(j));
+                toBeReg.setResolutions(0, resol);
                 removeBack(toBeReg);
                 opts.setFileName("BlueRegistered" + (j+1));
             
@@ -589,13 +598,13 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
 
 
         // find far left non border value
-        for (int i = 0, maxpixl = 0 ; maxpixl< 1000; i++){
+        for (int i = 0, maxpixl = 0 ; maxpixl< 250; i++){
             maxpixl = eye.get(i, Midy).intValue();
             lpix = i;
         }
         
         //find far right non border value
-        for (int j = xDim, maxpixr = 0 ; maxpixr < 1000; j--){
+        for (int j = xDim, maxpixr = 0 ; maxpixr < 250; j--){
             maxpixr = eye.get(j, Midy).intValue();
             rpix = j;
         }
