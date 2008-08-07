@@ -299,8 +299,8 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             orderAx2A = new double[4][4];
             orderB2A = new double[4][4];
             tmpTransMat = new TransMatrix(4);
-            index2Axial = new int[] { 1, 2, 3 };
-            index2ImgA = new int[] { 1, 2, 3 };
+            index2Axial = new int[] { 0, 1, 2 };
+            index2ImgA = new int[] { 0, 1, 2 };
             sign2Axial = new int[] { 1, 1, 1 };
             sign2ImgA = new int[] { 1, 1, 1 };
         } catch (OutOfMemoryError e) {
