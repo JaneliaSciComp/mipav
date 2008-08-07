@@ -612,12 +612,6 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
         if (algoTransform != null) {
             algoTransform.finalize();
         }
-        boolean test = true;
-        if (test) {
-            resultImg = orientedImgB;
-            setCompleted(true);
-            return;
-        }
 
         // Get updated resolutions and dimensions.
         for (int i = 0; i < 3; i++) {
