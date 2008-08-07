@@ -1124,18 +1124,18 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                             if (iIntensity > m_iBackThreshold) {
 
                                 // transform to ellipsoid coordinates
-                                float fX = ((float) (iX)) - m_kCenter.x;
-                                float fY = ((float) (iY)) - m_kCenter.y;
-                                float fZ = ((float) (iZ)) - m_kCenter.z;
-                                kP.x = (fX * m_kRotate.m00) + (fY * m_kRotate.m10) + (fZ * m_kRotate.m20);
-                                kP.y = (fX * m_kRotate.m01) + (fY * m_kRotate.m11) + (fZ * m_kRotate.m21);
-                                kP.z = (fX * m_kRotate.m02) + (fY * m_kRotate.m12) + (fZ * m_kRotate.m22);
+                                float fX = ((float) (iX)) - m_kCenter.X;
+                                float fY = ((float) (iY)) - m_kCenter.Y;
+                                float fZ = ((float) (iZ)) - m_kCenter.Z;
+                                kP.X = (fX * m_kRotate.M00) + (fY * m_kRotate.M10) + (fZ * m_kRotate.M20);
+                                kP.Y = (fX * m_kRotate.M01) + (fY * m_kRotate.M11) + (fZ * m_kRotate.M21);
+                                kP.Z = (fX * m_kRotate.M02) + (fY * m_kRotate.M12) + (fZ * m_kRotate.M22);
 
-                                kP.x *= fInvLength0;
-                                kP.y *= fInvLength1;
-                                kP.z *= fInvLength2;
+                                kP.X *= fInvLength0;
+                                kP.Y *= fInvLength1;
+                                kP.Z *= fInvLength2;
 
-                                if (((kP.x * kP.x) + (kP.y * kP.y) + (kP.z * kP.z)) <= 1.0f) {
+                                if (((kP.X * kP.X) + (kP.Y * kP.Y) + (kP.Z * kP.Z)) <= 1.0f) {
 
                                     // voxel is inside ellipsoid
                                     aiIntensity[iIQuantity++] = iIntensity;
