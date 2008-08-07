@@ -634,7 +634,8 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Convert 4D to RGB", "Convert4DtoRGB", 0, null, false),
                         menuBuilder.buildMenuItem("Extract 3D subset from 4D", "Subset", 0, null, false),
                         menuBuilder.buildMenuItem("Remove time volumes", null, 0, null, false),
-                        menuBuilder.buildMenuItem("Swap dims 3<->4", "Swap34", 0, null, false),}),
+                        menuBuilder.buildMenuItem("Swap dims 3<->4", "Swap34", 0, null, false),
+                        menuBuilder.buildMenuItem("Swap dims 1<->4", "Swap14", 0, null, false),}),
                 menuBuilder.buildMenuItem("Center of mass", "COM", 0, null, false),
                 menuBuilder.buildMenuItem("Clone (copy)", "Clone", 0, null, false),
                 menuBuilder.makeMenu("Conversion tools", false, new JMenuItem[] {
@@ -934,6 +935,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
             menuBuilder.setMenuItemEnabled("Remove time volumes", false);
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
+            menuBuilder.setMenuItemEnabled("Swap dims 1<->4", false);
             menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
             menuBuilder.setMenuItemEnabled("Barrel distortion correction", false);
@@ -979,6 +981,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Y axis -90", false);
             menuBuilder.setMenuItemEnabled("Randomize slice order", false);
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
+            menuBuilder.setMenuItemEnabled("Swap dims 1<->4", false);
             menuBuilder.setMenuItemEnabled("Convert 3D to 4D", false);
             menuBuilder.setMenuItemEnabled("Reslice - isotropic voxels", false);
             menuBuilder.setMenuItemEnabled("Slice averaging", false);
@@ -1139,6 +1142,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", true);
         menuBuilder.setMenuItemEnabled("Remove time volumes", true);
         menuBuilder.setMenuItemEnabled("Swap dims 3<->4", true);
+        menuBuilder.setMenuItemEnabled("Swap dims 1<->4", true);
         menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", true);
         menuBuilder.setMenuItemEnabled("3D rectangle", true);
         menuBuilder.setMenuItemEnabled("Animate", true);

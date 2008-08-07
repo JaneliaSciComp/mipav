@@ -1462,8 +1462,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogSubsample(this, imageA);
         } else if (command.equals("Swap34")) {
 
-            // JDialogSwap34 swap34 =
-            new JDialogSwap34(this, getActiveImage()).callAlgorithm();
+            new JDialogSwapDims(this, getActiveImage(), AlgorithmSwapDims.SWAP34).callAlgorithm();
+        } else if (command.equals("Swap14")) {
+
+            new JDialogSwapDims(this, getActiveImage(), AlgorithmSwapDims.SWAP14).callAlgorithm();
         } else if (command.equals("onlyColor")) { // JDialogOnlyColor onlyColorDialog = new JDialogOnlyColor(this,
                                                   // getActiveImage()); onlyColorDialog.callAlgorithm();
         } else if (command.equals("extractSurfaceCubes")) {
