@@ -20,6 +20,7 @@ import java.io.File;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -33,7 +34,12 @@ import javax.swing.border.LineBorder;
 import javax.swing.filechooser.FileFilter;
 
 
-
+/**
+ * This is the dialog for the NEI Retinal Registration PlugIn.
+ * 
+ * @author morseaj
+ *
+ */
 public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase implements AlgorithmInterface {
 
     /** handle to the algorithm **/
@@ -48,25 +54,20 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
     /** path to second image dir **/
     private JTextField ImageDirTextField2; 
     
-
+    /** path to second image dir **/
     private JTextField RefTextField;
     
+    /** min/man's **/
     private JTextField yminText;
-    
-    private JTextField ymaxText;
-    
-    private JTextField bminText;
-    
+    private JTextField ymaxText;   
+    private JTextField bminText; 
     private JTextField bmaxText;
     
+    /** user inputs **/
     private JTextField epsYText;
-    
     private JTextField epsBText;
-    
     private JTextField dPerPText;
-
     private JTextField VOIText;
-    
     private JTextField mpMapText;
     
     /** output text area **/
@@ -84,37 +85,37 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
     /** current directory  **/
     private String currDir = null;
     
-    /** study path **/
+    /** yellow path **/
     private String imagePath1;
     
-    /** study path **/
+    /** blue path **/
     private String imagePath2;
     
-    /** study path **/
+    /** reference path **/
     private String refPath;
     
     
-    /** browse button 1 **/
-    JButton image1PathBrowseButton;
+    /** browse buttons **/
+    private JButton image1PathBrowseButton;
+    private JButton image2PathBrowseButton;
+    private JButton mapBrowseButton;
+    private JButton VOIBrowseButton;
+    private JButton refPathBrowseButton;
+
+    /** tabed pane **/
+    private JTabbedPane tabs;
     
-    /** browse button 1 **/
-    JButton image2PathBrowseButton;
-    
-    JButton mapBrowseButton;
-    
-    JButton VOIBrowseButton;
-    
-    JButton refPathBrowseButton;
-    
-    ModelImage im;
-    
-    JTabbedPane tabs;
-    
+    /** should image be concatnated **/
     private JCheckBox toConcat;
     
+    /** is the image already registered **/
     private JCheckBox preReg;
     
-    private JCheckBox autoMinMax;
+    /** are the numbers percents **/
+    private boolean autoMinMax;
+    
+    /** units of min/max values **/
+    private JComboBox typeMinMax;
     
     
     public PlugInDialogNEIRetinalRegistration() {
@@ -128,7 +129,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
     
     public void init() {
         setForeground(Color.black);
-        setTitle("NEI Retinal Registration" + " v0.5");
+        setTitle("NEI Retinal Registration" + " v1.0");
         
         tabs = new JTabbedPane();
         
@@ -136,6 +137,8 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         GridBagConstraints mainPanelConstraints = new GridBagConstraints();
         mainPanelConstraints.anchor = GridBagConstraints.WEST;
         
+        
+        //First Tab for registration and MPmap creation
         JPanel mainPanel = new JPanel(mainPanelGridBagLayout);
         
         mainPanelConstraints.gridx = 0;
@@ -240,7 +243,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         mainPanelConstraints.gridx = 7;
         mainPanelConstraints.gridy = 4;
         mainPanelConstraints.insets = new Insets(25,450,15,0);
-        toConcat = new JCheckBox("make concated image:   ");
+        toConcat = new JCheckBox("make concatenated  image:   ");
         toConcat.setHorizontalTextPosition(SwingConstants.LEFT);
         mainPanel.add(toConcat, mainPanelConstraints);
         
@@ -256,7 +259,6 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         mainPanelConstraints.gridy = 5;
         mainPanelConstraints.insets = new Insets(10,70,15,0);
         yminText = new JTextField(5);
-        yminText.setEnabled(false);
         mainPanel.add(yminText, mainPanelConstraints);
 
         mainPanelConstraints.gridx = 3;
@@ -269,18 +271,22 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         mainPanelConstraints.gridy = 5;
         mainPanelConstraints.insets = new Insets(10,210,15,0);
         ymaxText = new JTextField(5);
-        ymaxText.setEnabled(false);
         mainPanel.add(ymaxText, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 5;
         mainPanelConstraints.gridy = 5;
         mainPanelConstraints.insets = new Insets(10,285,15,0);
-        autoMinMax = new JCheckBox("auto min/max:   ");
-        autoMinMax.setSelected(true);
-        autoMinMax.addActionListener(this);
-        autoMinMax.setActionCommand("autoMinMax");
-        autoMinMax.setHorizontalTextPosition(SwingConstants.LEFT);
-        mainPanel.add(autoMinMax, mainPanelConstraints);
+        
+        JLabel typeText = new JLabel("Min/Max Value Type: ");
+        mainPanel.add(typeText, mainPanelConstraints);
+        
+        mainPanelConstraints.insets = new Insets(10,420,15,0);
+        typeMinMax = new JComboBox();
+        typeMinMax.addItem("Percentile");
+        typeMinMax.addItem("Intensity");
+        mainPanel.add(typeMinMax, mainPanelConstraints);
+        
+
         
         mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 6;
@@ -292,7 +298,6 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         mainPanelConstraints.gridy = 6;
         mainPanelConstraints.insets = new Insets(10,70,15,0);
         bminText = new JTextField(5);
-        bminText.setEnabled(false);
         mainPanel.add(bminText, mainPanelConstraints);
 
         mainPanelConstraints.gridx = 3;
@@ -305,7 +310,6 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         mainPanelConstraints.gridy = 6;
         mainPanelConstraints.insets = new Insets(10,210,15,0);
         bmaxText = new JTextField(5);
-        bmaxText.setEnabled(false);
         mainPanel.add(bmaxText, mainPanelConstraints);
         
         
@@ -340,6 +344,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
 
         mainPanelConstraints.anchor = GridBagConstraints.WEST;
         
+        // Create Second tab for data creation
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 0;
         mainPanelConstraints.insets = new Insets(15,5,15,0);
@@ -429,17 +434,21 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         
         if (tabs.getSelectedIndex() == 0) //if on registration tab
         { 
+            if (typeMinMax.getSelectedIndex()==0)
+                autoMinMax = true;
+            else
+                autoMinMax = false;
             outputTextArea.append("*Beginning Retinal Registration* \n");
             float ymin = -1, ymax = -1,bmin = -1, bmax = -1;
-            if (!autoMinMax.isSelected()){
-                ymin = Float.parseFloat(yminText.getText().trim());
-                ymax = Float.parseFloat(ymaxText.getText().trim());
-                bmin = Float.parseFloat(bminText.getText().trim());
-                bmax = Float.parseFloat(bmaxText.getText().trim());
-            }
+            
+            ymin = Float.parseFloat(yminText.getText().trim());
+            ymax = Float.parseFloat(ymaxText.getText().trim());
+            bmin = Float.parseFloat(bminText.getText().trim());
+            bmax = Float.parseFloat(bmaxText.getText().trim());
+            
             
             alg = new PlugInAlgorithmNEIRetinalRegistration(imagePath1, imagePath2, outputTextArea, refPath, toConcat.isSelected(), Float.parseFloat(epsYText.getText().trim()), 
-                    Float.parseFloat(epsBText.getText().trim()),ymin,ymax, bmin, bmax, preReg.isSelected());
+                    Float.parseFloat(epsBText.getText().trim()),ymin,ymax, bmin, bmax, preReg.isSelected(), autoMinMax);
             alg.addListener(this);
             
             if (isRunInSeparateThread()) {
@@ -464,7 +473,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
             
             
             alg2 = new PlugInAlgorithmNEIRetinalRegistration2(mpMapText.getText().trim(), VOIText.getText().trim(),  
-                    Integer.parseInt(dPerPText.getText().trim()), outputTextArea2);
+                    Float.parseFloat(dPerPText.getText().trim()), outputTextArea2);
             alg2.addListener(this);
             
 
@@ -557,20 +566,6 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
             RefTextField.setEnabled(!preReg.isSelected());
             
         }
-        else if(command.equalsIgnoreCase("autoMinMax")) {
-            if (autoMinMax.isSelected()){
-                yminText.setEnabled(false);
-                ymaxText.setEnabled(false);
-                bminText.setEnabled(false);
-                bmaxText.setEnabled(false);
-            }
-            else{
-                yminText.setEnabled(true);
-                ymaxText.setEnabled(true);
-                bminText.setEnabled(true);
-                bmaxText.setEnabled(true);
-            }
-        }
         else if(command.equalsIgnoreCase("imagePath2Browse")) {
             JFileChooser chooser = new JFileChooser();
             if (currDir != null) {
@@ -625,6 +620,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         }
         
         else if(command.equalsIgnoreCase("cancel")) {
+
             if(alg != null) {
                 alg.setThreadStopped(true);
             }
@@ -638,6 +634,14 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
             {
                 if(ImageDirTextField1.getText().trim().equals("") || ImageDirTextField2.getText().trim().equals("") || (RefTextField.getText().trim().equals("") && !preReg.isSelected())) {
                     MipavUtil.displayError("Both Image Directories & a Reference are Required!");
+                    return;
+                }
+                if((typeMinMax.getSelectedIndex() == 0) && ((Float.parseFloat(yminText.getText().trim()) > 100 )||(Float.parseFloat(bminText.getText().trim()) > 100 )||(Float.parseFloat(ymaxText.getText().trim()) > 100 )||(Float.parseFloat(bmaxText.getText().trim()) > 100 ))) {
+                    MipavUtil.displayError("Percentile must be below 100!");
+                    return;
+                }
+                if((typeMinMax.getSelectedIndex() == 0) && ((Float.parseFloat(yminText.getText().trim()) < 0 )||(Float.parseFloat(bminText.getText().trim()) < 0)||(Float.parseFloat(ymaxText.getText().trim()) < 0 )||(Float.parseFloat(bmaxText.getText().trim()) < 0 ))) {
+                    MipavUtil.displayError("Percentile must be above 0");
                     return;
                 }
                 if(RefTextField.getText().trim().equals("") && !preReg.isSelected()){
@@ -690,7 +694,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
                 return;
             }
             try{
-            Integer.parseInt(dPerPText.getText().trim());
+            Float.parseFloat(dPerPText.getText().trim());
             }
             catch(NumberFormatException e1){
                 MipavUtil.displayError("Degrees per Pixel must be an Integer!");

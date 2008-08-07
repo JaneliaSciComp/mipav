@@ -15,7 +15,13 @@ import java.util.BitSet;
 
 import javax.swing.JTextArea;
 
-
+/**
+ * This algorithm takes in a image and voi location. Using the VOI the center of mass is found. From that point an azimutal 
+ * average is taken for each pixel (as a radius) until the radius is 475. The values are saved in a .txt file as CSV
+ * with the first value as radius times pixels per degrees and the second as the average intensity.
+ * @author morseaj
+ *
+ */
 public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
 
     /** mpMap File **/
@@ -25,7 +31,7 @@ public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
     private File voiFile;
     
     /** dots per pixel value **/
-    private int dPerp;
+    private float dPerp;
     
     /** output box **/
     private JTextArea outputbox;
@@ -46,14 +52,13 @@ public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
         
     }
     
-    public PlugInAlgorithmNEIRetinalRegistration2(String mpMapLoc, String voiLoc, int dPerp, JTextArea outbox2){//, float deltaR){
+    public PlugInAlgorithmNEIRetinalRegistration2(String mpMapLoc, String voiLoc, float dPerp, JTextArea outbox2){//, float deltaR){
         
         //save user input
         mpMapFile = new File(mpMapLoc);
         voiFile = new File(voiLoc);
         this.outputbox = outbox2;
         this.dPerp = dPerp;
-        //this.deltaR = deltaR;
         
     }
     @Override
@@ -78,7 +83,7 @@ public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
         } catch (IOException e) {
             MipavUtil.displayError("Error loading VOI to MPmap!");
             setCompleted(true);
-            this.notifyListeners(this);
+            notifyListeners(this);
             return;
         }
         
@@ -119,6 +124,10 @@ public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
                         total = 0;
                     denom = 0;
                 for(float theta = 0; theta < 360; theta=theta + (float).1){
+                    
+                    if (isThreadStopped()) {
+                        return;
+                    }
                     
                     //get point in relation to center of mass
                     current = new Point((int)(r*Math.sin(theta)), (int)(r*Math.cos(theta)));

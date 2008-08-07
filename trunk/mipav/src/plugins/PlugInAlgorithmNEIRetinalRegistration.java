@@ -31,7 +31,15 @@ import java.util.Arrays;
 import java.util.BitSet;
 import javax.swing.JTextArea;
 import java.lang.Math;
-
+/**
+ * This algoithm takes in 2 strings with image folders to be registered. The images are registered to the
+ * reference image. A concatnated images is displayed if requested. After an calculation is applied to the images
+ * as given by NEI to generate an MPmap. These MPmap are then averaged. Everything is saved in the same folder as the image directories.
+ * Max and mins can be based on percentile or fixed values.
+ * 
+ * @author morseaj
+ *
+ */
 public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     
     /** Path of first directory */
@@ -99,9 +107,12 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     /** Is the image registered **/
     private boolean preReg;
     
+    /** Is min/max percentile? **/
+    private boolean percentile;
+    
 
     public PlugInAlgorithmNEIRetinalRegistration(String imageDir1, String imageDir2, JTextArea outputbox, String refPath, boolean toConcat, float epsY,
-            float epsB, float ymin, float ymax,float bmin, float bmax, boolean registered) {
+            float epsB, float ymin, float ymax,float bmin, float bmax, boolean registered, boolean percentile) {
         
         //Set all variables
         sigma[0] = 6;
@@ -118,6 +129,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         this.bmin = bmin;
         this.bmax = bmax;
         this.preReg = registered;
+        this.percentile = percentile;
         
         
         
@@ -219,6 +231,10 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 removeBack(toBeReg); //remove border
                 opts.setFileName("YellowRegistered" + (j+1));
 
+                if (isThreadStopped()) {
+                    return;
+                }
+                
                 //register image
                 doneReg = registration(reference, toBeReg);
 
@@ -308,6 +324,10 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                     toBeReg = null;
                 }
             
+                if (isThreadStopped()) {
+                    return;
+                }
+                
                 if (shouldConcat){ //build concatnated image if true
                     int[] dims = new int[3];
                     dims[0] = concated.getExtents()[0];
@@ -412,6 +432,10 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
             int length = yellow.getExtents(0)[0] * yellow.getExtents(0)[1];
             yBuffer =  new float[length];
             
+            if (isThreadStopped()) {
+                return;
+            }
+            
             try {
                 yellow.exportData(0, length, yBuffer);
             }
@@ -421,9 +445,9 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
             }
             
             //set min/max
-            if (ymin ==-1 || ymax== -1){
-                yMax = (float) yellow.getMax();
-                yMin = findTrueMin(yBuffer);              
+            if (percentile){
+                yMax = findTrueMax(yBuffer, ymax);
+                yMin = findTrueMin(yBuffer, ymin);              
             }
             else{  
                 yMax = ymax;
@@ -445,9 +469,9 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 
                 
                 //find min/max
-                if (bmin ==-1 || bmax== -1){
-                    bMax = (float) blue.getMax();
-                    bMin = findTrueMin(bBuffer);             
+                if (percentile){
+                    bMax = findTrueMax(bBuffer, bmax);
+                    bMin = findTrueMin(bBuffer, bmin);                          
                 }
                 else{  
                     bMax = bmax;
@@ -473,6 +497,9 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 opts.setFileName("MPMap Yellow" + (i+1) + " to Blue" + (j+1));
                 fileIO.writeImage(mpMap, opts);
                 outputbox.append("done \n");
+                outputbox.append("**** Blue : (" + bMin + "," + bMax + ") \n");
+                outputbox.append("**** Yellow : (" + yMin + "," + yMax + ") \n");
+                outputbox.setCaretPosition( outputbox.getText().length() );   
                 counter++;
                 
 
@@ -503,6 +530,9 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
             outputbox.setCaretPosition( outputbox.getText().length() );    
             ModelImage allMPs[] = new ModelImage[listOfMP.length];
             for (int i = 0; i < listOfMP.length; i++){
+                if (isThreadStopped()) {
+                    return;
+                }
                 allMPs[i] = fileIO.readImage(listOfMP[i].getAbsoluteFile().toString());
             }
             
@@ -539,8 +569,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     
     
         
-          outputbox.append("** Ending Algorithm v0.5 **\n");
-          outputbox.setCaretPosition( outputbox.getText().length() );    
+           
           setCompleted(true);
           return;
           
@@ -701,7 +730,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     }
 
     /** Finds Min while ignoring "outliers" **/
-    public float findTrueMin(float[] bufferOrig)
+    public float findTrueMin(float[] bufferOrig, float percent)
     {
         //find low 1% and avg to get min
        float buffer[] = bufferOrig.clone();
@@ -714,19 +743,39 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
        }
        float newBuffer[] = new float[buffer.length - count];
        
-       int bottomOne = (int) newBuffer.length / 100;
-       float bottomOneTotal = 0;
+       int bottom = (int) (newBuffer.length / 100 * percent);
+       float bottomTotal = 0;
        
        for (int i = count, j = 0; i < buffer.length; i++, j++){
            newBuffer[j] = buffer[i];
-           if (j < bottomOne){
-               bottomOneTotal = bottomOneTotal + newBuffer[j];
+           if (j < bottom){
+               bottomTotal = bottomTotal + newBuffer[j];
            }
        }
        
-       float min = bottomOneTotal / bottomOne;
+       float min = bottomTotal / bottom;
 
        return min;
+    }
+    
+    /** Finds Min while ignoring "outliers" **/
+    public float findTrueMax(float[] bufferOrig, float percent)
+    {
+        //find low % and avg to get max
+       float buffer[] = bufferOrig.clone();
+       Arrays.sort(buffer);
+
+       
+       int top = (int) ((buffer.length / 100) * percent);
+       float topTotal = 0;
+       
+       for (int i = buffer.length-1; i >= (buffer.length - top - 1); i--){
+               topTotal = topTotal + buffer[i];
+           }
+
+       float max = topTotal / top;
+
+       return max;
     }
 
     
