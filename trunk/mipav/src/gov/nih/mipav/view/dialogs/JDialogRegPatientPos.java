@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.*;
 
@@ -296,6 +297,17 @@ public class JDialogRegPatientPos extends JDialogScriptableBase implements Algor
             MipavUtil.displayError("This algorithm only works for 3D datasets.");
 
             return false;
+        }
+        
+        for (int i = 0; i < 3; i++) {
+            if (imageA.getAxisOrientation()[i] == FileInfoBase.ORI_UNKNOWN_TYPE) {
+                MipavUtil.displayError(imageA.getImageName() + " has an unknown orientation for axis = " + i);
+                return false;
+            }
+            if (imageB.getAxisOrientation()[i] == FileInfoBase.ORI_UNKNOWN_TYPE) {
+                MipavUtil.displayError(imageB.getImageName() + " has an unknown orientation for axis = " + i);
+                return false;
+            }
         }
 
         doMatch = matchOrigBox.isSelected();
