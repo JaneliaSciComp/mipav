@@ -41,11 +41,11 @@ public class MatrixHolder extends ModelSerialCloneable {
 
         if (nDims == 2) {
             compositeMatrix = new TransMatrix(3, TransMatrix.TRANSFORM_COMPOSITE);
-        } else if (nDims == 3) {
+        } else if (nDims >= 3) {
             compositeMatrix = new TransMatrix(4, TransMatrix.TRANSFORM_COMPOSITE);
-        } else {
-        	throw new IllegalArgumentException("Dims must be 2 or 3");
-        }
+        } //else {
+        	//throw new IllegalArgumentException("Dims must be 2 or 3");
+        //}
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
