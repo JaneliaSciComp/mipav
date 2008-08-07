@@ -52,7 +52,7 @@ public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
         
     }
     
-    public PlugInAlgorithmNEIRetinalRegistration2(String mpMapLoc, String voiLoc, float dPerp, JTextArea outbox2){//, float deltaR){
+    public PlugInAlgorithmNEIRetinalRegistration2(String mpMapLoc, String voiLoc, float dPerp, JTextArea outbox2){
         
         //save user input
         mpMapFile = new File(mpMapLoc);
