@@ -279,7 +279,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         generateEllipsoidMesh(iSubdivisions);
 
         // Compute the median intensity for voxels inside the initial ellipsoid.
-        computeMedianIntensity();
+        computeMedianIntensity(true);
 
         // Supporting quantities for update of mesh.  VMean[i] stores the
         // average of the immediate vertex neighbors of vertex V[i].
@@ -314,25 +314,30 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      */
     public void extractBrain() {
         // The parameters were selected basic on empirical studies. First stage
-        // the mesh is kept fairly stiff to reduce likelyhood of surface intesections.
-        // The datasets I have tested I not seen (visual inspection) any intersections.
+        // the mesh is kept fairly stiff to reduce likelyhood of surface intersections.
+        // The data sets I have tested I not seen (visual inspection) any intersections.
         // The second stage the message is a little less stiff and mesh is allowed to
         // conform more to the surface of the brain.
 
 
         // First phase is mandatory with set values
-        int i;
+        int i,j;
         int iMaxStep = 8;
         int iMaxUpdate;
+        int jMaxUpdate = 10;
+        
 
         int tmpMD = m_iMaxDepth;
         float tmpF3F = imageFactor;
         float tmpStiff = m_fStiffness;
 
+        Point3f centerPt = new Point3f();
+                
         m_iMaxDepth = 7;
         imageFactor = 0.1f;
         m_fStiffness = 0.2f;
-
+        
+        
         fireProgressStateChanged(srcImage.getImageName(), "Extracting brain ...");
 
 
@@ -364,20 +369,34 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         } else {
             iMaxUpdate = nIterations;
         }
+        for (j = 1; (j <= jMaxUpdate && updateCenter(centerPt)); j++) {
+        	
+        	for (i = 1; (i <= iMaxUpdate) && !threadStopped; i++) {
 
-        for (i = 1; (i <= iMaxUpdate) && !threadStopped; i++) {
+                if (((j % 100) == 0)) {
 
-            if (((i % 100) == 0)) {
-
-                if (secondStageErosion) {
-                    fireProgressStateChanged(Math.round((25 + (((float) (i)) / iMaxUpdate * 25))));
-                } else {
-                    fireProgressStateChanged(Math.round((50 + (((float) (i)) / iMaxUpdate * 50))));
+                    if (secondStageErosion) {
+                        fireProgressStateChanged(Math.round((25 + (((float) (i * j)) / jMaxUpdate * 25))));
+                    } else {
+                        fireProgressStateChanged(Math.round((50 + (((float) (i * j)) / jMaxUpdate * 50))));
+                    }
                 }
-            }
 
-            updateMesh();
+                updateMesh();
+                        
+            }
+        	
+        	getInsideVoxels(false);
+            centerPt = computeNewCenter();
+            m_kCenter = centerPt;
+            //estimateEllipsoid();
+            //generateEllipsoidMesh(5);
+            computeMedianIntensity(false);
+            
+            Preferences.debug("New Center of Mass = " + m_kCenter + "\n");
+        	
         }
+        
 
         if (threadStopped) {
             finalize();
@@ -599,10 +618,12 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         int i;
         int j;
-
+        
         for (i = 0; i < m_iQuantity; i++) {
-            aiHistogram[m_aiImage[i]]++;
+        	aiHistogram[m_aiImage[i]]++;
         }
+        
+        
 
         // Eliminate a large chunk of background.  The four parameters below
         // were selected based on empirical studies.
@@ -631,7 +652,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         if (maxCountIndex == iMax) {
 
-            // unable to find background from above - use cummalitive histogram method
+            // unable to find background from above - use cumulative histogram method
             for (i = 0; i < 64; i++) {
                 iAccum += aiHistogram[i];
 
@@ -742,7 +763,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         generateEllipsoidMesh(iSubdivisions);
 
         // Compute the median intensity for voxels inside the initial ellipsoid.
-        computeMedianIntensity();
+        computeMedianIntensity(true);
 
         // Supporting quantities for update of mesh.  VMean[i] stores the
         // average of the immediate vertex neighbors of vertex V[i].
@@ -1017,7 +1038,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         }
     }
-
+    
+       
     /**
      * Compute the average length of all the edges in the triangle mesh.
      */
@@ -1045,14 +1067,21 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * Compute the median intensity of those voxels inside the initial ellipsoid. This intensity is used in the image
      * term of the surface evolution.
      */
-    protected void computeMedianIntensity() {
+    protected void computeMedianIntensity( boolean initial) {
 
         // compute median intensity of voxels inside initial ellipsoid
         float fInvLength0 = 1.0f / m_afLength[0];
         float fInvLength1 = 1.0f / m_afLength[1];
         float fInvLength2 = 1.0f / m_afLength[2];
         int iIQuantity = 0;
-        int[] aiIntensity = new int[m_iQuantity];
+        int[] aiIntensity;
+        
+        if (initial) {
+        	aiIntensity = new int[m_iQuantity];
+        } else {
+        	aiIntensity = new int[m_aiMask.length];
+        }
+               
         Vector3f kP = new Vector3f();
 
         for (int iZ = 0, i = 0; iZ < m_iZBound; iZ++) {
@@ -1060,9 +1089,12 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             for (int iY = 0; iY < m_iYBound; iY++) {
 
                 for (int iX = 0; iX < m_iXBound; iX++) {
-                    int iIntensity = m_aiImage[i++];
+                    
+                	if (initial) {
+                		
+                		int iIntensity = m_aiImage[i++];
 
-                    if (iIntensity > m_iBackThreshold) {
+                        if (iIntensity > m_iBackThreshold) {
 
                         // transform to ellipsoid coordinates
                         float fX = ((float) (iX)) - m_kCenter.X;
@@ -1078,10 +1110,42 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
                         if (((kP.X * kP.X) + (kP.Y * kP.Y) + (kP.Z * kP.Z)) <= 1.0f) {
 
-                            // voxel is inside ellipsoid
-                            aiIntensity[iIQuantity++] = iIntensity;
+                                // voxel is inside ellipsoid
+                                aiIntensity[iIQuantity++] = iIntensity;
+                            }
                         }
-                    }
+                		
+                	} else {
+                		
+                		if (m_aiMask[getIndex(iX, iY, iZ)] > 0) {
+                			
+                			int iIntensity = m_aiImage[getIndex(iX, iY, iZ)];
+
+                            if (iIntensity > m_iBackThreshold) {
+
+                                // transform to ellipsoid coordinates
+                                float fX = ((float) (iX)) - m_kCenter.x;
+                                float fY = ((float) (iY)) - m_kCenter.y;
+                                float fZ = ((float) (iZ)) - m_kCenter.z;
+                                kP.x = (fX * m_kRotate.m00) + (fY * m_kRotate.m10) + (fZ * m_kRotate.m20);
+                                kP.y = (fX * m_kRotate.m01) + (fY * m_kRotate.m11) + (fZ * m_kRotate.m21);
+                                kP.z = (fX * m_kRotate.m02) + (fY * m_kRotate.m12) + (fZ * m_kRotate.m22);
+
+                                kP.x *= fInvLength0;
+                                kP.y *= fInvLength1;
+                                kP.z *= fInvLength2;
+
+                                if (((kP.x * kP.x) + (kP.y * kP.y) + (kP.z * kP.z)) <= 1.0f) {
+
+                                    // voxel is inside ellipsoid
+                                    aiIntensity[iIQuantity++] = iIntensity;
+                                }
+                            }
+                		}
+                		
+                		
+                	}
+                	
                 }
             }
         }
@@ -1092,6 +1156,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         m_iMedianIntensity = aiIntensity[iIQuantity / 2];
         Preferences.debug("Brain extractor: computeMedianIntensity: m_iMedianIntensity = " + m_iMedianIntensity + "\n");
+        Preferences.debug("Brain extractor: computeMedianIntensity: iIQuantity = " + iIQuantity + "\n");
     }
 
     /**
@@ -1189,6 +1254,38 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         for (i = 0; i < m_iVQuantity; i++) {
             m_akVNormal[i].Normalize();
         }
+    }
+    
+    protected Point3f computeNewCenter() {
+    	
+    	Point3f newCenter = new Point3f();
+    	float totWeight = 0.0f;
+    	float comX = 0.0f;
+    	float comY = 0.0f;
+    	float comZ = 0.0f;
+    	
+    	for (int iZ = 1; iZ <= (m_iZBound - 1); iZ++) {
+    		
+    		for (int iY = 1; iY <= (m_iYBound - 1); iY++) {
+    			
+    			for (int iX = 1; iX <= (m_iXBound - 1); iX++) {
+    				
+    				if (m_aiMask[getIndex(iX, iY, iZ)] > 0) {
+                        comX += (float) (iX * m_aiImage[getIndex(iX, iY, iZ)]);
+                        comY += (float) (iY * m_aiImage[getIndex(iX, iY, iZ)]);
+                        comZ += (float) (iZ * m_aiImage[getIndex(iX, iY, iZ)]);
+                        totWeight += m_aiImage[getIndex(iX, iY, iZ)];
+                    }
+    			}
+    		}
+    	}
+    	
+    	newCenter.x = comX * srcImage.getFileInfo(0).getResolution(0) / totWeight;
+    	newCenter.y = comX * srcImage.getFileInfo(0).getResolution(1) / totWeight;
+    	newCenter.z = comX * srcImage.getFileInfo(0).getResolution(2) / totWeight;
+    	
+    	return newCenter;
+    	
     }
 
     /**
@@ -2551,6 +2648,22 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         float fUpdate3 = imageFactor * fRatio * m_fMeanEdgeLength;
 
         return fUpdate3;
+    }
+    
+    protected boolean updateCenter(Point3f Center) {
+    	
+    	float distCenter;
+    	
+    	distCenter = Center.distance(m_kCenter);
+    	
+    	Preferences.debug("Distance between Centers = " + distCenter + "\n");
+    	
+    	if (distCenter <= 0.05) {
+    		return false;
+    	} else {
+    		return true;
+    	}
+    	    	
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
