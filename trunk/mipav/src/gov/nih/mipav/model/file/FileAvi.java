@@ -26,6 +26,8 @@ import javax.swing.*;
  *           Melanson's Open Source Video 1 decoder found at
  *           http://zebra.fh-weingarten.de/~maxi/html/mplayer-dev-eng/2001-11/txt00008.txt Installing codecs may be done
  *           by running the folowing 2 files in mipav/apps: jmf_2_1_1e-windows-i586.exe DivX412Codec.exe
+ *           CVID decoder was ported from the codec written by Dr. Tim Ferguson at 
+ *           http://www.csse.monash.edu.au/~timf/.
  */
 
 public class FileAvi extends FileBase {
@@ -1914,6 +1916,9 @@ public class FileAvi extends FileBase {
                     } // if (haveMoviSubchunk && (subchunkBlocksRead == streams))
                 } // while ((totalBytesRead < totalDataArea) && chunkRead)
             } // else if (doMSVC && (bitCount == 16))
+            else if (doCVID && (bitCount == 8)) {
+                
+            } // else if (doCVID && (bitCount == 8))  
             else if (doCVID && (bitCount == 24)) {
                 int y_bottom;
                 byte frame_flags;
@@ -2947,9 +2952,6 @@ public class FileAvi extends FileBase {
                 
                 
             } // else if (doCVID && (bitCount == 24))    
-            else if (doCVID && (bitCount == 40)) {
-                
-            } // else if (doCVID && (bitCount == 40))
 
             raFile.close();
 
@@ -5044,8 +5046,6 @@ public class FileAvi extends FileBase {
                     return AlgorithmTranscode.TRANSCODE_IV41;
                 } else if (handlerString.toUpperCase().startsWith("IV50")) {
                     return AlgorithmTranscode.TRANSCODE_IV50;
-                //} else if (handlerString.toUpperCase().startsWith("CVID")) {
-                    //return AlgorithmTranscode.TRANSCODE_CVID;
                 } else if (handlerString.toUpperCase().startsWith("GEOV")) {
                     return AlgorithmTranscode.TRANSCODE_GEOV;
                 } else {
@@ -5219,12 +5219,19 @@ public class FileAvi extends FileBase {
                 if (((compression == 0) &&
                          ((bitCount == 4) || (bitCount == 8) || (bitCount == 16) || (bitCount == 24) || (bitCount == 32))) ||
                         ((compression == 1) && (bitCount == 8)) || (doMSVC && (bitCount == 8)) ||
-                        (doMSVC && (bitCount == 16)) || (doCVID && (bitCount == 24)) || 
+                        (doMSVC && (bitCount == 16)) || (doCVID && (bitCount == 8)) || (doCVID && (bitCount == 24)) || 
                         (doCVID && (bitCount == 40))) {
                     // OK
                 } else {
                     raFile.close();
                     throw new IOException("Cannot currently handle bit count = " + bitCount);
+                }
+                
+                if (doCVID && (bitCount == 40)) {
+                    // Greyscale depth 40(really depth 8) cinepak encoded AVI file
+                    // The depth 40 is an artifact of it being converted from quicktime where 
+                    // dpeth 40 is really depth 8 greyscale.
+                    bitCount = 8;
                 }
 
                 int imageSize = getInt(endianess);
