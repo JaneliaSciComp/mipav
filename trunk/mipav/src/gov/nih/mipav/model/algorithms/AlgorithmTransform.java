@@ -1463,18 +1463,20 @@ public class AlgorithmTransform extends AlgorithmBase {
             } else {
                 ptsi3[i - 1].Z = zf;
             }
-            // System.out.println("Initial point " +i +": " +(int)ptsi3[i-1].X +", " +(int)ptsi3[i-1].Y +", "
-            // +(int)ptsi3[i-1].Z);
+            //System.out.println("Initial point " +i +": " +(int)ptsi3[i-1].X +", " +(int)ptsi3[i-1].Y +", "
+             //+(int)ptsi3[i-1].Z);
         }
 
         /* Transform corner points, ptsi3, to get transformed points, ptsf3. */
-        transMatrix.transformAsVector3Df(ptsi3, ptsf3);
+        for (i = 1; i <= 8; i ++) {
+            transMatrix.transformAsPoint3Df(ptsi3[i-1], ptsf3[i-1]);
+        }
 
         /* Find new min and max values for the transformed point. */
         for (i = 1; i <= 8; i++) {
 
-            // System.out.println("Transformed point " +i +": " +(int)ptsf3[i-1].X +", " +(int)ptsf3[i-1].Y +", "
-            // +(int)ptsf3[i-1].Z);
+            //System.out.println("Transformed point " +i +": " +(int)ptsf3[i-1].X +", " +(int)ptsf3[i-1].Y +", "
+            //+(int)ptsf3[i-1].Z);
             if (ptsf3[i - 1].X < minx) {
                 minx = ptsf3[i - 1].X;
             }
