@@ -318,8 +318,13 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             return;
         }
 
-        orientB_inv.copyMatrix(orderB2Ax);
-        orientA.copyMatrix(orderAx2A);
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                orderB2Ax[i][j] = orientB_inv.get(i, j);
+                orderAx2A[i][j] = orientA.get(i, j);
+                
+            }
+        }
         matAx2A = new TransMatrix(orientA);
 
         for (int i = 0; i < 3; i++) {
@@ -335,13 +340,18 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
                 }
             }
         }
-        // System.out.println("\n" +"Sign to axial: " +sign2Axial[0] +" " +sign2Axial[1] +" " +sign2Axial[2]);
-        // System.out.println("Order to axial: " +index2Axial[0] +" " +index2Axial[1] +" " +index2Axial[2]);
+        //System.out.println("\n" +"Sign to axial: " +sign2Axial[0] +" " +sign2Axial[1] +" " +sign2Axial[2]);
+        //System.out.println("Order to axial: " +index2Axial[0] +" " +index2Axial[1] +" " +index2Axial[2]);
 
         tmpTransMat.Copy(orientB_inv);
         
         tmpTransMat.Mult(matAx2A);
-        tmpTransMat.copyMatrix(orderB2A);
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                orderB2A[i][j] = tmpTransMat.get(i, j);
+                
+            }
+        }
 
         for (int i = 0; i < 3; i++) {
 
@@ -356,8 +366,8 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
                 }
             }
         }
-        // System.out.println("Sign to ImgA: " +sign2ImgA[0] +" " +sign2ImgA[1] +" " +sign2ImgA[2]);
-        // System.out.println("Order to ImgA: " +index2ImgA[0] +" " +index2ImgA[1] +" " +index2ImgA[2] +".\n");
+        System.out.println("Sign to ImgA: " +sign2ImgA[0] +" " +sign2ImgA[1] +" " +sign2ImgA[2]);
+        System.out.println("Order to ImgA: " +index2ImgA[0] +" " +index2ImgA[1] +" " +index2ImgA[2] +".\n");
     }
 
     /**
