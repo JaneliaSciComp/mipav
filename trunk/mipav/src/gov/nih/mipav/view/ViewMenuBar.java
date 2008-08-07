@@ -943,6 +943,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Nearly circle to circle", false);
             menuBuilder.setMenuItemEnabled("Hough transform", false);
         } else if (numberOfDimensions == 2) {
+            menuBuilder.setMenuItemEnabled("Align patient position", false);
             menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
             menuBuilder.setMenuItemEnabled("Animate", false);
             menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
