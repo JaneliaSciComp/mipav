@@ -48,8 +48,8 @@ public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
     /** sees if value has been used in calculating data already **/
     private BitSet check;
     
-    public  PlugInAlgorithmNEIRetinalRegistration2(){
-        
+    
+    public  PlugInAlgorithmNEIRetinalRegistration2(){   
     }
     
     public PlugInAlgorithmNEIRetinalRegistration2(String mpMapLoc, String voiLoc, float dPerp, JTextArea outbox2){
