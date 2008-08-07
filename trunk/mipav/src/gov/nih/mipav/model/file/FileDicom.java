@@ -1864,13 +1864,13 @@ public class FileDicom extends FileDicomBase {
         try {
             pg.grabPixels();
         } catch (InterruptedException e) {
-            Preferences.debug("JIMI: Interrupted waiting for pixels!" + "\n");
+            Preferences.debug("Interrupted waiting for pixels!" + "\n");
 
             return new int[0];
         }
 
         if ((pg.getStatus() & ImageObserver.ABORT) != 0) {
-            Preferences.debug("JIMI: Image fetch aborted or errored" + "\n");
+            Preferences.debug("Image fetch aborted or errored" + "\n");
 
             return new int[0];
         }
