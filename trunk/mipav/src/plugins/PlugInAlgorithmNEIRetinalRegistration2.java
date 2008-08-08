@@ -51,7 +51,12 @@ public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
     
     public  PlugInAlgorithmNEIRetinalRegistration2(){   
     }
-    
+    /**
+     * mpMapFile is where the MPmap is
+     *voiLoc is where the VOI of the fovea is
+     *dPerp is degree per pixel and is used as a multiplication factor for the radius value
+     *
+     */
     public PlugInAlgorithmNEIRetinalRegistration2(String mpMapLoc, String voiLoc, float dPerp, JTextArea outbox2){
         
         //save user input
@@ -62,6 +67,21 @@ public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
         
     }
     @Override
+    /**
+     * Load mpMap and register VOI to it.
+     *
+     *Using VOi find center of mass of voi, save this as Point cm
+     *
+     *check is a bitset used to see if the pixel was already included in the average
+     *
+     *for each radius which is from 1 to 475
+     *    for each value of theta (0 - 360 with step = .1)
+     *        calculate the location of the pixel in rect coords using cm as origin
+     *        see if the point (current) has already be used using bitset
+     *        if not then add it to the total and add one to the denominator
+     *                if it is then ignore it and increase step
+     *    save the average of the perimeter to file data.txt with radius as radius time dPerp
+     */
     public void runAlgorithm() {
 
         outputbox.append("*Beginning MPmap Analysis* \n");
