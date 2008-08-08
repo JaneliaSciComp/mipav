@@ -181,8 +181,8 @@ public class MatrixHolder extends ModelSerialCloneable {
             //do not include a nifti associated matrices (matrices loaded w\ a NIFTI image)
             if (((tempMatrix.getTransformID() != TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) || useDICOM)
             		&& (!tempMatrix.isNIFTI())) {
-            	compositeMatrix.Copy(tempMatrix);
-                compositeMatrix.Mult(compositeMatrix);
+                compositeMatrix.Mult(tempMatrix);
+                
             }
         }
 
