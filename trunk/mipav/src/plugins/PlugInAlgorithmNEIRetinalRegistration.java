@@ -3,9 +3,10 @@
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmCenterOfMass;
 import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmBoundaryAttenuation;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitudeSep;
 
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR2D;
@@ -14,17 +15,14 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcat;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.VOI;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import java.awt.Point;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -112,13 +110,23 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     
     /** matrix of the image resolution to ensure regionGrow works **/
     private float resol[] = new float[2];
-
+    /**
+    * 
+    *  sigma[] is the size of the gradient magnitude
+    *  resol[] is the resolution the images should be, for the region grow
+    *  imagePaths are the yellow and blue directory
+    *  refPath is the location of the reference image
+    *  shouldConcat is true if the user requests a concatnated image
+    *  espB/Y and mins/maxs are just user inputed
+    *  preReg is true if it is already registered.
+    *  percentile is true if min/max are percents, if not then exact values
+    */
     public PlugInAlgorithmNEIRetinalRegistration(String imageDir1, String imageDir2, JTextArea outputbox, String refPath, boolean toConcat, float epsY,
             float epsB, float ymin, float ymax,float bmin, float bmax, boolean registered, boolean percentile) {
         
         //Set all variables
-        sigma[0] = 6;
-        sigma[1] = 6;
+        sigma[0] = 4;
+        sigma[1] = 4;
         resol[0] = (float) 0.013888889;
         resol[1] = (float) 0.013888889;
         this.imagePath1 = imageDir1;
@@ -626,6 +634,8 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         //grab region as bitset
         regionGrowAlgo.regionGrow2D(bitset, new Point(centerX, Midy), -1,false, false, null, min,max, -1, size, false);
 
+
+        
         return bitset;
     }
     
@@ -741,7 +751,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     /** Finds Min while ignoring "outliers" **/
     public float findTrueMin(float[] bufferOrig, float percent)
     {
-        //find low 1% and avg to get min
+        //find low % and avg to get min
        float buffer[] = bufferOrig.clone();
        Arrays.sort(buffer);
        int count = 0;
