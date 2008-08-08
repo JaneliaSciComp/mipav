@@ -366,8 +366,8 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
                 }
             }
         }
-        System.out.println("Sign to ImgA: " +sign2ImgA[0] +" " +sign2ImgA[1] +" " +sign2ImgA[2]);
-        System.out.println("Order to ImgA: " +index2ImgA[0] +" " +index2ImgA[1] +" " +index2ImgA[2] +".\n");
+        //System.out.println("Sign to ImgA: " +sign2ImgA[0] +" " +sign2ImgA[1] +" " +sign2ImgA[2]);
+        //System.out.println("Order to ImgA: " +index2ImgA[0] +" " +index2ImgA[1] +" " +index2ImgA[2] +".\n");
     }
 
     /**
