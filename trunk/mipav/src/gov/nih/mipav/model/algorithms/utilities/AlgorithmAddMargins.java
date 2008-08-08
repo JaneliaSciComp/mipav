@@ -915,8 +915,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             marginVector[2] = 0; // since 2D here
 
             newOriginLPS = calculateNewOrigin(srcImage, marginVector);
-            System.out.println("New LPS origin: " + Float.toString(newOriginLPS[0]) + ", " +
-                               Float.toString(newOriginLPS[1]) + ", " + Float.toString(newOriginLPS[2]));
+            //System.out.println("New LPS origin: " + Float.toString(newOriginLPS[0]) + ", " +
+                               //Float.toString(newOriginLPS[1]) + ", " + Float.toString(newOriginLPS[2]));
 
             // FILE INFO: add the file info    (if the original is a DICOM image, do a special file info...)
             fireProgressStateChanged("Updating File Info...");
@@ -1153,8 +1153,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     marginVector[2] = frontMargin;
 
                     newOriginLPS = calculateNewOrigin(srcImage, marginVector);
-                    System.out.println("New LPS origin: " + Float.toString(newOriginLPS[0]) + ", " +
-                                       Float.toString(newOriginLPS[1]) + ", " + Float.toString(newOriginLPS[2]));
+                    //System.out.println("New LPS origin: " + Float.toString(newOriginLPS[0]) + ", " +
+                                       //Float.toString(newOriginLPS[1]) + ", " + Float.toString(newOriginLPS[2]));
 
                     float delta = srcImage.getFileInfo()[0].getResolutions()[2];
                     int axisOrient = srcImage.getFileInfo()[0].getAxisOrientation(2);
@@ -1166,7 +1166,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                     float[] originImg = originLPS2Img(newOriginLPS, srcImage);
                     float startLoc = originImg[2];
-                    System.out.println("Start location is " + startLoc + ".\n");
+                    //System.out.println("Start location is " + startLoc + ".\n");
 
                     // FILE INFO: add the file info for 3D images
                     if ((tDim == 1)) {
@@ -1492,8 +1492,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     marginVector[2] = 0; // since 2D here
 
                     newOriginLPS = calculateNewOrigin(srcImage, marginVector);
-                    System.out.println("New LPS origin: " + Float.toString(newOriginLPS[0]) + ", " +
-                                       Float.toString(newOriginLPS[1]) + ", " + Float.toString(newOriginLPS[2]));
+                    //System.out.println("New LPS origin: " + Float.toString(newOriginLPS[0]) + ", " +
+                                       //Float.toString(newOriginLPS[1]) + ", " + Float.toString(newOriginLPS[2]));
 
                     // FILE INFO: add the file info    (if the original is a DICOM image, do a special file info...)
                     fireProgressStateChanged("Updating File Info...");
@@ -1618,8 +1618,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         marginVector[2] = frontMargin;
 
                         newOriginLPS = calculateNewOrigin(srcImage, marginVector);
-                        System.out.println("New LPS origin: " + Float.toString(newOriginLPS[0]) + ", " +
-                                           Float.toString(newOriginLPS[1]) + ", " + Float.toString(newOriginLPS[2]));
+                        //System.out.println("New LPS origin: " + Float.toString(newOriginLPS[0]) + ", " +
+                                           //Float.toString(newOriginLPS[1]) + ", " + Float.toString(newOriginLPS[2]));
 
                         float delta = srcImage.getFileInfo()[0].getResolutions()[2];
                         int axisOrient = srcImage.getFileInfo()[0].getAxisOrientation(2);
@@ -1631,7 +1631,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                         float[] originImg = originLPS2Img(newOriginLPS, srcImage);
                         float startLoc = originImg[2];
-                        System.out.println("Start location is " + startLoc + ".\n");
+                        //System.out.println("Start location is " + startLoc + ".\n");
 
                         // FILE INFO: add the file info for 3D images
                         if ((tDim == 1)) {
@@ -1817,8 +1817,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             imgOriginLPS = fileInfoBuffer.getOrigin();
         }
 
-        System.out.println("Original LPS origin: " + Float.toString(imgOriginLPS[0]) + ", " +
-                           Float.toString(imgOriginLPS[1]) + ", " + Float.toString(imgOriginLPS[2]));
+        //System.out.println("Original LPS origin: " + Float.toString(imgOriginLPS[0]) + ", " +
+                           //Float.toString(imgOriginLPS[1]) + ", " + Float.toString(imgOriginLPS[2]));
 
         originImgOrd = originLPS2Img(imgOriginLPS, srcImage);
         // System.out.println("Original origin in image order: " +Float.toString(originImgOrd[0]) +", "      +
