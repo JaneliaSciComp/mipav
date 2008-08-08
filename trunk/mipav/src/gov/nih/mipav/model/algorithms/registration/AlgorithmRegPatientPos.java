@@ -165,6 +165,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             for (int i = 0; i < 2; i++) {
                 if (fileInfo.getAxisOrientation(i) == FileInfoBase.ORI_UNKNOWN_TYPE) {
                     MipavUtil.displayError(image.getImageName() + " has unknown orientation for axis = " + i + "\n");
+                    setCompleted(false);
                     return;
                 }
             }
@@ -505,6 +506,11 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
 
                 destExtentsA[i] = resultImg.getExtents()[i] + add[i];
                 destExtentsC[i] = destExtentsA[i] - cropAmt[i];
+                if (destExtentsC[i] < 1) {
+                    MipavUtil.displayError("Error! Required cropping would make destExtentsC[" + i + "] = " + destExtentsC[i]);
+                    setCompleted(false);
+                    return;
+                }
                 // System.out.println("Original dimension is " +orientedImgB.getExtents()[i] +", amount to add is "
                 // +add[i] +", and destExtents[" +i +"] is " +destExtents[i] +".");
             }
