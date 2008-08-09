@@ -130,18 +130,11 @@ public class FileSurface_J3D {
         int yDim = extents[1];
         int zDim = extents[2];
 
-        Point3f s1 = new Point3f();
-        Point3f s2 = new Point3f();
-        Point3f s3 = new Point3f();
-        float sx1, sy1, sz1, sx2, sy2, sz2, sx3, sy3, sz3;
-
         float[] resols = kImage.getFileInfo()[0].getResolutions();
         float xBox = (xDim - 1) * resols[0];
         float yBox = (yDim - 1) * resols[1];
         float zBox = (zDim - 1) * resols[2];
         float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-        int iV1, iV2, iV3;
-        float d1, d2, d3;
 
         FileSurfaceRefXML_J3D kSurfaceXML;
         FileInfoSurfaceRefXML_J3D kFileInfo = null;
@@ -285,40 +278,6 @@ public class FileSurface_J3D {
 
                     for (int k = 0; k < 3; k++) {
                         akTriangle[j][k] = new Point3f();
-                    }
-                }
-
-                for (int j = 0; j < aiConnect.length;) {
-                    iV1 = aiConnect[j++];
-                    akComponent[i].getCoordinate(iV1, s1);
-                    sx1 = (s1.x - startLocation[0]) / (resols[0] * direction[0]);
-                    sy1 = (s1.y - startLocation[1]) / (resols[1] * direction[1]);
-                    sz1 = (s1.z - startLocation[2]) / (resols[2] * direction[2]);
-
-                    iV2 = aiConnect[j++];
-                    akComponent[i].getCoordinate(iV2, s2);
-                    sx2 = (s2.x - startLocation[0]) / (resols[0] * direction[0]);
-                    sy2 = (s2.y - startLocation[1]) / (resols[1] * direction[1]);
-                    sz2 = (s2.z - startLocation[2]) / (resols[2] * direction[2]);
-
-                    iV3 = aiConnect[j++];
-                    akComponent[i].getCoordinate(iV3, s3);
-                    sx3 = (s3.x - startLocation[0]) / (resols[0] * direction[0]);
-                    sy3 = (s3.y - startLocation[1]) / (resols[1] * direction[1]);
-                    sz3 = (s3.z - startLocation[2]) / (resols[2] * direction[2]);
-
-                    d1 = (float)
-                             Math.sqrt(((sx1 - sx2) * (sx1 - sx2)) + ((sy1 - sy2) * (sy1 - sy2)) +
-                                       ((sz1 - sz2) * (sz1 - sz2)));
-                    d2 = (float)
-                             Math.sqrt(((sx1 - sx3) * (sx1 - sx3)) + ((sy1 - sy3) * (sy1 - sy3)) +
-                                       ((sz1 - sz3) * (sz1 - sz3)));
-                    d3 = (float)
-                             Math.sqrt(((sx2 - sx3) * (sx2 - sx3)) + ((sy2 - sy3) * (sy2 - sy3)) +
-                                       ((sz2 - sz3) * (sz2 - sz3)));
-
-                    if ((d1 >= 1.0f) || (d2 >= 1.0f) || (d3 >= 1.0f)) {
-                        subTriangles(kImage, sx1, sy1, sz1, sx2, sy2, sz2, sx3, sy3, sz3);
                     }
                 }
 
