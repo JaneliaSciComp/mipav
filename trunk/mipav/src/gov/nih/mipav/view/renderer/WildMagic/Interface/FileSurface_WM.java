@@ -2303,41 +2303,43 @@ public class FileSurface_WM {
 
         kOut.write(bufferInt);
 
-        kOut.writeInt(1);
-        byte[] bufferColor = new byte[kMesh.VBuffer.GetVertexQuantity() * 4 * 4];
-        ColorRGBA kColor = new ColorRGBA();
-        int R, G, B ,A;
-        index = 0;
-        for (int i = 0; i < kMesh.VBuffer.GetVertexQuantity(); i++) {
-            kMesh.VBuffer.GetColor4( 0, i, kColor );
-        	
-            R = Float.floatToIntBits(kColor.R);
-            bufferColor[index++] = (byte) (R >>> 24);
-            bufferColor[index++] = (byte) (R >>> 16);
-            bufferColor[index++] = (byte) (R >>> 8);
-            bufferColor[index++] = (byte) (R & 0xff);
-            
-            G = Float.floatToIntBits(kColor.G);
-            bufferColor[index++] = (byte) (G >>> 24);
-            bufferColor[index++] = (byte) (G >>> 16);
-            bufferColor[index++] = (byte) (G >>> 8);
-            bufferColor[index++] = (byte) (G & 0xff);
+        if ( kMesh.VBuffer.GetAttributes().GetCChannels(0) != 0 )
+        {
+        	kOut.writeInt(1);
+        	byte[] bufferColor = new byte[kMesh.VBuffer.GetVertexQuantity() * 4 * 4];
+        	ColorRGBA kColor = new ColorRGBA();
+        	int R, G, B ,A;
+        	index = 0;
+        	for (int i = 0; i < kMesh.VBuffer.GetVertexQuantity(); i++) {
+        		kMesh.VBuffer.GetColor4( 0, i, kColor );
 
-            B = Float.floatToIntBits(kColor.B);
-            bufferColor[index++] = (byte) (B >>> 24);
-            bufferColor[index++] = (byte) (B >>> 16);
-            bufferColor[index++] = (byte) (B >>> 8);
-            bufferColor[index++] = (byte) (B & 0xff);
-             
-            A = Float.floatToIntBits(kColor.A);
-            bufferColor[index++] = (byte) (A >>> 24);
-            bufferColor[index++] = (byte) (A >>> 16);
-            bufferColor[index++] = (byte) (A >>> 8);
-            bufferColor[index++] = (byte) (A & 0xff);
-        	
+        		R = Float.floatToIntBits(kColor.R);
+        		bufferColor[index++] = (byte) (R >>> 24);
+        		bufferColor[index++] = (byte) (R >>> 16);
+        		bufferColor[index++] = (byte) (R >>> 8);
+        		bufferColor[index++] = (byte) (R & 0xff);
+
+        		G = Float.floatToIntBits(kColor.G);
+        		bufferColor[index++] = (byte) (G >>> 24);
+        		bufferColor[index++] = (byte) (G >>> 16);
+        		bufferColor[index++] = (byte) (G >>> 8);
+        		bufferColor[index++] = (byte) (G & 0xff);
+
+        		B = Float.floatToIntBits(kColor.B);
+        		bufferColor[index++] = (byte) (B >>> 24);
+        		bufferColor[index++] = (byte) (B >>> 16);
+        		bufferColor[index++] = (byte) (B >>> 8);
+        		bufferColor[index++] = (byte) (B & 0xff);
+
+        		A = Float.floatToIntBits(kColor.A);
+        		bufferColor[index++] = (byte) (A >>> 24);
+        		bufferColor[index++] = (byte) (A >>> 16);
+        		bufferColor[index++] = (byte) (A >>> 8);
+        		bufferColor[index++] = (byte) (A & 0xff);
+
+        	}
+        	kOut.write(bufferColor);
         }
-        kOut.write(bufferColor);
-
         if ( iType == 1 )
         {
             // write collapse records

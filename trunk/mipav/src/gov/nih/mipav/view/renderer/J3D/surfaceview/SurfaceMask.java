@@ -367,8 +367,11 @@ public class SurfaceMask
                                 
                                 if ( (ptr >= 0) && (ptr < end)) {
                                     kMask.set(ptr);
-                                    akMaskColor[ptr] = new ColorRGBA(kTriColor.x, 
-                                    		kTriColor.y, kTriColor.z, kTriColor.w );
+                                    if ( kTriColor != null )
+                                    {
+                                    	akMaskColor[ptr] = new ColorRGBA(kTriColor.x, 
+                                    			kTriColor.y, kTriColor.z, kTriColor.w );
+                                    }
                                     mVolumeMask.set(ptr);
                                 }
                             }
@@ -385,9 +388,12 @@ public class SurfaceMask
                                                 (int) Math.round(iZ));
                                 
                                 if ( (ptr >= 0) && (ptr < end)) {
-                                    kMask.set(ptr);
-                                    akMaskColor[ptr] = new ColorRGBA(kTriColor.x, 
-                                    		kTriColor.y, kTriColor.z, kTriColor.w );
+                                    kMask.set(ptr);                                  
+                                    if ( kTriColor != null )
+                                    {
+                                    	akMaskColor[ptr] = new ColorRGBA(kTriColor.x, 
+                                    			kTriColor.y, kTriColor.z, kTriColor.w );
+                                    }
                                     mVolumeMask.set(ptr);
                                 }
                             }
@@ -404,9 +410,12 @@ public class SurfaceMask
                                                 (int) Math.round(iZ));
                                 
                                 if ( (ptr >= 0) && (ptr < end)) {
-                                    kMask.set(ptr);
-                                    akMaskColor[ptr] = new ColorRGBA(kTriColor.x, 
-                                    		kTriColor.y, kTriColor.z, kTriColor.w );
+                                    kMask.set(ptr);                                   
+                                    if ( kTriColor != null )
+                                    {
+                                    	akMaskColor[ptr] = new ColorRGBA(kTriColor.x, 
+                                    			kTriColor.y, kTriColor.z, kTriColor.w );
+                                    }
                                     mVolumeMask.set(ptr);
                                 }
                             }
