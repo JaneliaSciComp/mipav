@@ -331,7 +331,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         float tmpF3F = imageFactor;
         float tmpStiff = m_fStiffness;
 
-        Point3f centerPt = new Point3f();
+        Vector3f centerPt = new Vector3f();
                 
         m_iMaxDepth = 7;
         imageFactor = 0.1f;
@@ -1256,9 +1256,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         }
     }
     
-    protected Point3f computeNewCenter() {
+    protected Vector3f computeNewCenter() {
     	
-    	Point3f newCenter = new Point3f();
+    	Vector3f newCenter = new Vector3f();
     	float totWeight = 0.0f;
     	float comX = 0.0f;
     	float comY = 0.0f;
@@ -1280,9 +1280,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     		}
     	}
     	
-    	newCenter.x = comX * srcImage.getFileInfo(0).getResolution(0) / totWeight;
-    	newCenter.y = comX * srcImage.getFileInfo(0).getResolution(1) / totWeight;
-    	newCenter.z = comX * srcImage.getFileInfo(0).getResolution(2) / totWeight;
+    	newCenter.X = comX * srcImage.getFileInfo(0).getResolution(0) / totWeight;
+    	newCenter.Y = comX * srcImage.getFileInfo(0).getResolution(1) / totWeight;
+    	newCenter.Z = comX * srcImage.getFileInfo(0).getResolution(2) / totWeight;
     	
     	return newCenter;
     	
@@ -2650,11 +2650,11 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         return fUpdate3;
     }
     
-    protected boolean updateCenter(Point3f Center) {
+    protected boolean updateCenter(Vector3f Center) {
     	
     	float distCenter;
     	
-    	distCenter = Center.distance(m_kCenter);
+    	distCenter = Center.Distance(m_kCenter);
     	
     	Preferences.debug("Distance between Centers = " + distCenter + "\n");
     	
