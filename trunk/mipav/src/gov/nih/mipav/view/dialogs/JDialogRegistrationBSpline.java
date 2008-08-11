@@ -1283,8 +1283,6 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
                     break;
                 }
-
-                kComboBoxBSplineDegree.addItem(Integer.toString(ms_aiBSplineDegreeOptions[i]));
             }
 
             kTextBSplineNumControlPoints.setText(Integer.toString(kOptions.iBSplineNumControlPoints));
