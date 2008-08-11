@@ -1277,7 +1277,9 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
             scriptParameters.storeImage(refWeightImage, "reference_weight_image");
         }
 
-        scriptParameters.storeImageInRecorder(getResultImage());
+        if (getResultImage() != null) {
+            scriptParameters.storeImageInRecorder(getResultImage());
+        }
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
