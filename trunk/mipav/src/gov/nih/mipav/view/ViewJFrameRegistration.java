@@ -1199,7 +1199,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     }
 
     /**
-     * Sets the alpha blending of parameter for two image displaying. Currenlty unused.
+     * Sets the alpha blending of parameter for two image displaying. Currently unused.
      *
      * @param  value  amount [0,100] that is the percentage of Image A to be displayed
      */
