@@ -59,7 +59,8 @@ import javax.swing.event.*;
  * 14.) Set degree increment for image rotations. Values can range from 0.01 to 360.0 degrees. The default value is 1.0
  * degrees.<br>
  * 15.) Put in rotate mode for rotating the image. In this mode the image can be moved either with the cw and ccw
- * buttons or moved an angle determined by the angle moved around the rotation center point as given by mouse dragging.<br>
+ * buttons or moved an angle around the rotation center point as given by mouse dragging.  The initial rotation
+ * point is the center, but a new rotation point can be set with a mouse press.<br>
  * 16.) cw button for rotating an image clockwise in rotate mode.<br>
  * 17.) ccw button for rotating an image counterclockwise in rotate mode.<br>
  * 
