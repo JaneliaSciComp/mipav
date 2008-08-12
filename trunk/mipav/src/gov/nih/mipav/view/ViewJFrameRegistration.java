@@ -2685,7 +2685,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             if ((det >= 0.99) && (det <= 1.01)) {
                 rotateBA = X.copy();
                 xfrmBA = buildXfrm(p1, p2, rotateBA);
-                xfrm.Mult(xfrmH, xfrm);
+                xfrm.Mult(xfrmBA);
 
                 doneLeastSquares = true;
 
