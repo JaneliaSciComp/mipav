@@ -317,14 +317,18 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
             fireProgressStateChanged("Starting surface extraction");
 
             TriMesh kMesh = kExtractor.getLevelSurface(level);
+            // Get the adjacent triangles:
+            VETMesh kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
+                    2 * kMesh.IBuffer.GetIndexQuantity(), .9f,
+                    2 * kMesh.GetTriangleQuantity(), .9f,
+                    kMesh.IBuffer.GetData() );
+            kMesh.IBuffer = new IndexBuffer( kVETMesh.GetTriangles() );
 
             buffer = null;
             System.gc();
             fireProgressStateChanged(50);
 
-            if (triangleConsistencyMode == ADJ_MODE) {
-                //kMesh.getConsistentComponents();
-            } else if (triangleConsistencyMode == SMOOTH_MODE) {
+            if (triangleConsistencyMode == SMOOTH_MODE) {
                 //kMesh.smoothTwo(2, 0.03f, true, 0.01f, false);
             }
 
