@@ -32,8 +32,6 @@ import javax.swing.event.*;
  * performs bilinear interpolation.</p>
  *
  * <p>The file menu has 2 items, Show VOIs in blended window and Close registration.
- * A reference slice slider selects the slice which does not move and against which the other slices are adjusted.
- * An adjusted slice slider selects a slice which will be moved into a desired alignment with the reference slice.
  * An alpha blending slider determines the percentages of the image produced by the reference slice(image R) and the
  * adjusted slice(imageA). 2 tabs are present, blended and dual.  On the  blended tab 17 toolbar buttons are present:</p>
  *
