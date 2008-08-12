@@ -19,8 +19,10 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 
+import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileXML.XMLAttributes;
 
 /**
  * This class facilitates reading and writing vtk xml
@@ -162,4 +164,60 @@ public class FileSurfaceVTKXML_WM extends FileSurfaceVTKXML {
         }
         return kMesh;
     }
+    
+    public boolean writeXMLsurface(String fileName, TriMesh kMesh) throws IOException {
+        FileWriter fw;
+        File headerFile;
+        StringBuffer buff,buff2;
+        headerFile = new File(fileName);
+        fw = new FileWriter(headerFile);
+        bw = new BufferedWriter(fw);
+        
+        int pointCount = kMesh.VBuffer.GetVertexQuantity();
+        int indexCount = kMesh.IBuffer.GetIndexQuantity();
+        
+        openTag("?xml version=\"1.0\"?",true);
+        openTag("VTKFile type=\"PolyData\"",true);
+        openTag("PolyData",true);
+        openTag("Piece NumberOfPoints=\"" + pointCount + "\" NumberOfPolys=\"" + indexCount/3 + "\"",true);
+        openTag("Points",true);
+        Vector3f p=new Vector3f();
+        buff = new StringBuffer();
+        for(int i=0;i<pointCount;i++){
+            kMesh.VBuffer.GetPosition3(i,p);
+            buff.append(String.format("%.5f %.5f %.5f ", p.X,p.Y,p.Z));
+        }
+        Vector<XMLAttributes> atVector = new Vector<XMLAttributes>();
+        atVector.add(new XMLAttributes("NumberOfComponents", "3"));
+        atVector.add(new XMLAttributes("format", "ascii"));
+        closedTag("DataArray",buff.toString(),atVector);
+        openTag("Points",false);
+        openTag("Polys",true);
+        buff = new StringBuffer();
+        buff2 = new StringBuffer();
+        int[] aiIndex = kMesh.IBuffer.GetData();
+        for(int i=0;i<indexCount;i+=3){
+            buff.append(aiIndex[i] + " " + aiIndex[i+1] + " " + aiIndex[i+2] + " ");
+            int offset = i + 3;
+            buff2.append(offset + " ");
+        }
+        atVector = new Vector<XMLAttributes>();
+        atVector.add(new XMLAttributes("type", "Int32"));
+        atVector.add(new XMLAttributes("Name", "connectivity"));
+        atVector.add(new XMLAttributes("format", "ascii"));
+        closedTag("DataArray",buff.toString(),atVector);
+        atVector = new Vector<XMLAttributes>();
+        atVector.add(new XMLAttributes("type", "Int32"));
+        atVector.add(new XMLAttributes("Name", "offsets"));
+        atVector.add(new XMLAttributes("format", "ascii"));
+        closedTag("DataArray",buff2.toString(),atVector);
+        openTag("Polys",false);
+        openTag("Piece", false);
+        openTag("PolyData",false);
+        openTag("VTKFile",false);
+        bw.close();
+        return true;
+    }
+
+    
 }
