@@ -361,7 +361,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
             }
 
             if (decimateFlag == true) {
-
+/*
                 fireProgressStateChanged("Initializing surface.");
                 VETMesh kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
                 		2 * kMesh.IBuffer.GetIndexQuantity(), .9f,
@@ -389,6 +389,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                 System.gc();
                 fireProgressStateChanged("Saving surface");
                FileSurface_WM.saveClodMesh(surfaceFileName, akClod, true, direction, origin, box, inverseDicomMatrix);
+               */
             } else {
                 fireProgressStateChanged(75);
                 fireProgressStateChanged("Saving surface");
