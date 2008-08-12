@@ -31,11 +31,11 @@ import javax.swing.event.*;
  * <p>The adjustable image slice moves are determined by floating point values fed into a transform routine that
  * performs bilinear interpolation.</p>
  *
- * <p>The file menu has 4 items, Open Point VOI, Save VOI as, Save image as, and Close registration. A reference slice
- * slider selects the slice which does not move and against which the other slices are adjusted. An adjusted slice
- * slider selects a slice which will be moved into a desired alignment with the reference slice. An alpha blending
- * slider determines the percentages of the image produced by the reference slice(image R) and the adjusted slice(image
- * A). 21 toolbar buttons are present:</p>
+ * <p>The file menu has 2 items, Show VOIs in blended window and Close registration.
+ * A reference slice slider selects the slice which does not move and against which the other slices are adjusted.
+ * An adjusted slice slider selects a slice which will be moved into a desired alignment with the reference slice.
+ * An alpha blending slider determines the percentages of the image produced by the reference slice(image R) and the
+ * adjusted slice(imageA). 2 tabs are present, blended and dual.  On the  blended tab 17 toolbar buttons are present:</p>
  *
  * <p>1.) Display LUT table calls forth a display panel which allows the user to set separate histograms for the
  * reference and adjusted slices.<br>
@@ -43,36 +43,47 @@ import javax.swing.event.*;
  * 3.) Magnify image 2.0X.<br>
  * 4.) Magnify image 0.5X.<br>
  * 5.) Window region of imageB<br>
- * 6.) Apply least squares alignment.<br>
- * 7.) Apply thin plate spline alignment.<br>
- * 8.) Reset to return slice to original state and remove all markers<br>
- * 9.) Commit the slice to the image.<br>
- * 10.) Set the pixel increment for image translations and movements of the rotation center. Values can range from 0.01
+ * 6.) Reset to return slice to original state and remove all markers<br>
+ * 7.) Commit the slice to the image.<br>
+ * 8.) Set the pixel increment for image translations and movements of the rotation center. Values can range from 0.01
  * to 2048.0. Movements of the rotation center will only be performed to the nearest integer. The default value is 1.0
  * pixels.<br>
- * 11.) Put in translate mode. In this mode the image can either be moved with the up, down, right, and left buttons or
- * moved a distance and direction with mouse dragging. 12.) Put in POINT_VOI mode for setting the location of reference
- * slice markers. In this mode reference slice markers can be moved with the up,down, right, and left buttons or dragged
- * with a pressed mousebutton. Red markers are used.<br>
- * 13.) Put in the POINT_VOI mode for setting the location of adjusted slice markers. In this mode adjusted slice
- * markers can be moved with the up, down, right, and left buttons or dragged with a pressed mousebutton. Green markers
- * are used.<br>
- * 14.) up button for image translation in translate mode and rotation center and marker movements in POINT_VOI mode.
+ * 9.) Put in translate mode. In this mode the image can either be moved with the up, down, right, and left buttons or
+ * moved a distance and direction with mouse dragging. 
+ * 10.) up button for image translation in translate mode.
  * <br>
- * 15.) down button for image translation in translate mode and rotation center and marker movements in POINT_VOI mode.
+ * 11.) down button for image translation in translate mode.
  * <br>
- * 16.) right button for image translation in translate mode and rotation center and marker movements in POINT_VOI mode.
+ * 12.) right button for image translation in translate mode.
  * <br>
- * 17.) left button for image translation in translate mode and rotation center and marker movements in POINT_VOI mode.
+ * 13.) left button for image translation in translate mode.
  * <br>
- * 18.) Set degree increment for image rotations. Values can range from 0.01 to 360.0 degrees. The default value is 1.0
+ * 14.) Set degree increment for image rotations. Values can range from 0.01 to 360.0 degrees. The default value is 1.0
  * degrees.<br>
- * 19.) Put in rotate mode for rotating the image. In this mode the image can be moved either with the cw and ccw
- * buttons or moved an angle determined by the angle moved around the rotation center point as given by a mouse press
- * followed by a mouse release. There is no rotation response to mouse dragging. The delay times are too long to permit
- * image rotations with mouse dragging.<br>
- * 20.) cw button for rotating an image clockwise in rotate mode.<br>
- * 21.) ccw button for rotating an image counterclockwise in rotate mode.<br>
+ * 15.) Put in rotate mode for rotating the image. In this mode the image can be moved either with the cw and ccw
+ * buttons or moved an angle determined by the angle moved around the rotation center point as given by mouse dragging.<br>
+ * 16.) cw button for rotating an image clockwise in rotate mode.<br>
+ * 17.) ccw button for rotating an image counterclockwise in rotate mode.<br>
+ * 
+ * On the dual tab 16 toolbar buttons are present:</p>
+ * 
+ * * <p>1.) Display LUT table calls forth a display panel which allows the user to set separate histograms for the
+ * reference and adjusted slices.<br>
+ * 2.) Magnify reference image 2.0X.<br>
+ * 3.) Magnify reference image 0.5X.<br>
+ * 4.) Magnify adjusted image 2.0X.<br>
+ * 5.) Magnify adjusted image 0.5X.<br>
+ * 6.) Apply least squares alignment.<br>
+ * 7.) Apply thin plate spline alignment.<br>
+ * 8.) Reset image to original state and remove all markers.<br>
+ * 9.) Put in POINT_VOI mode for setting the location of reference slice markers. Red markers are used.<br>
+ * 10.) Put in the POINT_VOI mode for setting the location of adjusted slice markers. Green markers are used.<br>
+ * 11.) Delete selected reference slice markers.<br>
+ * 12.) Delete selected adjusted slice markers.<br>
+ * 13.) Copy reference markers to the adjusted image.<br>
+ * 14.) Copy adjusted markers to the reference image.<br>
+ * 15.) Return to default mode.<br>
+ * 16.) Commit the slice to image.<br>
  * </p>
  *
  * @version  1.0
@@ -234,9 +245,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private JMenuItem itemHelp; // menu item to close registration window
-
-    /** DOCUMENT ME! */
-    private JCheckBoxMenuItem itemIntensityTPSpline;
 
     /** DOCUMENT ME! */
     private JButton leftButton; // transform left
@@ -856,9 +864,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             }
         } else if (command.equals("tpSpline")) {
             tpSpline();
-            // if (this.itemIntensityTPSpline.isSelected()) {
-            // intensityTPSpline();
-            // }
         } else if (command.equals("resetSlice")) {
 
             for (i = 0; i < bufferSize; i++) {
@@ -1728,7 +1733,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             openingMenuBar = new JMenuBar();
             itemHelp = new JMenuItem("Help");
             itemClose = new JMenuItem("Close Registration");
-            itemIntensityTPSpline = new JCheckBoxMenuItem("Thin plate spline for intensity");
             showVOIs = new JCheckBoxMenuItem("Show VOIs in blended window");
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameRegistrationTool.buildMenu");
@@ -1758,10 +1762,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         showVOIs.setFont(MipavUtil.font12B);
         showVOIs.setActionCommand("toggleVOIs");
         fileMenu.add(showVOIs);
-
-        itemIntensityTPSpline.setSelected(false);
-        itemIntensityTPSpline.setFont(font12B);
-        fileMenu.add(itemIntensityTPSpline);
 
         openingMenuBar.add(fileMenu);
         openingMenuBar.add(helpMenu);
