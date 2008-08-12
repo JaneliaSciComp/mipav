@@ -2554,8 +2554,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             }
         } // else
 
-        TriMesh kMeshes = new TriMesh(new VertexBuffer(m_akVertex), new IndexBuffer(m_aiConnect));
-        FileSurface_WM.saveSingleMesh(kName, srcImage, true, kMeshes);
+        TriMesh kMesh = new TriMesh(new VertexBuffer(m_akVertex), new IndexBuffer(m_aiConnect));
+        FileSurface_WM.save(kName, kMesh, 0, kMesh.VBuffer, flip, direction, startLocation, box, inverseDicomMatrix);
     }
 
     /**

@@ -1741,8 +1741,8 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
                 m_akVertex[i].Z = (m_akVertex[i].Z * m_fZDelta * direction[2]) + startLocation[2];
             }
         } // else
-        TriMesh kMeshes = new TriMesh(new VertexBuffer(m_akVertex), new IndexBuffer(m_aiConnect));
-        FileSurface_WM.saveSingleMesh(kName, srcImage, true, kMeshes);
+        TriMesh kMesh = new TriMesh(new VertexBuffer(m_akVertex), new IndexBuffer(m_aiConnect));
+        FileSurface_WM.save(kName, kMesh, 0, kMesh.VBuffer, flip, direction, startLocation, box, inverseDicomMatrix);
     }
 
     /**
