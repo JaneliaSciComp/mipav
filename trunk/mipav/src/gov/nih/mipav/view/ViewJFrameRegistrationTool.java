@@ -3283,7 +3283,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             if (command.equals("Apply")) {
 
                 if (pixel == true) {
-                    System.out.println("HERE!");
 
                     if (testParameter(field.getText(), 0.01, 2048.0)) {
                         increment = Float.valueOf(field.getText()).floatValue();
