@@ -32,11 +32,11 @@ import javax.swing.event.*;
  * <p>The adjustable image slice moves are determined by floating point values fed into a transform routine that
  * performs bilinear interpolation.</p>
  *
- * <p>The file menu has 4 items, Open Point VOI, Save VOI as, Save image as, and Close registration. A reference slice
+ * <p>The file menu has 1 item, Close registration. A reference slice
  * slider selects the slice which does not move and against which the other slices are adjusted. An adjusted slice
  * slider selects a slice which will be moved into a desired alignment with the reference slice. An alpha blending
- * slider determines the percentages of the image produced by the reference slice(image R) and the adjusted slice(image
- * A). 21 toolbar buttons are present:</p>
+ * slider determines the percentages of the image produced by the reference slice(image R) and the adjusted slice(imageA).
+ * 24 toolbar buttons are present:</p>
  *
  * <p>1.) Display LUT table calls forth a display panel which allows the user to set separate histograms for the
  * reference and adjusted slices.<br>
@@ -52,28 +52,30 @@ import javax.swing.event.*;
  * to 2048.0. Movements of the rotation center will only be performed to the nearest integer. The default value is 1.0
  * pixels.<br>
  * 11.) Put in translate mode. In this mode the image can either be moved with the up, down, right, and left buttons or
- * moved a distance and direction with mouse dragging. 12.) Put in POINT_VOI mode for setting the location of reference
- * slice markers. In this mode reference slice markers can be moved with the up,down, right, and left buttons or dragged
- * with a pressed mousebutton. Red markers are used.<br>
- * 13.) Put in the POINT_VOI mode for setting the location of adjusted slice markers. In this mode adjusted slice
- * markers can be moved with the up, down, right, and left buttons or dragged with a pressed mousebutton. Green markers
- * are used.<br>
- * 14.) up button for image translation in translate mode and rotation center and marker movements in POINT_VOI mode.
+ * moved a distance and direction with mouse dragging. 
+ * 12.) up button for image translation in translate mode and rotation center and marker movements in POINT_VOI mode.
  * <br>
- * 15.) down button for image translation in translate mode and rotation center and marker movements in POINT_VOI mode.
+ * 13.) down button for image translation in translate mode and rotation center and marker movements in POINT_VOI mode.
  * <br>
- * 16.) right button for image translation in translate mode and rotation center and marker movements in POINT_VOI mode.
+ * 14.) right button for image translation in translate mode and rotation center and marker movements in POINT_VOI mode.
  * <br>
- * 17.) left button for image translation in translate mode and rotation center and marker movements in POINT_VOI mode.
+ * 15.) left button for image translation in translate mode and rotation center and marker movements in POINT_VOI mode.
  * <br>
- * 18.) Set degree increment for image rotations. Values can range from 0.01 to 360.0 degrees. The default value is 1.0
+ * 16.) Set degree increment for image rotations. Values can range from 0.01 to 360.0 degrees. The default value is 1.0
  * degrees.<br>
- * 19.) Put in rotate mode for rotating the image. In this mode the image can be moved either with the cw and ccw
- * buttons or moved an angle determined by the angle moved around the rotation center point as given by a mouse press
- * followed by a mouse release. There is no rotation response to mouse dragging. The delay times are too long to permit
- * image rotations with mouse dragging.<br>
- * 20.) cw button for rotating an image clockwise in rotate mode.<br>
- * 21.) ccw button for rotating an image counterclockwise in rotate mode.<br>
+ * 17.) Put in rotate mode for rotating the image. In this mode the image can be moved either with the cw and ccw
+ * buttons or moved an angle around the rotation center point as given by mouse dragging.  The initial rotation
+ * point is the center, but a new rotation point can be set with a mouse press.<br>
+ * 18.) cw button for rotating an image clockwise in rotate mode.<br>
+ * 19.) ccw button for rotating an image counterclockwise in rotate mode.<br>
+ * 20.) Put in POINT_VOI mode for setting the location of reference slice markers. Red markers are used.<br>
+ * 21.) Put in the POINT_VOI mode for setting the location of adjusted slice markers. Green markers are used.
+ * Green markers move with translations and rotations.<br>
+ * 22.) Delete selected reference slice markers.<br>
+ * 23.) Delete selected adjusted slice markers.<br>
+ * 24.) Return to default mode.<br>
+ 
+ 
  * </p>
  *
  * @version  1.0
