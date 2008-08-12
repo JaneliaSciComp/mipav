@@ -1796,7 +1796,6 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
      * @param  entireFlag  Flag indicating if histogram should be made of entire image.
      */
     private void buildPanelB(ModelImage image, boolean entireFlag) {
-    	System.out.println("testing");
         // go calc histo
         calcHistogram(IMAGE_B, entireFlag, false);
 
@@ -1820,7 +1819,12 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
         
         lutAdjustCheckboxB = new JCheckBox("0 to 1 LUT adjustment");
         lutAdjustCheckboxB.setFont(MipavUtil.font12);
-        lutAdjustCheckboxB.setSelected(imageA.getParentFrame().getComponentImage().isZeroToOneLUTAdj());
+        if (image.getParentFrame() != null) {
+            lutAdjustCheckboxB.setSelected(image.getParentFrame().getComponentImage().isZeroToOneLUTAdj());
+        }
+        else if (regComponent != null) {
+            lutAdjustCheckboxB.setSelected(regComponent.isZeroToOneLUTAdj());        
+        }
         lutAdjustCheckboxB.addItemListener(this);
 
         GridBagConstraints gbc = new GridBagConstraints();
