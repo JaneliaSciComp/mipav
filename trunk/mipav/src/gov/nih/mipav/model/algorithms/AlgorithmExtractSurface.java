@@ -34,7 +34,7 @@ import java.util.*;
  *
  * @version  0.1 June, 2001
  * @author   Matthew J. McAuliffe, Ph.D.
- * @author   David H. Eberly, Ph.D. wrote all the extration and decimation code found in the SurfaceExtraction,
+ * @author   David H. Eberly, Ph.D. wrote all the extraction and decimation code found in the SurfaceExtraction,
  *           SurfaceDecimation and associated classes, with a little input from Matt with speed and memory optimizations
  * @see      ModelSurfaceExtractor
  * @see      ModelSurfaceDecimator
@@ -53,14 +53,6 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
     /** Extract surface based on intensity level. */
     public static final int LEVEL_MODE = 2;
 
-    /** Do not perform triangle consistency checking - all counter clockwise or all clockwise. */
-    public static final int NONE_MODE = 0;
-
-    /** Use adjacency model to perform triangle consistency. */
-    public static final int ADJ_MODE = 1;
-
-    /** Use smoothing model to perform triangle consistency. Smooths normals. */
-    public static final int SMOOTH_MODE = 2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -70,10 +62,10 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
     /** The amount to blur to smooth surface. */
     private float blurSigma = 0.5f;
 
-    /** If true then the extracted surface is decimated into a continous level of detail surface (clod). */
+    /** If true then the extracted surface is decimated into a continuous level of detail surface (clod). */
     private boolean decimateFlag;
 
-    /** Indicates level surface to be extraced. */
+    /** Indicates level surface to be extracted. */
     private float level;
 
     /** Mask image to extract surface from. */
@@ -82,23 +74,9 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
     /** Indicates mode - VOI, LEVELSET, or MASK. */
     private int mode;
 
-    /** The number of smoothing iterations to perform. */
-    private int smoothIterations = 2;
-
-    /** Positive smoothing scale factor. */
-    private float smoothLambda = 0.33f;
-
-    /** If true then the mesh of the surface is smoothed before it is saved. */
-    private boolean smoothMeshFlag;
-
-    /** Negative smoothing scale factor. */
-    private float smoothMu = -0.34f;
-
     /** Path and name of extracted surface file. ".sur" will be appended if necessary. */
     private String surfaceFileName;
 
-    /** Indicates triangle consistency mode. */
-    private int triangleConsistencyMode = NONE_MODE;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -107,44 +85,22 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
      *
      * @param  image     mask image or grayscale where a level surface is to be extracted
      * @param  level     indicates level surface to be extraced
-     * @param  mode      DOCUMENT ME!
-     * @param  triMode   DOCUMENT ME!
+     * @param  mode      Indicates mode - VOI, LEVELSET, or MASK.
      * @param  decFlag   indicates whether or not the decimation into a CLOD should take place.
      * @param  blurFlag  if true then the input image is blurred slightly
      * @param  sigma     the amount to blur the image
      * @param  fileName  path and name of extracted surface file. ".sur" will be appended if necessary.
      */
-    public AlgorithmExtractSurface(ModelImage image, float level, int mode, int triMode, boolean decFlag,
+    public AlgorithmExtractSurface(ModelImage image, float level, int mode, boolean decFlag,
                                    boolean blurFlag, float sigma, String fileName) {
 
-        // default to no mesh smoothing
-        this(image, level, mode, triMode, decFlag, blurFlag, sigma, fileName, false);
-    }
-
-    /**
-     * Creates a new AlgorithmExtractSurface object.
-     *
-     * @param  image       mask image or grayscale where a level surface is to be extracted
-     * @param  level       indicates level surface to be extraced
-     * @param  mode        DOCUMENT ME!
-     * @param  triMode     DOCUMENT ME!
-     * @param  decFlag     indicates whether or not the decimation into a CLOD should take place.
-     * @param  blurFlag    if true then the input image is blurred slightly
-     * @param  sigma       the amount to blur the image
-     * @param  fileName    path and name of extracted surface file. ".sur" will be appended if necessary.
-     * @param  smoothFlag  whether the generated mesh should have smoothing applied to it
-     */
-    public AlgorithmExtractSurface(ModelImage image, float level, int mode, int triMode, boolean decFlag,
-                                   boolean blurFlag, float sigma, String fileName, boolean smoothFlag) {
         super(null, image);
         decimateFlag = decFlag;
         this.blurFlag = blurFlag;
         this.level = level;
         this.mode = mode;
-        this.triangleConsistencyMode = triMode;
         blurSigma = sigma;
         surfaceFileName = fileName;
-        smoothMeshFlag = smoothFlag;
         init();
     }
 
@@ -191,19 +147,6 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
         if (maskImage.getNDims() > 2) {
             extractSurface();
         }
-    }
-
-    /**
-     * Changes the surface smoothing settings.
-     *
-     * @param  iters   the number of iterations
-     * @param  mu      negative scale factor
-     * @param  lambda  positive scale factor
-     */
-    public void setSmoothnessVars(int iters, float mu, float lambda) {
-        smoothIterations = iters;
-        smoothMu = mu;
-        smoothLambda = lambda;
     }
 
     /**
@@ -351,14 +294,6 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
             buffer2 = null;
             fireProgressStateChanged(50);
-
-            if (triangleConsistencyMode == SMOOTH_MODE) {
-                //kMesh.smoothTwo(2, 0.03f, true, 0.01f, false);
-            }
-
-            if (smoothMeshFlag) {
-                //kMesh.smoothThree(smoothIterations, smoothLambda, smoothMu, false);
-            }
 
             if (decimateFlag == true) {
                 fireProgressStateChanged("Initializing surface.");
