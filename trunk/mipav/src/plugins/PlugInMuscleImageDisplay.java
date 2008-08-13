@@ -419,6 +419,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         progressBar.dispose();
         setVisible(true);
         
+        //end automatic segmentation, prepare buffer for automatic calculations
         Iterator<String> itr = voiBuffer.keySet().iterator();
         
         while(itr.hasNext()) {
@@ -429,8 +430,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	}
         }
         
-        itr = voiBuffer.keySet().iterator();
         //always perform new calculation here, no need to check
+        itr = voiBuffer.keySet().iterator();
         while(itr.hasNext()) {
         	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
         	if(voi.getCalcEligible() && !voi.isEmpty()) {
@@ -445,7 +446,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        System.out.println(e);
     	String command = e.getActionCommand();
         //run through toggle buttons to see if a menu selected one (updates the button status)
         getControls().getTools().setToggleButtonSelected(command);
@@ -486,36 +486,30 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	((AnalysisPrompt)tabs[resultTabLoc]).setSlice(getViewableSlice());
         	((AnalysisPrompt)tabs[resultTabLoc]).setUpDialog();
         	((AnalysisPrompt)tabs[resultTabLoc]).enableCalcOutput();
-        } else if (!(command.equals(DialogPrompt.OUTPUT) ||
-        		command.equals(DialogPrompt.SAVE) ||
-        		command.equals(DialogPrompt.SELECT_ALL))) {
-        	if(command.equals(DialogPrompt.CANCEL)) {
-        		unlockToPanel(voiTabLoc);
-        		//initMuscleImage(activeTab);
-        	} else if(command.equals(DialogPrompt.HIDE_ALL)) {
-        		getActiveImage().unregisterAllVOIs();
-        		updateImages(true);
-        	} else if(command.equals(DialogPrompt.OK) && 
-        			tabs[voiTabLoc].getCompleted() == true) {
-        		unlockToPanel(voiTabLoc);
-        		//initMuscleImage(activeTab);
-        	} else if(command.equals(DialogPrompt.BACK)) {
-        		unlockToPanel(resultTabLoc);
-        		getActiveImage().unregisterAllVOIs();
-        		//initMuscleImage(activeTab);
-        	} else if(command.equals(DialogPrompt.EXIT)) {
-            	close();
-        	} else if(command.equals(DialogPrompt.HELP)) {
-        		if(imageType.equals(ImageType.Thigh))
-        			MipavUtil.showHelp("MS00001");
-        		else //image is of type abdomen
-        			MipavUtil.showHelp("MS00050");
-        	} else {
-        		super.actionPerformed(e);
-        	}
-        } else {
-        	super.actionPerformed(e);
-        }
+        } else if(command.equals(DialogPrompt.CANCEL)) {
+    		unlockToPanel(voiTabLoc);
+    		//initMuscleImage(activeTab);
+    	} else if(command.equals(DialogPrompt.HIDE_ALL)) {
+    		getActiveImage().unregisterAllVOIs();
+    		updateImages(true);
+    	} else if(command.equals(DialogPrompt.OK) && 
+    			tabs[voiTabLoc].getCompleted() == true) {
+    		unlockToPanel(voiTabLoc);
+    		//initMuscleImage(activeTab);
+    	} else if(command.equals(DialogPrompt.BACK)) {
+    		unlockToPanel(resultTabLoc);
+    		getActiveImage().unregisterAllVOIs();
+    		//initMuscleImage(activeTab);
+    	} else if(command.equals(DialogPrompt.EXIT)) {
+        	close();
+    	} else if(command.equals(DialogPrompt.HELP)) {
+    		if(imageType.equals(ImageType.Thigh))
+    			MipavUtil.showHelp("MS00001");
+    		else //image is of type abdomen
+    			MipavUtil.showHelp("MS00050");
+    	} else {
+    		super.actionPerformed(e);
+    	}
     }
     
     /**
@@ -3164,9 +3158,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		        	pressAvailableButtons();
 		        } else if (command.equals(SAVE)) {
 		        	setVisible(false);
+		        	boolean lutBuffer = lutOn;
 		        	getActiveImage().getParentFrame().requestFocus();
 		        	
 		        	processCalculations(true, true);
+		        	//note analysis turns off LUT automatically
+		        	if(lutOn = lutBuffer) 
+		        		loadLUT();
 		        	setVisible(true);
 		        } else if (command.equals(TOGGLE_LUT)) {
 		        	if(!lutOn) {
@@ -4664,7 +4662,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	     * <p>install the panels of source directory, destination directory, the checkbox for approving the
 	     * translation-table file and the panel containing the ok and cancel buttons. Installs the checkbox panel.</p>
 	     *
-	     * @param  voiList  DOCUMENT ME!
+	     * @param  voiList  list of existing vois (possibly without area/volume) that exist in this image.
 	     */
 	    public PlugInVOIStatistics(VOIVector voiList) {
 	        super(voiList);
