@@ -208,10 +208,8 @@ public class FileSurface_WM {
 
                     if (isSur == true) {
                         akComponent[i] = loadTMesh(in, progress, i * 100 / iQuantity, iQuantity,
-                                                   true, kColor, fOpacity, kMaterial, iLOD,
+                                                   true, kColor, fOpacity, kMaterial,
                                                    startLocation, direction, box );
-                        akComponent[i].SetName( file.getName() );
-                        System.err.println( "box " + box[0] + " " +  box[1] + " " +  box[2] );
                         xBox = box[0];
                         yBox = box[1];
                         zBox = box[2];
@@ -222,81 +220,54 @@ public class FileSurface_WM {
                             akComponent[i] = loadVRMLMesh(in, progress, i * 100 / iQuantity, iQuantity,
                                                           (i == 0),
                                                           startLocation, direction, box );
-                            akComponent[i].SetName( file.getName() );
-                            System.err.println( "box " + box[0] + " " +  box[1] + " " +  box[2] );
                     	}
                         else if (file.getName().endsWith("vtk")){
                             //vtk legacy
                             akComponent[i] = loadVTKLegacyMesh(in, progress, i * 100 / iQuantity, iQuantity, (i == 0), file.getName());
-                            if ( akComponent[i] != null)
-                            {
-                                akComponent[i].SetName( file.getName() );
-                            }
                         }
                     	else if(file.getName().endsWith("vtp")) {
                             //vtk xml
                             akComponent[i] = loadVTKXMLMesh( file.getAbsolutePath(), file.getName(), file.getParent());
-                            if ( akComponent[i] != null)
-                            {
-                                akComponent[i].SetName( file.getName() );
-                            }
                     	}
                     	else if (file.getName().endsWith("stla")) {
                             akComponent[i] = loadSTLAsciiMesh( file );
-                            if ( akComponent[i] != null)
-                            {
-                                akComponent[i].SetName( file.getName() );
-                            }
                     	}
                     	else if (file.getName().endsWith("stlb")) {
                             akComponent[i] = loadSTLBinaryMesh( in );
-                            if ( akComponent[i] != null)
-                            {
-                                akComponent[i].SetName( file.getName() );
-                            }
                     	}
                     	else if (file.getName().endsWith("ply")) {
                             akComponent[i] = loadPlyAsciiMesh( file );
-                            if ( akComponent[i] != null)
-                            {
-                                akComponent[i].SetName( file.getName() );
-                            }
                     	}
                         else if (file.getName().endsWith("txt")) {
                             akComponent[i] = readAscii( file );
-                            if ( akComponent[i] != null)
-                            {
-                                akComponent[i].SetName( file.getName() );
-                            }
-                        }
-
-                    }
-                    if (akComponent[i] != null) 
-                    {
-                        for (int j = 0; j < akComponent[i].VBuffer.GetVertexQuantity(); j++) {
-
-                            // The mesh files save the verticies as
-                            // pt.x*resX*direction[0] + startLocation
-                            // The loaded vertices go from -1 to 1
-                            // The loaded vertex is at (2.0f*pt.x*xRes - (xDim-1)*xRes)/((dim-1)*res)max
-                            akComponent[i].VBuffer.SetPosition3( j, 
-                                    ((2.0f * (akComponent[i].VBuffer.GetPosition3fX(j) - startLocation[0]) / direction[0]) -
-                                            xBox) / (2.0f*maxBox),
-                                            ((2.0f * (akComponent[i].VBuffer.GetPosition3fY(j) - startLocation[1]) / direction[1]) -
-                                                    yBox) / (2.0f*maxBox),
-                                                    ((2.0f * (akComponent[i].VBuffer.GetPosition3fZ(j) - startLocation[2]) / direction[2]) -
-                                                            zBox) / (2.0f*maxBox) );
                         }
                     }
                 }
                 else
                 {
-                    ClodMesh kClod = loadCMesh(in, null, 0, 1 );
-                    kClod.TargetRecord(kClod.GetMaximumLOD());
+                    ClodMesh kClod = loadCMesh(in, progress, i * 100 / iQuantity, iQuantity );
+                    kClod.TargetRecord(0);
                     kClod.SelectLevelOfDetail();
                     akComponent[i] = kClod;
                 }
+                if (akComponent[i] != null) 
+                {
+                    for (int j = 0; j < akComponent[i].VBuffer.GetVertexQuantity(); j++) {
 
+                        // The mesh files save the verticies as
+                        // pt.x*resX*direction[0] + startLocation
+                        // The loaded vertices go from -1 to 1
+                        // The loaded vertex is at (2.0f*pt.x*xRes - (xDim-1)*xRes)/((dim-1)*res)max
+                        akComponent[i].VBuffer.SetPosition3( j, 
+                                ((2.0f * (akComponent[i].VBuffer.GetPosition3fX(j) - startLocation[0]) / direction[0]) -
+                                        xBox) / (2.0f*maxBox),
+                                        ((2.0f * (akComponent[i].VBuffer.GetPosition3fY(j) - startLocation[1]) / direction[1]) -
+                                                yBox) / (2.0f*maxBox),
+                                                ((2.0f * (akComponent[i].VBuffer.GetPosition3fZ(j) - startLocation[2]) / direction[2]) -
+                                                        zBox) / (2.0f*maxBox) );
+                    }
+                    akComponent[i].SetName( file.getName() );
+                }
                 if (akComponent[i] == null) {
                     MipavUtil.displayError("Error while reading in triangle mesh.");
                     return null;
@@ -425,7 +396,7 @@ public class FileSurface_WM {
     
     public static TriMesh loadTMesh(RandomAccessFile kIn, ViewJProgressBar progress,
                                     int added, int total, boolean isVisible,
-                                    ColorRGB kColor, float fOpacity, MaterialState kMaterial, int iLOD,
+                                    ColorRGB kColor, float fOpacity, MaterialState kMaterial,
                                     float[] startLocation, float[] direction, float[] box )
         throws IOException {
 
@@ -791,272 +762,34 @@ public class FileSurface_WM {
      *
      * @exception  IOException  if there is an error reading from the file
      */
-    public static ClodMesh loadCMesh(RandomAccessFile kIn, JProgressBar pBar, int added, int piece)
+    public static ClodMesh loadCMesh(RandomAccessFile kIn, ViewJProgressBar pBar, int added, int piece)
         throws IOException {
-
+        ColorRGB kColor = new ColorRGB(ColorRGB.WHITE);
+        float fOpacity = 1.0f;
+        MaterialState kMaterial = new MaterialState();
+        float[] startLocation = new float[3];
+        float[] direction = new float[3];
+        float[] box = new float[3]; 
+        TriMesh kMesh = loadTMesh(kIn, pBar, added, piece,
+                true, kColor, fOpacity, kMaterial,
+                startLocation, direction, box );
+        
         try {
-            int i, index, tmpInt, prog;
-            int b1 = 0, b2 = 0, b3 = 0, b4 = 0;
-            int actions;
-            boolean flip;
-            boolean dicom;
-            long c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0, c8 = 0;
-            long tmpLong;
-            int j;
-            //double[][] inverseDicomArray;
-            TransMatrix inverseDicomMatrix = new TransMatrix(4);
-            float[] tCoord = new float[3];
-            float[] coord = new float[3];
-
-            actions = kIn.readInt();
-
-            if ((actions == 1) || (actions == 3)) {
-                flip = true;
-            } else {
-                flip = false;
-            }
-
-            if ((actions == 2) || (actions == 3)) {
-                dicom = true;
-            } else {
-                dicom = false;
-            }
-
-            float[] direction = new float[3];
-            direction[0] = kIn.readInt();
-            direction[1] = kIn.readInt();
-            direction[2] = kIn.readInt();
-
-            byte[] buffer = new byte[24];
-            kIn.read(buffer);
-            index = 0;
-            b1 = buffer[index++] & 0xff;
-            b2 = buffer[index++] & 0xff;
-            b3 = buffer[index++] & 0xff;
-            b4 = buffer[index++] & 0xff;
-
-            tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-
-            float[] startLocation = new float[3];
-            startLocation[0] = Float.intBitsToFloat(tmpInt);
-
-            b1 = buffer[index++] & 0xff;
-            b2 = buffer[index++] & 0xff;
-            b3 = buffer[index++] & 0xff;
-            b4 = buffer[index++] & 0xff;
-
-            tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-
-            startLocation[1] = Float.intBitsToFloat(tmpInt);
-
-
-            b1 = buffer[index++] & 0xff;
-            b2 = buffer[index++] & 0xff;
-            b3 = buffer[index++] & 0xff;
-            b4 = buffer[index++] & 0xff;
-
-            tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-
-            startLocation[2] = Float.intBitsToFloat(tmpInt);
-
-            b1 = buffer[index++] & 0xff;
-            b2 = buffer[index++] & 0xff;
-            b3 = buffer[index++] & 0xff;
-            b4 = buffer[index++] & 0xff;
-
-            tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-
-            float[] box = new float[3];
-            box[0] = Float.intBitsToFloat(tmpInt);
-
-            b1 = buffer[index++] & 0xff;
-            b2 = buffer[index++] & 0xff;
-            b3 = buffer[index++] & 0xff;
-            b4 = buffer[index++] & 0xff;
-
-            tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-
-            box[1] = Float.intBitsToFloat(tmpInt);
-
-
-            b1 = buffer[index++] & 0xff;
-            b2 = buffer[index++] & 0xff;
-            b3 = buffer[index++] & 0xff;
-            b4 = buffer[index++] & 0xff;
-
-            tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-
-            box[2] = Float.intBitsToFloat(tmpInt);
-
-            if (dicom) {
-                buffer = new byte[128];
-                kIn.read(buffer);
-                index = 0;
-                //inverseDicomArray = new double[4][4];
-
-                for (i = 0; i <= 3; i++) {
-
-                    for (j = 0; j <= 3; j++) {
-                        c1 = buffer[index++] & 0xffL;
-                        c2 = buffer[index++] & 0xffL;
-                        c3 = buffer[index++] & 0xffL;
-                        c4 = buffer[index++] & 0xffL;
-                        c5 = buffer[index++] & 0xffL;
-                        c6 = buffer[index++] & 0xffL;
-                        c7 = buffer[index++] & 0xffL;
-                        c8 = buffer[index++] & 0xffL;
-                        tmpLong = ((c1 << 56) | (c2 << 48) | (c3 << 40) | (c4 << 32) | (c5 << 24) | (c6 << 16) |
-                                   (c7 << 8) | c8);
-                        inverseDicomMatrix.set(i,j, Double.longBitsToDouble(tmpLong));
-                    }
-                }
-
-            } // if (dicom)
-
-            // read vertices
-            int iVertexCount = kIn.readInt();
-            Vector3f[] akVertex = new Vector3f[iVertexCount];
-            int bufferSize = 12 * iVertexCount;
-            byte[] bufferVertex = new byte[bufferSize];
-            byte[] bufferNormal = new byte[bufferSize];
-
-            // progress.setLocation(200, 200);
-            // progress.setVisible(true);
-
-            kIn.read(bufferVertex);
-            kIn.read(bufferNormal);
-
-            prog = Math.round((float) iVertexCount * piece / 25);
-
-            for (i = 0, index = 0; i < iVertexCount; i++) {
-                akVertex[i] = new Vector3f();
-
-                b1 = bufferVertex[index++] & 0xff;
-                b2 = bufferVertex[index++] & 0xff;
-                b3 = bufferVertex[index++] & 0xff;
-                b4 = bufferVertex[index++] & 0xff;
-
-                tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-
-                akVertex[i].X = Float.intBitsToFloat(tmpInt);
-
-                b1 = bufferVertex[index++] & 0xff;
-                b2 = bufferVertex[index++] & 0xff;
-                b3 = bufferVertex[index++] & 0xff;
-                b4 = bufferVertex[index++] & 0xff;
-
-                tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-
-                akVertex[i].Y = Float.intBitsToFloat(tmpInt);
-
-                b1 = bufferVertex[index++] & 0xff;
-                b2 = bufferVertex[index++] & 0xff;
-                b3 = bufferVertex[index++] & 0xff;
-                b4 = bufferVertex[index++] & 0xff;
-
-                tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-
-                akVertex[i].Z = Float.intBitsToFloat(tmpInt);
-
-                if (dicom) {
-                    tCoord[0] = akVertex[i].X - startLocation[0];
-                    tCoord[1] = akVertex[i].Y - startLocation[1];
-                    tCoord[2] = akVertex[i].Z - startLocation[2];
-                    inverseDicomMatrix.transform(tCoord, coord);
-                    akVertex[i].X = (coord[0] * direction[0]) + startLocation[0];
-                    akVertex[i].Y = (coord[1] * direction[1]) + startLocation[1];
-                    akVertex[i].Z = (coord[2] * direction[2]) + startLocation[2];
-                } // if (dicom)
-
-                if (flip) {
-
-                    // Flip (kVertex.y - startLocation[1], but
-                    // don't flip startLocation[1]
-                    akVertex[i].Y = (2 * startLocation[1]) + (box[1] * direction[1]) - akVertex[i].Y;
-                    akVertex[i].Z = (2 * startLocation[2]) + (box[2] * direction[2]) - akVertex[i].Z;
-                }
-
-                if ((pBar != null) && (prog != 0) && ((i % prog) == 0)) {
-                    pBar.setValue(added + (i / prog));
-                    pBar.update(pBar.getGraphics());
-                }
-            }
-
-            // read normals (discarded for now)
-            Vector3f[] akNormal = new Vector3f[iVertexCount];
-
-            for (i = 0, index = 0; i < iVertexCount; i++) {
-                akNormal[i] = new Vector3f();
-
-                b1 = bufferNormal[index++] & 0xff;
-                b2 = bufferNormal[index++] & 0xff;
-                b3 = bufferNormal[index++] & 0xff;
-                b4 = bufferNormal[index++] & 0xff;
-
-                tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-
-                akNormal[i].X = Float.intBitsToFloat(tmpInt);
-
-                b1 = bufferNormal[index++] & 0xff;
-                b2 = bufferNormal[index++] & 0xff;
-                b3 = bufferNormal[index++] & 0xff;
-                b4 = bufferNormal[index++] & 0xff;
-
-                tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-
-                akNormal[i].Y = Float.intBitsToFloat(tmpInt);
-
-                b1 = bufferNormal[index++] & 0xff;
-                b2 = bufferNormal[index++] & 0xff;
-                b3 = bufferNormal[index++] & 0xff;
-                b4 = bufferNormal[index++] & 0xff;
-
-                tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-
-                akNormal[i].Z = Float.intBitsToFloat(tmpInt);
-
-                if ((pBar != null) && (prog != 0) && ((i % prog) == 0)) {
-                    pBar.setValue(Math.round(25 / piece) + added + (i / prog));
-                    pBar.update(pBar.getGraphics());
-                }
-            }
-
-            // read connectivity
-            int iIndexCount = kIn.readInt();
-            int[] aiConnect = new int[iIndexCount];
-            byte[] bufferConnect = new byte[iIndexCount * 4];
-            kIn.read(bufferConnect);
-            prog = iIndexCount * piece / 25;
-
-            for (i = 0, index = 0; i < iIndexCount; i++) {
-                b1 = bufferConnect[index++] & 0x000000ff;
-                b2 = bufferConnect[index++] & 0x000000ff;
-                b3 = bufferConnect[index++] & 0x000000ff;
-                b4 = bufferConnect[index++] & 0x000000ff;
-
-                aiConnect[i] = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-
-                if ((pBar != null) && (prog != 0) && ((i % prog) == 0)) {
-                    pBar.setValue(Math.round(50 / piece) + added + (i / prog));
-                    pBar.update(pBar.getGraphics());
-                }
-            }
-
             int iRecordCount = kIn.readInt();
             CollapseRecord[] akRecord = new CollapseRecord[iRecordCount];
-            prog = iRecordCount * piece / 25;
+            int prog = iRecordCount * piece / 25;
 
-            for (i = 0; i < iRecordCount; i++) {
+            for (int i = 0; i < iRecordCount; i++) {
                 akRecord[i] = load(kIn);
 
                 if ((pBar != null) && (prog != 0) && ((i % prog) == 0)) {
-                    pBar.setValue(Math.round(75 / piece) + added + (i / prog));
+                    pBar.updateValueImmed(Math.round(75 / piece) + added + (i / prog));
                     pBar.update(pBar.getGraphics());
                 }
             }
 
-            return new ClodMesh( new VertexBuffer(akVertex), 
-                                 new IndexBuffer(aiConnect), new CollapseRecordArray(iRecordCount,akRecord));
+            return new ClodMesh( kMesh.VBuffer, 
+                                 kMesh.IBuffer, new CollapseRecordArray(iRecordCount,akRecord));
         } catch (IOException e) {
             return null;
         }
@@ -1133,16 +866,13 @@ public class FileSurface_WM {
 
         byte[] bufferInt = new byte[kRecord.IQuantity * 4];
         int tmpInt;
-
         for (int i = 0, index = 0; i < kRecord.IQuantity; i++) {
             tmpInt = kRecord.Index[i];
             bufferInt[index++] = (byte) (tmpInt >>> 24);
             bufferInt[index++] = (byte) (tmpInt >>> 16);
             bufferInt[index++] = (byte) (tmpInt >>> 8);
             bufferInt[index++] = (byte) (tmpInt & 0xff);
-
         }
-
         kOut.write(bufferInt);
     }
     
