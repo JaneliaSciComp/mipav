@@ -1,13 +1,21 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
 import javax.media.opengl.*;
+import javax.vecmath.Matrix4d;
+import javax.vecmath.Quat4d;
+
 import com.sun.opengl.util.*;
+
+import java.awt.Dimension;
 import java.awt.event.*;
 import java.util.Vector;
 
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.*;
 
 import WildMagic.LibApplications.OpenGLApplication.*;
@@ -432,4 +440,95 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         return m_akLights;
     }
+    
+    /**
+     * Build a image with the current rotational transformation matrix. Step.1
+     * convert the java3D transform matrix into a quaternion component. Step.2
+     * convert the quaternion into image( our world ) coordinate
+     * system. Step.3 convert the quaternion into a rotatin matrix. Quaternion
+     * q ( w, x, y, z ): rotation of w around the vector ( x, y, z ); Convert
+     * the quaternion into a rotation matrix. / \ | 1-2*y^2-2*z^2 2*x*y-2*w*z
+     * 2*x*z+2*w*y | | 2*xy+2*w*z 1-2*x^2-2*z^2 2*y*z-2*w*x | | 2*x*z-2*w*y
+     * 2*y*z+2*w*x 1-2*x^2-2*y^2 | \ / Step.4 Calling the transform algorithm
+     * to extract the image.
+     */
+    public void updateImageFromRotation() {
+        int interp = 0;
+        double w, x, y, z;
+        double[][] result = new double[4][4];
+
+        // Matrix3f mtx = new Matrix3f();
+        // Quat4d quat = new Quat4d();
+        Quaternion quat = new Quaternion();
+
+        // Step.1
+        Matrix3f kRotate = m_spkScene.Local.GetRotate();
+        // currentTransform.get(mtx);
+        //  mtx = kRotate;
+        // mtx.get(quat);
+        quat.FromRotationMatrix(kRotate);
+        
+        Vector3f rotAxis = new Vector3f();
+        quat.ToAxisAngle(rotAxis);
+        // Step.2
+        w = 1;
+        x = rotAxis.X;
+        y = -rotAxis.Y;
+        z = -rotAxis.Z;
+
+        // Step.3
+        TransMatrix transMtx = new TransMatrix(4);
+
+        transMtx.set(0, 0, 1 - (2 * (y * y)) - (2 * (z * z)));
+        transMtx.set(0, 1, 2 * ((x * y) - (w * z)));
+        transMtx.set(0, 2, 2 * ((x * z) + (w * y)));
+        transMtx.set(0, 3, 0);
+        transMtx.set(1, 0, 2 * ((x * y) + (w * z)));
+        transMtx.set(1, 1, 1 - (2 * (x * x)) - (2 * (z * z)));
+        transMtx.set(1, 2, 2 * ((y * z) - (w * x)));
+        transMtx.set(1, 3, 0);
+        transMtx.set(2, 0, 2 * ((x * z) - (w * y)));
+        transMtx.set(2, 1, 2 * ((y * z) + (w * x)));
+        transMtx.set(2, 2, 1 - (2 * (x * x)) - (2 * (y * y)));
+        transMtx.set(2, 3, 1);
+        transMtx.set(3, 0, 0);
+        transMtx.set(3, 1, 0);
+        transMtx.set(3, 2, 0);
+        transMtx.set(3, 3, 1);
+
+        TransMatrix xfrm = new TransMatrix(4);
+
+        WildMagic.LibFoundation.Mathematics.Vector3f center = m_kImageA.getImageCentermm(false);
+
+        xfrm.setTranslate(center.X, center.Y, center.Z);
+        xfrm.Mult(transMtx);
+        xfrm.setTranslate(-center.X, -center.Y, -center.Z);
+
+        // Step.4
+        float[] resols = m_kImageA.getFileInfo()[0].getResolutions();
+        int[] dim = m_kImageA.getFileInfo()[0].getExtents();
+        int xDim = dim[0];
+        int yDim = dim[1];
+        int zDim = dim[2];
+        AlgorithmTransform algoTrans = new AlgorithmTransform(m_kImageA, xfrm, interp, resols[0], resols[1], resols[2],
+                                                              xDim, yDim, zDim, false, false, false);
+
+        algoTrans.setUpdateOriginFlag(false);
+        algoTrans.run();
+
+        ModelImage resultImage1 = algoTrans.getTransformedImage();
+
+        if ((algoTrans.isCompleted() == true) && (resultImage1 != null)) {
+            resultImage1.calcMinMax();
+           
+            // The algorithm has completed and produced a new image to be displayed.
+            try {
+                new ViewJFrameImage(resultImage1, null, new Dimension(610, 200));
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Out of memory: unable to open new frame");
+            }
+           
+        }
+    }
+    
 }
