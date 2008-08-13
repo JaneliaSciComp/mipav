@@ -2570,10 +2570,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
         } else if (cursorMode == ERASER_PAINT) {
             performPaint(mouseEvent, true);
-            imageActive.notifyImageDisplayListeners();
+            if(imageActive.getTriImageFrame() == null) {
+            	imageActive.notifyImageDisplayListeners();
+            }else {
+            	imageActive.notifyImageDisplayListeners_notTriFrame();
+            }
         } else if (cursorMode == PAINT_VOI) {
             performPaint(mouseEvent, mouseMods == MouseEvent.BUTTON3_MASK);
-            imageActive.notifyImageDisplayListeners();
+            if(imageActive.getTriImageFrame() == null) {
+            	imageActive.notifyImageDisplayListeners();
+            }else {
+            	imageActive.notifyImageDisplayListeners_notTriFrame();
+            }
         }
     }
 
@@ -5038,7 +5046,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
             performPaint(mouseEvent, mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK);
-            imageActive.notifyImageDisplayListeners();
+            //imageActive.notifyImageDisplayListeners();  8/12/2008-nish  Commented out b/c we want update on mouse release
         }
 
         if ( (cursorMode == MAG_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {

@@ -2100,6 +2100,25 @@ public class ModelImage extends ModelStorageBase {
             }
         }
     }
+    
+    /**
+     * Used to notify all frames except the triImage frames that display this image model need to be updated.
+     */
+    public synchronized void notifyImageDisplayListeners_notTriFrame() {
+
+        if (frameList == null) {
+            return;
+        }
+
+        for (int i = 0; i < frameList.size(); i++) {
+
+            if ((frameList.elementAt(i) instanceof ViewJFrameBase)) {
+            	if(!(frameList.elementAt(i) instanceof gov.nih.mipav.view.ViewJFrameTriImage)) {
+            		frameList.elementAt(i).updateImages();
+            	}
+            }
+        }
+    }
 
     /**
      * Used to notify all frames that display this image model need to be updated.
