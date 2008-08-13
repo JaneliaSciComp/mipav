@@ -2566,10 +2566,21 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             g.dispose();
 
             return;
-        } else if (mode == compImage.PAINT_VOI) {
+        } else if (mode == ViewJComponentEditImage.PAINT_VOI) {
             compImage.performPaint(mouseEvent, mouseMods == MouseEvent.BUTTON3_MASK);
-            compImage.getActiveImage().notifyImageDisplayListeners();
-        }
+            if(compImage.getActiveImage().getTriImageFrame() == null) {
+            	compImage.getActiveImage().notifyImageDisplayListeners();
+            }else {
+            	compImage.getActiveImage().notifyImageDisplayListeners_notTriFrame();
+            }
+        }else if (mode == ViewJComponentEditImage.ERASER_PAINT) {
+        	compImage.performPaint(mouseEvent, mouseMods == MouseEvent.BUTTON3_MASK);
+            if(compImage.getActiveImage().getTriImageFrame() == null) {
+            	compImage.getActiveImage().notifyImageDisplayListeners();
+            }else {
+            	compImage.getActiveImage().notifyImageDisplayListeners_notTriFrame();
+            }
+        } 
     }
 
     /**
@@ -2927,7 +2938,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
      * @param  mouseEvent  MouseEvent the mouse event
      */
     public void mousePressed(MouseEvent mouseEvent) {
-
         if (compImage instanceof ViewJComponentRegistration) {
             return;
         }
@@ -3993,6 +4003,8 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             if (compImage.getActiveImage().getHistoLUTFrame() != null) {
                 compImage.getActiveImage().getHistoLUTFrame().update();
             }
+        }else if (mode == ViewJComponentEditImage.PAINT_VOI) {
+            	compImage.getActiveImage().notifyImageDisplayListeners();
         }
 
         // reset mousePressIsShiftDown for next mouse click
