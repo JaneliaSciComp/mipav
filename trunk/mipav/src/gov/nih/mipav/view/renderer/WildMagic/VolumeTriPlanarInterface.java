@@ -344,7 +344,7 @@ implements MouseListener, ItemListener, ChangeListener {
         String command = event.getActionCommand();
 
         if (command.equals("Extract")) {
-            //surRender.updateImageFromRotation();
+        	raycastRenderWM.updateImageFromRotation();
         } else if (command.equals("HistoLUT")) {
             insertTab("LUT", histoLUTPanel);
         } else if (command.equals("VolRender")) {
@@ -945,6 +945,11 @@ implements MouseListener, ItemListener, ChangeListener {
 
         clipBox = null;
 
+        if ( surfaceTextureGUI != null ) {
+        	surfaceTextureGUI.dispose();
+        	surfaceTextureGUI = null;
+        }
+        
         if ( surfaceGUI != null ) {
         	surfaceGUI.dispose();
         	surfaceGUI = null;
