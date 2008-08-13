@@ -462,7 +462,7 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
         if (image.getNDims() == 3) {
 
             // Make algorithm
-            extractSurAlgo = new AlgorithmExtractSurfaceCubes(image, level, mode, AlgorithmExtractSurfaceCubes.ADJ_MODE,
+            extractSurAlgo = new AlgorithmExtractSurfaceCubes(image, level, mode,
                                                               decimateFlag, blurFlag, blurValue, fileName);
 
             // This is very important. Adding this object as a listener allows the algorithm to

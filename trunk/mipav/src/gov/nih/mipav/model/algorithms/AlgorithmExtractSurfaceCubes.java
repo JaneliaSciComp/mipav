@@ -20,14 +20,14 @@ import java.util.Vector;
 
 /**
  * Extracts a surface using Marching Cube Extraction. Triangle decimation can be invoked to reduce triangle count. The
- * decimation algorithm produces a continious level of detail (clod) structure that can be used to optimize the the
+ * decimation algorithm produces a continuous level of detail (clod) structure that can be used to optimize the the
  * visualization of the surface. The input to this algorithm is typically a mask image where 0 = background and 100 =
  * object (i.e. interior to a VOI). The mask image is then blurred slightly and the level (50) is extracted. A greyscale
  * image may also be input and a surface is extracted given a level. The steps are:
  *
  * <ol>
  *   <li>Build mask image of VOI (i.e. all point interior to VOI are set to 100. All points exterior are = 0.</li>
- *   <li>Blur mask image if not greyscale</li>
+ *   <li>Blur mask image if not grey-scale</li>
  *   <li>Extract level surface at 50 or user defined level</li>
  *   <li>Save surface ( ".sur")</li>
  *   <li>If decimate then decimate surface and save (".sur")</li>
@@ -35,7 +35,7 @@ import java.util.Vector;
  *
  * @version  0.1 June, 2001
  * @author   Matthew J. McAuliffe, Ph.D.
- * @author   David H. Eberly, Ph.D. wrote all the extration and decimation code found in the SurfaceExtraction,
+ * @author   David H. Eberly, Ph.D. wrote all the extraction and decimation code found in the SurfaceExtraction,
  *           SurfaceDecimation and associated classes, with a little input from Matt with speed and memory optimizations
  * @see      ModelSurfaceExtractor
  * @see      ModelSurfaceDecimator
@@ -71,10 +71,10 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
     /** The amount to blur to smooth surface. */
     private float blurSigma = 0.5f;
 
-    /** If true then the extracted surface is decimated into a continous level of detail surface (clod). */
+    /** If true then the extracted surface is decimated into a continuous level of detail surface (clod). */
     private boolean decimateFlag;
 
-    /** Indicates level surface to be extraced. */
+    /** Indicates level surface to be extracted. */
     private int level;
 
     /** Mask image to extract surface from. */
@@ -83,69 +83,32 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
     /** Indicates mode - VOI, LEVELSET, or MASK. */
     private int mode;
 
-    /** The number of smoothing iterations to perform. */
-    private int smoothIterations = 2;
-
-    /** Positive smoothing scale factor. */
-    private float smoothLambda = 0.33f;
-
-    /** If true then the mesh of the surface is smoothed before it is saved. */
-    private boolean smoothMeshFlag;
-
-    /** Negative smoothing scale factor. */
-    private float smoothMu = -0.34f;
-
     /** Path and name of extracted surface file. ".sur" will be appended if necessary. */
     private String surfaceFileName;
-
-    /** Indicates triangle consistency mode. */
-    private int triangleConsistencyMode = NONE_MODE;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new AlgorithmExtractSurfaceCubes object.
      *
-     * @param  image     mask image or grayscale where a level surface is to be extracted
-     * @param  level     indicates level surface to be extraced
-     * @param  mode      DOCUMENT ME!
-     * @param  triMode   DOCUMENT ME!
-     * @param  decFlag   indicates whether or not the decimation into a CLOD should take place.
-     * @param  blurFlag  if true then the input image is blurred slightly
-     * @param  sigma     the amount to blur the image
-     * @param  fileName  path and name of extracted surface file. ".sur" will be appended if necessary.
-     */
-    public AlgorithmExtractSurfaceCubes(ModelImage image, int level, int mode, int triMode, boolean decFlag,
-                                        boolean blurFlag, float sigma, String fileName) {
-
-        // default to no mesh smoothing
-        this(image, level, mode, triMode, decFlag, blurFlag, sigma, fileName, false);
-    }
-
-    /**
-     * Creates a new AlgorithmExtractSurfaceCubes object.
-     *
-     * @param  image       mask image or grayscale where a level surface is to be extracted
-     * @param  level       indicates level surface to be extraced
-     * @param  mode        DOCUMENT ME!
-     * @param  triMode     DOCUMENT ME!
+     * @param  image       mask image or gray-scale where a level surface is to be extracted
+     * @param  level       indicates level surface to be extracted
+     * @param  mode        Indicates mode - VOI, LEVELSET, or MASK.
      * @param  decFlag     indicates whether or not the decimation into a CLOD should take place.
      * @param  blurFlag    if true then the input image is blurred slightly
      * @param  sigma       the amount to blur the image
      * @param  fileName    path and name of extracted surface file. ".sur" will be appended if necessary.
      * @param  smoothFlag  whether the generated mesh should have smoothing applied to it
      */
-    public AlgorithmExtractSurfaceCubes(ModelImage image, int level, int mode, int triMode, boolean decFlag,
-                                        boolean blurFlag, float sigma, String fileName, boolean smoothFlag) {
+    public AlgorithmExtractSurfaceCubes(ModelImage image, int level, int mode, boolean decFlag,
+                                        boolean blurFlag, float sigma, String fileName) {
         super(null, image);
         decimateFlag = decFlag;
         this.blurFlag = blurFlag;
         this.level = level;
         this.mode = mode;
-        this.triangleConsistencyMode = triMode;
         blurSigma = sigma;
         surfaceFileName = fileName;
-        smoothMeshFlag = smoothFlag;
         init();
     }
 
@@ -195,23 +158,9 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
     }
 
     /**
-     * Changes the surface smoothing settings.
-     *
-     * @param  iters   the number of iterations
-     * @param  mu      negative scale factor
-     * @param  lambda  positive scale factor
-     */
-    public void setSmoothnessVars(int iters, float mu, float lambda) {
-        smoothIterations = iters;
-        smoothMu = mu;
-        smoothLambda = lambda;
-    }
-
-    /**
      * Extracts a surface, in the form of triangles, from an image.
      */
     private void extractSurface() {
-        int i;
         int length;
         //double[][] inverseDicomArray = null;
 
@@ -328,16 +277,6 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
             System.gc();
             fireProgressStateChanged(50);
 
-            if (triangleConsistencyMode == SMOOTH_MODE) {
-                Vector3f[] akVerts = kMesh.VBuffer.GetPositionArray();
-                MeshSmoother kSmoother = new MeshSmoother(kMesh.VBuffer.GetVertexQuantity(), akVerts, kMesh.GetTriangleQuantity(), kMesh.IBuffer.GetData() );
-                //kMesh.smoothTwo(2, 0.03f, true, 0.01f, false);
-            }
-
-            if (smoothMeshFlag) {
-                //kMesh.smoothThree(smoothIterations, smoothLambda, smoothMu, false);
-            }
-
             if (decimateFlag == true) {
                 fireProgressStateChanged("Initializing surface.");
                 kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
@@ -354,7 +293,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                 String kName = surfaceFileName.substring(0,iIndex);
                 
                 fireProgressStateChanged("Surface decimation in progress");
-                for (i = 0; (i < iNumComponents) && !threadStopped; i++) {
+                for (int i = 0; (i < iNumComponents) && !threadStopped; i++) {
                     VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
                     IndexBuffer kIBuffer = new IndexBuffer(kComponents.get(i).GetTriangles());
                     CreateClodMesh kDecimator = new CreateClodMesh(kVBuffer, kIBuffer);
