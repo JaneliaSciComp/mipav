@@ -286,9 +286,9 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
 
         if (button == colorButton) {
             renderBase.setBoxColor(color);
-            if (button == colorButtonBackground) {
-                renderBase.setBackgroundColor(color);
-            }
+        }
+        if (button == colorButtonBackground) {
+            renderBase.setBackgroundColor(color);
         }
     }
 
