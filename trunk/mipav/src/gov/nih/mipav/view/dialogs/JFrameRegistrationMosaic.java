@@ -258,6 +258,7 @@ public class JFrameRegistrationMosaic extends JFrame
                 m_kOpenTileButton.setEnabled(true);
                 m_kUndoButton.setEnabled(false);
                 m_kCloseAllButton.setEnabled(true);
+                repaintButtons();
 
                 m_iReference = m_iSelected;
             }
@@ -270,6 +271,7 @@ public class JFrameRegistrationMosaic extends JFrame
                 m_kRegisterButton.setEnabled(true);
                 m_kUndoButton.setEnabled(false);
                 m_kAdvancedOptionsButton.setEnabled(true);
+                repaintButtons();
 
                 m_iTile = m_iSelected;
             }
@@ -288,6 +290,7 @@ public class JFrameRegistrationMosaic extends JFrame
                 m_kUndoButton.setEnabled(true);
                 m_kSaveButton.setEnabled(true);
                 m_kAdvancedOptionsButton.setEnabled(false);
+                repaintButtons();
             }
         } else if (command.equals("UndoMosaic")) {
 
@@ -302,12 +305,14 @@ public class JFrameRegistrationMosaic extends JFrame
             m_kSaveButton.setEnabled(false);
             m_kCloseAllButton.setEnabled(true);
             m_kAdvancedOptionsButton.setEnabled(true);
+            repaintButtons();
         } else if (command.equals("SaveMosaic")) {
 
             /* Save the new mosaic image */
             if (saveMosaic()) {
                 m_kUndoButton.setEnabled(false);
                 m_kAdvancedOptionsButton.setEnabled(false);
+                repaintButtons();
             }
         } else if (command.equals("CloseAll")) {
 
@@ -321,6 +326,7 @@ public class JFrameRegistrationMosaic extends JFrame
             m_kSaveButton.setEnabled(false);
             m_kCloseAllButton.setEnabled(false);
             m_kAdvancedOptionsButton.setEnabled(false);
+            repaintButtons();
         } else if (command.equals("AdvancedOptions")) {
             new JDialogRegistrationOAR2D(this, m_akImages[m_iReference], m_akImages[m_iTile], m_iCost, m_iDOF,
                                          m_iInterp, m_fRotateBegin, m_fRotateEnd, m_fCoarseRate, m_fFineRate,
@@ -328,6 +334,17 @@ public class JFrameRegistrationMosaic extends JFrame
                                          m_bDisplayTransform, m_fRotationRange, m_fXScaleRange, m_fYScaleRange,
                                          m_iScaleSteps, m_iTranslationRange);
         }
+    }
+    
+    private void repaintButtons() {
+        m_kOpenReferenceButton.repaint();
+        m_kOpenTileButton.repaint();
+        m_kToggleSelectedButton.repaint();
+        m_kRegisterButton.repaint();
+        m_kUndoButton.repaint();
+        m_kSaveButton.repaint();
+        m_kCloseAllButton.repaint();
+        m_kAdvancedOptionsButton.repaint();
     }
 
     /**
