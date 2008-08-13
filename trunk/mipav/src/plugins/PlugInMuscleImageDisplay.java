@@ -3122,10 +3122,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		/**Whether the custom lookup table is being displayed*/
 		private boolean lutOn = false;
 		
-		
-		/**Whether the SELECT_ALL button is in hide or select all mode*/
-		private boolean selectOn = true;
-		
 		/**A mapping of names to color panels for easy referencing. */
 		private TreeMap<String,ColorButtonPanel> checkBoxLocationTree;
 	
@@ -3166,14 +3162,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		        	processCalculations(false, false);
 		        } else if (command.equals(SELECT_ALL)) { 
 		        	pressAvailableButtons();
-		        	//((JButton)e.getSource()).setText(HIDE_ALL);
-		        	//((JButton)e.getSource()).setActionCommand(HIDE_ALL);
-		        	selectOn = false;
-		        //} else if (command.equals(HIDE_ALL)) {
-		        //	pressAvailableButtons(false);
-		        //	((JButton)e.getSource()).setText(SELECT_ALL);
-		        //	((JButton)e.getSource()).setActionCommand(SELECT_ALL);
-		        //	selectOn = true;
 		        } else if (command.equals(SAVE)) {
 		        	setVisible(false);
 		        	getActiveImage().getParentFrame().requestFocus();
@@ -3383,39 +3371,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		    
 		    add(mainPanel, BorderLayout.CENTER);
 		    
-		}
-
-		private boolean checkAndProcessForAllButtonsPressed() {
-			boolean emptyButton = false;
-			boolean stateChanged = false;
-			for(int i=0; i<mirrorButtonCalcItemsArr.length; i++) {
-				for(int j=0; j<mirrorButtonCalcItemsArr[i].length; j++) {
-					if(mirrorButtonCalcItemsArr[i][j].isEnabled() && !mirrorButtonCalcItemsArr[i][j].isSelected()) {
-						emptyButton = true;
-					}	
-				}
-			}
-			for(int i=0; i<noMirrorButtonCalcItemsArr.length; i++) {
-				for(int j=0; j<noMirrorButtonCalcItemsArr[i].length; j++) {
-					if(noMirrorButtonCalcItemsArr[i][j].isEnabled() && !noMirrorButtonCalcItemsArr[i][j].isSelected()) {
-						emptyButton = true;
-					}	
-				}
-			}
-			
-			if(!emptyButton) {
-				for(int i=0; i<buttonGroup.length; i++) {
-					if(buttonGroup[i].getText().equals(SHOW_ALL)) {
-						buttonGroup[i].setText(HIDE_ALL);
-						buttonGroup[i].setActionCommand(HIDE_ALL);
-						selectOn = true;
-						stateChanged = true;
-					}
-				}
-			}
-			
-			return stateChanged;
-			
 		}
 
 		/**
@@ -3739,8 +3694,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 				//loadLUT();
 				updateImages(true);
-				
-				
+						
 				java.awt.Image edgeImage = captureImage();
 				
 				loadVOIs(new String[] {}, 0);
@@ -3748,7 +3702,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				java.awt.Image qaImage = captureImage();
 				removeLUT();
 				PDFclose(edgeImage, qaImage);
-				
 				
 				Set<String> keys = checkBoxLocationTree.keySet();
 				Iterator<String> iter = keys.iterator();
@@ -4069,7 +4022,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		    meanLeanH = (meanLeanH*leanAreaLarge - meanLeanHResidual) / leanArea;
 		    meanTotalH = (meanTotalH*totalAreaLarge - meanTotalHResidual) / totalAreaCount;
 		    
-		    //sign errors result from adding areas that should've been subtracted
+		    //absolute positive function results requires confirmed negative values be flipped
 		    if(meanFatH > 0) {
 		    	meanFatH = -meanFatH;
 		    	meanTotalH = -meanTotalH;
