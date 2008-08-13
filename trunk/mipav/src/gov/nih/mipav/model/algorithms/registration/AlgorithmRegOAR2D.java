@@ -26,54 +26,71 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Vector;
 
-import javax.vecmath.Point3d;
 /**
- * This is an automatic registration method based on FLIRT. FLIRT stands for FMRIB's Linear Image Registration Tool. For
- * more information on FLIRT, visit their homepage at <a href="http://www.fmrib.ox.ac.uk/fsl/flirt/">
+ * This is an automatic registration method based on FLIRT. FLIRT stands for
+ * FMRIB's Linear Image Registration Tool. For more information on FLIRT, visit
+ * their homepage at <a href="http://www.fmrib.ox.ac.uk/fsl/flirt/">
  * http://www.fmrib.ox.ac.uk/fsl/flirt/</a>. Their main paper is:
- *
- * <p>Jenkinson, M. and Smith, S. (2001a).<br>
+ * 
+ * <p>
+ * Jenkinson, M. and Smith, S. (2001a).<br>
  * A global optimisation method for robust affine registration of brain images.<br>
  * <i>Medical Image Analysis</i>, 5(2):143-156.<br>
  * </p>
- *
- * <p>Our algorithm works as follows:<br>
+ * 
+ * <p>
+ * Our algorithm works as follows:<br>
  * 1.) We find the minimum resolution of the images and blur them if neccessary.<br>
  * 2.) We transform the images into isotropic voxels.<br>
  * 3.) We subsample the images by 2, 4, and 8, depending on the resolution.<br>
- * 4.) With the images that were subsampled by 8, we call levelEight. This function will use the coarse sampling rate
- * and optimize translations and global scale at the given rotation. So for example, if the coarse sampling range were
- * -30 to 30 at every 15 degrees, we would optimize at rotations of -30, -15, 0, 15, 30.<br>
- * 5.) Still in levelEight, we now measure the cost at the fine sampling rate. We interpolate the translations and
- * global scale to come up with a good guess as to what the optimized translation would be at that point.<br>
+ * 4.) With the images that were subsampled by 8, we call levelEight. This
+ * function will use the coarse sampling rate and optimize translations and
+ * global scale at the given rotation. So for example, if the coarse sampling
+ * range were -30 to 30 at every 15 degrees, we would optimize at rotations of
+ * -30, -15, 0, 15, 30.<br>
+ * 5.) Still in levelEight, we now measure the cost at the fine sampling rate.
+ * We interpolate the translations and global scale to come up with a good guess
+ * as to what the optimized translation would be at that point.<br>
  * 6.) We take the top 20% of the points and optimize them.<br>
- * 7.) We now have a large multi-array of costs. 20% of those have been optimized and placed back into their original
- * position in the multi-array. We look at the 2 neighbors of a point: + and - one fine sample. If our point has a cost
- * greater than any of these, it is not a minima. Otherwise it is. We save it in a vector of minima.<br>
- * 8.) We optimize the minima over rotation as well as translations and global scale. (Previously we had not optimized
- * over rotation.) We return two vectors, one containing the minima before optimization, one containing the minima after
- * optimization.<br>
- * 9.) We now call levelFour with the images subsampled by 4 and the vectors of minima. We measure the costs of the
- * minima on the new images and sort them. We take the top numMinima in each vector (pre-optimization and
+ * 7.) We now have a large multi-array of costs. 20% of those have been
+ * optimized and placed back into their original position in the multi-array. We
+ * look at the 2 neighbors of a point: + and - one fine sample. If our point has
+ * a cost greater than any of these, it is not a minima. Otherwise it is. We
+ * save it in a vector of minima.<br>
+ * 8.) We optimize the minima over rotation as well as translations and global
+ * scale. (Previously we had not optimized over rotation.) We return two
+ * vectors, one containing the minima before optimization, one containing the
+ * minima after optimization.<br>
+ * 9.) We now call levelFour with the images subsampled by 4 and the vectors of
+ * minima. We measure the costs of the minima on the new images and sort them.
+ * We take the top numMinima in each vector (pre-optimization and
  * post-optimization) and optimize them. We put them all into one vector.<br>
- * 10.) We perturb the rotation by zero and plus-minus fineDelta. If it's not a rigid transformation, we then perturb
- * the global scaling by factors of 0.8, 0.9, 1.0, 1.1, and 1.2.<br>
- * 11.) We optimize the perturbations. We return a vector of the perturbed, optimized minima.<br>
- * 12.) We now call levelTwo with the images subsampled by 2. We measure the costs of the minima at the new images. We
- * optimize the best minimum with 4 degrees of freedom, then 5, then 6. If the user has limited the degrees of freedom
- * to 3, there will only be one optimization run, with 3 degrees of freedom. The function returns the best minimum after
- * optimization.<br>
- * 13.) We call levelOne with the un-subsampled images. At levelOne, one optimization run is performed, with the maximum
- * allowable degrees of freedom, as specified by the user (the max is 6).<br>
- * 14.) The best answer is returned from levelOne. The matrix from this answer is saved in a file and also accessed by
- * the dialog that called this algorithm.<br>
+ * 10.) We perturb the rotation by zero and plus-minus fineDelta. If it's not a
+ * rigid transformation, we then perturb the global scaling by factors of 0.8,
+ * 0.9, 1.0, 1.1, and 1.2.<br>
+ * 11.) We optimize the perturbations. We return a vector of the perturbed,
+ * optimized minima.<br>
+ * 12.) We now call levelTwo with the images subsampled by 2. We measure the
+ * costs of the minima at the new images. We optimize the best minimum with 4
+ * degrees of freedom, then 5, then 6. If the user has limited the degrees of
+ * freedom to 3, there will only be one optimization run, with 3 degrees of
+ * freedom. The function returns the best minimum after optimization.<br>
+ * 13.) We call levelOne with the un-subsampled images. At levelOne, one
+ * optimization run is performed, with the maximum allowable degrees of freedom,
+ * as specified by the user (the max is 6).<br>
+ * 14.) The best answer is returned from levelOne. The matrix from this answer
+ * is saved in a file and also accessed by the dialog that called this
+ * algorithm.<br>
  * </p>
- *
- * <p>Note that when 6 degrees of freedom is used the rotation is set equal to 0 because diffX sets (0,2), diffY sets
- * (1,2), scaleX sets (0,0), scaleY sets (1,1), skewX sets (0,1), and skewY sets (1,0) so all 6 elements are set.</p>
- *
- * @author  Neva Cherniavsky
- * @author  Matthew McAuliffe
+ * 
+ * <p>
+ * Note that when 6 degrees of freedom is used the rotation is set equal to 0
+ * because diffX sets (0,2), diffY sets (1,2), scaleX sets (0,0), scaleY sets
+ * (1,1), skewX sets (0,1), and skewY sets (1,0) so all 6 elements are set.
+ * </p>
+ * 
+ * @author Neva Cherniavsky
+ * @author Matthew McAuliffe
  */
 public class AlgorithmRegOAR2D extends AlgorithmBase {
 
@@ -122,9 +139,6 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
     /** If true subsample. */
     private boolean doSubsample;
-
-    /** Dummy initial values used to create a Powell's algorithm instance before setting initial. */
-    private double[] dummy = { 0, 0, 0, 0, 0, 0, 0 };
 
     /** Isotropic input image. */
     private ModelImage imageInputIso;
@@ -306,43 +320,43 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     /**
      * Used to store all paths for levelEigth, levelFour, levelTwo and levelOne.
      */
-    private Vector<Vector<Point3d>>[] paths = new Vector[6];
+    private Vector<Vector<Vector3f>>[] paths = new Vector[6];
     
     /**
      * The optimal path.
      */
-    private Vector<Point3d> optimalPath = new Vector<Point3d>();
+    private Vector<Vector3f> optimalPath = new Vector<Vector3f>();
     
     private boolean pathRecorded = false;
     
-    private static final Point3d[] originalPath = {
-    	new Point3d(18.0,27.201007843017578,35.089054107666016),
-    	new Point3d(18.0,26.926931381225586,35.089054107666016),
-    	new Point3d(18.0,26.926931381225586,37.107540130615234),
-    	new Point3d(18.0,26.987857818603516,37.107540130615234),
-    	new Point3d(18.0,26.987857818603516,37.013275146484375),
-    	new Point3d(18.0,26.987857818603516,37.013275146484375),
-    	new Point3d(19.229249954223633,26.987857818603516,37.013275146484375),
-    	new Point3d(19.229249954223633,26.926382064819336,37.013275146484375),
-    	new Point3d(19.229249954223633,26.926382064819336,39.34950256347656),
-    	new Point3d(19.83618927001953,26.926382064819336,39.34950256347656),
-    	new Point3d(19.83618927001953,27.25579261779785,39.34950256347656),
-    	new Point3d(19.83618927001953,27.25579261779785,40.23905563354492),
-    	new Point3d(19.83618927001953,27.25579261779785,40.23905563354492),
-    	new Point3d(19.99574089050293,27.25579261779785,40.23905563354492),
-    	new Point3d(19.99574089050293,27.316665649414062,40.23905563354492),
-    	new Point3d(9.99574089050293,27.316665649414062,40.429630279541016),
-    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
-    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
-    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
-    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
-    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
-    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
-    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
-    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
-    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
-    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016),
-    	new Point3d(20.01641845703125,27.316665649414062,40.429630279541016)};
+    private static final Vector3f[] originalPath = {
+    	new Vector3f(18.0f,27.201007843017578f,35.089054107666016f),
+    	new Vector3f(18.0f,26.926931381225586f,35.089054107666016f),
+    	new Vector3f(18.0f,26.926931381225586f,37.107540130615234f),
+    	new Vector3f(18.0f,26.987857818603516f,37.107540130615234f),
+    	new Vector3f(18.0f,26.987857818603516f,37.013275146484375f),
+    	new Vector3f(18.0f,26.987857818603516f,37.013275146484375f),
+    	new Vector3f(19.229249954223633f,26.987857818603516f,37.013275146484375f),
+    	new Vector3f(19.229249954223633f,26.926382064819336f,37.013275146484375f),
+    	new Vector3f(19.229249954223633f,26.926382064819336f,39.34950256347656f),
+    	new Vector3f(19.83618927001953f,26.926382064819336f,39.34950256347656f),
+    	new Vector3f(19.83618927001953f,27.25579261779785f,39.34950256347656f),
+    	new Vector3f(19.83618927001953f,27.25579261779785f,40.23905563354492f),
+    	new Vector3f(19.83618927001953f,27.25579261779785f,40.23905563354492f),
+    	new Vector3f(19.99574089050293f,27.25579261779785f,40.23905563354492f),
+    	new Vector3f(19.99574089050293f,27.316665649414062f,40.23905563354492f),
+    	new Vector3f(9.99574089050293f,27.316665649414062f,40.429630279541016f),
+    	new Vector3f(20.01641845703125f,27.316665649414062f,40.429630279541016f),
+    	new Vector3f(20.01641845703125f,27.316665649414062f,40.429630279541016f),
+    	new Vector3f(20.01641845703125f,27.316665649414062f,40.429630279541016f),
+    	new Vector3f(20.01641845703125f,27.316665649414062f,40.429630279541016f),
+    	new Vector3f(20.01641845703125f,27.316665649414062f,40.429630279541016f),
+    	new Vector3f(20.01641845703125f,27.316665649414062f,40.429630279541016f),
+    	new Vector3f(20.01641845703125f,27.316665649414062f,40.429630279541016f),
+    	new Vector3f(20.01641845703125f,27.316665649414062f,40.429630279541016f),
+    	new Vector3f(20.01641845703125f,27.316665649414062f,40.429630279541016f),
+    	new Vector3f(20.01641845703125f,27.316665649414062f,40.429630279541016f),
+    	new Vector3f(20.01641845703125f,27.316665649414062f,40.429630279541016f)};
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -792,7 +806,6 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         simpleInputSub4 = null;
         simpleRefSub8 = null;
         simpleInputSub8 = null;
-        dummy = null;
 
         simpleWeightRef = null;
         simpleWeightInput = null;
@@ -886,18 +899,18 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     
     public Vector<Vector3f> param2Coordinates(double startX, double endX, double stepX,
     		double startY, double endY, double stepY, 
-    		double startZ, double endZ, double stepZ, Vector<Point3d> path){
+    		double startZ, double endZ, double stepZ, Vector<Vector3f> path){
     	if(path == null){
     		return null;
     	}
     	
     	Vector<Vector3f> coordPath = new Vector<Vector3f>(path.size());
     	for(int i = 0; i < path.size(); i++){
-    		Point3d p3d = path.elementAt(i);
+    		Vector3f p3d = path.elementAt(i);
     		Vector3f p3f = new Vector3f();
-    		p3f.X = (float)((p3d.y-startX)/stepX);
-    		p3f.Y = (float)((p3d.z-startY)/stepY);
-    		p3f.Z = (float)((p3d.x-startZ)/stepZ);
+    		p3f.X = (float)((p3d.Y-startX)/stepX);
+    		p3f.Y = (float)((p3d.Z-startY)/stepY);
+    		p3f.Z = (float)((p3d.X-startZ)/stepZ);
     		coordPath.add(p3f);
     	}
     	return coordPath;
@@ -1576,7 +1589,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 			Preferences
 					.debug(" Starting level 8 ************************************************\n");
 
-			Vector[] minimas = levelEight(simpleRefSub8, simpleInputSub8);
+			Vector<MatrixListItem>[] minimas = levelEight(simpleRefSub8, simpleInputSub8);
 			time = System.currentTimeMillis() - time;
 			Preferences.debug(" Level 8 min = " + ((float) time / 60000.0f)
 					+ "\n");
@@ -1591,7 +1604,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 			Preferences
 					.debug(" Starting level 4 ************************************************\n");
 
-			Vector minima = levelFour(simpleRefSub4, simpleInputSub4,
+			Vector<MatrixListItem> minima = levelFour(simpleRefSub4, simpleInputSub4,
 					minimas[0], minimas[1]);
 			time = System.currentTimeMillis() - time;
 			Preferences.debug(" Level 4  min = " + ((float) time / 60000.0f)
@@ -1682,7 +1695,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 				yFrom, yTo, yStep, zFrom, zTo, zStep, optimalPath);
 		Vector<Point3D> imagePath = findPointsOfLine(realPath);
 		print(imagePath, "Final Path:");
-		Vector<Point3d> originalPath2 = new Vector<Point3d>(30);
+		Vector<Vector3f> originalPath2 = new Vector<Vector3f>(30);
 		for(int j = 0; j < originalPath.length; j++){
 			originalPath2.add(originalPath[j]);
 		}
@@ -1729,7 +1742,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     	if(paths == null){
     		return;
     	}
-    	optimalPath = new Vector<Point3d>(100);
+    	optimalPath = new Vector<Vector3f>(100);
     	optimalPath.addAll(paths[5].get(0));
     	optimalPath.addAll(paths[4].get(0));
     	int index = indexOf(paths[3], optimalPath.elementAt(0));
@@ -1760,9 +1773,9 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     	}
     }
     
-    private int indexOf(Vector<Vector<Point3d>> aPaths, Point3d tp3d){
+    private int indexOf(Vector<Vector<Vector3f>> aPaths, Vector3f tp3d){
     	for(int i = 0; i < aPaths.size(); i++){
-    		Vector<Point3d> aPath = aPaths.get(i);
+    		Vector<Vector3f> aPath = aPaths.get(i);
     		if(tp3d.equals(aPath.get(aPath.size()-1))){
     			return i;
     		}
@@ -1783,13 +1796,13 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 					sb.append(item.initial[j]);
 					sb.append(",");
 				}
-			}else if(obj instanceof Point3d){
-				Point3d p3d = (Point3d) data.get(i);
-				sb.append(p3d.x);
+			}else if(obj instanceof Vector3f){
+				Vector3f p3d = (Vector3f) data.get(i);
+				sb.append(p3d.X);
 				sb.append(",");
-				sb.append(p3d.y);
+				sb.append(p3d.Y);
 				sb.append(",");
-				sb.append(p3d.z);
+				sb.append(p3d.Z);
 			}else if(obj instanceof Point3D){
 				Point3D p3i = (Point3D) data.get(i);
 				sb.append(p3i.x);
@@ -2388,7 +2401,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         fireProgressStateChanged("Optimizing top samples");
 
         powell.setPathRecorded(true);
-        paths[0] = new Vector<Vector<Point3d>>(10);
+        paths[0] = new Vector<Vector<Vector3f>>(10);
         index = Arrays.binarySearch(costs, threshold);
         if(index < 0){
             index = -1 * (index + 1);
@@ -2457,7 +2470,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                                           bracketBound);
         powell.setMultiThreadingEnabled(multiThreadingEnabled);
 
-        paths[1] = new Vector<Vector<Point3d>>(10);
+        paths[1] = new Vector<Vector<Vector3f>>(10);
         powell.setPathRecorded(true);
 //        long startTime = System.nanoTime();
 //        powell.createTerrain(-50f, 50f, 1f, -50f, 50f, 1f, -30f, 30f, 1f, "LevelEight_Terrain");
@@ -2570,7 +2583,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         // passed in from JDialog.  It used to be set to "3".
         int total = (numMinima < minima.size()) ? numMinima : minima.size();
         powell.setMaxIterations(baseNumIter);
-        paths[2] = new Vector<Vector<Point3d>>(10);
+        paths[2] = new Vector<Vector<Vector3f>>(10);
         powell.setPathRecorded(true);
         Vectornd[] initials = new Vectornd[2*total];
         for (int i = 0; i < total; i++) {
@@ -2597,7 +2610,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Vector<MatrixListItem> perturbList = new Vector<MatrixListItem>();
 
         fireProgressStateChanged("Perturbing minima");
-        paths[3] = new Vector<Vector<Point3d>>(10);
+        paths[3] = new Vector<Vector<Vector3f>>(10);
         powell.setPathRecorded(true);
         if(DOF > 3){
             initials = new Vectornd[newMinima.size()*7];
@@ -2730,7 +2743,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         powell.setMultiThreadingEnabled(false);
 
         powell.setPathRecorded(true);
-        paths[5] = new Vector<Vector<Point3d>>(1);
+        paths[5] = new Vector<Vector<Vector3f>>(1);
 //      long startTime = System.nanoTime();
 //      powell.createTerrain(-50f, 50f, 1f, -50f, 50f, 1f, -30f, 30f, 1f, "LevelOne_Terrain");
 //      System.out.println("Time consumed by createTerrain(): " + (System.nanoTime()-startTime));
@@ -2881,7 +2894,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         powell.setMultiThreadingEnabled(false);
 
         powell.setPathRecorded(true);
-        paths[4] = new Vector<Vector<Point3d>>(1);
+        paths[4] = new Vector<Vector<Vector3f>>(1);
 //        long startTime = System.nanoTime();
 //        powell.createTerrain(-50f, 50f, 1f, -50f, 50f, 1f, -30f, 30f, 1f, "LevelTwo_Terrain");
 //        System.out.println("Time consumed by createTerrain(): " + (System.nanoTime()-startTime));
@@ -2996,3 +3009,4 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         this.maxDim = maxDim;
     }
 }
+

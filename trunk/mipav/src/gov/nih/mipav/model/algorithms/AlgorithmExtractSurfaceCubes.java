@@ -289,7 +289,6 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
         int[] buffer = null;
 
         // Make storage string
-        String kSurfaceName = new String(surfaceFileName);
         surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + File.separator + surfaceFileName;
 
         try {
@@ -330,6 +329,8 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
             fireProgressStateChanged(50);
 
             if (triangleConsistencyMode == SMOOTH_MODE) {
+                Vector3f[] akVerts = kMesh.VBuffer.GetPositionArray();
+                MeshSmoother kSmoother = new MeshSmoother(kMesh.VBuffer.GetVertexQuantity(), akVerts, kMesh.GetTriangleQuantity(), kMesh.IBuffer.GetData() );
                 //kMesh.smoothTwo(2, 0.03f, true, 0.01f, false);
             }
 
