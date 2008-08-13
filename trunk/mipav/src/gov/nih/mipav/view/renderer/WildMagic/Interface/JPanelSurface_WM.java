@@ -459,7 +459,17 @@ public class JPanelSurface_WM extends JInterfaceBase
             if ( aiSelected.length == 0) return;
             
             for (int i = 0; i < aiSelected.length; i++) {
-                if ( m_kMeshes.get(aiSelected[i]) instanceof TriMesh )
+
+                if ( m_kMeshes.get(aiSelected[i]) instanceof ClodMesh )
+                {
+                    ClodMesh kCMesh = (ClodMesh)m_kMeshes.get(aiSelected[i]);
+                    int iValue = (int)(fValue * kCMesh.GetMaximumLOD());
+                    kCMesh.TargetRecord( iValue );
+                    kCMesh.SelectLevelOfDetail();
+                    numTriangles += kCMesh.GetTriangleQuantity();
+                    triangleText.setText("" + numTriangles);
+                }
+                else if ( m_kMeshes.get(aiSelected[i]) instanceof TriMesh )
                 {
                     TriMesh kMesh = ((TriMesh)(m_kMeshes.get(aiSelected[i])));
                     
@@ -519,10 +529,22 @@ public class JPanelSurface_WM extends JInterfaceBase
             if ( aiSelected.length == 1 )
             {
                 DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-                for (int i = 0; i < aiSelected.length; i++) {
-                    triangleText.setText(String.valueOf( m_kMeshes.get(aiSelected[i]).GetTriangleQuantity() ) );
-                    volumeText.setText(String.valueOf( m_kVolumeViewer.getVolume( (String)kList.elementAt(aiSelected[i]) ) ) );
-                    areaText.setText(String.valueOf( m_kVolumeViewer.getSurfaceArea( (String)kList.elementAt(aiSelected[i]) ) ) );              
+
+                triangleText.setText(String.valueOf( m_kMeshes.get(aiSelected[0]).GetTriangleQuantity() ) );
+                volumeText.setText(String.valueOf( m_kVolumeViewer.getVolume( (String)kList.elementAt(aiSelected[0]) ) ) );
+                areaText.setText(String.valueOf( m_kVolumeViewer.getSurfaceArea( (String)kList.elementAt(aiSelected[0]) ) ) );              
+
+                if ( m_kMeshes.get(aiSelected[0]) instanceof ClodMesh )
+                {
+                    decimateButton.setEnabled(false);
+                    detailSlider.setEnabled(true);
+                    detailLabel.setEnabled(true);
+                }
+                else
+                {
+                    decimateButton.setEnabled(true);
+                    detailSlider.setEnabled(false);
+                    detailLabel.setEnabled(false);                    
                 }
             }
         }

@@ -289,6 +289,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
         int[] buffer = null;
 
         // Make storage string
+        String kSurfaceName = new String(surfaceFileName);
         surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + File.separator + surfaceFileName;
 
         try {
@@ -338,31 +339,31 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
 
             if (decimateFlag == true) {
                 fireProgressStateChanged("Initializing surface.");
-//                 VETMesh kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
-//                 		2 * kMesh.IBuffer.GetIndexQuantity(), .9f,
-//                 		2 * kMesh.GetTriangleQuantity(), .9f,
-//                 		kMesh.IBuffer.GetData() );
-//                 Vector<VETMesh> kComponents = new Vector<VETMesh>();
-//                 kVETMesh.GetComponents(kComponents);
-//                 int iNumComponents = kComponents.size();
-//                 ClodMesh[] akClod = new ClodMesh[iNumComponents];
-//                 fireProgressStateChanged("Surface decimation in progress");
-//                 for (i = 0; (i < iNumComponents) && !threadStopped; i++) {
-//                 	VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
-//                 	IndexBuffer kIBuffer = new IndexBuffer(kComponents.get(i).GetTriangles());
-//                     CreateClodMesh kDecimator = new CreateClodMesh(kVBuffer, kIBuffer);
-//                     kDecimator.decimate();
-//                     akClod[i] = new ClodMesh(kVBuffer, kIBuffer, kDecimator.getRecords());
-//                 }
-                ClodMesh[] akClod = new ClodMesh[1];
+                kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
+                                        2 * kMesh.IBuffer.GetIndexQuantity(), .9f,
+                                        2 * kMesh.GetTriangleQuantity(), .9f,
+                                        kMesh.IBuffer.GetData() );
+                Vector<VETMesh> kComponents = new Vector<VETMesh>();
+                kVETMesh.GetComponents(kComponents);
+                int iNumComponents = kComponents.size();
+                ClodMesh[] akClod = new ClodMesh[iNumComponents];
+                
+
+                int iIndex = surfaceFileName.lastIndexOf('.');
+                String kName = surfaceFileName.substring(0,iIndex);
+                
                 fireProgressStateChanged("Surface decimation in progress");
-                VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
-                IndexBuffer kIBuffer = new IndexBuffer(kMesh.IBuffer);
-                CreateClodMesh kDecimator = new CreateClodMesh(kVBuffer, kIBuffer);
-                kDecimator.decimate();
-                akClod[0] = new ClodMesh(kVBuffer, kIBuffer, kDecimator.getRecords());
-                akClod[0].TargetRecord(akClod[0].GetMaximumLOD());
-                akClod[0].SelectLevelOfDetail();
+                for (i = 0; (i < iNumComponents) && !threadStopped; i++) {
+                    VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
+                    IndexBuffer kIBuffer = new IndexBuffer(kComponents.get(i).GetTriangles());
+                    CreateClodMesh kDecimator = new CreateClodMesh(kVBuffer, kIBuffer);
+                    kDecimator.decimate();
+                    akClod[i] = new ClodMesh(kVBuffer, kIBuffer, kDecimator.getRecords());
+
+                    fireProgressStateChanged("Saving surface"); 
+                    
+                    FileSurface_WM.save(kName + i + ".sur", akClod[i], 1,  akClod[i].VBuffer, true, direction, startLocation, box, inverseDicomMatrix);
+                }
                 if (threadStopped) {
                     finalize();
 
@@ -370,8 +371,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                 }
 
                 System.gc();
-                fireProgressStateChanged("Saving surface");
-                FileSurface_WM.saveClodMesh(surfaceFileName, akClod, true, direction, startLocation, box, inverseDicomMatrix);
+
             } else {
                 fireProgressStateChanged(75);
                 fireProgressStateChanged("Saving surface");

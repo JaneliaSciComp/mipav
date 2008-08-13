@@ -643,7 +643,7 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
 
                 // meshes are type TriangleMesh
                 if (isSur == true) {
-                    triMesh = FileSurface_WM.loadTMesh(in, progress, 0, 1, true, null, 1.0f, null, 1, null, null, null);
+                    triMesh = FileSurface_WM.loadTMesh(in, progress, 0, 1, true, null, 1.0f, null, null, null, null);
                 } else {
                     triMesh = FileSurface_WM.loadVRMLMesh(in, progress, 0, 1, true, null, null, null);
                 }
