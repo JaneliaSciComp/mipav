@@ -996,6 +996,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Insert missing slices", false);
             menuBuilder.setMenuItemEnabled("4D tools", false);
             menuBuilder.setMenuItemEnabled("Depth", false);
+            menuBuilder.setMenuItemEnabled("VOI landmark", false);
         }
 
         if (ModelImage.isColorImage(type)) {
