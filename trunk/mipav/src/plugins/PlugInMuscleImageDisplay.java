@@ -209,6 +209,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.multipleSlices = multipleSlices; 
         this.currentSlice = getViewableSlice();
         this.standAlone = false; 
+        this.colorChoice = 0;
+        //left as zero to ensure VOIs across image stay same color (helps for image batches)
         
         //already added from super constructor
         //image.addImageDisplayListener(this);
@@ -335,6 +337,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         this.symmetry = symmetry;
         this.multipleSlices = multipleSlices;
         this.currentSlice = getViewableSlice();
+        this.colorChoice = 0;
+        //left as zero to ensure VOIs across image stay same color (helps for image batches)
         
     	ViewJProgressBar progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
     	setVisible(false);
@@ -1343,7 +1347,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				pdfFile = new File(fileDir + File.separator + fileName);
 			}
 		}
-		System.out.println("Entering try loop.");
 		try {
 			pdfDocument = new Document();
 			pdfWriter = PdfWriter.getInstance(pdfDocument, new FileOutputStream(pdfFile));
@@ -1364,8 +1367,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 			Font fontNormal = FontFactory.getFont("Helvetica", 10, Font.NORMAL, Color.DARK_GRAY);
 			Font fontBold = FontFactory.getFont("Helvetica", 10, Font.BOLD, Color.BLACK);
-			
-			System.out.println("NOW HERE");
 	
 			FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0];
 			
@@ -1434,7 +1435,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			
 			//create the Table where we will insert the data:
 			wholeTable = new PdfPTable(new float[] {1.8f, 1f, 1f, 1f, 1f, 1f, 1f});
-			System.out.println("CREATED");
 			// add Column Titles (in bold)
 			String type = new String();
 			if(multipleSlices) {
@@ -1465,8 +1465,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					sliceTable[i].addCell(new PdfPCell(new Paragraph("Total HU", fontBold)));
 				}
 			}
-			
-			
+
 			return;
 		} catch (Exception e) {
 		    System.out.println("Error occured in addCell's calling method");
@@ -2123,6 +2122,17 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		public abstract void actionPerformed(ActionEvent e);
 
 		/**
+		 * Abstract method for dealing with a change in slice.
+		 * @param slice
+		 */
+		public abstract void setSlice(int slice);
+
+		/**
+		 * Abstract method required for initializing display.
+		 */
+		protected abstract void initDialog();
+
+		/**
 		 * Add a listener to this class so that when when the dialog has completed processing it can use notifyListener
 		 * to notify all listeners that the dialog has completed.
 		 *
@@ -2144,12 +2154,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	}
     	
     	/**
-		 * Abstract method for dealing with a change in slice.
-		 * @param slice
-		 */
-		public abstract void setSlice(int slice);
-
-		/**
 		 * Builds button panel consisting of buttonStringList.  If none is specified uses
 		 * default OK, CANCEL, and HELP
 		 *
@@ -2213,11 +2217,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		    }
 		    return buttonPanel;
 		}
-
-		/**
-		 * Abstract method required for initializing display.
-		 */
-		protected abstract void initDialog();
 
 		/**
     	 * Replaces buttonStringList with the given buttons.  
