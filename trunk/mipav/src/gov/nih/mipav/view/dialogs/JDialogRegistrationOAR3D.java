@@ -520,9 +520,11 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     comAlgo = new AlgorithmCenterOfMass(matchImage, threshold, true);
                     comAlgo.setAllowDataWindow(false);
                     comAlgo.run();
-                    comAlgo = new AlgorithmCenterOfMass(resultImage, threshold, true);
-                    comAlgo.setAllowDataWindow(false);
-                    comAlgo.run();
+                    if (resultImage != null) {
+                        comAlgo = new AlgorithmCenterOfMass(resultImage, threshold, true);
+                        comAlgo.setAllowDataWindow(false);
+                        comAlgo.run();
+                    }
                     comAlgo.finalize();
                     xOrig = (matchImage.getExtents()[0] - 1.0)/2.0;
                     yOrig = (matchImage.getExtents()[1] - 1.0)/2.0;
@@ -539,8 +541,14 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     zCenNew = xCen*finalMatrix.Get(2, 0) + yCen*finalMatrix.Get(2, 1) + zCen*finalMatrix.Get(2, 2) + finalMatrix.Get(2, 3);
                     Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
                                        + xCen + ", " + yCen + ", " + zCen + ")\n");
-                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + 
+                    if (resultImage != null) {
+                        comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + 
                                      ", " + nf.format(zCenNew) + ") in " + resultImage.getImageName() + ".\n";
+                    }
+                    else {
+                        comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + 
+                        ", " + nf.format(zCenNew) + ").\n";    
+                    }
                     Preferences.debug(comStr);
                 }
 
@@ -1165,7 +1173,9 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
      * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
+        if (getResultImage() != null) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
     }
 
     /**
@@ -1242,7 +1252,9 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             scriptParameters.storeImage(refWeightImage, "reference_weight_image");
         }
 
-        scriptParameters.storeImageInRecorder(getResultImage());
+        if (getResultImage() != null) {
+            scriptParameters.storeImageInRecorder(getResultImage());
+        }
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
