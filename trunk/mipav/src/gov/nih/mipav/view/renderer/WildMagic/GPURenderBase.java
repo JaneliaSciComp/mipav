@@ -457,24 +457,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         double w, x, y, z;
         double[][] result = new double[4][4];
 
-        // Matrix3f mtx = new Matrix3f();
-        // Quat4d quat = new Quat4d();
-        Quaternion quat = new Quaternion();
-
         // Step.1
+        Quaternion quat = new Quaternion();
         Matrix3f kRotate = m_spkScene.Local.GetRotate();
-        // currentTransform.get(mtx);
-        //  mtx = kRotate;
-        // mtx.get(quat);
         quat.FromRotationMatrix(kRotate);
         
-        Vector3f rotAxis = new Vector3f();
-        quat.ToAxisAngle(rotAxis);
         // Step.2
-        w = 1;
-        x = rotAxis.X;
-        y = -rotAxis.Y;
-        z = -rotAxis.Z;
+        w = quat.W();
+        x = quat.X();
+        y = quat.Y();
+        z = quat.Z();
 
         // Step.3
         TransMatrix transMtx = new TransMatrix(4);
