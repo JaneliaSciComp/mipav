@@ -1062,7 +1062,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 return;
             }
 
-            lsMatrix = matchImage.getMatrix();
+            lsMatrix = lsDialog.getResultMatrix();
             lsImage = lsDialog.getResultImage();
             lsDialog.dispose();
         }
