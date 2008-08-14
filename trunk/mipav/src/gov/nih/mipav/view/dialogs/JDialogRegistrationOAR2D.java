@@ -624,6 +624,9 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
 
                     transform = null;
                 }
+                else {
+                    xfrm = reg2.getTransform();
+                }
                 
                 if (!refImage.isColorImage()) {
                     threshold[0] = -Float.MAX_VALUE;
@@ -634,9 +637,11 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                     comAlgo = new AlgorithmCenterOfMass(matchImage, threshold, true);
                     comAlgo.setAllowDataWindow(false);
                     comAlgo.run();
-                    comAlgo = new AlgorithmCenterOfMass(resultImage, threshold, true);
-                    comAlgo.setAllowDataWindow(false);
-                    comAlgo.run();
+                    if (resultImage != null) {
+                        comAlgo = new AlgorithmCenterOfMass(resultImage, threshold, true);
+                        comAlgo.setAllowDataWindow(false);
+                        comAlgo.run();
+                    }
                     comAlgo.finalize();
                     xOrig = (matchImage.getExtents()[0] - 1.0)/2.0;
                     yOrig = (matchImage.getExtents()[1] - 1.0)/2.0;
@@ -649,8 +654,13 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                     yCenNew = xCen*xfrm.Get(1, 0) + yCen*xfrm.Get(1, 1) + xfrm.Get(1, 2);
                     Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
                                        + xCen + ", " + yCen + ")\n");
-                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ") in " +
-                                     resultImage.getImageName() + ".\n";
+                    if (resultImage != null) {
+                        comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ") in " +
+                                         resultImage.getImageName() + ".\n";
+                    }
+                    else {
+                        comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ").\n";    
+                    }
                     Preferences.debug(comStr);
                 }
 
@@ -1146,7 +1156,9 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
      * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
+        if (getResultImage() != null) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
     }
 
     /**
@@ -1201,7 +1213,9 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             scriptParameters.storeImage(refWeightImage, "reference_weight_image");
         }
 
-        scriptParameters.storeImageInRecorder(getResultImage());
+        if (getResultImage() != null) {
+            scriptParameters.storeImageInRecorder(getResultImage());
+        }
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
