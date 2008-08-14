@@ -1198,8 +1198,8 @@ public class TransMatrix extends Matrix4f
         int newX, newY;
 
         for (int n = 0; n < length; n++) {
-            newX = (int) Math.round((gon.xpoints[n] * M00) + (gon.ypoints[n] * M01) + M02);
-            newY = (int) Math.round((gon.xpoints[n] * M10) + (gon.ypoints[n] * M11) + M12);
+            newX = Math.round((gon.xpoints[n] * M00) + (gon.ypoints[n] * M01) + M02);
+            newY = Math.round((gon.xpoints[n] * M10) + (gon.ypoints[n] * M11) + M12);
             newGon.addPoint(newX, newY);
         }
 

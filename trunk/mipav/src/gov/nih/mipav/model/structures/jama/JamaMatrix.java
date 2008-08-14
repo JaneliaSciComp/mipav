@@ -41,24 +41,6 @@ public class JamaMatrix  {
 		matrix = new Matrix(A);
 		// TODO Auto-generated constructor stub
 	}
-
-	/**
-	 * @param A
-	 * @param m
-	 * @param n
-	 */
-//	public JamaMatrix(double[][] A, int m, int n) {
-//		matrix = new Matrix(A, m, n);
-//	}
-
-	/**
-	 * @param vals
-	 * @param m
-	 */
-//	public JamaMatrix(double[] vals, int m) {
-//		matrix = new Matrix(vals, m);
-//	}
-
 	
 	/** Convert results from Jama lib
 	 * @param B internal data 

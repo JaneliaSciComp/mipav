@@ -3032,7 +3032,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             TransMatrix xfrm = new TransMatrix(4);
             //xfrm.setZoom(Sx, Sy, Sz); xfrm.Inverse();
             xfrm.setZoom(1.0f/Sx, 1.0f/Sy, 1.0f/Sz);
-            // XXX This didn't have the inverse, so I changed it to be consistent.
             transformTrilinear(workingBuffer, xfrm);
         } // else shrink != 1.0f
 
