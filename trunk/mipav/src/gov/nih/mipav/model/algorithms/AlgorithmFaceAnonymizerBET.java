@@ -192,7 +192,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         else {
             //smooth the dataset
             fireProgressStateChanged(95, null, "Smoothing face...");
-            removeRegion = smoothFace(removeRegion, interestRegion, brainMask); 
+            removeRegion = smoothFace(removeRegion); 
             for(int i=removeRegion.nextSetBit(0); i>=0; i=removeRegion.nextSetBit(i+1)) {
                 srcImage.set(i, REMOVED_INTENSITY);
             }
@@ -514,7 +514,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
                 int minDist = ((int)bitUtil.getMinDistance(removePoint, interestEdgePoints));
                 if(minDist>MIN_RADIUS) {
                     int radius = pointPick.nextInt(minDist-MIN_RADIUS) + MIN_RADIUS;
-                    double decayedRadius = ((double)radius) * Math.exp(-((double)totalPointsRemoved) / ((double)totalArea));
+                    double decayedRadius = radius * Math.exp(-((double)totalPointsRemoved) / totalArea);
                     if(((int)decayedRadius) > MIN_RADIUS) {
                         progress = (int)(minComplete+(.3*((System.currentTimeMillis()-time)/40000.0))*100); 
                         fireProgressStateChanged(progress);
@@ -550,7 +550,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
      * @return                  A <code>BitSet</code> of size <code>srcImage.getSize()</code> where set values denote face de-identification may be performed.
      */
     
-    private BitSet smoothFace(BitSet removeRegion, BitSet interestRegion, BitSet brainMask)
+    private BitSet smoothFace(BitSet removeRegion)
     {
         BitSetUtility bitUtil = new BitSetUtility();
         BitSet removeEdge = bitUtil.getEdgePoints(removeRegion);
@@ -627,14 +627,13 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
                 }
                 return spherePoints;
             }
-            else {
-                int[][] spherePoints = new int[1][3];
-                spherePoints[0][0] = xCenter;
-                spherePoints[0][1] = yCenter;
-                spherePoints[0][2] = zCenter;
-                return spherePoints;
-            }
-            
+           
+            //r <=1
+            int[][] spherePoints = new int[1][3];
+            spherePoints[0][0] = xCenter;
+            spherePoints[0][1] = yCenter;
+            spherePoints[0][2] = zCenter;
+            return spherePoints;
         }
         
         /**
@@ -680,12 +679,12 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
                 }
                 return circlePoints;
             }
-            else {
-                int[][] circlePoints = new int[1][2];
-                circlePoints[0][0] = xCenter;
-                circlePoints[0][1] = yCenter;
-                return circlePoints;
-            }
+            
+            //r <= 1
+            int[][] circlePoints = new int[1][2];
+            circlePoints[0][0] = xCenter;
+            circlePoints[0][1] = yCenter;
+            return circlePoints;
         }
         
         /**
@@ -781,8 +780,8 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
                 temp[1] = y;
                 quadrantPoints.add(temp);
                 epsilon = computeEpsilon(x, y, radius);
-                epsilonX = computeEpsilonX(epsilon, x, dx, radius);
-                epsilonY = computeEpsilonY(epsilon, y, dy, radius);
+                epsilonX = computeEpsilonX(epsilon, x, dx);
+                epsilonY = computeEpsilonY(epsilon, y, dy);
                 epsilonXY = computeEpsilonXY(epsilon, x, dx, y, dy);
                 if(-epsilonXY<epsilonY)
                     x = x+dx;
@@ -811,12 +810,12 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
             return (int)(Math.pow(x, 2) + Math.pow(y, 2) - Math.pow(r, 2));
         }
         
-        private static int computeEpsilonX(int epsilon, int x, int dx, int r)
+        private static int computeEpsilonX(int epsilon, int x, int dx)
         {
             return epsilon + 2*x*dx + 1;
         }
         
-        private static int computeEpsilonY(int epsilon, int y, int dy, int r)
+        private static int computeEpsilonY(int epsilon, int y, int dy)
         {
             return epsilon + 2*y*dy + 1;
         }
@@ -900,22 +899,22 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
                     (value % sliceSize) / xDim == 0 || (value % sliceSize) / xDim == yDim-1 || 
                     value / sliceSize == 0 || value / sliceSize == zDim-1)
                 return true; 
-            else {
-                if(!set.get(value-1))
-                    return true;
-                else if(!set.get(value+1))
-                    return true;
-                else if(!set.get(value+xDim))
-                    return true;
-                else if(!set.get(value-xDim))
-                    return true;
-                else if(!set.get(value+(sliceSize)))
-                    return true;
-                else if(!set.get(value-(sliceSize)))
-                    return true;
-                else
-                    return false;
-            }
+            
+            if(!set.get(value-1))
+                return true;
+            else if(!set.get(value+1))
+                return true;
+            else if(!set.get(value+xDim))
+                return true;
+            else if(!set.get(value-xDim))
+                return true;
+            else if(!set.get(value+(sliceSize)))
+                return true;
+            else if(!set.get(value-(sliceSize)))
+                return true;
+            else
+                return false;
+            
         }
         
         static final int LEFT_EXP = 0;
@@ -947,8 +946,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         {
             if(value > 0 && value < volumeSize)
                 return true;
-            else
-                return false;
+            return false;
         }
         
         /**
@@ -987,65 +985,65 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
                 if(level != 0 && connectingRegion.get(loc)) {
                     return true;
                 }
-                else {
-                    switch(dir) {
-                        case start:
-                            if(!connectingRegion.get(loc+1))
-                                connectNearNeighborsUtil(loc+1, connectingRegion, connectingRegionCopy, level, right, levelCut);
-                            if(!connectingRegion.get(loc-1))
-                                connectNearNeighborsUtil(loc-1, connectingRegion, connectingRegionCopy, level, left, levelCut);
-                            if(!connectingRegion.get(loc-(xDim)))
-                                connectNearNeighborsUtil(loc-(xDim), connectingRegion, connectingRegionCopy, level, down, levelCut);
-                            if(!connectingRegion.get(loc+(xDim)))
-                                connectNearNeighborsUtil(loc+(xDim), connectingRegion, connectingRegionCopy, level, up, levelCut);
-                            if(!connectingRegion.get(loc+(sliceSize)))
-                                connectNearNeighborsUtil(loc+(sliceSize), connectingRegion, connectingRegionCopy, level, in, levelCut);
-                            if(!connectingRegion.get(loc-(sliceSize)))
-                                connectNearNeighborsUtil(loc-(sliceSize), connectingRegion, connectingRegionCopy, level, out, levelCut);
-                            break;
-                        case right:
-                            if(connectNearNeighborsUtil(loc+1, connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
-                                connectingRegionCopy.set(loc);
-                                return true;
-                            }
-                            break;
-                        case left:
-                            if(connectNearNeighborsUtil(loc-1, connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
-                                connectingRegionCopy.set(loc);
-                                return true;
-                            }
-                            break;
-                        case down:
-                            if(connectNearNeighborsUtil(loc-(xDim), connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
-                                connectingRegionCopy.set(loc);
-                                return true;
-                            }
-                            break;
-                        case up:
-                            if(connectNearNeighborsUtil(loc+(xDim), connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
-                                connectingRegionCopy.set(loc);
-                                return true;
-                            }
-                            break;
-                        case in:
-                            if(connectNearNeighborsUtil(loc+(sliceSize), connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
-                                connectingRegionCopy.set(loc);
-                                return true;
-                            }
-                            break;
-                        case out:
-                            if(connectNearNeighborsUtil(loc-(sliceSize), connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
-                                connectingRegionCopy.set(loc);
-                                return true;
-                            }
-                            break;
-                    }
-                    return false;
+                
+                switch(dir) {
+                    case start:
+                        if(!connectingRegion.get(loc+1))
+                            connectNearNeighborsUtil(loc+1, connectingRegion, connectingRegionCopy, level, right, levelCut);
+                        if(!connectingRegion.get(loc-1))
+                            connectNearNeighborsUtil(loc-1, connectingRegion, connectingRegionCopy, level, left, levelCut);
+                        if(!connectingRegion.get(loc-(xDim)))
+                            connectNearNeighborsUtil(loc-(xDim), connectingRegion, connectingRegionCopy, level, down, levelCut);
+                        if(!connectingRegion.get(loc+(xDim)))
+                            connectNearNeighborsUtil(loc+(xDim), connectingRegion, connectingRegionCopy, level, up, levelCut);
+                        if(!connectingRegion.get(loc+(sliceSize)))
+                            connectNearNeighborsUtil(loc+(sliceSize), connectingRegion, connectingRegionCopy, level, in, levelCut);
+                        if(!connectingRegion.get(loc-(sliceSize)))
+                            connectNearNeighborsUtil(loc-(sliceSize), connectingRegion, connectingRegionCopy, level, out, levelCut);
+                        break;
+                    case right:
+                        if(connectNearNeighborsUtil(loc+1, connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
+                            connectingRegionCopy.set(loc);
+                            return true;
+                        }
+                        break;
+                    case left:
+                        if(connectNearNeighborsUtil(loc-1, connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
+                            connectingRegionCopy.set(loc);
+                            return true;
+                        }
+                        break;
+                    case down:
+                        if(connectNearNeighborsUtil(loc-(xDim), connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
+                            connectingRegionCopy.set(loc);
+                            return true;
+                        }
+                        break;
+                    case up:
+                        if(connectNearNeighborsUtil(loc+(xDim), connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
+                            connectingRegionCopy.set(loc);
+                            return true;
+                        }
+                        break;
+                    case in:
+                        if(connectNearNeighborsUtil(loc+(sliceSize), connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
+                            connectingRegionCopy.set(loc);
+                            return true;
+                        }
+                        break;
+                    case out:
+                        if(connectNearNeighborsUtil(loc-(sliceSize), connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
+                            connectingRegionCopy.set(loc);
+                            return true;
+                        }
+                        break;
                 }
-            }
-            else {
                 return false;
+                
             }
+           
+            return false;
+            
         }
         
         private Vector convertSetToPoints(BitSet set)

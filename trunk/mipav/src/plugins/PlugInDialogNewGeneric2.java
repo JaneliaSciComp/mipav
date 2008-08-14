@@ -143,7 +143,7 @@ public class PlugInDialogNewGeneric2 extends JDialogScriptableBase implements Al
             String name = makeImageName(image.getImageName(), "_kidneys");
             resultImage = (ModelImage) image.clone();
             resultImage.setImageName(name);
-            genericAlgo = new PlugInAlgorithmCTAbdomen(resultImage, image, image.getImageDirectory(), Color.blue);
+            genericAlgo = new PlugInAlgorithmNewGeneric2(resultImage, image);
             //genericAlgo = new PlugInAlgorithmNewGeneric2(resultImage, image);
 
             // This is very important. Adding this object as a listener allows the algorithm to
