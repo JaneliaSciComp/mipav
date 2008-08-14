@@ -951,10 +951,7 @@ public class JFrameRegistrationMosaic extends JFrame
         ModelImage kImage = null;
         FileIO fileIO = new FileIO();
         String fileName = null;
-        String extension = null;
         String directory = null;
-        ViewImageFileFilter vFilter = null;
-        int i;
 
         try {
             ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, bSave);
