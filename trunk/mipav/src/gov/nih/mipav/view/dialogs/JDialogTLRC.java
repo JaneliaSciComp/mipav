@@ -1,18 +1,13 @@
 package gov.nih.mipav.view.dialogs;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-//import edu.jhmi.rad.medic.algorithms.*;
-//import edu.jhmi.rad.medic.structures.*;
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
 import java.awt.event.ActionEvent;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
-import Jama.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
 
 /**
 *   Dialog to enter points for creating an Talaraich image.

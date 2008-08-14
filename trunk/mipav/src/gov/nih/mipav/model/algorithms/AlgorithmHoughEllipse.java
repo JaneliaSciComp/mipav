@@ -6,7 +6,6 @@ import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
-//import gov.nih.mipav.*;
 
 import java.io.*;
 
