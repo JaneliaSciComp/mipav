@@ -1809,7 +1809,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         coarsePanelX = new JPanel(new FlowLayout(FlowLayout.LEFT));
         coarsePanelX.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelCoarseX = new JLabel("Number of angles to sample in sample in coarse grid: ");
+        JLabel labelCoarseX = new JLabel("Number of angles to sample in coarse grid: ");
         labelCoarseX.setFont(serif12);
         numberCoarseTextX = new JTextField("6", 3);
         coarsePanelX.add(labelCoarseX);
@@ -1859,7 +1859,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         coarsePanelY = new JPanel(new FlowLayout(FlowLayout.LEFT));
         coarsePanelY.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelCoarseY = new JLabel("Coarse angle increment: ");
+        JLabel labelCoarseY = new JLabel("Number of angles to sample in coarse grid: ");
         labelCoarseY.setForeground(Color.black);
         labelCoarseY.setFont(serif12);
         labelCoarseY.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1909,7 +1909,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         coarsePanelZ = new JPanel(new FlowLayout(FlowLayout.LEFT));
         coarsePanelZ.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelCoarseZ = new JLabel("Coarse angle increment: ");
+        JLabel labelCoarseZ = new JLabel("Number of angles to sample in coarse grid: ");
         labelCoarseZ.setForeground(Color.black);
         labelCoarseZ.setFont(serif12);
         labelCoarseZ.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -2464,15 +2464,15 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                 numCoarseY = tempInteger.intValue();
             }
 
-            if (numCoarseX == 1) {
-                int response = JOptionPane.showConfirmDialog(this, "Warning: There will only be 1 sampling.  Continue?",
+            if (numCoarseY == 1) {
+                int response = JOptionPane.showConfirmDialog(this, "Warning: There will only be 1 Y sampling.  Continue?",
                                                              "Sampling warning", JOptionPane.YES_NO_OPTION,
                                                              JOptionPane.WARNING_MESSAGE);
 
                 if (response == JOptionPane.NO_OPTION) {
-                    showX();
-                    numberCoarseTextX.requestFocus();
-                    numberCoarseTextX.selectAll();
+                    showY();
+                    numberCoarseTextY.requestFocus();
+                    numberCoarseTextY.selectAll();
 
                     return false;
                 }
@@ -2519,15 +2519,15 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                 numCoarseZ = tempInteger.intValue();
             }
 
-            if (numCoarseX == 1) {
-                int response = JOptionPane.showConfirmDialog(this, "Warning: There will only be 1 sampling.  Continue?",
+            if (numCoarseZ == 1) {
+                int response = JOptionPane.showConfirmDialog(this, "Warning: There will only be 1 Z sampling.  Continue?",
                                                              "Sampling warning", JOptionPane.YES_NO_OPTION,
                                                              JOptionPane.WARNING_MESSAGE);
 
                 if (response == JOptionPane.NO_OPTION) {
-                    showX();
-                    numberCoarseTextX.requestFocus();
-                    numberCoarseTextX.selectAll();
+                    showZ();
+                    numberCoarseTextZ.requestFocus();
+                    numberCoarseTextZ.selectAll();
 
                     return false;
                 }
