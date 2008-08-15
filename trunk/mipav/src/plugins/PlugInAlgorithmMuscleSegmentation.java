@@ -36,6 +36,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     /**Whether multiple slices are contained in srcImg */
     private boolean multipleSlices;
        
+    /**voiList created by various set up methods*/
+    private PlugInSelectableVOI[][] voiList;
+    
+    /**list of titles used for each pane*/
+    private String[] titles;
 	
     /**
      * Constructor.
@@ -60,31 +65,34 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         if (srcImage == null) {
             displayError("Source Image is null");
-
             return;
         }
 
         switch (imageType) {
             
             case Abdomen:
-                performAbdomenDialog();
+                buildAbdomenDialog();
                 break;
                 
             case Thigh:
-                performThighDialog();
+                buildThighDialog();
                 break;
+                
+            case Custom:
+            	buildCustomDialog();
+            	break;
                 
             default:
                 displayError("Image type not supported");
-                break;
-               
+                return;         
         }
+        performDialog();
     } // end runAlgorithm()
     
     
-    private void performAbdomenDialog() {
+    private void buildAbdomenDialog() {
         
-    	PlugInSelectableVOI[][] voiList = new PlugInSelectableVOI[3][];
+    	voiList = new PlugInSelectableVOI[3][];
     	int imageSize = 1;
     	if(srcImage.getNDims() > 2)
     		imageSize = srcImage.getExtents()[2];
@@ -112,35 +120,26 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     	voiList[2][7] = new PlugInSelectableVOI("Right Rectus", true, 1, 2, true, true, imageSize, 12);
     	voiList[2][8] = new PlugInSelectableVOI("Aortic Calcium", true, 5, 2, true, true, imageSize, 13);
         
-        String[] titles = new String[3];
+        titles = new String[3];
         titles[0] = "Abdomen";
         titles[1] = "Tissue";
         titles[2] = "Muscles"; 
         
-        if (ViewUserInterface.getReference().isAppFrameVisible()) {
-        	new PlugInMuscleImageDisplay(srcImage, titles, voiList,  
-        			PlugInMuscleImageDisplay.ImageType.Abdomen, 
-        			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, multipleSlices);
-        } else {
-        	new PlugInMuscleImageDisplay(srcImage, titles, voiList, 
-        			PlugInMuscleImageDisplay.ImageType.Abdomen, 
-        			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, true, multipleSlices);
-        }
-        
+        symmetry = PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT;
+	    imageType = PlugInMuscleImageDisplay.ImageType.Abdomen;
     }
     
     /**
 	 *   Builds thigh dialogue.
 	 */
-	private void performThighDialog() {
+	private void buildThighDialog() {
 	    
-	    TreeMap calcTree = new TreeMap();
 	    //String name, boolean closed, int numCurves, int location, boolean fillable, doCalc
 	    int imageSize = 1;
     	if(srcImage.getNDims() > 2)
     		imageSize = srcImage.getExtents()[2];
 	    
-	    PlugInSelectableVOI[][] voiList = new PlugInSelectableVOI[3][];
+	    voiList = new PlugInSelectableVOI[3][];
 	    
 	    voiList[0] = new PlugInSelectableVOI[3];
 	    voiList[0][0] = new PlugInSelectableVOI("Left Thigh", true, 1, 0, false, true, imageSize, 0);
@@ -170,21 +169,26 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 
     	voiList[2][10] = new PlugInSelectableVOI("Water sample", true, 1, 1, false, false, imageSize);
 	    
-	    String[] titles = new String[3];
+	    titles = new String[3];
 	    titles[0] = "Thigh";
 	    titles[1] = "Bone";
 	    titles[2] = "Muscles";
 	     
-	    this.symmetry = PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT;
-	    
-	    if (ViewUserInterface.getReference().isAppFrameVisible()) {
+	    symmetry = PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT;
+	    imageType = PlugInMuscleImageDisplay.ImageType.Thigh;
+	}
+	
+	private void buildCustomDialog() {
+		MipavUtil.displayError("Custom dialog not yet built. Plugin will now end.");
+	}
+	
+	private void performDialog() {
+		if (ViewUserInterface.getReference().isAppFrameVisible()) {
         	new PlugInMuscleImageDisplay(srcImage, titles, voiList,  
-        			PlugInMuscleImageDisplay.ImageType.Thigh, 
-        			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, multipleSlices);
+        			imageType, symmetry, multipleSlices);
         } else {
         	new PlugInMuscleImageDisplay(srcImage, titles, voiList, 
-        			PlugInMuscleImageDisplay.ImageType.Thigh, 
-        			PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT, true, multipleSlices);
+        			imageType, symmetry, true, multipleSlices);
         }
 	}
 	

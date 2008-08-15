@@ -26,9 +26,14 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
+	/**Radio button to denote image is two thigh CT*/
     private JRadioButton twoThighRadio;
     
+    /**Radio button to denote image is abdomen CT*/
     private JRadioButton abdomenRadio;
+    
+    /**Radio button to denote user would like to build custom plugin.*/
+    private JRadioButton customRadio;
     
     private PlugInMuscleImageDisplay.ImageType imageType;
     
@@ -205,6 +210,9 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         abdomenRadio = new JRadioButton("Abdomen");
         abdomenRadio.setFont(MipavUtil.font12);
         
+        customRadio = new JRadioButton("Custom");
+        customRadio.setFont(MipavUtil.font12);
+
         if (true) {
             twoThighRadio.setSelected(true);
         } else {
@@ -214,10 +222,12 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         ButtonGroup group = new ButtonGroup();
         group.add(twoThighRadio);
         group.add(abdomenRadio);
+        group.add(customRadio);
         
         mainPanel.add(twoThighRadio);
         mainPanel.add(abdomenRadio);
-
+        mainPanel.add(customRadio);
+        
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
         // Build the Panel that holds the OK and CANCEL Buttons

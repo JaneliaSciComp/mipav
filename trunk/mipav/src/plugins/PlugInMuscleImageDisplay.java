@@ -150,6 +150,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         /** denotes that the srcImg is two thighs */
         Thigh,
         
+        /** custom means a user defined body type has been created or loaded*/
+        Custom, 
+        
         /** unknown image type, generally represents an error state */
         Unknown
     }
@@ -4227,7 +4230,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		/**
 		 * Makes sure independent VOIs are calculated before their dependencies.  Example
-		 * left marrow calculated before left bone by properly ordering them.
+		 * left marrow calculated before left bone by properly ordering them.  Not needed
+		 * since joining of sub-MuscleCalculation threads are currnetly being performed.
 		 * @param tempVec
 		 * @return
 		 */

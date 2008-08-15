@@ -297,7 +297,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
                 for(int j=1; j<sizeInc; j++)
                     if(bitUtil.isInScan(i-j+j*xDim))
                         brainMask.set(i-j+j*xDim); 
-            if(bitUtil.isInScan(i+1) && !brainMaskTemp.get(i + 1))
+            if(bitUtil.isInScan(i+1) && !brainMaskTemp.get(i+1))
                 for(int j=1; j<=xtoDelete; j++)
                     if(bitUtil.isInScan(i+j))
                         brainMask.set(i+j);
@@ -305,7 +305,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
                 for(int j=1; j<=xtoDelete; j++)
                     if(bitUtil.isInScan(i-j))
                         brainMask.set(i-j);
-            if(bitUtil.isInScan(i+xDim) && !brainMaskTemp.get(i + xDim))
+            if(bitUtil.isInScan(i+xDim) && !brainMaskTemp.get(i+xDim))
                 for(int j=1; j<=ytoDelete; j++)
                     if(bitUtil.isInScan(i+j*xDim))
                         brainMask.set(i+(j*xDim));
