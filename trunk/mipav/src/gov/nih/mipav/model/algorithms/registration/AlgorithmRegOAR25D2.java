@@ -2865,15 +2865,15 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         Vector<MatrixListItem> perturbList = new Vector<MatrixListItem>();
 
         if(DOF > 3){
-            initials = new Vectornd[newMinima.size()*8];
+            initials = new Vectornd[newMinima.size()*7];
         }else{
             initials = new Vectornd[newMinima.size()*3];
         }
         // Perturb rotation.  Add fine delta and optimize, then subtract fine delta and optimize.
         int index = 0;
-        for (int j = 0; (j < 2) && !threadStopped; j++) {
+        for (int j = 0; (j <= 2) && !threadStopped; j++) {
 
-            for (int i = 0; (i < total) && !threadStopped; i++) {
+            for (int i = 0; (i < 2*total) && !threadStopped; i++) {
                 initial = (double[]) newMinima.elementAt(i).initial.clone();
 
                 // Preferences.debug("Perturbing initial[0] by ");
@@ -2899,7 +2899,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
         if (DOF > 3) {
             float scaleDelta = 0.8f;
-
             for (int j = 0; (j < 4) && !threadStopped; j++) {
 
                 for (int i = 0; (i < (2 * total)) && !threadStopped; i++) {
@@ -2981,6 +2980,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 getTolerance(degree), maxIter, rigidFlag, bracketBound);
         Vectornd[] initials = new Vectornd[1];
         initials[0] = new Vectornd(item.initial);
+        powell.setPoints(initials);
         powell.run();
 
         if (threadStopped) {
@@ -3042,6 +3042,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         Vectornd[] initials = new Vectornd[1];
         initials[0] = new Vectornd(initial);
 
+        powell.setPoints(initials);
         powell.run();
 
         if (threadStopped) {
