@@ -1494,11 +1494,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // JDialogGaussianBlur gb =
             new JDialogGaussianBlur(this, getActiveImage());
-        } else if (command.equals("GaussianBlurITK")) {
-            new JDialogGaussianBlurITK(this, getActiveImage());
-        } else if (command.equals("WaterShedITK")) {
-            new JDialogWaterShedITK(this, getActiveImage());
-        }  else if (command.equals("Unsharp mask")) {
+        } else if (command.equals("Unsharp mask")) {
             // JDialogUnsharpMask usm =
             new JDialogUnsharpMask(this, getActiveImage());
         } else if (command.equals("Local normalization")) {
