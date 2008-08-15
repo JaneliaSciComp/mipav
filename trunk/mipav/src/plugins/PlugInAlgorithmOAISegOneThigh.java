@@ -4,8 +4,6 @@ import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JDialogInitialCentroids;
-
 import java.io.*;
 
 import java.text.NumberFormat;

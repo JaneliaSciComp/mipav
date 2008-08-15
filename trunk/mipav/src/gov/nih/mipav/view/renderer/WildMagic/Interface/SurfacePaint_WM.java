@@ -369,7 +369,7 @@ public class SurfacePaint_WM extends JInterfaceBase
         try {
 
             int[] imageExtents = kImage.getExtents();
-            Point3Ds seed = new Point3Ds( (short)kSeedPoint.X,
+            Point3D seed = new Point3D( (short)kSeedPoint.X,
                                           (short)kSeedPoint.Y,
                                           (short)kSeedPoint.Z );
 

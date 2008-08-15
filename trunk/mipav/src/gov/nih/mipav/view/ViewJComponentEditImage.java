@@ -3633,7 +3633,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                     regionGrowBounds = new CubeBounds(imageExtents[0], 0, imageExtents[1], 0, imageExtents[2], 0);
                 }
 
-                count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3Ds(saveX, saveY, saveZ), fuzzyThreshold,
+                count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3D(saveX, saveY, saveZ), fuzzyThreshold,
                         useVOI, displayFuzzy, growDialog, saveValue - less, saveValue + more, sizeLimit, maxDistance,
                         variableThresholds, timeSlice, regionGrowBounds);
                 showRegionInfo(count, leadString);
@@ -3790,7 +3790,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                     regionGrowBounds = new CubeBounds(imageExtents[0], 0, imageExtents[1], 0, imageExtents[2], 0);
                 }
 
-                count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3Ds(saveX, saveY, saveZ), fuzzyThreshold,
+                count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3D(saveX, saveY, saveZ), fuzzyThreshold,
                         useVOI, displayFuzzy, growDialog, saveValueR - lessR, saveValueR + moreR, saveValueG - lessG,
                         saveValueG + moreG, saveValueB - lessB, saveValueB + moreB, sizeLimit, maxDistance, timeSlice,
                         regionGrowBounds);

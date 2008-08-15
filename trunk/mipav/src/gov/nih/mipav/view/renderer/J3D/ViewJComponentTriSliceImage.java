@@ -1,17 +1,13 @@
 package gov.nih.mipav.view.renderer.J3D;
 
 
-import gov.nih.mipav.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.*;
 
-import java.awt.*;
 import java.awt.image.*;
 
-import java.io.*;
 import javax.vecmath.*;
 
 

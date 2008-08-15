@@ -1,9 +1,7 @@
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.components.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.event.*;

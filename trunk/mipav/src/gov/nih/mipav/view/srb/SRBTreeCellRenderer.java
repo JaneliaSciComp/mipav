@@ -4,14 +4,6 @@ package gov.nih.mipav.view.srb;
 import edu.sdsc.grid.io.*;
 
 import java.awt.*;
-import java.awt.event.*;
-
-import java.beans.*;
-
-import java.io.*;
-
-import java.util.*;
-
 import javax.swing.*;
 import javax.swing.plaf.*;
 import javax.swing.plaf.basic.*;

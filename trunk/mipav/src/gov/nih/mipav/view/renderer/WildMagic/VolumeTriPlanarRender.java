@@ -3,8 +3,6 @@ package gov.nih.mipav.view.renderer.WildMagic;
 import javax.media.opengl.*;
 import com.sun.opengl.util.*;
 import java.awt.event.*;
-import java.util.Vector;
-
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -13,12 +11,9 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.*;
 import WildMagic.LibApplications.OpenGLApplication.*;
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Collision.*;
-import WildMagic.LibGraphics.Effects.*;
 import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 import WildMagic.LibRenderers.OpenGLRenderer.*;
-
-import gov.nih.mipav.view.renderer.J3D.GeneralLight;
 
 public class VolumeTriPlanarRender extends GPURenderBase
 implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener

@@ -8,7 +8,7 @@ import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.CubeBounds;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.Point3Ds;
+import gov.nih.mipav.model.structures.Point3D;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
@@ -391,7 +391,7 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
             } else if (boneImage.getNDims() == 3) {
                 CubeBounds regionGrowBounds;
                 regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
-                regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3Ds(seedX, seedY, seedZ), -1,
+                regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3D(seedX, seedY, seedZ), -1,
                                                     false, false, null, 0,
                                                     0, -1, -1, false,
                                                     0, regionGrowBounds);

@@ -1,19 +1,9 @@
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.view.ViewJFrameMessage;
-import gov.nih.mipav.plugins.*;
-
 import java.io.*;
 import java.text.*;
 import java.util.Vector;
-
-import gov.nih.mipav.view.ViewUserInterface;
-
-import java.awt.Color;
-import java.awt.Frame;
 
 public class PlugInAlgorithmVOIIntensities
     extends AlgorithmBase {

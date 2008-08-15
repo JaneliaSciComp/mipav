@@ -2,7 +2,6 @@ package gov.nih.mipav.view.renderer.J3D.surfaceview;
 
 
 import WildMagic.LibFoundation.Mathematics.*;
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.renderer.J3D.model.structures.*;
 import java.util.*;
 import javax.media.j3d.*;

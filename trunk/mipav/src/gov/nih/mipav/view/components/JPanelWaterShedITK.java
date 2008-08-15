@@ -1,12 +1,8 @@
 package gov.nih.mipav.view.components;
 
 
-import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
-import java.awt.Color;
-import java.awt.GridLayout;
 import java.awt.event.*;
 
 import javax.swing.*;

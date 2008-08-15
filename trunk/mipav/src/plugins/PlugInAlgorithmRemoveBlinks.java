@@ -3,11 +3,8 @@ import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.ViewJFrameMessage;
-import gov.nih.mipav.plugins.*;
-
 import java.io.*;
 import gov.nih.mipav.view.ViewUserInterface;
-import java.awt.Frame;
 
 public class PlugInAlgorithmRemoveBlinks
     extends AlgorithmBase {

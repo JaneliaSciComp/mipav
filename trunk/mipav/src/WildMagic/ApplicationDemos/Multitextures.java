@@ -32,8 +32,6 @@ import WildMagic.LibGraphics.SceneGraph.*;
 import WildMagic.LibGraphics.Shaders.*;
 import WildMagic.LibRenderers.OpenGLRenderer.*;
 
-import gov.nih.mipav.view.renderer.J3D.volumeview.*;
-
 public class Multitextures extends JavaApplication3D
     implements GLEventListener, KeyListener
 {

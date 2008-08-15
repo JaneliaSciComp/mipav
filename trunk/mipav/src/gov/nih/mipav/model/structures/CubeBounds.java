@@ -63,7 +63,7 @@ public class CubeBounds {
      *
      * @return  DOCUMENT ME!
      */
-    public boolean contains(Point3Ds seedPt) {
+    public boolean contains(Point3D seedPt) {
 
         if ((seedPt.x >= lowX) && (seedPt.x <= highX) && (seedPt.y >= lowY) && (seedPt.y <= highY) &&
                 (seedPt.z >= lowZ) && (seedPt.z <= highZ)) {

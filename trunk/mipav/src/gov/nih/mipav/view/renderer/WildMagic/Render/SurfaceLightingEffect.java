@@ -2,8 +2,6 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.model.structures.*;
 import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Collision.PickRecord;
-import WildMagic.LibGraphics.Effects.*;
 import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.Shaders.*;
 

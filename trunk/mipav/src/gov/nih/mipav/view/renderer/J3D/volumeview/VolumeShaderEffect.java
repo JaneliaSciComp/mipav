@@ -2,7 +2,6 @@ package gov.nih.mipav.view.renderer.J3D.volumeview;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-import java.awt.GraphicsConfiguration;
 import java.io.File;
 import java.io.IOException;
 
@@ -11,12 +10,9 @@ import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.Shaders.*;
 import WildMagic.LibGraphics.ObjectSystem.*;
 import WildMagic.LibGraphics.Effects.*;
-import gov.nih.mipav.view.renderer.J3D.surfaceview.*;
-
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 

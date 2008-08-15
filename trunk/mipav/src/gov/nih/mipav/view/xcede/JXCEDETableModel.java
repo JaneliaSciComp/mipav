@@ -3,15 +3,10 @@ package gov.nih.mipav.view.xcede;
 import java.util.EventListener;
 import java.util.Vector;
 import java.util.Enumeration;
-import java.util.Hashtable;
-
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TableModelEvent;
-import javax.swing.event.TreeModelEvent;
-import javax.swing.event.TreeModelListener;
-
 import gov.nih.mipav.model.file.xcede.*;
 
 public class JXCEDETableModel implements TableModel {

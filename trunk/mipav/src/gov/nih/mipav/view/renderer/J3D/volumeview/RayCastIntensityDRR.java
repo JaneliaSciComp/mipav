@@ -5,9 +5,6 @@ import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.structures.*;
 
-import java.awt.*;
-import java.awt.Frame.*;
-
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 

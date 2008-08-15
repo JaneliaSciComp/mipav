@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.swing.JTextArea;
@@ -17,7 +16,6 @@ import gov.nih.mipav.model.file.FileDicom;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewImageFileFilter;
 
 /**
  * @author pandyan

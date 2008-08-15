@@ -6,7 +6,6 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import java.io.*;
-import java.util.HashMap;
 import java.util.Vector;
 
 import gov.nih.mipav.model.file.*;

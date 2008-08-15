@@ -1,8 +1,6 @@
 package gov.nih.mipav.model.file;
 
 import java.util.HashMap;
-import java.util.Vector;
-
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogFileInfo;
 import gov.nih.mipav.view.dialogs.JDialogEditor;

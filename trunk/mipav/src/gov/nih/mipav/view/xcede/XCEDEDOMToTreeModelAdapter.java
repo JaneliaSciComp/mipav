@@ -1,7 +1,5 @@
 package gov.nih.mipav.view.xcede;
 
-import java.util.Enumeration;
-
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;

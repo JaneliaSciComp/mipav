@@ -14,9 +14,6 @@ import javax.swing.tree.TreeModel;
 
 import org.w3c.dom.Document;
 
-import gov.nih.mipav.model.file.xcede.*;
-import gov.nih.mipav.view.*;
-
 public class JXCEDETree extends JTree implements ActionListener{
     
     private JPopupMenu popupMenu;

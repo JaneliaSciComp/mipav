@@ -1,8 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.view.*;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.text.*;

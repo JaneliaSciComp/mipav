@@ -4,8 +4,6 @@ package gov.nih.mipav.model.algorithms.utilities;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import Jama.*;
-
 import gov.nih.mipav.view.*;
 
 import java.io.*;

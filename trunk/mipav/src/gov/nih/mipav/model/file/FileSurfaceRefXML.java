@@ -1,16 +1,6 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.model.structures.*;
-
-import org.xml.sax.*;
-import org.xml.sax.helpers.*;
-
-import java.io.*;
-
-import java.util.*;
-
-
 /**
  * Inherits from FileXML, reads SurfaceRef.XML files based on the "surfaceref.xsd" file. Defines specific variables for
  * reading and writing surfaceref.xml files:

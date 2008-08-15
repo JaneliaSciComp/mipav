@@ -1,8 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
-import gov.nih.mipav.plugins.*;     
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.algorithms.*;
@@ -14,8 +12,6 @@ import java.util.*;
 import java.io.*;
 
 import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.border.*;
  /** 
 *   
 *   Interface for the TalairachTransform plugin.

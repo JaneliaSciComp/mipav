@@ -8,7 +8,6 @@ import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.J3D.*;
 import java.util.*;
 import javax.swing.*;

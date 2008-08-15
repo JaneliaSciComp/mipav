@@ -12,7 +12,6 @@ import javax.media.control.*;
 import javax.media.datasink.*;
 import javax.media.format.*;
 import javax.media.protocol.*;
-import javax.media.protocol.*;
 
 
 /**

@@ -23,17 +23,12 @@ import com.sun.opengl.util.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Calendar;
-import java.nio.*;
-
 import WildMagic.LibApplications.OpenGLApplication.*;
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.Detail.*;
 import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 import WildMagic.LibGraphics.Shaders.*;
-import WildMagic.LibGraphics.Sorting.*;
 import WildMagic.LibRenderers.OpenGLRenderer.*;
 
 

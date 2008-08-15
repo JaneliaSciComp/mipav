@@ -3,7 +3,6 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.model.file.RawImageInfo;
 
 

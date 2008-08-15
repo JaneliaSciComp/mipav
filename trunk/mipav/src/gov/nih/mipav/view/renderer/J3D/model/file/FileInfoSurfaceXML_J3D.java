@@ -3,8 +3,6 @@ package gov.nih.mipav.view.renderer.J3D.model.file;
 
 import gov.nih.mipav.view.renderer.J3D.model.structures.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.dialogs.*;
 import javax.media.j3d.*;
 import javax.vecmath.*;
 

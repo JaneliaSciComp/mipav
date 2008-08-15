@@ -5,7 +5,6 @@ import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.J3D.*;
 
 

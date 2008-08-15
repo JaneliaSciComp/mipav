@@ -1,22 +1,14 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.provenance.*;
-
-import gov.nih.mipav.view.*;
-
-import org.apache.xerces.jaxp.*;
 
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
 import java.io.*;
 
-import java.net.*;
 import java.util.Vector;
-
-import javax.xml.parsers.*;
 
 
 public class FileDataProvenance extends FileXML {

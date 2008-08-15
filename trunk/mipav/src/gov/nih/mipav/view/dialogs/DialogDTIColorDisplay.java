@@ -1,8 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
 import java.awt.AWTException;
-import java.awt.BorderLayout;
-import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -58,7 +56,6 @@ import javax.swing.event.ChangeListener;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.*;
-import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileUtility;
@@ -70,7 +67,6 @@ import gov.nih.mipav.view.ColorWheel;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewControlsImage;
-import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewJComponentDTIImage;
 import gov.nih.mipav.view.ViewJFrameBase;
 import gov.nih.mipav.view.ViewJFrameImage;

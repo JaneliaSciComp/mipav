@@ -2,13 +2,10 @@ package gov.nih.mipav.model.file;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Attr;
 import org.xml.sax.*;
 
 import java.io.File;
 import java.io.IOException;
-
-import java.util.Vector;
 
 import javax.swing.JFileChooser;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -24,7 +21,6 @@ import javax.xml.transform.stream.StreamResult;
 
 import gov.nih.mipav.model.file.xcede.DocumentFactory;
 import gov.nih.mipav.model.file.xcede.XMLFactory;
-import gov.nih.mipav.model.srb.SRBFileTransferer;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.*;

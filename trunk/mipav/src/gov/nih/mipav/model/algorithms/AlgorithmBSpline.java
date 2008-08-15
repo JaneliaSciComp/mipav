@@ -3,8 +3,6 @@ package gov.nih.mipav.model.algorithms;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-import gov.nih.mipav.model.structures.*;
-
 
 /**
  * Fourth-order Bspline for 1-3D lines and 2D surface. I plan to add a 3D surface soon. This class is based on code from

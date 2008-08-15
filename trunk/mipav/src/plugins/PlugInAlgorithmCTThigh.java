@@ -4,11 +4,10 @@ import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
 import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
-import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.CubeBounds;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.Point3Ds;
+import gov.nih.mipav.model.structures.Point3D;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
@@ -624,7 +623,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
            } else if (srcImage.getNDims() == 3) {
                CubeBounds regionGrowBounds;
                regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
-               regionGrowAlgo.regionGrow3D(muscleBits, new Point3Ds(sX, sY, sZ), -1,
+               regionGrowAlgo.regionGrow3D(muscleBits, new Point3D(sX, sY, sZ), -1,
                                                    false, false, null, seedVal - 300,
                                                    seedVal + 1000, -1, -1, false,
                                                    0, regionGrowBounds);

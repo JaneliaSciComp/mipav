@@ -1,6 +1,4 @@
 import java.awt.AWTException;
-import java.awt.BorderLayout;
-import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;

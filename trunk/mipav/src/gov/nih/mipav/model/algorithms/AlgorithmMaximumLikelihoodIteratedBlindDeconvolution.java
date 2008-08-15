@@ -10,7 +10,6 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
-import java.io.IOException;
 
 
 /**

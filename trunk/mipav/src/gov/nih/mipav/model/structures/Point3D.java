@@ -9,7 +9,7 @@ package gov.nih.mipav.model.structures;
  */
 
 
-public class Point3D extends PointND {
+public class Point3D {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

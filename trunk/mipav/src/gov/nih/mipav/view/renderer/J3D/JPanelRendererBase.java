@@ -3,8 +3,6 @@ package gov.nih.mipav.view.renderer.J3D;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.J3D.volumeview.*;
-import gov.nih.mipav.view.renderer.WildMagic.*;
-
 import java.awt.*;
 import java.awt.event.*;
 

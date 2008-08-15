@@ -1,8 +1,6 @@
 package gov.nih.mipav.view.renderer.J3D.surfaceview.rfaview;
 
 
-import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.*;
 import gov.nih.mipav.view.renderer.J3D.model.structures.*;

@@ -7,7 +7,6 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.Preferences;
 
 import java.awt.*;
-import java.awt.geom.*;
 
 
 

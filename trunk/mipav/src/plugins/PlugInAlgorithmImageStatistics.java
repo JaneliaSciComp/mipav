@@ -2,8 +2,6 @@ import java.io.*;
 
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.view.Preferences;
-
 import java.text.DecimalFormat;
 import java.util.*;
 

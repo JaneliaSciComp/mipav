@@ -2,8 +2,6 @@ package gov.nih.mipav.model.srb;
 
 import edu.sdsc.grid.io.*;
 
-import java.util.List;
-
 /**
  * An interface for transfering files between different machines.
  * @author Hailong Wang

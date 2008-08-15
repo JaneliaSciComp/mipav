@@ -1,10 +1,6 @@
 package gov.nih.mipav.view.renderer.J3D.volumeview;
 
 
-import java.awt.*;
-import java.awt.Frame.*;
-
-
 /**
  * An interface to be used to color-based Renderer implementations.
  */

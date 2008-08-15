@@ -1,13 +1,11 @@
 package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Meshes.*;
-import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Detail.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;

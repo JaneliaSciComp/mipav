@@ -1504,7 +1504,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
      *
      * @return  returns the volume region
      */
-    public int regionGrow3D(BitSet paintMask, Point3Ds seedPt, float fuzzyThreshold, boolean useVOI,
+    public int regionGrow3D(BitSet paintMask, Point3D seedPt, float fuzzyThreshold, boolean useVOI,
                             boolean displayFuzzy, RegionGrowDialog growDialog, float lowBound, float upperBound,
                             int sizeLimit, float maxDistance, boolean variableThresholds, int timeSlice,
                             CubeBounds regionBounds) {
@@ -2508,7 +2508,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
      *
      * @return  returns the volume region
      */
-    public int regionGrow3D(BitSet paintMask, Point3Ds seedPt, float fuzzyThreshold, boolean useVOI,
+    public int regionGrow3D(BitSet paintMask, Point3D seedPt, float fuzzyThreshold, boolean useVOI,
                             boolean displayFuzzy, RegionGrowDialog growDialog, float lowBoundR, float upperBoundR,
                             float lowBoundG, float upperBoundG, float lowBoundB, float upperBoundB, int sizeLimit,
                             float maxDistance, int timeSlice, CubeBounds regionBounds) {

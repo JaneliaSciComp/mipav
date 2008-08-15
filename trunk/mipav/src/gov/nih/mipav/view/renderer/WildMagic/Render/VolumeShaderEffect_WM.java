@@ -1,15 +1,10 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.Shaders.*;
 import WildMagic.LibGraphics.ObjectSystem.*;
-import WildMagic.LibGraphics.Effects.*;
-
-
-import java.nio.*;
 
 /** 
  * VolumeShaderEffect is the workhorse of the GPU-based rendering in MIPAV. It

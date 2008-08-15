@@ -2,8 +2,6 @@ package gov.nih.mipav.model.file.xcede;
 
 import java.util.*;
 
-import gov.nih.mipav.view.Preferences;
-
 /**
  * This class represents the any level element of XCEDE(XML-based Clinical and Experimental Data Exchange) schema.
  * @author Hailong Wang

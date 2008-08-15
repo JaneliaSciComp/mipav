@@ -2,8 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JDialogBase.OKAction;
-
 import java.awt.*;
 import java.awt.event.*;
 
