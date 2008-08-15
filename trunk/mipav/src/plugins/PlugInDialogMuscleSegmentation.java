@@ -213,10 +213,12 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         customRadio = new JRadioButton("Custom");
         customRadio.setFont(MipavUtil.font12);
 
-        if (true) {
+        if (imageType.equals(PlugInMuscleImageDisplay.ImageType.Thigh)) {
             twoThighRadio.setSelected(true);
-        } else {
+        } else if (imageType.equals(PlugInMuscleImageDisplay.ImageType.Abdomen)) {
             abdomenRadio.setSelected(true);
+        } else {
+        	customRadio.setSelected(true);
         }
         
         ButtonGroup group = new ButtonGroup();
@@ -261,8 +263,10 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
             imageType = PlugInMuscleImageDisplay.ImageType.Thigh;
         } else if (abdomenRadio.isSelected()) {
             imageType = PlugInMuscleImageDisplay.ImageType.Abdomen;
+        } else if (customRadio.isSelected()) {
+        	imageType = PlugInMuscleImageDisplay.ImageType.Custom;
         } else {
-            MipavUtil.displayWarning("You have selected an unsupported image type.");
+            MipavUtil.displayWarning("You have selected an invalid image type.");
             return false;
         }
         return true;
