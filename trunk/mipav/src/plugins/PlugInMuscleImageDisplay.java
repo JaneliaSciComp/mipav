@@ -3960,7 +3960,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 					//still check for nulls in case thread has been disposed
 					boolean activeFound = false;
 					for(int j=0; j<activeGroup.length; j++) {
-						System.out.println("About to compare "+ activeGroup[j].getName() +" to "+residuals.get(i).getName());
+						//System.out.println("About to compare "+ activeGroup[j].getName() +" to "+residuals.get(i).getName());
 						if(activeGroup[j] != null && activeGroup[j].getName().equals(residuals.get(i).getName())) {
 							calc.add(activeGroup[j]);
 							System.out.println("Might avoid duplicate calculation "+activeGroup[j]);
