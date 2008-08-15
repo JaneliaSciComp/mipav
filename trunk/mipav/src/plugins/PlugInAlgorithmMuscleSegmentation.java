@@ -4,7 +4,17 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.TreeMap;
+
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import javax.swing.ScrollPaneConstants;
 
 /**
  * Creates an interface for working with Iceland CT images.
@@ -12,11 +22,11 @@ import java.util.TreeMap;
  * @author senseneyj
  *
  */
-public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
+public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements ActionListener {
     
     //~ Static fields --------------------------------------------------------------------------------------------------
-    
-    public static final Color[] colorPick = {Color.GREEN, Color.ORANGE, Color.CYAN, 
+
+	public static final Color[] colorPick = {Color.GREEN, Color.ORANGE, Color.CYAN, 
                                                 Color.YELLOW, Color.MAGENTA};
     
     public static final String LUT_IMAGE = "lutImage.tif";
@@ -41,6 +51,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     
     /**list of titles used for each pane*/
     private String[] titles;
+    
+    /**Dialog box used for creating custom types*/
+    private JPanel customDialog;
 	
     /**
      * Constructor.
@@ -72,23 +85,37 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             case Abdomen:
                 buildAbdomenDialog();
+                performDialog();
                 break;
                 
             case Thigh:
                 buildThighDialog();
+                performDialog();
                 break;
                 
             case Custom:
-            	buildCustomDialog();
+            	customDialog = initDialogBox();
+            	customDialog.setVisible(true);
             	break;
                 
             default:
                 displayError("Image type not supported");
                 return;         
         }
-        performDialog();
     } // end runAlgorithm()
     
+    /**
+     * For custom muscle types, calls buildCustomDialog
+     */
+	public void actionPerformed(ActionEvent e) {
+		if(e.getSource() instanceof JButton && ((JButton)e.getSource()).getText().equals("OK")) {
+			if(checkPanel()) {
+				buildCustomDialog();
+				performDialog();
+			}		
+		} else
+			super.actionPerformed(e);
+	}
     
     private void buildAbdomenDialog() {
         
@@ -179,9 +206,92 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
 	}
 	
 	private void buildCustomDialog() {
+		customDialog.setVisible(false);
 		MipavUtil.displayError("Custom dialog not yet built. Plugin will now end.");
 	}
 	
+	/**
+	 * Checks that information has been entered correctly.
+	 */
+	private boolean checkPanel() {
+		return true;
+	}
+	
+	/**
+	 * Build the custom dialog box for creating custom muscle types.
+	 */
+	private JPanel initDialogBox() {
+		ViewJFrameImage pane = new ViewJFrameImage(srcImage);
+		
+		JPanel mainPanel = initMainPanel(pane);
+		
+		//if this is standalone (app frame hidden), add the tabbedpane from the messageframe to the bottom of the plugin's frame
+		if (ViewUserInterface.getReference().isAppFrameVisible()) {
+			pane.getContentPane().add(mainPanel, BorderLayout.CENTER);
+		} else {
+			JTabbedPane messageTabs = ViewUserInterface.getReference().getMessageFrame().getTabbedPane();
+			messageTabs.setPreferredSize(new Dimension(pane.getWidth(), 100));
+			JSplitPane mainSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, mainPanel, messageTabs );
+			mainSplit.setDividerLocation(550);
+			pane.getContentPane().add(mainSplit, BorderLayout.CENTER);
+		}
+	    
+		//removes extra scrollPane from the mipav-loaded plugin
+		if (ViewUserInterface.getReference().isAppFrameVisible()) {
+			pane.getContentPane().remove(0);
+	    } 
+		
+		pane.pack();
+		
+		return mainPanel;
+	}
+	
+	private JPanel initMainPanel(ViewJFrameImage pane) {
+		//The component image will be displayed in a scrollpane.       
+	    JScrollPane scrollPane = new JScrollPane(pane.getComponentImage(), ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+	                                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+	    
+	    pane.getComponentImage().useHighlight(false);
+	    scrollPane.setFocusable(true);
+	    scrollPane.setBackground(Color.black);
+	    scrollPane.addKeyListener(pane);
+	    
+	    JTabbedPane dialogTabs = new JTabbedPane();
+	    dialogTabs.setMinimumSize(new Dimension (370, 532));
+	    dialogTabs.setPreferredSize(new Dimension(370, 532));
+	    dialogTabs.setMaximumSize(new Dimension (370, 532));
+	    
+	    JPanel[] tabs = new JPanel[1];
+	    
+	    JPanel panelA = new JPanel(new GridLayout(1, 3, 10, 10));
+	    
+	    JPanel testPanel = new JPanel();
+	    testPanel.setLayout(new BorderLayout());
+	    testPanel.add(dialogTabs, BorderLayout.WEST);
+	    testPanel.add(scrollPane, BorderLayout.CENTER);
+
+	    panelA.add(testPanel);
+	
+	    for(int i=0; i<1; i++) { 
+	    	//set up tab here
+	    	tabs[i] = initMuscleTab();
+	    	
+	    	tabs[i].addComponentListener(pane);
+	    	tabs[i].setName("Tab 1");
+	    	dialogTabs.addTab((i+1)+": "+"Tab 1", tabs[i]);
+	    }
+	            
+	    return panelA;
+	}
+	
+	private JPanel initMuscleTab() {
+		JPanel musclePanel = new JPanel();
+		
+		JButton text = new JButton("Sample text");
+		musclePanel.add(text, BorderLayout.CENTER);
+		return musclePanel;
+	}
+
 	private void performDialog() {
 		if (ViewUserInterface.getReference().isAppFrameVisible()) {
         	new PlugInMuscleImageDisplay(srcImage, titles, voiList,  
