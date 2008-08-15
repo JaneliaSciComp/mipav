@@ -1379,7 +1379,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
         // System.err.println("end index is: " + endIndex);
         for (int m = 0; m < endIndex; m++) {
-            fireProgressStateChanged("Registering image " + (iNumber + 1));
+            fireProgressStateChanged("Registering image " + iNumber);
 
             fireProgressStateChanged((int) (m / (float) (inputImage.getExtents()[2] - 1) * 100));
 
