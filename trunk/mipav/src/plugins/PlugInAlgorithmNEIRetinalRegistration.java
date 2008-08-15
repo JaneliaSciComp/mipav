@@ -5,8 +5,6 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
-import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmBoundaryAttenuation;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitudeSep;
 
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR2D;

@@ -4,13 +4,8 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.J3D.*;
-import gov.nih.mipav.view.renderer.WildMagic.*;
-
 import java.awt.*;
 import java.awt.event.*;
 

@@ -1,7 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
-import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.Shaders.*;
 import WildMagic.LibGraphics.ObjectSystem.*;

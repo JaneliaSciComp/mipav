@@ -1,18 +1,14 @@
 package gov.nih.mipav.model.algorithms.DiffusionTensorImaging;
 
 import java.io.IOException;
-import java.util.ArrayList;
-
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
-import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.ViewJComponentDTIImage;
-import gov.nih.mipav.view.ViewJFrameImage;
 
 /**
  * @author pandyan

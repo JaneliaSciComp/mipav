@@ -19,11 +19,6 @@ import javax.swing.*;
 
 import javax.vecmath.*;
 
-import org.apache.xerces.parsers.DOMParser;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
 
 /**
  * A simple triangle mesh that represents a level surface. The mesh only stores vertex positions and vertex normals. The

@@ -4,8 +4,6 @@ package gov.nih.mipav.view.renderer.WildMagic;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
-
 import java.awt.*;
 import java.awt.event.*;
 

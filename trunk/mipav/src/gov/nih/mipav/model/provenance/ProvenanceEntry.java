@@ -1,9 +1,6 @@
 package gov.nih.mipav.model.provenance;
 
-import java.io.IOException;
 import java.util.*;
-import java.text.SimpleDateFormat;
-
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 

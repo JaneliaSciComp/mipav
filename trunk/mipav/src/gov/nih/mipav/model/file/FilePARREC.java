@@ -2,7 +2,6 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.Preferences;
 
 import java.io.*;

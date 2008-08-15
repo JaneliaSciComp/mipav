@@ -1,22 +1,11 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import javax.media.opengl.*;
-import com.sun.opengl.util.*;
-import java.awt.event.*;
-import java.util.Iterator;
-import java.util.HashMap;
-import java.util.Vector;
-
 import gov.nih.mipav.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
-import WildMagic.LibApplications.OpenGLApplication.*;
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Effects.*;
 import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibGraphics.Shaders.*;
-import WildMagic.LibRenderers.OpenGLRenderer.*;
 
 /** Displays the Orientation Cube in the VolumeViewer.
  * @see VolumeObject.java

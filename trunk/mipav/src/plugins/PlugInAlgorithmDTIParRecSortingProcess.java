@@ -4,11 +4,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Vector;
-
 import javax.swing.JTextArea;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;

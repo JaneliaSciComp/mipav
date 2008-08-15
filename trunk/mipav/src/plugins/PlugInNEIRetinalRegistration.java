@@ -1,12 +1,4 @@
-import gov.nih.mipav.plugins.PlugInAlgorithm;
 import gov.nih.mipav.plugins.PlugInGeneric;
-
-import gov.nih.mipav.model.structures.ModelImage;
-
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewJFrameImage;
-
-import java.awt.Frame;
 
 
 

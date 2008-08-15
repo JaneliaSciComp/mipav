@@ -1,8 +1,5 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.*;
-import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
@@ -11,7 +8,6 @@ import java.awt.event.*;
 import java.io.File;
 import java.util.Vector;
 import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
 
 
 

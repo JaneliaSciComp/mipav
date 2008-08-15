@@ -22,7 +22,6 @@ import org.jdom.input.SAXBuilder;
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.file.FileXML.XMLAttributes;
 
 /**
  * This class facilitates reading and writing vtk xml

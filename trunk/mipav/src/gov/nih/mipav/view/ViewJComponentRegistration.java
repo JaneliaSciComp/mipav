@@ -5,15 +5,10 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.*;
 
-import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.view.icons.*;
-
 import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
-
-import java.util.*;
 
 
 /**

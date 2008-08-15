@@ -1,4 +1,3 @@
-import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.plugins.*; // needed to load PlugInAlgorithm / PlugInView / PlugInFile interface
@@ -7,21 +6,10 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.Vector;
-import java.util.jar.JarFile;
-import java.util.zip.ZipEntry;
-
-import javax.help.BadIDException;
 import javax.help.HelpBroker;
 import javax.help.HelpSet;
-import javax.help.HelpSetException;
-import javax.swing.JFileChooser;
 
 
 /**

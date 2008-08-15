@@ -2,8 +2,6 @@ package gov.nih.mipav.view.renderer.J3D.model.file;
 
 
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
-
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 

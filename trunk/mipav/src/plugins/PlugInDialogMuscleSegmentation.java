@@ -1,12 +1,10 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JDialogFaceAnonymizerBET;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.*;

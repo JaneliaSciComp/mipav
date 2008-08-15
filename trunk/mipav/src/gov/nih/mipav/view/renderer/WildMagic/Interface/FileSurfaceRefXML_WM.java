@@ -2,8 +2,6 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
-
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
@@ -13,7 +11,6 @@ import java.util.*;
 
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
 
 
 /**

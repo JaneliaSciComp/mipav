@@ -2,10 +2,6 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.dialogs.*;
-
-
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Rendering.*;
 

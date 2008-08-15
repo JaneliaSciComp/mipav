@@ -3,7 +3,6 @@ package gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM;
 
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.WildMagic.*;
 import gov.nih.mipav.view.renderer.WildMagic.Render.*;
 

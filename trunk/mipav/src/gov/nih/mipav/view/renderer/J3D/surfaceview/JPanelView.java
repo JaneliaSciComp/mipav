@@ -2,7 +2,6 @@ package gov.nih.mipav.view.renderer.J3D.surfaceview;
 
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.J3D.*;
 
 import com.sun.j3d.utils.behaviors.vp.*;

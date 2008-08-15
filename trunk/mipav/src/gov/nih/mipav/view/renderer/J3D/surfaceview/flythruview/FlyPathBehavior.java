@@ -2,8 +2,6 @@ package gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview;
 
 
 import WildMagic.LibFoundation.Curves.*;
-import gov.nih.mipav.model.structures.*;
-
 import java.awt.*;
 import java.awt.event.*;
 

@@ -5,13 +5,7 @@ import gov.nih.mipav.plugins.*; // needed to load PlugInAlgorithm / PlugInView /
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-
-import java.io.File;
 import java.io.IOException;
-
-import java.util.Vector;
 
 
 /**

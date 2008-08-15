@@ -3,8 +3,6 @@ package gov.nih.mipav.view.renderer.J3D.model.structures;
 
 import gov.nih.mipav.view.*;
 
-import java.io.*;
-
 import java.util.*;
 
 import javax.vecmath.*;

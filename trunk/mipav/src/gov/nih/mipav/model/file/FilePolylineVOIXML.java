@@ -3,10 +3,6 @@ package gov.nih.mipav.model.file;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
-import gov.nih.mipav.*;
-
-import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import org.apache.xerces.jaxp.*;

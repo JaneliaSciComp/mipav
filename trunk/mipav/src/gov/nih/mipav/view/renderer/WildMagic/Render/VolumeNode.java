@@ -1,17 +1,8 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import java.util.*;
-import java.nio.*;
-import gov.nih.mipav.MipavCoordinateSystems;
-import gov.nih.mipav.model.structures.*;
 import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibFoundation.System.*;
-import WildMagic.LibGraphics.Collision.*;
-import WildMagic.LibGraphics.Detail.*;
-import WildMagic.LibGraphics.Effects.*;
 import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibGraphics.SceneGraph.Spatial.CullingMode;
 
 /**
  * Displays the three orthogonal planes with the volume data.

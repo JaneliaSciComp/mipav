@@ -6,7 +6,6 @@ import java.awt.*;
 import javax.media.j3d.*;
 
 import javax.vecmath.*;
-import gov.nih.mipav.view.renderer.*;
 
 
 /**

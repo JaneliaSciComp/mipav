@@ -13,7 +13,6 @@ import javax.media.opengl.*;
 import com.sun.opengl.util.*;
 
 import gov.nih.mipav.view.renderer.WildMagic.Render.*;
-import WildMagic.LibApplications.OpenGLApplication.*;
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Effects.*;
 import WildMagic.LibGraphics.Rendering.*;

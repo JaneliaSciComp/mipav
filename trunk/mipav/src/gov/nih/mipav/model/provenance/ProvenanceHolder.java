@@ -5,12 +5,6 @@ import java.util.*;
 
 import javax.swing.event.EventListenerList;
 
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ProgressChangeEvent;
-import gov.nih.mipav.view.ProgressChangeListener;
-import gov.nih.mipav.view.ViewJProgressBar;
-import gov.nih.mipav.model.structures.*;
-
 
 /**
  * Class that stores matrices (owned by ModelImage) with accessor functions to the matrix map/adding and changing

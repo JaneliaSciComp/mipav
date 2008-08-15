@@ -5,8 +5,6 @@ import java.util.Enumeration;
 
 import javax.swing.tree.TreeNode;
 
-import gov.nih.mipav.view.Preferences;
-
 /**
  * This <code>XCEDEElement</code> represents the general element of the XCEDE xml file.
  * Right now I only think Project, Subject, Visit, Study and Series to be nodes, and

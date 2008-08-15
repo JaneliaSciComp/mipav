@@ -3,18 +3,14 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 import java.net.*;
 
 import javax.media.*;
-import javax.media.*;
 import javax.media.control.*;
 import javax.media.datasink.*;
 import javax.media.format.*;
-import javax.media.protocol.*;
 import javax.media.protocol.*;
 
 

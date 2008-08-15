@@ -10,7 +10,6 @@ import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.CustomUIBuilder.UIParams;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;

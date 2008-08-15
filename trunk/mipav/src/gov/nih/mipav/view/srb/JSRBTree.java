@@ -4,20 +4,14 @@ package gov.nih.mipav.view.srb;
 import edu.sdsc.grid.gui.*;
 import edu.sdsc.grid.io.*;
 
-//needed for the testing methods
-import edu.sdsc.grid.io.*;
-import edu.sdsc.grid.io.local.*;
 import edu.sdsc.grid.io.srb.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.event.*;
-
 import java.io.*;
 
 import java.net.*;
 
-import javax.swing.*;
 import javax.swing.*;
 import javax.swing.tree.*;
 

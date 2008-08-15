@@ -699,7 +699,7 @@ public class SurfacePaint
             modelColor.z *= 255.0f;
             modelColor.w *= 255.0f;
 
-            Point3Ds seed = new Point3Ds( (short)kSeedPoint.x,
+            Point3D seed = new Point3D( (short)kSeedPoint.x,
                                           (short)kSeedPoint.y,
                                           (short)kSeedPoint.z );
 

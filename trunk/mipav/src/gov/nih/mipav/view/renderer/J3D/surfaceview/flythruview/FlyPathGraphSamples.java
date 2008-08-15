@@ -1,8 +1,6 @@
 package gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview;
 
 
-import gov.nih.mipav.model.structures.*;
-
 import java.util.*;
 
 import javax.vecmath.*;

@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.algorithms.DiffusionTensorImaging;
 
-import java.awt.Dimension;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,8 +17,6 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.Vector;
-
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
@@ -44,7 +41,6 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageFileFilter;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJProgressBar;
 
 public class AlgorithmDTICreateListFile extends AlgorithmBase implements AlgorithmInterface{

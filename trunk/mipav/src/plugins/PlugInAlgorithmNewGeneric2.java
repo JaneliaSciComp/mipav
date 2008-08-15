@@ -6,26 +6,19 @@ import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
 import gov.nih.mipav.model.algorithms.AlgorithmSnake;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
-import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.CubeBounds;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.Point3Ds;
+import gov.nih.mipav.model.structures.Point3D;
 import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewJFrameTriImage;
-import gov.nih.mipav.view.ViewVOIVector;
-import gov.nih.mipav.view.dialogs.JDialogPaintGrow;
-
 import java.awt.Point;
 import java.io.IOException;
 import java.util.BitSet;
-import java.util.Vector;
 
 
 
@@ -673,7 +666,7 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
            } else if (boneImage.getNDims() == 3) {
                CubeBounds regionGrowBounds;
                regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
-               int count = regionGrowAlgo.regionGrow3D(muscleBits, new Point3Ds(sX, sY, sZ), -1,
+               int count = regionGrowAlgo.regionGrow3D(muscleBits, new Point3D(sX, sY, sZ), -1,
                                                    false, false, null, seedVal - 300,
                                                    seedVal + 1000, -1, -1, false,
                                                    0, regionGrowBounds);
@@ -797,7 +790,7 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
             } else if (boneImage.getNDims() == 3) {
                 CubeBounds regionGrowBounds;
                 regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
-                int count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3Ds(seedX, seedY, seedZ), -1,
+                int count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3D(seedX, seedY, seedZ), -1,
                                                     false, false, null, 0,
                                                     0, -1, -1, false,
                                                     0, regionGrowBounds);
@@ -1155,7 +1148,7 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
         } else if (boneImage.getNDims() == 3) {
             CubeBounds regionGrowBounds;
             regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
-            int count = regionGrowAlgo.regionGrow3D(boneBits, new Point3Ds(sx, sy, sz), -1,
+            int count = regionGrowAlgo.regionGrow3D(boneBits, new Point3D(sx, sy, sz), -1,
                                                 false, false, null, seedVal,
                                                 seedVal, -1, -1, false,
                                                 0, regionGrowBounds);

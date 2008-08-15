@@ -1,8 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.file.FileInfoImageXML;
-import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.RawImageInfo;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;

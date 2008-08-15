@@ -1,8 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.*;
-
 import gov.nih.mipav.view.*;
 
 import java.util.*;

@@ -4,9 +4,6 @@ package gov.nih.mipav.view.renderer.J3D.surfaceview.plotterview;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.J3D.*;
-import gov.nih.mipav.view.renderer.J3D.surfaceview.plotterview.*;
-
 import com.sun.j3d.utils.universe.*;
 
 import java.awt.*;

@@ -9,7 +9,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.Dimension;
 import java.io.*;
 
 import java.util.*;

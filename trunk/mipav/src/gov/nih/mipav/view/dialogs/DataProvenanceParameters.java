@@ -6,8 +6,6 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.provenance.*;
 
-import gov.nih.mipav.view.components.*;
-
 
 /**
  * <p>This class standardizes the parameter names given to many common parameters used in algorithms. It also provides

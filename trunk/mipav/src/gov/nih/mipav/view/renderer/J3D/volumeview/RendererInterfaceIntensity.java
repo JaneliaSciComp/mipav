@@ -1,12 +1,6 @@
 package gov.nih.mipav.view.renderer.J3D.volumeview;
 
 
-import gov.nih.mipav.model.structures.*;
-
-import java.awt.*;
-import java.awt.Frame.*;
-
-
 /**
  * An interface to be used to intensity-based Renderer implementations.
  */

@@ -6,8 +6,6 @@ import gov.nih.mipav.model.structures.*;
 import java.awt.*;
 import java.awt.image.*;
 
-import java.io.*;
-
 import java.util.*;
 
 

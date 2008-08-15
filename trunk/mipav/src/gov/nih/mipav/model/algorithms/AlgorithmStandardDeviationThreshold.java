@@ -1,12 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
-
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.view.ViewJComponentEditImage;
-import gov.nih.mipav.view.ViewVOIVector;
-
 import java.io.IOException;
 import java.util.BitSet;
 

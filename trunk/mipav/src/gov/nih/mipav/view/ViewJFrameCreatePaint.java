@@ -4,17 +4,13 @@ import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.components.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.view.*;
-
 import java.awt.*;
 import java.awt.event.*;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.border.*;
 
 
 /**

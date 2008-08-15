@@ -1,9 +1,6 @@
 package gov.nih.mipav.model.structures;
 
 
-import gov.nih.mipav.*;
-
-
 /**
  * This class extends the abstract BufferBase class. It allocates the space for a integer buffer on construction. This
  * class also defines the accessors to the data as required by the abstract base class.
