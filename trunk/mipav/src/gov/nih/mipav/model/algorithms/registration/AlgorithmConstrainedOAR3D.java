@@ -1,12 +1,12 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import Jama.*;
 
 import gov.nih.mipav.view.*;
 
@@ -701,116 +701,6 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         }
 
         return cogPt;
-    }
-
-    /**
-     * Working ...
-     *
-     * @param  image    DOCUMENT ME!
-     * @param  doColor  DOCUMENT ME!
-     */
-    public void calculatePrincipleAxis(ModelImage image, boolean doColor) {
-        int x, y, z;
-        int n = 0;
-        Matrix mat2 = new Matrix(3, 3); // Row,Col
-        Matrix meanProduct = new Matrix(3, 3);
-        Matrix mean = new Matrix(3, 1); // Column vector
-        double voxVal = 0;
-        double total = 0;
-        double tot = 0;
-
-        // Moments first and second order
-        double mX = 0, mY = 0, mZ = 0, mXX = 0, mXY = 0, mXZ = 0, mYY = 0, mYZ = 0, mZZ = 0;
-
-        float min = (float) image.getMin();
-
-        int xEnd = image.getExtents()[0];
-        int yEnd = image.getExtents()[1];
-        int zEnd = image.getExtents()[2];
-
-        int nLim = (int) Math.sqrt((double) xEnd * yEnd * zEnd);
-
-        if (nLim < 1000) {
-            nLim = 1000;
-        }
-
-        for (z = 0; z < zEnd; z++) {
-
-            for (y = 0; y < yEnd; y++) {
-
-                for (x = 0; x < xEnd; x++) {
-
-                    if (doColor) {
-                        voxVal = (double) (image.getFloatC(x, y, z, 1) + image.getFloatC(x, y, z, 2) +
-                                           image.getFloatC(x, y, z, 3));
-                    } else {
-                        voxVal = (double) (image.getFloat(x, y, z) - min);
-                    }
-
-                    mX += voxVal * x;
-                    mY += voxVal * y;
-                    mZ += voxVal * z;
-                    mXX += voxVal * x * x;
-                    mXY += voxVal * x * y;
-                    mXZ += voxVal * x * z;
-                    mYY += voxVal * y * y;
-                    mYZ += voxVal * y * z;
-                    mZZ += voxVal * z * z;
-                    tot += voxVal;
-                    n++;
-
-                    if (n > nLim) { // Lets not over run the buffers during summation
-                        n = 0;
-                        total += tot;
-                        mat2.set(0, 0, mat2.get(0, 0) + mXX);
-                        mat2.set(0, 1, mat2.get(0, 1) + mXY);
-                        mat2.set(0, 2, mat2.get(0, 2) + mXZ);
-                        mat2.set(1, 1, mat2.get(1, 1) + mYY);
-                        mat2.set(1, 2, mat2.get(1, 2) + mYZ);
-                        mat2.set(2, 2, mat2.get(2, 2) + mZZ);
-                        mean.set(0, 0, mean.get(0, 0) + mX);
-                        mean.set(1, 0, mean.get(1, 0) + mY);
-                        mean.set(2, 0, mean.get(2, 0) + mZ);
-                        tot = 0;
-                        mX = 0;
-                        mY = 0;
-                        mZ = 0;
-                        mXX = 0;
-                        mXY = 0;
-                        mXZ = 0;
-                        mYY = 0;
-                        mYZ = 0;
-                        mZZ = 0;
-                    }
-                }
-            }
-        }
-
-        total += tot;
-
-        if (Math.abs(total) < 1e-5) {
-            total = 1.0f;
-        }
-
-        mat2.set(0, 0, (mat2.get(0, 0) + mXX) / total);
-        mat2.set(0, 1, (mat2.get(0, 1) + mXY) / total);
-        mat2.set(0, 2, (mat2.get(0, 2) + mXZ) / total);
-        mat2.set(1, 1, (mat2.get(1, 1) + mYY) / total);
-        mat2.set(1, 2, (mat2.get(1, 2) + mYZ) / total);
-        mat2.set(2, 2, (mat2.get(2, 2) + mZZ) / total);
-        mean.set(0, 0, (mean.get(0, 0) + mX) / total);
-        mean.set(1, 0, (mean.get(1, 0) + mY) / total);
-        mean.set(2, 0, (mean.get(2, 0) + mZ) / total);
-
-        // Now make it central (taking off the Center of Mass)
-        for (int j = 0; j < 3; j++) {
-
-            for (int k = 0; k < 3; k++) {
-                meanProduct.set(j, k, mean.get(j, 0) * mean.get(k, 0));
-            }
-        }
-
-        mat2.minusEquals(meanProduct);
     }
 
     /**

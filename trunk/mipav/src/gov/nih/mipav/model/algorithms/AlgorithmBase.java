@@ -17,6 +17,9 @@ import java.util.Vector;
 
 import javax.swing.event.EventListenerList;
 
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 
 /**
  * Base abstract class for algorithms.
@@ -178,6 +181,120 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         }
     }
 
+    /**
+     * Working ...
+     * This function is never used. It doesn't modify any parameters or data members and returns void.
+     * @param  image    DOCUMENT ME!
+     * @param  doColor  DOCUMENT ME!
+     */
+    public void calculatePrincipleAxis(ModelImage image, boolean doColor) {
+        int x, y, z;
+        int n = 0;
+        Matrix3f mat2 = new Matrix3f(); // Row,Col
+        Matrix3f meanProduct = new Matrix3f();
+        Vector3f mean = new Vector3f(); // Column vector
+        double voxVal = 0;
+        double total = 0;
+        double tot = 0;
+
+        // Moments first and second order
+        double mX = 0, mY = 0, mZ = 0, mXX = 0, mXY = 0, mXZ = 0, mYY = 0, mYZ = 0, mZZ = 0;
+
+        float min = (float) image.getMin();
+
+        int xEnd = image.getExtents()[0];
+        int yEnd = image.getExtents()[1];
+        int zEnd = image.getExtents()[2];
+
+        int nLim = (int) Math.sqrt((double) xEnd * yEnd * zEnd);
+
+        if (nLim < 1000) {
+            nLim = 1000;
+        }
+
+        for (z = 0; z < zEnd; z++) {
+
+            for (y = 0; y < yEnd; y++) {
+
+                for (x = 0; x < xEnd; x++) {
+
+                    if (doColor) {
+                        voxVal = (double) (image.getFloatC(x, y, z, 1) + image.getFloatC(x, y, z, 2) +
+                                           image.getFloatC(x, y, z, 3));
+                    } else {
+                        voxVal = (double) (image.getFloat(x, y, z) - min);
+                    }
+
+                    mX += voxVal * x;
+                    mY += voxVal * y;
+                    mZ += voxVal * z;
+                    mXX += voxVal * x * x;
+                    mXY += voxVal * x * y;
+                    mXZ += voxVal * x * z;
+                    mYY += voxVal * y * y;
+                    mYZ += voxVal * y * z;
+                    mZZ += voxVal * z * z;
+                    tot += voxVal;
+                    n++;
+
+                    if (n > nLim) { // Lets not over run the buffers during summation
+                        n = 0;
+                        total += tot;
+                        mat2.M00 = (float)(mat2.M00 + mXX);
+                        mat2.M01 = (float)(mat2.M01 + mXY);
+                        mat2.M02 = (float)(mat2.M02 + mXZ);
+                        mat2.M11 = (float)(mat2.M11 + mYY);
+                        mat2.M12 = (float)(mat2.M12 + mYZ);
+                        mat2.M22 = (float)(mat2.M22 + mZZ);
+                        mean.X = (float)(mean.X + mX);
+                        mean.Y = (float)(mean.Y + mY);
+                        mean.Z = (float)(mean.Z + mZ);
+                        tot = 0;
+                        mX = 0;
+                        mY = 0;
+                        mZ = 0;
+                        mXX = 0;
+                        mXY = 0;
+                        mXZ = 0;
+                        mYY = 0;
+                        mYZ = 0;
+                        mZZ = 0;
+                    }
+                }
+            }
+        }
+
+        total += tot;
+
+        if (Math.abs(total) < 1e-5) {
+            total = 1.0f;
+        }
+
+        mat2.M00 = (float)((mat2.M00 + mXX) / total);
+        mat2.M01 = (float)((mat2.M01 + mXY) / total);
+        mat2.M02 = (float)((mat2.M02 + mXZ) / total);
+        mat2.M11 = (float)((mat2.M11 + mYY) / total);
+        mat2.M12 = (float)((mat2.M12 + mYZ) / total);
+        mat2.M22 = (float)((mat2.M22 + mZZ) / total);
+        mean.X = (float)((mean.X + mX) / total);
+        mean.Y = (float)((mean.Y + mY) / total);
+        mean.Z = (float)((mean.Z + mZ) / total);
+
+        // Now make it central (taking off the Center of Mass)
+        meanProduct.MakeTensorProduct(mean, mean);
+        mat2.M00 -= meanProduct.M00;
+        mat2.M01 -= meanProduct.M01;
+        mat2.M02 -= meanProduct.M02;
+        mat2.M10 -= meanProduct.M10;
+        mat2.M11 -= meanProduct.M11;
+        mat2.M12 -= meanProduct.M12;
+        mat2.M20 -= meanProduct.M20;
+        mat2.M21 -= meanProduct.M21;
+        mat2.M22 -= meanProduct.M22;
+    }
+
+
+    
     /**
      * Computes the elapased time as the difference between the start time and the current time (both of which are in
      * milliseconds).
