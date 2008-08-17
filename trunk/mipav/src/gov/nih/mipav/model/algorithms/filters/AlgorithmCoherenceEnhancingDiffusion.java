@@ -1692,7 +1692,8 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             double[][] evecs = new double[3][3];
             Matrix rot;
             Matrix cMat = new Matrix(3, 3);
-            double[][] cArray = new double[3][3];
+            // cArray is a reference to cMat's internal array.
+            double[][] cArray = cMat.getArray();
 
             for (int i = 0; i <= 2; i++) {
 
@@ -1762,7 +1763,6 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
                             cArray[0][0] = c1;
                             cArray[1][1] = c2;
                             cArray[2][2] = c3;
-                            cMat.setMatrix(cArray);
 
                             dMat = (rot.transpose().times(cMat)).times(rot);
 
@@ -2258,7 +2258,8 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             double[][] evecs = new double[3][3];
             Matrix rot;
             Matrix cMat = new Matrix(3, 3);
-            double[][] cArray = new double[3][3];
+            // cArray is a reference to cMat's internal array.
+            double[][] cArray = cMat.getArray();
 
             for (i = 0; i <= 2; i++) {
 
@@ -2328,8 +2329,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
                             cArray[0][0] = c1;
                             cArray[1][1] = c2;
                             cArray[2][2] = c3;
-                            cMat.setMatrix(cArray);
-
+                            
                             dMat = (rot.transpose().times(cMat)).times(rot);
 
                             d11[idx] = (float) dMat.get(0, 0);
