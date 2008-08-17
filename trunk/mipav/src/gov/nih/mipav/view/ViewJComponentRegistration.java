@@ -72,17 +72,17 @@ public class ViewJComponentRegistration
     /** DOCUMENT ME! */
     int memCount = 0;
 
-    /** DOCUMENT ME! */
-    private int adjMark = 0; // number of VOIs for adjustable slice
+    /** number of VOIs for adjustable slice */
+    private int adjMark = 0; 
 
     /** DOCUMENT ME! */
     private Point anchorPt = new Point(0, 0);
 
-    /** DOCUMENT ME! */
-    private short centerid; // id of rotation center
+    /** id of rotation center */
+    private short centerid; 
 
-    /** DOCUMENT ME! */
-    private VOI centerVOI = null; // center roation VOI
+    /** center rotation VOI */
+    private VOI centerVOI = null;
 
     /** DOCUMENT ME! */
     private boolean doAdjMark = false;
@@ -90,8 +90,8 @@ public class ViewJComponentRegistration
     /** DOCUMENT ME! */
     private boolean doCenter = false;
 
-    /** DOCUMENT ME! */
-    private boolean doDrag = true; // no adjusted slice movements with mouseDrag
+    /** no adjusted slice movements with mouseDrag */
+    private boolean doDrag = true; 
 
     /** DOCUMENT ME! */
     private boolean doRefMark = false;
@@ -111,8 +111,8 @@ public class ViewJComponentRegistration
     /** adjustable slice VOI. */
     private int newX, newY;
 
-    /** DOCUMENT ME! */
-    private int nMovingVOI = 0; // number of rotation center and
+    /** number of rotation center and */
+    private int nMovingVOI = 0; 
 
     /** DOCUMENT ME! */
     private int nPts = 0;
@@ -126,23 +126,23 @@ public class ViewJComponentRegistration
     /** DOCUMENT ME! */
     private int red, green, blue;
 
-    /** DOCUMENT ME! */
-    private int refMark = 0; // number of VOIs for reference slice
+    /** number of VOIs for reference slice */
+    private int refMark = 0;
 
-    /** DOCUMENT ME! */
-    private int rotCenterMark = 0; // number of VOIs for rotation center
+    /** number of VOIs for rotation center */
+    private int rotCenterMark = 0; 
 
     /** DOCUMENT ME! */
     private boolean showVOIs = true;
 
-    /** DOCUMENT ME! */
-    private boolean useDualVOIs = false; // to use VOIs from both imageA and imageB
+    /** to use VOIs from both imageA and imageB */
+    private boolean useDualVOIs = false; 
 
     /** DOCUMENT ME! */
     private int[] x, y;
 
-    /** DOCUMENT ME! */
-    private float xFinish, yFinish; // values obtained when mouseReleased
+    /** values obtained when mouseReleased */
+    private float xFinish, yFinish; 
 
     /** DOCUMENT ME! */
     private int[] xOrg;
@@ -153,8 +153,8 @@ public class ViewJComponentRegistration
     /** DOCUMENT ME! */
     private float xRotation;
 
-    /** DOCUMENT ME! */
-    private float xStart, yStart; // values obtained when mousePressed
+    /** values obtained when mousePressed */
+    private float xStart, yStart;
 
     /** DOCUMENT ME! */
     private int[] yOrg;

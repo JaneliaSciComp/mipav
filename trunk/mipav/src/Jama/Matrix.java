@@ -1041,52 +1041,5 @@ public class Matrix implements Cloneable, java.io.Serializable {
          throw new IllegalArgumentException("Matrix dimensions must agree.");
       }
    }
-
-/* ------------------------
-   Methods added by Mipav
- * ------------------------ */
-    /**
-     * Set the matrix.
-     *
-     * @param   matrix  the new matrix.
-     *
-     * @throws  IllegalArgumentException  if rows don't have the same length.
-     */
-    public void setMatrix(double[][] matrix) {
-
-        m = matrix.length;
-        n = matrix[0].length;
-
-        for (int i = 0; i < m; i++) {
-
-            if (matrix[i].length != n) {
-                throw new IllegalArgumentException("All rows must have the same length.");
-            }
-        }
-
-        this.A = matrix;
-    }
-
-    /**
-     * Linear algebraic matrix multiplication, matrix = matrix * B. Added by
-     * Delia McGarry 1/11/2000.
-     *
-     * @param      B  another matrix
-     *
-     * @exception  IllegalArgumentException  Matrix inner dimensions must agree.
-     */
-    public void timesEquals(Matrix B) {
-
-        if (B.n != n) {
-
-            /* If B were allowed to have more columns than A, the new matrix
-             * would have that many columns, but the new matrix will be stored
-             * eventually in A.*/
-            throw new IllegalArgumentException("# of rows must equal A's.");
-        }
-
-        A = times(B).getArray();
-
-    }
-
+   
 }
