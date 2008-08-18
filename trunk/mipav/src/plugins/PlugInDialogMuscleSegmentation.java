@@ -72,10 +72,10 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         	multipleSlices = false;
         } else
         	multipleSlices = true;
-        if(imageType == PlugInMuscleImageDisplay.ImageType.Unknown)
+        //if(imageType == PlugInMuscleImageDisplay.ImageType.Unknown)
         	init();
-        else
-        	callAlgorithm();
+        //else
+        //	callAlgorithm();
     }
     
 //  ~ Methods --------------------------------------------------------------------------------------------------------
