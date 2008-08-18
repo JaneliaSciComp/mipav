@@ -2787,8 +2787,22 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         //TODO: Put PlugInMuscleImageDisplay's actions here
 		//calculate, help, exit
 		public void actionPerformed(ActionEvent e) {
-		    System.err.println(e.getActionCommand());
-		    System.out.println(e.getActionCommand());
+		    System.out.println("Evaluating colorButtonPanel");
+		    if(e.getSource() instanceof PlugInMuscleColorButton) {
+            	PlugInMuscleColorButton obj = ((PlugInMuscleColorButton)e.getSource());
+		    	if (obj.getColorIcon().getColor() != Color.BLACK) {
+            		VOIVector vec = getActiveImage().getVOIs();
+            		for(int i=0; i<vec.size(); i++) {
+            			vec.get(i).setAllActive(false);
+	            		if(vec.get(i).getName().equals(obj.getVOIName())) {
+	            			vec.get(i).setAllActive(true);
+	            		}
+            		}
+            		updateImages(true);
+            		
+            		getComponentImage().getVOIHandler().showColorDialog();
+            	}
+		    }
 		}
 
 		/**The location of this dialog in the parentFrame's array*/
@@ -2983,7 +2997,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		        noMirrorButtonArr[i].addActionListener(muscleFrame);
 		        noMirrorGroup.add(noMirrorButtonArr[i]);
 		      
-		        noMirrorCheckArr[i] = new PlugInMuscleColorButtonPanel(Color.black, noMirrorArr[i]);
+		        noMirrorCheckArr[i] = new PlugInMuscleColorButtonPanel(Color.black, noMirrorArr[i], this);
 		        
 		        gbc2.gridx = 0;
 		        gbc2.weightx = 0;
@@ -3053,7 +3067,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		        mirrorButtonArr[i].addActionListener(muscleFrame);
 		        mirrorGroup.add(mirrorButtonArr[i]);
 		
-		        mirrorCheckArr[i] = new PlugInMuscleColorButtonPanel(Color.BLACK, mirrorButtonArr[i].getText());        
+		        mirrorCheckArr[i] = new PlugInMuscleColorButtonPanel(Color.BLACK, mirrorButtonArr[i].getText(), this);        
 		       
 		        if(i != 0 && i % 2 == 0) {
 		            gbc.gridy++;
@@ -3152,72 +3166,83 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		public void actionPerformed(ActionEvent e) {
 			System.out.println("Caught 2: "+e.getActionCommand());
 			String command = e.getActionCommand();
-		    
-		
-		        if (command.equals(OUTPUT)) {
-		        	processCalculations(false, false);
-		        } else if (command.equals(SELECT_ALL)) { 
-		        	pressAvailableButtons();
-		        } else if (command.equals(SAVE)) {
-		        	setVisible(false);
-		        	boolean lutBuffer = lutOn;
-		        	getActiveImage().getParentFrame().requestFocus();
-		        	
-		        	processCalculations(true, true);
-		        	//note analysis turns off LUT automatically
-		        	if(lutOn = lutBuffer) 
-		        		loadLUT();
-		        	setVisible(true);
-		        } else if (command.equals(TOGGLE_LUT)) {
-		        	if(!lutOn) {
-		        		loadLUT();
-		        		((JButton)e.getSource()).setText("Hide LUT");
-		        	} else {
-		        		removeLUT();
-		        		((JButton)e.getSource()).setText("Show LUT");
-		        	}
-		        } else if (command.equals(HELP)) {
-		        	if(imageType.equals(ImageType.Thigh))
-		        		MipavUtil.showHelp("MS00040");
-		        	else //image is of type abdomen
-		        		MipavUtil.showHelp("MS00080");
-		        } else if (command.equals(LOAD_VOI)) {
-		        	String text = ((JButton)e.getSource()).getText();
-		        	VOIVector vec = getActiveImage().getVOIs();
-		        	boolean exists = false;
-		        	for(int i=0; i<vec.size(); i++) 
-		        		if(vec.get(i).getName().equals(text)) {
-		        			vec.get(i).removeVOIListener(checkBoxLocationTree.get(text).getColorButton());
-		        			vec.remove(i);
-		        			exists = true;
-		        			checkBoxLocationTree.get(text).setColor(Color.BLACK);
-		        			checkBoxLocationTree.get(text).repaint();
-		        			((JButton)e.getSource()).setSelected(false);
-		        		}
-		        	if(!exists) {
-		        		VOI rec = voiBuffer.get(text);
-		        		Color c = null;
-		        		if((c = voiBuffer.get(rec.getName()).getColor()).equals(PlugInSelectableVOI.INVALID_COLOR) && 
-		        				(c = hasColor(rec)).equals(PlugInSelectableVOI.INVALID_COLOR)) {
-		            		c = colorPick[colorChoice++ % colorPick.length];
-		            	}
-		        		rec.removeVOIListener(checkBoxLocationTree.get(text).getColorButton());
-		        		rec.addVOIListener(checkBoxLocationTree.get(text).getColorButton());
-		        		
-		            	rec.setColor(c);
-		        		rec.setThickness(2);
-		        		
-		        		if(lutOn && getZeroStatus(rec.getName())) {
-		                	rec.setDisplayMode(VOI.SOLID);
-		                	rec.setOpacity((float)0.7);
-		                }
-		        		((JButton)e.getSource()).setSelected(true);
-		        		getActiveImage().registerVOI(rec);
-		        	}
-		        		
-		        	updateImages(true);
-		        }
-		    
+			if(e.getSource() instanceof PlugInMuscleColorButton) {
+            	PlugInMuscleColorButton obj = ((PlugInMuscleColorButton)e.getSource());
+		    	if (obj.getColorIcon().getColor() != Color.BLACK) {
+            		VOIVector vec = getActiveImage().getVOIs();
+            		for(int i=0; i<vec.size(); i++) {
+            			vec.get(i).setAllActive(false);
+	            		if(vec.get(i).getName().equals(obj.getVOIName())) {
+	            			vec.get(i).setAllActive(true);
+	            		}
+            		}
+            		updateImages(true);
+            		
+            		getComponentImage().getVOIHandler().showColorDialog();
+            	}
+		    } else if (command.equals(OUTPUT)) {
+	        	processCalculations(false, false);
+	        } else if (command.equals(SELECT_ALL)) { 
+	        	pressAvailableButtons();
+	        } else if (command.equals(SAVE)) {
+	        	setVisible(false);
+	        	boolean lutBuffer = lutOn;
+	        	getActiveImage().getParentFrame().requestFocus();
+	        	
+	        	processCalculations(true, true);
+	        	//note analysis turns off LUT automatically
+	        	if(lutOn = lutBuffer) 
+	        		loadLUT();
+	        	setVisible(true);
+	        } else if (command.equals(TOGGLE_LUT)) {
+	        	if(!lutOn) {
+	        		loadLUT();
+	        		((JButton)e.getSource()).setText("Hide LUT");
+	        	} else {
+	        		removeLUT();
+	        		((JButton)e.getSource()).setText("Show LUT");
+	        	}
+	        } else if (command.equals(HELP)) {
+	        	if(imageType.equals(ImageType.Thigh))
+	        		MipavUtil.showHelp("MS00040");
+	        	else //image is of type abdomen
+	        		MipavUtil.showHelp("MS00080");
+	        } else if (command.equals(LOAD_VOI)) {
+	        	String text = ((JButton)e.getSource()).getText();
+	        	VOIVector vec = getActiveImage().getVOIs();
+	        	boolean exists = false;
+	        	for(int i=0; i<vec.size(); i++) 
+	        		if(vec.get(i).getName().equals(text)) {
+	        			vec.get(i).removeVOIListener(checkBoxLocationTree.get(text).getColorButton());
+	        			vec.remove(i);
+	        			exists = true;
+	        			checkBoxLocationTree.get(text).setColor(Color.BLACK);
+	        			checkBoxLocationTree.get(text).repaint();
+	        			((JButton)e.getSource()).setSelected(false);
+	        		}
+	        	if(!exists) {
+	        		VOI rec = voiBuffer.get(text);
+	        		Color c = null;
+	        		if((c = voiBuffer.get(rec.getName()).getColor()).equals(PlugInSelectableVOI.INVALID_COLOR) && 
+	        				(c = hasColor(rec)).equals(PlugInSelectableVOI.INVALID_COLOR)) {
+	            		c = colorPick[colorChoice++ % colorPick.length];
+	            	}
+	        		rec.removeVOIListener(checkBoxLocationTree.get(text).getColorButton());
+	        		rec.addVOIListener(checkBoxLocationTree.get(text).getColorButton());
+	        		
+	            	rec.setColor(c);
+	        		rec.setThickness(2);
+	        		
+	        		if(lutOn && getZeroStatus(rec.getName())) {
+	                	rec.setDisplayMode(VOI.SOLID);
+	                	rec.setOpacity((float)0.7);
+	                }
+	        		((JButton)e.getSource()).setSelected(true);
+	        		getActiveImage().registerVOI(rec);
+	        	}
+	        		
+	        	updateImages(true);
+	        }
 		}
 
 		/**
@@ -3455,7 +3480,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             
             for(int i=0; i<mirrorCalcItemsArr[index].length * 2; i++) {
                                
-            	mirrorCheckCalcItemsArr[index][i] = new PlugInMuscleColorButtonPanel(Color.BLACK, mirrorString[i]);
+            	mirrorCheckCalcItemsArr[index][i] = new PlugInMuscleColorButtonPanel(Color.BLACK, mirrorString[i], this);
                 
                 checkBoxLocationTree.put(mirrorString[i], mirrorCheckCalcItemsArr[index][i]);
                 
@@ -3501,7 +3526,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             
             for(int i=0; i<noMirrorCalcItemsArr[index].length; i++) {
                                
-            	noMirrorCheckArr[index][i] = new PlugInMuscleColorButtonPanel(Color.BLACK, noMirrorCalcItemsArr[index][i]);
+            	noMirrorCheckArr[index][i] = new PlugInMuscleColorButtonPanel(Color.BLACK, noMirrorCalcItemsArr[index][i], this);
                 
                 checkBoxLocationTree.put(noMirrorCalcItemsArr[index][i], noMirrorCheckArr[index][i]);
                 
@@ -4440,13 +4465,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		private String voiName;
 		
-		public PlugInMuscleColorButtonPanel(Color c, String voiName) {
+		public PlugInMuscleColorButtonPanel(Color c, String voiName, ActionListener container) {
 			super();
 			this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 			//add(checkBox);
 			this.voiName = voiName;
 			colorButton = new PlugInMuscleColorButton(c, voiName);
-			colorButton.addActionListener(new ActionListener() { 
+			colorButton.addActionListener(container);
+			/*colorButton.addActionListener(new ActionListener() { 
                 public void actionPerformed(ActionEvent ae) {
                 	if (colorButton.getColorIcon().getColor() != Color.BLACK) {
                 		VOIVector vec = getActiveImage().getVOIs();
@@ -4461,7 +4487,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 		getComponentImage().getVOIHandler().showColorDialog();
                 	}
                 }
-            });
+            });*/
 			add(colorButton);
 		}
 		
@@ -4472,12 +4498,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 			return colorButton;
 		}
 
-		/**
-		 * Returns the name of the VOI corresponding to this colorButton.
-		 */
-		public String getVOIName() {
-			return voiName;
-		}
+		
 		
 		/**
 		 * Whether thecolorButton is visible.
@@ -4545,6 +4566,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 */
 		public ColorIcon getColorIcon() {
 			return cIcon;
+		}
+		
+		/**
+		 * Returns the name of the VOI corresponding to this colorButton.
+		 */
+		public String getVOIName() {
+			return voiName;
 		}
 
 		/**
