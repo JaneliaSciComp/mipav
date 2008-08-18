@@ -2742,10 +2742,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         private JLabel[] instructionLabel;
         
         /** Check boxes for mirror object buttons. */
-        private ColorButtonPanel[] mirrorCheckArr;
+        private PlugInMuscleColorButtonPanel[] mirrorCheckArr;
         
         /** Check boxes for non-mirror object buttons. */
-        private ColorButtonPanel[] noMirrorCheckArr;
+        private PlugInMuscleColorButtonPanel[] noMirrorCheckArr;
 
         /** Buttons for muscles where a mirror muscle may exist. */
         private JButton[] mirrorButtonArr;
@@ -2894,14 +2894,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             gbc.fill = GridBagConstraints.BOTH;
             gbc.weighty = 1;
             
-            mirrorCheckArr = new ColorButtonPanel[mirrorArr.length * 2];
+            mirrorCheckArr = new PlugInMuscleColorButtonPanel[mirrorArr.length * 2];
             mirrorButtonArr = new JButton[mirrorArr.length * 2];
             if(mirrorArr.length > 0) {
             	gbc.gridy++;
             	add(initSymmetricalObjects(), gbc);
             }
             
-            noMirrorCheckArr = new ColorButtonPanel[noMirrorArr.length];
+            noMirrorCheckArr = new PlugInMuscleColorButtonPanel[noMirrorArr.length];
             noMirrorButtonArr = new JButton[noMirrorArr.length];
             if(noMirrorArr.length > 0) {
             	gbc.gridy++;
@@ -2983,7 +2983,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		        noMirrorButtonArr[i].addActionListener(muscleFrame);
 		        noMirrorGroup.add(noMirrorButtonArr[i]);
 		      
-		        noMirrorCheckArr[i] = new ColorButtonPanel(Color.black, noMirrorArr[i]);
+		        noMirrorCheckArr[i] = new PlugInMuscleColorButtonPanel(Color.black, noMirrorArr[i]);
 		        
 		        gbc2.gridx = 0;
 		        gbc2.weightx = 0;
@@ -3053,7 +3053,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		        mirrorButtonArr[i].addActionListener(muscleFrame);
 		        mirrorGroup.add(mirrorButtonArr[i]);
 		
-		        mirrorCheckArr[i] = new ColorButtonPanel(Color.BLACK, mirrorButtonArr[i].getText());        
+		        mirrorCheckArr[i] = new PlugInMuscleColorButtonPanel(Color.BLACK, mirrorButtonArr[i].getText());        
 		       
 		        if(i != 0 && i % 2 == 0) {
 		            gbc.gridy++;
@@ -3098,10 +3098,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		private String[][] noMirrorCalcItemsArr;
 		
 		/** Side check box for all symmetric objects. */
-		private ColorButtonPanel[][] mirrorCheckCalcItemsArr;
+		private PlugInMuscleColorButtonPanel[][] mirrorCheckCalcItemsArr;
 		
 		/** Side check box for all non-symmetric objects. */
-		private ColorButtonPanel[][] noMirrorCheckArr;
+		private PlugInMuscleColorButtonPanel[][] noMirrorCheckArr;
 		
 		/** Buttons for all symmetric objects. */
 		private JButton[][] mirrorButtonCalcItemsArr;
@@ -3119,7 +3119,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		private boolean lutOn = false;
 		
 		/**A mapping of names to color panels for easy referencing. */
-		private TreeMap<String,ColorButtonPanel> checkBoxLocationTree;
+		private TreeMap<String,PlugInMuscleColorButtonPanel> checkBoxLocationTree;
 	
 		/**
 		 * Constructor, note is called at beginning of program, so mirrorArr and noMirrorArr
@@ -3139,7 +3139,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        this.noMirrorCalcItemsArr = getCalcItems(noMirrorArr);
 	        this.mirrorCalcItemsArr = getCalcItems(mirrorArr);
 	        
-	        checkBoxLocationTree = new TreeMap<String, ColorButtonPanel>();
+	        checkBoxLocationTree = new TreeMap<String, PlugInMuscleColorButtonPanel>();
 
 	        colorChoice = 0;
 	        
@@ -3182,7 +3182,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		        	else //image is of type abdomen
 		        		MipavUtil.showHelp("MS00080");
 		        } else if (command.equals(LOAD_VOI)) {
-		        	//checkAndProcessForAllButtonsPressed();	
 		        	String text = ((JButton)e.getSource()).getText();
 		        	VOIVector vec = getActiveImage().getVOIs();
 		        	boolean exists = false;
@@ -3322,10 +3321,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		    
 		    mainPanel.add(instructionPanel);
 		
-		    mirrorCheckCalcItemsArr = new ColorButtonPanel[mirrorCalcItemsArr.length][];
+		    mirrorCheckCalcItemsArr = new PlugInMuscleColorButtonPanel[mirrorCalcItemsArr.length][];
 		    mirrorButtonCalcItemsArr = new JButton[mirrorCalcItemsArr.length][];
 		    
-		    noMirrorCheckArr = new ColorButtonPanel[noMirrorCalcItemsArr.length][];
+		    noMirrorCheckArr = new PlugInMuscleColorButtonPanel[noMirrorCalcItemsArr.length][];
 		    noMirrorButtonCalcItemsArr = new JButton[noMirrorCalcItemsArr.length][];
 		
 		    String title = "";
@@ -3425,7 +3424,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 */
 		private JPanel initSymmetricalObjects(int index) {
 
-            mirrorCheckCalcItemsArr[index] = new ColorButtonPanel[mirrorCalcItemsArr[index].length * 2];
+            mirrorCheckCalcItemsArr[index] = new PlugInMuscleColorButtonPanel[mirrorCalcItemsArr[index].length * 2];
             mirrorButtonCalcItemsArr[index] = new JButton[mirrorCalcItemsArr[index].length * 2];
 			JPanel subPanel = new JPanel(new GridBagLayout());
             subPanel.setForeground(Color.black);
@@ -3456,7 +3455,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             
             for(int i=0; i<mirrorCalcItemsArr[index].length * 2; i++) {
                                
-            	mirrorCheckCalcItemsArr[index][i] = new ColorButtonPanel(Color.BLACK, mirrorString[i]);
+            	mirrorCheckCalcItemsArr[index][i] = new PlugInMuscleColorButtonPanel(Color.BLACK, mirrorString[i]);
                 
                 checkBoxLocationTree.put(mirrorString[i], mirrorCheckCalcItemsArr[index][i]);
                 
@@ -3489,7 +3488,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 */
 	    private JPanel initNonSymmetricalObjects(JPanel subPanel, int index) {
       
-	    	noMirrorCheckArr[index] = new ColorButtonPanel[noMirrorCalcItemsArr[index].length];
+	    	noMirrorCheckArr[index] = new PlugInMuscleColorButtonPanel[noMirrorCalcItemsArr[index].length];
             noMirrorButtonCalcItemsArr[index] = new JButton[noMirrorCalcItemsArr[index].length];
 	    	
 	    	GridBagConstraints gbc = new GridBagConstraints();
@@ -3502,7 +3501,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             
             for(int i=0; i<noMirrorCalcItemsArr[index].length; i++) {
                                
-            	noMirrorCheckArr[index][i] = new ColorButtonPanel(Color.BLACK, noMirrorCalcItemsArr[index][i]);
+            	noMirrorCheckArr[index][i] = new PlugInMuscleColorButtonPanel(Color.BLACK, noMirrorCalcItemsArr[index][i]);
                 
                 checkBoxLocationTree.put(noMirrorCalcItemsArr[index][i], noMirrorCheckArr[index][i]);
                 
@@ -4435,18 +4434,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	 * @author linkb
 	 *
 	 */
-	private class ColorButtonPanel extends JPanel {
+	public class PlugInMuscleColorButtonPanel extends JPanel {
 	
-		private ColorButton colorButton;
+		private PlugInMuscleColorButton colorButton;
 		
 		private String voiName;
 		
-		public ColorButtonPanel(Color c, String voiName) {
+		public PlugInMuscleColorButtonPanel(Color c, String voiName) {
 			super();
 			this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 			//add(checkBox);
 			this.voiName = voiName;
-			colorButton = new ColorButton(c, voiName);
+			colorButton = new PlugInMuscleColorButton(c, voiName);
 			colorButton.addActionListener(new ActionListener() { 
                 public void actionPerformed(ActionEvent ae) {
                 	if (colorButton.getColorIcon().getColor() != Color.BLACK) {
@@ -4469,7 +4468,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		/**
 		 * Returns the actual colorButton inside of the panel.
 		 */
-		public ColorButton getColorButton() {
+		public PlugInMuscleColorButton getColorButton() {
 			return colorButton;
 		}
 
@@ -4500,7 +4499,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	/**
 	 * The ColorButton inside of a ColorButtonPanel
 	 */
-	private class ColorButton extends JButton implements VOIListener {
+	private class PlugInMuscleColorButton extends JButton implements VOIListener {
 
 		/**The icon displaying the current color.*/
 		private ColorIcon cIcon;
@@ -4512,7 +4511,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 * Constructs a colorButton with the given color and name 
 		 * with standard dimension of 20px by 20px.
 		 */
-		public ColorButton(Color c, String voiName) {
+		public PlugInMuscleColorButton(Color c, String voiName) {
 			super();
 			cIcon = new ColorIcon(c, 13, 13);
 			this.voiName = voiName;
