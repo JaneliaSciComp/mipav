@@ -6,6 +6,7 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.TreeMap;
 
 import javax.swing.BoxLayout;
@@ -40,6 +41,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     
     //~ Instance fields ------------------------------------------------------------------------------------------------    
     
+    /**The current tab.*/
+    private int activeTab = 0;
+    
     /** denotes the type of srcImg (see enum ImageType) */
     private PlugInMuscleImageDisplay.ImageType imageType; 
     
@@ -54,6 +58,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
        
     /**voiList created by various set up methods*/
     private PlugInSelectableVOI[][] voiList;
+    
+    /**Each muscle pane is one VOI in custom mode.*/
+    private ArrayList<ArrayList<MusclePane>> customVOI;
     
     /**list of titles used for each pane*/
     private String[] titles;
@@ -126,8 +133,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				buildCustomDialog();
 				performDialog();
 			}		
-		} else
+		} else if(e.getActionCommand().equals("Add another VOI")){
+			customVOI.get(activeTab).add(new MusclePane(this));
+			
+		} else {
 			super.actionPerformed(e);
+		}
 	}
     
     private void buildAbdomenDialog() {
@@ -231,90 +242,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	}
 	
 	/**
-	 * Creates another muscle section for segmentation.
-	 */
-	private JPanel createNewMuscle() {
-		JPanel musclePanel = new JPanel(new GridBagLayout());
-		GridBagConstraints c = new GridBagConstraints();
-		
-		c.fill = GridBagConstraints.HORIZONTAL;
-		
-		PlugInMuscleColorButtonPanel colorButton = new PlugInMuscleColorButtonPanel(Color.black, "VOI", this);
-		
-		int i = 0;
-		String[] text = new String[PlugInMuscleImageDisplay.Symmetry.values().length];
-		
-		for(PlugInMuscleImageDisplay.Symmetry symmetry : PlugInMuscleImageDisplay.Symmetry.values())
-			text[i++] = symmetry.text;
-		
-		JComboBox symmetry = new JComboBox(text);
-		
-		JTextField name = new JTextField("Enter VOI name");
-		
-		Integer[] numValues = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-		JComboBox numCurves = new JComboBox(numValues);
-		
-		JLabel curveLabel = new JLabel("# curves");
-		JLabel blankLabel = new JLabel("   ");
-		
-		JCheckBox doCalc = new JCheckBox("Perform calc.");
-		JCheckBox doFill = new JCheckBox("Fill VOI");
-		JCheckBox isClosed = new JCheckBox("Closed curves");
-		isClosed.setSelected(true);
-		System.out.println("Default: "+c.gridwidth);
-		c.gridx = 0;
-		c.gridy = 0;
-		musclePanel.add(colorButton, c);
-		c.gridx = 1;
-		c.gridy = 0;
-		musclePanel.add(symmetry, c);
-		c.gridwidth = 3;
-		c.gridx = 2;
-		c.gridy = 0;
-		c.anchor = GridBagConstraints.LINE_END;
-		c.ipadx = 18;
-		c.weightx = .5;
-		c.fill = GridBagConstraints.VERTICAL;
-		musclePanel.add(name, c);
-		c.gridwidth = 2;
-		c.gridx = 0;
-		c.gridy = 1;
-		c.ipadx = 0;
-		c.anchor = GridBagConstraints.CENTER;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		musclePanel.add(doCalc, c);
-		c.gridwidth = 1;
-		c.gridx = 2;
-		c.gridy = 1;
-		musclePanel.add(doFill, c);
-		c.gridwidth = 1;
-		c.gridx = 3;
-		c.gridy = 1;
-		musclePanel.add(blankLabel, c);
-		c.gridwidth = 1;
-		c.gridx = 4;
-		c.gridy = 1;
-		c.anchor = GridBagConstraints.LINE_END;
-		c.fill = GridBagConstraints.NONE;
-		musclePanel.add(curveLabel, c);
-		c.gridwidth = 2;
-		c.gridx = 0;
-		c.gridy = 2;
-		c.anchor = GridBagConstraints.CENTER;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		musclePanel.add(isClosed, c);
-		c.gridwidth = 1;
-		c.gridx = 4;
-		c.gridy = 2;
-		c.anchor = GridBagConstraints.LINE_END;
-		c.fill = GridBagConstraints.NONE;
-		musclePanel.add(numCurves, c);
-		
-		return musclePanel;
-	}
-	
-	/**
 	 * Build the custom dialog box for creating custom muscle types.
 	 */
 	private JPanel initDialogBox() {
@@ -371,7 +298,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	
 	    for(int i=0; i<1; i++) { 
 	    	//set up tab here
-	    	tabs[i] = initMuscleTab();
+	    	tabs[i] = initMuscleTab(activeTab);
 	    	
 	    	tabs[i].addComponentListener(customPane);
 	    	tabs[i].setName("Tab 1");
@@ -381,11 +308,22 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    return panelA;
 	}
 	
-	private JPanel initMuscleTab() {
-		JPanel musclePanel = new JPanel();
-		JPanel muscleID = createNewMuscle();
-		musclePanel.add(muscleID, BorderLayout.CENTER);
-		return musclePanel;
+	private JPanel initMuscleTab(int currentTab) {
+		JPanel gridPane = new JPanel();
+		if(currentTab == 0)
+			customVOI = new ArrayList();
+		customVOI.add(new ArrayList());
+		for(int i=0; i<4; i++) {
+			customVOI.get(currentTab).add(new MusclePane(this));
+			customVOI.get(currentTab).get(i).setBorder(MipavUtil.buildTitledBorder("VOI #"+(i+1)));
+			gridPane.add(customVOI.get(currentTab).get(i));
+		}
+		
+		JButton incButton = new JButton("Add another VOI");
+		incButton.addActionListener(this);
+		gridPane.add(incButton);
+
+		return gridPane;
 	}
 
 	private void performDialog() {
@@ -396,6 +334,111 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
         	new PlugInMuscleImageDisplay(srcImage, titles, voiList, 
         			imageType, symmetry, true, multipleSlices);
         }
+	}
+	
+	private class MusclePane extends JPanel {
+		
+		/**The color identifier*/
+		private PlugInMuscleColorButtonPanel colorButton;
+		
+		/**The symmetry identifier*/
+		private JComboBox symmetry;
+		
+		/**The name of the VOI*/
+		private JTextField name;
+		
+		/**Number of curves in VOI*/
+		private JComboBox numCurves;
+		
+		/**Whether calculations should be performed (defaults to false).*/
+		private JCheckBox doCalc;
+		
+		/**Whether VOI should be filled when LUT applied (defaults to false. */
+		private JCheckBox doFill;
+		
+		/**Whether the VOI is closed (defaults to true)*/
+		private JCheckBox isClosed;
+		
+		public MusclePane(ActionListener caller) {
+			super(new GridBagLayout());
+			this.colorButton = new PlugInMuscleColorButtonPanel(Color.black, "VOI", caller);
+			int i = 0;
+			String[] text = new String[PlugInMuscleImageDisplay.Symmetry.values().length];
+			
+			for(PlugInMuscleImageDisplay.Symmetry symmetry : PlugInMuscleImageDisplay.Symmetry.values())
+				text[i++] = symmetry.text;
+			
+			this.symmetry = new JComboBox(text);
+			this.name = new JTextField("Enter VOI name");
+			
+			Integer[] numValues = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+			this.numCurves = new JComboBox(numValues);
+			
+			this.doCalc = new JCheckBox("Perform calc.");
+			this.doFill = new JCheckBox("Fill VOI");
+			this.isClosed = new JCheckBox("Closed curves");
+			isClosed.setSelected(true);
+			
+			initDialog();
+		}
+		
+		private void initDialog() {
+			JLabel curveLabel = new JLabel("# curves");
+			JLabel blankLabel = new JLabel("   ");
+
+			GridBagConstraints c = new GridBagConstraints();
+			
+			c.fill = GridBagConstraints.HORIZONTAL;
+			c.gridx = 0;
+			c.gridy = 0;
+			add(colorButton, c);
+			c.gridx = 1;
+			c.gridy = 0;
+			add(symmetry, c);
+			c.gridwidth = 3;
+			c.gridx = 2;
+			c.gridy = 0;
+			c.anchor = GridBagConstraints.LINE_END;
+			c.ipadx = 18;
+			c.weightx = .5;
+			c.fill = GridBagConstraints.VERTICAL;
+			add(name, c);
+			c.gridwidth = 2;
+			c.gridx = 0;
+			c.gridy = 1;
+			c.ipadx = 0;
+			c.anchor = GridBagConstraints.CENTER;
+			c.weightx = 0;
+			c.fill = GridBagConstraints.HORIZONTAL;
+			add(doCalc, c);
+			c.gridwidth = 1;
+			c.gridx = 2;
+			c.gridy = 1;
+			add(doFill, c);
+			c.gridwidth = 1;
+			c.gridx = 3;
+			c.gridy = 1;
+			add(blankLabel, c);
+			c.gridwidth = 1;
+			c.gridx = 4;
+			c.gridy = 1;
+			c.anchor = GridBagConstraints.LINE_END;
+			c.fill = GridBagConstraints.NONE;
+			add(curveLabel, c);
+			c.gridwidth = 2;
+			c.gridx = 0;
+			c.gridy = 2;
+			c.anchor = GridBagConstraints.CENTER;
+			c.fill = GridBagConstraints.HORIZONTAL;
+			add(isClosed, c);
+			c.gridwidth = 1;
+			c.gridx = 4;
+			c.gridy = 2;
+			c.anchor = GridBagConstraints.LINE_END;
+			c.fill = GridBagConstraints.NONE;
+			add(numCurves, c);
+		}
+		
 	}
 	
 }
