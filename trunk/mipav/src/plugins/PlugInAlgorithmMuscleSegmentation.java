@@ -9,12 +9,16 @@ import java.awt.event.ActionListener;
 import java.util.TreeMap;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
+
 
 /**
  * Creates an interface for working with Iceland CT images.
@@ -218,6 +222,35 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	}
 	
 	/**
+	 * Creates another muscle section for segmentation.
+	 */
+	private JPanel createNewMuscle() {
+		JPanel musclePanel = new JPanel(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+		
+		c.fill = GridBagConstraints.NONE;
+		
+		//PlugInMuscleImageDisplay.PlugInMuscleColorButtonPanel colorButton = 
+		//	new PlugInMuscleImageDisplay.PlugInMuscleColorButtonPanel(Color.black, "VOI");
+		
+		JComboBox symmetry = new JComboBox(PlugInMuscleImageDisplay.ImageType.values());
+		
+		JTextField name = new JTextField("Enter VOI name");
+		
+		Integer[] numValues = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+		JComboBox numCurves = new JComboBox(numValues);
+		
+		JCheckBox doCalc = new JCheckBox("Perform calc.");
+		JCheckBox doFill = new JCheckBox("Fill VOI");
+		JCheckBox isClosed = new JCheckBox("Closed curves");
+		isClosed.setSelected(true);
+		
+		
+		musclePanel.add(new JButton("Hello"), c);
+		return musclePanel;
+	}
+	
+	/**
 	 * Build the custom dialog box for creating custom muscle types.
 	 */
 	private JPanel initDialogBox() {
@@ -286,9 +319,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	
 	private JPanel initMuscleTab() {
 		JPanel musclePanel = new JPanel();
-		
-		JButton text = new JButton("Sample text");
-		musclePanel.add(text, BorderLayout.CENTER);
+		JPanel muscleID = createNewMuscle();
+		musclePanel.add(muscleID, BorderLayout.CENTER);
 		return musclePanel;
 	}
 
