@@ -62,6 +62,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     /**Each muscle pane is one VOI in custom mode.*/
     private ArrayList<ArrayList<MusclePane>> customVOI;
     
+    /**Each particular tab is represented here.*/
+    private ArrayList<JPanel> tabs;
+    
     /**list of titles used for each pane*/
     private String[] titles;
     
@@ -83,6 +86,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
         this.imageType = imageType;
         this.parentFrame = parentFrame;
         this.multipleSlices = multipleSlices;
+        
+        tabs = new ArrayList();
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -124,6 +129,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
      * For custom muscle types, calls buildCustomDialog
      */
 	public void actionPerformed(ActionEvent e) {
+		System.out.println("Found a new action: "+e.getSource()+"\t"+e.getActionCommand());
 		if(e.getSource() instanceof PlugInMuscleColorButton) {
         	PlugInMuscleColorButton obj = ((PlugInMuscleColorButton)e.getSource());
         	customPane.getComponentImage().getVOIHandler().showColorDialog();
@@ -134,7 +140,19 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				performDialog();
 			}		
 		} else if(e.getActionCommand().equals("Add another VOI")){
-			customVOI.get(activeTab).add(new MusclePane(this));
+			int length = tabs.get(activeTab).getComponents().length;
+			MusclePane pane = new MusclePane(this);
+			pane.setBorder(MipavUtil.buildTitledBorder("VOI #"+(length)));
+			customVOI.get(activeTab).add(pane);
+			//JButton copy = (JButton)tabs.get(activeTab).getComponent(length-1);
+			//tabs.get(activeTab).remove(length-1);
+			//tabs.get(activeTab).repaint();
+			tabs.get(activeTab).add(pane, length-1);
+			//pane.setVisible(true);
+			//tabs.get(activeTab).repaint();
+			
+			//tabs.get(activeTab).add(copy);
+			//tabs.get(activeTab).repaint();
 			
 		} else {
 			super.actionPerformed(e);
@@ -285,7 +303,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    dialogTabs.setPreferredSize(new Dimension(370, 532));
 	    dialogTabs.setMaximumSize(new Dimension (370, 532));
 	    
-	    JPanel[] tabs = new JPanel[1];
+	    JPanel[] tabs = new JPanel[2];
 	    
 	    JPanel panelA = new JPanel(new GridLayout(1, 3, 10, 10));
 	    
@@ -295,15 +313,17 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    testPanel.add(scrollPane, BorderLayout.CENTER);
 
 	    panelA.add(testPanel);
-	
-	    for(int i=0; i<1; i++) { 
-	    	//set up tab here
-	    	tabs[i] = initMuscleTab(activeTab);
-	    	
-	    	tabs[i].addComponentListener(customPane);
-	    	tabs[i].setName("Tab 1");
-	    	dialogTabs.addTab((i+1)+": "+"Tab 1", tabs[i]);
-	    }
+
+    	//set up tabs here
+    	tabs[0] = initMuscleTab(activeTab);
+    	
+    	tabs[0].addComponentListener(customPane);
+    	tabs[0].setName("Tab 1");
+    	dialogTabs.addTab("Tab 1", tabs[0]);
+    	
+    	tabs[1] = new JPanel();
+    	tabs[1].setName("New Tab");
+    	dialogTabs.addTab("Click to create a new tab...", tabs[1]);
 	            
 	    return panelA;
 	}
@@ -323,6 +343,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		incButton.addActionListener(this);
 		gridPane.add(incButton);
 
+		tabs.add(gridPane);
 		return gridPane;
 	}
 
@@ -438,8 +459,34 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			c.fill = GridBagConstraints.NONE;
 			add(numCurves, c);
 		}
-		
+
+		public Color getColorButton() {
+			return colorButton.getColorButton().getColorIcon().getColor();
+		}
+
+		public PlugInMuscleImageDisplay.Symmetry getSymmetry() {
+			return ((PlugInMuscleImageDisplay.Symmetry)symmetry.getSelectedItem());
+		}
+
+		public String getName() {
+			return name.getText();
+		}
+
+		public int getNumCurves() {
+			return Integer.valueOf(((String)numCurves.getSelectedItem())).intValue();
+		}
+
+		public boolean getDoCalc() {
+			return doCalc.isSelected();
+		}
+
+		public boolean getDoFill() {
+			return doFill.isSelected();
+		}
+
+		public boolean getIsClosed() {
+			return isClosed.isSelected();
+		}
 	}
-	
 }
 
