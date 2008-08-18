@@ -8,9 +8,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.TreeMap;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -58,6 +60,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     
     /**Dialog box used for creating custom types*/
     private JPanel customDialog;
+    
+    /**Initial pane when running in custom mode*/
+    private ViewJFrameImage customPane;
 	
     /**
      * Constructor.
@@ -112,7 +117,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
      * For custom muscle types, calls buildCustomDialog
      */
 	public void actionPerformed(ActionEvent e) {
-		if(e.getSource() instanceof JButton && ((JButton)e.getSource()).getText().equals("OK")) {
+		if(e.getSource() instanceof PlugInMuscleColorButton) {
+        	PlugInMuscleColorButton obj = ((PlugInMuscleColorButton)e.getSource());
+        	customPane.getComponentImage().getVOIHandler().showColorDialog();
+        	System.out.println("Should have showed");
+		} else if(e.getSource() instanceof JButton && ((JButton)e.getSource()).getText().equals("OK")) {
 			if(checkPanel()) {
 				buildCustomDialog();
 				performDialog();
@@ -228,25 +237,80 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		JPanel musclePanel = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		
-		c.fill = GridBagConstraints.NONE;
+		c.fill = GridBagConstraints.HORIZONTAL;
 		
-		//PlugInMuscleImageDisplay.PlugInMuscleColorButtonPanel colorButton = 
-		//	new PlugInMuscleImageDisplay.PlugInMuscleColorButtonPanel(Color.black, "VOI");
+		PlugInMuscleColorButtonPanel colorButton = new PlugInMuscleColorButtonPanel(Color.black, "VOI", this);
 		
-		JComboBox symmetry = new JComboBox(PlugInMuscleImageDisplay.ImageType.values());
+		int i = 0;
+		String[] text = new String[PlugInMuscleImageDisplay.Symmetry.values().length];
+		
+		for(PlugInMuscleImageDisplay.Symmetry symmetry : PlugInMuscleImageDisplay.Symmetry.values())
+			text[i++] = symmetry.text;
+		
+		JComboBox symmetry = new JComboBox(text);
 		
 		JTextField name = new JTextField("Enter VOI name");
 		
 		Integer[] numValues = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 		JComboBox numCurves = new JComboBox(numValues);
 		
+		JLabel curveLabel = new JLabel("# curves");
+		JLabel blankLabel = new JLabel("   ");
+		
 		JCheckBox doCalc = new JCheckBox("Perform calc.");
 		JCheckBox doFill = new JCheckBox("Fill VOI");
 		JCheckBox isClosed = new JCheckBox("Closed curves");
 		isClosed.setSelected(true);
+		System.out.println("Default: "+c.gridwidth);
+		c.gridx = 0;
+		c.gridy = 0;
+		musclePanel.add(colorButton, c);
+		c.gridx = 1;
+		c.gridy = 0;
+		musclePanel.add(symmetry, c);
+		c.gridwidth = 3;
+		c.gridx = 2;
+		c.gridy = 0;
+		c.anchor = GridBagConstraints.LINE_END;
+		c.ipadx = 18;
+		c.weightx = .5;
+		c.fill = GridBagConstraints.VERTICAL;
+		musclePanel.add(name, c);
+		c.gridwidth = 2;
+		c.gridx = 0;
+		c.gridy = 1;
+		c.ipadx = 0;
+		c.anchor = GridBagConstraints.CENTER;
+		c.weightx = 0;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		musclePanel.add(doCalc, c);
+		c.gridwidth = 1;
+		c.gridx = 2;
+		c.gridy = 1;
+		musclePanel.add(doFill, c);
+		c.gridwidth = 1;
+		c.gridx = 3;
+		c.gridy = 1;
+		musclePanel.add(blankLabel, c);
+		c.gridwidth = 1;
+		c.gridx = 4;
+		c.gridy = 1;
+		c.anchor = GridBagConstraints.LINE_END;
+		c.fill = GridBagConstraints.NONE;
+		musclePanel.add(curveLabel, c);
+		c.gridwidth = 2;
+		c.gridx = 0;
+		c.gridy = 2;
+		c.anchor = GridBagConstraints.CENTER;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		musclePanel.add(isClosed, c);
+		c.gridwidth = 1;
+		c.gridx = 4;
+		c.gridy = 2;
+		c.anchor = GridBagConstraints.LINE_END;
+		c.fill = GridBagConstraints.NONE;
+		musclePanel.add(numCurves, c);
 		
-		
-		musclePanel.add(new JButton("Hello"), c);
 		return musclePanel;
 	}
 	
@@ -254,41 +318,41 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	 * Build the custom dialog box for creating custom muscle types.
 	 */
 	private JPanel initDialogBox() {
-		ViewJFrameImage pane = new ViewJFrameImage(srcImage);
+		customPane = new ViewJFrameImage(srcImage);
 		
-		JPanel mainPanel = initMainPanel(pane);
+		JPanel mainPanel = initMainPanel();
 		
 		//if this is standalone (app frame hidden), add the tabbedpane from the messageframe to the bottom of the plugin's frame
 		if (ViewUserInterface.getReference().isAppFrameVisible()) {
-			pane.getContentPane().add(mainPanel, BorderLayout.CENTER);
+			customPane.getContentPane().add(mainPanel, BorderLayout.CENTER);
 		} else {
 			JTabbedPane messageTabs = ViewUserInterface.getReference().getMessageFrame().getTabbedPane();
-			messageTabs.setPreferredSize(new Dimension(pane.getWidth(), 100));
+			messageTabs.setPreferredSize(new Dimension(customPane.getWidth(), 100));
 			JSplitPane mainSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, mainPanel, messageTabs );
 			mainSplit.setDividerLocation(550);
-			pane.getContentPane().add(mainSplit, BorderLayout.CENTER);
+			customPane.getContentPane().add(mainSplit, BorderLayout.CENTER);
 		}
 	    
 		//removes extra scrollPane from the mipav-loaded plugin
 		if (ViewUserInterface.getReference().isAppFrameVisible()) {
-			pane.getContentPane().remove(0);
+			customPane.getContentPane().remove(0);
 	    } 
 		
-		pane.pack();
+		customPane.pack();
 		
 		return mainPanel;
 	}
 	
-	private JPanel initMainPanel(ViewJFrameImage pane) {
+	private JPanel initMainPanel() {
 		//The component image will be displayed in a scrollpane.       
-	    JScrollPane scrollPane = new JScrollPane(pane.getComponentImage(), ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+	    JScrollPane scrollPane = new JScrollPane(customPane.getComponentImage(), ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
 	                                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 	    
-	    pane.getComponentImage().useHighlight(false);
+	    customPane.getComponentImage().useHighlight(false);
 	    scrollPane.setFocusable(true);
 	    scrollPane.setBackground(Color.black);
-	    scrollPane.addKeyListener(pane);
-	    
+	    scrollPane.addKeyListener(customPane);    
+	  
 	    JTabbedPane dialogTabs = new JTabbedPane();
 	    dialogTabs.setMinimumSize(new Dimension (370, 532));
 	    dialogTabs.setPreferredSize(new Dimension(370, 532));
@@ -309,7 +373,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    	//set up tab here
 	    	tabs[i] = initMuscleTab();
 	    	
-	    	tabs[i].addComponentListener(pane);
+	    	tabs[i].addComponentListener(customPane);
 	    	tabs[i].setName("Tab 1");
 	    	dialogTabs.addTab((i+1)+": "+"Tab 1", tabs[i]);
 	    }
