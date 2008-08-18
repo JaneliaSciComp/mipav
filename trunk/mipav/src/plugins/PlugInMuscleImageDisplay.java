@@ -160,13 +160,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     public enum Symmetry{
         
         /** Indicates the image has no symmetry. */
-        NO_SYMMETRY, 
+        NO_SYMMETRY("No symmetry"), 
         
         /** Indicates that image has left-right symmetry. */
-        LEFT_RIGHT, 
+        LEFT_RIGHT("Left/Right"), 
         
         /** Indicates the image has top-bottom symmetry. */
-        TOP_BOTTOM
+        TOP_BOTTOM("Top/Bottom");
+        
+        final String text;
+        
+        Symmetry(String text) {
+        	this.text = text;
+        }
     }
  
     /**
@@ -4453,142 +4459,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    }
 	}
 		
-	/**
-	 * simple class that contains a ColorIcon for displaying the VOI color, and 
-	 * has a button for changing the color of the linked VOI (linked by name)
-	 * @author linkb
-	 *
-	 */
-	public class PlugInMuscleColorButtonPanel extends JPanel {
 	
-		private PlugInMuscleColorButton colorButton;
-		
-		private String voiName;
-		
-		public PlugInMuscleColorButtonPanel(Color c, String voiName, ActionListener container) {
-			super();
-			this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-			//add(checkBox);
-			this.voiName = voiName;
-			colorButton = new PlugInMuscleColorButton(c, voiName);
-			colorButton.addActionListener(container);
-			/*colorButton.addActionListener(new ActionListener() { 
-                public void actionPerformed(ActionEvent ae) {
-                	if (colorButton.getColorIcon().getColor() != Color.BLACK) {
-                		VOIVector vec = getActiveImage().getVOIs();
-                		for(int i=0; i<vec.size(); i++) {
-                			vec.get(i).setAllActive(false);
-    	            		if(vec.get(i).getName().equals(getVOIName())) {
-    	            			vec.get(i).setAllActive(true);
-    	            		}
-                		}
-                		updateImages(true);
-                		
-                		getComponentImage().getVOIHandler().showColorDialog();
-                	}
-                }
-            });*/
-			add(colorButton);
-		}
-		
-		/**
-		 * Returns the actual colorButton inside of the panel.
-		 */
-		public PlugInMuscleColorButton getColorButton() {
-			return colorButton;
-		}
-
-		
-		
-		/**
-		 * Whether thecolorButton is visible.
-		 */
-		public boolean isSelected() {
-			if(colorButton.getColorIcon().getColor() == Color.BLACK) 
-				return false;
-			return true;
-		}
-
-		/**
-		 * Sets the color of this colorButton.
-		 */
-		public void setColor(Color c) {
-			colorButton.getColorIcon().setColor(c);
-		}
-	}
-	
-	/**
-	 * The ColorButton inside of a ColorButtonPanel
-	 */
-	private class PlugInMuscleColorButton extends JButton implements VOIListener {
-
-		/**The icon displaying the current color.*/
-		private ColorIcon cIcon;
-		
-		/**The name of the voi corresponding to this button.*/
-		private String voiName;
-		
-		/**
-		 * Constructs a colorButton with the given color and name 
-		 * with standard dimension of 20px by 20px.
-		 */
-		public PlugInMuscleColorButton(Color c, String voiName) {
-			super();
-			cIcon = new ColorIcon(c, 13, 13);
-			this.voiName = voiName;
-			
-			setIcon(cIcon);
-			setForeground(ColorIcon.TRANSPARENT);
-			setBackground(ColorIcon.TRANSPARENT);
-			setBorder(null); 
-			setSize(new Dimension(20,20));
-			setPreferredSize(new Dimension(20,20));
-		}
-		
-		/**
-         * We are not interested in adding curves, so this method is empty.
-         */
-		public void addedCurve(VOIEvent added) {
-            /* not interested in adding curves */
-		}
-		
-        /**
-		 * VOI Listener call (listens only to color changes)
-		 */
-		public void colorChanged(Color c) {
-			cIcon.setColor(c);
-			//voiBuffer.get(voiName).setColor(c);
-			this.repaint();
-		}
-
-		/**
-		 * Returns the colorIcon inside of the colorButton.
-		 */
-		public ColorIcon getColorIcon() {
-			return cIcon;
-		}
-		
-		/**
-		 * Returns the name of the VOI corresponding to this colorButton.
-		 */
-		public String getVOIName() {
-			return voiName;
-		}
-
-		/**
-		 * We are not interested in selecting Curves, so this method is empty.
-		 */
-		public void selectedVOI(VOIEvent selection) {
-			/* not interested in having the ColorButon select VOIs */
-		}
-
-		/**
-         * We are not interested in removing Curves, so this method is empty.
-         */
-        public void removedCurve(VOIEvent removed) {
-            /* not interested in removing curves */
-        }
-	}
 	
 	/**
 	 * Custom livewire for adhering to edges of already created VOIs.
