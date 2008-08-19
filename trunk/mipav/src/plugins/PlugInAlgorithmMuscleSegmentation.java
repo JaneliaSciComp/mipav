@@ -8,6 +8,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TreeMap;
@@ -182,8 +187,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			//tabs.get(activeTab).repaint();
 			
 		} else if(e.getActionCommand().equals(LAUNCH)) {
-			if(checkPanel())
+			if(checkPanel()) {
 				buildCustomDialog();
+				srcImage = customPane.getImageA();
+				performDialog();
+			}
 		} else if(e.getActionCommand().equals(SAVE)) {
 			//Do nothing for now
 		} else {
@@ -350,10 +358,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 						validVOI[i]++;
 					else {
 						validVOI[i] = validVOI[i]+2;
-						customVOI.get(i).get(j).setName(temp.getSymmetry().side1 + " " + temp.getName());
-						MusclePane temp2 = customVOI.get(i).get(j);
-						temp2.setName(temp2.getSymmetry().side2 + " " + temp2.getName());
-						customVOI.get(i).add(j+1, temp2);
+						String name = temp.getName();
+						customVOI.get(i).add(j+1, customVOI.get(i).get(j).createNew(this));
+						customVOI.get(i).get(j).setName(temp.getSymmetry().side1 + " " + name);
+						customVOI.get(i).get(j+1).setName(temp.getSymmetry().side2 + " " + name);
+						j++;
 					}
 				}
 			}
@@ -376,8 +385,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			}
 		}
 		
-		customDialog.setVisible(false);
-		MipavUtil.displayError("Custom dialog not yet built. Plugin will now end.");
+		titles = new String[validPanes];
+		for(int i=0; i<validPanes; i++) {
+			titles[i] = titlesArr.get(i).getText();
+		}
+		
+		symmetry = PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT;
+	    imageType = PlugInMuscleImageDisplay.ImageType.Custom;
 	}
 	
 	/**
@@ -610,7 +624,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
         }
 	}
 	
-	private class MusclePane extends JPanel {
+	private class MusclePane extends JPanel implements Serializable {
 		
 		/**The color identifier*/
 		private PlugInMuscleColorButtonPanel colorButton;
@@ -725,12 +739,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			return name.getText();
 		}
 		
-		public void setName(String name) {
-			this.name.setText(name);
-		}
-
 		public int getNumCurves() {
-			return Integer.valueOf(((String)numCurves.getSelectedItem())).intValue();
+			return ((Integer)numCurves.getSelectedItem()).intValue();
 		}
 
 		public boolean getDoCalc() {
@@ -744,6 +754,51 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		public boolean getIsClosed() {
 			return isClosed.isSelected();
 		}
+		
+		/**
+		 * Creates a muscle pane just like this one.
+		 */
+		public MusclePane createNew(ActionListener listener) {
+			MusclePane p = new MusclePane(listener);
+			p.setColorButton(getColorButton());
+			p.setSymmetry(getSymmetry());
+			p.setNumCurves(getNumCurves());
+			p.setDoCalc(getDoCalc());
+			p.setDoFill(getDoFill());
+			p.setIsClosed(getIsClosed());
+			p.setName(getName());
+			
+			return p;
+		}
+
+		public void setColorButton(Color c) {
+			this.colorButton.getColorButton().getColorIcon().setColor(c);
+		}
+
+		public void setSymmetry(PlugInMuscleImageDisplay.Symmetry symmetry) {
+			this.symmetry.setSelectedItem(symmetry);
+		}
+
+		public void setNumCurves(int numCurves) {
+			this.numCurves.setSelectedIndex(numCurves-1);
+		}
+
+		public void setDoCalc(boolean doCalc) {
+			this.doCalc.setSelected(doCalc);
+		}
+
+		public void setDoFill(boolean doFill) {
+			this.doFill.setSelected(doFill);
+		}
+
+		public void setIsClosed(boolean isClosed) {
+			this.isClosed.setSelected(isClosed);
+		}
+
+		public void setName(String name) {
+			this.name.setText(name);
+		}
+		
 	}
 }
 
