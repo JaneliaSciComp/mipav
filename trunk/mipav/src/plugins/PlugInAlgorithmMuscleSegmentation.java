@@ -6,6 +6,8 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
@@ -29,7 +31,7 @@ import javax.swing.ScrollPaneConstants;
  * @author senseneyj
  *
  */
-public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements ActionListener {
+public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements ActionListener, ComponentListener {
     
     //~ Static fields --------------------------------------------------------------------------------------------------
 
@@ -38,6 +40,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     
     public static final String LUT_IMAGE = "lutImage.tif";
     public static final String VOI_IMAGE = "voiImage.tif";
+    public static final String NEW_TAB = "New Tab";
     
     //~ Instance fields ------------------------------------------------------------------------------------------------    
     
@@ -71,9 +74,18 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     /**Dialog box used for creating custom types*/
     private JPanel customDialog;
     
+    /**Tabbed panes*/
+    private JTabbedPane dialogTabs;
+    
     /**Initial pane when running in custom mode*/
     private ViewJFrameImage customPane;
 	
+    /** Number of currently used tabs*/
+    private int tabCount = 0;
+    
+    /**Whether new tabs are in a position to be created. */
+    private boolean doEval = false;
+    
     /**
      * Constructor.
      *
@@ -117,6 +129,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
             case Custom:
             	customDialog = initDialogBox();
             	customDialog.setVisible(true);
+            	doEval = true;
             	break;
                 
             default:
@@ -159,7 +172,50 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		}
 	}
     
-    private void buildAbdomenDialog() {
+    public void componentHidden(ComponentEvent e) {
+    	//Do nothing on hide
+	}
+
+	public void componentMoved(ComponentEvent e) {
+		//Do nothing on move
+	}
+
+	public void componentResized(ComponentEvent e) {
+		//Do nothing on resize
+	}
+
+	/**
+	 * Creates new tab when panel is shown
+	 */
+	public void componentShown(ComponentEvent e) {
+		if(e.getSource() instanceof JPanel && doEval) {
+			if(((JPanel)e.getSource()).getName().equals(NEW_TAB)) {
+				dialogTabs.removeTabAt(tabCount);
+				
+				JPanel newPanel = initMuscleTab(tabCount);
+		    	
+				newPanel.addComponentListener(customPane);
+				newPanel.addComponentListener(this);
+				newPanel.setName("Tab "+(tabCount+1));
+				
+				dialogTabs.addTab("Tab "+(tabCount+1), newPanel);
+				
+				JPanel tempPanel = new JPanel();
+				tempPanel.setName(NEW_TAB);
+				tempPanel.addComponentListener(customPane);
+				tempPanel.addComponentListener(this);
+				dialogTabs.addTab("Click to create a new tab...", tempPanel);
+				
+				dialogTabs.setSelectedIndex(tabCount);
+				activeTab = tabCount;
+				tabCount++;
+			} else if(((JPanel)e.getSource()).getName().indexOf("Tab ") != -1) {
+				activeTab = Integer.valueOf(((JPanel)e.getSource()).getName().substring(4)).intValue()-1;
+			}
+		}
+	}
+
+	private void buildAbdomenDialog() {
         
     	voiList = new PlugInSelectableVOI[3][];
     	int imageSize = 1;
@@ -298,7 +354,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    scrollPane.setBackground(Color.black);
 	    scrollPane.addKeyListener(customPane);    
 	  
-	    JTabbedPane dialogTabs = new JTabbedPane();
+	    dialogTabs = new JTabbedPane();
 	    dialogTabs.setMinimumSize(new Dimension (370, 532));
 	    dialogTabs.setPreferredSize(new Dimension(370, 532));
 	    dialogTabs.setMaximumSize(new Dimension (370, 532));
@@ -318,12 +374,18 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     	tabs[0] = initMuscleTab(activeTab);
     	
     	tabs[0].addComponentListener(customPane);
+    	tabs[0].addComponentListener(this);
     	tabs[0].setName("Tab 1");
     	dialogTabs.addTab("Tab 1", tabs[0]);
+    	tabCount = 1;
     	
     	tabs[1] = new JPanel();
-    	tabs[1].setName("New Tab");
+    	tabs[1].addComponentListener(customPane);
+    	tabs[1].addComponentListener(this);
+    	tabs[1].setName(NEW_TAB);
     	dialogTabs.addTab("Click to create a new tab...", tabs[1]);
+    	
+    	dialogTabs.addComponentListener(this);
 	            
 	    return panelA;
 	}
@@ -342,7 +404,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		JButton incButton = new JButton("Add another VOI");
 		incButton.addActionListener(this);
 		gridPane.add(incButton);
-
+		gridPane.setName("Tab "+currentTab);
 		tabs.add(gridPane);
 		return gridPane;
 	}
