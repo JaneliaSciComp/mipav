@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.registration;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -231,6 +232,10 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
             imageRef = new ModelImage(srcImage.getType(), volumeExtents, "Reference image");
             imageInput = new ModelImage(srcImage.getType(), volumeExtents, "Input image");
+            for (int z = 0; z < volumeExtents[2]; z++) {
+                imageRef.getFileInfo()[z].setResolutions(volumeResolutions);
+                imageInput.getFileInfo()[z].setResolutions(volumeResolutions);
+            }
 
             float[] buffer = new float[imageRef.getSize()];
 
