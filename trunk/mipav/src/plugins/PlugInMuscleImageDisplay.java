@@ -299,11 +299,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         System.out.println("Total time spent waiting for threads: "+(System.currentTimeMillis() - time));
         progressBar.updateValue(90);
     	progressBar.setMessage("Displaying results...");
-        initMuscleImage(2);
-        getActiveImage().unregisterAllVOIs();
-        initMuscleImage(1);
-        getActiveImage().unregisterAllVOIs();
-        initMuscleImage(0);
+        for(int i=voiList.length; i>0; i--) {
+        	getActiveImage().unregisterAllVOIs();
+        	initMuscleImage(i-1);
+        }
         progressBar.setVisible(false);
         progressBar.dispose();
         setVisible(true);
@@ -441,11 +440,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         System.out.println("Total time spent waiting for threads: "+(System.currentTimeMillis() - time));
         progressBar.updateValue(90);
     	progressBar.setMessage("Displaying results...");
-        initMuscleImage(2);
-        getActiveImage().unregisterAllVOIs();
-        initMuscleImage(1);
-        getActiveImage().unregisterAllVOIs();
-        initMuscleImage(0);
+    	for(int i=voiList.length; i>0; i--) {
+    		getActiveImage().unregisterAllVOIs();
+    		initMuscleImage(i-1);
+        }
         progressBar.setVisible(false);
         progressBar.dispose();
         setVisible(true);
