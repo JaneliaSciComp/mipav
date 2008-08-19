@@ -160,18 +160,27 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     public enum Symmetry{
         
         /** Indicates the image has no symmetry. */
-        NO_SYMMETRY("No symmetry"), 
+        NO_SYMMETRY("No symmetry", ""), 
         
         /** Indicates that image has left-right symmetry. */
-        LEFT_RIGHT("Left/Right"), 
+        LEFT_RIGHT("Left", "Right"), 
         
         /** Indicates the image has top-bottom symmetry. */
-        TOP_BOTTOM("Top/Bottom");
+        TOP_BOTTOM("Top", "Bottom");
         
         final String text;
         
-        Symmetry(String text) {
-        	this.text = text;
+        final String side1;
+        final String side2;
+        
+        Symmetry(String side1, String side2) {
+        	this.side1 = side1;
+        	this.side2 = side2;
+        	
+        	if(side2.length() == 0)
+        		this.text = side1;
+        	else
+        		this.text = side1+"/"+side2;
         }
     }
  

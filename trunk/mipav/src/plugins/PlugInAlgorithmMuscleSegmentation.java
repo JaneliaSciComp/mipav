@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.TreeMap;
 
 import javax.swing.BoxLayout;
@@ -40,7 +41,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     
     public static final String LUT_IMAGE = "lutImage.tif";
     public static final String VOI_IMAGE = "voiImage.tif";
+    
     public static final String NEW_TAB = "New Tab";
+    public static final String ADD_VOI = "Add another VOI";
+    public static final String LAUNCH = "Launch plugin";
+    public static final String SAVE = "Save";
+    public static final String DEFAULT_VOI = "Enter VOI name";
     
     //~ Instance fields ------------------------------------------------------------------------------------------------    
     
@@ -64,6 +70,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     
     /**Each muscle pane is one VOI in custom mode.*/
     private ArrayList<ArrayList<MusclePane>> customVOI;
+    
+    /**All of the requested titles*/
+    private ArrayList<JTextField> titlesArr;
     
     /**Each particular tab is represented here.*/
     private ArrayList<JPanel> tabs;
@@ -152,7 +161,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				buildCustomDialog();
 				performDialog();
 			}		
-		} else if(e.getActionCommand().equals("Add another VOI")){
+		} else if(e.getActionCommand().equals(ADD_VOI)) {
 			int length = tabs.get(activeTab).getComponents().length;
 			MusclePane pane = new MusclePane(this);
 			pane.setBorder(MipavUtil.buildTitledBorder("VOI #"+(length)));
@@ -160,13 +169,18 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			//JButton copy = (JButton)tabs.get(activeTab).getComponent(length-1);
 			//tabs.get(activeTab).remove(length-1);
 			//tabs.get(activeTab).repaint();
-			tabs.get(activeTab).add(pane, length-1);
+			tabs.get(activeTab).add(pane, length-2);
 			//pane.setVisible(true);
 			//tabs.get(activeTab).repaint();
 			
 			//tabs.get(activeTab).add(copy);
 			//tabs.get(activeTab).repaint();
 			
+		} else if(e.getActionCommand().equals(LAUNCH)) {
+			if(checkPanel())
+				buildCustomDialog();
+		} else if(e.getActionCommand().equals(SAVE)) {
+			//Do nothing for now
 		} else {
 			super.actionPerformed(e);
 		}
@@ -304,6 +318,59 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	}
 	
 	private void buildCustomDialog() {
+		//String name, boolean closed, int numCurves, int location, boolean fillable, doCalc
+	    int imageSize = 1;
+    	if(customPane.getImageA().getNDims() > 2)
+    		imageSize = customPane.getImageA().getExtents()[2];
+		
+		int validPanes = 0;
+		for(int i=0; i<customVOI.size(); i++) {
+			boolean validEntryFound = false;
+			for(int j=0; j<customVOI.get(i).size(); j++) {
+				if((!customVOI.get(i).get(j).getName().equals(DEFAULT_VOI)) && customVOI.get(i).get(j).getName().trim().length() > 0) {
+					if(!validEntryFound) {
+						validEntryFound = true;
+						validPanes++;
+					}
+				}
+			}
+		}
+		int[] validVOI = new int[validPanes];
+		
+		for(int i=0; i<validPanes; i++) {
+			for(int j=0; j<customVOI.get(i).size(); j++) {
+				MusclePane temp = customVOI.get(i).get(j);
+				if((!temp.getName().equals(DEFAULT_VOI)) && temp.getName().trim().length() > 0) {
+					if(temp.getSymmetry().equals(PlugInMuscleImageDisplay.Symmetry.NO_SYMMETRY))
+						validVOI[i]++;
+					else {
+						validVOI[i] = validVOI[i]+2;
+						customVOI.get(i).get(j).setName(temp.getSymmetry().side1 + " " + temp.getName());
+						MusclePane temp2 = customVOI.get(i).get(j);
+						temp2.setName(temp2.getSymmetry().side2 + " " + temp2.getName());
+						customVOI.get(i).add(j+1, temp2);
+					}
+				}
+			}
+		}
+		
+		voiList = new PlugInSelectableVOI[validPanes][];
+		int outputLoc = 0;
+		
+		for(int i=0; i<validPanes; i++) {
+			voiList[i] = new PlugInSelectableVOI[validVOI[i]];
+			for(int j=0; j<validVOI[i]; j++) {
+				MusclePane temp = customVOI.get(i).get(j);
+				if(temp.getDoCalc()) {
+					voiList[i][j] = new PlugInSelectableVOI(temp.getName(), temp.getIsClosed(), 
+							temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize, outputLoc++);
+				} else {
+					voiList[i][j] = new PlugInSelectableVOI(temp.getName(), temp.getIsClosed(), 
+							temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize);
+				}
+			}
+		}
+		
 		customDialog.setVisible(false);
 		MipavUtil.displayError("Custom dialog not yet built. Plugin will now end.");
 	}
@@ -312,7 +379,112 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	 * Checks that information has been entered correctly.
 	 */
 	private boolean checkPanel() {
+		//always return true until number of curves is replaced with text area
 		return true;
+	}
+	
+	/**
+	 * Sets mode to CT and sets range to CT presets. Used for any new image.
+	 *
+	 * @param  preset1  first CT preset
+	 * @param  preset2  second CT preset
+	 */
+	private void ctMode(ModelImage image, int preset1, int preset2) {
+		Dimension dim = new Dimension(256, 256);
+		
+		//stores LUT min max values
+		float[] x = new float[4], y = new float[4], z = new float[4];
+		
+		//reference to the image data currently displayed, used to adjust transfer func
+		float[] dataSlice;
+		
+		float min = Float.MAX_VALUE;
+	    float max = -Float.MIN_VALUE;
+	    //image's max and min intensities
+	    float minImage, maxImage;
+	    int i;
+	    
+	    ModelLUT LUT = customPane.getComponentImage().getLUTa();
+	
+	    //Stores the maximum and minimum intensity values applicable to this image
+	    minImage = (float)image.getMin();
+	    maxImage = (float)image.getMax();
+	    
+	    dataSlice = customPane.getComponentImage().getActiveImageBuffer();
+	    min = Float.MAX_VALUE;
+	    max = -Float.MAX_VALUE;
+	
+	    for (i = 0; i < dataSlice.length; i++) {
+	
+	        if (dataSlice[i] > max) {
+	            max = dataSlice[i];
+	        }
+	
+	        if (dataSlice[i] < min) {
+	            min = dataSlice[i];
+	        }
+	    }
+	    
+	    //Set LUT min max values of the image slice !!
+	    x[0] = minImage;
+	    y[0] = 255;
+	    z[0] = 0;
+	    x[1] = min;
+	    y[1] = 255;
+	    z[1] = 0;
+	    x[2] = max;
+	    y[2] = 0;
+	    z[2] = 0;
+	    x[3] = maxImage;
+	    y[3] = 0;
+	    z[3] = 0;
+	    LUT.getTransferFunction().importArrays(x, y, 4);
+	    
+	    float yVal, m, b;
+	    min = (float) image.getMin();
+	    max = (float) image.getMax();
+	
+	    x[0] = min; // -1024;
+	    y[0] = dim.height - 1;
+	    z[0] = 0;
+	
+	    if (preset2 < max) {
+	        x[2] = preset2;
+	    } else {
+	        x[2] = max;
+	    }
+	
+	    y[2] = 0;
+	    z[2] = 0;
+	
+	    if (preset1 < min) {
+	
+	        // y = m * x + b, line equation
+	        // Assume given points: pt1 ( preset1, 255 ),  pt2 ( x[2], y[2])
+	        // find point: pt3 ( -1024, yVal);
+	        m = (255 - y[2]) / (preset1 - x[2]);
+	        b = 255 - (m * preset1);
+	        yVal = (m * (-1024)) + b;
+	        x[1] = -1024;
+	        y[1] = yVal;
+	        z[1] = 0;
+	        Preferences.debug("yVal = " + yVal);
+	    } else {
+	        x[1] = preset1;
+	        y[1] = dim.height - 1;
+	        z[1] = 0;
+	    }
+	
+	    if (y[1] > 255) {
+	        y[1] = 255;
+	    }
+	
+	    x[3] = max; // 3071;
+	    y[3] = 0;
+	    z[3] = 0;
+	    
+	    LUT.getTransferFunction().importArrays(x, y, 4);
+	    image.notifyImageDisplayListeners(LUT, true);
 	}
 	
 	/**
@@ -320,6 +492,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	 */
 	private JPanel initDialogBox() {
 		customPane = new ViewJFrameImage(srcImage);
+		titlesArr = new ArrayList();
 		
 		JPanel mainPanel = initMainPanel();
 		
@@ -340,6 +513,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    } 
 		
 		customPane.pack();
+		
+		ctMode(customPane.getImageA(), -175, 275);
+		customPane.updateImages(true);
 		
 		return mainPanel;
 	}
@@ -392,6 +568,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	
 	private JPanel initMuscleTab(int currentTab) {
 		JPanel gridPane = new JPanel();
+		//TODO: Use sequential groups in 1.6 to force display of nonedit and 
+		//edit text field next to each other
+		JTextField title = new JTextField("Enter the title for this panel");
+		title.setMinimumSize(new Dimension(title.getHeight(), title.getWidth()));
+		gridPane.add(title);
+		titlesArr.add(title);
+		
 		if(currentTab == 0)
 			customVOI = new ArrayList();
 		customVOI.add(new ArrayList());
@@ -401,9 +584,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			gridPane.add(customVOI.get(currentTab).get(i));
 		}
 		
-		JButton incButton = new JButton("Add another VOI");
+		JButton incButton = new JButton(ADD_VOI);
 		incButton.addActionListener(this);
+		JButton launchButton = new JButton(LAUNCH);
+		launchButton.addActionListener(this);
 		gridPane.add(incButton);
+		gridPane.add(launchButton);
 		gridPane.setName("Tab "+currentTab);
 		tabs.add(gridPane);
 		return gridPane;
@@ -452,7 +638,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				text[i++] = symmetry.text;
 			
 			this.symmetry = new JComboBox(text);
-			this.name = new JTextField("Enter VOI name");
+			this.name = new JTextField(DEFAULT_VOI);
 			
 			Integer[] numValues = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 			this.numCurves = new JComboBox(numValues);
@@ -532,6 +718,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 
 		public String getName() {
 			return name.getText();
+		}
+		
+		public void setName(String name) {
+			this.name.setText(name);
 		}
 
 		public int getNumCurves() {
