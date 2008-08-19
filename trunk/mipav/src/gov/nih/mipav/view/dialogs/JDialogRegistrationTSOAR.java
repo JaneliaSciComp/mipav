@@ -381,7 +381,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
     /**
      * Accessor to set refImageNum.
      *
-     * @param  refImageNumber  number of reference slice
+     * @param  refImageNumber  number of reference volume
      */
     public void setRefImageNum(int refImageNumber) {
         refImageNum = refImageNumber;
@@ -569,14 +569,14 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
 
         ButtonGroup group = new ButtonGroup();
 
-        referenceButton = new JRadioButton("Register to reference volume(1-" + String.valueOf(image.getExtents()[3]) +
+        referenceButton = new JRadioButton("Register to reference volume(0-" + String.valueOf(image.getExtents()[3]-1) +
                                            ")");
         referenceButton.setSelected(true);
         referenceButton.setFont(serif12);
         referenceButton.setForeground(Color.black);
         group.add(referenceButton);
 
-        refImageNumText = new JTextField(String.valueOf((image.getExtents()[3] / 2) + 1), 3);
+        refImageNumText = new JTextField(String.valueOf(image.getExtents()[3] / 2), 3);
         refImageNumText.setEnabled(true);
 
         meanButton = new JRadioButton("Register to average volume");
@@ -861,13 +861,13 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         displayTransform = transformCheckbox.isSelected();
         reference = referenceButton.isSelected();
 
-        if (!testParameter(refImageNumText.getText(), 1, image.getExtents()[3])) {
+        if (!testParameter(refImageNumText.getText(), 0, image.getExtents()[3]-1)) {
             refImageNumText.requestFocus();
             refImageNumText.selectAll();
 
             return false;
         } else {
-            refImageNum = Integer.valueOf(refImageNumText.getText()).intValue() - 1;
+            refImageNum = Integer.valueOf(refImageNumText.getText()).intValue();
         }
 
         doGraph = graphCheckBox.isSelected();
