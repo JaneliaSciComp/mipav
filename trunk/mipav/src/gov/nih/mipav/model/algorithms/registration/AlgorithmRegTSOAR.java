@@ -948,7 +948,6 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         AlgorithmPowellOptBase powell;
         double[] initial = new double[] { 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0 };
         MatrixListItem[] results = new MatrixListItem[nVolumes];
-        TransMatrix matrix;
         float[] buffer = new float[imageInput.getSize()];
         ModelSimpleImage imageInputIso;
         Vector3f cogR;
@@ -1060,6 +1059,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
             if (level == 8) {
                 cogR = AlgorithmRegOAR3D.calculateCenterOfMass3D(refImage, null, doColor);
+
                 initial[3] = cog.X - cogR.X;
                 initial[4] = cog.Y - cogR.Y;
                 initial[5] = cog.Z - cogR.Z;
@@ -1084,8 +1084,14 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
             initials[0] = new Vectornd(initial);
             powell.setPoints(initials);
             powell.run();
-            results[i] = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, refImage.xRes),
-                                            powell.getPoint(0, refImage.xRes));
+            if ((level == 1) || (setFinalRegistrationAtLevel2 && (level == 2))) {
+                results[i] = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, refImage.xRes),
+                                                powell.getPoint(0, refImage.xRes));
+            }
+            else {
+                results[i] = new MatrixListItem(powell.getCost(0), powell.getMatrix(0),
+                                                powell.getPoint(0));
+            }
             cost.disposeLocal();
             powell.disposeLocal();
         }
@@ -1159,6 +1165,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
             if (level == 8) {
                 cogR = AlgorithmRegOAR3D.calculateCenterOfMass3D(refImage, null, doColor);
+                
                 initial[3] = cog.X - cogR.X;
                 initial[4] = cog.Y - cogR.Y;
                 initial[5] = cog.Z - cogR.Z;
@@ -1182,8 +1189,14 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
             initials[0] = new Vectornd(initial);
             powell.setPoints(initials);
             powell.run();
-            results[i] = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, refImage.xRes),
-                                            powell.getPoint(0, refImage.xRes));
+            if ((level == 1) || (setFinalRegistrationAtLevel2 && (level == 2))) {
+                results[i] = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, refImage.xRes),
+                                                powell.getPoint(0, refImage.xRes));
+            }
+            else {
+                results[i] = new MatrixListItem(powell.getCost(0), powell.getMatrix(0),
+                                                powell.getPoint(0));
+            }
             cost.disposeLocal();
             powell.disposeLocal();
         }
