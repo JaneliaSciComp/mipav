@@ -176,16 +176,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			MusclePane pane = new MusclePane(this);
 			pane.setBorder(MipavUtil.buildTitledBorder("VOI #"+(length)));
 			customVOI.get(activeTab).add(pane);
-			//JButton copy = (JButton)tabs.get(activeTab).getComponent(length-1);
-			//tabs.get(activeTab).remove(length-1);
-			//tabs.get(activeTab).repaint();
 			tabs.get(activeTab).add(pane, comps.length-2);
-			//pane.setVisible(true);
-			//tabs.get(activeTab).repaint();
-			
-			//tabs.get(activeTab).add(copy);
-			//tabs.get(activeTab).repaint();
-			
+			tabs.get(activeTab).validate();
 		} else if(e.getActionCommand().equals(LAUNCH)) {
 			if(checkPanel()) {
 				buildCustomDialog();
