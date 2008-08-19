@@ -162,14 +162,19 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				performDialog();
 			}		
 		} else if(e.getActionCommand().equals(ADD_VOI)) {
-			int length = tabs.get(activeTab).getComponents().length;
+			int length = 1;
+			Component[] comps = tabs.get(activeTab).getComponents();
+			for(int i=0; i<comps.length; i++) {
+				if(comps[i] instanceof MusclePane)
+					length++;
+			}
 			MusclePane pane = new MusclePane(this);
 			pane.setBorder(MipavUtil.buildTitledBorder("VOI #"+(length)));
 			customVOI.get(activeTab).add(pane);
 			//JButton copy = (JButton)tabs.get(activeTab).getComponent(length-1);
 			//tabs.get(activeTab).remove(length-1);
 			//tabs.get(activeTab).repaint();
-			tabs.get(activeTab).add(pane, length-2);
+			tabs.get(activeTab).add(pane, comps.length-2);
 			//pane.setVisible(true);
 			//tabs.get(activeTab).repaint();
 			
@@ -637,7 +642,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			for(PlugInMuscleImageDisplay.Symmetry symmetry : PlugInMuscleImageDisplay.Symmetry.values())
 				text[i++] = symmetry.text;
 			
-			this.symmetry = new JComboBox(text);
+			this.symmetry = new JComboBox(PlugInMuscleImageDisplay.Symmetry.values());
 			this.name = new JTextField(DEFAULT_VOI);
 			
 			Integer[] numValues = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
