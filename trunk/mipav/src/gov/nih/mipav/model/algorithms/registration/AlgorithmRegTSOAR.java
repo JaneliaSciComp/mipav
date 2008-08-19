@@ -374,9 +374,6 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
         float[] transformBuffer = new float[imageInput.getSize()];
 
-        // The resolutions of the image were defaulting to one.
-        imageInput.getFileInfo()[0].setResolutions(volumeResolutions);
-
         for (int i = 0; (i < nVolumes) && !threadStopped; i++) {
             fireProgressStateChanged((i + 1) * 100 / nVolumes);
 
