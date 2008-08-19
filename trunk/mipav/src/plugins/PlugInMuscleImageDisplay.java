@@ -182,6 +182,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         	else
         		this.text = side1+"/"+side2;
         }
+        
+        public String toString() {
+        	if(this.equals(Symmetry.LEFT_RIGHT))
+        		return "Left/Right";
+        	else if(this.equals(Symmetry.TOP_BOTTOM))
+        		return "Top/Bottom";
+        	else
+        		return "No Symmetry";
+        }
     }
  
     /**
