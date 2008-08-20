@@ -78,7 +78,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
     private JRadioButton referenceButton;
 
     /** DOCUMENT ME! */
-    private int refImageNum;
+    private int refImageNum = 0;
 
     /** DOCUMENT ME! */
     private JTextField refImageNumText;
@@ -293,6 +293,13 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
             } else {
                 graphCheckBox.setEnabled(false);
                 graphCheckBox.setSelected(false);
+            }
+        } else if ((event.getSource() == meanButton) || (event.getSource() == referenceButton)) {
+            if (referenceButton.isSelected()) {
+                refImageNumText.setEnabled(true);
+            }
+            else {
+                refImageNumText.setEnabled(false);
             }
         }
     }
@@ -574,6 +581,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         referenceButton.setSelected(true);
         referenceButton.setFont(serif12);
         referenceButton.setForeground(Color.black);
+        referenceButton.addItemListener(this);
         group.add(referenceButton);
 
         refImageNumText = new JTextField(String.valueOf(image.getExtents()[3] / 2), 3);
@@ -582,6 +590,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         meanButton = new JRadioButton("Register to average volume");
         meanButton.setFont(serif12);
         meanButton.setForeground(Color.black);
+        meanButton.addItemListener(this);
         group.add(meanButton);
 
         Insets insets = new Insets(0, 2, 0, 2);
@@ -861,14 +870,16 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         displayTransform = transformCheckbox.isSelected();
         reference = referenceButton.isSelected();
 
-        if (!testParameter(refImageNumText.getText(), 0, image.getExtents()[3]-1)) {
-            refImageNumText.requestFocus();
-            refImageNumText.selectAll();
-
-            return false;
-        } else {
-            refImageNum = Integer.valueOf(refImageNumText.getText()).intValue();
-        }
+        if (reference) {
+            if (!testParameter(refImageNumText.getText(), 0, image.getExtents()[3]-1)) {
+                refImageNumText.requestFocus();
+                refImageNumText.selectAll();
+    
+                return false;
+            } else {
+                refImageNum = Integer.valueOf(refImageNumText.getText()).intValue();
+            }
+        } // if (reference)
 
         doGraph = graphCheckBox.isSelected();
         doSubsample = sampleCheckBox.isSelected();
