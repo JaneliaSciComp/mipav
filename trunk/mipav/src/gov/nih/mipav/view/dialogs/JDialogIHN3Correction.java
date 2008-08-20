@@ -926,7 +926,7 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
 
         tmpStr = textKernel.getText();
 
-        if (testParameter(tmpStr, 0.05, 2.0)) {
+        if (testParameter(tmpStr, 0.05, 0.50)) {
             kernelfwhm = Float.valueOf(tmpStr).floatValue();
         } else {
             textKernel.requestFocus();
