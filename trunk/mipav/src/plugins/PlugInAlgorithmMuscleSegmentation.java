@@ -527,6 +527,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		
 		ctMode(customPane.getImageA(), -175, 275);
 		customPane.updateImages(true);
+		customPane.repaint();
 		
 		return mainPanel;
 	}
@@ -581,8 +582,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		JPanel gridPane = new JPanel();
 		//TODO: Use sequential groups in 1.6 to force display of nonedit and 
 		//edit text field next to each other
-		JTextField title = new JTextField("Enter the title for this panel");
-		title.setMinimumSize(new Dimension(title.getHeight(), title.getWidth()));
+		String editStr;
+		JTextField title = new JTextField(editStr = "Enter the title for this panel");
 		gridPane.add(title);
 		titlesArr.add(title);
 		
@@ -667,7 +668,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			JLabel blankLabel = new JLabel("   ");
 
 			GridBagConstraints c = new GridBagConstraints();
-			
 			c.fill = GridBagConstraints.HORIZONTAL;
 			c.gridx = 0;
 			c.gridy = 0;
@@ -680,8 +680,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			c.gridy = 0;
 			c.anchor = GridBagConstraints.LINE_END;
 			c.ipadx = 18;
-			c.weightx = .5;
-			c.fill = GridBagConstraints.VERTICAL;
+			c.weightx = 1;
+			c.fill = GridBagConstraints.BOTH;
 			add(name, c);
 			c.gridwidth = 2;
 			c.gridx = 0;
