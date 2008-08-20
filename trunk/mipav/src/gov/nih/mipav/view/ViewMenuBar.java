@@ -302,7 +302,8 @@ public class ViewMenuBar {
                 // false)}),
                 // menuBuilder.buildMenuItem("Stereo depth", "StereoDepth", 0, null, false),
                 menuBuilder.makeMenu("Shading correction", false, new JMenuItem[] {
-                        //menuBuilder.buildMenuItem("Entropy minimization", "entropyMin", 0, null, false),
+                        // Of 3 shading correction methods only entropy minimization works on color
+                        menuBuilder.buildMenuItem("Entropy minimization", "entropyMin", 0, null, false),
                         menuBuilder.buildMenuItem("Inhomogeneity N3 correction", "N3Correction", 0, null, false)}),
                         //menuBuilder.buildMenuItem("MRI combined info", "MRICorrection", 0, null, false)}),
                 menuBuilder.makeMenu("SNR", false, new JMenuItem[] {
