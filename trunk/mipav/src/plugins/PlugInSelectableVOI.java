@@ -3,7 +3,7 @@ import gov.nih.mipav.model.structures.*;
 import java.awt.Color;
 import java.util.Date;
 
-public class PlugInSelectableVOI extends VOI{//extends VOI{
+public class PlugInSelectableVOI extends VOI {
 	
 	
 	/**Whether the VOI most be closed.*/
