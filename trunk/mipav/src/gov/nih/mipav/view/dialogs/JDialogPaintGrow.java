@@ -430,7 +430,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
      * Creates new dialog and sets up GUI components.
      *
      * @param  theParentFrame  Parent frame.
-     * @param  surfacePaint for Painting on a ModelTriangleMesh surface
+     * @param  surfacePaint for Painting on a surface
      * @param  paintListeners  DOCUMENT ME!
      */
     public JDialogPaintGrow(Frame theParentFrame, SurfacePaint surfacePaint, Vector paintListeners)
@@ -445,7 +445,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
      * Creates new dialog and sets up GUI components.
      *
      * @param  theParentFrame  Parent frame.
-     * @param  surfacePaint for Painting on a ModelTriangleMesh surface
+     * @param  surfacePaint for Painting on a surface
      * @param  paintListeners  DOCUMENT ME!
      */
     public JDialogPaintGrow(Frame theParentFrame, SurfacePaint_WM surfacePaint, Vector paintListeners)

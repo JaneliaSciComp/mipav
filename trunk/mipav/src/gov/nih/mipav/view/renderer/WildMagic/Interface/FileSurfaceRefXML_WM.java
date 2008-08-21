@@ -79,7 +79,7 @@ public class FileSurfaceRefXML_WM extends FileSurfaceRefXML {
     }
 
     /**
-     * Writes the XML file information, including the ModelTriangleMesh surface out to the given filename and path:
+     * Writes the XML file information, including the surface out to the given filename and path:
      *
      * @param   fileName   file name to write to
      * @param   kMaterial    surface material

@@ -13,7 +13,6 @@ import WildMagic.LibGraphics.SceneGraph.*;
 /**
  * Displays the three orthogonal planes with the volume data.
  * @see GPUVolumeRender.java
- * @see VolumePlaneEffect.java
  * @see VolumeObject.java
  */
 public class VolumeSurface extends VolumeObject
@@ -201,23 +200,25 @@ public class VolumeSurface extends VolumeObject
     {
         m_kLightShader.SetClipping(bClip);
     } 
-    
-    /** Initializes axis-aligned clipping for the VolumeShaderEffect.
-     * @param afClip, the initial clipping parameters for axis-aligned clipping.
-     */
-    public void InitClip( float[] afClip )
-    {
-        m_kLightShader.InitClip(afClip);
-    }
 
     /** Sets axis-aligned clipping for the VolumeShaderEffect.
      * @param afClip, the clipping parameters for axis-aligned clipping.
      */
-    public void SetClip( int iWhich, float[] data)
+    public void SetClip( int iWhich, float data)
     {
         m_kLightShader.SetClip(iWhich, data);
     }
+    
+    public void SetSecondaryClip( int iWhich, float data)
+    {
+        m_kLightShader.SetSecondaryClip(iWhich, data);
+    }
 
+    public void EnableSecondaryClip(boolean bEnable)
+    {
+        m_kLightShader.EnableSecondaryClip(bEnable);        
+    }
+    
     /** Sets eye clipping for the VolumeShaderEffect.
      * @param afEquation, the eye clipping equation.
      */
@@ -819,8 +820,6 @@ public class VolumeSurface extends VolumeObject
             scaleMesh( alpha, connections );
             if (volumeLimit) {
                 presentVolume = ComputeVolume();
-
-                // System.out.println("ModelTriangleMesh.smoothMesh -- present volume " + presentVolume);
                 presentPercent = Math.abs(100.0f * (presentVolume - initialVolume) / initialVolume);
 
                 if (presentPercent >= volumePercent) {

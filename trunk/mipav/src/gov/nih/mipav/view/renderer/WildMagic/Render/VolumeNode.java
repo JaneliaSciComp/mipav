@@ -7,7 +7,6 @@ import WildMagic.LibGraphics.SceneGraph.*;
 /**
  * Displays the three orthogonal planes with the volume data.
  * @see GPUVolumeRender.java
- * @see VolumePlaneEffect.java
  * @see VolumeObject.java
  */
 public class VolumeNode extends VolumeObject

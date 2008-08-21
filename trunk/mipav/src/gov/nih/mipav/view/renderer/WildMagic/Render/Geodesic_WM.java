@@ -2014,7 +2014,7 @@ public class Geodesic_WM {
     /**
      * Create the edges list from the given surface triangle mesh.
      *
-     * @param   kMesh  ModelTriangleMesh surface
+     * @param   kMesh surface
      *
      * @return  boolean success or not
      */
@@ -2093,11 +2093,11 @@ public class Geodesic_WM {
     /**
      * creates a new mesh after triangulation or when a mesh is cut along the geodesic.
      *
-     * @param   kMesh            ModelTriangleMesh surface
+     * @param   kMesh            TriMesh surface
      * @param   iVertexCount     int new vertex count
      * @param   iOldVertexCount  int old vertex cunt
      *
-     * @return  ModelTriangleMesh surface
+     * @return  TriMesh surface
      */
     private TriMesh createNewMesh(TriMesh kMesh, int iVertexCount, int iOldVertexCount) {
 
@@ -2501,7 +2501,7 @@ public class Geodesic_WM {
     /**
      * Used in cutting closed paths and creating new meshes to export to the scene graph.
      *
-     * @param   kSourceMesh             ModelTriangleMesh surface mesh
+     * @param   kSourceMesh             TriMesh surface mesh
      * @param   kGeodesic_Closed_Loops  LinkedList closed path
      *
      * @return  int
@@ -2703,7 +2703,7 @@ public class Geodesic_WM {
      * Calculates and returns the start point normal for a new starting point inside an existing triangle. The new
      * normal is the average of the normals at each point in the triangle the starting point is inside
      *
-     * @param   kMesh    ModelTriangleMesh surface mesh
+     * @param   kMesh    TriMesh surface mesh
      * @param   aiIndex  int[] 3 triangle points
      *
      * @return  Vector3f Average normal of the triangle.
@@ -2733,7 +2733,7 @@ public class Geodesic_WM {
      * is the average of the texture coordinates at each point in the triangle
      * the starting point is inside
      *
-     * @param   kMesh    ModelTriangleMesh surface mesh
+     * @param   kMesh    TriMesh surface mesh
      * @param   aiIndex  int[] 3 triangle points
      *
      * @return  Texture3f Average texture coordinate of the triangle.
@@ -2761,7 +2761,7 @@ public class Geodesic_WM {
      * inside an existing triangle. The new color is the average of the colors
      * at each point in the triangle the starting point is inside
      *
-     * @param   kMesh    ModelTriangleMesh surface mesh
+     * @param   kMesh    TriMesh surface mesh
      * @param   aiIndex  int[] 3 triangle points
      *
      * @return  Color4f Average color of the triangle.
@@ -2790,7 +2790,7 @@ public class Geodesic_WM {
     /**
      * Get the the triangle normal from the given triangle index.
      *
-     * @param   kMesh    ModelTriangleMesh surface mesh
+     * @param   kMesh    TriMesh surface mesh
      * @param   iIndex1  int triangle point index 1
      * @param   iIndex2  int triangle point index 2
      *
@@ -2816,7 +2816,7 @@ public class Geodesic_WM {
     /**
      * Get the the triangle texture coordinate from the given triangle index.
      *
-     * @param   kMesh    ModelTriangleMesh surface mesh
+     * @param   kMesh    TriMesh surface mesh
      * @param   iIndex1  int triangle point index 1
      * @param   iIndex2  int triangle point index 2
      *
@@ -2841,7 +2841,7 @@ public class Geodesic_WM {
     /**
      * Get the the triangle color from the given triangle index.
      *
-     * @param   kMesh    ModelTriangleMesh surface mesh
+     * @param   kMesh    TriMesh surface mesh
      * @param   iIndex1  int triangle point index 1
      * @param   iIndex2  int triangle point index 2
      *
@@ -3492,7 +3492,7 @@ public class Geodesic_WM {
      * onRight determines if a given point on a triangle, kSide, is to the right of or to the left of the vector
      * specified by the vertices kPrev - kPoint.
      *
-     * @param   kMesh       ModelTriangleMesh surface mesh
+     * @param   kMesh       TriMesh surface mesh
      * @param   iPrevIndex  int previous vertice
      * @param   iIndex      int specified vertice index
      * @param   iSideIndex  int side vertice index
@@ -3783,7 +3783,7 @@ public class Geodesic_WM {
      * The start and end surfaces ensure that the points on the geodesic curve all fall on one mesh, and that the
      * algorithm isn't trying to find a path between two unconnected meshes.
      *
-     * @param  kMesh  ModelTriangleMesh surface mesh
+     * @param  kMesh  TriMesh surface mesh
      */
     private void setEndSurface(TriMesh kMesh) {
         m_kEndSurface = kMesh;
@@ -4139,7 +4139,7 @@ public class Geodesic_WM {
     /**
      * triangulates the mesh along a single geodesic.
      *
-     * @param   kMesh         ModelTriangleMesh surface mesh
+     * @param   kMesh         TriMesh surface mesh
      * @param   kPath         LinkedList path link list
      * @param   kLeftPath     LinkedList left path link list
      * @param   kRightPath    LinkedList right path link list
@@ -4410,7 +4410,7 @@ public class Geodesic_WM {
      * triangles that are connected to the path and that fall on the right of the path to contain the new path vertices.
      * This cuts the mesh by disconnecting the triangles that are on the left and right sides of the geodesic path.
      *
-     * @param   kMesh         ModelTriangleMesh surface mesh
+     * @param   kMesh         TriMesh surface mesh
      * @param   kPath         LinkedList path link list
      * @param   iVertexCount  int vertex count
      * @param   bOpen         boolean closed path or not
