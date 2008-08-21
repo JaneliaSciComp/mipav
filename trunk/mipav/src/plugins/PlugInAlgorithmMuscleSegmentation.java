@@ -8,8 +8,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -21,6 +26,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -497,7 +503,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    LUT.getTransferFunction().importArrays(x, y, 4);
 	    image.notifyImageDisplayListeners(LUT, true);
 	}
-	
+
 	/**
 	 * Build the custom dialog box for creating custom muscle types.
 	 */
@@ -615,6 +621,77 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
         	new PlugInMuscleImageDisplay(srcImage, titles, voiList, 
         			imageType, symmetry, true, multipleSlices);
         }
+	}
+	
+	private static class FileLoader {
+		/**
+		 * Whecks that the file specified by name exists and is the correct extension (txt).  Does
+		 * not check validity of file. Returned value indicates success of
+		 * checking file.
+		 * @param name
+		 * @return
+		 */
+		private boolean fileCheck(String name) {
+			File file = new File(name);
+			if(!file.exists())
+				return false;
+			JFileChooser fileChoose = new JFileChooser();
+			String fileType = fileChoose.getTypeDescription(file);
+			System.out.println(fileType);
+			if(!fileType.equals("txt"))
+				return false;
+			return true;
+		}
+		
+		/**
+		 * Reads the information stored in the file identified by name and stores in customVOI
+		 * necessary information in standard format. Returned value indicates success of
+		 * reading file.
+		 * @param name
+		 */
+		
+		private boolean fileRead(String name) {
+			BufferedReader input = null;
+			
+			try {
+				input = new BufferedReader(new FileReader(name));
+				
+				String line;
+				while((line = input.readLine()) != null) {
+					//Process line here
+				}
+			} catch(FileNotFoundException e) {
+				MipavUtil.displayError("File not found despite passing internal check system.");
+				e.printStackTrace();
+				return false;
+			} catch(IOException e) {
+				MipavUtil.displayError("Error reading file, re-open file.");
+				e.printStackTrace();
+				return false;
+			} finally {
+				try {
+					if(input != null) {
+						input.close();
+					}
+				} catch(IOException e) {
+					MipavUtil.displayError("Internal program error, failed to close file.");
+					e.printStackTrace();
+					return false;
+				}
+			} 
+			return true;
+		}
+		
+		/**
+		 * Writes the information stored in customVOI into a text file conatining all
+		 * necessary information in standard format. Returned value indicates success of
+		 * writing file.
+		 * @param name
+		 */
+		
+		private boolean fileWrite(String name) {
+			return false;
+		}
 	}
 	
 	private class MusclePane extends JPanel implements Serializable {
