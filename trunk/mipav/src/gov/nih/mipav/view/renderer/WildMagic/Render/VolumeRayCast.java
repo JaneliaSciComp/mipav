@@ -499,18 +499,10 @@ public class VolumeRayCast extends VolumeObject
         return m_kMesh;
     }
 
-    /** Initializes axis-aligned clipping for the VolumeShaderEffect.
-     * @param afClip, the initial clipping parameters for axis-aligned clipping.
-     */
-    public void InitClip( float[] afClip )
-    {
-        m_kVolumeShaderEffect.InitClip(afClip);
-    }
-
     /** Sets axis-aligned clipping for the VolumeShaderEffect.
      * @param afClip, the clipping parameters for axis-aligned clipping.
      */
-    public void SetClip( int iWhich, float[] data)
+    public void SetClip( int iWhich, float data)
     {
         m_kVolumeShaderEffect.SetClip(iWhich, data);
     }

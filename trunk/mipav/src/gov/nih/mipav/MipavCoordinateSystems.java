@@ -375,12 +375,12 @@ public class MipavCoordinateSystems {
     }
 
     /**
-     * Returns the direction vectors for displaying the ModelTriangleMesh surface so that it aligns properly with the
+     * Returns the direction vectors for displaying the surface so that it aligns properly with the
      * input ModelImage. The direction vectors are transformed into ModelCoordinates.
      * 
      * @param kImage the ModelImage for which the direction vectors are returned.
      * 
-     * @return the direction vectors for the ModelTriangleMesh object.
+     * @return the direction vectors for the object.
      */
     public static final int[] getModelDirections(ModelStorageBase kImage) {
         boolean[] axialFlip = getAxisFlip(kImage, FileInfoBase.AXIAL);

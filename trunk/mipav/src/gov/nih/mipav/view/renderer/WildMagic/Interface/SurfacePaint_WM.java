@@ -15,7 +15,7 @@ import javax.swing.*;
 
 
 /*
- * SurfacePaint class performs paint operations on a ModelTriangleMesh
+ * SurfacePaint class performs paint operations on a TriMesh
  * surfaces. When the mouse is moved over the surface, the PickCanvas is used
  * to retrieve the picked triangle in the mesh. The triangle vertex colors are
  * set to a user-specified color.
@@ -32,7 +32,7 @@ public class SurfacePaint_WM extends JInterfaceBase
      */
     private static final long serialVersionUID = -3767599197318881261L;
 
-    /** Paint the ModelTriangleMesh vertex color: */
+    /** Paint the TriMesh vertex color: */
     public static final int VERTEX = 0;
 
     /** Paint into the 3D texture map: */

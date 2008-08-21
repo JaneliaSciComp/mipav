@@ -32,7 +32,6 @@ import WildMagic.LibGraphics.SceneGraph.*;
  * @see  SurfaceRender.java
  * @see  SurfaceAttributes.java
  * @see  FileSurfaceXML.java
- * @see  ModelTriangleMesh.java
  */
 public class FileSurface_WM {
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -286,7 +285,7 @@ public class FileSurface_WM {
      *
      * @param  kImage      the ModelImage displayed in the SurfaceRender class
      * @param  akSurfaces  an array of surfaces described by their SurfaceAttributes, containing information that is
-     *                     saved with the ModelTriangleMesh
+     *                     saved with the TriMesh
      * @param  kCommand    the type of save operation to perform
      */
     public static void saveSurfaces(ModelImage kImage, TriMesh[] akSurfaces, String kCommand) {
@@ -736,7 +735,7 @@ public class FileSurface_WM {
     
     /**
      * Load the clod mesh from a binary file. The caller must have already opened the file and read the mesh type (0 =
-     * ModelTriangleMesh, 1 = ModelClodMesh) and the number of meshes in the file. The caller then calls this function
+     * TriMesh, 1 = ModelClodMesh) and the number of meshes in the file. The caller then calls this function
      * for each mesh. The format for a mesh is
      *
      * <pre>
@@ -914,7 +913,7 @@ public class FileSurface_WM {
                     if (!str.equals("#VRML V2.0 utf8") || !str2.equals("#MIPAV") ||
                         (str3.indexOf("#Number of shapes =") == -1)) {
                         MipavUtil.displayWarning("File doesn't appear to be a VRML 2.0 file written by MIPAV");
-                        Preferences.debug("ModelTriangleMesh.loadVRMLMesh: File doesn't appear to be a VRML 2.0 file written by MIPAV.\n");
+                        Preferences.debug("TriMesh.loadVRMLMesh: File doesn't appear to be a VRML 2.0 file written by MIPAV.\n");
 
                         // or throw error.
                         return null;
@@ -1301,14 +1300,8 @@ public class FileSurface_WM {
             //System.out.println(index+" "+count);
             
             progress.updateValueImmed(added + (100 / total));
-			
-            //             kMesh=new ModelTriangleMesh(points,indices);
-            //             kMesh.setVertexData(dat);
-            //             kMesh.SetName(fileName);
             
         } else { 
-            //             kMesh=new ModelTriangleMesh(points,indices);
-            //             kMesh.setName(fileName);
             
         }
         IndexBuffer kIBuffer = new IndexBuffer( indices.length, indices );
@@ -1471,7 +1464,7 @@ public class FileSurface_WM {
             int[] aiIndex = kMesh.IBuffer.GetData();
 	        
             // write header
-            kOut.println("ply"); // object is ModelTriangleMesh
+            kOut.println("ply"); // object is TriMesh
             kOut.println("format ascii 1.0");
             kOut.println("element vertex " + iVertexCount);
             kOut.println("property float32 x");
@@ -1714,7 +1707,7 @@ public class FileSurface_WM {
 
         PrintWriter kOut = new PrintWriter(new FileWriter(kName));
 
-        kOut.println("#VRML V2.0 utf8"); // object is ModelTriangleMesh
+        kOut.println("#VRML V2.0 utf8");
         kOut.println("#MIPAV");
         //kOut.println("#Number of shapes = " + akComponent.length);
         kOut.println("#Number of shapes = " + 1);
@@ -1927,7 +1920,7 @@ public class FileSurface_WM {
 
         PrintWriter kOut = new PrintWriter(new FileWriter(kName));
 
-        kOut.println('0'); // objects are ModelTriangleMesh
+        kOut.println('0');
         kOut.println(1);
 
         printAscii(kOut, kMesh);
@@ -2083,10 +2076,7 @@ public class FileSurface_WM {
 
     
     /**
-     * Internal support for 'void save (String)' and 'void save (String, ModelTriangleMesh[])'. ModelTriangleMesh uses
-     * this function to write vertices, normals, and connectivity indices to the file. ModelClodMesh overrides this to
-     * additionally write collapse records to the file
-     *
+     * 
      * @exception  IOException  if there is an error writing to the file
      */
     private static void saveSur(String kName, TriMesh kMesh,
@@ -2096,7 +2086,7 @@ public class FileSurface_WM {
     throws IOException
     {
         RandomAccessFile kOut = new RandomAccessFile(new File(kName), "rw");
-        kOut.writeInt(iType); // objects are ModelTriangleMesh
+        kOut.writeInt(iType); 
         kOut.writeInt(1);
         
         if (inverseDicomMatrix == null) {
@@ -2796,9 +2786,9 @@ public class FileSurface_WM {
     }
 
     /**
-     * Writes a ModelTriangleMesh and Material to disk in the xml format, based on surface.xsd.
+     * Writes a TriMesh and Material to disk in the xml format, based on surface.xsd.
      *
-     * @param  kMesh    ModelTriangleMesh surface mesh
+     * @param  kMesh    TriMesh surface mesh
      * @param  surface  Material material reference.
      */
     private static void writeTriangleMeshXML(String kName, ModelImage kImage, TriMesh kMesh)

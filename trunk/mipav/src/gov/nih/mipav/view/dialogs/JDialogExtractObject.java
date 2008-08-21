@@ -631,7 +631,7 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
         }
 
         if (iQuantity > 1) {
-            MipavUtil.displayWarning(iQuantity + " ModelTriangleMeshes are present.  Only reading first");
+            MipavUtil.displayWarning(iQuantity + " meshes are present.  Only reading first");
         }
 
         ViewJProgressBar progress = new ViewJProgressBar("Loading surface", "Loading surface", 0, 100, false, null,

@@ -2498,9 +2498,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     }
 
     /**
-     * Internal support for 'void save (String)' and 'void save (String, ModelTriangleMesh[])'. ModelTriangleMesh uses
-     * this function to write vertices, normals, and connectivity indices to the file. ModelClodMesh overrides this to
-     * additionally write collapse records to the file
+     * Internal support to write vertices, normals, and connectivity indices to the file. 
      *
      * @param      flip  if the y axis should be flipped - true for extract, false for from another surface
      *

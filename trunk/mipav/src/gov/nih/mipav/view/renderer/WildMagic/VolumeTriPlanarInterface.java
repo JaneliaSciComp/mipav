@@ -2768,7 +2768,11 @@ implements MouseListener, ItemListener, ChangeListener {
     {
         if ( raycastRenderWM != null )
         {
-            raycastRenderWM.addSurface(akSurfaces, bReplace);
+            VolumeSurface[] akVolumeSurfaces = raycastRenderWM.addSurface(akSurfaces, bReplace);  
+            for (int i = 0; i < 3; i++) 
+            {
+                m_akPlaneRender[i].AddSurfaces(akVolumeSurfaces);
+            }
             insertTab("Light", lightPanel);
             m_kLightsPanel.enableLight(0, true);
             insertTab("Surface", surfacePanel);
@@ -2776,7 +2780,7 @@ implements MouseListener, ItemListener, ChangeListener {
             m_kDisplaySurfaceCheck.setEnabled(true);
             raycastRenderWM.DisplaySurface(true);
             
-            menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", true);
+            menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", true);         
         }
         if ( geodesicGUI != null )
         {
@@ -2784,6 +2788,14 @@ implements MouseListener, ItemListener, ChangeListener {
             geodesicGUI.setSurfacePanel(surfaceGUI);
         }
     }  
+    
+    public void AddSlices(VolumeSlices kSlices)
+    {
+        for (int i = 0; i < 3; i++) 
+        {
+            m_akPlaneRender[i].AddSlices(kSlices);
+        }
+    }
     
     public void updateLighting()
     {
@@ -3052,6 +3064,10 @@ implements MouseListener, ItemListener, ChangeListener {
         if ( raycastRenderWM != null )
         {
             raycastRenderWM.updateLighting(akGLights);
+            for (int i = 0; i < 3; i++) 
+            {
+                m_akPlaneRender[i].updateLighting(akGLights);
+            }
         }
         if ( brainsurfaceFlattenerRender != null )
         {

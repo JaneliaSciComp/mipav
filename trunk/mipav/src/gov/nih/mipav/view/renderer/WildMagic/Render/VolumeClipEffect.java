@@ -18,25 +18,29 @@ public abstract class VolumeClipEffect extends ShaderEffect
         m_afClipArbData = null;
     }
 
+    public void OnLoadPrograms (int iPass, Program pkVProgram, Program pkPProgram)
+    {
+        InitClip();
+    }
+    
     /**
      * Init the axis-aligned clip planes.
      * @param afData, the axis-aligned clip plane default positions.
      */
-    public void InitClip( float[] afData )
+    public void InitClip( )
     {
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("DoClip") != null ) 
         {
-            pkProgram.GetUC("DoClip").SetDataSource(new float[]{0,0,0,0});
+            pkProgram.GetUC("DoClip").SetDataSource(m_afDoClip);
         }       
 
         for ( int i = 0; i < 6; i++ )
-        {
+        {       
             if ( pkProgram.GetUC(m_akClip[i]) != null ) 
             {
-                pkProgram.GetUC(m_akClip[i]).SetDataSource(new float[]{afData[i],0,0,0});
-            }       
-            m_aafClipData[i][0] = afData[i];
+                pkProgram.GetUC(m_akClip[i]).SetDataSource(m_aafClipData[i]);
+            }
         }
     }
 
@@ -50,7 +54,7 @@ public abstract class VolumeClipEffect extends ShaderEffect
         {
             if ( m_aafClipData[i] != null )
             {
-                SetClip( i, m_aafClipData[i] );
+                SetClip( i, m_aafClipData[i][0] );
             }
         }
         if ( m_afClipEyeData != null )
@@ -72,25 +76,54 @@ public abstract class VolumeClipEffect extends ShaderEffect
      * @param iWhich, one of 6 clip-planes to set.
      * @param data, the distance to the clip-plane.
      */
-    public void SetClip(int iWhich, float[] data)
+    public void SetClip(int iWhich, float data)
     {
-        m_aafClipData[iWhich] = data;
+        m_aafClipData[iWhich][0] = data;
         EnableClip();
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC(m_akClip[iWhich]) != null ) 
         {
-            pkProgram.GetUC(m_akClip[iWhich]).SetDataSource(data);
+            pkProgram.GetUC(m_akClip[iWhich]).SetDataSource(m_aafClipData[iWhich]);
         }
     }
+    
+    /**
+     * Enable and set the axis-aligned clip plane.
+     * @param iWhich, one of 6 clip-planes to set.
+     * @param data, the distance to the clip-plane.
+     */
+    public void SetSecondaryClip(int iWhich, float data)
+    {
+        m_aafClipData[iWhich][1] = data;
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC(m_akClip[iWhich]) != null ) 
+        {
+            pkProgram.GetUC(m_akClip[iWhich]).SetDataSource(m_aafClipData[iWhich]);
+        }
+    }
+    
     /**
      * Enable clipping.
      */
     private void EnableClip()
     {
+        m_afDoClip[0] = 1;
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("DoClip") != null ) 
         {
-            pkProgram.GetUC("DoClip").SetDataSource(new float[]{1,0,0,0});
+            pkProgram.GetUC("DoClip").SetDataSource(m_afDoClip);
+        }       
+    }    
+    /**
+     * Enable clipping.
+     */
+    public void EnableSecondaryClip(boolean bEnable)
+    {
+        m_afDoClip[1] = (bEnable) ? 1 : 0;
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("DoClip") != null ) 
+        {
+            pkProgram.GetUC("DoClip").SetDataSource(m_afDoClip);
         }       
     }
 
@@ -138,9 +171,14 @@ public abstract class VolumeClipEffect extends ShaderEffect
             pkProgram.GetUC("clipArb").SetDataSource(afEquation);
         }
     }
-
+    private float[] m_afDoClip = { 0, 0, 0, 0 };
     /** stores the axis-aligned clip plane information: */
-    private float[][] m_aafClipData = new float[6][4];
+    private float[][] m_aafClipData =  { { 0, 0, 0, 0 },
+                                                          { 1, 1, 0, 0 },
+                                                          { 0, 0, 0, 0 },
+                                                          { 1, 1, 0, 0 },
+                                                          { 0, 0, 0, 0 },
+                                                          { 1, 1, 0, 0 } };
     /** stores the eye clip plane information: */
     private float[] m_afClipEyeData = null;
     /** stores the inverse-eye clip plane information: */

@@ -176,7 +176,6 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
             {
                 if ( m_kDisplayList.get(i) instanceof VolumeSurface )
                 {
-                    ((VolumeSurface)m_kDisplayList.get(i)).InitClip(new float[] { 0, 1, 0, 1, 0, 1 });
                     ((VolumeSurface)m_kDisplayList.get(i)).SetPerPixelLighting( m_pkRenderer, true );
                 }
             }            

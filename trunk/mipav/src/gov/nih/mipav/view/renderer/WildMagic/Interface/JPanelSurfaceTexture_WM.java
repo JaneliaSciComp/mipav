@@ -223,7 +223,7 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
     }
 
     /**
-     * Returns whether the ModelTriangleMesh is to be displayed with the ModelImage data as a texture or not.
+     * Returns whether the TriMesh is to be displayed with the ModelImage data as a texture or not.
      *
      * @return  true when the ModelImageMesh is texture-mapped, false otherwise.
      */

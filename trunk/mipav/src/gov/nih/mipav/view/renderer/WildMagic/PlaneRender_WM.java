@@ -28,8 +28,6 @@ import java.io.FileNotFoundException;
  * texture-mapped polygon. The PlaneRenderWM class keeps track of whether it is
  * rendering the Axial, Sagital, or Coronal view of the data.
  *
- * Surfaces are displayed as the intersection of the ModelTriangleMesh with
- * the rendered z-slice. 
  */
 public class PlaneRender_WM extends GPURenderBase
     implements GLEventListener
@@ -51,21 +49,10 @@ public class PlaneRender_WM extends GPURenderBase
                                          { new ColorRGB(0, 1, 0), new ColorRGB(1, 0, 0), new ColorRGB(1, 1, 0) } };
 
     private int[][] m_aaiColorSwap = { { 2, 1, 0 }, { 1, 2, 0 }, { 1, 0, 2 } };
+    
+    Vector3f[] m_akCLoc = { new Vector3f(-1.0f,0.0f,0.0f), new Vector3f(0.0f,-1.0f,0.0f), new Vector3f(0.0f,0.0f,-1.0f) };
+    Vector3f[] m_akCoords = { new Vector3f(Vector3f.UNIT_X), new Vector3f(Vector3f.UNIT_Y), new Vector3f(Vector3f.UNIT_Z) };
 
-
-    /** Bounding box polyline object: */
-    //private Polyline[] m_akBoundingBox;
-    private Polyline m_kBoundingBox;
-
-    /** XBar box polyline object: */
-    private Polyline[] m_akXBar;
-
-    /** YBar box polyline object: */
-    private Polyline[] m_akYBar;
-
-    /** Vertex-color shader effect used for the polylines and the first-pass
-     * rendering of the proxy-geometry:*/
-    private ShaderEffect m_spkVertexColor3Shader;
 
     /** when true, the axis labels (P-> L-> S->) will be drawn */
     private boolean m_bDrawAxes = true;
@@ -92,9 +79,6 @@ public class PlaneRender_WM extends GPURenderBase
     /** Flag indicating if the right mouse button is currently pressed
      * down: */
     private boolean m_bRightMousePressed = false;
-
-    /** The center of the X,Y bar cross hairs, in plane coordinates:. */
-    private float m_fCenterX, m_fCenterY;
 
     /** The current active lookup table: */
     private ModelStorageBase m_kActiveLookupTable;
@@ -160,10 +144,8 @@ public class PlaneRender_WM extends GPURenderBase
     
     private Camera m_spkScreenCamera;
 
-    private VolumePlaneEffect m_spkEffect;
-    private TriMesh m_pkPlane = null;
-    private boolean m_bRadiological = true;
-
+    private int[] m_aiAxisOrder;
+    private boolean[] m_abAxisFlip;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -178,7 +160,7 @@ public class PlaneRender_WM extends GPURenderBase
      * @param  kConfig  GraphicsConfiguration
      * @param  iPlane   Image dimension to be displayed.
      * @param bMemory when true store all the data in memory, when false,
-     * write textues as the slices change
+     * write textures as the slices change
      */
     public PlaneRender_WM(VolumeTriPlanarInterface kParent, Animator kAnimator, 
                           VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa,
@@ -222,7 +204,6 @@ public class PlaneRender_WM extends GPURenderBase
                 new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
     }
     public void display(GLAutoDrawable arg0) {
-
         if ( !m_bModified )
         {
             return;
@@ -231,23 +212,59 @@ public class PlaneRender_WM extends GPURenderBase
         if ( m_kImageA == null ) {
         	return;
         }
-        
-        m_bModified = false;
-        if (MoveCamera())
+        if ( !m_bInit )
         {
-            m_kCuller.ComputeVisibleSet(m_spkScene);
+            init(arg0);
         }
-        
-        if (MoveObject())
-        {
-            m_spkScene.UpdateGS();
-            m_kCuller.ComputeVisibleSet(m_spkScene);
-        }
-       
+        m_bModified = false;   
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {
-            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+            if ( m_bSurfaceAdded )
+            {
+                m_bSurfaceAdded = false;
+                updateLighting( m_akLights );
+            }
+            for ( int i = 0; i < m_kDisplayList.size(); i++ )
+            {
+                boolean bDisplaySave = m_kDisplayList.get(i).GetDisplay();
+                Matrix3f kSave = new Matrix3f(m_kDisplayList.get(i).GetScene().Local.GetRotate());
+                m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(Matrix3f.IDENTITY);
+                m_kDisplayList.get(i).SetDisplay(true);
+
+                float fSliceP1 = (float)(m_iSlice+3)/(float)m_aiLocalImageExtents[2];
+                float fSliceM1 = (float)(m_iSlice-3)/(float)m_aiLocalImageExtents[2];
+                if ( m_abAxisFlip[2] )
+                {
+                    fSliceP1 = 1.0f - fSliceP1;
+                    fSliceM1 = 1.0f - fSliceM1;
+                }
+                if ( fSliceP1 < fSliceM1 )
+                {
+                    float fTemp = fSliceP1;
+                    fSliceP1 = fSliceM1;
+                    fSliceM1 = fTemp;
+                }
+                VolumeSurface kSurface = null;
+                if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+                {
+                    kSurface = ((VolumeSurface)m_kDisplayList.get(i));
+                    kSurface.SetSecondaryClip(m_aiAxisOrder[2]*2, fSliceM1);
+                    kSurface.SetSecondaryClip(m_aiAxisOrder[2]*2 + 1, fSliceP1);
+                    kSurface.EnableSecondaryClip(true);
+                }
+                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
+
+                m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(kSave);
+                m_kDisplayList.get(i).SetDisplay(bDisplaySave);
+
+                if ( kSurface != null )
+                {
+                    kSurface.SetSecondaryClip(m_aiAxisOrder[2]*2, 0f);
+                    kSurface.SetSecondaryClip(m_aiAxisOrder[2]*2 + 1, 1f);
+                    kSurface.EnableSecondaryClip(false);
+                }
+            }
             drawAxes();
             m_pkRenderer.EndScene();
 
@@ -267,7 +284,9 @@ public class PlaneRender_WM extends GPURenderBase
     	if ( m_kImageA == null ) {
         	return;
         }
-    	
+
+        m_bInit = true;
+        
         arg0.setAutoSwapBufferMode( false );
 
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
@@ -277,25 +296,30 @@ public class PlaneRender_WM extends GPURenderBase
 
         // set up camera
         m_spkCamera.SetFrustum(60.0f,1.0f,0.1f,100.0f);
-        Vector3f kCLoc = new Vector3f(0.0f,0.0f,2.0f);
-        Vector3f kCDir = Vector3f.UNIT_Z_NEG;
-        Vector3f kCUp = Vector3f.UNIT_Y;
-        Vector3f kCRight = Vector3f.UNIT_X;
-        m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
-
-        
+        Vector3f kCLoc = new Vector3f(m_akCLoc[m_aiAxisOrder[2]]);
+        Vector3f kCDir = new Vector3f(m_akCoords[m_aiAxisOrder[2]]);
+        Vector3f kCUp = new Vector3f(m_akCoords[m_aiAxisOrder[1]]);
+        Vector3f kCRight = new Vector3f(m_akCoords[m_aiAxisOrder[0]]);
+        if ( m_abAxisFlip[2] )
+        {
+            kCLoc.Scale(-1);
+            kCDir.Scale(-1);
+        }
+        if ( m_abAxisFlip[1] )
+        {
+            kCUp.Scale(-1);
+        }
+        if ( m_abAxisFlip[0] )
+        {
+            kCRight.Scale(-1);
+        }
+        //invert y-axis
+        kCUp.Scale(-1);
+        m_spkCamera.SetFrame( kCLoc, kCDir, kCUp, kCRight );
         CreateScene();
-
-        // initial update of objects
-        m_spkScene.UpdateGS();
-        m_spkScene.UpdateRS();
 
         // initial culling of scene
         m_kCuller.SetCamera(m_spkCamera);
-        m_kCuller.ComputeVisibleSet(m_spkScene);
-
-        InitializeCameraMotion(0.001f,0.001f);
-        InitializeObjectMotion(m_spkScene);
 
         //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
@@ -328,8 +352,9 @@ public class PlaneRender_WM extends GPURenderBase
             m_iWidth = iWidth;
             m_iHeight = iHeight;
             m_bModified = true;
-
-            m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
+            m_spkCamera.Perspective = false;
+            m_spkCamera.SetFrustum(65.0f,m_iWidth/(float)m_iHeight,1f,5.0f);
+            m_pkRenderer.OnFrustumChange();
         }
         
     }
@@ -396,14 +421,7 @@ public class PlaneRender_WM extends GPURenderBase
     }
     
     private void CreateScene ()
-    {
-        m_spkScene = new Node();
-        Attributes kAttr = new Attributes();
-        kAttr.SetPChannels(3);
-        kAttr.SetTChannels(0,3);
-        StandardMesh kSM = new StandardMesh(kAttr);
-        m_pkPlane = kSM.Rectangle(2,2,1.0f,1.0f);
-        
+    {        
         m_fX0 = -m_fXBox / m_fMaxBox;
         m_fX1 = m_fXBox / m_fMaxBox;
         m_fY0 = -m_fYBox / m_fMaxBox;
@@ -412,35 +430,24 @@ public class PlaneRender_WM extends GPURenderBase
         m_fXRange = m_fX1 - m_fX0;
         m_fYRange = m_fY1 - m_fY0;
 
-        /* Center the X and Y bars: */
-        m_fCenterX = (m_fX0 + m_fX1) / 2.0f;
-        m_fCenterY = (m_fY0 + m_fY1) / 2.0f;
-
         m_iSlice = (m_aiLocalImageExtents[2]) / 2;
-        
-        float[][] tc = MipavCoordinateSystems.
-            getPatientTextureCoordinates( new Vector3f( m_kImageA.getExtents()[0]/2.0f,
-                                                        m_kImageA.getExtents()[1]/2.0f,
-                                                        m_kImageA.getExtents()[2]/2.0f),
-                                          m_kImageA, m_iPlaneOrientation, true);
-
-        m_pkPlane.VBuffer.SetPosition3(0, m_fX0, m_fY0, 0);
-        m_pkPlane.VBuffer.SetTCoord3(0, 2, tc[0][0], tc[0][1], tc[0][2] );
-
-        m_pkPlane.VBuffer.SetPosition3(1, m_fX1, m_fY0, 0);
-        m_pkPlane.VBuffer.SetTCoord3(0, 3, tc[1][0], tc[1][1], tc[1][2] );
-
-        m_pkPlane.VBuffer.SetPosition3(2, m_fX0, m_fY1, 0);
-        m_pkPlane.VBuffer.SetTCoord3(0, 0, tc[2][0], tc[2][1], tc[2][2] );
-
-        m_pkPlane.VBuffer.SetPosition3(3, m_fX1, m_fY1, 0);
-        m_pkPlane.VBuffer.SetTCoord3(0, 1, tc[3][0], tc[3][1], tc[3][2] );
-
-        m_spkEffect = new VolumePlaneEffect( m_kVolumeImageA );
-        m_pkPlane.AttachEffect(m_spkEffect);
-        m_spkScene.AttachChild(m_pkPlane);
-        
+              
         CreateLabels();
+    }
+    
+    public void AddSurfaces( VolumeSurface[] akVolumeSurfaces )
+    {
+        for ( int i = 0; i < akVolumeSurfaces.length; i++ )
+        {
+            m_kDisplayList.add(akVolumeSurfaces[i]);
+        }
+        updateLighting( m_akLights );
+        m_bSurfaceAdded = true;
+    }
+
+    public void AddSlices( VolumeSlices kVolumeSlice  )
+    {
+        m_kDisplayList.add(kVolumeSlice);
     }
 
     /**
@@ -683,16 +690,6 @@ public class PlaneRender_WM extends GPURenderBase
     }
 
     /**
-     * Sets the new location of the XBar.
-     *
-     * @param  fSlice  The new position of the XBar in plane coordinates:
-     */
-    private void setXBar(float fSlice) {
-         fSlice = fSlice / (m_aiLocalImageExtents[0] - 1);
-         m_fCenterX = (fSlice * (m_fX1 - m_fX0)) + m_fX0;
-    }
-
-    /**
      * Sets the default color for the SliceHairColor.
      *
      * @param  kColor  set the hair color to this color
@@ -706,22 +703,6 @@ public class PlaneRender_WM extends GPURenderBase
         m_aakColors[m_iPlaneOrientation][m_aaiColorSwap[m_iPlaneOrientation][iView]] = kColor;
         ColorRGB kXSliceHairColor = m_aakColors[m_iPlaneOrientation][iX];
         ColorRGB kYSliceHairColor = m_aakColors[m_iPlaneOrientation][iY];
-
-        for ( int i = 0; i < 2; i++ )
-        {
-            for ( int j = 0; j < 2; j++ )
-            {
-                m_akXBar[i].VBuffer.SetColor3( 0, j, kXSliceHairColor );
-                m_akYBar[i].VBuffer.SetColor3( 0, j, kYSliceHairColor );
-            }
-            m_akXBar[i].VBuffer.Release();
-            m_akYBar[i].VBuffer.Release();
-        }
-        for ( int i = 0; i < 4; i++ )
-        {
-            m_kBoundingBox.VBuffer.SetColor3(0,i, m_aakColors[m_iPlaneOrientation][ iZ ] ) ;
-        }
-        m_kBoundingBox.VBuffer.Release();
 
         for ( int j = 0; j < 4; j++ )
         {
@@ -739,17 +720,6 @@ public class PlaneRender_WM extends GPURenderBase
             m_kYArrow[i].VBuffer.Release();
         }
     }
-
-    /**
-     * Sets the new location of the YBar.
-     *
-     * @param  fSlice  The new position of the YBar in plane coordinates:
-     */
-    private void setYBar(float fSlice) {
-         fSlice = fSlice / (m_aiLocalImageExtents[1] - 1);
-         m_fCenterY = (fSlice * (m_fY1 - m_fY0)) + m_fY0;
-    }
-
 
     /**
      * Turns displaying the Axis labes on or off:
@@ -770,21 +740,6 @@ public class PlaneRender_WM extends GPURenderBase
         if ( m_bDrawXHairs != bShow )
         {
             m_bDrawXHairs = bShow;
-            for ( int i = 0; i < 2; i++ )
-            {
-                if ( m_bDrawXHairs )
-                {
-                    m_spkScene.AttachChild(m_akXBar[i]);
-                    m_spkScene.AttachChild(m_akYBar[i]);
-                }
-                else
-                {
-                    m_spkScene.DetachChild(m_akXBar[i]);
-                    m_spkScene.DetachChild(m_akYBar[i]);                    
-                }
-            }
-            m_spkScene.UpdateGS();
-            m_kCuller.ComputeVisibleSet(m_spkScene);
         }
     }
 
@@ -795,87 +750,6 @@ public class PlaneRender_WM extends GPURenderBase
      */
     private void CreateLabels()
     {
-        int iX = 0;
-        int iY = 1;
-        int iZ = 2;
-
-        m_spkVertexColor3Shader = new VertexColor3Effect();
-        
-        Attributes kAttributes = new Attributes();
-        kAttributes.SetPChannels(3);
-        kAttributes.SetCChannels(0,3);
-        
-        VertexBuffer kOutlineSquare = new VertexBuffer(kAttributes, 4);
-        for ( int j = 0; j < 4; j++ )
-        {
-            kOutlineSquare.SetColor3( 0, j, m_aakColors[m_iPlaneOrientation][ iZ ] );
-        }
-        kOutlineSquare.SetPosition3( 0, m_fX0, m_fY0, 0 ) ;
-        kOutlineSquare.SetPosition3( 1, m_fX1, m_fY0, 0 ) ;
-        kOutlineSquare.SetPosition3( 2, m_fX1, m_fY1, 0 ) ;
-        kOutlineSquare.SetPosition3( 3, m_fX0, m_fY1, 0 ) ;
-
-        m_kBoundingBox = new Polyline( new VertexBuffer(kOutlineSquare), true, true );
-        m_kBoundingBox.AttachEffect( m_spkVertexColor3Shader );
-        m_spkScene.AttachChild(m_kBoundingBox);
-
-
-
-        ColorRGB kXSliceHairColor = m_aakColors[m_iPlaneOrientation][ iX ];
-        ColorRGB kYSliceHairColor = m_aakColors[m_iPlaneOrientation][ iY ];
-//         if ( m_iPlaneOrientation == FileInfoBase.AXIAL )
-//         {
-//             kXSliceHairColor = m_akColors[2];
-//             kYSliceHairColor = m_akColors[1];
-//         }
-//         else if ( m_iPlaneOrientation == FileInfoBase.SAGITTAL )
-//         {
-//             kXSliceHairColor = m_akColors[1];
-//             kYSliceHairColor = m_akColors[0];
-//         }
-        
-        float fScreenX = (float) m_fCenterX;
-        float fScreenY = (float) -m_fCenterY;
-
-
-        VertexBuffer[] akXBar = new VertexBuffer[2];
-        VertexBuffer[] akYBar = new VertexBuffer[2];
-        for ( int i = 0; i < 2; i++ )
-        {
-            akXBar[i] = new VertexBuffer(kAttributes, 2 );
-            akYBar[i] = new VertexBuffer(kAttributes, 2 );
-            for ( int j = 0; j < 2; j++ )
-            {
-                akXBar[i].SetColor3( 0, j, kXSliceHairColor );
-                akYBar[i].SetColor3( 0, j, kYSliceHairColor );
-            }
-        }
-
-        akXBar[0].SetPosition3(0, fScreenX, m_fY0, 0 );
-        akXBar[0].SetPosition3(1, fScreenX, fScreenY - .10f, 0 );
-
-        akXBar[1].SetPosition3(0, fScreenX, fScreenY + .10f, 0 );
-        akXBar[1].SetPosition3(1, fScreenX, m_fY1, 0 );
-        
-        akYBar[0].SetPosition3(0, m_fX0, fScreenY, 0 );
-        akYBar[0].SetPosition3(1, fScreenX - .10f, fScreenY, 0 );
-
-        akYBar[1].SetPosition3(0, fScreenX + .10f, fScreenY, 0 );
-        akYBar[1].SetPosition3(1, m_fX1, fScreenY, 0 );
-
-        m_akXBar = new Polyline[2];   
-        m_akYBar = new Polyline[2];    
-        for ( int i = 0; i < 2; i++ )
-        {
-            m_akXBar[i] = new Polyline( new VertexBuffer(akXBar[i]), true, true );
-            m_akXBar[i].AttachEffect( m_spkVertexColor3Shader );
-            m_spkScene.AttachChild(m_akXBar[i]);
-
-            m_akYBar[i] = new Polyline( new VertexBuffer(akYBar[i]), true, true );
-            m_akYBar[i].AttachEffect( m_spkVertexColor3Shader );
-            m_spkScene.AttachChild(m_akYBar[i]);
-        }
-
         // The screen camera is designed to map (x,y,z) in [0,1]^3 to (x',y,'z')
         // in [-1,1]^2 x [0,1].
         m_spkScreenCamera = new Camera();
@@ -1006,30 +880,6 @@ public class PlaneRender_WM extends GPURenderBase
             m_pkRenderer.LoadResources(m_kYArrow[1]);
         }
     }
-
-    private void UpdateBarPosition()
-    {
-
-        float fScreenX = (float) m_fCenterX;
-        float fScreenY = (float) -m_fCenterY;
-        m_akYBar[0].VBuffer.SetPosition3(0, m_fX0, fScreenY, 0 );
-        m_akYBar[0].VBuffer.SetPosition3(1, fScreenX - .10f, fScreenY, 0 );
-
-        m_akYBar[1].VBuffer.SetPosition3(0, fScreenX + .10f, fScreenY, 0 );
-        m_akYBar[1].VBuffer.SetPosition3(1, m_fX1, fScreenY, 0 );
-
-        m_akXBar[0].VBuffer.SetPosition3(0, fScreenX, m_fY0, 0 );
-        m_akXBar[0].VBuffer.SetPosition3(1, fScreenX, fScreenY - .10f, 0 );
-
-        m_akXBar[1].VBuffer.SetPosition3(0, fScreenX, fScreenY + .10f, 0 );
-        m_akXBar[1].VBuffer.SetPosition3(1, fScreenX, m_fY1, 0 );
-        
-        for ( int i = 0; i < 2; i++ )
-        {
-            m_akXBar[i].VBuffer.Release();
-            m_akYBar[i].VBuffer.Release();
-        }
-    }
     
     /**
      * Calculate the position of the mouse in the Local Coordinates, taking
@@ -1043,13 +893,13 @@ public class PlaneRender_WM extends GPURenderBase
      */
     private void ScreenToLocal(int iX, int iY, Vector3f kLocal, boolean bSetCenter )
     {
-        iX = (int)Math.min( m_iWidth,  Math.max( 0, iX ) );
-        iY = (int)Math.min( m_iHeight, Math.max( 0, iY ) );
+        iX = Math.min( m_iWidth,  Math.max( 0, iX ) );
+        iY = Math.min( m_iHeight, Math.max( 0, iY ) );
         float fHalfWidth = ((float) m_iWidth-1) / 2.0f;
         float fHalfHeight = ((float) m_iHeight-1) / 2.0f;
 
-        kLocal.X = ((float) (iX - fHalfWidth)) / fHalfWidth;
-        kLocal.Y = ((float) (iY - fHalfHeight)) / fHalfWidth;
+        kLocal.X = (iX - fHalfWidth) / fHalfWidth;
+        kLocal.Y = (iY - fHalfHeight) / fHalfWidth;
 
         kLocal.X /= m_fZoomScale;
         kLocal.Y /= m_fZoomScale;
@@ -1060,12 +910,6 @@ public class PlaneRender_WM extends GPURenderBase
         /* Bounds checking: */
         kLocal.X = Math.min( Math.max( kLocal.X, m_fX0 ), m_fX1 );
         kLocal.Y = Math.min( Math.max( kLocal.Y, m_fY0 ), m_fY1 );
-
-        if ( bSetCenter )
-        {
-            m_fCenterX = kLocal.X;
-            m_fCenterY = kLocal.Y;
-        }
 
         /* Normalize: */
         kLocal.X = (kLocal.X - m_fX0) / m_fXRange;
@@ -1146,23 +990,9 @@ public class PlaneRender_WM extends GPURenderBase
     public void setCenter( Vector3f center )
     {
         m_bModified = true;
-        float[][] tc = MipavCoordinateSystems.
-            getPatientTextureCoordinates( center,
-                                          m_kImageA, m_iPlaneOrientation, true);
-        m_pkPlane.VBuffer.SetTCoord3(0, 2, tc[0][0], tc[0][1], tc[0][2] );
-        m_pkPlane.VBuffer.SetTCoord3(0, 3, tc[1][0], tc[1][1], tc[1][2] );
-        m_pkPlane.VBuffer.SetTCoord3(0, 0, tc[2][0], tc[2][1], tc[2][2] );
-        m_pkPlane.VBuffer.SetTCoord3(0, 1, tc[3][0], tc[3][1], tc[3][2] );
-        
-        m_pkPlane.VBuffer.Release();
-
         Vector3f patientPt = new Vector3f();
         MipavCoordinateSystems.fileToPatient( center, patientPt, m_kImageA, m_iPlaneOrientation );
-        setXBar( patientPt.X );
-        setYBar( patientPt.Y );
         setSlice( patientPt.Z );
-        
-        UpdateBarPosition();
     }
 
     private void setSlice(float fSlice) {
@@ -1268,6 +1098,10 @@ public class PlaneRender_WM extends GPURenderBase
      * ModelImage.</p>
      */
     protected void setOrientation() {
+
+        m_aiAxisOrder = MipavCoordinateSystems.getAxisOrder(m_kImageA, m_iPlaneOrientation);
+        m_abAxisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageA, m_iPlaneOrientation);
+        //System.err.println( m_aiAxisOrder[2] + " " + m_abAxisFlip[2]);
         m_aiLocalImageExtents = m_kImageA.getExtents( m_iPlaneOrientation );
 
         float[] afResolutions = m_kImageA.getResolutions( 0, m_iPlaneOrientation );
@@ -1351,11 +1185,5 @@ public class PlaneRender_WM extends GPURenderBase
     {
         m_bModified = bModified;
     }
-
-    public void SetRadiological ( boolean bOn )
-    {
-        m_bRadiological = bOn;
-    }
-    
     
 }

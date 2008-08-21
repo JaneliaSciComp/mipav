@@ -241,8 +241,8 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     /**
      * Add new mesh to the volume rendering.
      *
-     * @param  kOld   ModelTriangleMesh old surface mesh
-     * @param  kNew   ModelTriangleMesh new surface mesh
+     * @param  kOld   TriMesh old surface mesh
+     * @param  kNew   TriMesh new surface mesh
      * @param  kName  String name
      */
     public void addSurface(TriMesh kNew) {
@@ -711,8 +711,8 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
      * and no new mesh needs to be added. This function allows the Geodesic object to replace the original mesh with the
      * sliced mesh in the surface renderer. ReplaceMesh is also used to undo cutting operations.
      *
-     * @param  kOld  ModelTriangleMesh old surface mesh
-     * @param  kNew  ModelTriangleMesh new surface mesh
+     * @param  kOld  TriMesh old surface mesh
+     * @param  kNew  TriMesh new surface mesh
      */
     public void replaceMesh(TriMesh kOld, TriMesh kNew) {
 

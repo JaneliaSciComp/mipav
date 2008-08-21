@@ -37,7 +37,6 @@ import java.util.*;
  *           SurfaceDecimation and associated classes, with a little input from Matt with speed and memory optimizations
  * @see      ModelSurfaceExtractor
  * @see      ModelSurfaceDecimator
- * @see      ModelTriangleMesh
  */
 public class AlgorithmExtractSurface extends AlgorithmBase {
 

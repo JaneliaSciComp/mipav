@@ -39,7 +39,6 @@ import javax.swing.*;
  * @see      AlgorithmExtractSurface
  * @see      ModelSurfaceExtractor
  * @see      ModelSurfaceDecimator
- * @see      ModelTriangleMesh
  */
 public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements AlgorithmInterface {
 
