@@ -398,7 +398,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
             } // isCompleted
 
             if (reg25 != null) {
-                reg25.disposeLocal();
+                reg25.finalize();
             }
 
             reg25 = null;
