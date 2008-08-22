@@ -149,9 +149,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
     /** if true subsample. */
     private boolean doSubsample;
 
-    /** Dummy initial values used to create a Powell's algorithm instance before setting initial. */
-    private double[] dummy = { 0, 0, 0, 0, 0, 0, 0 };
-
     /** whether or not to use center of gravity for first translation. */
     private boolean ignoreCOG = false;
 
@@ -720,13 +717,41 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         if (input1 != null) {
             input1.disposeLocal();
         }
+        
+        if (input2 != null) {
+            input2.disposeLocal();
+        }
+        
+        if (input3 != null) {
+            input3.disposeLocal();
+        }
+        
+        if (inputImage2 != null) {
+            inputImage2.disposeLocal();
+        }
+        
+        if (inputImage3 != null) {
+            inputImage3.disposeLocal();
+        }
 
         if (inputw_1 != null) {
             inputw_1.disposeLocal();
         }
+        
+        if (inputWeight != null) {
+            inputWeight.disposeLocal();
+        }
 
         if (output_1 != null) {
             output_1.disposeLocal();
+        }
+        
+        if (output_2 != null) {
+            output_2.disposeLocal();
+        }
+        
+        if (output_3 != null) {
+            output_3.disposeLocal();
         }
 
         if (weightSliceImage != null) {
@@ -740,8 +765,14 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         if (imageWeightIso != null) {
             imageWeightIso.disposeLocal();
         }
-
-        dummy = null;
+        
+        if (outsidePreReferenceSlice != null) {
+            outsidePreReferenceSlice.disposeLocal();
+        }
+        
+        if (outsideReferenceSlice != null) {
+            outsideReferenceSlice.disposeLocal();
+        }
 
         simpleInput_1 = null;
         simpleInputSub2_1 = null;
@@ -768,15 +799,34 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         simpleWeightISub16_1 = null;
 
         input1 = null;
+        input2 = null;
+        input3 = null;
+        inputImage2 = null;
+        inputImage3 = null;
         inputw_1 = null;
+        inputWeight = null;
         output_1 = null;
+        output_2 = null;
+        output_3 = null;
         weightSliceImage = null;
+        isoImage = null;
+        outsidePreReferenceSlice = null;
+        outsideReferenceSlice = null;
 
         inputImage = null;
         buffer = null;
         bufferIW = null;
         bufferW = null;
         bufferA = null;
+        iResols = null;
+        rot = null;
+        sliceCosts = null;
+        if (trans != null) {
+            for (int i = 0; i < trans.length; i++) {
+                trans[i] = null;
+            }
+            trans = null;
+        }
 
         answer = null;
 
