@@ -875,7 +875,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             if (resampletoUser.isSelected()) {
                 xyAspectRatio.setEnabled(true);
-                xyzAspectRatio.setEnabled(true);
+                if (image.getNDims() > 2) {
+                    xyzAspectRatio.setEnabled(true);
+                }
                 fieldOfView.setEnabled(true);
                 enableDims(true);
                 enableResols(true);
