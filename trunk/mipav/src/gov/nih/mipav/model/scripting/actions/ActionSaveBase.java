@@ -122,6 +122,8 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
     protected static final FileWriteOptions getSaveImageOptions(ParameterTable parameters, ModelImage image,
             boolean isSaveAsAction) {
         String savePrefix = "";
+        String saveFileDir = "";
+        String saveFileName = null;
 
         if (parameters.containsParameter(SAVE_PREFIX)) {
             savePrefix = parameters.getString(SAVE_PREFIX);
@@ -132,13 +134,18 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
         if (parameters.containsParameter(SAVE_SUFFIX)) {
             saveSuffix = parameters.getString(SAVE_SUFFIX);
         }
-
-        String saveFileName = null;
-        String saveFileDir = image.getImageDirectory();
-
-        if ( (saveFileDir == null) || saveFileDir.equals("")) {
-            saveFileDir = ViewUserInterface.getReference().getDefaultDirectory();
+        
+        if(ViewUserInterface.getReference().isProvidedOutputDir()) {
+        	saveFileDir = ViewUserInterface.getReference().getDefaultDirectory();
+        }else {
+	        saveFileDir = image.getImageDirectory();
+	        
+	        if ( (saveFileDir == null) || saveFileDir.equals("")) {
+	            saveFileDir = ViewUserInterface.getReference().getDefaultDirectory();
+	        }
         }
+        
+        
 
         saveFileDir += File.separator;
 
@@ -150,10 +157,14 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
             saveFileDir = FileUtility.getFileDirectory(parameters.getString(SAVE_FILE_NAME));
 
             if (saveFileDir == null) {
-                saveFileDir = image.getImageDirectory();
+            	if(ViewUserInterface.getReference().isProvidedOutputDir()) {
+                	saveFileDir = ViewUserInterface.getReference().getDefaultDirectory();
+                }else {
+                	saveFileDir = image.getImageDirectory();
 
-                if (saveFileDir == null) {
-                    saveFileDir = ViewUserInterface.getReference().getDefaultDirectory();
+                	if (saveFileDir == null) {
+                		saveFileDir = ViewUserInterface.getReference().getDefaultDirectory();
+                	}
                 }
             }
 

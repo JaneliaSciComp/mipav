@@ -186,6 +186,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** error handling for cmd line, if set to false will not exit on MipavUtil.displayError() */
     private boolean exitCmdLineOnError = true;
+    
+    /** This boolean tells if the user has provided an ouputDir parameter as a command line argument when running a script **/
+    private boolean providedOutputDir = false;
+    
+    /** This is the outputDir path that the user entered as a command line argument when running a script **/
+    private String outputDir = "";
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -2118,7 +2124,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         int[] voiCount;
         int imgCount = 0;
         boolean providedUserDefaultDir = false;
+        
         String userDefaultDir = "";
+        
 
         String scriptFile = null;
         Vector<OpenFileInfo> imageList = new Vector<OpenFileInfo>();
@@ -2211,16 +2219,21 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         }
 
-        // determine if -dir flag was provided (user defined default image directory)
+        // determine if -inputDir or -outputDir flag was provided (user defined default image directory / output image dir)
         for (i = 0; i < args.length; i++) {
-            if (args[i].equalsIgnoreCase("-dir")) {
+            if (args[i].equalsIgnoreCase("-inputDir")) {
                 providedUserDefaultDir = true;
                 userDefaultDir = args[ ++i];
                 break;
+            }else if(args[i].equalsIgnoreCase("-outputDir")){
+            	providedOutputDir = true;
+            	outputDir = args[ ++i];
+            	break;
             }
+            
         }
 
-        // if -dir was given, verify that path provided is a proper path
+        // if -inputDir was given, verify that path provided is a proper path
         if (providedUserDefaultDir) {
             if (userDefaultDir == null || userDefaultDir.trim().equals("")) {
                 printUsageAndExit();
@@ -2235,6 +2248,25 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     printUsageAndExit();
                 }
             }
+        }
+        
+        // if -outputDir was given, verify that path provided is a proper path
+        if(providedOutputDir) {
+        	if(outputDir == null || outputDir.trim().equals("")) {
+        		providedOutputDir = false;
+        		printUsageAndExit();
+        	}else {
+        		// check that there is a trailng slash at the end of the defaultDir...if not, add one
+        		if(! (outputDir.charAt(outputDir.length() - 1) ==  File.separatorChar)) {
+        			outputDir = outputDir + File.separator;
+        		}
+        		// now check if this is a valid path
+        		File checkOutputDir = new File(outputDir);
+        		if(! checkOutputDir.exists()) {
+        			providedOutputDir = false;
+        			printUsageAndExit();
+        		}
+        	}
         }
 
         i = 0;
@@ -2403,7 +2435,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         MipavUtil.displayError("Unable to load plugin (acc)");
                     }
 
-                } else if (arg.equalsIgnoreCase("-dir")) {
+                } else if (arg.equalsIgnoreCase("-inputDir")) {
+                    ++i;
+                } else if (arg.equalsIgnoreCase("-outputDir")) {
                     ++i;
                 } else {
                     printUsageAndExit();
@@ -3696,10 +3730,20 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     return;
                 }
             }
-
+            
+            //set the output dir (if provided from script) as the default dir
+            if(isProvidedOutputDir()) {
+            	setDefaultDirectory(outputDir);
+            }
+            
             if (scriptFile != null) {
                 ScriptRunner.getReference().runScript(scriptFile, imageNames, new Vector<String>());
             }
+            
+            //script is over...set the providedOutputDir back to false
+            providedOutputDir = false;
+            
+            
         }
     }
 
@@ -3753,7 +3797,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 + "[-vV] voiFileName "
                 + "[-oO] imageFileName "
                 + "[-dD] scriptVariableName scriptVariableValue "
-                + "[-dir][-DIR] Default image directory path "
+                + "[-inputDir][-INPUTDIR] Default image directory path "
+                + "[-outputDir][-OUTPUTDIR] Output image directory path"
                 + "[-hideHide]"
                 + "\n"
                 + "[-h][-H][--help]  Display this help"
@@ -3774,7 +3819,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 + "\n"
                 + "[-d][-D]          Set the value of a variable used in a script"
                 + "\n"
-                + "[-dir][-DIR]      Default image directory path"
+                + "[-inputDir][-INPUTDIR]      Default image directory path"
+                + "\n"
+                + "[-outputDir][-OUTPUTDIR]      Output image directory path"
                 + "\n"
                 + "Examples:"
                 + "\n"
@@ -3784,7 +3831,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 + "\n"
                 + "> mipav -i imageFileName -s scriptFileName -hide"
                 + "\n"
-                + "> mipav -s scriptFileName -i imageFileName1 -v voiName1 -v voiName2 -i imageFileName2 -v voiName3 -dir defaultImageDirectoryPath";
+                + "> mipav -s scriptFileName -i imageFileName1 -v voiName1 -v voiName2 -i imageFileName2 -v voiName3 -inputDir defaultImageDirectoryPath -outputDir outputImageDirectoryPath";
 
         // print this usage help to the console
         System.out.println(helpInfo);
@@ -3798,6 +3845,19 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         System.exit(0);
     }
+    
+    
+    /**
+     * This is the getter for providedOutputDir
+     * providedOutputDir: This boolean tells if the user has provided an ouputDir parameter as a command line argument when running a script
+     * @return
+     */
+    public boolean isProvidedOutputDir() {
+		return providedOutputDir;
+	}
+   
+
+    
 
     // ~ Inner Classes
     // --------------------------------------------------------------------------------------------------
@@ -3891,4 +3951,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             this.rawInfo = rI;
         }
     }
+
+
+
+	
+
+
+
+	
 }
