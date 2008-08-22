@@ -254,6 +254,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     /** Radio button for slice start & end matching interpolation. */
     private JRadioButton endMatchFOVradio;
     
+    private float[] dims;
+    private float[] resols;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -277,6 +280,19 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         userInterface = ViewUserInterface.getReference();
         cZres = 1.f;
         cZdim = 1;
+        dims = new float[3];
+        resols = new float[3];
+        dims[0] = image.getFileInfo()[0].getExtents()[0];
+        dims[1] = image.getFileInfo()[0].getExtents()[1];
+        if (image.getNDims() > 2) {
+            dims[2] = image.getFileInfo()[0].getExtents()[2];
+        }
+        
+        resols[0] = image.getFileInfo()[0].getResolutions()[0];
+        resols[1] = image.getFileInfo()[0].getResolutions()[1];
+        if (image.getNDims() > 2) {
+            resols[2] = image.getFileInfo()[0].getResolutions()[2];
+        }
         init();
     }
 
@@ -388,25 +404,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         String userText;
         float userValue;
         float factor, fov;
-        float[] dims;
-        float[] resols;
-
-        dims = new float[3];
-        resols = new float[3];
+        
         factor = 1.f;
-        
-        dims[0] = image.getFileInfo()[0].getExtents()[0];
-        dims[1] = image.getFileInfo()[0].getExtents()[1];
-        if (image.getNDims() > 2) {
-            dims[2] = image.getFileInfo()[0].getExtents()[2];
-        }
-        
-        resols[0] = image.getFileInfo()[0].getResolutions()[0];
-        resols[1] = image.getFileInfo()[0].getResolutions()[1];
-        if (image.getNDims() > 2) {
-            resols[2] = image.getFileInfo()[0].getResolutions()[2];
-        }
-
         
         tempTextField = (JTextField) source;
         userText = tempTextField.getText();
@@ -523,7 +522,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             }
         }
 
-        setDimAndResXYZ(dims, resols);
+        setDimAndResXYZ();
     }
 
     /**
@@ -1078,10 +1077,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     /**
      * Resets the dimension and resolution fields for resampling panel. Called by focusLost.
      *
-     * @param  dims    integer array of x,y and z dimensions
-     * @param  resols  float array of x,y and z resolutions
      */
-    public void setDimAndResXYZ(float[] dims, float[] resols) {
+    public void setDimAndResXYZ() {
         int[] iDims;
         int ndim;
 
