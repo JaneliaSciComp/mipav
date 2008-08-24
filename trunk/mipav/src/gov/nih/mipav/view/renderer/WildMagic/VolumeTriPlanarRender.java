@@ -2,6 +2,8 @@ package gov.nih.mipav.view.renderer.WildMagic;
 
 import javax.media.opengl.*;
 import com.sun.opengl.util.*;
+
+import java.awt.Cursor;
 import java.awt.event.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -353,7 +355,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_bFirstRender = false;
             m_kVolumeRayCast.SetDisplay(false);   
             m_kSlices.SetDisplay(true);   
+            m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
             VolumeImageViewer.main(m_kVolumeImageA);
+            m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             CMPMode();
         }
         if ( m_bSurfaceAdded )
@@ -397,7 +401,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kVolumeClip != null )
         {
             m_kVolumeClip.displayClipPlane(iWhich, bDisplay);
-            m_kVolumeClip.SetDisplay(bDisplay);
+            //m_kVolumeClip.SetDisplay(bDisplay);
         }
     }
 
@@ -589,7 +593,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( !bEnable )
         {
             setEyeClipPlane(0, bDisplay);
-            setEyeInvClipPlane(m_kImageA.getExtents()[2] - 1, bDisplay);
         }
     }
 
@@ -610,7 +613,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( !bEnable )
         {
             setEyeInvClipPlane(m_kImageA.getExtents()[2] - 1, bDisplay);
-            setEyeClipPlane(0, bDisplay);
         }
     }
 

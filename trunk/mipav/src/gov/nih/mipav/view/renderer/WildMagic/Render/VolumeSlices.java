@@ -27,11 +27,12 @@ public class VolumeSlices extends VolumeObject
         super(kImageA,kTranslate,fX,fY,fZ);
 
         m_akPlaneEffect = new VolumePlaneEffect[3];
+        m_kVolumePreShader = new VolumePreRenderEffect[3];
         for ( int i = 0; i < 3; i++ )
         {
             m_akPlaneEffect[i] = new VolumePlaneEffect( m_kVolumeImageA, true );
+            m_kVolumePreShader[i] = new VolumePreRenderEffect(false, true);
         }
-        m_kVertexColor3Shader = new VertexColor3Effect();
 
         CreatePlanes( );
         CreateBoundingBox();
@@ -58,7 +59,7 @@ public class VolumeSlices extends VolumeObject
         for ( int i = 0; i < 3; i++ )
         {
             m_akPlanes[i].DetachAllEffects();
-            m_akPlanes[i].AttachEffect( m_kVertexColor3Shader );
+            m_akPlanes[i].AttachEffect( m_kVolumePreShader[i] );
         }
         m_kScene.UpdateGS();
         kCuller.ComputeVisibleSet(m_kScene);
@@ -158,14 +159,19 @@ public class VolumeSlices extends VolumeObject
         for ( int i = 0; i < 3; i++ )
         {
             m_akBoundingBox[i] = new Polyline( new VertexBuffer(akOutlineSquare[i]), true, true );
-            m_akBoundingBox[i].AttachEffect( m_kVertexColor3Shader );
+            m_akBoundingBox[i].AttachEffect( m_kVolumePreShader[i] );
             m_akBoundingBox[i].Local.SetTranslate(m_kTranslate);
             m_kScene.AttachChild(m_akBoundingBox[i]);
             //m_akBoundingBox[i].VBuffer.SetShared(true);
             //m_akBoundingBox[i].IBuffer.SetShared(true);
         }
     }
-
+    public float GetSliceOpacity( int i )
+    {
+        int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
+        return m_akPlaneEffect[iIndex].GetBlend(); 
+    }
+    
     /** Sets the opacity for the given plane.
      * @param i, the plane index (0-3) in file coordinates.
      * @param fAlpha, the opacity for the given plane.
@@ -174,6 +180,7 @@ public class VolumeSlices extends VolumeObject
     {
         int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
         m_akPlaneEffect[iIndex].Blend( fAlpha );
+        m_kVolumePreShader[iIndex].Blend(fAlpha);
     }
 
     /** Sets the bounding box color for the given plane.
@@ -322,13 +329,17 @@ public class VolumeSlices extends VolumeObject
     /** Delete local memory. */
     public void dispose()
     {
-        if ( m_kVertexColor3Shader != null )
-        {
-            m_kVertexColor3Shader.dispose();
-            m_kVertexColor3Shader = null;
-        }
         for ( int i = 0; i < 3; i++ )
-        {
+        {   
+            if ( m_kVolumePreShader != null )
+            {
+                if ( m_kVolumePreShader[i] != null )
+                {
+                    m_kVolumePreShader[i].dispose();
+                    m_kVolumePreShader[i] = null;
+                }
+                m_kVolumePreShader = null;
+            }
             if ( m_akPlaneEffect != null )
             {
                 if ( m_akPlaneEffect[i] != null )
@@ -365,7 +376,7 @@ public class VolumeSlices extends VolumeObject
     }
 
     /** ShaderEffect for the plane bounding-boxes. */
-    private VertexColor3Effect m_kVertexColor3Shader;
+    private VolumePreRenderEffect[] m_kVolumePreShader;
     /** ShaderEffects for the planes. Each is unique so they can have different alpha values. */
     private VolumePlaneEffect[] m_akPlaneEffect;
     /** The three orthogonal plane TriMeshes. */
