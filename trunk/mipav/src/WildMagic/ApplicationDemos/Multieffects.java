@@ -169,12 +169,6 @@ public class Multieffects extends JavaApplication3D
        // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
-    /*
-    public GLCanvas GetCanvas()
-    {
-        return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
-    }
-    */
     public GLCanvas GetCanvas()
     {
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
@@ -208,6 +202,7 @@ public class Multieffects extends JavaApplication3D
         m_spkScene.AttachChild(pkPlane);
         
         m_iActive = 0;
+        m_pkRenderer.EnableUserClipPlane(0, m_kPlane);
         
     }
 
@@ -217,7 +212,7 @@ public class Multieffects extends JavaApplication3D
     private TextureEffect m_spkEffect;
     private int m_iActive;
     
-    //private Plane3f m_kPlane = new Plane3f( new Vector3f( .5f, -1, -1 ), new Vector3f( .5f, 1, 1), new Vector3f( .5f, -1, 1) );
+    private Plane3f m_kPlane = new Plane3f( new Vector3f( .5f, -1, -1 ), new Vector3f( .5f, 1, 1), new Vector3f( .5f, -1, 1) );
 
     public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();

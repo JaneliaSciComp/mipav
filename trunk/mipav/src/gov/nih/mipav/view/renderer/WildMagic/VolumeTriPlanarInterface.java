@@ -884,7 +884,7 @@ implements MouseListener, ItemListener, ChangeListener {
             if (imageA.isColorImage()) {
                 panelHistoRGB = new JPanelHistoRGB(imageA, imageB, RGBTA, RGBTB, true);
             } else {
-                panelHistoLUT = new JPanelHistoLUT(imageA, imageB, LUTa, LUTb, true);
+                panelHistoLUT = new JPanelHistoLUT(imageA, imageB, LUTa, LUTb, true, true);
             }
 
             progressBar.updateValueImmed(100);
@@ -1763,7 +1763,8 @@ implements MouseListener, ItemListener, ChangeListener {
              m_akPlaneRender[i].setCenter(center);
          }
 
-         raycastRenderWM.SetCenter( new Vector3f( center.X, center.Y, center.Z ) );
+         raycastRenderWM.SetCenter( center );
+         sliceGUI.setCenter((int)center.X, (int)center.Y, (int)center.Z);
     }
 
     /**
@@ -2082,6 +2083,7 @@ implements MouseListener, ItemListener, ChangeListener {
         Vector3f center = sliceGUI.getCenter();
         raycastRenderWM.SetCenter( new Vector3f( center.X, center.Y, center.Z ) );    
         for (int i = 0; i < 3; i++) {
+            m_akPlaneRender[i].setRadiologicalView(bOn);
             m_akPlaneRender[i].setCenter(center);
         }
         setPositionLabels(center);
@@ -2771,7 +2773,7 @@ implements MouseListener, ItemListener, ChangeListener {
             VolumeSurface[] akVolumeSurfaces = raycastRenderWM.addSurface(akSurfaces, bReplace);  
             for (int i = 0; i < 3; i++) 
             {
-                m_akPlaneRender[i].AddSurfaces(akVolumeSurfaces);
+                //m_akPlaneRender[i].AddSurfaces(akVolumeSurfaces);
             }
             insertTab("Light", lightPanel);
             m_kLightsPanel.enableLight(0, true);

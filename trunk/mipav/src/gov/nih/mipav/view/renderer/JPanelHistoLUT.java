@@ -168,6 +168,8 @@ public class JPanelHistoLUT
      */
     private JDialogCTHistoLUT ctDialogA, ctDialogB;
 
+    /** Update the LUT in real-time: */
+    private boolean bImageUpdate = false;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -227,6 +229,22 @@ public class JPanelHistoLUT
         mainPanel.add(scroller, BorderLayout.CENTER);
     }
 
+    /**
+     * Makes a frame of the histogram and LUT.
+     *
+     * @param  _imageA      Model of imageA
+     * @param  _imageB      Model of imageB
+     * @param  _LUTa        Model of LUT for image A
+     * @param  _LUTb        Model of LUT for image B
+     * @param  _entireFlag  Flag indicating if histogram should be done on all of image.
+     */
+    public JPanelHistoLUT(ModelImage _imageA, ModelImage _imageB, 
+            ModelLUT _LUTa, ModelLUT _LUTb, boolean _entireFlag, boolean bUpdateImage) {
+
+        this(_imageA, _imageB, _LUTa, _LUTb, _entireFlag);
+        this.bImageUpdate = bUpdateImage;
+    }
+    
     // ************************************************************************
     // **************************** Action Events *****************************
     // ************************************************************************
@@ -989,7 +1007,8 @@ public class JPanelHistoLUT
     public boolean isImageUpdate() {
 
         // return updateCheckBoxA.isSelected();
-        return false;
+        return bImageUpdate;
+        //return false;
     }
 
     // ********************************************************************

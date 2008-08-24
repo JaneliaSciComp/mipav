@@ -33,53 +33,26 @@ public class VolumeImageViewer extends JavaApplication3D
         m_kAnimator = kAnimator;
     }
 
-    public void SetFrame( Frame kFrame )
-    {
-        m_kFrame = kFrame;
-    }
-
 
     /**
      * @param args
      */
-    public static void main( VolumeImage kVolumeImage ) {
+    public static void main( VolumeImage kVolumeImage )
+    {
         VolumeImageViewer kWorld = new VolumeImageViewer(kVolumeImage);
         Frame frame = new Frame(kWorld.GetWindowTitle());
-        //GLCanvas canvas = new GLCanvas();
-  
         frame.add( kWorld.GetCanvas() );
-        frame.setSize(kWorld.GetWidth(),
-                      kWorld.GetHeight() );
-        /* Animator serves the purpose of the idle function, calls display: */
-        final Animator animator = new Animator( kWorld.GetCanvas() );
-        frame.addWindowListener(new WindowAdapter() {
-                public void windowClosing(WindowEvent e) {
-                    // Run this on another thread than the AWT event queue to
-                    // avoid deadlocks on shutdown on some platforms
-                    new Thread(new Runnable() {
-                            public void run() {
-                                animator.stop();
-                            }
-                        }).start();
-                }
-            });
-        frame.setVisible(true);
-
-        int iTop = frame.getInsets().top;
-        int iBottom =  frame.getInsets().bottom;
-        int iRight = frame.getInsets().right;
-        int iLeft =  frame.getInsets().left;
-
-        frame.setVisible(false);
-        frame.setSize(kWorld.GetWidth() + iRight + iLeft,
-                      kWorld.GetHeight() + iTop + iBottom );
-        frame.setVisible(true);
-
-        kWorld.SetAnimator(animator);
-        kWorld.SetFrame(frame);
-
-        // and all the rest happens in the display function...
-        animator.start();
+         final Animator animator = new Animator( kWorld.GetCanvas() );
+         // setting the frame to be undecorated removes the frame title bar and edges
+         // this prevents flashing on-screen.
+         frame.setUndecorated(true);
+         // frame must be set to visible for the gl canvas to be properly initialized.
+         frame.setVisible(true);
+         frame.setBounds(0,0,
+                 kWorld.GetWidth(), kWorld.GetHeight() );
+         frame.setVisible(false);
+         kWorld.SetAnimator(animator);
+         animator.start();
     }
 
     public void display(GLAutoDrawable arg0) {
@@ -102,7 +75,7 @@ public class VolumeImageViewer extends JavaApplication3D
             {
                 m_iSlice = 0;
                 m_bDisplayFirst = false;
-                System.err.println("Done first pass");
+                //System.err.println("Done first pass");
             }
         }
         while ( m_bDisplaySecond )
@@ -124,11 +97,10 @@ public class VolumeImageViewer extends JavaApplication3D
             {
                 m_bDisplaySecond = false;
                 m_iSlice = 0;
-                System.err.println("Done second pass");
+                //System.err.println("Done second pass");
             }
         }
         m_kAnimator.stop();
-        m_kFrame.setVisible(false);
     }
 
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) { }
@@ -189,6 +161,7 @@ public class VolumeImageViewer extends JavaApplication3D
             {
                 m_pkRenderer.Resize(iWidth,iHeight);
             }
+            arg0.setSize(iWidth,iHeight);
         }
     }
 
@@ -266,5 +239,4 @@ public class VolumeImageViewer extends JavaApplication3D
     private boolean m_bDisplayFirst = true;
     private boolean m_bDisplaySecond = true;
     private Animator m_kAnimator;
-    private Frame m_kFrame;
 }

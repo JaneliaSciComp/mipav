@@ -114,7 +114,7 @@ public class VolumeSurface extends VolumeObject
         for ( int i = 0; i < m_kScene.GetQuantity(); i++ )
         {
             m_kScene.GetChild(i).DetachAllEffects();
-            m_kScene.GetChild(i).AttachEffect( m_kVertexColor3Shader );
+            m_kScene.GetChild(i).AttachEffect( m_kVolumePreShader );
         }
 
         m_kScene.UpdateGS();
@@ -166,6 +166,7 @@ public class VolumeSurface extends VolumeObject
     public void Blend( float fValue )
     {
         m_kLightShader.Blend(fValue);
+        m_kVolumePreShader.Blend(fValue);
     }
     
     
@@ -1290,7 +1291,7 @@ public class VolumeSurface extends VolumeObject
     /** Creates the scene graph. */
     private void CreateScene ( )
     {
-        m_kVertexColor3Shader = new VolumePreRenderEffect();
+        m_kVolumePreShader = new VolumePreRenderEffect(true, true);
         m_kScene = new Node();
 
         m_kCull = new CullState();
@@ -1307,16 +1308,16 @@ public class VolumeSurface extends VolumeObject
     /** Delete local memory. */
     public void dispose()
     {
-        if ( m_kVertexColor3Shader != null )
+        if ( m_kVolumePreShader != null )
         {
-            m_kVertexColor3Shader.dispose();
-            m_kVertexColor3Shader = null;
+            m_kVolumePreShader.dispose();
+            m_kVolumePreShader = null;
         }
         m_kMesh = null;
     }
 
     /** ShaderEffect for the plane bounding-boxes. */
-    private VolumePreRenderEffect m_kVertexColor3Shader;
+    private VolumePreRenderEffect m_kVolumePreShader;
     //private HierarchicalTriMesh m_kMesh = null;
     private TriMesh m_kMesh = null;
     private MaterialState m_kMaterial = null;

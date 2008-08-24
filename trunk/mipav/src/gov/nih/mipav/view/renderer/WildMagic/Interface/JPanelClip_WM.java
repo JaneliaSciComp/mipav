@@ -490,10 +490,8 @@ public class JPanelClip_WM extends JInterfaceBase
 
             if (!boxStatic.isSelected()) {
                 setStaticSliderEnabled(false);
-                colorButtonStatic.setEnabled(false);
-                boundingCheckStatic.setSelected(false);
-                disableStaticClipping();
-                //disableStaticInvClipping();
+                //colorButtonStatic.setEnabled(false);
+                //boundingCheckStatic.setSelected(false);
             } else {
                 disableClipPlanes();
                 disableClipPlanesArbi();
@@ -512,10 +510,8 @@ public class JPanelClip_WM extends JInterfaceBase
 
             if (!boxStaticInv.isSelected()) {
                 setStaticInvSliderEnabled(false);
-                colorButtonStaticInv.setEnabled(false);
-                boundingCheckStaticInv.setSelected(false);
-                disableStaticInvClipping();
-                //disableStaticClipping();
+                //colorButtonStaticInv.setEnabled(false);
+                //boundingCheckStaticInv.setSelected(false);
             } else {
                 disableClipPlanes();
                 disableClipPlanesArbi();
@@ -1435,27 +1431,6 @@ public class JPanelClip_WM extends JInterfaceBase
             colorButtonA.setEnabled(false);
         }
     }
-
-    /**
-     * Disable the eye clipping plane.
-     */
-    public void disableStaticClipping() {
-        setStaticSliderEnabled(false);
-        colorButtonStatic.setEnabled(false);
-        boundingCheckStatic.setSelected(false);
-        boxStatic.setSelected(false);
-    }
-
-    /**
-     * Disable the eye inverse clipping plane.
-     */
-    public void disableStaticInvClipping() {
-        setStaticInvSliderEnabled(false);
-        colorButtonStaticInv.setEnabled(false);
-        boundingCheckStaticInv.setSelected(false);
-        boxStaticInv.setSelected(false);
-    }
-
 
     /**
      * Dispose memory.

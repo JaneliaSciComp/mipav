@@ -142,6 +142,7 @@ public class VolumeClip extends VolumeObject
     {
         if ( bDisplay != m_abDisplayPolyline[iWhich] )
         {
+            
             m_abDisplayPolyline[iWhich] = bDisplay;
             if ( bDisplay )
             {
@@ -154,6 +155,11 @@ public class VolumeClip extends VolumeObject
         }
         m_kScene.UpdateGS();
         m_kScene.UpdateRS();
+        m_bDisplay = false;
+        for ( int i = 0; i < m_abDisplayPolyline.length; i++ )
+        {
+            m_bDisplay |= m_abDisplayPolyline[i];
+        }
     }
 
     /**

@@ -259,6 +259,15 @@ public class VolumePlaneEffect extends ShaderEffect
      * Sets the blend factor shader parameter between imageA and imageB.
      * @param fBlend, blend factor (range = 0-1).
      */
+    public float GetBlend()
+    {
+        return m_afBlend[0];
+    }
+    
+    /**
+     * Sets the blend factor shader parameter between imageA and imageB.
+     * @param fBlend, blend factor (range = 0-1).
+     */
     public void Blend(float fBlend)
     {
         m_afBlend[0] = fBlend;

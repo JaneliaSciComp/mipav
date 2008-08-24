@@ -25,12 +25,45 @@ public class VolumePreRenderEffect extends ShaderEffect
     implements StreamInterface
 {
     /** Creates an new VolumePreRenderEffect */
-    public VolumePreRenderEffect ()
+    public VolumePreRenderEffect (boolean bUseTextureCoords, boolean bUnique)
     {
         super(1);
-        m_kVShader.set(0, new VertexShader("VolumePreRender"));
-        m_kPShader.set(0, new PixelShader("PassThrough3"));
+        if ( bUseTextureCoords )
+        {
+            m_kVShader.set(0, new VertexShader("VolumePreRender", bUnique));
+        }
+        else
+        {
+            m_kVShader.set(0, new VertexShader("VolumePreRenderColor", bUnique));            
+        }
+        m_kPShader.set(0, new PixelShader("PassThrough4", bUnique));
     }
+    
+    public void Blend( float fValue )
+    {    
+        Program pkProgram = GetVProgram(0);
+        if ( pkProgram == null )
+        {
+            return;
+        }
+        if ( pkProgram.GetUC("Blend") != null)
+        {
+            pkProgram.GetUC("Blend").SetDataSource(new float[]{fValue,0,0,0});
+        }
+    }
+    
+    /** This function is called in LoadPrograms once the shader programs are
+     * created.  It gives the ShaderEffect-derived classes a chance to do
+     * any additional work to hook up the effect with the low-level objects.
+     * @param iPass the ith rendering pass
+     */
+    public void OnLoadPrograms (int iPass, Program pkVProgram,
+                                Program pkPProgram)
+    {
+        Blend(1);
+    }
+
+    
 
     /**
      * Loads this object from the input parameter rkStream, using the input
