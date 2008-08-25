@@ -4091,7 +4091,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             fileInfo[0].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
             fileInfo[0].setEndianess(image.getFileInfo()[0].getEndianess());
             fileInfo[0].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
-            fileInfo[0].setResolutions(image.getFileInfo()[0].getResolutions());
+            fileInfo[0].setResolutions(resolutions);
             fileInfo[0].setExtents(resultImage.getExtents());
             fileInfo[0].setMax(resultImage.getMax());
             fileInfo[0].setMin(resultImage.getMin());
