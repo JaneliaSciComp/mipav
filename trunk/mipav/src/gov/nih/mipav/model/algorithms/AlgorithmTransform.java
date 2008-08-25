@@ -591,7 +591,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         // System.out.println("Directions are " +direct[0] +", " +direct[1] +" and " +direct[2]);
         if (pad) {
 
-            if ((interp != TRILINEAR) || (DIM != 3)) {
+            if ((interp != TRILINEAR) || (DIM < 3)) {
                 canPad = false;
             }
 
@@ -746,7 +746,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         // System.out.println("Directions are " +direct[0] +", " +direct[1] +" and " +direct[2]);
         if (pad) {
 
-            if ((interp != TRILINEAR) || (DIM != 3)) {
+            if ((interp != TRILINEAR) || (DIM < 3)) {
                 canPad = false;
             }
             
@@ -5514,6 +5514,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformBilinear4D(float[] imgBuf, TransMatrix kTM) {
         int i, j, k, l;
+        int iAdj, jAdj;
         int X0pos, Y0pos;
         int X1pos, Y1pos;
         float X, Y;
@@ -5539,15 +5540,28 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                    imm = (float) i * oXres;
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = (float) iAdj * oXres;
                     temp1 = (imm * T00) + T02;
                     temp2 = (imm * T10) + T12;
 
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                         // transform i,j
-                        value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
-                        jmm = (float) j * oYres;
+                        if (pad) {
+                            value = (float)padVal;
+                            jAdj = j - margins[1];
+                        }
+                        else {
+                            value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
+                            jAdj = j;
+                        }
+                        jmm = (float) jAdj * oYres;
                         X = (temp1 + (jmm * T01)) / iXres;
                         roundX = (int) (X + 0.5f);
 
@@ -5611,6 +5625,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformBilinear4DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM) {
         int i, j, k, l;
+        int iAdj, jAdj;
         int X0pos, Y0pos;
         int X1pos, Y1pos;
         float X, Y;
@@ -5637,7 +5652,13 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                    imm = (float) i * oXres;
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = (float) iAdj * oXres;
                     temp1 = (imm * T00) + T02;
                     temp2 = (imm * T10) + T12;
 
@@ -5645,12 +5666,22 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // transform i,j
                         temp3 = 4 * (i + (j * oXdim));
-                        imgBuf2[temp3] = 0; // remains zero if voxel is transformed out of bounds
-                        imgBuf2[temp3 + 1] = 0;
-                        imgBuf2[temp3 + 2] = 0;
-                        imgBuf2[temp3 + 3] = 0;
+                        if (pad) {
+                            imgBuf2[temp3] = (float)padVal; // remains zero if voxel is transformed out of bounds
+                            imgBuf2[temp3 + 1] = (float)padVal;
+                            imgBuf2[temp3 + 2] = (float)padVal;
+                            imgBuf2[temp3 + 3] = (float)padVal;
+                            jAdj = j - margins[1];
+                        }
+                        else {
+                            imgBuf2[temp3] = 0; // remains zero if voxel is transformed out of bounds
+                            imgBuf2[temp3 + 1] = 0;
+                            imgBuf2[temp3 + 2] = 0;
+                            imgBuf2[temp3 + 3] = 0;
+                            jAdj = j;
+                        }
 
-                        jmm = (float) j * oYres;
+                        jmm = (float) jAdj * oYres;
                         X = (temp1 + (jmm * T01)) / iXres;
                         roundX = (int) (X + 0.5f);
 
@@ -11109,6 +11140,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformTrilinear4D(float[] imgBuffer, TransMatrix kTM) {
         int i, j, k, l;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         int x0, y0, z0;
         float value;
@@ -11148,13 +11180,25 @@ public class AlgorithmTransform extends AlgorithmBase {
             fireProgressStateChanged(Math.round((float) l / oTdim * 100));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
-                kmm = k * oZres;
+                if (pad) {
+                    kAdj = k - margins[2];
+                }
+                else {
+                    kAdj = k;
+                }
+                kmm = kAdj * oZres;
                 k1 = (kmm * T02) + T03;
                 k2 = (kmm * T12) + T13;
                 k3 = (kmm * T22) + T23;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                    jmm = j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = jAdj * oYres;
                     j1 = (jmm * T01) + k1;
                     j2 = (jmm * T11) + k2;
                     j3 = (jmm * T21) + k3;
@@ -11162,8 +11206,15 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
                         // transform i,j,k
-                        value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
-                        imm = i * oXres;
+                        if (pad) {
+                            value = (float)padVal;
+                            iAdj = i - margins[0];
+                        }
+                        else {
+                            value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
+                            iAdj = i;
+                        }
+                        imm = iAdj * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
                         if ((X > -0.5f) && (X < iXdim)) {
@@ -11266,6 +11317,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformTrilinear4DC(float[] imgBuffer, float [] imgBuffer2, TransMatrix kTM) {
         int i, j, k, l;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         int x0, y0, z0;
         int temp;
@@ -11310,13 +11362,25 @@ public class AlgorithmTransform extends AlgorithmBase {
             fireProgressStateChanged(Math.round((float) l / oTdim * 100));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
-                kmm = k * oZres;
+                if (pad) {
+                    kAdj = k - margins[2];
+                }
+                else {
+                    kAdj = k;
+                }
+                kmm = kAdj * oZres;
                 k1 = (kmm * T02) + T03;
                 k2 = (kmm * T12) + T13;
                 k3 = (kmm * T22) + T23;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                    jmm = j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = jAdj * oYres;
                     j1 = (jmm * T01) + k1;
                     j2 = (jmm * T11) + k2;
                     j3 = (jmm * T21) + k3;
@@ -11325,11 +11389,21 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // transform i,j,k
                         temp = 4 * (i + (j * oXdim) + (k * oSliceSize));
-                        imgBuffer2[temp] = 0; // remains zero if voxel is transformed out of bounds
-                        imgBuffer2[temp + 1] = 0;
-                        imgBuffer2[temp + 2] = 0;
-                        imgBuffer2[temp + 3] = 0;
-                        imm = i * oXres;
+                        if (pad) {
+                            imgBuffer2[temp] = (float)padVal;
+                            imgBuffer2[temp + 1] = (float)padVal;
+                            imgBuffer2[temp + 2] = (float)padVal;
+                            imgBuffer2[temp + 3] = (float)padVal; 
+                            iAdj = i - margins[0];
+                        }
+                        else {
+                            imgBuffer2[temp] = 0; // remains zero if voxel is transformed out of bounds
+                            imgBuffer2[temp + 1] = 0;
+                            imgBuffer2[temp + 2] = 0;
+                            imgBuffer2[temp + 3] = 0;
+                            iAdj = i;
+                        }
+                        imm = iAdj * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
                         if ((X > -0.5f) && (X < iXdim)) {
