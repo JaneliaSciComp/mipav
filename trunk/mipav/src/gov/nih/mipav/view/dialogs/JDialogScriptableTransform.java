@@ -957,7 +957,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 textDimX.setText(String.valueOf(Math.round(resampleImage.getExtents()[0])));
                 textDimY.setText(String.valueOf(Math.round(resampleImage.getExtents()[1])));
 
-                if (image.getNDims() == 3) {
+                if ((image.getNDims() == 3) && (!image25DCheckbox.isSelected()) && (resampleImage.getNDims() > 2)) {
                     textResZ.setText(String.valueOf(resampleImage.getFileInfo(0).getResolutions()[2]));
                     textDimZ.setText(String.valueOf(Math.round(resampleImage.getExtents()[2])));
                 }
@@ -3587,7 +3587,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 oYdim = selectedImg.getExtents()[1];
             }
 
-            if ((image.getNDims() >= 3) && (!do25D)) {
+            if ((image.getNDims() >= 3) && (!do25D) && (selectedImg.getNDims() >= 3)) {
                 oZres = selectedImg.getFileInfo(0).getResolutions()[2];
                 units[2] = selectedImg.getUnitsOfMeasure(2);
                 if (setPix) {
@@ -3596,7 +3596,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 } else {
                     oZdim = selectedImg.getExtents()[2];
                 }
-            } else if ((image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
+            } else if (image.getNDims() >= 3) { // cannot change third dimension
                 oZres = image.getFileInfo(0).getResolutions()[2];
                 oZdim = image.getExtents()[2];
             }
