@@ -176,7 +176,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         Symmetry(String side1, String side2) {
         	this.side1 = side1;
         	this.side2 = side2;
-        	
         	if(side2.length() == 0)
         		this.text = side1;
         	else
