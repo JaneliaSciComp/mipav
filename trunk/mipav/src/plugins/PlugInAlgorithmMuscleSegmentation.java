@@ -9,11 +9,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -682,10 +684,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		
 		private ArrayList<ArrayList<MusclePane>> fileRead(String name) {
 			BufferedReader input = null;
-			
+			ArrayList<ArrayList<MusclePane>> customVOI = new ArrayList();
 			try {
 				input = new BufferedReader(new FileReader(name));
-				ArrayList<ArrayList<MusclePane>> customVOI = new ArrayList();
 				MusclePane currentPane = null;
 				String line, title, value, voiName;
 				int paneNum = 0;
@@ -768,6 +769,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				try {
 					if(input != null) {
 						input.close();
+						return customVOI;
 					}
 				} catch(IOException e) {
 					MipavUtil.displayError("Internal program error, failed to close file.");
@@ -775,7 +777,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 					return null;
 				}
 			} 
-			//return arrayLists here of musclePanes here
 			return null;
 		}
 		
@@ -787,6 +788,56 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		 */
 		
 		private boolean fileWrite(String name) {
+			BufferedWriter output = null;
+			MusclePane voi = null;
+			try {
+				output = new BufferedWriter(new FileWriter(name));
+				for(int i=0; i<customVOI.size(); i++) {
+					output.write(START_PANE+": "+i);
+					for(int j=0; j<customVOI.get(i).size(); j++) {
+						voi = customVOI.get(i).get(j);
+						output.write(START_VOI+": "+voi.getName());
+						Color col = null;
+						if(!(col = voi.getColorButton()).equals(Option.Color.setting)) {						
+							output.write(Option.Color.text+": "+
+											col.getRed()+","+col.getGreen()+","+col.getBlue());
+						}
+						if(!voi.getSymmetry().equals(Option.Symmetry.setting)) {
+							output.write(Option.Symmetry.text+": "+voi.getSymmetry());
+						}
+						if(!Integer.valueOf(voi.getNumCurves()).equals(Option.Num_Curves.setting)) {
+							output.write(Option.Num_Curves.text+": "+voi.getNumCurves());
+						}
+						if(!Boolean.valueOf(voi.getDoCalc()).equals(Option.Do_Calc.setting)) {
+							output.write(Option.Do_Calc.text+": "+voi.getDoCalc());
+						}
+						if(!Boolean.valueOf(voi.getDoFill()).equals(Option.Do_Fill.setting)) {
+							output.write(Option.Do_Fill.text+": "+voi.getDoFill());
+						}
+						if(!Boolean.valueOf(voi.getIsClosed()).equals(Option.Is_Closed.setting)) {
+							output.write(Option.Is_Closed.text+": "+voi.getIsClosed());
+						}
+						output.write(END_VOI);
+					}
+					output.write("END_PANE");
+				}
+			} catch(IOException e) {
+				MipavUtil.displayError("Error writing file, bad requested file name.");
+				e.printStackTrace();
+				return false;
+			} finally {
+				try {
+					if(output != null) {
+						output.flush();
+						output.close();
+						return true;
+					}
+				} catch(IOException e) {
+					MipavUtil.displayError("Internal program error, failed to close file.");
+					e.printStackTrace();
+					return false;
+				}
+			} 
 			return false;
 		}
 	
