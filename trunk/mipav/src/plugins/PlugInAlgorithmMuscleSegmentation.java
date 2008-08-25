@@ -623,9 +623,39 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
         }
 	}
 	
-	private static class FileLoader {
+	public enum Option {
+		Color("Color", java.awt.Color.RED),
+		
+		Symmetry("Symmetry", PlugInMuscleImageDisplay.Symmetry.NO_SYMMETRY),
+		
+		Num_Curves("Number of curves", 1),
+		
+		Do_Calc("Perform calculations", false),
+		
+		Do_Fill("Fill VOI on custom LUT", false),
+		
+		Is_Closed("Curves are closed", true);
+		
+		final String text;
+		final Object setting;
+		
+		Option(String text, Object setting) {
+			this.text = text;
+			this.setting = setting;
+		}
+	}
+	
+	
+		
+		public static final String START_VOI = "Start VOI";
+		public static final String START_PANE = "Start Pane";
+		public static final String END_VOI = "End Voi";
+		public static final String END_PANE = "End Pane";
+		
+		
+		
 		/**
-		 * Whecks that the file specified by name exists and is the correct extension (txt).  Does
+		 * Checks that the file specified by name exists and is the correct extension (txt).  Does
 		 * not check validity of file. Returned value indicates success of
 		 * checking file.
 		 * @param name
@@ -650,24 +680,90 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		 * @param name
 		 */
 		
-		private boolean fileRead(String name) {
+		private ArrayList<ArrayList<MusclePane>> fileRead(String name) {
 			BufferedReader input = null;
 			
 			try {
 				input = new BufferedReader(new FileReader(name));
-				
-				String line;
-				while((line = input.readLine()) != null) {
-					//Process line here
+				ArrayList<ArrayList<MusclePane>> customVOI = new ArrayList();
+				MusclePane currentPane = null;
+				String line, title, value, voiName;
+				int paneNum = 0;
+				boolean inPane = false, inVoi = false;
+		 parse: while((line = input.readLine()) != null) {
+			 		int breakPoint = line.indexOf(':');
+					title = line.substring(0, breakPoint).trim();
+					value = line.substring(breakPoint+1).trim();	
+				 	if(inPane) {
+						if(title.equals(END_PANE))
+							inPane = false;
+						else {
+							if(inVoi) {
+								if(title.equals(END_VOI))
+									inVoi = false;
+								else {
+									switch(Option.valueOf(title)) {
+									
+									case Color:
+										String[] colors = value.split(",");
+										int[] numCol = new int[colors.length];
+										for(int i=0; i<colors.length; i++)
+											numCol[i] = Integer.valueOf(colors[i]);
+										currentPane.setColorButton(new Color(numCol[0], numCol[1], numCol[2]));
+										break;
+										
+									case Symmetry:
+										currentPane.setSymmetry(PlugInMuscleImageDisplay.Symmetry.valueOf(value));
+										break;
+										
+									case Num_Curves:
+										currentPane.setNumCurves(Integer.valueOf(value));
+										break;
+										
+									case Do_Calc:
+										currentPane.setDoCalc(Boolean.valueOf(value));
+										break;
+										
+									case Do_Fill:
+										currentPane.setDoFill(Boolean.valueOf(value));
+										break;
+										
+									case Is_Closed:
+										currentPane.setIsClosed(Boolean.valueOf(value));
+										break;
+									}
+									
+								}
+							} else {
+								if(title.equals(START_VOI)) {
+									voiName = value;
+									currentPane = new MusclePane(this);
+									currentPane.setName(voiName);
+									customVOI.get(paneNum).add(currentPane);
+								} else {
+									MipavUtil.displayError("Badly formatted file.  Exiting program.");
+									break parse;
+								}
+							}
+						}
+					} else {
+						if(title.equals(START_PANE)) {
+							customVOI.add(new ArrayList<MusclePane>());
+							paneNum = customVOI.size()-1;
+						} else {
+							MipavUtil.displayError("Badly formatted file.  Exiting program.");
+							break parse;
+						}
+					}
 				}
 			} catch(FileNotFoundException e) {
 				MipavUtil.displayError("File not found despite passing internal check system.");
 				e.printStackTrace();
-				return false;
+				return null;
 			} catch(IOException e) {
 				MipavUtil.displayError("Error reading file, re-open file.");
 				e.printStackTrace();
-				return false;
+				return null;
 			} finally {
 				try {
 					if(input != null) {
@@ -676,10 +772,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				} catch(IOException e) {
 					MipavUtil.displayError("Internal program error, failed to close file.");
 					e.printStackTrace();
-					return false;
+					return null;
 				}
 			} 
-			return true;
+			//return arrayLists here of musclePanes here
+			return null;
 		}
 		
 		/**
@@ -692,7 +789,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		private boolean fileWrite(String name) {
 			return false;
 		}
-	}
+	
 	
 	private class MusclePane extends JPanel implements Serializable {
 		
@@ -819,7 +916,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		public boolean getDoFill() {
 			return doFill.isSelected();
 		}
-
+		
 		public boolean getIsClosed() {
 			return isClosed.isSelected();
 		}
