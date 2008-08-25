@@ -341,28 +341,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    	System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+
 	    	"End Pane"+System.getProperty("line.separator");
 	    
-	    File niaFolder = new File(srcImage.getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator); 
-	    BufferedWriter output = null;
-	    try {
-	    	if(!niaFolder.exists())
-	    		niaFolder.createNewFile();
-	    	File configFile = new File(srcImage.getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator+"Abdomen.nia");
-			output = new BufferedWriter(new FileWriter(configFile));
-			output.write(extendable);
-	    } catch(IOException e) {
-	    	MipavUtil.displayError("Unable to save configuration file.");
-	    	e.printStackTrace();
-	    } finally {
-			try {
-				if(output != null) {
-					output.flush();
-					output.close();
-				}
-			} catch(IOException e) {
-				MipavUtil.displayError("Internal program error, failed to close file.");
-				e.printStackTrace();
-			}
-		} 
+	    performFileSave(extendable, "Abdomen");
+	    
     }
     
     /**
@@ -412,6 +392,51 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	     
 	    symmetry = PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT;
 	    imageType = PlugInMuscleImageDisplay.ImageType.Thigh;
+	    
+	    String extendable = "Start Pane: Thigh"+System.getProperty("line.separator")+"Start Voi: Thigh"+
+	    	System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Symmetry: Left/Right"+
+	    	System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Phantom"+
+	    	System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"End Pane"+System.getProperty("line.separator")+
+	    	"Start Pane: Bone"+System.getProperty("line.separator")+"Start Voi: Bone"+System.getProperty("line.separator")+"Do_Calc: true"+
+	    	System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+
+	    	"Start Voi: Marrow"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+
+	    	"Symmetry: Left/Right"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Bone sample"+System.getProperty("line.separator")+
+	    	"End Voi"+System.getProperty("line.separator")+"End Pane"+System.getProperty("line.separator")+"Start Pane: Muscles"+System.getProperty("line.separator")+"Start Voi: Fascia"+
+	    	System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Quads"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+
+	    	System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Hamstrings"+System.getProperty("line.separator")+
+	    	"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+
+	    	"End Voi"+System.getProperty("line.separator")+"Start Voi: Sartorious"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+
+	    	System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Adductors"+System.getProperty("line.separator")+
+	    	"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Water sample"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"End Pane";
+	    
+	    performFileSave(extendable, "Thigh");
+	}
+	
+	private void performFileSave(String extendable, String name) {
+		File niaFolder = new File(srcImage.getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator); 
+	    BufferedWriter output = null;
+	    try {
+	    	if(!niaFolder.exists())
+	    		niaFolder.createNewFile();
+	    	File configFile = new File(srcImage.getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator+name+".nia");
+			output = new BufferedWriter(new FileWriter(configFile));
+			output.write(extendable);
+	    } catch(IOException e) {
+	    	MipavUtil.displayError("Unable to save configuration file.");
+	    	e.printStackTrace();
+	    } finally {
+			try {
+				if(output != null) {
+					output.flush();
+					output.close();
+				}
+			} catch(IOException e) {
+				MipavUtil.displayError("Internal program error, failed to close file.");
+				e.printStackTrace();
+			}
+		} 
 	}
 	
 	private void buildCustomDialog() {
