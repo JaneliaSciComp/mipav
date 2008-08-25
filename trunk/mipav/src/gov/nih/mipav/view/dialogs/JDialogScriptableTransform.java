@@ -1258,7 +1258,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             textDimY.setText(String.valueOf(Math.round(factor * resampleImage.getExtents()[1])));
             textResX.setText(String.valueOf(resampleImage.getFileInfo(0).getResolutions()[0] / factor));
 
-            if (image.getNDims() >= 3) {
+            if ((image.getNDims() >= 3) && (!image25DCheckbox.isSelected())) {
                 textResZ.setText(String.valueOf(resampleImage.getFileInfo(0).getResolutions()[2] / factor));
                 textDimZ.setText(String.valueOf(Math.round(factor * resampleImage.getExtents()[2])));
             }
