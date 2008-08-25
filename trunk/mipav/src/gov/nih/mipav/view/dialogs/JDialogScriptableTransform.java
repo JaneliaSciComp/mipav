@@ -875,7 +875,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             if (resampletoUser.isSelected()) {
                 xyAspectRatio.setEnabled(true);
-                if (image.getNDims() > 2) {
+                if ((image.getNDims() > 2) && (!image25DCheckbox.isSelected())) {
                     xyzAspectRatio.setEnabled(true);
                 }
                 fieldOfView.setEnabled(true);
