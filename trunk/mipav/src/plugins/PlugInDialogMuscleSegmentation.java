@@ -10,6 +10,7 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -31,6 +32,9 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     
     /**Radio button to denote image is abdomen CT*/
     private JRadioButton abdomenRadio;
+    
+    /**Alternate configs in user-dir*/
+    private JRadioButton[] extraRadio;
     
     /**Radio button to denote user would like to build custom plugin.*/
     private JRadioButton customRadio;
@@ -183,9 +187,28 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     // TODO Auto-generated method stub, no params yet
     }
    
+    private class NiaAcceptable implements FilenameFilter {
+
+		public boolean accept(File dir, String name) {
+			if(name.indexOf('.') != -1) {
+				if(name.substring(name.lastIndexOf('.')+1).equals("nia"))
+					return true;
+			}
+			return false;
+		}
+    }
+    
     private void init() {
         
-        
+        String fileName = image.getFileInfo()[0].getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator;
+        ArrayList<String> validConfig = new ArrayList();
+    	if(new File(fileName).exists()) {
+        	String[] allFiles = new File(fileName).list(new NiaAcceptable());
+        	for(int i=0; i<allFiles.length; i++) {
+        		if(!allFiles[i].equals(imageType.toString()+".nia")) 
+        			validConfig.add(allFiles[i]);
+        	}
+    	}
         setForeground(Color.black);
         setTitle("NIA Muscle Segmentation");
 
@@ -210,6 +233,12 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         abdomenRadio = new JRadioButton("Abdomen");
         abdomenRadio.setFont(MipavUtil.font12);
         
+        extraRadio = new JRadioButton[validConfig.size()];
+        for(int i=0; i<validConfig.size(); i++) {
+        	extraRadio[i] = new JRadioButton(validConfig.get(i));
+        	extraRadio[i].setFont(MipavUtil.font12);
+        }
+        
         customRadio = new JRadioButton("Custom");
         customRadio.setFont(MipavUtil.font12);
 
@@ -224,10 +253,16 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         ButtonGroup group = new ButtonGroup();
         group.add(twoThighRadio);
         group.add(abdomenRadio);
+        for(int i=0; i<extraRadio.length; i++) {
+        	group.add(extraRadio[i]);
+        }
         group.add(customRadio);
         
         mainPanel.add(twoThighRadio);
         mainPanel.add(abdomenRadio);
+        for(int i=0; i<extraRadio.length; i++) {
+        	mainPanel.add(extraRadio[i]);
+        }
         mainPanel.add(customRadio);
         
         getContentPane().add(mainPanel, BorderLayout.CENTER);

@@ -30,6 +30,9 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -56,8 +59,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     public static final String VOI_IMAGE = "voiImage.tif";
     
     public static final String NEW_TAB = "New Tab";
-    public static final String ADD_VOI = "Add another VOI";
+    public static final String ADD_VOI = "Add VOI";
+    public static final String ADD_PANE = "Add one pane";
     public static final String LAUNCH = "Launch plugin";
+    public static final String OPEN_TEMPLATE = "Open custom template";
+    public static final String SAVE_TEMPLATE = "Save template";
     public static final String SAVE = "Save";
     public static final String DEFAULT_VOI = "Enter VOI name";
     
@@ -107,7 +113,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     
     /**Whether new tabs are in a position to be created. */
     private boolean doEval = false;
-    
+
     /**
      * Constructor.
      *
@@ -184,7 +190,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			MusclePane pane = new MusclePane(this);
 			pane.setBorder(MipavUtil.buildTitledBorder("VOI #"+(length)));
 			customVOI.get(activeTab).add(pane);
-			tabs.get(activeTab).add(pane, comps.length-2);
+			tabs.get(activeTab).add(pane, comps.length-5);
 			tabs.get(activeTab).validate();
 		} else if(e.getActionCommand().equals(LAUNCH)) {
 			if(checkPanel()) {
@@ -192,8 +198,57 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				srcImage = customPane.getImageA();
 				performDialog();
 			}
-		} else if(e.getActionCommand().equals(SAVE)) {
-			//Do nothing for now
+		} else if(e.getActionCommand().equals(OPEN_TEMPLATE)) {
+			JFileChooser chooser = new JFileChooser();
+			chooser.setDialogTitle("Open a VOI template");
+			chooser.setCurrentDirectory(new File(Preferences.getImageDirectory()));
+			chooser.setMultiSelectionEnabled(false);
+		    chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".nia" }));
+		    
+		    int returnVal = chooser.showOpenDialog(customPane);
+		    
+		    if(returnVal == JFileChooser.APPROVE_OPTION) {
+		    	FileManager manager = new FileManager(this);
+		    	System.out.println(chooser.getSelectedFile().getAbsolutePath());
+		    	doEval = false;
+		    	manager.fileRead(chooser.getSelectedFile().getAbsolutePath());	
+		    	customPane.validate();
+		    	doEval = true;
+		    	//System.out.println(chooser.getSelectedFile().getName());
+		       //Preferences.setImageDirectory(chooser.getSelectedFile().getAbsoluteFile().getParent());
+		    }
+		} else if(e.getActionCommand().equals(SAVE_TEMPLATE)) {
+			JFileChooser chooser = new JFileChooser();
+			chooser.setCurrentDirectory(new File(Preferences.getImageDirectory()));
+			chooser.setDialogTitle("Save the current VOI template");
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[]{".nia"}));
+
+            int returnVal = chooser.showSaveDialog(null);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                String fileName = chooser.getSelectedFile().getName();
+                String fileDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                File file = new File(fileDir + fileName);
+                FileManager manager = new FileManager(this);
+                System.out.println(file.getAbsolutePath());
+                manager.fileWrite(file.getAbsolutePath());
+               
+            } else {
+                return;
+            }
+		} else if(e.getActionCommand().equals(ADD_PANE)) {
+				
+				JPanel newPanel = initMuscleTab(tabCount);
+		    	
+				newPanel.addComponentListener(customPane);
+				newPanel.addComponentListener(this);
+				newPanel.setName("Tab "+(tabCount+1));
+				
+				dialogTabs.addTab("Tab "+(tabCount+1), newPanel);
+				
+				dialogTabs.setSelectedIndex(tabCount);
+				activeTab = tabCount;
+				tabCount++;
 		} else {
 			super.actionPerformed(e);
 		}
@@ -216,27 +271,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	 */
 	public void componentShown(ComponentEvent e) {
 		if(e.getSource() instanceof JPanel && doEval) {
-			if(((JPanel)e.getSource()).getName().equals(NEW_TAB)) {
-				dialogTabs.removeTabAt(tabCount);
-				
-				JPanel newPanel = initMuscleTab(tabCount);
-		    	
-				newPanel.addComponentListener(customPane);
-				newPanel.addComponentListener(this);
-				newPanel.setName("Tab "+(tabCount+1));
-				
-				dialogTabs.addTab("Tab "+(tabCount+1), newPanel);
-				
-				JPanel tempPanel = new JPanel();
-				tempPanel.setName(NEW_TAB);
-				tempPanel.addComponentListener(customPane);
-				tempPanel.addComponentListener(this);
-				dialogTabs.addTab("Click to create a new tab...", tempPanel);
-				
-				dialogTabs.setSelectedIndex(tabCount);
-				activeTab = tabCount;
-				tabCount++;
-			} else if(((JPanel)e.getSource()).getName().indexOf("Tab ") != -1) {
+			if(((JPanel)e.getSource()).getName().indexOf("Tab ") != -1) {
 				activeTab = Integer.valueOf(((JPanel)e.getSource()).getName().substring(4)).intValue()-1;
 			}
 		}
@@ -279,6 +314,55 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
         
         symmetry = PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT;
 	    imageType = PlugInMuscleImageDisplay.ImageType.Abdomen;
+	    
+	    String extendable = "Start Pane: Abdomen"+System.getProperty("line.separator")+"Start Voi: Abdomen"+
+	    	System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Subcutaneous area"+System.getProperty("line.separator")+
+	    	"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Phantom"+
+	    	System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"End Pane"+System.getProperty("line.separator")+
+	    	"Start Pane: Tissue"+System.getProperty("line.separator")+"Start Voi: Visceral cavity"+System.getProperty("line.separator")+
+	    	"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Liver"+
+	    	System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Liver cysts"+System.getProperty("line.separator")+"Num_Curves: 7"+
+	    	System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+
+	    	System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Bone sample"+
+	    	System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Water sample"+
+	    	System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"End Pane"+System.getProperty("line.separator")+
+	    	"Start Pane: Muscles"+System.getProperty("line.separator")+"Start Voi: Psoas"+System.getProperty("line.separator")+
+	    	"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+
+	    	"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Lat. obliques"+
+	    	System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+
+	    	System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+
+	    	"Start Voi: Paraspinous"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+
+	    	System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+
+	    	"Start Voi: Rectus"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+
+	    	System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+
+	    	"Start Voi: Aortic calcium"+System.getProperty("line.separator")+"Num_Curves: 5"+System.getProperty("line.separator")+"Do_Calc: true"+
+	    	System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+
+	    	"End Pane"+System.getProperty("line.separator");
+	    
+	    File niaFolder = new File(srcImage.getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator); 
+	    BufferedWriter output = null;
+	    try {
+	    	if(!niaFolder.exists())
+	    		niaFolder.createNewFile();
+	    	File configFile = new File(srcImage.getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator+"Abdomen.nia");
+			output = new BufferedWriter(new FileWriter(configFile));
+			output.write(extendable);
+	    } catch(IOException e) {
+	    	MipavUtil.displayError("Unable to save configuration file.");
+	    	e.printStackTrace();
+	    } finally {
+			try {
+				if(output != null) {
+					output.flush();
+					output.close();
+				}
+			} catch(IOException e) {
+				MipavUtil.displayError("Internal program error, failed to close file.");
+				e.printStackTrace();
+			}
+		} 
     }
     
     /**
@@ -551,11 +635,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    scrollPane.addKeyListener(customPane);    
 	  
 	    dialogTabs = new JTabbedPane();
-	    dialogTabs.setMinimumSize(new Dimension (370, 532));
-	    dialogTabs.setPreferredSize(new Dimension(370, 532));
-	    dialogTabs.setMaximumSize(new Dimension (370, 532));
+	    dialogTabs.setMinimumSize(new Dimension (370, 552));
+	    dialogTabs.setPreferredSize(new Dimension(370, 552));
+	    dialogTabs.setMaximumSize(new Dimension (370, 552));
 	    
-	    JPanel[] tabs = new JPanel[2];
+	    JPanel[] tabs = new JPanel[1];
 	    
 	    JPanel panelA = new JPanel(new GridLayout(1, 3, 10, 10));
 	    
@@ -574,13 +658,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     	tabs[0].setName("Tab 1");
     	dialogTabs.addTab("Tab 1", tabs[0]);
     	tabCount = 1;
-    	
-    	tabs[1] = new JPanel();
-    	tabs[1].addComponentListener(customPane);
-    	tabs[1].addComponentListener(this);
-    	tabs[1].setName(NEW_TAB);
-    	dialogTabs.addTab("Click to create a new tab...", tabs[1]);
-    	
+	
     	dialogTabs.addComponentListener(this);
 	            
 	    return panelA;
@@ -588,6 +666,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	
 	private JPanel initMuscleTab(int currentTab) {
 		JPanel gridPane = new JPanel();
+		
+		
+		
 		//TODO: Use sequential groups in 1.6 to force display of nonedit and 
 		//edit text field next to each other
 		String editStr;
@@ -603,13 +684,22 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			customVOI.get(currentTab).get(i).setBorder(MipavUtil.buildTitledBorder("VOI #"+(i+1)));
 			gridPane.add(customVOI.get(currentTab).get(i));
 		}
-		
+		JButton incPaneButton = new JButton(ADD_PANE);
+		incPaneButton.addActionListener(this);
 		JButton incButton = new JButton(ADD_VOI);
 		incButton.addActionListener(this);
 		JButton launchButton = new JButton(LAUNCH);
 		launchButton.addActionListener(this);
+		JButton openButton = new JButton(OPEN_TEMPLATE);
+		openButton.addActionListener(this);
+		JButton saveButton = new JButton(SAVE_TEMPLATE);
+		saveButton.addActionListener(this);
+		
+		gridPane.add(incPaneButton);
 		gridPane.add(incButton);
 		gridPane.add(launchButton);
+		gridPane.add(openButton);
+		gridPane.add(saveButton);
 		gridPane.setName("Tab "+currentTab);
 		tabs.add(gridPane);
 		return gridPane;
@@ -626,17 +716,17 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	}
 	
 	public enum Option {
-		Color("Color", java.awt.Color.RED),
+		Color("Color", java.awt.Color.BLACK),
 		
 		Symmetry("Symmetry", PlugInMuscleImageDisplay.Symmetry.NO_SYMMETRY),
 		
-		Num_Curves("Number of curves", 1),
+		Num_Curves("Num_Curves", 1),
 		
-		Do_Calc("Perform calculations", false),
+		Do_Calc("Do_Calc", false),
 		
-		Do_Fill("Fill VOI on custom LUT", false),
+		Do_Fill("Do_Fill", false),
 		
-		Is_Closed("Curves are closed", true);
+		Is_Closed("Is_Closed", true);
 		
 		final String text;
 		final Object setting;
@@ -645,32 +735,42 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			this.text = text;
 			this.setting = setting;
 		}
+		
+		public String toString() {
+			return text;
+		}
 	}
 	
-	
+	private class FileManager {
 		
-		public static final String START_VOI = "Start VOI";
+		public static final String START_VOI = "Start Voi";
 		public static final String START_PANE = "Start Pane";
 		public static final String END_VOI = "End Voi";
 		public static final String END_PANE = "End Pane";
 		
+
+		private PlugInAlgorithmMuscleSegmentation parent;
 		
+		public FileManager(PlugInAlgorithmMuscleSegmentation parent) {
+			this.parent = parent;
+			System.out.println("Here it is "+System.getProperty("line.separator")+"there it was");
+		}
 		
 		/**
-		 * Checks that the file specified by name exists and is the correct extension (txt).  Does
+		 * Checks that the file specified by name exists and is the correct extension (nia).  Does
 		 * not check validity of file. Returned value indicates success of
 		 * checking file.
-		 * @param name
+		 * @param fileName
 		 * @return
 		 */
-		private boolean fileCheck(String name) {
-			File file = new File(name);
+		private boolean fileCheck(String fileName) {
+			File file = new File(fileName);
 			if(!file.exists())
 				return false;
 			JFileChooser fileChoose = new JFileChooser();
 			String fileType = fileChoose.getTypeDescription(file);
 			System.out.println(fileType);
-			if(!fileType.equals("txt"))
+			if(!fileType.equals("Text Document"))
 				return false;
 			return true;
 		}
@@ -679,30 +779,34 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		 * Reads the information stored in the file identified by name and stores in customVOI
 		 * necessary information in standard format. Returned value indicates success of
 		 * reading file.
-		 * @param name
+		 * @param fileName
 		 */
 		
-		private ArrayList<ArrayList<MusclePane>> fileRead(String name) {
+		private ArrayList<ArrayList<MusclePane>> fileRead(String fileName) {
 			BufferedReader input = null;
-			ArrayList<ArrayList<MusclePane>> customVOI = new ArrayList();
 			try {
-				input = new BufferedReader(new FileReader(name));
+				input = new BufferedReader(new FileReader(fileName));
 				MusclePane currentPane = null;
-				String line, title, value, voiName;
-				int paneNum = 0;
+				String line, title, value = null, voiName;
+				int paneNum = 0, voiNum = 0;
 				boolean inPane = false, inVoi = false;
 		 parse: while((line = input.readLine()) != null) {
 			 		int breakPoint = line.indexOf(':');
-					title = line.substring(0, breakPoint).trim();
-					value = line.substring(breakPoint+1).trim();	
+			 		if(breakPoint != -1) {
+						title = line.substring(0, breakPoint).trim();
+						value = line.substring(breakPoint+1).trim();	
+			 		} else 
+			 			title = line;
 				 	if(inPane) {
-						if(title.equals(END_PANE))
+						if(title.equals(END_PANE)) {
 							inPane = false;
-						else {
+							paneNum++;
+						} else {
 							if(inVoi) {
-								if(title.equals(END_VOI))
+								if(title.equals(END_VOI)) {
 									inVoi = false;
-								else {
+									voiNum++;
+								} else {
 									switch(Option.valueOf(title)) {
 									
 									case Color:
@@ -714,7 +818,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 										break;
 										
 									case Symmetry:
-										currentPane.setSymmetry(PlugInMuscleImageDisplay.Symmetry.valueOf(value));
+										if(value.equals(PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT.toString()))
+											currentPane.setSymmetry(PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT);
+										else if(value.equals(PlugInMuscleImageDisplay.Symmetry.TOP_BOTTOM.toString()))
+											currentPane.setSymmetry(PlugInMuscleImageDisplay.Symmetry.TOP_BOTTOM);
+										else if(value.equals(PlugInMuscleImageDisplay.Symmetry.NO_SYMMETRY.toString()))
+											currentPane.setSymmetry(PlugInMuscleImageDisplay.Symmetry.NO_SYMMETRY);
 										break;
 										
 									case Num_Curves:
@@ -738,9 +847,23 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 							} else {
 								if(title.equals(START_VOI)) {
 									voiName = value;
-									currentPane = new MusclePane(this);
+									if(voiNum > customVOI.get(paneNum).size()-1) {
+										int length = 0;
+										Component[] comps = tabs.get(activeTab).getComponents();
+										for(int i=0; i<comps.length; i++) {
+											if(comps[i] instanceof MusclePane)
+												length++;
+										}
+										currentPane = new MusclePane(parent);
+										currentPane.setBorder(MipavUtil.buildTitledBorder("VOI #"+(length+1)));
+										customVOI.get(activeTab).add(currentPane);
+										tabs.get(activeTab).add(currentPane, comps.length-5);
+									} else {
+										currentPane = customVOI.get(paneNum).get(voiNum);	
+									}
+									inVoi = true;
 									currentPane.setName(voiName);
-									customVOI.get(paneNum).add(currentPane);
+									
 								} else {
 									MipavUtil.displayError("Badly formatted file.  Exiting program.");
 									break parse;
@@ -749,8 +872,26 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 						}
 					} else {
 						if(title.equals(START_PANE)) {
-							customVOI.add(new ArrayList<MusclePane>());
-							paneNum = customVOI.size()-1;
+							if(paneNum > customVOI.size()-1) {
+								//customVOI.add(new ArrayList<MusclePane>());
+								//titlesArr.add(new JTextField(value));
+								
+								JPanel newPanel = initMuscleTab(tabCount);
+						    	
+								newPanel.addComponentListener(customPane);
+								newPanel.addComponentListener(parent);
+								newPanel.setName("Tab "+(tabCount+1));
+								
+								dialogTabs.addTab("Tab "+(tabCount+1), newPanel);
+								
+								dialogTabs.setSelectedIndex(tabCount);
+								activeTab = tabCount;
+								tabCount++;
+							} else
+								//change text here
+								titlesArr.get(paneNum).setText("Enter the title for this panel");
+							voiNum = 0;
+							inPane = true;
 						} else {
 							MipavUtil.displayError("Badly formatted file.  Exiting program.");
 							break parse;
@@ -761,7 +902,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				MipavUtil.displayError("File not found despite passing internal check system.");
 				e.printStackTrace();
 				return null;
-			} catch(IOException e) {
+			} catch(Exception e) {
 				MipavUtil.displayError("Error reading file, re-open file.");
 				e.printStackTrace();
 				return null;
@@ -776,7 +917,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 					e.printStackTrace();
 					return null;
 				}
-			} 
+			} 	
 			return null;
 		}
 		
@@ -784,42 +925,44 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		 * Writes the information stored in customVOI into a text file conatining all
 		 * necessary information in standard format. Returned value indicates success of
 		 * writing file.
-		 * @param name
+		 * @param fileName
 		 */
 		
-		private boolean fileWrite(String name) {
+		private boolean fileWrite(String fileName) {
 			BufferedWriter output = null;
 			MusclePane voi = null;
 			try {
-				output = new BufferedWriter(new FileWriter(name));
+				output = new BufferedWriter(new FileWriter(fileName));
 				for(int i=0; i<customVOI.size(); i++) {
-					output.write(START_PANE+": "+i);
-					for(int j=0; j<customVOI.get(i).size(); j++) {
+					output.write(START_PANE+": "+titlesArr.get(i).getText()+"\n");
+			  pane: for(int j=0; j<customVOI.get(i).size(); j++) {
+				  		if(customVOI.get(i).get(j).getName().equals(DEFAULT_VOI))
+				  			break pane;
 						voi = customVOI.get(i).get(j);
-						output.write(START_VOI+": "+voi.getName());
+						output.write(START_VOI+": "+voi.getName()+"\n");
 						Color col = null;
 						if(!(col = voi.getColorButton()).equals(Option.Color.setting)) {						
 							output.write(Option.Color.text+": "+
-											col.getRed()+","+col.getGreen()+","+col.getBlue());
+											col.getRed()+","+col.getGreen()+","+col.getBlue()+"\n");
 						}
 						if(!voi.getSymmetry().equals(Option.Symmetry.setting)) {
-							output.write(Option.Symmetry.text+": "+voi.getSymmetry());
+							output.write(Option.Symmetry.text+": "+voi.getSymmetry()+"\n");
 						}
 						if(!Integer.valueOf(voi.getNumCurves()).equals(Option.Num_Curves.setting)) {
-							output.write(Option.Num_Curves.text+": "+voi.getNumCurves());
+							output.write(Option.Num_Curves.text+": "+voi.getNumCurves()+"\n");
 						}
 						if(!Boolean.valueOf(voi.getDoCalc()).equals(Option.Do_Calc.setting)) {
-							output.write(Option.Do_Calc.text+": "+voi.getDoCalc());
+							output.write(Option.Do_Calc.text+": "+voi.getDoCalc()+"\n");
 						}
 						if(!Boolean.valueOf(voi.getDoFill()).equals(Option.Do_Fill.setting)) {
-							output.write(Option.Do_Fill.text+": "+voi.getDoFill());
+							output.write(Option.Do_Fill.text+": "+voi.getDoFill()+"\n");
 						}
 						if(!Boolean.valueOf(voi.getIsClosed()).equals(Option.Is_Closed.setting)) {
-							output.write(Option.Is_Closed.text+": "+voi.getIsClosed());
+							output.write(Option.Is_Closed.text+": "+voi.getIsClosed()+"\n");
 						}
-						output.write(END_VOI);
+						output.write(END_VOI+"\n");
 					}
-					output.write("END_PANE");
+					output.write(END_PANE+"\n");
 				}
 			} catch(IOException e) {
 				MipavUtil.displayError("Error writing file, bad requested file name.");
@@ -840,7 +983,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			} 
 			return false;
 		}
-	
+	}
 	
 	private class MusclePane extends JPanel implements Serializable {
 		
