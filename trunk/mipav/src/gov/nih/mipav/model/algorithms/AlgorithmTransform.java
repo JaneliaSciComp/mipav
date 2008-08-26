@@ -11635,8 +11635,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         Y = (temp2 + (kmm * T12)) / iYres;
 
                         if ((Y > -0.5f) && (Y < iYdim)) {
-                            temp1 = 0;
-                            T22 = 1.0f;
                             Z = (temp1 + (kmm * T22)) / iZres;
 
                             if ((Z > -0.5f) && (Z < iZdim)) {
