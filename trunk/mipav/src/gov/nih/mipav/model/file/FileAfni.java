@@ -1244,10 +1244,9 @@ public class FileAfni extends FileBase {
         tagsetFloats = null;
         tagsetLabelsString = null;
         tAxisOffsets = null;
-        if (tInfo != null) {
-            tInfo.finalize();
-        }
-        tInfo = null;
+        // Do not do tInfo.finalize();
+        // Do not do tInfo = null;
+        // tInfo may be needed for transformation between ORIG, ACPC, and TLRC.
         tlrcRes = null;
         typeString = null;
         volregBaseIdcodeString = null;
