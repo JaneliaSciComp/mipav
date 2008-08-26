@@ -113,6 +113,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     
     /**Whether new tabs are in a position to be created. */
     private boolean doEval = false;
+    
+    /**Name of file if image is of type run-time defined*/
+    private String fileName;
 
     /**
      * Constructor.
@@ -121,11 +124,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
      * @param  srcImg       Source image model.
      */
     public PlugInAlgorithmMuscleSegmentation(ModelImage srcImg, PlugInMuscleImageDisplay.ImageType imageType, 
-    											Frame parentFrame, boolean multipleSlices) {
+    											Frame parentFrame, boolean multipleSlices, String fileName) {
         super(null, srcImg);
         this.imageType = imageType;
         this.parentFrame = parentFrame;
         this.multipleSlices = multipleSlices;
+        //is equal to blank string if image is not run-time defined
+        this.fileName = fileName;
         
         tabs = new ArrayList();
     }
@@ -159,6 +164,26 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
             	customDialog.setVisible(true);
             	doEval = true;
             	break;
+            	
+            case RunTimeDefined: 
+            	customPane = new ViewJFrameImage(srcImage);
+            	customPane.setVisible(false);
+        		titlesArr = new ArrayList();
+        	    
+        		//removes extra scrollPane from the mipav-loaded plugin
+        		if (ViewUserInterface.getReference().isAppFrameVisible()) {
+        			customPane.getContentPane().remove(0);
+        	    } 
+            	
+        		customVOI = new ArrayList();
+        		FileManager manager = new FileManager(this);
+		    	manager.fileRead(srcImage.getImageDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator+fileName);	
+        		
+            	buildCustomDialog();
+				srcImage = (ModelImage)customPane.getImageA().clone();
+				customPane.dispose();
+				performDialog();
+				break;
                 
             default:
                 displayError("Image type not supported");
@@ -907,14 +932,15 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 								newPanel.addComponentListener(parent);
 								newPanel.setName("Tab "+(tabCount+1));
 								
-								dialogTabs.addTab("Tab "+(tabCount+1), newPanel);
-								
-								dialogTabs.setSelectedIndex(tabCount);
+								if(imageType.equals(PlugInMuscleImageDisplay.ImageType.Custom)) {
+									dialogTabs.addTab("Tab "+(tabCount+1), newPanel);
+									dialogTabs.setSelectedIndex(tabCount);
+								}
 								activeTab = tabCount;
+								titlesArr.get(paneNum).setText(value);
 								tabCount++;
 							} else
-								//change text here
-								titlesArr.get(paneNum).setText("Enter the title for this panel");
+								titlesArr.get(paneNum).setText(value);
 							voiNum = 0;
 							inPane = true;
 						} else {

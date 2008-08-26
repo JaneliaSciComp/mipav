@@ -51,6 +51,9 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     /** The source image */
     private ModelImage image; 
     
+    /** String defined by RunTime image type*/
+    private String fileName = new String();
+    
     /** Segmentation algorithm */
     private PlugInAlgorithmMuscleSegmentation muscleSegAlgo = null;
 
@@ -147,7 +150,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         try {
             //FileInfoBase[] info = image.getFileInfo();
             //info[0].displayAboutInfo(this); //expecting a 2D image
-            muscleSegAlgo = new PlugInAlgorithmMuscleSegmentation(image, imageType, parentFrame, multipleSlices);
+            muscleSegAlgo = new PlugInAlgorithmMuscleSegmentation(image, imageType, parentFrame, multipleSlices, fileName);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -301,8 +304,13 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         } else if (customRadio.isSelected()) {
         	imageType = PlugInMuscleImageDisplay.ImageType.Custom;
         } else {
-            MipavUtil.displayWarning("You have selected an invalid image type.");
-            return false;
+        	//load custom
+            imageType = PlugInMuscleImageDisplay.ImageType.RunTimeDefined;
+            for(int i=0; i<extraRadio.length; i++) {
+            	if(extraRadio[i].isSelected())
+            		fileName = extraRadio[i].getText();
+            }
+            System.out.println("File name: "+fileName);
         }
         return true;
     }

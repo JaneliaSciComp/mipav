@@ -154,7 +154,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         Custom, 
         
         /** unknown image type, generally represents an error state */
-        Unknown
+        Unknown,
+        
+        /** 
+         * ImageType is defined at run time, note that maintaing this distinction allows for
+         * dependencies to be integrated, will see if this funcionality is needed.
+         */
+        RunTimeDefined
     }
     
     public enum Symmetry{
