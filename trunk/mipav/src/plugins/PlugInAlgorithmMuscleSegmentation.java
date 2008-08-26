@@ -218,6 +218,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				buildCustomDialog();
 				srcImage = customPane.getImageA();
 				performDialog();
+				customPane.dispose();
 			}
 		} else if(e.getActionCommand().equals(OPEN_TEMPLATE)) {
 			JFileChooser chooser = new JFileChooser();

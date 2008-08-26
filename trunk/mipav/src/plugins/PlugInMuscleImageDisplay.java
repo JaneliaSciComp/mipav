@@ -199,7 +199,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     }
  
     /**
-     * Constructor for creating pluging within MIPAV system.
+     * Constructor for creating plugin within MIPAV system.
      * @param image
      * @param titles
      * @param voiList
@@ -216,7 +216,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	ViewJProgressBar progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
     	Vector <Frame> vec = userInterface.getImageFrameVector();
     	String fileName = image.getFileInfo()[0].getFileName();
-    	for(int i=0; i<vec.size(); i++) {
+    	/*for(int i=0; i<vec.size(); i++) {
     		if(!vec.get(i).getClass().equals(this.getClass())) {
     			if(vec.get(i) instanceof ViewJFrameImage) {
     				if(((ViewJFrameImage)vec.get(i)).getActiveImage().getFileInfo()[0].getFileName().equals(fileName)) {
@@ -225,7 +225,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     				}
     			}
     		}
-    	}
+    	}*/
     	setVisible(false);
         
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
@@ -658,7 +658,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 return;
             } else if(reply == JOptionPane.YES_OPTION && !standAlone) {
             	//reshow the hidden frame
-            	hiddenFrame.setVisible(true);
+            	//hiddenFrame.setVisible(true);
             }
         }
 

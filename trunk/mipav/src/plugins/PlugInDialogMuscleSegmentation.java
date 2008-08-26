@@ -299,6 +299,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
     
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
+     *.
      *
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
