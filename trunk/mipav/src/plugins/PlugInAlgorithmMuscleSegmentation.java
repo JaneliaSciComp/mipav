@@ -10,35 +10,23 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.TreeMap;
 
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 
@@ -202,9 +190,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	public void actionPerformed(ActionEvent e) {
 		System.out.println("Found a new action: "+e.getSource()+"\t"+e.getActionCommand());
 		if(e.getSource() instanceof PlugInMuscleColorButton) {
-        	PlugInMuscleColorButton obj = ((PlugInMuscleColorButton)e.getSource());
         	customPane.getComponentImage().getVOIHandler().showColorDialog();
-        	System.out.println("Should have showed");
 		} else if(e.getSource() instanceof JButton && ((JButton)e.getSource()).getText().equals("OK")) {
 			if(checkPanel()) {
 				buildCustomDialog();
@@ -221,7 +207,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			pane.setBorder(MipavUtil.buildTitledBorder("VOI #"+(length)));
 			customVOI.get(activeTab).add(pane);
 			
-			verticalPane.get(activeTab).setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+			verticalPane.get(activeTab).setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 			int lastHeight = (int)tabs.get(activeTab).getPreferredSize().getHeight();
 			tabs.get(activeTab).setPreferredSize(new Dimension(370, lastHeight+106));
 			
@@ -244,13 +230,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		    
 		    if(returnVal == JFileChooser.APPROVE_OPTION) {
 		    	FileManager manager = new FileManager(this);
-		    	System.out.println(chooser.getSelectedFile().getAbsolutePath());
-		    	doEval = false;
 		    	manager.fileRead(chooser.getSelectedFile().getAbsolutePath());	
 		    	customPane.validate();
-		    	doEval = true;
-		    	//System.out.println(chooser.getSelectedFile().getName());
-		       //Preferences.setImageDirectory(chooser.getSelectedFile().getAbsoluteFile().getParent());
 		    }
 		} else if(e.getActionCommand().equals(SAVE_TEMPLATE)) {
 			JFileChooser chooser = new JFileChooser();
@@ -263,9 +244,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 String fileName = chooser.getSelectedFile().getName();
                 String fileDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                if(fileName.indexOf(".nia") == -1)
+                	fileName += ".nia";
                 File file = new File(fileDir + fileName);
                 FileManager manager = new FileManager(this);
-                System.out.println(file.getAbsolutePath());
                 manager.fileWrite(file.getAbsolutePath());
                
             } else {
@@ -285,8 +267,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				
 				activeTab = tabCount;
 
-				JScrollPane verticalPaneSingle = new JScrollPane(newPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, 
-						JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+				JScrollPane verticalPaneSingle = new JScrollPane(newPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, 
+						ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
 		    	verticalPaneSingle.setMinimumSize(new Dimension (370, 585));
 		    	verticalPaneSingle.setPreferredSize(new Dimension(370, 585));
@@ -323,7 +305,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		if(e.getSource() instanceof JScrollPane && doEval && ((JScrollPane)e.getSource()).getViewport().getView() instanceof JPanel) {
 			if(((JPanel)((JScrollPane)e.getSource()).getViewport().getView()).getName().indexOf("Tab ") != -1) {
 				activeTab = Integer.valueOf(((JPanel)((JScrollPane)e.getSource()).getViewport().getView()).getName().substring(4)).intValue()-1;
-				System.out.println("Active tab changed to: "+activeTab);
 			}
 		}
 	}
@@ -737,8 +718,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    tabs[0].setMaximumSize(new Dimension (370, 8000));
     	
 	    verticalPane = new ArrayList();
-	    JScrollPane verticalPaneSingle = new JScrollPane(tabs[0], JScrollPane.VERTICAL_SCROLLBAR_NEVER, 
-										JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+	    JScrollPane verticalPaneSingle = new JScrollPane(tabs[0], ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, 
+										ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 	    verticalPaneSingle.addComponentListener(this);
     	
     	verticalPaneSingle.setMinimumSize(new Dimension (370, 585));
@@ -841,7 +822,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		
 		public FileManager(PlugInAlgorithmMuscleSegmentation parent) {
 			this.parent = parent;
-			System.out.println("Here it is "+System.getProperty("line.separator")+"there it was");
 		}
 		
 		/**
@@ -857,7 +837,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				return false;
 			JFileChooser fileChoose = new JFileChooser();
 			String fileType = fileChoose.getTypeDescription(file);
-			System.out.println(fileType);
 			if(!fileType.equals("Text Document"))
 				return false;
 			return true;
@@ -980,8 +959,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 								newPanel.setMaximumSize(new Dimension (370, 8000));
 								
 								if(imageType.equals(PlugInMuscleImageDisplay.ImageType.Custom)) {				
-									JScrollPane verticalPaneSingle = new JScrollPane(newPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, 
-											JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+									JScrollPane verticalPaneSingle = new JScrollPane(newPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, 
+											ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 	    	
 							    	verticalPaneSingle.setMinimumSize(new Dimension (370, 585));
 							    	verticalPaneSingle.setPreferredSize(new Dimension(370, 585));
