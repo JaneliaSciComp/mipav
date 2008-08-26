@@ -1486,8 +1486,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 					if (setPix) {		
 						float fovX = iXres * (iXdim-constantFOV);
 						float fovY = iYres * (iYdim-constantFOV);
-						oXdim = (int) (fovX / oXres) + constantFOV;
-						oYdim = (int) (fovY / oYres) + constantFOV;
+						oXdim = (int)Math.round(fovX / oXres) + constantFOV;
+						oYdim = (int)Math.round(fovY / oYres) + constantFOV;
 					} else {
 						oXdim = selectedImg.getExtents()[0];
 						oYdim = selectedImg.getExtents()[1];
@@ -1498,7 +1498,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 						//units[2] = selectedImg.getUnitsOfMeasure(2);
 						if (setPix) {
 							float fovZ = iZres * (iZdim-constantFOV);
-							oZdim = (int) (fovZ / oZres) + constantFOV;
+							oZdim = (int)Math.round(fovZ / oZres) + constantFOV;
 							
 						} else {
 							oZdim = selectedImg.getExtents()[2];
@@ -3580,8 +3580,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             if (setPix) {
                 fovX = iXres * (iXdim-constantFOV);
                 fovY = iYres * (iYdim-constantFOV);
-                oXdim = (int) (fovX / oXres) + constantFOV;
-                oYdim = (int) (fovY / oYres) + constantFOV;
+                oXdim = (int)Math.round(fovX / oXres) + constantFOV;
+                oYdim = (int)Math.round(fovY / oYres) + constantFOV;
             } else {
                 oXdim = selectedImg.getExtents()[0];
                 oYdim = selectedImg.getExtents()[1];
@@ -3592,7 +3592,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 units[2] = selectedImg.getUnitsOfMeasure(2);
                 if (setPix) {
                     fovZ = iZres * (iZdim-constantFOV);
-                    oZdim = (int) (fovZ / oZres) + constantFOV;
+                    oZdim = (int)Math.round(fovZ / oZres) + constantFOV;
                 } else {
                     oZdim = selectedImg.getExtents()[2];
                 }
