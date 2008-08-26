@@ -29,6 +29,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -66,6 +67,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     public static final String SAVE_TEMPLATE = "Save template";
     public static final String SAVE = "Save";
     public static final String DEFAULT_VOI = "Enter VOI name";
+    public static final String DEFAULT_PANE = "Enter the title for this panel";
     
     //~ Instance fields ------------------------------------------------------------------------------------------------    
     
@@ -95,6 +97,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     
     /**Each particular tab is represented here.*/
     private ArrayList<JPanel> tabs;
+    
+    /**ArrayList of scrollPanes to have policies defined on add VOI call*/
+    private ArrayList<JScrollPane> verticalPane;
     
     /**list of titles used for each pane*/
     private String[] titles;
@@ -215,6 +220,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			MusclePane pane = new MusclePane(this);
 			pane.setBorder(MipavUtil.buildTitledBorder("VOI #"+(length)));
 			customVOI.get(activeTab).add(pane);
+			
+			verticalPane.get(activeTab).setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+			int lastHeight = (int)tabs.get(activeTab).getPreferredSize().getHeight();
+			tabs.get(activeTab).setPreferredSize(new Dimension(370, lastHeight+106));
+			
 			tabs.get(activeTab).add(pane, comps.length-5);
 			tabs.get(activeTab).validate();
 		} else if(e.getActionCommand().equals(LAUNCH)) {
@@ -268,11 +278,26 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				newPanel.addComponentListener(customPane);
 				newPanel.addComponentListener(this);
 				newPanel.setName("Tab "+(tabCount+1));
+
+				newPanel.setMinimumSize(new Dimension (370, 585));
+				newPanel.setPreferredSize(new Dimension(370, 585));
+				newPanel.setMaximumSize(new Dimension (370, 8000));
 				
-				dialogTabs.addTab("Tab "+(tabCount+1), newPanel);
-				
-				dialogTabs.setSelectedIndex(tabCount);
 				activeTab = tabCount;
+
+				JScrollPane verticalPaneSingle = new JScrollPane(newPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, 
+						JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+		    	verticalPaneSingle.setMinimumSize(new Dimension (370, 585));
+		    	verticalPaneSingle.setPreferredSize(new Dimension(370, 585));
+		    	verticalPaneSingle.setMaximumSize(new Dimension (370, 585));
+		    	verticalPaneSingle.addComponentListener(this);
+		    	
+		    	verticalPane.add(verticalPaneSingle);
+		    	
+		    	dialogTabs.addTab("Tab "+(tabCount+1), verticalPaneSingle);
+		    	dialogTabs.setSelectedIndex(tabCount);
+				
 				tabCount++;
 		} else {
 			super.actionPerformed(e);
@@ -295,9 +320,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	 * Creates new tab when panel is shown
 	 */
 	public void componentShown(ComponentEvent e) {
-		if(e.getSource() instanceof JPanel && doEval) {
-			if(((JPanel)e.getSource()).getName().indexOf("Tab ") != -1) {
-				activeTab = Integer.valueOf(((JPanel)e.getSource()).getName().substring(4)).intValue()-1;
+		if(e.getSource() instanceof JScrollPane && doEval && ((JScrollPane)e.getSource()).getViewport().getView() instanceof JPanel) {
+			if(((JPanel)((JScrollPane)e.getSource()).getViewport().getView()).getName().indexOf("Tab ") != -1) {
+				activeTab = Integer.valueOf(((JPanel)((JScrollPane)e.getSource()).getViewport().getView()).getName().substring(4)).intValue()-1;
+				System.out.println("Active tab changed to: "+activeTab);
 			}
 		}
 	}
@@ -685,9 +711,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    scrollPane.addKeyListener(customPane);    
 	  
 	    dialogTabs = new JTabbedPane();
-	    dialogTabs.setMinimumSize(new Dimension (370, 552));
-	    dialogTabs.setPreferredSize(new Dimension(370, 552));
-	    dialogTabs.setMaximumSize(new Dimension (370, 552));
+	    dialogTabs.setMinimumSize(new Dimension (370, 585));
+	    dialogTabs.setPreferredSize(new Dimension(370, 585));
+	    dialogTabs.setMaximumSize(new Dimension (370, 585));
 	    
 	    JPanel[] tabs = new JPanel[1];
 	    
@@ -706,7 +732,22 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     	tabs[0].addComponentListener(customPane);
     	tabs[0].addComponentListener(this);
     	tabs[0].setName("Tab 1");
-    	dialogTabs.addTab("Tab 1", tabs[0]);
+    	tabs[0].setMinimumSize(new Dimension (370, 585));
+	    tabs[0].setPreferredSize(new Dimension(370, 585));
+	    tabs[0].setMaximumSize(new Dimension (370, 8000));
+    	
+	    verticalPane = new ArrayList();
+	    JScrollPane verticalPaneSingle = new JScrollPane(tabs[0], JScrollPane.VERTICAL_SCROLLBAR_NEVER, 
+										JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+	    verticalPaneSingle.addComponentListener(this);
+    	
+    	verticalPaneSingle.setMinimumSize(new Dimension (370, 585));
+    	verticalPaneSingle.setPreferredSize(new Dimension(370, 585));
+    	verticalPaneSingle.setMaximumSize(new Dimension (370, 585));
+    	
+    	verticalPane.add(verticalPaneSingle);
+    	
+    	dialogTabs.addTab("Tab 1", verticalPaneSingle);
     	tabCount = 1;
 	
     	dialogTabs.addComponentListener(this);
@@ -716,13 +757,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	
 	private JPanel initMuscleTab(int currentTab) {
 		JPanel gridPane = new JPanel();
-		
-		
-		
-		//TODO: Use sequential groups in 1.6 to force display of nonedit and 
-		//edit text field next to each other
-		String editStr;
-		JTextField title = new JTextField(editStr = "Enter the title for this panel");
+		JTextField title = new JTextField(DEFAULT_PANE);
+		title.setMinimumSize(new Dimension(180, 25));
+		title.setPreferredSize(new Dimension(180, 25));
+		title.setMaximumSize(new Dimension(180, 25));
 		gridPane.add(title);
 		titlesArr.add(title);
 		
@@ -904,6 +942,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 											if(comps[i] instanceof MusclePane)
 												length++;
 										}
+										
+										if(imageType.equals(PlugInMuscleImageDisplay.ImageType.Custom))
+											verticalPane.get(activeTab).setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+										int lastHeight = (int)tabs.get(activeTab).getPreferredSize().getHeight();
+										tabs.get(activeTab).setPreferredSize(new Dimension(370, lastHeight+106));
+										
 										currentPane = new MusclePane(parent);
 										currentPane.setBorder(MipavUtil.buildTitledBorder("VOI #"+(length+1)));
 										customVOI.get(activeTab).add(currentPane);
@@ -931,10 +975,23 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 								newPanel.addComponentListener(customPane);
 								newPanel.addComponentListener(parent);
 								newPanel.setName("Tab "+(tabCount+1));
+								newPanel.setMinimumSize(new Dimension (370, 585));
+								newPanel.setPreferredSize(new Dimension(370, 585));
+								newPanel.setMaximumSize(new Dimension (370, 8000));
 								
-								if(imageType.equals(PlugInMuscleImageDisplay.ImageType.Custom)) {
-									dialogTabs.addTab("Tab "+(tabCount+1), newPanel);
-									dialogTabs.setSelectedIndex(tabCount);
+								if(imageType.equals(PlugInMuscleImageDisplay.ImageType.Custom)) {				
+									JScrollPane verticalPaneSingle = new JScrollPane(newPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, 
+											JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+	    	
+							    	verticalPaneSingle.setMinimumSize(new Dimension (370, 585));
+							    	verticalPaneSingle.setPreferredSize(new Dimension(370, 585));
+							    	verticalPaneSingle.setMaximumSize(new Dimension (370, 5000));
+							    	verticalPaneSingle.addComponentListener(parent);
+							    	
+							    	verticalPane.add(verticalPaneSingle);
+							    	
+							    	dialogTabs.addTab("Tab "+(tabCount+1), verticalPaneSingle);
+							    	dialogTabs.setSelectedIndex(tabCount);
 								}
 								activeTab = tabCount;
 								titlesArr.get(paneNum).setText(value);
