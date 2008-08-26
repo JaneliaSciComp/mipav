@@ -215,20 +215,7 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         setForeground(Color.black);
         setTitle("NIA Muscle Segmentation");
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        int yPos = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 1;
-        gbc.insets = new Insets(3, 3, 3, 3);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 0;
-        gbc.gridy = yPos++;
-
-        JPanel mainPanel = new JPanel(new GridBagLayout());
-        mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder("What kind of image?"));
+        
         
         twoThighRadio = new JRadioButton("Two thighs");
         twoThighRadio.setFont(MipavUtil.font12);
@@ -261,12 +248,32 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         }
         group.add(customRadio);
         
-        mainPanel.add(twoThighRadio);
-        mainPanel.add(abdomenRadio);
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        mainPanel.setForeground(Color.black);
+        mainPanel.setBorder(buildTitledBorder("What kind of image?"));
+       
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        mainPanel.add(twoThighRadio, gbc);
+        gbc.gridx = 1;
+        mainPanel.add(abdomenRadio, gbc);
         for(int i=0; i<extraRadio.length; i++) {
-        	mainPanel.add(extraRadio[i]);
+        	if((gbc.gridx+1)%3 == 0) {
+        		gbc.gridy++;
+        		gbc.gridx = 0;
+        	} else
+        		gbc.gridx++;
+        	mainPanel.add(extraRadio[i], gbc);
         }
-        mainPanel.add(customRadio);
+        gbc.gridx++;
+        mainPanel.add(customRadio, gbc);
         
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
