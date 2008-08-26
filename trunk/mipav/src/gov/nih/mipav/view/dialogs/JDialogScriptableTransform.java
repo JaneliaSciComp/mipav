@@ -1296,13 +1296,14 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         if ((image.getNDims() == 2) || (do25D)) {
             Preferences.debug("oXres, oYres = " + oXres + ", " + oYres);
             Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n");
-            System.out.println(xfrm);
+            Preferences.debug("xfrm = " + xfrm);
             algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip, doPad, doRotateCenter, center);
             algoTrans.setPadValue(padValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
         } else { // ((image.getNDims() >= 3) && (!do25D))
             Preferences.debug("oXres, oYres, oZres = " + oXres + ", " + oYres + ", " + oZres);
             Preferences.debug(" oXdim, oYdim, oZdim = " + oXdim + ", " + oYdim + ", " + oZdim + "\n");
+            Preferences.debug("xfrm = " + xfrm);
             algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, 
             	units, doVOI, doClip, doPad, doRotateCenter, center);
             algoTrans.setPadValue(padValue);
