@@ -635,11 +635,15 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
                 // Hide dialog since the algorithm is about to run
                 setVisible(false);
-
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (FFTAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
+                
+                if (isRunInSeparateThread()) {
+	                // Start the thread as a low priority because we wish to still have user interface work fast.
+	                if (FFTAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+	                    MipavUtil.displayError("A thread is already running on this object");
+	                }
+                } else {
+                	FFTAlgo.run();
+                } 
             } catch (OutOfMemoryError x) {
                 MipavUtil.displayError("Dialog FFT: unable to allocate enough memory");
 
@@ -683,10 +687,14 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                                                                                       (imageFrames.elementAt(i)));
                 }
 
-                // Start the thread as a low priority because we wish to still have user interface.
-                if (FFTAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
+                if (isRunInSeparateThread()) {
+	                // Start the thread as a low priority because we wish to still have user interface work fast.
+	                if (FFTAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+	                    MipavUtil.displayError("A thread is already running on this object");
+	                }
+                } else {
+                	FFTAlgo.run();
+                } 
             } catch (OutOfMemoryError x) {
                 MipavUtil.displayError("Dialog FFT: unable to allocate enough memory");
 
