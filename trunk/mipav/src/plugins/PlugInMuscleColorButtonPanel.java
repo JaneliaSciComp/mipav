@@ -19,11 +19,13 @@ import javax.swing.JPanel;
 	public class PlugInMuscleColorButtonPanel extends JPanel {
 	
 		private PlugInMuscleColorButton colorButton;
+		private ActionListener container;
 		
 		public PlugInMuscleColorButtonPanel(Color c, String voiName, ActionListener container) {
 			super();
 			this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-			colorButton = new PlugInMuscleColorButton(c, voiName);
+			this.container = container;
+			colorButton = new PlugInMuscleColorButton(c, voiName, this);
 			colorButton.addActionListener(container);
 			add(colorButton);
 		}
@@ -33,6 +35,13 @@ import javax.swing.JPanel;
 		 */
 		public PlugInMuscleColorButton getColorButton() {
 			return colorButton;
+		}
+		
+		/**
+		 * Returns the listener to this panel
+		 */
+		public ActionListener getContainer() {
+			return container;
 		}
 
 		
@@ -65,14 +74,18 @@ import javax.swing.JPanel;
 		/**The name of the voi corresponding to this button.*/
 		private String voiName;
 		
+		/**Maintains reference to containing panel for easy action processing*/
+		private PlugInMuscleColorButtonPanel container;
+		
 		/**
 		 * Constructs a colorButton with the given color and name 
 		 * with standard dimension of 20px by 20px.
 		 */
-		public PlugInMuscleColorButton(Color c, String voiName) {
+		public PlugInMuscleColorButton(Color c, String voiName, PlugInMuscleColorButtonPanel container) {
 			super();
 			cIcon = new ColorIcon(c, 13, 13);
 			this.voiName = voiName;
+			this.container = container;
 			
 			setIcon(cIcon);
 			setForeground(ColorIcon.TRANSPARENT);
@@ -80,6 +93,10 @@ import javax.swing.JPanel;
 			setBorder(null); 
 			setSize(new Dimension(20,20));
 			setPreferredSize(new Dimension(20,20));
+		}
+		
+		public PlugInMuscleColorButtonPanel getContainer() {
+			return container;
 		}
 		
 		/**
