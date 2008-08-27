@@ -507,14 +507,18 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		
 		for(int i=0; i<validPanes; i++) {
 			voiList[i] = new PlugInSelectableVOI[validVOI[i]];
-			for(int j=0; j<validVOI[i]; j++) {
+			int numVoiFilled = 0;
+			for(int j=0; j<customVOI.get(i).size(); j++) {
 				MusclePane temp = customVOI.get(i).get(j);
-				if(temp.getDoCalc()) {
-					voiList[i][j] = new PlugInSelectableVOI(temp.getName(), temp.getIsClosed(), 
-							temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize, outputLoc++, temp.getColorButton());
-				} else {
-					voiList[i][j] = new PlugInSelectableVOI(temp.getName(), temp.getIsClosed(), 
-							temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize, temp.getColorButton());
+				if((!temp.getName().equals(DEFAULT_VOI)) && temp.getName().trim().length() > 0) {
+					if(temp.getDoCalc()) {
+						voiList[i][numVoiFilled] = new PlugInSelectableVOI(temp.getName(), temp.getIsClosed(), 
+								temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize, outputLoc++, temp.getColorButton());
+					} else {
+						voiList[i][numVoiFilled] = new PlugInSelectableVOI(temp.getName(), temp.getIsClosed(), 
+								temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize, temp.getColorButton());
+					}
+					numVoiFilled++;
 				}
 			}
 		}
@@ -1132,7 +1136,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			c.gridx = 2;
 			c.gridy = 0;
 			c.anchor = GridBagConstraints.LINE_END;
-			c.ipadx = 18;
+			c.ipadx = 25;
 			c.weightx = 1;
 			c.fill = GridBagConstraints.BOTH;
 			add(name, c);
