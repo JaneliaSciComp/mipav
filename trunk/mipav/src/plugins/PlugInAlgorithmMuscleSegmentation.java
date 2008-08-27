@@ -189,9 +189,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
      */
 	public void actionPerformed(ActionEvent e) {
 		System.out.println("Found a new action: "+e.getSource()+"\t"+e.getActionCommand());
-		if(e.getSource() instanceof PlugInMuscleColorButton) {
-        	customPane.getComponentImage().getVOIHandler().showColorDialog();
-		} else if(e.getSource() instanceof JButton && ((JButton)e.getSource()).getText().equals("OK")) {
+		if(e.getSource() instanceof JButton && ((JButton)e.getSource()).getText().equals("OK")) {
 			if(checkPanel()) {
 				buildCustomDialog();
 				performDialog();
@@ -318,27 +316,27 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     		imageSize = srcImage.getExtents()[2];
     	//String name, boolean closed, int numCurves, int location, boolean fillable, doCalc
     	voiList[0] = new PlugInSelectableVOI[3];
-    	voiList[0][0] = new PlugInSelectableVOI("Abdomen", true, 1, 0, false, true, imageSize, 0);
-    	voiList[0][1] = new PlugInSelectableVOI("Subcutaneous area", true, 1, 0, false, true, imageSize, 1);
-    	voiList[0][2] = new PlugInSelectableVOI("Phantom", true, 1, 0, false, false, imageSize);
+    	voiList[0][0] = new PlugInSelectableVOI("Abdomen", true, 1, 0, false, true, imageSize, 0, Color.ORANGE);
+    	voiList[0][1] = new PlugInSelectableVOI("Subcutaneous area", true, 1, 0, false, true, imageSize, 1, Color.RED);
+    	voiList[0][2] = new PlugInSelectableVOI("Phantom", true, 1, 0, false, false, imageSize, Color.GREEN);
     	
     	voiList[1] = new PlugInSelectableVOI[5];
-    	voiList[1][0] = new PlugInSelectableVOI("Visceral cavity", true, 1, 1, false, true, imageSize, 2);
-    	voiList[1][1] = new PlugInSelectableVOI("Liver", true, 1, 1, false, true, imageSize, 3);
-    	voiList[1][2] = new PlugInSelectableVOI("Liver cysts", true, 10, 1, true, true, imageSize, 4);
-    	voiList[1][3] = new PlugInSelectableVOI("Bone sample", true, 1, 1, false, false, imageSize);
-    	voiList[1][4] = new PlugInSelectableVOI("Water sample", true, 1, 1, false, false, imageSize);
+    	voiList[1][0] = new PlugInSelectableVOI("Visceral cavity", true, 1, 1, false, true, imageSize, 2, Color.ORANGE);
+    	voiList[1][1] = new PlugInSelectableVOI("Liver", true, 1, 1, false, true, imageSize, 3, Color.RED);
+    	voiList[1][2] = new PlugInSelectableVOI("Liver cysts", true, 10, 1, true, true, imageSize, 4, Color.GREEN);
+    	voiList[1][3] = new PlugInSelectableVOI("Bone sample", true, 1, 1, false, false, imageSize, Color.CYAN);
+    	voiList[1][4] = new PlugInSelectableVOI("Water sample", true, 1, 1, false, false, imageSize, Color.MAGENTA);
     	
     	voiList[2] = new PlugInSelectableVOI[9];
-    	voiList[2][0] = new PlugInSelectableVOI("Left Psoas", true, 1, 2, true, true, imageSize, 5);
-    	voiList[2][1] = new PlugInSelectableVOI("Right Psoas", true, 1, 2, true, true, imageSize, 6);
-    	voiList[2][2] = new PlugInSelectableVOI("Left Lat. obliques", true, 1, 2, true, true, imageSize, 7);
-    	voiList[2][3] = new PlugInSelectableVOI("Right Lat. obliques", true, 1, 2, true, true, imageSize, 8);
-    	voiList[2][4] = new PlugInSelectableVOI("Left Paraspinous", true, 1, 2, true, true, imageSize, 9);
-    	voiList[2][5] = new PlugInSelectableVOI("Right Paraspinous", true, 1, 2, true, true, imageSize, 10);
-    	voiList[2][6] = new PlugInSelectableVOI("Left Rectus", true, 1, 2, true, true, imageSize, 11);
-    	voiList[2][7] = new PlugInSelectableVOI("Right Rectus", true, 1, 2, true, true, imageSize, 12);
-    	voiList[2][8] = new PlugInSelectableVOI("Aortic Calcium", true, 5, 2, true, true, imageSize, 13);
+    	voiList[2][0] = new PlugInSelectableVOI("Left Psoas", true, 1, 2, true, true, imageSize, 5, Color.ORANGE);
+    	voiList[2][1] = new PlugInSelectableVOI("Right Psoas", true, 1, 2, true, true, imageSize, 6, Color.ORANGE);
+    	voiList[2][2] = new PlugInSelectableVOI("Left Lat. obliques", true, 1, 2, true, true, imageSize, 7, Color.RED);
+    	voiList[2][3] = new PlugInSelectableVOI("Right Lat. obliques", true, 1, 2, true, true, imageSize, 8, Color.RED);
+    	voiList[2][4] = new PlugInSelectableVOI("Left Paraspinous", true, 1, 2, true, true, imageSize, 9, Color.GREEN);
+    	voiList[2][5] = new PlugInSelectableVOI("Right Paraspinous", true, 1, 2, true, true, imageSize, 10, Color.GREEN);
+    	voiList[2][6] = new PlugInSelectableVOI("Left Rectus", true, 1, 2, true, true, imageSize, 11, Color.CYAN);
+    	voiList[2][7] = new PlugInSelectableVOI("Right Rectus", true, 1, 2, true, true, imageSize, 12, Color.CYAN);
+    	voiList[2][8] = new PlugInSelectableVOI("Aortic Calcium", true, 5, 2, true, true, imageSize, 13, Color.MAGENTA);
         
         titles = new String[3];
         titles[0] = "Abdomen";
@@ -348,31 +346,25 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
         symmetry = PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT;
 	    imageType = PlugInMuscleImageDisplay.ImageType.Abdomen;
 	    
-	    String extendable = "Start Pane: Abdomen"+System.getProperty("line.separator")+"Start Voi: Abdomen"+
-	    	System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
-	    	System.getProperty("line.separator")+"Start Voi: Subcutaneous area"+System.getProperty("line.separator")+
-	    	"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Phantom"+
-	    	System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"End Pane"+System.getProperty("line.separator")+
-	    	"Start Pane: Tissue"+System.getProperty("line.separator")+"Start Voi: Visceral cavity"+System.getProperty("line.separator")+
-	    	"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Liver"+
-	    	System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
-	    	System.getProperty("line.separator")+"Start Voi: Liver cysts"+System.getProperty("line.separator")+"Num_Curves: 7"+
-	    	System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+
-	    	System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Bone sample"+
-	    	System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Water sample"+
-	    	System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"End Pane"+System.getProperty("line.separator")+
-	    	"Start Pane: Muscles"+System.getProperty("line.separator")+"Start Voi: Psoas"+System.getProperty("line.separator")+
-	    	"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+
-	    	"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Lat. obliques"+
-	    	System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+
-	    	System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+
-	    	"Start Voi: Paraspinous"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+
-	    	System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+
-	    	"Start Voi: Rectus"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+
-	    	System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+
-	    	"Start Voi: Aortic calcium"+System.getProperty("line.separator")+"Num_Curves: 5"+System.getProperty("line.separator")+"Do_Calc: true"+
-	    	System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+
-	    	"End Pane"+System.getProperty("line.separator");
+	    String extendable = "Start Pane: Abdomen"+
+	    	System.getProperty("line.separator")+"Start Voi: Abdomen"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Subcutaneous area"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Phantom"+System.getProperty("line.separator")+"Color: 0,255,0"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane"+
+	    	System.getProperty("line.separator")+"Start Pane: Tissue"+
+	    	System.getProperty("line.separator")+"Start Voi: Visceral cavity"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Liver"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Liver cysts"+System.getProperty("line.separator")+"Num_Curves: 7"+System.getProperty("line.separator")+"Color: 0,255,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+	System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Bone sample"+System.getProperty("line.separator")+"Color: 0,255,255"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Water sample"+System.getProperty("line.separator")+"Color: 255,0,255"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane"+
+	    	System.getProperty("line.separator")+"Start Pane: Muscles"+
+	    	System.getProperty("line.separator")+"Start Voi: Psoas"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Lat. obliques"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Paraspinous"+System.getProperty("line.separator")+"Color: 0,255,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Rectus"+System.getProperty("line.separator")+"Color: 0,255,255"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Aortic calcium"+System.getProperty("line.separator")+"Color: 255,0,255"+System.getProperty("line.separator")+"Num_Curves: 5"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane"+System.getProperty("line.separator");
 	    
 	    performFileSave(extendable, "Abdomen");
 	    
@@ -391,32 +383,32 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    voiList = new PlugInSelectableVOI[3][];
 	    
 	    voiList[0] = new PlugInSelectableVOI[3];
-	    voiList[0][0] = new PlugInSelectableVOI("Left Thigh", true, 1, 0, false, true, imageSize, 0);
-    	voiList[0][1] = new PlugInSelectableVOI("Right Thigh", true, 1, 0, false, true, imageSize, 1);
+	    voiList[0][0] = new PlugInSelectableVOI("Left Thigh", true, 1, 0, false, true, imageSize, 0, Color.ORANGE);
+    	voiList[0][1] = new PlugInSelectableVOI("Right Thigh", true, 1, 0, false, true, imageSize, 1, Color.ORANGE);
     	
-    	voiList[0][2] = new PlugInSelectableVOI("Phantom", true, 1, 0, false, false, imageSize);
+    	voiList[0][2] = new PlugInSelectableVOI("Phantom", true, 1, 0, false, false, imageSize, Color.RED);
 	    
     	voiList[1] = new PlugInSelectableVOI[5];
-	    voiList[1][0] = new PlugInSelectableVOI("Left Bone", true, 1, 1, false, true, imageSize, 2);
-    	voiList[1][1] = new PlugInSelectableVOI("Right Bone", true, 1, 1, false, true, imageSize, 3);
-	    voiList[1][2] = new PlugInSelectableVOI("Left Marrow", true, 1, 1, true, true, imageSize, 4);
-    	voiList[1][3] = new PlugInSelectableVOI("Right Marrow", true, 1, 1, true, true, imageSize, 5);
+	    voiList[1][0] = new PlugInSelectableVOI("Left Bone", true, 1, 1, false, true, imageSize, 2, Color.ORANGE);
+    	voiList[1][1] = new PlugInSelectableVOI("Right Bone", true, 1, 1, false, true, imageSize, 3, Color.ORANGE);
+	    voiList[1][2] = new PlugInSelectableVOI("Left Marrow", true, 1, 1, true, true, imageSize, 4, Color.RED);
+    	voiList[1][3] = new PlugInSelectableVOI("Right Marrow", true, 1, 1, true, true, imageSize, 5, Color.RED);
     	
-    	voiList[1][4] = new PlugInSelectableVOI("Bone sample", true, 1, 1, false, false, imageSize);
+    	voiList[1][4] = new PlugInSelectableVOI("Bone sample", true, 1, 1, false, false, imageSize, Color.GREEN);
 	    
     	voiList[2] = new PlugInSelectableVOI[11];
-	    voiList[2][0] = new PlugInSelectableVOI("Left Fascia", true, 1, 2, false, true, imageSize, 6);
-    	voiList[2][1] = new PlugInSelectableVOI("Right Fascia", true, 1, 2, false, true, imageSize, 7);
-	    voiList[2][2] = new PlugInSelectableVOI("Left Quads", true, 1, 2, true, true, imageSize, 8);
-    	voiList[2][3] = new PlugInSelectableVOI("Right Quads", true, 1, 2, true, true, imageSize, 9);
-	    voiList[2][4] = new PlugInSelectableVOI("Left Hamstrings", true, 1, 2, true, true, imageSize, 10);
-    	voiList[2][5] = new PlugInSelectableVOI("Right Hamstrings", true, 1, 2, true, true, imageSize, 11);
-	    voiList[2][6] = new PlugInSelectableVOI("Left Sartorius", true, 1, 2, true, true, imageSize, 12);
-    	voiList[2][7] = new PlugInSelectableVOI("Right Sartorius", true, 1, 2, true, true, imageSize, 13);
-	    voiList[2][8] = new PlugInSelectableVOI("Left Adductors", true, 1, 2, true, true, imageSize, 14);
-    	voiList[2][9] = new PlugInSelectableVOI("Right Adductors", true, 1, 2, true, true, imageSize, 15);
+	    voiList[2][0] = new PlugInSelectableVOI("Left Fascia", true, 1, 2, false, true, imageSize, 6, Color.ORANGE);
+    	voiList[2][1] = new PlugInSelectableVOI("Right Fascia", true, 1, 2, false, true, imageSize, 7, Color.ORANGE);
+	    voiList[2][2] = new PlugInSelectableVOI("Left Quads", true, 1, 2, true, true, imageSize, 8, Color.RED);
+    	voiList[2][3] = new PlugInSelectableVOI("Right Quads", true, 1, 2, true, true, imageSize, 9, Color.RED);
+	    voiList[2][4] = new PlugInSelectableVOI("Left Hamstrings", true, 1, 2, true, true, imageSize, 10, Color.GREEN);
+    	voiList[2][5] = new PlugInSelectableVOI("Right Hamstrings", true, 1, 2, true, true, imageSize, 11, Color.GREEN);
+	    voiList[2][6] = new PlugInSelectableVOI("Left Sartorius", true, 1, 2, true, true, imageSize, 12, Color.CYAN);
+    	voiList[2][7] = new PlugInSelectableVOI("Right Sartorius", true, 1, 2, true, true, imageSize, 13, Color.CYAN);
+	    voiList[2][8] = new PlugInSelectableVOI("Left Adductors", true, 1, 2, true, true, imageSize, 14, Color.MAGENTA);
+    	voiList[2][9] = new PlugInSelectableVOI("Right Adductors", true, 1, 2, true, true, imageSize, 15, Color.MAGENTA);
 
-    	voiList[2][10] = new PlugInSelectableVOI("Water sample", true, 1, 1, false, false, imageSize);
+    	voiList[2][10] = new PlugInSelectableVOI("Water sample", true, 1, 1, false, false, imageSize, Color.CYAN);
 	    
 	    titles = new String[3];
 	    titles[0] = "Thigh";
@@ -426,23 +418,23 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    symmetry = PlugInMuscleImageDisplay.Symmetry.LEFT_RIGHT;
 	    imageType = PlugInMuscleImageDisplay.ImageType.Thigh;
 	    
-	    String extendable = "Start Pane: Thigh"+System.getProperty("line.separator")+"Start Voi: Thigh"+
-	    	System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Symmetry: Left/Right"+
-	    	System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Phantom"+
-	    	System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"End Pane"+System.getProperty("line.separator")+
-	    	"Start Pane: Bone"+System.getProperty("line.separator")+"Start Voi: Bone"+System.getProperty("line.separator")+"Do_Calc: true"+
-	    	System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+
-	    	"Start Voi: Marrow"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+
-	    	"Symmetry: Left/Right"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Bone sample"+System.getProperty("line.separator")+
-	    	"End Voi"+System.getProperty("line.separator")+"End Pane"+System.getProperty("line.separator")+"Start Pane: Muscles"+System.getProperty("line.separator")+"Start Voi: Fascia"+
-	    	System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
-	    	System.getProperty("line.separator")+"Start Voi: Quads"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+
-	    	System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Hamstrings"+System.getProperty("line.separator")+
-	    	"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+
-	    	"End Voi"+System.getProperty("line.separator")+"Start Voi: Sartorious"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+
-	    	System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"Start Voi: Adductors"+System.getProperty("line.separator")+
-	    	"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
-	    	System.getProperty("line.separator")+"Start Voi: Water sample"+System.getProperty("line.separator")+"End Voi"+System.getProperty("line.separator")+"End Pane";
+	    String extendable = "Start Pane: Thigh"+
+	    	System.getProperty("line.separator")+"Start Voi: Thigh"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Phantom"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane"+
+	    	System.getProperty("line.separator")+"Start Pane: Bone"+
+	    	System.getProperty("line.separator")+"Start Voi: Bone"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Marrow"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Bone sample"+System.getProperty("line.separator")+"Color: 0,255,0"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane"+
+	    	System.getProperty("line.separator")+"Start Pane: Muscles"+
+	    	System.getProperty("line.separator")+"Start Voi: Fascia"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Quads"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Hamstrings"+System.getProperty("line.separator")+"Color: 0,255,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Sartorious"+System.getProperty("line.separator")+"Color: 0,255,255"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Adductors"+System.getProperty("line.separator")+"Color: 255,0,255"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Water sample"+System.getProperty("line.separator")+"Color: 255,255,0"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane";
 	    
 	    performFileSave(extendable, "Thigh");
 	}
@@ -519,10 +511,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				MusclePane temp = customVOI.get(i).get(j);
 				if(temp.getDoCalc()) {
 					voiList[i][j] = new PlugInSelectableVOI(temp.getName(), temp.getIsClosed(), 
-							temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize, outputLoc++);
+							temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize, outputLoc++, temp.getColorButton());
 				} else {
 					voiList[i][j] = new PlugInSelectableVOI(temp.getName(), temp.getIsClosed(), 
-							temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize);
+							temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize, temp.getColorButton());
 				}
 			}
 		}
@@ -1026,6 +1018,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			  pane: for(int j=0; j<customVOI.get(i).size(); j++) {
 				  		if(customVOI.get(i).get(j).getName().equals(DEFAULT_VOI))
 				  			break pane;
+				  		if(customVOI.get(i).get(j).getName().length() == 0)
+				  			continue pane;
 						voi = customVOI.get(i).get(j);
 						output.write(START_VOI+": "+voi.getName()+"\n");
 						Color col = null;
@@ -1073,7 +1067,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		}
 	}
 	
-	private class MusclePane extends JPanel implements Serializable {
+	private class MusclePane extends JPanel implements Serializable, ActionListener {
 		
 		/**The color identifier*/
 		private PlugInMuscleColorButtonPanel colorButton;
@@ -1096,9 +1090,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		/**Whether the VOI is closed (defaults to true)*/
 		private JCheckBox isClosed;
 		
+		/**ColorChooser for selecting custom VOI colors*/
+	    private ViewJColorChooser colorChooser;
+		
 		public MusclePane(ActionListener caller) {
 			super(new GridBagLayout());
-			this.colorButton = new PlugInMuscleColorButtonPanel(Color.black, "VOI", caller);
+			this.colorButton = new PlugInMuscleColorButtonPanel(Color.black, "VOI", this);
 			int i = 0;
 			String[] text = new String[PlugInMuscleImageDisplay.Symmetry.values().length];
 			
@@ -1173,6 +1170,15 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			c.anchor = GridBagConstraints.LINE_END;
 			c.fill = GridBagConstraints.NONE;
 			add(numCurves, c);
+		}
+
+		public void actionPerformed(ActionEvent e) {
+			if(e.getSource() instanceof JButton && ((JButton)e.getSource()).getText().equals("OK")) {
+				colorButton.setColor(colorChooser.getColor());
+			} else if(e.getSource() instanceof PlugInMuscleColorButton) {
+				colorChooser = new ViewJColorChooser(new Frame(), "Pick VOI color", 
+						this, this);
+			}
 		}
 
 		public Color getColorButton() {

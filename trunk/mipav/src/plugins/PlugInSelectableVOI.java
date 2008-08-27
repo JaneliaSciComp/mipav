@@ -69,11 +69,20 @@ public class PlugInSelectableVOI extends VOI {
 	
 	public PlugInSelectableVOI(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
 			boolean fillEligible, boolean calcEligible, int imageSize) {
-		this(name, closed, maxCurvesPerSlice, paneNum, fillEligible, calcEligible, imageSize, INVALID_LOC_NUMBER);
+		this(name, closed, maxCurvesPerSlice, paneNum, fillEligible, calcEligible, imageSize, INVALID_LOC_NUMBER, INVALID_COLOR);
+	}
+	
+	public PlugInSelectableVOI(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
+			boolean fillEligible, boolean calcEligible, int imageSize, Color color) {
+		this(name, closed, maxCurvesPerSlice, paneNum, fillEligible, calcEligible, imageSize, INVALID_LOC_NUMBER, color);
 	}
 	
 	public PlugInSelectableVOI(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
 								boolean fillEligible, boolean calcEligible, int imageSize, int outputLoc) {
+		this(name, closed, maxCurvesPerSlice, paneNum, fillEligible, calcEligible, imageSize, outputLoc, INVALID_COLOR);
+	}
+	public PlugInSelectableVOI(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
+			boolean fillEligible, boolean calcEligible, int imageSize, int outputLoc, Color color) {
 		super((short)0, name, imageSize);
 		this.closed = closed;
 		this.maxCurvesPerSlice = maxCurvesPerSlice;
@@ -94,7 +103,6 @@ public class PlugInSelectableVOI extends VOI {
 		this.lastCalculated = new Date(System.currentTimeMillis()-1000);
 		this.lastModified = new Date(System.currentTimeMillis());
 		
-		
 		for(int i=0; i<imageSize+1; i++) {
 			totalArea[i] = Double.MIN_VALUE;
 			partialArea[i] = Double.MIN_VALUE;
@@ -105,7 +113,7 @@ public class PlugInSelectableVOI extends VOI {
 			meanTotalH[i] = Double.MIN_VALUE;
 		}
 		
-		setColor(INVALID_COLOR);
+		setColor(color);
 	}
 
 	public boolean getCreated() {
