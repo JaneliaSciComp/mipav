@@ -247,12 +247,20 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                 nrz = 0;
             }
 
-            if ((nix != srcImage.getExtents()[0]) || (niy != srcImage.getExtents()[1]) ||
+            // There are 3 sample acpc files on the Afni server.  s14_Anat+acpc.HEAD is the
+            // expected 192, 236, 171,  but EDspgr+acpc.HEAD and anat+acpc.HEAD are 
+            // 191, 236, 171.
+            if ((nix < srcImage.getExtents()[0]-1) || (nix > srcImage.getExtents()[0] + 1) ||
+                    (niy != srcImage.getExtents()[1]) ||
                     (niz != srcImage.getExtents()[2])) {
                 displayError("Source Image has wrong dimensions");
 
                 // notifyListeners(this);
                 return;
+            }
+            
+            if (nix != srcImage.getExtents()[0]) {
+                nix = srcImage.getExtents()[0];
             }
 
             try {
