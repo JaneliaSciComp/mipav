@@ -793,11 +793,8 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
     }   // end setVariables()
     
     /**
-    *	Once all the necessary variables are set, call the Gaussian Blur
-    *	algorithm based on what type of image this is and whether or not there
-    *	is a separate destination image.
+    *	Does nothing
     */
-    private void callAlgorithm() {
-    } // end callAlgorithm()
+    private void callAlgorithm() {} // end callAlgorithm()
     
 }
