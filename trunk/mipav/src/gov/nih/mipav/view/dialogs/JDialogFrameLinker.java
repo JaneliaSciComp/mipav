@@ -118,8 +118,7 @@ public class JDialogFrameLinker extends JDialogBase {
 
 
     /**
-     * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
-     * and whether or not there is a separate destination image.
+     * Not used.
      */
     protected void callAlgorithm() { }
 
