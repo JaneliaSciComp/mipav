@@ -2610,7 +2610,22 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
             return;
         }
+        
+    	image.getParentFrame().getComponentImage().removeMouseListener(image.getParentFrame().getComponentImage());
+    	image.getParentFrame().getComponentImage().removeMouseMotionListener(image.getParentFrame().getComponentImage());
+    	image.getParentFrame().getComponentImage().removeMouseListener(image.getParentFrame().getComponentImage().getVOIHandler());
+    	image.getParentFrame().getComponentImage().removeMouseMotionListener(image.getParentFrame().getComponentImage().getVOIHandler());
+    	if (image.getTriImageFrame() != null) {
+    		for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+                if (image.getTriImageFrame().triImage[i] != null) {
+                	image.getTriImageFrame().triImage[i].removeMouseListener(image.getTriImageFrame().triImage[i]);
+                	image.getTriImageFrame().triImage[i].removeMouseMotionListener(image.getTriImageFrame().triImage[i]);
+                }
+            }
+    	}
 
+    	
+    	
         // retrieve the mask
         BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
 
@@ -2705,6 +2720,19 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         listButton[selected].setSelected(true);
 
         refreshImagePaint(image, obj);
+        
+        image.getParentFrame().getComponentImage().addMouseListener(image.getParentFrame().getComponentImage());
+    	image.getParentFrame().getComponentImage().addMouseMotionListener(image.getParentFrame().getComponentImage());
+    	image.getParentFrame().getComponentImage().addMouseListener(image.getParentFrame().getComponentImage().getVOIHandler());
+    	image.getParentFrame().getComponentImage().addMouseMotionListener(image.getParentFrame().getComponentImage().getVOIHandler());
+    	if (image.getTriImageFrame() != null) {
+    		for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+                if (image.getTriImageFrame().triImage[i] != null) {
+                	image.getTriImageFrame().triImage[i].addMouseListener(image.getTriImageFrame().triImage[i]);
+                	image.getTriImageFrame().triImage[i].addMouseMotionListener(image.getTriImageFrame().triImage[i]);
+                }
+            }
+    	}
     }
 
     /**
