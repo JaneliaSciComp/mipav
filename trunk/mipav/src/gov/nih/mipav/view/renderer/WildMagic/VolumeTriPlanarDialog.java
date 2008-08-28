@@ -4,23 +4,25 @@ package gov.nih.mipav.view.renderer.WildMagic;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
+
 import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
 
-import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
-
 
 public class VolumeTriPlanarDialog extends JInterfaceBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -1966951185588087479L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Lookup table of the color imageA, B. */
     protected ModelRGB RGBTA = null, RGBTB = null;
@@ -82,7 +84,6 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
      */
     private String startupCommand = null;
 
-
     /** Resampled dimension value in Power of 2. */
     private int[] volExtents = new int[3];
 
@@ -92,17 +93,18 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
     /** Type of ViewJFrameVolumeView object (using WildMagic or not) */
     private String m_kVolViewType;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates the dialog, using the input parameters to place it on the screen.
-     *
-     * @param  _imageA  Model image A.
-     * @param  _imageB  Model image B.
+     * 
+     * @param _imageA Model image A.
+     * @param _imageB Model image B.
      */
-    public VolumeTriPlanarDialog(ModelImage _imageA, ModelImage _imageB, String kCommand ) {
+    public VolumeTriPlanarDialog(ModelImage _imageA, ModelImage _imageB, String kCommand) {
 
-        //super(ViewUserInterface.getReference().getMainFrame(), false);
+        // super(ViewUserInterface.getReference().getMainFrame(), false);
 
         m_kVolViewType = kCommand;
         imageAOriginal = _imageA;
@@ -177,7 +179,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
         if (nDim >= 3) {
 
-            if ((extents[0] == volExtents[0]) && (extents[1] == volExtents[1]) && (extents[2] == volExtents[2])) {
+            if ( (extents[0] == volExtents[0]) && (extents[1] == volExtents[1]) && (extents[2] == volExtents[2])) {
                 forceResample = false;
             } else {
                 forceResample = true;
@@ -188,7 +190,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
             init();
 
             // if do not need resample, set the resample button text to OK.
-            if (!forceResample) {
+            if ( !forceResample) {
                 OKButton.setText("OK");
             }
         } catch (NoClassDefFoundError error) {
@@ -204,17 +206,17 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Makes the dialog visible in center of screen.
-     *
-     * @param  status  Flag indicating if the dialog should be visible.
+     * 
+     * @param status Flag indicating if the dialog should be visible.
      */
     public void setVisible(boolean status) {
 
-        if ((status == true) && (isVisible() == false)) {
+        if ( (status == true) && (isVisible() == false)) {
 
             // move to center if not yet visible. note that if 'status' param is false
             // the dialog should not be centered, because centering it just before
@@ -226,11 +228,11 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
         super.setVisible(status);
     }
-    
+
     /**
      * On "OK", sets the name variable to the text entered. On "Cancel" disposes of this dialog and sets cancel flag.
-     *
-     * @param  event  Event that triggered this method.
+     * 
+     * @param event Event that triggered this method.
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -239,7 +241,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
             volExtents[0] = Integer.parseInt(extXOutput.getText());
 
-            if (!isPowerOfTwo(volExtents[0])) {
+            if ( !isPowerOfTwo(volExtents[0])) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
                 volExtents[0] = dimPowerOfTwo(volExtents[0]);
             }
@@ -248,7 +250,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
             volExtents[1] = Integer.parseInt(extYOutput.getText());
 
-            if (!isPowerOfTwo(volExtents[1])) {
+            if ( !isPowerOfTwo(volExtents[1])) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
                 volExtents[1] = dimPowerOfTwo(volExtents[1]);
             }
@@ -258,7 +260,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
             if (nDim >= 3) {
                 volExtents[2] = Integer.parseInt(extZOutput.getText());
 
-                if (!isPowerOfTwo(volExtents[2])) {
+                if ( !isPowerOfTwo(volExtents[2])) {
                     MipavUtil.displayInfo("Reample to Power of 2.");
                     volExtents[2] = dimPowerOfTwo(volExtents[2]);
                 }
@@ -267,14 +269,14 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
             if (nDim >= 3) {
 
-                if ((extents[0] == volExtents[0]) && (extents[1] == volExtents[1]) && (extents[2] == volExtents[2])) {
+                if ( (extents[0] == volExtents[0]) && (extents[1] == volExtents[1]) && (extents[2] == volExtents[2])) {
                     forceResample = false;
                 } else {
                     forceResample = true;
                 }
             } else {
 
-                if ((extents[0] == volExtents[0]) && (extents[1] == volExtents[1])) {
+                if ( (extents[0] == volExtents[0]) && (extents[1] == volExtents[1])) {
                     forceResample = false;
                 } else {
                     forceResample = true;
@@ -296,7 +298,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
             if (nDim >= 3) {
 
-                if ((extents[0] == volExtents[0]) && (extents[1] == volExtents[1]) && (extents[2] == volExtents[2])) {
+                if ( (extents[0] == volExtents[0]) && (extents[1] == volExtents[1]) && (extents[2] == volExtents[2])) {
                     forceResample = false;
                     forcePadding = false;
                 } else {
@@ -313,7 +315,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         } else if (command.equals("xChanged")) {
             int x = Integer.parseInt(extXOutput.getText());
 
-            if (!isPowerOfTwo(x)) {
+            if ( !isPowerOfTwo(x)) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
                 x = dimPowerOfTwo(x);
             }
@@ -322,7 +324,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         } else if (command.equals("yChanged")) {
             int y = Integer.parseInt(extYOutput.getText());
 
-            if (!isPowerOfTwo(y)) {
+            if ( !isPowerOfTwo(y)) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
                 y = dimPowerOfTwo(y);
             }
@@ -331,7 +333,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         } else if (command.equals("zChanged")) {
             int z = Integer.parseInt(extZOutput.getText());
 
-            if (!isPowerOfTwo(z)) {
+            if ( !isPowerOfTwo(z)) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
                 z = dimPowerOfTwo(z);
             }
@@ -340,10 +342,11 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         } else if (command.equals("FilterChanged")) {
             m_iFilter = m_kFilterType.getSelectedIndex();
 
-            /* Bilinear is not allowed for volumes, and is not in the list, if
-             * a type that is definted after bilinear is selected, increment the m_iFilter value so it matches the
-             * AlgotithmTransform type
-             * definition for that filter: */
+            /*
+             * Bilinear is not allowed for volumes, and is not in the list, if a type that is definted after bilinear is
+             * selected, increment the m_iFilter value so it matches the AlgotithmTransform type definition for that
+             * filter:
+             */
             if (m_iFilter > 0) {
                 m_iFilter++;
             }
@@ -355,8 +358,8 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
     /**
      * Builds the Cancel button. Sets it internally as well return the just-built button.
-     *
-     * @return  Return the noll resample button.
+     * 
+     * @return Return the noll resample button.
      */
     public JButton buildNotResampleButton() {
         cancelButton = new JButton("Cancel");
@@ -411,28 +414,24 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
     public void exec() {
 
         try {
-            if ( m_kVolViewType.equals( "WMVolTriplanar" ) ) {
-                VolumeTriPlanarInterface kWM = new VolumeTriPlanarInterface (imageA, LUTa, RGBTA,
-                        imageB, LUTb, RGBTB, this);
+            if (m_kVolViewType.equals("WMVolTriplanar")) {
+                VolumeTriPlanarInterface kWM = new VolumeTriPlanarInterface(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB,
+                        this);
                 kWM.setImageOriginal(imageAOriginal);
 
                 if (forcePadding) {
                     kWM.doPadding(extents, volExtents);
-                }  else if (forceResample) {
+                } else if (forceResample) {
                     kWM.doResample(volExtents, newRes, forceResample, nDim, m_iFilter);
-                }                
+                }
                 kWM.constructRenderers();
 
                 // can't do this before kWM.initialize() since it uses the plane renderer list, which is setup there
-/*
-                kWM.addAttachedSurfaces();
-                if (kWM.getProbeDialog() != null) {
-
-                    // need to update the rfa target labels in case there were attached surfaces that we should show info
-                    // about
-                    kWM.getProbeDialog().updateTargetList();
-                }
-*/
+                /*
+                 * kWM.addAttachedSurfaces(); if (kWM.getProbeDialog() != null) {
+                 *  // need to update the rfa target labels in case there were attached surfaces that we should show
+                 * info // about kWM.getProbeDialog().updateTargetList(); }
+                 */
                 if (forceResample) {
 
                     if (imageA != null) {
@@ -453,23 +452,22 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
                 if (segmentationImage != null) {
                     kWM.setSegmentationImage(segmentationImage);
                 }
-            } 
+            }
 
         } catch (NoClassDefFoundError notAvailableError) {
-            Preferences.debug("ViewJFrameSurfaceRenderer cannot be called; encountered " +
-                    "a NoClassDefFoundError.  \nIt is likely that java3D is " +
-                    "not available on this system.  The error is: \n" +
-                    notAvailableError.getLocalizedMessage());
-            MipavUtil.displayError("The surface renderer requires java 3D and it cannot " + "be found.");
+            Preferences.debug("ViewJFrameSurfaceRenderer cannot be called; encountered "
+                    + "a NoClassDefFoundError.  \nIt is likely that JOGL is "
+                    + "not available on this system.  The error is: \n" + notAvailableError.getLocalizedMessage());
+            MipavUtil.displayError("The surface renderer requires JOGL and it cannot be found.");
         } catch (OutOfMemoryError notEnoughError) {
-            Preferences.debug("ViewJFrameSurfaceRenderer cannot be called as there was " +
-                    "not enough memory allocated.  \n" + "The error is: \n" +
-                    notEnoughError.getLocalizedMessage());
-            MipavUtil.displayError("The surface renderer requires more memory " + "than is currently available;\n" +
-            "See the Memory Allocation menu");
+            Preferences.debug("ViewJFrameSurfaceRenderer cannot be called as there was "
+                    + "not enough memory allocated.  \n" + "The error is: \n" + notEnoughError.getLocalizedMessage());
+            MipavUtil.displayError("The surface renderer requires more memory " + "than is currently available;\n"
+                    + "See the Memory Allocation menu");
         }
 
     }
+
     public void init() {
         setTitle("Resample Dialog");
 
@@ -684,19 +682,17 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         OKButton.requestFocus();
     }
 
-
     /**
      * Sets the flags for the checkboxes.
-     *
-     * @param  event  event that triggered this function
+     * 
+     * @param event event that triggered this function
      */
-    public synchronized void itemStateChanged(ItemEvent event) {
-    }
+    public synchronized void itemStateChanged(ItemEvent event) {}
 
     /**
      * Sets a command that should be sent to the renderer after it is started.
-     *
-     * @param  cmd  the action command
+     * 
+     * @param cmd the action command
      */
     public void sendActionOnStart(String cmd) {
         startupCommand = cmd;
@@ -704,8 +700,8 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
     /**
      * Set the image which we can check to see if the probe is hitting anything important (such as vessels, etc).
-     *
-     * @param  img  segmentation image
+     * 
+     * @param img segmentation image
      */
     public void setSegmentationImage(ModelImage img) {
         segmentationImage = img;
@@ -713,11 +709,11 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
     /**
      * Builds a titled border with the given title, an etched border, and the proper font and color.
-     *
-     * @param   title    Title of the border
-     * @param   _border  Return the border built
-     *
-     * @return  The titled border.
+     * 
+     * @param title Title of the border
+     * @param _border Return the border built
+     * 
+     * @return The titled border.
      */
     protected TitledBorder buildTitledBorder(String title, Border _border) {
         return new TitledBorder(_border, title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
@@ -725,8 +721,8 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
     /**
      * Clear up memory from gc.
-     *
-     * @throws  Throwable  Call the dispose local to dispose memory.
+     * 
+     * @throws Throwable Call the dispose local to dispose memory.
      */
     protected void finalize() throws Throwable {
         disposeLocal();
@@ -735,12 +731,12 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
     /**
      * Creates and initializes the LUT for an image.
-     *
-     * @param   img  the image to create a LUT for
-     *
-     * @return  a LUT for the image <code>img</code> (null if a color image)
-     *
-     * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
+     * 
+     * @param img the image to create a LUT for
+     * 
+     * @return a LUT for the image <code>img</code> (null if a color image)
+     * 
+     * @throws OutOfMemoryError if enough memory cannot be allocated for this method
      */
     protected ModelLUT initLUT(ModelImage img) throws OutOfMemoryError {
         ModelLUT newLUT = null;
@@ -790,8 +786,8 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
     /**
      * Builds the OK button. Sets it internally as well return the just-built button.
-     *
-     * @return  Return the resample button built.
+     * 
+     * @return Return the resample button built.
      */
     private JButton buildResampleButton() {
         OKButton = new JButton("Resample");
@@ -806,16 +802,16 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
     /**
      * Calculate the dimension value to power of 2.
-     *
-     * @param   dim  dimension value.
-     *
-     * @return  value dimension value in power of 2
+     * 
+     * @param dim dimension value.
+     * 
+     * @return value dimension value in power of 2
      */
     private int dimPowerOfTwo(int dim) {
 
         // 128^3 x 4 is 8MB
         // 256^3 x 4 is 64MB
-        if (dim <=  16) {
+        if (dim <= 16) {
             return 16;
         } else if (dim <= 32) {
             return 32;
@@ -825,7 +821,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
                 return 64;
             } else {
                 return 32;
-            } 
+            }
         } else if (dim <= 128) {
 
             if (dim > 80) {
@@ -854,14 +850,15 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
     /**
      * Check if given value is power of 2 withint the range 16 to 512.
-     *
-     * @param   value  given integer value.
-     *
-     * @return  true is power of 2, false not.
+     * 
+     * @param value given integer value.
+     * 
+     * @return true is power of 2, false not.
      */
     private boolean isPowerOfTwo(int value) {
 
-        if ( (value == 16) ||(value == 16) || (value == 32) || (value == 64) || (value == 128) || (value == 256) || (value == 512)) {
+        if ( (value == 16) || (value == 16) || (value == 32) || (value == 64) || (value == 128) || (value == 256)
+                || (value == 512)) {
             return true;
         }
 
