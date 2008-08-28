@@ -109,32 +109,30 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
                     tabbedPane.setSelectedIndex(TAB_GUID);
                 }
             } else if (index == TAB_GUID) {
-                if (checkGUIDs()) {
-                    tabbedPane.setEnabledAt(TAB_MAIN, true);
-                    tabbedPane.setEnabledAt(TAB_SOURCE, true);
-                    tabbedPane.setEnabledAt(TAB_LOG, true);
+                tabbedPane.setEnabledAt(TAB_MAIN, true);
+                tabbedPane.setEnabledAt(TAB_SOURCE, true);
+                tabbedPane.setEnabledAt(TAB_LOG, true);
 
-                    // move to TAB_LOG
-                    tabbedPane.setSelectedIndex(index + 1);
+                // move to TAB_LOG
+                tabbedPane.setSelectedIndex(index + 1);
 
-                    nextButton.setText("Close");
-                    nextButton.setEnabled(false);
-                    previousButton.setEnabled(false);
-                    tabbedPane.setEnabledAt(TAB_MAIN, false);
-                    tabbedPane.setEnabledAt(TAB_SOURCE, false);
-                    tabbedPane.setEnabledAt(TAB_GUID, false);
-                    tabbedPane.setEnabledAt(TAB_LOG, true);
+                nextButton.setText("Close");
+                nextButton.setEnabled(false);
+                previousButton.setEnabled(false);
+                tabbedPane.setEnabledAt(TAB_MAIN, false);
+                tabbedPane.setEnabledAt(TAB_SOURCE, false);
+                tabbedPane.setEnabledAt(TAB_GUID, false);
+                tabbedPane.setEnabledAt(TAB_LOG, true);
 
-                    final gov.nih.mipav.SwingWorker worker = new gov.nih.mipav.SwingWorker() {
-                        public Object construct() {
-                            createSubmissionFiles();
+                final gov.nih.mipav.SwingWorker worker = new gov.nih.mipav.SwingWorker() {
+                    public Object construct() {
+                        createSubmissionFiles();
 
-                            return null;
-                        }
-                    };
+                        return null;
+                    }
+                };
 
-                    worker.start();
-                }
+                worker.start();
             } else if (index == TAB_LOG) {
                 dispose();
             } else if (tabbedPane.getTabCount() > index + 1) {
@@ -683,23 +681,6 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
      */
     private void printlnToLog(String line) {
         logOutputArea.getTextArea().append(line + "\n");
-    }
-
-    /**
-     * Parses each JTextField for GUIDs... highlights first bad field found (if present) and returns false, otherwise
-     * returns true if all fields valid
-     * 
-     * @return whether the GUIDs are all valid
-     */
-    private boolean checkGUIDs() {
-        int numImages = sourceModel.size();
-        for (int i = 0; i < numImages; i++) {
-            if ( !isValidGUID((String) guidTable.getModel().getValueAt(i, GUID_TABLE_GUID_COLUMN))) {
-                MipavUtil.displayWarning("Invalid GUID: " + guidTable.getModel().getValueAt(i, GUID_TABLE_GUID_COLUMN));
-                return false;
-            }
-        }
-        return true;
     }
 
     private JPanel buildButtonPanel() {
