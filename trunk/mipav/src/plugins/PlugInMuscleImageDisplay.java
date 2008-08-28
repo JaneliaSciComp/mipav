@@ -2423,13 +2423,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
                 	}
                 	
                 } else if (command.equals("PropVOIUp")) {
-                	performSnake(AlgorithmSnake.PROP_NEXT);
-                	incSlice();
+                	if (componentImage.getVOIHandler().propVOI(1, false) == true) {
+                        incSlice();
+                    }
                 } else if (command.equals("PropVOIDown")) {
-                	performSnake(AlgorithmSnake.PROP_PREV);
-                	decSlice();
+                	if (componentImage.getVOIHandler().propVOI(-1, true) == true) {
+                        decSlice();
+                    }
                 } else if (command.equals("PropVOIAll")) {
-                	performSnake(AlgorithmSnake.PROP_ALL);
+                	componentImage.getVOIHandler().propVOIAll();
                 } 
             }
             
