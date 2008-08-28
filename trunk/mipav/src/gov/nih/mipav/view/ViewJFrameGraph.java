@@ -1738,6 +1738,8 @@ public class ViewJFrameGraph extends JFrame
             update(getGraphics()); // repaints the graph
         } else if (command.equals("CancelModifyGraph")) {
             modifyDialog.dispose();
+        } else if (command.equals("Help")) {
+            MipavUtil.showHelp("10620");
         } else if (command.equals("Normalize")) {
             // System.err.println("running median, then gaussian on function1");
 
@@ -3926,12 +3928,15 @@ public class ViewJFrameGraph extends JFrame
     private void createModifyDialog() {
         JButton applyButton;
         JButton cancelButton;
+        JButton helpButton;
 
         try {
             modifyDialog = new JDialog(this, "Modify Graph", true);
             tabbedPane = new JTabbedPane();
             applyButton = new JButton("Apply");
             cancelButton = new JButton("Cancel");
+            helpButton = new JButton ("Help");
+            
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJComponentGraph.createModifyDialog");
 
@@ -3958,15 +3963,22 @@ public class ViewJFrameGraph extends JFrame
         applyButton.setFont(font12B);
         applyButton.addActionListener(this);
         applyButton.setActionCommand("ApplyModifyGraph");
-        applyButton.setBounds((modifyDialog.getBounds().width / 2) - 90, modifyDialog.getBounds().height - 70, 90, 30);
+        applyButton.setBounds((modifyDialog.getBounds().width / 2) - 130, modifyDialog.getBounds().height - 70, 90, 30);
 
         cancelButton.setFont(font12B);
         cancelButton.addActionListener(this);
         cancelButton.setActionCommand("CancelModifyGraph");
-        cancelButton.setBounds(modifyDialog.getBounds().width / 2, modifyDialog.getBounds().height - 70, 90, 30);
+        cancelButton.setBounds(modifyDialog.getBounds().width / 2 - 30, modifyDialog.getBounds().height - 70, 90, 30);
+        
+        helpButton.setFont(font12B);
+        helpButton.addActionListener(this);
+        helpButton.setActionCommand("Help");
+        helpButton.setBounds(modifyDialog.getBounds().width / 2 + 70, modifyDialog.getBounds().height - 70, 90, 30);
+
 
         modifyDialog.getContentPane().add(applyButton);
         modifyDialog.getContentPane().add(cancelButton);
+        modifyDialog.getContentPane().add(helpButton);
         modifyDialog.setLocation(this.getLocation());
         modifyDialog.setModal(false);
         modifyDialog.setVisible(true);

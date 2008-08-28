@@ -265,7 +265,7 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (source == helpButton) {
-            MipavUtil.showHelp("");
+            MipavUtil.showHelp("WBLSGSM01");
         } else if ((source == orthogonalButton) || (source == undecimatedButton) || (source == steerableButton) ||
                        (source == fullButton)) {
 
