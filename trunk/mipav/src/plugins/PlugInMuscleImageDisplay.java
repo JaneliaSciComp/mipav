@@ -3163,6 +3163,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		/**A mapping of names to color panels for easy referencing. */
 		private TreeMap<String,PlugInMuscleColorButtonPanel> checkBoxLocationTree;
+		
+		/**A mapping of names to JButtons for easy referencing*/
+		private TreeMap<String, JButton> buttonLocationTree;
 	
 		/**
 		 * Constructor, note is called at beginning of program, so mirrorArr and noMirrorArr
@@ -3323,19 +3326,39 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 				Iterator<String> it = keySet.iterator();
 				while(it.hasNext()) {
 					//Stays black until pressed.
-					checkBoxLocationTree.get(it.next()).setColor(Color.BLACK);
+					String next = it.next();
+					
+					checkBoxLocationTree.get(next).setColor(Color.BLACK);
+					checkBoxLocationTree.get(next).repaint();
 				}
 			}
 			boolean voiExists = false;
+			String buttonName = new String();
 			for(int index=0; index<mirrorButtonCalcItemsArr.length; index++) {
 				for(int i=0; i<mirrorButtonCalcItemsArr[index].length; i++) {
 					mirrorButtonCalcItemsArr[index][i].setEnabled(voiExists = voiExists(mirrorButtonCalcItemsArr[index][i].getText(), slice));
+					buttonName = mirrorButtonCalcItemsArr[index][i].getText();
+					if(!voiExists) {
+						checkBoxLocationTree.get(buttonName).setColor(Color.BLACK);
+						checkBoxLocationTree.get(buttonName).repaint();
+					} else if (voiExists && mirrorButtonCalcItemsArr[index][i].isSelected()){
+						checkBoxLocationTree.get(buttonName).setColor(voiBuffer.get(buttonName).getColor());
+						checkBoxLocationTree.get(buttonName).repaint();
+					}
 					mirrorButtonCalcItemsArr[index][i].setForeground(Color.BLACK);
 					if(voiExists && voiBuffer.get(mirrorButtonCalcItemsArr[index][i].getText()).isComputerGenerated())
 						mirrorButtonCalcItemsArr[index][i].setForeground(Color.RED);
 				}
 				for(int i=0; i<noMirrorButtonCalcItemsArr[index].length; i++) {
-					noMirrorButtonCalcItemsArr[index][i].setEnabled(voiExists(noMirrorButtonCalcItemsArr[index][i].getText(), slice));
+					noMirrorButtonCalcItemsArr[index][i].setEnabled(voiExists = voiExists(noMirrorButtonCalcItemsArr[index][i].getText(), slice));
+					buttonName = noMirrorButtonCalcItemsArr[index][i].getText();
+					if(!voiExists) {
+						checkBoxLocationTree.get(buttonName).setColor(Color.BLACK);
+						checkBoxLocationTree.get(buttonName).repaint();
+					} else if (voiExists && noMirrorButtonCalcItemsArr[index][i].isSelected()){
+						checkBoxLocationTree.get(buttonName).setColor(voiBuffer.get(buttonName).getColor());
+						checkBoxLocationTree.get(buttonName).repaint();
+					}
 					noMirrorButtonCalcItemsArr[index][i].setForeground(Color.BLACK);
 					if(voiExists && voiBuffer.get(noMirrorButtonCalcItemsArr[index][i].getText()).isComputerGenerated())
 						noMirrorButtonCalcItemsArr[index][i].setForeground(Color.RED);
