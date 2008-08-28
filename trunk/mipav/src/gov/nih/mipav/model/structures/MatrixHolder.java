@@ -273,6 +273,11 @@ public class MatrixHolder extends ModelSerialCloneable {
      * @param  newMatrix  the new matrix
      */
     public void replaceMatrix(String key, TransMatrix newMatrix) {
+        
+        if (key == null) {
+            System.err.println("key for the matrix is null, aborting replaceMatrix()");
+            return;
+        }
 
         if (key.indexOf(TransMatrix.getTransformIDStr(newMatrix.getTransformID())) == -1) {
 
