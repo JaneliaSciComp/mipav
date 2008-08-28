@@ -202,6 +202,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         } else if (srcImage.getNDims() == 2) {
             resultImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolution(0) * denom, 0);
             resultImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolution(1) * denom, 1);
+            resultImage.getFileInfo()[0].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
 
             resultImage.getFileInfo()[0].setModality(srcImage.getFileInfo()[0].getModality());
             resultImage.getFileInfo()[0].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());
