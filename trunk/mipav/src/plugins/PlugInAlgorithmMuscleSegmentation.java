@@ -109,6 +109,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     
     /**Name of file if image is of type run-time defined*/
     private String fileName;
+    
+    /**Image directory*/
+    private String imageDir;
 
     /**
      * Constructor.
@@ -124,6 +127,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
         this.multipleSlices = multipleSlices;
         //is equal to blank string if image is not run-time defined
         this.fileName = fileName;
+        this.imageDir = srcImg.getImageDirectory();
         
         tabs = new ArrayList();
     }
@@ -221,7 +225,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		} else if(e.getActionCommand().equals(OPEN_TEMPLATE)) {
 			JFileChooser chooser = new JFileChooser();
 			chooser.setDialogTitle("Open a VOI template");
-			chooser.setCurrentDirectory(new File(Preferences.getImageDirectory()));
+			chooser.setCurrentDirectory(new File(imageDir));
 			chooser.setMultiSelectionEnabled(false);
 		    chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".nia" }));
 		    
@@ -234,7 +238,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		    }
 		} else if(e.getActionCommand().equals(SAVE_TEMPLATE)) {
 			JFileChooser chooser = new JFileChooser();
-			chooser.setCurrentDirectory(new File(Preferences.getImageDirectory()));
+			chooser.setCurrentDirectory(new File(imageDir));
 			chooser.setDialogTitle("Save the current VOI template");
             chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[]{".nia"}));
 
@@ -511,12 +515,15 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			for(int j=0; j<customVOI.get(i).size(); j++) {
 				MusclePane temp = customVOI.get(i).get(j);
 				if((!temp.getName().equals(DEFAULT_VOI)) && temp.getName().trim().length() > 0) {
+					Color tempColor = temp.getColorButton();
+					if(tempColor.equals(Color.BLACK))
+						tempColor = PlugInSelectableVOI.INVALID_COLOR;
 					if(temp.getDoCalc()) {
 						voiList[i][numVoiFilled] = new PlugInSelectableVOI(temp.getName(), temp.getIsClosed(), 
-								temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize, outputLoc++, temp.getColorButton());
+								temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize, outputLoc++, tempColor);
 					} else {
 						voiList[i][numVoiFilled] = new PlugInSelectableVOI(temp.getName(), temp.getIsClosed(), 
-								temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize, temp.getColorButton());
+								temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize, tempColor);
 					}
 					numVoiFilled++;
 				}
@@ -1027,7 +1034,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 						voi = customVOI.get(i).get(j);
 						output.write(START_VOI+": "+voi.getName()+"\n");
 						Color col = null;
-						if(!(col = voi.getColorButton()).equals(Option.Color.setting)) {						
+						if(!(col = voi.getColorButton()).equals(Option.Color.setting) && 
+								!(col = voi.getColorButton()).equals(PlugInSelectableVOI.INVALID_COLOR)) {						
 							output.write(Option.Color.text+": "+
 											col.getRed()+","+col.getGreen()+","+col.getBlue()+"\n");
 						}
