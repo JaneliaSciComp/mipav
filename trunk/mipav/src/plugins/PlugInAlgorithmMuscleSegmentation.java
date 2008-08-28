@@ -1185,6 +1185,22 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			}
 		}
 
+		/**
+		 * Creates a muscle pane just like this one.
+		 */
+		public MusclePane createNew(ActionListener listener) {
+			MusclePane p = new MusclePane(listener);
+			p.setColorButton(getColorButton());
+			p.setSymmetry(getSymmetry());
+			p.setNumCurves(getNumCurves());
+			p.setDoCalc(getDoCalc());
+			p.setDoFill(getDoFill());
+			p.setIsClosed(getIsClosed());
+			p.setName(getName());
+			
+			return p;
+		}
+
 		public Color getColorButton() {
 			return colorButton.getColorButton().getColorIcon().getColor();
 		}
@@ -1213,22 +1229,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			return isClosed.isSelected();
 		}
 		
-		/**
-		 * Creates a muscle pane just like this one.
-		 */
-		public MusclePane createNew(ActionListener listener) {
-			MusclePane p = new MusclePane(listener);
-			p.setColorButton(getColorButton());
-			p.setSymmetry(getSymmetry());
-			p.setNumCurves(getNumCurves());
-			p.setDoCalc(getDoCalc());
-			p.setDoFill(getDoFill());
-			p.setIsClosed(getIsClosed());
-			p.setName(getName());
-			
-			return p;
-		}
-
 		public void setColorButton(Color c) {
 			this.colorButton.getColorButton().getColorIcon().setColor(c);
 		}
