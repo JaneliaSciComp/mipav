@@ -149,6 +149,8 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
             if (setVariables()) {
                 callAlgorithm();
             }
+        } else if (command.equals("Help")) {
+            MipavUtil.showHelp("WThresh01");
         } else if (command.equals("Cancel")) {
             dispose();
         }
@@ -704,6 +706,8 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
+        buildHelpButton();
+        buttonPanel.add(helpButton);
 
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);

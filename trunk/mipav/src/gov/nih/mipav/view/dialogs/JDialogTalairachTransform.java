@@ -675,7 +675,7 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 		if (command.equals("Close")) {
  			dispose();
 		}  else if (command.equals("Help")) {
-            MipavUtil.showHelp("10027");
+            MipavUtil.showHelp("13010");
         } else if (command.equals("ACPC")) {
 			transformToACPC();
 		} else if (command.equals("TLRC")) {
