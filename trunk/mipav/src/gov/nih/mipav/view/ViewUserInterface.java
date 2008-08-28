@@ -1,6 +1,5 @@
 package gov.nih.mipav.view;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import edu.sdsc.grid.io.GeneralFile;
 
@@ -31,6 +30,8 @@ import java.util.*;
 import javax.swing.*;
 
 import org.w3c.dom.Document;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -186,11 +187,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** error handling for cmd line, if set to false will not exit on MipavUtil.displayError() */
     private boolean exitCmdLineOnError = true;
-    
-    /** This boolean tells if the user has provided an ouputDir parameter as a command line argument when running a script **/
+
+    /**
+     * This boolean tells if the user has provided an ouputDir parameter as a command line argument when running a
+     * script *
+     */
     private boolean providedOutputDir = false;
-    
-    /** This is the outputDir path that the user entered as a command line argument when running a script **/
+
+    /** This is the outputDir path that the user entered as a command line argument when running a script * */
     private String outputDir = "";
 
     // ~ Constructors
@@ -2124,9 +2128,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         int[] voiCount;
         int imgCount = 0;
         boolean providedUserDefaultDir = false;
-        
+
         String userDefaultDir = "";
-        
 
         String scriptFile = null;
         Vector<OpenFileInfo> imageList = new Vector<OpenFileInfo>();
@@ -2219,18 +2222,19 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         }
 
-        // determine if -inputDir or -outputDir flag was provided (user defined default image directory / output image dir)
+        // determine if -inputDir or -outputDir flag was provided (user defined default image directory / output image
+        // dir)
         for (i = 0; i < args.length; i++) {
             if (args[i].equalsIgnoreCase("-inputDir")) {
                 providedUserDefaultDir = true;
                 userDefaultDir = args[ ++i];
                 break;
-            }else if(args[i].equalsIgnoreCase("-outputDir")){
-            	providedOutputDir = true;
-            	outputDir = args[ ++i];
-            	break;
+            } else if (args[i].equalsIgnoreCase("-outputDir")) {
+                providedOutputDir = true;
+                outputDir = args[ ++i];
+                break;
             }
-            
+
         }
 
         // if -inputDir was given, verify that path provided is a proper path
@@ -2249,24 +2253,24 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 }
             }
         }
-        
+
         // if -outputDir was given, verify that path provided is a proper path
-        if(providedOutputDir) {
-        	if(outputDir == null || outputDir.trim().equals("")) {
-        		providedOutputDir = false;
-        		printUsageAndExit();
-        	}else {
-        		// check that there is a trailng slash at the end of the defaultDir...if not, add one
-        		if(! (outputDir.charAt(outputDir.length() - 1) ==  File.separatorChar)) {
-        			outputDir = outputDir + File.separator;
-        		}
-        		// now check if this is a valid path
-        		File checkOutputDir = new File(outputDir);
-        		if(! checkOutputDir.exists()) {
-        			providedOutputDir = false;
-        			printUsageAndExit();
-        		}
-        	}
+        if (providedOutputDir) {
+            if (outputDir == null || outputDir.trim().equals("")) {
+                providedOutputDir = false;
+                printUsageAndExit();
+            } else {
+                // check that there is a trailng slash at the end of the defaultDir...if not, add one
+                if ( ! (outputDir.charAt(outputDir.length() - 1) == File.separatorChar)) {
+                    outputDir = outputDir + File.separator;
+                }
+                // now check if this is a valid path
+                File checkOutputDir = new File(outputDir);
+                if ( !checkOutputDir.exists()) {
+                    providedOutputDir = false;
+                    printUsageAndExit();
+                }
+            }
         }
 
         i = 0;
@@ -3730,20 +3734,19 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     return;
                 }
             }
-            
-            //set the output dir (if provided from script) as the default dir
-            if(isProvidedOutputDir()) {
-            	setDefaultDirectory(outputDir);
+
+            // set the output dir (if provided from script) as the default dir
+            if (isProvidedOutputDir()) {
+                setDefaultDirectory(outputDir);
             }
-            
+
             if (scriptFile != null) {
                 ScriptRunner.getReference().runScript(scriptFile, imageNames, new Vector<String>());
             }
-            
-            //script is over...set the providedOutputDir back to false
+
+            // script is over...set the providedOutputDir back to false
             providedOutputDir = false;
-            
-            
+
         }
     }
 
@@ -3799,7 +3802,43 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 + "\n"
                 + "[-m][-M]          Image multifile name"
                 + "\n"
-                + "[-r][-R]          Raw Image Info"
+                + "[-r][-R]          Raw Image Info (example: -r datatype;extents;resols;units;endian;offset)"
+                + "\n"
+                + "                  Supported raw image file data types:"
+                + "\n"
+                + "                      0 => Boolean"
+                + "\n"
+                + "                      1 => Byte"
+                + "\n"
+                + "                      2 => Unsigned Byte"
+                + "\n"
+                + "                      3 => Short"
+                + "\n"
+                + "                      4 => Unsigned Short"
+                + "\n"
+                + "                      5 => Integer"
+                + "\n"
+                + "                      6 => Long"
+                + "\n"
+                + "                      7 => Float"
+                + "\n"
+                + "                      8 => Double"
+                + "\n"
+                + "                      9 => ARGB"
+                + "\n"
+                + "                      10 => ARGB Unsigned Short"
+                + "\n"
+                + "                      11 => ARGB Float"
+                + "\n"
+                + "                      12 => Complex"
+                + "\n"
+                + "                      13 => Complex Double"
+                + "\n"
+                + "                      14 => Unsigned Integer"
+                + "\n"
+                + "                  The extents, resolutions and units for each image dimension should be separated by commas."
+                + "\n"
+                + "                  For endianess, true => big endian and false => little endian."
                 + "\n"
                 + "[-s][-S]          Script file name"
                 + "\n"
@@ -3839,19 +3878,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         System.exit(0);
     }
-    
-    
+
     /**
-     * This is the getter for providedOutputDir
-     * providedOutputDir: This boolean tells if the user has provided an ouputDir parameter as a command line argument when running a script
+     * This is the getter for providedOutputDir providedOutputDir: This boolean tells if the user has provided an
+     * ouputDir parameter as a command line argument when running a script
+     * 
      * @return
      */
     public boolean isProvidedOutputDir() {
-		return providedOutputDir;
-	}
-   
-
-    
+        return providedOutputDir;
+    }
 
     // ~ Inner Classes
     // --------------------------------------------------------------------------------------------------
@@ -3946,11 +3982,4 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
     }
 
-
-
-	
-
-
-
-	
 }
