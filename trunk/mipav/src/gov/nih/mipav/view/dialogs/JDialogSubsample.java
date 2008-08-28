@@ -44,23 +44,23 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private JRadioButton by8Button = null; // subsample by 8
     
-    /** User-Interface for displaying the original extent X */
-	private JTextField textOriginalExtentX;
+    /** Label for displaying the original extent X */
+	private JLabel label2OriginalExtentX;
 
-	/** User-Interface for displaying the original extent Y */
-	private JTextField textOriginalExtentY;
+	/** Label for displaying the original extent Y */
+	private JLabel label2OriginalExtentY;
 
-	/** User-Interface for displaying the original extent Z */
-	private JTextField textOriginalExtentZ;
+	/** Label for displaying the original extent Z */
+	private JLabel label2OriginalExtentZ;
 
-	/** User-Interface for entering the expected extent X */
-	private JTextField textExpectedExtentX;
+	/** Label for displaying the padded extent X */
+	private JLabel labelPaddedExtentX;
 
-	/** User-Interface for entering the expected extent Y */
-	private JTextField textExpectedExtentY;
+	/** Label for displaying the padded extent Y */
+	private JLabel labelPaddedExtentY;
 
-	/** User-Interface for entering the expected extent Z */
-	private JTextField textExpectedExtentZ;
+	/** label for displaying the padded extent Z */
+	private JLabel labelPaddedExtentZ;
 
     /** DOCUMENT ME! */
     private int denom = 2; // denominator for subsampling
@@ -181,17 +181,17 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         		}
         	}
         	
-        	textExpectedExtentX.setText(Integer.toString(padExtents[0]));
-        	textExpectedExtentY.setText(Integer.toString(padExtents[1]));
+        	labelPaddedExtentX.setText(Integer.toString(padExtents[0]));
+        	labelPaddedExtentY.setText(Integer.toString(padExtents[1]));
             if (dim < 3) {
-                textExpectedExtentZ.setText("1");
+                labelPaddedExtentZ.setText("1");
             }
             else {
                 if (processIndepBox.isSelected()) {
-                    textExpectedExtentZ.setText(Integer.toString(image.getExtents()[2]));  
+                    labelPaddedExtentZ.setText(Integer.toString(image.getExtents()[2]));  
                 }
                 else {
-        	        textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+        	        labelPaddedExtentZ.setText(Integer.toString(padExtents[2]));
                 }
             }
         	
@@ -205,14 +205,14 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
     		}
         	
         	if (doPad) {
-        		textExpectedExtentX.setEnabled(true);
-            	textExpectedExtentY.setEnabled(true);
-            	textExpectedExtentZ.setEnabled(true);
+        		labelPaddedExtentX.setEnabled(true);
+            	labelPaddedExtentY.setEnabled(true);
+            	labelPaddedExtentZ.setEnabled(true);
                 
         	} else {
-        		textExpectedExtentX.setEnabled(false);
-            	textExpectedExtentY.setEnabled(false);
-            	textExpectedExtentZ.setEnabled(false);
+        		labelPaddedExtentX.setEnabled(false);
+            	labelPaddedExtentY.setEnabled(false);
+            	labelPaddedExtentZ.setEnabled(false);
         	}
         	
         	
@@ -226,17 +226,17 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         		}
         	}
         	
-        	textExpectedExtentX.setText(Integer.toString(padExtents[0]));
-        	textExpectedExtentY.setText(Integer.toString(padExtents[1]));
+        	labelPaddedExtentX.setText(Integer.toString(padExtents[0]));
+        	labelPaddedExtentY.setText(Integer.toString(padExtents[1]));
             if (dim < 3) {
-                textExpectedExtentZ.setText("1");
+                labelPaddedExtentZ.setText("1");
             }
             else {
                 if (processIndepBox.isSelected()) {
-                    textExpectedExtentZ.setText(Integer.toString(image.getExtents()[2]));  
+                    labelPaddedExtentZ.setText(Integer.toString(image.getExtents()[2]));  
                 }
                 else {
-                    textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+                    labelPaddedExtentZ.setText(Integer.toString(padExtents[2]));
                 }
             }
             
@@ -250,14 +250,14 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             }
             
             if (doPad) {
-                textExpectedExtentX.setEnabled(true);
-                textExpectedExtentY.setEnabled(true);
-                textExpectedExtentZ.setEnabled(true);
+                labelPaddedExtentX.setEnabled(true);
+                labelPaddedExtentY.setEnabled(true);
+                labelPaddedExtentZ.setEnabled(true);
                 
             } else {
-                textExpectedExtentX.setEnabled(false);
-                textExpectedExtentY.setEnabled(false);
-                textExpectedExtentZ.setEnabled(false);
+                labelPaddedExtentX.setEnabled(false);
+                labelPaddedExtentY.setEnabled(false);
+                labelPaddedExtentZ.setEnabled(false);
             }
         	        	
         } else if (command.equals("Subsample by 8")) {
@@ -270,17 +270,17 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         		}
         	}
         	
-        	textExpectedExtentX.setText(Integer.toString(padExtents[0]));
-        	textExpectedExtentY.setText(Integer.toString(padExtents[1]));
+        	labelPaddedExtentX.setText(Integer.toString(padExtents[0]));
+        	labelPaddedExtentY.setText(Integer.toString(padExtents[1]));
             if (dim < 3) {
-                textExpectedExtentZ.setText("1");
+                labelPaddedExtentZ.setText("1");
             }
             else {
                 if (processIndepBox.isSelected()) {
-                    textExpectedExtentZ.setText(Integer.toString(image.getExtents()[2]));  
+                    labelPaddedExtentZ.setText(Integer.toString(image.getExtents()[2]));  
                 }
                 else {
-                    textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+                    labelPaddedExtentZ.setText(Integer.toString(padExtents[2]));
                 }    
             }
             
@@ -294,14 +294,14 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             }
             
             if (doPad) {
-                textExpectedExtentX.setEnabled(true);
-                textExpectedExtentY.setEnabled(true);
-                textExpectedExtentZ.setEnabled(true);
+                labelPaddedExtentX.setEnabled(true);
+                labelPaddedExtentY.setEnabled(true);
+                labelPaddedExtentZ.setEnabled(true);
                 
             } else {
-                textExpectedExtentX.setEnabled(false);
-                textExpectedExtentY.setEnabled(false);
-                textExpectedExtentZ.setEnabled(false);
+                labelPaddedExtentX.setEnabled(false);
+                labelPaddedExtentY.setEnabled(false);
+                labelPaddedExtentZ.setEnabled(false);
             }
         	        	
         }
@@ -360,19 +360,19 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             }
             
             if (doPad) {
-                textExpectedExtentX.setEnabled(true);
-                textExpectedExtentY.setEnabled(true);
-                textExpectedExtentZ.setEnabled(true);
+                labelPaddedExtentX.setEnabled(true);
+                labelPaddedExtentY.setEnabled(true);
+                labelPaddedExtentZ.setEnabled(true);
                 
             } else {
-                textExpectedExtentX.setEnabled(false);
-                textExpectedExtentY.setEnabled(false);
-                textExpectedExtentZ.setEnabled(false);
+                labelPaddedExtentX.setEnabled(false);
+                labelPaddedExtentY.setEnabled(false);
+                labelPaddedExtentZ.setEnabled(false);
             }
 
             if (processIndepBox.isSelected()) {
                 if (dim == 3) {
-                    textExpectedExtentZ.setText(Integer.toString(image.getExtents()[2]));
+                    labelPaddedExtentZ.setText(Integer.toString(image.getExtents()[2]));
                 }
                 if (voiCheckBox != null) {
                     voiCheckBox.setEnabled(false);
@@ -380,7 +380,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                 }
             } else {
                 if (dim == 3) {
-                    textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+                    labelPaddedExtentZ.setText(Integer.toString(padExtents[2]));
                 }
                 if (voiCheckBox != null) {
                     voiCheckBox.setEnabled(true);
@@ -530,7 +530,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
      * Sets up the dialog window and makes it visible.
      */
     private void init() {
-
+        int i;
         setTitle("Subsample");
 
         ButtonGroup sampleSizeGroup = null;
@@ -585,42 +585,58 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 		JLabel labelOriginalExtentX = new JLabel("extent X: ");
 		labelOriginalExtentX.setFont(serif12);
 
-		textOriginalExtentX = new JTextField();
-		textOriginalExtentX.setColumns(5);
-		textOriginalExtentX.setMaximumSize(labelOriginalExtentX.getPreferredSize());
-		textOriginalExtentX.setHorizontalAlignment(JTextField.RIGHT);
-		textOriginalExtentX.setText(Integer.toString(extents[0]));
-		textOriginalExtentX.setFont(serif12);
-		textOriginalExtentX.setEnabled(false);
+		label2OriginalExtentX = new JLabel();
+		label2OriginalExtentX.setMaximumSize(labelOriginalExtentX.getPreferredSize());
+		label2OriginalExtentX.setHorizontalAlignment(JLabel.RIGHT);
+        String xString = Integer.toString(extents[0]);
+        int xLen = xString.length();
+        int addPad = 9 - xLen;
+        for (i = 0; i < addPad; i++) {
+            xString = xString.concat(" ");
+        }
+		label2OriginalExtentX.setText(xString);
+		label2OriginalExtentX.setFont(serif12);
+		label2OriginalExtentX.setEnabled(true);
 
 		// Orginal Extent Y
 		JLabel labelOriginalExtentY = new JLabel("extent Y: ");
 		labelOriginalExtentY.setFont(serif12);
 
-		textOriginalExtentY = new JTextField();
-		textOriginalExtentY.setColumns(5);
-		textOriginalExtentY.setMaximumSize(labelOriginalExtentY.getPreferredSize());
-		textOriginalExtentY.setHorizontalAlignment(JTextField.RIGHT);
-		textOriginalExtentY.setText(Integer.toString(extents[1]));
-		textOriginalExtentY.setFont(serif12);
-		textOriginalExtentY.setEnabled(false);
+		label2OriginalExtentY = new JLabel();
+		label2OriginalExtentY.setMaximumSize(labelOriginalExtentY.getPreferredSize());
+		label2OriginalExtentY.setHorizontalAlignment(JLabel.RIGHT);
+        String yString = Integer.toString(extents[1]);
+        int yLen = yString.length();
+        addPad = 9 - yLen;
+        for (i = 0; i < addPad; i++) {
+            yString = yString.concat(" ");
+        }
+		label2OriginalExtentY.setText(yString);
+		label2OriginalExtentY.setFont(serif12);
+		label2OriginalExtentY.setEnabled(true);
 
 		// Orginal Extent Z
 		JLabel labelOriginalExtentZ = new JLabel("extent Z: ");
 		labelOriginalExtentZ.setFont(serif12);
 
-		textOriginalExtentZ = new JTextField();
-		textOriginalExtentZ.setColumns(5);
-		textOriginalExtentZ.setMaximumSize(labelOriginalExtentZ.getPreferredSize());
-		textOriginalExtentZ.setHorizontalAlignment(JTextField.RIGHT);
+		label2OriginalExtentZ = new JLabel();
+		label2OriginalExtentZ.setMaximumSize(labelOriginalExtentZ.getPreferredSize());
+		label2OriginalExtentZ.setHorizontalAlignment(JTextField.RIGHT);
+        String zString;
 		if (dim >= 3) {
-			textOriginalExtentZ.setText(Integer.toString(extents[2]));	
+			zString = Integer.toString(extents[2]);	
 		}
         else {
-            textOriginalExtentZ.setText("1");
+            zString = "1";
         }
-        textOriginalExtentZ.setFont(serif12);
-		textOriginalExtentZ.setEnabled(false);
+        int zLen = zString.length();
+        addPad = 9 - zLen;
+        for (i = 0; i < addPad; i++) {
+            zString = zString.concat(" ");
+        }
+        label2OriginalExtentZ.setText(zString);
+        label2OriginalExtentZ.setFont(serif12);
+		label2OriginalExtentZ.setEnabled(true);
 
 		// Panel for Expected Extents
 		JPanel expectedExtentsPanel = new JPanel(new GridBagLayout());
@@ -632,47 +648,62 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 		JLabel labelExpectedExtentX = new JLabel("extent X: ");
 		labelExpectedExtentX.setFont(serif12);
 
-		textExpectedExtentX = new JTextField();
-		textExpectedExtentX.setColumns(5);
-		textExpectedExtentX.setMaximumSize(labelExpectedExtentX.getPreferredSize());
-		textExpectedExtentX.setHorizontalAlignment(JTextField.RIGHT);
-		textExpectedExtentX.setText(Integer.toString(padExtents[0]));
-		textExpectedExtentX.setFont(serif12);
+		labelPaddedExtentX = new JLabel();
+		labelPaddedExtentX.setMaximumSize(labelExpectedExtentX.getPreferredSize());
+		labelPaddedExtentX.setHorizontalAlignment(JLabel.RIGHT);
+        xString = Integer.toString(padExtents[0]);
+        xLen = xString.length();
+        addPad = 9 - xLen;
+        for (i = 0; i < addPad; i++) {
+            xString = xString.concat(" ");
+        }
+		labelPaddedExtentX.setText(xString);
+		labelPaddedExtentX.setFont(serif12);
 		if (!doPad) {
-			textExpectedExtentX.setEnabled(false);
+			labelPaddedExtentX.setEnabled(false);
 		}
 
 		// Expected Extent Y
 		JLabel labelExpectedExtentY = new JLabel("extent Y: ");
 		labelExpectedExtentY.setFont(serif12);
 
-		textExpectedExtentY = new JTextField();
-		textExpectedExtentY.setColumns(5);
-		textExpectedExtentY.setMaximumSize(labelExpectedExtentY.getPreferredSize());
-		textExpectedExtentY.setHorizontalAlignment(JTextField.RIGHT);
-		textExpectedExtentY.setText(Integer.toString(padExtents[1]));
-		textExpectedExtentY.setFont(serif12);
+		labelPaddedExtentY = new JLabel();
+		labelPaddedExtentY.setMaximumSize(labelExpectedExtentY.getPreferredSize());
+		labelPaddedExtentY.setHorizontalAlignment(JLabel.RIGHT);
+        yString = Integer.toString(padExtents[1]);
+        yLen = yString.length();
+        addPad = 9 - yLen;
+        for (i = 0; i < addPad; i++) {
+            yString = yString.concat(" ");
+        }
+		labelPaddedExtentY.setText(yString);
+		labelPaddedExtentY.setFont(serif12);
 		if (!doPad) {
-			textExpectedExtentY.setEnabled(false);
+			labelPaddedExtentY.setEnabled(false);
 		}
 
 		// Expected Extent Z
 		JLabel labelExpectedExtentZ = new JLabel("extent Z: ");
 		labelExpectedExtentZ.setFont(serif12);
 
-		textExpectedExtentZ = new JTextField();
-		textExpectedExtentZ.setColumns(5);
-		textExpectedExtentZ.setMaximumSize(labelExpectedExtentZ.getPreferredSize());
-		textExpectedExtentZ.setHorizontalAlignment(JTextField.RIGHT);
-        if (dim < 3) {
-            textExpectedExtentZ.setText("1");
+		labelPaddedExtentZ = new JLabel();
+		labelPaddedExtentZ.setMaximumSize(labelExpectedExtentZ.getPreferredSize());
+		labelPaddedExtentZ.setHorizontalAlignment(JLabel.RIGHT);
+        if (dim >= 3) {
+            zString = Integer.toString(padExtents[2]); 
         }
         else {
-		    textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+            zString = "1";
         }
-		textExpectedExtentZ.setFont(serif12);
+        zLen = zString.length();
+        addPad = 9 - zLen;
+        for (i = 0; i < addPad; i++) {
+            zString = zString.concat(" ");
+        }
+        labelPaddedExtentZ.setText(zString);
+		labelPaddedExtentZ.setFont(serif12);
 		if (!doPad || dim < 3)  {
-			textExpectedExtentZ.setEnabled(false);
+			labelPaddedExtentZ.setEnabled(false);
 		}
 		
 		GridBagConstraints gbc1 = new GridBagConstraints();
@@ -686,19 +717,19 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 		gbc1.gridx = 0;
 		originalExtentsPanel.add(labelOriginalExtentX, gbc1);
 		gbc1.gridx = 1;
-		originalExtentsPanel.add(textOriginalExtentX, gbc1);
+		originalExtentsPanel.add(label2OriginalExtentX, gbc1);
 
 		gbc1.gridy++;
 		gbc1.gridx = 0;
 		originalExtentsPanel.add(labelOriginalExtentY, gbc1);
 		gbc1.gridx = 1;
-		originalExtentsPanel.add(textOriginalExtentY, gbc1);
+		originalExtentsPanel.add(label2OriginalExtentY, gbc1);
 
 		gbc1.gridy++;
 		gbc1.gridx = 0;
 		originalExtentsPanel.add(labelOriginalExtentZ, gbc1);
 		gbc1.gridx = 1;
-		originalExtentsPanel.add(textOriginalExtentZ, gbc1);
+		originalExtentsPanel.add(label2OriginalExtentZ, gbc1);
 
 		gbc1.gridx = 0;
 		gbc1.weightx = 1.0;
@@ -715,19 +746,19 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 		gbc2.gridx = 2;
 		expectedExtentsPanel.add(labelExpectedExtentX, gbc2);
 		gbc2.gridx = 3;
-		expectedExtentsPanel.add(textExpectedExtentX, gbc2);
+		expectedExtentsPanel.add(labelPaddedExtentX, gbc2);
 
 		gbc2.gridy++;
 		gbc2.gridx = 2;
 		expectedExtentsPanel.add(labelExpectedExtentY, gbc2);
 		gbc2.gridx = 3;
-		expectedExtentsPanel.add(textExpectedExtentY, gbc2);
+		expectedExtentsPanel.add(labelPaddedExtentY, gbc2);
 
 		gbc2.gridy++;
 		gbc2.gridx = 2;
 		expectedExtentsPanel.add(labelExpectedExtentZ, gbc2);
 		gbc2.gridx = 3;
-		expectedExtentsPanel.add(textExpectedExtentZ, gbc2);
+		expectedExtentsPanel.add(labelPaddedExtentZ, gbc2);
 
 		gbc2.gridx = 1;
 		gbc2.weightx = 1.0;
