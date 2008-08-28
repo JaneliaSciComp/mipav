@@ -2698,13 +2698,26 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
                 ((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);
 
-                if (indeterminateProgressBar != null) {
-                    indeterminateProgressBar.setIndeterminate(false);
-                }
-
                 image.getParentFrame().getComponentImage().setModifyFlag(true);
 
                 image.notifyImageDisplayListeners();
+                
+                if (indeterminateProgressBar != null) {
+                    indeterminateProgressBar.setIndeterminate(false);
+                }
+                
+                image.getParentFrame().getComponentImage().addMouseListener(image.getParentFrame().getComponentImage());
+            	image.getParentFrame().getComponentImage().addMouseMotionListener(image.getParentFrame().getComponentImage());
+            	image.getParentFrame().getComponentImage().addMouseListener(image.getParentFrame().getComponentImage().getVOIHandler());
+            	image.getParentFrame().getComponentImage().addMouseMotionListener(image.getParentFrame().getComponentImage().getVOIHandler());
+            	if (image.getTriImageFrame() != null) {
+            		for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+                        if (image.getTriImageFrame().triImage[i] != null) {
+                        	image.getTriImageFrame().triImage[i].addMouseListener(image.getTriImageFrame().triImage[i]);
+                        	image.getTriImageFrame().triImage[i].addMouseMotionListener(image.getTriImageFrame().triImage[i]);
+                        }
+                    }
+            	}
             }
         };
 
@@ -2720,19 +2733,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         listButton[selected].setSelected(true);
 
         refreshImagePaint(image, obj);
-        
-        image.getParentFrame().getComponentImage().addMouseListener(image.getParentFrame().getComponentImage());
-    	image.getParentFrame().getComponentImage().addMouseMotionListener(image.getParentFrame().getComponentImage());
-    	image.getParentFrame().getComponentImage().addMouseListener(image.getParentFrame().getComponentImage().getVOIHandler());
-    	image.getParentFrame().getComponentImage().addMouseMotionListener(image.getParentFrame().getComponentImage().getVOIHandler());
-    	if (image.getTriImageFrame() != null) {
-    		for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
-                if (image.getTriImageFrame().triImage[i] != null) {
-                	image.getTriImageFrame().triImage[i].addMouseListener(image.getTriImageFrame().triImage[i]);
-                	image.getTriImageFrame().triImage[i].addMouseMotionListener(image.getTriImageFrame().triImage[i]);
-                }
-            }
-    	}
+       
     }
 
     /**
