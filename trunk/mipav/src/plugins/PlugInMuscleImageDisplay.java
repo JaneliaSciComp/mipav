@@ -517,9 +517,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         		MipavUtil.displayWarning("This tab calculates VOIs that depend on the following being created.\n"+
         				"Note that only muscle calculations will be correct.\n"+createStr);
         	}
-        	((AnalysisPrompt)tabs[resultTabLoc]).setSlice(getViewableSlice());
-        	((AnalysisPrompt)tabs[resultTabLoc]).setUpDialog();
-        	((AnalysisPrompt)tabs[resultTabLoc]).enableCalcOutput();
+        	((AnalysisDialogPrompt)tabs[resultTabLoc]).setSlice(getViewableSlice());
+        	((AnalysisDialogPrompt)tabs[resultTabLoc]).setUpDialog();
+        	((AnalysisDialogPrompt)tabs[resultTabLoc]).enableCalcOutput();
         } else if(command.equals(DialogPrompt.CANCEL)) {
     		unlockToPanel(voiTabLoc);
     		//initMuscleImage(activeTab);
@@ -1652,7 +1652,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    
 	    //now put resultsTab up
 	    resultTabLoc = mirrorArr.length+1;
-	    tabs[resultTabLoc] = new AnalysisPrompt(this, mirrorArr, noMirrorArr);
+	    tabs[resultTabLoc] = new AnalysisDialogPrompt(this, mirrorArr, noMirrorArr);
 	    tabs[resultTabLoc].addListener(this);
 	    tabs[resultTabLoc].addComponentListener(this);
 	    tabs[resultTabLoc].setVisible(false);
@@ -3121,7 +3121,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
      * @author senseneyj
      *
      */
-    private class AnalysisPrompt extends DialogPrompt implements ActionListener {
+    private class AnalysisDialogPrompt extends DialogPrompt implements ActionListener {
 		
     	//~ Static fields/initializers -------------------------------------------------------------------------------------
     	
@@ -3175,7 +3175,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		 * @param mirrorArr
 		 * @param noMirrorArr
 		 */
-		public AnalysisPrompt(PlugInMuscleImageDisplay theParentFrame, String[][] mirrorArr, String[][] noMirrorArr) {
+		public AnalysisDialogPrompt(PlugInMuscleImageDisplay theParentFrame, String[][] mirrorArr, String[][] noMirrorArr) {
 	        super(theParentFrame, "Analysis");
 	        
 	        setButtons(buttonStringList);
