@@ -842,6 +842,10 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         if (processIndepBox != null) {
             processIndep = processIndepBox.isSelected();
         }
+        
+        if (processIndep && (image.getNDims() > 2)) {
+            padExtents[2] = image.getExtents()[2];
+        }
 
         if (image.getNDims() == 2) {
             newExtents = new int[2];
@@ -856,17 +860,13 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             sigmas[1] = 1.0f;
         } else if (image.getNDims() == 3) {
             newExtents = new int[3];
-            //newExtents[0] = image.getExtents()[0] / denom;
-            //newExtents[1] = image.getExtents()[1] / denom;
             
             newExtents[0] = padExtents[0] / denom;
             newExtents[1] = padExtents[1] / denom;
-            newExtents[2] = padExtents[2] / denom;
 
             if (processIndep) {
                 newExtents[2] = image.getExtents()[2];
             } else {
-                //newExtents[2] = image.getExtents()[2] / denom;
                 newExtents[2] = padExtents[2] / denom;
             }
 
@@ -876,13 +876,14 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             sigmas[2] = 1.0f * (image.getFileInfo(0).getResolutions()[0] / image.getFileInfo(0).getResolutions()[2]);
         } else if (image.getNDims() == 4) {
             newExtents = new int[4];
-            //newExtents[0] = image.getExtents()[0] / denom;
-            //newExtents[1] = image.getExtents()[1] / denom;
-            //newExtents[2] = image.getExtents()[2] / denom;
             
             newExtents[0] = padExtents[0] / denom;
             newExtents[1] = padExtents[1] / denom;
-            newExtents[2] = padExtents[2] / denom;
+            if (processIndep) {
+                newExtents[2] = image.getExtents()[2];
+            } else {
+                newExtents[2] = padExtents[2] / denom;
+            }
             newExtents[3] = image.getExtents()[3];
             
             sigmas = new float[3];
