@@ -269,16 +269,13 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
-
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (icgAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
+            if(isRunInSeparateThread()) {
+    	        // Start the thread as a low priority because we wish to still have user interface work fast
+    	        if (icgAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+    	            MipavUtil.displayError("A thread is already running on this object");
+    	        }
             } else {
-
-                // icgAlgo.setActiveImage(isActiveImage);
-                icgAlgo.run();
+            	icgAlgo.run();
             }
         } catch (OutOfMemoryError x) {
 

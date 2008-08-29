@@ -98,9 +98,6 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
     private ModelImage inputWeightImage;
 
     /** DOCUMENT ME! */
-    private boolean isScript;
-
-    /** DOCUMENT ME! */
     private JLabel labelCoarse;
 
     /** DOCUMENT ME! */
@@ -985,13 +982,13 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         // Hide dialog
         setVisible(false);
 
-        if (isScript) {
-            reg25.run();
+        if(isRunInSeparateThread()) {
+	        // Start the thread as a low priority because we wish to still have user interface work fast
+	        if (reg25.startMethod(Thread.MIN_PRIORITY) == false) {
+	            MipavUtil.displayError("A thread is already running on this object");
+	        }
         } else {
-
-            if (reg25.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
+        	reg25.run();
         }
     }
 

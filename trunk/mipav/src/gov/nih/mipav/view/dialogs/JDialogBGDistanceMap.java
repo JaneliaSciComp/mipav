@@ -302,9 +302,14 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                     // Hide dialog
                     setVisible(false);
 
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (distanceMapAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
+                    if (isRunInSeparateThread()) {
+	                    // Start the thread as a low priority because we wish to still have user interface work fast.
+	                    if (distanceMapAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+	                        MipavUtil.displayError("A thread is already running on this object");
+	                    }
+                    } else {
+                    	//to maintain proper script execution, directly calling run
+                    	distanceMapAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("Dialog distance map: unable to allocate enough memory");
@@ -355,9 +360,14 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    // Start the thread as a low priority because we wish to still have user interface.
-                    if (distanceMapAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
+                    if (isRunInSeparateThread()) {
+	                    // Start the thread as a low priority because we wish to still have user interface work fast.
+	                    if (distanceMapAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+	                        MipavUtil.displayError("A thread is already running on this object");
+	                    }
+                    } else {
+                    	//to maintain proper script execution, directly calling run
+                    	distanceMapAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("Dialog distance map: unable to allocate enough memory");
@@ -398,9 +408,14 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                     // Hide dialog
                     setVisible(false);
 
-                    // Start the thread as a low priority because we wish to still have user interface work fast
-                    if (distanceMapAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
+                    if (isRunInSeparateThread()) {
+	                    // Start the thread as a low priority because we wish to still have user interface work fast.
+	                    if (distanceMapAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+	                        MipavUtil.displayError("A thread is already running on this object");
+	                    }
+                    } else {
+                    	//to maintain proper script execution, directly calling run
+                    	distanceMapAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("Dialog distance map: unable to allocate enough memory");
@@ -449,9 +464,14 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    // Start the thread as a low priority because we wish to still have user interface work fast
-                    if (distanceMapAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
+                    if (isRunInSeparateThread()) {
+	                    // Start the thread as a low priority because we wish to still have user interface work fast.
+	                    if (distanceMapAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+	                        MipavUtil.displayError("A thread is already running on this object");
+	                    }
+                    } else {
+                    	//to maintain proper script execution, directly calling run
+                    	distanceMapAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("Dialog distance map: unable to allocate enough memory");

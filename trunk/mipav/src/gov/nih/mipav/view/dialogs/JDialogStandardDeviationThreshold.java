@@ -821,8 +821,13 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
 
         setVisible(false);
 
-        if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
-            MipavUtil.displayError("A thread is already running on this object");
+        if(isRunInSeparateThread()) {
+	        // Start the thread as a low priority because we wish to still have user interface work fast
+	        if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
+	            MipavUtil.displayError("A thread is already running on this object");
+	        }
+        } else {
+        	alg.run();
         }
     }
         

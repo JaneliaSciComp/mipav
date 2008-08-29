@@ -337,12 +337,13 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
             userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
         }
 
-        // Start the thread as a low priority because we wish to still have
-        // user interface work fast
-        // if (evalSeg.startMethod(Thread.MIN_PRIORITY) == false){
-        // MipavUtil.displayError("A thread is already running on this object", "Error");
-        if (evalSeg.startMethod(Thread.MIN_PRIORITY) == false) {
-            MipavUtil.displayError("A thread is already running on this object");
+        if(isRunInSeparateThread()) {
+	        // Start the thread as a low priority because we wish to still have user interface work fast
+	        if (evalSeg.startMethod(Thread.MIN_PRIORITY) == false) {
+	            MipavUtil.displayError("A thread is already running on this object");
+	        }
+        } else {
+        	evalSeg.run();
         }
     }
     
