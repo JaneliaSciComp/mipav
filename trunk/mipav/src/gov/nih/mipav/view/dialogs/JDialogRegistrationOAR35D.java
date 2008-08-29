@@ -103,9 +103,6 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
     private ModelImage inputWeightImage;
 
     /** DOCUMENT ME! */
-    private boolean isScript;
-
-    /** DOCUMENT ME! */
     private JLabel labelInterp2;
 
     /** DOCUMENT ME! */
@@ -215,8 +212,6 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         String tmpStr;
 
         if (command.equals("OK")) {
-            setIsScript(false);
-
             if (setVariables()) {
                 callAlgorithm();
             }
@@ -726,13 +721,13 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         // Hide dialog
         setVisible(false);
 
-        if (isScript) {
-            reg35.run();
+        if(isRunInSeparateThread()) {
+	        // Start the thread as a low priority because we wish to still have user interface work fast
+	        if (reg35.startMethod(Thread.MIN_PRIORITY) == false) {
+	            MipavUtil.displayError("A thread is already running on this object");
+	        }
         } else {
-
-            if (reg35.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
+        	reg35.run();
         }
     }
 
@@ -1337,15 +1332,6 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
         setVisible(true);
-    }
-
-    /**
-     * Sets it to be /not be a script.
-     *
-     * @param  isScript  is this a script running?
-     */
-    private void setIsScript(boolean isScript) {
-        this.isScript = isScript;
     }
 
     /**

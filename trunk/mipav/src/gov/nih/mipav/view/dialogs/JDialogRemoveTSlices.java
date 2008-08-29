@@ -295,9 +295,13 @@ public class JDialogRemoveTSlices extends JDialogScriptableBase implements Algor
 
                 setVisible(false); // Hide dialog
 
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (removeTSlicesAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
+                if(isRunInSeparateThread()) {
+        	        // Start the thread as a low priority because we wish to still have user interface work fast
+        	        if (removeTSlicesAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+        	            MipavUtil.displayError("A thread is already running on this object");
+        	        }
+                } else {
+                	removeTSlicesAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
 
