@@ -841,11 +841,11 @@ public class AlgorithmPad extends AlgorithmBase {
             		if (z[1] > i) {
             			
             			if (i < z[0]) {
-            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*z[1]));
+            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*srcImage.getExtents()[2]));
             			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
-            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*z[1] + i-z[0]));
+            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*srcImage.getExtents()[2] + i-z[0]));
             			} else {
-            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*z[1] + srcImage.getExtents()[2] - 1));
+            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*srcImage.getExtents()[2] + srcImage.getExtents()[2] - 1));
             			}
             	   	}
             	}
@@ -855,7 +855,7 @@ public class AlgorithmPad extends AlgorithmBase {
         	
         } else {
             for (t = 0; t < tDim; t++) {
-            	for (i = 0; i < numInfos; i++) {
+            	for (i = 0; i < z[1]; i++) {
             		index = t * z[1] + i;
             		if (index == 0) {
             			fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(0).clone();
@@ -863,11 +863,11 @@ public class AlgorithmPad extends AlgorithmBase {
             		
             		if (z[1] > i) {
             			if (i < z[0]) {
-            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(t*z[1]).clone();
+            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(t*srcImage.getExtents()[2]).clone();
             			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
-            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(index).clone();
+            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(t*srcImage.getExtents()[2] + i).clone();
             			} else {
-            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(t*z[1]+srcImage.getExtents()[2]-1).clone();
+            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(t*srcImage.getExtents()[2]+srcImage.getExtents()[2]-1).clone();
             			}
             		}
             	}
@@ -1083,7 +1083,7 @@ public class AlgorithmPad extends AlgorithmBase {
             } // if (nDims = 2)
             else { // nDims >= 3
                 for (t = 0; t < tDim; t++) {
-                    tOffset = t * z[1];
+                    tOffset = t * srcImage.getExtents()[2];
                     for (n = 0, slc = (n + z[0]); slc < z[1]; n++, slc++) {
     
                         ((FileInfoDicom) (srcImage.getFileInfo(tOffset+n))).setSecondaryCaptureTags();
@@ -1404,11 +1404,11 @@ public class AlgorithmPad extends AlgorithmBase {
             		if ((zDim > i) && (nDims > 2)) {
             			
             			if (i < z[0]) {
-            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*zDim));
+            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*srcImage.getExtents()[2]));
             			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
-            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*zDim + i-z[0]));
+            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*srcImage.getExtents()[2] + i-z[0]));
             			} else {
-            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*zDim + srcImage.getExtents()[2] - 1));
+            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*srcImage.getExtents()[2] + srcImage.getExtents()[2] - 1));
             			}
             	   	}
             	}
@@ -1418,7 +1418,7 @@ public class AlgorithmPad extends AlgorithmBase {
         	
         } else {
             for (t = 0; t < tDim; t++) {
-            	for (i = 0; i < numInfos; i++) {
+            	for (i = 0; i < zDim; i++) {
             		index = t*zDim + i;
             		if (index == 0) {
             			fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(0).clone();
@@ -1426,11 +1426,11 @@ public class AlgorithmPad extends AlgorithmBase {
             		
             		if ((zDim > i) && (nDims > 2)) {
             			if (i < z[0]) {
-            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(t*zDim).clone();
+            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(t*srcImage.getExtents()[2]).clone();
             			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
-            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(index).clone();
+            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(t*srcImage.getExtents()[2]+i).clone();
             			} else {
-            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(t*zDim + srcImage.getExtents()[2]-1).clone();
+            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(t*srcImage.getExtents()[2] + srcImage.getExtents()[2]-1).clone();
             			}
             		}
             	}
