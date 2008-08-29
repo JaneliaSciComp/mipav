@@ -12,7 +12,7 @@ import java.util.*;
 
 
 /**
- * Pads 2D and 3D images using the supplied parameters. 
+ * Pads 2D and 3D and 4D images using the supplied parameters. 
  *
  * @version  1.0 June 14, 2007
  * @author   Mayur Joshi
@@ -127,16 +127,16 @@ public class AlgorithmPad extends AlgorithmBase {
 
             if (srcImage.getNDims() == 2) {
                 calcStoreInDest2D();
-            } else if (srcImage.getNDims() == 3) {
-                calcStoreInDest3D();
+            } else if (srcImage.getNDims() >= 3) {
+                calcStoreInDest34D();
             } 
         } // if (destImage != null)
         else { // destImage == null
 
             if (srcImage.getNDims() == 2) {
                 calcStoreInPlace2D();
-            } else if (srcImage.getNDims() == 3) {
-                calcStoreInPlace3D();
+            } else if (srcImage.getNDims() >= 3) {
+                calcStoreInPlace34D();
             } 
 
         } // else destImage == null
@@ -307,17 +307,25 @@ public class AlgorithmPad extends AlgorithmBase {
     /**
      * This function produces a new 3D image that has been padded.
      */
-    private void calcStoreInDest3D() {
+    private void calcStoreInDest34D() {
         int i, j, k, offset, index;
         int length;
         int start = 0;
         int paddedLength;
         int paddedVolume;
+        int paddedTimeSet;
         float[] buffer;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
         int zDim = srcImage.getExtents()[2];
+        int tDim = 1;
+        if (srcImage.getNDims() > 3) {
+            tDim = srcImage.getExtents()[3];
+        }
         int[] dimExtents;
+        int t;
+        int tOffset;
+        int volLength;
                 
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
@@ -341,14 +349,16 @@ public class AlgorithmPad extends AlgorithmBase {
         }
 
         paddedVolume = paddedLength * dimExtents[2];
+        paddedTimeSet = paddedVolume * tDim;
 
         int mod = paddedVolume / 100; // mod is 1 percent of length
 
         if (RGBImage) {
-            length = 4 * xDim * yDim * zDim;
+            volLength = 4 * xDim * yDim * zDim;
         } else {
-            length = xDim * yDim * zDim;
+            volLength = xDim * yDim * zDim;
         }
+        length = volLength * tDim;
 
         try {
             buffer = new float[length];
@@ -373,93 +383,98 @@ public class AlgorithmPad extends AlgorithmBase {
 
            
         if (RGBImage) {
-        	        	
-        	offset = (4 * ((z[0] * x[1] * y[1]) + (y[0] * x[1]) + x[0]));
-        	
-        	for (i = 0; i < offset; i++){
-        		
-        		if ((i % mod) == 0) {
-    				fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
-    			}
-        		
-        		if (i % 4 == 0) {
-        			destImage.set(i, buffer[0]);
-        		} else {
-        			destImage.set(i, pad);
-        		}
-        	}
-        	
-        	for (k = 0; k < zDim; k++) {
-        		
-        		start = offset + (4 * k * x[1] * y[1]);
-        		
-        		for (i = 0; i < yDim; i++) {
+            for (t = 0; t < tDim; t++) {
+        	    tOffset = t * paddedVolume;    	
+            	offset = tOffset + (4 * ((z[0] * x[1] * y[1]) + (y[0] * x[1]) + x[0]));
+            	
+            	for (i = tOffset; i < offset; i++){
             		
-            		index = start;
-            		start = start + (4 * x[1]);
-            		        		        		        		
-            		for (j = 0; j < (4 * xDim); j++) {
-            			
-            			if ((index % mod) == 0) {
-            				fireProgressStateChanged(Math.round((float) index / (length - 1) * 100));
-            			}
-            			
-            			destImage.set(index, buffer[(4 * k * xDim * yDim) + (4 * i * xDim) + j]);
-            			index = index + 1;
-            		}
+            		if ((i % mod) == 0) {
+        				fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
+        			}
             		
-            		for ( j = (index + 1); j < start; j++) {
-            			
-            			if ((j % mod) == 0) {
-            				fireProgressStateChanged(Math.round((float) j / (length - 1) * 100));
-            			}
-            			
-            			if (j % 4 == 0) {
-                			destImage.set(i, buffer[0]);
-                		} else {
-                			destImage.set(i, pad);
-                		}
+            		if (i % 4 == 0) {
+            			destImage.set(i, buffer[0]);
+            		} else {
+            			destImage.set(i, pad);
             		}
-            			
             	}
-        		
-        	}
-        	
-        	for (i = start; i < length; i++) {
-        		
-        		if ((i % mod) == 0) {
-    				fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
-    			}
-        		
-        		if (i % 4 == 0) {
-        			destImage.set(i, buffer[0]);
-        		} else {
-        			destImage.set(i, pad);
-        		}
-        	}
+            	
+            	for (k = 0; k < zDim; k++) {
+            		
+            		start = offset + (4 * k * x[1] * y[1]);
+            		
+            		for (i = 0; i < yDim; i++) {
+                		
+                		index = start;
+                		start = start + (4 * x[1]);
+                		        		        		        		
+                		for (j = 0; j < (4 * xDim); j++) {
+                			
+                			if ((index % mod) == 0) {
+                				fireProgressStateChanged(Math.round((float) index / (length - 1) * 100));
+                			}
+                			
+                			destImage.set(index, buffer[(4 * t * xDim * yDim * zDim) + (4 * k * xDim * yDim) +
+                                                        (4 * i * xDim) + j]);
+                			index = index + 1;
+                		}
+                		
+                		for ( j = (index + 1); j < start; j++) {
+                			
+                			if ((j % mod) == 0) {
+                				fireProgressStateChanged(Math.round((float) j / (length - 1) * 100));
+                			}
+                			
+                			if (j % 4 == 0) {
+                    			destImage.set(i, buffer[0]);
+                    		} else {
+                    			destImage.set(i, pad);
+                    		}
+                		}
+                			
+                	}
+            		
+            	}
+            	
+            	for (i = start; i < (t+1)*volLength; i++) {
+            		
+            		if ((i % mod) == 0) {
+        				fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
+        			}
+            		
+            		if (i % 4 == 0) {
+            			destImage.set(i, buffer[0]);
+            		} else {
+            			destImage.set(i, pad);
+            		}
+            	}
+            } // for (t = 0; t < tDim; t++)
                 
         } // if (RGBImage)
         else { // not ARGB or ARGB_USHORT or ARGB_FLOAT
-        	            	
-            offset = (z[0] * x[1] * y[1]) + (y[0] * x[1]) + x[0];
-            
-            for (k = 0; k < zDim; k++) {
-            	start = offset + (k * x[1] * y[1]);
-            	for (i = 0; i < yDim; i++) {
-                	index = start + (i * x[1]);
-                	            		
-                	for (j = 0; j < xDim; j++) {
-                		
-                		if ((index % mod) == 0) {
-            				fireProgressStateChanged(Math.round((float) index / (length - 1) * 100));
-            			}
-                		
-                		destImage.set(index, buffer[(k * xDim * yDim) + (xDim * i) + j]);
-                		index = index + 1;
-                	}
+        	for (t = 0; t < tDim; t++) { 
+                tOffset = t * paddedVolume;
+                offset = tOffset + (z[0] * x[1] * y[1]) + (y[0] * x[1]) + x[0];
+                
+                for (k = 0; k < zDim; k++) {
+                	start = offset + (k * x[1] * y[1]);
+                	for (i = 0; i < yDim; i++) {
+                    	index = start + (i * x[1]);
+                    	            		
+                    	for (j = 0; j < xDim; j++) {
+                    		
+                    		if ((index % mod) == 0) {
+                				fireProgressStateChanged(Math.round((float) index / (length - 1) * 100));
+                			}
+                    		
+                    		destImage.set(index, buffer[(t * xDim * yDim * zDim) +(k * xDim * yDim) + (xDim * i) + j]);
+                    		index = index + 1;
+                    	}
+                    }
+                	
                 }
-            	
-            }
+            } // for (t = 0; t < tDim; t++)
         } // not ARGB or ARGB_USHORT or ARGB_FLOAT
         
         buffer = null;
@@ -714,18 +729,23 @@ public class AlgorithmPad extends AlgorithmBase {
     /**
      * This function pads srcImage Must use getSrcImage after running.
      */
-    private void calcStoreInPlace3D() {
+    private void calcStoreInPlace34D() {
 
         int i,j, k, offset, n, length;
         int index = 0;
         int row_start = 0;
         int paddedLength;
         int paddedVolume;
+        int paddedTimeSet;
         float[] buffer;
         float[] destBuffer;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
         int zDim = srcImage.getExtents()[2];
+        int tDim = 1;
+        if (srcImage.getNDims() > 3) {
+            tDim = srcImage.getExtents()[3];
+        }
         int[] destExtents;
         int nDims;
         FileInfoBase[] fileInfo;
@@ -742,6 +762,8 @@ public class AlgorithmPad extends AlgorithmBase {
         String value;
         int slc;
         FileInfoDicom dicomInfoBuffer;
+        int t;
+        int tOffset;
 
 
         destExtents = new int[3];
@@ -762,13 +784,14 @@ public class AlgorithmPad extends AlgorithmBase {
         }
 
         paddedVolume = paddedLength * destExtents[2];
+        paddedTimeSet = paddedVolume * tDim;
 
-        int mod = paddedVolume / 100; // mod is 1 percent of length
+        int mod = paddedTimeSet / 100; // mod is 1 percent of length
 
         if (RGBImage) {
-            length = 4 * xDim * yDim * zDim;
+            length = 4 * xDim * yDim * zDim * tDim;
         } else {
-            length = xDim * yDim * zDim;
+            length = xDim * yDim * zDim * tDim;
         }
 
         try {
@@ -791,7 +814,7 @@ public class AlgorithmPad extends AlgorithmBase {
         	return;
         }
         
-        int numInfos = z[1];
+        int numInfos = z[1] * tDim;
         
         fileInfo = new FileInfoBase[numInfos];
         
@@ -802,49 +825,53 @@ public class AlgorithmPad extends AlgorithmBase {
         
         	// Create all the new file infos (reference and children) and fill them with the tags from the old
         	// file infos. 
-        	for(i = 0; i < numInfos; i++) {
-        	
-        		if (i == 0) {
-        			// Create a reference file info
-        			fileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
-                        							oldDicomInfo.getFileFormat());
-        		} else {
-        			fileInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
-        										oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
-        			childTagTables[i - 1] = ((FileInfoDicom) fileInfo[i]).getTagTable();
-       			}
-        		
-        		if (numInfos > i) {
-        			
-        			if (i < z[0]) {
-        				((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(0));
-        			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
-        				((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(i-z[0]));
-        			} else {
-        				((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(srcImage.getExtents()[2] - 1));
-        			}
-        	   	}
-        	}
+            for (t = 0; t < tDim; t++) {
+            	for(i = 0; i < z[1]; i++) {
+            	    index = t * z[1] + i;
+            		if (index == 0) {
+            			// Create a reference file info
+            			fileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                            							oldDicomInfo.getFileFormat());
+            		} else {
+            			fileInfo[index] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+            										oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
+            			childTagTables[index - 1] = ((FileInfoDicom) fileInfo[index]).getTagTable();
+           			}
+            		
+            		if (z[1] > i) {
+            			
+            			if (i < z[0]) {
+            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*z[1]));
+            			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
+            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*z[1] + i-z[0]));
+            			} else {
+            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*z[1] + srcImage.getExtents()[2] - 1));
+            			}
+            	   	}
+            	}
+            }
         	
         	((FileInfoDicom) fileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
         	
         } else {
-        	for (i = 0; i < numInfos; i++) {
-        		
-        		if (i == 0) {
-        			fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
-        		}
-        		
-        		if (numInfos > i) {
-        			if (i < z[0]) {
-        				fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
-        			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
-        				fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(i).clone();
-        			} else {
-        				fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(srcImage.getExtents()[2]-1).clone();
-        			}
-        		}
-        	}
+            for (t = 0; t < tDim; t++) {
+            	for (i = 0; i < numInfos; i++) {
+            		index = t * z[1] + i;
+            		if (index == 0) {
+            			fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(0).clone();
+            		}
+            		
+            		if (z[1] > i) {
+            			if (i < z[0]) {
+            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(t*z[1]).clone();
+            			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
+            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(index).clone();
+            			} else {
+            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(t*z[1]+srcImage.getExtents()[2]-1).clone();
+            			}
+            		}
+            	}
+            }
         }
         
         FileInfoBase.copyCoreInfo(srcImage.getFileInfo(), fileInfo);
@@ -862,7 +889,7 @@ public class AlgorithmPad extends AlgorithmBase {
             }
         }
 
-        for (n = 0; n < z[1]; n++) {
+        for (n = 0; n < numInfos; n++) {
             imgOriginLPS = fileInfo[n].getOrigin();
             originImgOrd = originLPS2Img(imgOriginLPS, srcImage);
             originImgOrd[0] = originImgOrd[0] + (direct[0] * x[0] * resols[0]);
@@ -880,7 +907,7 @@ public class AlgorithmPad extends AlgorithmBase {
         srcImage = null;
 
         try {
-            destBuffer = new float[paddedVolume];
+            destBuffer = new float[paddedTimeSet];
         } catch (OutOfMemoryError e) {
             buffer = null;
             destBuffer = null;
@@ -891,120 +918,126 @@ public class AlgorithmPad extends AlgorithmBase {
 
         if (RGBImage) {
         	
-        	offset = (4 * ((z[0] * x[1] * y[1]) + (y[0] * x[1]) + x[0]));
-        	
-        	for (i = 0; i < offset; i++){
-        		
-        		if ((i % mod) == 0) {
-    				fireProgressStateChanged(Math.round((float) i / (paddedVolume - 1) * 100));
-    			}
-        		
-        		if (i % 4 == 0) {
-        			destBuffer[i] = buffer[0];
-        		} else {
-        			destBuffer[i] = pad;
-        		}
-        	}
-        	
-        	start = offset;
-        	
-        	for (k = 0; k < zDim; k++) {
-        		
-        		row_start = start;
-        		
-        		for (i = 0; i < yDim; i++) {
+        	for (t = 0; t < tDim; t++) {
+                tOffset = t * paddedVolume;
+                offset = tOffset + (4 * ((z[0] * x[1] * y[1]) + (y[0] * x[1]) + x[0]));
+            	
+            	for (i = tOffset; i < offset; i++){
             		
-            		index = row_start;
+            		if ((i % mod) == 0) {
+        				fireProgressStateChanged(Math.round((float) i / (paddedTimeSet - 1) * 100));
+        			}
             		
-            		if (i != (yDim - 1)) {
-            			row_start = row_start + (4 * x[1]);
-            		}
-            		
-            		
-            		            		           		        		        		        		
-            		for (j = 0; j < (4 * xDim); j++) {
-            			
-            			if ((index % mod) == 0) {
-            				fireProgressStateChanged(Math.round((float) index / (paddedVolume - 1) * 100));
-            			}
-            			
-            			destBuffer[index] = buffer[(4 * k * xDim * yDim) + (4 * i * xDim) + j];
-            			index = index + 1;
-            		}
-            		if (i == (yDim - 1) && k != (zDim -1)) {
-            			
-            			start = offset + (4 * (k + 1) * x[1] * y[1]);
-            			
-            			for ( j = index; j < start; j++) {
-            				
-            				if ((j % mod) == 0) {
-                				fireProgressStateChanged(Math.round((float) j / (paddedVolume - 1) * 100));
-                			}
-            			
-            				if (j % 4 == 0) {
-            					destBuffer[j] = buffer[0];
-            				} else {
-            					destBuffer[j] = pad;
-            				}
-            				index = j;
-            			}
+            		if (i % 4 == 0) {
+            			destBuffer[i] = buffer[0];
             		} else {
-            			
-            			for ( j = index; j < row_start; j++) {
-                			
-            				if ((j % mod) == 0) {
-                				fireProgressStateChanged(Math.round((float) j / (paddedVolume - 1) * 100));
-                			}
-            				
-            				if (j % 4 == 0) {
-            					destBuffer[j] = buffer[0];
-            				} else {
-            					destBuffer[j] = pad;
-            				}
-            				index = j;
-            			}
+            			destBuffer[i] = pad;
             		}
-            			
-        		}
-            }
-        	
-        	for (i = (index + 1); i < paddedVolume; i++) {
-        		
-        		if ((i % mod) == 0) {
-    				fireProgressStateChanged(Math.round((float) i / (paddedVolume - 1) * 100));
-    			}
-        		
-        		if (i % 4 == 0) {
-        			destBuffer[i] = buffer[0];
-        		} else {
-        			destBuffer[i] = pad;
-        		}
-        	}
+            	}
+            	
+            	start = offset;
+            	
+            	for (k = 0; k < zDim; k++) {
+            		
+            		row_start = start;
+            		
+            		for (i = 0; i < yDim; i++) {
+                		
+                		index = row_start;
+                		
+                		if (i != (yDim - 1)) {
+                			row_start = row_start + (4 * x[1]);
+                		}
+                		
+                		
+                		            		           		        		        		        		
+                		for (j = 0; j < (4 * xDim); j++) {
+                			
+                			if ((index % mod) == 0) {
+                				fireProgressStateChanged(Math.round((float) index / (paddedTimeSet - 1) * 100));
+                			}
+                			
+                			destBuffer[index] = buffer[(4 * t * xDim * yDim * zDim) + (4 * k * xDim * yDim)
+                                                        + (4 * i * xDim) + j];
+                			index = index + 1;
+                		}
+                		if (i == (yDim - 1) && k != (zDim -1)) {
+                			
+                			start = offset + (4 * (k + 1) * x[1] * y[1]);
+                			
+                			for ( j = index; j < start; j++) {
+                				
+                				if ((j % mod) == 0) {
+                    				fireProgressStateChanged(Math.round((float) j / (paddedTimeSet - 1) * 100));
+                    			}
+                			
+                				if (j % 4 == 0) {
+                					destBuffer[j] = buffer[0];
+                				} else {
+                					destBuffer[j] = pad;
+                				}
+                				index = j;
+                			}
+                		} else {
+                			
+                			for ( j = index; j < row_start; j++) {
+                    			
+                				if ((j % mod) == 0) {
+                    				fireProgressStateChanged(Math.round((float) j / (paddedTimeSet - 1) * 100));
+                    			}
+                				
+                				if (j % 4 == 0) {
+                					destBuffer[j] = buffer[0];
+                				} else {
+                					destBuffer[j] = pad;
+                				}
+                				index = j;
+                			}
+                		}
+                			
+            		}
+                }
+            	
+            	for (i = (index + 1); i < (t+1)*paddedVolume; i++) {
+            		
+            		if ((i % mod) == 0) {
+        				fireProgressStateChanged(Math.round((float) i / (paddedTimeSet - 1) * 100));
+        			}
+            		
+            		if (i % 4 == 0) {
+            			destBuffer[i] = buffer[0];
+            		} else {
+            			destBuffer[i] = pad;
+            		}
+            	}
+            } // for (t = 0; t < tDim; t++)
         	
         } // if (RGBImage)
         else { // not ARGB or ARGB_USHORT or ARGB_FLOAT
         	
         	Arrays.fill(destBuffer, (float) pad);
-        	
-        	offset = (z[0] * x[1] * y[1]) + (y[0] * x[1]) + x[0];
-            
-            for (k = 0; k < zDim; k++) {
-            	start = offset + (k * x[1] * y[1]);
-            	for (i = 0; i < yDim; i++) {
-                	index = start + (i * x[1]);
-                	            		
-                	for (j = 0; j < xDim; j++) {
-                		
-                		if ((index % mod) == 0) {
-            				fireProgressStateChanged(Math.round((float) index / (paddedVolume - 1) * 100));
-            			}
-                		
-                		destBuffer[index] = buffer[(k * xDim * yDim) + (xDim * i) + j];
-                		index = index + 1;
-                	}
+            for (t = 0; t < tDim; t++) {
+        	    tOffset = t * paddedVolume;
+            	offset = tOffset + (z[0] * x[1] * y[1]) + (y[0] * x[1]) + x[0];
+                
+                for (k = 0; k < zDim; k++) {
+                	start = offset + (k * x[1] * y[1]);
+                	for (i = 0; i < yDim; i++) {
+                    	index = start + (i * x[1]);
+                    	            		
+                    	for (j = 0; j < xDim; j++) {
+                    		
+                    		if ((index % mod) == 0) {
+                				fireProgressStateChanged(Math.round((float) index / (paddedTimeSet - 1) * 100));
+                			}
+                    		
+                    		destBuffer[index] = buffer[(t * xDim * yDim * zDim) + (k * xDim * yDim) + (xDim * i) + j];
+                    		index = index + 1;
+                    	}
+                    }
+                	
                 }
-            	
-            }
+            } // for (t = 0; t < tDim; t++)
         	
         } // not ARGB or ARGB_USHORT or ARGB_FLOAT
        
@@ -1016,7 +1049,7 @@ public class AlgorithmPad extends AlgorithmBase {
         
         srcImage = new ModelImage(dataType, destExtents, imageName);
 
-        for (n = 0; n < z[1]; n++) {
+        for (n = 0; n < numInfos; n++) {
             srcImage.setFileInfo(fileInfo[n], n);
         }
 
@@ -1048,40 +1081,42 @@ public class AlgorithmPad extends AlgorithmBase {
                 value = String.valueOf(originImgOrd[2]);
                 ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0020,1041", value, value.length());
             } // if (nDims = 2)
-            else { // nDims == 3
-
-                for (n = 0, slc = (n + z[0]); slc < z[1]; n++, slc++) {
-
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setSecondaryCaptureTags();
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).getTagTable().setValue("0028,0011",
-                                                                                       new Short((short) destExtents[0]),
-                                                                                       2); // columns
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).getTagTable().setValue("0028,0010",
-                                                                                       new Short((short) destExtents[1]),
-                                                                                       2); // rows
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).getTagTable().setValue("0020,0013",
-                                                                                       Short.toString((short) (n + 1)),
-                                                                                       Short.toString((short) (n + 1)).length()); // instance number
-                    //dicomInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(slc - z[0]);
-                    dicomInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(n);
-                    // change the slice number ("0020,0013"):
-                    // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
-                    value = Integer.toString(slc - (int) z[0] + 1);
-                    dicomInfoBuffer.getTagTable().setValue("0020,0013", value, value.length());
-
-                    // change the image start position ("0020, 0032")
-                    startPos = originImgOrd[2];
-                    originImgOrd[2] = startPos + (direct[2] * z[0] * resols[2]);
-                    newImgOriginLPS = originImg2LPS(originImgOrd, srcImage);
-                    value = Float.toString(newImgOriginLPS[0]) + "\\" + Float.toString(newImgOriginLPS[1]) + "\\" +
-                            Float.toString(newImgOriginLPS[2]);
-                    dicomInfoBuffer.getTagTable().setValue("0020,0032", value, value.length());
-
-                    // readjust the slice location ("0020,1041")
-                    value = String.valueOf(originImgOrd[2]);
-                    dicomInfoBuffer.getTagTable().setValue("0020,1041", value, value.length());
-                } // for ( n = 0, slc = z[0]; slc <= z[1]; n++, slc++ )
-            } // else nDims == 3
+            else { // nDims >= 3
+                for (t = 0; t < tDim; t++) {
+                    tOffset = t * z[1];
+                    for (n = 0, slc = (n + z[0]); slc < z[1]; n++, slc++) {
+    
+                        ((FileInfoDicom) (srcImage.getFileInfo(tOffset+n))).setSecondaryCaptureTags();
+                        ((FileInfoDicom) (srcImage.getFileInfo(tOffset+n))).getTagTable().setValue("0028,0011",
+                                                                                           new Short((short) destExtents[0]),
+                                                                                           2); // columns
+                        ((FileInfoDicom) (srcImage.getFileInfo(tOffset+n))).getTagTable().setValue("0028,0010",
+                                                                                           new Short((short) destExtents[1]),
+                                                                                           2); // rows
+                        ((FileInfoDicom) (srcImage.getFileInfo(tOffset+n))).getTagTable().setValue("0020,0013",
+                                                                                           Short.toString((short) (n + 1)),
+                                                                                           Short.toString((short) (n + 1)).length()); // instance number
+                        //dicomInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(slc - z[0]);
+                        dicomInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(tOffset+n);
+                        // change the slice number ("0020,0013"):
+                        // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
+                        value = Integer.toString(slc - (int) z[0] + 1);
+                        dicomInfoBuffer.getTagTable().setValue("0020,0013", value, value.length());
+    
+                        // change the image start position ("0020, 0032")
+                        startPos = originImgOrd[2];
+                        originImgOrd[2] = startPos + (direct[2] * z[0] * resols[2]);
+                        newImgOriginLPS = originImg2LPS(originImgOrd, srcImage);
+                        value = Float.toString(newImgOriginLPS[0]) + "\\" + Float.toString(newImgOriginLPS[1]) + "\\" +
+                                Float.toString(newImgOriginLPS[2]);
+                        dicomInfoBuffer.getTagTable().setValue("0020,0032", value, value.length());
+    
+                        // readjust the slice location ("0020,1041")
+                        value = String.valueOf(originImgOrd[2]);
+                        dicomInfoBuffer.getTagTable().setValue("0020,1041", value, value.length());
+                    } // for ( n = 0, slc = z[0]; slc <= z[1]; n++, slc++ )
+                } // for (t = 0; t < tDim; t++)
+            } // else nDims >= 3
         } // if ( ( srcImage.getFileInfo()[0] ).getFileFormat() == FileUtility.DICOM )
 
 
@@ -1162,6 +1197,12 @@ public class AlgorithmPad extends AlgorithmBase {
         int[] destExtents = destImage.getExtents();
         int[] direct = new int[3];
         FileInfoDicom dicomInfoBuffer;
+        int tDim = 1;
+        if (destImage.getNDims() > 3) {
+            tDim = destImage.getExtents()[3];
+        }
+        int t;
+        int tOffset;
 
         dicomInfoBuffer = (FileInfoDicom) destImage.getFileInfo(0);
         destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
@@ -1257,13 +1298,58 @@ public class AlgorithmPad extends AlgorithmBase {
                     // readjust the slice location ("0020,1041")
                     value = String.valueOf(originImgOrd[2]);
                     dicomInfoBuffer.getTagTable().setValue("0020,1041", value, value.length());
+                } 
+            } else if (destImage.getNDims() == 4) {
+                // int imgOrient = dicomInfoBuffer.getImageOrientation();
+
+                Vector3f originVOI = new Vector3f(x[0], y[0], z[0]);
+                Vector3f originLPS = new Vector3f();
+
+                startPos = origins[2];
+                for (t = 0; t < tDim; t++) {
+                    tOffset = t * z[1];
+                    // System.err.println("Original file origin: " + originVOI);
+                    for (n = 0, slc = (n + z[0]); slc < z[1]; n++, slc++) {
+    
+                        ((FileInfoDicom) (destImage.getFileInfo(tOffset+n))).setSecondaryCaptureTags();
+                        ((FileInfoDicom) (destImage.getFileInfo(tOffset+n))).getTagTable().setValue("0028,0011",
+                                                                                            new Short((short) destExtents[0]),
+                                                                                            2); // columns
+                        ((FileInfoDicom) (destImage.getFileInfo(tOffset+n))).getTagTable().setValue("0028,0010",
+                                                                                            new Short((short) destExtents[1]),
+                                                                                            2); // rows
+                        ((FileInfoDicom) (destImage.getFileInfo(tOffset+n))).getTagTable().setValue("0020,0013",
+                                                                                            Short.toString((short) (n + 1)),
+                                                                                            Short.toString((short) (n + 1)).length()); // instance number
+                        dicomInfoBuffer = (FileInfoDicom) destImage.getFileInfo(tOffset+n);
+    
+                        // change the slice number ("0020,0013"):
+                        // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
+                        value = Integer.toString(slc - (int) z[0] + 1);
+                        dicomInfoBuffer.getTagTable().setValue("0020,0013", value, value.length());
+    
+                        // change the image start position ("0020, 0032")
+    
+                        originVOI.Z = slc;
+                        MipavCoordinateSystems.fileToScanner(originVOI, originLPS, srcImage);
+    
+                        value = Float.toString(originLPS.X) + "\\" + Float.toString(originLPS.Y) + "\\" +
+                                Float.toString(originLPS.Z);
+    
+                        dicomInfoBuffer.getTagTable().setValue("0020,0032", value, value.length());
+    
+                        // readjust the slice location ("0020,1041")
+                        value = String.valueOf(originImgOrd[2]);
+                        dicomInfoBuffer.getTagTable().setValue("0020,1041", value, value.length());
+                    } 
                 }
+                
             }
         }
     }
 
     /**
-     * Updates important image attributes (start locations, orientation ) for the new padded file by modifing the
+     * Updates important image attributes (start locations, orientation ) for the new padded file by modifying the
      * fileinfo fo the new ( destination ) image.
      */
     private void updateFileInfoData() {
@@ -1280,14 +1366,18 @@ public class AlgorithmPad extends AlgorithmBase {
         FileInfoBase fileInfoBuffer;
         int nDims = destImage.getNDims();
         int[] direct = new int[nDims];
-        
-        if (nDims == 2) {
-        	numInfos = 1;
-        } else if(nDims == 3) {
-        	numInfos = destImage.getExtents()[2];
-        } else {
-        	numInfos = destImage.getExtents()[2] * destImage.getExtents()[3];
+        int zDim = 1;
+        if (destImage.getNDims() > 2) {
+            zDim = destImage.getExtents()[2];
         }
+        int tDim = 1;
+        if (destImage.getNDims() > 3) {
+            tDim = destImage.getExtents()[3];
+        }
+        int t;
+        int index;
+        
+        numInfos = zDim * tDim;
         
         fileInfo = new FileInfoBase[numInfos];
         
@@ -1297,50 +1387,54 @@ public class AlgorithmPad extends AlgorithmBase {
         
         
         	// Create all the new file infos (reference and children) and fill them with the tags from the old
-        	// file infos. 
-        	for(i = 0; i < numInfos; i++) {
-        	
-        		if (i == 0) {
-        			// Create a reference file info
-        			fileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
-                        							oldDicomInfo.getFileFormat());
-        		} else {
-        			fileInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
-        										oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
-        			childTagTables[i - 1] = ((FileInfoDicom) fileInfo[i]).getTagTable();
-       			}
-        		
-        		if ((numInfos > i) && (nDims > 2)) {
-        			
-        			if (i < z[0]) {
-        				((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(0));
-        			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
-        				((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(i-z[0]));
-        			} else {
-        				((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(srcImage.getExtents()[2] - 1));
-        			}
-        	   	}
-        	}
+        	// file infos.
+            for (t = 0; t < tDim; t++) {
+            	for(i = 0; i < zDim; i++) {
+            	    index = t * zDim + i;
+            		if (index == 0) {
+            			// Create a reference file info
+            			fileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                            							oldDicomInfo.getFileFormat());
+            		} else {
+            			fileInfo[index] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+            										oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
+            			childTagTables[index - 1] = ((FileInfoDicom) fileInfo[index]).getTagTable();
+           			}
+            		
+            		if ((zDim > i) && (nDims > 2)) {
+            			
+            			if (i < z[0]) {
+            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*zDim));
+            			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
+            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*zDim + i-z[0]));
+            			} else {
+            				((FileInfoDicom) fileInfo[index]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t*zDim + srcImage.getExtents()[2] - 1));
+            			}
+            	   	}
+            	}
+            } // for (t = 0; t < tDim; t++)
         	
         	((FileInfoDicom) fileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
         	
         } else {
-        	for (i = 0; i < numInfos; i++) {
-        		
-        		if (i == 0) {
-        			fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
-        		}
-        		
-        		if ((numInfos > i) && (nDims > 2)) {
-        			if (i < z[0]) {
-        				fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
-        			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
-        				fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(i).clone();
-        			} else {
-        				fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(srcImage.getExtents()[2]-1).clone();
-        			}
-        		}
-        	}
+            for (t = 0; t < tDim; t++) {
+            	for (i = 0; i < numInfos; i++) {
+            		index = t*zDim + i;
+            		if (index == 0) {
+            			fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(0).clone();
+            		}
+            		
+            		if ((zDim > i) && (nDims > 2)) {
+            			if (i < z[0]) {
+            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(t*zDim).clone();
+            			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
+            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(index).clone();
+            			} else {
+            				fileInfo[index] = (FileInfoBase) srcImage.getFileInfo(t*zDim + srcImage.getExtents()[2]-1).clone();
+            			}
+            		}
+            	}
+            }
         }
         
         FileInfoBase.copyCoreInfo(srcImage.getFileInfo(), fileInfo);
@@ -1446,9 +1540,56 @@ public class AlgorithmPad extends AlgorithmBase {
                 fileInfoBuffer = destImage.getFileInfo(s);
 
                 destImage.getFileInfo(s).setExtents(extentsTmp);
+                destImage.getFileInfo(s).setResolutions(resolsTmp);
                 fileInfoBuffer.setOrigin(originImgOrd);
             }
-        } 
+        } else if (nDims == 4) {
+            destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices()); 
+
+            fileInfoBuffer = destImage.getFileInfo(0);
+            resols = fileInfoBuffer.getResolutions();
+            axisOrient = fileInfoBuffer.getAxisOrientation();
+
+            for (i = 0; i < nDims; i++) {
+
+                if ((axisOrient[i] == FileInfoBase.ORI_R2L_TYPE) || (axisOrient[i] == FileInfoBase.ORI_A2P_TYPE) ||
+                        (axisOrient[i] == FileInfoBase.ORI_I2S_TYPE) ||
+                        (axisOrient[i] == FileInfoBase.ORI_UNKNOWN_TYPE)) {
+                    direct[i] = 1;
+                } else {
+                    direct[i] = -1;
+                }
+            }
+
+            Vector3f fileOriginVOI = new Vector3f(x[0], y[0], z[0]);
+            Vector3f lpsOriginVOI = new Vector3f();
+            MipavCoordinateSystems.fileToScanner(fileOriginVOI, lpsOriginVOI, destImage);
+ 
+            int orientation = destImage.getImageOrientation();
+
+            if ((orientation == FileInfoBase.AXIAL) || (orientation == FileInfoBase.UNKNOWN_ORIENT)) {
+                originImgOrd[0] = lpsOriginVOI.X;
+                originImgOrd[1] = lpsOriginVOI.Y;
+                originImgOrd[2] = lpsOriginVOI.Z;
+            } else if (orientation == FileInfoBase.SAGITTAL) {
+                originImgOrd[0] = lpsOriginVOI.Y;
+                originImgOrd[1] = lpsOriginVOI.Z;
+                originImgOrd[2] = lpsOriginVOI.X;
+            } else if (orientation == FileInfoBase.CORONAL) {
+                originImgOrd[0] = lpsOriginVOI.X;
+                originImgOrd[1] = lpsOriginVOI.Z;
+                originImgOrd[2] = lpsOriginVOI.Y;
+            }
+
+
+            for (int s = 0; s < destImage.getExtents()[2]*destImage.getExtents()[3]; s++) { // for each slice
+                fileInfoBuffer = destImage.getFileInfo(s);
+
+                destImage.getFileInfo(s).setExtents(destImage.getExtents());
+                destImage.getFileInfo(s).setResolutions(resols);
+                fileInfoBuffer.setOrigin(originImgOrd);
+            }    
+        }
 
         if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
             updateDICOM();
