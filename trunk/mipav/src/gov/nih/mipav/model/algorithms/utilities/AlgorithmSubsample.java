@@ -48,6 +48,8 @@ public class AlgorithmSubsample extends AlgorithmBase {
 
     /** Whether to perform trilinear filtering when getting intensities of points on the source image. */
     private boolean trilinearFlag = true;
+    
+    private ModelImage testImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -74,12 +76,15 @@ public class AlgorithmSubsample extends AlgorithmBase {
         
         processIndep = indep;
         this.transformVOI = transformVOI;
+       
         if (doPad) {
         	srcImage = padImage(src, padExtents);
         	//new ViewJFrameImage((ModelImage)(srcImage.clone()), null, new Dimension(610, 200));
         } else {
         	srcImage = src;
         }
+        
+        
         
         resultImage = result;
         resultExtents = newExtents;
@@ -626,7 +631,6 @@ public class AlgorithmSubsample extends AlgorithmBase {
 
         ModelSimpleImage src = new ModelSimpleImage(srcImage.getExtents(), srcImage.getFileInfo(0).getResolutions(),
                                                     srcImage);
-
         float[] resolutions = new float[srcImage.getNDims()];
 
         for (int i = 0; i < resolutions.length; i++) {
@@ -1218,6 +1222,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         // convert the source image to make it easier to work with
         ModelSimpleImage src = new ModelSimpleImage(srcImage.getExtents(), srcImage.getFileInfo(0).getResolutions(),
                                                     srcImage);
+        
         float[] resolutions = new float[srcImage.getNDims()];
 
         for (int i = 0; i < resolutions.length; i++) {
@@ -1568,7 +1573,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
                                                                                                                           (diagYZCoeff *
                                                                                                                                (diagYZVal)) +
                                                                                                                           (cornerCoeff *
-                                                                                                                               (cornerVal)));
+                                                                                                                                 (cornerVal)));
                         } // for (c = 0; c <= numChannels; c++)
                     } // for (int x = 0; x < result.xDim; x++)
                 } // for (int y = 0; y < result.yDim; y++)
@@ -1831,6 +1836,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
     	
     	paddedImage = new ModelImage(kImage.getType(), padExtents,
                 makeImageName(kImage.getImageName(), "_pad"));
+        
     	paddedImage.setAll(0);
     	int[] extents = kImage.getExtents();
     	AlgorithmPad algoPad = null;
@@ -1854,24 +1860,15 @@ public class AlgorithmSubsample extends AlgorithmBase {
     	// Generate bounds for pad algorithm
     	
     	// X bounds
-    	if (extents[0] == padExtents[0]) {
-    		x[0] = 0;
-    		x[1] = extents[0];
-    	} else {
-    		x[0] = 0;
-    		x[1] = padExtents[0];
-    	}
+        x[0] = 0;
+        x[1] = padExtents[0];
     	
     	// Y bounds
-    	if (extents[1] == padExtents[1]) {
-    		y[0] = 0;
-    		y[1] = extents[1];
-    	} else {
-    		y[0] = 0;
-    		y[1] = padExtents[1];
-    	}
+        y[0] = 0;
+        y[1] = padExtents[1];
     	
-    	if (extents.length == 3) {
+    	
+    	if (extents.length >= 3) {
     		if ((extents[2] == padExtents[2]) || (processIndep)) {
         		z[0] = 0;
         		z[1] = extents[2];
