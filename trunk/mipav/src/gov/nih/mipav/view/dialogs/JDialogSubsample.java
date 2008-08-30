@@ -136,7 +136,10 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         padExtents = new int[dim];
         
         for (int i = 0; i < dim; i++) {
-        	if (isDivisible(extents[i], denom)) {
+            if (i > 2) {
+                padExtents[i] = extents[i];
+            }
+            else if (isDivisible(extents[i], denom)) {
         		padExtents[i] = extents[i];
         	} else {
         		padExtents[i] = extents[i] + 1;
@@ -174,7 +177,10 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Subsample by 2")) {
         	denom = 2;
         	for(int i = 0; i < dim; i++) {
-        		if(isDivisible(extents[i], denom)) {
+                if (i > 2) {
+                    padExtents[i] = extents[i];
+                }
+                else if(isDivisible(extents[i], denom)) {
         			padExtents[i] = extents[i];
         		} else {
         			padExtents[i] = makeExtentDivisibleByDenom(extents[i], denom);
@@ -197,7 +203,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         	
         	if (Arrays.equals(padExtents, extents)) {
     			doPad = false;
-    		} else if ((dim == 3) && (processIndepBox.isSelected()) &&
+    		} else if ((dim >= 3) && (processIndepBox.isSelected()) &&
                      (extents[0] == padExtents[0]) && (extents[1] == padExtents[1])) {
                 doPad = false;
             } else {
@@ -219,7 +225,10 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Subsample by 4")) {
         	denom = 4;
         	for(int i = 0; i < dim; i++) {
-        		if(isDivisible(extents[i], denom)) {
+                if (i > 2) {
+                    padExtents[i] = extents[i];
+                }
+                else if(isDivisible(extents[i], denom)) {
         			padExtents[i] = extents[i];
         		} else {
         			padExtents[i] = makeExtentDivisibleByDenom(extents[i], denom);
@@ -242,7 +251,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             
             if (Arrays.equals(padExtents, extents)) {
                 doPad = false;
-            } else if ((dim == 3) && (processIndepBox.isSelected()) &&
+            } else if ((dim >= 3) && (processIndepBox.isSelected()) &&
                      (extents[0] == padExtents[0]) && (extents[1] == padExtents[1])) {
                 doPad = false;
             } else {
@@ -263,7 +272,10 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Subsample by 8")) {
         	denom = 8;
         	for(int i = 0; i < dim; i++) {
-        		if(isDivisible(extents[i], denom)) {
+                if (i > 2) {
+                    padExtents[i] = extents[i];
+                }
+                else if(isDivisible(extents[i], denom)) {
         			padExtents[i] = extents[i];
         		} else {
         			padExtents[i] = makeExtentDivisibleByDenom(extents[i], denom);
@@ -286,7 +298,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             
             if (Arrays.equals(padExtents, extents)) {
                 doPad = false;
-            } else if ((dim == 3) && (processIndepBox.isSelected()) &&
+            } else if ((dim >= 3) && (processIndepBox.isSelected()) &&
                      (extents[0] == padExtents[0]) && (extents[1] == padExtents[1])) {
                 doPad = false;
             } else {
@@ -352,7 +364,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             
             if (Arrays.equals(padExtents, extents)) {
                 doPad = false;
-            } else if ((dim == 3) && (processIndepBox.isSelected()) &&
+            } else if ((dim >= 3) && (processIndepBox.isSelected()) &&
                      (extents[0] == padExtents[0]) && (extents[1] == padExtents[1])) {
                 doPad = false;
             } else {
@@ -371,7 +383,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             }
 
             if (processIndepBox.isSelected()) {
-                if (dim == 3) {
+                if (dim >= 3) {
                     labelPaddedExtentZ.setText(Integer.toString(image.getExtents()[2]));
                 }
                 if (voiCheckBox != null) {
@@ -379,7 +391,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                     voiCheckBox.setSelected(false);
                 }
             } else {
-                if (dim == 3) {
+                if (dim >= 3) {
                     labelPaddedExtentZ.setText(Integer.toString(padExtents[2]));
                 }
                 if (voiCheckBox != null) {
@@ -568,7 +580,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             sampleSizePanel.add(voiCheckBox);
         }
 
-        if (image.getNDims() == 3) {
+        if (image.getNDims() >= 3) {
             processIndepBox = new JCheckBox("Process each slice independently (2.5D)", false);
             processIndepBox.setFont(serif12);
             processIndepBox.addItemListener(this);
@@ -826,14 +838,20 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         if (by4Button.isSelected()) {
             denom = 4;
             for(int i = 0; i < dim; i++) {
-            	if(!isDivisible(padExtents[i], denom)) {
+                if (i > 2) {
+                    padExtents[i] = extents[i];
+                }
+                else if(!isDivisible(padExtents[i], denom)) {
             		padExtents[i] = makeExtentDivisibleByDenom(padExtents[i], denom);
             	}
             }
         } else if (by8Button.isSelected()) {
             denom = 8;
             for(int i = 0; i < dim; i++) {
-            	if(!isDivisible(padExtents[i], denom)) {
+                if (i > 2) {
+                    padExtents[i] = extents[i];
+                }
+                else if(!isDivisible(padExtents[i], denom)) {
             		padExtents[i] = makeExtentDivisibleByDenom(padExtents[i], denom);
             	}
             }
