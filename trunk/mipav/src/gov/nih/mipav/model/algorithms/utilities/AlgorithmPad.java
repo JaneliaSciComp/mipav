@@ -1222,7 +1222,7 @@ public class AlgorithmPad extends AlgorithmBase {
         int nDims = destImage.getNDims();
         int[] axisOrient = destImage.getFileInfo()[0].getAxisOrientation();
 
-        for (int i = 0; i < nDims; i++) {
+        for (int i = 0; i < Math.min(3,nDims); i++) {
 
             if ((axisOrient[i] == 1) || (axisOrient[i] == 4) || (axisOrient[i] == 5)) {
                 direct[i] = 1;
@@ -1550,7 +1550,7 @@ public class AlgorithmPad extends AlgorithmBase {
             resols = fileInfoBuffer.getResolutions();
             axisOrient = fileInfoBuffer.getAxisOrientation();
 
-            for (i = 0; i < nDims; i++) {
+            for (i = 0; i < 3; i++) {
 
                 if ((axisOrient[i] == FileInfoBase.ORI_R2L_TYPE) || (axisOrient[i] == FileInfoBase.ORI_A2P_TYPE) ||
                         (axisOrient[i] == FileInfoBase.ORI_I2S_TYPE) ||
