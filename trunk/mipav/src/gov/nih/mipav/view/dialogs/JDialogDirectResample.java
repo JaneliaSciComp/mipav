@@ -113,7 +113,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         res = image.getFileInfo(0).getResolutions();
         this.dim = extents.length;
 
-        for (int i = 0; i < extents.length; i++) {
+        for (int i = 0; i < Math.min(3,extents.length); i++) {
             volExtents[i] = dimPowerOfTwo(extents[i]);
             volSize *= volExtents[i];
 
@@ -664,7 +664,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             }
         } else if (dim <= 512) {
 
-            if (dim > 448) {
+            if (dim > 320) {
                 return 512;
             } else {
                 return 256;
