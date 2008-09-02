@@ -823,6 +823,7 @@ public abstract class ViewJFrameBase extends JFrame
             // if voiDir exists, then get list of voi's from directory (*.voi)
             File voiFileDir = new File(voiDir);
             Vector<String> filenames = new Vector<String>();
+            Vector<Boolean> isLabel = new Vector<Boolean>();
 
             if (voiFileDir.exists() && voiFileDir.isDirectory()) {
 
@@ -833,6 +834,10 @@ public abstract class ViewJFrameBase extends JFrame
 
                     if (files[k].getName().endsWith(".voi") || files[k].getName().endsWith(".xml")) {
                         filenames.add(files[k].getName());
+                        isLabel.add(false);
+                    } else if (files[k].getName().endsWith(".lbl")) {
+                    	filenames.add(files[k].getName());
+                    	isLabel.add(true);
                     }
                 }
             } else { // voiFileDir either doesn't exist, or isn't a directory
@@ -849,7 +854,7 @@ public abstract class ViewJFrameBase extends JFrame
 
                 fileVOI = new FileVOI((String) (filenames.elementAt(i)), voiDir, currentImage);
 
-                VOIs = fileVOI.readVOI(false);
+                VOIs = fileVOI.readVOI(isLabel.get(i));
 
                 for (j = 0; j < VOIs.length; j++) {
                     currentImage.registerVOI(VOIs[j]);
@@ -2245,37 +2250,19 @@ public abstract class ViewJFrameBase extends JFrame
 
             if (displayMode == IMAGE_A) {
                 currentImage = imageA;
-                VOIs = (ViewVOIVector) imageA.getVOIs();
+                VOIs = imageA.getVOIs();
             } else if (displayMode == IMAGE_B) {
                 currentImage = imageB;
-                VOIs = (ViewVOIVector) imageB.getVOIs();
+                VOIs = imageB.getVOIs();
             } else {
                 MipavUtil.displayError(" Cannot save VOIs when viewing both images");
 
                 return;
             }
 
-            // Might want to bring up warning message before deleting VOIs !!!!
-            // or not do it at all.
-            // if voiDir exists, then empty it
-            // if voiDir does not exist, then create it
             File voiFileDir = new File(voiDir);
 
-            if (voiFileDir.exists() && voiFileDir.isDirectory()) {
-
-                // only clean out the vois if this is a default voi directory
-                if (voiFileDir.getName().startsWith("defaultVOIs_")) {
-                    File[] files = voiFileDir.listFiles();
-
-                    if (files != null) {
-
-                        for (int k = 0; k < files.length; k++) {
-
-                            if (files[k].getName().endsWith(".voi") || files[k].getName().endsWith(".xml")) { // files[k].delete();
-                            }
-                        }
-                    } // if (files != null)
-                }
+            if (voiFileDir.exists() && voiFileDir.isDirectory()) { //do nothing
             } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
             } else { // voiFileDir does not exist
                 voiFileDir.mkdir();
@@ -2286,10 +2273,13 @@ public abstract class ViewJFrameBase extends JFrame
             System.err.println("Number of VOIs: " + nVOI);
 
             for (i = 0; i < nVOI; i++) {
-
-                fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, currentImage);
-
-                fileVOI.writeVOI(VOIs.VOIAt(i), true);
+            	if(VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
+                    fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir,currentImage);
+                    fileVOI.writeVOI(VOIs.VOIAt(i), true);
+                } else {
+                	fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", voiDir,currentImage);
+                	fileVOI.writeAnnotationXML(true, true);
+                }
             }
 
         } catch (IOException error) {
@@ -2352,6 +2342,8 @@ public abstract class ViewJFrameBase extends JFrame
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
+                if(!fileName.endsWith(".lbl"))
+                	fileName += ".lbl";
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                 userInterface.setDefaultDirectory(directory);
 
@@ -2366,7 +2358,7 @@ public abstract class ViewJFrameBase extends JFrame
 
                 FileVOI fileVOI = new FileVOI(fileName, directory, imageA);
 
-                fileVOI.writeAnnotationXML(saveAll);
+                fileVOI.writeAnnotationXML(true, saveAll);
 
             } catch (IOException error) {
                 MipavUtil.displayError("Error writing labels");
@@ -2417,6 +2409,8 @@ public abstract class ViewJFrameBase extends JFrame
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
+                if(!fileName.endsWith(".lbl"))
+                	fileName += ".lbl";
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                 userInterface.setDefaultDirectory(directory);
             } else {
@@ -2426,7 +2420,7 @@ public abstract class ViewJFrameBase extends JFrame
             try {
 
                 FileVOI fileVOI = new FileVOI(fileName, directory, imageB);
-                fileVOI.writeAnnotationXML(true);
+                fileVOI.writeAnnotationXML(true, saveAll);
 
             } catch (IOException error) {
                 MipavUtil.displayError("Error writing label(s)");
@@ -3089,7 +3083,7 @@ public abstract class ViewJFrameBase extends JFrame
         try {
 
             if (displayMode == IMAGE_A) {
-                VOIs = (ViewVOIVector) imageA.getVOIs();
+                VOIs = imageA.getVOIs();
                 nVOI = VOIs.size();
 
                 for (i = 0; i < nVOI; i++) {
@@ -3105,13 +3099,17 @@ public abstract class ViewJFrameBase extends JFrame
                     return;
                 }
 
-                fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", imageA.getFileInfo(0).getFileDirectory(),
-                                      imageA);
-
-                fileVOI.writeVOI(VOIs.VOIAt(i), saveAllContours);
-
+                if(VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
+	                fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", imageA.getFileInfo(0).getFileDirectory(),
+	                                      imageA);
+	                fileVOI.writeVOI(VOIs.VOIAt(i), saveAllContours);
+                } else {
+                	fileVOI = new FileVOI(VOIs.VOIAt(i) + ".lbl", imageA.getFileInfo(0).getFileDirectory(),
+                            imageA);
+                	fileVOI.writeAnnotationXML(true, false);
+                }
             } else if (displayMode == IMAGE_B) {
-                VOIs = (ViewVOIVector) imageB.getVOIs();
+                VOIs = imageB.getVOIs();
                 nVOI = VOIs.size();
 
                 for (i = 0; i < nVOI; i++) {
@@ -3127,10 +3125,15 @@ public abstract class ViewJFrameBase extends JFrame
                     return;
                 }
 
-                fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", imageB.getFileInfo(0).getFileDirectory(),
-                                      imageB);
-
-                fileVOI.writeVOI(VOIs.VOIAt(i), saveAllContours);
+                if(VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
+	                fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", imageA.getFileInfo(0).getFileDirectory(),
+	                                      imageB);
+	                fileVOI.writeVOI(VOIs.VOIAt(i), saveAllContours);
+                } else {
+                	fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", imageA.getFileInfo(0).getFileDirectory(),
+                            imageB);
+                	fileVOI.writeAnnotationXML(true, false);
+                }
             } else {
                 MipavUtil.displayError(" Cannot open VOI when viewing both images");
             }
@@ -3163,7 +3166,7 @@ public abstract class ViewJFrameBase extends JFrame
         int nVOI;
         int i;
         ViewVOIVector VOIs;
-        boolean doPoint = false;
+        boolean doPoint = false, doAnnotation = false;
 
         if (displayMode == IMAGE_A) {
 
@@ -3216,20 +3219,29 @@ public abstract class ViewJFrameBase extends JFrame
 
             try {
 
-                if (fileName.endsWith(".voi") && (VOIs.VOIAt(i).getCurveType() == VOI.POINT)) {
+            	if (fileName.endsWith(".voi") && (VOIs.VOIAt(i).getCurveType() == VOI.POINT)) {
                     doPoint = true;
+                } else if(fileName.endsWith(".lbl") || VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
+                	doAnnotation = true;
+                	if(VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION && !fileName.endsWith(".lbl")) {
+                		fileName += ".lbl";
+                	}
+                } else if(!fileName.endsWith(".voi") && !fileName.endsWith(".xml")) {
+                	fileName += ".xml";
                 }
 
                 FileVOI fileVOI = new FileVOI(fileName, directory, imageA);
 
-                if (!doPoint) {
+                if (!doPoint && !doAnnotation) {
 
                     // use the MIPAV VOI format (not Nauges) since we
                     // need to save the curveType in order to correctly
                     // rebuild the VOIs when reading the VOI files.
                     fileVOI.writeVOI(VOIs.VOIAt(i), saveAllContours);
-                } else {
+                } else if (doPoint) {
                     fileVOI.writePointVOI(VOIs.VOIAt(i));
+                } else if(doAnnotation) {
+                	fileVOI.writeAnnotationXML(true, false);
                 }
             } catch (IOException error) {
                 MipavUtil.displayError("Error writing VOI");
@@ -3282,21 +3294,29 @@ public abstract class ViewJFrameBase extends JFrame
 
             try {
 
-                if (fileName.endsWith(".voi") && (VOIs.VOIAt(i).getCurveType() == VOI.POINT)) {
+            	if (fileName.endsWith(".voi") && (VOIs.VOIAt(i).getCurveType() == VOI.POINT)) {
                     doPoint = true;
+                } else if(fileName.endsWith(".lbl") || VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
+                	doAnnotation = true;
+                	if(VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION && !fileName.endsWith(".lbl")) {
+                		fileName += ".lbl";
+                	}
+                } else if(!fileName.endsWith(".voi") && !fileName.endsWith(".xml")) {
+                	fileName += ".xml";
                 }
 
                 FileVOI fileVOI = new FileVOI(fileName, directory, imageB);
 
-
-                if (!doPoint) {
+                if (!doPoint && !doAnnotation) {
 
                     // use the MIPAV VOI format (not Nauges) since we
                     // need to save the curveType in order to correctly
                     // rebuild the VOIs when reading the VOI files.
                     fileVOI.writeVOI(VOIs.VOIAt(i), saveAllContours);
-                } else {
+                } else if (doPoint) {
                     fileVOI.writePointVOI(VOIs.VOIAt(i));
+                } else if(doAnnotation) {
+                	fileVOI.writeAnnotationXML(true, false);
                 }
             } catch (IOException error) {
                 MipavUtil.displayError("Error writing VOI");
