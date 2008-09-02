@@ -2278,7 +2278,7 @@ public abstract class ViewJFrameBase extends JFrame
                     fileVOI.writeVOI(VOIs.VOIAt(i), true);
                 } else {
                 	fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", voiDir,currentImage);
-                	fileVOI.writeAnnotationXML(true, true);
+                	fileVOI.writeAnnotationInVoiAsXML(true, true);
                 }
             }
 
@@ -2342,8 +2342,6 @@ public abstract class ViewJFrameBase extends JFrame
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
-                if(!fileName.endsWith(".lbl"))
-                	fileName += ".lbl";
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                 userInterface.setDefaultDirectory(directory);
 
@@ -2358,7 +2356,7 @@ public abstract class ViewJFrameBase extends JFrame
 
                 FileVOI fileVOI = new FileVOI(fileName, directory, imageA);
 
-                fileVOI.writeAnnotationXML(true, saveAll);
+                fileVOI.writeAnnotationXML(saveAll);
 
             } catch (IOException error) {
                 MipavUtil.displayError("Error writing labels");
@@ -2409,8 +2407,6 @@ public abstract class ViewJFrameBase extends JFrame
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
-                if(!fileName.endsWith(".lbl"))
-                	fileName += ".lbl";
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                 userInterface.setDefaultDirectory(directory);
             } else {
@@ -2420,7 +2416,7 @@ public abstract class ViewJFrameBase extends JFrame
             try {
 
                 FileVOI fileVOI = new FileVOI(fileName, directory, imageB);
-                fileVOI.writeAnnotationXML(true, saveAll);
+                fileVOI.writeAnnotationXML(true);
 
             } catch (IOException error) {
                 MipavUtil.displayError("Error writing label(s)");
@@ -3106,7 +3102,7 @@ public abstract class ViewJFrameBase extends JFrame
                 } else {
                 	fileVOI = new FileVOI(VOIs.VOIAt(i) + ".lbl", imageA.getFileInfo(0).getFileDirectory(),
                             imageA);
-                	fileVOI.writeAnnotationXML(true, false);
+                	fileVOI.writeAnnotationInVoiAsXML(true, false);
                 }
             } else if (displayMode == IMAGE_B) {
                 VOIs = imageB.getVOIs();
@@ -3132,7 +3128,7 @@ public abstract class ViewJFrameBase extends JFrame
                 } else {
                 	fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", imageA.getFileInfo(0).getFileDirectory(),
                             imageB);
-                	fileVOI.writeAnnotationXML(true, false);
+                	fileVOI.writeAnnotationInVoiAsXML(true, false);
                 }
             } else {
                 MipavUtil.displayError(" Cannot open VOI when viewing both images");
@@ -3241,7 +3237,7 @@ public abstract class ViewJFrameBase extends JFrame
                 } else if (doPoint) {
                     fileVOI.writePointVOI(VOIs.VOIAt(i));
                 } else if(doAnnotation) {
-                	fileVOI.writeAnnotationXML(true, false);
+                	fileVOI.writeAnnotationInVoiAsXML(true, false);
                 }
             } catch (IOException error) {
                 MipavUtil.displayError("Error writing VOI");
@@ -3316,7 +3312,7 @@ public abstract class ViewJFrameBase extends JFrame
                 } else if (doPoint) {
                     fileVOI.writePointVOI(VOIs.VOIAt(i));
                 } else if(doAnnotation) {
-                	fileVOI.writeAnnotationXML(true, false);
+                	fileVOI.writeAnnotationInVoiAsXML(true, false);
                 }
             } catch (IOException error) {
                 MipavUtil.displayError("Error writing VOI");

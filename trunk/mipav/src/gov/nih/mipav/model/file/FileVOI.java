@@ -229,11 +229,166 @@ public class FileVOI extends FileXML {
     /**
      * Writes VOIText(s) to a .lbl file (XML based)
      *
+     * @param   writeAll  whether or not to write all VOITexts into the same file, or only the selected VOIText
+     *
+     * @throws  IOException  exception thrown if there is an error writing the file
+     */
+    public void writeAnnotationXML(boolean writeAll) throws IOException {
+        FileWriter fw;
+        while (file.exists() == true) {
+            int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?", "File exists",
+                                                         JOptionPane.YES_NO_OPTION);
+
+            if (response == JOptionPane.YES_OPTION) {
+                file.delete();
+                file = new File(fileDir + fileName);
+
+                break;
+            } else {
+                JFileChooser chooser = new JFileChooser();
+                chooser.setDialogTitle("Save label(s) as");
+                chooser.setCurrentDirectory(file);
+
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".lbl" }));
+
+                int returnVal = chooser.showSaveDialog(null);
+
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    fileName = chooser.getSelectedFile().getName();
+                    fileDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                    file = new File(fileDir + fileName);
+                } else {
+                    return;
+                }
+            }
+        }
+
+        try {
+            fw = new FileWriter(file);
+            bw = new BufferedWriter(fw);
+
+            bw.write(XML_HEADER);
+            bw.newLine();
+            bw.write(TEXT_HEADER);
+            bw.newLine();
+
+            openTag("Annotation xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
+
+            VOIVector VOIs = image.getVOIs();
+
+            int numVOIs = VOIs.size();
+
+            VOI currentVOI = null;
+            Vector[] curves = null;
+            VOIText vText = null;
+
+            Vector3f arrowPt, textPt, arrowPtScanner, textPtScanner;
+            int fontSize, fontDescriptors;
+            boolean useMarker;
+            String fontName;
+            Color voiColor;
+            Color voiBackgroundColor;
+            String voiString;
+
+            arrowPtScanner = new Vector3f();
+            textPtScanner = new Vector3f();
+
+            for (int i = 0; i < numVOIs; i++) {
+                currentVOI = VOIs.VOIAt(i);
+
+                if ((currentVOI.getCurveType() == VOI.ANNOTATION) && (writeAll || currentVOI.isActive())) {
+
+                    curves = currentVOI.getCurves();
+
+                    for (int j = 0; j < curves.length; j++) {
+
+                        for (int k = 0; k < curves[j].size(); k++) {
+
+                            openTag("Label", true);
+
+                            // there's only one per VOI
+                            vText = (VOIText) curves[j].elementAt(k);
+                            voiString = vText.getText();
+                            voiColor = vText.getColor();
+                            voiBackgroundColor = vText.getBackgroundColor();
+                            textPt = (Vector3f) vText.elementAt(0);
+                            arrowPt = (Vector3f) vText.elementAt(1);
+                            useMarker = vText.useMarker();
+                            fontSize = vText.getFontSize();
+                            fontName = vText.getFontName();
+                            fontDescriptors = vText.getFontDescriptors();
+
+                            closedTag( "Text", voiString);
+
+                            if (image.getNDims() > 2) {
+                                MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
+                                MipavCoordinateSystems.fileToScanner(arrowPt, arrowPtScanner, image);
+                                closedTag( "TextLocation",
+                                          Float.toString(textPtScanner.X) + "," + Float.toString(textPtScanner.Y) +
+                                          "," + Float.toString(textPtScanner.Z));
+                                closedTag( "ArrowLocation",
+                                          Float.toString(arrowPtScanner.X) + "," + Float.toString(arrowPtScanner.Y) +
+                                          "," + Float.toString(arrowPtScanner.Z));
+                                // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
+                                // arrowPtScanner);
+                            } else {
+                                textPt.Z = j;
+                                arrowPt.Z = j;
+                                closedTag( "TextLocation",
+                                          Float.toString(textPt.X) + "," + Float.toString(textPt.Y) + "," +
+                                          Float.toString(textPt.Z));
+                                closedTag( "ArrowLocation",
+                                          Float.toString(arrowPt.X) + "," + Float.toString(arrowPt.Y) + "," +
+                                          Float.toString(arrowPt.Z));
+                            }
+
+                            closedTag( "UseMarker", Boolean.toString(useMarker));
+
+                            closedTag( "Color",
+                                      Integer.toString(voiColor.getAlpha()) + "," +
+                                      Integer.toString(voiColor.getRed()) + "," +
+                                      Integer.toString(voiColor.getGreen()) + "," +
+                                      Integer.toString(voiColor.getBlue()));
+                            closedTag( "BackgroundColor",
+                                      Integer.toString(voiBackgroundColor.getAlpha()) + "," +
+                                      Integer.toString(voiBackgroundColor.getRed()) + "," +
+                                      Integer.toString(voiBackgroundColor.getGreen()) + "," +
+                                      Integer.toString(voiBackgroundColor.getBlue()));
+                            closedTag( "FontName", fontName);
+                            closedTag( "FontSize", Integer.toString(fontSize));
+
+                            if (fontDescriptors == Font.BOLD) {
+                                closedTag( "FontStyle", "BOLD");
+                            } else if (fontDescriptors == Font.ITALIC) {
+                                closedTag( "FontStyle", "ITALIC");
+                            } else if (fontDescriptors == (Font.BOLD + Font.ITALIC)) {
+                                closedTag( "FontStyle", "BOLDITALIC");
+                            } else {
+                                closedTag( "FontStyle", "");
+                            }
+
+                            openTag("Label", false);
+                        }
+                    }
+
+
+                }
+            }
+
+            openTag("Annotation", false);
+            bw.close();
+
+        } catch (Exception e) { }
+    }
+    
+    /**
+     * Writes VOIText(s) to a .lbl file (XML based)
+     *
      * @param   writeAllInSameFile  whether or not to write all VOITexts into the same file, or only the selected VOIText
      *
      * @throws  IOException  exception thrown if there is an error writing the file
      */
-    public void writeAnnotationXML(boolean writeAllInSameFile, boolean writeAllFromImage) throws IOException {
+    public void writeAnnotationInVoiAsXML(boolean writeAllInSameFile, boolean writeAllFromImage) throws IOException {
         FileWriter fw;
         while (file.exists() == true) {
             int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?", "File exists",
