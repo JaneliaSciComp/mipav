@@ -125,6 +125,14 @@ public class AlgorithmRotate extends AlgorithmBase {
      * Calculates the rotated image and replaces the source image with the rotated image.
      */
     private void calcInPlace() {
+        boolean doVOI = false;
+        ModelImage tmpMask = null;
+        ModelImage maskImage = null;
+        short [] maskBuffer = null;
+        float [] maskSliceBuffer = null;
+        if ((srcImage.getVOIs() != null) && (!srcImage.getVOIs().isEmpty()) && (srcImage.getNDims() <= 3)) {
+            doVOI = true;
+        }
 
         /* axisOrder and axisFlip changed to match the rotateAxis value: */
         int[] axisOrder = { 0, 1, 2, 3 };
@@ -249,6 +257,26 @@ public class AlgorithmRotate extends AlgorithmBase {
         }
 
         destImage = new ModelImage(srcImage.getType(), newDimExtents, srcImage.getImageName());
+        if (doVOI) {
+            maskImage = srcImage.generateShortImage(1);
+            tmpMask = new ModelImage(ModelImage.SHORT, newDimExtents, "VOI Mask");
+            if ((rotateAxis == X_AXIS_PLUS) || (rotateAxis == X_AXIS_MINUS) ||
+                (rotateAxis == Y_AXIS_PLUS) || (rotateAxis == Y_AXIS_MINUS)) {
+                maskBuffer = new short[xDim * yDim * zDim];
+                
+                try {
+                    maskImage.exportData(0, xDim * yDim * zDim, maskBuffer); // locks and releases lock
+                } catch (IOException error) {
+                    displayError("AlgorithmRotate: maskImage locked");
+                    setCompleted(false);
+    
+                    return;
+                }   
+            } // if ((rotateAxis == X_AXIS_PLUS) || (rotateAxis == X_AXIS_MINUS) ||
+            else {
+                maskSliceBuffer = new float[srcImage.getExtents()[axisOrder[0]] * srcImage.getExtents()[axisOrder[1]]];
+            }
+        } // if (doVOI)
 
         /* Export the ModelImage data, remapping the axes: */
         if (rotateAxis == X_AXIS_PLUS) {
@@ -274,7 +302,9 @@ public class AlgorithmRotate extends AlgorithmBase {
                     for (y = 0; y < yDim; y++) {
 
                         for (x = 0; x < xDim; x++) {
-
+                            if (doVOI) {
+                                tmpMask.set(x, (zDim - 1- z), y, maskBuffer[(z * oldSlice) + (y * oldXDim) + x]);
+                            }
                             for (c = 0; c < buffFactor; c++) {
                                 newVol[(y * newSlice) + ((zDim - 1 - z) * newXDim) + (x * buffFactor) + c] = oldVol[(z *
                                                                                                                          oldSlice) +
@@ -321,7 +351,9 @@ public class AlgorithmRotate extends AlgorithmBase {
                     for (y = 0; y < yDim; y++) {
 
                         for (x = 0; x < xDim; x++) {
-
+                            if (doVOI) {
+                                tmpMask.set(x, z, yDim - 1 - y, maskBuffer[(z * oldSlice) + (y * oldXDim) + x]);
+                            }
                             for (c = 0; c < buffFactor; c++) {
                                 newVol[((yDim - 1 - y) * newSlice) + (z * newXDim) + (x * buffFactor) + c] = oldVol[(z *
                                                                                                                          oldSlice) +
@@ -368,6 +400,9 @@ public class AlgorithmRotate extends AlgorithmBase {
                     for (y = 0; y < yDim; y++) {
 
                         for (x = 0; x < xDim; x++) {
+                            if (doVOI) {
+                                tmpMask.set(z, y, (xDim - 1 - x), maskBuffer[(z * oldSlice) + (y * oldXDim) + x]);
+                            }
 
                             for (c = 0; c < buffFactor; c++) {
                                 newVol[((xDim - 1 - x) * newSlice) + (y * newXDim) + (z * buffFactor) + c] = oldVol[(z *
@@ -415,7 +450,9 @@ public class AlgorithmRotate extends AlgorithmBase {
                     for (y = 0; y < yDim; y++) {
 
                         for (x = 0; x < xDim; x++) {
-
+                            if (doVOI) {
+                                tmpMask.set((zDim - 1 - z), y, x, maskBuffer[(z * oldSlice) + (y * oldXDim) + x]);
+                            }
                             for (c = 0; c < buffFactor; c++) {
                                 newVol[(x * newSlice) + (y * newXDim) + ((zDim - 1 - z) * buffFactor) + c] = oldVol[(z *
                                                                                                                          oldSlice) +
@@ -450,10 +487,22 @@ public class AlgorithmRotate extends AlgorithmBase {
                         srcImage.export(axisOrder, axisFlip, t, z, sliceBuffer);
                         destImage.importData((t * volume) + (z * slice), sliceBuffer, false);
                     } catch (IOException error) {
-                        displayError("AlgorithmSubset reports: Destination image already locked.");
+                        displayError("AlgorithmRotate reports: Destination image already locked.");
                         setCompleted(false);
 
                         return;
+                    }
+                    
+                    if (doVOI) {
+                        try {
+                            maskImage.export(axisOrder, axisFlip, t, z, maskSliceBuffer);
+                            tmpMask.importData((t * volume) + (z * slice), maskSliceBuffer, false);
+                        } catch (IOException error) {
+                            displayError("AlgorithmRotate reports: tmpMask locked.");
+                            setCompleted(false);
+
+                            return;
+                        }    
                     }
                 }
             }
@@ -678,6 +727,33 @@ public class AlgorithmRotate extends AlgorithmBase {
                 destImage.getMatrixHolder().addMatrix(tMat);
             }
         }
+        
+        if (doVOI) {
+            // ******* Make algorithm for VOI extraction.
+            tmpMask.calcMinMax();
+
+            AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+            VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+            VOIExtAlgo.run();
+
+            VOIVector resultVOIs = tmpMask.getVOIs();
+            VOIVector srcVOIs = srcImage.getVOIs();
+
+            for (int ii = 0; ii < resultVOIs.size(); ii++) {
+                int id = ((VOI) (resultVOIs.elementAt(ii))).getID();
+
+                for (int jj = 0; jj < srcVOIs.size(); jj++) {
+
+                    if (((VOI) (srcVOIs.elementAt(jj))).getID() == id) {
+                        ((VOI) (resultVOIs.elementAt(ii))).setName(((VOI) (srcVOIs.elementAt(jj))).getName());
+                    }
+                }
+            }
+
+            destImage.setVOIs(tmpMask.getVOIs());
+            tmpMask.disposeLocal();
+            maskImage.disposeLocal();    
+        } // if (doVOI)
 
         destImage.releaseLock();
         setCompleted(true);
