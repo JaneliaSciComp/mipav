@@ -386,10 +386,6 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                 if (dim >= 3) {
                     labelPaddedExtentZ.setText(Integer.toString(image.getExtents()[2]));
                 }
-                if (voiCheckBox != null) {
-                    voiCheckBox.setEnabled(false);
-                    voiCheckBox.setSelected(false);
-                }
             } else {
                 if (dim >= 3) {
                     labelPaddedExtentZ.setText(Integer.toString(padExtents[2]));
