@@ -137,6 +137,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
                         }
 
                         textVOI.setActive(true);
+                        textVOI.setName(textField.getText());
                         ((VOIText) (textVOI.getCurves()[slice].elementAt(0))).setActive(true);
                         activeImage.notifyImageDisplayListeners();
                     }

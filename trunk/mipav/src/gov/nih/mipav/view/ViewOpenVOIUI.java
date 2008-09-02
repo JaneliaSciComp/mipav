@@ -96,7 +96,7 @@ public class ViewOpenVOIUI {
             } else {
                 fileVOI = new FileVOI(fileName, directory, image);
 
-                if (doLabel) {
+                if (doLabel || extension.equals("lbl")) {
                     voi = fileVOI.readVOI(true);
                 } else {
                     voi = fileVOI.readVOI(false);
