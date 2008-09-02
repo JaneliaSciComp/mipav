@@ -18,7 +18,8 @@ import javax.swing.*;
 
 
 /**
- * Creates the dialog to remove separate slices in an image. Dialog asks which slices or volumes the user wishes to remove; it
+ * Creates the dialog to remove separate slices in an image. Dialog asks which slices the user wishes to remove; note that
+ * in 4D since the slices are removed for a constant z value but different time values no volumes are removed. it
  * provides buttons to mark all slices for removal and to de-select any slices from image removal; it gives options to
  * remove or to cancel. Allows 3D or 4D images; 2D images would not make sense with this operation.**(as of 25 Oct, does
  * not yet rename removed slice image when saving)**(as of 1 November, does not yet process the more complicated DICOM
@@ -298,12 +299,7 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
             }
 
         } else if (numChecked == 0) {
-            if (srcImage.getNDims() > 3) {
-                MipavUtil.displayError("No volumes were selected!  Select some volumes.");    
-            }
-            else {
-                MipavUtil.displayError("No slices were selected!  Select some slices.");
-            }
+            MipavUtil.displayError("No slices were selected!  Select some slices.");
         } 
     }
 
@@ -488,7 +484,7 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
 
         JPanel mainPanel = new JPanel(new BorderLayout()); // everything gets placed on this panel
 
-        setTitle("Extract slices / volumes");
+        setTitle("Extract slices ");
         setForeground(Color.black);
 
         checkboxPanel = new JPanel(); // place a check-box list in here
@@ -499,12 +495,7 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
                                                // remove.
 
         for (int i = 0; i < nSlices; i++) { // place nSlices of check options for user and give them a name
-            if (srcImage.getNDims() > 3) {
-                checkboxList[i] = new JCheckBox("Image volume index " + (String.valueOf(i)));    
-            }
-            else {
-                checkboxList[i] = new JCheckBox("Image slice index " + (String.valueOf(i)));
-            }
+            checkboxList[i] = new JCheckBox("Image slice index " + (String.valueOf(i)));
 
             // checkboxList[i].setFont(serif12B);
             checkboxList[i].setBackground(Color.white);
@@ -515,12 +506,7 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
         scrollPane = new JScrollPane(checkboxPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         mainPanel.add(scrollPane);
-        if (srcImage.getNDims() > 3) {
-            mainPanel.setBorder(buildTitledBorder("Check the volume indices to extract"));    
-        }
-        else {
-            mainPanel.setBorder(buildTitledBorder("Check the slice indices to extract"));
-        }
+        mainPanel.setBorder(buildTitledBorder("Check the slice indices to extract"));
         mainPanel.setPreferredSize(new Dimension(210, 390));
 
         JPanel checkPanel = new JPanel(new GridBagLayout());
@@ -571,22 +557,11 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
         JPanel rangePanel = new JPanel();
 
         rangePanel.setLayout(new BoxLayout(rangePanel, BoxLayout.Y_AXIS));
-        if (srcImage.getNDims() > 3) {
-            rangePanel.setBorder(buildTitledBorder("Range of volume indices"));
-            useRange = new JCheckBox("Specify range of volume indices", false);    
-        }
-        else {
-            rangePanel.setBorder(buildTitledBorder("Range of slice indices"));
-            useRange = new JCheckBox("Specify range of slice indices", false);
-        }
+        rangePanel.setBorder(buildTitledBorder("Range of slice indices"));
+        useRange = new JCheckBox("Specify range of slice indices", false);
         useRange.addItemListener(this);
         useRange.setFont(serif12B);
-        if (srcImage.getNDims() > 3) {
-            exampleLabel = new JLabel("Enter volume number indices and/or volume range indices.");
-        }
-        else {
-            exampleLabel = new JLabel("Enter slice number indices and/or slice range indices.");
-        }
+        exampleLabel = new JLabel("Enter slice number indices and/or slice range indices.");
         exampleLabel2 = new JLabel("For example, 0,3,5-12");
         exampleLabel.setFont(serif12);
         exampleLabel2.setFont(serif12);
