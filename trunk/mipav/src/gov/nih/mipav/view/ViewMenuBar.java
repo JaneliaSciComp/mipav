@@ -680,7 +680,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Z axis -90", "RotateZMinus", 0, null, false)}),
                 menuBuilder.makeMenu("Slice tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Concatenate", "Concat", 0, null, false),
-                        menuBuilder.buildMenuItem("Extract slices / volumes", null, 0, null, false),
+                        menuBuilder.buildMenuItem("Extract slices", null, 0, null, false),
                         menuBuilder.buildMenuItem("Insert missing slices", "InsertMSlices", 0, null, false),
                         menuBuilder.buildMenuItem("Insert slice", null, 0, null, false),
                         menuBuilder.buildMenuItem("Pad slices to power of 2", "padding", 0, null, false),
@@ -951,7 +951,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
             menuBuilder.setMenuItemEnabled("Brain tools", false);
-            menuBuilder.setMenuItemEnabled("Extract slices / volumes", false);
+            menuBuilder.setMenuItemEnabled("Extract slices", false);
             menuBuilder.setMenuItemEnabled("Replace slice", false);
             menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", false);
             menuBuilder.setMenuItemEnabled("Extract surface (marching cubes)", false);
@@ -1147,7 +1147,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Animate", true);
         menuBuilder.setMenuItemEnabled("Anonymize face (BET)", true);
         menuBuilder.setMenuItemEnabled("Cine (movie)", true);
-        menuBuilder.setMenuItemEnabled("Extract slices / volumes", true);
+        menuBuilder.setMenuItemEnabled("Extract slices", true);
         menuBuilder.setMenuItemEnabled("Replace slice", true);
         menuBuilder.setMenuItemEnabled("Brain tools", true);
         menuBuilder.setMenuItemEnabled("Light box", true);
