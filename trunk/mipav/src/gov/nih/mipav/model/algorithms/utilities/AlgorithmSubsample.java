@@ -224,7 +224,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
             fireProgressStateChanged("Subsample on VOIs");
             xfrm = AlgorithmTransform.matrixtoInverseArray(transMatrix);
 
-            if ((srcImage.getNDims() >= 3) && (!processIndep)) {
+            if (srcImage.getNDims() >= 3) {
                 imgLength = srcImage.getExtents()[0] * srcImage.getExtents()[1] * srcImage.getExtents()[2];
             } else {
                 imgLength = srcImage.getExtents()[0] * srcImage.getExtents()[1];
@@ -257,9 +257,11 @@ public class AlgorithmSubsample extends AlgorithmBase {
             }
 
             if (srcImage.getNDims() == 2) {
-                transform2DVOI(srcImage, imgBuf, xfrm);
+                transform25DVOI(srcImage, imgBuf, xfrm);
             } else if ((srcImage.getNDims() == 3) && (!processIndep)) {
                 transform3DVOI(srcImage, imgBuf, xfrm);
+            } else if ((srcImage.getNDims() == 3) && (processIndep)) {
+                transform25DVOI(srcImage, imgBuf, xfrm);
             }
 
         } // if (transformVOI)
@@ -1598,7 +1600,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
     }
 
     /**
-     * Transforms and resamples a 2D area using bilinear interpolation.
+     * Transforms and resamples a 2D or 25D VOI using nearest neighbor interpolation.
      *
      * <ol>
      *   <li>Export VOIs as a mask image</li>
@@ -1610,10 +1612,10 @@ public class AlgorithmSubsample extends AlgorithmBase {
      * @param  imgBuffer  Image array
      * @param  xfrm       Transformation matrix to be applied
      */
-    private void transform2DVOI(ModelImage image, float[] imgBuffer, TransMatrix xfrm) {
+    private void transform25DVOI(ModelImage image, float[] imgBuffer, TransMatrix xfrm) {
 
-        int i, j;
-        int X0pos, Y0pos;
+        int i, j, z;
+        int X0pos, Y0pos, Z0pos;
         float X, Y;
         float temp1, temp2;
         float value;
@@ -1621,6 +1623,11 @@ public class AlgorithmSubsample extends AlgorithmBase {
         int roundX, roundY;
         int iXdim = srcImage.getExtents()[0];
         int iYdim = srcImage.getExtents()[1];
+        int iSliceSize = iXdim * iYdim;
+        int iZdim = 1;
+        if (srcImage.getNDims() > 2) {
+            iZdim = srcImage.getExtents()[2];
+        }
         float iXres = srcImage.getFileInfo()[0].getResolution(0);
         float iYres = srcImage.getFileInfo()[0].getResolution(1);
         float oXres = resultImage.getFileInfo()[0].getResolution(0);
@@ -1641,7 +1648,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         tmpMask = new ModelImage(ModelImage.SHORT, resultExtents, null);
 
         try {
-            maskImage.exportData(0, srcImage.getExtents()[0] * srcImage.getExtents()[1], imgBuffer); // locks and releases lock
+            maskImage.exportData(0, srcImage.getExtents()[0] * srcImage.getExtents()[1] * iZdim, imgBuffer); // locks and releases lock
         } catch (IOException error) {
             displayError("Algorithm VOI transform: Image(s) locked");
             setCompleted(false);
@@ -1649,33 +1656,36 @@ public class AlgorithmSubsample extends AlgorithmBase {
             return;
         }
 
-        for (i = 0; (i < resultExtents[0]) && !threadStopped; i++) {
-            imm = (float) i * oXres;
-            temp1 = (imm * T00) + T02;
-            temp2 = (imm * T10) + T12;
-
-            for (j = 0; (j < resultExtents[1]) && !threadStopped; j++) {
-
-                // transform i,j
-                value = 0.0f; // remains zero if voxel is transformed out of bounds
-                jmm = (float) j * oYres;
-                X = (temp1 + (jmm * T01)) / iXres;
-                roundX = (int) (X + 0.5f);
-
-                if ((X >= -0.5f) && (roundX < iXdim)) {
-                    Y = (temp2 + (jmm * T11)) / iYres;
-                    roundY = (int) (Y + 0.5f);
-
-                    if ((Y >= -0.5f) && (roundY < iYdim)) {
-                        X0pos = roundX;
-                        Y0pos = roundY * iXdim;
-                        value = imgBuffer[Y0pos + X0pos];
-                    } // end if Y in bounds
-                } // end if X in bounds
-
-                tmpMask.set(i, j, value);
-            } // end for j
-        } // end for i
+        for (z = 0; (z < iZdim) && !threadStopped; z++) {
+            Z0pos = z * iSliceSize;
+            for (i = 0; (i < resultExtents[0]) && !threadStopped; i++) {
+                imm = (float) i * oXres;
+                temp1 = (imm * T00) + T02;
+                temp2 = (imm * T10) + T12;
+    
+                for (j = 0; (j < resultExtents[1]) && !threadStopped; j++) {
+    
+                    // transform i,j
+                    value = 0.0f; // remains zero if voxel is transformed out of bounds
+                    jmm = (float) j * oYres;
+                    X = (temp1 + (jmm * T01)) / iXres;
+                    roundX = (int) (X + 0.5f);
+    
+                    if ((X >= -0.5f) && (roundX < iXdim)) {
+                        Y = (temp2 + (jmm * T11)) / iYres;
+                        roundY = (int) (Y + 0.5f);
+    
+                        if ((Y >= -0.5f) && (roundY < iYdim)) {
+                            X0pos = roundX;
+                            Y0pos = roundY * iXdim;
+                            value = imgBuffer[Z0pos + Y0pos + X0pos];
+                        } // end if Y in bounds
+                    } // end if X in bounds
+    
+                    tmpMask.set(i, j, z, value);
+                } // end for j
+            } // end for i
+        } // for (z = 0; (z < iZdim) && !threadStopped; z++)
 
         if (threadStopped) {
             return;
@@ -1694,7 +1704,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
     }
 
     /**
-     * Transforms and resamples a 3D volume using trilinear interpolation.
+     * Transforms and resamples a 3D VOI using nearest neighbor interpolation.
      *
      * <ol>
      *   <li>Export VOIs as a mask image</li>
