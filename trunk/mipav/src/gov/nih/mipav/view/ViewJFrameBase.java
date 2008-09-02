@@ -2278,7 +2278,7 @@ public abstract class ViewJFrameBase extends JFrame
                     fileVOI.writeVOI(VOIs.VOIAt(i), true);
                 } else {
                 	fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", voiDir,currentImage);
-                	fileVOI.writeAnnotationInVoiAsXML(true, true);
+                	fileVOI.writeAnnotationInVoiAsXML(false, true);
                 }
             }
 
@@ -2342,6 +2342,9 @@ public abstract class ViewJFrameBase extends JFrame
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
+                if(!fileName.endsWith(".lbl")) {
+            		fileName += ".lbl";
+            	}
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                 userInterface.setDefaultDirectory(directory);
 
@@ -2407,6 +2410,9 @@ public abstract class ViewJFrameBase extends JFrame
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
+                if(!fileName.endsWith(".lbl")) {
+            		fileName += ".lbl";
+            	}
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                 userInterface.setDefaultDirectory(directory);
             } else {
@@ -3102,7 +3108,7 @@ public abstract class ViewJFrameBase extends JFrame
                 } else {
                 	fileVOI = new FileVOI(VOIs.VOIAt(i) + ".lbl", imageA.getFileInfo(0).getFileDirectory(),
                             imageA);
-                	fileVOI.writeAnnotationInVoiAsXML(true, false);
+                	fileVOI.writeAnnotationInVoiAsXML(false, false);
                 }
             } else if (displayMode == IMAGE_B) {
                 VOIs = imageB.getVOIs();
@@ -3128,7 +3134,7 @@ public abstract class ViewJFrameBase extends JFrame
                 } else {
                 	fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", imageA.getFileInfo(0).getFileDirectory(),
                             imageB);
-                	fileVOI.writeAnnotationInVoiAsXML(true, false);
+                	fileVOI.writeAnnotationInVoiAsXML(false, false);
                 }
             } else {
                 MipavUtil.displayError(" Cannot open VOI when viewing both images");
@@ -3312,7 +3318,7 @@ public abstract class ViewJFrameBase extends JFrame
                 } else if (doPoint) {
                     fileVOI.writePointVOI(VOIs.VOIAt(i));
                 } else if(doAnnotation) {
-                	fileVOI.writeAnnotationInVoiAsXML(true, false);
+                	fileVOI.writeAnnotationInVoiAsXML(false, false);
                 }
             } catch (IOException error) {
                 MipavUtil.displayError("Error writing VOI");

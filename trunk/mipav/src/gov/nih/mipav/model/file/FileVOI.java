@@ -463,8 +463,9 @@ public class FileVOI extends FileXML {
                         	voiString = vText.getText();
                         	
                         	//System.out.println("VOI Name: "+voiString+"\tfile: "+file.getName());
-                        	if(voiString.equals(file.getName().substring(0, file.getName().lastIndexOf('.')))) {
-                        	
+                        	if(writeAllInSameFile || 
+                        			(!writeAllInSameFile && voiString.equals(file.getName().substring(0, file.getName().lastIndexOf('.'))))) {
+                        		
 	                        	openTag("Label", true);
 	
 	                            // there's only one per VOI, but 
