@@ -1906,15 +1906,22 @@ public class FileVOI extends FileXML {
 
                     MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);
 
-
-                    if ((ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim) || (ptOut.X < 0) || (ptOut.Y < 0) ||
-                            (ptOut.Z < 0)) {
+                    if ((ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {
                         MipavUtil.displayWarning("VOI in file out of image bounds:  Open VOI aborted");
 
                         return;
                     }
+                    
+                    //A mistake has occured in reading FileInfoBase.ORI_L2R_TYPE, all must now be flipped
+                    if((ptOut.X < 0) && (ptOut.Y < 0) && (ptOut.Z < 0)) {
 
+                    	ptOut.X = -ptOut.X;
+                    	ptOut.Y = -ptOut.Y;
+                    	ptOut.Z = -ptOut.Z;
+                    }
+                    
                     slice = (int) ptOut.Z;
+                    System.out.println("Point: "+slice);
 
                     voiText.addElement(ptOut);
                 } else {
