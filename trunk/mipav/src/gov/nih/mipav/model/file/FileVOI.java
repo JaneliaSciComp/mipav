@@ -1909,7 +1909,7 @@ public class FileVOI extends FileXML {
 
                     if ((ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim) || (ptOut.X < 0) || (ptOut.Y < 0) ||
                             (ptOut.Z < 0)) {
-                        MipavUtil.displayWarning("VOI on file out of image bounds:  Open VOI aborted");
+                        MipavUtil.displayWarning("VOI in file out of image bounds:  Open VOI aborted");
 
                         return;
                     }
