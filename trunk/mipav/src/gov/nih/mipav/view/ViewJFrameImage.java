@@ -843,9 +843,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             componentImage.setCursorMode(ViewJComponentEditImage.POLYLINE);
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_TEXT.getActionCommand())) {
-
-        	componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-           
+        	if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, getControls())) {
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+            }
 
             componentImage.setCursorMode(ViewJComponentEditImage.ANNOTATION);
         } else if (command.equals("RectVOI")) {

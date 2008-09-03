@@ -5188,6 +5188,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
             case ViewJComponentEditImage.ANNOTATION:
                 compImage.setCursor(MipavUtil.textCursor);
+                if (isImageFrame) {
+                    compImage.getFrame().getControls().getTools().setToggleButtonSelected("TextVOI");
+                }
                 break;
 
             case ViewJComponentEditImage.ZOOMING_IN:
