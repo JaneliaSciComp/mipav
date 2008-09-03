@@ -667,6 +667,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Quantify mask(s)", "QuantifyMasks", 0, null, false),
 
                 }),
+                menuBuilder.buildMenuItem("Reorientation / Resampling", "Reorientation", 0, null, false),
                 menuBuilder.buildMenuItem("Replace pixel/voxel value", "ReplaceValue", 0, null, false),
                 menuBuilder.makeMenu("Rotate", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("X axis 180", "RotateX180", 0, null, false),
@@ -995,6 +996,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("4D tools", false);
             menuBuilder.setMenuItemEnabled("Depth", false);
             menuBuilder.setMenuItemEnabled("VOI landmark", false);
+            menuBuilder.setMenuItemEnabled("Reorientation / Resampling", false);
         }
 
         if (ModelImage.isColorImage(type)) {
