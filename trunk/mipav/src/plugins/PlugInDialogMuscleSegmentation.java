@@ -207,9 +207,11 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
         ArrayList<String> validConfig = new ArrayList();
     	if(new File(fileName).exists()) {
         	String[] allFiles = new File(fileName).list(new NiaAcceptable());
-        	for(int i=0; i<allFiles.length; i++) {
-        		if(!allFiles[i].equals(imageType.toString()+".nia")) 
-        			validConfig.add(allFiles[i]);
+        	if(allFiles != null) {
+	        	for(int i=0; i<allFiles.length; i++) {
+	        		if(!allFiles[i].equals(imageType.toString()+".nia")) 
+	        			validConfig.add(allFiles[i]);
+	        	}
         	}
     	}
         setForeground(Color.black);

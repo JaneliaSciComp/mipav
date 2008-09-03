@@ -448,7 +448,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    BufferedWriter output = null;
 	    try {
 	    	if(!niaFolder.exists())
-	    		niaFolder.createNewFile();
+	    		niaFolder.mkdir();
 	    	File configFile = new File(srcImage.getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator+name+".nia");
 			output = new BufferedWriter(new FileWriter(configFile));
 			output.write(extendable);
