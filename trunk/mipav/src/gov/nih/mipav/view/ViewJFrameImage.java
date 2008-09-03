@@ -1965,6 +1965,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogPointArea(this, getActiveImage(), true);
         } else if (command.equals("Principal components")) {
             new JDialogPrincipalComponents(this, getActiveImage());
+        } else if (command.equals("Reorientation")) {
+            new JDialogReorient(this, getActiveImage());
         } else if (command.equals("Extract slices")) {
             new JDialogExtractSlicesVolumes(this, getActiveImage());
         } else if (command.equals("Remove slices")) {
