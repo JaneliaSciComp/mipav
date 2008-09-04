@@ -1,23 +1,34 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.*;
-
-import java.awt.event.*;
-import java.awt.*;
-import java.util.*;
-import java.io.*;
-
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.border.*;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.RotationMatrix;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.view.DialogDefaultsInterface;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.util.Enumeration;
+import java.util.StringTokenizer;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 
 /** 
 *   
@@ -41,7 +52,12 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 	// parameters
 	private     String[]    orientTypes 	= 		{"Axial",
 													 "Coronal",
-													 "Sagittal"};	
+													 "Sagittal",
+                                                     "Unknown"};	
+    private     String[]    newOrientTypes     =       {"Axial R2L, A2P, I2S",
+             "Coronal R2L, S2I, A2P",
+             "Sagittal A2P, S2I, L2R",
+            "Unknown"}; 
     private		String		orientType		=		"Axial";
 		
 	private     String[]    resolutionTypes 	= 	{"Unchanged",
@@ -54,6 +70,10 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 												 "Linear",
 												 "Windowed_Sinc"};
 	private		String		interpType	=	"Linear";
+    private String[] orients = {
+            "Unknown", "Patient Right to Left", "Patient Left to Right", "Patient Posterior to Anterior",
+            "Patient Anterior to Posterior", "Patient Inferior to Superior", "Patient Superior to Inferior"
+        };
     
 	// storage for header information
 	FileInfoBase 	fileInfo;
@@ -68,6 +88,18 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 	private		JComboBox	comboTemplate;
 	private		JLabel		labelInterpType;	
 	private		JComboBox	comboInterpType;
+    private     JComboBox   presentOrientBox;
+    private     int         presentOrient;
+    private     JComboBox   presentOrientBoxX;
+    private     JComboBox   presentOrientBoxY;
+    private     JComboBox   presentOrientBoxZ;
+    private     int[]       presentAxisOrient;
+    private     JComboBox   newOrientBox;
+    private     int         newOrient;
+    private     JComboBox   newOrientBoxX;
+    private     JComboBox   newOrientBoxY;
+    private     JComboBox   newOrientBoxZ;
+    private     int[]       newAxisOrient;
 	
     /**
     *  Creates dialog for plugin.
@@ -91,6 +123,16 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
     *	Sets up the GUI (panels, buttons, etc) and displays it on the screen.
     */
 	private void init(){
+        JPanel presentOrientPanel;
+        JPanel newOrientPanel;
+        JLabel presentOrientLabel;
+        JLabel presentOrientLabelX;
+        JLabel presentOrientLabelY;
+        JLabel presentOrientLabelZ;
+        JLabel newOrientLabel;
+        JLabel newOrientLabelX;
+        JLabel newOrientLabelY;
+        JLabel newOrientLabelZ;
         setForeground(Color.black);
         setTitle("Reorientation / Resampling");
 				
@@ -102,6 +144,137 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 		comboOrientType.setFont(serif12);
         comboOrientType.setBackground(Color.white);
 		comboOrientType.setSelectedItem(orientType);
+        
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.insets = new Insets(0, 5, 0, 5);
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.fill = GridBagConstraints.NONE;
+        gbc2.weightx = 1;
+        gbc2.weighty = 1;
+        gbc2.gridwidth = 1;
+        gbc2.gridheight = 1;
+        
+        presentOrientPanel = new JPanel(new GridBagLayout());
+        presentOrientPanel.setBorder(buildTitledBorder("Present Orientation"));
+        
+        presentOrientLabel = new JLabel("Image orientation:");
+        presentOrientLabel.setFont(serif12);
+        presentOrientLabel.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        presentOrientPanel.add(presentOrientLabel, gbc2);
+        
+        presentOrientBox = new JComboBox(orientTypes);
+        presentOrientBox.setBackground(Color.white);
+        presentOrient = image.getImageOrientation();
+        presentOrientBox.setSelectedIndex(presentOrient);
+        presentOrientBox.addFocusListener(this);
+        gbc2.gridx = 1;
+        presentOrientPanel.add(presentOrientBox, gbc2);
+        
+        presentOrientLabelX = new JLabel("X-axis orientation (image left to right):");
+        presentOrientLabelX.setFont(serif12);
+        presentOrientLabelX.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 1;
+        presentOrientPanel.add(presentOrientLabelX, gbc2);
+        
+        presentOrientBoxX = new JComboBox(orients);
+        presentOrientBoxX.setBackground(Color.white);
+        presentOrientBoxX.setFont(MipavUtil.font12);
+        presentAxisOrient = image.getFileInfo()[0].getAxisOrientation();
+        presentOrientBoxX.setSelectedIndex(presentAxisOrient[0]);
+        gbc2.gridx = 1;
+        presentOrientPanel.add(presentOrientBoxX, gbc2);
+        
+        presentOrientLabelY = new JLabel("Y-axis orientation (image top to bottom):");
+        presentOrientLabelY.setFont(serif12);
+        presentOrientLabelY.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 2;
+        presentOrientPanel.add(presentOrientLabelY, gbc2);
+        
+        presentOrientBoxY = new JComboBox(orients);
+        presentOrientBoxY.setBackground(Color.white);
+        presentOrientBoxY.setFont(MipavUtil.font12);
+        presentOrientBoxY.setSelectedIndex(presentAxisOrient[1]);
+        gbc2.gridx = 1;
+        presentOrientPanel.add(presentOrientBoxY, gbc2);
+        
+        presentOrientLabelZ = new JLabel("Z-axis orientation (into the screen):");
+        presentOrientLabelZ.setFont(serif12);
+        presentOrientLabelZ.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 3;
+        presentOrientPanel.add(presentOrientLabelZ, gbc2);
+        
+        presentOrientBoxZ = new JComboBox(orients);
+        presentOrientBoxZ.setBackground(Color.white);
+        presentOrientBoxZ.setFont(MipavUtil.font12);
+        presentOrientBoxZ.setSelectedIndex(presentAxisOrient[2]);
+        gbc2.gridx = 1;
+        presentOrientPanel.add(presentOrientBoxZ, gbc2);
+        
+        newOrientPanel = new JPanel(new GridBagLayout());
+        newOrientPanel.setBorder(buildTitledBorder("New Orientation"));
+        
+        newOrientLabel = new JLabel("Image orientation:");
+        newOrientLabel.setFont(serif12);
+        newOrientLabel.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        newOrientPanel.add(newOrientLabel, gbc2);
+        
+        newOrientBox = new JComboBox(newOrientTypes);
+        newOrientBox.setBackground(Color.white);
+        newOrient = image.getImageOrientation();
+        newOrientBox.setSelectedIndex(presentOrient);
+        newOrientBox.addFocusListener(this);
+        gbc2.gridx = 1;
+        newOrientPanel.add(newOrientBox, gbc2);
+        
+        newOrientLabelX = new JLabel("X-axis orientation (image left to right):");
+        newOrientLabelX.setFont(serif12);
+        newOrientLabelX.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 1;
+        //newOrientPanel.add(newOrientLabelX, gbc2);
+        
+        newOrientBoxX = new JComboBox(orients);
+        newOrientBoxX.setBackground(Color.white);
+        newOrientBoxX.setFont(MipavUtil.font12);
+        newAxisOrient = image.getFileInfo()[0].getAxisOrientation();
+        newOrientBoxX.setSelectedIndex(newAxisOrient[0]);
+        gbc2.gridx = 1;
+        //newOrientPanel.add(newOrientBoxX, gbc2);
+        
+        newOrientLabelY = new JLabel("Y-axis orientation (image top to bottom):");
+        newOrientLabelY.setFont(serif12);
+        newOrientLabelY.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 2;
+        //newOrientPanel.add(newOrientLabelY, gbc2);
+        
+        newOrientBoxY = new JComboBox(orients);
+        newOrientBoxY.setBackground(Color.white);
+        newOrientBoxY.setFont(MipavUtil.font12);
+        newOrientBoxY.setSelectedIndex(newAxisOrient[1]);
+        gbc2.gridx = 1;
+        //newOrientPanel.add(newOrientBoxY, gbc2);
+        
+        newOrientLabelZ = new JLabel("Z-axis orientation (into the screen):");
+        newOrientLabelZ.setFont(serif12);
+        newOrientLabelZ.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 3;
+        //newOrientPanel.add(newOrientLabelZ, gbc2);
+        
+        newOrientBoxZ = new JComboBox(orients);
+        newOrientBoxZ.setBackground(Color.white);
+        newOrientBoxZ.setFont(MipavUtil.font12);
+        newOrientBoxZ.setSelectedIndex(presentAxisOrient[2]);
+        gbc2.gridx = 1;
+        //newOrientPanel.add(newOrientBoxZ, gbc2);
 		
 		labelResType = new JLabel("resolution ");
         labelResType.setFont(serif12);
@@ -139,47 +312,47 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
-        mainPanel.add(labelOrientType, gbc);
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-		gbc.gridwidth = 1;
+        gbc.gridwidth = 2;
         gbc.fill = gbc.HORIZONTAL;
-        mainPanel.add(comboOrientType, gbc);
+        mainPanel.add(presentOrientPanel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
+        gbc.weightx = 1;
+		gbc.gridwidth = 2;
+        gbc.fill = gbc.HORIZONTAL;
+        mainPanel.add(newOrientPanel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
         gbc.fill = gbc.NONE;
         mainPanel.add(labelResType, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.weightx = 1;
 		gbc.gridwidth = 1;
         gbc.fill = gbc.HORIZONTAL;
         mainPanel.add(comboResType, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
         gbc.fill = gbc.NONE;
         mainPanel.add(labelInterpType, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.weightx = 1;
 		gbc.gridwidth = 1;
         gbc.fill = gbc.HORIZONTAL;
         mainPanel.add(comboInterpType, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
         gbc.fill = gbc.NONE;
         mainPanel.add(labelTemplate, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         gbc.weightx = 1;
 		gbc.gridwidth = 1;
         gbc.fill = gbc.HORIZONTAL;
@@ -319,14 +492,13 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 			saveDefaults();
 		}
 	           
-		int i;
         ViewJFrameImage imageFrame;
 		
         if ( algorithm instanceof AlgorithmTransform) {
             resultImage = algoTrans.getTransformedImage();
 			if (algorithm.isCompleted() == true && resultImage != null) {
                 // The algorithm has completed and produced a new image to be displayed.
-				MedicUtil.updateFileInfo(fileInfo, resultImage);
+				JDialogBase.updateFileInfoStatic(fileInfo, resultImage);
                 resultImage.clearMask();
 				resultImage.calcMinMax();
 
@@ -397,20 +569,20 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 		int nx = n0x, ny = n0y, nz = n0z;
 		
 		if (resolutionType.equals("Finest-Cubic")) {
-			float rn = Numerics.min(rx,ry,rz);
-			nx = Numerics.ceil(nx*rx/rn);
+			float rn = Math.min(rx,Math.min(ry,rz));
+			nx = (int)Math.ceil(nx*rx/rn);
 			rx = rn;
-			ny = Numerics.ceil(ny*ry/rn);
+			ny = (int)Math.ceil(ny*ry/rn);
 			ry = rn;
-			nz = Numerics.ceil(nz*rz/rn);
+			nz = (int)Math.ceil(nz*rz/rn);
 			rz = rn;
 		} else if (resolutionType.equals("Coarsest-Cubic")) {
-			float rn = Numerics.max(rx,ry,rz);
-			nx = Numerics.ceil(nx*rx/rn);
+			float rn = Math.max(rx,Math.max(ry,rz));
+			nx = (int)Math.ceil(nx*rx/rn);
 			rx = rn;
-			ny = Numerics.ceil(ny*ry/rn);
+			ny = (int)Math.ceil(ny*ry/rn);
 			ry = rn;
-			nz = Numerics.ceil(nz*rz/rn);
+			nz = (int)Math.ceil(nz*rz/rn);
 			rz = rn;
 		} else if (resolutionType.equals("Same_as_template")) {
 			rx = template.getFileInfo()[0].getResolutions()[0];
