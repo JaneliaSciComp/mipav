@@ -293,6 +293,89 @@ public abstract class JDialogBase extends JDialog
         }
 
     }
+    
+    /**
+     * Copy important file information between ModelImage structures,
+     *  assuming all slices have same properties (uses only the first slice from
+     *  the source).
+     *
+     * @param  image        Source image.
+     * @param  resultImage  Resultant image.
+     */
+    public static final void updateFileInfoStatic(FileInfoBase info, ModelImage resultImage) {
+        FileInfoBase[] fileInfo;
+
+        if (resultImage.getNDims() == 2) {
+            fileInfo = resultImage.getFileInfo();
+            
+            fileInfo[0].setModality(info.getModality());
+            fileInfo[0].setFileDirectory(info.getFileDirectory());
+            fileInfo[0].setEndianess(info.getEndianess());
+            fileInfo[0].setUnitsOfMeasure(info.getUnitsOfMeasure());
+            fileInfo[0].setResolutions(info.getResolutions());
+            fileInfo[0].setAxisOrientation(info.getAxisOrientation());
+            fileInfo[0].setOrigin(info.getOrigin());
+            fileInfo[0].setPixelPadValue(info.getPixelPadValue());
+            fileInfo[0].setPhotometric(info.getPhotometric());
+            
+            fileInfo[0].setImageOrientation(info.getImageOrientation());
+            
+            fileInfo[0].setExtents(resultImage.getExtents());
+            fileInfo[0].setMax(resultImage.getMax());
+            fileInfo[0].setMin(resultImage.getMin());
+            
+        } else if (resultImage.getNDims() == 3) {
+            //System.out.print("3:");
+            fileInfo = resultImage.getFileInfo();
+
+            for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+                fileInfo[i].setModality(info.getModality());
+                fileInfo[i].setFileDirectory(info.getFileDirectory());
+                fileInfo[i].setEndianess(info.getEndianess());
+                fileInfo[i].setUnitsOfMeasure(info.getUnitsOfMeasure());
+                fileInfo[i].setResolutions(info.getResolutions());
+                fileInfo[i].setAxisOrientation(info.getAxisOrientation());
+                fileInfo[i].setOrigin(info.getOrigin());
+                fileInfo[i].setPixelPadValue(info.getPixelPadValue());
+                fileInfo[i].setPhotometric(info.getPhotometric());
+               
+                fileInfo[i].setImageOrientation(info.getImageOrientation());
+                
+                fileInfo[i].setExtents(resultImage.getExtents());
+                fileInfo[i].setMax(resultImage.getMax());
+                fileInfo[i].setMin(resultImage.getMin());
+            }
+        } else if (resultImage.getNDims() == 4) {
+            //System.out.print("4:");
+            fileInfo = resultImage.getFileInfo();
+
+            int[] units = new int[4];
+            float[] res = new float[4];
+            for (int n=0;n<4;n++) {
+                units[n] = info.getUnitsOfMeasure()[n];
+                res[n] = info.getResolutions()[n];
+            }
+                
+            for (int i = 0; i < (resultImage.getExtents()[2] * resultImage.getExtents()[3]); i++) {
+                fileInfo[i].setModality(info.getModality());
+                fileInfo[i].setFileDirectory(info.getFileDirectory());
+                fileInfo[i].setEndianess(info.getEndianess());
+                fileInfo[i].setAxisOrientation(info.getAxisOrientation());
+                fileInfo[i].setOrigin(info.getOrigin());
+                fileInfo[i].setPixelPadValue(info.getPixelPadValue());
+                fileInfo[i].setPhotometric(info.getPhotometric());
+                
+                fileInfo[i].setUnitsOfMeasure(units);
+                fileInfo[i].setResolutions(res);
+                
+                fileInfo[i].setImageOrientation(info.getImageOrientation());
+                
+                fileInfo[i].setExtents(resultImage.getExtents());
+                fileInfo[i].setMax(resultImage.getMax());
+                fileInfo[i].setMin(resultImage.getMin());
+            }
+        }
+    }
 
     /**
      * Unchanged.
