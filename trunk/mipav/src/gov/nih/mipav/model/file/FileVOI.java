@@ -278,7 +278,7 @@ public class FileVOI extends FileXML {
 
             int numVOIs = VOIs.size();
 
-            VOI currentVOI = null;
+            VOI currentVOI = null; 
             Vector[] curves = null;
             VOIText vText = null;
 
@@ -471,8 +471,8 @@ public class FileVOI extends FileXML {
 	                            // there's only one per VOI, but 
 	                            voiColor = vText.getColor();
 	                            voiBackgroundColor = vText.getBackgroundColor();
-	                            textPt = (Vector3f) vText.elementAt(0);
-	                            arrowPt = (Vector3f) vText.elementAt(1);
+	                            textPt = vText.elementAt(0);
+	                            arrowPt =  vText.elementAt(1);
 	                            useMarker = vText.useMarker();
 	                            fontSize = vText.getFontSize();
 	                            fontName = vText.getFontName();
@@ -1004,7 +1004,7 @@ public class FileVOI extends FileXML {
                         nActiveContours = nContours;
                     } else {
 
-                        for (j = 0; j < nContours; j++) {
+                         for (j = 0; j < nContours; j++) {
 
                             if (((VOIBase) contours[i].elementAt(j)).isActive()) {
                                 nActiveContours++;

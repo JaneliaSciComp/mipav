@@ -1980,19 +1980,16 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
                 return;
             }
-
             srcImage.reallocate(ModelStorageBase.FLOAT);
             srcImage.importData(0, distBuffer, true);
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
 
-
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-
 
             return;
         }

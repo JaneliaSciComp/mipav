@@ -13,7 +13,6 @@ import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
 import gov.nih.mipav.model.scripting.actions.ActionCloseFrame;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.event.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
@@ -137,7 +136,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     private boolean oldPrefCloseFrameCheckValue = Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK);
     
     /**Frame of original image, hidden until plugin is exited.*/
-    private Frame hiddenFrame;
+    //private Frame hiddenFrame;
     
     /** Whether the algorithm is being run in standAlone mode.*/
     private boolean standAlone;
@@ -212,79 +211,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             ImageType imageType, Symmetry symmetry, boolean multipleSlices) {
 
     	super(image);
-    	
-    	ViewJProgressBar progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
-    	Vector <Frame> vec = userInterface.getImageFrameVector();
-    	String fileName = image.getFileInfo()[0].getFileName();
-    	/*for(int i=0; i<vec.size(); i++) {
-    		if(!vec.get(i).getClass().equals(this.getClass())) {
-    			if(vec.get(i) instanceof ViewJFrameImage) {
-    				if(((ViewJFrameImage)vec.get(i)).getActiveImage().getFileInfo()[0].getFileName().equals(fileName)) {
-    					hiddenFrame = vec.get(i);
-    					hiddenFrame.setVisible(false);
-    				}
-    			}
-    		}
-    	}*/
+
     	setVisible(false);
-        
-        Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
-        
-        this.setImageA(image); 
-        this.titles = titles; 
-        this.mirrorArr = new String[voiList.length][]; 
-        this.noMirrorArr = new String[voiList.length][]; 
-        this.calcTree = new TreeMap<String, Boolean>(); 
-        this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>()); 
-        this.imageType = imageType; 
-        this.symmetry = symmetry; 
-        this.multipleSlices = multipleSlices; 
-        this.currentSlice = getViewableSlice();
-        this.standAlone = false; 
-        this.colorChoice = 0;
-        //left as zero to ensure VOIs across image stay same color (helps for image batches)
-        
-        //already added from super constructor
-        //image.addImageDisplayListener(this);
-        
-        for(int i=0; i<voiList.length; i++) {
-        	ArrayList<Comparable> mirrorArrList = new ArrayList<Comparable>(), noMirrorArrList = new ArrayList<Comparable>(), 
-        				mirrorZList = new ArrayList<Comparable>(), noMirrorZList = new ArrayList<Comparable>();
-        	for(int j=0; j<voiList[i].length; j++) {
-        		voiBuffer.put(voiList[i][j].getName(), voiList[i][j]);
-        		if(voiList[i][j].getName().contains("Left")) {
-        			mirrorArrList.add(voiList[i][j].getName().substring(new String("Left ").length()));
-        			mirrorZList.add(voiList[i][j].getFillEligible());
-        			calcTree.put(voiList[i][j].getName().substring(new String("Left ").length()), voiList[i][j].getCalcEligible());
-        		} else if(voiList[i][j].getName().contains("Right")) {
-        			//do nothing
-        		} else {
-        			noMirrorArrList.add(voiList[i][j].getName());
-        			noMirrorZList.add(voiList[i][j].getFillEligible());
-        			calcTree.put(voiList[i][j].getName(), voiList[i][j].getCalcEligible());
-        		}
-        	}
-        	mirrorArr[i] = new String[mirrorArrList.size()];
-        	for(int j=0; j<mirrorArr[i].length; j++) 
-        		mirrorArr[i][j] = (String)mirrorArrList.get(j);
-        	noMirrorArr[i] = new String[noMirrorArrList.size()];
-        	for(int j=0; j<noMirrorArr[i].length; j++) 
-        		noMirrorArr[i][j] = (String)noMirrorArrList.get(j);
-        }
-        
-        //same up to here
-        
-        if (imageA == null) {
-            return;
-        }
-        progressBar.updateValue(5);
-        imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
-        
+     
+        commonConstructor(image, titles, voiList,  imageType, symmetry, false, multipleSlices);
+
         File f;
         if(!(f = new File(imageDir+File.separator)).exists())
         	f.mkdir();
 
-        System.out.println("Exists? "+f.exists());
         createVOIBuffer();
         
         initNext();
@@ -334,52 +269,23 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         }
     }
     
-    private void commonConstructor() {
-    	
-    }
-    
-    /**
-     * Constructor for calling this as a stand-alone.  will invoke the class's own init() function
-     * for setting up the image rather than ViewJFrameImage's init()
-     * @param image the model image
-     * @param titles
-     * @param mirrorCalcItemsArr
-     * @param mirrorZ
-     * @param noMirrorCalcItemsArr
-     * @param noMirrorZ
-     * @param imageType
-     * @param symmetry
-     * @param standAlone
-     */
-    public PlugInMuscleImageDisplay(ModelImage image, String[] titles,
-            PlugInSelectableVOI[][] voiList, 
-            ImageType imageType, Symmetry symmetry, 
-            boolean standAlone, boolean multipleSlices) {
-    	// calls the super that will not call ViewJFrameImage's init() function
-    	super(image, null, null, false, false);
-    	this.setImageA(image);
-    	this.titles = titles;
-        this.mirrorArr = new String[voiList.length][];
-        this.noMirrorArr = new String[voiList.length][];
-        this.calcTree = new TreeMap<String, Boolean>();
-        this.voiBuffer = new TreeMap<String, PlugInSelectableVOI>();
+    private void commonConstructor(ModelImage image, String[] titles,
+            PlugInSelectableVOI[][] voiList,  
+            ImageType imageType, Symmetry symmetry, boolean standAlone, boolean multipleSlices) {
+    	this.setImageA(image); 
+        this.titles = titles; 
+        this.mirrorArr = new String[voiList.length][]; 
+        this.noMirrorArr = new String[voiList.length][]; 
+        this.calcTree = new TreeMap<String, Boolean>(); 
+        this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>()); 
         this.standAlone = standAlone;
-        this.imageType = imageType;
-        this.symmetry = symmetry;
-        this.multipleSlices = multipleSlices;
+        this.imageType = imageType; 
+        this.symmetry = symmetry; 
+        this.multipleSlices = multipleSlices; 
         this.currentSlice = getViewableSlice();
         this.colorChoice = 0;
-        //left as zero to ensure VOIs across image stay same color (helps for image batches)
-        
-    	ViewJProgressBar progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
-    	setVisible(false);
-    	progressBar.setVisible(true);
-        
-        
-        createVOIBuffer();
-        
-        //create automatic VOIs here
-        
+      //left as zero to ensure VOIs across image stay same color (helps for image batches)
+
         for(int i=0; i<voiList.length; i++) {
         	ArrayList<Comparable> mirrorArrList = new ArrayList<Comparable>(), noMirrorArrList = new ArrayList<Comparable>(), 
         				mirrorZList = new ArrayList<Comparable>(), noMirrorZList = new ArrayList<Comparable>();
@@ -405,8 +311,43 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         		noMirrorArr[i][j] = (String)noMirrorArrList.get(j);
         }
         
-        
         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
+        
+        progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
+        if (imageA == null) {
+            return;
+        }
+        progressBar.updateValue(5);
+        imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
+        
+    }
+    
+    /**
+     * Constructor for calling this as a stand-alone.  will invoke the class's own init() function
+     * for setting up the image rather than ViewJFrameImage's init()
+     * @param image the model image
+     * @param titles
+     * @param mirrorCalcItemsArr
+     * @param mirrorZ
+     * @param noMirrorCalcItemsArr
+     * @param noMirrorZ
+     * @param imageType
+     * @param symmetry
+     * @param standAlone
+     */
+    public PlugInMuscleImageDisplay(ModelImage image, String[] titles,
+            PlugInSelectableVOI[][] voiList, 
+            ImageType imageType, Symmetry symmetry, 
+            boolean standAlone, boolean multipleSlices) {
+    	// calls the super that will not call ViewJFrameImage's init() function
+    	super(image, null, null, false, false);
+    	
+    	commonConstructor(image, titles, voiList,  imageType, symmetry, standAlone, multipleSlices);
+
+    	setVisible(false);
+    	progressBar.setVisible(true);
+
+        createVOIBuffer();
 
     	initStandAlone();
     	setVisible(false);
@@ -414,9 +355,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
     	scrollPane.requestFocus();
     	
     	ctMode(getImageA(), -175, 275);
-    	
-    	imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
-    	
+
     	if (imageA == null) {
             return;
         }
@@ -1152,7 +1091,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	/**Loads relevant VOIs for the particular slice. */
 	
 	@Override
-	public void setSlice(int slice, boolean updateLinkedImages) {
+	public void setSlice(int slice) {
 		
 		zSlice = slice;
 	    controls.setZSlider(zSlice);
@@ -2542,6 +2481,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		    JPanel buttonPanel = new JPanel();
 		    
 		    if(multipleSlices) {
+		    	/*GridBagConstraints gbc = new GridBagConstraints();
+		    	gbc.anchor = GridBagConstraints.CENTER;
+		    	gbc.fill = GridBagConstraints.HORIZONTAL;
+		    	gbc.gridx = 0;
+		    	gbc.gridy = 0;
+		    	
+		    	String propStr = new String("Use the propogating buttons below to allow MIPAV to generate similar VOIs "+
+		    			"on sequential slices.  First select the VOI you would like to propogate.");
+		    	JLabel propLabel = new JLabel(propStr);*/
+		    	
 		    	JMenuItem item1, item2, item3;
 		    	propMenu = ViewMenuBuilder.buildMenu("Propogate", 0, true);
 		    	propMenu.add(item1 = ViewMenuBuilder.buildMenuItem("", "PropVOIDown", 0, this, "voipropd.gif", true));
@@ -3163,9 +3112,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 		
 		/**A mapping of names to color panels for easy referencing. */
 		private TreeMap<String,PlugInMuscleColorButtonPanel> checkBoxLocationTree;
-		
-		/**A mapping of names to JButtons for easy referencing*/
-		private TreeMap<String, JButton> buttonLocationTree;
 	
 		/**
 		 * Constructor, note is called at beginning of program, so mirrorArr and noMirrorArr
@@ -4632,7 +4578,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	        }
 	        // need to take out line VOIs, polyline VOIs, point VOIs
 
-	        everything = new JTabbedPane(JTabbedPane.TOP);
+	        everything = new JTabbedPane(SwingConstants.TOP);
 	        everything.setFont(MipavUtil.font12B);
 	        everything.insertTab("VOI selection", null, buildVOIPanel(voiList), // we must store this panel so we can
 	                                                                            // create a new listing later
@@ -5563,5 +5509,4 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	    	super.writeXML(voi, saveAllContours);
 	    }
 	}
-	
 }
