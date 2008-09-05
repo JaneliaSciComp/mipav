@@ -189,15 +189,6 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
             return;
         }
 
-        int nDim = srcImage.getNDims();
-
-        if ((nDim != 2) && (nDim != 3)) {
-            displayError("Source Image is not 2D or 3D");
-            setCompleted(false);
-
-            return;
-        }
-
         VOIs = srcImage.getVOIs();
 
         xDim = srcImage.getExtents()[0];
