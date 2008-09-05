@@ -1,25 +1,24 @@
 package gov.nih.mipav.model.algorithms.utilities;
 
 
-import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.structures.*;
 
-import java.awt.*;
-
-import java.io.*;
-
+import java.awt.Color;
+import java.io.IOException;
 import java.util.*;
 
 
 /**
  * Allow the user to fill a VOI or fill everything outside the VOI with a specific fill value.
- *
- * @version  0.1 Feb 11, 1998
- * @author   Matthew J. McAuliffe, Ph.D.
+ * 
+ * @version 0.1 Feb 11, 1998
+ * @author Matthew J. McAuliffe, Ph.D.
  */
 public class AlgorithmMask extends AlgorithmBase {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Set the mask areas to this value. */
     private float imageFill = 0.0f;
@@ -35,18 +34,19 @@ public class AlgorithmMask extends AlgorithmBase {
 
     /** if true then fill inside the VOI. If false then fill outside */
     private boolean polarity = true;
-    
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new AlgorithmMask object.
-     *
-     * @param  srcImg    source image model
-     * @param  fill      value used to fill a region
-     * @param  polarity  flag indicating fill location, true = fill inside; false fill outside
-     * @param  useVOI    use the VOI to define the mask area else it will use the painted area to define the mask.
+     * 
+     * @param srcImg source image model
+     * @param fill value used to fill a region
+     * @param polarity flag indicating fill location, true = fill inside; false fill outside
+     * @param useVOI use the VOI to define the mask area else it will use the painted area to define the mask.
      */
-    public AlgorithmMask(ModelImage srcImg, float fill, boolean polarity, boolean useVOI  ) {
+    public AlgorithmMask(ModelImage srcImg, float fill, boolean polarity, boolean useVOI) {
 
         super(null, srcImg);
         imageFill = fill;
@@ -57,14 +57,13 @@ public class AlgorithmMask extends AlgorithmBase {
         }
     }
 
-
     /**
      * Creates a new AlgorithmMask object.
-     *
-     * @param  srcImg      source image model
-     * @param  _fillColor  color used to fill a region
-     * @param  polarity    flag indicating fill location, true = fill inside; false fill outside
-     * @param  useVOI      use the VOI to define the mask area else it will use the painted area to define the mask.
+     * 
+     * @param srcImg source image model
+     * @param _fillColor color used to fill a region
+     * @param polarity flag indicating fill location, true = fill inside; false fill outside
+     * @param useVOI use the VOI to define the mask area else it will use the painted area to define the mask.
      */
     public AlgorithmMask(ModelImage srcImg, Color _fillColor, boolean polarity, boolean useVOI) {
 
@@ -78,12 +77,12 @@ public class AlgorithmMask extends AlgorithmBase {
 
     /**
      * Creates a new AlgorithmMask object.
-     *
-     * @param  destImg   image model where result image is to stored
-     * @param  srcImg    source image model
-     * @param  fill      value used to fill a region
-     * @param  polarity  flag indicating fill location, true = fill inside; false fill outside
-     * @param  useVOI    use the VOI to define the mask area else it will use the painted area to define the mask.
+     * 
+     * @param destImg image model where result image is to stored
+     * @param srcImg source image model
+     * @param fill value used to fill a region
+     * @param polarity flag indicating fill location, true = fill inside; false fill outside
+     * @param useVOI use the VOI to define the mask area else it will use the painted area to define the mask.
      */
     public AlgorithmMask(ModelImage destImg, ModelImage srcImg, float fill, boolean polarity, boolean useVOI) {
 
@@ -98,13 +97,13 @@ public class AlgorithmMask extends AlgorithmBase {
 
     /**
      * Creates a new AlgorithmMask object.
-     *
-     * @param  srcImg    source image model
-     * @param  fillR     red value used to fill a region
-     * @param  fillG     green value used to fill a region
-     * @param  fillB     blue value used to fill a region
-     * @param  polarity  flag indicating fill location, true = fill inside; false fill outside
-     * @param  useVOI    use the VOI to define the mask area else it will use the painted area to define the mask.
+     * 
+     * @param srcImg source image model
+     * @param fillR red value used to fill a region
+     * @param fillG green value used to fill a region
+     * @param fillB blue value used to fill a region
+     * @param polarity flag indicating fill location, true = fill inside; false fill outside
+     * @param useVOI use the VOI to define the mask area else it will use the painted area to define the mask.
      */
     public AlgorithmMask(ModelImage srcImg, float fillR, float fillG, float fillB, boolean polarity, boolean useVOI) {
 
@@ -121,17 +120,17 @@ public class AlgorithmMask extends AlgorithmBase {
 
     /**
      * Creates a new AlgorithmMask object.
-     *
-     * @param  destImg   image model where result image is to stored
-     * @param  srcImg    source image model
-     * @param  fillR     red value used to fill a region
-     * @param  fillG     green value used to fill a region
-     * @param  fillB     blue value used to fill a region
-     * @param  polarity  flag indicating fill location, true = fill inside; false fill outside
-     * @param  useVOI    use the VOI to define the mask area else it will use the painted area to define the mask.
+     * 
+     * @param destImg image model where result image is to stored
+     * @param srcImg source image model
+     * @param fillR red value used to fill a region
+     * @param fillG green value used to fill a region
+     * @param fillB blue value used to fill a region
+     * @param polarity flag indicating fill location, true = fill inside; false fill outside
+     * @param useVOI use the VOI to define the mask area else it will use the painted area to define the mask.
      */
-    public AlgorithmMask(ModelImage destImg, ModelImage srcImg, float fillR, float fillG, float fillB, boolean polarity,
-                         boolean useVOI) {
+    public AlgorithmMask(ModelImage destImg, ModelImage srcImg, float fillR, float fillG, float fillB,
+            boolean polarity, boolean useVOI) {
 
         super(destImg, srcImg);
         imageFillR = fillR;
@@ -144,14 +143,15 @@ public class AlgorithmMask extends AlgorithmBase {
         }
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Fills VOI of the source image with fill value.
-     *
-     * @param  mask       DOCUMENT ME!
-     * @param  fillValue  value to be placed in the image where the mask is true
-     * @param  tSlice     indicates which volume should be painted (tSlice = 4th dimension)
+     * 
+     * @param mask DOCUMENT ME!
+     * @param fillValue value to be placed in the image where the mask is true
+     * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
      */
     public void calcInPlace25D(BitSet mask, float fillValue, int tSlice) {
         calcInPlace25D(mask, fillValue, tSlice, null);
@@ -159,12 +159,12 @@ public class AlgorithmMask extends AlgorithmBase {
 
     /**
      * Fills VOI of the source image with fill value.
-     *
-     * @param  mask                 DOCUMENT ME!
-     * @param  fillValue            value to be placed in the image where the mask is true
-     * @param  tSlice               indicates which volume should be painted (tSlice = 4th dimension)
-     * @param  intensityLockVector  Vector containing Integer objects that represent the intensity values that are not
-     *                              mutable
+     * 
+     * @param mask DOCUMENT ME!
+     * @param fillValue value to be placed in the image where the mask is true
+     * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
+     * @param intensityLockVector Vector containing Integer objects that represent the intensity values that are not
+     *            mutable
      */
     public void calcInPlace25D(BitSet mask, float fillValue, int tSlice, Vector intensityLockVector) {
 
@@ -178,7 +178,7 @@ public class AlgorithmMask extends AlgorithmBase {
         int[] lockedIntensities = null;
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
-        
+
         if (intensityLockVector != null) {
             lockedIntensities = new int[intensityLockVector.size()];
 
@@ -209,8 +209,6 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-           
-
             if (srcImage.getNDims() == 4) {
                 end = srcImage.getExtents()[2];
                 volLength = imgLength * srcImage.getExtents()[2];
@@ -228,17 +226,17 @@ public class AlgorithmMask extends AlgorithmBase {
 
             if (tSlice != -1) {
                 t = tSlice;
-                tEnd = tSlice+1;
-            }
-            else{
+                tEnd = tSlice + 1;
+            } else {
                 t = 0;
                 tEnd = srcImage.getExtents()[3];
             }
 
-            for( ; t < tEnd; t++  ) {
+            for (; t < tEnd; t++) {
                 for (z = 0; (z < end) && !threadStopped; z++) {
                     try {
-                        srcImage.exportData((t * volLength) + (z * imgLength), imgLength, buffer); // locks and releases lock
+                        srcImage.exportData( (t * volLength) + (z * imgLength), imgLength, buffer); // locks and
+                        // releases lock
                     } catch (IOException error) {
                         buffer = null;
                         bufferI = null;
@@ -248,23 +246,28 @@ public class AlgorithmMask extends AlgorithmBase {
                     }
 
                     if (srcImage.getNDims() > 2) {
-                        fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(), "Masking ...");
-                   
+                        fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)),
+                                srcImage.getImageName(), "Masking ...");
+
                     }
 
                     offset = z * imgLength;
 
                     int mod = imgLength / 10;
 
-                    for (i = 0; (i < imgLength) && !threadStopped; i++) {
+                    int sliceIndex;
 
-                        if ((srcImage.getNDims() == 2) && ((i % mod) == 0)) {
-                            fireProgressStateChanged(((float) i / (imgLength - 1)), srcImage.getImageName(), "Masking ...");
-                          
-                        }
+                    if (polarity) {
+                        for (i = mask.nextSetBit(offset); i >= 0 && i < imgLength * (z + 1) && !threadStopped; i = mask
+                                .nextSetBit(i + 1)) {
 
-                        if (((mask.get(offset + i) == true) && (polarity == true)) ||
-                                ((mask.get(offset + i) == false) && (polarity == false))) {
+                            if ( (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
+                                fireProgressStateChanged( ((float) i / (imgLength - 1)), srcImage.getImageName(),
+                                        "Masking ...");
+
+                            }
+
+                            sliceIndex = i % imgLength;
 
                             boolean locked = false;
 
@@ -272,20 +275,49 @@ public class AlgorithmMask extends AlgorithmBase {
 
                                 for (int j = 0; j < lockedIntensities.length; j++) {
 
-                                    if (buffer[i] == lockedIntensities[j]) {
+                                    if (buffer[sliceIndex] == lockedIntensities[j]) {
                                         locked = true;
+                                        break;
                                     }
                                 }
                             }
 
                             if (locked == false) {
-                                buffer[i] = fillValue;
+                                buffer[sliceIndex] = fillValue;
+                            }
+                        }
+                    } else {
+                        for (i = mask.nextClearBit(offset); i >= 0 && i < imgLength * (z + 1) && !threadStopped; i = mask
+                                .nextClearBit(i + 1)) {
+                            if ( (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
+                                fireProgressStateChanged( ((float) i / (imgLength - 1)), srcImage.getImageName(),
+                                        "Masking ...");
+
+                            }
+
+                            sliceIndex = i % imgLength;
+
+                            boolean locked = false;
+
+                            if (lockedIntensities != null) {
+
+                                for (int j = 0; j < lockedIntensities.length; j++) {
+
+                                    if (buffer[sliceIndex] == lockedIntensities[j]) {
+                                        locked = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (locked == false) {
+                                buffer[sliceIndex] = fillValue;
                             }
                         }
                     }
 
                     try {
-                        srcImage.importData((t * volLength) + (z * imgLength), buffer, false);
+                        srcImage.importData( (t * volLength) + (z * imgLength), buffer, false);
                     } catch (IOException error) {
                         buffer = null;
                         bufferI = null;
@@ -316,7 +348,6 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-          
             if (srcImage.getNDims() == 4) {
                 end = srcImage.getExtents()[2];
                 volLength = imgLength * srcImage.getExtents()[2];
@@ -335,8 +366,8 @@ public class AlgorithmMask extends AlgorithmBase {
             for (z = 0; (z < end) && !threadStopped; z++) {
 
                 try {
-                    srcImage.exportComplexData(2 * ((tSlice * volLength) + (z * imgLength)), imgLength, buffer,
-                                               bufferI); // locks and releases lock
+                    srcImage.exportComplexData(2 * ( (tSlice * volLength) + (z * imgLength)), imgLength, buffer,
+                            bufferI); // locks and releases lock
                 } catch (IOException error) {
                     errorCleanUp("Algorithm Mask: Image(s) locked", false);
 
@@ -344,8 +375,8 @@ public class AlgorithmMask extends AlgorithmBase {
                 }
 
                 if (srcImage.getNDims() == 3) {
-                    fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), 
-                            srcImage.getImageName(), "Masking ...");
+                    fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(),
+                            "Masking ...");
                 }
 
                 offset = z * imgLength;
@@ -354,17 +385,16 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
-                    if ((srcImage.getNDims() == 2) && ((i % mod) == 0)) {
-                        fireProgressStateChanged(((float) i / (imgLength - 1)), 
-                                srcImage.getImageName(), "Masking ...");
+                    if ( (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
+                        fireProgressStateChanged( ((float) i / (imgLength - 1)), srcImage.getImageName(), "Masking ...");
                     }
 
-                    if (((mask.get(offset + i) == true) && (polarity == true)) ||
-                            ((mask.get(offset + i) == false) && (polarity == false))) {
+                    if ( ( (mask.get(offset + i) == true) && (polarity == true))
+                            || ( (mask.get(offset + i) == false) && (polarity == false))) {
 
                         // Must preserve phase information so make values 1000 times the
                         // minimum float instead of zero
-                        mag = (float) (Math.sqrt((buffer[i] * buffer[i]) + (bufferI[i] * bufferI[i])));
+                        mag = (float) (Math.sqrt( (buffer[i] * buffer[i]) + (bufferI[i] * bufferI[i])));
 
                         if (mag > 1000.0f) {
 
@@ -390,8 +420,8 @@ public class AlgorithmMask extends AlgorithmBase {
                 }
 
                 try {
-                    srcImage.importComplexData(2 * ((tSlice * volLength) + (z * imgLength)), buffer, bufferI, false,
-                                               logMagDisplay);
+                    srcImage.importComplexData(2 * ( (tSlice * volLength) + (z * imgLength)), buffer, bufferI, false,
+                            logMagDisplay);
                 } catch (IOException error) {
                     buffer = null;
                     bufferI = null;
@@ -404,7 +434,6 @@ public class AlgorithmMask extends AlgorithmBase {
             srcImage.calcMinMaxMag(logMagDisplay);
         } // else COMPLEX
 
-       
         if (threadStopped) {
             finalize();
 
@@ -414,13 +443,12 @@ public class AlgorithmMask extends AlgorithmBase {
         setCompleted(true);
     }
 
-
     /**
      * Fills VOI of the color source image with fill color.
-     *
-     * @param  mask       DOCUMENT ME!
-     * @param  fillColor  color to be placed in the image where the mask is true
-     * @param  tSlice     indicates which volume should be painted (tSlice = 4th dimension)
+     * 
+     * @param mask DOCUMENT ME!
+     * @param fillColor color to be placed in the image where the mask is true
+     * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
      */
     public void calcInPlace25DC(BitSet mask, Color fillColor, int tSlice, String rgbString, Vector intensityLockVector) {
 
@@ -430,8 +458,9 @@ public class AlgorithmMask extends AlgorithmBase {
         byte[] buffer;
         polarity = true;
         int[] lockedIntensities = null;
-        //since image B is color....we must CREATE a LUTB rather than getting it from srcIMage.getParentFrame.getLUTB...in order to do the intensityLockVector stuff
-        ModelLUT lutB = new ModelLUT(ModelLUT.STRIPED, 256, new int[] { 4, 256 });
+        // since image B is color....we must CREATE a LUTB rather than getting it from
+        // srcIMage.getParentFrame.getLUTB...in order to do the intensityLockVector stuff
+        ModelLUT lutB = new ModelLUT(ModelLUT.STRIPED, 256, new int[] {4, 256});
 
         byte red, green, blue;
 
@@ -454,9 +483,8 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(0, 
-                srcImage.getImageName(), "Masking ...");
-        
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
+
         if (intensityLockVector != null) {
             lockedIntensities = new int[intensityLockVector.size()];
 
@@ -473,7 +501,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 }
             }
         }
-        
+
         if (srcImage.getNDims() == 4) {
             end = srcImage.getExtents()[2];
             volLength = imgLength * srcImage.getExtents()[2];
@@ -492,17 +520,18 @@ public class AlgorithmMask extends AlgorithmBase {
         for (z = 0; (z < end) && !threadStopped; z++) {
 
             try {
-                srcImage.exportData((tSlice * volLength) + (z * imgLength), imgLength, buffer); // locks and releases
-                                                                                                // lock
+                srcImage.exportData( (tSlice * volLength) + (z * imgLength), imgLength, buffer); // locks and
+                // releases
+                // lock
             } catch (IOException error) {
                 errorCleanUp("Algorithm Mask: Image(s) locked", false);
 
                 return;
             }
 
-            if ((srcImage.getNDims() == 3)) {
-                fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), 
-                        srcImage.getImageName(), "Masking ...");    
+            if ( (srcImage.getNDims() == 3)) {
+                fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(),
+                        "Masking ...");
             }
 
             offset = z * paintLength;
@@ -511,43 +540,45 @@ public class AlgorithmMask extends AlgorithmBase {
 
             for (i = 0, j = 0; (i < imgLength) && !threadStopped; i = i + 4, j++) {
 
-                if ((srcImage.getNDims() == 2) && ((i % mod) == 0)) {
-                    fireProgressStateChanged(((float) i / (imgLength - 1)), 
-                            srcImage.getImageName(), "Masking ...");
+                if ( (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
+                    fireProgressStateChanged( ((float) i / (imgLength - 1)), srcImage.getImageName(), "Masking ...");
                 }
 
-                if (((mask.get(offset + j) == true) && (polarity == true)) ||
-                        ((mask.get(offset + j) == false) && (polarity == false))) {
-                	
-                	
-                	boolean locked = false;
+                if ( ( (mask.get(offset + j) == true) && (polarity == true))
+                        || ( (mask.get(offset + j) == false) && (polarity == false))) {
+
+                    boolean locked = false;
 
                     if (lockedIntensities != null) {
                         for (int k = 0; k < lockedIntensities.length; k++) {
-                        	if(buffer[i+1] == (byte) Math.round(lutB.getColor(lockedIntensities[k]).getRed()) && buffer[i+2] == (byte) Math.round(lutB.getColor(lockedIntensities[k]).getGreen()) && buffer[i+3] == (byte) Math.round(lutB.getColor(lockedIntensities[k]).getBlue())) {
-                        		locked = true;
-                        	}
+                            if (buffer[i + 1] == (byte) Math.round(lutB.getColor(lockedIntensities[k]).getRed())
+                                    && buffer[i + 2] == (byte) Math.round(lutB.getColor(lockedIntensities[k])
+                                            .getGreen())
+                                    && buffer[i + 3] == (byte) Math
+                                            .round(lutB.getColor(lockedIntensities[k]).getBlue())) {
+                                locked = true;
+                            }
                         }
                     }
 
                     if (locked == false) {
 
-	                    buffer[i] = (byte) 255;
-	                    if (useR) {
-	                    	buffer[i + 1] = red;
-	                    }
-	                    if (useG) {
-	                    	buffer[i + 2] = green;
-	                    }
-	                    if (useB) {                    
-	                    	buffer[i + 3] = blue;
-	                    }
+                        buffer[i] = (byte) 255;
+                        if (useR) {
+                            buffer[i + 1] = red;
+                        }
+                        if (useG) {
+                            buffer[i + 2] = green;
+                        }
+                        if (useB) {
+                            buffer[i + 3] = blue;
+                        }
                     }
                 }
             }
 
             try {
-                srcImage.importData((tSlice * volLength) + (z * imgLength), buffer, false);
+                srcImage.importData( (tSlice * volLength) + (z * imgLength), buffer, false);
             } catch (IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -569,10 +600,10 @@ public class AlgorithmMask extends AlgorithmBase {
 
     /**
      * Fills VOI of the color source image with fill color.
-     *
-     * @param  mask       DOCUMENT ME!
-     * @param  fillColor  color to be placed in the image where the mask is true
-     * @param  tSlice     indicates which volume should be painted (tSlice = 4th dimension)
+     * 
+     * @param mask DOCUMENT ME!
+     * @param fillColor color to be placed in the image where the mask is true
+     * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
      */
     public void calcInPlace25DCMask(BitSet mask, Color fillColor, int tSlice) {
 
@@ -620,8 +651,9 @@ public class AlgorithmMask extends AlgorithmBase {
         for (z = 0; (z < end) && !threadStopped; z++) {
 
             try {
-                srcImage.exportData((tSlice * volLength) + (z * imgLength), imgLength, buffer); // locks and releases
-                                                                                                // lock
+                srcImage.exportData( (tSlice * volLength) + (z * imgLength), imgLength, buffer); // locks and
+                // releases
+                // lock
             } catch (IOException error) {
                 errorCleanUp("Algorithm Mask: Image(s) locked", false);
 
@@ -629,8 +661,8 @@ public class AlgorithmMask extends AlgorithmBase {
             }
 
             if (srcImage.getNDims() == 3) {
-            fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), 
-                    srcImage.getImageName(), "Masking ...");
+                fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(),
+                        "Masking ...");
             }
 
             offset = z * paintLength;
@@ -639,22 +671,21 @@ public class AlgorithmMask extends AlgorithmBase {
 
             for (i = 0, j = 0; (i < imgLength) && !threadStopped; i = i + 4, j++) {
 
-                if ((srcImage.getNDims() == 2) && ((i % mod) == 0)) {
-                fireProgressStateChanged(((float) i / (imgLength - 1)), 
-                        srcImage.getImageName(), "Masking ...");
+                if ( (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
+                    fireProgressStateChanged( ((float) i / (imgLength - 1)), srcImage.getImageName(), "Masking ...");
                 }
 
-                if ((mask.get(offset + j) == true) && (polarity == true)) {
+                if ( (mask.get(offset + j) == true) && (polarity == true)) {
                     buffer[i] = (byte) 255;
                     buffer[i + 1] = red;
                     buffer[i + 2] = green;
                     buffer[i + 3] = blue;
-                } else if ((mask.get(offset + j) == false) && (polarity == true)) {
+                } else if ( (mask.get(offset + j) == false) && (polarity == true)) {
                     buffer[i] = (byte) 255;
                     buffer[i + 1] = 0;
                     buffer[i + 2] = 0;
                     buffer[i + 3] = 0;
-                } else if ((mask.get(offset + j) == false) && (polarity == false)) {
+                } else if ( (mask.get(offset + j) == false) && (polarity == false)) {
                     buffer[i] = (byte) 255;
                     buffer[i + 1] = red;
                     buffer[i + 2] = green;
@@ -663,7 +694,7 @@ public class AlgorithmMask extends AlgorithmBase {
             }
 
             try {
-                srcImage.importData((tSlice * volLength) + (z * imgLength), buffer, false);
+                srcImage.importData( (tSlice * volLength) + (z * imgLength), buffer, false);
             } catch (IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -684,23 +715,22 @@ public class AlgorithmMask extends AlgorithmBase {
 
     /**
      * Fills VOI of the source image with fill value.
-     *
-     * @param  mask       DOCUMENT ME!
-     * @param  fillValue  value to be placed in the image where the mask is true
-     * @param  tSlice     indicates which volume should be painted (tSlice = 4th dimension)
+     * 
+     * @param mask DOCUMENT ME!
+     * @param fillValue value to be placed in the image where the mask is true
+     * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
      */
     public void calcInPlace25DMask(BitSet mask, float fillValue, int tSlice) {
         calcInPlace25DMask(mask, fillValue, tSlice, null);
     }
 
-
     /**
      * Fills VOI of the source image with fill value.
-     *
-     * @param  mask                 DOCUMENT ME!
-     * @param  fillValue            value to be placed in the image where the mask is true
-     * @param  tSlice               indicates which volume should be painted (tSlice = 4th dimension)
-     * @param  intensityLockVector  DOCUMENT ME!
+     * 
+     * @param mask DOCUMENT ME!
+     * @param fillValue value to be placed in the image where the mask is true
+     * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
+     * @param intensityLockVector DOCUMENT ME!
      */
     public void calcInPlace25DMask(BitSet mask, float fillValue, int tSlice, Vector intensityLockVector) {
 
@@ -730,9 +760,8 @@ public class AlgorithmMask extends AlgorithmBase {
             }
         }
 
-        fireProgressStateChanged(0, 
-                srcImage.getImageName(), "Masking ...");
-        
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
+
         if (srcImage.getType() != ModelStorageBase.COMPLEX) {
 
             try {
@@ -766,7 +795,8 @@ public class AlgorithmMask extends AlgorithmBase {
             for (z = 0; (z < end) && !threadStopped; z++) {
 
                 try {
-                    srcImage.exportData((tSlice * volLength) + (z * imgLength), imgLength, buffer); // locks and releases lock
+                    srcImage.exportData( (tSlice * volLength) + (z * imgLength), imgLength, buffer); // locks and
+                    // releases lock
                 } catch (IOException error) {
                     buffer = null;
                     bufferI = null;
@@ -775,9 +805,9 @@ public class AlgorithmMask extends AlgorithmBase {
                     return;
                 }
 
-               if (srcImage.getNDims() == 3) {
-                fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), 
-                        srcImage.getImageName(), "Masking ...");
+                if (srcImage.getNDims() == 3) {
+                    fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(),
+                            "Masking ...");
                 }
 
                 offset = z * imgLength;
@@ -786,13 +816,12 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
-                    if ((srcImage.getNDims() == 2) && ((i % mod) == 0)) {
-                        fireProgressStateChanged(((float) i / (imgLength - 1)), 
-                                srcImage.getImageName(), "Masking ...");
+                    if ( (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
+                        fireProgressStateChanged( ((float) i / (imgLength - 1)), srcImage.getImageName(), "Masking ...");
                     }
 
-                    if (((mask.get(offset + i) == true) && (polarity == true)) ||
-                            ((mask.get(offset + i) == false) && (polarity == false))) {
+                    if ( ( (mask.get(offset + i) == true) && (polarity == true))
+                            || ( (mask.get(offset + i) == false) && (polarity == false))) {
 
                         boolean locked = false;
 
@@ -809,13 +838,13 @@ public class AlgorithmMask extends AlgorithmBase {
                         if (locked == false) {
                             buffer[i] = fillValue;
                         }
-                    } else if ((mask.get(offset + i) == false) && (polarity == true)) {
+                    } else if ( (mask.get(offset + i) == false) && (polarity == true)) {
                         buffer[i] = 0;
                     }
                 }
 
                 try {
-                    srcImage.importData((tSlice * volLength) + (z * imgLength), buffer, false);
+                    srcImage.importData( (tSlice * volLength) + (z * imgLength), buffer, false);
                 } catch (IOException error) {
                     buffer = null;
                     bufferI = null;
@@ -861,17 +890,17 @@ public class AlgorithmMask extends AlgorithmBase {
             for (z = 0; (z < end) && !threadStopped; z++) {
 
                 try {
-                    srcImage.exportComplexData(2 * ((tSlice * volLength) + (z * imgLength)), imgLength, buffer,
-                                               bufferI); // locks and releases lock
+                    srcImage.exportComplexData(2 * ( (tSlice * volLength) + (z * imgLength)), imgLength, buffer,
+                            bufferI); // locks and releases lock
                 } catch (IOException error) {
                     errorCleanUp("Algorithm Mask: Image(s) locked", false);
 
                     return;
                 }
 
-                if ((srcImage.getNDims() == 3)) {
-                    fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), 
-                            srcImage.getImageName(), "Masking ...");
+                if ( (srcImage.getNDims() == 3)) {
+                    fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(),
+                            "Masking ...");
                 }
 
                 offset = z * imgLength;
@@ -880,54 +909,52 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
-                    if ((srcImage.getNDims() == 2) && ((i % mod) == 0)) {
-                        fireProgressStateChanged(((float) i / (imgLength - 1)), 
-                                srcImage.getImageName(), "Masking ...");
+                    if ( (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
+                        fireProgressStateChanged( ((float) i / (imgLength - 1)), srcImage.getImageName(), "Masking ...");
                     }
-                    
-//                  Must preserve phase information so make values 1000 times the
+
+                    // Must preserve phase information so make values 1000 times the
                     // minimum float instead of zero
-                    mag = (float) (Math.sqrt((buffer[i] * buffer[i]) + (bufferI[i] * bufferI[i])));
+                    mag = (float) (Math.sqrt( (buffer[i] * buffer[i]) + (bufferI[i] * bufferI[i])));
 
-                    if (((mask.get(offset + i) == true) && (polarity == true)) ||
-                            ((mask.get(offset + i) == false) && (polarity == false))) {
+                    if ( ( (mask.get(offset + i) == true) && (polarity == true))
+                            || ( (mask.get(offset + i) == false) && (polarity == false))) {
 
-                            boolean locked = false;
+                        boolean locked = false;
 
-                            if (lockedIntensities != null) {
+                        if (lockedIntensities != null) {
 
-                                for (int j = 0; j < lockedIntensities.length; j++) {
+                            for (int j = 0; j < lockedIntensities.length; j++) {
 
-                                    if (buffer[i] == lockedIntensities[j]) {
-                                        locked = true;
-                                    }
+                                if (buffer[i] == lockedIntensities[j]) {
+                                    locked = true;
                                 }
                             }
+                        }
 
-                            if (locked == false) {
-                                if (mag != 0.0f) {
-                                    norm = fillValue / mag;
-                                    buffer[i] = buffer[i] * norm;
-                                    bufferI[i] = bufferI[i] * norm;
-                                }
-                                else {
-                                    buffer[i] = fillValue;
-                                    bufferI[i] = 0.0f;
-                                }
+                        if (locked == false) {
+                            if (mag != 0.0f) {
+                                norm = fillValue / mag;
+                                buffer[i] = buffer[i] * norm;
+                                bufferI[i] = bufferI[i] * norm;
+                            } else {
+                                buffer[i] = fillValue;
+                                bufferI[i] = 0.0f;
                             }
+                        }
                     } // if (((mask.get(offset + i) == true) && (polarity == true)) ||
-                    else if ((mask.get(offset + i) == false) && (polarity == true)) {
-                        if (mag > 1000.0f*Float.MIN_VALUE) {
+                    else if ( (mask.get(offset + i) == false) && (polarity == true)) {
+                        if (mag > 1000.0f * Float.MIN_VALUE) {
                             norm = 1000.0f * Float.MIN_VALUE / mag;
                             buffer[i] = buffer[i] * norm;
                             bufferI[i] = bufferI[i] * norm;
-                        } // if (mag > 1000.0f*Float.MIN_VALUE)    
+                        } // if (mag > 1000.0f*Float.MIN_VALUE)
                     } // else if ((mask.get(offset + i) == false) && (polarity == true))
                 } // for (i = 0; (i < imgLength) && !threadStopped; i++)
 
                 try {
-                    srcImage.importComplexData(2 * ((tSlice * volLength) + (z * imgLength)), buffer, bufferI, false,
-                                               logMagDisplay);
+                    srcImage.importComplexData(2 * ( (tSlice * volLength) + (z * imgLength)), buffer, bufferI, false,
+                            logMagDisplay);
                 } catch (IOException error) {
                     buffer = null;
                     bufferI = null;
@@ -940,7 +967,6 @@ public class AlgorithmMask extends AlgorithmBase {
             srcImage.calcMinMaxMag(logMagDisplay);
         } // else COMPLEX
 
-      
         if (threadStopped) {
             finalize();
 
@@ -968,8 +994,6 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        
-
         if (srcImage.isColorImage()) {
 
             if (destImage != null) {
@@ -980,7 +1004,7 @@ public class AlgorithmMask extends AlgorithmBase {
                     calcStoreInDest3DRGB();
                 }
                 destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
-                
+
                 destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
             } else {
 
@@ -1043,13 +1067,13 @@ public class AlgorithmMask extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if (((i % mod) == 0)) {
-                fireProgressStateChanged(((float) i / (length - 1)), srcImage.getImageName(), "Masking ...");
+            if ( ( (i % mod) == 0)) {
+                fireProgressStateChanged( ((float) i / (length - 1)), srcImage.getImageName(), "Masking ...");
             }
 
-            if ((mask.get(i) == true) && (polarity == true)) {
+            if ( (mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFill;
-            } else if ((mask.get(i) == false) && (polarity == false)) {
+            } else if ( (mask.get(i) == false) && (polarity == false)) {
                 buffer[i] = imageFill;
             }
         }
@@ -1101,19 +1125,18 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
-        
-        int mod = length / 100; // mod is 1 percent of length
 
+        int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if (((i % mod) == 0)) {
-                fireProgressStateChanged(((float) i / (length - 1) * 33), srcImage.getImageName(), "Masking ...");
+            if ( ( (i % mod) == 0)) {
+                fireProgressStateChanged( ((float) i / (length - 1) * 33), srcImage.getImageName(), "Masking ...");
             }
 
-            if ((mask.get(i) == true) && (polarity == true)) {
+            if ( (mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFillR;
-            } else if ((mask.get(i) == false) && (polarity == false)) {
+            } else if ( (mask.get(i) == false) && (polarity == false)) {
                 buffer[i] = imageFillR;
             }
         }
@@ -1151,14 +1174,15 @@ public class AlgorithmMask extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-           if (((i % mod) == 0)) {
-               fireProgressStateChanged((33 + ((float) i / (length - 1) * 33)), srcImage.getImageName(), "Masking ...");
-               
+            if ( ( (i % mod) == 0)) {
+                fireProgressStateChanged( (33 + ((float) i / (length - 1) * 33)), srcImage.getImageName(),
+                        "Masking ...");
+
             }
 
-            if ((mask.get(i) == true) && (polarity == true)) {
+            if ( (mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFillG;
-            } else if ((mask.get(i) == false) && (polarity == false)) {
+            } else if ( (mask.get(i) == false) && (polarity == false)) {
                 buffer[i] = imageFillG;
             }
         }
@@ -1192,22 +1216,20 @@ public class AlgorithmMask extends AlgorithmBase {
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
             return;
-        }   
-        
+        }
+
         fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
 
-          
-        
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if ((i % mod) == 0) {
-                fireProgressStateChanged((Math.round(67 + ((float) i / (length - 1) * 33))), 
-                        srcImage.getImageName(), "Masking ...");
+            if ( (i % mod) == 0) {
+                fireProgressStateChanged( (Math.round(67 + ((float) i / (length - 1) * 33))), srcImage.getImageName(),
+                        "Masking ...");
             }
 
-            if ((mask.get(i) == true) && (polarity == true)) {
+            if ( (mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFillB;
-            } else if ((mask.get(i) == false) && (polarity == false)) {
+            } else if ( (mask.get(i) == false) && (polarity == false)) {
                 buffer[i] = imageFillB;
             }
         }
@@ -1252,7 +1274,6 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
-        
 
         for (z = 0; z < srcImage.getExtents()[2]; z++) {
 
@@ -1267,14 +1288,14 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * length;
 
-            fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(), "Masking ...");
-            
+            fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(),
+                    "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if ((mask.get(offset + i) == true) && (polarity == true)) {
+                if ( (mask.get(offset + i) == true) && (polarity == true)) {
                     buffer[i] = imageFill;
-                } else if ((mask.get(offset + i) == false) && (polarity == false)) {
+                } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
                     buffer[i] = imageFill;
                 }
             }
@@ -1334,14 +1355,14 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * length;
 
-            fireProgressStateChanged(((float) (3 * z) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)),
-                    srcImage.getImageName(), "Masking ...");
+            fireProgressStateChanged( ((float) (3 * z) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage
+                    .getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if ((mask.get(offset + i) == true) && (polarity == true)) {
+                if ( (mask.get(offset + i) == true) && (polarity == true)) {
                     buffer[i] = imageFillR;
-                } else if ((mask.get(offset + i) == false) && (polarity == false)) {
+                } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
                     buffer[i] = imageFillR;
                 }
             }
@@ -1372,15 +1393,14 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-            fireProgressStateChanged(((float) ((3 * z) + 1) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)),
-                    srcImage.getImageName(), "Masking ...");
-            
+            fireProgressStateChanged( ((float) ( (3 * z) + 1) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage
+                    .getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if ((mask.get(offset + i) == true) && (polarity == true)) {
+                if ( (mask.get(offset + i) == true) && (polarity == true)) {
                     buffer[i] = imageFillG;
-                } else if ((mask.get(offset + i) == false) && (polarity == false)) {
+                } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
                     buffer[i] = imageFillG;
                 }
             }
@@ -1411,14 +1431,14 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-            fireProgressStateChanged(((float) ((3 * z) + 2) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)),
-                    srcImage.getImageName(), "Masking ...");
+            fireProgressStateChanged( ((float) ( (3 * z) + 2) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage
+                    .getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if ((mask.get(offset + i) == true) && (polarity == true)) {
+                if ( (mask.get(offset + i) == true) && (polarity == true)) {
                     buffer[i] = imageFillB;
-                } else if ((mask.get(offset + i) == false) && (polarity == false)) {
+                } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
                     buffer[i] = imageFillB;
                 }
             }
@@ -1445,7 +1465,6 @@ public class AlgorithmMask extends AlgorithmBase {
         srcImage.calcMinMax();
         setCompleted(true);
     }
-
 
     /**
      * Fills new image/VOI with new fill value;
@@ -1483,20 +1502,20 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
-        
+
         int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if ((i % mod) == 0) {
-                fireProgressStateChanged(((float) i / (length - 1)), srcImage.getImageName(), "Masking ...");
+            if ( (i % mod) == 0) {
+                fireProgressStateChanged( ((float) i / (length - 1)), srcImage.getImageName(), "Masking ...");
             }
 
-            if ((mask.get(i) == true) && (polarity == false)) {
+            if ( (mask.get(i) == true) && (polarity == false)) {
                 destImage.set(i, buffer[i]);
-            } else if ((mask.get(i) == true) && (polarity == true)) {
+            } else if ( (mask.get(i) == true) && (polarity == true)) {
                 destImage.set(i, imageFill);
-            } else if ((mask.get(i) == false) && (polarity == false)) {
+            } else if ( (mask.get(i) == false) && (polarity == false)) {
                 destImage.set(i, imageFill);
             } else {
                 destImage.set(i, buffer[i]);
@@ -1524,7 +1543,6 @@ public class AlgorithmMask extends AlgorithmBase {
         int length;
         float[] buffer;
 
-
         try {
             length = srcImage.getSliceSize();
             buffer = new float[length];
@@ -1542,20 +1560,19 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
-        
-        int mod = length / 100; // mod is 1 percent of length
 
- 
+        int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if ((i % mod) == 0) {
-                fireProgressStateChanged((Math.round((float) i / (length - 1) * 33)), srcImage.getImageName(), "Masking ...");
+            if ( (i % mod) == 0) {
+                fireProgressStateChanged( (Math.round((float) i / (length - 1) * 33)), srcImage.getImageName(),
+                        "Masking ...");
             }
 
-            if ((mask.get(i) == true) && (polarity == true)) {
+            if ( (mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFillR;
-            } else if ((mask.get(i) == false) && (polarity == false)) {
+            } else if ( (mask.get(i) == false) && (polarity == false)) {
                 buffer[i] = imageFillR;
             }
         }
@@ -1591,14 +1608,14 @@ public class AlgorithmMask extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if ((i % mod) == 0) {
-                fireProgressStateChanged((Math.round(33 + ((float) i / (length - 1) * 33))), srcImage.getImageName(), "Masking ...");
+            if ( (i % mod) == 0) {
+                fireProgressStateChanged( (Math.round(33 + ((float) i / (length - 1) * 33))), srcImage.getImageName(),
+                        "Masking ...");
             }
-            
 
-            if ((mask.get(i) == true) && (polarity == true)) {
+            if ( (mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFillG;
-            } else if ((mask.get(i) == false) && (polarity == false)) {
+            } else if ( (mask.get(i) == false) && (polarity == false)) {
                 buffer[i] = imageFillG;
             }
         }
@@ -1634,13 +1651,14 @@ public class AlgorithmMask extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if ((i % mod) == 0) {
-                fireProgressStateChanged((Math.round(67 + ((float) i / (length - 1) * 33))), srcImage.getImageName(), "Masking ...");
+            if ( (i % mod) == 0) {
+                fireProgressStateChanged( (Math.round(67 + ((float) i / (length - 1) * 33))), srcImage.getImageName(),
+                        "Masking ...");
             }
-            
-            if ((mask.get(i) == true) && (polarity == true)) {
+
+            if ( (mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFillB;
-            } else if ((mask.get(i) == false) && (polarity == false)) {
+            } else if ( (mask.get(i) == false) && (polarity == false)) {
                 buffer[i] = imageFillB;
             }
         }
@@ -1693,7 +1711,6 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
-        
 
         for (z = 0; (z < srcImage.getExtents()[2]) && !threadStopped; z++) {
 
@@ -1708,15 +1725,16 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * length;
 
-            fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(), "Masking ...");
+            fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(),
+                    "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if ((mask.get(offset + i) == true) && (polarity == false)) {
+                if ( (mask.get(offset + i) == true) && (polarity == false)) {
                     destImage.set(offset + i, buffer[i]);
-                } else if ((mask.get(offset + i) == true) && (polarity == true)) {
+                } else if ( (mask.get(offset + i) == true) && (polarity == true)) {
                     destImage.set(offset + i, imageFill);
-                } else if ((mask.get(offset + i) == false) && (polarity == false)) {
+                } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
                     destImage.set(offset + i, imageFill);
                 } else {
                     destImage.set(offset + i, buffer[i]);
@@ -1744,7 +1762,6 @@ public class AlgorithmMask extends AlgorithmBase {
         int length, offset;
         float[] buffer;
 
-
         try {
             length = srcImage.getSliceSize();
             buffer = new float[length];
@@ -1771,14 +1788,14 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * length;
 
-            fireProgressStateChanged(((float) (3 * z) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage.getImageName(), "Masking ...");
-
+            fireProgressStateChanged( ((float) (3 * z) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage
+                    .getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if ((mask.get(offset + i) == true) && (polarity == true)) {
+                if ( (mask.get(offset + i) == true) && (polarity == true)) {
                     buffer[i] = imageFillR;
-                } else if ((mask.get(offset + i) == false) && (polarity == false)) {
+                } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
                     buffer[i] = imageFillR;
                 }
             }
@@ -1807,13 +1824,14 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-            fireProgressStateChanged(((float) ((3 * z) + 1) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage.getImageName(), "Masking ...");
+            fireProgressStateChanged( ((float) ( (3 * z) + 1) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage
+                    .getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if ((mask.get(offset + i) == true) && (polarity == true)) {
+                if ( (mask.get(offset + i) == true) && (polarity == true)) {
                     buffer[i] = imageFillG;
-                } else if ((mask.get(offset + i) == false) && (polarity == false)) {
+                } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
                     buffer[i] = imageFillG;
                 }
             }
@@ -1842,13 +1860,14 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-            fireProgressStateChanged(((float) ((3 * z) + 2) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage.getImageName(), "Masking ...");
+            fireProgressStateChanged( ((float) ( (3 * z) + 2) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage
+                    .getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if ((mask.get(offset + i) == true) && (polarity == true)) {
+                if ( (mask.get(offset + i) == true) && (polarity == true)) {
                     buffer[i] = imageFillB;
-                } else if ((mask.get(offset + i) == false) && (polarity == false)) {
+                } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
                     buffer[i] = imageFillB;
                 }
             }
@@ -1871,7 +1890,7 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         destImage.calcMinMax();
-     
+
         setCompleted(true);
 
     }
