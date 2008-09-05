@@ -2,25 +2,22 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.registration.*;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR2D;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import com.sun.j3d.utils.universe.*;
-
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.*;
-
+import java.awt.image.BufferedImage;
 import java.io.*;
 
 import javax.media.j3d.*;
-
 import javax.swing.*;
-
 import javax.vecmath.*;
+
+import com.sun.j3d.utils.universe.SimpleUniverse;
 
 
 /**
@@ -28,15 +25,17 @@ import javax.vecmath.*;
  * call the AlgorithmRegOAR2D registration algorithm to create a mosaic image with the two aligned images. Multiple
  * images can be added to the mosaic and aligned one at a time.
  */
-public class JFrameRegistrationMosaic extends JFrame
-        implements ActionListener, MouseListener, MouseMotionListener, AlgorithmInterface /* Registration Algorithm */ {
+public class JFrameRegistrationMosaic extends JFrame implements ActionListener, MouseListener, MouseMotionListener,
+        AlgorithmInterface /* Registration Algorithm */{
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 2954367270283496349L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** For masking, set to true if the reference image is written into the same location:. */
     private boolean[][] m_aabReference = null;
@@ -186,7 +185,6 @@ public class JFrameRegistrationMosaic extends JFrame
     /** Accumulated transformation prior to current mouseDrag:. */
     private Transform3D m_kOldTransform;
 
-
     /* GUI buttons: */
     /** Open reference image:. */
     private JButton m_kOpenReferenceButton;
@@ -206,6 +204,9 @@ public class JFrameRegistrationMosaic extends JFrame
     /** Save the mosaic image:. */
     private JButton m_kSaveButton;
 
+    /** Open the mosaic image help. */
+    private JButton m_kHelpButton;
+
     /** Scene graph root node:. */
     private BranchGroup m_kScene = null;
 
@@ -221,7 +222,8 @@ public class JFrameRegistrationMosaic extends JFrame
     /** SimpleUniverse:. */
     private SimpleUniverse m_kUniverse = null;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * JFrameRegistrationMosaic - Creates new window for manual (mouse-based) registration of two images.
@@ -231,8 +233,8 @@ public class JFrameRegistrationMosaic extends JFrame
         try {
             this.setIconImage(MipavUtil.getIconImage("puzzle3.gif"));
         } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
-                              ">.  Check that this file is available.\n");
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
         }
 
         initGUI();
@@ -240,12 +242,13 @@ public class JFrameRegistrationMosaic extends JFrame
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * actionPerformed - JButton events:
-     *
-     * @param  event  button event
+     * 
+     * @param event button event
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -277,8 +280,9 @@ public class JFrameRegistrationMosaic extends JFrame
             }
         } else if (command.equals("ToggleSelected")) {
 
-            /* Toggle which image is selected -- which image the user
-             * manipulates with the mouse: */
+            /*
+             * Toggle which image is selected -- which image the user manipulates with the mouse:
+             */
             toggleSelectedImage();
         } else if (command.equals("Register")) {
 
@@ -329,13 +333,14 @@ public class JFrameRegistrationMosaic extends JFrame
             repaintButtons();
         } else if (command.equals("AdvancedOptions")) {
             new JDialogRegistrationOAR2D(this, m_akImages[m_iReference], m_akImages[m_iTile], m_iCost, m_iDOF,
-                                         m_iInterp, m_fRotateBegin, m_fRotateEnd, m_fCoarseRate, m_fFineRate,
-                                         m_bDoSubsample, m_iBracketBound, m_iMaxIterations, m_iNumMinima, m_iInterp2,
-                                         m_bDisplayTransform, m_fRotationRange, m_fXScaleRange, m_fYScaleRange,
-                                         m_iScaleSteps, m_iTranslationRange);
+                    m_iInterp, m_fRotateBegin, m_fRotateEnd, m_fCoarseRate, m_fFineRate, m_bDoSubsample,
+                    m_iBracketBound, m_iMaxIterations, m_iNumMinima, m_iInterp2, m_bDisplayTransform, m_fRotationRange,
+                    m_fXScaleRange, m_fYScaleRange, m_iScaleSteps, m_iTranslationRange);
+        } else if (command.equals("Help")) {
+            MipavUtil.showHelp("");
         }
     }
-    
+
     private void repaintButtons() {
         m_kOpenReferenceButton.repaint();
         m_kOpenTileButton.repaint();
@@ -343,6 +348,7 @@ public class JFrameRegistrationMosaic extends JFrame
         m_kRegisterButton.repaint();
         m_kUndoButton.repaint();
         m_kSaveButton.repaint();
+        m_kHelpButton.repaint();
         m_kCloseAllButton.repaint();
         m_kAdvancedOptionsButton.repaint();
     }
@@ -350,8 +356,8 @@ public class JFrameRegistrationMosaic extends JFrame
     /**
      * algorithmPerformed - when the alignment algorithm finishes, the transformed tile is blended with the reference
      * image and displayed:
-     *
-     * @param  kAlgorithm  AlgorithmBase
+     * 
+     * @param kAlgorithm AlgorithmBase
      */
     public void algorithmPerformed(AlgorithmBase kAlgorithm) {
         ModelImage kTransformedTile = null;
@@ -389,14 +395,13 @@ public class JFrameRegistrationMosaic extends JFrame
 
         if (kAlgorithm instanceof AlgorithmRegOAR2D) {
 
-            if (((AlgorithmRegOAR2D) kAlgorithm).isCompleted()) {
+            if ( ((AlgorithmRegOAR2D) kAlgorithm).isCompleted()) {
 
                 String kName = JDialogBase.makeImageName(m_akImages[m_iTile].getImageName(), "_register");
 
                 /* Transform the input tile image: */
-                kAlgorithmTransform = new AlgorithmTransform(m_akImages[m_iTile],
-                                                             ((AlgorithmRegOAR2D) kAlgorithm).getTransform(),
-                                                             m_iInterp2, 1.0f, 1.0f, iXDim, iYDim, false, false, false);
+                kAlgorithmTransform = new AlgorithmTransform(m_akImages[m_iTile], ((AlgorithmRegOAR2D) kAlgorithm)
+                        .getTransform(), m_iInterp2, 1.0f, 1.0f, iXDim, iYDim, false, false, false);
 
                 kAlgorithmTransform.setRunningInSeparateThread(true);
                 kAlgorithmTransform.setUpdateOriginFlag(true);
@@ -407,10 +412,8 @@ public class JFrameRegistrationMosaic extends JFrame
                 kAlgorithmTransform = null;
 
                 /* Transform the TileAlpha image: */
-                kAlgorithmTransform = new AlgorithmTransform(m_kTileAlpha,
-                                                             ((AlgorithmRegOAR2D) kAlgorithm).getTransform(),
-                                                             AlgorithmTransform.BILINEAR, 1.0f, 1.0f, iXDim, iYDim,
-                                                             false, false, false);
+                kAlgorithmTransform = new AlgorithmTransform(m_kTileAlpha, ((AlgorithmRegOAR2D) kAlgorithm)
+                        .getTransform(), AlgorithmTransform.BILINEAR, 1.0f, 1.0f, iXDim, iYDim, false, false, false);
 
                 kAlgorithmTransform.setRunningInSeparateThread(true);
                 kAlgorithmTransform.setUpdateOriginFlag(true);
@@ -421,7 +424,7 @@ public class JFrameRegistrationMosaic extends JFrame
                 kAlgorithmTransform = null;
 
                 /* Blend result and reference images into final mosaic: */
-                if ((kTransformedTile != null) && (kTransformedTileAlpha != null)) {
+                if ( (kTransformedTile != null) && (kTransformedTileAlpha != null)) {
                     int iXRange = kTransformedTile.getExtents()[0];
                     int iYRange = kTransformedTile.getExtents()[1];
 
@@ -453,10 +456,12 @@ public class JFrameRegistrationMosaic extends JFrame
                                     }
 
                                     if (kMosaic.isColorImage()) {
-                                        kMosaic.setC(i, j, c,
-                                                     ((fRefAlpha * fRefVal) + (fTTileAlpha * fTTileVal)) / fScale);
+                                        kMosaic.setC(i, j, c, ( (fRefAlpha * fRefVal) + (fTTileAlpha * fTTileVal))
+                                                / fScale);
                                     } else {
-                                        kMosaic.set(i, j, ((fRefAlpha * fRefVal) + (fTTileAlpha * fTTileVal)) / fScale);
+                                        kMosaic
+                                                .set(i, j, ( (fRefAlpha * fRefVal) + (fTTileAlpha * fTTileVal))
+                                                        / fScale);
                                     }
                                 }
                             } else {
@@ -506,7 +511,7 @@ public class JFrameRegistrationMosaic extends JFrame
             }
         }
 
-        if (((AlgorithmRegOAR2D) kAlgorithm) != null) {
+        if ( ((AlgorithmRegOAR2D) kAlgorithm) != null) {
             ((AlgorithmRegOAR2D) kAlgorithm).disposeLocal();
             kAlgorithm = null;
         }
@@ -558,7 +563,6 @@ public class JFrameRegistrationMosaic extends JFrame
 
         m_akBackupImages = null;
 
-
         m_kUniverse.cleanup();
         m_kUniverse = null;
         m_kCanvas = null;
@@ -586,14 +590,14 @@ public class JFrameRegistrationMosaic extends JFrame
 
     /**
      * Called from inside the JDialogRegistrationOAR2D class when the user has set the parameters and closes the dialog.
-     *
-     * @param  kOptionsDialog  the JDialogRegistrationOAR2D object containing the updated registration parameters
-     * @param  bCallAlgorithm  boolean when true this function activates the registration algorithm, when false, the
-     *                         user must then press the "register images" button to register.
+     * 
+     * @param kOptionsDialog the JDialogRegistrationOAR2D object containing the updated registration parameters
+     * @param bCallAlgorithm boolean when true this function activates the registration algorithm, when false, the user
+     *            must then press the "register images" button to register.
      */
     public void getVariablesFromDialog(JDialogRegistrationOAR2D kOptionsDialog, boolean bCallAlgorithm) {
 
-        /* Get the registration parameters from the dialog:  */
+        /* Get the registration parameters from the dialog: */
         m_iCost = kOptionsDialog.getCostChoice();
         m_iDOF = kOptionsDialog.getDOF();
         m_iInterp = kOptionsDialog.getInterp();
@@ -625,20 +629,19 @@ public class JFrameRegistrationMosaic extends JFrame
 
     /**
      * mouseClicked.
-     *
-     * @param  e  MouseEvent
+     * 
+     * @param e MouseEvent
      */
-    public void mouseClicked(MouseEvent e) { }
-
+    public void mouseClicked(MouseEvent e) {}
 
     /**
      * mouseDragged.
-     *
-     * @param  e  MouseEvent
+     * 
+     * @param e MouseEvent
      */
     public void mouseDragged(MouseEvent e) {
 
-        if (!m_bFileLoaded) {
+        if ( !m_bFileLoaded) {
             return;
         }
 
@@ -647,20 +650,22 @@ public class JFrameRegistrationMosaic extends JFrame
 
             if (e.getX() != m_iXClick) {
 
-                /* The angle rotation is based on the mouse x position on the
-                 * screen: */
-                double dAngle = (e.getX() - m_iXClick) * ((2.0 * Math.PI) / (double) m_kCanvas.getWidth());
+                /*
+                 * The angle rotation is based on the mouse x position on the screen:
+                 */
+                double dAngle = (e.getX() - m_iXClick) * ( (2.0 * Math.PI) / (double) m_kCanvas.getWidth());
                 Transform3D kRotate = new Transform3D();
                 kRotate.setRotation(new AxisAngle4d(0, 0, 1, -dAngle));
 
-                /* rotation is about the center of the selected image, so
-                 * concatenate a translation to the origin, rotation,
-                 * translation from the origin into the matrix: */
+                /*
+                 * rotation is about the center of the selected image, so concatenate a translation to the origin,
+                 * rotation, translation from the origin into the matrix:
+                 */
                 Vector3d kTransV = new Vector3d();
                 m_kOldTransform.get(kTransV);
 
                 Transform3D kTranslateInv = new Transform3D();
-                kTranslateInv.setTranslation(new Vector3d(-kTransV.x, -kTransV.y, -kTransV.z));
+                kTranslateInv.setTranslation(new Vector3d( -kTransV.x, -kTransV.y, -kTransV.z));
 
                 Transform3D kTranslate = new Transform3D();
                 kTranslate.setTranslation(kTransV);
@@ -675,9 +680,10 @@ public class JFrameRegistrationMosaic extends JFrame
 
             if (e.getY() != m_iYClick) {
 
-                /* scale is based on the mouse y movement, each time the mouse
-                 * moves in y the image is scaled larger (up in y) or smaller
-                 * (down in y): */
+                /*
+                 * scale is based on the mouse y movement, each time the mouse moves in y the image is scaled larger (up
+                 * in y) or smaller (down in y):
+                 */
                 double dScale = 1.0;
 
                 if (e.getY() > m_iYClick) {
@@ -696,17 +702,19 @@ public class JFrameRegistrationMosaic extends JFrame
         /* Right mouse button, translation: */
         else if (m_kMouseEvent.getButton() == MouseEvent.BUTTON3) {
 
-            /* translation is based on the mouse x-y position, the center of
-             * the image is placed exactly at the mouse: */
+            /*
+             * translation is based on the mouse x-y position, the center of the image is placed exactly at the mouse:
+             */
             Matrix4d kNewMatrix = new Matrix4d();
             m_kCurrentTransform.get(kNewMatrix);
             kNewMatrix.m03 = ((double) (e.getX() - (m_iXClick))) * (2.0 / (double) m_kCanvas.getWidth());
-            kNewMatrix.m13 = -((double) (e.getY() - (m_iYClick))) * (2.0 / (double) m_kCanvas.getWidth());
+            kNewMatrix.m13 = - ((double) (e.getY() - (m_iYClick))) * (2.0 / (double) m_kCanvas.getWidth());
             m_kCurrentTransform.set(kNewMatrix);
         }
 
-        /* Concatenate the current transformations with the previous
-         * (accumulated) mouseDragged transformation: */
+        /*
+         * Concatenate the current transformations with the previous (accumulated) mouseDragged transformation:
+         */
         Transform3D kNewTransform = new Transform3D(m_kCurrentTransform);
         kNewTransform.mul(m_kOldTransform);
         m_akImageTransforms[m_iSelected].setTransform(kNewTransform);
@@ -714,34 +722,34 @@ public class JFrameRegistrationMosaic extends JFrame
 
     /**
      * mouseEntered.
-     *
-     * @param  e  MouseEvent
+     * 
+     * @param e MouseEvent
      */
-    public void mouseEntered(MouseEvent e) { }
+    public void mouseEntered(MouseEvent e) {}
 
     /**
      * mouseExited.
-     *
-     * @param  e  MouseEvent
+     * 
+     * @param e MouseEvent
      */
-    public void mouseExited(MouseEvent e) { }
+    public void mouseExited(MouseEvent e) {}
 
     /**
      * mouseMoved.
-     *
-     * @param  e  MouseEvent
+     * 
+     * @param e MouseEvent
      */
-    public void mouseMoved(MouseEvent e) { }
+    public void mouseMoved(MouseEvent e) {}
 
     /**
      * mousePressed, store the current transformation for the selected image so the new transformations calculated in
      * the mouseDragged function can be concatenated onto the current transform.
-     *
-     * @param  kMouseEvent  MouseEvent
+     * 
+     * @param kMouseEvent MouseEvent
      */
     public void mousePressed(MouseEvent kMouseEvent) {
 
-        if (!m_bFileLoaded) {
+        if ( !m_bFileLoaded) {
             return;
         }
 
@@ -749,12 +757,14 @@ public class JFrameRegistrationMosaic extends JFrame
         m_iXClick = kMouseEvent.getX();
         m_iYClick = kMouseEvent.getY();
 
-        /* Store the event, for determining which button is pressed during
-         * drag: */
+        /*
+         * Store the event, for determining which button is pressed during drag:
+         */
         m_kMouseEvent = kMouseEvent;
 
-        /* Store the current transform in m_kOldTransform, it will be
-         * concatenated during mouseDrag: */
+        /*
+         * Store the current transform in m_kOldTransform, it will be concatenated during mouseDrag:
+         */
         m_kCurrentTransform = new Transform3D();
         m_kOldTransform = new Transform3D();
         m_akImageTransforms[m_iSelected].getTransform(m_kOldTransform);
@@ -762,10 +772,10 @@ public class JFrameRegistrationMosaic extends JFrame
 
     /**
      * mouseReleased.
-     *
-     * @param  e  MouseEvent
+     * 
+     * @param e MouseEvent
      */
-    public void mouseReleased(MouseEvent e) { }
+    public void mouseReleased(MouseEvent e) {}
 
     /**
      * backupMosaic -- Backs up the reference & tile polygon shapes, borders, ModelImages, and TransformGroups before
@@ -823,8 +833,8 @@ public class JFrameRegistrationMosaic extends JFrame
 
     /**
      * closeAllImages -- clears the scenegraph of all displayed images and deletes references to the images:
-     *
-     * @param  bResetAlpha  true if all images are closed, false if a new mosaic is created
+     * 
+     * @param bResetAlpha true if all images are closed, false if a new mosaic is created
      */
     private void closeAllImages(boolean bResetAlpha) {
 
@@ -893,10 +903,10 @@ public class JFrameRegistrationMosaic extends JFrame
 
     /**
      * createCanvas - Creates the Canvas3D for rendering the images.
-     *
-     * @param   kPanel  the JPanel that contains the Canvas3D in the frame
-     *
-     * @return  Canvas3D the new canvas
+     * 
+     * @param kPanel the JPanel that contains the Canvas3D in the frame
+     * 
+     * @return Canvas3D the new canvas
      */
     private Canvas3D createCanvas(JPanel kPanel) {
 
@@ -917,7 +927,7 @@ public class JFrameRegistrationMosaic extends JFrame
 
         /* Light the scene: */
         Color3f kLightColor = new Color3f(1, 1, 1);
-        Vector3f kLightDir = new Vector3f(-.5f, -.5f, -1f);
+        Vector3f kLightDir = new Vector3f( -.5f, -.5f, -1f);
         DirectionalLight kLight = new DirectionalLight(kLightColor, kLightDir);
         kLight.setInfluencingBounds(kBounds);
         m_kScene.addChild(kLight);
@@ -942,10 +952,10 @@ public class JFrameRegistrationMosaic extends JFrame
     /**
      * createMosaicOpenDialog - Creates a file open dialog for image files (.jpg, tiff, etc.). If a new file is opened
      * it is mapped onto a polygon and placed in the scene graph:
-     *
-     * @param   bSave  open file for saving (true) or open file for reading (false)
-     *
-     * @return  boolean, success or failure for the file open
+     * 
+     * @param bSave open file for saving (true) or open file for reading (false)
+     * 
+     * @return boolean, success or failure for the file open
      */
     private boolean createMosaicOpenDialog(boolean bSave) {
         ModelImage kImage = null;
@@ -956,7 +966,7 @@ public class JFrameRegistrationMosaic extends JFrame
         try {
             ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, bSave);
 
-            if (!fileChooser.useAWT()) {
+            if ( !fileChooser.useAWT()) {
                 JFileChooser chooser = fileChooser.getFileChooser();
 
                 if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
@@ -986,7 +996,7 @@ public class JFrameRegistrationMosaic extends JFrame
                 fileName = fileChooser.getFileName();
                 directory = fileChooser.getDirectory();
 
-                if ((fileName == null) || (directory == null)) {
+                if ( (fileName == null) || (directory == null)) {
                     return false;
                 }
             }
@@ -998,7 +1008,7 @@ public class JFrameRegistrationMosaic extends JFrame
                     storeImage(kImage);
                     m_bFileLoaded = true;
                 }
-            } else if ((m_akImages != null) && (bSave == true)) {
+            } else if ( (m_akImages != null) && (bSave == true)) {
 
                 if (m_akImages[m_iReference] != null) {
                     FileWriteOptions kOptions = new FileWriteOptions(true);
@@ -1023,17 +1033,17 @@ public class JFrameRegistrationMosaic extends JFrame
      * texture-mapped polygon is created so that the displayed texture and size of the polygon match the size in pixels
      * of the original image loaded from file -- even when the original image size is not a power of two. The displayed
      * image must match the original data image so that the registration is accurate.
-     *
-     * @param  kTransformGroup  the TransformGroup which will contain the new textured polygon in the scene graph
-     * @param  kImage           the BufferedImage, power or two size image, padded if necessary, containing the original
-     *                          image data.
-     * @param  iWidth           the original image width
-     * @param  iHeight          the original image height
-     * @param  iWidthPow2       the next-largest power of two width
-     * @param  iHeightPow2      the next-largest power of two height
+     * 
+     * @param kTransformGroup the TransformGroup which will contain the new textured polygon in the scene graph
+     * @param kImage the BufferedImage, power or two size image, padded if necessary, containing the original image
+     *            data.
+     * @param iWidth the original image width
+     * @param iHeight the original image height
+     * @param iWidthPow2 the next-largest power of two width
+     * @param iHeightPow2 the next-largest power of two height
      */
     private void createTexturedPolygon(TransformGroup kTransformGroup, BufferedImage kImage, int iWidth, int iHeight,
-                                       int iWidthPow2, int iHeightPow2) {
+            int iWidthPow2, int iHeightPow2) {
 
         /* Create the new texture from the input BufferedImage: */
         ImageComponent2D kDisplayedImage = new ImageComponent2D(ImageComponent.FORMAT_RGBA, kImage);
@@ -1048,8 +1058,9 @@ public class JFrameRegistrationMosaic extends JFrame
         /* Setup appearance attributes for the texture mapped polygon. */
         Appearance kImageAppearance = new Appearance();
 
-        /* Disable lighting so that the color information comes from the
-         *texture maps. */
+        /*
+         * Disable lighting so that the color information comes from the texture maps.
+         */
         Material kMaterial = new Material();
         kMaterial.setLightingEnable(false);
         kImageAppearance.setMaterial(kMaterial);
@@ -1078,10 +1089,10 @@ public class JFrameRegistrationMosaic extends JFrame
         float fWidthTextureScale = (float) iWidth / (float) iWidthPow2;
         float fHeightTextureScale = (float) iHeight / (float) iHeightPow2;
         QuadArray kGeometry = new QuadArray(4, QuadArray.COORDINATES | QuadArray.TEXTURE_COORDINATE_2);
-        kGeometry.setCoordinate(0, new Point3d(-dWidth, -dHeight, 0));
+        kGeometry.setCoordinate(0, new Point3d( -dWidth, -dHeight, 0));
         kGeometry.setCoordinate(1, new Point3d(dWidth, -dHeight, 0));
         kGeometry.setCoordinate(2, new Point3d(dWidth, dHeight, 0));
-        kGeometry.setCoordinate(3, new Point3d(-dWidth, dHeight, 0));
+        kGeometry.setCoordinate(3, new Point3d( -dWidth, dHeight, 0));
 
         /* Texture coordinates: */
         kGeometry.setTextureCoordinate(0, 0, new TexCoord2f(0, 0));
@@ -1095,10 +1106,10 @@ public class JFrameRegistrationMosaic extends JFrame
 
         /* The border outline: when the image is selected the border is red: */
         QuadArray kBorderGeometry = new QuadArray(4, QuadArray.COORDINATES | QuadArray.COLOR_3);
-        kBorderGeometry.setCoordinate(0, new Point3d(-dWidth, -dHeight, 0));
+        kBorderGeometry.setCoordinate(0, new Point3d( -dWidth, -dHeight, 0));
         kBorderGeometry.setCoordinate(1, new Point3d(dWidth, -dHeight, 0));
         kBorderGeometry.setCoordinate(2, new Point3d(dWidth, dHeight, 0));
-        kBorderGeometry.setCoordinate(3, new Point3d(-dWidth, dHeight, 0));
+        kBorderGeometry.setCoordinate(3, new Point3d( -dWidth, dHeight, 0));
         kBorderGeometry.setColor(0, new Color3f(1, 0, 0));
         kBorderGeometry.setColor(1, new Color3f(1, 0, 0));
         kBorderGeometry.setColor(2, new Color3f(1, 0, 0));
@@ -1110,7 +1121,7 @@ public class JFrameRegistrationMosaic extends JFrame
 
         /* Display the outline of the box: */
         PolygonAttributes kPolygonAttributes = new PolygonAttributes(PolygonAttributes.POLYGON_LINE,
-                                                                     PolygonAttributes.CULL_NONE, 0f);
+                PolygonAttributes.CULL_NONE, 0f);
 
         /* Appearance: */
         Appearance kBorderAppearance = new Appearance();
@@ -1186,8 +1197,9 @@ public class JFrameRegistrationMosaic extends JFrame
         m_kToggleSelectedButton.setEnabled(false);
         kToolBar.add(m_kToggleSelectedButton);
 
-        /* Call the registration algorithm, using the user-manipulated
-         * transformation as the initial guess: */
+        /*
+         * Call the registration algorithm, using the user-manipulated transformation as the initial guess:
+         */
         m_kRegisterButton = new JButton("Register Images");
         m_kRegisterButton.setActionCommand("Register");
         m_kRegisterButton.addActionListener(this);
@@ -1220,6 +1232,12 @@ public class JFrameRegistrationMosaic extends JFrame
         m_kAdvancedOptionsButton.setEnabled(false);
         kToolBar.add(m_kAdvancedOptionsButton);
 
+        m_kHelpButton = new JButton("Help");
+        m_kHelpButton.setActionCommand("Help");
+        m_kHelpButton.addActionListener(this);
+        m_kHelpButton.setEnabled(true);
+        kToolBar.add(m_kHelpButton);
+
         /* Add the toolbar to the display: */
         kToolBar.validate();
         kToolBar.setVisible(true);
@@ -1236,38 +1254,42 @@ public class JFrameRegistrationMosaic extends JFrame
         setSize(Toolkit.getDefaultToolkit().getScreenSize().width, Toolkit.getDefaultToolkit().getScreenSize().height);
     }
 
-
     /**
      * registerImages - Registers the reference and tile images based on the how the user positions the images with the
      * mouse. Two new registered images are created, each containing one registered sub-image. The AlgorithmRegOAR2D is
      * then called on the two new registered images, to better refine the registration. Upon completion of the
      * registration algorithm, a new mosaic image is created.
-     *
-     * @return  boolean, sucess/failure of registeration
+     * 
+     * @return boolean, sucess/failure of registeration
      */
     private boolean registerImages() {
 
-        /* Backup images and transforms in case the user chooses to undo this
-         * operation: */
+        /*
+         * Backup images and transforms in case the user chooses to undo this operation:
+         */
         backupMosaic();
 
         m_akImages[m_iReference].calcMinMax();
         m_akImages[m_iTile].calcMinMax();
 
-        /* Get the reference image transform and invert it, so the reference
-         * image is at the origin, axis-aligned: */
+        /*
+         * Get the reference image transform and invert it, so the reference image is at the origin, axis-aligned:
+         */
         Transform3D kReferenceT = new Transform3D();
         m_akImageTransforms[m_iReference].getTransform(kReferenceT);
         kReferenceT.invert();
 
-        /* Get the tile image transform and concatenate it with the inverted
-         * reference image transform: */
+        /*
+         * Get the tile image transform and concatenate it with the inverted reference image transform:
+         */
         Transform3D kTileT = new Transform3D();
         m_akImageTransforms[m_iTile].getTransform(kTileT);
         kTileT.mul(kReferenceT, kTileT);
 
-        /* Swap the rotation transform (-sin for sin), and invert the y
-         * translation to get from polygon space to screen pixel space: */
+        /*
+         * Swap the rotation transform (-sin for sin), and invert the y translation to get from polygon space to screen
+         * pixel space:
+         */
         Matrix4d kTileMatrix = new Matrix4d();
         kTileT.get(kTileMatrix);
 
@@ -1277,8 +1299,9 @@ public class JFrameRegistrationMosaic extends JFrame
         kTileMatrix.m13 *= -1;
         kTileT.set(kTileMatrix);
 
-        /* Transform the polygon to image pixel space, at the four corners of
-         * the polygon:  */
+        /*
+         * Transform the polygon to image pixel space, at the four corners of the polygon:
+         */
         int iTileWidth = m_akImages[m_iTile].getExtents()[0];
         int iTileHeight = m_akImages[m_iTile].getExtents()[1];
         double dWidth = (double) iTileWidth / (double) m_kCanvas.getWidth();
@@ -1286,8 +1309,9 @@ public class JFrameRegistrationMosaic extends JFrame
         int iReferenceWidth = m_akImages[m_iReference].getExtents()[0];
         int iReferenceHeight = m_akImages[m_iReference].getExtents()[1];
 
-        /* Since we're transforming into the reference image space, the
-         * reference size is the min/max bounds to begin: */
+        /*
+         * Since we're transforming into the reference image space, the reference size is the min/max bounds to begin:
+         */
         double dMinX = -(double) iReferenceWidth / 2;
         double dMinY = -(double) iReferenceHeight / 2;
         double dMaxX = (double) iReferenceWidth / 2;
@@ -1295,10 +1319,10 @@ public class JFrameRegistrationMosaic extends JFrame
 
         /* polygon corners to be transformed: */
         Vector4d[] akCorners = new Vector4d[4];
-        akCorners[0] = new Vector4d(-dWidth, -dHeight, 0, 1);
+        akCorners[0] = new Vector4d( -dWidth, -dHeight, 0, 1);
         akCorners[1] = new Vector4d(dWidth, -dHeight, 0, 1);
         akCorners[2] = new Vector4d(dWidth, dHeight, 0, 1);
-        akCorners[3] = new Vector4d(-dWidth, dHeight, 0, 1);
+        akCorners[3] = new Vector4d( -dWidth, dHeight, 0, 1);
 
         Transform3D kFinalTransform = new Transform3D(kTileT);
 
@@ -1370,12 +1394,13 @@ public class JFrameRegistrationMosaic extends JFrame
         m_kTileAlpha = new ModelImage(ModelStorageBase.FLOAT, aiExtents, "tile_alpha");
         ;
 
-        /* For masking, set to true if the reference image is written into the
-         * same location: */
+        /*
+         * For masking, set to true if the reference image is written into the same location:
+         */
         m_aabReference = new boolean[iXRange][iYRange];
 
-        int iReferenceOffsetLeft = (int) ((-(double) iReferenceWidth / 2) - dMinX);
-        int iReferenceOffsetTop = (int) ((-(double) iReferenceHeight / 2) - dMinY);
+        int iReferenceOffsetLeft = (int) ( ( -(double) iReferenceWidth / 2) - dMinX);
+        int iReferenceOffsetTop = (int) ( ( -(double) iReferenceHeight / 2) - dMinY);
 
         int iReferenceBuffFactor = 1;
 
@@ -1389,17 +1414,18 @@ public class JFrameRegistrationMosaic extends JFrame
             iTileBuffFactor = 4;
         }
 
-        /* Loop over the new image pixels.
-         *
+        /*
+         * Loop over the new image pixels.
+         * 
          * (1) Write the new reference image, positioning the reference data with offsets so that the two images are
          * aligned based on the user-positioned transform.
-         *
+         * 
          * (2) Initialize The reference and tile mask images for weighted registration.
-         *
+         * 
          * (3) apply the inverse transformation to the tile image pixels to determine where to place the it in the new
          * overlapped image:
-         *
-         * (4) Write the reference and tile mask images where ever both    reference and tile images overlap.
+         * 
+         * (4) Write the reference and tile mask images where ever both reference and tile images overlap.
          */
         int iX, iY;
         float fXDistance, fYDistance;
@@ -1419,7 +1445,7 @@ public class JFrameRegistrationMosaic extends JFrame
                 /* (1) Write new reference image: */
                 for (int c = 0; c < iReferenceBuffFactor; c++) {
 
-                    if ((iX >= 0) && (iX < iReferenceWidth) && (iY >= 0) && (iY < iReferenceHeight)) {
+                    if ( (iX >= 0) && (iX < iReferenceWidth) && (iY >= 0) && (iY < iReferenceHeight)) {
 
                         if (iReferenceBuffFactor == 4) {
                             kReference.setC(i, j, c, m_akImages[m_iReference].getFloatC(iX, iY, c));
@@ -1461,7 +1487,7 @@ public class JFrameRegistrationMosaic extends JFrame
                     }
                 }
 
-                if ((m_aabReference[i][j] == false) && m_bResetAlpha) {
+                if ( (m_aabReference[i][j] == false) && m_bResetAlpha) {
                     m_kReferenceAlpha.set(i, j, 0.0f);
                 }
 
@@ -1475,11 +1501,11 @@ public class JFrameRegistrationMosaic extends JFrame
                 kReferenceReg.set(i, j, fGrayScale);
                 fGrayScale = 0;
 
-                /* (3) apply the inverse transformation to the tile image
-                 * pixels to determine where to place the it in the new
-                 * overlapped image: */
-                Vector4d kPoint = new Vector4d((i - Math.abs(dMinX)) / ((double) m_kCanvas.getWidth() / 2.0),
-
+                /*
+                 * (3) apply the inverse transformation to the tile image pixels to determine where to place the it in
+                 * the new overlapped image:
+                 */
+                Vector4d kPoint = new Vector4d( (i - Math.abs(dMinX)) / ((double) m_kCanvas.getWidth() / 2.0),
 
                 (j - Math.abs(dMinY)) / ((double) m_kCanvas.getWidth() / 2.0), 0, 1);
                 kInverse.transform(kPoint);
@@ -1494,7 +1520,7 @@ public class JFrameRegistrationMosaic extends JFrame
                 /* Write the transformed tile image: */
                 for (int c = 0; c < iTileBuffFactor; c++) {
 
-                    if ((iX >= 0) && (iX < (iTileWidth - 1)) && (iY >= 0) && (iY < (iTileHeight - 1))) {
+                    if ( (iX >= 0) && (iX < (iTileWidth - 1)) && (iY >= 0) && (iY < (iTileHeight - 1))) {
 
                         if (iTileBuffFactor == 4) {
                             kTile.setC(i, j, c, m_akImages[m_iTile].getFloatC(iX, iY, c));
@@ -1535,8 +1561,9 @@ public class JFrameRegistrationMosaic extends JFrame
                     }
                 }
 
-                /* (4) Write the reference and tile mask images where ever
-                 *both reference and tile images overlap. */
+                /*
+                 * (4) Write the reference and tile mask images where ever both reference and tile images overlap.
+                 */
                 if (iTileBuffFactor == 4) {
                     fGrayScale /= 3.0f;
                 }
@@ -1555,25 +1582,24 @@ public class JFrameRegistrationMosaic extends JFrame
         m_kTileAlpha.calcMinMax();
         /*
          * try { new ViewJFrameImage(kReference, null, new Dimension(610, 200)); } catch (OutOfMemoryError error) {
-         * MipavUtil.displayError(                        "Out of memory: unable to open new frame"); } try { new
+         * MipavUtil.displayError( "Out of memory: unable to open new frame"); } try { new
          * ViewJFrameImage(kReferenceMask, null, new Dimension(610, 200)); } catch (OutOfMemoryError error) {
-         * MipavUtil.displayError(                        "Out of memory: unable to open new frame"); } try { new
-         * ViewJFrameImage(kTile, null, new Dimension(610, 200)); } catch (OutOfMemoryError error) {
-         * MipavUtil.displayError(                        "Out of memory: unable to open new frame"); } try { new
-         * ViewJFrameImage(kTileMask, null, new Dimension(610, 200)); } catch (OutOfMemoryError error) {
-         * MipavUtil.displayError(                        "Out of memory: unable to open new frame"); } try { new
+         * MipavUtil.displayError( "Out of memory: unable to open new frame"); } try { new ViewJFrameImage(kTile, null,
+         * new Dimension(610, 200)); } catch (OutOfMemoryError error) { MipavUtil.displayError( "Out of memory: unable
+         * to open new frame"); } try { new ViewJFrameImage(kTileMask, null, new Dimension(610, 200)); } catch
+         * (OutOfMemoryError error) { MipavUtil.displayError( "Out of memory: unable to open new frame"); } try { new
          * ViewJFrameImage(kReferenceReg, null, new Dimension(610, 200)); } catch (OutOfMemoryError error) {
-         * MipavUtil.displayError(                        "Out of memory: unable to open new frame"); } try { new
-         * ViewJFrameImage(kTileReg, null, new Dimension(610, 200)); } catch (OutOfMemoryError error) {
-         * MipavUtil.displayError(                        "Out of memory: unable to open new frame"); } try { new
-         * ViewJFrameImage((ModelImage)m_kReferenceAlpha.clone(), null, new Dimension(610, 200)); } catch
-         * (OutOfMemoryError error) { MipavUtil.displayError(                        "Out of memory: unable to open new
-         * frame"); } try { new ViewJFrameImage(m_kTileAlpha, null, new Dimension(610, 200)); } catch (OutOfMemoryError
-         * error) { MipavUtil.displayError(                        "Out of memory: unable to open new frame"); }
+         * MipavUtil.displayError( "Out of memory: unable to open new frame"); } try { new ViewJFrameImage(kTileReg,
+         * null, new Dimension(610, 200)); } catch (OutOfMemoryError error) { MipavUtil.displayError( "Out of memory:
+         * unable to open new frame"); } try { new ViewJFrameImage((ModelImage)m_kReferenceAlpha.clone(), null, new
+         * Dimension(610, 200)); } catch (OutOfMemoryError error) { MipavUtil.displayError( "Out of memory: unable to
+         * open new frame"); } try { new ViewJFrameImage(m_kTileAlpha, null, new Dimension(610, 200)); } catch
+         * (OutOfMemoryError error) { MipavUtil.displayError( "Out of memory: unable to open new frame"); }
          */
 
-        /* Save the transformed tile and reference image, for when the
-         * alignment algorithm is finished: */
+        /*
+         * Save the transformed tile and reference image, for when the alignment algorithm is finished:
+         */
         m_akImages[m_iReference] = kReference;
         m_akImages[m_iTile] = kTile;
 
@@ -1586,19 +1612,18 @@ public class JFrameRegistrationMosaic extends JFrame
         }
 
         AlgorithmRegOAR2D kAlgorithmReg = new AlgorithmRegOAR2D(kReferenceReg, kTileReg, kReferenceMask, kTileMask,
-                                                                m_iCost, m_iDOF, m_iInterp, m_fRotateBegin,
-                                                                m_fRotateEnd, m_fCoarseRate, m_fFineRate,
-                                                                m_bDoSubsample, m_iBracketBound, m_iMaxIterations,
-                                                                m_iNumMinima);
+                m_iCost, m_iDOF, m_iInterp, m_fRotateBegin, m_fRotateEnd, m_fCoarseRate, m_fFineRate, m_bDoSubsample,
+                m_iBracketBound, m_iMaxIterations, m_iNumMinima);
         kAlgorithmReg.addListener(this);
         kAlgorithmReg.setRunningInSeparateThread(false);
 
         if (m_bBruteForce == true) {
 
-            /* Setup the brute force registration, and initialize brute force
-             * parameters: */
+            /*
+             * Setup the brute force registration, and initialize brute force parameters:
+             */
             kAlgorithmReg.setBruteForce(true, m_fRotationRange, m_fXScaleRange, m_fYScaleRange, m_iScaleSteps,
-                                        m_iTranslationRange);
+                    m_iTranslationRange);
         }
 
         kAlgorithmReg.run();
@@ -1628,11 +1653,10 @@ public class JFrameRegistrationMosaic extends JFrame
         return true;
     }
 
-
     /**
      * saveMosaic -- Opens a save dialog and saves the mosaic image in the selected file format.
-     *
-     * @return  boolean, sucess/failure of file save
+     * 
+     * @return boolean, sucess/failure of file save
      */
     private boolean saveMosaic() {
 
@@ -1647,8 +1671,8 @@ public class JFrameRegistrationMosaic extends JFrame
      * storeImage - creates a BufferedImage from the ModelImage data where the BufferedImage's size is the next-largest
      * power of two from the ModelImage size. The BufferedImage is then passed to the createTexturedPolygon function for
      * display in the scene graph.
-     *
-     * @param  kImage  the input ModelImage containing the image data.
+     * 
+     * @param kImage the input ModelImage containing the image data.
      */
     private void storeImage(ModelImage kImage) {
         int iWidth = kImage.getExtents()[0];
@@ -1656,37 +1680,40 @@ public class JFrameRegistrationMosaic extends JFrame
 
         kImage.calcMinMax();
 
-        /* Determine the next-largest size that is a power of two, to create
-         * the texture: */
+        /*
+         * Determine the next-largest size that is a power of two, to create the texture:
+         */
         double dLog2Width = Math.log((double) iWidth) / Math.log(2.0);
         double dLog2Height = Math.log((double) iHeight) / Math.log(2.0);
         int iWidthPow2 = (int) Math.pow(2, Math.ceil(dLog2Width));
         int iHeightPow2 = (int) Math.pow(2, Math.ceil(dLog2Height));
 
-        /* Create the new BufferedImage and write the ModelImage data into
-         * it: */
+        /*
+         * Create the new BufferedImage and write the ModelImage data into it:
+         */
         BufferedImage kBuffer = new BufferedImage(iWidthPow2, iHeightPow2, BufferedImage.TYPE_INT_ARGB);
 
         for (int iY = 0; iY < iHeight; iY++) {
 
             for (int iX = 0; iX < iWidth; iX++) {
                 kBuffer.setRGB(iX, (iHeightPow2 - iHeight) + iY,
-                               kImage.getPackedColor((iY * iWidth) + iX) & 0xaaffffff);
+                        kImage.getPackedColor( (iY * iWidth) + iX) & 0xaaffffff);
             }
         }
 
-        /* Create the textured polygon and store the data in the scene
-         * graph: */
+        /*
+         * Create the textured polygon and store the data in the scene graph:
+         */
         Transform3D kTransform = new Transform3D();
 
         /* Scale large images: */
         int iWidthLimit = m_kCanvas.getWidth();
         int iHeightLimit = m_kCanvas.getHeight();
 
-        if ((iWidth > iWidthLimit) || (iHeight > iHeightLimit) || m_bSetScale) {
+        if ( (iWidth > iWidthLimit) || (iHeight > iHeightLimit) || m_bSetScale) {
 
             if (m_bSetScale == false) {
-                m_fScale = (float) Math.min((iWidthLimit / (float) iWidth), (iHeightLimit / (float) iHeight));
+                m_fScale = (float) Math.min( (iWidthLimit / (float) iWidth), (iHeightLimit / (float) iHeight));
             }
 
             kTransform.setScale(m_fScale);
@@ -1776,7 +1803,6 @@ public class JFrameRegistrationMosaic extends JFrame
         if (m_iOpen == 0) {
             m_iSelected = 1;
         }
-
 
         int iReferenceWidth = m_akImages[m_iReference].getExtents()[0];
         int iReferenceHeight = m_akImages[m_iReference].getExtents()[1];
