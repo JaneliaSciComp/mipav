@@ -8,7 +8,6 @@ import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.RotationMatrix;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.DialogDefaultsInterface;
 import gov.nih.mipav.view.MipavUtil;
@@ -23,6 +22,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
 import javax.swing.JComboBox;
@@ -46,19 +46,13 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
     private     ModelImage              image;                // source image
     private     ModelImage              template = null;      // template image
     private     ModelImage              resultImage = null;   // result image
-    
-	private static final	float   ISQRT2 = (float)(1.0/Math.sqrt(2.0f));
 		
 	// parameters
 	private     String[]    orientTypes 	= 		{"Axial",
 													 "Coronal",
 													 "Sagittal",
                                                      "Unknown"};	
-    private     String[]    newOrientTypes     =       {"Axial R2L, A2P, I2S",
-             "Coronal R2L, S2I, A2P",
-             "Sagittal A2P, S2I, L2R",
-            "Unknown"}; 
-    private		String		orientType		=		"Axial";
+    
 		
 	private     String[]    resolutionTypes 	= 	{"Unchanged",
 													 "Finest-Cubic",
@@ -80,8 +74,6 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 	
     // dialog elements
 	private 	JPanel  	mainPanel;
-	private 	JLabel  	labelOrientType;
-    private		JComboBox	comboOrientType;
 	private 	JLabel  	labelResType;
     private		JComboBox	comboResType;
 	private		JLabel		labelTemplate;	
@@ -89,17 +81,18 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 	private		JLabel		labelInterpType;	
 	private		JComboBox	comboInterpType;
     private     JComboBox   presentOrientBox;
-    private     int         presentOrient;
     private     JComboBox   presentOrientBoxX;
     private     JComboBox   presentOrientBoxY;
     private     JComboBox   presentOrientBoxZ;
+    private     int[]       or = new int[3];
     private     int[]       presentAxisOrient;
-    private     JComboBox   newOrientBox;
+    private     JLabel      newOrientLabel2;
     private     int         newOrient;
     private     JComboBox   newOrientBoxX;
     private     JComboBox   newOrientBoxY;
     private     JComboBox   newOrientBoxZ;
     private     int[]       newAxisOrient;
+    private     int[]       newOr = new int[3];
 	
     /**
     *  Creates dialog for plugin.
@@ -135,15 +128,6 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         JLabel newOrientLabelZ;
         setForeground(Color.black);
         setTitle("Reorientation / Resampling");
-				
- 		labelOrientType = new JLabel("orientation ");
-        labelOrientType.setFont(serif12);
-        labelOrientType.setForeground(Color.black);
-        		
-		comboOrientType = new JComboBox(orientTypes);
-		comboOrientType.setFont(serif12);
-        comboOrientType.setBackground(Color.white);
-		comboOrientType.setSelectedItem(orientType);
         
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.insets = new Insets(0, 5, 0, 5);
@@ -166,8 +150,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         
         presentOrientBox = new JComboBox(orientTypes);
         presentOrientBox.setBackground(Color.white);
-        presentOrient = image.getImageOrientation();
-        presentOrientBox.setSelectedIndex(presentOrient);
+        presentOrientBox.setSelectedIndex(image.getImageOrientation());
         presentOrientBox.addFocusListener(this);
         gbc2.gridx = 1;
         presentOrientPanel.add(presentOrientBox, gbc2);
@@ -212,6 +195,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         presentOrientBoxZ.setBackground(Color.white);
         presentOrientBoxZ.setFont(MipavUtil.font12);
         presentOrientBoxZ.setSelectedIndex(presentAxisOrient[2]);
+        presentOrientBoxZ.addItemListener(this);
         gbc2.gridx = 1;
         presentOrientPanel.add(presentOrientBoxZ, gbc2);
         
@@ -225,20 +209,17 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         gbc2.gridy = 0;
         newOrientPanel.add(newOrientLabel, gbc2);
         
-        newOrientBox = new JComboBox(newOrientTypes);
-        newOrientBox.setBackground(Color.white);
-        newOrient = image.getImageOrientation();
-        newOrientBox.setSelectedIndex(presentOrient);
-        newOrientBox.addFocusListener(this);
+        newOrientLabel2 = new JLabel(orientTypes[image.getImageOrientation()]);
+        newOrientLabel2.setBackground(Color.black);
         gbc2.gridx = 1;
-        newOrientPanel.add(newOrientBox, gbc2);
+        newOrientPanel.add(newOrientLabel2, gbc2);
         
         newOrientLabelX = new JLabel("X-axis orientation (image left to right):");
         newOrientLabelX.setFont(serif12);
         newOrientLabelX.setForeground(Color.black);
         gbc2.gridx = 0;
         gbc2.gridy = 1;
-        //newOrientPanel.add(newOrientLabelX, gbc2);
+        newOrientPanel.add(newOrientLabelX, gbc2);
         
         newOrientBoxX = new JComboBox(orients);
         newOrientBoxX.setBackground(Color.white);
@@ -246,35 +227,36 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         newAxisOrient = image.getFileInfo()[0].getAxisOrientation();
         newOrientBoxX.setSelectedIndex(newAxisOrient[0]);
         gbc2.gridx = 1;
-        //newOrientPanel.add(newOrientBoxX, gbc2);
+        newOrientPanel.add(newOrientBoxX, gbc2);
         
         newOrientLabelY = new JLabel("Y-axis orientation (image top to bottom):");
         newOrientLabelY.setFont(serif12);
         newOrientLabelY.setForeground(Color.black);
         gbc2.gridx = 0;
         gbc2.gridy = 2;
-        //newOrientPanel.add(newOrientLabelY, gbc2);
+        newOrientPanel.add(newOrientLabelY, gbc2);
         
         newOrientBoxY = new JComboBox(orients);
         newOrientBoxY.setBackground(Color.white);
         newOrientBoxY.setFont(MipavUtil.font12);
         newOrientBoxY.setSelectedIndex(newAxisOrient[1]);
         gbc2.gridx = 1;
-        //newOrientPanel.add(newOrientBoxY, gbc2);
+        newOrientPanel.add(newOrientBoxY, gbc2);
         
         newOrientLabelZ = new JLabel("Z-axis orientation (into the screen):");
         newOrientLabelZ.setFont(serif12);
         newOrientLabelZ.setForeground(Color.black);
         gbc2.gridx = 0;
         gbc2.gridy = 3;
-        //newOrientPanel.add(newOrientLabelZ, gbc2);
+        newOrientPanel.add(newOrientLabelZ, gbc2);
         
         newOrientBoxZ = new JComboBox(orients);
         newOrientBoxZ.setBackground(Color.white);
         newOrientBoxZ.setFont(MipavUtil.font12);
         newOrientBoxZ.setSelectedIndex(presentAxisOrient[2]);
+        newOrientBoxZ.addItemListener(this);
         gbc2.gridx = 1;
-        //newOrientPanel.add(newOrientBoxZ, gbc2);
+        newOrientPanel.add(newOrientBoxZ, gbc2);
 		
 		labelResType = new JLabel("resolution ");
         labelResType.setFont(serif12);
@@ -369,7 +351,6 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 	} // end init()
 	
     private void buildTemplateList() {
-        int j;
        
         comboTemplate = new JComboBox();
         comboTemplate.setFont(serif12);
@@ -412,7 +393,9 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         }
 
         String str = new String();
-        str += orientType + delim;
+        str += Integer.toString(newOr[0]) + delim;
+        str += Integer.toString(newOr[1]) + delim;
+        str += Integer.toString(newOr[2]) + delim;
         str += resolutionType + delim;
         str += interpType;
 
@@ -430,7 +413,9 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
             try {
                 System.out.println(defaultsString);
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
-				orientType = st.nextToken();
+				newOr[0] = new Integer(st.nextToken()).intValue();
+                newOr[1] = new Integer(st.nextToken()).intValue();
+                newOr[2] = new Integer(st.nextToken()).intValue();
 				resolutionType = st.nextToken();
 				interpType = st.nextToken();
 			}
@@ -491,8 +476,6 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 		if (Preferences.isPreference(Preferences.PREF_SAVE_DEFAULTS) && this.getOwner() != null && !isScriptRunning()) {
 			saveDefaults();
 		}
-	           
-        ViewJFrameImage imageFrame;
 		
         if ( algorithm instanceof AlgorithmTransform) {
             resultImage = algoTrans.getTransformedImage();
@@ -503,8 +486,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 				resultImage.calcMinMax();
 
                 try {
-					imageFrame = new ViewJFrameImage(resultImage, null,
-                                           new Dimension(610, 200) );
+					new ViewJFrameImage(resultImage, null, new Dimension(610, 200) );
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     JOptionPane.showMessageDialog(null, 
@@ -531,9 +513,51 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
     *	@return		<code>true</code> if parameters set successfully, <code>false</code> otherwise.
     */
     private boolean setVariables() {
-    	String tmpStr;
+        int rl, is, ap;
+        int i;
          
-		orientType = (String)comboOrientType.getSelectedItem();
+        or[0] = presentOrientBoxX.getSelectedIndex();
+        or[1] = presentOrientBoxY.getSelectedIndex();
+        or[2] = presentOrientBoxZ.getSelectedIndex();
+        rl = 0;
+        ap = 0;
+        is = 0;
+        for (i = 0; i <= 2; i++) {
+            if ((or[i] == FileInfoBase.ORI_L2R_TYPE) || (or[i] == FileInfoBase.ORI_R2L_TYPE)) {
+                rl++;
+            }
+            else if ((or[i] == FileInfoBase.ORI_A2P_TYPE) || (or[i] == FileInfoBase.ORI_P2A_TYPE)) {
+                ap++;
+            }
+            else if ((or[i] == FileInfoBase.ORI_I2S_TYPE) || (or[i] == FileInfoBase.ORI_S2I_TYPE)) {
+                is++;
+            }
+        }
+        if ((rl != 1) || (ap != 1) || (is != 1)) {
+            MipavUtil.displayError("Error! Present orientation must have one RL, one AP, and one IS axis");
+            return false;
+        }
+        newOr[0] = newOrientBoxX.getSelectedIndex();
+        newOr[1] = newOrientBoxY.getSelectedIndex();
+        newOr[2] = newOrientBoxZ.getSelectedIndex();
+        rl = 0;
+        ap = 0;
+        is = 0;
+        for (i = 0; i <= 2; i++) {
+            if ((newOr[i] == FileInfoBase.ORI_L2R_TYPE) || (newOr[i] == FileInfoBase.ORI_R2L_TYPE)) {
+                rl++;
+            }
+            else if ((newOr[i] == FileInfoBase.ORI_A2P_TYPE) || (newOr[i] == FileInfoBase.ORI_P2A_TYPE)) {
+                ap++;
+            }
+            else if ((newOr[i] == FileInfoBase.ORI_I2S_TYPE) || (newOr[i] == FileInfoBase.ORI_S2I_TYPE)) {
+                is++;
+            }
+        }
+        if ((rl != 1) || (ap != 1) || (is != 1)) {
+            MipavUtil.displayError("Error! New orientation must have one RL, one AP, and one IS axis");
+            return false;
+        }
 		resolutionType = (String)comboResType.getSelectedItem();
 		interpType = (String)comboInterpType.getSelectedItem();
 		
@@ -551,183 +575,192 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
     *	is a separate destination image.
     */
     protected void callAlgorithm() {
-
+        int i, j;
+        boolean found;
+        float ri[] = new float[3];
+        int   ni[] = new int[3];
+        float r0[] = new float[3];
+        int   n0[] = new int[3];
 		setVisible(false);
         
 		fileInfo = (FileInfoBase)(image.getFileInfo()[0].clone());
 		
 		// set resampled resolutions, dimensions
-		float r0x = image.getFileInfo()[0].getResolutions()[0];
-		float r0y = image.getFileInfo()[0].getResolutions()[1];
-		float r0z = image.getFileInfo()[0].getResolutions()[2];
+		ri[0] = image.getFileInfo()[0].getResolutions()[0];
+		ri[1] = image.getFileInfo()[0].getResolutions()[1];
+		ri[2] = image.getFileInfo()[0].getResolutions()[2];
 		
-		int n0x = image.getExtents()[0];
-		int	n0y = image.getExtents()[1];
-		int	n0z = image.getExtents()[2];
-			
-		float rx = r0x, ry = r0y, rz= r0z;
-		int nx = n0x, ny = n0y, nz = n0z;
+		ni[0] = image.getExtents()[0];
+		ni[1] = image.getExtents()[1];
+		ni[2] = image.getExtents()[2];
+        
+        float r[] = new float[3];
+        int   n[] = new int[3];
+        for (i = 0; i <= 2; i++) {
+            r[i] = ri[i];
+            n[i] = ni[i];
+        }
 		
 		if (resolutionType.equals("Finest-Cubic")) {
-			float rn = Math.min(rx,Math.min(ry,rz));
-			nx = (int)Math.ceil(nx*rx/rn);
-			rx = rn;
-			ny = (int)Math.ceil(ny*ry/rn);
-			ry = rn;
-			nz = (int)Math.ceil(nz*rz/rn);
-			rz = rn;
+			float rn = Math.min(r[0],Math.min(r[1],r[2]));
+			n[0] = (int)Math.ceil(n[0]*r[0]/rn);
+			r[0] = rn;
+			n[1] = (int)Math.ceil(n[1]*r[1]/rn);
+			r[1] = rn;
+			n[2] = (int)Math.ceil(n[2]*r[2]/rn);
+			r[2] = rn;
 		} else if (resolutionType.equals("Coarsest-Cubic")) {
-			float rn = Math.max(rx,Math.max(ry,rz));
-			nx = (int)Math.ceil(nx*rx/rn);
-			rx = rn;
-			ny = (int)Math.ceil(ny*ry/rn);
-			ry = rn;
-			nz = (int)Math.ceil(nz*rz/rn);
-			rz = rn;
+			float rn = Math.max(r[0],Math.max(r[1],r[2]));
+			n[0] = (int)Math.ceil(n[0]*r[0]/rn);
+			r[0] = rn;
+			n[1] = (int)Math.ceil(n[1]*r[1]/rn);
+			r[1] = rn;
+			n[2] = (int)Math.ceil(n[2]*r[2]/rn);
+			r[2] = rn;
 		} else if (resolutionType.equals("Same_as_template")) {
-			rx = template.getFileInfo()[0].getResolutions()[0];
-			ry = template.getFileInfo()[0].getResolutions()[1];
-			rz = template.getFileInfo()[0].getResolutions()[2];
-			nx = template.getExtents()[0];
-			ny = template.getExtents()[1];
-			nz = template.getExtents()[2];
+			r[0] = template.getFileInfo()[0].getResolutions()[0];
+			r[1] = template.getFileInfo()[0].getResolutions()[1];
+			r[2] = template.getFileInfo()[0].getResolutions()[2];
+			n[0] = template.getExtents()[0];
+			n[1] = template.getExtents()[1];
+			n[2] = template.getExtents()[2];
 		}
-		
-		// compute the matrix from re-orientation information
-		RotationMatrix rot = new RotationMatrix();
-		
-		// retrieve image info
-		int orient = image.getImageOrientation();
-		int orx = image.getFileInfo()[0].getAxisOrientation(0);
-		int ory = image.getFileInfo()[0].getAxisOrientation(1);
-		int orz = image.getFileInfo()[0].getAxisOrientation(2);
-		
-		float[] ao = new float[3];
-		for (int i=0;i<3;i++) ao[i] = 1.0f;
-		float[] at = new float[3];
-		for (int i=0;i<3;i++) at[i] = 0.0f;
-			
-		if (orientType.equals("Axial")) {
-			// note : assumes a rotation around the image center
-			if (orient==FileInfoBase.AXIAL) {
-				rot.setParameters(0.0f,0.0f,0.0f);
-			
-				if (orx==FileInfoBase.ORI_L2R_TYPE) { ao[0] = -1.0f; at[0] = r0x*(n0x-1); }
-				if (ory==FileInfoBase.ORI_P2A_TYPE) { ao[1] = -1.0f; at[1] = r0y*(n0y-1); }
-				if (orz==FileInfoBase.ORI_S2I_TYPE) { ao[2] = -1.0f; at[2] = r0z*(n0z-1); }
-			
-			} else if (orient==FileInfoBase.CORONAL) {
-				rot.setParameters(-ISQRT2,0.0f,0.0f);
-				at[2] = r0y*(n0y-1); 
-				
-				if (orx==FileInfoBase.ORI_L2R_TYPE) { ao[0] = -1.0f; at[0] = r0x*(n0x-1); }
-				if (ory==FileInfoBase.ORI_I2S_TYPE) { ao[1] = -1.0f; at[1] = r0z*(n0z-1); }
-				if (orz==FileInfoBase.ORI_P2A_TYPE) { ao[2] = -1.0f; at[2] = 0.0f; }
-			
-				float rt = ry; ry = rz; rz = rt;
-				int   nt = ny; ny = nz; nz = nt;
-			} else if (orient==FileInfoBase.SAGITTAL) {
-				rot.setParameters(-0.5f,-0.5f,0.5f);
-				at[0] = r0z*(n0z-1);
-				at[2] = r0y*(n0y-1);
-				
-				if (orx==FileInfoBase.ORI_P2A_TYPE) { ao[0] = -1.0f; at[0] = 0.0f; }
-				if (ory==FileInfoBase.ORI_I2S_TYPE) { ao[1] = -1.0f; at[1] = r0x*(n0x-1); }
-				if (orz==FileInfoBase.ORI_R2L_TYPE) { ao[2] = -1.0f; at[2] = 0.0f; }
-				
-				float rt = rz; rz = ry; ry = rx; rx = rt;
-				int   nt = nz; nz = ny; ny = nx; nx = nt;
-			}
-			fileInfo.setImageOrientation(FileInfoBase.AXIAL);
-			fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE,0);
-			fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE,1);
-			fileInfo.setAxisOrientation(FileInfoBase.ORI_I2S_TYPE,2);
-		} else if (orientType.equals("Coronal")) {
-			// note : assumes a rotation around the image center
-			if (orient==FileInfoBase.CORONAL) {
-				rot.setParameters(0.0f,0.0f,0.0f);
-			
-				if (orx==FileInfoBase.ORI_L2R_TYPE) { ao[0] = -1.0f; at[0] = r0x*(n0x-1); }
-				if (ory==FileInfoBase.ORI_I2S_TYPE) { ao[1] = -1.0f; at[1] = r0y*(n0y-1); }
-				if (orz==FileInfoBase.ORI_P2A_TYPE) { ao[2] = -1.0f; at[2] = r0z*(n0z-1); }
-			
-			} else if (orient==FileInfoBase.AXIAL) {
-				rot.setParameters(ISQRT2,0.0f,0.0f);
-				at[1] = r0z*(n0z-1); 
-				
-				if (orx==FileInfoBase.ORI_L2R_TYPE) { ao[0] = -1.0f; at[0] = r0x*(n0x-1); }
-				if (ory==FileInfoBase.ORI_P2A_TYPE) { ao[1] = -1.0f; at[1] = 0.0f; }
-				if (orz==FileInfoBase.ORI_S2I_TYPE) { ao[2] = -1.0f; at[2] = r0y*(n0y-1); }
-			
-				float rt = ry; ry = rz; rz = rt;
-				int   nt = ny; ny = nz; nz = nt;
-			} else if (orient==FileInfoBase.SAGITTAL) {
-				rot.setParameters(0.0f,-ISQRT2,0.0f);
-				at[0] = r0z*(n0z-1);
-				
-				if (orx==FileInfoBase.ORI_P2A_TYPE) { ao[0] = -1.0f; at[0] = 0.0f; }
-				if (ory==FileInfoBase.ORI_I2S_TYPE) { ao[1] = -1.0f; at[1] = r0y*(n0y-1); }
-				if (orz==FileInfoBase.ORI_R2L_TYPE) { ao[2] = -1.0f; at[2] = r0x*(n0x-1); }
-				
-				float rt = rz; rz = rx; rx = rt;
-				int   nt = nz; nz = nx; nx = nt;
-			}
-			fileInfo.setImageOrientation(FileInfoBase.CORONAL);
-			fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE,0);
-			fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE,1);
-			fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE,2);
-		}  else if (orientType.equals("Sagittal")) {
-			// note : assumes a rotation around the image center
-			if (orient==FileInfoBase.SAGITTAL) {
-				rot.setParameters(0.0f,0.0f,0.0f);
-			
-				if (orx==FileInfoBase.ORI_P2A_TYPE) { ao[0] = -1.0f; at[0] = r0x*(n0x-1); }
-				if (ory==FileInfoBase.ORI_I2S_TYPE) { ao[1] = -1.0f; at[1] = r0y*(n0y-1); }
-				if (orz==FileInfoBase.ORI_R2L_TYPE) { ao[2] = -1.0f; at[2] = r0z*(n0z-1); }
-			
-			} else if (orient==FileInfoBase.CORONAL) {
-				rot.setParameters(0.0f,ISQRT2,0.0f);
-				at[2] = r0x*(n0x-1);
-				
-				if (orx==FileInfoBase.ORI_L2R_TYPE) { ao[0] = -1.0f; at[0] = r0z*(n0z-1); }
-				if (ory==FileInfoBase.ORI_I2S_TYPE) { ao[1] = -1.0f; at[1] = r0y*(n0y-1); }
-				if (orz==FileInfoBase.ORI_P2A_TYPE) { ao[2] = -1.0f; at[2] = 0.0f; }
-				
-				float rt = rz; rz = rx; rx = rt;
-				int   nt = nz; nz = nx; nx = nt;
-			} else if (orient==FileInfoBase.AXIAL) {
-				rot.setParameters(0.5f,0.5f,-0.5f);
-				at[1] = r0z*(n0z-1);
-				at[2] = r0x*(n0x-1);
-				
-				if (orx==FileInfoBase.ORI_L2R_TYPE) { ao[0] = -1.0f; at[0] = r0y*(n0y-1); }
-				if (ory==FileInfoBase.ORI_P2A_TYPE) { ao[1] = -1.0f; at[1] = 0.0f; }
-				if (orz==FileInfoBase.ORI_S2I_TYPE) { ao[2] = -1.0f; at[2] = 0.0f; }
-				
-				float rt = rx; rx = ry; ry = rz; rz = rt;
-				int   nt = nx; nx = ny; ny = nz; nz = nt;
-			} 
-			fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
-			fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE,0);
-			fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE,1);
-			fileInfo.setAxisOrientation(FileInfoBase.ORI_L2R_TYPE,2);
-		}
-
-		fileInfo.setResolutions(rx,0);
-		fileInfo.setResolutions(ry,1);
-		fileInfo.setResolutions(rz,2);
-		fileInfo.setExtents(nx,0);
-		fileInfo.setExtents(ny,1);
-		fileInfo.setExtents(nz,2);
+        
+        double X[][] = new double[4][4];
+        for (j = 0; j <= 2; j++) {
+            switch (or[j]) {
+                case FileInfoBase.ORI_R2L_TYPE:
+                    found = false;
+                    for (i = 0; (i <= 2) && (!found); i++) {
+                        if (newOr[i] == FileInfoBase.ORI_R2L_TYPE) {
+                            found = true;
+                            X[i][j] = 1.0;
+                            r0[i] = r[j];
+                            n0[i] = n[j];
+                        }
+                        else if (newOr[i] == FileInfoBase.ORI_L2R_TYPE) {
+                            found = true;
+                            X[i][j] = -1.0;
+                            X[i][3] = ri[j]*(ni[j] - 1);
+                            r0[i] = r[j];
+                            n0[i] = n[j];
+                        }
+                    }
+                    break;
+                case FileInfoBase.ORI_L2R_TYPE:
+                    found = false;
+                    for (i = 0; (i <= 2) && (!found); i++) {
+                        if (newOr[i] == FileInfoBase.ORI_L2R_TYPE) {
+                            found = true;
+                            X[i][j] = 1.0;
+                            r0[i] = r[j];
+                            n0[i] = n[j];
+                        }
+                        else if (newOr[i] == FileInfoBase.ORI_R2L_TYPE) {
+                            found = true;
+                            X[i][j] = -1.0;
+                            X[i][3] = ri[j]*(ni[j] - 1);
+                            r0[i] = r[j];
+                            n0[i] = n[j];
+                        }
+                    }
+                    break;
+                case FileInfoBase.ORI_A2P_TYPE:
+                    found = false;
+                    for (i = 0; (i <= 2) && (!found); i++) {
+                        if (newOr[i] == FileInfoBase.ORI_A2P_TYPE) {
+                            found = true;
+                            X[i][j] = 1.0;
+                            r0[i] = r[j];
+                            n0[i] = n[j];
+                        }
+                        else if (newOr[i] == FileInfoBase.ORI_P2A_TYPE) {
+                            found = true;
+                            X[i][j] = -1.0;
+                            X[i][3] = ri[j]*(ni[j] - 1);
+                            r0[i] = r[j];
+                            n0[i] = n[j];
+                        }
+                    }
+                    break;
+                case FileInfoBase.ORI_P2A_TYPE:
+                    found = false;
+                    for (i = 0; (i <= 2) && (!found); i++) {
+                        if (newOr[i] == FileInfoBase.ORI_P2A_TYPE) {
+                            found = true;
+                            X[i][j] = 1.0;
+                            r0[i] = r[j];
+                            n0[i] = n[j];
+                        }
+                        else if (newOr[i] == FileInfoBase.ORI_A2P_TYPE) {
+                            found = true;
+                            X[i][j] = -1.0;
+                            X[i][3] = ri[j]*(ni[j] - 1);
+                            r0[i] = r[j];
+                            n0[i] = n[j];
+                        }
+                    }
+                    break;
+                case FileInfoBase.ORI_I2S_TYPE:
+                    found = false;
+                    for (i = 0; (i <= 2) && (!found); i++) {
+                        if (newOr[i] == FileInfoBase.ORI_I2S_TYPE) {
+                            found = true;
+                            X[i][j] = 1.0;
+                            r0[i] = r[j];
+                            n0[i] = n[j];
+                        }
+                        else if (newOr[i] == FileInfoBase.ORI_S2I_TYPE) {
+                            found = true;
+                            X[i][j] = -1.0;
+                            X[i][3] = ri[j]*(ni[j] - 1);
+                            r0[i] = r[j];
+                            n0[i] = n[j];
+                        }
+                    }
+                    break;
+                case FileInfoBase.ORI_S2I_TYPE:
+                    found = false;
+                    for (i = 0; (i <= 2) && (!found); i++) {
+                        if (newOr[i] == FileInfoBase.ORI_S2I_TYPE) {
+                            found = true;
+                            X[i][j] = 1.0;
+                            r0[i] = r[j];
+                            n0[i] = n[j];
+                        }
+                        else if (newOr[i] == FileInfoBase.ORI_I2S_TYPE) {
+                            found = true;
+                            X[i][j] = -1.0;
+                            X[i][3] = ri[j]*(ni[j] - 1);
+                            r0[i] = r[j];
+                            n0[i] = n[j];
+                        }
+                    }
+                    break;
+            }
+        } // for (j = 0; j <= 2; j++)
+        
+        for (i = 0; i <= 2; i++) {
+            fileInfo.setResolutions(r0[i], i);   
+            fileInfo.setExtents(n0[i], i);
+            fileInfo.setAxisOrientation(newOr[i], i);
+        }
+        
+        if ((newOr[2] == FileInfoBase.ORI_I2S_TYPE) || (newOr[2] == FileInfoBase.ORI_S2I_TYPE)) {
+            newOrient = FileInfoBase.AXIAL;
+        }
+        else if ((newOr[2] == FileInfoBase.ORI_A2P_TYPE) || (newOr[2] == FileInfoBase.ORI_P2A_TYPE)) {
+            newOrient = FileInfoBase.CORONAL;
+        }
+        else if ((newOr[2] == FileInfoBase.ORI_L2R_TYPE) || (newOr[2] == FileInfoBase.ORI_R2L_TYPE)) {
+            newOrient = FileInfoBase.SAGITTAL;
+        }
+        else {
+            newOrient = FileInfoBase.UNKNOWN_ORIENT;
+        } 
+        fileInfo.setImageOrientation(newOrient);
 		
 		TransMatrix transform = new TransMatrix(4);
-        double X[][] = new double[4][4];
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                X[i][j] = rot.getMatrix(i, j)*ao[i];
-            }
-            X[i][3] = at[i];
-        }
         transform.setMatrix(0, 2, 0, 3, X);
 		
 		System.out.println(transform.toString());
@@ -741,7 +774,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
             interp = AlgorithmTransform.WSINC;
         }	
 			
-		algoTrans = new AlgorithmTransform(image, transform, interp, rx, ry, rz, nx, ny, nz, 
+		algoTrans = new AlgorithmTransform(image, transform, interp, r0[0], r0[1], r0[2], n0[0], n0[1], n0[2], 
 											true, false, false);
 		algoTrans.setUpdateOriginFlag(true);
 		
@@ -781,7 +814,24 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         template = scriptParameters.retrieveInputImage(2);
 		parentFrame = image.getParentFrame();
 
-        orientType = scriptParameters.getParams().getString("orientation");
+        or[0] = image.getFileInfo()[0].getAxisOrientation()[0];
+        or[1] = image.getFileInfo()[0].getAxisOrientation()[1];
+        or[2] = image.getFileInfo()[0].getAxisOrientation()[2];
+        newOr[0] = scriptParameters.getParams().getInt("neworientationx");
+        newOr[1] = scriptParameters.getParams().getInt("neworientationy");
+        newOr[2] = scriptParameters.getParams().getInt("neworientationz");
+        if ((newOr[2] == FileInfoBase.ORI_I2S_TYPE) || (newOr[2] == FileInfoBase.ORI_S2I_TYPE)) {
+            newOrient = FileInfoBase.AXIAL;
+        }
+        else if ((newOr[2] == FileInfoBase.ORI_A2P_TYPE) || (newOr[2] == FileInfoBase.ORI_P2A_TYPE)) {
+            newOrient = FileInfoBase.CORONAL;
+        }
+        else if ((newOr[2] == FileInfoBase.ORI_L2R_TYPE) || (newOr[2] == FileInfoBase.ORI_R2L_TYPE)) {
+            newOrient = FileInfoBase.SAGITTAL;
+        }
+        else {
+            newOrient = FileInfoBase.UNKNOWN_ORIENT;
+        }
 		resolutionType = scriptParameters.getParams().getString("resolution");
 		interpType = scriptParameters.getParams().getString("interpolation");
 		
@@ -797,9 +847,47 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         scriptParameters.storeInputImage(template);
 		scriptParameters.storeOutputImageParams(resultImage, true);  // false means computation in place
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("orientation", orientType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("orientationx", newOr[0]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("orientationy", newOr[1]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("orientationz", newOr[2]));
 		scriptParameters.getParams().put(ParameterFactory.newParameter("resolution", resolutionType));
 		scriptParameters.getParams().put(ParameterFactory.newParameter("interpolation", interpType));
 		
+    }
+    
+    public void itemStateChanged(ItemEvent e) {
+        int presentOrient;
+        if (e.getSource().equals(presentOrientBoxZ)) {
+            or[2] = presentOrientBoxZ.getSelectedIndex();
+            if ((or[2] == FileInfoBase.ORI_I2S_TYPE) || (or[2] == FileInfoBase.ORI_S2I_TYPE)) {
+                presentOrient = FileInfoBase.AXIAL;
+            }
+            else if ((or[2] == FileInfoBase.ORI_A2P_TYPE) || (or[2] == FileInfoBase.ORI_P2A_TYPE)) {
+                presentOrient = FileInfoBase.CORONAL;
+            }
+            else if ((or[2] == FileInfoBase.ORI_L2R_TYPE) || (or[2] == FileInfoBase.ORI_R2L_TYPE)) {
+                presentOrient = FileInfoBase.SAGITTAL;
+            }
+            else {
+                presentOrient = FileInfoBase.UNKNOWN_ORIENT;
+            }
+            presentOrientBox.setSelectedIndex(presentOrient);
+        }
+        else if (e.getSource().equals(newOrientBoxZ)) {
+            newOr[2] = newOrientBoxZ.getSelectedIndex();
+            if ((newOr[2] == FileInfoBase.ORI_I2S_TYPE) || (newOr[2] == FileInfoBase.ORI_S2I_TYPE)) {
+                newOrient = FileInfoBase.AXIAL;
+            }
+            else if ((newOr[2] == FileInfoBase.ORI_A2P_TYPE) || (newOr[2] == FileInfoBase.ORI_P2A_TYPE)) {
+                newOrient = FileInfoBase.CORONAL;
+            }
+            else if ((newOr[2] == FileInfoBase.ORI_L2R_TYPE) || (newOr[2] == FileInfoBase.ORI_R2L_TYPE)) {
+                newOrient = FileInfoBase.SAGITTAL;
+            }
+            else {
+                newOrient = FileInfoBase.UNKNOWN_ORIENT;
+            } 
+            newOrientLabel2.setText(orientTypes[newOrient]);
+        }
     }
 }
