@@ -537,8 +537,6 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 
         int numImages = sourceModel.size();
         for (int i = 0; i < numImages; i++) {
-            String outputFileNameBase = System.getProperty("user.name") + "_" + System.currentTimeMillis();
-
             File imageFile = (File) sourceModel.elementAt(i);
 
             printlnToLog("Opening: " + imageFile + ", multifile: " + multiFileTable.get(imageFile));
@@ -551,6 +549,17 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
                     multiFileTable.get(imageFile), null);
 
             List<String> origFiles = FileUtility.getFileNameList(origImage);
+
+            String currentGuid = (String) guidTable.getModel().getValueAt(i, GUID_TABLE_GUID_COLUMN);
+            int modality = origImage.getFileInfo(0).getModality();
+            String modalityString = FileInfoBase.getModalityStr(modality).replaceAll("\\s+", "");
+
+            String outputFileNameBase;
+            if (modality == FileInfoBase.UNKNOWN_MODALITY) {
+                outputFileNameBase = currentGuid + "_" + System.currentTimeMillis();
+            } else {
+                outputFileNameBase = currentGuid + "_" + modalityString + "_" + System.currentTimeMillis();
+            }
 
             String zipFilePath = outputDirBase + outputFileNameBase + ".zip";
             try {
@@ -571,7 +580,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
             ndarData.zipFileName = FileUtility.getFileName(zipFilePath);
 
             // set the valid GUID into the NDAR data object
-            ndarData.validGUID = (String) guidTable.getModel().getValueAt(i, GUID_TABLE_GUID_COLUMN);
+            ndarData.validGUID = currentGuid;
 
             writeMetaDataFiles(outputDirBase, outputFileNameBase, imageFile, origImage);
 
@@ -612,7 +621,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         options.setNDARData(ndarData);
 
         // get the image file name and add .xml to it (maintain the previous extension in the name)
-        fName = outputFileNameBase + "_" + image.getImageFileName();
+        fName = outputFileNameBase;
         if ( !fName.endsWith(".xml")) {
             fName += ".xml";
         }
