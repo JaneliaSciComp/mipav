@@ -629,22 +629,30 @@ public class VOI extends ModelSerialCloneable {
         int yDim = image.getExtents()[1];
         int length = xDim * yDim * zDim;
         int i;
+        int t;
+        int tDim = 1;
 
         // System.err.println("creating binary image");
         if (image.getType() != ModelStorageBase.BOOLEAN) {
             return;
+        }
+        
+        if (image.getNDims() >= 4) {
+            tDim = image.getExtents()[3];
         }
 
         createBinaryMask(image.getMask(), xDim, yDim, XOR, onlyActive);
 
         BitSet mask = image.getMask();
 
-        for (i = 0; i < length; i++) {
-
-            if (mask.get(i) == true) {
-                image.set(i, true);
-            } else {
-                image.set(i, false);
+        for (t = 0; t < tDim; t++) {
+            for (i = 0; i < length; i++) {
+    
+                if (mask.get(i) == true) {
+                    image.set(t*length + i, true);
+                } else {
+                    image.set(t* length + i, false);
+                }
             }
         }
     }
@@ -865,14 +873,22 @@ public class VOI extends ModelSerialCloneable {
         int yDim = image.getExtents()[1];
         int length = xDim * yDim * zDim;
         int i;
+        int tDim = 1;
+        int t;
+        
+        if (image.getNDims() >= 4) {
+            tDim = image.getExtents()[3];
+        }
         createBinaryMask(image.getMask(), xDim, yDim, XOR, onlyActive);
 
         BitSet mask = image.getMask();
 
-        for (i = 0; i < length; i++) {
-
-            if (mask.get(i) == true) {
-                image.set(i, watershedID + offset);
+        for (t = 0; t < tDim; t++) {
+            for (i = 0; i < length; i++) {
+    
+                if (mask.get(i) == true) {
+                    image.set(t*length + i, watershedID + offset);
+                }
             }
         }
     }
@@ -935,14 +951,22 @@ public class VOI extends ModelSerialCloneable {
         int yDim = image.getExtents()[1];
         int length = xDim * yDim * zDim;
         int i;
+        int tDim = 1;
+        int t;
+        
+        if (image.getNDims() >= 4) {
+            tDim = image.getExtents()[3];    
+        }
         createBinaryMask(image.getMask(), xDim, yDim, XOR, onlyActive);
 
         BitSet mask = image.getMask();
 
-        for (i = 0; i < length; i++) {
-
-            if (mask.get(i) == true) {
-                image.set(i, watershedID + offset);
+        for (t = 0; t < tDim; t++) {
+            for (i = 0; i < length; i++) {
+    
+                if (mask.get(i) == true) {
+                    image.set(t*length + i, watershedID + offset);
+                }
             }
         }
     }
