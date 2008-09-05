@@ -62,7 +62,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 													 "Finest Cubic",
 													 "Coarsest Cubic",
 													 "Same as template"};	
-    private		String		resolutionType		=		"Unchanged";
+    private	    int         resolutionIndex     =  0;
 	
 	private		String[]	interpTypes	=	{"Nearest Neighbor",
 												 "Trilinear",
@@ -134,6 +134,11 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         JLabel newOrientLabelX;
         JLabel newOrientLabelY;
         JLabel newOrientLabelZ;
+        float rx = image.getFileInfo()[0].getResolutions()[0];
+        float ry = image.getFileInfo()[0].getResolutions()[1];
+        float rz = image.getFileInfo()[0].getResolutions()[2];
+        float minResolution = Math.min(rx, Math.min(ry, rz));
+        float maxResolution = Math.max(rx, Math.max(ry, rz));
         setForeground(Color.black);
         setTitle("Reorientation / Resampling");
         
@@ -301,10 +306,12 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         labelResType.setFont(serif12);
         labelResType.setForeground(Color.black);
         		
-		comboResType = new JComboBox(resolutionTypes);
+		resolutionTypes[1] = "Finest Cubic " + Float.toString(minResolution);
+        resolutionTypes[2] = "Coarsest Cubic " + Float.toString(maxResolution);
+        comboResType = new JComboBox(resolutionTypes);
 		comboResType.setFont(serif12);
         comboResType.setBackground(Color.white);
-		comboResType.setSelectedItem(resolutionType);
+		comboResType.setSelectedIndex(resolutionIndex);
         comboResType.addItemListener(this);
 		
 		labelInterpType = new JLabel("Interpolation ");
@@ -437,7 +444,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         str += Integer.toString(newOr[0]) + delim;
         str += Integer.toString(newOr[1]) + delim;
         str += Integer.toString(newOr[2]) + delim;
-        str += resolutionType + delim;
+        str += Integer.toString(resolutionIndex) + delim;
         str += interpType;
 
         return str;
@@ -457,7 +464,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 				newOr[0] = new Integer(st.nextToken()).intValue();
                 newOr[1] = new Integer(st.nextToken()).intValue();
                 newOr[2] = new Integer(st.nextToken()).intValue();
-				resolutionType = st.nextToken();
+				resolutionIndex = new Integer(st.nextToken()).intValue();
 				interpType = st.nextToken();
 			}
             catch (Exception ex) {
@@ -602,7 +609,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
             MipavUtil.displayError("Error! New orientation must have one RL, one AP, and one IS axis");
             return false;
         }
-		resolutionType = (String)comboResType.getSelectedItem();
+		resolutionIndex = comboResType.getSelectedIndex();
 		interpType = (String)comboInterpType.getSelectedItem();
 		
 		String name = (String)comboTemplate.getSelectedItem();
@@ -646,7 +653,8 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
             n[i] = ni[i];
         }
 		
-		if (resolutionType.equals("Finest Cubic")) {
+		if (resolutionIndex == 1) {
+            // Finest cubic
 			float rn = Math.min(r[0],Math.min(r[1],r[2]));
 			n[0] = (int)Math.ceil(n[0]*r[0]/rn);
 			r[0] = rn;
@@ -654,7 +662,8 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 			r[1] = rn;
 			n[2] = (int)Math.ceil(n[2]*r[2]/rn);
 			r[2] = rn;
-		} else if (resolutionType.equals("Coarsest Cubic")) {
+		} else if (resolutionIndex == 2) {
+            // Coarsest cubic
 			float rn = Math.max(r[0],Math.max(r[1],r[2]));
 			n[0] = (int)Math.ceil(n[0]*r[0]/rn);
 			r[0] = rn;
@@ -662,7 +671,8 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 			r[1] = rn;
 			n[2] = (int)Math.ceil(n[2]*r[2]/rn);
 			r[2] = rn;
-		} else if (resolutionType.equals("Same as template")) {
+		} else if (resolutionIndex == 3) {
+            // Same as template
 			r[0] = template.getFileInfo()[0].getResolutions()[0];
 			r[1] = template.getFileInfo()[0].getResolutions()[1];
 			r[2] = template.getFileInfo()[0].getResolutions()[2];
@@ -875,7 +885,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         newOr[0] = scriptParameters.getParams().getInt("neworientationx");
         newOr[1] = scriptParameters.getParams().getInt("neworientationy");
         newOr[2] = scriptParameters.getParams().getInt("neworientationz");
-		resolutionType = scriptParameters.getParams().getString("resolution");
+		resolutionIndex = scriptParameters.getParams().getInt("resolution");
 		interpType = scriptParameters.getParams().getString("interpolation");
 		
     }
@@ -893,7 +903,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         scriptParameters.getParams().put(ParameterFactory.newParameter("orientationx", newOr[0]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("orientationy", newOr[1]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("orientationz", newOr[2]));
-		scriptParameters.getParams().put(ParameterFactory.newParameter("resolution", resolutionType));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("resolution", resolutionIndex));
 		scriptParameters.getParams().put(ParameterFactory.newParameter("interpolation", interpType));
 		
     }
@@ -901,6 +911,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
     public void itemStateChanged(ItemEvent e) {
         int presentOrient;
         int newOrientIndex;
+        int resolutionIndex;
         if (e.getSource().equals(presentOrientBoxZ)) {
             or[2] = presentOrientBoxZ.getSelectedIndex();
             if ((or[2] == FileInfoBase.ORI_I2S_TYPE) || (or[2] == FileInfoBase.ORI_S2I_TYPE)) {
@@ -950,8 +961,8 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
             }
         }
         else if (e.getSource().equals(comboResType)) {
-            resolutionType = (String)comboResType.getSelectedItem();
-            if (resolutionType.equals("Same as template")) {
+            resolutionIndex = comboResType.getSelectedIndex();
+            if (resolutionIndex == 3) {
                 comboTemplate.setEnabled(true);
             }
             else {
