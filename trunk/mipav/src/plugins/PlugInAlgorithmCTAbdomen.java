@@ -1,3 +1,4 @@
+import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
@@ -179,7 +180,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 //        makeSubcutaneousFat2DVOI();
 //        snakeSubcutaneousVOI();
 
-//        ShowImage(abdomenImage, "Segmented Abdomen");
+        ShowImage(abdomenImage, "Segmented Abdomen");
         
         // the really old way to find the subcutaneous fat VOI
 //        JCATsegmentSubcutaneousFat2D();
@@ -194,6 +195,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         ModelImage binImage = srcImage.generateBinaryImage();
         
         // close the binaryImage with a huge structuring element to fill in all the major gaps
+        
         closeImage(binImage, 61.0f);
         
         // convert the binary image into a VOI
@@ -1536,6 +1538,11 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
             ModelImage binImage = sliceImage.generateBinaryImage();            
             System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
 
+            System.out.print("    Smoothing Image with "+sliceVOI.getNumPoints()+"points: ");
+            time = System.currentTimeMillis();
+            AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(binImage, sliceVOI, sliceVOI.getNumPoints()/3, true);
+            System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
+            
             // close the binaryImage with a huge structuring element to fill in all the major gaps
             System.out.print("    Morphology to the image: ");
             time = System.currentTimeMillis();
@@ -1619,7 +1626,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
         } // end for (int sliceIdx = 0; ...)
 
-//        ShowImage(sliceImage, "sliceImage");
+        ShowImage(sliceImage, "sliceImage");
 
     } // fixSubcutaneousFatVOIs()
     
@@ -2541,8 +2548,6 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
         return resultImage;
     } // end threshold(...)
-  
-   
    
    /**
     * Mathematical Morphological closing operation
@@ -2553,8 +2558,6 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
        MorphIDObj.run();
    } // end closeImage(...)
   
-   
-   
    /**
     * Mathematical Morphological closing operation as a series of 2D operations
     */
@@ -2603,9 +2606,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
        } // end for (z = 0; ...)
        
    } // end closeImage25D(...)
-  
-   
-   
+
    /**
     * Mathematical Morphological closing operation
     */
@@ -2614,18 +2615,19 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
        MorphIDObj = new AlgorithmMorphology3D(img, 2, 1, AlgorithmMorphology3D.CLOSE, 2, 2, 0, 0, true);
        MorphIDObj.run();
    } // end closeImage3D(...)
-  
-   
-   
+
    /**
     * Mathematical Morphological closing operation
     */
    public void closeImage(ModelImage img, float dia) {
        AlgorithmMorphology2D MorphIDObj = null;
-       MorphIDObj = new AlgorithmMorphology2D(img, 0, dia, AlgorithmMorphology2D.CLOSE, 1, 1, 0, 0, true);
+       //TODO: Try various diameters, construct (2D) image dimension-based method
+       double idealRes = ((img.getExtents()[0]+img.getExtents()[1])/2.0+zDim)/(img.getExtents()[0]+img.getExtents()[1]+zDim)/3.0*30;
+       System.out.println("Try resolutions: "+idealRes);
+       MorphIDObj = new AlgorithmMorphology2D(img, 0, (int)dia, AlgorithmMorphology2D.CLOSE, 1, 1, 0, 0, true);
+       //nia/subset uses 30
        MorphIDObj.run();
    } // end closeImageCircle(...)
-   
 
     /**
      * morphological ID_OBJECTS.
@@ -2655,8 +2657,6 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         MorphIDObj.run();
     }
 
-    
-    
     /**
      * DOCUMENT ME!
      *
@@ -2669,9 +2669,5 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         cloneImg.setImageName(Name);
         new ViewJFrameImage(cloneImg);
     }
-    
-
-
-
 }
 

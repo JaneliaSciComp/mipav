@@ -43,7 +43,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 
 	public static final Color[] colorPick = {Color.GREEN, Color.ORANGE, Color.CYAN, 
                                                 Color.YELLOW, Color.MAGENTA};
-    
     public static final String LUT_IMAGE = "lutImage.tif";
     public static final String VOI_IMAGE = "voiImage.tif";
     
