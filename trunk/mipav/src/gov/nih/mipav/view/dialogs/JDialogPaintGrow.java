@@ -472,6 +472,9 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         String command = event.getActionCommand();
         Object source = event.getSource();
 
+        if (command.equals("Help")) {
+            MipavUtil.showHelp("PaintGrow001");
+        }
         if (command.equals("Close") || command.equals("Apply")) {
 
             if (sizeCheckbox.isSelected()) { // unrestricted size
@@ -1919,8 +1922,11 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
+        buildHelpButton();
         OKButton.setText("Close");
+        helpButton.setText("Help");
         buttonPanel.add(OKButton);
+        buttonPanel.add(helpButton);
         mainDialogPanel.add(tabbedPane);
         mainDialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 
