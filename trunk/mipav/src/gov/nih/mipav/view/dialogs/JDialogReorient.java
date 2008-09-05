@@ -80,7 +80,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 	private		JComboBox	comboTemplate;
 	private		JLabel		labelInterpType;	
 	private		JComboBox	comboInterpType;
-    private     JComboBox   presentOrientBox;
+    private     JLabel      presentOrientLabel2;
     private     JComboBox   presentOrientBoxX;
     private     JComboBox   presentOrientBoxY;
     private     JComboBox   presentOrientBoxZ;
@@ -148,12 +148,10 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         gbc2.gridy = 0;
         presentOrientPanel.add(presentOrientLabel, gbc2);
         
-        presentOrientBox = new JComboBox(orientTypes);
-        presentOrientBox.setBackground(Color.white);
-        presentOrientBox.setSelectedIndex(image.getImageOrientation());
-        presentOrientBox.addFocusListener(this);
+        presentOrientLabel2 = new JLabel(orientTypes[image.getImageOrientation()]);
+        presentOrientLabel2.setBackground(Color.black);
         gbc2.gridx = 1;
-        presentOrientPanel.add(presentOrientBox, gbc2);
+        presentOrientPanel.add(presentOrientLabel2, gbc2);
         
         presentOrientLabelX = new JLabel("X-axis orientation (image left to right):");
         presentOrientLabelX.setFont(serif12);
@@ -871,7 +869,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
             else {
                 presentOrient = FileInfoBase.UNKNOWN_ORIENT;
             }
-            presentOrientBox.setSelectedIndex(presentOrient);
+            presentOrientLabel2.setText(orientTypes[presentOrient]);
         }
         else if (e.getSource().equals(newOrientBoxZ)) {
             newOr[2] = newOrientBoxZ.getSelectedIndex();
