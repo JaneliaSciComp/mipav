@@ -51,19 +51,28 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 	private     String[]    orientTypes 	= 		{"Axial",
 													 "Coronal",
 													 "Sagittal",
-                                                     "Unknown"};	
+                                                     "Unknown"};
+    private     String[]    newOrientTypes =        {"Dicom axial",
+                                                     "Dicom coronal",
+                                                     "Dicom sagittal",
+                                                     "User defined"};
     
 		
 	private     String[]    resolutionTypes 	= 	{"Unchanged",
-													 "Finest-Cubic",
-													 "Coarsest-Cubic",
-													 "Same_as_template"};	
+													 "Finest Cubic",
+													 "Coarsest Cubic",
+													 "Same as template"};	
     private		String		resolutionType		=		"Unchanged";
 	
-	private		String[]	interpTypes	=	{"Nearest_Neighbor",
-												 "Linear",
-												 "Windowed_Sinc"};
-	private		String		interpType	=	"Linear";
+	private		String[]	interpTypes	=	{"Nearest Neighbor",
+												 "Trilinear",
+                                                 "Bspline 3rd order",
+                                                 "Bspline 4th order",
+                                                 "Cubic Lagrangian",
+                                                 "Quintic Lagrangian",
+                                                 "Heptic Lagrangian",
+												 "Windowed Sinc"};
+	private		String		interpType	=	"Trilinear";
     private String[] orients = {
             "Unknown", "Patient Right to Left", "Patient Left to Right", "Patient Posterior to Anterior",
             "Patient Anterior to Posterior", "Patient Inferior to Superior", "Patient Superior to Inferior"
@@ -85,13 +94,10 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
     private     JComboBox   presentOrientBoxY;
     private     JComboBox   presentOrientBoxZ;
     private     int[]       or = new int[3];
-    private     int[]       presentAxisOrient;
-    private     JLabel      newOrientLabel2;
-    private     int         newOrient;
+    private     JComboBox   newOrientBox;
     private     JComboBox   newOrientBoxX;
     private     JComboBox   newOrientBoxY;
     private     JComboBox   newOrientBoxZ;
-    private     int[]       newAxisOrient;
     private     int[]       newOr = new int[3];
 	
     /**
@@ -116,6 +122,8 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
     *	Sets up the GUI (panels, buttons, etc) and displays it on the screen.
     */
 	private void init(){
+        int i;
+        boolean isDicom = false;
         JPanel presentOrientPanel;
         JPanel newOrientPanel;
         JLabel presentOrientLabel;
@@ -163,8 +171,10 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         presentOrientBoxX = new JComboBox(orients);
         presentOrientBoxX.setBackground(Color.white);
         presentOrientBoxX.setFont(MipavUtil.font12);
-        presentAxisOrient = image.getFileInfo()[0].getAxisOrientation();
-        presentOrientBoxX.setSelectedIndex(presentAxisOrient[0]);
+        for (i = 0; i <=2; i++) {
+            or[i] = image.getFileInfo()[0].getAxisOrientation()[i];   
+        }
+        presentOrientBoxX.setSelectedIndex(or[0]);
         gbc2.gridx = 1;
         presentOrientPanel.add(presentOrientBoxX, gbc2);
         
@@ -178,7 +188,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         presentOrientBoxY = new JComboBox(orients);
         presentOrientBoxY.setBackground(Color.white);
         presentOrientBoxY.setFont(MipavUtil.font12);
-        presentOrientBoxY.setSelectedIndex(presentAxisOrient[1]);
+        presentOrientBoxY.setSelectedIndex(or[1]);
         gbc2.gridx = 1;
         presentOrientPanel.add(presentOrientBoxY, gbc2);
         
@@ -192,7 +202,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         presentOrientBoxZ = new JComboBox(orients);
         presentOrientBoxZ.setBackground(Color.white);
         presentOrientBoxZ.setFont(MipavUtil.font12);
-        presentOrientBoxZ.setSelectedIndex(presentAxisOrient[2]);
+        presentOrientBoxZ.setSelectedIndex(or[2]);
         presentOrientBoxZ.addItemListener(this);
         gbc2.gridx = 1;
         presentOrientPanel.add(presentOrientBoxZ, gbc2);
@@ -207,10 +217,34 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         gbc2.gridy = 0;
         newOrientPanel.add(newOrientLabel, gbc2);
         
-        newOrientLabel2 = new JLabel(orientTypes[image.getImageOrientation()]);
-        newOrientLabel2.setBackground(Color.black);
+        newOrientBox = new JComboBox(newOrientTypes);
+        for (i = 0; i <=2; i++) {
+            newOr[i] = image.getFileInfo()[0].getAxisOrientation()[i];   
+        }
+        if ((newOr[0] == FileInfoBase.ORI_R2L_TYPE) && (newOr[1] == FileInfoBase.ORI_A2P_TYPE) &&
+                (newOr[2] == FileInfoBase.ORI_I2S_TYPE)) {
+            isDicom = true;
+            newOrientBox.setSelectedIndex(0);
+        }
+        else if ((newOr[0] == FileInfoBase.ORI_R2L_TYPE) && (newOr[1] == FileInfoBase.ORI_S2I_TYPE) &&
+                     (newOr[2] == FileInfoBase.ORI_A2P_TYPE)) {
+            isDicom = true;
+            newOrientBox.setSelectedIndex(1);
+        }
+        else if ((newOr[0] == FileInfoBase.ORI_A2P_TYPE) && (newOr[1] == FileInfoBase.ORI_S2I_TYPE) &&
+                 (newOr[2] == FileInfoBase.ORI_L2R_TYPE)) {
+            isDicom = true;
+            newOrientBox.setSelectedIndex(2);
+        }
+        else {
+            newOrientBox.setSelectedIndex(3);
+        }
+        
+        newOrientBox.setBackground(Color.white);
+        newOrientBox.setFont(MipavUtil.font12);
+        newOrientBox.addItemListener(this);
         gbc2.gridx = 1;
-        newOrientPanel.add(newOrientLabel2, gbc2);
+        newOrientPanel.add(newOrientBox, gbc2);
         
         newOrientLabelX = new JLabel("X-axis orientation (image left to right):");
         newOrientLabelX.setFont(serif12);
@@ -222,8 +256,10 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         newOrientBoxX = new JComboBox(orients);
         newOrientBoxX.setBackground(Color.white);
         newOrientBoxX.setFont(MipavUtil.font12);
-        newAxisOrient = image.getFileInfo()[0].getAxisOrientation();
-        newOrientBoxX.setSelectedIndex(newAxisOrient[0]);
+        newOrientBoxX.setSelectedIndex(newOr[0]);
+        if (isDicom) {
+            newOrientBoxX.setEnabled(false);
+        }
         gbc2.gridx = 1;
         newOrientPanel.add(newOrientBoxX, gbc2);
         
@@ -237,7 +273,10 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         newOrientBoxY = new JComboBox(orients);
         newOrientBoxY.setBackground(Color.white);
         newOrientBoxY.setFont(MipavUtil.font12);
-        newOrientBoxY.setSelectedIndex(newAxisOrient[1]);
+        newOrientBoxY.setSelectedIndex(newOr[1]);
+        if (isDicom) {
+            newOrientBoxY.setEnabled(false);
+        }
         gbc2.gridx = 1;
         newOrientPanel.add(newOrientBoxY, gbc2);
         
@@ -251,12 +290,14 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         newOrientBoxZ = new JComboBox(orients);
         newOrientBoxZ.setBackground(Color.white);
         newOrientBoxZ.setFont(MipavUtil.font12);
-        newOrientBoxZ.setSelectedIndex(presentAxisOrient[2]);
-        newOrientBoxZ.addItemListener(this);
+        newOrientBoxZ.setSelectedIndex(newOr[2]);
+        if (isDicom) {
+            newOrientBoxZ.setEnabled(false);
+        }
         gbc2.gridx = 1;
         newOrientPanel.add(newOrientBoxZ, gbc2);
 		
-		labelResType = new JLabel("resolution ");
+		labelResType = new JLabel("Resolution ");
         labelResType.setFont(serif12);
         labelResType.setForeground(Color.black);
         		
@@ -264,8 +305,9 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 		comboResType.setFont(serif12);
         comboResType.setBackground(Color.white);
 		comboResType.setSelectedItem(resolutionType);
+        comboResType.addItemListener(this);
 		
-		labelInterpType = new JLabel("interpolation ");
+		labelInterpType = new JLabel("Interpolation ");
         labelInterpType.setFont(serif12);
         labelInterpType.setForeground(Color.black);
         		
@@ -353,6 +395,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         comboTemplate = new JComboBox();
         comboTemplate.setFont(serif12);
         comboTemplate.setBackground(Color.white);
+        comboTemplate.setEnabled(false);
 
         Enumeration names = ViewUserInterface.getReference().getRegisteredImageNames();
 
@@ -517,6 +560,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         or[0] = presentOrientBoxX.getSelectedIndex();
         or[1] = presentOrientBoxY.getSelectedIndex();
         or[2] = presentOrientBoxZ.getSelectedIndex();
+        
         rl = 0;
         ap = 0;
         is = 0;
@@ -535,9 +579,11 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
             MipavUtil.displayError("Error! Present orientation must have one RL, one AP, and one IS axis");
             return false;
         }
+        
         newOr[0] = newOrientBoxX.getSelectedIndex();
         newOr[1] = newOrientBoxY.getSelectedIndex();
         newOr[2] = newOrientBoxZ.getSelectedIndex();
+        
         rl = 0;
         ap = 0;
         is = 0;
@@ -563,7 +609,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 		template = ViewUserInterface.getReference().getRegisteredImageByName(name);
 		
 		System.out.println(getParameterString("|"));
-
+        
     	return true;  	
     }   // end setVariables()
     
@@ -575,6 +621,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
     protected void callAlgorithm() {
         int i, j;
         boolean found;
+        int newOrient;
         float ri[] = new float[3];
         int   ni[] = new int[3];
         float r0[] = new float[3];
@@ -599,7 +646,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
             n[i] = ni[i];
         }
 		
-		if (resolutionType.equals("Finest-Cubic")) {
+		if (resolutionType.equals("Finest Cubic")) {
 			float rn = Math.min(r[0],Math.min(r[1],r[2]));
 			n[0] = (int)Math.ceil(n[0]*r[0]/rn);
 			r[0] = rn;
@@ -607,7 +654,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 			r[1] = rn;
 			n[2] = (int)Math.ceil(n[2]*r[2]/rn);
 			r[2] = rn;
-		} else if (resolutionType.equals("Coarsest-Cubic")) {
+		} else if (resolutionType.equals("Coarsest Cubic")) {
 			float rn = Math.max(r[0],Math.max(r[1],r[2]));
 			n[0] = (int)Math.ceil(n[0]*r[0]/rn);
 			r[0] = rn;
@@ -615,7 +662,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 			r[1] = rn;
 			n[2] = (int)Math.ceil(n[2]*r[2]/rn);
 			r[2] = rn;
-		} else if (resolutionType.equals("Same_as_template")) {
+		} else if (resolutionType.equals("Same as template")) {
 			r[0] = template.getFileInfo()[0].getResolutions()[0];
 			r[1] = template.getFileInfo()[0].getResolutions()[1];
 			r[2] = template.getFileInfo()[0].getResolutions()[2];
@@ -764,13 +811,23 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 		System.out.println(transform.toString());
 		
 		int interp = AlgorithmTransform.TRILINEAR;
-		if (interpType.equals("Nearest_Neighbor")) {
+		if (interpType.equals("Nearest Neighbor")) {
             interp = AlgorithmTransform.NEAREST_NEIGHBOR;
-        } else if (interpType.equals("Linear")) {
+        } else if (interpType.equals("Trilinear")) {
 			interp = AlgorithmTransform.TRILINEAR;
-        } else if  (interpType.equals("Windowed_Sinc")) {
+        } else if (interpType.equals("Bspline 3rd order")) {
+            interp = AlgorithmTransform.BSPLINE3;
+        } else if (interpType.equals("Bspline 4th order")) {
+            interp = AlgorithmTransform.BSPLINE4;
+        } else if (interpType.equals("Cubic Lagrangian")) {
+            interp = AlgorithmTransform.CUBIC_LAGRANGIAN;
+        } else if (interpType.equals("Quintic Lagrangian")) {
+            interp = AlgorithmTransform.QUINTIC_LAGRANGIAN;
+        } else if (interpType.equals("Heptic Lagrangian")) {
+            interp = AlgorithmTransform.HEPTIC_LAGRANGIAN;
+        } else if  (interpType.equals("Windowed Sinc")) {
             interp = AlgorithmTransform.WSINC;
-        }	
+        }
 			
 		algoTrans = new AlgorithmTransform(image, transform, interp, r0[0], r0[1], r0[2], n0[0], n0[1], n0[2], 
 											true, false, false);
@@ -818,18 +875,6 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         newOr[0] = scriptParameters.getParams().getInt("neworientationx");
         newOr[1] = scriptParameters.getParams().getInt("neworientationy");
         newOr[2] = scriptParameters.getParams().getInt("neworientationz");
-        if ((newOr[2] == FileInfoBase.ORI_I2S_TYPE) || (newOr[2] == FileInfoBase.ORI_S2I_TYPE)) {
-            newOrient = FileInfoBase.AXIAL;
-        }
-        else if ((newOr[2] == FileInfoBase.ORI_A2P_TYPE) || (newOr[2] == FileInfoBase.ORI_P2A_TYPE)) {
-            newOrient = FileInfoBase.CORONAL;
-        }
-        else if ((newOr[2] == FileInfoBase.ORI_L2R_TYPE) || (newOr[2] == FileInfoBase.ORI_R2L_TYPE)) {
-            newOrient = FileInfoBase.SAGITTAL;
-        }
-        else {
-            newOrient = FileInfoBase.UNKNOWN_ORIENT;
-        }
 		resolutionType = scriptParameters.getParams().getString("resolution");
 		interpType = scriptParameters.getParams().getString("interpolation");
 		
@@ -855,6 +900,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
     
     public void itemStateChanged(ItemEvent e) {
         int presentOrient;
+        int newOrientIndex;
         if (e.getSource().equals(presentOrientBoxZ)) {
             or[2] = presentOrientBoxZ.getSelectedIndex();
             if ((or[2] == FileInfoBase.ORI_I2S_TYPE) || (or[2] == FileInfoBase.ORI_S2I_TYPE)) {
@@ -871,21 +917,46 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
             }
             presentOrientLabel2.setText(orientTypes[presentOrient]);
         }
-        else if (e.getSource().equals(newOrientBoxZ)) {
-            newOr[2] = newOrientBoxZ.getSelectedIndex();
-            if ((newOr[2] == FileInfoBase.ORI_I2S_TYPE) || (newOr[2] == FileInfoBase.ORI_S2I_TYPE)) {
-                newOrient = FileInfoBase.AXIAL;
+        else if (e.getSource().equals(newOrientBox)) {
+            newOrientIndex = newOrientBox.getSelectedIndex();
+            if (newOrientIndex == 0) {
+                newOrientBoxX.setSelectedIndex(FileInfoBase.ORI_R2L_TYPE);
+                newOrientBoxX.setEnabled(false);
+                newOrientBoxY.setSelectedIndex(FileInfoBase.ORI_A2P_TYPE);
+                newOrientBoxY.setEnabled(false);
+                newOrientBoxZ.setSelectedIndex(FileInfoBase.ORI_I2S_TYPE);
+                newOrientBoxZ.setEnabled(false);
             }
-            else if ((newOr[2] == FileInfoBase.ORI_A2P_TYPE) || (newOr[2] == FileInfoBase.ORI_P2A_TYPE)) {
-                newOrient = FileInfoBase.CORONAL;
+            else if (newOrientIndex == 1) {
+                newOrientBoxX.setSelectedIndex(FileInfoBase.ORI_R2L_TYPE);
+                newOrientBoxX.setEnabled(false);
+                newOrientBoxY.setSelectedIndex(FileInfoBase.ORI_S2I_TYPE);
+                newOrientBoxY.setEnabled(false);
+                newOrientBoxZ.setSelectedIndex(FileInfoBase.ORI_A2P_TYPE);
+                newOrientBoxZ.setEnabled(false);    
             }
-            else if ((newOr[2] == FileInfoBase.ORI_L2R_TYPE) || (newOr[2] == FileInfoBase.ORI_R2L_TYPE)) {
-                newOrient = FileInfoBase.SAGITTAL;
+            else if (newOrientIndex == 2) {
+                newOrientBoxX.setSelectedIndex(FileInfoBase.ORI_A2P_TYPE);
+                newOrientBoxX.setEnabled(false);
+                newOrientBoxY.setSelectedIndex(FileInfoBase.ORI_S2I_TYPE);
+                newOrientBoxY.setEnabled(false);
+                newOrientBoxZ.setSelectedIndex(FileInfoBase.ORI_L2R_TYPE);
+                newOrientBoxZ.setEnabled(false);
             }
             else {
-                newOrient = FileInfoBase.UNKNOWN_ORIENT;
-            } 
-            newOrientLabel2.setText(orientTypes[newOrient]);
+                newOrientBoxX.setEnabled(true);
+                newOrientBoxY.setEnabled(true);
+                newOrientBoxZ.setEnabled(true);
+            }
+        }
+        else if (e.getSource().equals(comboResType)) {
+            resolutionType = (String)comboResType.getSelectedItem();
+            if (resolutionType.equals("Same as template")) {
+                comboTemplate.setEnabled(true);
+            }
+            else {
+                comboTemplate.setEnabled(false);
+            }
         }
     }
 }
