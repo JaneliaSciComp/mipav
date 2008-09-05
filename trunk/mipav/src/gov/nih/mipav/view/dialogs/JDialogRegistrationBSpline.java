@@ -278,6 +278,13 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
                 } else {
                     MipavUtil.showHelp("19020");
                 }
+            } else if (kStringDimension.equals("2")) {
+
+                if (m_kCheckMultiPass.isSelected()) {
+                    MipavUtil.showHelp("19018");
+                } else {
+                    MipavUtil.showHelp("19016");
+                }
             }
         }
     }
