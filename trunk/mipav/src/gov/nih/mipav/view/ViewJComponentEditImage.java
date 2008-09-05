@@ -1,6 +1,5 @@
 package gov.nih.mipav.view;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.*;
 
@@ -21,6 +20,8 @@ import java.text.*;
 import java.util.*;
 
 import javax.swing.JOptionPane;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -394,7 +395,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
     /** flag indicating whether there is 0 to 1 LUT Adjustment * */
     private boolean zeroToOneLUTAdj = false;
-    
+
     private int[] paintBuffer;
 
     // ~ Constructors
@@ -2570,17 +2571,17 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
         } else if (cursorMode == ERASER_PAINT) {
             performPaint(mouseEvent, true);
-            if(imageActive.getTriImageFrame() == null) {
-            	imageActive.notifyImageDisplayListeners();
-            }else {
-            	imageActive.notifyImageDisplayListeners_notTriFrame();
+            if (imageActive.getTriImageFrame() == null) {
+                imageActive.notifyImageDisplayListeners();
+            } else {
+                imageActive.notifyImageDisplayListeners_notTriFrame();
             }
         } else if (cursorMode == PAINT_VOI) {
             performPaint(mouseEvent, mouseMods == MouseEvent.BUTTON3_MASK);
-            if(imageActive.getTriImageFrame() == null) {
-            	imageActive.notifyImageDisplayListeners();
-            }else {
-            	imageActive.notifyImageDisplayListeners_notTriFrame();
+            if (imageActive.getTriImageFrame() == null) {
+                imageActive.notifyImageDisplayListeners();
+            } else {
+                imageActive.notifyImageDisplayListeners_notTriFrame();
             }
         }
     }
@@ -4836,15 +4837,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * Undoes the last paint.
      */
     public void undoLastPaint() {
-        int pEnd = paintBitmap.size();
-
-        for (int p = 0; p < pEnd; p++) {
-
-            if (paintBitmapBU.get(p)) {
-                paintBitmap.set(p);
-            } else {
-                paintBitmap.clear(p);
-            }
+        paintBitmap.clear();
+        for (int i = paintBitmapBU.nextSetBit(0); i >= 0; i = paintBitmapBU.nextSetBit(i + 1)) {
+            paintBitmap.set(i);
         }
 
         if (growDialog != null) {
@@ -4866,7 +4861,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         if (isGrower) {
 
             if (backup) {
-                paintBitmapBU = (BitSet) paintBitmap.clone();
+                paintBitmapBU.clear();
+                for (int i = paintBitmap.nextSetBit(0); i >= 0; i = paintBitmap.nextSetBit(i + 1)) {
+                    paintBitmapBU.set(i);
+                }
             }
 
             paintBitmap = region;
@@ -5046,7 +5044,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
             performPaint(mouseEvent, mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK);
-            //imageActive.notifyImageDisplayListeners();  8/12/2008-nish  Commented out b/c we want update on mouse release
+            // imageActive.notifyImageDisplayListeners(); 8/12/2008-nish Commented out b/c we want update on mouse
+            // release
         }
 
         if ( (cursorMode == MAG_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
@@ -5057,19 +5056,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             }
         }
     }
-    
+
     /**
-     * Creates the Java image to be displayed from the model image. Makes it
-     * from the appropriate slice.
-     *
-     * @param   slice  Slice of image to create java image from.
-     *
-     * @return  Flag indicating success or failure.
+     * Creates the Java image to be displayed from the model image. Makes it from the appropriate slice.
+     * 
+     * @param slice Slice of image to create java image from.
+     * 
+     * @return Flag indicating success or failure.
      */
     public boolean createImg(int slice) {
-    	m_kPatientSlice.updateSlice( slice );
-        
-        if ( m_kPatientSlice.showUsingOrientation( 0, paintBuffer,null, true,false, 0, false ) ) {
+        m_kPatientSlice.updateSlice(slice);
+
+        if (m_kPatientSlice.showUsingOrientation(0, paintBuffer, null, true, false, 0, false)) {
             importImage(paintBuffer);
         }
         return true;
@@ -5314,15 +5312,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     private void backupPaintBitmap() {
         paintBitmapBU.clear();
 
-        int pEnd = paintBitmap.size();
-
-        for (int p = 0; p < pEnd; p++) {
-
-            if (paintBitmap.get(p)) {
-                paintBitmapBU.set(p);
-            } else {
-                paintBitmapBU.clear(p);
-            }
+        for (int i = paintBitmap.nextSetBit(0); i >= 0; i = paintBitmap.nextSetBit(i + 1)) {
+            paintBitmapBU.set(i);
         }
     }
 
