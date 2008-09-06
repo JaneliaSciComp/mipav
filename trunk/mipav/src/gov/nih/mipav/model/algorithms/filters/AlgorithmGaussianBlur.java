@@ -116,6 +116,11 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
 
             return;
         }
+        
+//		 Test to calc speed of srcImage.calcMinMax()
+//		long startTimeMM = System.nanoTime();
+//		for (int m = 0; m < 1200; m++){ srcImage.calcMinMax(); }
+//		System.out.println("Time consumed: MIN MAX " + (System.nanoTime()-startTimeMM));
 
         if (srcImage.getNDims() == 2) {
             makeKernels2D();
@@ -133,6 +138,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
 
             return;
         }
+        
         long startTime = System.nanoTime();
         fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
 
@@ -152,7 +158,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
         convolver.run();
 
         setCompleted(true);
-        System.out.println("Time consumed: " + (System.nanoTime()-startTime));
+        System.out.println("Time consumed GB: " + (System.nanoTime()-startTime));
     }
 
     /**
@@ -754,6 +760,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
     	for (int s = startSlice; s < endSlice; s++) {
 			int start = s * length;
 			float[] buffer = new float[length];
+			
 			try {
 				srcImage.exportData(start, length, buffer); // locks and
 															// releases lock

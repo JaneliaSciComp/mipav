@@ -409,7 +409,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         // before computing the new min, max, save the last values.
         lastMin = min;
         lastMax = max;
-
+        
         min = Double.POSITIVE_INFINITY;
         max = Double.NEGATIVE_INFINITY;
 
@@ -418,17 +418,38 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) {
 
-            for (i = 0; i < dataSize; i++) {
-                value = data.getDouble(i);
-
-                if (value > max) {
-                    max = value;
-                }
-
-                if (value < min) {
-                    min = value;
-                }
-            }
+        	/*if (bufferType == SHORT) {  // I thought this would be faster but it is not -- Matt 9/5/2008
+        		short minShort;	
+                short maxShort;
+                short valueShort;
+        		minShort = Short.MAX_VALUE;
+                maxShort = Short.MIN_VALUE;
+                for (i = 0; i < dataSize; i++) {
+                	valueShort = data.getShort(i);
+	
+	                if (valueShort > maxShort) {
+	                	maxShort = valueShort;
+	                }
+	
+	                if (valueShort < minShort) {
+	                	minShort = valueShort;
+	                }
+	            }
+                min = minShort;
+                max = maxShort;
+        	}*/
+        	//else if (bufferType == DOUBLE) {
+	            for (i = 0; i < dataSize; i++) {
+	                value = data.getDouble(i);
+	                if (value > max) {
+	                    max = value;
+	                }
+	
+	                if (value < min) {
+	                    min = value;
+	                }
+	            }
+	        //}
         } else { // color
             minR = Double.POSITIVE_INFINITY;
             maxR = Double.NEGATIVE_INFINITY;
