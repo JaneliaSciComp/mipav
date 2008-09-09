@@ -8,6 +8,7 @@ import gov.nih.mipav.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 
 import org.apache.xerces.jaxp.*;
 
@@ -284,11 +285,12 @@ public class FileVOI extends FileXML {
 
             Vector3f arrowPt, textPt, arrowPtScanner, textPtScanner;
             int fontSize, fontDescriptors;
-            boolean useMarker;
+            boolean useMarker, doNote;
             String fontName;
             Color voiColor;
             Color voiBackgroundColor;
             String voiString;
+            String noteString = new String();
 
             arrowPtScanner = new Vector3f();
             textPtScanner = new Vector3f();
@@ -309,16 +311,21 @@ public class FileVOI extends FileXML {
                             // there's only one per VOI
                             vText = (VOIText) curves[j].elementAt(k);
                             voiString = vText.getText();
+                            noteString = vText.getNote();
+                        	doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
+                        	
                             voiColor = vText.getColor();
                             voiBackgroundColor = vText.getBackgroundColor();
-                            textPt = (Vector3f) vText.elementAt(0);
-                            arrowPt = (Vector3f) vText.elementAt(1);
+                            textPt = vText.elementAt(0);
+                            arrowPt = vText.elementAt(1);
                             useMarker = vText.useMarker();
                             fontSize = vText.getFontSize();
                             fontName = vText.getFontName();
                             fontDescriptors = vText.getFontDescriptors();
 
                             closedTag( "Text", voiString);
+                            if(doNote)
+                            	closedTag( "Note", noteString);
 
                             if (image.getNDims() > 2) {
                                 MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
@@ -439,11 +446,12 @@ public class FileVOI extends FileXML {
 
             Vector3f arrowPt, textPt, arrowPtScanner, textPtScanner;
             int fontSize, fontDescriptors;
-            boolean useMarker;
+            boolean useMarker, doNote = false;
             String fontName;
             Color voiColor;
             Color voiBackgroundColor;
             String voiString;
+            String noteString = new String();
 
             arrowPtScanner = new Vector3f();
             textPtScanner = new Vector3f();
@@ -461,13 +469,15 @@ public class FileVOI extends FileXML {
 
                         	vText = (VOIText) curves[j].elementAt(k);
                         	voiString = vText.getText();
+                        	noteString = vText.getNote();
+                        	doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
                         	
                         	//System.out.println("VOI Name: "+voiString+"\tfile: "+file.getName());
                         	if(writeAllInSameFile || 
                         			(!writeAllInSameFile && voiString.equals(file.getName().substring(0, file.getName().lastIndexOf('.'))))) {
                         		
 	                        	openTag("Label", true);
-	
+	                        	
 	                            // there's only one per VOI, but 
 	                            voiColor = vText.getColor();
 	                            voiBackgroundColor = vText.getBackgroundColor();
@@ -479,6 +489,8 @@ public class FileVOI extends FileXML {
 	                            fontDescriptors = vText.getFontDescriptors();
 	
 	                            closedTag( "Text", voiString);
+	                            if(doNote)
+	                            	closedTag( "Note", noteString);
 	
 	                            if (image.getNDims() > 2) {
 	                                MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
@@ -1881,7 +1893,9 @@ public class FileVOI extends FileXML {
                 voi.setUID(Integer.parseInt(elementBuffer));
             } else if (currentKey.equals("Text")) {
                 voiText.setText(elementBuffer);
-            } else if (currentKey.equals("TextLocation") || currentKey.equals("ArrowLocation")) {
+            } else if (currentKey.equals("Note")) {
+            	voiText.setNote(elementBuffer);
+        	} else if (currentKey.equals("TextLocation") || currentKey.equals("ArrowLocation")) {
                 float x = 0f, y = 0f, z = 0f;
                 StringTokenizer st = new StringTokenizer(elementBuffer, ",");
 

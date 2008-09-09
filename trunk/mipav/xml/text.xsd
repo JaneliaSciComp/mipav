@@ -12,6 +12,7 @@
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element name="Text" type="xs:string"/>
+							<xs:element name="Note" type="xs:string"/>
 							<xs:element name="TextLocation" type="xs:string"/>
 							<xs:element name="ArrowLocation" type="xs:string"/>
 							<xs:element name="UseMarker" type="xs:boolean"/>
