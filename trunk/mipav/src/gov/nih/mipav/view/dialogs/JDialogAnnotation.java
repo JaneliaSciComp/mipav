@@ -10,6 +10,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicBorders;
 
 
 /**
@@ -25,6 +26,9 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 2171038314100102783L;
+    
+    /**Default notes section text*/
+    public static final String DEFAULT_NOTES = "Enter notes for the annotation here.  This field is optional.";
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -79,9 +83,12 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
     /** slice of image where the VOI resides. */
     private int slice;
 
-    /** TextField that will contain the string to be displayed. */
-    private JTextField textField;
+    /** NameField that will contain the string to be displayed. */
+    private JTextField nameField;
 
+    /** NoteField for providing a note about this marker. Note only displayed when clicked. */
+    private JTextArea noteField;
+    
     /** the VOI that contains the VOIText. */
     private VOI textVOI;
 
@@ -137,7 +144,9 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
                         }
 
                         textVOI.setActive(true);
-                        textVOI.setName(textField.getText());
+                        textVOI.setName(nameField.getText());
+                        if(!noteField.getText().equals(DEFAULT_NOTES) && noteField.getText().length() > 0)
+                        	((VOIText) (textVOI.getCurves()[slice].elementAt(0))).setNote(noteField.getText());
                         ((VOIText) (textVOI.getCurves()[slice].elementAt(0))).setActive(true);
                         activeImage.notifyImageDisplayListeners();
                     }
@@ -185,12 +194,16 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
                 fontDescriptors += Font.ITALIC;
             }
 
-            textField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
+            nameField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
                                        Integer.parseInt(fontSizeField.getText())));
+            noteField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
+                    Integer.parseInt(fontSizeField.getText())));
 
         } else if (event.getSource() == fontTypeBox) {
-            textField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
+            nameField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
                                        Integer.parseInt(fontSizeField.getText())));
+            noteField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
+                    Integer.parseInt(fontSizeField.getText())));
         }
 
         pack();
@@ -220,10 +233,10 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
 
         fontTypeBox.addItemListener(this);
 
-        boldBox = new JCheckBox("bold");
+        boldBox = new JCheckBox("Bold");
         boldBox.addItemListener(this);
 
-        italicBox = new JCheckBox("italic");
+        italicBox = new JCheckBox("Italic");
         italicBox.addItemListener(this);
 
         fontSizeField = new JTextField(2);
@@ -266,7 +279,8 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         colorButton.setBackground(textVOI.getColor());
         colorButton.setForeground(textVOI.getColor());
         colorButton.setToolTipText("Click to change text color");
-        textField.setForeground(textVOI.getColor());
+        nameField.setForeground(textVOI.getColor());
+        noteField.setForeground(textVOI.getColor());
 
         colorButton.addActionListener(this);
         colorButton.setActionCommand("ChooseColor");
@@ -284,7 +298,8 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         backgroundColorButton.setSize(24, 24);
         backgroundColorButton.setMaximumSize(new Dimension(24, 24));
 
-        textField.setBackground(vt.getBackgroundColor());
+        nameField.setBackground(vt.getBackgroundColor());
+        noteField.setBackground(vt.getBackgroundColor());
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -342,22 +357,22 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         scrollPanel = new JPanel();
         buttonPanel = this.buildButtons();
 
-        textField = new JTextField(30);
+        nameField = new JTextField(25);
 
-        scrollPane = new JScrollPane(textField, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                     JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane = new JScrollPane(nameField, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-        scrollPanel.setBorder(buildTitledBorder("Text"));
+        scrollPanel.setBorder(buildTitledBorder("Name"));
 
         scrollPanel.add(scrollPane);
 
         VOIText vt = (VOIText) textVOI.getCurves()[slice].elementAt(0);
-        textField.setFont(new Font(vt.getFontName(), vt.getFontDescriptors(), vt.getFontSize()));
+        nameField.setFont(new Font(vt.getFontName(), vt.getFontDescriptors(), vt.getFontSize()));
 
         if (!vt.getText().equals("")) {
-            textField.setText(vt.getText());
+            nameField.setText(vt.getText());
         } else {
-            textField.setText("Enter text here");
+            nameField.setText("Enter name here");
         }
 
         JPanel markerPanel = new JPanel();
@@ -369,14 +384,58 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
 
         boolean useMarker = vt.useMarker();
         useMarkerBox.setSelected(useMarker);
+        
+        JPanel notePanel = new JPanel();
+        notePanel.setBorder(buildTitledBorder("Notes Section"));
+       
+        noteField = new JTextArea(DEFAULT_NOTES);
+        noteField.setRows(4);
+        noteField.setFont(new Font(vt.getFontName(), vt.getFontDescriptors(), vt.getFontSize()));
+        noteField.setBackground(textVOI.getColor());
+        noteField.setEditable(true);
+        noteField.setLineWrap(true);
+        noteField.setWrapStyleWord(true);
+        if (!vt.getNote().equals("") && !vt.getNote().equals(DEFAULT_NOTES)) {
+            noteField.setText(vt.getNote());
+        } else {
+            noteField.setText(DEFAULT_NOTES);
+        }
+        
+        JScrollPane containerPane = new JScrollPane(noteField);
+        containerPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        containerPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        containerPane.setMinimumSize(new Dimension(279, 90));
+        containerPane.setMaximumSize(new Dimension(279, 90));
+        containerPane.setPreferredSize(new Dimension(279, 90));
+        containerPane.setBorder(BasicBorders.getTextFieldBorder());
+
+        notePanel.add(containerPane);
 
         mainDialogPanel.setLayout(layout);
 
-        JPanel centerPanel = new JPanel(new BorderLayout());
+        JPanel centerPanel = new JPanel(new GridBagLayout());
 
-        centerPanel.add(buildFontPanel(), BorderLayout.NORTH);
-        centerPanel.add(scrollPanel, BorderLayout.CENTER);
-        centerPanel.add(markerPanel, BorderLayout.SOUTH);
+        GridBagConstraints c = new GridBagConstraints();
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 0;
+		c.gridwidth = 2;
+        centerPanel.add(buildFontPanel(), c);
+        c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 1;
+		c.gridwidth = 1;
+        centerPanel.add(scrollPanel, c);
+        c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 1;
+		c.gridwidth = 1;
+        centerPanel.add(markerPanel, c);
+        c.fill = GridBagConstraints.BOTH;
+        c.gridx = 0;
+        c.gridy = 2;
+        c.gridwidth = 2;
+        centerPanel.add(notePanel, c);
 
         mainDialogPanel.add(centerPanel, BorderLayout.CENTER);
         mainDialogPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -384,8 +443,10 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         getContentPane().add(mainDialogPanel);
 
         pack();
-        textField.requestFocus();
-        textField.selectAll();
+        nameField.requestFocus();
+        nameField.selectAll();
+        
+        System.out.println(noteField.getSize());
     }
 
     /**
@@ -398,7 +459,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         try {
             VOIText vt = (VOIText) textVOI.getCurves()[slice].elementAt(0);
             vt.setFontSize(Integer.parseInt(fontSizeField.getText()));
-            vt.setText(textField.getText());
+            vt.setText(nameField.getText());
 
             vt.setFontDescriptors(fontDescriptors);
             vt.setFontName((String) fontTypeBox.getSelectedItem());
@@ -436,10 +497,12 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         public void actionPerformed(ActionEvent event) {
 
             if (!fontSizeField.getText().equals("")) {
-                textField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
+                nameField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
                                            Integer.parseInt(fontSizeField.getText())));
-                pack();
             }
+            noteField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
+                    Integer.parseInt(fontSizeField.getText())));
+            pack();
         }
     }
 
@@ -473,11 +536,13 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
             if (isBackground) {
                 backgroundColorButton.setForeground(color);
                 backgroundColorButton.setBackground(color);
-                textField.setBackground(color);
+                nameField.setBackground(color);
+                noteField.setBackground(color);
             } else {
                 colorButton.setForeground(color);
                 colorButton.setBackground(color);
-                textField.setForeground(color);
+                nameField.setForeground(color);
+                noteField.setForeground(color);
             }
         }
     }
