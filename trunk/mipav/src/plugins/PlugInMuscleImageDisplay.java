@@ -35,7 +35,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyListener, AlgorithmInterface {
+public class PlugInMuscleImageDisplay extends ViewJFrameImage implements AlgorithmInterface {
     
     //~ Static fields --------------------------------------------------------------------------------------------------
     
@@ -489,7 +489,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 	 * Handles automatic segmentation algorithm completions.
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
-		
 			
 		Vector<VOIBase>[] firstVOI = null;
 		Vector<VOIBase>[] secondVOI = null;
@@ -656,8 +655,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             return;
         }
 
-       
-
         //width and height calculated by size minus both insets of entire image+dialogbox
         width = getSize().width - (getInsets().left + getInsets().right);
         height = getSize().height - (getInsets().top + getInsets().bottom);
@@ -678,10 +675,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
         zoom = (int) Math.min((bigger ) / ((imageA.getExtents()[0] * widthResFactor) ),
                               (bigger ) / ((imageA.getExtents()[1] * heightResFactor) ));
 
-        
         //check to see if we are dealing with a small sized image at the minimum frame width
         if (imageSizeSmall && (zoom > componentImage.getZoomX()) && (getSize().width <= minFrameWidth)) {
-        	
         		//System.err.println("Doing nothing, returning\n\n\n");
         	return;
         }
@@ -770,8 +765,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
             updateImages(true);
         }
         
-        addComponentListener(this);
-        
+        addComponentListener(this);  
     }
     
     /**
@@ -1003,7 +997,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements KeyList
 
 	/**
 	 * Whether a VOI contains a particular curve for the given slice.  If bad name or slice number, 
-	 * returns false (performs bounds check)
+	 * should return false and perform bounds check, but does not currently
 	 * 
 	 * @param name Name of VOI to check for
 	 * @param slice Slice number to check

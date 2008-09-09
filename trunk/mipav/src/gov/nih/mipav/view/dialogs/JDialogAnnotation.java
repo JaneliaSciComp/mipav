@@ -11,6 +11,7 @@ import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicBorders;
+import javax.swing.plaf.metal.MetalBorders;
 
 
 /**
@@ -440,8 +441,6 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         pack();
         nameField.requestFocus();
         nameField.selectAll();
-        
-        System.out.println(nameField.getSize());
     }
 
     /**
@@ -494,9 +493,9 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
             if (!fontSizeField.getText().equals("")) {
                 nameField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
                                            Integer.parseInt(fontSizeField.getText())));
+                noteField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
+                        Integer.parseInt(fontSizeField.getText())));
             }
-            noteField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
-                    Integer.parseInt(fontSizeField.getText())));
             pack();
         }
     }
