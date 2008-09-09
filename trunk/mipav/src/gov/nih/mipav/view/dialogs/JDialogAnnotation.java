@@ -74,12 +74,6 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
     /** checkbox for italic style. */
     private JCheckBox italicBox;
 
-    /** pane within scrollpanel. */
-    private JScrollPane scrollPane;
-
-    /** panel to hold the jtextfield. */
-    private JPanel scrollPanel;
-
     /** slice of image where the VOI resides. */
     private int slice;
 
@@ -354,26 +348,27 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
 
         BorderLayout layout = new BorderLayout(25, 25);
 
-        scrollPanel = new JPanel();
+        JPanel namePanel = new JPanel();
         buttonPanel = this.buildButtons();
 
         nameField = new JTextField(25);
+        
+        namePanel.setBorder(buildTitledBorder("Name"));
 
-        scrollPane = new JScrollPane(nameField, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-        scrollPanel.setBorder(buildTitledBorder("Name"));
-
-        scrollPanel.add(scrollPane);
+        namePanel.add(nameField);
 
         VOIText vt = (VOIText) textVOI.getCurves()[slice].elementAt(0);
         nameField.setFont(new Font(vt.getFontName(), vt.getFontDescriptors(), vt.getFontSize()));
+        nameField.setBorder(BasicBorders.getTextFieldBorder());
 
         if (!vt.getText().equals("")) {
             nameField.setText(vt.getText());
         } else {
             nameField.setText("Enter name here");
         }
+        nameField.setMinimumSize(new Dimension(229, 26));
+        nameField.setPreferredSize(new Dimension(229, 26));
+        nameField.setMaximumSize(new Dimension(229, 26));
 
         JPanel markerPanel = new JPanel();
         markerPanel.setBorder(buildTitledBorder("Marker options"));
@@ -425,7 +420,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
 		c.gridx = 0;
 		c.gridy = 1;
 		c.gridwidth = 1;
-        centerPanel.add(scrollPanel, c);
+        centerPanel.add(namePanel, c);
         c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridx = 1;
 		c.gridy = 1;
@@ -446,7 +441,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         nameField.requestFocus();
         nameField.selectAll();
         
-        System.out.println(noteField.getSize());
+        System.out.println(nameField.getSize());
     }
 
     /**
