@@ -62,6 +62,9 @@ public class VOIText extends VOIBase {
     /** The String to be displayed. */
     private String textString = new String();
     
+    /** The note stored in VOIText, has same font as textString*/
+    private String noteString = new String();
+    
     /** If this is set to true, a draggable arrow will be displayed */
     private boolean useMarker = true;
     
@@ -388,6 +391,15 @@ public class VOIText extends VOIBase {
     public String getText() {
         return textString;
     }
+    
+    /**
+     * Gets the contained note.
+     *
+     * @return  Contained note of the VOIText
+     */
+    public String getNote() {
+        return noteString;
+    }
 
     /**
      * Import points into the contour.
@@ -594,6 +606,15 @@ public class VOIText extends VOIBase {
      */
     public void setText(String textString) {
         this.textString = textString;
+    }
+    
+    /**
+     * Sets the contained note.
+     *
+     * @param  noteString  String note stored in VOIText
+     */
+    public void setNote(String noteString) {
+        this.noteString = noteString;
     }
 
 
