@@ -339,6 +339,7 @@ public class FileAvi extends FileBase {
     public ModelImage readImage(boolean one) throws IOException {
         int[] imgExtents;
         byte[] imgBuffer;
+        byte[] imgBuffer2;
         byte[] fileBuffer;
         int bufferSize;
         int x, y, z, k;
@@ -1924,6 +1925,7 @@ public class FileAvi extends FileBase {
                 int len;
                 int i;
                 int j;
+                int c;
                 int cv_width;
                 int cv_height;
                 int strips;
@@ -1973,6 +1975,7 @@ public class FileAvi extends FileBase {
                 int pixelIndex;
                 int index;
                 int mask;
+                boolean sizeChanged = false;
                 bufferSize = 4 * imgExtents[0] * imgExtents[1];
                 imgBuffer = new byte[bufferSize];
                 dataSignature = new byte[4];
@@ -2180,12 +2183,24 @@ public class FileAvi extends FileBase {
                                     y1 |= (fileBuffer[j++] & 0xff);
                                     x1 = (fileBuffer[j++] & 0xff) << 8;
                                     x1 |= (fileBuffer[j++] & 0xff);
+                                    Preferences.debug("x0 = " + x0 + " x1 = " + x1 + " y0 = " + y0 + " y1 = " + y1 + "\n");
                                     
                                     y_bottom += y1;
                                     top_size -= 12;
                                     x = 0;
-                                    if (x1 != imgExtents[0]) {
-                                        Preferences.debug("Warning x1 = " + x1 + " instead of " + imgExtents[0] + "\n");
+                                    if ((!sizeChanged) && ((cv_width != imgExtents[0]) || (cv_height != imgExtents[1]))) {
+                                        sizeChanged = true;
+                                        if (cv_width != imgExtents[0]) {
+                                            Preferences.debug("cv_width = " + cv_width + " instead of " +
+                                                              imgExtents[0] + "\n");
+                                        }
+                                        if (cv_height != imgExtents[1]) {
+                                            Preferences.debug("cv_height = " + cv_height + " instead of " +
+                                                              imgExtents[1] + "\n");
+                                        }
+                                        row_inc = 4 * (cv_width - 4);
+                                        bufferSize = 4 * cv_width * cv_height;
+                                        imgBuffer = new byte[bufferSize];
                                     }
                                     while (top_size > 0) {
                                         chunk_id = (fileBuffer[j++] & 0xff) << 8;
@@ -2417,7 +2432,7 @@ public class FileAvi extends FileBase {
                                                             d2 = fileBuffer[j++] & 0xff;
                                                             d3 = fileBuffer[j++] & 0xff;
                                                             chunk_size -= 4;
-                                                            pixelIndex = 4 * imgExtents[0] * y + 4 * x;
+                                                            pixelIndex = 4 * cv_width * y + 4 * x;
                                                             
                                                             imgBuffer[pixelIndex + 1] = v4r[cur_strip][d0][0];
                                                             imgBuffer[pixelIndex + 2] = v4g[cur_strip][d0][0];
@@ -2496,7 +2511,7 @@ public class FileAvi extends FileBase {
                                                         else {
                                                             // 1 byte per block
                                                             index = fileBuffer[j++] & 0xff;
-                                                            pixelIndex = 4 * imgExtents[0] * y + 4 * x;
+                                                            pixelIndex = 4 * cv_width * y + 4 * x;
                                                             imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
                                                             imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
                                                             imgBuffer[pixelIndex + 3] = v1b[cur_strip][index][0];
@@ -2573,7 +2588,7 @@ public class FileAvi extends FileBase {
                                                             chunk_size--;
                                                         } // else 1 byte per block
                                                         x += 4;
-                                                        if (x >= imgExtents[0]) {
+                                                        if (x >= cv_width) {
                                                             x = 0;
                                                             y += 4;
                                                         }
@@ -2619,7 +2634,7 @@ public class FileAvi extends FileBase {
                                                                 d2 = fileBuffer[j++] & 0xff;
                                                                 d3 = fileBuffer[j++] & 0xff;
                                                                 chunk_size -= 4;
-                                                                pixelIndex = 4 * imgExtents[0] * y + 4 * x;
+                                                                pixelIndex = 4 * cv_width * y + 4 * x;
                                                                 
                                                                 imgBuffer[pixelIndex + 1] = v4r[cur_strip][d0][0];
                                                                 imgBuffer[pixelIndex + 2] = v4g[cur_strip][d0][0];
@@ -2700,7 +2715,7 @@ public class FileAvi extends FileBase {
                                                                 // V1
                                                                 chunk_size--;
                                                                 index = fileBuffer[j++] & 0xff;
-                                                                pixelIndex = 4 * imgExtents[0] * y + 4 * x;
+                                                                pixelIndex = 4 * cv_width * y + 4 * x;
                                                                 
                                                                 imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
                                                                 imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
@@ -2779,7 +2794,7 @@ public class FileAvi extends FileBase {
                                                         } // if ((flag & mask) != 0)
                                                         mask >>>= 1;
                                                         x += 4;
-                                                        if (x >= imgExtents[0]) {
+                                                        if (x >= cv_width) {
                                                             x = 0;
                                                             y += 4;
                                                         }
@@ -2795,7 +2810,7 @@ public class FileAvi extends FileBase {
                                                 // List of blocks from only the V1 codebook
                                                 while((chunk_size > 0) && (y < y_bottom)) {
                                                     index = fileBuffer[j++] & 0xff;
-                                                    pixelIndex = 4 * imgExtents[0] * y + 4 * x;
+                                                    pixelIndex = 4 * cv_width * y + 4 * x;
                                                     
                                                     imgBuffer[pixelIndex + 1] = v1r[cur_strip][index][0];
                                                     imgBuffer[pixelIndex + 2] = v1g[cur_strip][index][0];
@@ -2872,7 +2887,7 @@ public class FileAvi extends FileBase {
                                                     } // if (pixelIndex < bufferSize)
                                                     chunk_size--;
                                                     x += 4;
-                                                    if (x >= imgExtents[0]) {
+                                                    if (x >= cv_width) {
                                                         x = 0;
                                                         y += 4;
                                                     }
@@ -2895,10 +2910,28 @@ public class FileAvi extends FileBase {
                                     } // while (top_size > 0)
                                 } // for (cur_strip = 0; cur_strip < strips; cur_strip++)
 
-                                if (one) {
-                                    imageA.importData(0, imgBuffer, false);
-                                } else {
-                                    imageA.importData(z * bufferSize, imgBuffer, false);
+                                if ((cv_width != imgExtents[0]) || (cv_height != imgExtents[1])) {
+                                    bufferSize = 4 * imgExtents[0] * imgExtents[1];
+                                    imgBuffer2 = new byte[bufferSize];
+                                    for (y = 0; y < imgExtents[1]; y++) {
+                                        for (x = 0; x < imgExtents[0]; x++) {
+                                            for (c = 0; c < 4; c++) {
+                                                imgBuffer2[4*(x + y * imgExtents[0]) + c] = imgBuffer[4*(x + y * cv_width) + c];
+                                            }
+                                        }
+                                    }
+                                    if (one) {
+                                        imageA.importData(0, imgBuffer2, false);
+                                    } else {
+                                        imageA.importData(z * bufferSize, imgBuffer2, false);
+                                    }
+                                }
+                                else {
+                                    if (one) {
+                                        imageA.importData(0, imgBuffer, false);
+                                    } else {
+                                        imageA.importData(z * bufferSize, imgBuffer, false);
+                                    }
                                 }
 
                                 if (actualFrames > 1) {
@@ -5229,7 +5262,7 @@ public class FileAvi extends FileBase {
                 if (doCVID && (bitCount == 40)) {
                     // Greyscale depth 40(really depth 8) cinepak encoded AVI file
                     // The depth 40 is an artifact of it being converted from quicktime where 
-                    // dpeth 40 is really depth 8 greyscale.
+                    // depth 40 is really depth 8 greyscale.
                     bitCount = 8;
                 }
 
