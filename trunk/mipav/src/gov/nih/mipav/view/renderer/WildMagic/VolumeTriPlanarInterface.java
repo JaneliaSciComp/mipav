@@ -2773,7 +2773,7 @@ implements MouseListener, ItemListener, ChangeListener {
             VolumeSurface[] akVolumeSurfaces = raycastRenderWM.addSurface(akSurfaces, bReplace);  
             for (int i = 0; i < 3; i++) 
             {
-                //m_akPlaneRender[i].AddSurfaces(akVolumeSurfaces);
+                m_akPlaneRender[i].AddSurfaces(akVolumeSurfaces);
             }
             insertTab("Light", lightPanel);
             m_kLightsPanel.enableLight(0, true);
@@ -3120,9 +3120,11 @@ implements MouseListener, ItemListener, ChangeListener {
                 jar_filename = fn;   
                 String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib\\"));
                 externalDirs = externalDirs.concat("WildMagic");
+                System.err.println("Shader dir found: " + externalDirs);
                 return externalDirs;
             }
         }
+        System.err.println("Shader dir not found");
         return System.getProperties().getProperty("user.dir");
     }
     
