@@ -3111,26 +3111,26 @@ implements MouseListener, ItemListener, ChangeListener {
     }
     
     protected String getExternalDirs()
-    {
-        String jar_filename = "";
-        String class_path_key = "java.class.path";
-        String class_path = System.getProperty(class_path_key);
-        for (String fn : class_path.split(";") ) {
-            if (fn.endsWith("WildMagic.jar")) {
-                jar_filename = fn;   
-                String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib\\"));
-                externalDirs = externalDirs.concat("WildMagic");
-                System.err.println("Shader dir found: " + externalDirs);
-                return externalDirs;
-            }
-        }
-        System.err.println("Shader dir not found");
-        return System.getProperties().getProperty("user.dir");
-    }
+	{
+		String jar_filename = "";
+		String class_path_key = "java.class.path";
+		String class_path = System.getProperty(class_path_key);
+		for (String fn : class_path.split(":")) {
+			if (fn.endsWith("WildMagic.jar")) {
+				jar_filename = fn;
+				String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib"));
+				externalDirs = externalDirs.concat("WildMagic");
+				System.err.println("Shader dir found: " + externalDirs);
+				return externalDirs;
+			}
+		}
+		System.err.println("Shader dir not found");
+		return System.getProperties().getProperty("user.dir");
+	}
     
     /**
-     * Set the camera parameters for displaying.
-     */
+	 * Set the camera parameters for displaying.
+	 */
     public void setCameraParameters() {
     	displayGUI.displayCameraParams(raycastRenderWM.getCameraParameters());
     }
