@@ -339,7 +339,7 @@ public class FileAvi extends FileBase {
     public ModelImage readImage(boolean one) throws IOException {
         int[] imgExtents;
         byte[] imgBuffer;
-        byte[] imgBuffer2;
+        byte[] imgBuffer2 = null;
         byte[] fileBuffer;
         int bufferSize;
         int x, y, z, k;
@@ -2199,8 +2199,8 @@ public class FileAvi extends FileBase {
                                                               imgExtents[1] + "\n");
                                         }
                                         row_inc = 4 * (cv_width - 4);
-                                        bufferSize = 4 * cv_width * cv_height;
-                                        imgBuffer = new byte[bufferSize];
+                                        imgBuffer = new byte[4 * cv_width * cv_height];
+                                        imgBuffer2 = new byte[4 * imgExtents[0] * imgExtents[1]];
                                     }
                                     while (top_size > 0) {
                                         chunk_id = (fileBuffer[j++] & 0xff) << 8;
@@ -2911,8 +2911,6 @@ public class FileAvi extends FileBase {
                                 } // for (cur_strip = 0; cur_strip < strips; cur_strip++)
 
                                 if ((cv_width != imgExtents[0]) || (cv_height != imgExtents[1])) {
-                                    bufferSize = 4 * imgExtents[0] * imgExtents[1];
-                                    imgBuffer2 = new byte[bufferSize];
                                     for (y = 0; y < imgExtents[1]; y++) {
                                         for (x = 0; x < imgExtents[0]; x++) {
                                             for (c = 0; c < 4; c++) {
