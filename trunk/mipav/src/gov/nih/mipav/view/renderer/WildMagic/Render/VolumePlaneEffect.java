@@ -272,7 +272,7 @@ public class VolumePlaneEffect extends ShaderEffect
     {
         m_afBlend[0] = fBlend;
         Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("blend") != null ) 
+        if ( pkProgram != null && pkProgram.GetUC("blend") != null ) 
         {
             pkProgram.GetUC("blend").SetDataSource(m_afBlend);
         }
