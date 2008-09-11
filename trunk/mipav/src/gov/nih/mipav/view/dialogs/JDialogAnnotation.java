@@ -400,9 +400,9 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         JScrollPane containerPane = new JScrollPane(noteField);
         containerPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         containerPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        containerPane.setMinimumSize(new Dimension(279, 90));
-        containerPane.setMaximumSize(new Dimension(279, 90));
-        containerPane.setPreferredSize(new Dimension(279, 90));
+        containerPane.setMinimumSize(new Dimension(505, 93));
+        containerPane.setMaximumSize(new Dimension(505, 93));
+        containerPane.setPreferredSize(new Dimension(505, 93));
         containerPane.setBorder(BasicBorders.getTextFieldBorder());
 
         notePanel.add(containerPane);
