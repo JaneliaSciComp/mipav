@@ -180,25 +180,17 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
 
         if ((event.getSource() == boldBox) || (event.getSource() == italicBox)) {
             fontDescriptors = Font.PLAIN;
-
-            if (boldBox.isSelected()) {
+            if (boldBox.isSelected()) 
                 fontDescriptors += Font.BOLD;
-            }
-
-            if (italicBox.isSelected()) {
+            if (italicBox.isSelected()) 
                 fontDescriptors += Font.ITALIC;
-            }
-
-            nameField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
-                                       Integer.parseInt(fontSizeField.getText())));
-            noteField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
-                    Integer.parseInt(fontSizeField.getText())));
+                
+        	nameField.setFont(new Font((String) fontTypeBox.getSelectedItem(), Font.PLAIN, 12));
+            noteField.setFont(new Font((String) fontTypeBox.getSelectedItem(), Font.PLAIN, 12));
 
         } else if (event.getSource() == fontTypeBox) {
-            nameField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
-                                       Integer.parseInt(fontSizeField.getText())));
-            noteField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
-                    Integer.parseInt(fontSizeField.getText())));
+            nameField.setFont(new Font((String) fontTypeBox.getSelectedItem(), Font.PLAIN, 12));
+            noteField.setFont(new Font((String) fontTypeBox.getSelectedItem(), Font.PLAIN, 12));
         }
 
         pack();
@@ -274,8 +266,6 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         colorButton.setBackground(textVOI.getColor());
         colorButton.setForeground(textVOI.getColor());
         colorButton.setToolTipText("Click to change text color");
-        nameField.setForeground(textVOI.getColor());
-        noteField.setForeground(textVOI.getColor());
 
         colorButton.addActionListener(this);
         colorButton.setActionCommand("ChooseColor");
@@ -292,9 +282,6 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         backgroundColorButton.setActionCommand("ChooseBackgroundColor");
         backgroundColorButton.setSize(24, 24);
         backgroundColorButton.setMaximumSize(new Dimension(24, 24));
-
-        nameField.setBackground(vt.getBackgroundColor());
-        noteField.setBackground(vt.getBackgroundColor());
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -387,7 +374,6 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         noteField = new JTextArea(DEFAULT_NOTES);
         noteField.setRows(4);
         noteField.setFont(new Font(vt.getFontName(), vt.getFontDescriptors(), vt.getFontSize()));
-        noteField.setBackground(textVOI.getColor());
         noteField.setEditable(true);
         noteField.setLineWrap(true);
         noteField.setWrapStyleWord(true);
@@ -530,13 +516,9 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
             if (isBackground) {
                 backgroundColorButton.setForeground(color);
                 backgroundColorButton.setBackground(color);
-                nameField.setBackground(color);
-                noteField.setBackground(color);
             } else {
                 colorButton.setForeground(color);
                 colorButton.setBackground(color);
-                nameField.setForeground(color);
-                noteField.setForeground(color);
             }
         }
     }
