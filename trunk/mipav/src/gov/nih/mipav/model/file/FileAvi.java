@@ -1916,9 +1916,6 @@ public class FileAvi extends FileBase {
                     } // if (haveMoviSubchunk && (subchunkBlocksRead == streams))
                 } // while ((totalBytesRead < totalDataArea) && chunkRead)
             } // else if (doMSVC && (bitCount == 16))
-            else if (doCVID && (bitCount == 8)) {
-                
-            } // else if (doCVID && (bitCount == 8))  
             else if (doCVID && (bitCount == 24)) {
                 int y_bottom;
                 byte frame_flags;
