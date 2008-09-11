@@ -592,7 +592,7 @@ public class FileAvi extends FileBase {
                 moreExtents = imgExtents;
             }
 
-            if ((bitCount == 16) || (bitCount == 24) || (bitCount == 32) || doMSVC || (doCVID && (bitCount == 12))) {
+            if ((bitCount == 16) || (bitCount == 24) || (bitCount == 32) || doMSVC || doCVID) {
                 fileInfo.setDataType(ModelStorageBase.ARGB);
                 imageA = new ModelImage(ModelStorageBase.ARGB, moreExtents, fileName);
             } else if ((bitCount == 4) || (bitCount == 8)) {
@@ -2207,94 +2207,146 @@ public class FileAvi extends FileBase {
                                         chunk_id |= (fileBuffer[j++] & 0xff);
                                         chunk_size = (fileBuffer[j++] & 0xff) << 8;
                                         chunk_size |= (fileBuffer[j++] & 0xff);
+                                        Preferences.debug("chunk_id = " + chunk_id + " chunk_size = " + chunk_size + "\n");
                                         top_size -= chunk_size;
                                         chunk_size -= 4;
                                         
                                         switch(chunk_id) {
                                             /* Codebook entries */
-                                            case 0x2000:
+                                            case 0x2000: // color
+                                            case 0x2400: // black and white
                                                 // List of blocks in 12 bit V4 codebook
-                                                cnum = chunk_size/6;
+                                                if (chunk_id == 0x2000) {
+                                                    cnum = chunk_size/6;
+                                                }
+                                                else {
+                                                    cnum = chunk_size/4;
+                                                }
                                                 for (i = 0; i < cnum; i++) {
                                                     v4y0[cur_strip][i] = fileBuffer[j++]; // luma
                                                     v4y1[cur_strip][i] = fileBuffer[j++];
                                                     v4y2[cur_strip][i] = fileBuffer[j++];
                                                     v4y3[cur_strip][i] = fileBuffer[j++];
-                                                    v4u[cur_strip][i] = fileBuffer[j++]; // chroma
-                                                    v4v[cur_strip][i] = fileBuffer[j++];
-                                                    
-                                                    uvr = v4v[cur_strip][i] << 1;
-                                                    uvg = -((v4u[cur_strip][i] + 1) >> 1) - v4v[cur_strip][i];
-                                                    uvb = v4u[cur_strip][i] << 1;
-                                                    
-                                                    v4r[cur_strip][i][0] = uiclp[(v4y0[cur_strip][i] & 0xff) +
-                                                                                  uvr + 512];
-                                                    v4g[cur_strip][i][0] = uiclp[(v4y0[cur_strip][i] & 0xff) +
-                                                                                 uvg + 512];
-                                                    v4b[cur_strip][i][0] = uiclp[(v4y0[cur_strip][i] & 0xff) +
-                                                                                 uvb + 512];
-                                                    v4r[cur_strip][i][1] = uiclp[(v4y1[cur_strip][i] & 0xff) +
-                                                                                 uvr + 512];
-                                                    v4g[cur_strip][i][1] = uiclp[(v4y1[cur_strip][i] & 0xff) +
-                                                                                uvg + 512];
-                                                    v4b[cur_strip][i][1] = uiclp[(v4y1[cur_strip][i] & 0xff) +
-                                                                                uvb + 512];
-                                                    v4r[cur_strip][i][2] = uiclp[(v4y2[cur_strip][i] & 0xff) +
-                                                                                 uvr + 512];
-                                                    v4g[cur_strip][i][2] = uiclp[(v4y2[cur_strip][i] & 0xff) +
-                                                                                uvg + 512];
-                                                    v4b[cur_strip][i][2] = uiclp[(v4y2[cur_strip][i] & 0xff) +
-                                                                                uvb + 512];
-                                                    v4r[cur_strip][i][3] = uiclp[(v4y3[cur_strip][i] & 0xff) +
-                                                                                 uvr + 512];
-                                                    v4g[cur_strip][i][3] = uiclp[(v4y3[cur_strip][i] & 0xff) +
-                                                                                uvg + 512];
-                                                    v4b[cur_strip][i][3] = uiclp[(v4y3[cur_strip][i] & 0xff) +
-                                                                                uvb + 512];
+                                                    if (chunk_id == 0x2400) {
+                                                        v4u[cur_strip][i] = 0;
+                                                        v4v[cur_strip][i] = 0;
+                                                        
+                                                        v4r[cur_strip][i][0] = v4y0[cur_strip][i];
+                                                        v4g[cur_strip][i][0] = v4y0[cur_strip][i];
+                                                        v4b[cur_strip][i][0] = v4y0[cur_strip][i];
+                                                        v4r[cur_strip][i][1] = v4y1[cur_strip][i];
+                                                        v4g[cur_strip][i][1] = v4y1[cur_strip][i];
+                                                        v4b[cur_strip][i][1] = v4y1[cur_strip][i];
+                                                        v4r[cur_strip][i][2] = v4y2[cur_strip][i];
+                                                        v4g[cur_strip][i][2] = v4y2[cur_strip][i];
+                                                        v4b[cur_strip][i][2] = v4y2[cur_strip][i];
+                                                        v4r[cur_strip][i][3] = v4y3[cur_strip][i];
+                                                        v4g[cur_strip][i][3] = v4y3[cur_strip][i];
+                                                        v4b[cur_strip][i][3] = v4y3[cur_strip][i];
+                                                    }
+                                                    else {
+                                                        v4u[cur_strip][i] = fileBuffer[j++]; // chroma
+                                                        v4v[cur_strip][i] = fileBuffer[j++];
+                                                        
+                                                        uvr = v4v[cur_strip][i] << 1;
+                                                        uvg = -((v4u[cur_strip][i] + 1) >> 1) - v4v[cur_strip][i];
+                                                        uvb = v4u[cur_strip][i] << 1;
+                                                        
+                                                        v4r[cur_strip][i][0] = uiclp[(v4y0[cur_strip][i] & 0xff) +
+                                                                                      uvr + 512];
+                                                        v4g[cur_strip][i][0] = uiclp[(v4y0[cur_strip][i] & 0xff) +
+                                                                                     uvg + 512];
+                                                        v4b[cur_strip][i][0] = uiclp[(v4y0[cur_strip][i] & 0xff) +
+                                                                                     uvb + 512];
+                                                        v4r[cur_strip][i][1] = uiclp[(v4y1[cur_strip][i] & 0xff) +
+                                                                                     uvr + 512];
+                                                        v4g[cur_strip][i][1] = uiclp[(v4y1[cur_strip][i] & 0xff) +
+                                                                                    uvg + 512];
+                                                        v4b[cur_strip][i][1] = uiclp[(v4y1[cur_strip][i] & 0xff) +
+                                                                                    uvb + 512];
+                                                        v4r[cur_strip][i][2] = uiclp[(v4y2[cur_strip][i] & 0xff) +
+                                                                                     uvr + 512];
+                                                        v4g[cur_strip][i][2] = uiclp[(v4y2[cur_strip][i] & 0xff) +
+                                                                                    uvg + 512];
+                                                        v4b[cur_strip][i][2] = uiclp[(v4y2[cur_strip][i] & 0xff) +
+                                                                                    uvb + 512];
+                                                        v4r[cur_strip][i][3] = uiclp[(v4y3[cur_strip][i] & 0xff) +
+                                                                                     uvr + 512];
+                                                        v4g[cur_strip][i][3] = uiclp[(v4y3[cur_strip][i] & 0xff) +
+                                                                                    uvg + 512];
+                                                        v4b[cur_strip][i][3] = uiclp[(v4y3[cur_strip][i] & 0xff) +
+                                                                                    uvb + 512];
+                                                    }
                                                 } // for (i = 0; i < cnum; i++)
                                                 break;
-                                            case 0x2200:
+                                            case 0x2200: // color
+                                            case 0x2600: // black and white
                                                 // List of blocks in 12 bit V1 codebook
-                                                cnum = chunk_size/6;
+                                                if (chunk_id == 0x2200) {
+                                                    cnum = chunk_size/6;
+                                                }
+                                                else {
+                                                    cnum = chunk_size/4;
+                                                }
                                                 for (i = 0; i < cnum; i++) {
                                                     v1y0[cur_strip][i] = fileBuffer[j++]; // luma
                                                     v1y1[cur_strip][i] = fileBuffer[j++];
                                                     v1y2[cur_strip][i] = fileBuffer[j++];
                                                     v1y3[cur_strip][i] = fileBuffer[j++];
-                                                    v1u[cur_strip][i] = fileBuffer[j++]; // chroma
-                                                    v1v[cur_strip][i] = fileBuffer[j++];
-                                                    
-                                                    uvr = v1v[cur_strip][i] << 1;
-                                                    uvg = -((v1u[cur_strip][i] + 1) >> 1) - v1v[cur_strip][i];
-                                                    uvb = v1u[cur_strip][i] << 1;
-                                                    
-                                                    v1r[cur_strip][i][0] = uiclp[(v1y0[cur_strip][i] & 0xff) +
-                                                                                  uvr + 512];
-                                                    v1g[cur_strip][i][0] = uiclp[(v1y0[cur_strip][i] & 0xff) +
-                                                                                 uvg + 512];
-                                                    v1b[cur_strip][i][0] = uiclp[(v1y0[cur_strip][i] & 0xff) +
-                                                                                 uvb + 512];
-                                                    v1r[cur_strip][i][1] = uiclp[(v1y1[cur_strip][i] & 0xff) +
-                                                                                 uvr + 512];
-                                                    v1g[cur_strip][i][1] = uiclp[(v1y1[cur_strip][i] & 0xff) +
-                                                                                uvg + 512];
-                                                    v1b[cur_strip][i][1] = uiclp[(v1y1[cur_strip][i] & 0xff) +
-                                                                                uvb + 512];
-                                                    v1r[cur_strip][i][2] = uiclp[(v1y2[cur_strip][i] & 0xff) +
-                                                                                 uvr + 512];
-                                                    v1g[cur_strip][i][2] = uiclp[(v1y2[cur_strip][i] & 0xff) +
-                                                                                uvg + 512];
-                                                    v1b[cur_strip][i][2] = uiclp[(v1y2[cur_strip][i] & 0xff) +
-                                                                                uvb + 512];
-                                                    v1r[cur_strip][i][3] = uiclp[(v1y3[cur_strip][i] & 0xff) +
-                                                                                 uvr + 512];
-                                                    v1g[cur_strip][i][3] = uiclp[(v1y3[cur_strip][i] & 0xff) +
-                                                                                uvg + 512];
-                                                    v1b[cur_strip][i][3] = uiclp[(v1y3[cur_strip][i] & 0xff) +
-                                                                                uvb + 512];
+                                                    if (chunk_id == 0x2600) {
+                                                        v1u[cur_strip][i] = 0;
+                                                        v1v[cur_strip][i] = 0;
+                                                        
+                                                        v1r[cur_strip][i][0] = v1y0[cur_strip][i];
+                                                        v1g[cur_strip][i][0] = v1y0[cur_strip][i];
+                                                        v1b[cur_strip][i][0] = v1y0[cur_strip][i];
+                                                        v1r[cur_strip][i][1] = v1y1[cur_strip][i];
+                                                        v1g[cur_strip][i][1] = v1y1[cur_strip][i];
+                                                        v1b[cur_strip][i][1] = v1y1[cur_strip][i];
+                                                        v1r[cur_strip][i][2] = v1y2[cur_strip][i];
+                                                        v1g[cur_strip][i][2] = v1y2[cur_strip][i];
+                                                        v1b[cur_strip][i][2] = v1y2[cur_strip][i];
+                                                        v1r[cur_strip][i][3] = v1y3[cur_strip][i];
+                                                        v1g[cur_strip][i][3] = v1y3[cur_strip][i];
+                                                        v1b[cur_strip][i][3] = v1y3[cur_strip][i];    
+                                                    }
+                                                    else {
+                                                        v1u[cur_strip][i] = fileBuffer[j++]; // chroma
+                                                        v1v[cur_strip][i] = fileBuffer[j++];
+                                                        
+                                                        uvr = v1v[cur_strip][i] << 1;
+                                                        uvg = -((v1u[cur_strip][i] + 1) >> 1) - v1v[cur_strip][i];
+                                                        uvb = v1u[cur_strip][i] << 1;
+                                                        
+                                                        v1r[cur_strip][i][0] = uiclp[(v1y0[cur_strip][i] & 0xff) +
+                                                                                      uvr + 512];
+                                                        v1g[cur_strip][i][0] = uiclp[(v1y0[cur_strip][i] & 0xff) +
+                                                                                     uvg + 512];
+                                                        v1b[cur_strip][i][0] = uiclp[(v1y0[cur_strip][i] & 0xff) +
+                                                                                     uvb + 512];
+                                                        v1r[cur_strip][i][1] = uiclp[(v1y1[cur_strip][i] & 0xff) +
+                                                                                     uvr + 512];
+                                                        v1g[cur_strip][i][1] = uiclp[(v1y1[cur_strip][i] & 0xff) +
+                                                                                    uvg + 512];
+                                                        v1b[cur_strip][i][1] = uiclp[(v1y1[cur_strip][i] & 0xff) +
+                                                                                    uvb + 512];
+                                                        v1r[cur_strip][i][2] = uiclp[(v1y2[cur_strip][i] & 0xff) +
+                                                                                     uvr + 512];
+                                                        v1g[cur_strip][i][2] = uiclp[(v1y2[cur_strip][i] & 0xff) +
+                                                                                    uvg + 512];
+                                                        v1b[cur_strip][i][2] = uiclp[(v1y2[cur_strip][i] & 0xff) +
+                                                                                    uvb + 512];
+                                                        v1r[cur_strip][i][3] = uiclp[(v1y3[cur_strip][i] & 0xff) +
+                                                                                     uvr + 512];
+                                                        v1g[cur_strip][i][3] = uiclp[(v1y3[cur_strip][i] & 0xff) +
+                                                                                    uvg + 512];
+                                                        v1b[cur_strip][i][3] = uiclp[(v1y3[cur_strip][i] & 0xff) +
+                                                                                    uvb + 512];
+                                                    }
                                                 } // for (i = 0; i < cnum; i++)
                                                 break;
-                                            case 0x2100:
+                                            case 0x2100: // color
+                                            case 0x2500: // black and white
                                                 // Selective list of blocks to update 12 bit V4 codebook
                                                 ci = 0;
                                                 while (chunk_size > 0) {
@@ -2306,42 +2358,66 @@ public class FileAvi extends FileBase {
                                                     
                                                     for (i = 0; i < 32; i++) {
                                                         if ((flag & 0x80000000)!= 0) {
-                                                            chunk_size -= 6;
+                                                            if (chunk_id == 0x2100) {
+                                                                chunk_size -= 6;
+                                                            }
+                                                            else {
+                                                                chunk_size -= 4;
+                                                            }
                                                             v4y0[cur_strip][ci] = fileBuffer[j++]; // luma
                                                             v4y1[cur_strip][ci] = fileBuffer[j++];
                                                             v4y2[cur_strip][ci] = fileBuffer[j++];
                                                             v4y3[cur_strip][ci] = fileBuffer[j++];
-                                                            v4u[cur_strip][ci] = fileBuffer[j++]; // chroma
-                                                            v4v[cur_strip][ci] = fileBuffer[j++];
-                                                            
-                                                            uvr = v4v[cur_strip][ci] << 1;
-                                                            uvg = -((v4u[cur_strip][ci] + 1) >> 1) - v4v[cur_strip][ci];
-                                                            uvb = v4u[cur_strip][ci] << 1;
-                                                            
-                                                            v4r[cur_strip][ci][0] = uiclp[(v4y0[cur_strip][ci] & 0xff) +
-                                                                                          uvr + 512];
-                                                            v4g[cur_strip][ci][0] = uiclp[(v4y0[cur_strip][ci] & 0xff) +
-                                                                                         uvg + 512];
-                                                            v4b[cur_strip][ci][0] = uiclp[(v4y0[cur_strip][ci] & 0xff) +
-                                                                                         uvb + 512];
-                                                            v4r[cur_strip][ci][1] = uiclp[(v4y1[cur_strip][ci] & 0xff) +
-                                                                                         uvr + 512];
-                                                            v4g[cur_strip][ci][1] = uiclp[(v4y1[cur_strip][ci] & 0xff) +
-                                                                                        uvg + 512];
-                                                            v4b[cur_strip][ci][1] = uiclp[(v4y1[cur_strip][ci] & 0xff) +
-                                                                                        uvb + 512];
-                                                            v4r[cur_strip][ci][2] = uiclp[(v4y2[cur_strip][ci] & 0xff) +
-                                                                                         uvr + 512];
-                                                            v4g[cur_strip][ci][2] = uiclp[(v4y2[cur_strip][ci] & 0xff) +
-                                                                                        uvg + 512];
-                                                            v4b[cur_strip][ci][2] = uiclp[(v4y2[cur_strip][ci] & 0xff) +
-                                                                                        uvb + 512];
-                                                            v4r[cur_strip][ci][3] = uiclp[(v4y3[cur_strip][ci] & 0xff) +
-                                                                                         uvr + 512];
-                                                            v4g[cur_strip][ci][3] = uiclp[(v4y3[cur_strip][ci] & 0xff) +
-                                                                                        uvg + 512];
-                                                            v4b[cur_strip][ci][3] = uiclp[(v4y3[cur_strip][ci] & 0xff) +
-                                                                                        uvb + 512];
+                                                            if (chunk_id == 0x2500) {
+                                                                v4u[cur_strip][ci] = 0;
+                                                                v4v[cur_strip][ci] = 0;
+                                                                
+                                                                v4r[cur_strip][ci][0] = v4y0[cur_strip][ci];
+                                                                v4g[cur_strip][ci][0] = v4y0[cur_strip][ci];
+                                                                v4b[cur_strip][ci][0] = v4y0[cur_strip][ci];
+                                                                v4r[cur_strip][ci][1] = v4y1[cur_strip][ci];
+                                                                v4g[cur_strip][ci][1] = v4y1[cur_strip][ci];
+                                                                v4b[cur_strip][ci][1] = v4y1[cur_strip][ci];
+                                                                v4r[cur_strip][ci][2] = v4y2[cur_strip][ci];
+                                                                v4g[cur_strip][ci][2] = v4y2[cur_strip][ci];
+                                                                v4b[cur_strip][ci][2] = v4y2[cur_strip][ci];
+                                                                v4r[cur_strip][ci][3] = v4y3[cur_strip][ci];
+                                                                v4g[cur_strip][ci][3] = v4y3[cur_strip][ci];
+                                                                v4b[cur_strip][ci][3] = v4y3[cur_strip][ci];    
+                                                            }
+                                                            else {
+                                                                v4u[cur_strip][ci] = fileBuffer[j++]; // chroma
+                                                                v4v[cur_strip][ci] = fileBuffer[j++];
+                                                                
+                                                                uvr = v4v[cur_strip][ci] << 1;
+                                                                uvg = -((v4u[cur_strip][ci] + 1) >> 1) - v4v[cur_strip][ci];
+                                                                uvb = v4u[cur_strip][ci] << 1;
+                                                                
+                                                                v4r[cur_strip][ci][0] = uiclp[(v4y0[cur_strip][ci] & 0xff) +
+                                                                                              uvr + 512];
+                                                                v4g[cur_strip][ci][0] = uiclp[(v4y0[cur_strip][ci] & 0xff) +
+                                                                                             uvg + 512];
+                                                                v4b[cur_strip][ci][0] = uiclp[(v4y0[cur_strip][ci] & 0xff) +
+                                                                                             uvb + 512];
+                                                                v4r[cur_strip][ci][1] = uiclp[(v4y1[cur_strip][ci] & 0xff) +
+                                                                                             uvr + 512];
+                                                                v4g[cur_strip][ci][1] = uiclp[(v4y1[cur_strip][ci] & 0xff) +
+                                                                                            uvg + 512];
+                                                                v4b[cur_strip][ci][1] = uiclp[(v4y1[cur_strip][ci] & 0xff) +
+                                                                                            uvb + 512];
+                                                                v4r[cur_strip][ci][2] = uiclp[(v4y2[cur_strip][ci] & 0xff) +
+                                                                                             uvr + 512];
+                                                                v4g[cur_strip][ci][2] = uiclp[(v4y2[cur_strip][ci] & 0xff) +
+                                                                                            uvg + 512];
+                                                                v4b[cur_strip][ci][2] = uiclp[(v4y2[cur_strip][ci] & 0xff) +
+                                                                                            uvb + 512];
+                                                                v4r[cur_strip][ci][3] = uiclp[(v4y3[cur_strip][ci] & 0xff) +
+                                                                                             uvr + 512];
+                                                                v4g[cur_strip][ci][3] = uiclp[(v4y3[cur_strip][ci] & 0xff) +
+                                                                                            uvg + 512];
+                                                                v4b[cur_strip][ci][3] = uiclp[(v4y3[cur_strip][ci] & 0xff) +
+                                                                                            uvb + 512];
+                                                            }
                                                         } // if ((flag & 0x80000000) != 0)
                                                         ci++;
                                                         flag <<= 1;
@@ -2353,7 +2429,8 @@ public class FileAvi extends FileBase {
                                                     chunk_size--;
                                                 }
                                                 break;
-                                            case 0x2300:
+                                            case 0x2300: // color
+                                            case 0x2700: // black and white
                                                 // Selective list of blocks to update 12 bit V1 codebook
                                                 ci = 0;
                                                 while (chunk_size > 0) {
@@ -2365,42 +2442,66 @@ public class FileAvi extends FileBase {
                                                     
                                                     for (i = 0; i < 32; i++) {
                                                         if ((flag & 0x80000000)!= 0) {
-                                                            chunk_size -= 6;
+                                                            if (chunk_id == 0x2300) {
+                                                                chunk_size -= 6;
+                                                            }
+                                                            else {
+                                                                chunk_size -= 4;
+                                                            }
                                                             v1y0[cur_strip][ci] = fileBuffer[j++]; // luma
                                                             v1y1[cur_strip][ci] = fileBuffer[j++];
                                                             v1y2[cur_strip][ci] = fileBuffer[j++];
                                                             v1y3[cur_strip][ci] = fileBuffer[j++];
-                                                            v1u[cur_strip][ci] = fileBuffer[j++]; // chroma
-                                                            v1v[cur_strip][ci] = fileBuffer[j++];
-                                                            
-                                                            uvr = v1v[cur_strip][ci] << 1;
-                                                            uvg = -((v1u[cur_strip][ci] + 1) >> 1) - v1v[cur_strip][ci];
-                                                            uvb = v1u[cur_strip][ci] << 1;
-                                                            
-                                                            v1r[cur_strip][ci][0] = uiclp[(v1y0[cur_strip][ci] & 0xff) +
-                                                                                          uvr + 512];
-                                                            v1g[cur_strip][ci][0] = uiclp[(v1y0[cur_strip][ci] & 0xff) +
-                                                                                         uvg + 512];
-                                                            v1b[cur_strip][ci][0] = uiclp[(v1y0[cur_strip][ci] & 0xff) +
-                                                                                         uvb + 512];
-                                                            v1r[cur_strip][ci][1] = uiclp[(v1y1[cur_strip][ci] & 0xff) +
-                                                                                         uvr + 512];
-                                                            v1g[cur_strip][ci][1] = uiclp[(v1y1[cur_strip][ci] & 0xff) +
-                                                                                        uvg + 512];
-                                                            v1b[cur_strip][ci][1] = uiclp[(v1y1[cur_strip][ci] & 0xff) +
-                                                                                        uvb + 512];
-                                                            v1r[cur_strip][ci][2] = uiclp[(v1y2[cur_strip][ci] & 0xff) +
-                                                                                         uvr + 512];
-                                                            v1g[cur_strip][ci][2] = uiclp[(v1y2[cur_strip][ci] & 0xff) +
-                                                                                        uvg + 512];
-                                                            v1b[cur_strip][ci][2] = uiclp[(v1y2[cur_strip][ci] & 0xff) +
-                                                                                        uvb + 512];
-                                                            v1r[cur_strip][ci][3] = uiclp[(v1y3[cur_strip][ci] & 0xff) +
-                                                                                         uvr + 512];
-                                                            v1g[cur_strip][ci][3] = uiclp[(v1y3[cur_strip][ci] & 0xff) +
-                                                                                        uvg + 512];
-                                                            v1b[cur_strip][ci][3] = uiclp[(v1y3[cur_strip][ci] & 0xff) +
-                                                                                        uvb + 512];
+                                                            if (chunk_id == 0x2700) {
+                                                                v1u[cur_strip][i] = 0;
+                                                                v1v[cur_strip][i] = 0;
+                                                                
+                                                                v1r[cur_strip][ci][0] = v1y0[cur_strip][ci];
+                                                                v1g[cur_strip][ci][0] = v1y0[cur_strip][ci];
+                                                                v1b[cur_strip][ci][0] = v1y0[cur_strip][ci];
+                                                                v1r[cur_strip][ci][1] = v1y1[cur_strip][ci];
+                                                                v1g[cur_strip][ci][1] = v1y1[cur_strip][ci];
+                                                                v1b[cur_strip][ci][1] = v1y1[cur_strip][ci];
+                                                                v1r[cur_strip][ci][2] = v1y2[cur_strip][ci];
+                                                                v1g[cur_strip][ci][2] = v1y2[cur_strip][ci];
+                                                                v1b[cur_strip][ci][2] = v1y2[cur_strip][ci];
+                                                                v1r[cur_strip][ci][3] = v1y3[cur_strip][ci];
+                                                                v1g[cur_strip][ci][3] = v1y3[cur_strip][ci];
+                                                                v1b[cur_strip][ci][3] = v1y3[cur_strip][ci];       
+                                                            }
+                                                            else {
+                                                                v1u[cur_strip][ci] = fileBuffer[j++]; // chroma
+                                                                v1v[cur_strip][ci] = fileBuffer[j++];
+                                                                
+                                                                uvr = v1v[cur_strip][ci] << 1;
+                                                                uvg = -((v1u[cur_strip][ci] + 1) >> 1) - v1v[cur_strip][ci];
+                                                                uvb = v1u[cur_strip][ci] << 1;
+                                                                
+                                                                v1r[cur_strip][ci][0] = uiclp[(v1y0[cur_strip][ci] & 0xff) +
+                                                                                              uvr + 512];
+                                                                v1g[cur_strip][ci][0] = uiclp[(v1y0[cur_strip][ci] & 0xff) +
+                                                                                             uvg + 512];
+                                                                v1b[cur_strip][ci][0] = uiclp[(v1y0[cur_strip][ci] & 0xff) +
+                                                                                             uvb + 512];
+                                                                v1r[cur_strip][ci][1] = uiclp[(v1y1[cur_strip][ci] & 0xff) +
+                                                                                             uvr + 512];
+                                                                v1g[cur_strip][ci][1] = uiclp[(v1y1[cur_strip][ci] & 0xff) +
+                                                                                            uvg + 512];
+                                                                v1b[cur_strip][ci][1] = uiclp[(v1y1[cur_strip][ci] & 0xff) +
+                                                                                            uvb + 512];
+                                                                v1r[cur_strip][ci][2] = uiclp[(v1y2[cur_strip][ci] & 0xff) +
+                                                                                             uvr + 512];
+                                                                v1g[cur_strip][ci][2] = uiclp[(v1y2[cur_strip][ci] & 0xff) +
+                                                                                            uvg + 512];
+                                                                v1b[cur_strip][ci][2] = uiclp[(v1y2[cur_strip][ci] & 0xff) +
+                                                                                            uvb + 512];
+                                                                v1r[cur_strip][ci][3] = uiclp[(v1y3[cur_strip][ci] & 0xff) +
+                                                                                             uvr + 512];
+                                                                v1g[cur_strip][ci][3] = uiclp[(v1y3[cur_strip][ci] & 0xff) +
+                                                                                            uvg + 512];
+                                                                v1b[cur_strip][ci][3] = uiclp[(v1y3[cur_strip][ci] & 0xff) +
+                                                                                            uvb + 512];
+                                                            }
                                                         } // if ((flag & 0x80000000) != 0)
                                                         ci++;
                                                         flag <<= 1;
@@ -5260,8 +5361,9 @@ public class FileAvi extends FileBase {
                 if (doCVID && (bitCount == 40)) {
                     // Greyscale depth 40(really depth 8) cinepak encoded AVI file
                     // The depth 40 is an artifact of it being converted from quicktime where 
-                    // depth 40 is really depth 8 greyscale.
-                    bitCount = 8;
+                    // depth 40 is really depth 8 greyscale.  Must be handled with
+                    // 24 bit cvid decoding forming 8, 8, 8 image with equal red, green, and blue.
+                    bitCount = 24;
                 }
 
                 int imageSize = getInt(endianess);
