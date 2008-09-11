@@ -53,7 +53,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
     private PlugInAlgorithmNINDSAnonymizationTool alg;
     
     /** labels **/
-    private JLabel inputDirectoryLabel,outputMessageLabel, outputDirectoryLabel;
+    private JLabel inputDirectoryLabel,outputMessageLabel, outputDirectoryLabel, errorMessageLabel;
     
     /** panels **/
     private JPanel mainPanel, OKCancelPanel;
@@ -138,21 +138,31 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 		outputDirectoryBrowseButton.setActionCommand("outputDirectoryBrowse");
 		mainPanel.add(outputDirectoryBrowseButton, mainPanelConstraints);
 		
-		
-		//output message
+		//error message
 		mainPanelConstraints.gridx = 0;
 		mainPanelConstraints.gridy = 2;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
-		outputMessageLabel = new JLabel(" ");
+		errorMessageLabel = new JLabel(" ");
+		errorMessageLabel.setForeground(Color.RED);
 		mainPanelConstraints.anchor = GridBagConstraints.CENTER;
+        mainPanel.add(errorMessageLabel, mainPanelConstraints);
+
+		
+		
+		//output message
+		mainPanelConstraints.gridx = 0;
+		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.gridwidth = 3;
+		mainPanelConstraints.insets = new Insets(15,5,15,5);
+		outputMessageLabel = new JLabel(" ");
         mainPanel.add(outputMessageLabel, mainPanelConstraints);
         mainPanelConstraints.anchor = GridBagConstraints.WEST;
 		
 		//output text area
         mainPanelConstraints.fill = GridBagConstraints.BOTH;
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.gridy = 4;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		outputTextArea = new JTextArea(15, 70);
@@ -188,37 +198,59 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
 		if(command.equalsIgnoreCase("inputDirectoryBrowse")) {
+			String defaultInputDirectory = Preferences.getProperty(Preferences.PREF_NINDS_ANON_PLUGIN_INPUTDIR);
 			JFileChooser chooser = new JFileChooser();
-			if (currDir != null) {
-				chooser.setCurrentDirectory(new File(currDir));
-            }
+			if (defaultInputDirectory != null) {
+	            File file = new File(defaultInputDirectory);
+
+	            if (file != null) {
+	                chooser.setCurrentDirectory(file);
+	            } else {
+	                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+	            }
+	        } else {
+	            chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+	        }
 			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 	        chooser.setDialogTitle("Choose input directory");
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	inputDirectoryTextField.setText(chooser.getSelectedFile().getAbsolutePath());
 	        	currDir = chooser.getSelectedFile().getAbsolutePath();
+	        	Preferences.setProperty(Preferences.PREF_NINDS_ANON_PLUGIN_INPUTDIR, currDir);
 	        }
 		}else if(command.equalsIgnoreCase("outputDirectoryBrowse")) {
+			String defaultOutputDirectory = Preferences.getProperty(Preferences.PREF_NINDS_ANON_PLUGIN_OUTPUTDIR);
 			JFileChooser chooser = new JFileChooser();
-			if (currDir != null) {
-				chooser.setCurrentDirectory(new File(currDir));
-            }
+			if (defaultOutputDirectory != null) {
+	            File file = new File(defaultOutputDirectory);
+
+	            if (file != null) {
+	                chooser.setCurrentDirectory(file);
+	            } else {
+	                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+	            }
+	        } else {
+	            chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+	        }
 			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 	        chooser.setDialogTitle("Choose output directory");
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	outputDirectoryTextField.setText(chooser.getSelectedFile().getAbsolutePath());
 	        	currDir = chooser.getSelectedFile().getAbsolutePath();
+	        	Preferences.setProperty(Preferences.PREF_NINDS_ANON_PLUGIN_OUTPUTDIR, currDir);
 	        }
 		}else if(command.equalsIgnoreCase("cancel")) {
 			if(alg != null) {
-				alg.setThreadStopped(true);
+				alg.setAlgCanceled(true);
+			}else {
+				dispose();
 			}
-			dispose();
 		}else if(command.equalsIgnoreCase("ok")) {
 			outputTextArea.setText("");
 			outputMessageLabel.setText(" ");
+			errorMessageLabel.setText(" ");
 			if(inputDirectoryTextField.getText().trim().equals("") || outputDirectoryTextField.getText().trim().equals("")) {
 				MipavUtil.displayError("Input Directory and Output Directory are required");
 				return;
@@ -245,7 +277,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 	protected void callAlgorithm() {
 		String inputDirectoryPath = inputDirectoryTextField.getText().trim();
 		String outputDirectoryPath = outputDirectoryTextField.getText().trim();
-		alg = new PlugInAlgorithmNINDSAnonymizationTool(inputDirectoryPath, outputDirectoryPath, outputTextArea);
+		alg = new PlugInAlgorithmNINDSAnonymizationTool(inputDirectoryPath, outputDirectoryPath, outputTextArea, errorMessageLabel);
 		
 		alg.addListener(this);
 		
@@ -306,7 +338,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		if(alg.isCompleted()) {
-
+			outputMessageLabel.setForeground(Color.BLACK);
 			outputMessageLabel.setText(alg.getOutputTextFileName() + " saved to  " + alg.getInputDirectoryPath());
 			mainPanel.validate();
 			pack();

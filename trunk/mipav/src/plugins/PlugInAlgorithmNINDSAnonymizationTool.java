@@ -1,3 +1,4 @@
+import java.awt.Color;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
+import javax.swing.JLabel;
 import javax.swing.JTextArea;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
@@ -72,16 +74,21 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     /** outputText filename **/
     private String outputTextFileName;
     
-	
+    /** message label **/
+    private JLabel errorMessageLabel;
+    
+    private boolean algCanceled = false;
 	
 	
 	/**
 	 * constructor
 	 */
-	public PlugInAlgorithmNINDSAnonymizationTool(String inputDirectoryPath, String outputDirectoryPath, JTextArea outputTextArea) {
+	public PlugInAlgorithmNINDSAnonymizationTool(String inputDirectoryPath, String outputDirectoryPath, JTextArea outputTextArea, JLabel errorMessageLabel) {
 		this.inputDirectoryPath = inputDirectoryPath;
 		this.outputDirectoryPath = outputDirectoryPath;
 		this.outputTextArea = outputTextArea;
+		this.errorMessageLabel = errorMessageLabel;
+
 		fileIO = new FileIO();
 		fileIO.setQuiet(true);
 		
@@ -136,22 +143,15 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
         // first create a File object based upon the study path
         File inputDirectoryRoot = new File(inputDirectoryPath);
         
-        try {
-            success = parse(inputDirectoryRoot);
-        } catch(Exception e) {
-        	outputTextArea.append("! ERROR...exiting algorithm \n");
-        	System.out.println("! ERROR: " + e.toString() + "\n");
-            System.out.println("! ERROR...exiting algorithm \n");
-            finalize();
-            setCompleted(true);
-            return;
-        }
+
+        success = parse(inputDirectoryRoot);
+
         if (success == false) {
-        	outputTextArea.append("! Error in Alonymizing...exiting algorithm");
-        	printStream.println("! Error in Alonymizing...exiting algorithm");
-            finalize();
+        	outputTextArea.append("! Algorithm Canceled");
+        	errorMessageLabel.setText("! Algorithm Canceled");
+        	printStream.println("! Algorithm Canceled");
+        	finalize();
             setCompleted(true);
-            return;
         }
 
  
@@ -182,14 +182,14 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 	 * @throws IOException
 	 * @throws OutOfMemoryError
 	 */
-	 public boolean parse(File file) throws IOException, OutOfMemoryError {
+	 public boolean parse(File file) {
 	        imageFilter = new ViewImageFileFilter(new String[]{".dcm", ".DCM"});
 
 	        File[] children = file.listFiles();
 
 	        for (int i = 0; i < children.length; i++) {
 
-                if (isThreadStopped()) {
+                if (algCanceled) {
                     return false;
                 }
 
@@ -205,7 +205,13 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
                 		if(children[i].getName().endsWith(".dcm") || children[i].getName().endsWith(".DCM")) {
                 			success = anonymizeDICOM(children[i]);
                 			if (success == false) {
-                	            return false;
+                				outputTextArea.append("! Error in anonymizing " + children[i].getName() + " \n\n");
+                				errorMessageLabel.setText("! Error in anonymizing " + children[i].getName());
+
+                			
+                				printStream.println("! Error in anonymizing " + children[i].getName());
+                				printStream.println();
+                	            continue;
                 	        }
                 			
                 		}
@@ -281,15 +287,16 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     	String dob = "";
     	String newUID = "";
     	int patientIDInt = 0;
-		patientID = (String)tagTable.getValue("0010,0020");
+		patientID = ((String)tagTable.getValue("0010,0020")).trim();
 		try {
 			patientIDInt = new Integer(patientID).intValue();
 		}catch(NumberFormatException e) {
 			outputTextArea.append("! Patient ID(0010,0020) value is not a valid entry \n");
+			printStream.println("! Patient ID(0010,0020) value is not a valid entry");
 			e.printStackTrace();
 			return false;
 		}
-		dob = (String)tagTable.getValue("0010,0030");
+		dob = ((String)tagTable.getValue("0010,0030")).trim();
 		if(dob.contains("/")) {
 			dob = dob.replaceAll("\\/", "");
 		}
@@ -298,6 +305,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 			dobInt = new Integer(dob).intValue();
 		}catch(NumberFormatException e) {
 			outputTextArea.append("! Patient DOB(0010,0030) value is not a valid entry \n");
+			printStream.println("! Patient DOB(0010,0030) value is not a valid entry");
 			e.printStackTrace();
 			return false;
 		}
@@ -325,6 +333,8 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
         try {
         	digest = MessageDigest.getInstance("MD5");
         }catch(NoSuchAlgorithmException e) {
+        	outputTextArea.append("! Error in MD5 hash algorithm \n");
+			printStream.println("! Error in MD5 hash algorithm");
         	e.printStackTrace();
         	return false;
         }
@@ -732,7 +742,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     	    		tagTable.removeTag(tag);
     			}
     		}catch(NumberFormatException nfe) {
-    			
+    			//do nothing
     		} 
     	}
     	
@@ -792,6 +802,12 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 	 */
 	public String getInputDirectoryPath() {
 		return inputDirectoryPath;
+	}
+
+
+
+	public void setAlgCanceled(boolean algCanceled) {
+		this.algCanceled = algCanceled;
 	}
 	
 	

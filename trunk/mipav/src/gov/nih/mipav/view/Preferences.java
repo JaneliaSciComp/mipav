@@ -454,6 +454,12 @@ public class Preferences {
 
     /** plugin of view type. */
     public static final String PREF_PLUGIN_VIEW = "PlugInView";
+    
+    /** ? */
+    public static final String PREF_NINDS_ANON_PLUGIN_INPUTDIR = "NINDSAnonymizationPlugin_inputDir";
+    
+    /** ? */
+    public static final String PREF_NINDS_ANON_PLUGIN_OUTPUTDIR = "NINDSAnonymizationPlugin_outputDir";
 
     /** The character that separates items (such as in the user file type definitions). */
     public static final String ITEM_SEPARATOR = ";";
