@@ -77,6 +77,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     /** message label **/
     private JLabel errorMessageLabel;
     
+    /** boolean if alg was canceled **/
     private boolean algCanceled = false;
 	
 	
@@ -147,7 +148,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
         success = parse(inputDirectoryRoot);
 
         if (success == false) {
-        	outputTextArea.append("! Algorithm Canceled");
+        	outputTextArea.append("! Algorithm Canceled \n");
         	errorMessageLabel.setText("! Algorithm Canceled");
         	printStream.println("! Algorithm Canceled");
         	finalize();
@@ -205,11 +206,11 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
                 		if(children[i].getName().endsWith(".dcm") || children[i].getName().endsWith(".DCM")) {
                 			success = anonymizeDICOM(children[i]);
                 			if (success == false) {
-                				outputTextArea.append("! Error in anonymizing " + children[i].getName() + " \n\n");
-                				errorMessageLabel.setText("! Error in anonymizing " + children[i].getName());
+                				outputTextArea.append("!!!!!!!!!!!!!!!!!!!! ERROR IN ANONYMIZING " + children[i].getName() + " \n\n");
+                				errorMessageLabel.setText("! Error in anonymizing 1 or more image files");
 
                 			
-                				printStream.println("! Error in anonymizing " + children[i].getName());
+                				printStream.println("!!!!!!!!!!!!!!!!!!!! ERROR IN ANONYMIZING " + children[i].getName());
                 				printStream.println();
                 	            continue;
                 	        }
@@ -805,7 +806,10 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 	}
 
 
-
+	/**
+	 * set alg canceled
+	 * @param algCanceled
+	 */
 	public void setAlgCanceled(boolean algCanceled) {
 		this.algCanceled = algCanceled;
 	}
