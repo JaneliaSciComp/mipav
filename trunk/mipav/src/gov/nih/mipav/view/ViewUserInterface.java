@@ -3871,11 +3871,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         // print the usage help to a dialog.
         // maybe later we can make this an option...
-        if(!isAppFrameVisible) {
-	        JTextArea helpArea = new JTextArea(helpInfo);
-	        helpArea.setFont(MipavUtil.courier12);
-	        helpArea.setEditable(false);
-	        JOptionPane.showMessageDialog(null, helpArea, "Command line help", JOptionPane.INFORMATION_MESSAGE);
+        if (isAppFrameVisible) {
+            JTextArea helpArea = new JTextArea(helpInfo);
+            helpArea.setFont(MipavUtil.courier12);
+            helpArea.setEditable(false);
+            JOptionPane.showMessageDialog(null, helpArea, "Command line help", JOptionPane.INFORMATION_MESSAGE);
         }
 
         System.exit(0);
