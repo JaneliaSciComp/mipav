@@ -6,11 +6,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import java.awt.event.ActionListener;
 import java.util.Vector;
 
-import javax.swing.JComponent;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JSeparator;
+import javax.swing.*;
 
 
 /**
@@ -177,8 +173,8 @@ public class ViewMenuBar {
                                 menuBuilder.buildMenuItem("Denoising BLS GSM", "blsGSM", 0, null, false),
                                 menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),}),
                 menuBuilder.makeMenu("Histogram tools", false, new JMenuItem[] {
-                        menuBuilder.buildMenuItem("2D Histogram", "histTwoDim", 0, null, false),
-                        menuBuilder.buildMenuItem("Cumulative Histogram", "cumHistogram", 0, null, false),
+                        menuBuilder.buildMenuItem("2D histogram", "histTwoDim", 0, null, false),
+                        menuBuilder.buildMenuItem("Cumulative histogram", "cumHistogram", 0, null, false),
                         menuBuilder.makeMenu("Histogram equalization", false, new JMenuItem[] {
                                 menuBuilder.buildMenuItem("Neighborhood adaptive", "performNAHE", 0, null, false),
                                 menuBuilder.buildMenuItem("Regional adaptive", "performRAHE", 0, null, false)}),
@@ -216,7 +212,7 @@ public class ViewMenuBar {
                                         // 0,
                                         // null,
                                         // false),
-                                        menuBuilder.buildMenuItem("Maximum Likelihood Iterative blind deconvolution",
+                                        menuBuilder.buildMenuItem("Maximum likelihood iterative blind deconvolution",
                                                 null, 0, null, false)}),}),
                 menuBuilder.makeMenu("Morphological", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Bg. distance map", null, 0, null, false),
@@ -234,7 +230,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Particle analysis", null, 0, null, false),
                         menuBuilder.buildMenuItem("Skeletonize", null, 0, null, false),
                         menuBuilder.buildMenuItem("Skeletonize3D pot field", "Skeletonize3D", 0, null, false),
-                        // menuBuilder.buildMenuItem("Skeletonize3D Voronoi",
+                        // menuBuilder.buildMenuItem("Skeletonize3D voronoi",
                         // "SkelGeom3D", 0, null,
                         // false),
                         menuBuilder.buildMenuItem("Ultimate erode", null, 0, null, false),}),
@@ -245,7 +241,7 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("Principal component", "Principal components", 0, null, false),
                 menuBuilder.makeMenu("Registration", false, new JMenuItem[] {
 
-                        // menuBuilder.buildMenuItem("AFNI - Shear",
+                        // menuBuilder.buildMenuItem("AFNI - shear",
                         // "MRIShear", 0, null, false),
                         // menuBuilder.buildMenuItem("AIR linear", null, 0,
                         // null, false),
@@ -293,9 +289,9 @@ public class ViewMenuBar {
                                         false),}),
                         menuBuilder.buildMenuItem("Watershed", null, 0, null, false),
                         menuBuilder.makeMenu("ITK", false, new JMenuItem[] {
-                                menuBuilder.buildMenuItem("Diffusion Levelset 2D", "DiffusionLevelsetITK2", 0, null,
+                                menuBuilder.buildMenuItem("Diffusion levelset 2D", "DiffusionLevelsetITK2", 0, null,
                                         false),
-                                menuBuilder.buildMenuItem("Diffusion Levelset 3D", "DiffusionLevelsetITK3", 0, null,
+                                menuBuilder.buildMenuItem("Diffusion levelset 3D", "DiffusionLevelsetITK3", 0, null,
                                         false),}),}),
 
                 // menuBuilder.buildMenuItem("Non-parametric", "nonparametric", 0, null,
@@ -305,7 +301,7 @@ public class ViewMenuBar {
                         // Of 3 shading correction methods only entropy minimization works on color
                         menuBuilder.buildMenuItem("Entropy minimization", "entropyMin", 0, null, false),
                         menuBuilder.buildMenuItem("Inhomogeneity N3 correction", "N3Correction", 0, null, false)}),
-                        //menuBuilder.buildMenuItem("MRI combined info", "MRICorrection", 0, null, false)}),
+                // menuBuilder.buildMenuItem("MRI combined info", "MRICorrection", 0, null, false)}),
                 menuBuilder.makeMenu("SNR", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Single MRI image", "SMRISNR", 0, null, false),
                         menuBuilder.buildMenuItem("Two MRI images", "DMRISNR", 0, null, false),}),
@@ -392,12 +388,12 @@ public class ViewMenuBar {
      * @see #makeFileMenu(boolean)
      */
     public JMenu makeDiffusionTensorMenu() {
-        return menuBuilder.makeMenu("Diffusion Tensor Imaging", true, new JComponent[] {
-                menuBuilder.buildMenuItem("Create List File", "createListFile", 0, "open.gif", true),
-                menuBuilder.buildMenuItem("Open DTI Framework", "loadDTIFrame", 0, "open.gif", true),
-                menuBuilder.buildMenuItem("Open Diffusion Weighted Images", "loadDWI", 0, "open.gif", true),
-                menuBuilder.buildMenuItem("Open Diffusion Tensor Image", "loadDTI", 0, "open.gif", true),
-                menuBuilder.buildMenuItem("Open EigenVector and Functional Analysis Images", "loadEG_FA", 0,
+        return menuBuilder.makeMenu("Diffusion tensor imaging", true, new JComponent[] {
+                menuBuilder.buildMenuItem("Create list file", "createListFile", 0, "open.gif", true),
+                menuBuilder.buildMenuItem("Open DTI framework", "loadDTIFrame", 0, "open.gif", true),
+                menuBuilder.buildMenuItem("Open diffusion weighted images", "loadDWI", 0, "open.gif", true),
+                menuBuilder.buildMenuItem("Open diffusion tensor image", "loadDTI", 0, "open.gif", true),
+                menuBuilder.buildMenuItem("Open eigenvector and functional analysis images", "loadEG_FA", 0,
                         "open.gif", true)});
     }
 
@@ -667,7 +663,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Quantify mask(s)", "QuantifyMasks", 0, null, false),
 
                 }),
-                menuBuilder.buildMenuItem("Reorientation / Resampling", "Reorientation", 0, null, false),
+                menuBuilder.buildMenuItem("Reorientation", "Reorientation", 0, null, false),
                 menuBuilder.buildMenuItem("Replace pixel/voxel value", "ReplaceValue", 0, null, false),
                 menuBuilder.makeMenu("Rotate", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("X axis 180", "RotateX180", 0, null, false),
@@ -778,12 +774,11 @@ public class ViewMenuBar {
                                                 "backward.gif", true)}),
                                 separator,
                                 menuBuilder.makeMenu("VOI conversion", true, new JMenuItem[] {
-                                        menuBuilder
-                                                .buildMenuItem("VOI(s) to binary mask", "BinaryMask", 0, null, false),
-                                        menuBuilder.buildMenuItem("VOI(s) to short mask", "ShortMask", 0, null, false),
-                                        menuBuilder.buildMenuItem("VOI(s) to paint mask", "PaintMask", 0, null, false),
-                                        menuBuilder.buildMenuItem("VOI(s) to ubyte mask", "UnsignedByteMask", 0, null,
-                                                false)}),
+                                        menuBuilder.buildMenuItem("VOI -> Binary mask", "BinaryMask", 0, null, false),
+                                        menuBuilder.buildMenuItem("VOI -> Short mask", "ShortMask", 0, null, false),
+                                        menuBuilder.buildMenuItem("VOI -> Paint", "PaintMask", 0, null, false),
+                                        menuBuilder.buildMenuItem("VOI -> Unsigned byte mask", "UnsignedByteMask", 0,
+                                                null, false)}),
                                 menuBuilder.makeMenu("Mask conversion", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem("Mask -> VOI", "MaskToVOI", 0, null, false),
                                         menuBuilder.buildMenuItem("Mask -> Paint", "MaskToPaint", 0, null, false),}),
