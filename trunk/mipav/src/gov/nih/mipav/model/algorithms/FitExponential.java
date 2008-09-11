@@ -99,10 +99,10 @@ public class FitExponential extends NLEngine {
         yDataOrg = new double[nPoints];
 
         for (i = 0; i < nPoints; i++) {
-            xseries[i] = (double) xData[i];
-            yseries[i] = (double) yData[i];
-            xDataOrg[i] = (double) xData[i];
-            yDataOrg[i] = (double) yData[i];
+            xseries[i] = xData[i];
+            yseries[i] = yData[i];
+            xDataOrg[i] = xData[i];
+            yDataOrg[i] = yData[i];
         }
 
     }
@@ -152,16 +152,13 @@ public class FitExponential extends NLEngine {
 
         super.driver();
 
-        if (chisq < oldChiSq) {
+        if (chisq < oldChiSq) 
             return;
-        } else {
+           
+        for (i = 0; i < a.length; i++) 
+            a[i] = oldA[i];
 
-            for (i = 0; i < a.length; i++) {
-                a[i] = oldA[i];
-            }
-
-            chisq = oldChiSq;
-        }
+        chisq = oldChiSq;
     }
 
     /**

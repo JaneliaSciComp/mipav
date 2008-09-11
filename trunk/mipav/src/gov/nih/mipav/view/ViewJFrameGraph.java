@@ -2681,7 +2681,8 @@ public class ViewJFrameGraph extends JFrame
             for (int i = 0; i < x.length; i++) {
                 x[i] = new float[newX[i].length];
 
-                for (int j = 0; j < x[i].length; j++) {
+         
+          for (int j = 0; j < x[i].length; j++) {
                     x[i][j] = newX[i][j];
                 }
             }
