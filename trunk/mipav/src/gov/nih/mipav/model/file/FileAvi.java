@@ -5257,6 +5257,12 @@ public class FileAvi extends FileBase {
                     byte[] extra = new byte[strhLength - 56];
                     raFile.read(extra);
                 }
+                
+                long strfPos = raFile.getFilePointer();
+                if ((left == 29811) && (top == 26226)) {
+                    // The left, top, right, and bottom  fields have been omitted
+                    raFile.seek(strfPos - 8);
+                }
 
                 // read the stream format CHUNK
                 int strfSignature = getInt(endianess);
