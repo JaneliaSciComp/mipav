@@ -3214,8 +3214,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase implements Algor
     }
 
     /**
-     * Launches browser...code obtained from: Bare Bones Browser Launch by Dem Pilafian Web Page Copyright © 2007 Center
-     * Key Software Source Code and Javadoc are Public Domain http://www.centerkey.com/java/browser
+     * Launches browser...code obtained from: Bare Bones Browser Launch by Dem Pilafian Web Page Copyright (c) 2007
+     * Center Key Software Source Code and Javadoc are Public Domain http://www.centerkey.com/java/browser
      * 
      * @param url
      */
