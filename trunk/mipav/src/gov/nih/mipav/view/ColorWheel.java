@@ -29,7 +29,7 @@ import java.awt.Image;
  * 
  * Publication Reference:
  * 
- * S. Pajevic and C. Pierpaoli, “Color Schemes to Represent the Orientation of Anisotropic Tissues from Diffusion Tensor Data: Application to White Matter Fiber Tract Mapping in the Human Brain,” Magnetic Resonance in Medicine, vol. 42, no. 3, pp. 526-540, 1999
+ * S. Pajevic and C. Pierpaoli, "Color Schemes to Represent the Orientation of Anisotropic Tissues from Diffusion Tensor Data: Application to White Matter Fiber Tract Mapping in the Human Brain," Magnetic Resonance in Medicine, vol. 42, no. 3, pp. 526-540, 1999
  *
  */ 
 public class ColorWheel extends Canvas {
