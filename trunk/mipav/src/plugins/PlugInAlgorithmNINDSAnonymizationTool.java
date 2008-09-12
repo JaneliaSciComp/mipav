@@ -1,4 +1,16 @@
-import java.awt.Color;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.file.DicomDictionary;
+import gov.nih.mipav.model.file.FileDicomKey;
+import gov.nih.mipav.model.file.FileDicomSQ;
+import gov.nih.mipav.model.file.FileDicomTag;
+import gov.nih.mipav.model.file.FileDicomTagTable;
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.FileWriteOptions;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.MipavUtil;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,24 +26,6 @@ import java.util.Hashtable;
 import javax.swing.JLabel;
 import javax.swing.JTextArea;
 
-import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.file.DicomDictionary;
-import gov.nih.mipav.model.file.FileDicom;
-import gov.nih.mipav.model.file.FileDicomKey;
-import gov.nih.mipav.model.file.FileDicomSQ;
-import gov.nih.mipav.model.file.FileDicomTag;
-import gov.nih.mipav.model.file.FileDicomTagTable;
-import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.file.FileInfoDicom;
-import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.file.FileWriteOptions;
-import gov.nih.mipav.model.structures.ModelImage;
-
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewImageFileFilter;
-import gov.nih.mipav.view.ViewJFrameImage;
-
 /**
  * @author pandyan
  *
@@ -46,9 +40,6 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 	
 	/** output text area **/
 	private JTextArea outputTextArea;
-	
-	/** This is the image filter needed to select the images.* */
-    private ViewImageFileFilter imageFilter;
     
     /** boolean indicating if methods were successfule **/
     private boolean success = false;
@@ -184,7 +175,6 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 	 * @throws OutOfMemoryError
 	 */
 	 public boolean parse(File file) {
-	        imageFilter = new ViewImageFileFilter(new String[]{".dcm", ".DCM"});
 
 	        File[] children = file.listFiles();
 
@@ -202,21 +192,29 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
                 	}
                     parse(children[i]);
                 } else if (!children[i].isDirectory()) {
-                	if (imageFilter.accept(children[i])) {
-                		if(children[i].getName().endsWith(".dcm") || children[i].getName().endsWith(".DCM")) {
-                			success = anonymizeDICOM(children[i]);
-                			if (success == false) {
-                				outputTextArea.append("!!!!!!!!!!!!!!!!!!!! ERROR IN ANONYMIZING " + children[i].getName() + " \n\n");
-                				errorMessageLabel.setText("! Error in anonymizing 1 or more image files");
-
+                		try {
+	                		if(FileUtility.isDicom(children[i].getName(), children[i].getParent() + File.separator, true) == FileUtility.DICOM) {
+	                			success = anonymizeDICOM(children[i]);
+	                			if (success == false) {
+	                				outputTextArea.append("!!!!!!!!!!!!!!!!!!!! ERROR IN ANONYMIZING " + children[i].getName() + " \n\n");
+	                				errorMessageLabel.setText("! Error in anonymizing 1 or more image files");
+	
+	                			
+	                				printStream.println("!!!!!!!!!!!!!!!!!!!! ERROR IN ANONYMIZING " + children[i].getName());
+	                				printStream.println();
+	                	            continue;
+	                	        }
+	                			
+	                		}
+                		}catch(IOException e) {
+                			outputTextArea.append("!!!!!!!!!!!!!!!!!!!! IO Error in determing if file is DICOM : " + children[i].getName() + " \n\n");
                 			
-                				printStream.println("!!!!!!!!!!!!!!!!!!!! ERROR IN ANONYMIZING " + children[i].getName());
-                				printStream.println();
-                	            continue;
-                	        }
                 			
+            				printStream.println("!!!!!!!!!!!!!!!!!!!! IO Error in determing if file is DICOM : " + children[i].getName());
+            				printStream.println();
+            	            continue;
                 		}
-                	}
+                	
                 }
                 
 	        }
