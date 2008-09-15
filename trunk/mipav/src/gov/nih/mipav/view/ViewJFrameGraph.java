@@ -4094,10 +4094,13 @@ public class ViewJFrameGraph extends JFrame
                                                                                                // filter
 
             // to only show plot files
-            if (defaultDirectory != null) {
+            String str = Preferences.getProperty(Preferences.PREF_IMAGE_DIR);
+            if(str != null && new File(str) != null) {
+            	chooser.setCurrentDirectory(new File(str));
+            }else if (defaultDirectory != null) {
                 chooser.setCurrentDirectory(new File(defaultDirectory));
             } else {
-                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            	chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
             }
 
             int returnVal = chooser.showSaveDialog(this);
