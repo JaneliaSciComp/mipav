@@ -776,6 +776,10 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
      * finalize
      */
 	public void finalize() {
+		if(inputImage != null) {
+			inputImage.disposeLocal();
+			inputImage = null;
+		}
 		try{
 			if(outputStream != null) {
 				outputStream.close();
