@@ -15,7 +15,6 @@ import java.awt.event.*;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
-
 import com.sun.opengl.util.Animator;
 
 import WildMagic.LibFoundation.Curves.Curve3f;
@@ -428,13 +427,14 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
         float yBox = (yDim - 1) * afResolutions[1];
         float zBox = (zDim - 1) * afResolutions[2];
         float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-        kPoint.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
+        Vector3f kPointScaled = new Vector3f();
+        kPointScaled.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
                 xBox) / (2.0f*maxBox);
-        kPoint.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
+        kPointScaled.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
                 yBox) / (2.0f*maxBox);
-        kPoint.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
+        kPointScaled.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
                 zBox) / (2.0f*maxBox);
-       return kPoint;
+       return kPointScaled;
     }
     /**
      * Called any time the position along the current curve changes and the color of the curve needs to change to show
@@ -531,13 +531,19 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
             Vector3f kCLoc = behavior.getViewPoint();
             Vector3f kCRight = new Vector3f();
             kCRight.UnitCross( kCDir, kCUp );
-            m_spkCamera.SetFrame(getPositionScaled(kCLoc),kCDir,kCUp,kCRight);
+            Vector3f kPositionScaled = getPositionScaled(kCLoc);
+            m_spkCamera.SetFrame(kPositionScaled,kCDir,kCUp,kCRight);
             
             if ( m_kLight != null )
             {
-                m_kLight.Position.Copy(kCLoc);
+                m_kLight.Position.Copy(kPositionScaled);
                 m_kLight.DVector.Copy(kCDir);
             }
+            Vector3f kVolumePt = m_kVolumeLayout.getSamplePoint(kCLoc.X, kCLoc.Y, kCLoc.Z);
+            kVolumePt.X *= m_kMaskImage.getExtents()[0];
+            kVolumePt.Y *= m_kMaskImage.getExtents()[1];
+            kVolumePt.Z *= m_kMaskImage.getExtents()[2];
+            m_kParent.setSliceFromPlane(kVolumePt);
         }
             
     }
