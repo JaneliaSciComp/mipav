@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview;
 
 import WildMagic.LibFoundation.Curves.*;
+import gov.nih.mipav.view.renderer.flythroughview.*;
 import gov.nih.mipav.view.renderer.J3D.*;
 import gov.nih.mipav.view.renderer.J3D.model.structures.*;
 
@@ -287,7 +288,7 @@ public class ModelTriangleMeshCurveSegments {
         /* All Temporary variables are initialized outside the loops for
          * performance
          */
-        Point3f[] akSamplePos;
+        WildMagic.LibFoundation.Mathematics.Vector3f[] akSamplePos;
 
         float fDist;
         float fRelativeLength;
@@ -525,7 +526,7 @@ public class ModelTriangleMeshCurveSegments {
 
         /* The original voxel sample points along the FlyPath curve
          */
-        Point3f[] akSamplePos;
+        WildMagic.LibFoundation.Mathematics.Vector3f[] akSamplePos;
 
         /* Temporary variables for calculating the change in curvature of the
          * curve.
@@ -589,7 +590,7 @@ public class ModelTriangleMeshCurveSegments {
                     /* Add the distance between the current sample point and
                      * the previous sample point to the total length
                      */
-                    afTotalLength[iCurve] += akSamplePos[iSample].distance(akSamplePos[iSample - 1]);
+                    afTotalLength[iCurve] += akSamplePos[iSample].Distance(akSamplePos[iSample - 1]);
 
                     /* The length from the first sample point to the current
                      * sample point
@@ -758,9 +759,10 @@ public class ModelTriangleMeshCurveSegments {
         /* Sample points along the FlyPath Curve. Down-sampling is an option
          * the user can choose.
          */
-        Point3f[] akSamplePos;
+        WildMagic.LibFoundation.Mathematics.Vector3f[] akSamplePos;
 
         Point3f kVertex0 = new Point3f((float) 0, (float) 0, (float) 0);
+        WildMagic.LibFoundation.Mathematics.Vector3f kVertex0WM = new WildMagic.LibFoundation.Mathematics.Vector3f(0,0,0);
         int iVIndex0 = 0, iVIndex1 = 0, iVIndex2 = 0;
         ;
 
@@ -848,8 +850,9 @@ public class ModelTriangleMeshCurveSegments {
                      * curve, both in the BSpline representation and the original voxel sample position representation
                      * are evaluated. The minimum distance is taken.
                      */
+                    kVertex0WM.Set(kVertex0.x, kVertex0.y, kVertex0.z);
                     fDist = Math.min(m_aakCurvePos[iCurve][iSample].distanceSquared(kVertex0),
-                                     akSamplePos[iSample].distanceSquared(kVertex0));
+                                     akSamplePos[iSample].SquaredDistance(kVertex0WM));
 
                     /* If the distance is within the maximim "width" of
                      * the tube at this point on the path is the triangle added to the sub-mesh.

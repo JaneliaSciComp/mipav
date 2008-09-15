@@ -6,6 +6,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.flythroughview.*;
 import gov.nih.mipav.view.renderer.J3D.*;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.*;
 import gov.nih.mipav.view.renderer.J3D.model.structures.*;
@@ -510,7 +511,9 @@ public class FlythruRender extends SurfaceRender
      * @return  Point3f A new instance created which contains the interpolated sample coordinates.
      */
     public Point3f getSamplePosition() {
-        return m_kVolumeLayout.getSamplePoint(m_kFlyPathBehavior.getPathPosition());
+        Point3f kPos = m_kFlyPathBehavior.getPathPosition();
+        WildMagic.LibFoundation.Mathematics.Vector3f kPosV = m_kVolumeLayout.getSamplePoint( kPos.x, kPos.y, kPos.z );
+        return new Point3f( kPosV.X, kPosV.Y, kPosV.Z );
     }
 
     /**

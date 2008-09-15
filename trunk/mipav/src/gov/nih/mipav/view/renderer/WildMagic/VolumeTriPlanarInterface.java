@@ -16,6 +16,7 @@ import gov.nih.mipav.view.renderer.J3D.*;
 
 import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
 import gov.nih.mipav.view.renderer.WildMagic.Render.*;
+import gov.nih.mipav.view.renderer.WildMagic.flythroughview.*;
 
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Collision.*;
@@ -81,7 +82,7 @@ implements MouseListener, ItemListener, ChangeListener {
     protected JPanel m_kBrainsurfaceFlattenerPanel = null;
     /** Rendering the brainsurfaceFlattener objects. */
     protected gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender brainsurfaceFlattenerRender = null;
-    
+    protected FlyThroughRender m_kFlyThroughRender =  null;
     /** DOCUMENT ME! */
     protected JPanelClip_WM clipBox;
     protected JPanelSlices_WM sliceGUI;
@@ -495,6 +496,17 @@ implements MouseListener, ItemListener, ChangeListener {
                 }
             }
             insertTab("BrainSurface", m_kBrainsurfaceFlattenerPanel );
+            resizePanel();
+        } else if (command.equals("FlyThru")) {
+            m_kFlyThroughRender = new FlyThroughRender( this, 
+                    m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
+                    m_kVolumeImageB, imageB, LUTb, RGBTB);
+            TriMesh kSurface = raycastRenderWM.getSurface( surfaceGUI.getSelectedSurface() );
+            //m_kFlyThroughRender.AddSurfaces( raycastRenderWM.getSurfaces(surfaceGUI.getSelectedSurfaces()) );
+            m_kFlyThroughRender.addSurface(kSurface);
+            bf_flyPanel.add( m_kFlyThroughRender.GetCanvas(), BorderLayout.CENTER );
+            dualPane.setDividerLocation( 0.5f );            
+            m_kLightsPanel.enableLight(0, true);
             resizePanel();
         } else if (command.equals("ResetX")) {
             resetAxisY();
@@ -2782,7 +2794,8 @@ implements MouseListener, ItemListener, ChangeListener {
             m_kDisplaySurfaceCheck.setEnabled(true);
             raycastRenderWM.DisplaySurface(true);
             
-            menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", true);         
+            menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", true);  
+            menuObj.setMenuItemEnabled("Open Fly Through view", true);       
         }
         if ( geodesicGUI != null )
         {
@@ -3074,6 +3087,10 @@ implements MouseListener, ItemListener, ChangeListener {
         if ( brainsurfaceFlattenerRender != null )
         {
             brainsurfaceFlattenerRender.updateLighting(akGLights);
+        }  
+        if ( m_kFlyThroughRender != null )
+        {
+            m_kFlyThroughRender.updateLighting(akGLights);
         }
     }
     

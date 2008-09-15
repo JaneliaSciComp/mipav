@@ -1434,6 +1434,16 @@ public class JPanelSurface_WM extends JInterfaceBase
     }
     
     
+    public String[] getSelectedSurfaces() {
+        int[] aiSelected = surfaceList.getSelectedIndices();
+        String[] akNames = new String[aiSelected.length];
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+        for (int i = 0; i < aiSelected.length; i++) {
+            akNames[i] = new String((String)kList.elementAt(aiSelected[i]));
+        }
+        return akNames;
+    }
+    
     public void setDropperColor( ColorRGBA kDropperColor, Vector3f kPickPoint )
     {
         if ( m_kSurfacePaint != null )

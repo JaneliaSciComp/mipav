@@ -1,9 +1,8 @@
-package gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview;
+package gov.nih.mipav.view.renderer.flythroughview;
 
 
+import WildMagic.LibFoundation.Mathematics.*;
 import java.util.*;
-
-import javax.vecmath.*;
 
 
 /**
@@ -19,10 +18,10 @@ public class FlyPathGraphSamples extends FlyPathGraph {
      * entries must correspond for the same index. The size of these arrays must also match the size of the arrays in
      * the base class, and must correspond for the same index.
      */
-    protected ArrayList m_kListArrayPointKey; // array of int[]
+    protected ArrayList<int[]> m_kListArrayPointKey; // array of int[]
 
     /** DOCUMENT ME! */
-    protected ArrayList m_kListArrayPointPosition; // array of Point3f[]
+    protected ArrayList<Vector3f[]> m_kListArrayPointPosition; // array of Vector3f[]
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -30,8 +29,8 @@ public class FlyPathGraphSamples extends FlyPathGraph {
      * Constructor. Initially empty path with no branches.
      */
     public FlyPathGraphSamples() {
-        m_kListArrayPointKey = new ArrayList();
-        m_kListArrayPointPosition = new ArrayList();
+        m_kListArrayPointKey = new ArrayList<int[]>();
+        m_kListArrayPointPosition = new ArrayList<Vector3f[]>();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -46,7 +45,7 @@ public class FlyPathGraphSamples extends FlyPathGraph {
      *
      * @throws  IllegalArgumentException  DOCUMENT ME!
      */
-    public void add(int[] aiPointKey, Point3f[] akPointPosition) {
+    public void add(int[] aiPointKey, Vector3f[] akPointPosition) {
 
         // All arrays must be valid.
         if ((null == aiPointKey) || (null == akPointPosition)) {
@@ -70,18 +69,18 @@ public class FlyPathGraphSamples extends FlyPathGraph {
             // where this branch is to be attached.
             int iBranchKey = aiPointKey[0];
             int iBranchPoint = -1;
-            Point3f[] akBranchPosition = null;
+            Vector3f[] akBranchPosition = null;
 
 LoopBranchSearch:
             for (int iBranch = 0; iBranch < getNumBranches(); iBranch++) {
-                int[] aiBranchKey = (int[]) m_kListArrayPointKey.get(iBranch);
+                int[] aiBranchKey = m_kListArrayPointKey.get(iBranch);
 
                 for (int iPoint = 0; iPoint < aiBranchKey.length; ++iPoint) {
 
                     if (iBranchKey == aiBranchKey[iPoint]) {
                         iBranchBranch = iBranch;
                         iBranchPoint = iPoint;
-                        akBranchPosition = (Point3f[]) m_kListArrayPointPosition.get(iBranch);
+                        akBranchPosition = m_kListArrayPointPosition.get(iBranch);
 
                         break LoopBranchSearch;
                     }
@@ -99,7 +98,7 @@ LoopBranchSearch:
             float fBranchPointDist = 0.0f;
 
             for (int iPoint = 1; iPoint < akBranchPosition.length; iPoint++) {
-                float fLength = akBranchPosition[iPoint].distance(akBranchPosition[iPoint - 1]);
+                float fLength = akBranchPosition[iPoint].Distance(akBranchPosition[iPoint - 1]);
                 fBranchLength += fLength;
 
                 if (iPoint <= iBranchPoint) {
@@ -124,7 +123,7 @@ LoopBranchSearch:
      *
      * @return  Point3f[] Array of 3D coordinates for the points.
      */
-    public Point3f[] getArrayPointPosition(int iBranch) {
-        return (Point3f[]) m_kListArrayPointPosition.get(iBranch);
+    public Vector3f[] getArrayPointPosition(int iBranch) {
+        return m_kListArrayPointPosition.get(iBranch);
     }
 }

@@ -1,4 +1,4 @@
-package gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview;
+package gov.nih.mipav.view.renderer.flythroughview;
 
 
 import gov.nih.mipav.model.structures.*;
@@ -75,7 +75,7 @@ public class DijkstraMinCostPath {
         // sample being considered.
         m_akVolumeCost = new DijkstraCostItem[iNumSamples];
 
-        TreeSet kTreeSetSourceCostRemain = new TreeSet();
+        TreeSet<DijkstraCostItem> kTreeSetSourceCostRemain = new TreeSet<DijkstraCostItem>();
 
         for (int iIndex = 0; iIndex < iNumSamples; ++iIndex) {
 
@@ -99,7 +99,7 @@ public class DijkstraMinCostPath {
         // ViewJFrameVolumeView.getRendererProgressBar().setRange(kTreeSetSourceCostRemain.size(),0);
         int iIndexMinDist = iIndexStart;
         int iIndexFurthestDistance = iIndexStart;
-        int len = kTreeSetSourceCostRemain.size() - 1;
+        //int len = kTreeSetSourceCostRemain.size() - 1;
 
         while (!kTreeSetSourceCostRemain.isEmpty()) {
 
@@ -194,7 +194,7 @@ public class DijkstraMinCostPath {
             // remaining to have their computed distance finalized.
             // By removing it from the set, this sample is now considered
             // to have its computed distance finalized.
-            DijkstraCostItem kRemainMinDistItem = (DijkstraCostItem) kTreeSetSourceCostRemain.first();
+            DijkstraCostItem kRemainMinDistItem = kTreeSetSourceCostRemain.first();
             kTreeSetSourceCostRemain.remove(kRemainMinDistItem);
             iIndexMinDist = kRemainMinDistItem.getKey();
             kRemainMinDistItem.markFinalized();

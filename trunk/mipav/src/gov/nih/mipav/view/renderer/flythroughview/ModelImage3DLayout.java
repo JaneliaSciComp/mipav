@@ -1,7 +1,7 @@
-package gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview;
+package gov.nih.mipav.view.renderer.flythroughview;
 
-
-import javax.vecmath.*;
+import WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.model.structures.Point3D;
 
 
 /**
@@ -66,7 +66,7 @@ public class ModelImage3DLayout {
     private final int[] m_aiOffsetNeighborsVoxel;
 
     /** Array of 27 index offsets used by the getIndexNeighbors27 method. */
-    private final Point3i[] m_akOffsetXYZNeighbors27;
+    private final Point3D[] m_akOffsetXYZNeighbors27;
 
     /** Index offsets used by the getIndexNeighborsGradient method. */
     private final GradientNeighbors m_kOffsetNeighborsGradient;
@@ -148,9 +148,9 @@ public class ModelImage3DLayout {
         // The relative distances are based on the size of the sample
         // along each dimension.
         m_aiOffsetNeighbors27 = new int[27];
-        m_akOffsetXYZNeighbors27 = new Point3i[27];
+        m_akOffsetXYZNeighbors27 = new Point3D[27];
         m_aiOffsetNeighbors27[0] = 0;
-        m_akOffsetXYZNeighbors27[0] = new Point3i(0, 0, 0);
+        m_akOffsetXYZNeighbors27[0] = new Point3D(0, 0, 0);
         m_afDistanceNeighbors27 = new float[27];
         m_afRealDistanceNeighbors27 = new float[27];
         m_afDistanceNeighbors27[0] = 0.0f;
@@ -174,14 +174,14 @@ public class ModelImage3DLayout {
                     // indexes although we are using it to compute offsets
                     // in this case where normally the getIndex method
                     // would never be called with negative indexes.
-                    m_akOffsetXYZNeighbors27[iIndexNeighbors27] = new Point3i(iX, iY, iZ);
+                    m_akOffsetXYZNeighbors27[iIndexNeighbors27] = new Point3D(iX, iY, iZ);
                     m_aiOffsetNeighbors27[iIndexNeighbors27] = getIndex(iX, iY, iZ);
 
                     // Compute the Euclidean distance (in sample coordinates)
                     // to the next sample
-                    float fDx = (float) iX;
-                    float fDy = (float) iY;
-                    float fDz = (float) iZ;
+                    float fDx = iX;
+                    float fDy = iY;
+                    float fDz = iZ;
                     m_afDistanceNeighbors27[iIndexNeighbors27] = (float) Math.sqrt((fDx * fDx) + (fDy * fDy) +
                                                                                    (fDz * fDz));
 
@@ -455,7 +455,7 @@ public class ModelImage3DLayout {
      *                      the getIndexNeighbors27 method. Note that the [0] entry is for the center sample (always XYZ
      *                      offsets of zero), and the remaining 26 entries are for the neighbor samples.
      */
-    public void getOffsetXYZNeighbors27(Point3i[] akOffsetXYZ) {
+    public void getOffsetXYZNeighbors27(Point3D[] akOffsetXYZ) {
         System.arraycopy(m_akOffsetXYZNeighbors27, 0, akOffsetXYZ, 0, 27);
     }
 
@@ -473,13 +473,13 @@ public class ModelImage3DLayout {
      * @return  computed "real" distance between two samples in volume
      */
     public float getRealDistance(int iX1, int iY1, int iZ1, int iX2, int iY2, int iZ2) {
-        float fDeltaX = (float) (iX2 - iX1);
-        float fDeltaY = (float) (iY2 - iY1);
-        float fDeltaZ = (float) (iZ2 - iZ1);
+        float fDeltaX = (iX2 - iX1);
+        float fDeltaY = (iY2 - iY1);
+        float fDeltaZ = (iZ2 - iZ1);
 
-        double fVx = (double) (fDeltaX * m_fSpacingX);
-        double fVy = (double) (fDeltaY * m_fSpacingY);
-        double fVz = (double) (fDeltaZ * m_fSpacingZ);
+        double fVx = (fDeltaX * m_fSpacingX);
+        double fVy = (fDeltaY * m_fSpacingY);
+        double fVz = (fDeltaZ * m_fSpacingZ);
 
         return (float) Math.sqrt((fVx * fVx) + (fVy * fVy) + (fVz * fVz));
     }
@@ -507,7 +507,7 @@ public class ModelImage3DLayout {
      * @param  iZ      sample Z coordinate index
      * @param  kPoint  Point3f into which the computed coordinates are stored
      */
-    public void getRealPoint(int iX, int iY, int iZ, Point3f kPoint) {
+    public void getRealPoint(int iX, int iY, int iZ, Vector3f kPoint) {
 
         // Do we need to reverse the sense?
         if (m_bReverseX) {
@@ -522,9 +522,9 @@ public class ModelImage3DLayout {
             iZ = m_iDimZ - 1 - iZ;
         }
 
-        kPoint.x = m_fOffsetX + (m_fSpacingX * (float) iX);
-        kPoint.y = m_fOffsetY + (m_fSpacingY * (float) iY);
-        kPoint.z = m_fOffsetZ + (m_fSpacingZ * (float) iZ);
+        kPoint.X = m_fOffsetX + (m_fSpacingX * iX);
+        kPoint.Y = m_fOffsetY + (m_fSpacingY * iY);
+        kPoint.Z = m_fOffsetZ + (m_fSpacingZ * iZ);
     }
 
     /**
@@ -535,28 +535,28 @@ public class ModelImage3DLayout {
      * @return  Point3f This is a new instance containing the interpolated sample coordinates converted from the input
      *          real coordinates.
      */
-    public Point3f getSamplePoint(Point3f kRealPoint) {
-        Point3f kSamplePoint = new Point3f();
+    public Vector3f getSamplePoint(float x, float y, float z) {
+        Vector3f kSamplePoint = new Vector3f();
 
-        kSamplePoint.x = (kRealPoint.x - m_fOffsetX) / m_fSpacingX;
-        kSamplePoint.y = (kRealPoint.y - m_fOffsetY) / m_fSpacingY;
-        kSamplePoint.z = (kRealPoint.z - m_fOffsetZ) / m_fSpacingZ;
+        kSamplePoint.X = (x - m_fOffsetX) / m_fSpacingX;
+        kSamplePoint.Y = (y - m_fOffsetY) / m_fSpacingY;
+        kSamplePoint.Z = (z - m_fOffsetZ) / m_fSpacingZ;
 
-        kSamplePoint.x = kSamplePoint.x / (float) (m_iDimX - 1);
-        kSamplePoint.y = kSamplePoint.y / (float) (m_iDimY - 1);
-        kSamplePoint.z = kSamplePoint.z / (float) (m_iDimZ - 1);
+        kSamplePoint.X = kSamplePoint.X / (m_iDimX - 1);
+        kSamplePoint.Y = kSamplePoint.Y / (m_iDimY - 1);
+        kSamplePoint.Z = kSamplePoint.Z / (m_iDimZ - 1);
 
         // Do we need to reverse the sense?
         if (m_bReverseX) {
-            kSamplePoint.x = 1 - kSamplePoint.x;
+            kSamplePoint.X = 1 - kSamplePoint.X;
         }
 
         if (m_bReverseY) {
-            kSamplePoint.y = 1 - kSamplePoint.y;
+            kSamplePoint.Y = 1 - kSamplePoint.Y;
         }
 
         if (m_bReverseZ) {
-            kSamplePoint.z = 1 - kSamplePoint.z;
+            kSamplePoint.Z = 1 - kSamplePoint.Z;
         }
 
         return kSamplePoint;

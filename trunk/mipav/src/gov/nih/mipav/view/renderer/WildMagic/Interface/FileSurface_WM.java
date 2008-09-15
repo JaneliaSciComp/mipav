@@ -207,10 +207,10 @@ public class FileSurface_WM {
                         akComponent[i] = loadTMesh(in, progress, i * 100 / iQuantity, iQuantity,
                                                    true, kColor, fOpacity, kMaterial,
                                                    startLocation, direction, box );
-                        xBox = box[0];
-                        yBox = box[1];
-                        zBox = box[2];
-                        maxBox = Math.max(xBox, Math.max(yBox, zBox));
+                        //xBox = box[0];
+                        //yBox = box[1];
+                        //zBox = box[2];
+                        //maxBox = Math.max(xBox, Math.max(yBox, zBox));
                     }
                     else {
                     	if ( file.getName().endsWith("wrl") ) {

@@ -56,9 +56,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /** Set to true when init() is called: */
     protected boolean m_bInit = false;
     /** Scene translation, centers the scene: */
-    protected Vector3f m_kTranslate;
+    protected Vector3f m_kTranslate = new Vector3f(Vector3f.ZERO);
     /** Normalized volume extents: */
-    protected float m_fX, m_fY, m_fZ, m_fMax;
+    protected float m_fX = 1f, m_fY = 1f, m_fZ = 1f, m_fMax = 1f;
     /** Flag for indicating the that Java Container is visible or not: */
     protected boolean m_bVisible = true;
 
