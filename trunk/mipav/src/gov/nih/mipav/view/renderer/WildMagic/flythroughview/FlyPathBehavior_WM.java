@@ -1,22 +1,18 @@
-package gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview;
+package gov.nih.mipav.view.renderer.WildMagic.flythroughview;
 
 
 import WildMagic.LibFoundation.Curves.*;
+import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.renderer.flythroughview.*;
 import java.awt.*;
 import java.awt.event.*;
-
 import java.util.*;
-
-import javax.media.j3d.*;
-
-import javax.vecmath.*;
 
 
 /**
  * Behavior which allows for flying down a specified path and looking around.
  */
-public class FlyPathBehavior extends Behavior implements KeyListener {
+public class FlyPathBehavior_WM implements KeyListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -27,10 +23,13 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
     public static final int EVENT_CHANGE_POSITION = 0x00000001;
 
     /** DOCUMENT ME! */
-    public static final int EVENT_CHANGE_ORIENTATION = 0x00000002;
+    public static final int EVENT_CHANGE_VIEW = 0x00000002;
+    
+    /** DOCUMENT ME! */
+    public static final int EVENT_RESET_ORIENTATION = 0x00000004;
 
     /** DOCUMENT ME! */
-    public static final int EVENT_CHANGE_BRANCH = 0x00000004;
+    public static final int EVENT_CHANGE_BRANCH = 0x00000008;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -73,7 +72,7 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
     private int m_iBranchChoiceIndex = -1;
 
     /** Keep reference to instance which describes the annotation points. */
-    private FlyPathAnnotateList m_kAnnotateList;
+    private FlyPathAnnotateList_WM m_kAnnotateList;
 
     /** DOCUMENT ME! */
     private BranchState m_kBranchState = null;
@@ -87,42 +86,25 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
     /** Keep reference to instance which describes the path. */
     private FlyPathGraphCurve m_kFlyPathGraph;
 
-    /** Transform created for multiple use to avoid new'ing it each time. */
-    private Transform3D m_kTransform = new Transform3D();
-
-    /**
-     * View direction component for this view transform. This assumes a viewup vector (see m_kVectorViewup member). This
-     * transform causes the view to look down the path when the yaw=pitch=roll=0.
-     */
-    private TransformGroup m_kTransformDirection;
-
-    /** Orientation (yaw/pitch) component for this view transform. */
-    private TransformGroup m_kTransformOrientation;
-
-    /** Position-only component for this view transform. */
-    private TransformGroup m_kTransformPosition;
-
-    /** DOCUMENT ME! */
-    private Transform3D m_kTransformRot = new Transform3D();
-
     /**
      * The desired view up vector is a normalized average of these two orthogonal axes vectors. The problem is that if
      * just one desired view up vector is chosen, then when the view direction vector is "aligned" with that vector,
      * some other view up vector would have to be chosen and some rule would have to be defined for that.
      */
-    private Vector3d m_kViewup1 = new Vector3d(0.0f, 1.0f, 0.0f);
+    private Vector3f m_kViewup1 = new Vector3f(0.0f, 1.0f, 0.0f);
 
     /** DOCUMENT ME! */
-    private Vector3d m_kViewup2 = new Vector3d(0.0f, 0.0f, 1.0f);
-
-    /** Conditions which contain the events we want to "wakeup" on. */
-    private final WakeupCondition m_kWakeupCondition;
+    private Vector3f m_kViewup2 = new Vector3f(0.0f, 0.0f, 1.0f);
 
     /** Parent frame references. */
-    private FlythruRender parentScene;
+    private FlyThroughRender parentScene;
 
     /** If any of the mouse move button pressed. */
     private boolean pressed;
+
+    private Vector3f m_kViewPoint = new Vector3f(0f,0f,0f);
+    private Vector3f m_kViewDirection = new Vector3f(0f,0f,0f);
+    private Vector3f m_kViewUp = new Vector3f(0f,0f,0f);
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -137,18 +119,13 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
      * @param  kTransformOrientation  TransformGroup contains the Transform3D for the current viewing orientation.
      * @param  _parentScene           the parent frame which hold Canvas3D.
      */
-    public FlyPathBehavior(FlyPathGraphCurve kFlyPathGraph, FlyPathAnnotateList kAnnotateList,
-                           TransformGroup kTransformPosition, TransformGroup kTransformDirection,
-                           TransformGroup kTransformOrientation, FlythruRender _parentScene) {
+    public FlyPathBehavior_WM(FlyPathGraphCurve kFlyPathGraph, FlyPathAnnotateList_WM kAnnotateList,FlyThroughRender _parentScene) {
 
         // Keep references to these.
         m_kFlyPathGraph = kFlyPathGraph;
         m_kAnnotateList = kAnnotateList;
-        m_kTransformPosition = kTransformPosition;
-        m_kTransformOrientation = kTransformOrientation;
-        m_kTransformDirection = kTransformDirection;
         parentScene = _parentScene;
-        parentScene.getCanvas().addKeyListener(this);
+        parentScene.GetCanvas().addKeyListener(this);
 
         // Create array to store the state of each branch.
         int iNumBranches = kFlyPathGraph.getNumBranches();
@@ -165,13 +142,6 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
         m_fPathStep = 1.0f;
         m_fGazeDist = 10.0f;
         setBranch(0);
-
-        // Setup key events that we will want to handle.
-        WakeupCriterion[] akWakeup = new WakeupCriterion[1];
-
-        akWakeup[0] = new WakeupOnAWTEvent(KeyEvent.KEY_PRESSED);
-        m_kWakeupCondition = new WakeupOr(akWakeup);
-
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -300,24 +270,7 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
     public float getPathLength() {
         return m_kBranchState.m_kBranchCurve.GetTotalLength();
     }
-
-    /**
-     * Get the location of the current position along the path.
-     *
-     * @return  location of current position
-     */
-    public Point3f getPathPosition() {
-        Transform3D kTransform = new Transform3D();
-
-        m_kTransformPosition.getTransform(kTransform);
-
-        Matrix4f kMatrix = new Matrix4f();
-
-        kTransform.get(kMatrix);
-
-        return new Point3f(kMatrix.m03, kMatrix.m13, kMatrix.m23);
-    }
-
+    
     /**
      * Get the current distance increment for moving along the path.
      *
@@ -342,49 +295,6 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
         return -1;
     }
 
-    /**
-     * Retrieve the current base direction vector for viewing.
-     *
-     * @return  normalized direction vector
-     */
-    public Vector3f getViewDirection() {
-        Transform3D kTransform = new Transform3D();
-
-        m_kTransformDirection.getTransform(kTransform);
-
-        Matrix4f kMatrix = new Matrix4f();
-
-        kTransform.get(kMatrix);
-
-        return new Vector3f(kMatrix.m02, kMatrix.m12, kMatrix.m22);
-    }
-
-    /**
-     * Retrieve the current relative orientation transform matrix for viewing which is relative to the current base
-     * direction transform for viewing.
-     *
-     * @return  3x3 matrix containing orientation transform
-     */
-    public Matrix3f getViewOrientation() {
-        Transform3D kTransform = new Transform3D();
-
-        m_kTransformOrientation.getTransform(kTransform);
-
-        Matrix3f kMatrix = new Matrix3f();
-
-        kTransform.get(kMatrix);
-
-        return kMatrix;
-    }
-
-    /**
-     * Implementation of the Behavior abstract method.
-     */
-    public void initialize() {
-
-        // arm to wakeup on the specified event(s)
-        wakeupOn(m_kWakeupCondition);
-    }
 
     /**
      * Get indication of whether the movement along the current path is in the forward or reverse direction.
@@ -401,21 +311,145 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
      * @param  event  key event to handle
      */
     public void keyPressed(KeyEvent event) {
-        currEventTime = event.getWhen();
+        if (KeyEvent.KEY_PRESSED == event.getID()) {
+            int iKeyCode = event.getKeyCode();
+            char iKeyChar = event.getKeyChar();
 
-        // System.out.println("time elapse = " + (currEventTime-prevEventTime));
-        if ((currEventTime - prevEventTime) < 600) {
-            pressed = false;
+            switch (iKeyCode) {
 
-            return;
+            case KeyEvent.VK_ESCAPE:
+                setIdentityViewOrientation();
+                break;
+
+                case KeyEvent.VK_HOME:
+
+                    // reset position to the beginning of the path
+                    if (!m_bChooseBranch && (null == m_akBranchChoice)) {
+                        setPathDist(0.0f);
+                    } else {
+                        beep();
+                    }
+
+                    break;
+
+                case KeyEvent.VK_END:
+
+                    // reset position to the end of the path
+                    if (!m_bChooseBranch && (null == m_akBranchChoice)) {
+                        setPathDist(1.0f);
+                    } else {
+                        beep();
+                    }
+
+                    break;
+
+                case KeyEvent.VK_UP:
+
+                    // move forward along the path
+                    if (!m_bChooseBranch) {
+                        doPathStep(1);
+                    } else {
+                        beep();
+                    }
+
+                    break;
+
+                case KeyEvent.VK_DOWN:
+
+                    // move backward along the path
+                    if (!m_bChooseBranch) {
+                        doPathStep(-1);
+                    } else {
+                        beep();
+                    }
+
+                    break;
+
+                case KeyEvent.VK_R:
+
+                    // follow path in reverse heading
+                    m_kBranchState.m_bMoveForward = !m_kBranchState.m_bMoveForward;
+                    setPathDist(m_kBranchState.m_fNormalizedPathDist);
+                    break;
+
+                case KeyEvent.VK_F5:
+
+                    // go to previous annotate point
+                    if (!m_bChooseBranch && (m_kAnnotateList.getNumItems() > 0)) {
+
+                        if (--m_iAnnotateListItemSelected < 0) {
+                            m_iAnnotateListItemSelected = m_kAnnotateList.getNumItems() - 1;
+                        }
+
+                        setCurvePathAnnotateItem(m_iAnnotateListItemSelected);
+                    } else {
+                        beep();
+                    }
+
+                    break;
+
+                case KeyEvent.VK_F6:
+
+                    // go to next annotate point
+                    if (!m_bChooseBranch && (m_kAnnotateList.getNumItems() > 0)) {
+
+                        if (++m_iAnnotateListItemSelected >= m_kAnnotateList.getNumItems()) {
+                            m_iAnnotateListItemSelected = 0;
+                        }
+
+                        setCurvePathAnnotateItem(m_iAnnotateListItemSelected);
+                    } else {
+                        beep();
+                    }
+
+                    break;
+
+                case KeyEvent.VK_SPACE:
+
+                    // select next branch choice
+                    if (null != m_akBranchChoice) {
+                        setClosestChoiceBranch();
+                    } else {
+                        beep();
+                    }
+
+                    break;
+
+                case KeyEvent.VK_S:
+
+                    // change the distance of a single step
+                    if ('s' == iKeyChar) {
+                        m_fPathStep -= 0.1f;
+
+                        if (m_fPathStep < 0.1f) {
+                            m_fPathStep = 0.1f;
+                            beep();
+                        }
+                    } else {
+                        m_fPathStep += 0.1f;
+                    }
+
+                    setPathDist(m_kBranchState.m_fNormalizedPathDist);
+                    break;
+
+                case KeyEvent.VK_G:
+
+                    // change the gaze distance
+                    if ('g' == iKeyChar) {
+                        m_fGazeDist -= 1.0f;
+
+                        if (m_fGazeDist < 0.0f) {
+                            m_fGazeDist = 0.0f;
+                            beep();
+                        }
+                    } else {
+                        m_fGazeDist += 1.0f;
+                    }
+
+                    setPathDist(m_kBranchState.m_fNormalizedPathDist);
+                    break;
+            }
         }
-
-        pressed = true;
-        prevEventTime = event.getWhen();
-
-        StandardKey key = new StandardKey(event);
-
-        key.start();
     }
 
     /**
@@ -442,57 +476,7 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
      */
     public void move(String command) {
 
-        if (command.equals("lookup")) {
-
-            // pitch - look up
-            m_kTransformRot.rotX(Math.toRadians(+1.0));
-            m_kTransformOrientation.getTransform(m_kTransform);
-            m_kTransform.mul(m_kTransformRot);
-            m_kTransformOrientation.setTransform(m_kTransform);
-            notifyCallback(EVENT_CHANGE_ORIENTATION);
-        } else if (command.equals("lookdown")) {
-
-            // pitch - look down
-            m_kTransformRot.rotX(Math.toRadians(-1.0));
-            m_kTransformOrientation.getTransform(m_kTransform);
-            m_kTransform.mul(m_kTransformRot);
-            m_kTransformOrientation.setTransform(m_kTransform);
-            notifyCallback(EVENT_CHANGE_ORIENTATION);
-        } else if (command.equals("lookleft")) {
-
-            // yaw - look left
-            m_kTransformRot.rotY(Math.toRadians(+1.0));
-            m_kTransformOrientation.getTransform(m_kTransform);
-            m_kTransform.mul(m_kTransformRot);
-            m_kTransformOrientation.setTransform(m_kTransform);
-            notifyCallback(EVENT_CHANGE_ORIENTATION);
-        } else if (command.equals("lookright")) {
-
-            // case KeyEvent.VK_RIGHT:
-            // yaw - look right
-            m_kTransformRot.rotY(Math.toRadians(-1.0));
-            m_kTransformOrientation.getTransform(m_kTransform);
-            m_kTransform.mul(m_kTransformRot);
-            m_kTransformOrientation.setTransform(m_kTransform);
-            notifyCallback(EVENT_CHANGE_ORIENTATION);
-        } else if (command.equals("counterclockwise")) {
-
-            // case KeyEvent.VK_F3:
-            // roll - counterclockwise
-            m_kTransformRot.rotZ(Math.toRadians(-1.0));
-            m_kTransformOrientation.getTransform(m_kTransform);
-            m_kTransform.mul(m_kTransformRot);
-            m_kTransformOrientation.setTransform(m_kTransform);
-            notifyCallback(EVENT_CHANGE_ORIENTATION);
-        } else if (command.equals("clockwise")) {
-
-            // roll - clockwise
-            m_kTransformRot.rotZ(Math.toRadians(+1.0));
-            m_kTransformOrientation.getTransform(m_kTransform);
-            m_kTransform.mul(m_kTransformRot);
-            m_kTransformOrientation.setTransform(m_kTransform);
-            notifyCallback(EVENT_CHANGE_ORIENTATION);
-        } else if (command.equals("escape")) {
+        if (command.equals("escape")) {
 
             // VK_ESCAPE
             setIdentityViewOrientation();
@@ -611,22 +595,6 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
      */
     public void moveAlongPath(int _step) {
         doPathStep(_step);
-    }
-
-    /**
-     * Implementation of the Behavior abstract method. Process events in the criteria which are the ones we setup for.
-     *
-     * @param  kCriteria  collection of WakeupCriterion to which this Behavior is responding to events.
-     */
-    public void processStimulus(Enumeration kCriteria) {
-        WakeupCriterion kGenericEvent = (WakeupCriterion) kCriteria.nextElement();
-
-        if (kGenericEvent instanceof WakeupOnAWTEvent) {
-            WakeupOnAWTEvent kEvent = (WakeupOnAWTEvent) kGenericEvent;
-
-            // re-arm to wakeup on this event
-            wakeupOn(kEvent);
-        }
     }
 
     /**
@@ -825,29 +793,15 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
      * with the largest positive value, i.e., most in alignment.
      */
     private void setClosestChoiceBranch() {
-
-        // Combine the view position, direction, and orientation
-        // transforms into a single transform.
-        m_kTransformPosition.getTransform(m_kTransform);
-        m_kTransformDirection.getTransform(m_kTransformRot);
-        m_kTransform.mul(m_kTransformRot);
-        m_kTransformOrientation.getTransform(m_kTransformRot);
-        m_kTransform.mul(m_kTransformRot);
-
         // Retrieve the current combined viewing direction vector.
         // Note that the sign of the view direction vector is negated
         // for the reasons described in the setView method.
-        Matrix4f kMatrixView = new Matrix4f();
+        Matrix4f kMatrixView = parentScene.getWVMatrix();
 
-        m_kTransform.get(kMatrixView);
-
-        Vector3f kViewDirection = new Vector3f(-kMatrixView.m02, -kMatrixView.m12, -kMatrixView.m22);
+        Vector3f kViewDirection = new Vector3f(-kMatrixView.M02, -kMatrixView.M12, -kMatrixView.M22);
 
         // Record the current view position and combined view orientation.
-        Point3f kP0 = new Point3f(kMatrixView.m03, kMatrixView.m13, kMatrixView.m23);
-        Quat4f kQ0 = new Quat4f();
-
-        kMatrixView.get(kQ0);
+        Vector3f kP0 = new Vector3f(kMatrixView.M03, kMatrixView.M13, kMatrixView.M23);
 
         // Check point down path which is maximum of the step distance
         // and the gaze distance.
@@ -861,11 +815,11 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
             BranchState kBranch = m_akBranchChoice[iBranch];
             Vector3f kV = new Vector3f();
 
-            kV.sub(kBranch.getForwardNormalizedPosition(fPointDist), kP0);
-            kV.normalize();
+            kV.Sub(kBranch.getForwardNormalizedPosition(fPointDist), kP0);
+            kV.Normalize();
 
             // Only accept the best aligned branches we can supposedly see.
-            float fAlign = kV.dot(kViewDirection);
+            float fAlign = kV.Dot(kViewDirection);
 
             if ((fAlign > 0.0f) && (fAlign > fBestAlign)) {
                 fBestAlign = fAlign;
@@ -891,12 +845,12 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
      * @param  iItem  int
      */
     private void setCurvePathAnnotateItem(int iItem) {
-
+/*
         // Select the curve and the position along the curve.
         // First set the sign of the path step to reflect
         // whether the movement down the path was forward or backward
         // when the annotation point was captured.
-        FlyPathAnnotateList.Item kItem = m_kAnnotateList.getItem(iItem);
+        FlyPathAnnotateList_WM.Item kItem = m_kAnnotateList.getItem(iItem);
 
         m_kBranchState.m_bMoveForward = kItem.isPathMoveForward();
         setBranch(kItem.getBranchIndex());
@@ -906,21 +860,21 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
 
         // Compute the vector from the current path position to the
         // annotation view point.
-        Point3f kP = new Point3f();
+        Vector3f kP = new Vector3f();
 
         kItem.getPointPosition(kP);
 
         Vector3f kV = new Vector3f();
 
-        kV.sub(kP, getPathPosition());
-        kV.normalize();
+        kV.Sub(kP, getPathPosition());
+        kV.Normalize();
 
         // Convert this vector so that it is in current view frame.
         // Note that the view direction vector was negated in order
         // to build the view direction transformation, so we negate
         // the desired view orientation vector before we determine
         // this vector in the view direction frame.
-        kV.negate();
+        kV.Neg();
         m_kTransformDirection.getTransform(m_kTransform);
         m_kTransform.invert();
         m_kTransform.transform(kV);
@@ -937,17 +891,16 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
         m_kTransform.mul(m_kTransformRot);
         m_kTransformOrientation.setTransform(m_kTransform);
         notifyCallback(EVENT_CHANGE_ORIENTATION);
+        */
     }
 
     /**
      * Reset the view orientation transformation to the identity. That is, remove all yaw/pitch/roll.
      */
     private void setIdentityViewOrientation() {
-        m_kTransform.setIdentity();
-        m_kTransformOrientation.setTransform(m_kTransform);
-        notifyCallback(EVENT_CHANGE_ORIENTATION);
+        notifyCallback(EVENT_RESET_ORIENTATION);
     }
-
+    
     /**
      * Update the camera position along the path based on the specified distance from the beginning.
      *
@@ -969,34 +922,32 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
         // It needs to be double precision for the view to use.
         Curve3f kCurve = m_kBranchState.m_kBranchCurve;
         float fTime = kCurve.GetTime(fDist, 100, 1e-02f);
-        WildMagic.LibFoundation.Mathematics.Vector3f kVec = kCurve.GetPosition(fTime);
-        Point3d kViewPoint = new Point3d(kVec.X, kVec.Y, kVec.Z);
+        Vector3f kViewPoint = kCurve.GetPosition(fTime);
 
         // If the gaze distance is zero, then use the tangent vector
         // to the curve.
         // If the path is being followed in the reverse direction,
         // then the direction of looking down the path needs to
         // be reversed (negated).
-        Vector3d kLookatVector = new Vector3d();
+        Vector3f kLookatVector = new Vector3f();
         boolean bLookatVectorUseTangent = true;
 
         if (m_fGazeDist > 0.0f) {
             float fTimeGazeDist = m_kBranchState.getForwardNormalizedTime(m_fGazeDist);
 
             if (fTime != fTimeGazeDist) {
-            	kVec = kCurve.GetPosition(fTimeGazeDist);
-                kLookatVector.sub(new Point3d(kVec.X, kVec.Y, kVec.Z), kViewPoint);
-                kLookatVector.normalize();
+                Vector3f kVec = kCurve.GetPosition(fTimeGazeDist);
+                kLookatVector.Sub(kVec, kViewPoint);
+                kLookatVector.Normalize();
                 bLookatVectorUseTangent = false;
             }
         }
 
         if (bLookatVectorUseTangent) {
-        	kVec = kCurve.GetTangent(fTime);
-            kLookatVector.set(kVec.X, kVec.Y, kVec.Z);
+            kLookatVector = kCurve.GetTangent(fTime);
 
             if (!m_kBranchState.m_bMoveForward) {
-                kLookatVector.negate();
+                kLookatVector.Neg();
             }
         }
 
@@ -1049,60 +1000,59 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
      * @param  kViewPoint      coordinates of the camera view point
      * @param  kViewdirVector  coordinates of the camera view direction vector. This vector must be normalized.
      */
-    private void setView(Point3d kViewPoint, Vector3d kViewdirVector) {
-
+    private void setView(Vector3f kViewPoint, Vector3f kViewdirVector) {        
         // Use the view direction vector to create positive weights where more
         // weight is given to an axis that has less of a component in the
         // direction vector.  Use the weights to create an average of
         // two desired (orthogonal axis) up vectors.  Normalize this average
         // vector to create a combined view up vector to use.
-        Vector3d kV = new Vector3d(kViewdirVector);
+        Vector3f kV = new Vector3f(kViewdirVector);
 
-        kV.absolute();
-        kV.sub(new Vector3d(1.0, 1.0, 1.0), kV);
+        kV.Set( Math.abs(kV.X), Math.abs(kV.Y), Math.abs(kV.Z) );
+        kV.Sub(Vector3f.ONE, kV);
 
-        Vector3d kViewupVector = new Vector3d(0.0, 0.0, 0.0);
+        Vector3f kViewupVector = new Vector3f(0.0f, 0.0f, 0.0f);
 
-        kViewupVector.scaleAdd(m_kViewup1.dot(kV), m_kViewup1, kViewupVector);
-        kViewupVector.scaleAdd(m_kViewup2.dot(kV), m_kViewup2, kViewupVector);
-        kViewupVector.normalize();
+        kViewupVector.ScaleAdd(m_kViewup1.Dot(kV), m_kViewup1, kViewupVector);
+        kViewupVector.ScaleAdd(m_kViewup2.Dot(kV), m_kViewup2, kViewupVector);
+        kViewupVector.Normalize();
 
         // Project the view-up vector onto the plane which is
         // perpendicular to the view direction vector.  By getting to
         // this point, we know that the view-up vector and the view
         // direction vectors are not aligned.  This projected vector is
         // normalized and becomes the new view-up vector.
-        Vector3d kViewdirProjection = new Vector3d();
+        Vector3f kViewdirProjection = new Vector3f();
 
-        kViewdirProjection.scale(kViewdirVector.dot(kViewupVector), kViewdirVector);
-        kViewupVector.sub(kViewdirProjection);
-        kViewupVector.normalize();
+        kViewdirProjection.Scale(kViewdirVector.Dot(kViewupVector), kViewdirVector);
+        kViewupVector.Sub(kViewdirProjection);
+        kViewupVector.Normalize();
 
-        Vector3d kViewleftVector = new Vector3d();
+        Vector3f kViewleftVector = new Vector3f();
 
-        kViewleftVector.cross(kViewupVector, kViewdirVector);
-
-        // Setup the view direction transform.
-        // Rotate around the Y axis by 180 degrees so that the view
-        // is down the -Z axis instead and the +X axis is to the right.
-        Matrix3d kMatrixView = new Matrix3d();
-
-        kMatrixView.m00 = -kViewleftVector.x;
-        kMatrixView.m10 = -kViewleftVector.y;
-        kMatrixView.m20 = -kViewleftVector.z;
-        kMatrixView.m01 = +kViewupVector.x;
-        kMatrixView.m11 = +kViewupVector.y;
-        kMatrixView.m21 = +kViewupVector.z;
-        kMatrixView.m02 = -kViewdirVector.x;
-        kMatrixView.m12 = -kViewdirVector.y;
-        kMatrixView.m22 = -kViewdirVector.z;
-        m_kTransform.set(kMatrixView);
-        m_kTransformDirection.setTransform(m_kTransform);
-
-        // Setup the view position transform.
-        m_kTransform.set(new Vector3d(kViewPoint));
-        m_kTransformPosition.setTransform(m_kTransform);
+        kViewleftVector.Cross(kViewupVector, kViewdirVector);
+        
+        m_kViewPoint.Copy(kViewPoint);
+        m_kViewDirection.Copy(kViewdirVector);
+        m_kViewUp.Copy(kViewupVector);
     }
+    
+    public Vector3f getViewPoint()
+    {
+        return m_kViewPoint;
+    }
+    
+    public Vector3f getViewDirection()
+    {
+        return m_kViewDirection;
+    }
+    
+    public Vector3f getViewUp()
+    {
+        return m_kViewUp;
+    }
+    
+
 
     //~ Inner Interfaces -----------------------------------------------------------------------------------------------
 
@@ -1119,269 +1069,11 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
          * @param  iEvent     Bitmask identifies the event(s) which caused the view to change. Bitmask created from OR
          *                    of EVENT_* defintions.
          */
-        void viewChanged(FlyPathBehavior kBehavior, int iEvent);
+        void viewChanged(FlyPathBehavior_WM kBehavior, int iEvent);
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
-    /**
-     * Class used to send Standard key events to the canvas. Must subclass Thread because a single <code>
-     * keyPressed</code> event on one of the mouse buttons needs to generate <code>keyReleased</code> events on the
-     * canvas until the mouse is released.
-     */
-    class StandardKey extends Thread {
-
-        /** DOCUMENT ME! */
-        KeyEvent currentEvent;
-
-        /** int centerX, centerY;. */
-        KeyEvent evt;
-
-        /** DOCUMENT ME! */
-        Object source;
-
-        /** DOCUMENT ME! */
-        long when;
-
-        /** DOCUMENT ME! */
-        int x, y, mod, id;
-
-        /**
-         * Creates new thread and sets up mouse event variables appropriately.
-         *
-         * @param  event  Original mouse event, from button.
-         */
-        public StandardKey(KeyEvent event) {
-            when = event.getWhen();
-            currentEvent = event;
-            id = KeyEvent.KEY_PRESSED;
-            source = event.getSource();
-
-            // evt = new KeyEvent(parentScene.getCanvas(), id, when, 0, event.getKeyCode());
-            evt = event;
-        }
-
-        /**
-         * Runs the thread. While the button is pressed, dispatches mouse dragged events at a rate consistent with the
-         * velocity slider. Once the mouse is released, <code>pressed</code> will be set to false and the loop will
-         * stop.
-         */
-        public synchronized void run() {
-
-            while (pressed) {
-                parentScene.getCanvas().dispatchEvent(evt);
-
-                if (KeyEvent.KEY_PRESSED == currentEvent.getID()) {
-                    int iKeyCode = currentEvent.getKeyCode();
-                    char iKeyChar = currentEvent.getKeyChar();
-
-                    switch (iKeyCode) {
-
-                        case KeyEvent.VK_PAGE_UP:
-
-                            // pitch - look up
-                            m_kTransformRot.rotX(Math.toRadians(+1.0));
-                            m_kTransformOrientation.getTransform(m_kTransform);
-                            m_kTransform.mul(m_kTransformRot);
-                            m_kTransformOrientation.setTransform(m_kTransform);
-                            notifyCallback(EVENT_CHANGE_ORIENTATION);
-                            break;
-
-                        case KeyEvent.VK_PAGE_DOWN:
-
-                            // pitch - look down
-                            m_kTransformRot.rotX(Math.toRadians(-1.0));
-                            m_kTransformOrientation.getTransform(m_kTransform);
-                            m_kTransform.mul(m_kTransformRot);
-                            m_kTransformOrientation.setTransform(m_kTransform);
-                            notifyCallback(EVENT_CHANGE_ORIENTATION);
-                            break;
-
-                        case KeyEvent.VK_LEFT:
-
-                            // yaw - look left
-                            m_kTransformRot.rotY(Math.toRadians(+1.0));
-                            m_kTransformOrientation.getTransform(m_kTransform);
-                            m_kTransform.mul(m_kTransformRot);
-                            m_kTransformOrientation.setTransform(m_kTransform);
-                            notifyCallback(EVENT_CHANGE_ORIENTATION);
-                            break;
-
-                        case KeyEvent.VK_RIGHT:
-
-                            // yaw - look right
-                            m_kTransformRot.rotY(Math.toRadians(-1.0));
-                            m_kTransformOrientation.getTransform(m_kTransform);
-                            m_kTransform.mul(m_kTransformRot);
-                            m_kTransformOrientation.setTransform(m_kTransform);
-                            notifyCallback(EVENT_CHANGE_ORIENTATION);
-                            break;
-
-                        case KeyEvent.VK_F3:
-
-                            // roll - counterclockwise
-                            m_kTransformRot.rotZ(Math.toRadians(-1.0));
-                            m_kTransformOrientation.getTransform(m_kTransform);
-                            m_kTransform.mul(m_kTransformRot);
-                            m_kTransformOrientation.setTransform(m_kTransform);
-                            notifyCallback(EVENT_CHANGE_ORIENTATION);
-                            break;
-
-                        case KeyEvent.VK_F4:
-
-                            // roll - clockwise
-                            m_kTransformRot.rotZ(Math.toRadians(+1.0));
-                            m_kTransformOrientation.getTransform(m_kTransform);
-                            m_kTransform.mul(m_kTransformRot);
-                            m_kTransformOrientation.setTransform(m_kTransform);
-                            notifyCallback(EVENT_CHANGE_ORIENTATION);
-                            break;
-
-                        case KeyEvent.VK_ESCAPE:
-                            setIdentityViewOrientation();
-                            break;
-
-                        case KeyEvent.VK_HOME:
-
-                            // reset position to the beginning of the path
-                            if (!m_bChooseBranch && (null == m_akBranchChoice)) {
-                                setPathDist(0.0f);
-                            } else {
-                                beep();
-                            }
-
-                            break;
-
-                        case KeyEvent.VK_END:
-
-                            // reset position to the end of the path
-                            if (!m_bChooseBranch && (null == m_akBranchChoice)) {
-                                setPathDist(1.0f);
-                            } else {
-                                beep();
-                            }
-
-                            break;
-
-                        case KeyEvent.VK_UP:
-
-                            // move forward along the path
-                            if (!m_bChooseBranch) {
-                                doPathStep(1);
-                            } else {
-                                beep();
-                            }
-
-                            break;
-
-                        case KeyEvent.VK_DOWN:
-
-                            // move backward along the path
-                            if (!m_bChooseBranch) {
-                                doPathStep(-1);
-                            } else {
-                                beep();
-                            }
-
-                            break;
-
-                        case KeyEvent.VK_R:
-
-                            // follow path in reverse heading
-                            m_kBranchState.m_bMoveForward = !m_kBranchState.m_bMoveForward;
-                            setPathDist(m_kBranchState.m_fNormalizedPathDist);
-                            break;
-
-                        case KeyEvent.VK_F5:
-
-                            // go to previous annotate point
-                            if (!m_bChooseBranch && (m_kAnnotateList.getNumItems() > 0)) {
-
-                                if (--m_iAnnotateListItemSelected < 0) {
-                                    m_iAnnotateListItemSelected = m_kAnnotateList.getNumItems() - 1;
-                                }
-
-                                setCurvePathAnnotateItem(m_iAnnotateListItemSelected);
-                            } else {
-                                beep();
-                            }
-
-                            break;
-
-                        case KeyEvent.VK_F6:
-
-                            // go to next annotate point
-                            if (!m_bChooseBranch && (m_kAnnotateList.getNumItems() > 0)) {
-
-                                if (++m_iAnnotateListItemSelected >= m_kAnnotateList.getNumItems()) {
-                                    m_iAnnotateListItemSelected = 0;
-                                }
-
-                                setCurvePathAnnotateItem(m_iAnnotateListItemSelected);
-                            } else {
-                                beep();
-                            }
-
-                            break;
-
-                        case KeyEvent.VK_SPACE:
-
-                            // select next branch choice
-                            if (null != m_akBranchChoice) {
-                                setClosestChoiceBranch();
-                            } else {
-                                beep();
-                            }
-
-                            break;
-
-                        case KeyEvent.VK_S:
-
-                            // change the distance of a single step
-                            if ('s' == iKeyChar) {
-                                m_fPathStep -= 0.1f;
-
-                                if (m_fPathStep < 0.1f) {
-                                    m_fPathStep = 0.1f;
-                                    beep();
-                                }
-                            } else {
-                                m_fPathStep += 0.1f;
-                            }
-
-                            setPathDist(m_kBranchState.m_fNormalizedPathDist);
-                            break;
-
-                        case KeyEvent.VK_G:
-
-                            // change the gaze distance
-                            if ('g' == iKeyChar) {
-                                m_fGazeDist -= 1.0f;
-
-                                if (m_fGazeDist < 0.0f) {
-                                    m_fGazeDist = 0.0f;
-                                    beep();
-                                }
-                            } else {
-                                m_fGazeDist += 1.0f;
-                            }
-
-                            setPathDist(m_kBranchState.m_fNormalizedPathDist);
-                            break;
-                    }
-                }
-
-                when += 1;
-
-                try {
-                    wait(1);
-                } catch (InterruptedException error) { }
-
-                evt = new KeyEvent(parentScene.getCanvas(), id, when, 0, currentEvent.getKeyCode(),
-                                   currentEvent.getKeyChar(), currentEvent.getKeyLocation());
-            }
-        }
-    }
 
     /**
      * DOCUMENT ME!
@@ -1506,10 +1198,8 @@ public class FlyPathBehavior extends Behavior implements KeyListener {
          *
          * @return  Point3f Coordinates of the 3D point further down along the curve.
          */
-        public Point3f getForwardNormalizedPosition(float fDist) {
-        	WildMagic.LibFoundation.Mathematics.Vector3f kVec = m_kBranchCurve.GetPosition(getForwardNormalizedTime(fDist));
-        	Point3f kPos = new Point3f( kVec.X, kVec.Y, kVec.Z );
-            return kPos;
+        public Vector3f getForwardNormalizedPosition(float fDist) {
+        	return m_kBranchCurve.GetPosition(getForwardNormalizedTime(fDist));
         }
 
         /**

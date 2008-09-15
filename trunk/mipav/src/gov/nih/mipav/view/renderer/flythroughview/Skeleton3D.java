@@ -1,16 +1,12 @@
-package gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview;
+package gov.nih.mipav.view.renderer.flythroughview;
 
 
+import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.renderer.J3D.*;
-
 import java.util.*;
 
-import javax.swing.*;
-
-import javax.vecmath.*;
 
 
 /**
@@ -80,8 +76,6 @@ public class Skeleton3D {
     /** Describes the organization of the volume data in a linear array. */
     private ModelImage3DLayout m_kVolumeLayout;
 
-    /** DOCUMENT ME! */
-    private JProgressBar rendererProgressBar;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -99,8 +93,6 @@ public class Skeleton3D {
         // Remember these inputs.
         m_kImage = kImage;
         m_kVolumeLayout = kVolumeLayout;
-
-        rendererProgressBar = ViewJFrameVolumeView.getRendererProgressBar();
 
         // What is the total number of samples in the volume.
         final int iNumSamples = m_kVolumeLayout.getNumSamples();
@@ -311,7 +303,7 @@ public class Skeleton3D {
             }
 
             int[] aiPathIndex = new int[iNumPathSamples];
-            Point3f[] akPathPoint = new Point3f[iNumPathSamples];
+            Vector3f[] akPathPoint = new Vector3f[iNumPathSamples];
             float[] afPathPointBoundaryMinDist = new float[iNumPathSamples];
             float fPathLength = 0.0f;
 
@@ -328,7 +320,7 @@ public class Skeleton3D {
                 int iX = m_kVolumeLayout.getIndexX(iIndex);
                 int iY = m_kVolumeLayout.getIndexY(iIndex);
                 int iZ = m_kVolumeLayout.getIndexZ(iIndex);
-                Point3f kPathPoint = new Point3f();
+                Vector3f kPathPoint = new Vector3f();
                 m_kVolumeLayout.getRealPoint(iX, iY, iZ, kPathPoint);
                 akPathPoint[iPath] = kPathPoint;
 
@@ -340,7 +332,7 @@ public class Skeleton3D {
                 // along the path as an estimate of the total length of
                 // this branch.
                 if (iPath > 0) {
-                    fPathLength += akPathPoint[iPath].distance(akPathPoint[iPath - 1]);
+                    fPathLength += akPathPoint[iPath].Distance(akPathPoint[iPath - 1]);
                 }
             }
 
@@ -449,7 +441,7 @@ public class Skeleton3D {
             }
 
             int[] aiPathIndex = new int[iNumPathSamples];
-            Point3f[] akPathPoint = new Point3f[iNumPathSamples];
+            Vector3f[] akPathPoint = new Vector3f[iNumPathSamples];
             float[] afPathPointBoundaryMinDist = new float[iNumPathSamples];
             float fPathLength = 0.0f;
 
@@ -466,7 +458,7 @@ public class Skeleton3D {
                 int iX = m_kVolumeLayout.getIndexX(iIndex);
                 int iY = m_kVolumeLayout.getIndexY(iIndex);
                 int iZ = m_kVolumeLayout.getIndexZ(iIndex);
-                Point3f kPathPoint = new Point3f();
+                Vector3f kPathPoint = new Vector3f();
                 m_kVolumeLayout.getRealPoint(iX, iY, iZ, kPathPoint);
                 akPathPoint[iPath] = kPathPoint;
 
@@ -478,7 +470,7 @@ public class Skeleton3D {
                 // along the path as an estimate of the total length of
                 // this branch.
                 if (iPath > 0) {
-                    fPathLength += akPathPoint[iPath].distance(akPathPoint[iPath - 1]);
+                    fPathLength += akPathPoint[iPath].Distance(akPathPoint[iPath - 1]);
                 }
             }
 
@@ -542,9 +534,9 @@ public class Skeleton3D {
         // use default XYZ spacing of 1.0.
         // Maximum boundary distance is in real coordinates so
         // use anisotropic spacing of the volume.
-        final float fSpacingX = m_kVolumeLayout.m_fSpacingX;
-        final float fSpacingY = m_kVolumeLayout.m_fSpacingY;
-        final float fSpacingZ = m_kVolumeLayout.m_fSpacingZ;
+        //final float fSpacingX = m_kVolumeLayout.m_fSpacingX;
+        //final float fSpacingY = m_kVolumeLayout.m_fSpacingY;
+        //final float fSpacingZ = m_kVolumeLayout.m_fSpacingZ;
         final int L = m_kVolumeLayout.m_iDimX;
         final int M = m_kVolumeLayout.m_iDimY;
         final int N = m_kVolumeLayout.m_iDimZ;
@@ -558,10 +550,10 @@ public class Skeleton3D {
         // Step 1 = N iterations (outer loops over Z coordinate)
         // Step 2 = N iterations (outer loops over Z coordinate)
         // Step 3 = M iterations (outer loops over Y coordinate)
-        final int iProgressOffsetStep1 = 0;
-        final int iProgressOffsetStep2 = iProgressOffsetStep1 + N;
-        final int iProgressOffsetStep3 = iProgressOffsetStep2 + N;
-        final int iProgressOffsetLast = iProgressOffsetStep3 + M;
+        //final int iProgressOffsetStep1 = 0;
+        //final int iProgressOffsetStep2 = iProgressOffsetStep1 + N;
+        //final int iProgressOffsetStep3 = iProgressOffsetStep2 + N;
+        //final int iProgressOffsetLast = iProgressOffsetStep3 + M;
         // rendererProgressBar.setMessage("Computing boundary distance ...");
         // kProgress.setRange(0,iProgressOffsetLast-1);
 
@@ -827,7 +819,7 @@ public class Skeleton3D {
                                 int iIndexNeighborB = aiIndexNeighborsVoxel[iIndexB];
                                 Vector3f kGradientB = akVolumeBoundaryDistGradient[iIndexNeighborB];
 
-                                if (kGradientA.dot(kGradientB) <= 0.0f) {
+                                if (kGradientA.Dot(kGradientB) <= 0.0f) {
                                     bNonUniform = true;
                                 }
                             }
@@ -847,13 +839,13 @@ public class Skeleton3D {
 
                         // Compute the average gradient for the samples
                         // the comprise the voxel.
-                        kAvgGradient.set(0.0f, 0.0f, 0.0f);
+                        kAvgGradient.Set(0.0f, 0.0f, 0.0f);
 
                         for (int iIndex = 0; iIndex < 8; ++iIndex) {
-                            kAvgGradient.add(akVolumeBoundaryDistGradient[aiIndexNeighborsVoxel[iIndex]]);
+                            kAvgGradient.Add(akVolumeBoundaryDistGradient[aiIndexNeighborsVoxel[iIndex]]);
                         }
 
-                        kAvgGradient.normalize();
+                        kAvgGradient.Normalize();
 
                         // Check to see if any sample in the voxel set of
                         // samples has a nonuniform gradient relative to
@@ -862,7 +854,7 @@ public class Skeleton3D {
 
                         for (int iIndex = 0; iIndex < 8; ++iIndex) {
 
-                            if (kAvgGradient.dot(akVolumeBoundaryDistGradient[aiIndexNeighborsVoxel[iIndex]]) <= 0.0f) {
+                            if (kAvgGradient.Dot(akVolumeBoundaryDistGradient[aiIndexNeighborsVoxel[iIndex]]) <= 0.0f) {
                                 bNonUniform = true;
 
                                 break;
@@ -887,7 +879,7 @@ public class Skeleton3D {
         // Start with a set of all the volume samples that were marked as
         // having nonuniform gradients.  A TreeSet is used because
         // the entries are ordered.
-        TreeSet kTreeSetFlaggedSamples = new TreeSet();
+        TreeSet<Integer> kTreeSetFlaggedSamples = new TreeSet<Integer>();
 
         for (int iZ = 0; iZ < m_kVolumeLayout.m_iDimZ; ++iZ) {
 
@@ -911,7 +903,7 @@ public class Skeleton3D {
             // Get and remove any one of the remaining flagged samples that
             // have not been processed yet.  Get the XYZ sample
             // coordinates from its linear array index.
-            Integer kInteger = (Integer) kTreeSetFlaggedSamples.first();
+            Integer kInteger = kTreeSetFlaggedSamples.first();
             kTreeSetFlaggedSamples.remove(kInteger);
 
             int iIndex = kInteger.intValue();
@@ -935,29 +927,29 @@ public class Skeleton3D {
                 // The gradient is not unit length, but if we are to
                 // follow the gradient as we walk through the samples,
                 // then we need a unit length version of the gradient.
-                kUnitGradient.normalize(kGradient);
+                kUnitGradient.Normalize(kGradient);
 
                 // Proceed to the next sample by following the gradient.
                 // Use rounding because unless the gradient is aligned
                 // with an orthogonal axis, none of the gradient vector's
                 // elements will have a magnitude > 1.  Use our own
                 // rounding to avoid the function call to Math.round.
-                if (kUnitGradient.x >= 0.0f) {
-                    iX += (int) (kUnitGradient.x + 0.5f);
+                if (kUnitGradient.X >= 0.0f) {
+                    iX += (int) (kUnitGradient.X + 0.5f);
                 } else {
-                    iX -= (int) (-kUnitGradient.x + 0.5f);
+                    iX -= (int) (-kUnitGradient.X + 0.5f);
                 }
 
-                if (kUnitGradient.y >= 0.0f) {
-                    iY += (int) (kUnitGradient.y + 0.5f);
+                if (kUnitGradient.Y >= 0.0f) {
+                    iY += (int) (kUnitGradient.Y + 0.5f);
                 } else {
-                    iY -= (int) (-kUnitGradient.y + 0.5f);
+                    iY -= (int) (-kUnitGradient.Y + 0.5f);
                 }
 
-                if (kUnitGradient.z >= 0.0f) {
-                    iZ += (int) (kUnitGradient.z + 0.5f);
+                if (kUnitGradient.Z >= 0.0f) {
+                    iZ += (int) (kUnitGradient.Z + 0.5f);
                 } else {
-                    iZ -= (int) (-kUnitGradient.z + 0.5f);
+                    iZ -= (int) (-kUnitGradient.Z + 0.5f);
                 }
 
                 // Get the index in the linear array but check to make
@@ -991,7 +983,7 @@ public class Skeleton3D {
         // Label the connected flagged samples.
         // Keep count of how many samples have each label.
         // kProgress.setMessage("Finding largest connection ...");
-        kTreeSetFlaggedSamples = new TreeSet();
+        kTreeSetFlaggedSamples = new TreeSet<Integer>();
 
         short[] asVolumeLabeledConnections = new short[iNumSamples];
 
@@ -1005,8 +997,8 @@ public class Skeleton3D {
 
         // kProgress.setRange(kTreeSetFlaggedSamples.size()-1,0);
         short sConnectLabel = 0;
-        ArrayList kConnectLabelCount = new ArrayList();
-        int len = kTreeSetFlaggedSamples.size() - 1;
+        ArrayList<Integer> kConnectLabelCount = new ArrayList<Integer>();
+        //int len = kTreeSetFlaggedSamples.size() - 1;
 
         while (!kTreeSetFlaggedSamples.isEmpty()) {
 
@@ -1016,11 +1008,11 @@ public class Skeleton3D {
             // Get any remaining sample that has been flagged.
             // That sample is identified by its linear array index.
             // Easiest to just get the first.
-            TreeSet kTreeSet = new TreeSet();
+            TreeSet<Integer> kTreeSet = new TreeSet<Integer>();
             kTreeSet.add(kTreeSetFlaggedSamples.first());
 
             while (!kTreeSet.isEmpty()) {
-                Integer kInteger = (Integer) kTreeSet.first();
+                Integer kInteger = kTreeSet.first();
                 kTreeSet.remove(kInteger);
 
                 if (kTreeSetFlaggedSamples.remove(kInteger)) {
@@ -1050,9 +1042,8 @@ public class Skeleton3D {
         int iLabelMaxCount = 0;
 
         for (int iLabel = 1; iLabel < kConnectLabelCount.size(); ++iLabel) {
-            int iCountA = ((Integer) kConnectLabelCount.get(iLabelMaxCount)).intValue();
-
-            int iCountB = ((Integer) kConnectLabelCount.get(iLabel)).intValue();
+            int iCountA = kConnectLabelCount.get(iLabelMaxCount).intValue();
+            int iCountB = kConnectLabelCount.get(iLabel).intValue();
 
             if (iCountA < iCountB) {
                 iLabelMaxCount = iLabel;

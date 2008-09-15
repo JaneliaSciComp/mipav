@@ -1,4 +1,4 @@
-package gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview;
+package gov.nih.mipav.view.renderer.flythroughview;
 
 
 import java.util.*;
@@ -18,21 +18,21 @@ public class FlyPathGraph {
      * instance which contains Integer's which identify the unique index of the child branch. array of TreeMap
      * (key=Float(fNormalizedPathDist)), value=Set(Integer(iChildBranch)))
      */
-    protected ArrayList m_kListBranchChildList;
+    protected ArrayList<TreeMap<Float,Set<Integer>>> m_kListBranchChildList;
 
     /**
      * Each item is an Integer which contains the index of the parent branch to which this branch is connected. A parent
      * branch of -1 is used to indicate there is no parent branch, i.e., the root branch. This ArrayList has the same
      * number of entries as the m_kListBranchParentNormalizedDist ArrayList and the entries correspond.
      */
-    protected ArrayList m_kListBranchParentIndex; // array of Integer
+    protected ArrayList<Integer> m_kListBranchParentIndex; // array of Integer
 
     /**
      * Each item in a Float which contains the normalized path distance (in range [0,1]) for the parent branch where
      * this branch started. If there is no parent branch, this value is considered undefined. This ArrayList has the
      * same number of entries as the m_kListBranchParentIndex ArrayList and the entries correspond.
      */
-    protected ArrayList m_kListBranchParentNormalizedDist; // array of Float
+    protected ArrayList<Float> m_kListBranchParentNormalizedDist; // array of Float
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -40,9 +40,9 @@ public class FlyPathGraph {
      * Constructor.
      */
     protected FlyPathGraph() {
-        m_kListBranchParentIndex = new ArrayList();
-        m_kListBranchParentNormalizedDist = new ArrayList();
-        m_kListBranchChildList = new ArrayList();
+        m_kListBranchParentIndex = new ArrayList<Integer>();
+        m_kListBranchParentNormalizedDist = new ArrayList<Float>();
+        m_kListBranchChildList = new ArrayList<TreeMap<Float,Set<Integer>>>();
     }
 
     /**
@@ -51,7 +51,7 @@ public class FlyPathGraph {
      * @param  that  FlyPathGraph Instance to be duplicated.
      */
     protected FlyPathGraph(FlyPathGraph that) {
-        this.m_kListBranchParentIndex = (ArrayList) that.m_kListBranchParentIndex.clone();
+        this.m_kListBranchParentIndex = (ArrayList<Integer>) that.m_kListBranchParentIndex.clone();
 
         this.m_kListBranchParentNormalizedDist = (ArrayList) that.m_kListBranchParentNormalizedDist.clone();
 
@@ -68,7 +68,7 @@ public class FlyPathGraph {
      * @return  int Index of the parent branch. A value of -1 is returned if the specified branch has no parent.
      */
     public int getBranchParentIndex(int iBranch) {
-        return ((Integer) m_kListBranchParentIndex.get(iBranch)).intValue();
+        return m_kListBranchParentIndex.get(iBranch).intValue();
     }
 
     /**
@@ -82,7 +82,7 @@ public class FlyPathGraph {
      *          value of 0.0f is returned if the specified branch has no parent.
      */
     public float getBranchParentNormalizedDist(int iBranch) {
-        return ((Float) m_kListBranchParentNormalizedDist.get(iBranch)).floatValue();
+        return m_kListBranchParentNormalizedDist.get(iBranch).floatValue();
     }
 
     /**
@@ -100,7 +100,7 @@ public class FlyPathGraph {
      */
     public int[] getBranchPointBranches(int iBranch, int iBranchPoint) {
         Map.Entry[] akBranchPointEntry = getBranchPointEntryArray(iBranch);
-        Set kChildBranchSet = (Set) akBranchPointEntry[iBranchPoint].getValue();
+        Set<Integer> kChildBranchSet = (Set<Integer>) akBranchPointEntry[iBranchPoint].getValue();
         Integer[] akChildBranch = new Integer[kChildBranchSet.size()];
         int[] aiChildBranch = new int[kChildBranchSet.size()];
         kChildBranchSet.toArray(akChildBranch);
@@ -171,20 +171,20 @@ public class FlyPathGraph {
 
         // Store branch as child of its parent, if it has a parent.
         if (iBranchParent >= 0) {
-            Map kBranchChildList = (Map) m_kListBranchChildList.get(iBranchParent);
+            TreeMap<Float,Set<Integer>> kBranchChildList = m_kListBranchChildList.get(iBranchParent);
             Float kKey = new Float(fNormalizedPathDist);
-            Set kChildSet = (Set) kBranchChildList.get(kKey);
+            Set<Integer> kChildSet = kBranchChildList.get(kKey);
 
             if (null != kChildSet) {
                 kChildSet.add(new Integer(iNewBranch));
             } else {
-                kChildSet = new HashSet();
+                kChildSet = new HashSet<Integer>();
                 kChildSet.add(new Integer(iNewBranch));
                 kBranchChildList.put(kKey, kChildSet);
             }
         }
 
-        m_kListBranchChildList.add(new TreeMap());
+        m_kListBranchChildList.add(new TreeMap<Float,Set<Integer>>());
     }
 
     /**
@@ -198,7 +198,7 @@ public class FlyPathGraph {
      *          point.
      */
     protected Map.Entry[] getBranchPointEntryArray(int iBranch) {
-        TreeMap kTreeMap = (TreeMap) m_kListBranchChildList.get(iBranch);
+        TreeMap<Float, Set<Integer>> kTreeMap = m_kListBranchChildList.get(iBranch);
         Set kEntrySet = kTreeMap.entrySet();
         Map.Entry[] akMapEntry = new Map.Entry[kEntrySet.size()];
         kEntrySet.toArray(akMapEntry);

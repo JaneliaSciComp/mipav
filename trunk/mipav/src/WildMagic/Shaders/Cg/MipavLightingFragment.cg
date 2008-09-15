@@ -589,11 +589,12 @@ void p_MipavLightingFragment(
                 }
             }
         }
-        if ( bClipped == true )
-        {
-            discard;
-        }
     }
+    if ( bClipped == true )
+    {
+        discard;
+    }
+
     if ( bClipped == false )
     {
         if ( UseTexture == 0 )

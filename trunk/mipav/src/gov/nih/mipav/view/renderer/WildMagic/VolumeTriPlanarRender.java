@@ -166,6 +166,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
 
 
+    public VolumeSurface[] getSurfaces( String[] akSurfaceNames )
+    {
+        VolumeSurface[] akVolumeSurfaces = new VolumeSurface[akSurfaceNames.length];
+        int iCount = 0;
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                for ( int j = 0; j < akSurfaceNames.length; j++ )
+                {
+                    if ( m_kDisplayList.get(i).GetName().equals(akSurfaceNames[j]))
+                    {
+                        akVolumeSurfaces[iCount++] = (VolumeSurface)m_kDisplayList.get(i);
+                    }
+                }
+            }
+        }
+        return akVolumeSurfaces;
+    }
     /**
      * Add tract into the DTI display
      * @param kLine   polyline
