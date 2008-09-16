@@ -1990,7 +1990,12 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @param directory DOCUMENT ME!
      */
     public final void setFileDirectory(String directory) {
-        setFileName(directory + FileUtility.getFileName(fileName));
+        if (directory != null) {
+            setFileName(directory + FileUtility.getFileName(fileName));
+        }
+        else {
+            setFileName(FileUtility.getFileName(fileName));
+        }
     }
 
     /**
