@@ -478,8 +478,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             saveSRBFile();
         } else if (command.equals("TransferSRBFiles")) {
             transferSRBFiles();
-        } else if (command.equals("TransferNDAR")) {
-            transferNDAR();
         } else if (command.equals("AutoUploadToSRB")) {
 
             if (menuBuilder.isMenuItemSelected("Enable auto SRB upload")) {
@@ -3009,14 +3007,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     public void transferSRBFiles() {
         SRBFileTransferer transferer = new SRBFileTransferer();
         transferer.transferFiles();
-    }
-
-    /**
-     * Starts up an SRB NDAR transfer dialog
-     * 
-     */
-    public void transferNDAR() {
-        new JDialogNDAR(this.getMainFrame());
     }
 
     /**

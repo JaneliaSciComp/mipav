@@ -1,14 +1,11 @@
 package gov.nih.mipav.model.file;
 
-import WildMagic.LibFoundation.Mathematics.Vector2f;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JDialogNDAR.NDARData;
 
 import java.awt.*;
 import java.awt.image.*;
@@ -19,6 +16,8 @@ import javax.swing.JComponent;
 
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
+
+import WildMagic.LibFoundation.Mathematics.*;
 
 
 /**
@@ -771,7 +770,7 @@ public class FileImageXML extends FileXML {
 
         // set up the NDAR specific information for header writing
         if (options.writeHeaderOnly()) {
-            NDARData data = options.getNDARData();
+            NDARWriteData data = options.getNDARData();
 
             ((FileInfoImageXML) fileInfo).setSubjectID(data.validGUID);
 
@@ -1000,25 +999,19 @@ public class FileImageXML extends FileXML {
 
                     if (orient == FileInfoBase.SAGITTAL) {
                         // same for 2D or 3D, 2D doesn't use last row/col
-                        tMatrix.Set(0, 1, 0, 0,
-                                    0, 0, -1, 0,
-                                    -1, 0, 0, 0,
-                                    0, 0, 0, 1);
-                       
+                        tMatrix.Set(0, 1, 0, 0, 0, 0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 1);
+
                     } else if (orient == FileInfoBase.CORONAL) {
                         // same for 2D or 3D, 2D doesn't use last row/col
-                        tMatrix.Set(1, 0, 0, 0, 
-                                    0, 0, -1, 0, 
-                                    0, 1, 0, 0, 
-                                    0, 0, 0, 1);
-                        
+                        tMatrix.Set(1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1);
+
                     }
                 }
 
                 for (i = 0; i < tMatrix.getDim(); i++) {
 
                     for (j = 0; j < tMatrix.getDim(); j++) {
-                        closedTag("Data", new Double(tMatrix.Get(i,j)).toString());
+                        closedTag("Data", new Double(tMatrix.Get(i, j)).toString());
                     }
                 }
 
@@ -2527,7 +2520,8 @@ public class FileImageXML extends FileXML {
          * @param anVector DOCUMENT ME!
          * @param tal DOCUMENT ME!
          */
-        public MyXMLHandler(FileInfoImageXML fInfo, Vector<VOI> anVector, Vector<TransMatrix> mVector, TalairachTransformInfo tal) {
+        public MyXMLHandler(FileInfoImageXML fInfo, Vector<VOI> anVector, Vector<TransMatrix> mVector,
+                TalairachTransformInfo tal) {
             fileInfo = fInfo;
             annotationVector = anVector;
             matrixVector = mVector;
