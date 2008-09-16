@@ -10,6 +10,7 @@ import gov.nih.mipav.view.*;
 import java.awt.image.*;
 
 import java.io.*;
+import java.math.BigInteger;
 
 import java.util.*;
 
@@ -343,6 +344,90 @@ public class FileDicom extends FileDicomBase {
 
         return (fileInfo.containsDICM);
     }
+    
+    /**
+     * Dicom version 2: 
+     * Does not have a preamble in which to search for "DICM"
+     * So...the solution will be to search that it has at least a couple of beginning "08" tags
+     * However, we do not know if its Little Endian or Big Endian..so need to handle both
+     * 
+     * @return
+     * @throws IOException
+     */
+    public boolean isDICOM_ver2() throws IOException {
+    	if (raFile == null) {
+            return false;
+        }
+    	raFile.seek(0);
+    	boolean endianess = FileBase.LITTLE_ENDIAN;
+    	
+    	//read first byte
+    	byte b = raFile.readByte();
+    	if(b == 8) {
+    		//could be dicom 2...need to find at least 1 more 08
+    		//endianess is LITTLE ENDIAN
+    		endianess = FileBase.LITTLE_ENDIAN;
+    		raFile.skipBytes(1);
+    	}else {
+    		b = raFile.readByte();
+    		if(b == 8) {
+    			//could be dicom 2...need to find at least 1 more 08
+    			//endianess is BIG ENDIAN
+    			endianess = FileBase.BIG_ENDIAN;
+    		}else {
+    			//definitely not dicom 2....since the first tag is not 08
+    			return false;
+    		}
+    	}
+    	
+    	//skip next 2 bytes
+    	raFile.skipBytes(2);
+
+    	//read in length...4 bytes long
+    	byte[] byteBuffer = new byte[4];
+    	if(endianess == FileBase.LITTLE_ENDIAN) {
+    		byteBuffer[3] = raFile.readByte();
+    		byteBuffer[2] = raFile.readByte();
+    		byteBuffer[1] = raFile.readByte();
+    		byteBuffer[0] = raFile.readByte();
+    	}else {
+    		byteBuffer[0] = raFile.readByte();
+    		byteBuffer[1] = raFile.readByte();
+    		byteBuffer[2] = raFile.readByte();
+    		byteBuffer[3] = raFile.readByte();
+    	}
+    	BigInteger bi = new BigInteger(byteBuffer);
+    	int skipLength = bi.intValue();
+
+    	//skip over the length
+    	raFile.skipBytes(skipLength);
+    	
+    	
+    	if(endianess == FileBase.LITTLE_ENDIAN) {
+    		b = raFile.readByte();
+    		if(b == 8) {
+    			//is dicom...since we have at least 2 08 tags
+    			return true;
+    		}else {
+    			//not dicom
+    			return false;
+    		}
+    	}else {
+    		raFile.skipBytes(1);
+    		b = raFile.readByte();
+    		if(b == 8) {
+    			//is dicom...since we have at least 2 08 tags
+    			return true;
+    		}else {
+    			//not dicom
+    			return false;
+    		}
+    	}
+
+    }
+    
+    
+
 
     /**
      * gets the quiet option on the class.

@@ -929,6 +929,10 @@ public class FileUtility {
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = FileUtility.isDicom(fileName, fileDir, quiet);
             }
+            
+            if (fileType == FileUtility.UNDEFINED) {
+                fileType = FileUtility.isDicom_ver2(fileName, fileDir, quiet);
+            }
 
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = FileUtility.isGESigna4X(fileName, fileDir, quiet);
@@ -1071,6 +1075,46 @@ public class FileUtility {
         }
 
     }
+    
+    
+    
+    /**
+     * tests if unknown file is of type 2.0 dicom
+     * @param fileName
+     * @param fileDir
+     * @param quiet
+     * @return
+     * @throws IOException
+     */
+    public static final int isDicom_ver2(String fileName, String fileDir, boolean quiet) throws IOException {
+    	try {
+            FileDicom imageFile = new FileDicom(fileName, fileDir);
+
+            if (imageFile != null) {
+                boolean isDicom = imageFile.isDICOM_ver2();
+
+                imageFile.close();
+                imageFile = null;
+
+                if (isDicom) {
+                    return FileUtility.DICOM;
+                }
+            }
+
+            return FileUtility.UNDEFINED;
+        } catch (OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+                Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
+            } else {
+                Preferences.debug("FileIO: " + error + "\n", Preferences.DEBUG_FILEIO);
+            }
+
+            return FileUtility.UNDEFINED;
+        }
+    }
+    
 
     /**
      * Tests if the unknown file is of type GE Signa 4X type.
