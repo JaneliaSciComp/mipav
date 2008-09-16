@@ -1,11 +1,9 @@
-package gov.nih.mipav.view.dialogs;
-
-
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.WidgetFactory;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.srb.JDialogLoginSRB;
 
 import java.awt.*;
@@ -56,7 +54,7 @@ public class PlugInDialogNDAR extends JDialogBase implements ActionListener, Cha
     private Hashtable<File, Boolean> multiFileTable = null;
 
     /** NDAR data object passed into FileWriteOptions and onto the writeXML with specific NDAR info */
-    private NDARData ndarData;
+    private NDARWriteData ndarData;
 
     /** Static tab indices */
     private static final int TAB_MAIN = 0;
@@ -533,7 +531,7 @@ public class PlugInDialogNDAR extends JDialogBase implements ActionListener, Cha
             new File(outputDirBase).mkdirs();
         }
 
-        ndarData = new NDARData();
+        ndarData = new NDARWriteData();
 
         int numImages = sourceModel.size();
         for (int i = 0; i < numImages; i++) {
@@ -723,12 +721,6 @@ public class PlugInDialogNDAR extends JDialogBase implements ActionListener, Cha
         buttonPanel.add(helpButton);
 
         return buttonPanel;
-    }
-
-    public class NDARData {
-        public String validGUID;
-
-        public String zipFileName;
     }
 
     private class GUIDTableModel extends AbstractTableModel {

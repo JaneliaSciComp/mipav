@@ -2,21 +2,21 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.dialogs.JDialogNDAR.NDARData;
 
-import java.util.*;
+import java.util.BitSet;
 
 
 /**
  * This structure contains information to direct file writing.
- *
- * @version  0.1 June 21, 2001
- * @author   Neva Cherniavsky
- * @see      FileIO
+ * 
+ * @version 0.1 June 21, 2001
+ * @author Neva Cherniavsky
+ * @see FileIO
  */
 public class FileWriteOptions {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private boolean runningInSeparateThread = false;
@@ -151,21 +151,25 @@ public class FileWriteOptions {
     /** DOCUMENT ME! */
     private float zStart;
 
-    /** Tells FileIO whether or not to insert the saved image into the Quicklist (recently used image list) after successful saving */
+    /**
+     * Tells FileIO whether or not to insert the saved image into the Quicklist (recently used image list) after
+     * successful saving
+     */
     private boolean putInQuicklist = true;
-    
-    /** Tells the FileBase (FileImageXML only now) to write only the header (.xml) if true*/
+
+    /** Tells the FileBase (FileImageXML only now) to write only the header (.xml) if true */
     private boolean writeHeaderOnly = false;
-    
-    private NDARData ndarData = null;
-    
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    private NDARWriteData ndarData = null;
+
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructs an options structure with the given saveAs value. The file name and directory will need to be set
      * later.
-     *
-     * @param  saveAs  <code>true</code> indicates this is a file with a new file name.
+     * 
+     * @param saveAs <code>true</code> indicates this is a file with a new file name.
      */
     public FileWriteOptions(boolean saveAs) {
         this.saveAs = saveAs;
@@ -174,10 +178,10 @@ public class FileWriteOptions {
     /**
      * Constructs an options structure with the given file name, directory, and saveAs values. The image is written to
      * this file name and directory, under the preference of saveAs.
-     *
-     * @param  fileName   File name to save the image at.
-     * @param  directory  Directory to save the image at.
-     * @param  saveAs     <code>true</code> indicates this is a file with a new file name.
+     * 
+     * @param fileName File name to save the image at.
+     * @param directory Directory to save the image at.
+     * @param saveAs <code>true</code> indicates this is a file with a new file name.
      */
     public FileWriteOptions(String fileName, String directory, boolean saveAs) {
         this.fileName = fileName;
@@ -185,8 +189,8 @@ public class FileWriteOptions {
         this.saveAs = saveAs;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * DOCUMENT ME!
@@ -200,58 +204,64 @@ public class FileWriteOptions {
         this.imageB = null;
     }
 
-    /** 
+    /**
      * Whether or not to put the file into the recently used image list after saving
-     * @return if the image should be put into the quicklist 
+     * 
+     * @return if the image should be put into the quicklist
      */
     public boolean doPutInQuicklist() {
-    	return this.putInQuicklist;
+        return this.putInQuicklist;
     }
-    
-    /** 
+
+    /**
      * Sets the flag for putting the image into the recently used image list
+     * 
      * @param doPut true = do put into quicklist
      */
     public void doPutInQuicklist(boolean doPut) {
-    	this.putInQuicklist = doPut;
+        this.putInQuicklist = doPut;
     }
-    
+
     /**
      * Determines whether to write only the header (for now, .xml files) and no raw file...for NDAR SRB transfer
+     * 
      * @return write header only
      */
     public boolean writeHeaderOnly() {
-    	return this.writeHeaderOnly;
+        return this.writeHeaderOnly;
     }
-    
+
     /**
      * Sets the options to write only the .xml header if true
+     * 
      * @param headerOnly write header only flag
      */
     public void setWriteHeaderOnly(boolean headerOnly) {
-    	this.writeHeaderOnly = headerOnly;
+        this.writeHeaderOnly = headerOnly;
     }
-    
+
     /**
      * Sets the NDAR Data that will be used to populate XML header fields
+     * 
      * @param data NDAR data generated from JDialogNDAR
      */
-    public void setNDARData(NDARData data) {
-    	this.ndarData = data;
+    public void setNDARData(NDARWriteData data) {
+        this.ndarData = data;
     }
-    
+
     /**
      * Retrieves the NDAR data for use in populating XML fields
+     * 
      * @return the ndar data
      */
-    public NDARData getNDARData() {
-    	return this.ndarData;
+    public NDARWriteData getNDARData() {
+        return this.ndarData;
     }
-    
+
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public float getAlphaBlend() {
         return this.alphaBlend;
@@ -259,8 +269,8 @@ public class FileWriteOptions {
 
     /**
      * Gets the AVI compression.
-     *
-     * @return  AVICompression
+     * 
+     * @return AVICompression
      */
     public int getAVICompression() {
         return AVICompression;
@@ -268,8 +278,8 @@ public class FileWriteOptions {
 
     /**
      * Returns the orientations of the 3 axes.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public int[] getAxisOrientation() {
         return axisOrientation;
@@ -277,8 +287,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns the slice to begin saving at.
-     *
-     * @return  The first slice to save at.
+     * 
+     * @return The first slice to save at.
      */
     public int getBeginSlice() {
         return beginSlice;
@@ -286,8 +296,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns the time slice to begin saving at.
-     *
-     * @return  The first time slice to save at.
+     * 
+     * @return The first time slice to save at.
      */
     public int getBeginTime() {
         return beginTimePeriod;
@@ -295,8 +305,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public int getBlue() {
         return this.blue;
@@ -305,8 +315,8 @@ public class FileWriteOptions {
     /**
      * Accessor that returns the number of digits to use when appending to the multi file save (i.e., if you want
      * test00.tif to be the first file, 0 is the start number and 2 is the digit number).
-     *
-     * @return  The number of digits to append to the multi file save.
+     * 
+     * @return The number of digits to append to the multi file save.
      */
     public int getDigitNumber() {
         return fileDigitNumber;
@@ -314,8 +324,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns the slice to stop saving at.
-     *
-     * @return  The last slice to save at.
+     * 
+     * @return The last slice to save at.
      */
     public int getEndSlice() {
         return endSlice;
@@ -323,8 +333,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns the time slice to stop saving at.
-     *
-     * @return  The last time slice to save at.
+     * 
+     * @return The last time slice to save at.
      */
     public int getEndTime() {
         return endTimePeriod;
@@ -332,8 +342,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns the directory to be written to.
-     *
-     * @return  The directory to write this image to.
+     * 
+     * @return The directory to write this image to.
      */
     public String getFileDirectory() {
         return fileDirectory;
@@ -341,8 +351,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns the file name to be written to.
-     *
-     * @return  The file name to write this image to.
+     * 
+     * @return The file name to write this image to.
      */
     public String getFileName() {
         return fileName;
@@ -350,10 +360,10 @@ public class FileWriteOptions {
 
     /**
      * Accessor to get what type of file this is, such as analyze, raw, DICOM, etc.
-     *
-     * @return  The file type of this image.
-     *
-     * @see     FileBase
+     * 
+     * @return The file type of this image.
+     * 
+     * @see FileBase
      */
     public int getFileType() {
         return fileType;
@@ -361,8 +371,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public int getGreen() {
         return this.green;
@@ -370,8 +380,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public ModelImage getImageB() {
         return this.imageB;
@@ -379,8 +389,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public ModelLUT getLUTa() {
         return this.LUTa;
@@ -388,8 +398,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public ModelLUT getLUTb() {
         return this.LUTb;
@@ -397,8 +407,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public int getMicroSecPerFrame() {
         return this.microSecPerFrame;
@@ -406,8 +416,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public float getMJPEGQuality() {
         return this.mjpegQuality;
@@ -415,8 +425,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public float getOpacity() {
         return this.opacity;
@@ -424,18 +434,17 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public BitSet getPaintBitmap() {
         return this.paintBitmap;
     }
 
-
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public int getRed() {
         return this.red;
@@ -443,8 +452,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public ModelRGB getRGBTa() {
         return this.RGBTa;
@@ -452,8 +461,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public ModelRGB getRGBTb() {
         return this.RGBTb;
@@ -462,8 +471,8 @@ public class FileWriteOptions {
     /**
      * Accessor that returns the number to append to the multi file save (i.e., if you want test00.tif to be the first
      * file, 0 is the start number and 2 is the digit number).
-     *
-     * @return  The number to append to the multi file save.
+     * 
+     * @return The number to append to the multi file save.
      */
     public int getStartNumber() {
         return fileStartNumber;
@@ -471,8 +480,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns the time slice to save at; for TIFF, because TIFF only saves to 3D.
-     *
-     * @return  The time slice to save at.
+     * 
+     * @return The time slice to save at.
      */
     public int getTimeSlice() {
         return timeSlice;
@@ -480,8 +489,8 @@ public class FileWriteOptions {
 
     /**
      * Gets the filename for the linked file for the XML header.
-     *
-     * @return  xml linked filename
+     * 
+     * @return xml linked filename
      */
     public String getXMLLinkedFilename() {
         return this.xmlLinkedFilename;
@@ -489,8 +498,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns value of X Space text field.
-     *
-     * @return  Value typed in field.
+     * 
+     * @return Value typed in field.
      */
     public float getXSpace() {
         return xSpace;
@@ -498,8 +507,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns value of X Start text field.
-     *
-     * @return  Value typed in field.
+     * 
+     * @return Value typed in field.
      */
     public float getXStart() {
         return xStart;
@@ -507,8 +516,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns value of Y Space text field.
-     *
-     * @return  Value typed in field.
+     * 
+     * @return Value typed in field.
      */
     public float getYSpace() {
         return ySpace;
@@ -516,8 +525,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns value of Y Start text field.
-     *
-     * @return  Value typed in field.
+     * 
+     * @return Value typed in field.
      */
     public float getYStart() {
         return yStart;
@@ -525,8 +534,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns value of Z Space text field.
-     *
-     * @return  Value typed in field.
+     * 
+     * @return Value typed in field.
      */
     public float getZSpace() {
         return zSpace;
@@ -534,8 +543,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns value of Z Start text field.
-     *
-     * @return  Value typed in field.
+     * 
+     * @return Value typed in field.
      */
     public float getZStart() {
         return zStart;
@@ -543,8 +552,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public boolean isRunningInSeparateThread() {
         return this.runningInSeparateThread;
@@ -552,8 +561,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public boolean isAVI() {
         return this.isAVI;
@@ -563,8 +572,8 @@ public class FileWriteOptions {
      * Accessor that returns whether or not this is the default save. So if a user just hits the "OK" button in the
      * dialog without changing anything, it is default. However, if something needs to be recorded, all necessary
      * information is recorded.
-     *
-     * @return  <code>true</code> indicates default, <code>false</code> otherwise.
+     * 
+     * @return <code>true</code> indicates default, <code>false</code> otherwise.
      */
     public boolean isDefault() {
         return defaults;
@@ -572,9 +581,9 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns whether or not the Instance Number (0020,0013) should be recalculated before saving.
-     *
-     * @return  <code>true</code> indicates recalculate the Instance number, <code>false</code> don't modify the
-     *          Instance Number.
+     * 
+     * @return <code>true</code> indicates recalculate the Instance number, <code>false</code> don't modify the
+     *         Instance Number.
      */
     public boolean isInstanceNumberRecalculated() {
         return recalculateInstanceNumber;
@@ -583,8 +592,8 @@ public class FileWriteOptions {
     /**
      * Accessor that returns whether or not this is an image to be stored as multiple files. (Used primarily for TIFF
      * images).
-     *
-     * @return  <code>true</code> indicates multiple file save, <code>false</code> otherwise.
+     * 
+     * @return <code>true</code> indicates multiple file save, <code>false</code> otherwise.
      */
     public boolean isMultiFile() {
         return multiFile;
@@ -593,8 +602,8 @@ public class FileWriteOptions {
     /**
      * Accessor that returns whether or not it is possible to write with packed bits compression (only possible with
      * TIFF byte images).
-     *
-     * @return  <code>true</code> indicates possible, <code>false</code> otherwise.
+     * 
+     * @return <code>true</code> indicates possible, <code>false</code> otherwise.
      */
     public boolean isPackBitEnabled() {
         return packBitEnable;
@@ -602,8 +611,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns whether or not this is a Save or SaveAs operation.
-     *
-     * @return  <code>true</code> indicates save as, <code>false</code> save.
+     * 
+     * @return <code>true</code> indicates save as, <code>false</code> save.
      */
     public boolean isSaveAs() {
         return saveAs;
@@ -611,8 +620,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns whether or not the save should be into a subdirectory of imagename (without extension).
-     *
-     * @return  <code>true</code> indicates save should be into a subdirectory as, <code>false</code> save.
+     * 
+     * @return <code>true</code> indicates save should be into a subdirectory as, <code>false</code> save.
      */
     public boolean isSaveInSubdirectory() {
         return saveInSubdirectory;
@@ -620,8 +629,8 @@ public class FileWriteOptions {
 
     /**
      * Checks to see if this is being run from a script.
-     *
-     * @return  is it a script?
+     * 
+     * @return is it a script?
      */
     public boolean isScript() {
         return isScript;
@@ -629,8 +638,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns whether all of the options have been previously set (usually by the script parser).
-     *
-     * @return  <code>true</code> indicates the options are already set, <code>false</code> otherwise.
+     * 
+     * @return <code>true</code> indicates the options are already set, <code>false</code> otherwise.
      */
     public boolean isSet() {
         return optionsSet;
@@ -638,8 +647,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that returns whether or not to write with packed bits compression (only possible with TIFF byte images).
-     *
-     * @return  <code>true</code> indicates w/compression, <code>false</code> otherwise.
+     * 
+     * @return <code>true</code> indicates w/compression, <code>false</code> otherwise.
      */
     public boolean isWritePackBit() {
         return writePackBit;
@@ -647,8 +656,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  isActive  DOCUMENT ME!
+     * 
+     * @param isActive DOCUMENT ME!
      */
     public void setRunningInSeparateThread(boolean isActive) {
         this.runningInSeparateThread = isActive;
@@ -656,8 +665,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  alphaBlend  DOCUMENT ME!
+     * 
+     * @param alphaBlend DOCUMENT ME!
      */
     public void setAlphaBlend(float alphaBlend) {
         this.alphaBlend = alphaBlend;
@@ -665,8 +674,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets the AVI compression.
-     *
-     * @param  AVICompression  DOCUMENT ME!
+     * 
+     * @param AVICompression DOCUMENT ME!
      */
     public void setAVICompression(int AVICompression) {
         this.AVICompression = AVICompression;
@@ -674,8 +683,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets the orientations of the 3 axes.
-     *
-     * @param  ori  DOCUMENT ME!
+     * 
+     * @param ori DOCUMENT ME!
      */
     public void setAxisOrientation(int[] ori) {
         axisOrientation = ori;
@@ -683,8 +692,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets the slice to begin writing at (3D).
-     *
-     * @param  slice  First slice to begin writing at.
+     * 
+     * @param slice First slice to begin writing at.
      */
     public void setBeginSlice(int slice) {
         beginSlice = slice;
@@ -692,8 +701,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets the time slice to begin writing at (4D).
-     *
-     * @param  slice  Time slice to begin writing at.
+     * 
+     * @param slice Time slice to begin writing at.
      */
     public void setBeginTime(int slice) {
         beginTimePeriod = slice;
@@ -701,8 +710,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  blue  DOCUMENT ME!
+     * 
+     * @param blue DOCUMENT ME!
      */
     public void setBlue(int blue) {
         this.blue = blue;
@@ -710,8 +719,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets the "default" flag.
-     *
-     * @param  flag  <code>true</code> indicates default options, <code>false</code> otherwise.
+     * 
+     * @param flag <code>true</code> indicates default options, <code>false</code> otherwise.
      */
     public void setDefault(boolean flag) {
         defaults = flag;
@@ -720,8 +729,8 @@ public class FileWriteOptions {
     /**
      * /** Accessor that sets the number of digits to use when appending to the multi file save (i.e., if you want
      * test00.tif to be the first file, 0 is the start number and 2 is the digit number).
-     *
-     * @param  digit  Number of digits to write out.
+     * 
+     * @param digit Number of digits to write out.
      */
     public void setDigitNumber(int digit) {
         fileDigitNumber = digit;
@@ -729,8 +738,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets the slice to stop writing at (3D).
-     *
-     * @param  slice  Last slice to stop writing at.
+     * 
+     * @param slice Last slice to stop writing at.
      */
     public void setEndSlice(int slice) {
         endSlice = slice;
@@ -738,8 +747,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets the time slice to stop writing at (4D).
-     *
-     * @param  slice  Time slice to stop writing at.
+     * 
+     * @param slice Time slice to stop writing at.
      */
     public void setEndTime(int slice) {
         endTimePeriod = slice;
@@ -747,8 +756,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets the file directory.
-     *
-     * @param  dir  File directory to write to.
+     * 
+     * @param dir File directory to write to.
      */
     public void setFileDirectory(String dir) {
         fileDirectory = dir;
@@ -756,8 +765,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets the file name to write out.
-     *
-     * @param  name  File name to write to.
+     * 
+     * @param name File name to write to.
      */
     public void setFileName(String name) {
         fileName = name;
@@ -765,8 +774,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets the file type (analyze, raw, TIFF, DICOM, etc.).
-     *
-     * @param  type  File type to set to.
+     * 
+     * @param type File type to set to.
      */
     public void setFileType(int type) {
         fileType = type;
@@ -774,8 +783,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  green  DOCUMENT ME!
+     * 
+     * @param green DOCUMENT ME!
      */
     public void setGreen(int green) {
         this.green = green;
@@ -783,8 +792,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  imageB  DOCUMENT ME!
+     * 
+     * @param imageB DOCUMENT ME!
      */
     public void setImageB(ModelImage imageB) {
         this.imageB = imageB;
@@ -792,8 +801,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  isAVI  DOCUMENT ME!
+     * 
+     * @param isAVI DOCUMENT ME!
      */
     public void setIsAVI(boolean isAVI) {
         this.isAVI = isAVI;
@@ -801,8 +810,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets the options to be run in a script.
-     *
-     * @param  isScript  whether the options are being used as part of a script
+     * 
+     * @param isScript whether the options are being used as part of a script
      */
     public void setIsScript(boolean isScript) {
         this.isScript = isScript;
@@ -810,8 +819,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  LUTa  DOCUMENT ME!
+     * 
+     * @param LUTa DOCUMENT ME!
      */
     public void setLUTa(ModelLUT LUTa) {
         this.LUTa = LUTa;
@@ -819,8 +828,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  LUTb  DOCUMENT ME!
+     * 
+     * @param LUTb DOCUMENT ME!
      */
     public void setLUTb(ModelLUT LUTb) {
         this.LUTb = LUTb;
@@ -828,8 +837,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  microSec  DOCUMENT ME!
+     * 
+     * @param microSec DOCUMENT ME!
      */
     public void setMicroSecPerFrame(int microSec) {
         this.microSecPerFrame = microSec;
@@ -837,8 +846,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  mjpegQuality  DOCUMENT ME!
+     * 
+     * @param mjpegQuality DOCUMENT ME!
      */
     public void setMJPEGQuality(float mjpegQuality) {
         this.mjpegQuality = mjpegQuality;
@@ -847,8 +856,8 @@ public class FileWriteOptions {
     /**
      * Accessor that sets whether or not to write the image as multiple files, one 2D slice per file. Used primarily for
      * TIFF images.
-     *
-     * @param  flag  <code>true</code> indicates write this as multiple files, <code>false</code> otherwise.
+     * 
+     * @param flag <code>true</code> indicates write this as multiple files, <code>false</code> otherwise.
      */
     public void setMultiFile(boolean flag) {
         multiFile = flag;
@@ -856,8 +865,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  opacity  DOCUMENT ME!
+     * 
+     * @param opacity DOCUMENT ME!
      */
     public void setOpacity(float opacity) {
         this.opacity = opacity;
@@ -865,8 +874,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets whether all of the options have been previously set (usually by the script parser).
-     *
-     * @param  set  <code>true</code> indicates the options are already set, <code>false</code> otherwise.
+     * 
+     * @param set <code>true</code> indicates the options are already set, <code>false</code> otherwise.
      */
     public void setOptionsSet(boolean set) {
         optionsSet = set;
@@ -875,19 +884,19 @@ public class FileWriteOptions {
     /**
      * Accessor that sets whether it is possible to write with packed bits compression. It is only an options for TIFF
      * files that are byte images.
-     *
-     * @param  flag  <code>true</code> indicates it is possible to write with packed bits compression, <code>
-     *               false</code> otherwise.
+     * 
+     * @param flag <code>true</code> indicates it is possible to write with packed bits compression, <code>
+     *               false</code>
+     *            otherwise.
      */
     public void setPackBitEnabled(boolean flag) {
         packBitEnable = flag;
     }
 
-
     /**
      * DOCUMENT ME!
-     *
-     * @param  paintBitmap  DOCUMENT ME!
+     * 
+     * @param paintBitmap DOCUMENT ME!
      */
     public void setPaintBitmap(BitSet paintBitmap) {
         this.paintBitmap = paintBitmap;
@@ -895,8 +904,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets whether or not the Instance Number (0020,0013) should be recalculated before saving.
-     *
-     * @param  flag  DOCUMENT ME!
+     * 
+     * @param flag DOCUMENT ME!
      */
     public void setRecalculateInstanceNumber(boolean flag) {
         recalculateInstanceNumber = flag;
@@ -904,8 +913,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  red  DOCUMENT ME!
+     * 
+     * @param red DOCUMENT ME!
      */
     public void setRed(int red) {
         this.red = red;
@@ -913,8 +922,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  RGBTa  DOCUMENT ME!
+     * 
+     * @param RGBTa DOCUMENT ME!
      */
     public void setRGBTa(ModelRGB RGBTa) {
         this.RGBTa = RGBTa;
@@ -922,8 +931,8 @@ public class FileWriteOptions {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  RGBTb  DOCUMENT ME!
+     * 
+     * @param RGBTb DOCUMENT ME!
      */
     public void setRGBTb(ModelRGB RGBTb) {
         this.RGBTb = RGBTb;
@@ -931,8 +940,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets the "save as" flag.
-     *
-     * @param  flag  <code>true</code> indicates save as, <code>false</code> indicates regular save.
+     * 
+     * @param flag <code>true</code> indicates save as, <code>false</code> indicates regular save.
      */
     public void setSaveAs(boolean flag) {
         saveAs = flag;
@@ -940,9 +949,9 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets the "save as" flag.
-     *
-     * @param  flag  <code>true</code> indicates image should be saved in a subdirectory (imagename without extension)
-     *               <code>false</code> indicates regular save.
+     * 
+     * @param flag <code>true</code> indicates image should be saved in a subdirectory (imagename without extension)
+     *            <code>false</code> indicates regular save.
      */
     public void setSaveInSubdirectory(boolean flag) {
         saveInSubdirectory = flag;
@@ -951,8 +960,8 @@ public class FileWriteOptions {
     /**
      * Accessor that sets the number to append to the multi file save (i.e., if you want test00.tif to be the first
      * file, 0 is the start number and 2 is the digit number).
-     *
-     * @param  num  Start number to write out.
+     * 
+     * @param num Start number to write out.
      */
     public void setStartNumber(int num) {
         fileStartNumber = num;
@@ -962,8 +971,8 @@ public class FileWriteOptions {
      * Accessor that sets the time slice to record (4D TIFF). This would have the same functionality as setting the
      * begin time slice and end time slice to the same number. With TIFF images, we do not allow the user to specify a
      * range of time slices, so we will save a 4D image to a 3D TIFF but not to a 4D TIFF.
-     *
-     * @param  slice  Time slice to write.
+     * 
+     * @param slice Time slice to write.
      */
     public void setTimeSlice(int slice) {
         timeSlice = slice;
@@ -972,8 +981,8 @@ public class FileWriteOptions {
     /**
      * Accessor that sets whether to write with packed bits compression. Only possible for TIFF files that are byte
      * images.
-     *
-     * @param  flag  <code>true</code> indicates write with packed bits compression, <code>false</code> otherwise.
+     * 
+     * @param flag <code>true</code> indicates write with packed bits compression, <code>false</code> otherwise.
      */
     public void setWritePackBit(boolean flag) {
         writePackBit = flag;
@@ -981,8 +990,8 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets the xml linked filename (for XML files).
-     *
-     * @param  xmlfilename  the linked xml filename
+     * 
+     * @param xmlfilename the linked xml filename
      */
     public void setXMLLinkedFilename(String xmlfilename) {
         xmlLinkedFilename = xmlfilename;
@@ -990,10 +999,10 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets x space (used for MINC images).
-     *
-     * @param  value  Value to set the x space to.
-     *
-     * @see    gov.nih.mipav.view.dialogs.JDialogSaveMinc
+     * 
+     * @param value Value to set the x space to.
+     * 
+     * @see gov.nih.mipav.view.dialogs.JDialogSaveMinc
      */
     public void setXSpace(float value) {
         xSpace = value;
@@ -1001,10 +1010,10 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets x start (used for MINC images).
-     *
-     * @param  value  Value to set the x start to.
-     *
-     * @see    gov.nih.mipav.view.dialogs.JDialogSaveMinc
+     * 
+     * @param value Value to set the x start to.
+     * 
+     * @see gov.nih.mipav.view.dialogs.JDialogSaveMinc
      */
     public void setXStart(float value) {
         xStart = value;
@@ -1012,10 +1021,10 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets y space (used for MINC images).
-     *
-     * @param  value  Value to set the y space to.
-     *
-     * @see    gov.nih.mipav.view.dialogs.JDialogSaveMinc
+     * 
+     * @param value Value to set the y space to.
+     * 
+     * @see gov.nih.mipav.view.dialogs.JDialogSaveMinc
      */
     public void setYSpace(float value) {
         ySpace = value;
@@ -1023,10 +1032,10 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets y start (used for MINC images).
-     *
-     * @param  value  Value to set the y start to.
-     *
-     * @see    gov.nih.mipav.view.dialogs.JDialogSaveMinc
+     * 
+     * @param value Value to set the y start to.
+     * 
+     * @see gov.nih.mipav.view.dialogs.JDialogSaveMinc
      */
     public void setYStart(float value) {
         yStart = value;
@@ -1034,10 +1043,10 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets z space (used for MINC images).
-     *
-     * @param  value  Value to set the z space to.
-     *
-     * @see    gov.nih.mipav.view.dialogs.JDialogSaveMinc
+     * 
+     * @param value Value to set the z space to.
+     * 
+     * @see gov.nih.mipav.view.dialogs.JDialogSaveMinc
      */
     public void setZSpace(float value) {
         zSpace = value;
@@ -1045,10 +1054,10 @@ public class FileWriteOptions {
 
     /**
      * Accessor that sets z start (used for MINC images).
-     *
-     * @param  value  Value to set the z start to.
-     *
-     * @see    gov.nih.mipav.view.dialogs.JDialogSaveMinc
+     * 
+     * @param value Value to set the z start to.
+     * 
+     * @see gov.nih.mipav.view.dialogs.JDialogSaveMinc
      */
     public void setZStart(float value) {
         zStart = value;
@@ -1056,29 +1065,28 @@ public class FileWriteOptions {
 
     /**
      * Shows these options as a string, useful for debugging.
-     *
-     * @return  A string containing the saved file write options.
+     * 
+     * @return A string containing the saved file write options.
      */
     public String toString() {
         String s = "";
         s += "All File options:\n";
-        s += "\tFile name: " + fileName + "\n\tFile directory: " + fileDirectory + "\n\tFile type: " + fileType +
-             "\n\tSave as: " + saveAs + "\n\tOptions set: " + optionsSet + "\n\tDefaults: " + defaults + "\n\n";
+        s += "\tFile name: " + fileName + "\n\tFile directory: " + fileDirectory + "\n\tFile type: " + fileType
+                + "\n\tSave as: " + saveAs + "\n\tOptions set: " + optionsSet + "\n\tDefaults: " + defaults + "\n\n";
         s += "3D options:\n";
         s += "\tBegin slice: " + beginSlice + "\n\tEnd slice: " + endSlice + "\n\n";
         s += "4D options:\n";
-        s += "\tBegin time: " + beginTimePeriod + "\n\tEnd time: " + endTimePeriod + "\n\tTime Slice: " + timeSlice +
-             "\n\n";
+        s += "\tBegin time: " + beginTimePeriod + "\n\tEnd time: " + endTimePeriod + "\n\tTime Slice: " + timeSlice
+                + "\n\n";
         s += "TIFF options:\n";
-        s += "\tPack Bit Enabled: " + packBitEnable + "\n\tWrite Pack Bit: " + writePackBit + "\n\tMulti file: " +
-             multiFile + "\n\tStart #: " + fileStartNumber + "\n\t# digits: " + fileDigitNumber + "\n\n";
+        s += "\tPack Bit Enabled: " + packBitEnable + "\n\tWrite Pack Bit: " + writePackBit + "\n\tMulti file: "
+                + multiFile + "\n\tStart #: " + fileStartNumber + "\n\t# digits: " + fileDigitNumber + "\n\n";
         s += "MINC options:\n";
-        s += "\tX Start: " + xStart + "\n\tY Start: " + yStart + "\n\tZ Start: " + zStart + "\n\tX Space: " + xSpace +
-             "\n\tY Space: " + ySpace + "\n\tZ Space: " + zSpace + "\n\n";
+        s += "\tX Start: " + xStart + "\n\tY Start: " + yStart + "\n\tZ Start: " + zStart + "\n\tX Space: " + xSpace
+                + "\n\tY Space: " + ySpace + "\n\tZ Space: " + zSpace + "\n\n";
         s += "DICOM options:\n";
         s += "\tRecalculate Image Instance: " + recalculateInstanceNumber + "\n";
 
         return s;
     }
-
 }
