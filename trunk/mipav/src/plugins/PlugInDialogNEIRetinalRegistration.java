@@ -645,10 +645,18 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
                     MipavUtil.displayError("epsYellow is Required!");
                     return;
                 }
+                if((Float.parseFloat(epsYText.getText().trim()) < 0) ||  (Float.parseFloat(epsYText.getText().trim()) > 1)) {
+                	MipavUtil.displayError("epsYellow must be between 0 and 1!");
+                    return;
+                }
                 if(epsBText.getText().trim().equals("")){
                     MipavUtil.displayError("epsBlue is Required!");
                     return;
-                    }
+                }
+                if((Float.parseFloat(epsBText.getText().trim()) < 0) ||  (Float.parseFloat(epsBText.getText().trim()) > 1)) {
+                	MipavUtil.displayError("epsBlue must be between 0 and 1!");
+                    return;
+                }
                 
                 boolean success = validateFilePaths();
                 if(!success) {
@@ -703,6 +711,11 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         
     }
     
+    
+    /**
+     * 
+     * @return
+     */
     public boolean validateFilePaths() {
         File image1File = new File(ImageDirTextField1.getText().trim());
         File image2File = new File(ImageDirTextField2.getText().trim());
@@ -719,6 +732,9 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         return true;
         
     }
+    
+
+    
     public void setimagePaths(String imagePath1, String imagePath2, String refPath) {
         this.imagePath1 = imagePath1;
         this.imagePath2 = imagePath2;

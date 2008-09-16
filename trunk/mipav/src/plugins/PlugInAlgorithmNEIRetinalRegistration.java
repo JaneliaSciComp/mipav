@@ -125,8 +125,8 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         //Set all variables
         sigma[0] = 4;
         sigma[1] = 4;
-        resol[0] = (float) 0.013888889;
-        resol[1] = (float) 0.013888889;
+        //resol[0] = (float) 0.013888889;
+        //resol[1] = (float) 0.013888889;
         this.imagePath1 = imageDir1;
         this.imagePath2 = imageDir2;
         this.refPath = refPath;
@@ -184,15 +184,33 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
             outputbox.append("** Loading " + refPath + " in as Reference Image: \n");
             reference = fileIO.readImage(refPath);
             reference.setImageName("reference");
-            reference.setResolutions(0, resol);
+            //reference.setResolutions(0, resol);
+            resol[0] = reference.getResolutions(0)[0];
+            resol[1] = reference.getResolutions(0)[1];
+            
         }
         
         
         //make 3 new folders
-        
-        File outputfolder = new File(f2.getParent(), "Output");
-        if (outputfolder.exists())
-            outputfolder.delete();
+        int num = 1;
+        File outputfolder = new File(f2.getParent(), "Output" + num);
+        if (outputfolder.exists()) {
+        	for (int i=2;i<=10;i++) {
+        		outputfolder = null;
+        		num = i;
+        		outputfolder = new File(f2.getParent(), "Output" + num);
+        		if(!outputfolder.exists()) {
+        			break;
+        		}else {
+        			if(i == 10) {
+        				outputfolder = null;
+        				num = 1;
+        				outputfolder = new File(f2.getParent(), "Output" + num);
+        			}
+        		}
+        	}
+        	
+        }
         outputfolder.mkdir();
         
         File outputfolder2 = null, outputfolder3 = null;
@@ -202,10 +220,10 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         opts.setEndSlice(0);
         opts.setOptionsSet(true);
         if (!preReg){//do if the images need to be registered
-            outputfolder2 = new File(f2.getParent(), "YellowReg");
+            outputfolder2 = new File(f2.getParent(), "YellowReg" + num);
             outputfolder2.mkdir();
             
-            outputfolder3 = new File(f2.getParent(), "BlueReg");
+            outputfolder3 = new File(f2.getParent(), "BlueReg" + num);
             outputfolder3.mkdir();
             
             //select eye for registration
@@ -218,7 +236,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
             //file write options
 
             opts.setFileDirectory(outputfolder2 + outputfolder2.separator);
-            ModelImage toBeReg, doneReg, convDoneReg;
+            ModelImage toBeReg, doneReg;
             outputbox.append("        ** Calculating Gradient Magnitude for Registration**\n");
             
             
@@ -295,20 +313,10 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 }
             }
             
-                //convert image to float
-                convDoneReg = new ModelImage(ModelStorageBase.FLOAT,doneReg.getExtents(), doneReg.getImageName());
-                convDoneReg.getFileInfo(0).setEndianess(false);
-            
-                algoType = new AlgorithmChangeType(convDoneReg, doneReg, doneReg.getMin(), doneReg.getMax(), doneReg.getMin(), doneReg.getMax(), false);
-                algoType.run();
-            
+
                 //save image
-                fileIO.writeImage(convDoneReg, opts);
-                if (convDoneReg != null){
-                    convDoneReg.disposeLocal();
-                    convDoneReg = null;
-                }
-            
+                fileIO.writeImage(doneReg, opts);
+
                 if (currCost > .35){  //may not be registered, alert user
                     notReg.add("YellowRegistered" + (j+1));
                 }
@@ -373,23 +381,9 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                     }
                 
                 }
-    
-                //convert to float
-                convDoneReg = new ModelImage(ModelStorageBase.FLOAT,doneReg.getExtents(), doneReg.getImageName());
-                convDoneReg.getFileInfo(0).setEndianess(false);
-        
-                algoType = new AlgorithmChangeType(convDoneReg, doneReg, doneReg.getMin(), doneReg.getMax(), doneReg.getMin(), doneReg.getMax(), false);
-                algoType.run();
-        
-        
-                fileIO.writeImage(convDoneReg, opts);
-        
-                if (convDoneReg != null){
-                              convDoneReg.disposeLocal();
-                              convDoneReg = null;
-                }
-        
-    
+
+                fileIO.writeImage(doneReg, opts);
+
         
                 if (currCost > .35) //warn user if it may not be registered
                     notReg.add("BlueRegistered" + (j+1));
