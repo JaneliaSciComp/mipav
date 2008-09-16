@@ -491,10 +491,10 @@ public class PlaneRender_WM extends GPURenderBase
     {
         for ( int i = 0; i < akVolumeSurfaces.length; i++ )
         {
-            m_kDisplayList.add(akVolumeSurfaces[i]);
+            //m_kDisplayList.add(akVolumeSurfaces[i]);
         }
-        updateLighting( m_akLights );
-        m_bSurfaceAdded = true;
+        //updateLighting( m_akLights );
+        //m_bSurfaceAdded = true;
     }
 
     public void AddSlices( VolumeSlices kVolumeSlice  )

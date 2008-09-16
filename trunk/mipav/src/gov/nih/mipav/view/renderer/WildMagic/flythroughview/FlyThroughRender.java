@@ -319,7 +319,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
         // Default geometry/appearance properties.
         // Set the radius based on the maximum distance of "inside"
         // volume samples to the surface.
-        float fRadius = 0.03f * m_kSkeleton.getMaxBoundaryDistance();
+        float fRadius = 0.003f * m_kSkeleton.getMaxBoundaryDistance();
 
         // Create the node to render the branch paths and their connections.
         int iNumBranches = m_kFlyPathGraphCurve.getNumBranches();
@@ -332,6 +332,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
 
             m_aiBranchIndexUnvisitedMin[iBranch] = 0;
             m_aiBranchIndexUnvisitedMax[iBranch] = kGeometryBranchPath.VBuffer.GetVertexQuantity() - 1;
+
+            m_kParent.addGeometry(new Polyline(kGeometryBranchPath.VBuffer, false, true));
         }
         
         // Create the node to render the annotation points as they are added.
@@ -345,6 +347,14 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
         m_kAnnotateList = new FlyPathAnnotateList_WM();
         m_kAnnotateList.setDefaultShape(kSM.Sphere(10, 10, fRadius));
         
+        TriMesh kSpherePosition = kSM.Sphere(10, 10, fRadius);
+        for ( int i = 0; i < kSpherePosition.VBuffer.GetVertexQuantity(); i++ )
+        {
+            kSpherePosition.VBuffer.SetColor3(0, i, 1, 0, 0 );
+        }
+        kSpherePosition.SetName( "FlyThrough" );
+        m_kParent.addGeometry( kSpherePosition );
+
         // Setup behavior to handle flying down the path and
         // looking around.
         m_kFlyPathBehavior = new FlyPathBehavior_WM(m_kFlyPathGraphCurve, m_kAnnotateList, this);
@@ -544,6 +554,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
             kVolumePt.Y *= m_kMaskImage.getExtents()[1];
             kVolumePt.Z *= m_kMaskImage.getExtents()[2];
             m_kParent.setSliceFromPlane(kVolumePt);
+            m_kParent.translateSurface( "FlyThrough", kPositionScaled );
         }
             
     }
