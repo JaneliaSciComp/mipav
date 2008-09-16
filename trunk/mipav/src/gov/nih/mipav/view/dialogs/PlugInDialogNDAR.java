@@ -20,7 +20,7 @@ import javax.swing.event.*;
 import javax.swing.table.*;
 
 
-public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeListener, ItemListener {
+public class PlugInDialogNDAR extends JDialogBase implements ActionListener, ChangeListener, ItemListener {
 
     /** Scrolling text area for log output */
     private WidgetFactory.ScrollTextArea logOutputArea;
@@ -72,7 +72,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 
     private static final int GUID_TABLE_GUID_COLUMN = 1;
 
-    public JDialogNDAR(Frame theParentFrame) {
+    public PlugInDialogNDAR(Frame theParentFrame) {
         super(theParentFrame, false);
 
         init();
