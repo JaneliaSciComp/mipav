@@ -193,7 +193,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
                     parse(children[i]);
                 } else if (!children[i].isDirectory()) {
                 		try {
-	                		if(children[i].getName().endsWith(".dcm") || children[i].getName().endsWith(".DCM") || FileUtility.isDicom(children[i].getName(), children[i].getParent() + File.separator, true) == FileUtility.DICOM) {
+	                		if((FileUtility.isDicom(children[i].getName(), children[i].getParent() + File.separator, true) == FileUtility.DICOM) || (FileUtility.isDicom_ver2(children[i].getName(), children[i].getParent() + File.separator, true) == FileUtility.DICOM)) {
 	                			success = anonymizeDICOM(children[i]);
 	                			if (success == false) {
 	                				outputTextArea.append("!!!!!!!!!!!!!!!!!!!! ERROR IN ANONYMIZING " + children[i].getName() + " \n\n");
