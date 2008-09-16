@@ -496,7 +496,13 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
             //    chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
             //}
 
-            chooser.setSelectedFile(new File(testImage.getFileInfo(0).getFileDirectory() + testImage.getImageFileName()));
+            
+            if (testImage.getFileInfo(0).getFileDirectory() != null) {
+                chooser.setSelectedFile(new File(testImage.getFileInfo(0).getFileDirectory() + testImage.getImageFileName()));
+            }
+            else {
+                chooser.setSelectedFile(new File(testImage.getImageFileName()));
+            }
             
             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
 
