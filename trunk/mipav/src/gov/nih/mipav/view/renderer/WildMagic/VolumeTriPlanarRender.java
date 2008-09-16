@@ -165,6 +165,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         return akVolumeSurfaces;
     }
 
+    public void addGeometry( Geometry kGeometry )
+    {
+        VolumeGeometry kVLine = new VolumeGeometry( kGeometry, m_kVolumeImageA, 
+                                                    m_kTranslate,
+                                                    m_fX, m_fY, m_fZ );
+        kVLine.SetDisplay(true);
+        m_kDisplayList.add( kVLine );
+        UpdateSceneRotation();
+    }
 
     public VolumeSurface[] getSurfaces( String[] akSurfaceNames )
     {
@@ -1832,6 +1841,19 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         ResetShaderParamsWindow();
     }
     
+    public void translateSurface(String kSurfaceName, Vector3f kTranslate)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    m_kDisplayList.get(i).Translate(kTranslate);
+                }
+            }
+        }
+    }
     
     public void toggleGeodesicPathDisplay(String kSurfaceName, int iWhich)
     {

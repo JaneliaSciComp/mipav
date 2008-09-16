@@ -40,7 +40,7 @@ public abstract class VolumeObject
     public VolumeObject (VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ)
     {
         m_kVolumeImageA = kImageA;
-        m_kTranslate = kTranslate;
+        m_kTranslate.Copy(kTranslate);
         
         m_fX = fX;
         m_fY = fY;
@@ -189,6 +189,11 @@ public abstract class VolumeObject
         }
     } 
 
+    public void Translate(Vector3f kTranslate)
+    {
+        m_kTranslate.Add(kTranslate);
+    }
+
     public void Blend( float fValue ) {}
     
     public void SetColor( ColorRGB kColor ){}
@@ -207,7 +212,7 @@ public abstract class VolumeObject
     /** a reference to the VolumeImage containing the shared data and textures for display. */
     protected VolumeImage m_kVolumeImageA;
     /** local translation in the parent scene-graph. */
-    protected Vector3f m_kTranslate;
+    protected Vector3f m_kTranslate = new Vector3f();;
     /** Culling of this object (front-face, back-face, none) */
     protected CullState m_kCull;
     /** Alpha blending for this object. */

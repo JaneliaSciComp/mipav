@@ -2804,6 +2804,14 @@ implements MouseListener, ItemListener, ChangeListener {
         }
     }  
     
+    public void addGeometry( Geometry kGeometry )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.addGeometry(kGeometry);
+        }
+    }
+
     public void AddSlices(VolumeSlices kSlices)
     {
         for (int i = 0; i < 3; i++) 
@@ -2823,6 +2831,14 @@ implements MouseListener, ItemListener, ChangeListener {
         if ( raycastRenderWM != null )
         {
             raycastRenderWM.removeSurface(kSurfaceName);
+        }
+    }
+
+    public void translateSurface(String kSurfaceName, Vector3f kTranslate)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.translateSurface(kSurfaceName, kTranslate);
         }
     }
 
