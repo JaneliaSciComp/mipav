@@ -14,7 +14,7 @@ import javax.swing.*;
 
 
 /**
- * @version  July 21, 2008
+ * @version  September 16, 2008
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -144,7 +144,7 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if (algorithm instanceof PlugInAlgorithmCenterDistance2) {
+        if (algorithm instanceof PlugInAlgorithmFociAndStrands) {
             image.clearMask();
 
             if (algorithm.isCompleted()) {
@@ -311,7 +311,7 @@ public class PlugInDialogFociAndStrands extends JDialogScriptableBase implements
     private void init() {
         DecimalFormat df = new DecimalFormat("0.00");
         setForeground(Color.black);
-        setTitle("Foci and Strands  07/21/08");
+        setTitle("Foci and Strands  09/16/08");
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
