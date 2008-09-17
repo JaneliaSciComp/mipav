@@ -6,9 +6,8 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.io.*;
-
-import java.text.*;
+import java.io.IOException;
+import java.text.DecimalFormat;
 
 
 /**
@@ -18,36 +17,49 @@ import java.text.*;
  * step process is used: 1.) Determine the standard deviation of the difference image over the same VOI region used for
  * the signal mean difference variance = (1/(VOI pixel number - 1)) * sum over VOI region of (image[i] - image2[i])**2
  * difference standard deviation = square root(difference variance)
- *
- * <p>2.) SNR for a signal VOI = square root(2) * (voi mean)/difference standard deviation The factor square root(2) is
+ * 
+ * <p>
+ * 2.) SNR for a signal VOI = square root(2) * (voi mean)/difference standard deviation The factor square root(2) is
  * required because the standard deviation used is from the difference image rather than one of the original images The
- * contrast to noise ratio is simply SNR for VOI 1 - SNR for VOI 2.</p>
- *
- * <p>An optional registration may be performed before SNR. In this registration image2 is registered to image.
+ * contrast to noise ratio is simply SNR for VOI 1 - SNR for VOI 2.
+ * </p>
+ * 
+ * <p>
+ * An optional registration may be performed before SNR. In this registration image2 is registered to image.
  * AlgorithmRegOAR2D is used with the cost function being the only registration parameter the user can vary in the
  * dialog box. Correlation ratio is the default cost function, but the user can also select least squares, normalized
  * cross correlation, or normalized mutual information. The SNR will be performed with the registered image2 rather than
- * on the original prebleached image.</p>
- *
- * <p>Note that even for 2 perfectly aligned images the results differ substantially for processing without and with
+ * on the original prebleached image.
+ * </p>
+ * 
+ * <p>
+ * Note that even for 2 perfectly aligned images the results differ substantially for processing without and with
  * registration. In 1 example for 2 aligned images without registration the standard deviation equalled 12.3 and the SNR
- * equalled 8.44. With registration the standard deviation equalled 7.66 and the SNR equalled 13.6.</p>
- *
- * <p>The code here assumes the presence of 1 or 2 VOI regions - a required signal region and optional second signal
+ * equalled 8.44. With registration the standard deviation equalled 7.66 and the SNR equalled 13.6.
+ * </p>
+ * 
+ * <p>
+ * The code here assumes the presence of 1 or 2 VOI regions - a required signal region and optional second signal
  * region. The VOIs must all be placed in the the same image. Radio buttons in the dialog box are used to select a red
  * signal 1 or a green signal 2 VOI. Either an ellipse VOI, rectangle VOI, or polyline VOI will be selected from the top
- * MIPAV toolbar. There is no need to hit the NEW_VOI button.</p>
- *
- * <p>Reference: 1.) PhD. Thesis Signal and Noise Estimation From Magnetic Resonance Images by Jan Sijbers, Universiteit
- * Antwerpen, Department Natuurkunde, Section 7.1.2 The NEMA standard, p. 49.</p>
- *
- * <p>2.) Acceptance Testing of Magnetic Resonance Imaging Systems, AAPM Report No. 34, Published by the American
+ * MIPAV toolbar. There is no need to hit the NEW_VOI button.
+ * </p>
+ * 
+ * <p>
+ * Reference: 1.) PhD. Thesis Signal and Noise Estimation From Magnetic Resonance Images by Jan Sijbers, Universiteit
+ * Antwerpen, Department Natuurkunde, Section 7.1.2 The NEMA standard, p. 49.
+ * </p>
+ * 
+ * <p>
+ * 2.) Acceptance Testing of Magnetic Resonance Imaging Systems, AAPM Report No. 34, Published by the American
  * Assoication of Physicists in Medicine by the American Institute of Physics, March, 1992 (Reprinted from Medical
- * Physics, Vol. 19, Issue 1, 1992).</p>
+ * Physics, Vol. 19, Issue 1, 1992).
+ * </p>
  */
 public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private int cost;
@@ -73,23 +85,23 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
     /** DOCUMENT ME! */
     private ViewUserInterface UI;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new AlgorithmTwoMRIImagesSNR object.
-     *
-     * @param  image           First MRI image
-     * @param  image2          Second MRI image
-     * @param  signalIndex     the index of the signal VOI
-     * @param  signalImage     image the signal VOI belongs to; 1 if image, 2 if image 2
-     * @param  signal2Index    the index of the second signal VOI if >= 0
-     * @param  register        If true register the image2 to the image before SNR
-     * @param  cost            Cost function used in registration
-     * @param  createRegImage  If register = true and createRegImage = true, then create a frame with the registered
-     *                         image
+     * 
+     * @param image First MRI image
+     * @param image2 Second MRI image
+     * @param signalIndex the index of the signal VOI
+     * @param signalImage image the signal VOI belongs to; 1 if image, 2 if image 2
+     * @param signal2Index the index of the second signal VOI if >= 0
+     * @param register If true register the image2 to the image before SNR
+     * @param cost Cost function used in registration
+     * @param createRegImage If register = true and createRegImage = true, then create a frame with the registered image
      */
     public AlgorithmTwoMRIImagesSNR(ModelImage image, ModelImage image2, int signalIndex, int signalImage,
-                                    int signal2Index, boolean register, int cost, boolean createRegImage) {
+            int signal2Index, boolean register, int cost, boolean createRegImage) {
 
         super(null, image);
         this.image2 = image2;
@@ -102,7 +114,8 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
         UI = ViewUserInterface.getReference();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Prepares this class for destruction.
@@ -160,7 +173,6 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing Two MRI Image SNR ...");
 
-        
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         srcExtents[0] = xDim;
@@ -187,7 +199,6 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
             VOIsReg.addElement(inVOI);
         }
 
-
         if (signal2Index >= 0) {
 
             if (signalImage == 1) {
@@ -195,7 +206,6 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
                 VOIsReg.addElement(inVOI);
             }
         } // if (signal2Index >= 0)
-
 
         if (register) {
             fireProgressStateChanged("Registering images");
@@ -238,17 +248,13 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
                 doSubsample = false;
                 interp = AlgorithmTransform.BILINEAR;
                 interp2 = AlgorithmTransform.BILINEAR;
-                regAlgo = new AlgorithmRegOAR2D(srcImage, image2, cost, DOF, interp, rotateBegin, rotateEnd, coarseRate,
-                                                fineRate, doSubsample, bracketBound, maxIterations, numMinima);
+                regAlgo = new AlgorithmRegOAR2D(srcImage, image2, cost, DOF, interp, rotateBegin, rotateEnd,
+                        coarseRate, fineRate, doSubsample, bracketBound, maxIterations, numMinima);
                 regAlgo.run();
-                transform = new AlgorithmTransform(image2, regAlgo.getTransform(), interp2,
-                                                   srcImage.getFileInfo()[0].getResolutions()[0],
-                                                   srcImage.getFileInfo()[0].getResolutions()[1],
-                                                   srcImage.getExtents()[0], srcImage.getExtents()[1], 
-                                                   new int []{srcImage.getUnitsOfMeasure(0),
-                                                   srcImage.getUnitsOfMeasure(1)},
-                                                   transformVOI,
-                                                   false, false);
+                transform = new AlgorithmTransform(image2, regAlgo.getTransform(), interp2, srcImage.getFileInfo()[0]
+                        .getResolutions()[0], srcImage.getFileInfo()[0].getResolutions()[1], srcImage.getExtents()[0],
+                        srcImage.getExtents()[1], new int[] {srcImage.getUnitsOfMeasure(0),
+                                srcImage.getUnitsOfMeasure(1)}, transformVOI, false, false);
                 regAlgo.finalize();
                 regAlgo = null;
             } // if (srcImage.getNDims() == 2)
@@ -258,17 +264,14 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
                 interp = AlgorithmTransform.TRILINEAR;
                 interp2 = AlgorithmTransform.TRILINEAR;
                 regAlgo3D = new AlgorithmRegOAR3D(srcImage, image2, cost, DOF, interp, rotateBeginX, rotateEndX,
-                                                  coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
-                                                  fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxResol,
-                                                  doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+                        coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
+                        rotateEndZ, coarseRateZ, fineRateZ, maxResol, doSubsample, fastMode, bracketBound,
+                        maxIterations, numMinima);
                 regAlgo3D.run();
-                transform = new AlgorithmTransform(image2, regAlgo3D.getTransform(), interp2,
-                                                   srcImage.getFileInfo()[0].getResolutions()[0],
-                                                   srcImage.getFileInfo()[0].getResolutions()[1],
-                                                   srcImage.getFileInfo()[0].getResolutions()[2],
-                                                   srcImage.getExtents()[0], srcImage.getExtents()[1],
-                                                   srcImage.getExtents()[2], 
-                                                   transformVOI, false, false);
+                transform = new AlgorithmTransform(image2, regAlgo3D.getTransform(), interp2, srcImage.getFileInfo()[0]
+                        .getResolutions()[0], srcImage.getFileInfo()[0].getResolutions()[1], srcImage.getFileInfo()[0]
+                        .getResolutions()[2], srcImage.getExtents()[0], srcImage.getExtents()[1],
+                        srcImage.getExtents()[2], transformVOI, false, false);
                 regAlgo3D.finalize();
                 regAlgo3D = null;
             } // else if (srcImagre.getNDims() == 3)
@@ -279,7 +282,6 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
             transform.finalize();
 
             if (createRegImage) {
-
 
                 regImage.setImageName(image2.getImageName() + "_registered");
                 regImage.calcMinMax();
@@ -342,7 +344,6 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
             mask = image2.generateVOIMask(mask, signalIndex);
         }
 
-
         if (signal2Index >= 0) {
 
             if (register) {
@@ -388,8 +389,8 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
             Preferences.debug("SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
             UI.setDataText("SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
             cnr = snr - snr2;
-            Preferences.debug("Constrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
-            UI.setDataText("Constrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
+            Preferences.debug("Contrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
+            UI.setDataText("Contrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
         } // if (signal2Index >= 0)
 
         setCompleted(true);

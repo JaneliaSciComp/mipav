@@ -8,11 +8,8 @@ import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.io.*;
-
-import java.text.*;
-
+import java.text.NumberFormat;
 import java.util.*;
 
 import javax.swing.*;
@@ -24,21 +21,22 @@ import javax.swing.tree.*;
 /**
  * Tree of images beneath the given directory. When a user clicks on a filename, a thumbnail of the image appears, along
  * with the header data.
- *
- * @author   Neva Cherniavsky
- * @version  1.0 June 1, 2002
- * @see      ViewJComponentPreviewImage
+ * 
+ * @author Neva Cherniavsky
+ * @version 1.0 June 1, 2002
+ * @see ViewJComponentPreviewImage
  */
-public class ViewImageDirectory extends JFrame
-        implements ActionListener, ComponentListener, ItemListener, TreeSelectionListener, TreeExpansionListener,
-                   ChangeListener, PreviewImageContainer {
+public class ViewImageDirectory extends JFrame implements ActionListener, ComponentListener, ItemListener,
+        TreeSelectionListener, TreeExpansionListener, ChangeListener, PreviewImageContainer {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -1262294439731204344L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     protected String directory;
@@ -63,7 +61,6 @@ public class ViewImageDirectory extends JFrame
 
     /** DOCUMENT ME! */
     // protected JPanelProgressBar progressPanel;
-
     /** DOCUMENT ME! */
     protected Font serif12, serif12B;
 
@@ -141,47 +138,35 @@ public class ViewImageDirectory extends JFrame
 
     /** DOCUMENT ME! */
     private JCheckBoxMenuItem thumbnailOption;
-    
-    
-    
-    
-    
+
     /*
-     * These next fields that were associated with adding ability to subsample/force UBYTE 
-     * when opening images and the code in places further down have been commented out becasue
-     * we currently do not have the ability to read 3d volumes on a slice by slice basis that 
-     * would then be subsampled.
+     * These next fields that were associated with adding ability to subsample/force UBYTE when opening images and the
+     * code in places further down have been commented out becasue we currently do not have the ability to read 3d
+     * volumes on a slice by slice basis that would then be subsampled.
      * 
      * we can address this at a later time
      * 
-     * nish
-     * 6/17/2008
+     * nish 6/17/2008
      * 
      */
     /** DOCUMENT ME! */
-    //protected JCheckBox enableCheckbox;
-    
+    // protected JCheckBox enableCheckbox;
     /** DOCUMENT ME! */
-    //protected static final String ENABLE = "Enable";
-    
+    // protected static final String ENABLE = "Enable";
     /** DOCUMENT ME! */
-    //protected JTextField txtHeight;
-
+    // protected JTextField txtHeight;
     /** DOCUMENT ME! */
-    //protected JTextField txtWidth;
-    
+    // protected JTextField txtWidth;
     /** DOCUMENT ME! */
-    //protected JCheckBox chkForceUBYTE;
+    // protected JCheckBox chkForceUBYTE;
 
-    
-
-    //~ Constructors ---------------------------------------------------------------------------------------------------
-
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
     /**
      * Creates new tree of images and sets up file filter. Calls initialization method.
-     *
-     * @param  dir     DOCUMENT ME!
-     * @param  filter  Directory to make tree under.
+     * 
+     * @param dir DOCUMENT ME!
+     * @param filter Directory to make tree under.
      */
     public ViewImageDirectory(String dir, ViewImageFileFilter filter) {
         super();
@@ -215,32 +200,33 @@ public class ViewImageDirectory extends JFrame
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
         } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
-                              ">.  Check that this file is available.\n");
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
         }
 
         this.addWindowListener(new WindowAdapter() {
-                public void windowClosing(WindowEvent we) {
+            public void windowClosing(WindowEvent we) {
 
-                    if (img != null) {
-                        img.dispose(true);
-                        img = null;
-                    } else if (thumbnail != null) {
-                        thumbnail.finalize();
-                        thumbnail = null;
-                    }
-
+                if (img != null) {
+                    img.dispose(true);
+                    img = null;
+                } else if (thumbnail != null) {
+                    thumbnail.finalize();
+                    thumbnail = null;
                 }
-            });
+
+            }
+        });
 
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Recreates the tree when a new directory is selected; refreshes the tree when refresh is selected.
-     *
-     * @param  event  Event that triggered this function.
+     * 
+     * @param event Event that triggered this function.
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -255,18 +241,17 @@ public class ViewImageDirectory extends JFrame
                 buildSourceTreeListing(false);
                 validate();
             }
-        } /*else if (command.equals(ENABLE)) {
-            txtHeight.setEnabled(enableCheckbox.isSelected());
-            txtWidth.setEnabled(enableCheckbox.isSelected());
-            chkForceUBYTE.setEnabled(enableCheckbox.isSelected());
-        }*/else if (command.equals("Refresh")) {
+        } /*
+             * else if (command.equals(ENABLE)) { txtHeight.setEnabled(enableCheckbox.isSelected());
+             * txtWidth.setEnabled(enableCheckbox.isSelected()); chkForceUBYTE.setEnabled(enableCheckbox.isSelected()); }
+             */else if (command.equals("Refresh")) {
             treePanel.removeAll();
             buildSourceTreeListing(false);
             validate();
         } else if (command.equals("Filter")) {
             JDialogFilterChoice dialog = new JDialogFilterChoice(this);
 
-            if (!dialog.isCancelled()) {
+            if ( !dialog.isCancelled()) {
                 imageFilter = dialog.getFilter();
                 treePanel.removeAll();
                 buildSourceTreeListing(false);
@@ -291,24 +276,21 @@ public class ViewImageDirectory extends JFrame
             double[] buffer;
             TreePath[] selected = directoryTree.getSelectionPaths();
             FileIO io = new FileIO();
-            //Dimension subsampleDimension = null;
+            // Dimension subsampleDimension = null;
             boolean forceUBYTE = false;
 
             // progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
             /*
-            if (enableCheckbox.isSelected() && (subsamplingSanityCheck() == false)) {
-                MipavUtil.displayError("Subsampling dimensions are invalid.");
-
-                return;
-            }
-
-            if (enableCheckbox.isSelected()) {
-                subsampleDimension = new Dimension(Integer.parseInt(txtWidth.getText()),
-                                                   Integer.parseInt(txtHeight.getText()));
-                forceUBYTE = chkForceUBYTE.isSelected();
-            }
-            
-            */
+             * if (enableCheckbox.isSelected() && (subsamplingSanityCheck() == false)) {
+             * MipavUtil.displayError("Subsampling dimensions are invalid.");
+             * 
+             * return; }
+             * 
+             * if (enableCheckbox.isSelected()) { subsampleDimension = new
+             * Dimension(Integer.parseInt(txtWidth.getText()), Integer.parseInt(txtHeight.getText())); forceUBYTE =
+             * chkForceUBYTE.isSelected(); }
+             * 
+             */
 
             if (command.equals("OpenToSingle")) {
                 openSeparateOption.setSelected(false);
@@ -325,7 +307,7 @@ public class ViewImageDirectory extends JFrame
             }
             // if there is only one image selected, open that in a separate
             // frame
-            else if ((selected.length == 1) && !((ViewFileTreeNode) selected[0].getLastPathComponent()).isDirectory()) {
+            else if ( (selected.length == 1) && ! ((ViewFileTreeNode) selected[0].getLastPathComponent()).isDirectory()) {
 
                 fileName = ((ViewFileTreeNode) selected[0].getLastPathComponent()).getName();
                 directory = ((ViewFileTreeNode) selected[0].getLastPathComponent()).getDirectory();
@@ -338,20 +320,13 @@ public class ViewImageDirectory extends JFrame
                 if (image == null) {
                     return;
                 }
-                
+
                 /*
-                if(image.getNDims() == 2) {
-                	if(subsampleDimension != null) {
-                        image = FileIO.subsample(image, subsampleDimension);
-                	}
-                	if(forceUBYTE) {
-                		if(!image.isColorImage() && image.getType() != ModelStorageBase.UBYTE) {
-                			image = FileIO.convertToUBYTE(image);
-                		}
-                	}
-                }
-				*/
-                
+                 * if(image.getNDims() == 2) { if(subsampleDimension != null) { image = FileIO.subsample(image,
+                 * subsampleDimension); } if(forceUBYTE) { if(!image.isColorImage() && image.getType() !=
+                 * ModelStorageBase.UBYTE) { image = FileIO.convertToUBYTE(image); } } }
+                 */
+
                 new ViewJFrameImage(image, io.getModelLUT());
                 // progressPanel.getProgressBar().setBorderPainted(false);
                 // progressPanel.getProgressBar().setBackground(this.getBackground());
@@ -405,7 +380,7 @@ public class ViewImageDirectory extends JFrame
                  * etc). If the open command is told to openSeparate (separately), dimensions will be ignored and each
                  * image will be placed into a separate frame
                  */
-                if (!table.isEmpty()) {
+                if ( !table.isEmpty()) {
                     Enumeration en = table.keys();
 
                     int index = 0;
@@ -437,15 +412,15 @@ public class ViewImageDirectory extends JFrame
 
                             if (secondImage != null) {
 
-                                if ((newImage.getType() == secondImage.getType()) &&
-                                        (newImage.getExtents().length == secondImage.getExtents().length)) {
+                                if ( (newImage.getType() == secondImage.getType())
+                                        && (newImage.getExtents().length == secondImage.getExtents().length)) {
                                     boolean matches = true;
 
                                     for (i = 0; i < newImage.getExtents().length; i++) {
 
-                                        if ((newImage.getExtents()[i] != secondImage.getExtents()[i]) ||
-                                                (newImage.getResolutions(0)[i] != secondImage.getResolutions(0)[i]) ||
-                                                (newImage.getExtents().length > 3)) {
+                                        if ( (newImage.getExtents()[i] != secondImage.getExtents()[i])
+                                                || (newImage.getResolutions(0)[i] != secondImage.getResolutions(0)[i])
+                                                || (newImage.getExtents().length > 3)) {
                                             matches = false;
 
                                             break;
@@ -460,7 +435,7 @@ public class ViewImageDirectory extends JFrame
                             }
 
                             secondImage = null; // dont need to clean up since
-                                                // we have this in table
+                            // we have this in table
                         }
 
                         /**
@@ -472,42 +447,30 @@ public class ViewImageDirectory extends JFrame
                         if (numMatches == 1) {
                             table.remove(matchingImageNames.elementAt(0));
                             /*
-                            if(newImage.getNDims() == 2) {
-                            	if(subsampleDimension != null) {
-                            		newImage = FileIO.subsample(newImage, subsampleDimension);
-                            	}
-                            	if(forceUBYTE) {
-                            		if(!newImage.isColorImage() && newImage.getType() != ModelStorageBase.UBYTE) {
-                            			newImage = FileIO.convertToUBYTE(newImage);
-                            		}
-                            	}
-                            }
-							*/
+                             * if(newImage.getNDims() == 2) { if(subsampleDimension != null) { newImage =
+                             * FileIO.subsample(newImage, subsampleDimension); } if(forceUBYTE) {
+                             * if(!newImage.isColorImage() && newImage.getType() != ModelStorageBase.UBYTE) { newImage =
+                             * FileIO.convertToUBYTE(newImage); } } }
+                             */
                             // put the image (only 1) into a new frame
                             new ViewJFrameImage(newImage);
                             matchingImageNames.removeAllElements();
                         } else if (openSeparate == true) // open to separate
-                                                         // frames
+                        // frames
                         {
 
                             for (i = 0; i < matchingImageNames.size(); i++) {
                                 ModelImage image = (ModelImage) table.remove(matchingImageNames.elementAt(i));
                                 /*
-                                if(image.getNDims() == 2) {
-                                	if(subsampleDimension != null) {
-                                		image = FileIO.subsample(image, subsampleDimension);
-                                	}
-                                	if(forceUBYTE) {
-                                		if(!image.isColorImage() && image.getType() != ModelStorageBase.UBYTE) {
-                                			image = FileIO.convertToUBYTE(image);
-                                		}
-                                	}
-                                }
-								*/
+                                 * if(image.getNDims() == 2) { if(subsampleDimension != null) { image =
+                                 * FileIO.subsample(image, subsampleDimension); } if(forceUBYTE) {
+                                 * if(!image.isColorImage() && image.getType() != ModelStorageBase.UBYTE) { image =
+                                 * FileIO.convertToUBYTE(image); } } }
+                                 */
                                 new ViewJFrameImage(image);
                             }
                         } else { // otherwise concatenate images into a
-                                 // single image (2D->3D, 3D->4D)
+                            // single image (2D->3D, 3D->4D)
 
                             int[] newExtents = new int[newImage.getExtents().length + 1];
 
@@ -517,8 +480,9 @@ public class ViewImageDirectory extends JFrame
 
                             newExtents[newExtents.length - 1] = matchingImageNames.size();
 
-                            ModelImage concatImage = new ModelImage(newImage.getType(), newExtents,
-                                                                    newImage.getImageName() + "_concat");
+                            ModelImage concatImage = new ModelImage(newImage.getType(), newExtents, newImage
+                                    .getImageName()
+                                    + "_concat");
 
                             if (newImage.isColorImage()) {
                                 bufferLength = 4 * newExtents[0] * newExtents[1];
@@ -542,18 +506,12 @@ public class ViewImageDirectory extends JFrame
 
                                 newImage = (ModelImage) table.remove(matchingImageNames.elementAt(i));
                                 /*
-                                if(newImage.getNDims() == 2) {
-                                	if(subsampleDimension != null) {
-                                		newImage = FileIO.subsample(newImage, subsampleDimension);
-                                	}
-                                	if(forceUBYTE) {
-                                		if(!newImage.isColorImage() && newImage.getType() != ModelStorageBase.UBYTE) {
-                                			newImage = FileIO.convertToUBYTE(newImage);
-                                		}
-                                	}
-                                	
-                                }
-								*/
+                                 * if(newImage.getNDims() == 2) { if(subsampleDimension != null) { newImage =
+                                 * FileIO.subsample(newImage, subsampleDimension); } if(forceUBYTE) {
+                                 * if(!newImage.isColorImage() && newImage.getType() != ModelStorageBase.UBYTE) {
+                                 * newImage = FileIO.convertToUBYTE(newImage); } }
+                                 *  }
+                                 */
                                 try {
                                     newImage.exportData(0, bufferLength, buffer);
                                 } catch (IOException error) {
@@ -563,8 +521,6 @@ public class ViewImageDirectory extends JFrame
 
                                     return;
                                 }
-                                
-                                
 
                                 try {
                                     concatImage.importData(i * bufferLength, buffer, false);
@@ -602,22 +558,22 @@ public class ViewImageDirectory extends JFrame
 
     /**
      * Unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void componentHidden(ComponentEvent event) { }
+    public void componentHidden(ComponentEvent event) {}
 
     /**
      * Unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void componentMoved(ComponentEvent event) { }
+    public void componentMoved(ComponentEvent event) {}
 
     /**
      * Tells the component image that the size of the image panel has changed, then repaints the component image.
-     *
-     * @param  event  Event that triggered this function.
+     * 
+     * @param event Event that triggered this function.
      */
     public void componentResized(ComponentEvent event) {
 
@@ -633,20 +589,20 @@ public class ViewImageDirectory extends JFrame
 
                 img.paintComponent(img.getGraphics());
             }
-        } else if (event.getSource().equals(sliderPanel)) { }
+        } else if (event.getSource().equals(sliderPanel)) {}
     }
 
     /**
      * Unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void componentShown(ComponentEvent event) { }
+    public void componentShown(ComponentEvent event) {}
 
     /**
      * Called by the component image to get the real-time size of the panel before centering.
-     *
-     * @return  The size of the panel.
+     * 
+     * @return The size of the panel.
      */
     public Dimension getPanelSize() {
         return new Dimension(imagePanel.getBounds().width, imagePanel.getBounds().height);
@@ -654,8 +610,8 @@ public class ViewImageDirectory extends JFrame
 
     /**
      * Sets border painted or not painted depending on if the button was selected or deselected.
-     *
-     * @param  event  Event that triggered this function.
+     * 
+     * @param event Event that triggered this function.
      */
     public void itemStateChanged(ItemEvent event) {
         ((AbstractButton) event.getSource()).setBorderPainted(event.getStateChange() == ItemEvent.SELECTED);
@@ -663,8 +619,8 @@ public class ViewImageDirectory extends JFrame
 
     /**
      * Sets values based on knob along slider.
-     *
-     * @param  e  Event that triggered this function
+     * 
+     * @param e Event that triggered this function
      */
     public void stateChanged(ChangeEvent e) {
         Object source = e.getSource();
@@ -675,7 +631,7 @@ public class ViewImageDirectory extends JFrame
 
             // if the image is not a thumbnail and it is larger than 1024 x 768,
             // do not adjust while sliding
-            if ((img != null) && (img.getImageSize() > 786432) && brightSlider.getValueIsAdjusting()) {
+            if ( (img != null) && (img.getImageSize() > 786432) && brightSlider.getValueIsAdjusting()) {
                 return;
             }
 
@@ -691,7 +647,7 @@ public class ViewImageDirectory extends JFrame
 
             // if the image is not a thumbnail and it is larger than 1024 x 768,
             // do not adjust while sliding
-            if ((img != null) && (img.getImageSize() > 786432) && contSlider.getValueIsAdjusting()) {
+            if ( (img != null) && (img.getImageSize() > 786432) && contSlider.getValueIsAdjusting()) {
                 return;
             }
 
@@ -707,18 +663,18 @@ public class ViewImageDirectory extends JFrame
 
     /**
      * Unchanged.
-     *
-     * @param  tee  DOCUMENT ME!
+     * 
+     * @param tee DOCUMENT ME!
      */
-    public void treeCollapsed(TreeExpansionEvent tee) { }
+    public void treeCollapsed(TreeExpansionEvent tee) {}
 
     /**
      * Expands tree node in file tree. On expansion, the tree queries the selected node; if a selected node has had its
      * children previously added, then no nodes will be added, but the tree will display the previously added children.
      * Otherwize, the node will add nodes which will be displayed; each node will be marked as adding only directories
      * as child-nodes.
-     *
-     * @param  tee  Event that triggered this function.
+     * 
+     * @param tee Event that triggered this function.
      */
     public void treeExpanded(TreeExpansionEvent tee) {
         TreePath path = tee.getPath();
@@ -726,7 +682,7 @@ public class ViewImageDirectory extends JFrame
         node = (ViewFileTreeNode) path.getLastPathComponent();
         file = (File) node.getUserObject();
 
-        if (!node.isExplored()) {
+        if ( !node.isExplored()) {
             DefaultTreeModel model = (DefaultTreeModel) directoryTree.getModel();
 
             node.explore(imageFilter);
@@ -738,8 +694,8 @@ public class ViewImageDirectory extends JFrame
      * Re-create the image and header info by reacting to each selection on the tree. On selection, the image is read in
      * again and constructed, and the table is cleared and the new header info is posted to the table. Note: no check
      * has been made to remove child-nodes from a selection when the parent has been selected.
-     *
-     * @param  e  Event that triggered this function.
+     * 
+     * @param e Event that triggered this function.
      */
     public void valueChanged(TreeSelectionEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) directoryTree.getLastSelectedPathComponent();
@@ -748,9 +704,10 @@ public class ViewImageDirectory extends JFrame
             return;
         }
 
-        if (!((ViewFileTreeNode) node).isDirectory()) {
-            FileInfoBase fileInfo = buildImage(((ViewFileTreeNode) node).getName(),
-                                               ((ViewFileTreeNode) node).getDirectory() + File.separatorChar);
+        if ( ! ((ViewFileTreeNode) node).isDirectory()) {
+            FileInfoBase fileInfo = buildImage( ((ViewFileTreeNode) node).getName(), ((ViewFileTreeNode) node)
+                    .getDirectory()
+                    + File.separatorChar);
 
             if (fileInfo == null) {
                 return;
@@ -760,7 +717,7 @@ public class ViewImageDirectory extends JFrame
             secondaryModel.setRowCount(0);
             otherLabel.setVisible(false);
 
-            String[] info = new String[] { "", "" };
+            String[] info = new String[] {"", ""};
 
             for (int i = 0; i < fileInfo.getExtents().length; i++) {
                 info[0] = "Dimension " + i;
@@ -826,11 +783,11 @@ public class ViewImageDirectory extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   fileName   String
-     * @param   directory  String
-     *
-     * @return  FileInfoBase
+     * 
+     * @param fileName String
+     * @param directory String
+     * 
+     * @return FileInfoBase
      */
     protected FileInfoBase buildImage(String fileName, String directory) {
 
@@ -882,7 +839,7 @@ public class ViewImageDirectory extends JFrame
         // progressPanel.getProgressBar().setForeground(this.getBackground());
         // }
 
-        int[] extents = new int[] { image.getExtents()[0], image.getExtents()[1] };
+        int[] extents = new int[] {image.getExtents()[0], image.getExtents()[1]};
 
         img = new ViewJComponentPreviewImage(image, extents, this);
         img.createImg(0);
@@ -901,8 +858,8 @@ public class ViewImageDirectory extends JFrame
 
     /**
      * Creates the tree that holds the image files and returns the panel containing the tree.
-     *
-     * @param  directoriesOnly  DOCUMENT ME!
+     * 
+     * @param directoriesOnly DOCUMENT ME!
      */
     protected void buildSourceTreeListing(boolean directoriesOnly) {
 
@@ -911,7 +868,7 @@ public class ViewImageDirectory extends JFrame
         ViewFileTreeNode rootNode = null;
 
         if (fs != null) { // fs is null when the set of roots could not be
-                          // determined
+            // determined
             rootNode = new ViewFileTreeNode(new File(directory), true);
             rootNode.exploreDirectoriesOnly(directoriesOnly);
             fs.add(rootNode);
@@ -919,7 +876,7 @@ public class ViewImageDirectory extends JFrame
             directoryTree = new JTree(fs);
             directoryTree.setRootVisible(false);
         } else { // we can build an empty tree, but it won't mean anything.
-                 // throw error?? FIXME
+            // throw error?? FIXME
             directoryTree = new JTree();
         }
 
@@ -936,20 +893,20 @@ public class ViewImageDirectory extends JFrame
 
     /**
      * Builds a titled border with the given title, an etched border, and the proper font and color.
-     *
-     * @param   title  Title of the border
-     *
-     * @return  The titled border.
+     * 
+     * @param title Title of the border
+     * 
+     * @return The titled border.
      */
     protected TitledBorder buildTitledBorder(String title) {
         return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
-                                Color.black);
+                Color.black);
     }
 
     /**
      * Builds a toolbar with the same functionality as the menu.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected JPanel buildToolbar() {
         Border pressedBorder = BorderFactory.createLoweredBevelBorder();
@@ -1056,13 +1013,16 @@ public class ViewImageDirectory extends JFrame
 
     /**
      * Initializes GUI components and displays dialog.
-     *
-     * <p>For the brightSlider the slider values and the brightness values are identical. brightness is an offset going
+     * 
+     * <p>
+     * For the brightSlider the slider values and the brightness values are identical. brightness is an offset going
      * from -255 to 255. This is enough to change all 0 values to 255 and all 255 values to 0. brightness is added to
-     * all contrast scaled red, green, and blue.</p>
-     *
-     * <p>However, for the constrastSlider the slider values are different from the contrast values. The contrast values
-     * go from 0.1 to 10.0 while the slider values go from -200 to 200. contrast =
+     * all contrast scaled red, green, and blue.
+     * </p>
+     * 
+     * <p>
+     * However, for the contrastSlider the slider values are different from the contrast values. The contrast values go
+     * from 0.1 to 10.0 while the slider values go from -200 to 200. contrast =
      * (float)Math.pow(10.0,contSlider.getValue()/200.0) The original red, green, and blue are mutliplied by contrast.
      * </p>
      */
@@ -1085,7 +1045,7 @@ public class ViewImageDirectory extends JFrame
         current.setForeground(Color.black);
         current.setFont(serif12B);
 
-        JLabel minimum = new JLabel(String.valueOf(-255));
+        JLabel minimum = new JLabel(String.valueOf( -255));
 
         minimum.setForeground(Color.black);
         minimum.setFont(serif12);
@@ -1127,7 +1087,7 @@ public class ViewImageDirectory extends JFrame
         sliderPanel.setBorder(buildTitledBorder("Level"));
 
         contSlider = new JSlider(JSlider.HORIZONTAL, -200, 200,
-                                 (int) (Math.round(86.85889638 * Math.log(origContrast))));
+                (int) (Math.round(86.85889638 * Math.log(origContrast))));
 
         contSlider.setMajorTickSpacing(80);
         contSlider.setPaintTicks(true);
@@ -1197,10 +1157,9 @@ public class ViewImageDirectory extends JFrame
 
         gbc2.gridy = 2;
         centerPanel.add(sliderPanel, gbc2);
-        
-        
-        //gbc2.gridy = 4;
-        //centerPanel.add(buildSubsamplePanel(), gbc2);
+
+        // gbc2.gridy = 4;
+        // centerPanel.add(buildSubsamplePanel(), gbc2);
 
         gbc2.gridheight = 1;
         gbc2.gridy = 4;
@@ -1223,8 +1182,8 @@ public class ViewImageDirectory extends JFrame
 
     /**
      * Sets up the image panel and the table that will store basic header info, and returns the panel containing these.
-     *
-     * @return  The panel containing the image and the header info table.
+     * 
+     * @return The panel containing the image and the header info table.
      */
     private JSplitPane buildImagePanel() {
 
@@ -1292,7 +1251,7 @@ public class ViewImageDirectory extends JFrame
 
         try {
             scrollPane = new JScrollPane(scrollingBox, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setPreferredSize(new Dimension(400, 200));
             scrollPane.setMinimumSize(new Dimension(150, 100));
         } catch (OutOfMemoryError error) {
@@ -1372,86 +1331,56 @@ public class ViewImageDirectory extends JFrame
         menuBar.add(menu);
         setJMenuBar(menuBar);
     }
-    
-    
+
     /*
-    protected JPanel buildSubsamplePanel() {
-        GridBagLayout gbLayout = new GridBagLayout();
-        GridBagConstraints gbConstraints = new GridBagConstraints();
+     * protected JPanel buildSubsamplePanel() { GridBagLayout gbLayout = new GridBagLayout(); GridBagConstraints
+     * gbConstraints = new GridBagConstraints();
+     * 
+     * JPanel subsamplePanel = new JPanel(gbLayout); subsamplePanel.setBorder(new
+     * TitledBorder(BorderFactory.createEtchedBorder(), "Subsampling"));
+     * 
+     * gbConstraints.gridx = 1; gbConstraints.anchor = GridBagConstraints.WEST; enableCheckbox = new JCheckBox(ENABLE);
+     * enableCheckbox.addActionListener(this); enableCheckbox.setActionCommand(ENABLE);
+     * gbLayout.setConstraints(enableCheckbox, gbConstraints); subsamplePanel.add(enableCheckbox);
+     * 
+     * gbConstraints.gridx = 0; gbConstraints.gridy = 1; gbConstraints.anchor = GridBagConstraints.EAST;
+     * 
+     * JLabel lblWidth = new JLabel("Width: "); gbLayout.setConstraints(lblWidth, gbConstraints);
+     * subsamplePanel.add(lblWidth);
+     * 
+     * gbConstraints.gridx = 1; gbConstraints.anchor = GridBagConstraints.WEST; txtWidth = new JTextField(5);
+     * txtWidth.setEnabled(enableCheckbox.isSelected()); gbLayout.setConstraints(txtWidth, gbConstraints);
+     * subsamplePanel.add(txtWidth);
+     * 
+     * gbConstraints.gridx = 0; gbConstraints.gridy = 2; gbConstraints.anchor = GridBagConstraints.EAST;
+     * 
+     * JLabel lblHeight = new JLabel("Height: "); gbLayout.setConstraints(lblHeight, gbConstraints);
+     * subsamplePanel.add(lblHeight);
+     * 
+     * gbConstraints.gridx = 1; gbConstraints.anchor = GridBagConstraints.WEST; txtHeight = new JTextField(5);
+     * txtHeight.setEnabled(enableCheckbox.isSelected()); gbLayout.setConstraints(txtHeight, gbConstraints);
+     * subsamplePanel.add(txtHeight);
+     * 
+     * gbConstraints.gridy++; chkForceUBYTE = new JCheckBox("Force 8-bit"); chkForceUBYTE.setToolTipText("Force result
+     * images to use 8-bit channels"); chkForceUBYTE.setEnabled(enableCheckbox.isSelected());
+     * gbLayout.setConstraints(chkForceUBYTE, gbConstraints); subsamplePanel.add(chkForceUBYTE);
+     * 
+     * return subsamplePanel; }
+     * 
+     * 
+     * 
+     * 
+     * protected boolean subsamplingSanityCheck() {
+     * 
+     * try { int height = Integer.parseInt(txtHeight.getText()); int width = Integer.parseInt(txtWidth.getText());
+     * 
+     * if ((height < 1) || (width < 1)) { return false; }
+     * 
+     * return true; } catch (NumberFormatException nfe) { return false; } }
+     */
 
-        JPanel subsamplePanel = new JPanel(gbLayout);
-        subsamplePanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "Subsampling"));
-
-        gbConstraints.gridx = 1;
-        gbConstraints.anchor = GridBagConstraints.WEST;
-        enableCheckbox = new JCheckBox(ENABLE);
-        enableCheckbox.addActionListener(this);
-        enableCheckbox.setActionCommand(ENABLE);
-        gbLayout.setConstraints(enableCheckbox, gbConstraints);
-        subsamplePanel.add(enableCheckbox);
-
-        gbConstraints.gridx = 0;
-        gbConstraints.gridy = 1;
-        gbConstraints.anchor = GridBagConstraints.EAST;
-
-        JLabel lblWidth = new JLabel("Width: ");
-        gbLayout.setConstraints(lblWidth, gbConstraints);
-        subsamplePanel.add(lblWidth);
-
-        gbConstraints.gridx = 1;
-        gbConstraints.anchor = GridBagConstraints.WEST;
-        txtWidth = new JTextField(5);
-        txtWidth.setEnabled(enableCheckbox.isSelected());
-        gbLayout.setConstraints(txtWidth, gbConstraints);
-        subsamplePanel.add(txtWidth);
-
-        gbConstraints.gridx = 0;
-        gbConstraints.gridy = 2;
-        gbConstraints.anchor = GridBagConstraints.EAST;
-
-        JLabel lblHeight = new JLabel("Height: ");
-        gbLayout.setConstraints(lblHeight, gbConstraints);
-        subsamplePanel.add(lblHeight);
-
-        gbConstraints.gridx = 1;
-        gbConstraints.anchor = GridBagConstraints.WEST;
-        txtHeight = new JTextField(5);
-        txtHeight.setEnabled(enableCheckbox.isSelected());
-        gbLayout.setConstraints(txtHeight, gbConstraints);
-        subsamplePanel.add(txtHeight);
-
-        gbConstraints.gridy++;
-        chkForceUBYTE = new JCheckBox("Force 8-bit");
-        chkForceUBYTE.setToolTipText("Force result images to use 8-bit channels");
-        chkForceUBYTE.setEnabled(enableCheckbox.isSelected());
-        gbLayout.setConstraints(chkForceUBYTE, gbConstraints);
-        subsamplePanel.add(chkForceUBYTE);
-
-        return subsamplePanel;
-    }
-    
-    
-    
-
-    protected boolean subsamplingSanityCheck() {
-
-        try {
-            int height = Integer.parseInt(txtHeight.getText());
-            int width = Integer.parseInt(txtWidth.getText());
-
-            if ((height < 1) || (width < 1)) {
-                return false;
-            }
-
-            return true;
-        } catch (NumberFormatException nfe) {
-            return false;
-        }
-    }
-    */
-
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
     /**
      * DOCUMENT ME!
      */
@@ -1459,15 +1388,15 @@ public class ViewImageDirectory extends JFrame
 
         /**
          * DOCUMENT ME!
-         *
-         * @param   nameA  DOCUMENT ME!
-         * @param   nameB  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @param nameA DOCUMENT ME!
+         * @param nameB DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public int compare(Object nameA, Object nameB) {
 
-            if ((nameA == null) && (nameB == null)) {
+            if ( (nameA == null) && (nameB == null)) {
                 return 0;
             } else if (nameA == null) {
                 return -1;
@@ -1481,7 +1410,7 @@ public class ViewImageDirectory extends JFrame
             int a_int;
             int b_int;
 
-            if (!(FileUtility.trimNumbersAndSpecial(a).equals(FileUtility.trimNumbersAndSpecial(b)))) {
+            if ( ! (FileUtility.trimNumbersAndSpecial(a).equals(FileUtility.trimNumbersAndSpecial(b)))) {
                 return a.compareTo(b);
             } else {
                 a_int = FileUtility.getFileIndex(a);

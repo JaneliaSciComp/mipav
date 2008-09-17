@@ -4,9 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-import java.awt.event.*;
-
-import java.text.*;
+import java.awt.event.ActionEvent;
+import java.text.NumberFormat;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -15,18 +14,20 @@ import javax.swing.event.*;
 /**
  * This class creates a simple dialog in which the user can specify a brightness integer and a contrast float using
  * sliders. Called from ViewJFrameAnimate.
- *
- * @version  April 24, 2002
- * @author   Neva Cherniavsky
+ * 
+ * @version April 24, 2002
+ * @author Neva Cherniavsky
  */
 public class JDialogBrightness extends JDialogBase implements ChangeListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -1222614304368736757L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private int brightness;
@@ -52,15 +53,16 @@ public class JDialogBrightness extends JDialogBase implements ChangeListener {
     /** DOCUMENT ME! */
     private NumberFormat nfc;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates new dialog for entering brightness and contrast.
-     *
-     * @param  parent     Parent frame.
-     * @param  compImage  Component image to change.
-     * @param  bright     Initial brightness.
-     * @param  con        Initial contrast.
+     * 
+     * @param parent Parent frame.
+     * @param compImage Component image to change.
+     * @param bright Initial brightness.
+     * @param con Initial contrast.
      */
     public JDialogBrightness(JFrame parent, ViewJComponentAnimate compImage, int bright, float con) {
         super(parent, false);
@@ -72,11 +74,11 @@ public class JDialogBrightness extends JDialogBase implements ChangeListener {
 
     /**
      * Creates new dialog for entering brightness and contrast.
-     *
-     * @param  parent     Parent frame.
-     * @param  compImage  Component image to change.
-     * @param  bright     Initial brightness.
-     * @param  con        Initial contrast.
+     * 
+     * @param parent Parent frame.
+     * @param compImage Component image to change.
+     * @param bright Initial brightness.
+     * @param con Initial contrast.
      */
     public JDialogBrightness(JFrame parent, ViewJComponentColocalizationRegression compImage, int bright, float con) {
         super(parent, false);
@@ -88,11 +90,11 @@ public class JDialogBrightness extends JDialogBase implements ChangeListener {
 
     /**
      * Creates new dialog for entering brightness and contrast.
-     *
-     * @param  parent     Parent frame.
-     * @param  compImage  Component image to change.
-     * @param  bright     Initial brightness.
-     * @param  con        Initial contrast.
+     * 
+     * @param parent Parent frame.
+     * @param compImage Component image to change.
+     * @param bright Initial brightness.
+     * @param con Initial contrast.
      */
     public JDialogBrightness(JFrame parent, ViewJComponentColocalizationEM compImage, int bright, float con) {
         super(parent, false);
@@ -102,12 +104,13 @@ public class JDialogBrightness extends JDialogBase implements ChangeListener {
         init(brightness, contrast);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  evt  DOCUMENT ME!
+     * 
+     * @param evt DOCUMENT ME!
      */
     public void actionPerformed(ActionEvent evt) {
         String command = evt.getActionCommand();
@@ -145,8 +148,8 @@ public class JDialogBrightness extends JDialogBase implements ChangeListener {
 
     /**
      * Sets values based on knob along slider.
-     *
-     * @param  e  Event that triggered this function
+     * 
+     * @param e Event that triggered this function
      */
     public void stateChanged(ChangeEvent e) {
         Object source = e.getSource();
@@ -188,18 +191,22 @@ public class JDialogBrightness extends JDialogBase implements ChangeListener {
 
     /**
      * Initializes GUI components and displays dialog.
-     *
-     * <p>For the brightnessSlider the slider values and the brightness values are identical. brightness is an offset
-     * going from -255 to 255. This is enough to change all 0 values to 255 and all 255 values to 0. brightness is added
-     * to all contrast scaled red, green, and blue.</p>
-     *
-     * <p>However, for the constrastSlider the slider values are different from the contrast values. The contrast values
-     * go from 0.1 to 10.0 while the slider values go from -200 to 200. contrast =
+     * 
+     * <p>
+     * For the brightnessSlider the slider values and the brightness values are identical. brightness is an offset going
+     * from -255 to 255. This is enough to change all 0 values to 255 and all 255 values to 0. brightness is added to
+     * all contrast scaled red, green, and blue.
+     * </p>
+     * 
+     * <p>
+     * However, for the contrastSlider the slider values are different from the contrast values. The contrast values go
+     * from 0.1 to 10.0 while the slider values go from -200 to 200. contrast =
      * (float)Math.pow(10.0,contrastSlider.getValue()/200.0) The original red, green, and blue are mutliplied by
-     * contrast.</p>
-     *
-     * @param  brightness  Initial brightness.
-     * @param  contrast    Initial contrast.
+     * contrast.
+     * </p>
+     * 
+     * @param brightness Initial brightness.
+     * @param contrast Initial contrast.
      */
     private void init(int brightness, float contrast) {
         setTitle("Brightness/Contrast");
@@ -218,7 +225,7 @@ public class JDialogBrightness extends JDialogBase implements ChangeListener {
         current.setForeground(Color.black);
         current.setFont(serif12B);
 
-        JLabel minimum = new JLabel(String.valueOf(-255));
+        JLabel minimum = new JLabel(String.valueOf( -255));
         minimum.setForeground(Color.black);
         minimum.setFont(serif12);
 
@@ -257,7 +264,7 @@ public class JDialogBrightness extends JDialogBase implements ChangeListener {
         sliderPanel.setBorder(buildTitledBorder("Brightness"));
 
         contrastSlider = new JSlider(JSlider.HORIZONTAL, -200, 200,
-                                     (int) (Math.round(86.85889638 * Math.log(contrast))));
+                (int) (Math.round(86.85889638 * Math.log(contrast))));
 
         contrastSlider.setMajorTickSpacing(80);
         contrastSlider.setPaintTicks(true);
