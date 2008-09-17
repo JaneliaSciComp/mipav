@@ -40,14 +40,17 @@ public class ViewJFrameGraph extends JFrame
     /** DOCUMENT ME! */
     private static final int MINIMUM_HEIGHT = 335;
 
-    /** DOCUMENT ME! */
+    /** Mode indicates no curve fitting is taking place */
     private static final int fitNoneMode = 0;
 
-    /** DOCUMENT ME! */
+    /** Mode indicates linear fitting in progress */
     private static final int fitLinearMode = 2;
 
-    /** DOCUMENT ME! */
+    /** Mode indicates exponential fitting in progress */
     private static final int fitExpMode = 3;
+    
+    /** Mode indicates Gaussian fitting in progress*/
+    private static final int fitGaussianMode = 4;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -250,13 +253,16 @@ public class ViewJFrameGraph extends JFrame
     /** DOCUMENT ME! */
     private JPanel pointsVisiblePanel;
 
-    /** DOCUMENT ME! */
+    /** Radio button for fitting graph data to Gaussian function*/
+    private JRadioButton radioFitGaussian;
+    
+    /** Radio button for fitting graph data to exponential function */
     private JRadioButton radioFitExponential;
 
-    /** DOCUMENT ME! */
+    /** Radio button for fitting graph data to linear function */
     private JRadioButton radioFitLinear;
 
-    /** DOCUMENT ME! */
+    /** Radio button to remove any existing function fitting from graph*/
     private JRadioButton radioFitNone;
 
     /** DOCUMENT ME! */
@@ -1444,7 +1450,82 @@ public class ViewJFrameGraph extends JFrame
             }
 
             update(getGraphics());
-        } else if (command.equals("SaveGraph")) { // saves the graph to a file
+        } else if (command.equals("FitGaussian")) { 
+        	MipavUtil.displayError("Not currently implemented. ");
+        	/*
+        	double[] params;
+            int nPoints;
+            FitExponential fe = null;
+
+            ViewJComponentFunct[] functions = graph.getFuncts();
+            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
+            float[] x;
+            float[] y;
+
+            try {
+
+                if (messageGraph == null) {
+                    messageGraph = new ViewJFrameMessageGraph("Fitting Data");
+                }
+
+                for (int i = 0; i < functions.length; i++) {
+                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
+                    fe = new FitExponential(nPoints, graph.getFuncts()[i].getOriginalXs(),
+                                            graph.getFuncts()[i].getOriginalYs());
+                    fe.driver();
+                    fe.dumpResults();
+                    params = fe.getParameters();
+
+                    x = new float[functions[i].getXs().length];
+                    y = new float[x.length];
+
+                    for (int j = 0; j < x.length; j++) {
+                        x[j] = (functions[i].getXs()[j]);
+                        y[j] = (float) (params[0] + (params[1] * Math.exp(params[2] * x[j])));
+                    }
+
+                    fittedFunctions[i].setXs(x);
+                    fittedFunctions[i].setOriginalXs(x);
+                    fittedFunctions[i].setYs(y);
+                    fittedFunctions[i].setOriginalYs(y);
+
+                    messageGraph.append("*********************\n");
+                    messageGraph.append("Fitting of gaussian function " + i + "\n");
+                    messageGraph.append("Chi-squared = " + fe.getChiSquared() + "\n");
+                    messageGraph.append(" y = " + String.valueOf(params[0]) + " + " + String.valueOf(params[1]) +
+                                        " * exp(" + String.valueOf(params[2]) + " * x)\n");
+                    messageGraph.append("\n");
+                }
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Graph :  Out of memory ");
+
+            }
+
+            if (messageGraph != null) {
+
+                if (messageGraph.isVisible() == false) {
+                    messageGraph.setLocation(100, 50);
+                    messageGraph.setSize(500, 300);
+                    messageGraph.setVisible(true);
+                }
+            }
+
+            fitMode = fitExpMode;
+
+            for (int index = 0; index < 5; index++) {
+
+                if (index >= graph.getFuncts().length) {
+                    fitFunctVisibleCheckbox[index].setEnabled(false);
+                    fitFunctVisibleCheckbox[index].setSelected(false);
+                } else {
+                    fitFunctVisibleCheckbox[index].setEnabled(true);
+                    fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
+                }
+            }
+
+            update(getGraphics());*/
+        	
+    	} else if (command.equals("SaveGraph")) { // saves the graph to a file
 
             try {
                 save();
@@ -3157,6 +3238,60 @@ public class ViewJFrameGraph extends JFrame
             }
 
             update(getGraphics());
+        } else if(fitMode == fitGaussianMode) {
+        	//TODO: Customize to Gaussian here
+        	double[] params;
+            int nPoints;
+            FitExponential fe = null;
+
+            ViewJComponentFunct[] functions = graph.getFuncts();
+            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
+            float[] x;
+            float[] y;
+
+            try {
+
+                for (int i = 0; i < functions.length; i++) {
+                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
+                    fe = new FitExponential(nPoints, graph.getFuncts()[i].getOriginalXs(),
+                                            graph.getFuncts()[i].getOriginalYs());
+                    fe.driver();
+                    fe.dumpResults();
+                    params = fe.getParameters();
+
+                    x = new float[functions[i].getXs().length];
+                    y = new float[x.length];
+
+                    for (int j = 0; j < x.length; j++) {
+                        x[j] = (functions[i].getXs()[j]);
+                        y[j] = (float) (params[0] + (params[1] * Math.exp(params[2] * x[j])));
+                    }
+
+                    fittedFunctions[i].setXs(x);
+                    fittedFunctions[i].setOriginalXs(x);
+                    fittedFunctions[i].setYs(y);
+                    fittedFunctions[i].setOriginalYs(y);
+                }
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Graph :  Out of memory ");
+
+            }
+
+            if (modifyDialog != null) {
+
+                for (int index = 0; index < 5; index++) {
+
+                    if (index >= graph.getFuncts().length) {
+                        fitFunctVisibleCheckbox[index].setEnabled(false);
+                        fitFunctVisibleCheckbox[index].setSelected(false);
+                    } else {
+                        fitFunctVisibleCheckbox[index].setEnabled(true);
+                        fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
+                    }
+                }
+            }
+
+            update(getGraphics());
         }
 
     }
@@ -3233,6 +3368,7 @@ public class ViewJFrameGraph extends JFrame
             groupFitFunctType = new ButtonGroup();
             radioFitLinear = new JRadioButton("Fit linear (a1*x + a0)");
             radioFitExponential = new JRadioButton("Fit exponential (a0+a1*exp(a2*x))");
+            radioFitGaussian = new JRadioButton("Fit Gaussian (a*exp(-(x-b)^2/(2sigma^2)))");
             radioFitNone = new JRadioButton("None");
             fitFunctVisibleCheckbox = new JCheckBox[5];
             name = new String[5];
@@ -3246,12 +3382,12 @@ public class ViewJFrameGraph extends JFrame
         fitFunctPanel.setLayout(null);
         fitFunctPanel.setBorder(new EtchedBorder());
 
-        fitFunctTypePanel.setBounds(10, 10, 240, 110);
+        fitFunctTypePanel.setBounds(10, 10, 280, 150);
         fitFunctTypePanel.setLayout(null);
         fitFunctTypePanel.setBorder(new EtchedBorder());
         fitFunctPanel.add(fitFunctTypePanel);
 
-        fitFunctVisiblePanel.setBounds(10, 130, 390, 110);
+        fitFunctVisiblePanel.setBounds(10, 170, 390, 110);
         fitFunctVisiblePanel.setLayout(null);
         fitFunctVisiblePanel.setBorder(new EtchedBorder());
         fitFunctPanel.add(fitFunctVisiblePanel);
@@ -3270,7 +3406,14 @@ public class ViewJFrameGraph extends JFrame
         groupFitFunctType.add(radioFitExponential);
         fitFunctTypePanel.add(radioFitExponential);
 
-        radioFitNone.setBounds(10, 70, 180, 30);
+        radioFitGaussian.setBounds(10, 70, 260, 30);
+        radioFitGaussian.addActionListener(this);
+        radioFitGaussian.setActionCommand("FitGaussian");
+        radioFitGaussian.setFont(font12);
+        groupFitFunctType.add(radioFitGaussian);
+        fitFunctTypePanel.add(radioFitGaussian);
+        
+        radioFitNone.setBounds(10, 100, 180, 30);
         radioFitNone.setFont(font12);
         radioFitNone.addActionListener(this);
         radioFitNone.setActionCommand("FitNone");
@@ -3281,6 +3424,8 @@ public class ViewJFrameGraph extends JFrame
             radioFitLinear.setSelected(true);
         } else if (fitMode == fitExpMode) {
             radioFitExponential.setSelected(true);
+        } else if (fitMode == fitGaussianMode) { 
+        	radioFitGaussian.setSelected(true);
         } else {
             radioFitNone.setSelected(true);
         }
@@ -4196,10 +4341,9 @@ public class ViewJFrameGraph extends JFrame
     private boolean testMaxParameter(String str, float maxValue) {
 
         double tmp;
-        Double stringConv;
 
         try {
-            stringConv = new Double(0);
+            new Double(0);
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph.testMaxParameter");
 
@@ -4207,15 +4351,13 @@ public class ViewJFrameGraph extends JFrame
         }
 
         try {
-            tmp = stringConv.valueOf(str).floatValue();
+            tmp = Double.valueOf(str).floatValue();
 
             if (tmp < maxValue) {
                 MipavUtil.displayError("Maximum Value must be at least " + maxValue);
-
                 return false;
-            } else {
-                return true;
-            }
+            } 
+            return true;
         } catch (NumberFormatException error) {
             MipavUtil.displayError("Must enter numeric value");
 
@@ -4234,29 +4376,25 @@ public class ViewJFrameGraph extends JFrame
     private boolean testMinParameter(String str, float minValue) {
 
         double tmp;
-        Double stringConv;
 
         try {
-            stringConv = new Double(0);
+            new Double(0);
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph.testMinParameter");
-
             return false;
         }
 
         try {
-            tmp = stringConv.valueOf(str).floatValue();
+            tmp = Double.valueOf(str).floatValue();
 
             if (tmp > minValue) {
                 MipavUtil.displayError("Minimum value must be less than or equal to " + minValue);
-
-                return false;
-            } else {
-                return true;
+            	return false;
             }
+            return true;
+            
         } catch (NumberFormatException error) {
             MipavUtil.displayError("Must enter numeric value");
-
             return false;
         }
     }
@@ -4279,20 +4417,17 @@ public class ViewJFrameGraph extends JFrame
             stringConv = new Double(0);
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph.testParameter");
-
             return false;
         }
 
         try {
-            tmp = stringConv.valueOf(str).doubleValue();
+            tmp = Double.valueOf(str).doubleValue();
 
             if ((tmp > maxValue) || (tmp < minValue)) {
-
                 // MipavUtil.displayError("Value must be between " + minValue + " and " + maxValue);
                 return false;
-            } else {
-                return true;
-            }
+            } 
+            return false;
         } catch (NumberFormatException error) {
             MipavUtil.displayError("Must enter numeric value");
 
@@ -4389,14 +4524,22 @@ public class ViewJFrameGraph extends JFrame
             radioFitLinear.setSelected(true);
             radioFitNone.setSelected(false);
             radioFitExponential.setSelected(false);
+            radioFitGaussian.setSelected(false);
         } else if (fitMode == fitExpMode) {
             radioFitLinear.setSelected(false);
             radioFitNone.setSelected(false);
             radioFitExponential.setSelected(true);
+            radioFitGaussian.setSelected(false);
+        } else if(fitMode == fitGaussianMode) { 
+        	radioFitLinear.setSelected(false);
+        	radioFitNone.setSelected(false);
+        	radioFitExponential.setSelected(false);
+        	radioFitGaussian.setSelected(true);
         } else {
             radioFitLinear.setSelected(false);
             radioFitNone.setSelected(true);
             radioFitExponential.setSelected(false);
+            radioFitGaussian.setSelected(false);
         }
 
     }
