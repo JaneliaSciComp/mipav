@@ -562,8 +562,9 @@ public abstract class ViewJFrameMultiple extends ViewJFrameImage {
         int[] slices = initSlicePositions(img);
         int[] numSlices = initNumSlices(img);
 
-        zSlice = slices[0];
-        tSlice = slices[1];
+        compImg.setSlice(slices[0]);
+        compImg.setTimeSlice(slices[1]);
+        
         nImage = numSlices[0];
         nTImage = numSlices[1];
 
@@ -1103,7 +1104,7 @@ public abstract class ViewJFrameMultiple extends ViewJFrameImage {
         setCurrentComponentImage(compImg);
         componentTable.put(getCurrentKey(), compImg);
 
-        setSlice(zSlice);
+        setSlice(compImg.getSlice());
 
         return true;
 
