@@ -796,12 +796,13 @@ public class FlyPathBehavior_WM implements KeyListener {
         // Retrieve the current combined viewing direction vector.
         // Note that the sign of the view direction vector is negated
         // for the reasons described in the setView method.
-        Matrix4f kMatrixView = parentScene.getWVMatrix();
-
-        Vector3f kViewDirection = new Vector3f(-kMatrixView.M02, -kMatrixView.M12, -kMatrixView.M22);
+        //Matrix4f kMatrixView = parentScene.getWVMatrix();
+        //Vector3f kViewDirection = new Vector3f(-kMatrixView.M02, -kMatrixView.M12, -kMatrixView.M22);
+        Vector3f kViewDirection = new Vector3f(parentScene.getCameraDirection());
 
         // Record the current view position and combined view orientation.
-        Vector3f kP0 = new Vector3f(kMatrixView.M03, kMatrixView.M13, kMatrixView.M23);
+        //Vector3f kP0 = new Vector3f(kMatrixView.M03, kMatrixView.M13, kMatrixView.M23);
+        Vector3f kP0 = new Vector3f(getViewPoint());
 
         // Check point down path which is maximum of the step distance
         // and the gaze distance.
@@ -866,7 +867,7 @@ public class FlyPathBehavior_WM implements KeyListener {
 
         Vector3f kV = new Vector3f();
 
-        kV.Sub(kP, getPathPosition());
+        kV.Sub(kP, getViewPoint());
         kV.Normalize();
 
         // Convert this vector so that it is in current view frame.

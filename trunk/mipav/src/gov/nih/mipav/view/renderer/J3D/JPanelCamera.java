@@ -1,4 +1,4 @@
-package gov.nih.mipav.view.renderer;
+package gov.nih.mipav.view.renderer.J3D;
 
 
 import gov.nih.mipav.view.*;
@@ -18,7 +18,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @author   Ruida Cheng
  */
-public class JPanelCamera extends JPanelRendererBase implements ActionListener, MouseListener, ItemListener {
+public class JPanelCamera extends JPanelRendererJ3D implements ActionListener, MouseListener, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

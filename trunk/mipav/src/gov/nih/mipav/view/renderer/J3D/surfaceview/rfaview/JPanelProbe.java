@@ -30,7 +30,7 @@ import javax.vecmath.*;
  *
  * @author  Ruida Cheng
  */
-public class JPanelProbe extends JPanelRendererBase implements ChangeListener, ListSelectionListener {
+public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, ListSelectionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

@@ -39,7 +39,7 @@ import javax.vecmath.*;
  * @see  SurfaceMask.java
  * @see  ModelImage.java
  */
-public class JPanelSurfaceTexture extends JPanelRendererBase implements ViewImageUpdateInterface {
+public class JPanelSurfaceTexture extends JPanelRendererJ3D implements ViewImageUpdateInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

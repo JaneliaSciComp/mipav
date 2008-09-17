@@ -21,7 +21,7 @@ import javax.swing.border.*;
  *
  * @author  Ruida Cheng
  */
-public class JPanelFlythruMove extends JPanelRendererBase implements ActionListener, MouseListener {
+public class JPanelFlythruMove extends JPanelRendererJ3D implements ActionListener, MouseListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

@@ -83,6 +83,7 @@ implements MouseListener, ItemListener, ChangeListener {
     /** Rendering the brainsurfaceFlattener objects. */
     protected gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender brainsurfaceFlattenerRender = null;
     protected FlyThroughRender m_kFlyThroughRender =  null;
+    protected JPanel m_kFlyThroughPanel = null;
     /** DOCUMENT ME! */
     protected JPanelClip_WM clipBox;
     protected JPanelSlices_WM sliceGUI;
@@ -498,15 +499,23 @@ implements MouseListener, ItemListener, ChangeListener {
             insertTab("BrainSurface", m_kBrainsurfaceFlattenerPanel );
             resizePanel();
         } else if (command.equals("FlyThru")) {
-            m_kFlyThroughRender = new FlyThroughRender( this, 
-                    m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
-                    m_kVolumeImageB, imageB, LUTb, RGBTB);
-            TriMesh kSurface = raycastRenderWM.getSurface( surfaceGUI.getSelectedSurface() );
-            //m_kFlyThroughRender.AddSurfaces( raycastRenderWM.getSurfaces(surfaceGUI.getSelectedSurfaces()) );
-            m_kFlyThroughRender.addSurface(kSurface);
-            bf_flyPanel.add( m_kFlyThroughRender.GetCanvas(), BorderLayout.CENTER );
-            dualPane.setDividerLocation( 0.5f );            
-            m_kLightsPanel.enableLight(0, true);
+            if ( m_kFlyThroughPanel == null )
+            {
+                m_kFlyThroughRender = new FlyThroughRender( this, 
+                        m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
+                        m_kVolumeImageB, imageB, LUTb, RGBTB);
+                TriMesh kSurface = raycastRenderWM.getSurface( surfaceGUI.getSelectedSurface() );
+                m_kFlyThroughRender.addSurface(kSurface);
+                bf_flyPanel.add( m_kFlyThroughRender.GetCanvas(), BorderLayout.CENTER );
+                dualPane.setDividerLocation( 0.5f );            
+                m_kLightsPanel.enableLight(0, true);
+                m_kFlyThroughPanel = new JPanel();
+                JPanelVirtualEndoscopySetup_WM kFlyThroughPanel = new JPanelVirtualEndoscopySetup_WM(m_kFlyThroughRender);
+                m_kFlyThroughPanel.add(kFlyThroughPanel.getMainPanel());
+                kFlyThroughPanel.getMainPanel().setVisible(true);
+                m_kFlyThroughRender.setupRenderControl(kFlyThroughPanel);
+            }
+            insertTab("FlyThrough", m_kFlyThroughPanel );
             resizePanel();
         } else if (command.equals("ResetX")) {
             resetAxisY();

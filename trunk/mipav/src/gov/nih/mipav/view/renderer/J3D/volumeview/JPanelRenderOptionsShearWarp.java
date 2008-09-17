@@ -13,7 +13,7 @@ import javax.swing.*;
 /**
  * Dialog to turn bounding box of surface renderer on and off, and to change the color of the frame.
  */
-public class JPanelRenderOptionsShearWarp extends JPanelRendererBase {
+public class JPanelRenderOptionsShearWarp extends JPanelRendererJ3D {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

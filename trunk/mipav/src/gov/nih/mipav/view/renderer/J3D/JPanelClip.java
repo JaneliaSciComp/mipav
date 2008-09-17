@@ -35,7 +35,7 @@ import javax.vecmath.*;
  *
  * @author  Ruida Cheng
  */
-public class JPanelClip extends JPanelRendererBase
+public class JPanelClip extends JPanelRendererJ3D
         implements ChangeListener, MouseListener, MouseBehaviorCallback, MouseMotionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------

@@ -1,31 +1,25 @@
-package gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview;
+package gov.nih.mipav.view.renderer.WildMagic.flythroughview;
 
-
+import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.view.renderer.J3D.*;
-import gov.nih.mipav.view.renderer.J3D.model.structures.*;
+import gov.nih.mipav.view.renderer.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.io.*;
-
 import java.text.*;
-
 import javax.swing.*;
 
-import javax.vecmath.*;
 
 
 /**
  * Control panel to set up the virtual endoscopy volume view. This panel loads the mask image and surface file. It also
  * adjusts the endoscopy view parameters.
  */
-public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
+public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -55,9 +49,6 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
     /** Surface smooth control panel reference. */
     private JDialogSmoothMesh kDialogSmooth;
 
-    /** File to open the mask suface. */
-    private File kFile;
-
     /** Button panel. */
     private JPanel kPanelButton;
 
@@ -65,13 +56,7 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
     private boolean m_bShowMeanCurvatures = false;
 
     /** DOCUMENT ME! */
-    private JButton m_kButtonLoadSurface = new JButton();
-
-    /** DOCUMENT ME! */
     private JCheckBox m_kCheckBoxShowCurvatures = new JCheckBox();
-
-    /** Surface sample reduction factor. */
-    private JComboBox m_kComboSegmentSurfaceBranchSamplesReductionFactor;
 
     /** DOCUMENT ME! */
     private JCheckBox m_kContinueUpdate = new JCheckBox();
@@ -104,7 +89,7 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
     private ModelLUT m_kMeanCurvaturesLUT = null;
 
     /** Image option panel. */
-    private FlythruRender.SetupOptions m_kOptions = new FlythruRender.SetupOptions();
+    private FlyThroughRender.SetupOptions m_kOptions = new FlyThroughRender.SetupOptions();
 
     /** DOCUMENT ME! */
     private JTextField m_kTextBranch = new JTextField();
@@ -133,14 +118,8 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
     /** DOCUMENT ME! */
     private JTextField m_kTextStepGaze = new JTextField();
 
-    /** Keep a copy of the loaded triangle mesh and any other properties associated with the surface. */
-    private ModelTriangleMesh m_kTriangleMesh = null;
-
     /** Applet that is associated with the controls in this frame. */
-    private final FlythruRender m_kView;
-
-    /** Keep a reference to the ViewJFrameVolumeView. */
-    private ViewJFrameVolumeView parentFrame;
+    private final FlyThroughRender m_kView;
 
     /** Scroll pane. */
     private JScrollPane scroller;
@@ -148,27 +127,10 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
     /** Scroll panel that holding all the control components. */
     private DrawingPanel scrollPanel;
 
-    /** Loaded mask surface image directory. */
-    private String surfaceDir;
-
     /** continue update button. */
     private JButton updateButton = new JButton();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here. This method is not used for now.
-     *
-     * @param  _kView  parent frame reference.
-     */
-    public JPanelVirtualEndoscopySetup(FlythruRender _kView) {
-        super(_kView);
-        m_kView = _kView;
-        m_kDecimalFormat = new DecimalFormat();
-        m_kDecimalFormat.setMinimumFractionDigits(1);
-        m_kDecimalFormat.setMaximumFractionDigits(1);
-    }
 
     /**
      * Creates endoscopy registration control panel.
@@ -176,9 +138,8 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
      * @param  _kView        FlythruRender refrence.
      * @param  _parentFrame  ViewJFrameVolumeView parent frame reference.
      */
-    public JPanelVirtualEndoscopySetup(FlythruRender _kView, ViewJFrameVolumeView _parentFrame) {
-        super(_kView);
-        parentFrame = _parentFrame;
+    public JPanelVirtualEndoscopySetup_WM(FlyThroughRender _kView) {
+        super();
         m_kView = _kView;
 
         init();
@@ -207,42 +168,14 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
 
             if (setVariables()) {
                 loadingImage();
-                loadingSurface();
                 m_kCheckBoxShowCurvatures.setEnabled(true);
-                parentFrame.setRightPanelCanvas();
-                setVisible(false);
-                parentFrame.addFlightPath();
-
+                OKButton.setEnabled(false);
             }
         } else if (source == cancelButton) {
             setVisible(false);
         }
 
-        if (command.equals("Select Surface ...")) {
-            JFileChooser chooser = new JFileChooser();
-
-            chooser.setMultiSelectionEnabled(true);
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.SURFACE));
-
-            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-            } else {
-                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-            }
-
-            if (JFileChooser.APPROVE_OPTION != chooser.showOpenDialog(null)) {
-                return;
-            }
-
-            kFile = chooser.getSelectedFile();
-            surfaceDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-            m_kLabelFileName.setText(kFile.getName());
-            chooser.setVisible(false);
-
-            if ((fileName != null) && (kFile != null)) {
-                OKButton.setEnabled(true);
-            }
-        } else if (command.equals("Select Image ...")) {
+        if (command.equals("Select Image ...")) {
             JFileChooser chooser = new JFileChooser();
 
             chooser.setMultiSelectionEnabled(true);
@@ -263,11 +196,12 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
             flythruLabelFileName.setText(fileName);
             chooser.setVisible(false);
 
-            if ((fileName != null) && (kFile != null)) {
+            if (fileName != null) {
                 OKButton.setEnabled(true);
+                flythruButtonLoadImage.setEnabled(false);
             }
         } else if (command.equals("Update")) {
-            parentFrame.setPathPosition(m_kView.getSamplePosition(), m_kView.getPositionScaled());
+            
         }
     }
 
@@ -281,11 +215,8 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
         m_kTextMaxNumBranches = null;
         m_kTextMinBranchLength = null;
         m_kTextPercentBSplineNumControlPoints = null;
-        m_kComboSegmentSurfaceBranchSamplesReductionFactor = null;
-        m_kTriangleMesh = null;
         m_kMeanCurvaturesLUT = null;
         m_kLabelFileName = null;
-        m_kButtonLoadSurface = null;
         m_kLabelDistance = null;
         m_kTextDistance = null;
         m_kLabelPosition = null;
@@ -302,9 +233,7 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
         m_kTextStepGaze = null;
         flythruLabelFileName = null;
         flythruButtonLoadImage = null;
-        kFile = null;
         endoscopyImage = null;
-        parentFrame = null;
         kDialogSmooth = null;
         scrollPanel = null;
         scroller = null;
@@ -344,7 +273,7 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
      * @param  _color  Color
      */
     public void setColor(Color _color) {
-        m_kView.setRenderSurfaceColors(_color);
+        //m_kView.setRenderSurfaceColors(_color);
     }
 
     /**
@@ -354,8 +283,8 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
      * @param  kFlyPathBehavior  FlyPathBehavior Instance which contains the current state of orientation along the
      *                           branches.
      */
-    public void updateOrientation(FlyPathBehavior kFlyPathBehavior) {
-        setViewOrientation(kFlyPathBehavior.getViewOrientation());
+    public void updateOrientation(Matrix3f kOrientation) {
+        setViewOrientation(kOrientation);
     }
 
     /**
@@ -365,11 +294,11 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
      * @param  kFlyPathBehavior  FlyPathBehavior Instance which contains the current state of position along the
      *                           branches.
      */
-    public void updatePosition(FlyPathBehavior kFlyPathBehavior) {
+    public void updatePosition(FlyPathBehavior_WM kFlyPathBehavior) {
         setBranchInfo(kFlyPathBehavior.getBranchIndex(), kFlyPathBehavior.isPathMoveForward());
         setStepGazeDist(kFlyPathBehavior.getPathStep(), kFlyPathBehavior.getGazeDistance());
         setPathDistance(kFlyPathBehavior.getPathDistance(), kFlyPathBehavior.getPathLength());
-        setPathPosition(kFlyPathBehavior.getPathPosition());
+        setPathPosition(kFlyPathBehavior.getViewPoint());
         setViewDirection(kFlyPathBehavior.getViewDirection());
     }
 
@@ -403,14 +332,14 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
      *
      * @param  kPosition  3D coordinates of current position
      */
-    protected void setPathPosition(Point3f kPosition) {
+    protected void setPathPosition(Vector3f kPosition) {
         m_kDecimalFormat.setMinimumFractionDigits(1);
         m_kDecimalFormat.setMaximumFractionDigits(1);
-        m_kTextPosition.setText(m_kDecimalFormat.format(kPosition.x) + " " + m_kDecimalFormat.format(kPosition.y) +
-                                " " + m_kDecimalFormat.format(kPosition.z));
+        m_kTextPosition.setText(m_kDecimalFormat.format(kPosition.X) + " " + m_kDecimalFormat.format(kPosition.Y) +
+                                " " + m_kDecimalFormat.format(kPosition.Z));
 
         if (continueUpdate) {
-            parentFrame.setPathPosition(m_kView.getSamplePosition(), m_kView.getPositionScaled());
+            
         }
     }
 
@@ -434,8 +363,8 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
     protected void setViewDirection(Vector3f kVector) {
         m_kDecimalFormat.setMinimumFractionDigits(2);
         m_kDecimalFormat.setMaximumFractionDigits(2);
-        m_kTextDirection.setText(m_kDecimalFormat.format(kVector.x) + " " + m_kDecimalFormat.format(kVector.y) + " " +
-                                 m_kDecimalFormat.format(kVector.z));
+        m_kTextDirection.setText(m_kDecimalFormat.format(kVector.X) + " " + m_kDecimalFormat.format(kVector.Y) + " " +
+                                 m_kDecimalFormat.format(kVector.Z));
     }
 
     /**
@@ -448,9 +377,9 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
         m_kDecimalFormat.setMinimumFractionDigits(1);
         m_kDecimalFormat.setMaximumFractionDigits(1);
 
-        float fRotateX = (float) Math.toDegrees(Math.atan2((double) (-kMatrix.m12), (double) (kMatrix.m22)));
-        float fRotateY = (float) Math.toDegrees(Math.asin((double) (-kMatrix.m02)));
-        float fRotateZ = (float) Math.toDegrees(Math.atan2((double) (-kMatrix.m01), (double) (kMatrix.m00)));
+        float fRotateX = (float) Math.toDegrees(Math.atan2((-kMatrix.M12), (kMatrix.M22)));
+        float fRotateY = (float) Math.toDegrees(Math.asin(((-kMatrix.M02))));
+        float fRotateZ = (float) Math.toDegrees(Math.atan2((-kMatrix.M01), (kMatrix.M00)));
 
         m_kTextOrientation.setText(m_kDecimalFormat.format(fRotateX) + " " + m_kDecimalFormat.format(fRotateY) + " " +
                                    m_kDecimalFormat.format(fRotateZ));
@@ -491,7 +420,7 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
      */
     void m_kCheckBoxShowCurvatures_actionPerformed(ActionEvent e) {
         m_bShowMeanCurvatures = m_kCheckBoxShowCurvatures.isSelected();
-        m_kView.setMeanCurvaturesLUT(m_bShowMeanCurvatures ? m_kMeanCurvaturesLUT : null);
+        //m_kView.setMeanCurvaturesLUT(m_bShowMeanCurvatures ? m_kMeanCurvaturesLUT : null);
     }
 
     /**
@@ -555,21 +484,6 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
         m_kTextPercentBSplineNumControlPoints.setText(Float.toString(m_kOptions.m_fFractionNumControlPoints));
         m_kTextPercentBSplineNumControlPoints.setFont(serif12);
 
-        // combo box to select path samples reduction factor to use when
-        // segmenting the surface
-        JLabel kLabelSegmentSurfaceBranchSamplesReductionFactor = new JLabel("Surface segmentation branch samples reduction factor");
-
-        kLabelSegmentSurfaceBranchSamplesReductionFactor.setForeground(Color.black);
-        kLabelSegmentSurfaceBranchSamplesReductionFactor.setFont(serif12);
-        kLabelSegmentSurfaceBranchSamplesReductionFactor.setAlignmentX(Component.LEFT_ALIGNMENT);
-        m_kComboSegmentSurfaceBranchSamplesReductionFactor = new JComboBox();
-        m_kComboSegmentSurfaceBranchSamplesReductionFactor.setFont(MipavUtil.font12);
-        m_kComboSegmentSurfaceBranchSamplesReductionFactor.setBackground(Color.white);
-        m_kComboSegmentSurfaceBranchSamplesReductionFactor.addItem("1 (no reduction)");
-        m_kComboSegmentSurfaceBranchSamplesReductionFactor.addItem("2");
-        m_kComboSegmentSurfaceBranchSamplesReductionFactor.addItem("4");
-        m_kComboSegmentSurfaceBranchSamplesReductionFactor.setSelectedIndex(1);
-
         // Button: Load Surface
         flythruButtonLoadImage.setText("Select Mask Image ...");
         flythruButtonLoadImage.setActionCommand("Select Image ...");
@@ -624,17 +538,6 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         kPanelOptions.add(m_kTextPercentBSplineNumControlPoints, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        kPanelOptions.add(kLabelSegmentSurfaceBranchSamplesReductionFactor, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        gbc.weightx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        kPanelOptions.add(m_kComboSegmentSurfaceBranchSamplesReductionFactor, gbc);
-
         JPanel fileLoaderPanel = new JPanel(new GridBagLayout());
 
         gbc.gridx = 0;
@@ -664,7 +567,7 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
-        kDialogSmooth = new JDialogSmoothMesh( parentFrame, false, JDialogSmoothMesh.SMOOTH1 );
+        kDialogSmooth = new JDialogSmoothMesh( null, false, JDialogSmoothMesh.SMOOTH1 );
         smoothPanel.add(kDialogSmooth.getMainPanel(), gbc);
 
         JPanel surfaceControlPanel = new JPanel();
@@ -772,16 +675,6 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         surfacePanel.add(updatePanel, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 14;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        surfacePanel.add(m_kButtonLoadSurface, gbc);
-        gbc.gridx = 1;
-        gbc.gridy = 14;
-        gbc.weightx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        surfacePanel.add(m_kLabelFileName, gbc);
         surfaceControlPanel.add(smoothPanel);
         surfaceControlPanel.add(surfacePanel);
         contentBox.add(surfaceControlPanel);
@@ -849,12 +742,6 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
         updateButton.setFont(MipavUtil.font12B);
         updateButton.setMinimumSize(MipavUtil.defaultButtonSize);
         updateButton.setEnabled(false);
-
-        // Button: Load Surface
-        m_kButtonLoadSurface.setText("Select Mask Surface ...");
-        m_kButtonLoadSurface.setActionCommand("Select Surface ...");
-        m_kButtonLoadSurface.addActionListener(this);
-
     }
 
     /**
@@ -865,36 +752,9 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
         fileIO.setQuiet(true);
         endoscopyImage = fileIO.readImage(fileName, directory, false, null);
         m_kView.setupRender(endoscopyImage, m_kOptions);
-
     }
 
-    /**
-     * Mask to load the surface image.
-     */
-    private void loadingSurface() {
-
-        // Display a file dialog to select the surface file to load. Instantiate each time in order to cause a re-scan
-        // of the files in the directory. ViewJSimpleProgressBar kProgress = new ViewJSimpleProgressBar(
-        // kFile.getName(), "Loading surface file ..." );
-        parentFrame.addSurface(surfaceDir, kFile);
-
-        try {
-
-            // Load the selected surface file and extract the mesh.
-            SurfaceLoaderSUR kSurfaceLoader = new SurfaceLoaderSUR(kFile.getPath());
-
-            m_kTriangleMesh = kSurfaceLoader.getTriangleMesh();
-
-            // Display a dialog box to decide if the user wants to
-            // smooth the mesh.
-
-            kDialogSmooth.setVariables();
-            m_kTriangleMesh.smoothMesh(kDialogSmooth.getIterations(), kDialogSmooth.getAlpha(),
-                                       kDialogSmooth.getVolumeLimit(), kDialogSmooth.getVolumePercent(), false); // display progress bar
-
-            // Update the user interface.
-            m_kView.setSurface(m_kTriangleMesh);
-
+/*
             // Access the mesh curvatures computed for the surface.
             ModelTriangleMeshCurvatures kMeshCurvatures = m_kView.getSurfaceCurvatures();
             float[] afMeanCurvatures = kMeshCurvatures.getMeanCurvatures();
@@ -928,17 +788,8 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
             m_kMeanCurvaturesLUT.invertLUT();
             m_kMeanCurvaturesLUT.resetTransferLine(-(float) dMeanCurvatureAbsMax, +(float) dMeanCurvatureAbsMax);
             m_kView.setMeanCurvaturesLUT(m_bShowMeanCurvatures ? m_kMeanCurvaturesLUT : null);
+*/
 
-        } catch (IOException kException) {
-            System.out.println(kException.getMessage());
-            kException.printStackTrace();
-
-            return;
-        } finally {
-            ViewJFrameVolumeView.getRendererProgressBar().setValue(100);
-            ViewJFrameVolumeView.getRendererProgressBar().update(ViewJFrameVolumeView.getRendererProgressBar().getGraphics());
-        }
-    }
 
     /**
      * Sets up the variables needed for the algorithm from the GUI components.
@@ -985,11 +836,6 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererJ3D {
 
             return false;
         }
-
-        // Path samples reduction factor for segmentation of the surface.
-        m_kOptions.m_iSegmentSurfaceBranchSamplesReductionFactor = 1 <<
-                                                                       m_kComboSegmentSurfaceBranchSamplesReductionFactor.getSelectedIndex();
-
         return true;
     }
 

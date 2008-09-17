@@ -22,7 +22,7 @@ import javax.vecmath.*;
  * Dialog to turn slices bounding box of surface renderer on and off, and to change the color of the frame. This dialog
  * also control the X, Y, Z slices movements.
  */
-public class JPanelLights extends JPanelRendererBase implements ChangeListener, MouseListener, ListSelectionListener {
+public class JPanelLights extends JPanelRendererJ3D implements ChangeListener, MouseListener, ListSelectionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

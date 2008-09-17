@@ -21,7 +21,7 @@ import javax.swing.event.*;
  * change the color of the frame. This dialog also control the X, Y, Z slices
  * movements.
  */
-public class JPanelSlices extends JPanelRendererBase
+public class JPanelSlices extends JPanelRendererJ3D
     implements ChangeListener,  // for slider changes
                MouseListener    // (LOD change)
 {

@@ -13,7 +13,7 @@ import javax.swing.*;
 /**
  * Dialog to turn bounding box of surface renderer on and off, and to change the color of the frame.
  */
-public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
+public class JPanelRenderOptionsRayCast extends JPanelRendererJ3D {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

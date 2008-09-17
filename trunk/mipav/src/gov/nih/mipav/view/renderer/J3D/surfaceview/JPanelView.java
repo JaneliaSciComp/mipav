@@ -24,7 +24,7 @@ import javax.swing.event.*;
  *
  * @author  Neva Cherniavsky
  */
-public class JPanelView extends JPanelRendererBase implements ChangeListener, MouseListener {
+public class JPanelView extends JPanelRendererJ3D implements ChangeListener, MouseListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

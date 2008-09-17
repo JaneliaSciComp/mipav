@@ -23,7 +23,7 @@ import javax.vecmath.*;
 /**
  * DOCUMENT ME!
  */
-public class JPanelBrainSurfaceFlattener extends JPanelRendererBase implements ViewImageUpdateInterface {
+public class JPanelBrainSurfaceFlattener extends JPanelRendererJ3D implements ViewImageUpdateInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

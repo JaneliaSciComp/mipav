@@ -21,7 +21,7 @@ import javax.swing.border.*;
  *
  * @author  Alexandra Bokinsky, Ph.D.
  */
-public class JPanelSculptor extends JPanelRendererBase {
+public class JPanelSculptor extends JPanelRendererJ3D {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
