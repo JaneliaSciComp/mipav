@@ -91,7 +91,52 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
      */
     public void actionPerformed(ActionEvent event) {
 
-        if (event.getActionCommand().equals("Save")) {
+        if (event.getActionCommand().equals("Print")) {
+            try {
+                String jobtitle = "";
+                PrintJob pjob = getToolkit().getPrintJob(this, jobtitle, null);
+                if (pjob != null) {
+
+                    String textString = ((ScrollTextArea)tabbedPane.getSelectedComponent()).getTextArea().getText();
+                    File outFile = new File("out.txt");
+                    FileWriter out = new FileWriter(outFile);
+                    out.write(textString);
+                    out.close();
+                    FileInputStream fis = new FileInputStream(outFile);
+                    BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+                    //FileReader fr = new FileReader(outFile);
+                    //BufferedReader br = new BufferedReader(fr);
+                    Graphics g = null;  // refers to current page
+                    //Dimension pDim = pjob.getPageDimension();
+                    //int pRes = pjob.getPageResolution();
+                    //System.out.println("Page size " + pDim + "; Res " + pRes);
+                    g = pjob.getGraphics();
+                    g.setColor(Color.black);
+                    //g.setFont(new Font("SansSerif", Font.PLAIN, 12));
+                    g.setFont(MipavUtil.font12);
+                    int y = 100;
+                    String line;
+                    try {
+                      while ((line = br.readLine()) != null) {
+                        // g.drawString does not respond to tab characters
+                        // Must use java.awt.font.LineBreakMeasurer
+                        //System.out.println(line);
+                        g.drawString(line, 20, y+=18);
+                      }
+                    } catch (IOException e) {
+                      System.err.println(e);
+                    }
+                    // g.drawString("Page " + pgNum, 300, 300);
+                    g.dispose(); // flush page
+                    pjob.end();  // total end of print job.
+                    pjob = null;  // avoid redundant calls to pjob.end()
+                }
+            } catch (Exception error) {
+                error.printStackTrace();
+                MipavUtil.displayError("Error writing file");
+            }    
+        }
+        else if (event.getActionCommand().equals("Save")) {
             String fileName = "", directory = "";
 
             JFileChooser chooser = new JFileChooser();
@@ -114,7 +159,6 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
 
             try {
                 BufferedWriter br = new BufferedWriter(new FileWriter(directory + fileName));
-
 
                 ((ScrollTextArea) tabbedPane.getSelectedComponent()).getTextArea().write(br);
                 br.flush();
@@ -373,6 +417,7 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
 
         JMenu editMenu = ViewMenuBuilder.buildMenu("Edit", 0, false);
 
+        fileMenu.add(ViewMenuBuilder.buildMenuItem("Print", "Print", 0 , this, "printer.gif", true));
         fileMenu.add(ViewMenuBuilder.buildMenuItem("Save messages", "Save", 0, this, "save.gif", true));
         editMenu.add(ViewMenuBuilder.buildMenuItem("Clear messages", "Clear", 0, this, "clear.gif", true));
         editMenu.add(ViewMenuBuilder.buildMenuItem("Copy", "Copy", 0, this, "copypaint.gif", true));
