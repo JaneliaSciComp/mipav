@@ -5,6 +5,7 @@ import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.renderer.flythroughview.*;
+import gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview.JPanelVirtualEndoscopySetup;
 import gov.nih.mipav.view.renderer.WildMagic.*;
 import gov.nih.mipav.view.renderer.WildMagic.Render.*;
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
@@ -19,6 +20,7 @@ import com.sun.opengl.util.Animator;
 
 import WildMagic.LibFoundation.Curves.Curve3f;
 import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibGraphics.Collision.PickRecord;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.GlobalState;
@@ -52,7 +54,11 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
     //private VolumeSurface m_kSurface = null;
     private TriMesh m_kSurface = null;
     private Light m_kLight = null;
-    
+    private SetupOptions m_kOptions = new SetupOptions();
+    /** This is the control frame which may need to be updated as the view changes. */
+    private JPanelVirtualEndoscopySetup_WM m_kControlFrame = null;
+    private Node m_kRotation = new Node();
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     public FlyThroughRender( VolumeTriPlanarInterface kParent, Animator kAnimator, VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa, ModelRGB kRGBTa,
@@ -108,6 +114,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
         MeasureTime();
 
         Move();
+        Pick();
 
         // Draw the scene to the back buffer/
         if (m_pkRenderer.BeginScene())
@@ -128,7 +135,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
             updateLighting( m_akLights );
         }
     }
-    
+
     protected void Move()
     {
         if (MoveCamera())
@@ -139,6 +146,34 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
         {
             m_spkScene.UpdateGS();
             m_kCuller.ComputeVisibleSet(m_spkScene);
+        }
+    }
+    
+    protected void Pick()
+    {
+        Vector3f kPos = new Vector3f(0,0,10);
+        Vector3f kDir = new Vector3f(0,0,1);  // the pick ray
+
+        if (m_bPickPending)
+        {
+            if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
+                                       GetHeight(),kPos,kDir))
+            {
+                m_bPickPending = false;
+                for ( int i = 0; i < m_kDisplayList.size(); i++ )
+                {
+                    if ( m_kDisplayList.get(i).GetPickable() )
+                    {
+                        m_kPicker.Execute(m_kDisplayList.get(i).GetScene(),kPos,kDir,0.0f,
+                                          Float.MAX_VALUE);
+                        if (m_kPicker.Records.size() > 0)
+                        {
+                            PickRecord kRecord = m_kPicker.GetClosestNonnegative();
+                            //m_kParent.PickCorrespondence( kRecord.iV0, kRecord.iV1, kRecord.iV2 );
+                        }
+                    }
+                }
+            }
         }
     }
     
@@ -165,7 +200,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
         }
     }
 
-    
+
     public void init(GLAutoDrawable arg0) {
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         ((OpenGLRenderer)m_pkRenderer).InitializeState();
@@ -194,7 +229,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
         //m_kCuller.ComputeVisibleSet(m_spkScene);
 
         InitializeCameraMotion(.05f,0.001f);
-        InitializeObjectMotion(m_spkScene);
+        InitializeObjectMotion(m_kRotation);
 
         //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
@@ -215,13 +250,13 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
         m_spkScene.AttachGlobalState(m_spkCull);
         //m_spkScene.AttachChild(m_kSurface.GetMesh());
         m_spkScene.AttachChild(m_kSurface);
-        
+
         m_kTranslate = new Vector3f(Vector3f.ZERO);      
         for ( int i = 0; i < m_pkRenderer.GetMaxLights(); i++ )
         {
             m_pkRenderer.SetLight( i, new Light() );
         }
-        setupRender(m_kImageA);
+        setupRender(m_kImageA, m_kOptions);
     }
 
     /**
@@ -231,7 +266,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
      */
     public void mousePressed(MouseEvent e) {
         super.mousePressed(e);
-        
+
         /* Only capture mouse events when enabled, and only when the control key is down and the left mouse
          * button is pressed. */
         if (e.isControlDown()) {
@@ -249,6 +284,33 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
 
     }
 
+    public void mouseDragged(MouseEvent e)
+    {
+        super.mouseDragged(e);
+        Matrix3f kRotate = m_kRotation.Local.GetRotate();
+        //kRotate.Inverse();
+        Vector3f kUp = new Vector3f();
+        Vector3f kDir = new Vector3f();
+        Vector3f kRight = new Vector3f();
+        
+
+        Vector3f kCUp = m_kFlyPathBehavior.getViewUp();
+        kCUp.Normalize();
+        Vector3f kCDir = m_kFlyPathBehavior.getViewDirection();
+        kCDir.Normalize();
+        Vector3f kCRight = new Vector3f();
+        kCRight.UnitCross( kCDir, kCUp );
+        
+        kRotate.Mult( kCUp, kUp );
+        kRotate.Mult( kCDir, kDir );
+        kRotate.Mult( kCRight, kRight );
+        m_spkCamera.SetFrame( m_spkCamera.GetLocation(), kDir, kUp, kRight);
+        if ( m_kControlFrame != null )
+        {
+            m_kControlFrame.updateOrientation(kRotate);
+        }
+    }
+
     public void addSurface(TriMesh kSurfaces)
     {
         /*
@@ -258,7 +320,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
                     m_fX, m_fY, m_fZ,
                     new TriMesh(kSurfaces), false );
         m_kSurface.SetDisplay(true);
-        */
+         */
 
         m_kSurface = new TriMesh(kSurfaces);
         StandardMesh.ReverseTriangleOrder(m_kSurface.GetTriangleQuantity(), m_kSurface.IBuffer.GetData());
@@ -285,16 +347,22 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
         m_kSurface.UpdateMS();
         m_bSurfaceAdded = true;
     }
-    
+
     /**
      * Setup flythru renderer.
      *
      * @param  _kImage   original model image reference.
      * @param  kOptions  setup options reference.
      */
-    public void setupRender(ModelImage kImage) {
-        SetupOptions kOptions = new SetupOptions();
+    public void setupRender(ModelImage kImage, SetupOptions kOptions) {
         m_kMaskImage = kImage;
+        m_kOptions = kOptions;
+
+        if ( !m_bInit ) 
+        {
+            return;
+        }
+
         // Setup layout of 3D image for mapping sample coordinates
         // to real coordinates.
         int[] aiExtents = m_kMaskImage.getExtents();
@@ -312,7 +380,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
         // Extract the centerline curve.
         m_kSkeleton = new Skeleton3D(m_kMaskImage, m_kVolumeLayout);
 
-        m_kFlyPathGraphSamples = m_kSkeleton.getPathGraph(kOptions.m_iMaxBranches, kOptions.m_fMinBranchLength);
+        m_kFlyPathGraphSamples = m_kSkeleton.getPathGraph(m_kOptions.m_iMaxBranches, m_kOptions.m_fMinBranchLength);
 
         m_kFlyPathGraphCurve = new FlyPathGraphCurve(m_kFlyPathGraphSamples, 0.07f, 2);
 
@@ -335,7 +403,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
 
             m_kParent.addGeometry(new Polyline(kGeometryBranchPath.VBuffer, false, true));
         }
-        
+
         // Create the node to render the annotation points as they are added.
         // Create default shape to render and create list to store all
         // of the annotations.
@@ -346,7 +414,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
         StandardMesh kSM = new StandardMesh(kAttr);
         m_kAnnotateList = new FlyPathAnnotateList_WM();
         m_kAnnotateList.setDefaultShape(kSM.Sphere(10, 10, fRadius));
-        
+
         TriMesh kSpherePosition = kSM.Sphere(10, 10, fRadius);
         for ( int i = 0; i < kSpherePosition.VBuffer.GetVertexQuantity(); i++ )
         {
@@ -359,6 +427,16 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
         // looking around.
         m_kFlyPathBehavior = new FlyPathBehavior_WM(m_kFlyPathGraphCurve, m_kAnnotateList, this);
         m_kFlyPathBehavior.setupCallback(this);
+    }
+
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  _control  DOCUMENT ME!
+     */
+    public void setupRenderControl(JPanelVirtualEndoscopySetup_WM _control) {
+        m_kControlFrame = _control;
     }
 
     /**
@@ -444,7 +522,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
                 yBox) / (2.0f*maxBox);
         kPointScaled.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
                 zBox) / (2.0f*maxBox);
-       return kPointScaled;
+        return kPointScaled;
     }
     /**
      * Called any time the position along the current curve changes and the color of the curve needs to change to show
@@ -459,7 +537,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
 
         // How many points are in the array?
         int iNumPoints = kLine.VBuffer.GetVertexQuantity();
-        
+
         // What is the range of samples to be colored as unvisited.
         int iUnvisitedMin = (int) (m_kFlyPathBehavior.getBranchDistUnvisitedMin() * (iNumPoints - 1));
         int iUnvisitedMax = (int) (m_kFlyPathBehavior.getBranchDistUnvisitedMax() * (iNumPoints - 1));
@@ -479,10 +557,12 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
         // Save the new range of unvisited range of the path.
         m_aiBranchIndexUnvisitedMin[iBranch] = iUnvisitedMin;
         m_aiBranchIndexUnvisitedMax[iBranch] = iUnvisitedMax;
+
+        kLine.VBuffer.Release();
     }
-    
-    
-    
+
+
+
     public static class SetupOptions {
 
         /**
@@ -524,42 +604,57 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
 
     public void viewChanged(FlyPathBehavior_WM behavior, int iEvent)
     {
+        if ( m_kFlyPathBehavior != behavior )
+        {
+            return;
+        }
         if (FlyPathBehavior_WM.EVENT_RESET_ORIENTATION == 
             (FlyPathBehavior_WM.EVENT_RESET_ORIENTATION & iEvent))
-        {
-            m_spkScene.Local.SetRotateCopy(Matrix3f.IDENTITY);
-            m_spkScene.UpdateGS();
-            m_kCuller.ComputeVisibleSet(m_spkScene);
-        }  
-        if (FlyPathBehavior_WM.EVENT_CHANGE_POSITION == 
-            (FlyPathBehavior_WM.EVENT_CHANGE_POSITION & iEvent))
-        {
-            Vector3f kCDir = behavior.getViewDirection();
-            kCDir.Normalize();
-            Vector3f kCUp = behavior.getViewUp();
-            kCUp.Normalize();
-            Vector3f kCLoc = behavior.getViewPoint();
-            Vector3f kCRight = new Vector3f();
-            kCRight.UnitCross( kCDir, kCUp );
-            Vector3f kPositionScaled = getPositionScaled(kCLoc);
-            m_spkCamera.SetFrame(kPositionScaled,kCDir,kCUp,kCRight);
-            
-            if ( m_kLight != null )
+        {       
+            m_kRotation.Local.SetRotateCopy(Matrix3f.IDENTITY);
+            if ( m_kControlFrame != null )
             {
-                m_kLight.Position.Copy(kPositionScaled);
-                m_kLight.DVector.Copy(kCDir);
+                m_kControlFrame.updateOrientation(m_kRotation.Local.GetRotate());
             }
-            Vector3f kVolumePt = m_kVolumeLayout.getSamplePoint(kCLoc.X, kCLoc.Y, kCLoc.Z);
-            kVolumePt.X *= m_kMaskImage.getExtents()[0];
-            kVolumePt.Y *= m_kMaskImage.getExtents()[1];
-            kVolumePt.Z *= m_kMaskImage.getExtents()[2];
-            m_kParent.setSliceFromPlane(kVolumePt);
-            m_kParent.translateSurface( "FlyThrough", kPositionScaled );
+        }  
+
+        if ( m_kControlFrame != null )
+        {
+            m_kControlFrame.updatePosition(behavior);
         }
-            
+        Vector3f kCDir = behavior.getViewDirection();
+        kCDir.Normalize();
+        Vector3f kCUp = behavior.getViewUp();
+        kCUp.Normalize();
+        Vector3f kCLoc = behavior.getViewPoint();
+        Vector3f kCRight = new Vector3f();
+        kCRight.UnitCross( kCDir, kCUp );
+        Vector3f kPositionScaled = getPositionScaled(kCLoc);
+        m_spkCamera.SetFrame(kPositionScaled,kCDir,kCUp,kCRight);
+
+        if ( m_kLight != null )
+        {
+            m_kLight.Position.Copy(kPositionScaled);
+            m_kLight.DVector.Copy(kCDir);
+        }
+        Vector3f kVolumePt = m_kVolumeLayout.getSamplePoint(kCLoc.X, kCLoc.Y, kCLoc.Z);
+        kVolumePt.X *= m_kMaskImage.getExtents()[0];
+        kVolumePt.Y *= m_kMaskImage.getExtents()[1];
+        kVolumePt.Z *= m_kMaskImage.getExtents()[2];
+        m_kParent.setSliceFromPlane(kVolumePt);
+        m_kParent.translateSurface( "FlyThrough", kPositionScaled );
+
+        resetRenderBranchPath();
+
+
+    }
+    
+    public Vector3f getCameraDirection()
+    {
+        return new Vector3f( m_spkCamera.GetDVector() );
     }
 
-    
+
     public Matrix4f getWVMatrix()
     {
         //m_pkRenderer.SetGeometry(m_kSurface.GetMesh());
@@ -569,5 +664,5 @@ public class FlyThroughRender extends GPURenderBase implements FlyPathBehavior_W
         m_pkRenderer.SetGeometry(null);
         return new Matrix4f(afData, true);
     }
-    
+
 }

@@ -39,7 +39,7 @@ import javax.vecmath.*;
  *
  * @author  Neva Cherniavsky
  */
-public class JPanelMousePlotter extends JPanelRendererBase
+public class JPanelMousePlotter extends JPanelRendererJ3D
         implements MouseListener, MouseMotionListener, ChangeListener, MouseBehaviorCallback {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------

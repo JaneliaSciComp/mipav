@@ -24,7 +24,7 @@ import javax.swing.event.*;
  *
  * @version  0.1 August, 2005
  */
-public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeListener, MouseListener {
+public class JPanelVolOpacityBase extends JPanelRendererJ3D implements ChangeListener, MouseListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

@@ -1,12 +1,10 @@
-package gov.nih.mipav.view.renderer.J3D;
+package gov.nih.mipav.view.renderer;
 
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.J3D.volumeview.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import javax.media.j3d.Material;
 import javax.swing.*;
 import javax.swing.border.*;
 
@@ -68,12 +66,6 @@ public abstract class JPanelRendererBase extends JPanel
      */
     protected JButton OKButton;
 
-    /** Raycast based renderer reference, raycast renderer or shear warp renderer. */
-    protected VolumeRenderer rayBasedRender;
-
-    /** Render base. */
-    protected RenderViewBase renderBase = null;
-
     /** Flag indicating if the algorithm should run in a separate thread. Default is <code>true</code>. */
     protected boolean runInSeparateThread = true;
 
@@ -88,21 +80,7 @@ public abstract class JPanelRendererBase extends JPanel
      *
      * @param  parent  Parent frame.
      */
-    public JPanelRendererBase(RenderViewBase parent) {
-        renderBase = parent;
-        serif12 = MipavUtil.font12;
-        serif12B = MipavUtil.font12B;
-        addKeyListener(this);
-    }
-
-    /**
-     * Constructor that sets the parent frame of the dialog and whether or not the dialog is modal. Also adds this as a
-     * window listener and key listener to all dialogs.
-     *
-     * @param  parent  Parent frame.
-     */
     public JPanelRendererBase() {
-        renderBase = null;
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
         addKeyListener(this);
@@ -133,7 +111,6 @@ public abstract class JPanelRendererBase extends JPanel
 
         /** The main control. */
         mainPanel = null;
-        renderBase = null;
         OKButton = null;
         cancelButton = null;
         closeButton = null;
@@ -164,8 +141,6 @@ public abstract class JPanelRendererBase extends JPanel
         return cancelFlag;
     }
 
-    public void setMaterial(Material kMaterial, int iIndex) {}
-    public void restorePerVertexColor(Material kMaterial, int index) {}
     /**
      * Unchanged.
      *
@@ -248,36 +223,6 @@ public abstract class JPanelRendererBase extends JPanel
      * @param  leftHandSys  DOCUMENT ME!
      */
     public void setLeftHandSystem(boolean leftHandSys) { }
-
-    /**
-     * Set the reference to ray based renderer, raycast renderer or shear warp renderer. This method set the clipping
-     * dialog to control the both the 3D texture renderer and raycast based renderer.
-     *
-     * @param  _rayBasedRender  VolumeRenderer reference
-     */
-    public void setRayBasedRender(VolumeRenderer _rayBasedRender) {
-        rayBasedRender = _rayBasedRender;
-    }
-
-    /**
-     * Accessor to set the render base object This reference used to update volumes according to the render view base
-     * instance type.
-     *
-     * @param  _renderBase  RenderViewBase
-     */
-    public void setSurfaceRender(RenderViewBase _renderBase) {
-        renderBase = _renderBase;
-    }
-
-    /**
-     * Accessor to set the render base object This reference used to update volumes according to the render view base
-     * instance type.
-     *
-     * @param  _renderBase  RenderViewBase
-     */
-    public RenderViewBase getSurfaceRender() {
-        return renderBase;
-    }
 
     /**
      * Makes the dialog visible in center of screen.

@@ -6,6 +6,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.J3D.*;
 import gov.nih.mipav.view.renderer.J3D.model.file.*;
 import gov.nih.mipav.view.renderer.J3D.model.structures.*;
@@ -38,7 +39,7 @@ import javax.vecmath.*;
  * @author  David Eberly
  * @author  Neva Cherniavsky
  */
-public class JPanelSurface extends JPanelRendererBase
+public class JPanelSurface extends JPanelRendererJ3D
         implements ListSelectionListener, MouseListener, MouseMotionListener, ChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------

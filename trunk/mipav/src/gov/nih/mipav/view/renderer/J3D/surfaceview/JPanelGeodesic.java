@@ -37,7 +37,7 @@ import javax.swing.*;
  *
  * @author  Alexandra Bokinsky, Ph.D.
  */
-public class JPanelGeodesic extends JPanelRendererBase {
+public class JPanelGeodesic extends JPanelRendererJ3D {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

@@ -39,7 +39,7 @@ public class JDialogSimpleText extends JDialogBase {
      * @param  dialog  Parent dialog that created this.
      * @param  parent  Parent frame.
      */
-    public JDialogSimpleText(JPanelRendererBase dialog, RenderViewBase parent) {
+    public JDialogSimpleText(JPanelRendererJ3D dialog, RenderViewBase parent) {
 
         // super( parent, true );
         setTitle("Name the current view");

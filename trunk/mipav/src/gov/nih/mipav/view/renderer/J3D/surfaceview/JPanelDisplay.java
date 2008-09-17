@@ -13,7 +13,7 @@ import javax.swing.*;
  * The display panel control the red bounding box frame ( on/off ), texture aligned rendering mode, cubic controk,
  * perspective and parrallel viewing mode, and back ground color.
  */
-public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
+public class JPanelDisplay extends JPanelRendererJ3D implements KeyListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

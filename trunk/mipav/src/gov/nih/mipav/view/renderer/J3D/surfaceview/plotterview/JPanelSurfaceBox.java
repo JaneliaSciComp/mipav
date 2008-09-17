@@ -14,7 +14,7 @@ import javax.swing.*;
 /**
  * Dialog to turn bounding box of surface renderer on and off, and to change the color of the frame.
  */
-public class JPanelSurfaceBox extends JPanelRendererBase {
+public class JPanelSurfaceBox extends JPanelRendererJ3D {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

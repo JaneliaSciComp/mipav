@@ -4,7 +4,7 @@ package gov.nih.mipav.view.renderer.J3D.volumeview;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.*;
+import gov.nih.mipav.view.renderer.J3D.*;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.*;
 
 import com.sun.j3d.utils.behaviors.mouse.*;
