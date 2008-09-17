@@ -3414,9 +3414,9 @@ public class ViewJFrameGraph extends JFrame
         fitFunctTypePanel.add(radioFitGaussian);
         
         radioFitNone.setBounds(10, 100, 180, 30);
-        radioFitNone.setFont(font12);
         radioFitNone.addActionListener(this);
         radioFitNone.setActionCommand("FitNone");
+        radioFitNone.setFont(font12);
         groupFitFunctType.add(radioFitNone);
         fitFunctTypePanel.add(radioFitNone);
 

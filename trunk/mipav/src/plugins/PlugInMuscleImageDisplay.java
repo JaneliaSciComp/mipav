@@ -162,7 +162,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         RunTimeDefined
     }
     
-    public enum Symmetry{
+    public enum Symmetry {
         
         /** Indicates the image has no symmetry. */
         NO_SYMMETRY("No symmetry", ""), 
@@ -2360,7 +2360,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
                         incSlice();
                     }
                 } else if (command.equals("PropVOIDown")) {
-                	if (componentImage.getVOIHandler().propVOI(-1, true) == true) {
+                	if (componentImage.getVOIHandler().propVOI(-1, false) == true) {
                         decSlice();
                     }
                 } else if (command.equals("PropVOIAll")) {
