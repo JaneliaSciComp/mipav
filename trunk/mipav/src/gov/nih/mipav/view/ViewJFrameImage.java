@@ -114,9 +114,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /** The scrollPane where the image is displayed. */
     protected JScrollPane scrollPane;
 
-    /** Image time sequence number of image that is displayed. Zero indexed based. */
-    protected int tSlice;
-
     /** Storage of the resolution units of measure. For example, mm, cm, inches ... */
     protected int[] units;
 
@@ -128,9 +125,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     /** Defaults magnification of image to 1. */
     protected float zoom = 1;
-
-    /** Image slice number of image that is displayed. Zero indexed based. */
-    protected int zSlice;
 
     /** Reference to the color chooser. */
     private ViewJColorChooser colorChooser;
@@ -250,7 +244,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * Makes an aboutDialog box and displays information of the image plane presently being displayed.
      */
     public void about() {
-        super.about(zSlice, tSlice);
+        super.about(componentImage.getSlice(), componentImage.getTimeSlice());
     }
 
     // ************************************************************************
@@ -482,9 +476,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     removeControls();
                     controls = new ViewControlsImage(this); // Build controls used in this frame
                     menuBuilder = new ViewMenuBuilder(this);
-                    tSlice = 0;
+                    componentImage.setTimeSlice(0);
                     nTImage = imageB.getExtents()[3];
-                    zSlice = (imageB.getExtents()[2] - 1) / 2;
+                    componentImage.setSlice((imageB.getExtents()[2] - 1) / 2);
                     nImage = imageB.getExtents()[2];
                     menuBar = menuBarMaker.getMenuBar(this, 4, imageB.getType(), imageB.isDicomImage());
                     controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), menuBuilder
@@ -661,9 +655,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     removeControls();
                     controls = new ViewControlsImage(this); // Build controls used in this frame
                     menuBuilder = new ViewMenuBuilder(this);
-                    tSlice = 0;
+                    componentImage.setTimeSlice(0);
                     nTImage = 0;
-                    zSlice = (imageA.getExtents()[2] - 1) / 2;
+                    componentImage.setSlice((imageA.getExtents()[2] - 1) / 2);
                     nImage = imageA.getExtents()[2];
                     menuBar = menuBarMaker.getMenuBar(this, 3, imageA.getType(), imageA.isDicomImage());
                     controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), menuBuilder
@@ -1278,7 +1272,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("BSnake")) {
             new JDialogBSnake(this, getActiveImage());
         } else if (command.equals("SmoothVOI")) {
-            new JDialogBSmooth(this, getActiveImage(), zSlice);
+            new JDialogBSmooth(this, getActiveImage(), componentImage.getSlice());
         } // Paint
         else if (command.equals("colorPaint")) { // new colour dialog only when null
 
@@ -2142,7 +2136,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else if (command.equals("Cine (movie)")) {
             componentImage.cine(40);
-            componentImage.setSlice(zSlice);
             updateImages(true);
         } else if (command.equals("NextImage")) {
             // incSlice();
@@ -2324,7 +2317,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Surface plotter")) {
 
             try {
-                new ViewJFramePlotterView(imageA, componentImage.getLUTa(), zSlice);
+                new ViewJFramePlotterView(imageA, componentImage.getLUTa(), componentImage.getSlice());
 
             } catch (NoClassDefFoundError notAvailableError) {
                 Preferences.debug("ViewJFrameSurfacePlotter cannot be called; encountered "
@@ -3112,12 +3105,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             return;
         }
 
-        if (zSlice > 0) {
-            zSlice--;
-            controls.setZSlider(zSlice);
+        if (componentImage.getSlice() > 0) {
+            componentImage.setSlice(componentImage.getSlice() - 1);
+            controls.setZSlider(componentImage.getSlice());
 
             if (imageA.getLightBoxFrame() != null) { // move highlight on images in lightbox
-                imageA.getLightBoxFrame().setSlice(zSlice);
+                imageA.getLightBoxFrame().setSlice(componentImage.getSlice());
                 // imageA.getLightBoxFrame().updateImage(zSlice, true); //turn highlight on in old image
             }
 
@@ -3134,7 +3127,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 for (int i = 0; i < registeredFramedImages.size(); i++) {
                     ModelImage img = (ModelImage) registeredFramedImages.get(i);
                     ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
-                    framedImg.setSlice(zSlice, false);
+                    framedImg.setSlice(componentImage.getSlice(), false);
                 }
 
                 registeredFramedImages = null;
@@ -3148,11 +3141,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             if (infoDialogA != null) {
-                infoDialogA.setSlice(zSlice, tSlice);
+                infoDialogA.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
             }
 
             if (infoDialogB != null) {
-                infoDialogB.setSlice(zSlice, tSlice);
+                infoDialogB.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
             }
 
             updateImages(true);
@@ -3484,7 +3477,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @return returns the slice which is currently displayed
      */
     public int getViewableSlice() {
-        return zSlice;
+        return componentImage.getSlice();
     }
 
     /**
@@ -3493,7 +3486,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @return int the current time slice
      */
     public int getViewableTimeSlice() {
-        return tSlice;
+        return componentImage.getTimeSlice();
     }
 
     /**
@@ -3624,12 +3617,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             return;
         }
 
-        if (zSlice < (imageA.getExtents()[2] - 1)) {
-            zSlice++;
-            controls.setZSlider(zSlice);
+        if (componentImage.getSlice() < (imageA.getExtents()[2] - 1)) {
+            componentImage.setSlice(componentImage.getSlice() + 1);
+            controls.setZSlider(componentImage.getSlice());
 
             if (imageA.getLightBoxFrame() != null) { // move highlight on images in lightbox
-                imageA.getLightBoxFrame().setSlice(zSlice); // turn highlight on in old image
+                imageA.getLightBoxFrame().setSlice(componentImage.getSlice()); // turn highlight on in old image
             }
 
             // livewire grad mag. should be recalculated for the new slice
@@ -3645,7 +3638,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 for (int i = 0; i < registeredFramedImages.size(); i++) {
                     ModelImage img = (ModelImage) registeredFramedImages.get(i);
                     ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
-                    framedImg.setSlice(zSlice, false);
+                    framedImg.setSlice(componentImage.getSlice(), false);
                     framedImg.updateImages();
                 }
 
@@ -3658,11 +3651,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             if (infoDialogA != null) {
-                infoDialogA.setSlice(zSlice, tSlice);
+                infoDialogA.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
             }
 
             if (infoDialogB != null) {
-                infoDialogB.setSlice(zSlice, tSlice);
+                infoDialogB.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
             }
 
             updateImages(true);
@@ -3685,8 +3678,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         slices = initSlicePositions(img);
         numImages = initNumSlices(img);
 
-        zSlice = slices[0];
-        tSlice = slices[1];
+        componentImage.setSlice(slices[0]);
+        componentImage.setTimeSlice(slices[1]);
 
         nImage = numImages[0];
         nTImage = numImages[1];
@@ -4149,9 +4142,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 removeControls();
                 controls = new ViewControlsImage(this); // Build controls used in this frame
                 menuBuilder = new ViewMenuBuilder(this);
-                tSlice = 0;
+                componentImage.setTimeSlice(0);
                 nTImage = imageB.getExtents()[3];
-                zSlice = (imageB.getExtents()[2] - 1) / 2;
+                componentImage.setSlice((imageB.getExtents()[2] - 1) / 2);
                 nImage = imageB.getExtents()[2];
                 menuBar = menuBarMaker.getMenuBar(this, 4, imageB.getType(), imageB.isDicomImage());
                 controls
@@ -4401,9 +4394,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             return;
         }
 
-        if (zSlice < imageA.getExtents()[2]) {
-            zSlice = slice;
-            controls.setZSlider(zSlice);
+        if (componentImage.getSlice() < imageA.getExtents()[2]) {
+            componentImage.setSlice(slice);
+            controls.setZSlider(componentImage.getSlice());
             updateImages(true);
 
             /**
@@ -4416,7 +4409,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 for (int i = 0; i < registeredFramedImages.size(); i++) {
                     ModelImage img = (ModelImage) registeredFramedImages.get(i);
                     ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
-                    framedImg.setSlice(zSlice, false);
+                    framedImg.setSlice(componentImage.getSlice(), false);
                     framedImg.updateImages();
                 }
             }
@@ -4431,11 +4424,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             if (infoDialogA != null) {
-                infoDialogA.setSlice(zSlice, tSlice);
+                infoDialogA.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
             }
 
             if (infoDialogB != null) {
-                infoDialogB.setSlice(zSlice, tSlice);
+                infoDialogB.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
             }
         }
     }
@@ -4449,8 +4442,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         if (imageA.getNDims() == 4) {
 
-            if (tSlice < imageA.getExtents()[3]) {
-                tSlice = slice;
+            if (componentImage.getTimeSlice() < imageA.getExtents()[3]) {
+                componentImage.setTimeSlice(slice);
                 controls.setTSlider(slice);
 
                 // livewire grad mag. should be recalculated for the new slice
@@ -4459,22 +4452,22 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 updateImages(true);
 
                 if (linkFrame != null) {
-                    linkFrame.setTimeSlice(tSlice);
+                    linkFrame.setTimeSlice(componentImage.getTimeSlice());
                 }
 
                 if (infoDialogA != null) {
-                    infoDialogA.setSlice(zSlice, tSlice);
+                    infoDialogA.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
                 }
 
                 if (infoDialogB != null) {
-                    infoDialogB.setSlice(zSlice, tSlice);
+                    infoDialogB.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
                 }
             }
         } // if (imageA.getNDims() <= 3)
         else if ( (imageB != null) && (imageB.getNDims() == 4)) {
 
-            if (tSlice < imageB.getExtents()[3]) {
-                tSlice = slice;
+            if (componentImage.getTimeSlice() < imageB.getExtents()[3]) {
+                componentImage.setTimeSlice(slice);
                 controls.setTSlider(slice);
 
                 // livewire grad mag. should be recalculated for the new slice
@@ -4483,15 +4476,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 updateImages(true);
 
                 if (linkFrame != null) {
-                    linkFrame.setTimeSlice(tSlice);
+                    linkFrame.setTimeSlice(componentImage.getTimeSlice());
                 }
 
                 if (infoDialogA != null) {
-                    infoDialogA.setSlice(zSlice, tSlice);
+                    infoDialogA.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
                 }
 
                 if (infoDialogB != null) {
-                    infoDialogB.setSlice(zSlice, tSlice);
+                    infoDialogB.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
                 }
             }
         } // else if ((imageB != null) && (imageB.getNDims() == 4))
@@ -4667,7 +4660,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         // controls.setZSlider(zSlice);
         setControls();
-        setSlice(zSlice);
+        setSlice(componentImage.getSlice());
 
         return true;
 
@@ -4714,7 +4707,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             return false;
         }
 
-        if (componentImage.show(tSlice, zSlice, null, null, forceShow, -1) == false) {
+        if (componentImage.show(componentImage.getTimeSlice(), componentImage.getSlice(), null, null, forceShow, -1) == false) {
             return false;
         }
 
@@ -4746,7 +4739,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         // redraw the paintBrushCursor (quick)
         componentImage.updatePaintBrushCursor();
 
-        if (componentImage.show(tSlice, zSlice, LUTa, LUTb, forceShow, interpMode) == false) {
+        if (componentImage.show(componentImage.getTimeSlice(), componentImage.getSlice(), LUTa, LUTb, forceShow, interpMode) == false) {
             return false;
         }
 
@@ -4901,7 +4894,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (getActiveImage() == imageA) {
 
             if (infoDialogA == null) {
-                infoDialogA = new JDialogImageInfo(this, imageA, zSlice, tSlice);
+                infoDialogA = new JDialogImageInfo(this, imageA, componentImage.getSlice(), componentImage.getTimeSlice());
             }
 
             return infoDialogA;
@@ -4912,7 +4905,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         {
 
             if (infoDialogB == null) {
-                infoDialogB = new JDialogImageInfo(this, imageB, zSlice, tSlice);
+                infoDialogB = new JDialogImageInfo(this, imageB, componentImage.getSlice(), componentImage.getTimeSlice());
             }
 
             return infoDialogB;
@@ -4929,7 +4922,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (imageB != null) {
 
             if (infoDialogB == null) {
-                infoDialogB = new JDialogImageInfo(this, imageB, zSlice, tSlice);
+                infoDialogB = new JDialogImageInfo(this, imageB, componentImage.getSlice(), componentImage.getTimeSlice());
             }
 
             return infoDialogB;
@@ -5008,11 +5001,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (displayMode == IMAGE_A) {
 
             if (imageA.getNDims() == 4) { // Setup the title for 4D image
-                str = imageA.getImageName() + "  " + String.valueOf(zSlice) + "/" + String.valueOf(nImage - 1) + "z  "
-                        + String.valueOf(tSlice) + "/" + String.valueOf(nTImage - 1) + "t M:"
+                str = imageA.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + "z  "
+                        + String.valueOf(componentImage.getTimeSlice()) + "/" + String.valueOf(nTImage - 1) + "t M:"
                         + makeString(componentImage.getZoomX(), 2);
             } else if (imageA.getNDims() == 3) { // Setup the title for 3D image
-                str = imageA.getImageName() + "  " + String.valueOf(zSlice) + "/" + String.valueOf(nImage - 1) + " M:"
+                str = imageA.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + " M:"
                         + makeString(componentImage.getZoomX(), 2);
             } else {
                 str = imageA.getImageName() + "  M:" + makeString(componentImage.getZoomX(), 2);
@@ -5020,11 +5013,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else {
 
             if (imageB.getNDims() == 4) { // Setup the title for 4D image of image B
-                str = imageB.getImageName() + "  " + String.valueOf(zSlice) + "/" + String.valueOf(nImage - 1) + "z  "
-                        + String.valueOf(tSlice) + "/" + String.valueOf(nTImage - 1) + "t M:"
+                str = imageB.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + "z  "
+                        + String.valueOf(componentImage.getTimeSlice()) + "/" + String.valueOf(nTImage - 1) + "t M:"
                         + makeString(componentImage.getZoomX(), 2);
             } else if (imageB.getNDims() == 3) { // Setup the title
-                str = imageB.getImageName() + "  " + String.valueOf(zSlice) + "/" + String.valueOf(nImage - 1) + " M:"
+                str = imageB.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + " M:"
                         + makeString(componentImage.getZoomX(), 2);
             } else {
                 str = imageB.getImageName() + "  M:" + makeString(componentImage.getZoomX(), 2);
@@ -5445,11 +5438,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             for (int j = 0; j < componentImage.imageExtents[2]; j++) {
 
-                if (j != zSlice) {
+                if (j != componentImage.getSlice()) {
 
                     for (int i = 0; i < oneSlicePixels; i++) {
 
-                        if (bitSet.get( (oneSlicePixels * zSlice) + i) == true) {
+                        if (bitSet.get( (oneSlicePixels * componentImage.getSlice()) + i) == true) {
                             bitSet.set( (oneSlicePixels * j) + i);
                         }
                     }
@@ -5463,15 +5456,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     private void propagatePaintToNextSlice() {
 
-        if ( (componentImage.getImageA().getNDims() > 2) && (zSlice < componentImage.imageExtents[2])) {
+        if ( (componentImage.getImageA().getNDims() > 2) && (componentImage.getSlice() < componentImage.imageExtents[2])) {
             BitSet bitSet = componentImage.getPaintBitmap();
 
             int oneSlicePixels = componentImage.imageExtents[0] * componentImage.imageExtents[1];
 
             for (int i = 0; i < oneSlicePixels; i++) {
 
-                if (bitSet.get( (oneSlicePixels * zSlice) + i) == true) {
-                    bitSet.set( (oneSlicePixels * (zSlice + 1)) + i);
+                if (bitSet.get( (oneSlicePixels * componentImage.getSlice()) + i) == true) {
+                    bitSet.set( (oneSlicePixels * (componentImage.getSlice() + 1)) + i);
                 }
             }
 
@@ -5484,15 +5477,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     private void propagatePaintToPreviousSlice() {
 
-        if ( (componentImage.getImageA().getNDims() > 2) && (zSlice > 0)) {
+        if ( (componentImage.getImageA().getNDims() > 2) && (componentImage.getSlice() > 0)) {
             BitSet bitSet = componentImage.getPaintBitmap();
 
             int oneSlicePixels = componentImage.imageExtents[0] * componentImage.imageExtents[1];
 
             for (int i = 0; i < oneSlicePixels; i++) {
 
-                if (bitSet.get( (oneSlicePixels * zSlice) + i) == true) {
-                    bitSet.set( (oneSlicePixels * (zSlice - 1)) + i);
+                if (bitSet.get( (oneSlicePixels * componentImage.getSlice()) + i) == true) {
+                    bitSet.set( (oneSlicePixels * (componentImage.getSlice() - 1)) + i);
                 }
             }
 

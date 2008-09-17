@@ -1087,8 +1087,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	@Override
 	public void setSlice(int slice) {
 		
-		zSlice = slice;
-	    controls.setZSlider(zSlice);
+		componentImage.setSlice(slice);
+	    controls.setZSlider(componentImage.getSlice());
 	    updateImages(true);
 	    
 	    // livewire grad mag. should be recalculated for the new slice    
