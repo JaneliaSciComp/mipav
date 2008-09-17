@@ -1,13 +1,12 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
 
-import java.io.*;
-
-import java.text.*;
+import java.io.IOException;
+import java.text.DecimalFormat;
 
 
 /**
@@ -17,11 +16,12 @@ import java.text.*;
  * requires a single MRI magnitude image. The program mathematics assumes a General Rician or noncentral chi probability
  * distribution characteristic of a MRI magnitude image. For the case of a single receiver system, the General Rician
  * distribution reduces to the Rician distribution.
- *
- * <p>The program calculates the SNR by 2 different methods. First, the signal to noise ratio is found using a equation
- * for the first moment of Generalized Rice distribution. The first method follows the general 3 step approach outlined
- * in the Constantinides reference: 1.) The noise standard deviation equals the square root((sum over i for background
- * VOI of pixel(i) * pixel(i))/ (2 * number of background pixels * number of NMR receivers)) 2.) For each signal VOI the
+ * 
+ * <p>
+ * The program calculates the SNR by 2 different methods. First, the signal to noise ratio is found using a equation for
+ * the first moment of Generalized Rice distribution. The first method follows the general 3 step approach outlined in
+ * the Constantinides reference: 1.) The noise standard deviation equals the square root((sum over i for background VOI
+ * of pixel(i) * pixel(i))/ (2 * number of background pixels * number of NMR receivers)) 2.) For each signal VOI the
  * mean is calculated. 3.) The the mean is divided by the noise standard deviation The signal to noise ratio is
  * calculated from the VOI mean to noise ratio using an equation (mean/standard deviation) = 1 * 3 * 5 * ... (2n - 1) *
  * (1/((2**(n-1))*((n - 1)!))) * sqrt(PI/2) * 1F1(-1/2, n, -SNR*SNR/2) where n = number of NMR receivers in the phase
@@ -31,11 +31,13 @@ import java.text.*;
  * function equivalence can only be used in the case of 1 receiver, a port of the ACM Algorithm 707 conhyp routine is
  * used to find the confluent hypergeometric function for values of SNR * SNR/2 <= 3000. The port of the conhyp routine
  * failed for values of SNR*SNR/2 > 3055, so for SNR*SNR/2 > 3000 the asymptotic limiting formula of the confluent
- * hypergeometric function used in Appendix C of the Sato reference was used.</p>
- *
- * <p>The second method uses the maximum likelihood approach outlined in the Sijbers thesis. This approach finds the
- * signal value which maximizes the value of the log of the maximum likelihood function (Equation 5.38): Let pixelNumber
- * = number of pixels in the signal VOI log(L) equals approximately -pixelNumber*(n - 1)*log(signal)
+ * hypergeometric function used in Appendix C of the Sato reference was used.
+ * </p>
+ * 
+ * <p>
+ * The second method uses the maximum likelihood approach outlined in the Sijbers thesis. This approach finds the signal
+ * value which maximizes the value of the log of the maximum likelihood function (Equation 5.38): Let pixelNumber =
+ * number of pixels in the signal VOI log(L) equals approximately -pixelNumber*(n - 1)*log(signal)
  * -pixelNumber*signal**2/(2*backgroundVariance) + sum from i = 1 to pixelNumber of (log(BESSEL_I of order (n - 1) of
  * (pixel[i]*signal/backgroundVariance)) Note that this method does not work for large values of signal to noise ratio
  * because the BESSEL_I function cannot handle large arguments. For example, the UNSCALED BESSEL_I of order 0 of x can
@@ -46,85 +48,119 @@ import java.text.*;
  * maximum likelihood equation, a one dimensional search method called Brent's method that uses inverse parabolic
  * ineterpolation calls the log of the maximum likelihood function. Brent's method is started with 3 points, 0.75 *
  * first moment calculated signal, the first moment calculated signal, and 1.25 * first moment calculated signal. This
- * assumes that the first moment result differs from the maximum likelihood moment by less than 25%.</p>
- *
- * <p>Testing the validity of this program is easy enough. Each receiver in the phase array has 2 standard deviations -
- * one associated with the real part of the complex image and one associated with the imaginary part of the complex
- * image. signal with noise = square root((signal without noise)**2 + sum from k = 1 to n of (sigmak real)**2 + (simgak
+ * assumes that the first moment result differs from the maximum likelihood moment by less than 25%.
+ * </p>
+ * 
+ * <p>
+ * Testing the validity of this program is easy enough. Each receiver in the phase array has 2 standard deviations - one
+ * associated with the real part of the complex image and one associated with the imaginary part of the complex image.
+ * signal with noise = square root((signal without noise)**2 + sum from k = 1 to n of (sigmak real)**2 + (simgak
  * imaginary)**2) So to simulate noisy data at each pixel we simply use 2*n Gaussian distributions in the above fashion.
  * Running testAlgorithm with 1000 counts of a 100.0 signal and 1000 counts of a varying background for the 1 receiver
  * case gave: background Calculated SNR Ideal SNR from first moment 0.5 198.0 200.0 1.0 101.0 100.0 2.0 48.9 50.0 5.0
- * 19.7 20.0 20.0 5.10 5.00 50.0 2.28 2.00 100.0 1.09 1.00</p>
- *
- * <p>A second run of testAlgorithm showed good agreement between the 2 methods of finding the SNR: background First
- * moment SNR Maximum likelihood SNR 100.0 1.21 1.16 50.0 2.20 2.21 20.0 5.09 5.09 10.0 10.0 10.0 5.0 20.0 20.0</p>
- *
- * <p>For 1F1(-1/2, 1, x) tested with Shanjie Zhang and Jianming Jin Computation of Special Functions CHGM routine and
- * ACM Algorithm 707 conhyp routine by Mark Nardin, W. F. Perger, and Atul Bhalla the results were: From x = -706 to x =
- * +184 the results of the 2 routines matched to at least 1 part in 1E5.</p>
- *
- * <p>For x = -3055 to x = +184 the ACM routine seemed to give valid results. For x <= -3056 the ACM routine results
+ * 19.7 20.0 20.0 5.10 5.00 50.0 2.28 2.00 100.0 1.09 1.00
+ * </p>
+ * 
+ * <p>
+ * A second run of testAlgorithm showed good agreement between the 2 methods of finding the SNR: background First moment
+ * SNR Maximum likelihood SNR 100.0 1.21 1.16 50.0 2.20 2.21 20.0 5.09 5.09 10.0 10.0 10.0 5.0 20.0 20.0
+ * </p>
+ * 
+ * <p>
+ * For 1F1(-1/2, 1, x) tested with Shanjie Zhang and Jianming Jin Computation of Special Functions CHGM routine and ACM
+ * Algorithm 707 conhyp routine by Mark Nardin, W. F. Perger, and Atul Bhalla the results were: From x = -706 to x =
+ * +184 the results of the 2 routines matched to at least 1 part in 1E5.
+ * </p>
+ * 
+ * <p>
+ * For x = -3055 to x = +184 the ACM routine seemed to give valid results. For x <= -3056 the ACM routine results
  * oscillated wildly and at x = -3200 the result was frozen at 1.0E75. For x >= +185 the ACM result was frozen at
- * 1.0E75. The log result was also seen to oscillate for x <= -3056.</p>
- *
- * <p>For x = -706 to x = +781 the CHGM routine seemed to give valid results. For x = -707 to x = -745 the CHGM routine
+ * 1.0E75. The log result was also seen to oscillate for x <= -3056.
+ * </p>
+ * 
+ * <p>
+ * For x = -706 to x = +781 the CHGM routine seemed to give valid results. For x = -707 to x = -745 the CHGM routine
  * gave infinity and for x <= -746 the CHGM routine gave NaN. For x >= +783 the CHGM routine gave a result of -infinity.
  * </p>
- *
- * <p>So for x = -(signal/noise)*(signal/noise)/2, the CHGM routine can handle a maximum signal/noise value of 37.5 and
- * in standard output the ACM routine can handle a maximum signal/noise value of 78.166.</p>
- *
- * <p>For 1F1(-1/2, 2, x) the results were very similar: From x = -706 to x = +189 the results of the 2 routines matched
- * to at least 1 part in 1E5.</p>
- *
- * <p>From x = -3058 to x = +189 the ACM routine seemed to give valid results. At x <= -3059 the ACM results oscillated
- * wildly. For x > +189 the ACM result was frozen at 1.0E75.</p>
- *
- * <p>For x = -706 to x = +791 the CHGM routine seemed to give valid results. For x = -707 to x = -745 the CHGM routine
+ * 
+ * <p>
+ * So for x = -(signal/noise)*(signal/noise)/2, the CHGM routine can handle a maximum signal/noise value of 37.5 and in
+ * standard output the ACM routine can handle a maximum signal/noise value of 78.166.
+ * </p>
+ * 
+ * <p>
+ * For 1F1(-1/2, 2, x) the results were very similar: From x = -706 to x = +189 the results of the 2 routines matched to
+ * at least 1 part in 1E5.
+ * </p>
+ * 
+ * <p>
+ * From x = -3058 to x = +189 the ACM routine seemed to give valid results. At x <= -3059 the ACM results oscillated
+ * wildly. For x > +189 the ACM result was frozen at 1.0E75.
+ * </p>
+ * 
+ * <p>
+ * For x = -706 to x = +791 the CHGM routine seemed to give valid results. For x = -707 to x = -745 the CHGM routine
  * gave infinity and for x <= -746 the CHGM routine gave NaN. For x >= +792 the CHGM routine gave a result of -infinity.
  * </p>
- *
- * <p>In this module use the ACM routine for x >= -3000. For large negative x, use the formula: As |x| approaches
- * infinity, 1F1(a, b, x) approaches (gamma(b)/gamma(b-a))*((-x)**(-a))*[1 + Order(|x|**-1)} for the real part of x < 0.
- * More specifically from the Sato reference, the asymptotic behavior of the confluent hypergeometric function is:
- * 1F1(a, b, x) approaches (gamma(a)/gamma(b-a)*((-x)**(-a))*G(a, a-b+1, -x) where G is an asymptotic series G(a, b, x)
- * = 1 + (a*b)/(1!*x) + (a*(a+1)*b*(b+1))/(2!*x**2) + ...</p>
- *
- * <p>References: 1.) PhD. Thesis Signal and Noise Estimation From Magnetic Resonance Images by Jan Sijbers,
- * Universiteit Antwerpen, Department Natuurkunde. 2.) Signal-to-noise Measurements in Magnitude Images from NMR Phased
- * Arrays by Chris D. Constantinides, Ergin Atalar, Elliot R. McVeigh, Magnetic Resonance in Medicine, November, 1997,
- * 38(5), pp. 852-857. Erratum in Magnetic Resonance in Medicine, July, 2004, 52(1), p. 219. 3.) I. S. Gradshteyn and I.
- * M. Rhyzik, Tables of integrals, series, and products, Sixth edition. 4.) Tohru Sato, Liviu F. Chibotaru, and Arnout
- * Ceulemans, The Exe dynamic Jahn-Teller problem: A new insight from the strong coupling limit, The Journal of Chemical
- * Physics, Vol. 122, 054104, 2005, Appendix C. 5.) Numerical Recipes in C The Art of Scientific Computing Second
- * Edition, William H. Press, Saul A. Teukolsky, William T. Vetterling, and Brian P. Flannery, Cambridge University
- * Press, 1992, pp. 402-405.</p>
- *
- * <p>Derivation of Bessel function formula when number of receivers == 1 E[M**v] = (2*sigma**2)**(v/2) * gamma(1 + v/2)
- * * 1F1(-v/2, 1, -A**2/(2*sigma**2)) E[M] = sigma * sqrt(2) * gamma(3/2) * 1F1(-1/2, 1, -A**2/(2*sigma**2)) gamma(1/2)
- * = sqrt(PI) gamma(n+1) = n*gamma(n) gamma(3/2) = sqrt(pi)/2 E[M] = sigma * sqrt(PI/2) * 1F1(-1/2, 1,
- * -A**2/(2*sigma**2)) 1F1(alpha, gamma, z) = exp(z) * 1F1(gamma - alpha, gamma, -z) Let pow = A**2/(2*sigma**2)
- * 1F1(-1/2, 1, -pow) = exp(-pow) * 1F1(3/2, 1, pow) = exp(-pow) * [1/2 * 1F1(3/2, 1, pow) + 1/2 * 1F1(3/2, 1, pow)]</p>
- *
- * <p>alpha*1F1(alpha+1, gamma, z) = (z + 2*alpha - gamma)*1F1(alpha, gamma, z) + (gamma - alpha) * 1F1(alpha - 1,
- * gamma, z) 1F1(-1/2, 1, -pow) = exp(-pow) * [0.5 * 1F1(3/2, 1, pow) + pow * 1F1(1/2, 1, pow) + 0.5 * 1F1(-1/2, 1,
- * pow)] = exp(-pow) * [(1 + pow) * 1F1(1/2, 1, pow) + 0.5*(1F1(3/2, 1, pow) - 1F1(1/2, 1, pow)) - 0.5*(1F1(1/2, 1, pow)
- * - 1F1(-1/2, 1, pow))]</p>
- *
- * <p>(z/gamma)*1F1(alpha+1, gamma+1, z) = 1F1(alpha+1, gamma, z) - 1F1(alpha, gamma, z)</p>
- *
- * <p>1F1(-1/2, 1, -pow) = exp(-pow) * [(1 + pow)* 1F1(1/2, 1, pow) + (pow/2) * 1F1(3/2, 2, pow) - (pow/2) * 1F1(1/2, 2,
+ * 
+ * <p>
+ * In this module use the ACM routine for x >= -3000. For large negative x, use the formula: As |x| approaches infinity,
+ * 1F1(a, b, x) approaches (gamma(b)/gamma(b-a))*((-x)**(-a))*[1 + Order(|x|**-1)} for the real part of x < 0. More
+ * specifically from the Sato reference, the asymptotic behavior of the confluent hypergeometric function is: 1F1(a, b,
+ * x) approaches (gamma(a)/gamma(b-a)*((-x)**(-a))*G(a, a-b+1, -x) where G is an asymptotic series G(a, b, x) = 1 +
+ * (a*b)/(1!*x) + (a*(a+1)*b*(b+1))/(2!*x**2) + ...
+ * </p>
+ * 
+ * <p>
+ * References: 1.) PhD. Thesis Signal and Noise Estimation From Magnetic Resonance Images by Jan Sijbers, Universiteit
+ * Antwerpen, Department Natuurkunde. 2.) Signal-to-noise Measurements in Magnitude Images from NMR Phased Arrays by
+ * Chris D. Constantinides, Ergin Atalar, Elliot R. McVeigh, Magnetic Resonance in Medicine, November, 1997, 38(5), pp.
+ * 852-857. Erratum in Magnetic Resonance in Medicine, July, 2004, 52(1), p. 219. 3.) I. S. Gradshteyn and I. M. Rhyzik,
+ * Tables of integrals, series, and products, Sixth edition. 4.) Tohru Sato, Liviu F. Chibotaru, and Arnout Ceulemans,
+ * The Exe dynamic Jahn-Teller problem: A new insight from the strong coupling limit, The Journal of Chemical Physics,
+ * Vol. 122, 054104, 2005, Appendix C. 5.) Numerical Recipes in C The Art of Scientific Computing Second Edition,
+ * William H. Press, Saul A. Teukolsky, William T. Vetterling, and Brian P. Flannery, Cambridge University Press, 1992,
+ * pp. 402-405.
+ * </p>
+ * 
+ * <p>
+ * Derivation of Bessel function formula when number of receivers == 1 E[M**v] = (2*sigma**2)**(v/2) * gamma(1 + v/2) *
+ * 1F1(-v/2, 1, -A**2/(2*sigma**2)) E[M] = sigma * sqrt(2) * gamma(3/2) * 1F1(-1/2, 1, -A**2/(2*sigma**2)) gamma(1/2) =
+ * sqrt(PI) gamma(n+1) = n*gamma(n) gamma(3/2) = sqrt(pi)/2 E[M] = sigma * sqrt(PI/2) * 1F1(-1/2, 1, -A**2/(2*sigma**2))
+ * 1F1(alpha, gamma, z) = exp(z) * 1F1(gamma - alpha, gamma, -z) Let pow = A**2/(2*sigma**2) 1F1(-1/2, 1, -pow) =
+ * exp(-pow) * 1F1(3/2, 1, pow) = exp(-pow) * [1/2 * 1F1(3/2, 1, pow) + 1/2 * 1F1(3/2, 1, pow)]
+ * </p>
+ * 
+ * <p>
+ * alpha*1F1(alpha+1, gamma, z) = (z + 2*alpha - gamma)*1F1(alpha, gamma, z) + (gamma - alpha) * 1F1(alpha - 1, gamma,
+ * z) 1F1(-1/2, 1, -pow) = exp(-pow) * [0.5 * 1F1(3/2, 1, pow) + pow * 1F1(1/2, 1, pow) + 0.5 * 1F1(-1/2, 1, pow)] =
+ * exp(-pow) * [(1 + pow) * 1F1(1/2, 1, pow) + 0.5*(1F1(3/2, 1, pow) - 1F1(1/2, 1, pow)) - 0.5*(1F1(1/2, 1, pow) -
+ * 1F1(-1/2, 1, pow))]
+ * </p>
+ * 
+ * <p>
+ * (z/gamma)*1F1(alpha+1, gamma+1, z) = 1F1(alpha+1, gamma, z) - 1F1(alpha, gamma, z)
+ * </p>
+ * 
+ * <p>
+ * 1F1(-1/2, 1, -pow) = exp(-pow) * [(1 + pow)* 1F1(1/2, 1, pow) + (pow/2) * 1F1(3/2, 2, pow) - (pow/2) * 1F1(1/2, 2,
  * pow)] = exp(-pow) * [(1 + pow) * 1F1(1/2, 1, pow) + ((pow/2)**2)*1F1(3/2, 3, pow)] = exp(-pow/2) * [(1 + pow) *
- * exp(-pow/2) * 1F1(1/2, 1, pow) + ((pow/2)**2)* exp(-pow/2) * 1F1(3/2, 3, pow)]</p>
- *
- * <p>Iv(x) = ((2**-v)/gamma(v+1)) * (x**v) * exp(-x) * 1F1(1/2 + v, 1 + 2*v, 2*x) I0(x) = exp(-x) * 1F1(1/2, 1, 2*x)
- * I1(x) = (x * exp(-x)/2) * 1F1(3/2, 3, 2*x)</p>
- *
- * <p>1F1(-1/2, 1, -pow) = exp(-pow/2) * [(1 + pow) * I0(pow/2) + pow * I1(pow/2)]</p>
+ * exp(-pow/2) * 1F1(1/2, 1, pow) + ((pow/2)**2)* exp(-pow/2) * 1F1(3/2, 3, pow)]
+ * </p>
+ * 
+ * <p>
+ * Iv(x) = ((2**-v)/gamma(v+1)) * (x**v) * exp(-x) * 1F1(1/2 + v, 1 + 2*v, 2*x) I0(x) = exp(-x) * 1F1(1/2, 1, 2*x) I1(x) =
+ * (x * exp(-x)/2) * 1F1(3/2, 3, 2*x)
+ * </p>
+ * 
+ * <p>
+ * 1F1(-1/2, 1, -pow) = exp(-pow/2) * [(1 + pow) * I0(pow/2) + pow * I1(pow/2)]
+ * </p>
  */
 public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** The index of a rerquired noise background VOI. */
     private int backgroundIndex;
@@ -153,19 +189,20 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
     /** DOCUMENT ME! */
     private boolean useMaxLikelihood = true;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new AlgorithmSingleMRIImageSNR object.
-     *
-     * @param  srcImg           source image
-     * @param  signalIndex      the index of the signal VOI
-     * @param  signal2Index     the index of the signal2 VOI if >= 0
-     * @param  backgroundIndex  the index of the background VOI
-     * @param  numReceivers     the number of NMR receivers
+     * 
+     * @param srcImg source image
+     * @param signalIndex the index of the signal VOI
+     * @param signal2Index the index of the signal2 VOI if >= 0
+     * @param backgroundIndex the index of the background VOI
+     * @param numReceivers the number of NMR receivers
      */
     public AlgorithmSingleMRIImageSNR(ModelImage srcImg, int signalIndex, int signal2Index, int backgroundIndex,
-                                      int numReceivers) {
+            int numReceivers) {
 
         super(null, srcImg);
 
@@ -176,7 +213,8 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         UI = ViewUserInterface.getReference();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Prepares this class for destruction.
@@ -244,7 +282,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
             double gamConstant;
             gam = new Gamma((double) numReceivers, resultB);
             gam.run();
-            gam = new Gamma((numReceivers + 0.5), resultBMinusA);
+            gam = new Gamma( (numReceivers + 0.5), resultBMinusA);
             gam.run();
             gamConstant = resultB[0] / resultBMinusA[0];
 
@@ -257,24 +295,24 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
             for (x = 12000.00; x <= 40000.0; x++) {
                 Bessel bes = new Bessel(Bessel.BESSEL_I, x, imaginaryArg, initialOrder, Bessel.SCALED_FUNCTION,
-                                        sequenceNumber, realResult, imagResult, nz, errorFlag);
+                        sequenceNumber, realResult, imagResult, nz, errorFlag);
                 bes.run();
-                Preferences.debug("x = " + x + " realResult[0] = " + realResult[0] + " nz = " + nz[0] +
-                                  " errorFlag = " + errorFlag[0] + "\n");
+                Preferences.debug("x = " + x + " realResult[0] = " + realResult[0] + " nz = " + nz[0] + " errorFlag = "
+                        + errorFlag[0] + "\n");
             }
 
-            /*for (realZ = -10.0; realZ <= 10.0; realZ++) {
-             *  for (imagZ = -10.0; imagZ <= 10.0; imagZ++) { cf = new ConfluentHypergeometric(-0.5, 1.0, realZ, imagZ,
-             *                                          realResult, imagResult); cf.run(); cf = new
-             * ConfluentHypergeometric(-0.5, 0.0, 1.0, 0.0, realZ, imagZ,                                    Lnchf, ip,
-             * realResult2, imagResult2); cf.run(); //result[0] = gamConstant * Math.sqrt(-x) * (1.0 +
-             * (-0.5)*(0.5-numReceivers)/(-x) +         //(-0.25)*(0.5-numReceivers)*(1.5-numReceivers)/(2.0*x*x));
-             * Preferences.debug("realZ = " + realZ + " imagZ = " + imagZ +         " realResult[0] = " + realResult[0]
-             * +         " imagResult[0] = " + imagResult[0] +         " realResult2[0] = " + realResult2[0] +         "
-             * imagResult2[0] = " + imagResult2[0] + "\n"); if ((Math.abs((realResult[0] -
-             * realResult2[0])/realResult[0]) > 1.0E-5) ||     (Math.abs((imagResult[0] - imagResult2[0])/imagResult[0])
-             * > 1.0E-5)){     Preferences.debug("Mismatch at realZ = " + realZ +                        " imagZ = " +
-             * imagZ + "\n"); } }  }*/
+            /*
+             * for (realZ = -10.0; realZ <= 10.0; realZ++) { for (imagZ = -10.0; imagZ <= 10.0; imagZ++) { cf = new
+             * ConfluentHypergeometric(-0.5, 1.0, realZ, imagZ, realResult, imagResult); cf.run(); cf = new
+             * ConfluentHypergeometric(-0.5, 0.0, 1.0, 0.0, realZ, imagZ, Lnchf, ip, realResult2, imagResult2);
+             * cf.run(); //result[0] = gamConstant * Math.sqrt(-x) * (1.0 + (-0.5)*(0.5-numReceivers)/(-x) +
+             * //(-0.25)*(0.5-numReceivers)*(1.5-numReceivers)/(2.0*x*x)); Preferences.debug("realZ = " + realZ + "
+             * imagZ = " + imagZ + " realResult[0] = " + realResult[0] + " imagResult[0] = " + imagResult[0] + "
+             * realResult2[0] = " + realResult2[0] + " imagResult2[0] = " + imagResult2[0] + "\n"); if
+             * ((Math.abs((realResult[0] - realResult2[0])/realResult[0]) > 1.0E-5) || (Math.abs((imagResult[0] -
+             * imagResult2[0])/imagResult[0]) > 1.0E-5)){ Preferences.debug("Mismatch at realZ = " + realZ + " imagZ = " +
+             * imagZ + "\n"); } } }
+             */
             setCompleted(true);
 
             return;
@@ -288,7 +326,6 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
         fireProgressStateChanged(srcImage.getImageName(), "Calculating MRI SNR ...");
 
-        
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         sliceSize = xDim * yDim;
@@ -417,13 +454,13 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
             } // if (useMaxLikelihood)
 
             cnr = snr - snr2;
-            Preferences.debug("First moment constrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
-            UI.setDataText("First moment constrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
+            Preferences.debug("First moment contrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
+            UI.setDataText("First moment contrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
 
             if (useMaxLikelihood) {
                 cnrML = snrML - snrML2;
-                Preferences.debug("Maximum likelihood constrast to noise ratio for 1 - 2 = " + nf.format(cnrML) + "\n");
-                UI.setDataText("Maximum likelihood constrast to noise ratio for 1 - 2 = " + nf.format(cnrML) + "\n");
+                Preferences.debug("Maximum likelihood contrast to noise ratio for 1 - 2 = " + nf.format(cnrML) + "\n");
+                UI.setDataText("Maximum likelihood contrast to noise ratio for 1 - 2 = " + nf.format(cnrML) + "\n");
             } // if (useMaxLikelihood)
         } // if (signal2Index >= 0)
 
@@ -434,14 +471,14 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
     /**
      * Port of routine brent from Numerical Recipes in C, pp. 404-405 One dimesional search algorithm
-     *
-     * @param   ax    Minimum value of search range for parameter
-     * @param   bx    Value bracketed by ax and cx
-     * @param   cx    Maximum value of search range of parameter
-     * @param   xmin  Value of parameter that minimzes the function
-     * @param   tol   Minimum isolated to a fractional precision of tol
-     *
-     * @return  function value at xmin
+     * 
+     * @param ax Minimum value of search range for parameter
+     * @param bx Value bracketed by ax and cx
+     * @param cx Maximum value of search range of parameter
+     * @param xmin Value of parameter that minimzes the function
+     * @param tol Minimum isolated to a fractional precision of tol
+     * 
+     * @return function value at xmin
      */
     private double brent(double ax, double bx, double cx, double[] xmin, double tol) {
         double ITMAX_BRENT = 100;
@@ -489,7 +526,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
         fx = -receiverMaximumLikelihood(x);
 
-        if (!useMaxLikelihood) {
+        if ( !useMaxLikelihood) {
 
             // receiverMaximumLikelihood Bessel function call failed
             return fx;
@@ -516,7 +553,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
                 // Construct a trial parabolic fit
                 r = (x - w) * (fx - fv);
                 q = (x - v) * (fx - fw);
-                p = ((x - v) * q) - ((x - w) * r);
+                p = ( (x - v) * q) - ( (x - w) * r);
                 q = 2.0 * (q - r);
 
                 if (q > 0.0) {
@@ -527,7 +564,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
                 etemp = e;
                 e = d;
 
-                if ((Math.abs(p) >= Math.abs(0.5 * q * etemp)) || (p <= (q * (a - x))) || (p >= (q * (b - x)))) {
+                if ( (Math.abs(p) >= Math.abs(0.5 * q * etemp)) || (p <= (q * (a - x))) || (p >= (q * (b - x)))) {
 
                     if (x >= xm) {
                         e = a - x;
@@ -540,7 +577,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
                 } // if ((Math.abs(p) >= Math.abs(0.5*q*etemp)) || (p <= q*(a - x)) ||
 
                 // The above conditions determine the acceptability of the parabolic
-                // fit.  Here we take the golden section step into the larger of the
+                // fit. Here we take the golden section step into the larger of the
                 // two segments.
                 else {
 
@@ -548,9 +585,9 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
                     d = p / q;
                     u = x + d;
 
-                    if (((u - a) < tol2) || ((b - u) < tol2)) {
+                    if ( ( (u - a) < tol2) || ( (b - u) < tol2)) {
 
-                        if ((xm - x) >= 0.0) {
+                        if ( (xm - x) >= 0.0) {
                             d = Math.abs(tol1);
                         } // if ((xm - x) >= 0.0)
                         else {
@@ -583,7 +620,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
             fu = -receiverMaximumLikelihood(u);
 
-            if (!useMaxLikelihood) {
+            if ( !useMaxLikelihood) {
 
                 // receiverMaximumLikelihood Bessel function call failed
                 return fx;
@@ -614,13 +651,13 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
                     b = u;
                 } // else
 
-                if ((fu <= fw) || (w == x)) {
+                if ( (fu <= fw) || (w == x)) {
                     v = w;
                     w = u;
                     fv = fw;
                     fw = fu;
                 } // if (fu <= fw || w == x)
-                else if ((fu <= fv) || (v == x) || (v == w)) {
+                else if ( (fu <= fv) || (v == x) || (v == w)) {
                     v = u;
                     fv = fu;
                 } // else if (fu <= fv || v == x || v == w)
@@ -635,21 +672,21 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
     /**
      * This routine iterates to find the solution to the first moment equation for the Generalized Rice distribution.
-     *
-     * @param   meanDivStdDev  DOCUMENT ME!
-     * @param   signal         DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param meanDivStdDev DOCUMENT ME!
+     * @param signal DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     private double funcC(double meanDivStdDev, boolean signal) {
 
-        /** For 1F1(-1/2, 1, x) for the ACM code called the result is only
-         *  valid for x >= -3055 and for 1F1(-1/2, 2, x) the result is only valid for x >= -3058.  For large negative x,
-         * use the formula: As |x| approaches infinity, 1F1(a, b, x) approaches (gamma(b)/gamma(b-a))*((-x)**(-a))*[1 +
-         * Order(|x|**-1)} for the real part of x < 0. More specifically from the Sato reference, the asymptotic
-         * behavior of the confluent hypergeometric function is: 1F1(a, b, x) approaches
-         * (gamma(a)/gamma(b-a)*((-x)**(-a))*G(a, a-b+1, -x) where G is an asymptotic series G(a, b, x) = 1 +
-         * (a*b)/(1!*x) + (a*(a+1)*b*(b+1))/(2!*x**2) + ...
+        /**
+         * For 1F1(-1/2, 1, x) for the ACM code called the result is only valid for x >= -3055 and for 1F1(-1/2, 2, x)
+         * the result is only valid for x >= -3058. For large negative x, use the formula: As |x| approaches infinity,
+         * 1F1(a, b, x) approaches (gamma(b)/gamma(b-a))*((-x)**(-a))*[1 + Order(|x|**-1)} for the real part of x < 0.
+         * More specifically from the Sato reference, the asymptotic behavior of the confluent hypergeometric function
+         * is: 1F1(a, b, x) approaches (gamma(a)/gamma(b-a)*((-x)**(-a))*G(a, a-b+1, -x) where G is an asymptotic series
+         * G(a, b, x) = 1 + (a*b)/(1!*x) + (a*(a+1)*b*(b+1))/(2!*x**2) + ...
          */
         double snr;
         double lowerBound;
@@ -678,7 +715,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         double gamConstant;
 
         for (n = 1; n <= numReceivers; n++) {
-            constant = constant * ((2 * n) - 1);
+            constant = constant * ( (2 * n) - 1);
         }
 
         constant = constant / Math.pow(2.0, numReceivers - 1);
@@ -689,7 +726,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
         gam = new Gamma((double) numReceivers, resultB);
         gam.run();
-        gam = new Gamma((numReceivers + 0.5), resultBMinusA);
+        gam = new Gamma( (numReceivers + 0.5), resultBMinusA);
         gam.run();
         gamConstant = resultB[0] / (resultBMinusA[0] * Math.sqrt(2.0));
 
@@ -699,15 +736,15 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
             // cf = new ConfluentHypergeometric(-0.5, numReceivers, -square, result);
             // cf.run();
             if (square <= 3000) {
-                cf = new ConfluentHypergeometric(-0.5, 0.0, (double) numReceivers, 0.0, -square, 0.0, Lnchf, ip,
-                                                 realResult, imagResult);
+                cf = new ConfluentHypergeometric( -0.5, 0.0, (double) numReceivers, 0.0, -square, 0.0, Lnchf, ip,
+                        realResult, imagResult);
                 cf.run();
                 // Preferences.debug("realResult cf run = " + realResult[0] + "\n");
             } else {
-                realResult[0] = gamConstant * snr *
-                                    (1.0 + ((-0.5) * (0.5 - numReceivers) / square) +
-                                         ((-0.25) * (0.5 - numReceivers) * (1.5 - numReceivers) /
-                                              (2.0 * square * square)));
+                realResult[0] = gamConstant
+                        * snr
+                        * (1.0 + ( ( -0.5) * (0.5 - numReceivers) / square) + ( ( -0.25) * (0.5 - numReceivers)
+                                * (1.5 - numReceivers) / (2.0 * square * square)));
                 // Preferences.debug("realResult snr = " + realResult[0] + "\n");
             }
 
@@ -729,11 +766,11 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         } // for (i = 0; i < maxIters; i++)
 
         if (signal) {
-            Preferences.debug("Error for signal 1 VOI SNR after " + i + " iterations  = " + nf.format(100 * error) +
-                              "%\n");
+            Preferences.debug("Error for signal 1 VOI SNR after " + i + " iterations  = " + nf.format(100 * error)
+                    + "%\n");
         } else {
-            Preferences.debug("Error for signal 2 VOI SNR after " + i + " iterations  = " + nf.format(100 * error) +
-                              "%\n");
+            Preferences.debug("Error for signal 2 VOI SNR after " + i + " iterations  = " + nf.format(100 * error)
+                    + "%\n");
         }
 
         return snr;
@@ -742,10 +779,10 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
     /**
      * For an input signal value this routine returns the log of the maximimum likelihood function.
-     *
-     * @param   signal  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param signal DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     private double receiverMaximumLikelihood(double signal) {
         int n;
@@ -767,7 +804,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         for (i = 0; i < n; i++) {
             realArg = signalBuffer[i] * signalDivVar;
             bes = new Bessel(Bessel.BESSEL_I, realArg, imaginaryArg, initialOrder, Bessel.SCALED_FUNCTION,
-                             sequenceNumber, realResult, imagResult, nz, errorFlag);
+                    sequenceNumber, realResult, imagResult, nz, errorFlag);
             bes.run();
             likelihood += (Math.log(realResult[0]) + realArg);
 
@@ -779,7 +816,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
             }
         } // for (i = 0; i < n; i++)
 
-        likelihood -= ((n * (numReceivers - 1) * Math.log(signal)) + (n * signalDivVar * signal / 2.0));
+        likelihood -= ( (n * (numReceivers - 1) * Math.log(signal)) + (n * signalDivVar * signal / 2.0));
         Preferences.debug("signal = " + signal + " likelihood = " + likelihood + "\n");
 
         return likelihood;
@@ -858,28 +895,27 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         return;
     } // testAlgorithm
 
-    /** This func is commented out because it only works for the case when the
-     *  number of receivers equals one.
+    /**
+     * This func is commented out because it only works for the case when the number of receivers equals one.
      */
-    /**private double func(double meanDivStdDev, boolean signal) {
-     *  double snr; double lowerBound; double upperBound; int i; int maxIters = 1000; snr = meanDivStdDev/2.0;
-     * lowerBound = 0.0; upperBound = meanDivStdDev; double calculatedMeanDivStdDev; double square; double sqdiv2;
-     * double constant = Math.sqrt(Math.PI/2.0); double[] cyr = new double[1]; double[] cyi = new double[1]; int[] nz =
-     * new int[1]; int[] errorFlag = new int[1]; double i0; double i1; for (i = 0; i < maxIters; i++) {     square = snr
-     * snr / 2.0;     sqdiv2 = square/2.0;     Bessel i0Bessel =         new
-     * Bessel(Bessel.BESSEL_I,sqdiv2,0.0,0.0,Bessel.UNSCALED_FUNCTION,1,cyr,cyi,nz,errorFlag);     i0Bessel.run(); i0 =
-     * cyr[0];     Bessel i1Bessel =         new
-     * Bessel(Bessel.BESSEL_I,sqdiv2,0.0,1.0,Bessel.UNSCALED_FUNCTION,1,cyr,cyi,nz,errorFlag);     i1Bessel.run(); i1 =
-     * cyr[0];     calculatedMeanDivStdDev = constant * Math.exp(-sqdiv2) *((1.0 + square)*i0 + square*i1);     if
-     * (Math.abs(calculatedMeanDivStdDev - meanDivStdDev)/meanDivStdDev < 0.001) {         break;     }     if
-     * (calculatedMeanDivStdDev > meanDivStdDev) {         upperBound = snr;         snr = (snr + lowerBound)/2.0;     }
-     *   else {         lowerBound = snr;         snr = (snr + upperBound)/2.0;     } } // for (i = 0; i < maxIters;
-     * i++) if (signal) {     if (i == maxIters) {         Preferences.debug("Failure to converge for signal 1 VOI SNR
-     * after " + maxIters +                            " iterations\n");         UI.setDataText("Failure to converge for
-     * signal 1 VOI SNR after " + maxIters +                  " iterations\n");     }     else {
-     * Preferences.debug("Signal 1 VOI SNR converged after " + i + " iterations\n");     } } else {     if (i ==
-     * maxIters) {         Preferences.debug("Failure to converge for signal 2 VOI SNR after " + maxIters + "
-     * iterations\n");         UI.setDataText("Failure to converge for signal 2 VOI SNR after " + maxIters + "
-     * iterations\n");     }     else {         Preferences.debug("Signal 2 VOI SNR converged
-     * after " + i + " iterations\n");     }    } return snr; }*/
+    /**
+     * private double func(double meanDivStdDev, boolean signal) { double snr; double lowerBound; double upperBound; int
+     * i; int maxIters = 1000; snr = meanDivStdDev/2.0; lowerBound = 0.0; upperBound = meanDivStdDev; double
+     * calculatedMeanDivStdDev; double square; double sqdiv2; double constant = Math.sqrt(Math.PI/2.0); double[] cyr =
+     * new double[1]; double[] cyi = new double[1]; int[] nz = new int[1]; int[] errorFlag = new int[1]; double i0;
+     * double i1; for (i = 0; i < maxIters; i++) { square = snr snr / 2.0; sqdiv2 = square/2.0; Bessel i0Bessel = new
+     * Bessel(Bessel.BESSEL_I,sqdiv2,0.0,0.0,Bessel.UNSCALED_FUNCTION,1,cyr,cyi,nz,errorFlag); i0Bessel.run(); i0 =
+     * cyr[0]; Bessel i1Bessel = new
+     * Bessel(Bessel.BESSEL_I,sqdiv2,0.0,1.0,Bessel.UNSCALED_FUNCTION,1,cyr,cyi,nz,errorFlag); i1Bessel.run(); i1 =
+     * cyr[0]; calculatedMeanDivStdDev = constant * Math.exp(-sqdiv2) *((1.0 + square)*i0 + square*i1); if
+     * (Math.abs(calculatedMeanDivStdDev - meanDivStdDev)/meanDivStdDev < 0.001) { break; } if (calculatedMeanDivStdDev >
+     * meanDivStdDev) { upperBound = snr; snr = (snr + lowerBound)/2.0; } else { lowerBound = snr; snr = (snr +
+     * upperBound)/2.0; } } // for (i = 0; i < maxIters; i++) if (signal) { if (i == maxIters) {
+     * Preferences.debug("Failure to converge for signal 1 VOI SNR after " + maxIters + " iterations\n");
+     * UI.setDataText("Failure to converge for signal 1 VOI SNR after " + maxIters + " iterations\n"); } else {
+     * Preferences.debug("Signal 1 VOI SNR converged after " + i + " iterations\n"); } } else { if (i == maxIters) {
+     * Preferences.debug("Failure to converge for signal 2 VOI SNR after " + maxIters + " iterations\n");
+     * UI.setDataText("Failure to converge for signal 2 VOI SNR after " + maxIters + " iterations\n"); } else {
+     * Preferences.debug("Signal 2 VOI SNR converged after " + i + " iterations\n"); } } return snr; }
+     */
 }

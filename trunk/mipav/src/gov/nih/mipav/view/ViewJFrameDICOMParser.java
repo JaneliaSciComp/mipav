@@ -4,58 +4,50 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.view.renderer.*;
+import gov.nih.mipav.view.dialogs.JDialogSelectDICOMColumnHeaders;
+import gov.nih.mipav.view.renderer.JDialogRendererAVI;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.io.*;
-
-import java.text.*;
-
+import java.text.NumberFormat;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.event.*;
+import javax.swing.border.Border;
+import javax.swing.event.ChangeEvent;
 
 
 /**
  * DICOM parser - shows pertinent DICOM tags, allows user to sort on specific values in the tags and open the proper
  * images. Can also open the images to an AVI file. Can see image as thumbnail. Extends ViewImageDirectory for the tree
  * and thumbnail.
- *
- * @author  Neva Cherniavsky
- * @see     FileInfoDicom
+ * 
+ * @author Neva Cherniavsky
+ * @see FileInfoDicom
  */
 public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 1085995416072088026L;
 
     /** DOCUMENT ME! */
-    public static final String[] DEFAULT_COLUMN_HEADERS_IMAGE_TABLE = new String[] {
-                                                                          "Instance (formerly Image) Number",
-                                                                          "Acquisition Time", "X-position",
-                                                                          "Y-position", "Z-position"
-                                                                      };
+    public static final String[] DEFAULT_COLUMN_HEADERS_IMAGE_TABLE = new String[] {"Instance (formerly Image) Number",
+            "Acquisition Time", "X-position", "Y-position", "Z-position"};
 
     /** DOCUMENT ME! */
-    public static final String[] DEFAULT_COLUMN_HEADERS_STUDY_TABLE = new String[] {
-                                                                          "Patient Name", "Patient ID", "Study ID",
-                                                                          "Study Date", "Description", ""
-                                                                      };
+    public static final String[] DEFAULT_COLUMN_HEADERS_STUDY_TABLE = new String[] {"Patient Name", "Patient ID",
+            "Study ID", "Study Date", "Description", ""};
 
     /** DOCUMENT ME! */
-    public static final String[] DEFAULT_COLUMN_HEADERS_SERIES_TABLE = new String[] {
-                                                                           "Series", "Type", "# Images", "Time", "Mod",
-                                                                           "Description", "", "StudyID"
-                                                                       };
+    public static final String[] DEFAULT_COLUMN_HEADERS_SERIES_TABLE = new String[] {"Series", "Type", "# Images",
+            "Time", "Mod", "Description", "", "StudyID"};
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private int brightness = 0;
@@ -133,15 +125,16 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
     /** DOCUMENT ME! */
     private TableSorter studyTableSorter;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates new frame. Tables contain no data but the tree is initialized to the appropriate directory.
-     *
-     * @param  dir  Directory.
+     * 
+     * @param dir Directory.
      */
     public ViewJFrameDICOMParser(String dir) {
-        super(dir, new ViewImageFileFilter(new String[] { ".dcm", ".DCM", ".ima", ".IMA" }));
+        super(dir, new ViewImageFileFilter(new String[] {".dcm", ".DCM", ".ima", ".IMA"}));
 
         addWindowListener(this);
         buildMenu();
@@ -169,16 +162,17 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         setVisible(true);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * The purpose of this method is to determine whether the parameter represents one of the special table columns. In
      * this case, X-position, Y-position, and Z-position are special columns because they are not standard DICOM tags.
      * They are parsed out from the Patient Orientation tag and populated manually.
-     *
-     * @param   columnName  String
-     *
-     * @return  boolean
+     * 
+     * @param columnName String
+     * 
+     * @return boolean
      */
     public static boolean isCompositeXYZPositionColumn(String columnName) {
 
@@ -189,11 +183,10 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         return false;
     }
 
-
     /**
      * Recreates the tree when a new directory is selected; refreshes the tree when refresh is selected.
-     *
-     * @param  event  Event that triggered this function.
+     * 
+     * @param event Event that triggered this function.
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -239,7 +232,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 }
 
                 // if there is 1 or less rows in series table and study table, populate the image table
-                if ((seriesTableModel.getRowCount() <= 1) && (studyTableModel.getRowCount() <= 1)) {
+                if ( (seriesTableModel.getRowCount() <= 1) && (studyTableModel.getRowCount() <= 1)) {
 
                     // Since there is just 1 or less rows in both tables, passing in empty string params
                     // so everything gets shown when reloadRows gets called
@@ -341,7 +334,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
             }
 
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".avi" }));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".avi"}));
 
             int returnVal = chooser.showSaveDialog(this);
 
@@ -422,7 +415,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                     // Use (max-min)/255 because the slider is only goes from -255 to 255
                     // and need to take all values down to min or up to max
-                    level = ((min + max) / 2.0f) - (brightness * (max - min) / 255);
+                    level = ( (min + max) / 2.0f) - (brightness * (max - min) / 255);
                     window = (max - min) * contrast / 2.0f;
 
                     x[2] = level + (window / 2);
@@ -551,8 +544,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public Vector getColumnNames() {
         Vector columnNames = new Vector();
@@ -564,7 +557,6 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         return columnNames;
     }
 
-
     /**
      * reloadRows.
      */
@@ -572,23 +564,23 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         reloadRows("", "");
     }
 
-
     /**
      * The purpose of this method is to re-parse the DICOM files to refresh the table data. It is called after the user
      * hits "apply" in the configuration dialog, or the user clicks "parse" in the toolbar.
-     *
-     * @param  seriesNumber  DOCUMENT ME!
-     * @param  studyNo       DOCUMENT ME!
+     * 
+     * @param seriesNumber DOCUMENT ME!
+     * @param studyNo DOCUMENT ME!
      */
     public void reloadRows(String seriesNumber, String studyNo) {
         ViewFileTreeNode node = (ViewFileTreeNode) directoryTree.getLastSelectedPathComponent();
 
-        if ((node != null) && (fileInfoVector != null)) // fileInfoVector is the Vector of DICOM headers associated
-                                                        // with the selected file
+        if ( (node != null) && (fileInfoVector != null)) // fileInfoVector is the Vector of DICOM headers associated
+        // with the selected file
         {
 
             try {
-                Vector tableHeaderVector = imageTableModel.getColumnNames(); // Vector holding the names of the columns
+                Vector tableHeaderVector = imageTableModel.getColumnNames(); // Vector holding the names of the
+                                                                                // columns
 
                 int mod = (fileInfoVector.size() / 100);
 
@@ -607,10 +599,9 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                         sliceStudyNo = "";
                     }
 
-                    if (((seriesNumber == null) || seriesNumber.equals("") ||
-                             (seriesNumberEqual(seriesNumber, fileInfoDICOM) == true)) &&
-                            ((studyNo.equals("")) || (sliceStudyNo.equals(studyNo)))) {
-
+                    if ( ( (seriesNumber == null) || seriesNumber.equals("") || (seriesNumberEqual(seriesNumber,
+                            fileInfoDICOM) == true))
+                            && ( (studyNo.equals("")) || (sliceStudyNo.equals(studyNo)))) {
 
                         Vector newRow = new Vector();
 
@@ -619,18 +610,20 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                         // tableHeader.size() is the number of columns in the table
                         for (int j = 0; j < tableHeaderVector.size(); j++) {
                             String columnName = (String) tableHeaderVector.elementAt(j); // get name of first column
-                            String key = (String) columnKeyTable.get(columnName); // get key associated with this column
+                            String key = (String) columnKeyTable.get(columnName); // get key associated with this
+                                                                                    // column
 
                             if (isCompositeXYZPositionColumn(columnName)) // test to see if we have to populate this
-                                                                          // column manually i.e. non-native DICOM tag
+                            // column manually i.e. non-native DICOM tag
                             {
-                                key = JDialogSelectDICOMColumnHeaders.CUSTOM; // assign CUSTOM to key to indicate it is
-                                                                              // non-native DICOM tag
+                                key = JDialogSelectDICOMColumnHeaders.CUSTOM; // assign CUSTOM to key to indicate it
+                                                                                // is
+                                // non-native DICOM tag
                             } else if (key == null) {
                                 key = DicomDictionary.getKeyFromTagName(columnName); // might return null
                             }
 
-                            if ((key != null) && columnName.equals("Instance (formerly Image) Number")) {
+                            if ( (key != null) && columnName.equals("Instance (formerly Image) Number")) {
                                 String instanceNumber = (String) fileInfoDICOM.getTagTable().getValue(key);
 
                                 try {
@@ -641,24 +634,25 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                                 }
 
                                 imageTableModel.setColumnClass(new Integer(0).getClass(), j);
-                            } else if ((key != null) && key.equals(JDialogSelectDICOMColumnHeaders.CUSTOM)) {
+                            } else if ( (key != null) && key.equals(JDialogSelectDICOMColumnHeaders.CUSTOM)) {
 
-                                /* This is a hack because DICOM puts all 3 patient orientation values into one value.
-                                 * To account for the fact that the user will probably want to sort on these values
+                                /*
+                                 * This is a hack because DICOM puts all 3 patient orientation values into one value. To
+                                 * account for the fact that the user will probably want to sort on these values
                                  * individually, we have to split up the x, y, z positions from patient orientation and
                                  * must manually populate these columns.
                                  */
-                                if (((String) tableHeaderVector.elementAt(j)).equals("X-position")) {
+                                if ( ((String) tableHeaderVector.elementAt(j)).equals("X-position")) {
                                     Float floatObj = new Float(fileInfoDICOM.xLocation);
                                     imageTableModel.setColumnClass(floatObj.getClass(), j);
 
                                     newRow.addElement(floatObj);
-                                } else if (((String) tableHeaderVector.elementAt(j)).equals("Y-position")) {
+                                } else if ( ((String) tableHeaderVector.elementAt(j)).equals("Y-position")) {
                                     Float floatObj = new Float(fileInfoDICOM.yLocation);
                                     imageTableModel.setColumnClass(floatObj.getClass(), j);
 
                                     newRow.addElement(floatObj);
-                                } else if (((String) tableHeaderVector.elementAt(j)).equals("Z-position")) {
+                                } else if ( ((String) tableHeaderVector.elementAt(j)).equals("Z-position")) {
                                     Float floatObj = new Float(fileInfoDICOM.zLocation);
                                     imageTableModel.setColumnClass(floatObj.getClass(), j);
 
@@ -679,13 +673,13 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                                 if (dicomTag == null) {
                                     newRow.addElement(SortingTableModel.EMPTY_CELL); // if data is not present, add
-                                                                                     // empty cell
+                                    // empty cell
                                 } else {
                                     String type = dicomTag.getType();
                                     String value = (String) dicomTag.getValue(true);
 
-                                    if (type.equals("SL") || type.equals("UL") || type.equals("SS") ||
-                                            type.equals("US")) {
+                                    if (type.equals("SL") || type.equals("UL") || type.equals("SS")
+                                            || type.equals("US")) {
 
                                         /*
                                          * Try to create a Number object out of the data. This is important because the
@@ -695,32 +689,36 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                                         try {
                                             Integer integer = new Integer(Integer.parseInt(value));
                                             imageTableModel.setColumnClass(integer.getClass(), j); // set numerical
-                                                                                                   // sorting
+                                            // sorting
                                             newRow.addElement(integer);
 
                                             continue;
                                         } catch (NumberFormatException nfe) {
 
                                             // at this point, its not a number, so assume String
-                                            imageTableModel.setColumnClass(new String().getClass(), j); // set lexical sorting
+                                            imageTableModel.setColumnClass(new String().getClass(), j); // set lexical
+                                                                                                        // sorting
                                             newRow.addElement(value);
                                         }
                                     } else if (type.equals("FD") || type.equals("FL")) {
 
                                         try {
                                             Double doubleObj = new Double(Double.parseDouble(value));
-                                            imageTableModel.setColumnClass(doubleObj.getClass(), j); // set numerical sorting
+                                            imageTableModel.setColumnClass(doubleObj.getClass(), j); // set numerical
+                                                                                                        // sorting
                                             newRow.addElement(doubleObj);
 
                                             continue;
                                         } catch (NumberFormatException nfe) {
 
                                             // at this point, its not a number, so assume String
-                                            imageTableModel.setColumnClass(new String().getClass(), j); // set lexical sorting
+                                            imageTableModel.setColumnClass(new String().getClass(), j); // set lexical
+                                                                                                        // sorting
                                             newRow.addElement(value);
                                         }
                                     } else {
-                                        imageTableModel.setColumnClass(new String().getClass(), j); // set lexical sorting
+                                        imageTableModel.setColumnClass(new String().getClass(), j); // set lexical
+                                                                                                    // sorting
                                         newRow.addElement(value);
                                     }
                                 }
@@ -728,11 +726,10 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                                 newRow.addElement(SortingTableModel.EMPTY_CELL); // data is null, add empty cell
                             }
 
-
                         }
 
                         imageTableModel.addRow(newRow); // the new row, after all column values have been added, is
-                                                        // added to the table
+                        // added to the table
                     }
                 }
 
@@ -746,8 +743,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  rightTable  DOCUMENT ME!
+     * 
+     * @param rightTable DOCUMENT ME!
      */
     public void setHeaderConfiguration(JTable rightTable) {
         imageTableModel = new SortingTableModel();
@@ -768,8 +765,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
     /**
      * Sets values based on knob along slider.
-     *
-     * @param  e  Event that triggered this function
+     * 
+     * @param e Event that triggered this function
      */
     public void stateChanged(ChangeEvent e) {
         Object source = e.getSource();
@@ -795,22 +792,22 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
     /**
      * windowActivated - unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowActivated(WindowEvent event) { }
+    public void windowActivated(WindowEvent event) {}
 
     /**
      * windowClosed - unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowClosed(WindowEvent event) { }
+    public void windowClosed(WindowEvent event) {}
 
     /**
      * windowClosing - calls close.
-     *
-     * @param  event  event that triggered function
+     * 
+     * @param event event that triggered function
      */
     public void windowClosing(WindowEvent event) {
         this.close();
@@ -820,25 +817,24 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
     /**
      * windowDeactivated - unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowDeactivated(WindowEvent event) { }
+    public void windowDeactivated(WindowEvent event) {}
 
     /**
      * windowDeiconified - unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowDeiconified(WindowEvent event) { }
+    public void windowDeiconified(WindowEvent event) {}
 
     /**
      * windowIconified - unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowIconified(WindowEvent event) { }
-
+    public void windowIconified(WindowEvent event) {}
 
     // ************************************************************************
     // **************************** Window Events *****************************
@@ -846,15 +842,15 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
     /**
      * windowOpened - unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowOpened(WindowEvent event) { }
+    public void windowOpened(WindowEvent event) {}
 
     /**
      * Builds a toolbar with the same functionality as the menu.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     protected JPanel buildToolbar() {
         Border pressedBorder = BorderFactory.createLoweredBevelBorder();
@@ -945,7 +941,6 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         selectAllRowsButton.setFocusPainted(false);
         tBar.add(selectAllRowsButton);
 
-
         tBar.setFloatable(false);
         panel.add(tBar, BorderLayout.NORTH);
 
@@ -968,31 +963,29 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         initializeSeriesTable(tableListener);
 
         JScrollPane studyTableScrollPane = new JScrollPane(studyTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                           JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         studyTableScrollPane.setPreferredSize(new Dimension(700, 200));
         studyTableScrollPane.setMinimumSize(new Dimension(40, 40));
 
-
         JScrollPane seriesTableScrollPane = new JScrollPane(seriesTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                            JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         seriesTableScrollPane.setPreferredSize(new Dimension(700, 200));
         seriesTableScrollPane.setMinimumSize(new Dimension(40, 40));
 
         JSplitPane sliderHeaderPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true, studyTableScrollPane,
-                                                     seriesTableScrollPane);
+                seriesTableScrollPane);
 
         rightPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true, sliderHeaderPane, imageTableScrollPane);
 
         setTitle("DICOM browser");
     }
 
-
     /**
      * AddSeriesData This method populates the series table based upon the studyID.
-     *
-     * @param  studyNo  DOCUMENT ME!
+     * 
+     * @param studyNo DOCUMENT ME!
      */
     private void addSeriesData(String studyNo) {
         seriesTableModel.removeAllRows();
@@ -1000,9 +993,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         Object[] seriesData = new Object[8];
         String data = "";
 
-// first lets populate the rows of the series table...but not the #images attribute
-outerLoop:
-        for (int i = 0; i < fileInfoVector.size(); i++) {
+        // first lets populate the rows of the series table...but not the #images attribute
+        outerLoop: for (int i = 0; i < fileInfoVector.size(); i++) {
             FileInfoDicom fileInfoDICOM = (FileInfoDicom) fileInfoVector.elementAt(i);
             String sliceStudyNo = (String) fileInfoDICOM.getTagTable().getValue("0020,0010");
 
@@ -1074,7 +1066,6 @@ outerLoop:
             } // end if
         } // end outerLoop for
 
-
         // we need to display the number of images in the series table
         // first init the counters to 0
         if (seriesNumberCounters == null) {
@@ -1101,7 +1092,7 @@ outerLoop:
                 sliceStudyNo = "";
             }
 
-            if ((seriesNumberCounters.get(ser) != null) && (sliceStudyNo.equals(studyNo))) {
+            if ( (seriesNumberCounters.get(ser) != null) && (sliceStudyNo.equals(studyNo))) {
                 Integer I = (Integer) seriesNumberCounters.get(ser);
                 int k = I.intValue();
                 int j = ++k;
@@ -1115,14 +1106,12 @@ outerLoop:
             seriesTableModel.setValueAt((Integer) seriesNumberCounters.get(seriesNo), i, 2);
         }
 
-
     }
-
 
     /**
      * Adds the study data to the table.
-     *
-     * @param  fileInfo  File info structure where data is stored.
+     * 
+     * @param fileInfo File info structure where data is stored.
      */
     private void addStudyData(FileInfoDicom fileInfo) {
         Object[] studyData = new Object[6];
@@ -1192,15 +1181,19 @@ outerLoop:
 
     /**
      * Initializes GUI components and displays dialog.
-     *
-     * <p>For the brightnessSlider the slider values and the brightness values are identical. brightness is an offset
-     * going from -255 to 255. This is enough to change all 0 values to 255 and all 255 values to 0. brightness is added
-     * to all contrast scaled red, green, and blue.</p>
-     *
-     * <p>However, for the constrastSlider the slider values are different from the contrast values. The contrast values
-     * go from 0.1 to 10.0 while the slider values go from -200 to 200. contrast =
+     * 
+     * <p>
+     * For the brightnessSlider the slider values and the brightness values are identical. brightness is an offset going
+     * from -255 to 255. This is enough to change all 0 values to 255 and all 255 values to 0. brightness is added to
+     * all contrast scaled red, green, and blue.
+     * </p>
+     * 
+     * <p>
+     * However, for the contrastSlider the slider values are different from the contrast values. The contrast values go
+     * from 0.1 to 10.0 while the slider values go from -200 to 200. contrast =
      * (float)Math.pow(10.0,contrastSlider.getValue()/200.0) The original red, green, and blue are mutliplied by
-     * contrast.</p>
+     * contrast.
+     * </p>
      */
     private void buildBrightnessContrastPanel() {
         brightnessSlider = new JSlider(JSlider.HORIZONTAL, -255, 255, origBrightness);
@@ -1219,7 +1212,7 @@ outerLoop:
         current.setForeground(Color.black);
         current.setFont(serif12B);
 
-        JLabel minimum = new JLabel(String.valueOf(-255));
+        JLabel minimum = new JLabel(String.valueOf( -255));
 
         minimum.setForeground(Color.black);
         minimum.setFont(serif12);
@@ -1258,8 +1251,8 @@ outerLoop:
         sliderPanel.add(maximum, gbc);
         sliderPanel.setBorder(buildTitledBorder("Level"));
 
-        contrastSlider = new JSlider(JSlider.HORIZONTAL, -200, 200,
-                                     (int) (Math.round(86.85889638 * Math.log(origContrast))));
+        contrastSlider = new JSlider(JSlider.HORIZONTAL, -200, 200, (int) (Math.round(86.85889638 * Math
+                .log(origContrast))));
 
         contrastSlider.setMajorTickSpacing(80);
         contrastSlider.setPaintTicks(true);
@@ -1333,7 +1326,6 @@ outerLoop:
         gbc2.gridheight = 1;
         gbc2.gridy = 4;
 
-
         brightnessContrastPanel = new JPanel(new BorderLayout());
         brightnessContrastPanel.add(centerPanel);
         brightnessContrastPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -1370,7 +1362,6 @@ outerLoop:
         setJMenuBar(menuBar);
     }
 
-
     /**
      * DOCUMENT ME!
      */
@@ -1387,10 +1378,10 @@ outerLoop:
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   tableListener  DOCUMENT ME!
-     *
-     * @throws  NumberFormatException  DOCUMENT ME!
+     * 
+     * @param tableListener DOCUMENT ME!
+     * 
+     * @throws NumberFormatException DOCUMENT ME!
      */
     private void initializeImageTable(MouseListener tableListener) throws NumberFormatException {
         imageTableModel = new SortingTableModel();
@@ -1411,8 +1402,8 @@ outerLoop:
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  tableListener  DOCUMENT ME!
+     * 
+     * @param tableListener DOCUMENT ME!
      */
     private void initializeSeriesTable(MouseListener tableListener) {
         seriesTableModel = new SortingTableModel();
@@ -1439,8 +1430,8 @@ outerLoop:
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  tableListener  DOCUMENT ME!
+     * 
+     * @param tableListener DOCUMENT ME!
      */
     private void initializeStudyTable(MouseListener tableListener) {
         studyTableModel = new SortingTableModel();
@@ -1469,8 +1460,8 @@ outerLoop:
     /**
      * Parses the files in the directory. Looks for DICOM files within several subdirectories of the file. Populates the
      * FileInfoVector
-     *
-     * @param  file  File to start parse at.
+     * 
+     * @param file File to start parse at.
      */
     private void parse(File file) {
         imageTableModel.removeAllRows();
@@ -1484,7 +1475,7 @@ outerLoop:
         File[] children = file.listFiles();
         FileDicom imageFile = null;
 
-        // used to reduce the amount of replication in the tag tables we read in (maybe).  don't need to register the
+        // used to reduce the amount of replication in the tag tables we read in (maybe). don't need to register the
         // children with the reference tag table, since the reference tag table should not be changing (no put() calls)
         // after it is read in initially
         FileInfoDicom referenceFileInfo = null;
@@ -1496,13 +1487,13 @@ outerLoop:
 
                 if (children[i].isDirectory()) {
                     parse(children[i]);
-                } else if (!children[i].isDirectory()) {
+                } else if ( !children[i].isDirectory()) {
 
                     try {
 
                         if (imageFile == null) {
-                            imageFile = new FileDicom(children[i].getName(),
-                                                      children[i].getParent() + File.separatorChar);
+                            imageFile = new FileDicom(children[i].getName(), children[i].getParent()
+                                    + File.separatorChar);
                         } else {
                             imageFile.setFileName(children[i], referenceFileInfo);
                         }
@@ -1547,7 +1538,7 @@ outerLoop:
             }
         }
 
-        Preferences.debug("Parse took: " + ((System.currentTimeMillis() - time) / 1000f) + "\n");
+        Preferences.debug("Parse took: " + ( (System.currentTimeMillis() - time) / 1000f) + "\n");
     }
 
     /**
@@ -1569,18 +1560,18 @@ outerLoop:
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   seriesNumber   DOCUMENT ME!
-     * @param   fileInfoDICOM  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param seriesNumber DOCUMENT ME!
+     * @param fileInfoDICOM DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     private boolean seriesNumberEqual(String seriesNumber, FileInfoDicom fileInfoDICOM) {
         Object object = fileInfoDICOM.getTagTable().getValue("0020,0011");
 
         if (object instanceof String) {
 
-            if (((String) object).equals(seriesNumber)) {
+            if ( ((String) object).equals(seriesNumber)) {
                 return true;
             } else {
                 return false;
@@ -1620,7 +1611,8 @@ outerLoop:
         studyTable.getColumn(DEFAULT_COLUMN_HEADERS_STUDY_TABLE[5]).setMaxWidth(0);
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * Table listener - listens for clicks on any of the three table headers or clicks within each table.
@@ -1630,8 +1622,8 @@ outerLoop:
         /**
          * When the user clicks on a header, sorts the column. When the user clicks on a study or series, parse. When
          * the user clicks on an image, displays a thumbnail.
-         *
-         * @param  e  Event that triggered this function.
+         * 
+         * @param e Event that triggered this function.
          */
         public void mouseClicked(MouseEvent e) {
             Object source = e.getSource();
@@ -1661,8 +1653,8 @@ outerLoop:
 
                 // we dont want to clear out the image panelthumbnail and reload image table
                 // if user clicks on the same one...so...
-                String seriesNumber = (String) seriesTableModel.getValueAt(seriesTableSorter.modelIndex(seriesTable.getSelectedRow()),
-                                                                           0);
+                String seriesNumber = (String) seriesTableModel.getValueAt(seriesTableSorter.modelIndex(seriesTable
+                        .getSelectedRow()), 0);
 
                 if (imageTableVector != null) {
                     FileInfoDicom fileInfoDICOM = (FileInfoDicom) imageTableVector.elementAt(0);
@@ -1676,8 +1668,8 @@ outerLoop:
                     }
                 }
 
-                String studyNo = (String) seriesTableModel.getValueAt(seriesTableSorter.modelIndex(seriesTable.getSelectedRow()),
-                                                                      7);
+                String studyNo = (String) seriesTableModel.getValueAt(seriesTableSorter.modelIndex(seriesTable
+                        .getSelectedRow()), 7);
 
                 if (studyNo == null) {
                     studyNo = "";
@@ -1702,42 +1694,40 @@ outerLoop:
             }
         }
 
+        /**
+         * Unchanged.
+         * 
+         * @param e DOCUMENT ME!
+         */
+        public void mouseDragged(MouseEvent e) {}
 
         /**
          * Unchanged.
-         *
-         * @param  e  DOCUMENT ME!
+         * 
+         * @param e DOCUMENT ME!
          */
-        public void mouseDragged(MouseEvent e) { }
+        public void mouseEntered(MouseEvent e) {}
 
         /**
          * Unchanged.
-         *
-         * @param  e  DOCUMENT ME!
+         * 
+         * @param e DOCUMENT ME!
          */
-        public void mouseEntered(MouseEvent e) { }
-
-        /**
-         * Unchanged.
-         *
-         * @param  e  DOCUMENT ME!
-         */
-        public void mouseExited(MouseEvent e) { }
-
+        public void mouseExited(MouseEvent e) {}
 
         /**
          * DOCUMENT ME!
-         *
-         * @param  event  DOCUMENT ME!
+         * 
+         * @param event DOCUMENT ME!
          */
-        public void mousePressed(MouseEvent event) { }
+        public void mousePressed(MouseEvent event) {}
 
         /**
          * Unchanged.
-         *
-         * @param  e  DOCUMENT ME!
+         * 
+         * @param e DOCUMENT ME!
          */
-        public void mouseReleased(MouseEvent e) { }
+        public void mouseReleased(MouseEvent e) {}
     }
 
 }

@@ -1,22 +1,21 @@
 package gov.nih.mipav.view;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.AlgorithmColocalizationRegression;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
-import java.text.*;
-
-import java.util.*;
+import java.text.NumberFormat;
+import java.util.Vector;
 
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -30,31 +29,40 @@ import javax.swing.event.*;
  * initial position - the point on the line just above the point where the first negative or zero linear correlation
  * coefficient is present. Magnify will double the present magnification and Unmagnify will half the present
  * magnification. Magnifications are only powers of 2.
- *
- * <p>The LUT dialog can be used to set colors and transfer functions of the LUT table used by the 2D histogram display.
+ * 
+ * <p>
+ * The LUT dialog can be used to set colors and transfer functions of the LUT table used by the 2D histogram display.
  * </p>
- *
- * <p>The dialog box for brightness and contrast has brightness and contrast sliders, an Apply button, and a Cancel
- * button. The brightness will add an offset ranging from -255 to 255 to every scaled red, green, and blue in the image.
+ * 
+ * <p>
+ * The dialog box for brightness and contrast has brightness and contrast sliders, an Apply button, and a Cancel button.
+ * The brightness will add an offset ranging from -255 to 255 to every scaled red, green, and blue in the image.
  * Contrast will multiply every original red, green, and blue value by a floating point number ranging from 0.1 to 10.0.
  * Before apply is pressed, slider changes are only temporarily made to the currently displayed slice. If apply is
  * pressed, these changes are permanently made to the histogram image. Pressing cancel keeps all the histogram image in
- * its original state.</p>
- *
- * <p>The file menu only has 1 simple function - a close ViewJFrameColocalization structure function. The help menu only
- * has 1 simple function - an about colocalization function.</p>
- *
- * <p>ViewJFrameColocalizationRegression is called in AlgorithmColocalizationRegression.
- * ViewJFrameColocalizationRegression calls ViewJComponentColocalizationRegression</p>
+ * its original state.
+ * </p>
+ * 
+ * <p>
+ * The file menu only has 1 simple function - a close ViewJFrameColocalization structure function. The help menu only
+ * has 1 simple function - an about colocalization function.
+ * </p>
+ * 
+ * <p>
+ * ViewJFrameColocalizationRegression is called in AlgorithmColocalizationRegression. ViewJFrameColocalizationRegression
+ * calls ViewJComponentColocalizationRegression
+ * </p>
  */
 public class ViewJFrameColocalizationRegression extends ViewJFrameBase implements ChangeListener, ItemListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -2084669389930362925L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private AlgorithmColocalizationRegression alg;
@@ -230,7 +238,6 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
     /** DOCUMENT ME! */
     private JMenuBar openingMenuBar; // contains File and Help menus
 
-
     /** DOCUMENT ME! */
     private int origBrightness = 0; // offset added to each scaled
 
@@ -348,60 +355,58 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
     /** DOCUMENT ME! */
     private float zoom = 1; // present magnification - can only be a power of 2
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Makes a frame of the colocalization histogram.
-     *
-     * @param  alg                AlgorithmColocalizationRegression parent
-     * @param  _imageA            Model of imageA
-     * @param  _LUTa              Model of LUT for image A
-     * @param  _imageB            Model of imageB
-     * @param  _LUTb              Model of LUT for image B
-     * @param  _RGBTA             Model RGB LUT for color image (A) else null
-     * @param  destImage          The destination image
-     * @param  controlFrame       ViewJFrameBase passed to ViewJComponentColocalizationRegression
-     * @param  useRed             DOCUMENT ME!
-     * @param  useGreen           DOCUMENT ME!
-     * @param  useBlue            DOCUMENT ME!
-     * @param  slope              DOCUMENT ME!
-     * @param  offset             DOCUMENT ME!
-     * @param  linearCorrelation  DOCUMENT ME!
-     * @param  PValue             DOCUMENT ME!
-     * @param  haveThreshold      DOCUMENT ME!
-     * @param  rThreshold         DOCUMENT ME!
-     * @param  colocSize          DOCUMENT ME!
-     * @param  colocIntensity1    DOCUMENT ME!
-     * @param  colocIntensity2    DOCUMENT ME!
-     * @param  min1               DOCUMENT ME!
-     * @param  max1               DOCUMENT ME!
-     * @param  min2               DOCUMENT ME!
-     * @param  max2               DOCUMENT ME!
-     * @param  scale1             DOCUMENT ME!
-     * @param  scale2             DOCUMENT ME!
-     * @param  lineMin1           DOCUMENT ME!
-     * @param  lineMax1           DOCUMENT ME!
-     * @param  lineMin2           DOCUMENT ME!
-     * @param  lineMax2           DOCUMENT ME!
-     * @param  thresholdOn1       DOCUMENT ME!
-     * @param  leftPad            DOCUMENT ME!
-     * @param  rightPad           DOCUMENT ME!
-     * @param  bottomPad          DOCUMENT ME!
-     * @param  topPad             DOCUMENT ME!
-     * @param  doSecondIteration  DOCUMENT ME!
-     * @param  pointCalculation   DOCUMENT ME!
+     * 
+     * @param alg AlgorithmColocalizationRegression parent
+     * @param _imageA Model of imageA
+     * @param _LUTa Model of LUT for image A
+     * @param _imageB Model of imageB
+     * @param _LUTb Model of LUT for image B
+     * @param _RGBTA Model RGB LUT for color image (A) else null
+     * @param destImage The destination image
+     * @param controlFrame ViewJFrameBase passed to ViewJComponentColocalizationRegression
+     * @param useRed DOCUMENT ME!
+     * @param useGreen DOCUMENT ME!
+     * @param useBlue DOCUMENT ME!
+     * @param slope DOCUMENT ME!
+     * @param offset DOCUMENT ME!
+     * @param linearCorrelation DOCUMENT ME!
+     * @param PValue DOCUMENT ME!
+     * @param haveThreshold DOCUMENT ME!
+     * @param rThreshold DOCUMENT ME!
+     * @param colocSize DOCUMENT ME!
+     * @param colocIntensity1 DOCUMENT ME!
+     * @param colocIntensity2 DOCUMENT ME!
+     * @param min1 DOCUMENT ME!
+     * @param max1 DOCUMENT ME!
+     * @param min2 DOCUMENT ME!
+     * @param max2 DOCUMENT ME!
+     * @param scale1 DOCUMENT ME!
+     * @param scale2 DOCUMENT ME!
+     * @param lineMin1 DOCUMENT ME!
+     * @param lineMax1 DOCUMENT ME!
+     * @param lineMin2 DOCUMENT ME!
+     * @param lineMax2 DOCUMENT ME!
+     * @param thresholdOn1 DOCUMENT ME!
+     * @param leftPad DOCUMENT ME!
+     * @param rightPad DOCUMENT ME!
+     * @param bottomPad DOCUMENT ME!
+     * @param topPad DOCUMENT ME!
+     * @param doSecondIteration DOCUMENT ME!
+     * @param pointCalculation DOCUMENT ME!
      */
-    public ViewJFrameColocalizationRegression(AlgorithmColocalizationRegression alg, ModelImage _imageA, ModelLUT _LUTa,
-                                              ModelImage _imageB, ModelLUT _LUTb, ModelRGB _RGBTA, ModelImage destImage,
-                                              ViewJFrameBase controlFrame, boolean useRed, boolean useGreen,
-                                              boolean useBlue, float slope, float offset, float linearCorrelation,
-                                              float PValue, boolean[] haveThreshold, float[] rThreshold,
-                                              float[] colocSize, float[] colocIntensity1, float[] colocIntensity2,
-                                              double min1, double max1, double min2, double max2, double scale1,
-                                              double scale2, double lineMin1, double lineMax1, double lineMin2,
-                                              double lineMax2, boolean thresholdOn1, int leftPad, int rightPad,
-                                              int bottomPad, int topPad, boolean doSecondIteration,
-                                              boolean pointCalculation) {
+    public ViewJFrameColocalizationRegression(AlgorithmColocalizationRegression alg, ModelImage _imageA,
+            ModelLUT _LUTa, ModelImage _imageB, ModelLUT _LUTb, ModelRGB _RGBTA, ModelImage destImage,
+            ViewJFrameBase controlFrame, boolean useRed, boolean useGreen, boolean useBlue, float slope, float offset,
+            float linearCorrelation, float PValue, boolean[] haveThreshold, float[] rThreshold, float[] colocSize,
+            float[] colocIntensity1, float[] colocIntensity2, double min1, double max1, double min2, double max2,
+            double scale1, double scale2, double lineMin1, double lineMax1, double lineMin2, double lineMax2,
+            boolean thresholdOn1, int leftPad, int rightPad, int bottomPad, int topPad, boolean doSecondIteration,
+            boolean pointCalculation) {
 
         super(_imageA, null);
 
@@ -485,16 +490,17 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
         componentImage.setPosition(originalX, originalY);
 
-        /* componentY is added so that the previous software for ViewJFrameImage can be
-         * reused.  There the image was resized without a toolbar, statusPanel, ormenubar contributing to the vertical
-         * length. */
+        /*
+         * componentY is added so that the previous software for ViewJFrameImage can be reused. There the image was
+         * resized without a toolbar, statusPanel, ormenubar contributing to the vertical length.
+         */
         pack();
         componentY = topPanel.getHeight() + openingMenuBar.getHeight();
 
         // structureY is the total of all nonimage components in the Y direction
         structureY = getInsets().top + componentY + getInsets().bottom;
-        setSize((int) Math.round(scrollPaneSize + 3 + getInsets().left + getInsets().right),
-                (int) Math.round(scrollPaneSize + 3 + structureY));
+        setSize((int) Math.round(scrollPaneSize + 3 + getInsets().left + getInsets().right), (int) Math
+                .round(scrollPaneSize + 3 + structureY));
 
         addComponentListener(this);
 
@@ -506,7 +512,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
         for (int i = -10; i <= 10; i++) {
 
-            if ((zoom >= Math.pow(2.0, (double) i)) && (zoom < Math.pow(2.0, (double) (i + 1)))) {
+            if ( (zoom >= Math.pow(2.0, (double) i)) && (zoom < Math.pow(2.0, (double) (i + 1)))) {
                 zoom = (float) Math.pow(2.0, (double) i);
             }
         }
@@ -523,7 +529,8 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         componentImage.update();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     // ************************************************************************
     // **************************** Action Events *****************************
@@ -531,8 +538,8 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Calls various methods depending on the action.
-     *
-     * @param  event  event that triggered function
+     * 
+     * @param event event that triggered function
      */
     public void actionPerformed(ActionEvent event) {
 
@@ -552,7 +559,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
             }
         } else if (command.equals("MagColocalize")) {
 
-            // Doubles the present magnification.  The zoom is always a power of 2.
+            // Doubles the present magnification. The zoom is always a power of 2.
             zoom = 2.0f * componentImage.getZoomX();
             componentImage.setZoom(zoom, zoom);
             validate();
@@ -560,7 +567,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
             setTitle();
         } else if (command.equals("UnMagColocalize")) {
 
-            // Halves the present magnification.  The zoom is always a power of 2.
+            // Halves the present magnification. The zoom is always a power of 2.
             zoom = 0.5f * componentImage.getZoomX();
             componentImage.setZoom(zoom, zoom);
             validate();
@@ -638,30 +645,29 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Resizes frame and all components.
-     *
-     * @param  event  event that triggered function
+     * 
+     * @param event event that triggered function
      */
     public synchronized void componentResized(ComponentEvent event) {
         int width, height;
         int fullWidth, fullHeight;
 
-        if ((getSize().width >= (xScreen - 20)) || (getSize().height >= (yScreen - 20))) {
+        if ( (getSize().width >= (xScreen - 20)) || (getSize().height >= (yScreen - 20))) {
             return;
         }
 
         removeComponentListener(this);
 
         width = (int) Math.round(Math.max(getSize().width - (2 * getInsets().left), minimumToolBarWidth));
-        height = (int)
-                     Math.round(Math.max(getSize().height - getInsets().top - componentY - getInsets().bottom,
-                                         minimumHeight));
+        height = (int) Math.round(Math.max(getSize().height - getInsets().top - componentY - getInsets().bottom,
+                minimumHeight));
 
         scrollPane.setSize(width, height);
         scrollPane.setPreferredSize(new Dimension(width, height));
-        fullWidth = Math.max(scrollPane.getSize().width + getInsets().left + getInsets().right,
-                             minimumToolBarWidth + getInsets().left + getInsets().right);
+        fullWidth = Math.max(scrollPane.getSize().width + getInsets().left + getInsets().right, minimumToolBarWidth
+                + getInsets().left + getInsets().right);
         fullHeight = Math.max(getInsets().top + componentY + scrollPane.getSize().height + getInsets().bottom,
-                              minimumHeight);
+                minimumHeight);
 
         setSize(fullWidth, fullHeight);
         validate();
@@ -730,8 +736,8 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Get control widgets for frame.
-     *
-     * @return  controls
+     * 
+     * @return controls
      */
     public ViewControlsImage getControls() {
         return controls;
@@ -739,8 +745,8 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Accessor that returns the reference to imageA.
-     *
-     * @return  image
+     * 
+     * @return image
      */
     public ModelImage getImageA() {
 
@@ -753,8 +759,8 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Accessor that returns the reference to imageB.
-     *
-     * @return  imageB
+     * 
+     * @return imageB
      */
     public ModelImage getImageB() {
 
@@ -772,8 +778,8 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
     /**
      * Sets border painted or not painted depending on if the button was selected or deselected. Changes the currently
      * selected script.
-     *
-     * @param  event  Event that triggered this function.
+     * 
+     * @param event Event that triggered this function.
      */
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
@@ -781,7 +787,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
         if (source instanceof AbstractButton) {
 
-            if (((AbstractButton) source).getBorder().equals(raisedBorder)) {
+            if ( ((AbstractButton) source).getBorder().equals(raisedBorder)) {
                 ((AbstractButton) source).setBorder(pressedBorder);
             } else {
                 ((AbstractButton) source).setBorder(raisedBorder);
@@ -791,18 +797,17 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Passes arrays needed in free range mode.
-     *
-     * @param  haveFreeRangeThreshold    DOCUMENT ME!
-     * @param  freeRangeRThreshold       DOCUMENT ME!
-     * @param  freeRangeColocSize        DOCUMENT ME!
-     * @param  freeRangeColocIntensity1  DOCUMENT ME!
-     * @param  freeRangeColocIntensity2  DOCUMENT ME!
-     *
-     * @paran  freeRangeColocIntensity2
+     * 
+     * @param haveFreeRangeThreshold DOCUMENT ME!
+     * @param freeRangeRThreshold DOCUMENT ME!
+     * @param freeRangeColocSize DOCUMENT ME!
+     * @param freeRangeColocIntensity1 DOCUMENT ME!
+     * @param freeRangeColocIntensity2 DOCUMENT ME!
+     * 
+     * @paran freeRangeColocIntensity2
      */
     public void passFreeRangeArrays(boolean[] haveFreeRangeThreshold, float[] freeRangeRThreshold,
-                                    float[] freeRangeColocSize, float[] freeRangeColocIntensity1,
-                                    float[] freeRangeColocIntensity2) {
+            float[] freeRangeColocSize, float[] freeRangeColocIntensity1, float[] freeRangeColocIntensity2) {
 
         this.haveFreeRangeThreshold = haveFreeRangeThreshold;
         this.freeRangeRThreshold = freeRangeRThreshold;
@@ -810,7 +815,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         this.freeRangeColocIntensity1 = freeRangeColocIntensity1;
         this.freeRangeColocIntensity2 = freeRangeColocIntensity2;
         componentImage.passFreeRangeArrays(haveFreeRangeThreshold, freeRangeRThreshold, freeRangeColocSize,
-                                           freeRangeColocIntensity1, freeRangeColocIntensity2);
+                freeRangeColocIntensity1, freeRangeColocIntensity2);
     }
 
     /**
@@ -831,28 +836,28 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
     /**
      * Does nothing.
      */
-    public void removeControls() { }
+    public void removeControls() {}
 
     /**
      * Does nothing.
-     *
-     * @param  active  DOCUMENT ME!
+     * 
+     * @param active DOCUMENT ME!
      */
-    public void setActiveImage(int active) { }
+    public void setActiveImage(int active) {}
 
     /**
      * Does nothing.
-     *
-     * @param  value  DOCUMENT ME!
+     * 
+     * @param value DOCUMENT ME!
      */
-    public void setAlphaBlend(int value) { }
+    public void setAlphaBlend(int value) {}
 
     /**
-     * Sets the brightness and contrast of the component image. Set all slices to have the new brightness and constrast.
+     * Sets the brightness and contrast of the component image. Set all slices to have the new brightness and contrast.
      * Results in createImage producing an Image img[slice] for every slice.
-     *
-     * @param  brightness  Brightness to set.
-     * @param  contrast    Contrast to set.
+     * 
+     * @param brightness Brightness to set.
+     * @param contrast Contrast to set.
      */
     public void setBrightness(int brightness, float contrast) {
         origBrightness = brightness;
@@ -863,15 +868,15 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
     /**
      * Does nothing.
      */
-    public void setControls() { }
+    public void setControls() {}
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  str1  DOCUMENT ME!
-     * @param  str2  DOCUMENT ME!
-     * @param  str3  DOCUMENT ME!
-     * @param  str4  DOCUMENT ME!
+     * 
+     * @param str1 DOCUMENT ME!
+     * @param str2 DOCUMENT ME!
+     * @param str3 DOCUMENT ME!
+     * @param str4 DOCUMENT ME!
      */
     public void setCurrentLabels(String str1, String str2, String str3, String str4) {
         labelCurrentColoc.setText(str1);
@@ -882,23 +887,22 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Does nothing.
-     *
-     * @param  flag  DOCUMENT ME!
+     * 
+     * @param flag DOCUMENT ME!
      */
-    public void setEnabled(boolean flag) { }
+    public void setEnabled(boolean flag) {}
 
     /**
      * Does nothing.
-     *
-     * @param  _imageB  DOCUMENT ME!
+     * 
+     * @param _imageB DOCUMENT ME!
      */
-    public void setImageB(ModelImage _imageB) { }
-
+    public void setImageB(ModelImage _imageB) {}
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  LUTdest  DOCUMENT ME!
+     * 
+     * @param LUTdest DOCUMENT ME!
      */
     public void setLUTdest(ModelLUT LUTdest) {
         this.LUTdest = LUTdest;
@@ -925,32 +929,32 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
     /**
      * Modifies a frame of the colocalization histogram after mouseRelased has indicated the contour VOI in the source
      * image has been moved.
-     *
-     * @param  slope              DOCUMENT ME!
-     * @param  offset             DOCUMENT ME!
-     * @param  linearCorrelation  DOCUMENT ME!
-     * @param  PValue             DOCUMENT ME!
-     * @param  haveThreshold      DOCUMENT ME!
-     * @param  rThreshold         DOCUMENT ME!
-     * @param  colocSize          DOCUMENT ME!
-     * @param  colocIntensity1    DOCUMENT ME!
-     * @param  colocIntensity2    DOCUMENT ME!
-     * @param  min1               DOCUMENT ME!
-     * @param  max1               DOCUMENT ME!
-     * @param  min2               DOCUMENT ME!
-     * @param  max2               DOCUMENT ME!
-     * @param  scale1             DOCUMENT ME!
-     * @param  scale2             DOCUMENT ME!
-     * @param  lineMin1           DOCUMENT ME!
-     * @param  lineMax1           DOCUMENT ME!
-     * @param  lineMin2           DOCUMENT ME!
-     * @param  lineMax2           DOCUMENT ME!
-     * @param  thresholdOn1       DOCUMENT ME!
+     * 
+     * @param slope DOCUMENT ME!
+     * @param offset DOCUMENT ME!
+     * @param linearCorrelation DOCUMENT ME!
+     * @param PValue DOCUMENT ME!
+     * @param haveThreshold DOCUMENT ME!
+     * @param rThreshold DOCUMENT ME!
+     * @param colocSize DOCUMENT ME!
+     * @param colocIntensity1 DOCUMENT ME!
+     * @param colocIntensity2 DOCUMENT ME!
+     * @param min1 DOCUMENT ME!
+     * @param max1 DOCUMENT ME!
+     * @param min2 DOCUMENT ME!
+     * @param max2 DOCUMENT ME!
+     * @param scale1 DOCUMENT ME!
+     * @param scale2 DOCUMENT ME!
+     * @param lineMin1 DOCUMENT ME!
+     * @param lineMax1 DOCUMENT ME!
+     * @param lineMin2 DOCUMENT ME!
+     * @param lineMax2 DOCUMENT ME!
+     * @param thresholdOn1 DOCUMENT ME!
      */
     public void setNewVar(float slope, float offset, float linearCorrelation, float PValue, boolean[] haveThreshold,
-                          float[] rThreshold, float[] colocSize, float[] colocIntensity1, float[] colocIntensity2,
-                          double min1, double max1, double min2, double max2, double scale1, double scale2,
-                          double lineMin1, double lineMax1, double lineMin2, double lineMax2, boolean thresholdOn1) {
+            float[] rThreshold, float[] colocSize, float[] colocIntensity1, float[] colocIntensity2, double min1,
+            double max1, double min2, double max2, double scale1, double scale2, double lineMin1, double lineMax1,
+            double lineMin2, double lineMax2, boolean thresholdOn1) {
         this.slope = slope;
         this.offset = offset;
         this.linearCorrelation = linearCorrelation;
@@ -973,21 +977,21 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         this.thresholdOn1 = thresholdOn1;
         modifyStatusPanel();
         componentImage.setNewVar(slope, offset, haveThreshold, rThreshold, colocSize, colocIntensity1, colocIntensity2,
-                                 min1, max1, min2, max2, scale1, scale2, lineMin1, lineMax1, lineMin2, lineMax2,
-                                 thresholdOn1, linearCorrelation);
+                min1, max1, min2, max2, scale1, scale2, lineMin1, lineMax1, lineMin2, lineMax2, thresholdOn1,
+                linearCorrelation);
     }
 
     /**
      * Does nothing.
-     *
-     * @param  paintBitmapSwitch  DOCUMENT ME!
+     * 
+     * @param paintBitmapSwitch DOCUMENT ME!
      */
-    public void setPaintBitmapSwitch(boolean paintBitmapSwitch) { }
+    public void setPaintBitmapSwitch(boolean paintBitmapSwitch) {}
 
     /**
      * Sets the RGB LUT table for ARGB image A.
-     *
-     * @param  RGBT  the new RGB LUT to be applied to the image
+     * 
+     * @param RGBT the new RGB LUT to be applied to the image
      */
     public void setRGBTA(ModelRGB RGBT) {
 
@@ -998,8 +1002,8 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Sets the RGB LUT table for ARGB image B.
-     *
-     * @param  RGBT  the new RGB LUT to be applied to the image
+     * 
+     * @param RGBT the new RGB LUT to be applied to the image
      */
     public void setRGBTB(ModelRGB RGBT) {
 
@@ -1010,17 +1014,17 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Does nothing.
-     *
-     * @param  slice  DOCUMENT ME!
+     * 
+     * @param slice DOCUMENT ME!
      */
-    public void setSlice(int slice) { }
+    public void setSlice(int slice) {}
 
     /**
      * Does nothing.
-     *
-     * @param  slice  DOCUMENT ME!
+     * 
+     * @param slice DOCUMENT ME!
      */
-    public void setTimeSlice(int slice) { }
+    public void setTimeSlice(int slice) {}
 
     /**
      * Set the title of the frame with the image name and magnification.
@@ -1038,27 +1042,26 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Sets values based on knob along slider.
-     *
-     * @param  e  Event that triggered this function
+     * 
+     * @param e Event that triggered this function
      */
     public void stateChanged(ChangeEvent e) {
         Object source = e.getSource();
-
 
     }
 
     /**
      * Does nothing.
-     *
-     * @param  sX  DOCUMENT ME!
-     * @param  sY  DOCUMENT ME!
+     * 
+     * @param sX DOCUMENT ME!
+     * @param sY DOCUMENT ME!
      */
-    public void updateFrame(float sX, float sY) { }
+    public void updateFrame(float sX, float sY) {}
 
     /**
      * Does nothing.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public boolean updateImageExtents() {
         return false;
@@ -1066,8 +1069,8 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Does nothing.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public final boolean updateImages() {
         return true;
@@ -1075,10 +1078,10 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * This methods calls the componentImage's update method to redraw the screen. Without LUT changes.
-     *
-     * @param   forceShow  unused parameter
-     *
-     * @return  boolean confirming successful update
+     * 
+     * @param forceShow unused parameter
+     * 
+     * @return boolean confirming successful update
      */
     public final boolean updateImages(boolean forceShow) {
 
@@ -1093,13 +1096,13 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Does nothing.
-     *
-     * @param   LUTa        DOCUMENT ME!
-     * @param   LUTb        DOCUMENT ME!
-     * @param   forceShow   DOCUMENT ME!
-     * @param   interpMode  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param LUTa DOCUMENT ME!
+     * @param LUTb DOCUMENT ME!
+     * @param forceShow DOCUMENT ME!
+     * @param interpMode DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public final boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean forceShow, int interpMode) {
         return true;
@@ -1107,22 +1110,22 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Does nothing.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowActivated(WindowEvent event) { }
+    public void windowActivated(WindowEvent event) {}
 
     /**
      * Does nothing.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowClosed(WindowEvent event) { }
+    public void windowClosed(WindowEvent event) {}
 
     /**
      * Stops thread, calls close.
-     *
-     * @param  event  event that triggered function
+     * 
+     * @param event event that triggered function
      */
     public void windowClosing(WindowEvent event) {
         ViewJComponentEditImage editImageFrameA;
@@ -1213,24 +1216,24 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Does nothing.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowDeactivated(WindowEvent event) { }
+    public void windowDeactivated(WindowEvent event) {}
 
     /**
      * Does nothing.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowDeiconified(WindowEvent event) { }
+    public void windowDeiconified(WindowEvent event) {}
 
     /**
      * Does nothing.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowIconified(WindowEvent event) { }
+    public void windowIconified(WindowEvent event) {}
 
     // ************************************************************************
     // **************************** Window Events *****************************
@@ -1238,20 +1241,19 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Does nothing.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowOpened(WindowEvent event) { }
-
+    public void windowOpened(WindowEvent event) {}
 
     /**
      * Tests that the entered parameter is in range.
-     *
-     * @param   str       the value entered by the user
-     * @param   minValue  the minimum value this variable may be set to
-     * @param   maxValue  the maximum value this variable may be set to
-     *
-     * @return  boolean result of test
+     * 
+     * @param str the value entered by the user
+     * @param minValue the minimum value this variable may be set to
+     * @param maxValue the maximum value this variable may be set to
+     * 
+     * @return boolean result of test
      */
     protected boolean testParameter(String str, double minValue, double maxValue) {
         double tmp;
@@ -1259,9 +1261,9 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         try {
             tmp = Double.valueOf(str).doubleValue();
 
-            if ((tmp > maxValue) || (tmp < minValue)) {
-                MipavUtil.displayError("Value is out of range: " + String.valueOf(minValue) + " , " +
-                                       String.valueOf(maxValue));
+            if ( (tmp > maxValue) || (tmp < minValue)) {
+                MipavUtil.displayError("Value is out of range: " + String.valueOf(minValue) + " , "
+                        + String.valueOf(maxValue));
 
                 return false;
             } else {
@@ -1276,13 +1278,13 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Method that adds components to the control paenl.
-     *
-     * @param  c    component added to the control panel
-     * @param  gbc  GridBagConstraints of added component
-     * @param  x    grdix location
-     * @param  y    gridy location
-     * @param  w    gridwidth
-     * @param  h    gridheight
+     * 
+     * @param c component added to the control panel
+     * @param gbc GridBagConstraints of added component
+     * @param x grdix location
+     * @param y gridy location
+     * @param w gridwidth
+     * @param h gridheight
      */
     private void addStatusPanel(Component c, GridBagConstraints gbc, int x, int y, int w, int h) {
         gbc.gridx = x;
@@ -1294,10 +1296,10 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Method to build the toolbar for the Animate frame.
-     *
-     * @param   al  Action listener (this frame)
-     *
-     * @return  The animation toolbar
+     * 
+     * @param al Action listener (this frame)
+     * 
+     * @return The animation toolbar
      */
     private JToolBar buildColocalizeToolBar(ActionListener al) {
         JToolBar colocalizeToolBar = new JToolBar();
@@ -1425,18 +1427,12 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
             return;
         }
 
-        openingMenuBar.add(menuObj.makeMenu("File", false,
-                                            new JComponent[] {
-                                                menuObj.buildMenuItem("Close", "CloseColocalize", 0, null, false)
-                                            }));
-        openingMenuBar.add(menuObj.makeMenu("Help", false,
-                                            new JComponent[] {
-                                                menuObj.buildMenuItem("About colocalization", "AboutColocalize", 0,
-                                                                      null, false)
-                                            }));
+        openingMenuBar.add(menuObj.makeMenu("File", false, new JComponent[] {menuObj.buildMenuItem("Close",
+                "CloseColocalize", 0, null, false)}));
+        openingMenuBar.add(menuObj.makeMenu("Help", false, new JComponent[] {menuObj.buildMenuItem(
+                "About colocalization", "AboutColocalize", 0, null, false)}));
 
     }
-
 
     /**
      * Make a scroll frame and puts an image component into it.
@@ -1539,17 +1535,11 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
             }
 
             componentImage = new ViewJComponentColocalizationRegression(alg, controlFrame, this, imageA, imageB,
-                                                                        destImage, LUTdest, imageBufferDest, useRed,
-                                                                        useGreen, useBlue, slope, offset, haveThreshold,
-                                                                        rThreshold, colocSize, colocIntensity1,
-                                                                        colocIntensity2, min1, max1, min2, max2, scale1,
-                                                                        scale2, lineMin1, lineMax1, lineMin2, lineMax2,
-                                                                        thresholdOn1, pixBufferDest, paintBufferDest,
-                                                                        zoom, extents, logMagDisplay,
-                                                                        regionLinesDisplay, leftPad, rightPad,
-                                                                        bottomPad, topPad, doSecondIteration,
-                                                                        linearCorrelation, userInterface);
-
+                    destImage, LUTdest, imageBufferDest, useRed, useGreen, useBlue, slope, offset, haveThreshold,
+                    rThreshold, colocSize, colocIntensity1, colocIntensity2, min1, max1, min2, max2, scale1, scale2,
+                    lineMin1, lineMax1, lineMin2, lineMax2, thresholdOn1, pixBufferDest, paintBufferDest, zoom,
+                    extents, logMagDisplay, regionLinesDisplay, leftPad, rightPad, bottomPad, topPad,
+                    doSecondIteration, linearCorrelation, userInterface);
 
             componentImage.setRGBTA(RGBTA);
 
@@ -1569,7 +1559,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
         // The component image will be displayed in a scrollpane.
         scrollPane = new JScrollPane(innerPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                     JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         scrollPane.setBounds(0, 0, scrollPaneSize + 3, scrollPaneSize + 3);
         getContentPane().add(scrollPane);
@@ -1580,7 +1570,6 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         setBackground(Color.black);
 
     }
-
 
     /**
      * Panel that builds the status display panel.
@@ -1637,7 +1626,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         originalY = Math.round(pt.Y);
 
         if (thresholdOn1) {
-            index1 = (int) Math.round(((pt.X - leftPad) / scale1) + min1);
+            index1 = (int) Math.round( ( (pt.X - leftPad) / scale1) + min1);
             index2f = (index1 * slope) + offset;
             ip = index1 - (int) Math.ceil(lineMin1);
             threshold = rThreshold[ip];
@@ -1647,7 +1636,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         } else {
             bin2 = destImage.getExtents()[1] - bottomPad - topPad;
             invertedy = (2 * topPad) + bin2 - 1 - pt.Y;
-            index2 = (int) Math.round(((invertedy - topPad) / scale2) + min2);
+            index2 = (int) Math.round( ( (invertedy - topPad) / scale2) + min2);
             index1f = (index2 - offset) / slope;
             ip = index2 - (int) Math.ceil(lineMin2);
             threshold = rThreshold[ip];
@@ -1711,19 +1700,18 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         labelCurrentIntensity2.setEnabled(true);
         addStatusPanel(labelCurrentIntensity2, cpGBC, 0, 2, 3, 1);
 
-        /*if ((useRed) && (useGreen)) {
-         *  if (offset >= 0) {     labelLineFunction = new JLabel("Green = " + slope + "*red + " + offset); } else {
-         * labelLineFunction = new JLabel("Green = " + slope + "*red - " +                         Math.abs(offset)); }
-         * } else if ((useRed) && (useBlue)) { if (offset >= 0) {     labelLineFunction = new JLabel("Blue = " + slope +
-         * "*red + " + offset); } else {     labelLineFunction = new JLabel("Blue = " + slope + "*red - " +
-         * Math.abs(offset)); } } else if ((useGreen) && (useBlue)) { if (offset >= 0) { labelLineFunction = new
-         * JLabel("Blue = " + slope + "*green + "     + offset); } else {     labelLineFunction = new JLabel("Blue = " +
-         * slope + "*green - " +     Math.abs(offset)); } } else { if (offset >= 0) { labelLineFunction = new
-         * JLabel(imageB.getImageName() + " = " + slope +                             "*" + imageA.getImageName() + " +
-         * " + offset); } else {     labelLineFunction = new JLabel(imageB.getImageName() + " = " + slope + "*" +
-         * imageA.getImageName() + " - " + Math.abs(offset)); } } labelLineFunction.setForeground(Color.black);
-         * labelLineFunction.setFont(MipavUtil.font12); labelLineFunction.setEnabled(true);
-         * addStatusPanel(labelLineFunction, cpGBC, 0, 0, 3, 1);
+        /*
+         * if ((useRed) && (useGreen)) { if (offset >= 0) { labelLineFunction = new JLabel("Green = " + slope + "*red + " +
+         * offset); } else { labelLineFunction = new JLabel("Green = " + slope + "*red - " + Math.abs(offset)); } } else
+         * if ((useRed) && (useBlue)) { if (offset >= 0) { labelLineFunction = new JLabel("Blue = " + slope + "*red + " +
+         * offset); } else { labelLineFunction = new JLabel("Blue = " + slope + "*red - " + Math.abs(offset)); } } else
+         * if ((useGreen) && (useBlue)) { if (offset >= 0) { labelLineFunction = new JLabel("Blue = " + slope + "*green + " +
+         * offset); } else { labelLineFunction = new JLabel("Blue = " + slope + "*green - " + Math.abs(offset)); } }
+         * else { if (offset >= 0) { labelLineFunction = new JLabel(imageB.getImageName() + " = " + slope + "*" +
+         * imageA.getImageName() + " + " + offset); } else { labelLineFunction = new JLabel(imageB.getImageName() + " = " +
+         * slope + "*" + imageA.getImageName() + " - " + Math.abs(offset)); } }
+         * labelLineFunction.setForeground(Color.black); labelLineFunction.setFont(MipavUtil.font12);
+         * labelLineFunction.setEnabled(true); addStatusPanel(labelLineFunction, cpGBC, 0, 0, 3, 1);
          */
 
         if (PValue >= 0.0f) {
@@ -1735,13 +1723,14 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         }
 
         if (doSecondIteration) {
-            labelLinearCorrelation = new JLabel("     Linear correlation coefficient for all pixels not in subthreshold region = " +
-                                                linearCorrelation);
+            labelLinearCorrelation = new JLabel(
+                    "     Linear correlation coefficient for all pixels not in subthreshold region = "
+                            + linearCorrelation);
             dataLine1 = dataLine1 + "Linear correlation coefficient - 2 iters\t";
             dataLine2 = dataLine2 + linearCorrelation + "\n";
         } else {
-            labelLinearCorrelation = new JLabel("     Linear correlation coefficient for all pixels above background = " +
-                                                linearCorrelation);
+            labelLinearCorrelation = new JLabel(
+                    "     Linear correlation coefficient for all pixels above background = " + linearCorrelation);
             dataLine1 = dataLine1 + "Linear correlation coefficient - 1 iter\t";
             dataLine2 = dataLine2 + linearCorrelation + "\n";
         }
@@ -1766,37 +1755,37 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
         if (thresholdOn1) {
 
-            if ((useRed) && (useGreen)) {
+            if ( (useRed) && (useGreen)) {
                 currentThreshold += " for pixels with red < " + index1 + " or green < " + index2f;
                 dataLine1 += " for pixels with red < " + index1 + " or green < " + index2f + "\n";
-            } else if ((useRed) && (useBlue)) {
+            } else if ( (useRed) && (useBlue)) {
                 currentThreshold += " for pixels with red < " + index1 + " or blue < " + index2f;
                 dataLine1 += " for pixels with red < " + index1 + " or blue < " + index2f + "\n";
-            } else if ((useGreen) && (useBlue)) {
+            } else if ( (useGreen) && (useBlue)) {
                 currentThreshold += " for pixels with green < " + index1 + " or blue < " + index2f;
                 dataLine1 += " for pixels with green < " + index1 + " or blue < " + index2f + "\n";
             } else {
-                currentThreshold += " for pixels with " + imageA.getImageName() + " < " + index1 + " or " +
-                                    imageB.getImageName() + " < " + index2f;
-                dataLine1 += " for pixels with " + imageA.getImageName() + " < " + index1 + " or " +
-                             imageB.getImageName() + " < " + index2f + "\n";
+                currentThreshold += " for pixels with " + imageA.getImageName() + " < " + index1 + " or "
+                        + imageB.getImageName() + " < " + index2f;
+                dataLine1 += " for pixels with " + imageA.getImageName() + " < " + index1 + " or "
+                        + imageB.getImageName() + " < " + index2f + "\n";
             }
         } else {
 
-            if ((useRed) && (useGreen)) {
+            if ( (useRed) && (useGreen)) {
                 currentThreshold += " for pixels with red < " + index1f + " or green < " + index2;
                 dataLine1 += " for pixels with red < " + index1f + " or green < " + index2 + "\n";
-            } else if ((useRed) && (useBlue)) {
+            } else if ( (useRed) && (useBlue)) {
                 currentThreshold += " for pixels with red < " + index1f + " or blue < " + index2;
                 dataLine1 += " for pixels with red < " + index1f + " or blue < " + index2 + "\n";
-            } else if ((useGreen) && (useBlue)) {
+            } else if ( (useGreen) && (useBlue)) {
                 currentThreshold += " for pixels with green < " + index1f + " or blue < " + index2;
                 dataLine1 += " for pixels with green < " + index1f + " or blue < " + index2 + "\n";
             } else {
-                currentThreshold += " for pixels with " + imageA.getImageName() + " < " + index1f + " or " +
-                                    imageB.getImageName() + " < " + index2;
-                dataLine1 += " for pixels with " + imageA.getImageName() + " < " + index1f + " or " +
-                             imageB.getImageName() + " < " + index2 + "\n";
+                currentThreshold += " for pixels with " + imageA.getImageName() + " < " + index1f + " or "
+                        + imageB.getImageName() + " < " + index2;
+                dataLine1 += " for pixels with " + imageA.getImageName() + " < " + index1f + " or "
+                        + imageB.getImageName() + " < " + index2 + "\n";
             }
         }
 
@@ -1816,7 +1805,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
             userInterface.setDataText(PValue + "\n");
         }
 
-        if (!pointCalculation) {
+        if ( !pointCalculation) {
             userInterface.setDataText(dataLine1);
             userInterface.setDataText(dataLine2);
             userInterface.setDataText("\n");
@@ -1828,10 +1817,10 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Helper method to create a label with the proper font and font color.
-     *
-     * @param   title  Text of the label.
-     *
-     * @return  New label.
+     * 
+     * @param title Text of the label.
+     * 
+     * @return New label.
      */
     private JLabel createLabel(String title) {
         JLabel label = new JLabel(title);
@@ -1843,8 +1832,8 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Makes a separator for the use in the toolbars.
-     *
-     * @return  Separator button.
+     * 
+     * @return Separator button.
      */
     private JButton makeSeparator() {
         JButton separator = new JButton(MipavUtil.getIcon("separator.gif"));
@@ -1874,7 +1863,6 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         float threshold;
         String currentThreshold;
 
-
         VOIs = destImage.getVOIs();
 
         if (VOIs != null) {
@@ -1901,7 +1889,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         originalY = Math.round(pt.Y);
 
         if (thresholdOn1) {
-            index1 = (int) Math.round(((pt.X - leftPad) / scale1) + min1);
+            index1 = (int) Math.round( ( (pt.X - leftPad) / scale1) + min1);
             index2f = (index1 * slope) + offset;
             ip = index1 - (int) Math.ceil(lineMin1);
             threshold = rThreshold[ip];
@@ -1911,7 +1899,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         } else {
             bin2 = destImage.getExtents()[1] - bottomPad - topPad;
             invertedy = (2 * topPad) + bin2 - 1 - pt.Y;
-            index2 = (int) Math.round(((invertedy - topPad) / scale2) + min2);
+            index2 = (int) Math.round( ( (invertedy - topPad) / scale2) + min2);
             index1f = (index2 - offset) / slope;
             ip = index2 - (int) Math.ceil(lineMin2);
             threshold = rThreshold[ip];
@@ -1967,17 +1955,17 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         }
 
         if (doSecondIteration) {
-            labelLinearCorrelation.setText("     Linear correlation coefficient for all pixels not in subthreshold region = " +
-                                           linearCorrelation);
+            labelLinearCorrelation
+                    .setText("     Linear correlation coefficient for all pixels not in subthreshold region = "
+                            + linearCorrelation);
             dataLine1 = dataLine1 + "Linear correlation coefficient - 2 iters\t";
             dataLine2 = dataLine2 + linearCorrelation + "\n";
         } else {
-            labelLinearCorrelation.setText("     Linear correlation coefficient for all pixels above background = " +
-                                           linearCorrelation);
+            labelLinearCorrelation.setText("     Linear correlation coefficient for all pixels above background = "
+                    + linearCorrelation);
             dataLine1 = dataLine1 + "Linear correlation coefficient - 1 iter\t";
             dataLine2 = dataLine2 + linearCorrelation + "\n";
         }
-
 
         if (Float.isNaN(threshold)) {
             currentThreshold = "     Linear correlation coefficient is undefined";
@@ -1989,37 +1977,37 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
         if (thresholdOn1) {
 
-            if ((useRed) && (useGreen)) {
+            if ( (useRed) && (useGreen)) {
                 currentThreshold += " for pixels with red < " + index1 + " or green < " + index2f;
                 dataLine1 += " for pixels with red < " + index1 + " or green < " + index2f + "\n";
-            } else if ((useRed) && (useBlue)) {
+            } else if ( (useRed) && (useBlue)) {
                 currentThreshold += " for pixels with red < " + index1 + " or blue < " + index2f;
                 dataLine1 += " for pixels with red < " + index1 + " or blue < " + index2f + "\n";
-            } else if ((useGreen) && (useBlue)) {
+            } else if ( (useGreen) && (useBlue)) {
                 currentThreshold += " for pixels with green < " + index1 + " or blue < " + index2f;
                 dataLine1 += " for pixels with green < " + index1 + " or blue < " + index2f + "\n";
             } else {
-                currentThreshold += " for pixels with " + imageA.getImageName() + " < " + index1 + " or " +
-                                    imageB.getImageName() + " < " + index2f;
-                dataLine1 += " for pixels with " + imageA.getImageName() + " < " + index1 + " or " +
-                             imageB.getImageName() + " < " + index2f + "\n";
+                currentThreshold += " for pixels with " + imageA.getImageName() + " < " + index1 + " or "
+                        + imageB.getImageName() + " < " + index2f;
+                dataLine1 += " for pixels with " + imageA.getImageName() + " < " + index1 + " or "
+                        + imageB.getImageName() + " < " + index2f + "\n";
             }
         } else {
 
-            if ((useRed) && (useGreen)) {
+            if ( (useRed) && (useGreen)) {
                 currentThreshold += " for pixels with red < " + index1f + " or green < " + index2;
                 dataLine1 += " for pixels with red < " + index1f + " or green < " + index2 + "\n";
-            } else if ((useRed) && (useBlue)) {
+            } else if ( (useRed) && (useBlue)) {
                 currentThreshold += " for pixels with red < " + index1f + " or blue < " + index2;
                 dataLine1 += " for pixels with red < " + index1f + " or blue < " + index2 + "\n";
-            } else if ((useGreen) && (useBlue)) {
+            } else if ( (useGreen) && (useBlue)) {
                 currentThreshold += " for pixels with green < " + index1f + " or blue < " + index2;
                 dataLine1 += " for pixels with green < " + index1f + " or blue < " + index2 + "\n";
             } else {
-                currentThreshold += " for pixels with " + imageA.getImageName() + " < " + index1f + " or " +
-                                    imageB.getImageName() + " < " + index2;
-                dataLine1 += " for pixels with " + imageA.getImageName() + " < " + index1f + " or " +
-                             imageB.getImageName() + " < " + index2 + "\n";
+                currentThreshold += " for pixels with " + imageA.getImageName() + " < " + index1f + " or "
+                        + imageB.getImageName() + " < " + index2;
+                dataLine1 += " for pixels with " + imageA.getImageName() + " < " + index1f + " or "
+                        + imageB.getImageName() + " < " + index2 + "\n";
             }
         }
 

@@ -1,21 +1,18 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.algorithms.AlgorithmTranscode;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
+import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.*;
-
+import java.awt.image.PixelGrabber;
 import java.io.*;
-
-import java.text.*;
-
+import java.text.NumberFormat;
 import java.util.*;
 
 import javax.swing.*;
@@ -36,44 +33,57 @@ import javax.swing.event.*;
  * magnification. Magnifications are only powers of 2. However, the scale function can be set to any value in the dialog
  * box called up by JDialogAnimate. This scale function will do a slice by slice bilinear of bspline interpolation to
  * create the initial slices on which the power of 2 magnification may be changed.
- *
- * <p>The dialog box for brightness and contrast has brightness and contrast sliders, an Apply button, and a Cancel
- * button. The brightness will add an offset ranging from -255 to 255 to every scaled red, green, and blue in the image.
+ * 
+ * <p>
+ * The dialog box for brightness and contrast has brightness and contrast sliders, an Apply button, and a Cancel button.
+ * The brightness will add an offset ranging from -255 to 255 to every scaled red, green, and blue in the image.
  * Contrast will multiply every original red, green, and blue value by a floating point number ranging from 0.1 to 10.0.
  * Before apply is pressed, slider changes are only temporarily made to the currently displayed slice. If apply is
  * pressed, these changes are permanently made to all slices. Pressing cancel keeps all slices in their original state.
  * </p>
- *
- * <p>Images may also be viewed in a steady state mode. The slider is used to control the number of the slice shown when
+ * 
+ * <p>
+ * Images may also be viewed in a steady state mode. The slider is used to control the number of the slice shown when
  * animation is not occurring. A text field for the desired frames per second is present. The initial default value is
- * 30 per second. This is followed by a text field for the actual frames per second.</p>
- *
- * <p>The file menu only has 2 simple functions - a save as function and a close animate structure function. The options
- * menu has a view z slice numbers for use for 4D images.</p>
- *
- * <p>ViewJFrameAnimate is called in ViewJFrameImage.</p>
- *
- * <p>An animation of a blended image A and image B can be performed. However, all the blending parameters must be set
+ * 30 per second. This is followed by a text field for the actual frames per second.
+ * </p>
+ * 
+ * <p>
+ * The file menu only has 2 simple functions - a save as function and a close animate structure function. The options
+ * menu has a view z slice numbers for use for 4D images.
+ * </p>
+ * 
+ * <p>
+ * ViewJFrameAnimate is called in ViewJFrameImage.
+ * </p>
+ * 
+ * <p>
+ * An animation of a blended image A and image B can be performed. However, all the blending parameters must be set
  * before the animation structure is created. One parameter is alphaBlend for all images. For color only are also the
  * parameters: RaOn, GaOn, BaOn, RbOn, GbOn, BbOn, RGBTA, and RGBTB. Changes in these parmeters that are made after the
- * animation structure is created will not be propagated into the animation structure.</p>
- *
- * <p>If 4D images are animated, the animation is performed on the fourth time dimension with all the z slices for a
- * given time present in a given frame. The number of rows or columns for the z slices, whether or not a border frame is
+ * animation structure is created will not be propagated into the animation structure.
+ * </p>
+ * 
+ * <p>
+ * If 4D images are animated, the animation is performed on the fourth time dimension with all the z slices for a given
+ * time present in a given frame. The number of rows or columns for the z slices, whether or not a border frame is
  * present around z slices, and the border frame color are all selected in JDialogAnimate before ViewJFrameAnimate is
  * invoked. Note that JDialogAnimate converts all 4D images to 3D images so ViewJFrameAnimate actually is always passed
- * 3D images.</p>
- *
- * @version  1.0
+ * 3D images.
+ * </p>
+ * 
+ * @version 1.0
  */
 public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -2372670418729121051L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     public JToggleButton[] toggleArray = new JToggleButton[8];
@@ -144,8 +154,9 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
     private JButton deleteButton;
 
     /** DOCUMENT ME! */
-    private boolean disposeImage; // if true dispose of imageA and imageB upon exiting ViewJFrameAnimate.  It will be
-                                  // true unless unscaled 3D images are passed.
+    private boolean disposeImage; // if true dispose of imageA and imageB upon exiting ViewJFrameAnimate. It will be
+
+    // true unless unscaled 3D images are passed.
 
     /** DOCUMENT ME! */
     private Border etchedBorder = BorderFactory.createEtchedBorder();
@@ -373,37 +384,38 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
     /** DOCUMENT ME! */
     private int zSlice; // slice value determined by the slider
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Makes a frame of the animated image.
-     *
-     * @param  _imageA          Model of imageA
-     * @param  _LUTa            Model of LUT for image A
-     * @param  _imageB          Model of imageB
-     * @param  _LUTb            Model of LUT for image B
-     * @param  _RGBTA           Model RGB LUT for color image (A) else null
-     * @param  _RGBTB           Model RGB LUT for color image (B) else null
-     * @param  controlFrame     ViewJFrameBase passed to ViewJComponentAnimate
-     * @param  nRow             rows of z images in 4D images
-     * @param  nColumn          columns of z images in 4D images
-     * @param  originalZDim     for 4D images equals zDim before 4D to 3D conversion
-     * @param  showFrameBorder  puts colored borders around z images in 4D images
-     * @param  borderCol        color of the z image borders
-     * @param  disposeImage     dispose of imageA and imageB on frame close
+     * 
+     * @param _imageA Model of imageA
+     * @param _LUTa Model of LUT for image A
+     * @param _imageB Model of imageB
+     * @param _LUTb Model of LUT for image B
+     * @param _RGBTA Model RGB LUT for color image (A) else null
+     * @param _RGBTB Model RGB LUT for color image (B) else null
+     * @param controlFrame ViewJFrameBase passed to ViewJComponentAnimate
+     * @param nRow rows of z images in 4D images
+     * @param nColumn columns of z images in 4D images
+     * @param originalZDim for 4D images equals zDim before 4D to 3D conversion
+     * @param showFrameBorder puts colored borders around z images in 4D images
+     * @param borderCol color of the z image borders
+     * @param disposeImage dispose of imageA and imageB on frame close
      */
     public ViewJFrameAnimate(ModelImage _imageA, ModelLUT _LUTa, ModelImage _imageB, ModelLUT _LUTb, ModelRGB _RGBTA,
-                             ModelRGB _RGBTB, ViewJFrameBase controlFrame, int nRow, int nColumn, int originalZDim,
-                             boolean showFrameBorder, Color borderCol, boolean disposeImage) {
-    	
+            ModelRGB _RGBTB, ViewJFrameBase controlFrame, int nRow, int nColumn, int originalZDim,
+            boolean showFrameBorder, Color borderCol, boolean disposeImage) {
+
         super(_imageA, null);
         addNotify();
- 
+
         try {
             setIconImage(MipavUtil.getIconImage("movie_16x16.gif"));
         } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
-                              ">.  Check that this file is available.\n");
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
         }
 
         buildMenu();
@@ -424,11 +436,12 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         this.RGBTA = _RGBTA;
         this.RGBTB = _RGBTB;
 
-        /* Not that the loading is often sufficiently quick so that the
-         * animation frame will complete loading before the progress bar message appears and only a transparent progress
-         * bar is seen. */
+        /*
+         * Not that the loading is often sufficiently quick so that the animation frame will complete loading before the
+         * progress bar message appears and only a transparent progress bar is seen.
+         */
         progressBar = new ViewJProgressBar(imageA.getImageName(), "Constructing animation structure...", 0, 100, true,
-                                           this, this);
+                this, this);
 
         xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
         yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
@@ -480,15 +493,16 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         getContentPane().add(topPanel, "North");
         buildScrollPane();
 
-        /* componentY is added so that the previous software for ViewJFrameImage can be
-         * reused.  There the image was resized without a toolbar, controlPanel, or menubar contributing to the vertical
-         * length. */
+        /*
+         * componentY is added so that the previous software for ViewJFrameImage can be reused. There the image was
+         * resized without a toolbar, controlPanel, or menubar contributing to the vertical length.
+         */
         componentY = topPanel.getHeight() + openingMenuBar.getHeight();
 
         // structureY is the total of all nonimage components in the Y direction
         structureY = getInsets().top + componentY + getInsets().bottom;
-        setSize((int) Math.round(scrollPaneSize + 3 + getInsets().left + getInsets().right),
-                (int) Math.round(scrollPaneSize + 3 + structureY));
+        setSize((int) Math.round(scrollPaneSize + 3 + getInsets().left + getInsets().right), (int) Math
+                .round(scrollPaneSize + 3 + structureY));
 
         addWindowListener(this);
         addComponentListener(this);
@@ -503,7 +517,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
         for (int i = -10; i <= 10; i++) {
 
-            if ((zoom >= Math.pow(2.0, (double) i)) && (zoom < Math.pow(2.0, (double) (i + 1)))) {
+            if ( (zoom >= Math.pow(2.0, (double) i)) && (zoom < Math.pow(2.0, (double) (i + 1)))) {
                 zoom = (float) Math.pow(2.0, (double) i);
             }
         }
@@ -516,7 +530,8 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         userInterface.regFrame(this);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     // ************************************************************************
     // **************************** Action Events *****************************
@@ -524,8 +539,8 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Calls various methods depending on the action.
-     *
-     * @param  event  event that triggered function
+     * 
+     * @param event event that triggered function
      */
     public void actionPerformed(ActionEvent event) {
 
@@ -552,16 +567,20 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
             return;
         }
 
-        msWait = (long) ((1000 / framesPerSecond) + 0.4999);
+        msWait = (long) ( (1000 / framesPerSecond) + 0.4999);
 
-        /* The slider could be used to set the text field, but an attempt to
-         * use DocumentListener to have the text field set the slider was unsuccessful. */
+        /*
+         * The slider could be used to set the text field, but an attempt to use DocumentListener to have the text field
+         * set the slider was unsuccessful.
+         */
 
-        /* tmpStr = textAnimationFrame.getText();
-         * zSlice = Integer.parseInt(tmpStr) - 1; if (zSlice < 0) { MipavUtil.displayError("Animation frame number
-         * cannot be less than 1"); textAnimationFrame.requestFocus(); textAnimationFrame.selectAll(); return; } else if
-         * (zSlice > (nImage-1)) { MipavUtil.displayError("Animation Frame number cannot exceed " +
-         * String.valueOf(nImage)); textAnimationFrame.requestFocus(); textAnimationFrame.selectAll(); return; } */
+        /*
+         * tmpStr = textAnimationFrame.getText(); zSlice = Integer.parseInt(tmpStr) - 1; if (zSlice < 0) {
+         * MipavUtil.displayError("Animation frame number cannot be less than 1"); textAnimationFrame.requestFocus();
+         * textAnimationFrame.selectAll(); return; } else if (zSlice > (nImage-1)) { MipavUtil.displayError("Animation
+         * Frame number cannot exceed " + String.valueOf(nImage)); textAnimationFrame.requestFocus();
+         * textAnimationFrame.selectAll(); return; }
+         */
         slider.setValue(zSlice);
         updateImages(true);
 
@@ -686,7 +705,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
             stopButton.setBorderPainted(false);
             pause = false;
 
-            // Stop any ongoing  continuous forward, continuous reverse, or reverse
+            // Stop any ongoing continuous forward, continuous reverse, or reverse
             // before launching forward
             fStop fs = new fStop();
 
@@ -728,7 +747,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
             stop = true;
         } else if (command.equals("MagAnimate")) {
 
-            // Doubles the present magnification.  The zoom is always a power of 2.
+            // Doubles the present magnification. The zoom is always a power of 2.
             zoom = 2.0f * componentImage.getZoomX();
             componentImage.setZoom(zoom, zoom);
             validate();
@@ -736,7 +755,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
             setTitle();
         } else if (command.equals("UnMagAnimate")) {
 
-            // Halves the present magnification.  The zoom is always a power of 2.
+            // Halves the present magnification. The zoom is always a power of 2.
             zoom = 0.5f * componentImage.getZoomX();
             componentImage.setZoom(zoom, zoom);
             validate();
@@ -747,7 +766,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
             int compression = 0;
 
-            boolean isBW = (!imageA.isColorImage()) && (imageB == null);
+            boolean isBW = ( !imageA.isColorImage()) && (imageB == null);
 
             JDialogAVIChoice choice = new JDialogAVIChoice(userInterface.getMainFrame(), !isBW);
 
@@ -827,8 +846,8 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                     for (i = 0, k = 0; i < (d.width * d.height); i++, k += 4) {
                         byteBuffer[k] = (byte) 255; // alpha
-                        byteBuffer[k + 1] = (byte) ((pixels[i] >> 16) & 0xFF); // red
-                        byteBuffer[k + 2] = (byte) ((pixels[i] >> 8) & 0xFF); // green
+                        byteBuffer[k + 1] = (byte) ( (pixels[i] >> 16) & 0xFF); // red
+                        byteBuffer[k + 2] = (byte) ( (pixels[i] >> 8) & 0xFF); // green
                         byteBuffer[k + 3] = (byte) (pixels[i] & 0xFF); // blue
                     }
 
@@ -875,11 +894,11 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
                 aviOptions.setAVICompression(1);
 
                 if (imageA.getType() != ModelStorageBase.UBYTE) {
-                    resultImage = new ModelImage(ModelStorageBase.UBYTE, imageA.getExtents(),
-                                                 imageA.getImageName() + "_change");
+                    resultImage = new ModelImage(ModelStorageBase.UBYTE, imageA.getExtents(), imageA.getImageName()
+                            + "_change");
 
                     AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(resultImage, imageA, imageA.getMin(),
-                                                                                 imageA.getMax(), 0.0, 255.0, false);
+                            imageA.getMax(), 0.0, 255.0, false);
 
                     // changeTypeAlgo.setSeparateThread(false);
                     changeTypeAlgo.run();
@@ -902,7 +921,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         } else if (command.equals("ShowNumbers")) {
             showNumbers = menuObj.isMenuItemSelected("Show Z slice numbers");
 
-            if ((nRow > 1) || (nColumn > 1)) { // 4D image - number for each individual z slice
+            if ( (nRow > 1) || (nColumn > 1)) { // 4D image - number for each individual z slice
                 componentImage.displayNumbers(showNumbers);
             } else { // 3D image
                 componentImage.setShowSliceNumber(showNumbers);
@@ -916,10 +935,10 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
             new JDialogBrightness(this, componentImage, origBrightness, origContrast);
         } else if (command.equals("deleteSlice")) {
 
-            // Delete the current slice from the animation.  Note that the software does not actually
-            // delete the slice.  It simply uses a sliceOldNumber table in ViewJFrameAnimate and a
+            // Delete the current slice from the animation. Note that the software does not actually
+            // delete the slice. It simply uses a sliceOldNumber table in ViewJFrameAnimate and a
             // ignoreSlice boolean array in ViewJComponentAnimate to make sure that the image is never
-            // called.  The control panel is rebuild with the slider and labelAnimationFrame having new
+            // called. The control panel is rebuild with the slider and labelAnimationFrame having new
             // values.
             slider.setEnabled(false);
             componentImage.ignoreSlice();
@@ -957,14 +976,14 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Resizes frame and all components.
-     *
-     * @param  event  event that triggered function
+     * 
+     * @param event event that triggered function
      */
     public synchronized void componentResized(ComponentEvent event) {
 
         int width, height;
 
-        if ((getSize().width >= (xScreen - 20)) || (getSize().height >= (yScreen - 20))) {
+        if ( (getSize().width >= (xScreen - 20)) || (getSize().height >= (yScreen - 20))) {
             return;
         }
 
@@ -975,13 +994,12 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
         scrollPane.setSize(width, height - componentY);
 
-        setSize(Math.max(width, minimumToolBarWidth),Math.max(height,minimumHeight));
+        setSize(Math.max(width, minimumToolBarWidth), Math.max(height, minimumHeight));
 
         validate();
         setTitle();
         addComponentListener(this);
         updateImages(true);
-  
 
     }
 
@@ -992,7 +1010,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         setVisible(false);
 
         // imageA.registerAnimateFrame(animateFrame) occurred in
-        // JDialogAnimate.  unregisterAnimateFrame() sets
+        // JDialogAnimate. unregisterAnimateFrame() sets
         // animateFrame to null in modelImage.
         imageA.removeImageDisplayListener(this);
 
@@ -1050,8 +1068,8 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Get control widgets for frame.
-     *
-     * @return  controls
+     * 
+     * @return controls
      */
     public ViewControlsImage getControls() {
         return controls;
@@ -1059,8 +1077,8 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Accessor that returns the reference to imageA.
-     *
-     * @return  image
+     * 
+     * @return image
      */
     public ModelImage getImageA() {
 
@@ -1073,8 +1091,8 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Accessor that returns the reference to imageB.
-     *
-     * @return  imageB
+     * 
+     * @return imageB
      */
     public ModelImage getImageB() {
 
@@ -1088,28 +1106,28 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
     /**
      * Does nothing.
      */
-    public void removeControls() { }
+    public void removeControls() {}
 
     /**
      * Does nothing.
-     *
-     * @param  active  DOCUMENT ME!
+     * 
+     * @param active DOCUMENT ME!
      */
-    public void setActiveImage(int active) { }
+    public void setActiveImage(int active) {}
 
     /**
      * Does nothing.
-     *
-     * @param  value  DOCUMENT ME!
+     * 
+     * @param value DOCUMENT ME!
      */
-    public void setAlphaBlend(int value) { }
+    public void setAlphaBlend(int value) {}
 
     /**
-     * Sets the brightness and contrast of the component image. Set all slices to have the new brightness and constrast.
+     * Sets the brightness and contrast of the component image. Set all slices to have the new brightness and contrast.
      * Results in createImage producing an Image img[slice] for every slice.
-     *
-     * @param  brightness  Brightness to set.
-     * @param  contrast    Contrast to set.
+     * 
+     * @param brightness Brightness to set.
+     * @param contrast Contrast to set.
      */
     public void setBrightness(int brightness, float contrast) {
         origBrightness = brightness;
@@ -1120,12 +1138,12 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
     /**
      * Does nothing.
      */
-    public void setControls() { }
+    public void setControls() {}
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  doDispose  DOCUMENT ME!
+     * 
+     * @param doDispose DOCUMENT ME!
      */
     public void setDisposeImages(boolean doDispose) {
         this.disposeImage = doDispose;
@@ -1133,16 +1151,15 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Does nothing.
-     *
-     * @param  flag  DOCUMENT ME!
+     * 
+     * @param flag DOCUMENT ME!
      */
-    public void setEnabled(boolean flag) { }
-
+    public void setEnabled(boolean flag) {}
 
     /**
      * Sets the slider value (for invoking save image from dialog).
-     *
-     * @param  fps  int frames per second
+     * 
+     * @param fps int frames per second
      */
     public void setFramesPerSecond(int fps) {
 
@@ -1152,22 +1169,22 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Does nothing.
-     *
-     * @param  _imageB  DOCUMENT ME!
+     * 
+     * @param _imageB DOCUMENT ME!
      */
-    public void setImageB(ModelImage _imageB) { }
+    public void setImageB(ModelImage _imageB) {}
 
     /**
      * Does nothing.
-     *
-     * @param  paintBitmapSwitch  DOCUMENT ME!
+     * 
+     * @param paintBitmapSwitch DOCUMENT ME!
      */
-    public void setPaintBitmapSwitch(boolean paintBitmapSwitch) { }
+    public void setPaintBitmapSwitch(boolean paintBitmapSwitch) {}
 
     /**
      * Sets the RGB LUT table for ARGB image A.
-     *
-     * @param  RGBT  the new RGB LUT to be applied to the image
+     * 
+     * @param RGBT the new RGB LUT to be applied to the image
      */
     public void setRGBTA(ModelRGB RGBT) {
 
@@ -1178,8 +1195,8 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Sets the RGB LUT table for ARGB image B.
-     *
-     * @param  RGBT  the new RGB LUT to be applied to the image
+     * 
+     * @param RGBT the new RGB LUT to be applied to the image
      */
     public void setRGBTB(ModelRGB RGBT) {
 
@@ -1190,8 +1207,8 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Sets the slice to be displayed and updates title frame.
-     *
-     * @param  slice  indicates image slice to be displayed
+     * 
+     * @param slice indicates image slice to be displayed
      */
     public void setSlice(int slice) {
 
@@ -1208,10 +1225,10 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Does nothing.
-     *
-     * @param  slice  DOCUMENT ME!
+     * 
+     * @param slice DOCUMENT ME!
      */
-    public void setTimeSlice(int slice) { }
+    public void setTimeSlice(int slice) {}
 
     /**
      * Set the title of the frame with the image name and magnification.
@@ -1230,8 +1247,8 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Sets values based on knob along slider.
-     *
-     * @param  e  Event that triggered this function
+     * 
+     * @param e Event that triggered this function
      */
     public void stateChanged(ChangeEvent e) {
         Object source = e.getSource();
@@ -1256,16 +1273,16 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Does nothing.
-     *
-     * @param  sX  DOCUMENT ME!
-     * @param  sY  DOCUMENT ME!
+     * 
+     * @param sX DOCUMENT ME!
+     * @param sY DOCUMENT ME!
      */
-    public void updateFrame(float sX, float sY) { }
+    public void updateFrame(float sX, float sY) {}
 
     /**
      * Does nothing.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public boolean updateImageExtents() {
         return false;
@@ -1273,8 +1290,8 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Does nothing.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public final boolean updateImages() {
         return true;
@@ -1282,10 +1299,10 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * This methods calls the componentImage's update method to redraw the screen. Without LUT changes.
-     *
-     * @param   forceShow  unused parameter
-     *
-     * @return  boolean confirming successful update
+     * 
+     * @param forceShow unused parameter
+     * 
+     * @return boolean confirming successful update
      */
     public final boolean updateImages(boolean forceShow) {
 
@@ -1301,13 +1318,13 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Does nothing.
-     *
-     * @param   LUTa        DOCUMENT ME!
-     * @param   LUTb        DOCUMENT ME!
-     * @param   forceShow   DOCUMENT ME!
-     * @param   interpMode  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param LUTa DOCUMENT ME!
+     * @param LUTb DOCUMENT ME!
+     * @param forceShow DOCUMENT ME!
+     * @param interpMode DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public final boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean forceShow, int interpMode) {
         return true;
@@ -1315,22 +1332,22 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Does nothing.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowActivated(WindowEvent event) { }
+    public void windowActivated(WindowEvent event) {}
 
     /**
      * Does nothing.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowClosed(WindowEvent event) { }
+    public void windowClosed(WindowEvent event) {}
 
     /**
      * Stops thread, calls close.
-     *
-     * @param  event  event that triggered function
+     * 
+     * @param event event that triggered function
      */
     public void windowClosing(WindowEvent event) {
         stop = true;
@@ -1340,24 +1357,24 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Does nothing.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowDeactivated(WindowEvent event) { }
+    public void windowDeactivated(WindowEvent event) {}
 
     /**
      * Does nothing.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowDeiconified(WindowEvent event) { }
+    public void windowDeiconified(WindowEvent event) {}
 
     /**
      * Does nothing.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowIconified(WindowEvent event) { }
+    public void windowIconified(WindowEvent event) {}
 
     // ************************************************************************
     // **************************** Window Events *****************************
@@ -1365,19 +1382,19 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Does nothing.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowOpened(WindowEvent event) { }
+    public void windowOpened(WindowEvent event) {}
 
     /**
      * Tests that the entered parameter is in range.
-     *
-     * @param   str       the value entered by the user
-     * @param   minValue  the minimum value this variable may be set to
-     * @param   maxValue  the maximum value this variable may be set to
-     *
-     * @return  boolean result of test
+     * 
+     * @param str the value entered by the user
+     * @param minValue the minimum value this variable may be set to
+     * @param maxValue the maximum value this variable may be set to
+     * 
+     * @return boolean result of test
      */
     protected boolean testParameter(String str, double minValue, double maxValue) {
         double tmp;
@@ -1385,9 +1402,9 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         try {
             tmp = Double.valueOf(str).doubleValue();
 
-            if ((tmp > maxValue) || (tmp < minValue)) {
-                MipavUtil.displayError("Value is out of range: " + String.valueOf(minValue) + " , " +
-                                       String.valueOf(maxValue));
+            if ( (tmp > maxValue) || (tmp < minValue)) {
+                MipavUtil.displayError("Value is out of range: " + String.valueOf(minValue) + " , "
+                        + String.valueOf(maxValue));
 
                 return false;
             } else {
@@ -1402,13 +1419,13 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Method that adds components to the control paenl.
-     *
-     * @param  c    component added to the control panel
-     * @param  gbc  GridBagConstraints of added component
-     * @param  x    grdix location
-     * @param  y    gridy location
-     * @param  w    gridwidth
-     * @param  h    gridheight
+     * 
+     * @param c component added to the control panel
+     * @param gbc GridBagConstraints of added component
+     * @param x grdix location
+     * @param y gridy location
+     * @param w gridwidth
+     * @param h gridheight
      */
     private void addControlPanel(Component c, GridBagConstraints gbc, int x, int y, int w, int h) {
         gbc.gridx = x;
@@ -1420,10 +1437,10 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Method to build the toolbar for the Animate frame.
-     *
-     * @param   al  Action listener (this frame)
-     *
-     * @return  The animation toolbar
+     * 
+     * @param al Action listener (this frame)
+     * 
+     * @return The animation toolbar
      */
     private JToolBar buildAnimateToolBar(ActionListener al) {
         JToolBar animateToolBar = new JToolBar();
@@ -1614,13 +1631,13 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         controlPanel.setBorder(new EtchedBorder());
         controlPanel.setLayout(cpGBL);
 
-        labelAnimationFrame = new JLabel(" Frame index (0 - " + String.valueOf(nImage-1) + ")");
+        labelAnimationFrame = new JLabel(" Frame index (0 - " + String.valueOf(nImage - 1) + ")");
         labelAnimationFrame.setForeground(Color.black);
         labelAnimationFrame.setFont(MipavUtil.font12);
         labelAnimationFrame.setEnabled(true);
         addControlPanel(labelAnimationFrame, cpGBC, 0, 0, 2, 1);
 
-        slider = new JSlider(0, nImage-1, zSlice);
+        slider = new JSlider(0, nImage - 1, zSlice);
         slider.setFont(MipavUtil.font12);
         slider.setEnabled(true);
         slider.setMinorTickSpacing(nImage / 10);
@@ -1630,7 +1647,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         labelTable = new Hashtable();
         labelTable.put(new Integer(0), createLabel("0"));
         labelTable.put(new Integer(zSlice), createLabel(String.valueOf(zSlice)));
-        labelTable.put(new Integer(nImage-1), createLabel(String.valueOf(nImage-1)));
+        labelTable.put(new Integer(nImage - 1), createLabel(String.valueOf(nImage - 1)));
         slider.setLabelTable(labelTable);
         slider.setPaintLabels(true);
         addControlPanel(slider, cpGBC, 3, 0, 8, 1);
@@ -1692,18 +1709,12 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
             return;
         }
 
-        openingMenuBar.add(menuObj.makeMenu("File", false,
-                                            new JComponent[] {
-                                                menuObj.buildMenuItem("Save image as *.avi", "SaveImageAs", 0, null,
-                                                                      false), separator,
-                                                menuObj.buildMenuItem("Close", "CloseAnimate", 0, null, false)
-                                            }));
+        openingMenuBar.add(menuObj.makeMenu("File", false, new JComponent[] {
+                menuObj.buildMenuItem("Save image as *.avi", "SaveImageAs", 0, null, false), separator,
+                menuObj.buildMenuItem("Close", "CloseAnimate", 0, null, false)}));
 
-        openingMenuBar.add(menuObj.makeMenu("Options", false,
-                                            new JComponent[] {
-                                                menuObj.buildCheckBoxMenuItem("Show Z slice numbers", "ShowNumbers",
-                                                                              true)
-                                            }));
+        openingMenuBar.add(menuObj.makeMenu("Options", false, new JComponent[] {menuObj.buildCheckBoxMenuItem(
+                "Show Z slice numbers", "ShowNumbers", true)}));
     }
 
     /**
@@ -1780,8 +1791,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
             // tells if log magnitude display is used with complex images
             logMagDisplay = imageA.getLogMagDisplay();
             componentImage = new ViewJComponentAnimate(controlFrame, imageA, LUTa, imageBufferA, imageB, LUTb,
-                                                       imageBufferB, pixBuffer, zoom, extents, logMagDisplay,
-                                                       alphaBlend, disposeImage);
+                    imageBufferB, pixBuffer, zoom, extents, logMagDisplay, alphaBlend, disposeImage);
 
             componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, paintBuffer);
             componentImage.setRGBTA(RGBTA);
@@ -1791,7 +1801,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
             // This must also be set in 3D or a null pointer error occurs in buildImageObject
             componentImage.setBorderCol(borderCol);
 
-            if ((nRow > 1) || (nColumn > 1)) {
+            if ( (nRow > 1) || (nColumn > 1)) {
 
                 // Then this is a 3D image constructed from a 4D image.
                 componentImage.set4DSpecs(originalZDim, nColumn, nRow);
@@ -1835,7 +1845,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
         // The component image will be displayed in a scrollpane.
         scrollPane = new JScrollPane(innerPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                     JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         scrollPane.setBounds(0, 0, scrollPaneSize + 3, scrollPaneSize + 3);
         getContentPane().add(scrollPane);
@@ -1852,10 +1862,10 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Helper method to create a label with the proper font and font color.
-     *
-     * @param   title  Text of the label.
-     *
-     * @return  New label.
+     * 
+     * @param title Text of the label.
+     * 
+     * @return New label.
      */
     private JLabel createLabel(String title) {
         JLabel label = new JLabel(title);
@@ -1868,8 +1878,8 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
     /**
      * Makes a separator for the use in the toolbars.
-     *
-     * @return  Separator button.
+     * 
+     * @return Separator button.
      */
     private JButton makeSeparator() {
         JButton separator = new JButton(MipavUtil.getIcon("separator.gif"));
@@ -1880,7 +1890,8 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         return (separator);
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * continuous backward and forward - continuously cycles from first to last slice unless a pause suspends the loop
@@ -1903,7 +1914,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
             boolean forward = true;
 
-            for (zShow = 0; (!stop);) {
+            for (zShow = 0; ( !stop);) {
 
                 if (zShow == 0) {
                     startTime = System.currentTimeMillis();
@@ -1921,7 +1932,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                     try {
                         sleep(newmsWait);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 } // end of if (msWait > msElapsed)
                 else {
 
@@ -1929,14 +1940,14 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                         // so chance to respond to another button
                         sleep(1L);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 }
 
                 while (pause) {
 
                     try {
                         sleep(5L);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 } // end of while(pause)
 
                 if (zShow == (nImage - 1)) {
@@ -1993,12 +2004,12 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                 try {
                     sleep(5L);
-                } catch (InterruptedException error) { }
+                } catch (InterruptedException error) {}
             }
 
             stop = false;
 
-            if (!cfRun) {
+            if ( !cfRun) {
                 CBackForward cbf = new CBackForward();
 
                 cbf.start();
@@ -2025,7 +2036,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         public void run() {
             cfRun = true;
 
-            for (zShow = 0; (!stop); zShow++) {
+            for (zShow = 0; ( !stop); zShow++) {
 
                 if (zShow == 0) {
                     startTime = System.currentTimeMillis();
@@ -2041,7 +2052,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                     try {
                         sleep(newmsWait);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 } // end of if (msWait > msElapsed)
                 else {
 
@@ -2049,14 +2060,14 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                         // so chance to respond to another button
                         sleep(1L);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 }
 
                 while (pause) {
 
                     try {
                         sleep(5L);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 } // end of while(pause)
 
                 if (zShow == (nImage - 1)) {
@@ -2109,12 +2120,12 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                 try {
                     sleep(5L);
-                } catch (InterruptedException error) { }
+                } catch (InterruptedException error) {}
             }
 
             stop = false;
 
-            if (!cfRun) {
+            if ( !cfRun) {
                 CForward cf = new CForward();
 
                 cf.start();
@@ -2143,7 +2154,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
             crRun = true;
             startTime = System.currentTimeMillis();
 
-            for (zShow = nImage - 1; (!stop); zShow--) {
+            for (zShow = nImage - 1; ( !stop); zShow--) {
                 localTime = System.currentTimeMillis();
                 updateImages(true);
                 localTime2 = System.currentTimeMillis();
@@ -2154,7 +2165,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                     try {
                         sleep(newmsWait);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 } // end of if (msWait > msElapsed)
                 else {
 
@@ -2162,14 +2173,14 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                         // so chance to respond to another button
                         sleep(1L);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 }
 
                 while (pause) {
 
                     try {
                         sleep(5L);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 } // end of while(pause)
 
                 if (zShow == 0) {
@@ -2218,12 +2229,12 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                 try {
                     sleep(5L);
-                } catch (InterruptedException error) { }
+                } catch (InterruptedException error) {}
             }
 
             stop = false;
 
-            if (!crRun) {
+            if ( !crRun) {
                 CReverse cr = new CReverse();
 
                 cr.start();
@@ -2252,7 +2263,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
             fRun = true;
             startTime = System.currentTimeMillis();
 
-            for (zShow = 0; (zShow < nImage) && (!stop); zShow++) {
+            for (zShow = 0; (zShow < nImage) && ( !stop); zShow++) {
                 localTime = System.currentTimeMillis();
                 updateImages(true);
                 localTime2 = System.currentTimeMillis();
@@ -2263,7 +2274,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                     try {
                         sleep(newmsWait);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 } // end of if (msWait > msElapsed)
                 else {
 
@@ -2271,14 +2282,14 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                         // so chance to respond to another button
                         sleep(1L);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 }
 
                 while (pause) {
 
                     try {
                         sleep(5L);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 } // end of while(pause)
             } // end of for (zShow = 0; (zShow < nImage) && (!stop);zShow++)
 
@@ -2324,12 +2335,12 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                 try {
                     sleep(5L);
-                } catch (InterruptedException error) { }
+                } catch (InterruptedException error) {}
             }
 
             stop = false;
 
-            if (!fRun) {
+            if ( !fRun) {
                 Forward f = new Forward();
 
                 f.start();
@@ -2358,7 +2369,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
             rRun = true;
             startTime = System.currentTimeMillis();
 
-            for (zShow = nImage - 1; (zShow >= 0) && (!stop); zShow--) {
+            for (zShow = nImage - 1; (zShow >= 0) && ( !stop); zShow--) {
                 localTime = System.currentTimeMillis();
                 updateImages(true);
                 localTime2 = System.currentTimeMillis();
@@ -2369,7 +2380,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                     try {
                         sleep(newmsWait);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 } // end of if (msWait > msElapsed)
                 else {
 
@@ -2377,14 +2388,14 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                         // so chance to respond to another button press
                         sleep(1L);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 }
 
                 while (pause) {
 
                     try {
                         sleep(5L);
-                    } catch (InterruptedException error) { }
+                    } catch (InterruptedException error) {}
                 } // end of while(pause)
             } // end of for (zShow = nImage - 1; (zShow >= 0) && (!stop);zShow--)
 
@@ -2429,12 +2440,12 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                 try {
                     sleep(5L);
-                } catch (InterruptedException error) { }
+                } catch (InterruptedException error) {}
             }
 
             stop = false;
 
-            if (!rRun) {
+            if ( !rRun) {
                 Reverse r = new Reverse();
 
                 r.start();
