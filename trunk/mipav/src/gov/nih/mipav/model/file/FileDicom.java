@@ -366,24 +366,34 @@ public class FileDicom extends FileDicomBase {
         raFile.seek(0);
         boolean endianess = FileBase.LITTLE_ENDIAN;
 
-        // read first byte
-        byte b = raFile.readByte();
-        if (b == 8) {
-            // could be dicom 2...need to find at least 1 more 08
-            // endianess is LITTLE ENDIAN
-            endianess = FileBase.LITTLE_ENDIAN;
-            raFile.skipBytes(1);
-        } else {
-            b = raFile.readByte();
-            if (b == 8) {
-                // could be dicom 2...need to find at least 1 more 08
-                // endianess is BIG ENDIAN
-                endianess = FileBase.BIG_ENDIAN;
-            } else {
-                // definitely not dicom 2....since the first tag is not 08
-                return false;
-            }
-        }
+        //read first byte
+    	byte b = raFile.readByte();
+    	if(b == 8) {
+    		b = raFile.readByte();
+    		if(b == 0) {
+        		//could be dicom 2...need to find at least 1 more 08
+        		//endianess is LITTLE ENDIAN
+        		endianess = FileBase.LITTLE_ENDIAN;
+    		}else{
+    			//definitely not dicom 2....since the first tag is not 08
+    			return false;
+    		}
+    	}else {
+    		if(b == 0) {
+	    		b = raFile.readByte();
+	    		if(b == 8) {
+	    			//could be dicom 2...need to find at least 1 more 08
+	    			//endianess is BIG ENDIAN
+	    			endianess = FileBase.BIG_ENDIAN;
+	    		}else {
+	    			//definitely not dicom 2....since the first tag is not 08
+	    			return false;
+	    		}
+    		}else {
+    			//definitely not dicom 2....since the first tag is not 08
+    			return false;
+    		}
+    	}
 
         // skip next 2 bytes
         raFile.skipBytes(2);
@@ -415,20 +425,31 @@ public class FileDicom extends FileDicomBase {
         if (endianess == FileBase.LITTLE_ENDIAN) {
             b = raFile.readByte();
             if (b == 8) {
-                // is dicom...since we have at least 2 08 tags
-                return true;
+            	b = raFile.readByte();
+        		if(b == 0) {
+        			// is dicom...since we have at least 2 08 tags
+            		return true;
+        		}else{
+        			//not dicom
+        			return false;
+        		}
             } else {
                 // not dicom
                 return false;
             }
         } else {
-            raFile.skipBytes(1);
             b = raFile.readByte();
-            if (b == 8) {
-                // is dicom...since we have at least 2 08 tags
-                return true;
-            } else {
-                // not dicom
+            if(b == 0) {
+            	b = raFile.readByte();
+	            if (b == 8) {
+	                // is dicom...since we have at least 2 08 tags
+	                return true;
+	            } else {
+	                // not dicom
+	                return false;
+	            }
+            }else {
+            	// not dicom
                 return false;
             }
         }
