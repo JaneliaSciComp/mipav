@@ -41,6 +41,7 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
      */
     public void runAlgorithm() {
 
+    	fireProgressStateChanged("Processing data...");
         if (srcImage == null) {
             displayError("Source Image is null");
 
@@ -97,19 +98,22 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
 	
 		ViewUserInterface.getReference().getMessageFrame().append(appMessage, ViewJFrameMessage.DATA);
 		
+		AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(destImage, 7, 0, 65536, 0, 65536, false);
+		changeTypeAlgo.run();
+		
 		for(int i=0; i<xDim; i++) 
 			for(int j=0; j<yDim; j++) 
 				destImage.set(i, j, srcImage.get(i, j).doubleValue()*slope + intercept);
+		
+		fireProgressStateChanged(70);
 		
 		FileDicomTagTable destTable = ((FileInfoDicom)destImage.getFileInfo()[0]).getTagTable();
 		destTable.setValue("2005,100E", 1);
 		destTable.setValue("0028,1052", 1);
 		destTable.setValue("0028,1053", 1);
 		
-		//AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(destImage, 7, 0, 5000, 0, 10000, false);
-		//changeTypeAlgo.run();
-		
-		//new ViewJFrameImage(destImage);
+		destImage.calcMinMax();
+		fireProgressStateChanged(85);
 		
 		setCompleted(true);
     }
@@ -142,25 +146,29 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
 							"\nIntercept: "+dec.format(intercept);
 		ViewUserInterface.getReference().getMessageFrame().append(appMessage, ViewJFrameMessage.DATA);
 		
-		for(int k=0; k<zDim; k++) 
-			for(int i=0; i<xDim; i++) 
-				for(int j=0; j<yDim; j++) 
-					destImage.set(i, j, k, srcImage.get(i, j, k).doubleValue()*slope + intercept);
+		AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(destImage, 7, 0, 65536, 0, 65536, false);
+		changeTypeAlgo.run();
 		
+		for(int k=0; k<zDim; k++) {
+			for(int i=0; i<xDim; i++) {
+				for(int j=0; j<yDim; j++) {
+					destImage.set(i, j, k, srcImage.get(i, j, k).doubleValue()*slope + intercept);				
+				}
+			}
+			fireProgressStateChanged((k/zDim)*70);
+		}
+
 		for(int k=0; k<zDim; k++) {
 			FileDicomTagTable destTable = ((FileInfoDicom)destImage.getFileInfo()[k]).getTagTable();
 			destTable.setValue("2005,100E", 1);
 			destTable.setValue("0028,1052", dec.format(intercept));
 			destTable.setValue("0028,1053", dec.format(slope));
+			fireProgressStateChanged(70 + (k/zDim)*10);
 		}
 		
-		//new ViewJFrameImage((ModelImage)destImage.clone());
+		destImage.calcMinMax();
+		fireProgressStateChanged(85);
 
-		//AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(destImage, 7, 0, 5000, 0, 55536, false);
-		//changeTypeAlgo.run();
-        
-		//new ViewJFrameImage(destImage);
-		
 		setCompleted(true);
     }
 }

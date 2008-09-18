@@ -152,11 +152,28 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
             
             if ((philipsAlgo.isCompleted() == true) && (resultImage != null)) {
 
-                // The algorithm has completed and produced a new image to be displayed.
+                progressBar.setMessage("Saving image...");
+            	
+            	// The algorithm has completed and produced a new image to be displayed.
                 updateFileInfo(image, resultImage);
 
                 resultImage.clearMask();
 
+                FileIO fileIO = new FileIO();
+                FileWriteOptions opts = new FileWriteOptions(true);
+                opts.setFileType(FileUtility.XML);
+                opts.setFileDirectory(image.getImageDirectory()+"corrected"+File.separator);
+                opts.setFileName(image.getImageName()+"_corrected");
+                if(image.getNDims() > 2) {
+	                opts.setBeginSlice(0);
+	                opts.setEndSlice(resultImage.getExtents()[2]-1);
+                }
+                opts.setIsScript(true);
+                opts.setOptionsSet(true); 
+                fileIO.writeImage(resultImage, opts);
+                
+                progressBar.dispose();
+                
                 try {
                     new ViewJFrameImage(resultImage);
                     
@@ -164,15 +181,9 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
-                FileIO fileIO = new FileIO();
-                FileWriteOptions opts = new FileWriteOptions(true);
-                opts.setFileType(FileUtility.DICOM);
-                opts.setFileDirectory(image.getImageDirectory()+"corrected"+File.separator);
-                opts.setFileName(image.getImageFileName());
-                //opts.setBeginSlice(0);
-                //opts.setEndSlice(0);
-                opts.setOptionsSet(true);
-                fileIO.writeImage(resultImage, opts);
+                
+                MipavUtil.displayInfo("Image saved as "+image.getImageName()+"_corrected\n"+
+                						"in "+image.getImageDirectory()+"corrected"+File.separator);
             } else if (resultImage != null) {
 
                 // algorithm failed but result image still has garbage

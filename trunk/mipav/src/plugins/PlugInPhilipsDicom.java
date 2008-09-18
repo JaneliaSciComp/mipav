@@ -25,7 +25,7 @@ public class PlugInPhilipsDicom implements PlugInAlgorithm {
         if (parentFrame instanceof ViewJFrameImage) {
             new PlugInDialogPhilipsDicom(parentFrame, image);
         } else {
-            MipavUtil.displayError("PlugInNewGeneric only runs on an image frame.");
+            MipavUtil.displayError("PlugInPhilipsDicom only runs on an image frame.");
         }
     }
 }
