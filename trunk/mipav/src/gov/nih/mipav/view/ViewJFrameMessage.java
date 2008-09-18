@@ -6,6 +6,10 @@ import gov.nih.mipav.model.scripting.actions.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.font.*;
+import java.text.*;
+import java.util.Vector;
+import java.util.Enumeration;
 
 import java.io.*;
 
@@ -98,35 +102,122 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
                 if (pjob != null) {
 
                     String textString = ((ScrollTextArea)tabbedPane.getSelectedComponent()).getTextArea().getText();
-                    File outFile = new File("out.txt");
-                    FileWriter out = new FileWriter(outFile);
-                    out.write(textString);
-                    out.close();
-                    FileInputStream fis = new FileInputStream(outFile);
-                    BufferedReader br = new BufferedReader(new InputStreamReader(fis));
-                    //FileReader fr = new FileReader(outFile);
-                    //BufferedReader br = new BufferedReader(fr);
-                    Graphics g = null;  // refers to current page
+                    int tabCount = 0;
+                    int lineCount = 0;
+                    int currentTabOnLine = 0;
+                    int maxTabOnLine = 0;
+                    int i;
+                    int j;
+                    boolean lastCharTab = false;
+                    for (i = 0; i < textString.length(); i++) {
+                        if ((textString.charAt(i) == '\t') && (!lastCharTab)) {
+                            lastCharTab = true;
+                            tabCount++;
+                            currentTabOnLine++;
+                            if (currentTabOnLine > maxTabOnLine) {
+                                maxTabOnLine = currentTabOnLine;
+                            }
+                        }
+                        else if ((textString.charAt(i) == '\t') && (lastCharTab)) {
+                            
+                        }
+                        else if (textString.charAt(i) == '\n') {
+                            lastCharTab = false;
+                            lineCount++;
+                            currentTabOnLine = 0;
+                        }
+                        else {
+                            lastCharTab = false;
+                        }
+                    }
+                    int maxCharsBeforeTab[] = new int[maxTabOnLine];
+                    int charNum = 0;
+                    int tabNum = 0;
+                    lastCharTab = false;
+                    for (i = 0; i < textString.length(); i++) {
+                        if ((textString.charAt(i) == '\t') && (!lastCharTab)) {
+                            lastCharTab = true;
+                            if (charNum > maxCharsBeforeTab[tabNum]) {
+                                maxCharsBeforeTab[tabNum++] = charNum;
+                            }
+                            charNum = 0;
+                        }
+                        else if ((textString.charAt(i) == '\t') && (lastCharTab)) {
+                            
+                        }
+                        else if (textString.charAt(i) == '\n') {
+                            lastCharTab = false;
+                            charNum = 0;
+                            tabNum = 0;
+                        }
+                        else {
+                            lastCharTab = false;
+                            charNum++;
+                        }
+                    }
+                    String paddedString[] = new String[lineCount];
+                    int startPos = 0;
+                    int currentPos = 0;
+                    charNum = 0;
+                    tabNum = 0;
+                    int spacesNeeded;
+                    int lineNum = 0;
+                    lastCharTab = false;
+                    for (i = 0; i < textString.length(); i++) {
+                        if ((textString.charAt(i) == '\t') && (!lastCharTab)) {
+                            lastCharTab = true;
+                             spacesNeeded = maxCharsBeforeTab[tabNum++] - charNum + 2;
+                             charNum = 0;
+                             if (paddedString[lineNum] == null) {
+                                 paddedString[lineNum] = textString.substring(startPos, currentPos);
+                             }
+                             else {
+                             paddedString[lineNum] = 
+                                 paddedString[lineNum].concat(textString.substring(startPos, currentPos));
+                             }
+                             startPos = currentPos + 1;
+                             for (j = 0; j < spacesNeeded; j++) {
+                                 paddedString[lineNum] = paddedString[lineNum].concat(" ");
+                             }
+                        }
+                        else if ((textString.charAt(i) == '\t') && (lastCharTab)){
+                            
+                        }
+                        else if (textString.charAt(i) == '\n') {
+                            lastCharTab = false;
+                            charNum = 0;
+                            if (paddedString[lineNum] == null) {
+                                paddedString[lineNum] = textString.substring(startPos, currentPos + 1);
+                            }
+                            else {
+                                paddedString[lineNum] = 
+                                paddedString[lineNum].concat(textString.substring(startPos, currentPos + 1));
+                            }
+                            tabNum = 0;
+                            lineNum++;
+                            startPos = currentPos + 1;
+                        }
+                        else {
+                            lastCharTab = false;
+                            charNum++;
+                        }
+                        currentPos++;
+                    }
+                    
+                    Graphics g = null;
                     //Dimension pDim = pjob.getPageDimension();
                     //int pRes = pjob.getPageResolution();
                     //System.out.println("Page size " + pDim + "; Res " + pRes);
                     g = pjob.getGraphics();
                     g.setColor(Color.black);
-                    //g.setFont(new Font("SansSerif", Font.PLAIN, 12));
-                    g.setFont(MipavUtil.font12);
+                    g.setFont(new Font("Courier", Font.PLAIN, 12));
+                    int x = 20;
                     int y = 100;
-                    String line;
-                    try {
-                      while ((line = br.readLine()) != null) {
-                        // g.drawString does not respond to tab characters
-                        // Must use java.awt.font.LineBreakMeasurer
-                        //System.out.println(line);
-                        g.drawString(line, 20, y+=18);
-                      }
-                    } catch (IOException e) {
-                      System.err.println(e);
+                    for (i = 0; i < lineCount; i++) {
+                        g.drawString(paddedString[i], x, y);
+                        y += 18;
                     }
-                    // g.drawString("Page " + pgNum, 300, 300);
+                
                     g.dispose(); // flush page
                     pjob.end();  // total end of print job.
                     pjob = null;  // avoid redundant calls to pjob.end()
