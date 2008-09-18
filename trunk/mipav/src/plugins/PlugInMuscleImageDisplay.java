@@ -2450,17 +2450,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    mainPanel.setForeground(Color.black);
 		    mainPanel.setBorder(MipavUtil.buildTitledBorder("VOI Selection"));
 		    
-		    //GridBagConstraints gbc = new GridBagConstraints();
-		    //gbc.anchor = GridBagConstraints.CENTER;
-		    //gbc.fill = GridBagConstraints.HORIZONTAL;
-		    //gbc.gridx = 0;
-		    //gbc.gridy = 0;
-		    //gbc.ipadx = 0;
-		        
-		    //String propStr = new String("Use the propogating buttons below to allow MIPAV to generate similar VOIs "+
-			//"on sequential slices.  First select the VOI you would like to propogate.");
-		    //JLabel propLabel = new JLabel(propStr);
-		    
 		    selectText = new JLabel("");
 		    warningText = new JLabel("");
 		    
@@ -2475,15 +2464,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    JPanel buttonPanel = new JPanel();
 		    
 		    if(multipleSlices) {
-		    	/*GridBagConstraints gbc = new GridBagConstraints();
-		    	gbc.anchor = GridBagConstraints.CENTER;
-		    	gbc.fill = GridBagConstraints.HORIZONTAL;
-		    	gbc.gridx = 0;
-		    	gbc.gridy = 0;
-		    	
-		    	String propStr = new String("Use the propogating buttons below to allow MIPAV to generate similar VOIs "+
-		    			"on sequential slices.  First select the VOI you would like to propogate.");
-		    	JLabel propLabel = new JLabel(propStr);*/
 		    	
 		    	JMenuItem item1, item2, item3;
 		    	propMenu = ViewMenuBuilder.buildMenu("Propogate", 0, true);
@@ -2920,7 +2900,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    instructionPanel.setForeground(Color.black);
 		    instructionPanel.setBorder(MipavUtil.buildTitledBorder("Instructions"));
 		    instructionLabel = new JLabel[4];
-		    instructionLabel[0] = new JLabel("1) Press an object button.\n\r");
+		    instructionLabel[0] = new JLabel("1) Press an object button.");
 		    instructionLabel[1] = new JLabel("2) A dialog box will prompt you to draw VOI(s) around that object.");
 		    instructionLabel[2] = new JLabel("3) Once drawn the check box next to the button will be checked.");
 		    instructionLabel[3] = new JLabel("4) Press that button again to review your VOI(s).");
