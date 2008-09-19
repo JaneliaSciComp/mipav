@@ -161,7 +161,7 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
 
                 FileIO fileIO = new FileIO();
                 FileWriteOptions opts = new FileWriteOptions(true);
-                opts.setFileType(FileUtility.ANALYZE);
+                opts.setFileType(FileUtility.XML);
                 opts.setFileDirectory(image.getImageDirectory()+"corrected"+File.separator);
                 opts.setFileName(image.getImageName()+"_corrected");
                 if(image.getNDims() > 2) {
