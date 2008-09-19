@@ -92,9 +92,9 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
     	//would be surprised if this is correct
     	double slope = (double1053 / (double100E * double1053)) / 1000;
     	
-    	DecimalFormat dec = new DecimalFormat("0.##");
+    	DecimalFormat dec = new DecimalFormat("0.######");
 		String appMessage = "Slope:\t"+dec.format(slope)+
-							"\nIntercept: "+dec.format(intercept);
+							"\nIntercept:\t"+dec.format(intercept)+"\n";
 	
 		ViewUserInterface.getReference().getMessageFrame().append(appMessage, ViewJFrameMessage.DATA);
 		
@@ -142,8 +142,8 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
     	double slope = (double1053 / (double100E * double1053)) / 1000;
     	
     	DecimalFormat dec = new DecimalFormat("0.######");
-		String appMessage = "Slope:\t"+dec.format(slope)+
-							"\nIntercept: "+dec.format(intercept);
+    	String appMessage = "Slope:\t"+dec.format(slope)+
+							"\nIntercept:\t"+dec.format(intercept)+"\n";
 		ViewUserInterface.getReference().getMessageFrame().append(appMessage, ViewJFrameMessage.DATA);
 		
 		AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(destImage, 7, 0, 65536, 0, 65536, false);

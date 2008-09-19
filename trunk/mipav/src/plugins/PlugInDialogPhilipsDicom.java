@@ -151,7 +151,7 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
             image.clearMask();
             
             if ((philipsAlgo.isCompleted() == true) && (resultImage != null)) {
-
+            	progressBar.setVisible(true);
                 progressBar.setMessage("Saving image...");
             	
             	// The algorithm has completed and produced a new image to be displayed.
@@ -170,6 +170,9 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
                 }
                 opts.setIsScript(true);
                 opts.setOptionsSet(true); 
+                File f = new File(image.getImageDirectory()+"corrected"+File.separator);
+                if(!f.exists())
+                	f.mkdir();
                 fileIO.writeImage(resultImage, opts);
                 
                 progressBar.dispose();
