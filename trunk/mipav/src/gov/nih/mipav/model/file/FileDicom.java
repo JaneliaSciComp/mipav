@@ -744,7 +744,7 @@ public class FileDicom extends FileDicomBase {
                     } catch (NullPointerException e) {
                         System.err.println("Null pointer exception while setting value.  Trying to put new tag.");
                     }
-
+                  
                     // fileInfo.setLength(name, len);
                     Preferences.debug("Finished sequence tags.\n\n", Preferences.DEBUG_FILEIO);
                 }
@@ -2215,7 +2215,7 @@ public class FileDicom extends FileDicomBase {
             inSQ = true;
             getNextElement(endianess);
             nameSQ = convertGroupElement(groupWord, elementWord);
-
+            
             // System.err.println("nameSQ " + nameSQ);
             inSQ = oldSQ;
         }
@@ -2223,7 +2223,7 @@ public class FileDicom extends FileDicomBase {
         // Integer.toString(elementWord, 0x10)+
         // " for " + Integer.toString(elementLength, 0x10) +
         // " # readfrom: " + Long.toString(getFilePointer(), 0x10) + "\n");
-
+  
         // either there's an "item end" or we've read the entire element length
         while ( !nameSQ.equals(SEQ_ITEM_END) && ( (getFilePointer() - startfptr) < itemLength)) {
             // The following is almost exactly the same as the code in readHeader. The main difference is the
@@ -2349,6 +2349,11 @@ public class FileDicom extends FileDicomBase {
 
                     if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
                         entry.setValue(readUnknownData(), elementLength);
+                    } else if(elementLength % 8 == 0 && elementLength != 8) {
+                    	Double[] dArr = new Double[elementLength/8];
+                    	for(int i=0; i<dArr.length; i++) 
+                    		dArr[i] = getDouble(endianess);
+                    	entry.setValue(dArr, elementLength);
                     } else if (elementLength > 8) {
                         entry.setValue(readUnknownData(), elementLength);
                     } else {
@@ -3399,7 +3404,13 @@ public class FileDicom extends FileDicomBase {
                 } else if (type.equals("typeFloat")) {
                     writeFloat( ((Float) entry.getValue(false)).floatValue(), endianess);
                 } else if (type.equals("typeDouble")) {
-                    writeDouble( ((Double) entry.getValue(false)).doubleValue(), endianess);
+                	if(entry.getValue(false) instanceof Double[]) {
+                		Double[] dArr = (Double[]) entry.getValue(false);
+                		for(int k=0; k<dArr.length; k++) {
+                			writeDouble(dArr[k], endianess);
+                		}
+                	} else
+                		writeDouble( ((Double) entry.getValue(false)).doubleValue(), endianess);
                 } else if (type.equals("typeShort")) {
                     writeShort( ((Short) entry.getValue(false)).shortValue(), endianess);
                 } else if (type.equals("typeInt")) {
@@ -3410,7 +3421,7 @@ public class FileDicom extends FileDicomBase {
                     writeSequence(outputFile, vr_type, sq2, endianess);
                 }
             }
-
+          
             // write end-item tag:
             writeShort((short) 0xFFFE, endianess);
             writeShort((short) 0xE00D, endianess);
