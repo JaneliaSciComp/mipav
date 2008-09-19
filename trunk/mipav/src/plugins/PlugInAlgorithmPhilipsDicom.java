@@ -108,9 +108,9 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
 		fireProgressStateChanged(70);
 		
 		FileDicomTagTable destTable = ((FileInfoDicom)destImage.getFileInfo()[0]).getTagTable();
-		destTable.setValue("2005,100E", 1);
-		destTable.setValue("0028,1052", 1);
-		destTable.setValue("0028,1053", 1);
+		destTable.setValue("2005,100E", new Float(1));
+		destTable.setValue("0028,1052", dec.format(intercept));
+		destTable.setValue("0028,1053", dec.format(slope));
 		
 		destImage.calcMinMax();
 		fireProgressStateChanged(85);
@@ -160,7 +160,7 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
 
 		for(int k=0; k<zDim; k++) {
 			FileDicomTagTable destTable = ((FileInfoDicom)destImage.getFileInfo()[k]).getTagTable();
-			destTable.setValue("2005,100E", 1);
+			destTable.setValue("2005,100E", new Float(1));
 			destTable.setValue("0028,1052", dec.format(intercept));
 			destTable.setValue("0028,1053", dec.format(slope));
 			fireProgressStateChanged(70 + (k/zDim)*10);
