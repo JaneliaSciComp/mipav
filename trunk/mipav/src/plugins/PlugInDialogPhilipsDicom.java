@@ -161,7 +161,7 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
 
                 FileIO fileIO = new FileIO();
                 FileWriteOptions opts = new FileWriteOptions(true);
-                opts.setFileType(FileUtility.XML);
+                opts.setFileType(FileUtility.ANALYZE);
                 opts.setFileDirectory(image.getImageDirectory()+"corrected"+File.separator);
                 opts.setFileName(image.getImageName()+"_corrected");
                 if(image.getNDims() > 2) {
@@ -174,6 +174,12 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
                 if(!f.exists())
                 	f.mkdir();
                 fileIO.writeImage(resultImage, opts);
+                
+                progressBar.setMessage("Reloading image...");
+                progressBar.updateValue(95);
+                
+                resultImage = fileIO.readImage(image.getImageDirectory()+"corrected"+
+                								File.separator+image.getImageName()+"_corrected.img");
                 
                 progressBar.dispose();
                 
