@@ -1288,16 +1288,25 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("CommitPaint") || command.equals("CommitPaintExt")) {
             boolean outputNew = Preferences.is(Preferences.PREF_PAINT_TO_MASK_NEW);
             boolean polarity = command.equals("CommitPaint");
-
+            boolean saveMasksAs4D = false;
+            if(getActiveImage().getNDims() == 4) {
+            	JDialogMask3D4D dialogMask3D4D = new JDialogMask3D4D(this);
+            	if (dialogMask3D4D.isCancelled()) {
+                    return;
+                } else {
+                	saveMasksAs4D = dialogMask3D4D.isSaveMasksAs4D();
+                }
+            }
+            System.out.println("aaa saveMasksAs4D is " + saveMasksAs4D);
             if (outputNew == true) {
                 ModelImage cloneImage = (ModelImage) getActiveImage().clone();
                 ViewJFrameImage newFrame = new ViewJFrameImage(cloneImage);
                 newFrame.getComponentImage().intensityDropper = getComponentImage().intensityDropper;
 
                 if (getActiveImage() == imageA) {
-                    newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_A, true, polarity, null);
+                    newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_A, true, polarity, null, saveMasksAs4D);
                 } else {
-                    newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_B, true, polarity, null);
+                    newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_B, true, polarity, null, saveMasksAs4D);
                 }
                 // reset to default
                 newFrame.getComponentImage().intensityDropper = 1f;
@@ -1306,9 +1315,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } else {
 
                 if (getActiveImage() == imageA) {
-                    componentImage.commitMask(ViewJComponentBase.IMAGE_A, true, polarity, null);
+                    componentImage.commitMask(ViewJComponentBase.IMAGE_A, true, polarity, null, saveMasksAs4D);
                 } else {
-                    componentImage.commitMask(ViewJComponentBase.IMAGE_B, true, polarity, null);
+                    componentImage.commitMask(ViewJComponentBase.IMAGE_B, true, polarity, null, saveMasksAs4D);
                 }
 
                 getActiveImage().notifyImageDisplayListeners(null, true);

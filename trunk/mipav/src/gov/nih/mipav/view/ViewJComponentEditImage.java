@@ -798,8 +798,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param clearPaintMask if true clear paint mask
      * @param polarity DOCUMENT ME!
      */
-    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity) {
-        commitMask(imagesDone, clearPaintMask, polarity, null);
+    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity, boolean commitMasksAs4D) {
+        commitMask(imagesDone, clearPaintMask, polarity, null, commitMasksAs4D);
     }
 
     /**
@@ -811,8 +811,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param intensityLockVector Vector containing Integers values which are indexed to the locked intensity values in
      *            the image
      */
-    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity, Vector<Integer> intensityLockVector) {
-        commitMask(imagesDone, clearPaintMask, polarity, intensityLockVector, true);
+    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity, Vector<Integer> intensityLockVector, boolean commitMasksAs4D) {
+        commitMask(imagesDone, clearPaintMask, polarity, intensityLockVector, true, commitMasksAs4D);
     }
 
     /**
@@ -826,14 +826,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param showProgressBar if true, shows the progress bar for this algorithm
      */
     public void commitMask(ModelImage affectedImage, boolean clearPaintMask, boolean polarity,
-            Vector<Integer> intensityLockVector, boolean showProgressBar) {
+            Vector<Integer> intensityLockVector, boolean showProgressBar, boolean commitMasksAs4D) {
 
         if (affectedImage == imageA) {
-            commitMask(IMAGE_A, clearPaintMask, polarity, intensityLockVector, showProgressBar);
+            commitMask(IMAGE_A, clearPaintMask, polarity, intensityLockVector, showProgressBar, commitMasksAs4D);
         }
 
         if ( (imageB != null) && (affectedImage == imageB)) {
-            commitMask(IMAGE_B, clearPaintMask, polarity, intensityLockVector, showProgressBar);
+            commitMask(IMAGE_B, clearPaintMask, polarity, intensityLockVector, showProgressBar, commitMasksAs4D);
         }
     }
 
@@ -848,7 +848,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param showProgressBar if true, shows the progress bar for this algorithm
      */
     public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity,
-            Vector<Integer> intensityLockVector, boolean showProgressBar) {
+            Vector<Integer> intensityLockVector, boolean showProgressBar, boolean commitMasksAs4D) {
 
         float min, max;
         Color fillColor = new Color(128, 0, 0);
@@ -877,21 +877,27 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice, rgbString, intensityLockVector);
             } else {
-
                 if (imageA.getNDims() == 4) {
-
-                    // Build dialog 3D or 4D
-                    new JDialogMask3D4D(frame, slice);
-
-                    if (slice[0] == -1) {
-                        timeSlice = -1;
-                    }
-                }
-
-                if (slice[0] <= 0) {
-                    maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
+                	if(commitMasksAs4D) {
+                		for(int i=0;i<imageA.getExtents()[3];i++) {
+                			maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
+                            maskAlgo.setRunningInSeparateThread(false);
+                            maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, i, intensityLockVector);
+                		}
+                	}else {
+                		maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
+                        maskAlgo.setRunningInSeparateThread(false);
+                        maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
+                	}
+                }else {
+                	maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
                     maskAlgo.setRunningInSeparateThread(false);
                     maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
+                }
+
+              
+                
+                    
 
                     if (imageA.getType() == ModelStorageBase.UBYTE) {
                         min = 0;
@@ -914,7 +920,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                             imageA.getHistoLUTFrame().update();
                         }
                     }
-                }
+                
             }
         }
 
@@ -927,20 +933,25 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice, rgbString, intensityLockVector);
             } else {
-
                 if (imageA.getNDims() == 4) {
-
-                    // Build dialog 3D or 4D
-                    new JDialogMask3D4D(frame, slice);
-
-                    if (slice[0] == -1) {
-                        timeSlice = -1;
-                    }
+                	if(commitMasksAs4D) {
+                		for(int i=0;i<imageA.getExtents()[3];i++) {
+                			maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
+                            maskAlgo.setRunningInSeparateThread(false);
+                            maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, i, intensityLockVector);
+                		}
+                	}else {
+                		maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
+                        maskAlgo.setRunningInSeparateThread(false);
+                        maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
+                	}
+                }else {
+                	maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
+                    maskAlgo.setRunningInSeparateThread(false);
+                    maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
                 }
 
-                maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
-                maskAlgo.setRunningInSeparateThread(false);
-                maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
+                
 
                 if (imageB.getType() == ModelStorageBase.UBYTE) {
                     min = 0;

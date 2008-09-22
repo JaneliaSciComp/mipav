@@ -65,6 +65,15 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
     /** Button that allows user to collapse masks/paint to single value.* */
     private JButton collapseButton;
+    
+    /** radio buttons for commmiting masks as 3d or 4d if image is 4d **/
+    private JRadioButton saveAs3DMaskRadio, saveAs4DMaskRadio;
+    
+    /** button group for radio buttons **/
+    private ButtonGroup radioGroup;;
+    
+    /** this boolean is needed for commiting masks for a 4d image **/
+    private boolean saveMasksAs4D = false;
 
     /** array of colors to use for the labels. */
     private Color[] color;
@@ -307,7 +316,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             ModelImage imgB = image.getParentFrame().getImageB();
             image.getParentFrame().getComponentImage().setIntensityDropper(
                     (float) (new Integer(multiButton[selected].getText()).intValue()));
-            image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
+            image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false, saveMasksAs4D);
             image.getParentFrame().getComponentImage().setModifyFlag(true);
             image.notifyImageDisplayListeners();
             refreshImagePaint(image, obj);
@@ -417,7 +426,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 ModelImage imgB = image.getParentFrame().getImageB();
                 image.getParentFrame().getComponentImage().setIntensityDropper(
                         (float) (new Integer(multiButton[selected].getText()).intValue()));
-                image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
+                image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false, saveMasksAs4D);
                 image.getParentFrame().getComponentImage().setModifyFlag(true);
                 image.notifyImageDisplayListeners();
                 intensityLockVector = null;
@@ -566,7 +575,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 ModelImage imgB = image.getParentFrame().getImageB();
                 image.getParentFrame().getComponentImage().setIntensityDropper(
                         (float) (new Integer(multiButton[selected].getText()).intValue()));
-                image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
+                image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false, saveMasksAs4D);
                 image.getParentFrame().getComponentImage().setModifyFlag(true);
                 image.notifyImageDisplayListeners();
                 refreshImagePaint(image, obj);
@@ -637,6 +646,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 save = null;
                 saver = null;
             }
+        }else if (command.equals("AdvancedPaint:saveMasksAs3D")) {
+        	saveMasksAs4D = false;
+        }else if (command.equals("AdvancedPaint:saveMasksAs4D")) {
+        	saveMasksAs4D = true;
         }
 
     }
@@ -1257,7 +1270,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         ModelImage imgB = image.getParentFrame().getImageB();
         image.getParentFrame().getComponentImage().setIntensityDropper(
                 (float) (new Integer(multiButton[selected].getText()).intValue()));
-        image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
+        image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false, saveMasksAs4D);
         image.getParentFrame().getComponentImage().setModifyFlag(true);
         image.notifyImageDisplayListeners();
         refreshImagePaint(image, obj);
@@ -1376,7 +1389,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         // call the paint to mask program for existing mask
         image.getParentFrame().getComponentImage().setIntensityDropper(
                 (float) (new Integer(multiButton[_num].getText()).intValue()));
-        image.getParentFrame().getComponentImage().commitMask(imageB, true, true, intensityLockVector, false);
+        image.getParentFrame().getComponentImage().commitMask(imageB, true, true, intensityLockVector, false, saveMasksAs4D);
 
         // call the mask to paint program for starting mask
         if (color[_num] == null) {
@@ -1790,6 +1803,16 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         leftPanel.add(displayModeButton, gbc);
         gbc.gridy = 5;
         leftPanel.add(collapseButton, gbc);
+        if(image.getNDims() == 4){
+        	radioGroup = new ButtonGroup();
+        	saveAs3DMaskRadio = new JRadioButton(" Commit Masks as 3D ");
+        	saveAs3DMaskRadio.setSelected(true);
+        	saveAs3DMaskRadio.addActionListener(this);
+        	saveAs3DMaskRadio.setActionCommand("AdvancedPaint:saveMasksAs3D");
+    		radioGroup.add(saveAs3DMaskRadio);
+    		gbc.gridy = 6;
+            leftPanel.add(saveAs3DMaskRadio, gbc);
+        }
 
         rightPanel = new JPanel(new GridBagLayout());
         gbc.gridy = 0;
@@ -1807,6 +1830,15 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         rightPanel.add(buttonShortkeys, gbc);
         gbc.gridy = 5;
         rightPanel.add(checkAutosave, gbc);
+        if(image.getNDims() == 4){
+        	saveAs4DMaskRadio = new JRadioButton(" Commit Masks as 4D ");
+        	saveAs4DMaskRadio.addActionListener(this);
+        	saveAs4DMaskRadio.setActionCommand("AdvancedPaint:saveMasksAs4D");
+    		radioGroup.add(saveAs4DMaskRadio);
+    		gbc.gridy = 6;
+            rightPanel.add(saveAs4DMaskRadio, gbc);
+        }
+
 
         leftRightPanel = new JPanel(new GridBagLayout());
         gbc.anchor = GridBagConstraints.NORTHWEST;
@@ -2672,7 +2704,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 // call the paint to mask program for existing mask
                 image.getParentFrame().getComponentImage().setIntensityDropper(
                         (float) (new Integer(multiButton[_from].getText()).intValue()));
-                image.getParentFrame().getComponentImage().commitMask(imageB, true, true, intensityLockVector, false);
+                image.getParentFrame().getComponentImage().commitMask(imageB, true, true, intensityLockVector, false, saveMasksAs4D);
 
                 // if desired, this is a good place to save the mask
                 if (checkAutosave.isSelected())

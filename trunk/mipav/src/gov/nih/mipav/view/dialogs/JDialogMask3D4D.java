@@ -28,11 +28,7 @@ public class JDialogMask3D4D extends JDialogBase {
     /** Radio button indicating that the image should  be masked in 4D */
     private JRadioButton fourD;
 
-    /** Single value array indicating 3D or 4d processing.
-     *   0 = single volume processing or 3D
-     *  -1 = multiple volume processing or 4D
-     */
-    private int sliceRef[];
+    private boolean saveMasksAs4D = false;
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -43,9 +39,8 @@ public class JDialogMask3D4D extends JDialogBase {
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public JDialogMask3D4D(Frame theParentFrame, int slice[]) {
-        super(theParentFrame, false);
-        sliceRef = slice;
+    public JDialogMask3D4D(Frame theParentFrame) {
+        super(theParentFrame, true);
         init();
     }
 
@@ -62,9 +57,9 @@ public class JDialogMask3D4D extends JDialogBase {
 
         if (command.equals("OK")) {
             if (threeD.isSelected()) {
-                sliceRef[0] = 0;
+            	saveMasksAs4D = false;
             } else if (fourD.isSelected()) {
-                sliceRef[0] = -1;
+            	saveMasksAs4D = true;
             }
             dispose();
         } else if (command.equals("Cancel")) {
@@ -115,6 +110,11 @@ public class JDialogMask3D4D extends JDialogBase {
         pack();
         setVisible(true);
     }
+
+
+	public boolean isSaveMasksAs4D() {
+		return saveMasksAs4D;
+	}
 
 
 
