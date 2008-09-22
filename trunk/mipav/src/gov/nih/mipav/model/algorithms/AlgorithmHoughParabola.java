@@ -129,6 +129,8 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
     
     // number of parabolas to be found
     private int numParabolas;
+    
+    private ModelImage testImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -508,6 +510,17 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                     }
                 } // if (var >= 0.0)
             }
+            testImage = new ModelImage(ModelImage.BYTE, srcImage.getExtents(), "Hough Parabola Test Image");
+            try {
+                testImage.importData(0, srcBuffer, true);
+            }catch (IOException e) {
+                MipavUtil.displayError("IOException " + e + " on testImage.importData");
+
+                setCompleted(false);
+
+                return;
+            }
+            new ViewJFrameImage(testImage);
         } // if (test)
         
         try {
@@ -515,7 +528,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         } catch (IOException e) {
             MipavUtil.displayError("IOException " + e + " on destImage.importData");
 
-            setCompleted(true);
+            setCompleted(false);
 
             return;
         }
