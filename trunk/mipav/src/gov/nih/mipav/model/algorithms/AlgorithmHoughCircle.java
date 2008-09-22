@@ -64,6 +64,8 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
     
     // number of circles to be found
     private int numCircles;
+    
+    private ModelImage testImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -229,6 +231,18 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
                 xSum3 = xSum3 + x;
                 ySum3 = ySum3 + y;
             }
+            testImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), "Hough Circle Test Image");
+            try {
+                testImage.importData(0, srcBuffer, true);
+            }
+            catch (IOException e) {
+                MipavUtil.displayError("IOException " + e + " on testImage.importData");
+
+                setCompleted(false);
+
+                return;
+            }
+            new ViewJFrameImage(testImage);
             xSum = xSum/20.0;
             ySum = ySum/20.0;
             radSum = 0.0;
