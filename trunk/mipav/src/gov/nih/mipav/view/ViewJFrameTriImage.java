@@ -777,11 +777,22 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners();
 
         } else if (command.equals("CommitPaint")) {
+        	//THIS MAY NOT BE CORRECT
+        	 boolean saveMasksAs4D = false;
+             if(imageA.getNDims() == 4) {
+             	JDialogMask3D4D dialogMask3D4D = new JDialogMask3D4D(this);
+             	if (dialogMask3D4D.isCancelled()) {
+                     return;
+                 } else {
+                 	saveMasksAs4D = dialogMask3D4D.isSaveMasksAs4D();
+                 }
+             }
+        	
 
             if (getSelectedImage() == ViewJComponentBase.BOTH) {
 
                 if (triImage[AXIAL_AB] != null) {
-                    triImage[AXIAL_AB].commitMask(ViewJComponentBase.BOTH, true, true);
+                    triImage[AXIAL_AB].commitMask(ViewJComponentBase.BOTH, true, true, saveMasksAs4D);
                     triImage[AXIAL_AB].getActiveImage().notifyImageDisplayListeners(null, true);
                 } else {
                     // triImage[AXIAL_A].commitMask(ViewJComponentBase.BOTH, true, true);
@@ -789,7 +800,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             } else if (getSelectedImage() == ViewJComponentBase.IMAGE_A) {
 
                 if (triImage[AXIAL_A] != null) {
-                    triImage[AXIAL_A].commitMask(ViewJComponentBase.IMAGE_A, true, true);
+                    triImage[AXIAL_A].commitMask(ViewJComponentBase.IMAGE_A, true, true, saveMasksAs4D);
                     triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
                 }
             } else if (getSelectedImage() == ViewJComponentBase.IMAGE_B) {
@@ -797,18 +808,29 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 // must set IMAGE_A because in the AXIAL_B, SAGITTAL_B, and CORONAL_B images,
                 // imageB is in the imageA slot
                 if (triImage[AXIAL_B] != null) {
-                    triImage[AXIAL_B].commitMask(ViewJComponentBase.IMAGE_A, true, true);
+                    triImage[AXIAL_B].commitMask(ViewJComponentBase.IMAGE_A, true, true, saveMasksAs4D);
                     triImage[AXIAL_B].getActiveImage().notifyImageDisplayListeners(null, true);
                 }
             }
 
             updateImages(true);
         } else if (command.equals("CommitPaintExt")) {
-
+        	//THIS MAY NOT BE CORRECT
+       	 	boolean saveMasksAs4D = false;
+            if(imageA.getNDims() == 4) {
+            	JDialogMask3D4D dialogMask3D4D = new JDialogMask3D4D(this);
+            	if (dialogMask3D4D.isCancelled()) {
+                    return;
+                } else {
+                	saveMasksAs4D = dialogMask3D4D.isSaveMasksAs4D();
+                }
+            }
+            
+            
             if (getSelectedImage() == ViewJComponentBase.BOTH) {
 
                 if (triImage[AXIAL_AB] != null) {
-                    triImage[AXIAL_AB].commitMask(ViewJComponentBase.BOTH, true, false);
+                    triImage[AXIAL_AB].commitMask(ViewJComponentBase.BOTH, true, false, saveMasksAs4D);
                     triImage[AXIAL_AB].getActiveImage().notifyImageDisplayListeners(null, true);
                 } else {
                     // triImage[AXIAL_A].commitMask(ViewJComponentBase.BOTH, true, false);
@@ -817,7 +839,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             } else if (getSelectedImage() == ViewJComponentBase.IMAGE_A) {
 
                 if (triImage[AXIAL_A] != null) {
-                    triImage[AXIAL_A].commitMask(ViewJComponentBase.IMAGE_A, true, false);
+                    triImage[AXIAL_A].commitMask(ViewJComponentBase.IMAGE_A, true, false, saveMasksAs4D);
                     triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
                 }
                 // triImage[AXIAL_A].getImageA().notifyImageDisplayListeners(null, true);
@@ -826,7 +848,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 // must set IMAGE_A because in the AXIAL_B, SAGITTAL_B, and CORONAL_B images,
                 // imageB is in the imageA slot
                 if (triImage[AXIAL_B] != null) {
-                    triImage[AXIAL_B].commitMask(ViewJComponentBase.IMAGE_A, true, false);
+                    triImage[AXIAL_B].commitMask(ViewJComponentBase.IMAGE_A, true, false, saveMasksAs4D);
                     triImage[AXIAL_B].getImageA().notifyImageDisplayListeners(null, true);
                 }
             }
@@ -2575,6 +2597,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         Object source = e.getSource();
 
         if (source == tImageSlider) {
+        	System.out.println("Aaa");
             int newValue = 1;
 
             // removed to make the slider behavior match the time slider in the main mipav frame
