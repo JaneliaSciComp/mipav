@@ -176,6 +176,10 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
+                } catch (Exception e) {
+                	MipavUtil.displayError("General display error occured.  Note image has been saved.");
+                	System.gc();
+                	e.printStackTrace();
                 }
                 
                 MipavUtil.displayInfo("Image saved as "+image.getImageName()+"_corrected\n"+
@@ -310,7 +314,6 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
         gbc.fill = GridBagConstraints.BOTH;
         mainPanel.add(textName, gbc);
 
-        
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
         // Build the Panel that holds the OK and CANCEL Buttons
@@ -339,7 +342,7 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
 	    	Object obj1 = ((FileInfoDicom)fileInfo).getTagTable().getValue("2005,100E");
 	    	Object obj2 = ((FileInfoDicom)fileInfo).getTagTable().getValue("0028,1052");
 	    	Object obj3 = ((FileInfoDicom)fileInfo).getTagTable().getValue("0028,1053");
-	    	
+	    
 	    	if(obj1 != null && obj2 != null && obj3 != null)
 	    		return true;
     	}

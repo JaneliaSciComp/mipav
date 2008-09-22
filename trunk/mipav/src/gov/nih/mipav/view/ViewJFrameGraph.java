@@ -1510,7 +1510,7 @@ public class ViewJFrameGraph extends JFrame
                 }
             }
 
-            fitMode = fitExpMode;
+            fitMode = fitGaussMode;
 
             for (int index = 0; index < 5; index++) {
 
@@ -3368,7 +3368,7 @@ public class ViewJFrameGraph extends JFrame
             groupFitFunctType = new ButtonGroup();
             radioFitLinear = new JRadioButton("Fit linear (a1*x + a0)");
             radioFitExponential = new JRadioButton("Fit exponential (a0+a1*exp(a2*x))");
-            radioFitGaussian = new JRadioButton("Fit Gaussian (a*exp(-(x-b)^2/(2sigma^2)))");
+            radioFitGaussian = new JRadioButton("Fit Gaussian (A*exp(-(X-Xo)^2/(2sigma^2)))");
             radioFitNone = new JRadioButton("None");
             fitFunctVisibleCheckbox = new JCheckBox[5];
             name = new String[5];
