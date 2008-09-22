@@ -157,6 +157,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
     
     // Maximum percent by which perimiter pixels can deviate from the ellipse equation
     private double ellipseRangeTolerance;
+    
+    private ModelImage testImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -594,8 +596,18 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 srcBuffer[index] = 1; 
             }
    
-            //setCompleted(true);
-            //return;
+            testImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), "Hough Ellipse Test Image");
+            try {
+                testImage.importData(0, srcBuffer, true);
+            }
+            catch (IOException e) {
+                MipavUtil.displayError("IOException " + e + " on testImage.importData");
+
+                setCompleted(false);
+
+                return;    
+            }
+            new ViewJFrameImage(testImage);
         } // if (test)
         
         try {
@@ -603,7 +615,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         } catch (IOException e) {
             MipavUtil.displayError("IOException " + e + " on destImage.importData");
 
-            setCompleted(true);
+            setCompleted(false);
 
             return;
         }
