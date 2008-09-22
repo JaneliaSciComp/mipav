@@ -14,6 +14,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Vector;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
 	/**Action command for browse button*/
-    public static final String BROWSE = "Browse";
+    public static final String OPEN = "Open";
     
     /**Action command for OK button*/
     public static final String OK = "OK";
@@ -41,20 +42,17 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
     /** Result image. */
     private ModelImage resultImage = null;
 
-    /** Dource image for algorithm */
+    /** Source image for algorithm */
     private ModelImage image = null; // source image
     
     /** Browse button to load compatible image*/
-    private JButton browseButton;
+    private JButton openButton;
     
     /** Name of file to load*/
     private JTextField textName;
     
     /**File directory where image is stored.*/
     private File fileDir;
-    
-    /**Whether to perform image loading when OK button is pressed. */
-    private boolean performImageLoad = false;
     
     /** The algorithm to perform */
     private PlugInAlgorithmPhilipsDicom philipsAlgo = null;
@@ -83,10 +81,8 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
         setVisible(false);
         
         if(image == null || !setVariables()) {
-        	performImageLoad = true;
-        	setVisible(true);
+        	MipavUtil.displayError("Image not a valid DICOM image, reload image");
         } else {
-        	performImageLoad = false;
         	OKButton.doClick();
         }
     }
@@ -105,23 +101,14 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
-        if (command.equals(BROWSE)) {
-
-        	imageFile = setImageToOpen();
-        	if(imageFile != null) {
-        		textName.setText(imageFile.getAbsolutePath());
-        		validate();
+        if (command.equals(OPEN)) {
+        	ViewUserInterface.getReference().openImageFrame();
+        	image = ViewUserInterface.getReference().getActiveImageFrame().getImageA();
+        	if(image != null) {
+	        	textName.setText(image.getImageDirectory());
+	        	validate();
         	}
-            
-        } if (command.equals(OK)) {
-        	if(performImageLoad) {
-        		try {
-        			loadImage();
-        		} catch(Exception e) {
-        			MipavUtil.displayError("Not a valid Philips DICOM image file, try another image.");
-        		}
-        	}
-
+        } else if (command.equals(OK)) {
             if (setVariables()) {
                 callAlgorithm();
             } else {
@@ -216,8 +203,7 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
 
     } // end AlgorithmPerformed()
 
-    
-    /**
+	/**
      * Once all the necessary variables are set, call the kidney segmentation algorithm
      */
     protected void callAlgorithm() {
@@ -279,7 +265,7 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
         mainPanel.setForeground(Color.black);
         mainPanel.setBorder(buildTitledBorder("Load DICOM image"));
 
-        JLabel labelType = new JLabel("<html>The open image is not a valid Philips DICOM image file.  Click the \"Browse\" <br>button to find a Philips DICOM image to load.</html>");
+        JLabel labelType = new JLabel("<html>The open image is not a valid Philips DICOM image file.  Click the <br>\""+OPEN+"\" button to load a Philips DICOM image.  Click the \""+OK+"\" button <br>to run the plugin.</html>");
         labelType.setForeground(Color.black);
         labelType.setFont(serif12);
 
@@ -288,11 +274,11 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
         textName.setFont(serif12);
         textName.setEnabled(false);
 
-        browseButton = new JButton("Browse");
-        browseButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        browseButton.setFont(serif12B);
-        browseButton.setActionCommand(BROWSE);
-        browseButton.addActionListener(this);
+        openButton = new JButton(OPEN);
+        openButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        openButton.setFont(serif12B);
+        openButton.setActionCommand(OPEN);
+        openButton.addActionListener(this);
         
         
         Insets insets = new Insets(2, 10, 10, 10);
@@ -316,7 +302,7 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
         gbc.insets = new Insets(0, 2, 0, 2);
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.WEST;
-        mainPanel.add(browseButton, gbc);
+        mainPanel.add(openButton, gbc);
         
         gbc.gridx = 1;
         gbc.gridy = 1;
@@ -359,146 +345,5 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
     	}
     	
     	return false;
-    }
-    
-    private File setImageToOpen() {
-        JFileChooser chooser = new JFileChooser();
-        int filterType = -1;
-
-        // lets set the user defined file filters
-        ViewImageFileFilter.setUserDefinedExtensions();
-
-        // address of TIFF header of second image in file if present
-        // for LSM510 image files
-
-        // set the filter type to the preferences saved filter
-        int filter = 0;
-
-        try {
-            filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
-        } catch (NumberFormatException nfe) {
-
-            // an invalid value was set in preferences -- so don't use it!
-            filter = -1;
-        }
-        
-        try {
-
-            // chooser = new JFileChooser();
-            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-                File file = new File(ViewUserInterface.getReference().getDefaultDirectory());
-
-                if (file != null) {
-                    chooser.setCurrentDirectory(file);
-                } else {
-                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-                }
-            } else {
-                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            }
-
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
-
-            if (filter != -1) {
-                // it seems that the set command adds the filter again...
-                // chooser.addChoosableFileFilter(new ViewImageFileFilter(filter));
-
-                // if filter is something we already added, then remove it before
-                // setting it..... (kludgy, kludgy....)
-                javax.swing.filechooser.FileFilter found = ViewOpenFileUI.findFilter(chooser, filter);
-
-                if (found != null) {
-                    chooser.removeChoosableFileFilter(found);
-                }
-
-                // initially set to the preferences
-                chooser.setFileFilter(new ViewImageFileFilter(filter));
-            }
-
-            // but if the filterType was set, then use that instead
-            // set the current filter to filterType
-            if (filterType != -1) { // filterType has been set
-
-                // don't add this filter twice --- if it's there, then remove it
-                javax.swing.filechooser.FileFilter found2 = ViewOpenFileUI.findFilter(chooser, filterType);
-
-                if (found2 != null) {
-                    chooser.removeChoosableFileFilter(found2);
-                }
-
-                // set the current file filter
-                chooser.setFileFilter(new ViewImageFileFilter(filterType));
-            }
-
-            chooser.setDialogTitle("Open Image");
-
-            int returnValue = chooser.showOpenDialog(ViewUserInterface.getReference().getMainFrame());
-
-            if (returnValue == JFileChooser.APPROVE_OPTION) {
-                imageFile = chooser.getSelectedFile();
-                String directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                ViewUserInterface.getReference().setDefaultDirectory(directory);
-                return imageFile;
-            } 
-            	
-            return null;
-        } catch (OutOfMemoryError e) {
-            MipavUtil.displayError("Out of memory!");
-
-            return null;
-        }
-    }
-    
-    private void loadImage() throws Exception {
-    	ModelRGB modelRGB = null;
-    	String fileName = new String();
-    	String directory = new String();
-    	ModelLUT LUT = null;
-    	try {
-            FileIO fileIO = new FileIO();
-            fileName = imageFile.getName();
-            directory = imageFile.getParent();
-            image = fileIO.readImage(fileName, imageFile.getParent(), false, null);
-
-            LUT = fileIO.getModelLUT();
-            modelRGB = fileIO.getModelRGB();
-
-        } catch (OutOfMemoryError e) {
-            MipavUtil.displayError("Out of memory!");
-        }
-
-        try {
-
-        	ViewJFrameImage imageFrame = new ViewJFrameImage(image, LUT, ViewUserInterface.getReference().getNewFrameLocation());
-        	if (modelRGB != null) {
-                imageFrame.setRGBTA(modelRGB);
-            }
-        } catch (OutOfMemoryError e) {
-            MipavUtil.displayError("Out of memory!");
-        }
-
-        Preferences.setLastImage(directory + fileName, image.getFileInfo()[0].getMultiFile(), image.getNDims());
-
-        // updates menubar for each image
-        Vector<Frame> imageFrames = ViewUserInterface.getReference().getImageFrameVector();
-
-        if (imageFrames.size() < 1) {
-        	ViewUserInterface.getReference().buildMenu();
-        	ViewUserInterface.getReference().setControls();
-        } else {
-        	ViewUserInterface.getReference().buildMenu();
-
-            for (int i = 0; i < imageFrames.size(); i++) {
-
-                if (imageFrames.elementAt(i) instanceof ViewJFrameImage) {
-                    ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
-                }
-            }
-
-            ViewUserInterface.getReference().getActiveImageFrame().setControls();
-        } 
     }
 }
