@@ -71,12 +71,6 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
         yDim = srcImage.getExtents()[1];
         sliceSize = xDim * yDim;
         
-        xDim = srcImage.getExtents()[0];
-        yDim = srcImage.getExtents()[1];
-        sliceSize = xDim * yDim;
-        
-        int zDim = srcImage.getExtents()[2];
-        
         //Already tested to cast correctly in setVariables
         FileInfoDicom fileInfo = (FileInfoDicom)srcImage.getFileInfo()[0];
     	
@@ -89,7 +83,6 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
     	double double1053 = Double.valueOf(tag3);
     	
     	double intercept = (double1052 / (double100E * double1053)) / 1000;
-    	//would be surprised if this is correct
     	double slope = (double1053 / (double100E * double1053)) / 1000;
     	
     	DecimalFormat dec = new DecimalFormat("0.######");
@@ -138,7 +131,6 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
     	double double1053 = Double.valueOf(tag3);
     	
     	double intercept = (double1052 / (double100E * double1053)) / 1000;
-    	//would be surprised if this is correct
     	double slope = (double1053 / (double100E * double1053)) / 1000;
     	
     	DecimalFormat dec = new DecimalFormat("0.######");
