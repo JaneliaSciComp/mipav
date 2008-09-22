@@ -358,6 +358,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         while (keys.hasMoreElements()) {
             tagTable.remove(keys.nextElement());
         }
+        tagTable.clear();
     }
 
     /**
@@ -621,5 +622,34 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
 
             tagTable.put(key, tag);
         }
+    }
+    
+    
+    /**
+     * Prepares this class for cleanup.
+     */
+    public void finalize() {
+    	if(childTagTables != null) {
+	    	for(int i=0;i<childTagTables.length;i++) {
+	    		if(childTagTables[i] != null) {
+	    			childTagTables[i].reset();
+	    			childTagTables[i].finalize();
+	    		}
+	    		childTagTables[i] = null;
+	    	}
+    	}
+    	parentFileInfo = null;
+    	if(tagTable != null) {
+    		Enumeration<FileDicomKey> keys = tagTable.keys();
+
+            while (keys.hasMoreElements()) {
+                tagTable.remove(keys.nextElement());
+            }
+    		tagTable.clear();
+    	}
+        tagTable = null;
+
+
+
     }
 }

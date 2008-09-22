@@ -288,6 +288,7 @@ public class FileInfoDicom extends FileInfoBase {
 
         if (tagTable != null) {
             tagTable.reset();
+            tagTable.finalize();
         }
 
         tagTable = null;
