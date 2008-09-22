@@ -205,7 +205,7 @@ public class AlgorithmHoughLine extends AlgorithmBase {
                 testImage.importData(0, srcBuffer, true);
             }
             catch(IOException e) {
-                MipavUtil.displayError("IOException " + e + " on destImage.importData");
+                MipavUtil.displayError("IOException " + e + " on testImage.importData");
 
                 setCompleted(false);
 
