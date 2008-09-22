@@ -941,7 +941,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 									currentPane.setName(voiName);
 									
 								} else {
-									MipavUtil.displayError("Badly formatted file.  Exiting program.");
+									MipavUtil.displayError("Badly formatted file.  Please choose another template.");
 									break parse;
 								}
 							}
@@ -983,7 +983,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 							voiNum = 0;
 							inPane = true;
 						} else {
-							MipavUtil.displayError("Badly formatted file.  Exiting program.");
+							MipavUtil.displayError("Badly formatted file.  Please choose another template.");
 							break parse;
 						}
 					}
