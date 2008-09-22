@@ -1489,8 +1489,13 @@ public abstract class ViewJFrameBase extends JFrame
                     try {
 
                         // try to prefill the "save as" text area
-                        fileChooser.getFileChooser().setSelectedFile(new File(img.getFileInfo(0).getFileDirectory() +
+                        if (img.getFileInfo(0).getFileDirectory() != null) {
+                            fileChooser.getFileChooser().setSelectedFile(new File(img.getFileInfo(0).getFileDirectory() +
                                                                               img.getImageFileName()));
+                        }
+                        else {
+                            fileChooser.getFileChooser().setSelectedFile(new File(img.getImageFileName()));    
+                        }
                     } catch (Throwable t) {
                         // if prefill fails, do nothing
                     }
