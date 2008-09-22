@@ -60,6 +60,8 @@ public class AlgorithmHoughLine extends AlgorithmBase {
     
     // Hough transform of image with rho on x axis and theta on y axis
     private ModelImage houghImage;
+    
+    private ModelImage testImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -198,6 +200,18 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             srcBuffer[(xDimSource-1)/2 + ((yDimSource-1)/2)*xDimSource] = 1;
             srcBuffer[xDimSource - 1] = 1;
             srcBuffer[sourceSlice - 1] = 1;
+            testImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(),"Hough Line Test");
+            try {
+                testImage.importData(0, srcBuffer, true);
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException " + e + " on destImage.importData");
+
+                setCompleted(false);
+
+                return;    
+            }
+            new ViewJFrameImage(testImage);
         }
 
         houghBuffer = new int[houghSlice];
