@@ -16,11 +16,14 @@ public class FitGaussian extends NLEngine {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Original x-data */
     private double[] xDataOrg;
 
-    /** DOCUMENT ME! */
+    /** Original y-data */
     private double[] yDataOrg;
+    
+    /** Interpolated y-data from Gaussian*/
+    private double[] yDataInt;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 

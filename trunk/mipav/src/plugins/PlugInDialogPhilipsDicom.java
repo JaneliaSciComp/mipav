@@ -166,7 +166,7 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
                 progressBar.updateValue(95);
                 
                 resultImage = fileIO.readImage(image.getImageDirectory()+"corrected"+
-                								File.separator+image.getImageName()+"_corrected.img");
+                								File.separator+image.getImageName()+"_corrected.xml");
                 
                 progressBar.dispose();
                 
