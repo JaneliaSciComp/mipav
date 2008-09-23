@@ -669,7 +669,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
      *
      * @param  kTriangleMesh  DOCUMENT ME!
      */
-    public boolean setup(TriMesh kMesh, Vector3f kCenter ) {
+    public boolean setup(TriMesh kMesh ) {
 
         /* reset inflation initialization: */
         m_bInflationInitialized = false;
@@ -677,7 +677,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         if ( m_kCortical.CheckManifold() )
         {
         	/* cortical mesh initializations */
-        	m_kCortical.computeMeanCurvature(kCenter);
+        	m_kCortical.computeMeanCurvature();
         	/* calculate the conformal mapping of mesh to the flattened plane and
         	 * sphere maps, and setup the display for the plane and sphere: */
         	calculateConformal();

@@ -404,9 +404,9 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
     /**
      * Resets the Mesh Display, when the file is reloaded:
      */
-    public Node displayCorticalAnalysis( TriMesh kMesh, Vector3f kCenter ) {
+    public Node displayCorticalAnalysis( TriMesh kMesh ) {
         m_kTriangleMesh = kMesh;
-        if ( !m_kView.setup(m_kTriangleMesh, kCenter) )
+        if ( !m_kView.setup(m_kTriangleMesh) )
         {
         	return null;
         }

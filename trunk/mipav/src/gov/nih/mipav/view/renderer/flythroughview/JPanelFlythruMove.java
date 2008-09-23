@@ -1,9 +1,8 @@
-package gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview;
+package gov.nih.mipav.view.renderer.flythroughview;
 
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.J3D.*;
-import gov.nih.mipav.view.renderer.J3D.surfaceview.*;
+import gov.nih.mipav.view.renderer.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -21,7 +20,7 @@ import javax.swing.border.*;
  *
  * @author  Ruida Cheng
  */
-public class JPanelFlythruMove extends JPanelRendererJ3D implements ActionListener, MouseListener {
+public class JPanelFlythruMove extends JPanelRendererBase implements ActionListener, MouseListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -139,7 +138,7 @@ public class JPanelFlythruMove extends JPanelRendererJ3D implements ActionListen
     private JPanel moviePanel;
 
     /** The parent fly thru render reference. */
-    private FlythruRender parentScene;
+    private FlyThroughRenderInterface parentScene;
 
     /** Pause button. */
     private JToggleButton pauseButton;
@@ -208,8 +207,8 @@ public class JPanelFlythruMove extends JPanelRendererJ3D implements ActionListen
      *
      * @param  _kView  FlythruRender
      */
-    public JPanelFlythruMove(FlythruRender _kView) {
-        super(_kView);
+    public JPanelFlythruMove(FlyThroughRenderInterface _kView) {
+        addKeyListener(this);
         parentScene = _kView;
         init();
     }

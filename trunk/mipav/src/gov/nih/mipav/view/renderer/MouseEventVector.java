@@ -1,17 +1,12 @@
-package gov.nih.mipav.view.renderer.J3D.surfaceview;
+package gov.nih.mipav.view.renderer;
 
 
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.io.*;
-
 import java.util.*;
-
-import javax.media.j3d.*;
-
 import javax.swing.event.*;
 
 
@@ -33,25 +28,25 @@ public class MouseEventVector implements Serializable {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** First time accessed. */
-    boolean first;
+    public boolean first;
 
     /** Current mode. */
-    int mode;
+    public int mode;
 
     /** Vector to record mouse events. */
-    Vector mouseEvents;
+    public Vector mouseEvents;
 
     /** Name of the events. */
-    String name;
+    public String name;
 
     /** State being recorded. */
-    Object state;
+    public Object state;
 
     /** Vector to record state changes. */
-    Vector stateVector;
+    public Vector stateVector;
 
     /** Parent frame transform3D view. */
-    Transform3D view;
+    public double[] view;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -66,7 +61,7 @@ public class MouseEventVector implements Serializable {
      * @param  state  The state being recorded.
      * @param  mode   Current mode.
      */
-    public MouseEventVector(String name, Transform3D view, boolean first, Object state, int mode) {
+    public MouseEventVector(String name, double[] view, boolean first, Object state, int mode) {
         this.name = name;
         this.view = view;
         this.first = first;
@@ -155,7 +150,7 @@ public class MouseEventVector implements Serializable {
      *
      * @return  The transform representing the view.
      */
-    public Transform3D getView() {
+    public double[] getView() {
         return view;
     }
 
@@ -200,7 +195,7 @@ public class MouseEventVector implements Serializable {
      *
      * @param  _view  The present view transform.
      */
-    public void setView(Transform3D _view) {
+    public void setView(double[] _view) {
         this.view = _view;
     }
 
@@ -281,7 +276,7 @@ public class MouseEventVector implements Serializable {
             i++;
         }
 
-        view = new Transform3D(matrix);
+        view = matrix;
         first = stream.readBoolean();
         state = stream.readObject();
         mode = stream.readInt();

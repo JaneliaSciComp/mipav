@@ -17,9 +17,6 @@ public class FlyPathAnnotateList_WM {
     protected int m_iNextItemKey = 0;
 
     /** DOCUMENT ME! */
-    protected TriMesh m_kDefaultShape = null;
-
-    /** DOCUMENT ME! */
     protected ArrayList<Item> m_kList = new ArrayList<Item>();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -59,20 +56,12 @@ public class FlyPathAnnotateList_WM {
      * @param  kPointNormal         Vector3f Normal vector associated with the annotated point.
      */
     public void addItem(int iBranch, float fNormalizedPathDist, boolean bPathMoveForward, Vector3f kPointPosition,
-                        Vector3f kPointNormal) {
+                        Vector3f kPointNormal, Vector3f kCLoc, Vector3f kCDir, Vector3f kCUp, Vector3f kCRight) {
         String kDescription = new String("Point" + Integer.toString(m_iNextItemKey + 1));
 
-        addItem(new Item(iBranch, fNormalizedPathDist, bPathMoveForward, kPointPosition, kPointNormal, m_kDefaultShape,
+        addItem(new Item(iBranch, fNormalizedPathDist, bPathMoveForward, kPointPosition, kPointNormal,
+                kCLoc, kCDir, kCUp, kCRight,
                          kDescription));
-    }
-
-    /**
-     * Return access to the default shape to use for rendering all subsequent annotated items.
-     *
-     * @return  Shape3D Instance which contains the geometry and appearance to use for rendering.
-     */
-    public TriMesh getDefaultShape() {
-        return m_kDefaultShape;
     }
 
     /**
@@ -83,7 +72,7 @@ public class FlyPathAnnotateList_WM {
      * @return  Item Information about the annotation item.
      */
     public Item getItem(int iItem) {
-        return (Item) m_kList.get(iItem);
+        return m_kList.get(iItem);
     }
 
     /**
@@ -102,15 +91,6 @@ public class FlyPathAnnotateList_WM {
      */
     public void removeItem(int iItem) {
         m_kList.remove(iItem);
-    }
-
-    /**
-     * Set the default shape for rendering all subsequent annotated items to that specified.
-     *
-     * @param  kShape  Shape3D Instance which contains the geometry and appearance to use for rendering.
-     */
-    public void setDefaultShape(TriMesh kShape) {
-        m_kDefaultShape = new TriMesh(kShape);
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
@@ -138,8 +118,11 @@ public class FlyPathAnnotateList_WM {
         /** DOCUMENT ME! */
         private Vector3f m_kPointPosition;
 
-        /** DOCUMENT ME! */
-        private TriMesh m_kShape;
+        private Vector3f m_kCameraLocation;
+        private Vector3f m_kCameraDVector;
+        private Vector3f m_kCameraUVector;
+        private Vector3f m_kCameraRVector;
+
 
         /**
          * Constructor. Only the shape and description can be changed once initialized in the constructor, while all
@@ -156,13 +139,16 @@ public class FlyPathAnnotateList_WM {
          * @param  kDescription         String Text description to set.
          */
         Item(int iBranch, float fNormalizedPathDist, boolean bPathMoveForward, Vector3f kPointPosition,
-             Vector3f kPointNormal, TriMesh kShape, String kDescription) {
+             Vector3f kPointNormal, Vector3f kCLoc, Vector3f kCDir, Vector3f kCUp, Vector3f kCRight, String kDescription) {
             m_iBranch = iBranch;
             m_fNormalizedPathDist = fNormalizedPathDist;
             m_bPathMoveForward = bPathMoveForward;
             m_kPointPosition = new Vector3f(kPointPosition);
             m_kPointNormal = new Vector3f(kPointNormal);
-            m_kShape = new TriMesh(kShape);
+            m_kCameraLocation = new Vector3f(kCLoc);
+            m_kCameraDVector = new Vector3f(kCDir);
+            m_kCameraUVector = new Vector3f(kCUp);
+            m_kCameraRVector = new Vector3f(kCRight);
             m_kDescription = new String(kDescription);
         }
 
@@ -211,14 +197,25 @@ public class FlyPathAnnotateList_WM {
         public void getPointPosition(Vector3f kPointPosition) {
             kPointPosition.Copy(m_kPointPosition);
         }
-
-        /**
-         * Return access to the shape for rendering the annotated point.
-         *
-         * @return  Shape3D Instance which contains the geometry and appearance to use for rendering.
-         */
-        public TriMesh getShape() {
-            return m_kShape;
+        
+        public Vector3f getCameraLocation()
+        {
+            return m_kCameraLocation;
+        }
+        
+        public Vector3f getCameraDirection()
+        {
+            return m_kCameraDVector;
+        }
+        
+        public Vector3f getCameraUp()
+        {
+            return m_kCameraUVector;
+        }
+        
+        public Vector3f getCameraRight()
+        {
+            return m_kCameraRVector;
         }
 
         /**
@@ -237,15 +234,6 @@ public class FlyPathAnnotateList_WM {
          */
         public void setDescription(String kDescription) {
             m_kDescription = new String(kDescription);
-        }
-
-        /**
-         * Set the shape for rendering the annotated point to that specified.
-         *
-         * @param  kShape  Shape3D Instance which contains the geometry and appearance to use for rendering.
-         */
-        public void setShape(TriMesh kShape) {
-            m_kShape = kShape;
         }
     }
 }

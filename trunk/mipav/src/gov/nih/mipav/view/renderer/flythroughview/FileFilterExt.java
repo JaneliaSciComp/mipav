@@ -1,4 +1,4 @@
-package gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview;
+package gov.nih.mipav.view.renderer.flythroughview;
 
 
 import java.io.File;
@@ -29,7 +29,7 @@ public class FileFilterExt extends FileFilter {
      *
      * @param  kDescription  String containing the filter description
      */
-    FileFilterExt(String kDescription) {
+    public FileFilterExt(String kDescription) {
         setDescription(kDescription);
     }
 
@@ -40,7 +40,7 @@ public class FileFilterExt extends FileFilter {
      * @param  kExtension    String containing the initial extension
      * @param  kDescription  String containing the filter description
      */
-    FileFilterExt(String kExtension, String kDescription) {
+    public FileFilterExt(String kExtension, String kDescription) {
         addExtension(kExtension);
     }
 
@@ -50,7 +50,7 @@ public class FileFilterExt extends FileFilter {
      * @param  akExtensions  String array containing the initial extensions
      * @param  kDescription  String containing the filter description
      */
-    FileFilterExt(String[] akExtensions, String kDescription) {
+    public FileFilterExt(String[] akExtensions, String kDescription) {
 
         for (int iExt = 0; iExt < akExtensions.length; ++iExt) {
             addExtension(akExtensions[iExt]);

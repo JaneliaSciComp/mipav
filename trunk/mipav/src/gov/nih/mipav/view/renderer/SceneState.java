@@ -1,13 +1,10 @@
-package gov.nih.mipav.view.renderer.J3D.surfaceview;
+package gov.nih.mipav.view.renderer;
 
 
 import gov.nih.mipav.model.structures.*;
-
 import java.awt.event.*;
-
 import java.io.*;
 
-import javax.media.j3d.*;
 
 
 /**
@@ -52,7 +49,7 @@ public class SceneState implements Serializable {
     public int surfaceOpacity;
 
     /** Current sceneRoot transform. */
-    public Transform3D transform = null;
+    public float[] transform = null;
 
     /** Currrent tranform function of the volume render look up table. */
     public TransferFunction transformFunc;

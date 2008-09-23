@@ -11,6 +11,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.*;
+import gov.nih.mipav.view.renderer.flythroughview.*;
 import gov.nih.mipav.view.renderer.J3D.model.structures.*;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.*;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.brainflattenerview.*;
