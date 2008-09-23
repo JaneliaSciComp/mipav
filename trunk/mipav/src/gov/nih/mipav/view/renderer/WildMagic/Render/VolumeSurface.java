@@ -573,7 +573,7 @@ public class VolumeSurface extends VolumeObject
             m_kMesh.VBuffer.GetPosition3( i, kPos );
             m_kCenter.Add( kPos );
         }
-        m_kCenter.Scale( 1.0f / (float)m_kMesh.VBuffer.GetVertexQuantity() );
+        m_kCenter.Scale( 1.0f / m_kMesh.VBuffer.GetVertexQuantity() );
     }
     
     

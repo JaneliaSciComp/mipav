@@ -124,9 +124,10 @@ public class ViewJComponentVolOpacity extends ViewJComponentVolOpacityBase {
 
             if (myMouseDialog.mode == JPanelMouse.RECORD_MODE) {
                 Transform3D t3D = new Transform3D();
-
                 myParent.getSceneRootTG().getTransform(t3D);
-                opacityEvents = new MouseEventVector("VolOpacity" + opacityCount, t3D, myMouseDialog.first,
+                double[] mat = new double[16];
+                t3D.get(mat);
+                opacityEvents = new MouseEventVector("VolOpacity" + opacityCount, mat, myMouseDialog.first,
                                                      ((SurfaceRender) myParent).getSceneState(),
                                                      ((SurfaceRender) myParent).getMouseMode());
                 myMouseDialog.listModel.addElement("VolOpacity" + opacityCount);

@@ -6,7 +6,6 @@ import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.renderer.flythroughview.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 
 
 /**
@@ -159,7 +158,7 @@ public class FlyPathBehavior_WM implements KeyListener {
                 setBranch(i);
 
                 for (j = 0; j < steps; j++) {
-                    moveAlongPath(1);
+                    moveAlongPath(1);   
                 }
 
                 for (j = 0; j < steps; j++) {
@@ -476,7 +475,57 @@ public class FlyPathBehavior_WM implements KeyListener {
      */
     public void move(String command) {
 
-        if (command.equals("escape")) {
+        if (command.equals("lookup")) {
+            // pitch - look up
+            Vector3f kRight = new Vector3f();
+            kRight.UnitCross( m_kViewDirection, m_kViewUp );
+            Matrix3f kRotate = new Matrix3f();
+            kRotate.FromAxisAngle( kRight, (float)Math.toRadians(1) );
+            kRotate.Mult( m_kViewDirection, m_kViewDirection );
+            kRotate.Mult( m_kViewUp, m_kViewUp );
+            // Notify listener that we are updated.
+            notifyCallback(EVENT_CHANGE_POSITION);
+        } else if (command.equals("lookdown")) {
+            // pitch - look down
+            Vector3f kRight = new Vector3f();
+            kRight.UnitCross( m_kViewDirection, m_kViewUp );
+            Matrix3f kRotate = new Matrix3f();
+            kRotate.FromAxisAngle( kRight, (float)Math.toRadians(-1) );
+            kRotate.Mult( m_kViewDirection, m_kViewDirection );
+            kRotate.Mult( m_kViewUp, m_kViewUp );
+            // Notify listener that we are updated.
+            notifyCallback(EVENT_CHANGE_POSITION);
+        } else if (command.equals("lookleft")) {
+            // yaw - look left
+            Matrix3f kRotate = new Matrix3f();
+            kRotate.FromAxisAngle( m_kViewUp, (float)Math.toRadians(1) );
+            kRotate.Mult( m_kViewDirection, m_kViewDirection );
+            // Notify listener that we are updated.
+            notifyCallback(EVENT_CHANGE_POSITION);
+        } else if (command.equals("lookright")) {
+            // case KeyEvent.VK_RIGHT:
+            // yaw - look right
+            Matrix3f kRotate = new Matrix3f();
+            kRotate.FromAxisAngle( m_kViewUp, (float)Math.toRadians(-1) );
+            kRotate.Mult( m_kViewDirection, m_kViewDirection );
+            // Notify listener that we are updated.
+            notifyCallback(EVENT_CHANGE_POSITION);
+        } else if (command.equals("counterclockwise")) {
+            // case KeyEvent.VK_F3:
+            // roll - counterclockwise
+            Matrix3f kRotate = new Matrix3f();
+            kRotate.FromAxisAngle( m_kViewDirection, (float)Math.toRadians(-1) );
+            kRotate.Mult( m_kViewUp,  m_kViewUp );
+            // Notify listener that we are updated.
+            notifyCallback(EVENT_CHANGE_POSITION);
+        } else if (command.equals("clockwise")) {
+            // roll - clockwise
+            Matrix3f kRotate = new Matrix3f();
+            kRotate.FromAxisAngle( m_kViewDirection, (float)Math.toRadians(1) );
+            kRotate.Mult( m_kViewUp,  m_kViewUp );
+            // Notify listener that we are updated.
+            notifyCallback(EVENT_CHANGE_POSITION);
+        } else if (command.equals("escape")) {
 
             // VK_ESCAPE
             setIdentityViewOrientation();
@@ -846,7 +895,7 @@ public class FlyPathBehavior_WM implements KeyListener {
      * @param  iItem  int
      */
     private void setCurvePathAnnotateItem(int iItem) {
-/*
+
         // Select the curve and the position along the curve.
         // First set the sign of the path step to reflect
         // whether the movement down the path was forward or backward
@@ -856,43 +905,12 @@ public class FlyPathBehavior_WM implements KeyListener {
         m_kBranchState.m_bMoveForward = kItem.isPathMoveForward();
         setBranch(kItem.getBranchIndex());
 
-        // Set the view orientation to point at the annotation point
-        // from the current view down the path.
+        m_kViewPoint.Copy(kItem.getCameraLocation());
+        m_kViewDirection.Copy(kItem.getCameraDirection());
+        m_kViewUp.Copy(kItem.getCameraUp());
 
-        // Compute the vector from the current path position to the
-        // annotation view point.
-        Vector3f kP = new Vector3f();
+        notifyCallback(EVENT_CHANGE_POSITION);
 
-        kItem.getPointPosition(kP);
-
-        Vector3f kV = new Vector3f();
-
-        kV.Sub(kP, getViewPoint());
-        kV.Normalize();
-
-        // Convert this vector so that it is in current view frame.
-        // Note that the view direction vector was negated in order
-        // to build the view direction transformation, so we negate
-        // the desired view orientation vector before we determine
-        // this vector in the view direction frame.
-        kV.Neg();
-        m_kTransformDirection.getTransform(m_kTransform);
-        m_kTransform.invert();
-        m_kTransform.transform(kV);
-
-        // Since the current view vector in the current view frame
-        // is (0,0,1), then we can rotate about the X axis and then
-        // about the Y axis to get to this vector which aims at
-        // the annotation point.
-        double dRotX = Math.atan2(-kV.y, kV.z);
-        double dRotY = Math.asin(kV.x);
-
-        m_kTransformRot.rotY(dRotY);
-        m_kTransform.rotX(dRotX);
-        m_kTransform.mul(m_kTransformRot);
-        m_kTransformOrientation.setTransform(m_kTransform);
-        notifyCallback(EVENT_CHANGE_ORIENTATION);
-        */
     }
 
     /**

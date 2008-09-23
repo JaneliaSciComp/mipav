@@ -5,6 +5,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.*;
 
 import com.sun.j3d.utils.behaviors.mouse.*;
@@ -3467,16 +3468,18 @@ public class JPanelClip extends JPanelRendererJ3D
 
         if (myMouseDialog.isRecording() && !isClipArbiPicked && ((SurfaceRender) renderBase).getDisplayMode3D()) {
             Transform3D t3D = new Transform3D();
-
             renderBase.getSceneRootTG().getTransform(t3D);
-            clipEvents = new MouseEventVector("clipSlider" + clipCount, t3D, myMouseDialog.first,
+            double[] mat = new double[16];
+            t3D.get(mat);
+            clipEvents = new MouseEventVector("clipSlider" + clipCount, mat, myMouseDialog.first,
                                               renderBase.getSceneState(), ((SurfaceRender) renderBase).getMouseMode());
             recordEventName = true;
         } else if (myMouseDialog.isRecording() && isClipArbiPicked && ((SurfaceRender) renderBase).getDisplayMode3D()) {
             Transform3D t3D = new Transform3D();
-
             renderBase.getSceneRootTG().getTransform(t3D);
-            rotationEvent = new MouseEventVector("ArbitraryRotation" + rotationCount, t3D, myMouseDialog.first,
+            double[] mat = new double[16];
+            t3D.get(mat);
+            rotationEvent = new MouseEventVector("ArbitraryRotation" + rotationCount, mat, myMouseDialog.first,
                                                  renderBase.getSceneState(),
                                                  ((SurfaceRender) renderBase).getMouseMode());
             recordEventName = true;

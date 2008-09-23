@@ -12,13 +12,13 @@ public class SurfaceLightingEffect extends VolumeClipEffect
     public SurfaceLightingEffect (VolumeImage kImageA)
     {
         SetPassQuantity(1);
-        m_kVVertexLighting = new VertexShader("MipavLighting");
+        m_kVVertexLighting = new VertexShader("MipavLighting", true);
         m_kPVertexLighting = new PixelShader("PassThrough4");
         
         m_kVolumeTextureNew = new Texture();
         m_kVolumeLUTNew = new Texture();
         
-        m_kVPixelLighting = new VertexShader("MipavLightingFragment");
+        m_kVPixelLighting = new VertexShader("MipavLightingFragment", true);
         m_kPPixelLighting = new PixelShader("MipavLightingFragment", true);
         m_kPPixelLighting.SetTextureQuantity(4);
         m_kPPixelLighting.SetImageName(0,"VolumeImageA");
@@ -96,6 +96,21 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         m_fBlend = fValue;
     }
 
+    
+    public void SetReverseFace( int iReverse )
+    {    
+        Program pkProgram = GetVProgram(0);
+        if ( pkProgram == null )
+        {
+            return;
+        }
+        if ( pkProgram.GetUC("ReverseFace") != null)
+        {
+            pkProgram.GetUC("ReverseFace").SetDataSource(new float[]{iReverse,0,0,0});
+        }
+        m_iReverseFace = iReverse;
+    }
+    
     public void SetPerPixelLighting( Renderer kRenderer, boolean bOn )
     {
         if ( m_bPerPixelLighting != bOn)
@@ -116,6 +131,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
                     kRenderer.GetMaxVShaderImages(),
                     kRenderer.GetMaxPShaderImages());
             Blend(m_fBlend);
+            SetReverseFace(m_iReverseFace);
             ResetClip();
         }
     }
@@ -267,6 +283,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
     }
     private VolumeImage m_kVolumeImage = null;
     private float m_fBlend = 1.0f;
+    private int m_iReverseFace = 0;
     private VertexShader m_kVVertexLighting;
     private PixelShader m_kPVertexLighting;
     private VertexShader m_kVPixelLighting;

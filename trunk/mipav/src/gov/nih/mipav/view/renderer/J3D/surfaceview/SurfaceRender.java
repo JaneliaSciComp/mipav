@@ -2326,6 +2326,17 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
      *
      * @param  transform  Transform3D
      */
+    public void updateCubicTransform(double[] mat) {
+        Transform3D t3D = new Transform3D(mat);
+        updateCubicTransform(t3D);
+    }
+    
+    
+    /**
+     * Update the transform3D for the cubic.
+     *
+     * @param  transform  Transform3D
+     */
     public void updateCubicTransform(Transform3D transform) {
         View kView = universe.getViewer().getView();
         Matrix4f matrix = new Matrix4f();
@@ -2665,7 +2676,7 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
      *
      * @param  transform  Transform that was changed to.
      */
-    public void updateTransform(Transform3D transform) {
+    public void updateTransform() {
         updateTextureVolumeRender();
 
     }

@@ -510,7 +510,7 @@ public class MjCorticalMesh_WM {
     /**
      * mean curvature.
      */
-    public void computeMeanCurvature( Vector3f kCenter ) {
+    public void computeMeanCurvature( ) {
         int iVQuantity = m_kMesh.VBuffer.GetVertexQuantity();
         m_afMeanCurvature = new float[iVQuantity];
 

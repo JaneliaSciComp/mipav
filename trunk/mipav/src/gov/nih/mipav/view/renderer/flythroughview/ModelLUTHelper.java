@@ -1,4 +1,4 @@
-package gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview;
+package gov.nih.mipav.view.renderer.flythroughview;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 

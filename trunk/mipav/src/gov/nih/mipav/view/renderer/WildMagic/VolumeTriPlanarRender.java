@@ -172,7 +172,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                                                     m_kTranslate,
                                                     m_fX, m_fY, m_fZ );
         kVLine.SetDisplay(true);
-        m_kDisplayList.add( kVLine );
+        m_kDisplayList.add( 1, kVLine );
         UpdateSceneRotation();
     }
 

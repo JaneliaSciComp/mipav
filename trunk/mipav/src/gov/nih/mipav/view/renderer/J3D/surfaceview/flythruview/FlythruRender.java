@@ -41,7 +41,7 @@ import javax.vecmath.*;
  * mouse and keyboard for maneuvering the view of the colon while moving through it.
  */
 public class FlythruRender extends SurfaceRender
-        implements FlyPathBehavior.Callback, MouseBehaviorCallback, MouseListener {
+        implements FlyThroughRenderInterface, FlyPathBehavior.Callback, MouseBehaviorCallback, MouseListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

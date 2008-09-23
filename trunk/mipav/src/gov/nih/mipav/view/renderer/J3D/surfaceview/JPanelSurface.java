@@ -7,6 +7,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.J3D.*;
 import gov.nih.mipav.view.renderer.J3D.model.file.*;
 import gov.nih.mipav.view.renderer.J3D.model.structures.*;
@@ -1414,7 +1415,9 @@ public class JPanelSurface extends JPanelRendererJ3D
             Transform3D t3D = new Transform3D();
 
             parentScene.getSceneRootTG().getTransform(t3D);
-            surfaceOpacityEvents = new MouseEventVector("surfaceOpacitySlider" + surfaceSliderCount, t3D,
+            double[] mat = new double[16];
+            t3D.get(mat);
+            surfaceOpacityEvents = new MouseEventVector("surfaceOpacitySlider" + surfaceSliderCount, mat,
                                                         myMouseDialog.first, parentScene.getSceneState(),
                                                         parentScene.getMouseMode());
             setSurfaceOpacityFlag = true;

@@ -1,11 +1,14 @@
 package gov.nih.mipav.view.renderer.WildMagic.flythroughview;
 
 import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.*;
+import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.MjCorticalMesh_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Render.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -46,9 +49,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
     /** DOCUMENT ME! */
     private JLabel flythruLabelFileName = new JLabel();
 
-    /** Surface smooth control panel reference. */
-    private JDialogSmoothMesh kDialogSmooth;
-
     /** Button panel. */
     private JPanel kPanelButton;
 
@@ -84,9 +84,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
 
     /** DOCUMENT ME! */
     private JLabel m_kLabelStepGaze = new JLabel();
-
-    /** kMean curvature LUT. Pseudo color look up table. */
-    private ModelLUT m_kMeanCurvaturesLUT = null;
 
     /** Image option panel. */
     private FlyThroughRender.SetupOptions m_kOptions = new FlyThroughRender.SetupOptions();
@@ -201,7 +198,7 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
                 flythruButtonLoadImage.setEnabled(false);
             }
         } else if (command.equals("Update")) {
-            
+            m_kView.update();
         }
     }
 
@@ -215,7 +212,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         m_kTextMaxNumBranches = null;
         m_kTextMinBranchLength = null;
         m_kTextPercentBSplineNumControlPoints = null;
-        m_kMeanCurvaturesLUT = null;
         m_kLabelFileName = null;
         m_kLabelDistance = null;
         m_kTextDistance = null;
@@ -234,7 +230,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         flythruLabelFileName = null;
         flythruButtonLoadImage = null;
         endoscopyImage = null;
-        kDialogSmooth = null;
         scrollPanel = null;
         scroller = null;
         kPanelButton = null;
@@ -265,15 +260,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         scroller.setPreferredSize(new Dimension(panelWidth, frameHeight - kPanelButton.getHeight()));
         scroller.setSize(new Dimension(panelWidth, frameHeight - kPanelButton.getHeight()));
         scroller.revalidate();
-    }
-
-    /**
-     * When the surface panel change the surface color, endoscopy view changes the color accordingly.
-     *
-     * @param  _color  Color
-     */
-    public void setColor(Color _color) {
-        //m_kView.setRenderSurfaceColors(_color);
     }
 
     /**
@@ -337,10 +323,11 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         m_kDecimalFormat.setMaximumFractionDigits(1);
         m_kTextPosition.setText(m_kDecimalFormat.format(kPosition.X) + " " + m_kDecimalFormat.format(kPosition.Y) +
                                 " " + m_kDecimalFormat.format(kPosition.Z));
-
-        if (continueUpdate) {
-            
-        }
+    }
+    
+    public boolean getContinuousUpdate()
+    {
+        return continueUpdate;
     }
 
     /**
@@ -420,7 +407,7 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
      */
     void m_kCheckBoxShowCurvatures_actionPerformed(ActionEvent e) {
         m_bShowMeanCurvatures = m_kCheckBoxShowCurvatures.isSelected();
-        //m_kView.setMeanCurvaturesLUT(m_bShowMeanCurvatures ? m_kMeanCurvaturesLUT : null);
+        m_kView.doPseudoColor(m_bShowMeanCurvatures);
     }
 
     /**
@@ -557,19 +544,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
 
         contentBox.add(kPanelOptions);
 
-        JPanel smoothPanel = new JPanel();
-
-        smoothPanel.setLayout(new GridBagLayout());
-        gbc = new GridBagConstraints();
-
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 1;
-        kDialogSmooth = new JDialogSmoothMesh( null, false, JDialogSmoothMesh.SMOOTH1 );
-        smoothPanel.add(kDialogSmooth.getMainPanel(), gbc);
-
         JPanel surfaceControlPanel = new JPanel();
 
         surfaceControlPanel.setLayout(new BoxLayout(surfaceControlPanel, BoxLayout.Y_AXIS));
@@ -675,7 +649,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         surfacePanel.add(updatePanel, gbc);
 
-        surfaceControlPanel.add(smoothPanel);
         surfaceControlPanel.add(surfacePanel);
         contentBox.add(surfaceControlPanel);
 
@@ -752,45 +725,8 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         fileIO.setQuiet(true);
         endoscopyImage = fileIO.readImage(fileName, directory, false, null);
         m_kView.setupRender(endoscopyImage, m_kOptions);
-    }
-
-/*
-            // Access the mesh curvatures computed for the surface.
-            ModelTriangleMeshCurvatures kMeshCurvatures = m_kView.getSurfaceCurvatures();
-            float[] afMeanCurvatures = kMeshCurvatures.getMeanCurvatures();
-            int iNumVertices = afMeanCurvatures.length;
-            double dNumVertices = (double) iNumVertices;
-
-            // Compute the mean and standard deviation of the mean curvatures.
-            double dMeanCurvatureSum = 0.0f;
-            double dMeanCurvatureSum2 = 0.0f;
-
-            for (int iVertex = 0; iVertex < iNumVertices; ++iVertex) {
-                double dMeanCurvature = (double) afMeanCurvatures[iVertex];
-
-                dMeanCurvatureSum += dMeanCurvature;
-                dMeanCurvatureSum2 += dMeanCurvature * dMeanCurvature;
-            }
-
-            double dMeanCurvatureMean = dMeanCurvatureSum / dNumVertices;
-            double dMeanCurvatureStddev = Math.sqrt((dMeanCurvatureSum2 -
-                                                     (dNumVertices * dMeanCurvatureMean * dMeanCurvatureMean)) /
-                                                        (dNumVertices - 1.0));
-
-            // Make the range of curvature values to be mapped symmetrical.
-            double dMeanCurvatureAbsMax = Math.max(Math.abs(dMeanCurvatureMean - (2.0 * dMeanCurvatureStddev)),
-                                                   Math.abs(dMeanCurvatureMean + (2.0 * dMeanCurvatureStddev)));
-
-            // Map the mean curvatures values to pseudocolors.
-            int[] aiDimExtentsLUT = new int[] { 4, 256 };
-
-            m_kMeanCurvaturesLUT = new ModelLUT(ModelLUT.SPECTRUM, 256, aiDimExtentsLUT);
-            m_kMeanCurvaturesLUT.invertLUT();
-            m_kMeanCurvaturesLUT.resetTransferLine(-(float) dMeanCurvatureAbsMax, +(float) dMeanCurvatureAbsMax);
-            m_kView.setMeanCurvaturesLUT(m_bShowMeanCurvatures ? m_kMeanCurvaturesLUT : null);
-*/
-
-
+    } 
+    
     /**
      * Sets up the variables needed for the algorithm from the GUI components.
      *

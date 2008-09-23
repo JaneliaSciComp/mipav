@@ -7,6 +7,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.J3D.*;
 
 import com.sun.j3d.utils.behaviors.mouse.*;
@@ -285,7 +286,7 @@ public class JPanelMouse extends JPanelRendererJ3D
             if (index > -1) {
 
                 // go to view
-                parentScene.getSceneRootTG().setTransform(((MouseEventVector) events.elementAt(index)).getView());
+                parentScene.getSceneRootTG().setTransform(new Transform3D(((MouseEventVector) events.elementAt(index)).getView()));
                 sliceDialog.setSceneState(((MouseEventVector) events.elementAt(index)).getState());
 
                 // parentScene.updateImages(true);
@@ -704,13 +705,13 @@ public class JPanelMouse extends JPanelRendererJ3D
                     (myParent.getClipDialog() == null)) {
 
                 try {
-                    Transform3D t3d = new Transform3D();
-
+                    Transform3D t3D = new Transform3D();
                     // save current view
-                    parentScene.getSceneRootTG().getTransform(t3d);
-
+                    parentScene.getSceneRootTG().getTransform(t3D);
+                    double[] mat = new double[16];
+                    t3D.get(mat);
                     // save under name "Mouse0" , "Mouse36", etc.
-                    eventVector = new MouseEventVector("Mouse " + mouseCount, t3d, first, parentScene.getSceneState(),
+                    eventVector = new MouseEventVector("Mouse " + mouseCount, mat, first, parentScene.getSceneState(),
                                                        ((SurfaceRender) parentScene).getMouseMode());
 
                     if (first == true) {
@@ -1450,7 +1451,7 @@ public class JPanelMouse extends JPanelRendererJ3D
 
                     // set transform to proper beginning transform for mouse events
                     if (vector.getName().substring(0, 5).equals("Mouse")) {
-                        parentScene.getSceneRootTG().setTransform(vector.getView());
+                        parentScene.getSceneRootTG().setTransform(new Transform3D(vector.getView()));
                         ((SurfaceRender) (parentScene)).updateCubicTransform(vector.getView());
                     } else if (vector.getName().substring(0, 4).equals("Arbi")) {
                         isArbitraryRotation = true;
@@ -1818,8 +1819,8 @@ public class JPanelMouse extends JPanelRendererJ3D
                         blank++;
                         transformVector.add("Blank");
                     } else if (process == 1) {
-                        ((SceneState) (currentObject)).transform = new Transform3D();
-                        ((SceneState) (currentObject)).transform.set(currentTransform);
+                        ((SceneState) (currentObject)).transform = new float[16];
+                        currentTransform.get(((SceneState) (currentObject)).transform);
                         transformVector.add(currentObject);
                         data++;
                         process = 0;
@@ -1849,9 +1850,10 @@ public class JPanelMouse extends JPanelRendererJ3D
                         if (((SceneState) (obj)).transform != null) {
 
                             if (((SceneState) obj).isClipArbiPicked == false) {
-                                parentScene.getSceneRootTG().setTransform(((SceneState) (obj)).transform);
-                                ((SurfaceRender) (parentScene)).updateTransform(((SceneState) (obj)).transform);
-                                ((SurfaceRender) (parentScene)).updateCubicTransform(((SceneState) (obj)).transform);
+                                parentScene.getSceneRootTG().setTransform(new Transform3D(((SceneState) (obj)).transform));
+                                ((SurfaceRender) (parentScene)).updateTransform();
+                                Transform3D t3D = new Transform3D(((SceneState) (obj)).transform);
+                                ((SurfaceRender) (parentScene)).updateCubicTransform(t3D);
                             }
 
                             if (progressNum == 0) {

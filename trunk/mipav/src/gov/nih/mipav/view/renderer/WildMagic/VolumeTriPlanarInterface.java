@@ -13,10 +13,12 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.J3D.*;
+import gov.nih.mipav.view.renderer.J3D.surfaceview.flythruview.JPanelVirtualEndoscopySetup;
 
 import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
 import gov.nih.mipav.view.renderer.WildMagic.Render.*;
 import gov.nih.mipav.view.renderer.WildMagic.flythroughview.*;
+import gov.nih.mipav.view.renderer.flythroughview.JPanelFlythruMove;
 
 import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Collision.*;
@@ -84,6 +86,9 @@ implements MouseListener, ItemListener, ChangeListener {
     protected gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender brainsurfaceFlattenerRender = null;
     protected FlyThroughRender m_kFlyThroughRender =  null;
     protected JPanel m_kFlyThroughPanel = null;
+    protected JPanelVirtualEndoscopySetup_WM flythruControl;
+    protected JPanel flythruMovePanel;
+    protected JPanelFlythruMove flythruMoveControl; 
     /** DOCUMENT ME! */
     protected JPanelClip_WM clipBox;
     protected JPanelSlices_WM sliceGUI;
@@ -478,8 +483,7 @@ implements MouseListener, ItemListener, ChangeListener {
                             m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
                         m_kVolumeImageB, imageB, LUTb, RGBTB);
                 TriMesh kSurface = raycastRenderWM.getSurface( surfaceGUI.getSelectedSurface() );
-                Vector3f kCenter = raycastRenderWM.GetCenter( surfaceGUI.getSelectedSurface() );
-                Node kMeshLines = brainsurfaceFlattenerRender.getPanel().displayCorticalAnalysis(kSurface, kCenter);       
+                Node kMeshLines = brainsurfaceFlattenerRender.getPanel().displayCorticalAnalysis(kSurface);       
                 if ( kMeshLines != null )
                 {
                     m_kBrainsurfaceFlattenerPanel = new JPanel();
@@ -509,12 +513,9 @@ implements MouseListener, ItemListener, ChangeListener {
                 bf_flyPanel.add( m_kFlyThroughRender.GetCanvas(), BorderLayout.CENTER );
                 dualPane.setDividerLocation( 0.5f );            
                 m_kLightsPanel.enableLight(0, true);
-                m_kFlyThroughPanel = new JPanel();
-                JPanelVirtualEndoscopySetup_WM kFlyThroughPanel = new JPanelVirtualEndoscopySetup_WM(m_kFlyThroughRender);
-                m_kFlyThroughPanel.add(kFlyThroughPanel.getMainPanel());
-                kFlyThroughPanel.getMainPanel().setVisible(true);
-                m_kFlyThroughRender.setupRenderControl(kFlyThroughPanel);
+                buildFlythroughPanel();
             }
+            insertTab("FlyThroughMove", flythruMovePanel);
             insertTab("FlyThrough", m_kFlyThroughPanel );
             resizePanel();
         } else if (command.equals("ResetX")) {
@@ -589,7 +590,23 @@ implements MouseListener, ItemListener, ChangeListener {
         maxPanelWidth = Math.max(displayPanel.getPreferredSize().width, maxPanelWidth);
     }
 
+    /**
+     * Build the flythru move control panel.
+     */
+    public void buildFlythroughPanel() {
+        flythruMovePanel = new JPanel();
+        flythruMoveControl = new JPanelFlythruMove(m_kFlyThroughRender);
+        flythruMovePanel.add(flythruMoveControl.getMainPanel());
+        maxPanelWidth = Math.max(flythruMovePanel.getPreferredSize().width, maxPanelWidth);
 
+        m_kFlyThroughPanel = new JPanel();
+        flythruControl = new JPanelVirtualEndoscopySetup_WM(m_kFlyThroughRender);
+        m_kFlyThroughPanel.add(flythruControl.getMainPanel());
+        flythruControl.getMainPanel().setVisible(true);
+        m_kFlyThroughRender.setupRenderControl(flythruControl);
+        maxPanelWidth = Math.max(m_kFlyThroughPanel.getPreferredSize().width, maxPanelWidth);
+    }
+    
     /**
      * Build the Geodesic control panel.
      */
@@ -2657,6 +2674,10 @@ implements MouseListener, ItemListener, ChangeListener {
         if ( brainsurfaceFlattenerRender != null )
         {
             brainsurfaceFlattenerRender.resizePanel(maxPanelWidth, height);
+        }
+        if ( m_kFlyThroughRender != null )
+        {
+            flythruControl.resizePanel(maxPanelWidth, height);
         }
     }
 

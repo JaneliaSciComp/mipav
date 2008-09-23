@@ -475,12 +475,20 @@ void v_MipavLightingFragment(
                      out float3       kInNormal,
                      out float4       kInColor0,
                      out float3       kOutBaseTCoord : TEXCOORD0,
+                     uniform float ReverseFace,
                      uniform float4x4 WVPMatrix)
 {
     // Transform the position from model space to clip space.
     kClipPosition = mul(kModelPosition,WVPMatrix);
     kInPos = mul(kModelPosition,WVPMatrix);
     kInNormal = kModelNormal;
+    if ( ReverseFace == 1 )
+    {
+        kInNormal.x *= -1;
+        kInNormal.y *= -1;
+        kInNormal.z *= -1;
+    }
+
     kInVolumeClipPos = kInBaseTCoord;
     kInColor0 = kModelColor0;
 

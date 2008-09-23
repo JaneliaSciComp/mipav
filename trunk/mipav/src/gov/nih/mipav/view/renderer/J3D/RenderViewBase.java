@@ -1241,12 +1241,12 @@ public abstract class RenderViewBase extends VolumeCanvas3D
      */
     public void recordMouse(String name, JPanelMouse myMouseDialog, int mouseMode ) {
         Transform3D t3D = new Transform3D();
-
         // get the view
         getSceneRootTG().getTransform(t3D);
-
+        double[] mat = new double[16];
+        t3D.get(mat);
         // store name and view together
-        sliderEvents = new MouseEventVector(name, t3D, myMouseDialog.first,
+        sliderEvents = new MouseEventVector(name, mat, myMouseDialog.first,
                 getSceneState(),
                 mouseMode);
     }
