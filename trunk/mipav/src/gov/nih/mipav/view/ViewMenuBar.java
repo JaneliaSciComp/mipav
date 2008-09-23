@@ -410,8 +410,6 @@ public class ViewMenuBar {
 
         JMenu captureMenu = makeCaptureMenu(isAnImageOpen);
 
-        JMenu srbMenu = makeSRBMenu(isAnImageOpen);
-
         JMenu dicomMenu = makeDicomMenu();
 
         JMenu dtiMenu = makeDiffusionTensorMenu();
@@ -435,8 +433,8 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Create blank image", "CreateBlankImage", 0, "open.gif", true),
                         menuBuilder.buildMenuItem("Image browser", "BrowseImages", 0, null, true),}), separator,
                 loadMenu, extractImageBItem, closeImageBItem, separator, saveImageItem, saveImageAsItem, captureMenu,
-                separator, dicomMenu, separator, srbMenu, separator, dtiMenu, separator, menuBuilder.buildQuickList(),
-                separator, menuBuilder.buildMenuItem("DCCIE image conversion", "dccieconvert", 0, null, true),
+                separator, dicomMenu, separator, dtiMenu, separator, menuBuilder.buildQuickList(), separator,
+                menuBuilder.buildMenuItem("DCCIE image conversion", "dccieconvert", 0, null, true),
 
                 // menuBuilder.buildMenuItem("Convert old XML", "convertXML", 0, null, true),
                 separator, menuBuilder.buildMenuItem("Exit", "Exit", 'x', null, true)});
@@ -555,37 +553,6 @@ public class ViewMenuBar {
         return menuBuilder.makeMenu("Scripts", false, new JMenuItem[] {
                 menuBuilder.buildMenuItem("Record script", "RecordScript", 0, null, false),
                 menuBuilder.buildMenuItem("Run script", "RunScript", 0, null, false)});
-    }
-
-    /**
-     * Create the Storage Resource Broker (SRB) File submenu.
-     * 
-     * @param imageOpened Whether an image is currently open in mipav; this determines whether the 'save' menu items are
-     *            enabled.
-     * 
-     * @return The new submenu
-     * 
-     * @see #makeFileMenu(boolean)
-     */
-    public JMenu makeSRBMenu(boolean imageOpened) {
-        // boolean isAutoUploadEnabled = ( (userInterface != null) && (userInterface.getNDARPipeline() != null));
-        // JMenuItem saveXCEDESchemaItem = menuBuilder.buildMenuItem("Save XCEDE schema", "SaveXCEDESchema", 0,
-        // "save.gif", true);
-        // JMenuItem saveImageToSRBItem = menuBuilder.buildMenuItem("Save image to SRB", "SaveSRBFile", 0, "save.gif",
-        // true);
-
-        // menuBuilder.setMenuItemEnabled("Save XCEDE schema", imageOpened);
-        // menuBuilder.setMenuItemEnabled("Save image to SRB", imageOpened);
-
-        return menuBuilder.makeMenu("NDAR", true, new JMenuItem[] {
-        // menuBuilder.buildMenuItem("Open XCEDE schema", "OpenXCEDESchema", 0, "open.gif",
-                // true), saveXCEDESchemaItem,
-                // menuBuilder.buildMenuItem("Open image from SRB", "OpenSRBFile", 0, "open.gif", true),
-                // saveImageToSRBItem, menuBuilder.buildMenuItem("SRB transfer", "TransferSRBFiles", 0, null, true),
-                menuBuilder.buildMenuItem("NDAR image submission package creation tool", "TransferNDAR", 0, null, true)
-                // menuBuilder.buildCheckBoxMenuItem("Enable auto SRB upload", "AutoUploadToSRB",
-                // isAutoUploadEnabled)
-                });
     }
 
     /**
