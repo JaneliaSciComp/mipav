@@ -6321,13 +6321,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public void setFileInfo(FileInfoBase[] fInfo) {
     	
-        if (fInfo != null) {
+        if ((fInfo != null) && (fileInfo != fInfo)) {
         	for(int i=0;i<fileInfo.length;i++) {
         		fileInfo[i].finalize();
         	}
             fileInfo = fInfo;
-        }
-      
+        }      
     }
 
     /**
@@ -6340,7 +6339,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     	if(fileInfo == null) {
     		return;
     	}
-    	if(fileInfo[idx] != null) {
+    	if((fileInfo[idx] != null) && (fileInfo[idx] != fInfo)) {
     		fileInfo[idx].finalize();
     	}
         fileInfo[idx] = fInfo;
