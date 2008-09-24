@@ -1972,13 +1972,11 @@ implements MouseListener, ItemListener, ChangeListener {
                     TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
                     m_kVolumeImageA.UpdateImages(kTransfer, 0);
                 }
-                /*
                 else
                 {
                     TransferFunction kTransfer = m_kVolOpacityPanel.getCompB().getOpacityTransferFunction();
-                    raycastRenderWM.updateImages(1, kTransfer);
+                    m_kVolumeImageA.UpdateImages(kTransfer, 2);
                 }
-                */
             }
             else
             {

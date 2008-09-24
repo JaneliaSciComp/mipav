@@ -154,6 +154,11 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
             gov.nih.mipav.view.renderer.J3D.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.J3D.surfaceview.SurfaceRender) renderBase;
             ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
         }            
+        if ( m_kVolumeViewer != null )
+        {
+            m_kVolumeViewer.updateImages(true);
+            m_kVolumeViewer.setGradientMagnitude( true );
+        }
     }
 
     /**
@@ -268,7 +273,11 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
         {
             gov.nih.mipav.view.renderer.J3D.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.J3D.surfaceview.SurfaceRender) renderBase;
             ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
-        }  
+        }         
+        if ( m_kVolumeViewer != null )
+        {
+            m_kVolumeViewer.setGradientMagnitude( false );
+        }
     }
 
     /**
