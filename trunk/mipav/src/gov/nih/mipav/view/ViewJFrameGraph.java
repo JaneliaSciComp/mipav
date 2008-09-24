@@ -1451,11 +1451,11 @@ public class ViewJFrameGraph extends JFrame
 
             update(getGraphics());
         } else if (command.equals("FitGaussian")) { 
-        	MipavUtil.displayError("Not currently implemented. ");
-        	/*
+        	//MipavUtil.displayError("Not currently implemented. ");
+        	
         	double[] params;
             int nPoints;
-            FitExponential fe = null;
+            FitGaussian fe = null;
 
             ViewJComponentFunct[] functions = graph.getFuncts();
             ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
@@ -1470,7 +1470,7 @@ public class ViewJFrameGraph extends JFrame
 
                 for (int i = 0; i < functions.length; i++) {
                     nPoints = graph.getFuncts()[i].getOriginalXs().length;
-                    fe = new FitExponential(nPoints, graph.getFuncts()[i].getOriginalXs(),
+                    fe = new FitGaussian(nPoints, graph.getFuncts()[i].getOriginalXs(),
                                             graph.getFuncts()[i].getOriginalYs());
                     fe.driver();
                     fe.dumpResults();
@@ -1491,9 +1491,8 @@ public class ViewJFrameGraph extends JFrame
 
                     messageGraph.append("*********************\n");
                     messageGraph.append("Fitting of gaussian function " + i + "\n");
-                    messageGraph.append("Chi-squared = " + fe.getChiSquared() + "\n");
-                    messageGraph.append(" y = " + String.valueOf(params[0]) + " + " + String.valueOf(params[1]) +
-                                        " * exp(" + String.valueOf(params[2]) + " * x)\n");
+                    messageGraph.append(" y = " + params[0] + " * exp((x-" + String.valueOf(params[1]) +
+                                        ")^2/(2*" + String.valueOf(params[2]) + "))\n");
                     messageGraph.append("\n");
                 }
             } catch (OutOfMemoryError error) {
@@ -1510,7 +1509,7 @@ public class ViewJFrameGraph extends JFrame
                 }
             }
 
-            fitMode = fitGaussMode;
+            fitMode = fitGaussianMode;
 
             for (int index = 0; index < 5; index++) {
 
@@ -1523,7 +1522,7 @@ public class ViewJFrameGraph extends JFrame
                 }
             }
 
-            update(getGraphics());*/
+            update(getGraphics());
         	
     	} else if (command.equals("SaveGraph")) { // saves the graph to a file
 
@@ -1854,7 +1853,7 @@ public class ViewJFrameGraph extends JFrame
                 newY[i] = getMedian(sortY);
             }
 
-            GaussianOneDimKernel g = new GaussianOneDimKernel();
+            GaussianOneDimKernel g = new  GaussianOneDimKernel();
             float[] kernel = g.make(1.0f);
             // System.err.println("LENGTH IS: " + kernel.length);
             // for (int b = 0; b < kernel.length; b++) {
@@ -1876,6 +1875,9 @@ public class ViewJFrameGraph extends JFrame
                 gaussY[i] = (newY[i - 3] * kernel[0]) + (newY[i - 2] * kernel[1]) + (newY[i - 1] * kernel[2]) +
                             (newY[i] * kernel[3]) + (newY[i + 1] * kernel[4]) + (newY[i + 2] * kernel[5]) +
                             (newY[i + 3] * kernel[6]);
+                if(gaussY[i] != 0.0)
+                	System.out.println("Stop");
+                
             }
 
             new ViewJFrameGraph(x, gaussY, "Median -> Gaussian");

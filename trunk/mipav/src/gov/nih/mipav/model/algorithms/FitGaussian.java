@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import Jama.Matrix;
 import gov.nih.mipav.view.*;
 
 
@@ -14,8 +15,7 @@ import gov.nih.mipav.view.*;
  */
 public class FitGaussian extends NLEngine {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-
+	//~ Instance fields ------------------------------------------------------------------------------------------------
     /** Original x-data */
     private double[] xDataOrg;
 
@@ -24,6 +24,15 @@ public class FitGaussian extends NLEngine {
     
     /** Interpolated y-data from Gaussian*/
     private double[] yDataInt;
+    
+    /**Amplitude parameter*/
+    private double amp;
+    
+    /**Center parameter*/
+    private double xInit;
+    
+    /**Sigma parameter*/
+    private double sigma;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -49,30 +58,11 @@ public class FitGaussian extends NLEngine {
         // nPoints data points, 3 coefficients, and exponential fitting
         super(nPoints, 3);
 
-        int i;
-
-        // ia[0] equals 0 for fixed c1; ia[0] is nonzero for fitting c1
-        ia[0] = 1;
-
-        // ia[1] equals 0 for fixed c2; ia[1] is nonzero for fitting c2
-        ia[1] = 1;
-
-        // ia[2] equals 0 for fixed c3; ia[2] is nonzero for fitting c3
-        ia[2] = 1;
-
-        for (i = 0; i < nPoints; i++) {
-            xseries[i] = xData[i];
-            yseries[i] = yData[i];
-        }
-
         this.xDataOrg = xData;
         this.yDataOrg = yData;
-
-        stdv = 1;
-
-        for (i = 0; i < nPoints; i++) {
-            sig[i] = stdv;
-        }
+        
+        estimateInitial();
+        
     }
 
     /**
@@ -87,82 +77,52 @@ public class FitGaussian extends NLEngine {
         // nPoints data points, 3 coefficients, and exponential fitting
         super(nPoints, 3);
 
-        // super(5, 3, NLEngine.EXPONENTIAL);
-        int i;
-
-        // ia[0] equals 0 for fixed c1; ia[0] is nonzero for fitting c1
-        ia[0] = 1;
-
-        // ia[1] equals 0 for fixed c2; ia[1] is nonzero for fitting c2
-        ia[1] = 1;
-
-        // ia[2] equals 0 for fixed c3; ia[2] is nonzero for fitting c3
-        ia[2] = 1;
-
-        xDataOrg = new double[nPoints];
-        yDataOrg = new double[nPoints];
-
-        for (i = 0; i < nPoints; i++) {
-            xseries[i] = xData[i];
-            yseries[i] = yData[i];
+        this.xDataOrg = new double[nPoints];
+        this.yDataOrg = new double[nPoints];
+        for (int i = 0; i < nPoints; i++) {
             xDataOrg[i] = xData[i];
             yDataOrg[i] = yData[i];
         }
+        
+        estimateInitial();
 
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    private void estimateInitial() {
+    	amp = 2500;
+    	xInit = 980;
+    	sigma = 50;
+    	
+    	a[0] = amp;
+    	a[1] = xInit;
+    	a[2] = sigma;
+    }
+    
     /**
      * Starts the analysis. For some reason a guess with the wrong sign for a2 will not converge. Therefore, try both
      * sign and take the one with the lowest chi-squared value.
      */
     public void driver() {
-        int i;
-        double oldChiSq;
-        double[] oldA = new double[a.length];
-        int nPoints = xDataOrg.length;
-
-        gues[0] = 5;
-        gues[1] = 50;
-        gues[2] = 0.75;
-        stdv = 1;
-
-        for (i = 0; i < nPoints; i++) {
-            sig[i] = stdv;
-        }
-
-        super.driver();
-
-        for (i = 0; i < a.length; i++) {
-            oldA[i] = a[i];
-        }
-
-        oldChiSq = chisq;
-
-        gues[0] = 5;
-        gues[1] = 50;
-        gues[2] = -0.75;
-        stdv = 1;
-
-        for (i = 0; i < nPoints; i++) {
-            sig[i] = stdv;
-        }
-
-        for (i = 0; i < nPoints; i++) {
-            xseries[i] = xDataOrg[i];
-            yseries[i] = yDataOrg[i];
-        }
-
-        super.driver();
-
-        if (chisq < oldChiSq) 
-            return;
-           
-        for (i = 0; i < a.length; i++) 
-            a[i] = oldA[i];
-
-        chisq = oldChiSq;
+        
+    	Matrix jacobian = generateJacobian();
+    	Matrix residuals = generateResiduals();
+    	
+    	Matrix lhs = jacobian.transpose().times(jacobian);
+    	Matrix rhs = jacobian.transpose().times(residuals);
+    	
+    	Matrix dLambda = lhs.solve(rhs);
+    	
+    	amp = amp + dLambda.get(0, 0);
+    	xInit = xInit + dLambda.get(1, 0);
+    	sigma = sigma + dLambda.get(2, 0);
+    	
+    	//a already initialized in super constructor, used to hold parameters for output
+    	a[0] = amp;
+    	a[1] = xInit;
+    	a[2] = sigma;
+    	
     }
 
     /**
@@ -174,39 +134,17 @@ public class FitGaussian extends NLEngine {
         Preferences.debug("Chi-squared: " + String.valueOf(chisq) + "\n");
 
         // Preferences.debug("Final lamda: " + String.valueOf(flamda));
-        Preferences.debug("a0 " + String.valueOf(a[0]) + "\n"); // + " +/- " + String.valueOf(Math.sqrt(covar[0][0])));
-        Preferences.debug("a1 " + String.valueOf(a[1]) + "\n"); // + " +/- " + String.valueOf(Math.sqrt(covar[1][1])));
-        Preferences.debug("a2 " + String.valueOf(a[2]) + "\n\n"); // + " +/- " +
+        Preferences.debug("a0 " + String.valueOf(1) + "\n"); // + " +/- " + String.valueOf(Math.sqrt(covar[0][0])));
+        Preferences.debug("a1 " + String.valueOf(1) + "\n"); // + " +/- " + String.valueOf(Math.sqrt(covar[1][1])));
+        Preferences.debug("a2 " + String.valueOf(1) + "\n\n"); // + " +/- " +
                                                                   // String.valueOf(Math.sqrt(covar[2][2])));
     }
-
-    /**
-     * Fit to function - f = a1*exp(-(x-a2)^2/2sigma^2)
-     *
-     * @param   x1    The x value of the data point.
-     * @param   atry  The best guess parameter values.
-     * @param   dyda  The derivative values of y with respect to fitting parameters.
-     *
-     * @return  The calculated y value.
-     */
-    public double fitToFunction(double x1, double[] atry, double[] dyda) {
-
-        // mrqcof calls function
-        // mrqcof supplies x1 and best guess parameters atry[]
-        // function returns the partial derivatives dyda and the calculated ymod
-        double ymod = 0;
-
-        try {
-            ymod = atry[0] + (atry[1] * Math.exp(atry[2] * x1));
-            dyda[0] = 1; // a0 partial derivative
-            dyda[1] = Math.exp(atry[2] * x1); // a1 partial derivative
-            dyda[2] = atry[1] * x1 * Math.exp(atry[2] * x1); // a2 partial derivative
-        } catch (Exception e) {
-            Preferences.debug("function error: " + e.getMessage());
-        }
-
-        return ymod;
-    }
+    
+    @Override
+	public double fitToFunction(double x1, double[] atry, double[] dyda) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 
     /**
      * Test data to test fitting of gaussian.
@@ -252,4 +190,78 @@ public class FitGaussian extends NLEngine {
             sig[i] = stdv;
         }
     }
+    
+    /**
+     * Gaussian evaluated at a point with given parameters
+     */
+    private double gauss(double x) {
+    	double exp = -Math.pow(x-xInit, 2) / (2 * Math.pow(sigma, 2));
+    	
+    	double f = amp*Math.exp(exp);
+    	
+    	return f;
+    }
+    
+    /**
+     * Partial derivative of gaussian with respect to A.
+     */
+    private double dgdA(double x) {
+    	double exp = -Math.pow(x-xInit, 2) / (2 * Math.pow(sigma, 2));
+    	
+    	double f = Math.exp(exp);
+    	
+    	return f;
+    	
+    }
+    
+    /**
+     * Partial derivative of gaussian with respect to x.
+     */
+    private double dgdx(double x) {
+    	double exp = -Math.pow(x-xInit, 2) / (2 * Math.pow(sigma, 2));
+    	
+    	double coeff = (amp * (x-xInit))/(Math.pow(sigma, 2));
+    	
+    	double f = coeff*Math.exp(exp);
+    	
+    	return f;
+    }
+    
+    /**
+     * Partial derivative of gaussian with respect to sigma.
+     */
+    private double dgdsigma(double x) {
+    	double exp = -Math.pow(x-xInit, 2) / (2 * Math.pow(sigma, 2));
+    	
+    	double coeff = (amp * Math.pow(x-xInit, 2))/(Math.pow(sigma, 3));
+    	
+    	double f = coeff*Math.exp(exp);
+    	
+    	return f;
+    }
+    
+    /**
+     * Jacobian used for non-linear least squares fitting.
+     */
+    private Matrix generateJacobian() {
+    	Matrix jacobian = new Matrix(xDataOrg.length, 3);
+    	for(int i=0; i<xDataOrg.length; i++) {
+    		jacobian.set(i, 0, dgdA(xDataOrg[i]));
+    		jacobian.set(i, 1, dgdx(xDataOrg[i]));
+    		jacobian.set(i, 2, dgdsigma(xDataOrg[i]));
+    	}
+    	
+    	return jacobian;
+    }
+    
+    private Matrix generateResiduals() {
+    	Matrix residuals = new Matrix(yDataOrg.length, 1);
+    	for(int i=0; i<yDataOrg.length; i++) {
+    		double r = yDataOrg[i] - gauss(xDataOrg[i]);
+    		residuals.set(i, 0, r);
+    	}
+    	
+    	return residuals;
+    }
+    
 }
