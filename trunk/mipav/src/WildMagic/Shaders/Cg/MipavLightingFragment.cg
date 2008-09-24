@@ -80,7 +80,7 @@ void GetPointLightFactors
     float fSpec = 0;
     float cos_theta = 0;
     float cos_alpha = 0;
-    
+
     
     float3 kVertexDirection = normalize(kModelPosition - kLightPosition);
     fDiff = -dot(kModelNormal,kVertexDirection);
@@ -91,7 +91,7 @@ void GetPointLightFactors
         fSpec = dot(kModelNormal,kHalfVector);
         if (fSpec > 0.0f)
         {
-            fSpec = pow(fSpec,32f);
+            fSpec = pow(fSpec,fSpecularExponent);
         }
         else
         {
@@ -103,8 +103,9 @@ void GetPointLightFactors
         fDiff = 0.0f;
         fSpec = 0.0f;
     }
+    
     /*
-   float3 V = normalize(kCameraPosition - kModelPosition);
+    float3 V = normalize(kCameraPosition - kModelPosition);
     float3 N = normalize(kModelNormal);
     
     float3 lightDirection = normalize(kLightPosition - kModelPosition);
@@ -124,12 +125,76 @@ void GetPointLightFactors
        fDiff = 1.0f * cos_theta;
     }
     if ( cos_alpha > 0 ) {
-       fSpec = pow(cos_alpha, 32f);
+       fSpec = pow(cos_alpha, fSpecularExponent);
     }
     */
     fDiffuseFactor = fDiff;
     fSpecularFactor = fSpec;
 }
+// void GetPointLightFactors
+// (
+//  float3    kModelPosition,
+//  float3    kModelNormal,
+//  float3    kCameraPosition,
+//  float3    kLightPosition,
+//  float     fSpecularExponent,
+//  out float fDiffuseFactor,
+//  out float fSpecularFactor)
+// {
+//     float fDiff = 0;
+//     float fSpec = 0;
+//     float cos_theta = 0;
+//     float cos_alpha = 0;
+    
+    
+//     float3 kVertexDirection = normalize(kModelPosition - kLightPosition);
+//     fDiff = -dot(kModelNormal,kVertexDirection);
+//     if (fDiff > 0.0f)
+//     {
+//         float3 kViewVector = normalize(kCameraPosition - kModelPosition);
+//         float3 kHalfVector = normalize(kViewVector - kVertexDirection);
+//         fSpec = dot(kModelNormal,kHalfVector);
+//         if (fSpec > 0.0f)
+//         {
+//             fSpec = pow(fSpec,32f);
+//         }
+//         else
+//         {
+//             fSpec = 0.0f;
+//         }
+//     }
+//     else
+//     {
+//         fDiff = 0.0f;
+//         fSpec = 0.0f;
+//     }
+//     /*
+//    float3 V = normalize(kCameraPosition - kModelPosition);
+//     float3 N = normalize(kModelNormal);
+    
+//     float3 lightDirection = normalize(kLightPosition - kModelPosition);
+//     float3 L = float3(lightDirection.x, lightDirection.y, lightDirection.z);
+//     L = -L;
+//     L = normalize(L);
+    
+//     float3 R = float3(N.x, N.y, N.z);
+//     R = R * ( 2 * dot(L, N));
+//     R = R - L;
+//     R = normalize(R);
+    
+//     cos_theta = dot(L, N);
+//     cos_alpha = dot(R, V);
+    
+//     if ( cos_theta > 0 ) {
+//        fDiff = 1.0f * cos_theta;
+//     }
+//     if ( cos_alpha > 0 ) {
+//        fSpec = pow(cos_alpha, 32f);
+//     }
+//     */
+//     fDiffuseFactor = fDiff;
+//     fSpecularFactor = fSpec;
+// }
 //----------------------------------------------------------------------------
 void GetSpotLightFactors
 (
@@ -289,9 +354,45 @@ void PointLight(    uniform float3 kModelPosition,
         }
     }
 
-    kVertexColor.rgb = MaterialEmissive + fAttn*kColor;
+    //kVertexColor.rgb = MaterialEmissive + fAttn*kColor;
+    kVertexColor.rgb = MaterialEmissive + kColor;
     kVertexColor.a = MaterialDiffuse.a;
 }
+// void PointLight(    uniform float3 kModelPosition,
+//                     uniform float3 kModelNormal,
+//                     uniform float3   CameraWorldPosition,
+//                     uniform float3   MaterialEmissive,
+//                     uniform float3   MaterialAmbient,
+//                     uniform float4   MaterialDiffuse,
+//                     uniform float4   MaterialSpecular,
+//                     uniform float3   LightWorldPosition,
+//                     uniform float3   LightAmbient,
+//                     uniform float3   LightDiffuse,
+//                     uniform float3   LightSpecular,
+//                     uniform float4   LightAttenuation,
+//                     out     float4 kVertexColor)
+// {
+//     float fDiff, fSpec;
+//     GetPointLightFactors(kModelPosition.xyz,kModelNormal,
+//                          CameraWorldPosition,LightWorldPosition,MaterialSpecular.a,
+//                          fDiff,fSpec);
+
+//     float fAttn = GetAttenuation(kModelPosition.xyz,
+//                                  LightWorldPosition,LightAttenuation);
+
+//     float3 kColor = MaterialAmbient*LightAmbient;
+//     if (fDiff > 0.0f)
+//     {
+//         kColor += fDiff*MaterialDiffuse.xyz*LightDiffuse;
+//         if (fSpec > 0.0f)
+//         {
+//             kColor += fSpec*MaterialSpecular.xyz*LightSpecular;
+//         }
+//     }
+
+//     kVertexColor.rgb = MaterialEmissive + fAttn*kColor;
+//     kVertexColor.a = MaterialDiffuse.a;
+// }
 
 void SpotLight(    uniform float3 kModelPosition,
                    uniform float3 kModelNormal,
@@ -349,19 +450,12 @@ void computeColor( float3 kModelPosition, float3 kModelNormal, float3 CameraWorl
 {
     if ( LightType == -1 )
     {
-//         float3 local_normal = normalize(kModelNormal);
-
-//         color_sample.r = local_normal.x;
-//         color_sample.g = local_normal.y;
-//         color_sample.b = local_normal.z;
         color_sample.r = 0;
         color_sample.g = 0;
         color_sample.b = 0;
     }
     else
     {
-        float3 local_normal = normalize(kModelNormal);
-
         if ( LightType == 0 )
         {
             AmbientLight( MaterialEmissive,
@@ -373,7 +467,7 @@ void computeColor( float3 kModelPosition, float3 kModelNormal, float3 CameraWorl
         else if ( LightType == 1 )
         {
             DirectionalLight(  kModelPosition,
-                               local_normal,
+                               kModelNormal,
                                CameraWorldPosition,
                                MaterialEmissive,
                                MaterialAmbient,
@@ -390,7 +484,7 @@ void computeColor( float3 kModelPosition, float3 kModelNormal, float3 CameraWorl
         else if ( LightType == 2 )
         {
             PointLight( kModelPosition,
-                        local_normal,
+                        kModelNormal,
                         CameraWorldPosition,
                         MaterialEmissive,
                         MaterialAmbient,
@@ -406,7 +500,7 @@ void computeColor( float3 kModelPosition, float3 kModelNormal, float3 CameraWorl
         else
         {
             SpotLight( kModelPosition,
-                       local_normal,
+                       kModelNormal,
                        CameraWorldPosition,
                        MaterialEmissive,
                        MaterialAmbient,
