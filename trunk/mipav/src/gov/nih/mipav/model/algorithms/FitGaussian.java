@@ -106,17 +106,20 @@ public class FitGaussian extends NLEngine {
      */
     public void driver() {
         
-    	Matrix jacobian = generateJacobian();
-    	Matrix residuals = generateResiduals();
+    	for(int i=0; i<10; i++) {
     	
-    	Matrix lhs = jacobian.transpose().times(jacobian);
-    	Matrix rhs = jacobian.transpose().times(residuals);
-    	
-    	Matrix dLambda = lhs.solve(rhs);
-    	
-    	amp = amp + dLambda.get(0, 0);
-    	xInit = xInit + dLambda.get(1, 0);
-    	sigma = sigma + dLambda.get(2, 0);
+	    	Matrix jacobian = generateJacobian();
+	    	Matrix residuals = generateResiduals();
+	    	
+	    	Matrix lhs = jacobian.transpose().times(jacobian);
+	    	Matrix rhs = jacobian.transpose().times(residuals);
+	    	
+	    	Matrix dLambda = lhs.solve(rhs);
+	    	
+	    	amp = amp + dLambda.get(0, 0);
+	    	xInit = xInit + dLambda.get(1, 0);
+	    	sigma = sigma + dLambda.get(2, 0);
+    	}
     	
     	//a already initialized in super constructor, used to hold parameters for output
     	a[0] = amp;

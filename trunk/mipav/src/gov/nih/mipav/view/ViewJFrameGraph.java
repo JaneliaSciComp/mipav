@@ -1481,7 +1481,8 @@ public class ViewJFrameGraph extends JFrame
 
                     for (int j = 0; j < x.length; j++) {
                         x[j] = (functions[i].getXs()[j]);
-                        y[j] = (float) (params[0] + (params[1] * Math.exp(params[2] * x[j])));
+                        double exp = -Math.pow(x[j]-params[1], 2) / (2 * Math.pow(params[2], 2));
+                    	y[j] = (float) (params[0]*Math.exp(exp));
                     }
 
                     fittedFunctions[i].setXs(x);
