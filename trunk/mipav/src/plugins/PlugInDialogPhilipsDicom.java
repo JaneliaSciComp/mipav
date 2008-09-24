@@ -155,7 +155,7 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
 	                opts.setBeginSlice(0);
 	                opts.setEndSlice(resultImage.getExtents()[2]-1);
                 }
-                opts.setIsScript(true);
+                opts.setIsScript(false);
                 opts.setOptionsSet(true); 
                 File f = new File(image.getImageDirectory()+"corrected"+File.separator);
                 if(!f.exists())
