@@ -80,7 +80,7 @@ public class FitGaussian extends NLEngine {
         this.xDataOrg = xData;
         this.yDataOrg = yData;
         
-        //yDataOrg = applyKernel();
+        yDataOrg = applyKernel();
         
         estimateInitial();
         
@@ -105,7 +105,7 @@ public class FitGaussian extends NLEngine {
             yDataOrg[i] = yData[i];
         }
         
-        //yDataOrg = applyKernel();
+        yDataOrg = applyKernel();
         
         estimateInitial();
 
@@ -273,7 +273,7 @@ public class FitGaussian extends NLEngine {
     	int numItr = 0;
     	
     	while(!converged && numItr < MAX_ITR) {
-    		//double oldAmp = amp;
+    		double oldAmp = amp;
         	double oldXInit = xInit;
         	double oldSigma = sigma;
     	
@@ -285,17 +285,17 @@ public class FitGaussian extends NLEngine {
 	    	
 	    	Matrix dLambda = lhs.solve(rhs);
 	    	
-	    	//amp = amp + dLambda.get(0, 0);
-	    	xInit = xInit + dLambda.get(0, 0);
-	    	sigma = sigma + dLambda.get(1, 0);
-	    	if(//Math.abs(Math.abs(oldAmp - amp) / ((oldAmp + amp) / 2)) < EPSILON && 
+	    	amp = amp + dLambda.get(0, 0);
+	    	xInit = xInit + dLambda.get(1, 0);
+	    	sigma = sigma + dLambda.get(2, 0);
+	    	if(Math.abs(Math.abs(oldAmp - amp) / ((oldAmp + amp) / 2)) < EPSILON && 
 	    			Math.abs(Math.abs(oldXInit - xInit) / ((oldXInit + xInit) / 2)) < EPSILON && 
 	    			Math.abs(Math.abs(oldSigma - sigma) / ((oldSigma + sigma) / 2)) < EPSILON && numItr > MIN_ITR) {
 	    		converged = true;    		
 	    		Preferences.debug("Converged after "+numItr+" iterations.");
 	    		System.out.println("Converged after "+numItr+" iterations.");
 	    	} else {
-	    		//oldAmp = amp;
+	    		oldAmp = amp;
 	    		oldXInit = xInit;
 	    		oldSigma = sigma;
 	    		numItr++;
@@ -353,6 +353,18 @@ public class FitGaussian extends NLEngine {
     }
     
     /**
+     * Partial derivative of gaussian with respect to A.
+     */
+    private double dgdA(double x) {
+    	double exp = -Math.pow(x-xInit, 2) / (2 * Math.pow(sigma, 2));
+    	
+    	double f = Math.exp(exp);
+    	
+    	return f;
+    	
+    }
+    
+    /**
      * Partial derivative of gaussian with respect to x.
      */
     private double dgdx(double x) {
@@ -382,10 +394,11 @@ public class FitGaussian extends NLEngine {
      * Jacobian used for non-linear least squares fitting.
      */
     private Matrix generateJacobian() {
-    	Matrix jacobian = new Matrix(dataEnd - dataStart, 2);
+    	Matrix jacobian = new Matrix(dataEnd - dataStart, 3);
     	for(int i=dataStart; i<dataEnd; i++) {
-    		jacobian.set(i-dataStart, 0, dgdx(xDataOrg[i]));
-    		jacobian.set(i-dataStart, 1, dgdsigma(xDataOrg[i]));
+    		jacobian.set(i-dataStart, 0, dgdA(xDataOrg[i]));
+    		jacobian.set(i-dataStart, 1, dgdx(xDataOrg[i]));
+    		jacobian.set(i-dataStart, 2, dgdsigma(xDataOrg[i]));
     	}
     	
     	return jacobian;
