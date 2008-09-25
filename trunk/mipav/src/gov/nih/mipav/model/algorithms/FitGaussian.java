@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import java.util.Arrays;
+
 import Jama.Matrix;
 import gov.nih.mipav.view.*;
 
@@ -15,6 +17,17 @@ import gov.nih.mipav.view.*;
  */
 public class FitGaussian extends NLEngine {
 
+	//~ Static fields -------------------------------------------------------------------------------------------
+	
+	/**Max number of iterations to perform. */
+	public static final int MAX_ITR = 50;
+	
+	/**Min number of iterations to perform. */
+	public static final int MIN_ITR = 5;
+	
+	/**Minimum allowable distance between iterations of a coefficient before considered converged. */
+	public static final double EPSILON = .005;
+	
 	//~ Instance fields ------------------------------------------------------------------------------------------------
     /** Original x-data */
     private double[] xDataOrg;
@@ -67,6 +80,8 @@ public class FitGaussian extends NLEngine {
         this.xDataOrg = xData;
         this.yDataOrg = yData;
         
+        yDataOrg = applyKernel();
+        
         estimateInitial();
         
     }
@@ -79,7 +94,7 @@ public class FitGaussian extends NLEngine {
      * @param  yData    DOCUMENT ME!
      */
     public FitGaussian(int nPoints, float[] xData, float[] yData) {
-
+    	
         // nPoints data points, 3 coefficients, and exponential fitting
         super(nPoints, 3);
 
@@ -90,12 +105,74 @@ public class FitGaussian extends NLEngine {
             yDataOrg[i] = yData[i];
         }
         
+        yDataOrg = applyKernel();
+        
         estimateInitial();
 
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /**
+     * Apply small kernel to smooth out data.  Often helpful when too many bins have been applied by user.
+     */
+    private double[] applyKernel() {
+    	
+        int size = 7;
+        int start = size / 2;
+        double[] sortY = new double[size];
+        double[] newY = new double[yDataOrg.length];
+        double[] gaussY = new double[yDataOrg.length];
+        int end = yDataOrg.length - start;
+
+        newY[0] = yDataOrg[0];
+        newY[1] = getMedian(new double[] { yDataOrg[0], yDataOrg[1], yDataOrg[2] });
+        newY[2] = getMedian(new double[] { yDataOrg[0], yDataOrg[1], yDataOrg[2], yDataOrg[3], yDataOrg[4] });
+
+        newY[end] = getMedian(new double[] { yDataOrg[end - 2], yDataOrg[end - 1], yDataOrg[end], yDataOrg[end + 1], yDataOrg[end + 2] });
+        newY[end + 1] = getMedian(new double[] { yDataOrg[end], yDataOrg[end + 1], yDataOrg[end + 2] });
+        newY[end + 2] = yDataOrg[end + 2];
+
+        for (int i = start; i < end; i++) {
+            for (int j = 0; j < size; j++) {
+                sortY[j] = yDataOrg[i + j - start];
+            }
+            newY[i] = getMedian(sortY);
+        }
+
+        GaussianOneDimKernel g = new  GaussianOneDimKernel();
+        float[] kernel = g.make(1.0f);
+        gaussY[0] = newY[0];
+        gaussY[1] = newY[1];
+        gaussY[2] = newY[2];
+
+        // System.err.println("gaussY length: " + gaussY.length + " end: " + end);
+        end = gaussY.length - 3;
+
+        gaussY[end] = newY[end];
+        gaussY[end + 1] = newY[end + 1];
+        gaussY[end + 2] = newY[end + 2];
+
+        for (int i = 3; i < end; i++) {
+            gaussY[i] = (newY[i - 3] * kernel[0]) + (newY[i - 2] * kernel[1]) + (newY[i - 1] * kernel[2]) +
+                        (newY[i] * kernel[3]) + (newY[i + 1] * kernel[4]) + (newY[i + 2] * kernel[5]) +
+                        (newY[i + 3] * kernel[6]);
+        }
+        
+        return gaussY;
+    }
+    
+    /**
+     * get median of given array
+     */
+    private double getMedian(double[] toSort) {
+        int length = toSort.length;
+
+        Arrays.sort(toSort);
+
+        return toSort[(length / 2)];
+    }
+    
     private void estimateInitial() {
     	
     	//determine location of start data, note 
@@ -192,8 +269,13 @@ public class FitGaussian extends NLEngine {
      */
     public void driver() {
         
-    	for(int i=0; i<10; i++) {
-    		System.out.println(i);
+    	boolean converged = false;
+    	int numItr = 0;
+    	
+    	while(!converged && numItr < MAX_ITR) {
+    		double oldAmp = amp;
+        	double oldXInit = xInit;
+        	double oldSigma = sigma;
     	
 	    	Matrix jacobian = generateJacobian();
 	    	Matrix residuals = generateResiduals();
@@ -206,6 +288,23 @@ public class FitGaussian extends NLEngine {
 	    	amp = amp + dLambda.get(0, 0);
 	    	xInit = xInit + dLambda.get(1, 0);
 	    	sigma = sigma + dLambda.get(2, 0);
+	    	if(Math.abs(Math.abs(oldAmp - amp) / ((oldAmp + amp) / 2)) < EPSILON && 
+	    			Math.abs(Math.abs(oldXInit - xInit) / ((oldXInit + xInit) / 2)) < EPSILON && 
+	    			Math.abs(Math.abs(oldSigma - sigma) / ((oldSigma + sigma) / 2)) < EPSILON && numItr > MIN_ITR) {
+	    		converged = true;    		
+	    		Preferences.debug("Converged after "+numItr+" iterations.");
+	    		System.out.println("Converged after "+numItr+" iterations.");
+	    	} else {
+	    		oldAmp = amp;
+	    		oldXInit = xInit;
+	    		oldSigma = sigma;
+	    		numItr++;
+	    	}
+    	}
+    	
+    	if(!converged) {
+    		Preferences.debug("Did not converge after "+numItr+" iterations.");
+    		System.out.println("Did not converge after "+numItr+" iterations.");
     	}
     	
     	//a already initialized in super constructor, used to hold parameters for output
