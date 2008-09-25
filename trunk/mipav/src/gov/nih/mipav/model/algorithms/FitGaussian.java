@@ -25,6 +25,12 @@ public class FitGaussian extends NLEngine {
     /** Interpolated y-data from Gaussian*/
     private double[] yDataInt;
     
+    /**Location in xDataOrg where Gaussian data starts */
+    private int dataStart;
+    
+    /**Location in xDataOrg where Gaussian data ends */
+    private int dataEnd;
+    
     /**Amplitude parameter*/
     private double amp;
     
@@ -91,9 +97,89 @@ public class FitGaussian extends NLEngine {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     private void estimateInitial() {
-    	amp = 2500;
-    	xInit = 980;
-    	sigma = 50;
+    	
+    	//determine location of start data, note 
+    	//basic thresholding will already have been performed
+    	dataStart = 0;
+    	for(int i=0; i<yDataOrg.length; i++) {
+    		if(yDataOrg[i] != 0 && i > 0) {
+    			dataStart = i-1;
+    			break;
+    		}		
+    	}
+    	
+    	//estimate xInit
+    	int maxIndex = 0;
+    	double totalDataCount = 0;
+    	int numIndexWithData = 0;
+    	for(int i=dataStart; i<yDataOrg.length; i++) {
+    		if(yDataOrg[i] > yDataOrg[maxIndex]) {
+    			maxIndex = i;
+    		}
+    		if(yDataOrg[i] > 0) {
+    			numIndexWithData++;
+    			totalDataCount += yDataOrg[i];
+    		}
+    	}	
+    	xInit = xDataOrg[maxIndex];
+    	
+    	//determine location of end data
+    	dataEnd = 0;
+    	for(int i=maxIndex; i<yDataOrg.length; i++) {
+    		if(yDataOrg[i] == 0) {
+    			dataEnd = i;
+    			break;
+    		}
+    	}
+
+    	//find location of one sigma data collection point
+    	double dataCollectedOneSigma = yDataOrg[maxIndex], dataCollectedTwoSigma = yDataOrg[maxIndex];
+    	int xStopLeftIndex = maxIndex, xStopRightIndex = maxIndex;
+    	boolean left = true;
+    	while(dataCollectedOneSigma / totalDataCount < .68 && 
+    			xStopLeftIndex > dataStart+1 && xStopRightIndex < dataEnd-1) {
+    		if(left) 
+    			dataCollectedOneSigma += yDataOrg[--xStopLeftIndex];
+    		if(!left)
+    			dataCollectedOneSigma += yDataOrg[++xStopRightIndex];
+    		left = !left;
+    	}
+    	
+    	//estimate one sigma from stopping locations
+    	double oneSigmaEstimate = 0;
+    	if(dataCollectedOneSigma / totalDataCount >= .68) {
+    		double sigmaLeft = Math.abs(xDataOrg[maxIndex] - xDataOrg[xStopLeftIndex]);
+    		double sigmaRight = Math.abs(xDataOrg[maxIndex] - xDataOrg[xStopLeftIndex]);
+    		oneSigmaEstimate = sigmaLeft + sigmaRight / 2.0;
+    	}
+    	
+    	//find location of two sigma data collection point
+    	dataCollectedTwoSigma = dataCollectedOneSigma;
+    	while(dataCollectedTwoSigma / totalDataCount < .95 && 
+    			xStopLeftIndex > dataStart+1 && xStopRightIndex < dataEnd-1) {
+    		if(left) 
+    			dataCollectedTwoSigma += yDataOrg[--xStopLeftIndex];
+    		if(!left)
+    			dataCollectedTwoSigma += yDataOrg[++xStopRightIndex];
+    		left = !left;
+    	}
+    	
+    	//estimate two sigma from stopping location
+    	double twoSigmaEstimate = 0;
+    	if(dataCollectedOneSigma / totalDataCount >= .68) {
+    		double sigmaLeft = Math.abs(xDataOrg[maxIndex] - xDataOrg[xStopLeftIndex]);
+    		double sigmaRight = Math.abs(xDataOrg[maxIndex] - xDataOrg[xStopLeftIndex]);
+    		twoSigmaEstimate = sigmaLeft + sigmaRight / 2.0;
+    	}
+    	
+    	//use both measurements to estimate stdev
+    	if(twoSigmaEstimate != 0)
+    		sigma = (oneSigmaEstimate + .5*twoSigmaEstimate) / 2;
+    	else 
+    		sigma = oneSigmaEstimate;
+    	
+    	//estimate for amplitude
+    	amp = yDataOrg[maxIndex];
     	
     	a[0] = amp;
     	a[1] = xInit;
@@ -107,6 +193,7 @@ public class FitGaussian extends NLEngine {
     public void driver() {
         
     	for(int i=0; i<10; i++) {
+    		System.out.println(i);
     	
 	    	Matrix jacobian = generateJacobian();
 	    	Matrix residuals = generateResiduals();
@@ -153,45 +240,6 @@ public class FitGaussian extends NLEngine {
      * Test data to test fitting of gaussian.
      */
     private void testData() {
-
-        // Setup for a function of the type y = c1 + c2*exp(c3*x)
-        int i;
-
-        stdv = 100;
-
-        // ia[0] equals 0 for fixed c1; ia[0] is nonzero for fitting c1
-        ia[0] = 1;
-
-        // ia[1] equals 0 for fixed c2; ia[1] is nonzero for fitting c2
-        ia[1] = 1;
-
-        // ia[2] equals 0 for fixed c3; ia[2] is nonzero for fitting c3
-        ia[2] = 1;
-
-        xseries[0] = 0;
-        yseries[0] = 1 + 2;
-
-        xseries[1] = 1;
-        yseries[1] = 1 + (2 * Math.exp(-3));
-
-        xseries[2] = 2;
-        yseries[2] = 1 + (2 * Math.exp(-6));
-
-        xseries[3] = 3;
-        yseries[3] = 1 + (2 * Math.exp(-9));
-
-        xseries[4] = 4;
-        yseries[4] = 1 + (2 * Math.exp(-12));
-
-        // guess();
-        gues[0] = -1;
-        gues[1] = 2;
-        gues[2] = -5;
-
-        // Assign the same standard deviations to all data points.
-        for (i = 0; i < 5; i++) {
-            sig[i] = stdv;
-        }
     }
     
     /**
@@ -247,21 +295,21 @@ public class FitGaussian extends NLEngine {
      * Jacobian used for non-linear least squares fitting.
      */
     private Matrix generateJacobian() {
-    	Matrix jacobian = new Matrix(xDataOrg.length, 3);
-    	for(int i=0; i<xDataOrg.length; i++) {
-    		jacobian.set(i, 0, dgdA(xDataOrg[i]));
-    		jacobian.set(i, 1, dgdx(xDataOrg[i]));
-    		jacobian.set(i, 2, dgdsigma(xDataOrg[i]));
+    	Matrix jacobian = new Matrix(dataEnd - dataStart, 3);
+    	for(int i=dataStart; i<dataEnd; i++) {
+    		jacobian.set(i-dataStart, 0, dgdA(xDataOrg[i]));
+    		jacobian.set(i-dataStart, 1, dgdx(xDataOrg[i]));
+    		jacobian.set(i-dataStart, 2, dgdsigma(xDataOrg[i]));
     	}
     	
     	return jacobian;
     }
     
     private Matrix generateResiduals() {
-    	Matrix residuals = new Matrix(yDataOrg.length, 1);
-    	for(int i=0; i<yDataOrg.length; i++) {
+    	Matrix residuals = new Matrix(dataEnd - dataStart, 1);
+    	for(int i=dataStart; i<dataEnd; i++) {
     		double r = yDataOrg[i] - gauss(xDataOrg[i]);
-    		residuals.set(i, 0, r);
+    		residuals.set(i-dataStart, 0, r);
     	}
     	
     	return residuals;
