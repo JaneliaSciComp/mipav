@@ -57,7 +57,7 @@
     <property name="javac.target" value="1.5+" />
     <property name="verbose" value="no" />
     <property name="nowarn" value="no" />
-    <property name="listfiles" value="yes" />
+    <property name="listfiles" value="no" />
     <property name="version.target" value="1.5" />
     <property name="version.source" value="1.5" />
     <property name="sysAssert" value="yes" />
@@ -110,9 +110,6 @@
         </path>
         <property name="build.cp" refid="build.classpath" />
 
-        <!-- make sure that the compilation directory exists -->
-        <mkdir dir="${dir.dest}"/>
-        
         <echo>source: ${dir.source}</echo>
         <echo>destination: ${dir.dest}</echo>
     </target>
@@ -136,6 +133,9 @@
         <echo>source: ${dir.source}</echo>
         <echo>destination: ${dir.dest}</echo>
         <echo>classpath: ${build.cp}</echo>
+
+        <!-- make sure that the compilation directory exists -->
+        <mkdir dir="${dir.dest}"/>
 
         <javac  debug="${debug}"
                 deprecation="${deprecation}"
@@ -229,11 +229,6 @@
             </fileset>
         </copy>
 
-        <!-- copy the help jar to the compilation directory -->
-        <copy todir="${dir.dest}/help">
-            <fileset file="${dir.source}/help/mipav_help.jar"/>
-        </copy>
-
         <!-- xml schema files -->
         <copy todir="${dir.dest}">
             <fileset dir="${dir.source}/../xml" includes="*.xsd"/>
@@ -256,6 +251,17 @@
         </copy>
     </target>
 
+    <target name="copyjars"
+            description="Copy all of the project jars for running the project."
+            depends="init">
+        <!-- copy the help jar to the compilation directory -->
+        <copy todir="${dir.dest}/help">
+            <fileset file="${dir.source}/help/mipav_help.jar"/>
+        </copy>
+
+
+    </target>
+
     <!-- Reports the properties that will be used by ant. -->
     <target name="state"
         description="testing elements."
@@ -274,7 +280,7 @@
     <!-- Compile and run the program. -->
     <target name="run"
             description="Try running it."
-            depends="init,compile,copyresources">
+            depends="init,compile,copyresources,copyjars">
         <java classname="${project.main}"
                 classpathref="build.classpath"
                 dir="${dir.dest}"
@@ -320,13 +326,7 @@
     <target name="clean"
             description="Clean all build products."
             depends="init">
-        <echo message="Deleting classes in ${dir.dest}."/>
-        <delete>
-            <fileset dir="${dir.dest}">
-                <include name="**/*.class"/>
-                <include name="**/icons/*"/>
-            </fileset>
-        </delete>
+        <delete dir="${dir.dest}"/>
         <delete file="${project.name}.jar"/>
         <delete dir="${dir.doc}"/>
     </target>
