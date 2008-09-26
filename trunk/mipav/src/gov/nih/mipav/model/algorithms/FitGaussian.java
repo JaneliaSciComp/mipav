@@ -35,9 +35,6 @@ public class FitGaussian extends NLEngine {
     /** Original y-data */
     private double[] yDataOrg;
     
-    /** Interpolated y-data from Gaussian*/
-    private double[] yDataInt;
-    
     /**Location in xDataOrg where Gaussian data starts */
     private int dataStart;
     
