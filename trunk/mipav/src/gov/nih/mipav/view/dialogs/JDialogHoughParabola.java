@@ -299,7 +299,7 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
         gbc.gridy = 1;
         paramPanel.add(mainLabel2, gbc);
 
-        xvLabel = new JLabel("Desired xv dimension of Hough transform image ");
+        xvLabel = new JLabel("Desired vx dimension of Hough transform image ");
         xvLabel.setForeground(Color.black);
         xvLabel.setFont(serif12);
         xvLabel.setEnabled(true);
@@ -313,7 +313,7 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
         gbc.gridx = 1;
         paramPanel.add(xvText, gbc);
 
-        yvLabel = new JLabel("Desired yv dimension of Hough transform image ");
+        yvLabel = new JLabel("Desired vy dimension of Hough transform image ");
         yvLabel.setForeground(Color.black);
         yvLabel.setFont(serif12);
         yvLabel.setEnabled(true);
