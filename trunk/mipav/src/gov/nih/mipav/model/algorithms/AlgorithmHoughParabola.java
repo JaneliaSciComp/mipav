@@ -476,7 +476,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
             }*/
             
             // 180 degrees
-            /*xVertex = (xDim-1)/2.0;
+            xVertex = (xDim-1)/2.0;
             yVertex = (yDim-1)/2.0;
             yStart = (int)(yVertex - 20);
             yFinish = (int)(yVertex + 20);
@@ -489,7 +489,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                     index = x + + (int)Math.round(yVal) * xDim;
                     srcBuffer[index] = value;
                 }
-            }*/
+            }
             
             // 45 degrees
             //p = 1
@@ -1705,6 +1705,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                     } // else phiTable[i] == Math.PI
                 } // else (Math.abs(xEndPoint[i][1] - xEndPoint[i][0]) < Math.abs(yEndPoint[i][1] - yEndPoint[i][0]))
                 k++;
+                k2++;
             } // if (selectedParabola[i])
         } // for (i = 0, k = 0, k2 = 0; i < numParabolaFound; i++)
         
