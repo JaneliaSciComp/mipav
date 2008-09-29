@@ -211,12 +211,7 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
 
         try {
             String name = makeImageName(image.getImageName(), "_hough_parabola");
-            if (image.getType() == ModelStorageBase.BYTE) {
-                resultImage = new ModelImage(ModelStorageBase.UBYTE, image.getExtents(), name);
-            }
-            else {
-                resultImage = new ModelImage(image.getType(), image.getExtents(), name);
-            }
+            resultImage = new ModelImage(image.getType(), image.getExtents(), name);
             resultImage.setImageName(name);
 
             // Make algorithm
