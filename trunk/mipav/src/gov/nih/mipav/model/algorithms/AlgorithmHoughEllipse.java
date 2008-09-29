@@ -8,6 +8,7 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
+import java.awt.Color;
 
 /**
  *  This Hough transform uses (xi, yi) points in the original image space to generate p, q, r1, r2, and theta points in the Hough
@@ -435,6 +436,12 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         double d2;
         double slope;
         boolean ellipseDetected;
+        VOI ellipseVOI[] = null;
+        int ellipsesDrawn = 0;
+        int ellipsePoints[];
+        float xArr[];
+        float yArr[];
+        float zArr[];
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -1835,8 +1842,15 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
             return;
         }
         
-        // Draw selected elipses
         for (i = 0; i < ellipsesFound; i++) {
+            if (selectedEllipse[i]) {
+                ellipsesDrawn++;
+            }
+        }
+        
+        // Draw selected elipses
+        ellipsePoints = new int[ellipsesDrawn];
+        for (i = 0, k = 0; i < ellipsesFound; i++) {
             if (selectedEllipse[i]) {
                 beta = thetaTable[i];
                 cosbeta = Math.cos(beta);
@@ -1851,11 +1865,47 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                         if ((y >= 0) && (y < yDim)) {
                             index = x + (xDim*y);
                             srcBuffer[index] = value;
+                            ellipsePoints[k]++;
                         }
                     }
                 }
+                k++;
             } // if (selectedEllipse[i])
         } // for (i = 0; i < ellipsesFound; i++)
+        
+        
+        ellipseVOI = new VOI[ellipsesDrawn];
+        for (i = 0, k = 0; i < ellipsesFound; i++) {
+            if (selectedEllipse[i]) {
+                n = 0;
+                ellipseVOI[k] = new VOI((short)k, "ellipseVOI" + Integer.toString(k), 1, VOI.CONTOUR, -1.0f);
+                ellipseVOI[k].setColor(Color.red);
+                xArr = new float[ellipsePoints[k]];
+                yArr = new float[ellipsePoints[k]];
+                zArr = new float[ellipsePoints[k]];
+                beta = thetaTable[i];
+                cosbeta = Math.cos(beta);
+                sinbeta = Math.sin(beta);
+                for (j = 0; j < 720; j++) {
+                    alpha = j * Math.PI/360.0;
+                    cosalpha = Math.cos(alpha);
+                    sinalpha = Math.sin(alpha);
+                    x = (int)(xCenterTable[i] + r1Table[i] * cosalpha * cosbeta - r2Table[i] * sinalpha * sinbeta);
+                    if ((x >= 0) && (x < xDim)) {
+                        y = (int)(yCenterTable[i] + r1Table[i] * cosalpha * sinbeta + r2Table[i] * sinalpha * cosbeta);
+                        if ((y >= 0) && (y < yDim)) {
+                            xArr[n] = x;
+                            yArr[n++] = y;
+                        }
+                    }
+                }
+                ellipseVOI[k].importCurve(xArr, yArr, zArr, 0);
+                ((VOIContour)(ellipseVOI[k].getCurves()[0].elementAt(0))).setFixed(true);
+                destImage.registerVOI(ellipseVOI[k]);
+                k++;
+            } // if (selectedEllipse[i])
+        } // for (i = 0; i < ellipsesFound; i++)
+        
         
         try {
             destImage.importData(0, srcBuffer, true);
