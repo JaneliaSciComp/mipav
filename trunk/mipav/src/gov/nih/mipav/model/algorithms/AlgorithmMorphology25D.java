@@ -463,15 +463,22 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             return;
         }
 
-        // Source Image must be Boolean, UByte or UShort
-        if ((srcImage.getType() != ModelImage.BOOLEAN) && (srcImage.getType() != ModelImage.UBYTE) &&
+        srcImage.calcMinMax();
+        double minValue = srcImage.getMin();
+        if (minValue < 0) {
+            displayError("Source Image cannot have negative minimum");
+            setCompleted(false);
+            return;
+        }
+        if ((srcImage.getType() != ModelImage.BOOLEAN) && (srcImage.getType() != ModelImage.BYTE) &&
+                (srcImage.getType() != ModelImage.UBYTE) && (srcImage.getType() != ModelImage.SHORT) &&
                 (srcImage.getType() != ModelImage.USHORT)) {
-            displayError("Source Image must be Boolean, UByte or UShort");
+            displayError("Source Image must be Boolean, Byte, UByte, Short or UShort");
             setCompleted(false);
 
             return;
         }
-
+        
         // verify using a 3d image for this algorithm.
         if (srcImage.getNDims() != 3) {
             displayError("Source Image is not 3D");
@@ -1130,9 +1137,10 @@ kernelLoop:
 
         try {
 
-            if ((srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.UBYTE)) {
-                srcImage.reallocate(ModelImage.USHORT);
-            }
+            if ((srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.BYTE) ||
+                    (srcImage.getType() == ModelStorageBase.UBYTE) || (srcImage.getType() == ModelStorageBase.SHORT)) {
+                    srcImage.reallocate(ModelImage.USHORT);
+                }
 
             srcImage.importData(0, imgBuffer, true);
         } catch (IOException error) {
