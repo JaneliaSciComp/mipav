@@ -1471,7 +1471,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             return;
         }
 
-        // Source Image must be Boolean, UByte or UShort
+        // Source Image must be Boolean, Byte, UByte, Short or UShort
         srcImage.calcMinMax();
         double minValue = srcImage.getMin();
         if (minValue < 0) {
