@@ -225,7 +225,12 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
 
         try {
             String name = makeImageName(image.getImageName(), "_hough_ellipse");
-            resultImage = new ModelImage(image.getType(), image.getExtents(), name);
+            if (image.getType() == ModelStorageBase.BYTE) {
+                resultImage = new ModelImage(ModelStorageBase.UBYTE, image.getExtents(), name);
+            }
+            else {
+                resultImage = new ModelImage(image.getType(), image.getExtents(), name);
+            }
             resultImage.setImageName(name);
 
             // Make algorithm
@@ -418,7 +423,7 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
         gbc.gridx = 1;
         paramPanel.add(pointSetsText, gbc);
         
-        countLabel = new JLabel("Counts required to find an ellipse ");
+        countLabel = new JLabel("Counts in a p,q,r1,r2,theta bin required for an ellipse find ");
         countLabel.setForeground(Color.black);
         countLabel.setFont(serif12);
         countLabel.setEnabled(true);
