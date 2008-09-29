@@ -211,7 +211,12 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
 
         try {
             String name = makeImageName(image.getImageName(), "_hough_parabola");
-            resultImage = new ModelImage(image.getType(), image.getExtents(), name);
+            if (image.getType() == ModelStorageBase.BYTE) {
+                resultImage = new ModelImage(ModelStorageBase.UBYTE, image.getExtents(), name);
+            }
+            else {
+                resultImage = new ModelImage(image.getType(), image.getExtents(), name);
+            }
             resultImage.setImageName(name);
 
             // Make algorithm
@@ -242,7 +247,7 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
         } catch (OutOfMemoryError x) {
 
             System.gc();
-            MipavUtil.displayError("Dialog Hough Circle: unable to allocate enough memory");
+            MipavUtil.displayError("Dialog Hough Parabola: unable to allocate enough memory");
 
             return;
         }
