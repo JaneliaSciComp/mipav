@@ -225,12 +225,7 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
 
         try {
             String name = makeImageName(image.getImageName(), "_hough_ellipse");
-            if (image.getType() == ModelStorageBase.BYTE) {
-                resultImage = new ModelImage(ModelStorageBase.UBYTE, image.getExtents(), name);
-            }
-            else {
-                resultImage = new ModelImage(image.getType(), image.getExtents(), name);
-            }
+            resultImage = new ModelImage(image.getType(), image.getExtents(), name);
             resultImage.setImageName(name);
 
             // Make algorithm
