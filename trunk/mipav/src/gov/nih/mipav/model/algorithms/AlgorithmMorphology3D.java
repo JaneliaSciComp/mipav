@@ -540,7 +540,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                 return;
             }
 
-            if ((srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.UBYTE)) {
+            if ((srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.BYTE) ||
+                (srcImage.getType() == ModelStorageBase.UBYTE) || (srcImage.getType() == ModelStorageBase.SHORT)) {
                 srcImage.reallocate(ModelImage.USHORT);
             }
 
@@ -820,9 +821,17 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             return;
         }
 
-        if ((srcImage.getType() != ModelImage.BOOLEAN) && (srcImage.getType() != ModelImage.UBYTE) &&
+        srcImage.calcMinMax();
+        double minValue = srcImage.getMin();
+        if (minValue < 0) {
+            displayError("Source Image cannot have negative minimum");
+            setCompleted(false);
+            return;
+        }
+        if ((srcImage.getType() != ModelImage.BOOLEAN) && (srcImage.getType() != ModelImage.BYTE) &&
+                (srcImage.getType() != ModelImage.UBYTE) && (srcImage.getType() != ModelImage.SHORT) &&
                 (srcImage.getType() != ModelImage.USHORT)) {
-            displayError("Source Image must be Boolean, UByte or UShort");
+            displayError("Source Image must be Boolean, Byte, UByte, Short or UShort");
             setCompleted(false);
 
             return;
@@ -1454,7 +1463,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                 return;
             }
 
-            if ((srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.UBYTE)) {
+            if ((srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.BYTE) ||
+                (srcImage.getType() == ModelStorageBase.UBYTE) || (srcImage.getType() == ModelStorageBase.SHORT)) {
                 srcImage.reallocate(ModelImage.USHORT);
             }
 
@@ -2083,7 +2093,8 @@ kernelLoop:
 
         try {
 
-            if ((srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.UBYTE)) {
+            if ((srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.BYTE) ||
+                (srcImage.getType() == ModelStorageBase.UBYTE) || (srcImage.getType() == ModelStorageBase.SHORT)) {
                 srcImage.reallocate(ModelImage.USHORT);
             }
 
