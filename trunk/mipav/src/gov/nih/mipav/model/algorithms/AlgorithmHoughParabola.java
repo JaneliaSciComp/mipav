@@ -8,6 +8,7 @@ import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
 import java.text.DecimalFormat;
+import java.awt.Color;
 
 /**
  * [(y - vy)*cos(phi) - (x - vx)*sin(phi)]**2 =
@@ -194,7 +195,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
 
         int sourceSlice;
 
-        int i, j, k, m, n, c;
+        int i, j, k, k2, m, n, n2, c;
         int index, indexDest;
         
         byte[] srcBuffer;
@@ -340,6 +341,17 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         double cosphit;
         double sinphit;
         double diff;
+        VOI parabolaVOI[] = null;
+        VOI parabolaVOI2[] = null;
+        int parabolasDrawn = 0;
+        int parabolaPoints[];
+        int parabolaPoints2[];
+        float xArr[];
+        float yArr[];
+        float zArr[];
+        float xArr2[];
+        float yArr2[];
+        float zArr2[];
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -1569,8 +1581,16 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
             return;
         }
         
-        // Draw selected parabolas
         for (i = 0; i < numParabolasFound; i++) {
+            if (selectedParabola[i]) {
+                parabolasDrawn++;
+            }
+        }
+        
+        // Draw selected parabolas
+        parabolaPoints = new int[parabolasDrawn];
+        parabolaPoints2 = new int[parabolasDrawn];
+        for (i = 0, k = 0, k2 = 0; i < numParabolasFound; i++) {
             if (selectedParabola[i]) {
                 if (Math.abs(xEndPoint[i][1] - xEndPoint[i][0]) >= Math.abs(yEndPoint[i][1] - yEndPoint[i][0])) {
                     xStart = Math.min(xEndPoint[i][0], xEndPoint[i][1]);
@@ -1593,10 +1613,12 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                                 if ((y1 >= 0) && (y1 < yDim)) {
                                     index = (int)Math.round(xVal) + y1 * xDim;
                                     srcBuffer[index] = value;
+                                    parabolaPoints[k]++;
                                 }
                                 if ((y2 >= 0) && (y2 < yDim)) {
                                     index = (int)Math.round(xVal) + y2 * xDim;
                                     srcBuffer[index] = value;
+                                    parabolaPoints2[k2]++;
                                 }
                             } // if (var >= 0.0)
                         }
@@ -1609,6 +1631,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                             if ((y1 >= 0) && (y1 < yDim)) {
                                 index = (int)Math.round(xVal) + y1 * xDim;
                                 srcBuffer[index] = value;
+                                parabolaPoints[k]++;
                             }
                         }
                     } // else if (phiTable[i] == Math.PI/2.0)
@@ -1620,6 +1643,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                             if ((y1 >= 0) && (y1 < yDim)) {
                                 index = (int)Math.round(xVal) + y1 * xDim;
                                 srcBuffer[index] = value;
+                                parabolaPoints[k]++;
                             }
                         }    
                     } // else phiTable[i] == 3.0 * Math.PI/2.0
@@ -1645,10 +1669,12 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                                 if ((x1 >= 0) && (x1 < xDim)) {
                                     index = x1 + (int)Math.round(yVal) * xDim;
                                     srcBuffer[index] = value;
+                                    parabolaPoints[k]++;
                                 }
                                 if ((x2 >= 0) && (x2 < xDim)) {
                                     index = x2 + (int)Math.round(yVal) * xDim;
                                     srcBuffer[index] = value;
+                                    parabolaPoints2[k2]++;
                                 }
                             } // if (var = 0.0)
                         }
@@ -1661,6 +1687,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                             if ((x1 >= 0) && (x1 < xDim)) {
                                 index = x1 + (int)Math.round(yVal) * xDim;
                                 srcBuffer[index] = value;
+                                parabolaPoints[k]++;
                             }
                         }
                     } // else if (phiTable[i] == 0.0)
@@ -1672,12 +1699,150 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                             if ((x1 >= 0) && (x1 < xDim)) {
                                 index = x1 + (int)Math.round(yVal) * xDim;
                                 srcBuffer[index] = value;
+                                parabolaPoints[k]++;
                             }
                         }  
                     } // else phiTable[i] == Math.PI
                 } // else (Math.abs(xEndPoint[i][1] - xEndPoint[i][0]) < Math.abs(yEndPoint[i][1] - yEndPoint[i][0]))
+                k++;
             } // if (selectedParabola[i])
-        } // for (i = 0; i < numParabolaFound; i++)
+        } // for (i = 0, k = 0, k2 = 0; i < numParabolaFound; i++)
+        
+        parabolaVOI = new VOI[parabolasDrawn];
+        parabolaVOI2 = new VOI[parabolasDrawn];
+        for (i = 0, k = 0, k2 = 0; i < numParabolasFound; i++) {
+            if (selectedParabola[i]) {
+                n = 0;
+                parabolaVOI[k] = new VOI((short)k, "parabolaVOI" + Integer.toString(k), 1, VOI.POLYLINE, -1.0f);
+                parabolaVOI[k].setColor(Color.red);
+                xArr = new float[parabolaPoints[k]];
+                yArr = new float[parabolaPoints[k]];
+                zArr = new float[parabolaPoints[k]];
+                n2 = 0;
+                parabolaVOI2[k2] = new VOI((short)(parabolasDrawn+k2), "parabolaVOI" + Integer.toString(parabolasDrawn + k2),
+                                          1, VOI.POLYLINE, -1.0f);
+                parabolaVOI2[k2].setColor(Color.red);
+                xArr2 = new float[parabolaPoints2[k2]];
+                yArr2 = new float[parabolaPoints2[k2]];
+                zArr2 = new float[parabolaPoints2[k2]];
+                if (Math.abs(xEndPoint[i][1] - xEndPoint[i][0]) >= Math.abs(yEndPoint[i][1] - yEndPoint[i][0])) {
+                    xStart = Math.min(xEndPoint[i][0], xEndPoint[i][1]);
+                    xFinish = Math.max(xEndPoint[i][0], xEndPoint[i][1]);
+                    xdel = (double)(xFinish - xStart)/(double)maxParabolaPoints;
+                    if ((phiTable[i] != Math.PI/2.0) && (phiTable[i] != 3.0*Math.PI/2.0)) {
+                        cosphi = Math.cos(phiTable[i]);
+                        sinphi = Math.sin(phiTable[i]);
+                        a = cosphi * cosphi;
+                        for (j = 0; j <= maxParabolaPoints; j++) {
+                            xVal = xStart + j * xdel;
+                            xf = xVal - vxTable[i];
+                            b = -2.0 * sinphi*(xf*cosphi + 2.0*pTable[i]);
+                            cv = xf*xf*sinphi*sinphi - 4.0*pTable[i]*xf*cosphi;
+                            var = b*b - 4.0*a*cv;
+                            if (var >= 0.0) {
+                                root = Math.sqrt(var);
+                                y1 = (int)Math.round(vyTable[i] + (-b - root)/(2.0 * a));
+                                y2 = (int)Math.round(vyTable[i] + (-b + root)/(2.0 * a));
+                                if ((y1 >= 0) && (y1 < yDim)) {
+                                    xArr[n] = Math.round(xVal);
+                                    yArr[n++] = y1;
+                                }
+                                if ((y2 >= 0) && (y2 < yDim)) {
+                                    xArr2[n2] = Math.round(xVal);
+                                    yArr2[n2++] = y2;
+                                }
+                            } // if (var >= 0.0)
+                        }
+                    } // if ((phiTable[i] != Math.PI/2.0) && (phiTable[i] != 3.0*Math.PI/2.0))
+                    else if (phiTable[i] == Math.PI/2.0) {
+                        for (j = 0; j <= maxParabolaPoints; j++) {
+                            xVal = xStart + j * xdel;
+                            xf = xVal - vxTable[i];
+                            y1 = (int)Math.round(vyTable[i] + xf*xf/(4.0 * pTable[i]));
+                            if ((y1 >= 0) && (y1 < yDim)) {
+                                xArr[n] = Math.round(xVal);
+                                yArr[n++] = y1;
+                            }
+                        }
+                    } // else if (phiTable[i] == Math.PI/2.0)
+                    else { // phiTable[i] == 3.0 * Math.PI/2.0
+                        for (j = 0; j <= maxParabolaPoints; j++) {
+                            xVal = xStart + j * xdel;
+                            xf = xVal - vxTable[i];
+                            y1 = (int)Math.round(vyTable[i] - xf*xf/(4.0 * pTable[i]));
+                            if ((y1 >= 0) && (y1 < yDim)) {
+                                xArr[n] = Math.round(xVal);
+                                yArr[n++] = y1;
+                            }
+                        }    
+                    } // else phiTable[i] == 3.0 * Math.PI/2.0
+                } // if (Math.abs(xEndPoint[i][1] - xEndPoint[i][0]) >= Math.abs(yEndPoint[i][1] - yEndPoint[i][0]))
+                else {
+                    yStart = Math.min(yEndPoint[i][0], yEndPoint[i][1]);
+                    yFinish = Math.max(yEndPoint[i][0], yEndPoint[i][1]);
+                    ydel = (double)(yFinish - yStart)/(double)maxParabolaPoints;
+                    if ((phiTable[i] != 0.0) && (phiTable[i] != Math.PI)) {
+                        cosphi = Math.cos(phiTable[i]);
+                        sinphi = Math.sin(phiTable[i]); 
+                        a = sinphi * sinphi;
+                        for (j = 0; j <= maxParabolaPoints; j++) {
+                            yVal = yStart + j * ydel;
+                            yf = yVal - vyTable[i];
+                            b = -2.0 * cosphi * (yf*sinphi + 2.0*pTable[i]);
+                            cv = yf*yf*cosphi*cosphi - 4.0*pTable[i]*yf*sinphi;
+                            var = b*b - 4.0*a*cv;
+                            if (var >= 0.0) {
+                                root = Math.sqrt(var);
+                                x1 = (int)Math.round(vxTable[i] + (-b - root)/(2.0 * a));
+                                x2 = (int)Math.round(vxTable[i] + (-b + root)/(2.0 * a));
+                                if ((x1 >= 0) && (x1 < xDim)) {
+                                    xArr[n] = x1;
+                                    yArr[n++] = Math.round(yVal);
+                                }
+                                if ((x2 >= 0) && (x2 < xDim)) {
+                                    xArr2[n2] = x2;
+                                    yArr2[n2++] = Math.round(yVal);
+                                }
+                            } // if (var = 0.0)
+                        }
+                    } // if (phiTable[i] != 0.0)
+                    else if (phiTable[i] == 0.0){ // phiTable = 0.0
+                        for (j = 0; j < maxParabolaPoints; j++) {
+                            yVal = yStart + j * ydel;
+                            yf = yVal - vyTable[i];
+                            x1 = (int)Math.round(vxTable[i] + yf*yf/(4.0 * pTable[i]));
+                            if ((x1 >= 0) && (x1 < xDim)) {
+                                xArr[n] = x1;
+                                yArr[n++] = Math.round(yVal);
+                            }
+                        }
+                    } // else if (phiTable[i] == 0.0)
+                    else { // phiTable[i] == Math.PI
+                        for (j = 0; j < maxParabolaPoints; j++) {
+                            yVal = yStart + j * ydel;
+                            yf = yVal - vyTable[i];
+                            x1 = (int)Math.round(vxTable[i] - yf*yf/(4.0 * pTable[i]));
+                            if ((x1 >= 0) && (x1 < xDim)) {
+                                xArr[n] = x1;
+                                yArr[n++] = Math.round(yVal);
+                            }
+                        }  
+                    } // else phiTable[i] == Math.PI
+                } // else (Math.abs(xEndPoint[i][1] - xEndPoint[i][0]) < Math.abs(yEndPoint[i][1] - yEndPoint[i][0]))
+                if (n > 0) {
+                    parabolaVOI[k].importCurve(xArr, yArr, zArr, 0);
+                    ((VOIContour)(parabolaVOI[k].getCurves()[0].elementAt(0))).setFixed(true);
+                    destImage.registerVOI(parabolaVOI[k]);
+                }
+                k++;
+                if (n2 > 0) {
+                    parabolaVOI2[k2].importCurve(xArr2, yArr2, zArr2, 0);
+                    ((VOIContour)(parabolaVOI2[k2].getCurves()[0].elementAt(0))).setFixed(true);
+                    destImage.registerVOI(parabolaVOI2[k2]);
+                }
+                k2++;
+            } // if (selectedParabola[i])
+        } // for (i = 0, k = 0, k2 = 0; i < numParabolaFound; i++)
         
         try {
             destImage.importData(0, srcBuffer, true);
