@@ -1,12 +1,12 @@
 package gov.nih.mipav.model.structures;
 
-import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
+import java.awt.Color;
 import java.io.*;
+
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 
 /**
@@ -16,13 +16,14 @@ import java.io.*;
  * extended to handle arbitrary size LUTs but 256 is almost universal). There are 256 locations with alpha, red, green,
  * and blue values as floats in order to store both RGB or HSI or etc. The LUTs are calculated from the corresponding
  * transfer functions for each of a, r, g, and b.
- *
- * @version  1.0
- * @author   Matthew J. McAuliffe, Ph.D.
+ * 
+ * @version 1.0
+ * @author Matthew J. McAuliffe, Ph.D.
  */
 public class ModelLUT extends ModelStorageBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 5061105716563814614L;
@@ -59,9 +60,9 @@ public class ModelLUT extends ModelStorageBase {
 
     /** Sets up the transfer function to be yellow-ish orange which is supposed to make bones look good. */
     public static final int BONE = 10;
-    
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Fucntion that attenuates image values. */
     private TransferFunction alphaLine = new TransferFunction();
@@ -96,14 +97,15 @@ public class ModelLUT extends ModelStorageBase {
     /** The X coordinates of the transfer functions. */
     private float[] x = new float[256]; // I don't expect tranfer function to have > 256 points
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructor.
-     *
-     * @param  _type       indicates type of lut (ie. GRAY, SPECTRUM ...)
-     * @param  _nColors    number of colors defined in LUT
-     * @param  dimExtents  array indicating LUT extent in each dimension (e.g. 4x256)
+     * 
+     * @param _type indicates type of lut (ie. GRAY, SPECTRUM ...)
+     * @param _nColors number of colors defined in LUT
+     * @param dimExtents array indicating LUT extent in each dimension (e.g. 4x256)
      */
     public ModelLUT(int _type, int _nColors, int[] dimExtents) {
         super(ModelStorageBase.FLOAT, dimExtents);
@@ -112,7 +114,7 @@ public class ModelLUT extends ModelStorageBase {
         resetAlphaLine();
         resetTransferLine(0, dimExtents[1]);
 
-        if ((_nColors > 0) && (_nColors <= 256)) {
+        if ( (_nColors > 0) && (_nColors <= 256)) {
             nColors = _nColors;
         } else {
             nColors = 256;
@@ -179,13 +181,14 @@ public class ModelLUT extends ModelStorageBase {
         }
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * This is a method to export a special int array where the alpha is stored in the most significant byte, then red,
      * green and blue. Note that the transfer function has been applied to it.
-     *
-     * @return  remappedLUT location where indexLUT will be exported to
+     * 
+     * @return remappedLUT location where indexLUT will be exported to
      */
     public final int[] exportIndexedLUT() {
 
@@ -211,7 +214,7 @@ public class ModelLUT extends ModelStorageBase {
             }
 
             for (i = 0; i < lutHeight; i++) {
-                iNew = (float) (x[0] + (((float) i / (lutHeight - 1)) * (x[nPts - 1] - x[0])));
+                iNew = (float) (x[0] + ( ((float) i / (lutHeight - 1)) * (x[nPts - 1] - x[0])));
                 remappedLUT[i] = indexedLUT[(int) (transferLine.getRemappedValue(iNew, lutHeight) + 0.5f)];
             }
         }
@@ -225,35 +228,33 @@ public class ModelLUT extends ModelStorageBase {
      * @param iHeight, lut height
      * @param iTable
      */
-    public static byte[] exportIndexedLUTMin( ModelLUT kLut )
-    {
+    public static byte[] exportIndexedLUTMin(ModelLUT kLut) {
         TransferFunction kTransferLine = kLut.getTransferFunction();
-        
+
         byte[] remappedLUTMin = null;
         int remappedValue;
         int count = 0;
         int nPts = kTransferLine.size();
-        float xMax = ((Vector2f) (kTransferLine.getPoint(nPts-1))).X;
+        float xMax = ((Vector2f) (kTransferLine.getPoint(nPts - 1))).X;
         float xMin = ((Vector2f) (kTransferLine.getPoint(0))).X;
         float fNew;
 
         int lutHeight = kLut.getExtents()[1];
         remappedLUTMin = new byte[lutHeight * 4];
         for (int i = 0; i < lutHeight; i++) {
-            fNew = (float) (xMin + (((float) i / (lutHeight - 1)) * (xMax - xMin)));
+            fNew = (float) (xMin + ( ((float) i / (lutHeight - 1)) * (xMax - xMin)));
             remappedValue = kLut.indexedLUT[(int) (kTransferLine.getRemappedValue(fNew, lutHeight) + 0.5f)];
-            remappedLUTMin[count++] = (byte)( (remappedValue & 0x00ff0000) >> 16);
-            remappedLUTMin[count++] = (byte)( (remappedValue & 0x0000ff00) >> 8);
-            remappedLUTMin[count++] = (byte)( (remappedValue & 0x000000ff));
-            remappedLUTMin[count++] = (byte)( (remappedValue & 0xff000000) >> 24);
+            remappedLUTMin[count++] = (byte) ( (remappedValue & 0x00ff0000) >> 16);
+            remappedLUTMin[count++] = (byte) ( (remappedValue & 0x0000ff00) >> 8);
+            remappedLUTMin[count++] = (byte) ( (remappedValue & 0x000000ff));
+            remappedLUTMin[count++] = (byte) ( (remappedValue & 0xff000000) >> 24);
         }
         return remappedLUTMin;
     }
 
     /**
      */
-    public static byte[] exportIndexedLUTMin( ModelRGB kRGBT )
-    {
+    public static byte[] exportIndexedLUTMin(ModelRGB kRGBT) {
         TransferFunction kTransferLineR = kRGBT.getRedFunction();
         TransferFunction kTransferLineG = kRGBT.getGreenFunction();
         TransferFunction kTransferLineB = kRGBT.getBlueFunction();
@@ -262,15 +263,15 @@ public class ModelLUT extends ModelStorageBase {
         int nPtsR = kTransferLineR.size();
         int nPtsG = kTransferLineG.size();
         int nPtsB = kTransferLineB.size();
-        float xMaxR = ((Vector2f) (kTransferLineR.getPoint(nPtsR-1))).X;
+        float xMaxR = ((Vector2f) (kTransferLineR.getPoint(nPtsR - 1))).X;
         float xMinR = ((Vector2f) (kTransferLineR.getPoint(0))).X;
-        
-        float xMaxG = ((Vector2f) (kTransferLineG.getPoint(nPtsG-1))).X;
+
+        float xMaxG = ((Vector2f) (kTransferLineG.getPoint(nPtsG - 1))).X;
         float xMinG = ((Vector2f) (kTransferLineG.getPoint(0))).X;
-        
-        float xMaxB = ((Vector2f) (kTransferLineB.getPoint(nPtsB-1))).X;
+
+        float xMaxB = ((Vector2f) (kTransferLineB.getPoint(nPtsB - 1))).X;
         float xMinB = ((Vector2f) (kTransferLineB.getPoint(0))).X;
-        
+
         int remappedValue;
         int count = 0;
         float fNewR, fNewG, fNewB;
@@ -278,34 +279,32 @@ public class ModelLUT extends ModelStorageBase {
         int lutHeight = kRGBT.getExtents()[1];
         byte[] remappedLUTMin = new byte[lutHeight * 4];
         for (int i = 0; i < lutHeight; i++) {
-            fNewR = (float) (xMinR + (((float) i / (lutHeight - 1)) * (xMaxR - xMinR)));
-            fNewG = (float) (xMinG + (((float) i / (lutHeight - 1)) * (xMaxG - xMinG)));
-            fNewB = (float) (xMinB + (((float) i / (lutHeight - 1)) * (xMaxB - xMinB)));
+            fNewR = (float) (xMinR + ( ((float) i / (lutHeight - 1)) * (xMaxR - xMinR)));
+            fNewG = (float) (xMinG + ( ((float) i / (lutHeight - 1)) * (xMaxG - xMinG)));
+            fNewB = (float) (xMinB + ( ((float) i / (lutHeight - 1)) * (xMaxB - xMinB)));
 
             remappedValue = iTable[(int) (kTransferLineR.getRemappedValue(fNewR, lutHeight) + 0.5f)];
-            remappedLUTMin[count++] = (byte)( (remappedValue & 0x00ff0000) >> 16);
+            remappedLUTMin[count++] = (byte) ( (remappedValue & 0x00ff0000) >> 16);
 
             remappedValue = iTable[(int) (kTransferLineG.getRemappedValue(fNewG, lutHeight) + 0.5f)];
-            remappedLUTMin[count++] = (byte)( (remappedValue & 0x0000ff00) >> 8);
+            remappedLUTMin[count++] = (byte) ( (remappedValue & 0x0000ff00) >> 8);
 
             remappedValue = iTable[(int) (kTransferLineB.getRemappedValue(fNewB, lutHeight) + 0.5f)];
-            remappedLUTMin[count++] = (byte)( (remappedValue & 0x000000ff));
+            remappedLUTMin[count++] = (byte) ( (remappedValue & 0x000000ff));
 
-            //Alpha
-            remappedLUTMin[count++] = (byte)(255);
+            // Alpha
+            remappedLUTMin[count++] = (byte) (255);
         }
         return remappedLUTMin;
     }
 
-
-
     /**
      * This is a method to export a special int array where the alpha is stored in the most significant byte, then red,
      * green and blue. Without the transfer function applied to the LUT
-     *
-     * @param   arrayLUT  location where indexLUT will be exported.
-     *
-     * @return  int 0 indictes error, and 1 indicates successful completion
+     * 
+     * @param arrayLUT location where indexLUT will be exported.
+     * 
+     * @return int 0 indictes error, and 1 indicates successful completion
      */
     public final int exportIndexedLUT(int[] arrayLUT) {
 
@@ -321,10 +320,10 @@ public class ModelLUT extends ModelStorageBase {
     /**
      * This is a method to export a 2D float array of the LUT. This method is used by the ViewJComponent show methods to
      * blend between two images.
-     *
-     * @param   applyAlpha  flag indicating if the LUT's alpha values should be applied
-     *
-     * @return  float returns the RGB LUT a 2D array
+     * 
+     * @param applyAlpha flag indicating if the LUT's alpha values should be applied
+     * 
+     * @return float returns the RGB LUT a 2D array
      */
     public final float[][] exportRGB_LUT(boolean applyAlpha) {
 
@@ -354,59 +353,54 @@ public class ModelLUT extends ModelStorageBase {
         return (lut);
     }
 
-
     /**
      * Accessor that returns the alpha transfer function.
-     *
-     * @return  the transfer function that describes how to map the alpha values
+     * 
+     * @return the transfer function that describes how to map the alpha values
      */
     public TransferFunction getAlphaFunction() {
         return alphaLine;
     }
 
-
     /**
      * Accessor that returns the blue transfer function.
-     *
-     * @return  the transfer function that describes how to map the blue values
+     * 
+     * @return the transfer function that describes how to map the blue values
      */
     public TransferFunction getBlueFunction() {
         return blueLine;
     }
 
-
     /**
      * Gets a specific index of the LUT.
-     *
-     * @param   index  index of the LUT, normally 0-255
-     *
-     * @return  LUTcolor color at index
+     * 
+     * @param index index of the LUT, normally 0-255
+     * 
+     * @return LUTcolor color at index
      */
     public Color getColor(int index) {
         int r, g, b;
 
-        r = getInt(1, index); // get red   channel
+        r = getInt(1, index); // get red channel
         g = getInt(2, index); // get green channel
-        b = getInt(3, index); // get blue  channel
+        b = getInt(3, index); // get blue channel
 
         return (new Color(r, g, b));
     }
 
-
     /**
      * Accessor that returns the green transfer function.
-     *
-     * @return  the transfer function that describes how to map the green values
+     * 
+     * @return the transfer function that describes how to map the green values
      */
     public TransferFunction getGreenFunction() {
         return greenLine;
     }
 
-
     /**
      * Accessor to get LUT type.
-     *
-     * @return  LUT type
+     * 
+     * @return LUT type
      */
     public int getLUTType() {
         return type;
@@ -414,8 +408,8 @@ public class ModelLUT extends ModelStorageBase {
 
     /**
      * Accessor that returns the red transfer function.
-     *
-     * @return  the transfer function that describes how to map the red values
+     * 
+     * @return the transfer function that describes how to map the red values
      */
     public TransferFunction getRedFunction() {
         return redLine;
@@ -423,9 +417,8 @@ public class ModelLUT extends ModelStorageBase {
 
     /**
      * Accessor that returns the transfer function.
-     *
-     * @return  the transfer function that describes how to remap the image intensities into display values from the
-     *          LUT.
+     * 
+     * @return the transfer function that describes how to remap the image intensities into display values from the LUT.
      */
     public TransferFunction getTransferFunction() {
         return transferLine;
@@ -677,100 +670,100 @@ public class ModelLUT extends ModelStorageBase {
 
     /**
      * Makes a LUT specifically for viewing CT thigh images
-     *
+     * 
      */
     public void makeCTThighTransferFunctions() {
-    	 float[] x = null;
-         float[] y = null;
-         float[] z = null;
+        float[] x = null;
+        float[] y = null;
+        float[] z = null;
 
-         try {
-             x = new float[7];
-             y = new float[7];
-             z = new float[7];
-         } catch (OutOfMemoryError error) {
-             System.gc();
-             MipavUtil.displayError("Out of memory: ModelLUT: makeGrayBRTransferFunctions");
+        try {
+            x = new float[7];
+            y = new float[7];
+            z = new float[7];
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: ModelLUT: makeGrayBRTransferFunctions");
 
-             return;
-         }
+            return;
+        }
 
-         int height;
-         height = getExtents()[1];
+        int height;
+        height = getExtents()[1];
 
-         x[0] = 0;
-         y[0] = height - 1;
-         z[0] = 0;
-         
-         x[1] = 1;
-         y[1] = 0;
-         z[1] = 0;
+        x[0] = 0;
+        y[0] = height - 1;
+        z[0] = 0;
 
-         x[2] = 2;
-         y[2] = 0;
-         z[2] = 0;
+        x[1] = 1;
+        y[1] = 0;
+        z[1] = 0;
 
-         x[3] = 2;
-         y[3] = height - 1;
-         z[3] = 0;
+        x[2] = 2;
+        y[2] = 0;
+        z[2] = 0;
 
-         x[4] = 254;
-         y[4] = 0;
-         z[4] = 0;
+        x[3] = 2;
+        y[3] = height - 1;
+        z[3] = 0;
 
-         x[5] = 254;
-         y[5] = height - 1;
-         z[5] = 0;
+        x[4] = 254;
+        y[4] = 0;
+        z[4] = 0;
 
-         x[6] = 255;
-         y[6] = height - 1;
-         z[6] = 0;
+        x[5] = 254;
+        y[5] = height - 1;
+        z[5] = 0;
 
-         blueLine.importArrays(x, y, 7);
+        x[6] = 255;
+        y[6] = height - 1;
+        z[6] = 0;
 
-         x[0] = 0;
-         y[0] = height - 1;
-         z[0] = 0;
+        blueLine.importArrays(x, y, 7);
 
-         x[1] = 2;
-         y[1] = height - 1;
-         z[1] = 0;
+        x[0] = 0;
+        y[0] = height - 1;
+        z[0] = 0;
 
-         x[2] = 254;
-         y[2] = 0;
-         z[2] = 0;
+        x[1] = 2;
+        y[1] = height - 1;
+        z[1] = 0;
 
-         x[3] = 254;
-         y[3] = height - 1;
-         z[3] = 0;
+        x[2] = 254;
+        y[2] = 0;
+        z[2] = 0;
 
-         x[4] = 255;
-         y[4] = height - 1;
-         z[4] = 0;
+        x[3] = 254;
+        y[3] = height - 1;
+        z[3] = 0;
 
-         greenLine.importArrays(x, y, 5);
+        x[4] = 255;
+        y[4] = height - 1;
+        z[4] = 0;
 
-         x[0] = 0;
-         y[0] = height - 1;
-         z[0] = 0;
+        greenLine.importArrays(x, y, 5);
 
-         x[1] = 2;
-         y[1] = height - 1;
-         z[1] = 0;
+        x[0] = 0;
+        y[0] = height - 1;
+        z[0] = 0;
 
-         x[2] = 254;
-         y[2] = 0;
-         z[2] = 0;
+        x[1] = 2;
+        y[1] = height - 1;
+        z[1] = 0;
 
-         x[3] = 255;
-         y[3] = 0;
-         z[3] = 0;
+        x[2] = 254;
+        y[2] = 0;
+        z[2] = 0;
 
-         redLine.importArrays(x, y, 4);
-         resetAlphaLine();
-         type = GRAY_BR;
+        x[3] = 255;
+        y[3] = 0;
+        z[3] = 0;
+
+        redLine.importArrays(x, y, 4);
+        resetAlphaLine();
+        type = GRAY_BR;
     }
-    
+
     /**
      * Creates the R, G, and B transfer functions to produce a gray scale LUT.
      */
@@ -1023,8 +1016,8 @@ public class ModelLUT extends ModelStorageBase {
     /**
      * Special LUT to be used to display java image. Assumes RGB values that range between (0 and 255) are stored in the
      * LUT;
-     *
-     * @param  opacityArray  DOCUMENT ME!
+     * 
+     * @param opacityArray DOCUMENT ME!
      */
     public void makeIndexedLUT(int[] opacityArray) {
         int index;
@@ -1034,7 +1027,7 @@ public class ModelLUT extends ModelStorageBase {
 
         height = getExtents()[1]; // Get the height of LUT array;
 
-        if ((indexedLUT == null) || (indexedLUT.length != height)) {
+        if ( (indexedLUT == null) || (indexedLUT.length != height)) {
 
             try {
                 indexedLUT = new int[height]; // Special LUT to be used to display image
@@ -1055,13 +1048,13 @@ public class ModelLUT extends ModelStorageBase {
                 alpha = getInt(0, index);
             }
 
-            r = (int) ((alpha * getFloat(1, index)) + 0.5f);
-            g = (int) ((alpha * getFloat(2, index)) + 0.5f);
-            b = (int) ((alpha * getFloat(3, index)) + 0.5f);
+            r = (int) ( (alpha * getFloat(1, index)) + 0.5f);
+            g = (int) ( (alpha * getFloat(2, index)) + 0.5f);
+            b = (int) ( (alpha * getFloat(3, index)) + 0.5f);
 
-            // indexedLUT[index] =     (255 << 24) |               //set Java's alpha value always to 255
-            // (getInt(1,index)  << 16) |
-            // (getInt(2,index)  << 8)  |
+            // indexedLUT[index] = (255 << 24) | //set Java's alpha value always to 255
+            // (getInt(1,index) << 16) |
+            // (getInt(2,index) << 8) |
             // getInt(3,index);
             indexedLUT[index] = (255 << 24) | (r << 16) | (g << 8) | b; // set Java's alpha value always to 255
         }
@@ -1069,8 +1062,8 @@ public class ModelLUT extends ModelStorageBase {
 
     /**
      * This method uses the A, R, G, B transfer functions to build the desired LUT.
-     *
-     * @param  _nColors  indicates the number of colors to used in the LUT.
+     * 
+     * @param _nColors indicates the number of colors to used in the LUT.
      */
 
     public void makeLUT(int _nColors) {
@@ -1083,7 +1076,7 @@ public class ModelLUT extends ModelStorageBase {
         float[] x;
         float[] a, r, g, b;
 
-        if ((_nColors > 0) && (_nColors <= 256)) {
+        if ( (_nColors > 0) && (_nColors <= 256)) {
             nColors = _nColors;
         } else {
             nColors = 256;
@@ -1152,7 +1145,6 @@ public class ModelLUT extends ModelStorageBase {
         makeIndexedLUT(null);
     }
 
-
     /**
      * Creates the R, G, and B transfer functions to produce a red scale LUT.
      */
@@ -1206,8 +1198,8 @@ public class ModelLUT extends ModelStorageBase {
     }
 
     /**
-     * Creates the R, G, and B transfer functions to produce a skin scale LUT. (blue -> pink -> red -> orange -> yellow
-     * -> white)
+     * Creates the R, G, and B transfer functions to produce a skin scale LUT. (blue -> pink -> red -> orange -> yellow ->
+     * white)
      */
     public void makeSkinTransferFunctions() {
 
@@ -1346,7 +1338,6 @@ public class ModelLUT extends ModelStorageBase {
         type = SPECTRUM;
     }
 
-
     /**
      * makeStripedLUT -
      */
@@ -1378,9 +1369,8 @@ public class ModelLUT extends ModelStorageBase {
         float bri = 1.0f;
         int m = 53;
 
-
         for (i = 0; i < (height - 1); i++) {
-            color = Color.getHSBColor(((i * m) % 360) / 360.0f, sat, bri);
+            color = Color.getHSBColor( ( (i * m) % 360) / 360.0f, sat, bri);
             set(0, i + 1, 1);
             set(1, i + 1, color.getRed());
             set(2, i + 1, color.getGreen());
@@ -1388,9 +1378,9 @@ public class ModelLUT extends ModelStorageBase {
 
             if (i != 0) {
 
-                if ((i % (360 / m)) == 0) {
+                if ( (i % (360 / m)) == 0) {
 
-                    if ((sat > 0.5f) && (bri > 0.5f)) {
+                    if ( (sat > 0.5f) && (bri > 0.5f)) {
                         sat = sat - 0.25f;
                         bri = bri - 0.25f;
                     } else {
@@ -1408,7 +1398,6 @@ public class ModelLUT extends ModelStorageBase {
         makeIndexedLUT(null);
     }
 
-   
     /**
      * makeVR with customized LUT
      */
@@ -1416,7 +1405,6 @@ public class ModelLUT extends ModelStorageBase {
         nColors = 256;
         int height = getExtents()[1]; // number of entries in the LUT (i.e. 256)
 
-        
         try {
             indexedLUT = new int[height];
             remappedLUT = new int[height];
@@ -1427,39 +1415,28 @@ public class ModelLUT extends ModelStorageBase {
             return;
         }
 
-        File kFile = new File(ViewJPanelLUT.customLUTsLocation + File.separator + name + ".txt");
-        if ( !kFile.exists() || !kFile.canRead() )
-        {
-            return;
-        }
-        int iLength = (int)kFile.length();
-        if ( iLength <= 0 )
-        {
-            return;
-        }
-
         try {
-            BufferedReader in = new BufferedReader(new FileReader(kFile));
+            BufferedReader in = ViewJPanelLUT.openLUTFile(name);
             String str;
             int i = 0;
 
-            while ((str = in.readLine()) != null) {
-                //System.err.print(str + " ==> " );
+            while ( (str = in.readLine()) != null) {
+                // System.err.print(str + " ==> " );
                 set(0, i, 1);
                 java.util.StringTokenizer st = new java.util.StringTokenizer(str);
                 if (st.hasMoreTokens()) {
                     int iValue = Integer.valueOf(st.nextToken()).intValue();
-                    //System.err.print(iValue + " " );
+                    // System.err.print(iValue + " " );
                     set(1, i, iValue);
                 }
                 if (st.hasMoreTokens()) {
                     int iValue = Integer.valueOf(st.nextToken()).intValue();
-                    //System.err.print(iValue + " " );
+                    // System.err.print(iValue + " " );
                     set(2, i, iValue);
                 }
                 if (st.hasMoreTokens()) {
                     int iValue = Integer.valueOf(st.nextToken()).intValue();
-                    //System.err.println(iValue + " " );
+                    // System.err.println(iValue + " " );
                     set(3, i, iValue);
                 }
                 i++;
@@ -1467,12 +1444,10 @@ public class ModelLUT extends ModelStorageBase {
             in.close();
         } catch (IOException e) {}
 
-       
         // make special Java LUT that is an int array where MSB is alpha, and then red, green
         // and blue follow;
         makeIndexedLUT(null);
     }
-    
 
     /**
      * The purpose of this method is to adjust the zero index of the LUT from (1, 1, 1) to (0, 0, 0) The reason is so
@@ -1482,8 +1457,8 @@ public class ModelLUT extends ModelStorageBase {
         Color zeroIndexColor = getColor(0);
 
         // test to see if the color is R == 0, G == 0, B == 0
-        boolean zeroIndexColorIs000 = ((zeroIndexColor.getRed() == 1) && (zeroIndexColor.getGreen() == 1) &&
-                                           (zeroIndexColor.getBlue() == 1));
+        boolean zeroIndexColorIs000 = ( (zeroIndexColor.getRed() == 1) && (zeroIndexColor.getGreen() == 1) && (zeroIndexColor
+                .getBlue() == 1));
 
         // only change index 0 to 1's if index 0 is currently R == 0, G == 0, B == 0.
         if (zeroIndexColorIs000 == true) {
@@ -1530,9 +1505,9 @@ public class ModelLUT extends ModelStorageBase {
 
     /**
      * Resets the transfer function to be linear.
-     *
-     * @param  min  DOCUMENT ME!
-     * @param  max  DOCUMENT ME!
+     * 
+     * @param min DOCUMENT ME!
+     * @param max DOCUMENT ME!
      */
     public void resetTransferLine(float min, float max) {
         this.resetTransferLine(min, min, max, max);
@@ -1540,11 +1515,11 @@ public class ModelLUT extends ModelStorageBase {
 
     /**
      * Resets the transfer function to be linear.
-     *
-     * @param  min     float the minimum for the data range of this image type
-     * @param  imgMin  float the actual minimum data value for the image
-     * @param  max     float the maximum for the data range of this image type
-     * @param  imgMax  float the actual maximum data value for the image
+     * 
+     * @param min float the minimum for the data range of this image type
+     * @param imgMin float the actual minimum data value for the image
+     * @param max float the maximum for the data range of this image type
+     * @param imgMax float the actual maximum data value for the image
      */
     public void resetTransferLine(float min, float imgMin, float max, float imgMax) {
         int height;
@@ -1571,13 +1546,13 @@ public class ModelLUT extends ModelStorageBase {
 
         // if both min == imgMin and max==imgMax, then
         // divide the 2, and 3rd points by 3rds
-        if ((min == imgMin) && (max == imgMax)) {
-            x[1] = min + ((max - min) / 3.0f);
-            y[1] = (height - 1) - ((height - 1) / 3.0f);
+        if ( (min == imgMin) && (max == imgMax)) {
+            x[1] = min + ( (max - min) / 3.0f);
+            y[1] = (height - 1) - ( (height - 1) / 3.0f);
             z[1] = 0;
 
-            x[2] = min + ((max - min) * 2.0f / 3.0f);
-            y[2] = (height - 1) - (((height - 1) * 2.0f) / 3.0f);
+            x[2] = min + ( (max - min) * 2.0f / 3.0f);
+            y[2] = (height - 1) - ( ( (height - 1) * 2.0f) / 3.0f);
             z[2] = 0;
         } // else if only min = imgMin and max != imgMax, then pt 3
 
@@ -1626,9 +1601,9 @@ public class ModelLUT extends ModelStorageBase {
 
     /**
      * Sets a specific index of the LUT with the given color.
-     *
-     * @param  index     index of the LUT, normally 0-255
-     * @param  LUTcolor  color to be placed at the LUT
+     * 
+     * @param index index of the LUT, normally 0-255
+     * @param LUTcolor color to be placed at the LUT
      */
     public void setColor(int index, Color LUTcolor) {
 
@@ -1642,12 +1617,12 @@ public class ModelLUT extends ModelStorageBase {
 
     /**
      * Sets a specific index of the LUT with the given color and updates the compressed LUT.
-     *
-     * @param  index  int index of the LUT
-     * @param  alpha  int 0-255 alpha
-     * @param  red    int 0-255 red
-     * @param  green  int 0-255 green
-     * @param  blue   int 0-255 blue
+     * 
+     * @param index int index of the LUT
+     * @param alpha int 0-255 alpha
+     * @param red int 0-255 red
+     * @param green int 0-255 green
+     * @param blue int 0-255 blue
      */
     public void setColor(int index, int alpha, int red, int green, int blue) {
         set(0, index, alpha); // set alpha value to 1.0
@@ -1659,8 +1634,8 @@ public class ModelLUT extends ModelStorageBase {
 
     /**
      * Sets the LUTs transfer function.
-     *
-     * @param  txFunction  DOCUMENT ME!
+     * 
+     * @param txFunction DOCUMENT ME!
      */
     public void setTransferFunction(TransferFunction txFunction) {
         transferLine = txFunction;
@@ -1668,21 +1643,20 @@ public class ModelLUT extends ModelStorageBase {
 
     /**
      * displays the LUT colours and alpha values in hex.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public String toString() {
         return toString(true, true);
     }
 
-
     /**
      * Presents the Lookuptable by.
-     *
-     * @param   displayInHex        DOCUMENT ME!
-     * @param   displayAlphaValues  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param displayInHex DOCUMENT ME!
+     * @param displayAlphaValues DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public String toString(boolean displayInHex, boolean displayAlphaValues) {
         StringBuffer outStr = new StringBuffer("ModelLUT: ");
@@ -1701,18 +1675,17 @@ public class ModelLUT extends ModelStorageBase {
                     alphaValue = Integer.toHexString(get(0, i).intValue()) + ", ";
                 }
 
-                outStr.append("[" + alphaValue + Integer.toHexString(get(1, i).intValue()) + ", " +
-                              Integer.toHexString(get(2, i).intValue()) + ", " +
-                              Integer.toHexString(get(3, i).intValue()) + "]");
+                outStr.append("[" + alphaValue + Integer.toHexString(get(1, i).intValue()) + ", "
+                        + Integer.toHexString(get(2, i).intValue()) + ", " + Integer.toHexString(get(3, i).intValue())
+                        + "]");
             } else { // display as Decimal
 
                 if (displayAlphaValues) {
                     alphaValue = Integer.toString(get(0, i).intValue()) + ", ";
                 }
 
-                outStr.append("[" + alphaValue + Integer.toString(get(1, i).intValue()) + ", " +
-                              Integer.toString(get(2, i).intValue()) + ", " + Integer.toString(get(3, i).intValue()) +
-                              "]");
+                outStr.append("[" + alphaValue + Integer.toString(get(1, i).intValue()) + ", "
+                        + Integer.toString(get(2, i).intValue()) + ", " + Integer.toString(get(3, i).intValue()) + "]");
             }
 
             outStr.append("\n");
@@ -1730,8 +1703,8 @@ public class ModelLUT extends ModelStorageBase {
         Color zeroIndexColor = getColor(0);
 
         // test to see if the color is R == 0, G == 0, B == 0
-        boolean zeroIndexColorIs000 = ((zeroIndexColor.getRed() == 0) && (zeroIndexColor.getGreen() == 0) &&
-                                           (zeroIndexColor.getBlue() == 0));
+        boolean zeroIndexColorIs000 = ( (zeroIndexColor.getRed() == 0) && (zeroIndexColor.getGreen() == 0) && (zeroIndexColor
+                .getBlue() == 0));
 
         // only change index 0 to 1's if index 0 is currently R == 0, G == 0, B == 0.
         if (zeroIndexColorIs000 == true) {
@@ -1741,9 +1714,9 @@ public class ModelLUT extends ModelStorageBase {
 
     /**
      * Calculates the color band (i.e. red, green, blue) for the LUT using the the corresponding transfer function
-     *
-     * @param  function  the band's transfer function
-     * @param  band      storage location after conversion from transfer function to the band
+     * 
+     * @param function the band's transfer function
+     * @param band storage location after conversion from transfer function to the band
      */
     private void calcBand(TransferFunction function, float[] band) {
         int i, j;
@@ -1758,8 +1731,7 @@ public class ModelLUT extends ModelStorageBase {
         }
     }
 
-    public int[] getIndexedLUT()
-    {
+    public int[] getIndexedLUT() {
         return indexedLUT;
     }
 }
