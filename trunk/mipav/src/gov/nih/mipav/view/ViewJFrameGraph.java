@@ -1481,7 +1481,7 @@ public class ViewJFrameGraph extends JFrame
                     		searchZero = false;
                     		System.out.println("Zero: "+zeroOffset);
                     	} else if(!searchZero && origY[j] != 0) {
-                    		zeroCrossing.add(j > 0 ? j-1 : j);
+                    		zeroCrossing.add(j+50 > 0 ? j-50 : j);
                     		searchZero = true;
                     	}
                     }
