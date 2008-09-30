@@ -199,7 +199,7 @@
     </target>
 
     <!-- Create a jar file of the compiled software. -->
-    <target name="jar" depends="init,compile,copyresources">
+    <target name="jar" depends="init,clean,compile,copyresources">
         <jar compress="true" destfile="${project.name}.jar">
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
@@ -235,8 +235,8 @@
         </copy>
 
         <!-- wildmagic shader files -->
-        <copy todir="${dir.dest}/Shaders">
-            <fileset dir="${dir.source}/WildMagic/Shaders"/>
+        <copy todir="${dir.dest}/WildMagic">
+            <fileset dir="${dir.source}/WildMagic"/>
         </copy>
 
         <!-- /// TODO: placeholder installshield config file would be nice.. -->
