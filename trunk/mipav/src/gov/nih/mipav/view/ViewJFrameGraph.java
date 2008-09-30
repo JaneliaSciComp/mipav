@@ -1448,15 +1448,19 @@ public class ViewJFrameGraph extends JFrame
                     fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
                 }
             }
-
+			//comment
             update(getGraphics());
         } else if (command.equals("FitGaussian")) { 
+        	//MipavUtil.displayError("Not currently implemented. ");
         	
         	double[] params;
+            int nPoints;
             FitGaussian fe = null;
 
             ViewJComponentFunct[] functions = graph.getFuncts();
             ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
+            float[] x;
+            float[] y;
 
             try {
 
@@ -1465,109 +1469,32 @@ public class ViewJFrameGraph extends JFrame
                 }
 
                 for (int i = 0; i < functions.length; i++) {
-                	float[] origX = graph.getFuncts()[i].getOriginalXs();
-                	float[] origY = graph.getFuncts()[i].getOriginalYs();
-                    
-                    //delim. by zero crossings and store in linked list
-                    LinkedList<float[]> origXDelim = new LinkedList();
-                    LinkedList<float[]> origYDelim = new LinkedList();
-                    
-                    ArrayList<Integer> zeroCrossing = new ArrayList();
-                    boolean searchZero = Math.abs(origY[0]) > 0;
-                    for(int j=0; j<origY.length; j++) {
-                    	if(searchZero && origY[j] == 0) {
-                    		int zeroOffset = 0;
-                    		zeroCrossing.add((zeroOffset = j+(j-zeroCrossing.get(zeroCrossing.size()-1))) > origY.length ? origY.length : zeroOffset);
-                    		searchZero = false;
-                    		System.out.println("Zero: "+zeroOffset);
-                    	} else if(!searchZero && origY[j] != 0) {
-                    		zeroCrossing.add(j+50 > 0 ? j-50 : j);
-                    		searchZero = true;
-                    	}
-                    }
-                    zeroCrossing.add(origY.length);
-                    
-                    //parse array and store in seperate intervals
-                    int lastIndex = 0, currentIndex = 0;
-                    Iterator<Integer> zeroItr = zeroCrossing.iterator();
-                    while(zeroItr.hasNext() && (currentIndex = zeroItr.next()) > lastIndex) {
-                    	float[] origXSub = new float[currentIndex - lastIndex];
-                    	float[] origYSub = new float[currentIndex - lastIndex];
-                    	for(int j=lastIndex; j<currentIndex; j++) {
-                    		origXSub[j-lastIndex] = origX[j];
-                    		origYSub[j-lastIndex] = origY[j];
-                    	}
-                    	if(lastIndex == 0) {
-                    		origXDelim.addFirst(origXSub);
-                        	origYDelim.addFirst(origYSub);
-                        	System.out.println("Size is:"+origXDelim.size());
-                    	} else {
-	                    	origXDelim.add(origXSub);
-	                    	origYDelim.add(origYSub);
-	                    	System.out.println("Size is:"+origXDelim.size());
-                    	}
-                    	lastIndex = currentIndex;
-                    }
-                    
-                    //construct and fit functions (linearly for now, could be threaded if necessary
-                    ListIterator listXItr = origXDelim.listIterator();
-                    ListIterator listYItr = origYDelim.listIterator();
-                    //new x array needed in case would like functions made at greater resolution
-                    ArrayList<Float> interpX = new ArrayList();
-                    ArrayList<Float> interpY = new ArrayList();
-                    
-                    while(listXItr.hasNext() && listYItr.hasNext()) {
-                    	float[] xSubPoints = (float[])listXItr.next();
-                    	float[] ySubPoints = (float[])listYItr.next();
-                    	ArrayList<Float> xArr = new ArrayList(xSubPoints.length);
-	                    ArrayList<Float> yArr = new ArrayList(ySubPoints.length);
-                    	
-                    	int sum = 0;
-                    	for(float ySubNum : ySubPoints)  
-                    		sum += ySubNum;
-                    	
-                    	if(sum == 0) {
-                    		 for (int j = 0; j < xSubPoints.length; j++) {
-     	                        xArr.add(j, xSubPoints[j]);
-     	                    	yArr.add(j, 0f);
-     	                    }
-                    	} else { //non-zero sum means gaussian hould be tried
-		                    fe = new FitGaussian(xSubPoints.length, xSubPoints, ySubPoints);
-		                    fe.driver();
-		                    fe.dumpResults();
-		                    params = fe.getParameters();
-	
-		                    messageGraph.append("*********************\n");
-		                    messageGraph.append("Fitting of gaussian function " + i + "\n");
-		                    messageGraph.append(" y = " + params[0] + " * exp((x-" + String.valueOf(params[1]) +
-		                                        ")^2/(2*" + String.valueOf(params[2]) + "))\n");
-		                    messageGraph.append("\n");
-	
-		                    float xValue = 0;
-		                    for (int j = 0; j < xSubPoints.length; j++) {
-		                        xArr.add(j, xValue = (xSubPoints[j]));
-		                        double exp = -Math.pow(xValue-params[1], 2) / (2 * Math.pow(params[2], 2));
-		                    	yArr.add(j, (float) (params[0]*Math.exp(exp)));
-		                    }
-                    	}
-	                    
-	                    interpX.addAll(xArr);
-	                    interpY.addAll(yArr);
-                    }
-	                    
-                    //conversion possible in one line not yet possible in 1.6 (might be done in 1.7 >>)
-                    float[] x = new float[interpX.size()];
-                    float[] y = new float[interpY.size()];
+                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
+                    fe = new FitGaussian(nPoints, graph.getFuncts()[i].getOriginalXs(),
+                                            graph.getFuncts()[i].getOriginalYs());
+                    fe.driver();
+                    fe.dumpResults();
+                    params = fe.getParameters();
 
-                    for(int j=0; j<x.length; j++)  {
-                    	x[j] = interpX.get(j);
-                    	y[j] = interpY.get(j);
+                    x = new float[functions[i].getXs().length];
+                    y = new float[x.length];
+
+                    for (int j = 0; j < x.length; j++) {
+                        x[j] = (functions[i].getXs()[j]);
+                        double exp = -Math.pow(x[j]-params[1], 2) / (2 * Math.pow(params[2], 2));
+                    	y[j] = (float) (params[0]*Math.exp(exp));
                     }
 
                     fittedFunctions[i].setXs(x);
                     fittedFunctions[i].setOriginalXs(x);
                     fittedFunctions[i].setYs(y);
                     fittedFunctions[i].setOriginalYs(y);
+
+                    messageGraph.append("*********************\n");
+                    messageGraph.append("Fitting of gaussian function " + i + "\n");
+                    messageGraph.append(" y = " + params[0] + " * exp((x-" + String.valueOf(params[1]) +
+                                        ")^2/(2*" + String.valueOf(params[2]) + "))\n");
+                    messageGraph.append("\n");
                 }
             } catch (OutOfMemoryError error) {
                 MipavUtil.displayError("Graph :  Out of memory ");
