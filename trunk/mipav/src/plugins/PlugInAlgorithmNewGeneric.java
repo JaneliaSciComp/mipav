@@ -1,9 +1,11 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ViewUserInterface;
 
 
 
@@ -37,18 +39,28 @@ public class PlugInAlgorithmNewGeneric extends AlgorithmBase implements Algorith
      * Starts the algorithm.
      */
     public void runAlgorithm() {
+    	srcImage.getParentFrame().dispose();
+    	Runtime inst = Runtime.getRuntime();
+    	System.out.println("Total Memory = " + inst.totalMemory()
+    						+ " Free Memory = " + inst.freeMemory());
+    	
+    	ViewUserInterface.getReference().openImageFrame();
+    	inst = Runtime.getRuntime();
+    	System.out.println("Total Memory = " + inst.totalMemory()
+				+ " Free Memory = " + inst.freeMemory());
+    	ModelImage image = ViewUserInterface.getReference().getActiveImageFrame().getImageA();
+    	
+    	inst = Runtime.getRuntime();
+    	System.out.println("Total Memory = " + inst.totalMemory()
+				+ " Free Memory = " + inst.freeMemory());
+    	
+    	image.getParentFrame().dispose();
+    	
+    	System.out.println("Total Memory = " + inst.totalMemory()
+				+ " Free Memory = " + inst.freeMemory());
 
-        if (srcImage == null) {
-            displayError("Source Image is null");
-
-            return;
-        }
-
-        if (srcImage.getNDims() == 2) {
-            calc2D();
-        } else if (srcImage.getNDims() > 2) {
-            calc3D();
-        }
+    	
+    	
     } // end runAlgorithm()
     
 //  ~ Methods --------------------------------------------------------------------------------------------------------
