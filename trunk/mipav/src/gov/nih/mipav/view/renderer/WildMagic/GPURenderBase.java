@@ -1,10 +1,15 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
+import javax.imageio.ImageIO;
 import javax.media.opengl.*;
 import com.sun.opengl.util.*;
 
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Vector;
 
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
@@ -81,8 +86,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     protected Picker m_kPicker = new Picker();
 
     protected boolean m_bModified = true;
-
-
+    
+    //protected GraphicsImage m_kScreenCaptureImage = null;
+    //protected Texture m_kScreenCaptureTarget = null;
+    //protected boolean m_bScreenCapture = false;
+    private int m_iScreenCaptureCounter = 0;
 
     /**
      * Constructs a new GPUVolumeRender object.
@@ -221,7 +229,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             DrawFrameRate(8,16,ColorRGBA.WHITE);
         }
     }
-
+    /*
+    public void CreateScene()
+    {
+        m_kScreenCaptureImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,m_iWidth,m_iHeight,
+                m_kVolumeImageA.GetImage().getExtents()[2],(byte[])null,
+        "ScreenCaptureImage");
+        m_kScreenCaptureTarget = new Texture();
+        m_kScreenCaptureTarget.SetImage(m_kScreenCaptureImage);
+    }
+*/
     /**
      * Part of the GLEventListener interface.
      */
@@ -514,6 +531,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
            
         }
+    }
+    
+    public boolean writeImage()
+    {
+        BufferedImage kScreenShot = m_pkRenderer.Screenshot();
+        //m_bScreenCapture = true;
+        //GetCanvas().display();
+        try {
+            ImageIO.write(kScreenShot, "jpg", new File("captureImage" + m_iScreenCaptureCounter++ + "." + "jpg"));
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return true;
+    }
+    
+
+    public int getCounter() {
+        return m_iScreenCaptureCounter;
     }
     
 }

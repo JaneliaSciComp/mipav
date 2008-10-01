@@ -6,7 +6,7 @@ import WildMagic.LibGraphics.Effects.*;
 
 public abstract class VolumeClipEffect extends ShaderEffect
 {
-    /** Axis-aligned clip plane shader paramter names: */
+    /** Axis-aligned clip plane shader parameter names: */
     private final static String[] m_akClip =
         new String[]{ "clipXInv", "clipX", "clipYInv", "clipY", "clipZInv", "clipZ" };
 
@@ -171,19 +171,19 @@ public abstract class VolumeClipEffect extends ShaderEffect
             pkProgram.GetUC("clipArb").SetDataSource(afEquation);
         }
     }
-    private float[] m_afDoClip = { 0, 0, 0, 0 };
+    protected float[] m_afDoClip = { 0, 0, 0, 0 };
     /** stores the axis-aligned clip plane information: */
-    private float[][] m_aafClipData =  { { 0, 0, 0, 0 },
+    protected float[][] m_aafClipData =  { { 0, 0, 0, 0 },
                                                           { 1, 1, 0, 0 },
                                                           { 0, 0, 0, 0 },
                                                           { 1, 1, 0, 0 },
                                                           { 0, 0, 0, 0 },
                                                           { 1, 1, 0, 0 } };
     /** stores the eye clip plane information: */
-    private float[] m_afClipEyeData = null;
+    protected float[] m_afClipEyeData = null;
     /** stores the inverse-eye clip plane information: */
-    private float[] m_afClipEyeInvData = null;
+    protected float[] m_afClipEyeInvData = null;
     /** stores the arbitrary clip plane information: */
-    private float[] m_afClipArbData = null;
+    protected float[] m_afClipArbData = null;
 
 }

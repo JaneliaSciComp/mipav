@@ -1,7 +1,5 @@
 package gov.nih.mipav.view.renderer.flythroughview;
 
-import WildMagic.LibFoundation.Mathematics.Vector2f;
-
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -61,8 +59,8 @@ public class ModelLUTHelper {
         m_afLutOut = new float[iNumPoints];
 
         for (int i = 0; i < iNumPoints; i++) {
-            m_afLutIn[i] = ((Vector2f) (kLUT.getTransferFunction().getPoint(i))).X;
-            m_afLutOut[i] = 255.0f - ((Vector2f) (kLUT.getTransferFunction().getPoint(i))).Y;
+            m_afLutIn[i] = kLUT.getTransferFunction().getPoint(i).X;
+            m_afLutOut[i] = 255.0f - kLUT.getTransferFunction().getPoint(i).Y;
         }
 
         // Create the mapping for the input transfer function to

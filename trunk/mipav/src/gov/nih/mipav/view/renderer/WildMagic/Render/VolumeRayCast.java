@@ -683,6 +683,11 @@ public class VolumeRayCast extends VolumeObject
         return m_kMaterial;
     }
 
+    public VolumeClipEffect GetClipEffect()
+    {
+        return m_kVolumeShaderEffect;
+    }
+    
     /** VolumeShaderEffect applied to proxy-geometry: */
     private VolumeShaderEffect_WM m_kVolumeShaderEffect = null;
 

@@ -4,7 +4,6 @@ package gov.nih.mipav.view.renderer.WildMagic.flythroughview;
 import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameAnimateClip;
 import gov.nih.mipav.view.renderer.flythroughview.*;
 import gov.nih.mipav.view.renderer.WildMagic.*;
@@ -15,24 +14,11 @@ import gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface;
 import gov.nih.mipav.view.renderer.flythroughview.ModelImage3DLayout;
 import gov.nih.mipav.view.renderer.flythroughview.Skeleton3D;
 
-import java.awt.AWTException;
 import java.awt.Canvas;
-import java.awt.Dimension;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Robot;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 
-import javax.imageio.ImageIO;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
-import javax.swing.JSplitPane;
-import javax.swing.SwingUtilities;
 
 import com.sun.opengl.util.Animator;
 
@@ -86,9 +72,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     private ModelLUT m_kMeanCurvaturesLUT = null;
     private SurfaceLightingEffect m_kLightShader;
     private ViewJFrameAnimateClip animateClip;
-    private int saveCounter = 0;
-    int capScreenWidth, capScreenHeight;
     private ColorRGB[] m_akColorBackup;
+    private boolean m_bSnapshot = false;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -154,6 +139,10 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             m_pkRenderer.ClearBuffers();
             Render();
             m_pkRenderer.EndScene();
+        }
+        if ( m_bSnapshot )
+        {
+            writeImage();
         }
         m_pkRenderer.DisplayBackBuffer();
 
@@ -389,10 +378,13 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         }
     }
 
-    public void addSurface(TriMesh kSurfaces)
+    public void addSurface(TriMesh kSurface)
     {
-        m_kSurface = new TriMesh(kSurfaces);
-        m_kSurface.AttachGlobalState(kSurfaces.GetGlobalState( GlobalState.StateType.MATERIAL ));
+        //IndexBuffer kIBuffer = new IndexBuffer(kSurface.IBuffer);
+        //StandardMesh.ReverseTriangleOrder(kSurface.GetTriangleQuantity(), kIBuffer.GetData());
+        //m_kSurface = new TriMesh(kSurface.VBuffer, kIBuffer);
+        m_kSurface = new TriMesh(kSurface);
+        m_kSurface.AttachGlobalState(kSurface.GetGlobalState( GlobalState.StateType.MATERIAL ));
         SurfaceLightingEffect kLightShader = new SurfaceLightingEffect( m_kVolumeImageA );
         m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA );
         m_kSurface.AttachEffect(kLightShader);
@@ -1077,7 +1069,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     }
 
     public boolean buildAnimateFrame() {        
-        //animateClip = new ViewJFrameAnimateClip(m_kMaskImage, capScreenWidth, capScreenHeight, saveCounter);
+        animateClip = new ViewJFrameAnimateClip(m_kMaskImage, getWidth(), getHeight(), getCounter());
         return true;
     }
 
@@ -1093,22 +1085,24 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         m_kFlyPathBehavior.move(cmd);
     }
 
-    public void saveAVIMovie() {
-        // TODO Auto-generated method stub
-        
-    }
-
-    public void saveQuickTimeMovie() {
-        // TODO Auto-generated method stub
-        
-    }
-
     public void setCurrentState(Object _state) {
         m_kFlyPathBehavior.setBranch(_state);
     }
+    
+    public void record(boolean bOn)
+    {
+        m_bSnapshot = bOn;
+    }
 
-    public boolean writeImage() {
-        return true;
+    public String getDirectory() {
+        return new String("");
+    }
 
-    }    
+    public int getHeight() {
+        return m_pkRenderer.GetHeight();
+    }
+
+    public int getWidth() {
+        return m_pkRenderer.GetWidth();
+    }
 }

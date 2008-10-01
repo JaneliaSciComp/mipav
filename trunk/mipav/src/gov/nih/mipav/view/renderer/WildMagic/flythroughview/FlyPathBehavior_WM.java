@@ -98,9 +98,6 @@ public class FlyPathBehavior_WM implements KeyListener {
     /** Parent frame references. */
     private FlyThroughRender parentScene;
 
-    /** If any of the mouse move button pressed. */
-    private boolean pressed;
-
     private Vector3f m_kViewPoint = new Vector3f(0f,0f,0f);
     private Vector3f m_kViewDirection = new Vector3f(0f,0f,0f);
     private Vector3f m_kViewUp = new Vector3f(0f,0f,0f);
@@ -456,17 +453,14 @@ public class FlyPathBehavior_WM implements KeyListener {
      *
      * @param  event  key event to handle
      */
-    public void keyReleased(KeyEvent event) {
-        pressed = false;
-    }
+    public void keyReleased(KeyEvent event) {}
 
     /**
      * Does nothing.
      *
      * @param  event  key event to handle
      */
-    public void keyTyped(KeyEvent event) { // displayInfo(e, "KEY TYPED: ");
-    }
+    public void keyTyped(KeyEvent event) {}
 
     /**
      * Call from the JPanelFlythruMove.

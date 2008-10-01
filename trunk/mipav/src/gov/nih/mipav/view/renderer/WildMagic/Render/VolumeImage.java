@@ -7,6 +7,7 @@ import java.nio.*;
 import WildMagic.LibGraphics.Rendering.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -183,6 +184,7 @@ public class VolumeImage
         kImage.calcMinMax();
         float fImageMax = (float)kImage.getMax();
         float fImageMin = (float)kImage.getMin();
+        System.err.println( "UpdateData " + fImageMax + " " + fImageMin );
 
         if ( kImage.isColorImage() )
         {
@@ -647,5 +649,80 @@ public class VolumeImage
     {
         return m_kLUT;
     }
+
+    public ModelImage CreateImageFromTexture()
+    {
+        int iXBound = m_kImageA.getExtents()[0];
+        int iYBound = m_kImageA.getExtents()[1];
+        int iZBound = m_kImageA.getExtents()[2];
+        m_kImageA.calcMinMax();
+        float fImageMax = (float)m_kImageA.getMax();
+        float fImageMin = (float)m_kImageA.getMin();
+        System.err.println( fImageMax + " " + fImageMin );
+        
+        ModelImage kResult = null;
+        if ( m_kImageA.isColorImage() )
+        {
+            byte[] aucData = new byte[4*iXBound*iYBound*iZBound];
+            for ( int i = 0; i < m_kImageA.getSize(); i += 4)
+            {
+                aucData[i] = m_kVolumeA.GetData()[i+3];
+                aucData[i+1] = m_kVolumeA.GetData()[i+1];
+                aucData[i+2] = m_kVolumeA.GetData()[i+2];
+                aucData[i+3] = m_kVolumeA.GetData()[i];
+            }
+            try {
+                kResult = new ModelImage( m_kImageA.getType(), m_kImageA.getExtents(), JDialogBase.makeImageName(m_kImageA.getImageName(), "_Crop") );
+                kResult.importData( 0, aucData, true );
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        else
+        {
+            float[] afData = new float[iXBound*iYBound*iZBound];
+
+            if ( m_bByte )
+            {
+                int i = 0;
+                for (int iZ = 0; iZ < iZBound; iZ++)
+                {
+                    for (int iY = 0; iY < iYBound; iY++)
+                    {
+                        for (int iX = 0; iX < iXBound; iX++)
+                        {
+
+                            byte bValue = m_kVolumeA.GetData()[i];
+                            //afData[i++]  = (float)((fImageMax - fImageMin) * ( bValue / 255.0 )) + fImageMin;
+                            afData[i++]  = (float)( bValue / 255.0 );
+                        }
+                    }
+                }
+            }
+            else
+            {
+                int i = 0;
+                for (int iZ = 0; iZ < iZBound; iZ++)
+                {
+                    for (int iY = 0; iY < iYBound; iY++)
+                    {
+                        for (int iX = 0; iX < iXBound; iX++)
+                        {
+                            float fValue = m_kVolumeA.GetFloatData()[i];
+                            afData[i++] = (fValue*(fImageMax - fImageMin) + fImageMin);
+                        }
+                    }
+                }
+            }
+            try {
+                kResult = new ModelImage( ModelStorageBase.FLOAT, m_kImageA.getExtents(), JDialogBase.makeImageName(m_kImageA.getImageName(), "_Crop") );
+                kResult.importData( 0, afData, true );
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return kResult;
+    }
+
 
 }
