@@ -672,6 +672,7 @@ public class FileRaw extends FileBase {
                     for (i = 0; i < bufferSize; i++) {
                         buffer[i] = tmpBuffer[i];
                     }
+                    tmpBuffer = null;
                 } catch (IOException error) {
                     throw error;
                 }
@@ -687,6 +688,7 @@ public class FileRaw extends FileBase {
                     for (i = 0; i < bufferSize; i++) {
                         buffer[i] = tmpBuffer[i];
                     }
+                    tmpBuffer = null;
                 } catch (IOException error) {
                     throw error;
                 }
@@ -704,6 +706,7 @@ public class FileRaw extends FileBase {
                         // buffer[i] = tmpBuffer[i];
                         buffer[i] = (float) (tmpBuffer[i] & 0xff);
                     }
+                    tmpBuffer = null;
                 } catch (IOException error) {
                     throw error;
                 }
@@ -719,6 +722,7 @@ public class FileRaw extends FileBase {
                     for (i = 0; i < bufferSize; i++) {
                         buffer[i] = tmpBuffer[i];
                     }
+                    tmpBuffer = null;
                 } catch (IOException error) {
                     throw error;
                 }
@@ -736,6 +740,7 @@ public class FileRaw extends FileBase {
                         // buffer[i] = tmpBuffer[i];
                         buffer[i] = (float) (tmpBuffer[i] & 0xffff);
                     }
+                    tmpBuffer = null;
                 } catch (IOException error) {
                     throw error;
                 }
@@ -751,6 +756,7 @@ public class FileRaw extends FileBase {
                     for (i = 0; i < bufferSize; i++) {
                         buffer[i] = tmpBuffer[i];
                     }
+                    tmpBuffer = null;
                 } catch (IOException error) {
                     throw error;
                 }
@@ -766,6 +772,7 @@ public class FileRaw extends FileBase {
                     for (i = 0; i < bufferSize; i++) {
                         buffer[i] = (float) (tmpBuffer[i] & 0xffffffffL);
                     }
+                    tmpBuffer = null;
                 } catch (IOException error) {
                     throw error;
                 }
@@ -781,6 +788,7 @@ public class FileRaw extends FileBase {
                     for (i = 0; i < bufferSize; i++) {
                         buffer[i] = tmpBuffer[i];
                     }
+                    tmpBuffer = null;
                 } catch (IOException error) {
                     throw error;
                 }
@@ -797,7 +805,7 @@ public class FileRaw extends FileBase {
                         buffer[i] = tmpBuffer[i];
                         // Try array copy
                     }
-
+                    tmpBuffer = null;
                 } catch (IOException error) {
                     throw error;
                 }
@@ -813,6 +821,7 @@ public class FileRaw extends FileBase {
                     for (i = 0; i < bufferSize; i++) {
                         buffer[i] = (float) tmpBuffer[i];
                     }
+                    tmpBuffer = null;
                 } catch (IOException error) {
                     throw error;
                 }
@@ -836,6 +845,7 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 2] = tmpBuffer[i + 1];
                                 buffer[ii + 3] = 0;
                             }
+                            tmpBuffer = null;
                         } else { // RRRRR GGGGG
 
                             byte[] tmpBuffer = fileRW.getByteBuffer();
@@ -847,6 +857,7 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 2] = tmpBuffer[i + bufferOffset];
                                 buffer[ii + 3] = 0;
                             }
+                            tmpBuffer = null;
                         }    
                     } // if (numColors == 2)
                     else if (numColors == 3) {
@@ -860,6 +871,7 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 2] = tmpBuffer[i + 1];
                                 buffer[ii + 3] = tmpBuffer[i + 2];
                             }
+                            tmpBuffer = null;
                         } else { // RRRRR GGGGG BBBBB
 
                             byte[] tmpBuffer = fileRW.getByteBuffer();
@@ -871,6 +883,7 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 2] = tmpBuffer[i + bufferOffset];
                                 buffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
                             }
+                            tmpBuffer = null;
                         }
                     } // else if (numColors == 3)
                     else { // numColors == 4
@@ -882,6 +895,7 @@ public class FileRaw extends FileBase {
                                 for (i = 0; i < tmpBuffer.length; i ++) {
                                     buffer[i] = tmpBuffer[i];
                                 }
+                                tmpBuffer = null;
                             } else { // AAAA RRRRR GGGGG BBBBB
     
                                 byte[] tmpBuffer = fileRW.getByteBuffer();
@@ -893,6 +907,7 @@ public class FileRaw extends FileBase {
                                     buffer[ii + 2] = tmpBuffer[i + (2 * bufferOffset)];
                                     buffer[ii + 3] = tmpBuffer[i + (3 * bufferOffset)];
                                 }
+                                tmpBuffer = null;
                             }    
                         }
                         else { // RGBAOrder
@@ -906,6 +921,7 @@ public class FileRaw extends FileBase {
                                     buffer[i + 2] = tmpBuffer[i + 1];
                                     buffer[i + 3] = tmpBuffer[i + 2];
                                 }
+                                tmpBuffer = null;
                             } else { // RRRRR GGGGG BBBBB AAAA
     
                                 byte[] tmpBuffer = fileRW.getByteBuffer();
@@ -917,6 +933,7 @@ public class FileRaw extends FileBase {
                                     buffer[ii + 2] = tmpBuffer[i + bufferOffset];
                                     buffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
                                 }
+                                tmpBuffer = null;
                             }   
                         } // else RGBAOrder
                     } // numColors == 4
@@ -945,6 +962,7 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 2] = (float) (tmpBuffer[i + 1] & 0xffff);
                                 buffer[ii + 3] = 0.0f;
                             }
+                            tmpBuffer = null;
                         } else { // RRRRR GGGGG
 
                             short[] tmpBuffer = fileRW.getShortBuffer();
@@ -956,6 +974,7 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 2] = (float) (tmpBuffer[i + bufferOffset] & 0xffff);
                                 buffer[ii + 3] = 0.0f;
                             }
+                            tmpBuffer = null;
                         }    
                     } // if (numColors == 2)
                     else if (numColors == 3) {
@@ -969,6 +988,7 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 2] = (float) (tmpBuffer[i + 1] & 0xffff);
                                 buffer[ii + 3] = (float) (tmpBuffer[i + 2] & 0xffff);
                             }
+                            tmpBuffer = null;
                         } else { // RRRRR GGGGG BBBBB
 
                             short[] tmpBuffer = fileRW.getShortBuffer();
@@ -980,6 +1000,7 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 2] = (float) (tmpBuffer[i + bufferOffset] & 0xffff);
                                 buffer[ii + 3] = (float) (tmpBuffer[i + (2 * bufferOffset)] & 0xffff);
                             }
+                            tmpBuffer = null;
                         }
                     } // else if (numColors == 3)
                     else { // numColors == 4
@@ -991,6 +1012,7 @@ public class FileRaw extends FileBase {
                               for (i = 0; i < tmpBuffer.length; i++) {
                                   buffer[i] = (float) (tmpBuffer[i] & 0xffff);
                               }
+                              tmpBuffer = null;
                           } else { // AAAA RRRRR GGGGG BBBBB
   
                               short[] tmpBuffer = fileRW.getShortBuffer();
@@ -1002,6 +1024,7 @@ public class FileRaw extends FileBase {
                                   buffer[ii + 2] = (float) (tmpBuffer[i + (2 * bufferOffset)] & 0xffff);
                                   buffer[ii + 3] = (float) (tmpBuffer[i + (3 * bufferOffset)] & 0xffff);
                               }
+                              tmpBuffer = null;
                           }    
                       } // if (!RGBAOrder)
                       else { // RGBAOrder 
@@ -1015,6 +1038,7 @@ public class FileRaw extends FileBase {
                                   buffer[i + 2] = (float) (tmpBuffer[i + 1] & 0xffff);
                                   buffer[i + 3] = (float) (tmpBuffer[i + 2] & 0xffff);
                               }
+                              tmpBuffer = null;
                           } else { // RRRRR GGGGG BBBBB AAAAA
   
                               short[] tmpBuffer = fileRW.getShortBuffer();
@@ -1026,6 +1050,7 @@ public class FileRaw extends FileBase {
                                   buffer[ii + 2] = (float) (tmpBuffer[i + bufferOffset] & 0xffff);
                                   buffer[ii + 3] = (float) (tmpBuffer[i + (2 * bufferOffset)] & 0xffff);
                               }
+                              tmpBuffer = null;
                           }    
                       } // else RGBAOrder
                     } // else numColors == 4

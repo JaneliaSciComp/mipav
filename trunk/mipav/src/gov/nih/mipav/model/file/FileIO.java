@@ -1293,6 +1293,7 @@ public class FileIO {
         imageFile.finalize();
         imageFile = null;
         matrix = null;
+        refFileInfo = null;
         bufferShort = null;
         bufferFloat = null;
 

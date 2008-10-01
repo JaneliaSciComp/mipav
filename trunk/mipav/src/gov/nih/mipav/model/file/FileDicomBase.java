@@ -287,8 +287,9 @@ public class FileDicomBase {
         for (int i = 0; i < length; i++) {
             b[i] = tagBuffer[bPtr++];
         }
-
-        return new String(b);
+        String s = new String(b);
+        b = null;
+        return s;
     }
 
     /**
@@ -308,8 +309,9 @@ public class FileDicomBase {
 
         byte[] b = new byte[length];
         raFile.readFully(b);
-
-        return new String(b);
+        String s = new String(b);
+        b = null;
+        return s;
     }
 
     /**
