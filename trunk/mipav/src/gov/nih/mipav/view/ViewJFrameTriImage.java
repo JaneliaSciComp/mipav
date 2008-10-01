@@ -680,7 +680,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
 
             updateImages(true);
-        } else if (command.equals("Protractor")) {
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_PROTRACTOR.getActionCommand())) {
 
             snapProtractor90 = menuObj.isMenuItemSelected("Snap protractor to 90 degrees multiple");
 
