@@ -11,7 +11,6 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
-import java.util.jar.*;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -1088,29 +1087,20 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
     }
 
     private static final Vector<String> getCustomLUTList() {
+        String listingFilename = ViewJPanelLUT.customLUTsLocation + File.separator + "LUT_listing";
+
         // use this long call instead of ClassLoader.getSystemResource() to work properly from a jnlp launch
-        URL dirURL = Thread.currentThread().getContextClassLoader().getResource(ViewJPanelLUT.customLUTsLocation);
+        URL listingFileURL = Thread.currentThread().getContextClassLoader().getResource(listingFilename);
 
-        if (dirURL == null) {
+        if (listingFileURL == null) {
             Preferences.debug("Unable to open " + ViewJPanelLUT.customLUTsLocation + ".\n", Preferences.DEBUG_MINOR);
-
-            // TODO -- running from jar?
-            try {
-                JarFile jar = new JarFile("mipav.jar");
-                Enumeration<JarEntry> jarEntries = jar.entries();
-                while (jarEntries.hasMoreElements()) {
-                    System.out.println(jarEntries.nextElement());
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
 
         // use buffering this implementation reads one line at a time
         Vector<String> lutStrings = new Vector<String>();
         try {
             // reading from a buffered reader pointed to a directory should return the files contained within it
-            BufferedReader br = new BufferedReader(new InputStreamReader(dirURL.openStream()));
+            BufferedReader br = new BufferedReader(new InputStreamReader(listingFileURL.openStream()));
             String line = null;
             while ( (line = br.readLine()) != null) {
                 lutStrings.add(line);
@@ -1118,10 +1108,6 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
         } catch (IOException e) {
             Preferences.debug("Unable to create custom LUT list: " + e.getMessage() + ".\n", Preferences.DEBUG_MINOR);
             e.printStackTrace();
-        }
-
-        for (int i = 0; i < lutStrings.size(); i++) {
-            lutStrings.set(i, lutStrings.get(i).replaceAll(".txt$", ""));
         }
 
         return lutStrings;
@@ -1282,18 +1268,18 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
         } else if (source == outputBoxB) {
             threshFillBF.setEnabled(outputBoxB.getSelectedIndex() == AlgorithmThresholdDual.ORIGINAL_TYPE);
         } /*
-             * else if (source == oneBasedLUTCheckBoxImageA) { // get the color of the LUT index 0 Color zeroIndexColor =
-             * getLUTa().getColor(0); // test to see if the color is R == 0, G == 0, B == 0 boolean zeroIndexColorIs000 =
-             * ((zeroIndexColor.getRed() == 0) && (zeroIndexColor.getGreen() == 0) && (zeroIndexColor.getBlue() == 0));
-             * boolean zeroIndexColorIs111 = ((zeroIndexColor.getRed() == 1) && (zeroIndexColor.getGreen() == 1) &&
-             * (zeroIndexColor.getBlue() == 1)); // if the user wants a 1-based LUT if
-             * (oneBasedLUTCheckBoxImageA.isSelected() == true) { // only change index 0 to 1's if it is currently R ==
-             * 0, G == 0, B == 0. if (zeroIndexColorIs000 == true) { getLUTa().setColor(0, new Color(1, 1, 1)); } } else { //
-             * only change index 1 to 0's if it is currently R == 1, G == 1, B == 1. if (zeroIndexColorIs111 == true) {
-             * getLUTa().setColor(0, new Color(0, 0, 0)); } }
-             * 
-             * updateFrames(false); }
-             */else if (source == oneBasedLUTCheckBoxImageB) {
+         * else if (source == oneBasedLUTCheckBoxImageA) { // get the color of the LUT index 0 Color zeroIndexColor =
+         * getLUTa().getColor(0); // test to see if the color is R == 0, G == 0, B == 0 boolean zeroIndexColorIs000 =
+         * ((zeroIndexColor.getRed() == 0) && (zeroIndexColor.getGreen() == 0) && (zeroIndexColor.getBlue() == 0));
+         * boolean zeroIndexColorIs111 = ((zeroIndexColor.getRed() == 1) && (zeroIndexColor.getGreen() == 1) &&
+         * (zeroIndexColor.getBlue() == 1)); // if the user wants a 1-based LUT if
+         * (oneBasedLUTCheckBoxImageA.isSelected() == true) { // only change index 0 to 1's if it is currently R ==
+         * 0, G == 0, B == 0. if (zeroIndexColorIs000 == true) { getLUTa().setColor(0, new Color(1, 1, 1)); } } else { //
+         * only change index 1 to 0's if it is currently R == 1, G == 1, B == 1. if (zeroIndexColorIs111 == true) {
+         * getLUTa().setColor(0, new Color(0, 0, 0)); } }
+         * 
+         * updateFrames(false); }
+         */else if (source == oneBasedLUTCheckBoxImageB) {
 
             // get the color of the LUT index 0
             Color zeroIndexColor = getLUTb().getColor(0);
