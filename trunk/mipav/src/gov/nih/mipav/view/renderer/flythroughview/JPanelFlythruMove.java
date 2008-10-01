@@ -266,7 +266,7 @@ public class JPanelFlythruMove extends JPanelRendererBase implements ActionListe
             }
         } else if (command.equals("AVIplay")) {
             mode = PLAY_MODE;
-            parentScene.buildAnimateFrame();
+            new ViewJFrameAnimateClip(parentScene.getImage(), parentScene.getWidth(), parentScene.getHeight(), parentScene.getCounter());
         } else if (command.equals("Record")) {
 
             if (!isRecording()) {
@@ -1081,13 +1081,13 @@ public class JPanelFlythruMove extends JPanelRendererBase implements ActionListe
     public void saveAVIMovie() {
         File outputFile = null;
         File[] inputFile = new File[parentScene.getCounter()];
-
+        String directory = parentScene.getImage().getFileInfo(0).getFileDirectory() + "flythru" + File.separatorChar;
         for (int i = 0; i < parentScene.getCounter(); i++) {
-            inputFile[i] = new File(parentScene.getDirectory() + "captureImage" + i + "." + "jpg");
+            inputFile[i] = new File(directory + "captureImage" + i + "." + "jpg");
         }
 
         // Save to AVI file.
-        String file = parentScene.getDirectory() + "flythru.avi";
+        String file = directory + "flythru.avi";
         outputFile = new File(file);
 
         try {
@@ -1110,16 +1110,17 @@ public class JPanelFlythruMove extends JPanelRendererBase implements ActionListe
         Vector inputFiles = new Vector();
         String file;
 
-        file = "file:" + parentScene.getDirectory() + "flythru.mov";
+        String directory = parentScene.getImage().getFileInfo(0).getFileDirectory() + "flythru" + File.separatorChar;
+        file = "file:" + directory + "flythru.mov";
 
         if ((oml = new MediaLocator(file)) == null) {
-            System.err.println("Cannot build media locator from: " + parentScene.getDirectory());
+            System.err.println("Cannot build media locator from: " + directory);
 
             return;
         }
 
         for (int i = 0; i < parentScene.getCounter(); i++) {
-            inputFiles.addElement(parentScene.getDirectory() + "captureImage" + i + "." + "jpg");
+            inputFiles.addElement(directory + "captureImage" + i + "." + "jpg");
         }
 
         JpegImagesToMovie imageToMovie = new JpegImagesToMovie();

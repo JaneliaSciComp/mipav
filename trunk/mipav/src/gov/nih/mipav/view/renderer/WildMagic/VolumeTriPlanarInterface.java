@@ -3248,4 +3248,17 @@ implements MouseListener, ItemListener, ChangeListener {
     	raycastRenderWM.setObjectRotation(rot);
     }
     
+    public void displayAll()
+    {
+        for (int i = 0; i < 3; i++) 
+        {
+            m_akPlaneRender[i].GetCanvas().display();
+        }
+        raycastRenderWM.GetCanvas().display();
+        if ( m_kFlyThroughRender != null )
+        {
+            m_kFlyThroughRender.GetCanvas().display();
+        }
+    }
+    
 }

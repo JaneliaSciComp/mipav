@@ -51,9 +51,6 @@ public class FlythruRender extends SurfaceRender
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    ViewJFrameAnimateClip animateClip;
-
-    /** DOCUMENT ME! */
     short[] buffer = null;
 
     /** DOCUMENT ME! */
@@ -297,22 +294,11 @@ public class FlythruRender extends SurfaceRender
         }
     }
 
-    /**
-     * DOCUMENT ME!
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#autoRun()
      */
     public void autoRun() {
         m_kFlyPathBehavior.autoRun();
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public synchronized boolean buildAnimateFrame() {
-        animateClip = new ViewJFrameAnimateClip(kImage, capScreenWidth, capScreenHeight, saveCounter);
-
-        return true;
     }
 
     /**
@@ -338,11 +324,6 @@ public class FlythruRender extends SurfaceRender
         if (m_kUniverse != null) {
             m_kUniverse.removeAllLocales();
             m_kUniverse = null;
-        }
-
-        if (animateClip != null) {
-            animateClip.dispose();
-            animateClip = null;
         }
 
         m_kSceneRoot = null;
@@ -420,19 +401,17 @@ public class FlythruRender extends SurfaceRender
         return (Shape3D) kBranchPathShape;
     }
 
-    /**
-     * Get the current state of traversing.
-     *
-     * @return  BranchState
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getBranchState()
      */
     public Object getBranchState() {
         return m_kFlyPathBehavior.getBranchState();
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.J3D.RenderViewBase#getCanvas()
      */
     public Canvas3D getCanvas() {
         return kCanvas;
@@ -545,10 +524,9 @@ public class FlythruRender extends SurfaceRender
         return m_kMeshCurvatures;
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  cmd  DOCUMENT ME!
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#makeMove(java.lang.String)
      */
     public void makeMove(String cmd) {
         m_kFlyPathBehavior.move(cmd);
@@ -1181,10 +1159,9 @@ public class FlythruRender extends SurfaceRender
         }
     }
 
-    /**
-     * Write the image from the rendering frame into the camera capture frame.
-     *
-     * @return  succeed <code>true</code> means succeed, <code>false</code> means unsucceed.
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.J3D.RenderViewBase#writeImage()
      */
     public synchronized boolean writeImage() {
         int bufferSize, xDim, yDim;
@@ -1264,18 +1241,23 @@ public class FlythruRender extends SurfaceRender
     }
 
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getCounter()
+     */
     public int getCounter() {
         return saveCounter;
     }
 
-    public String getDirectory() {
-        return directory;
-    }
-
+    /* (non-Javadoc)
+     * @see javax.media.j3d.Canvas3D#getHeight()
+     */
     public int getHeight() {
         return capScreenHeight;
     }
 
+    /* (non-Javadoc)
+     * @see javax.media.j3d.Canvas3D#getWidth()
+     */
     public int getWidth() {
         return capScreenWidth;
     }
@@ -1752,8 +1734,16 @@ public class FlythruRender extends SurfaceRender
         }
     }
 
-    public void record(boolean bOn) {
-        // TODO Auto-generated method stub
-        
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#record(boolean)
+     */
+    public void record(boolean bOn) {}
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getImage()
+     */
+    public ModelImage getImage()
+    {
+        return kImage;
     }
 }

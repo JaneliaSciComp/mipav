@@ -71,7 +71,6 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /** kMean curvature LUT. Pseudo color look up table. */
     private ModelLUT m_kMeanCurvaturesLUT = null;
     private SurfaceLightingEffect m_kLightShader;
-    private ViewJFrameAnimateClip animateClip;
     private ColorRGB[] m_akColorBackup;
     private boolean m_bSnapshot = false;
     
@@ -1014,19 +1013,22 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             m_kLight.Position.Copy(kPositionScaled);
             m_kLight.DVector.Copy(kCDir);
         }
-        if ( m_kControlFrame != null )
-        {
-            if ( m_kControlFrame.getContinuousUpdate() )
-            {
-                update();
-            }
-        }
+
         resetRenderBranchPath();
         
         if (FlyPathBehavior_WM.EVENT_CHANGE_BRANCH == (FlyPathBehavior_WM.EVENT_CHANGE_BRANCH & iEvent)) {
             resetRenderBranchConnect();
         }
-        GetCanvas().display();
+        if ( m_kControlFrame.getContinuousUpdate() )
+        {
+            update();
+            m_kParent.displayAll();
+        }
+        else
+        {
+            GetCanvas().display();
+        }
+        
     }
     
     public Vector3f getCameraDirection()
@@ -1064,44 +1066,59 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         m_bSurfaceAdded = true;
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#autoRun()
+     */
     public void autoRun() {
         m_kFlyPathBehavior.autoRun();        
     }
 
-    public boolean buildAnimateFrame() {        
-        animateClip = new ViewJFrameAnimateClip(m_kMaskImage, getWidth(), getHeight(), getCounter());
-        return true;
-    }
-
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getBranchState()
+     */
     public Object getBranchState() {
         return m_kFlyPathBehavior.getBranchState();
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getCanvas()
+     */
     public Canvas getCanvas() {
         return GetCanvas();
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#makeMove(java.lang.String)
+     */
     public void makeMove(String cmd) {
         m_kFlyPathBehavior.move(cmd);
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#setCurrentState(java.lang.Object)
+     */
     public void setCurrentState(Object _state) {
         m_kFlyPathBehavior.setBranch(_state);
     }
     
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#record(boolean)
+     */
     public void record(boolean bOn)
     {
         m_bSnapshot = bOn;
     }
 
-    public String getDirectory() {
-        return new String("");
-    }
-
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getHeight()
+     */
     public int getHeight() {
         return m_pkRenderer.GetHeight();
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getWidth()
+     */
     public int getWidth() {
         return m_pkRenderer.GetWidth();
     }
