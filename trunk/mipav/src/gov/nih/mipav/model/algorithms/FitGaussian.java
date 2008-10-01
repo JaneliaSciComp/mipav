@@ -171,13 +171,14 @@ public class FitGaussian extends NLEngine {
     }
     
     private void estimateInitial() {
+    	int offset = 15;
     	
     	//determine location of start data, note 
     	//basic thresholding will already have been performed
     	dataStart = 0;
     	for(int i=0; i<yDataOrg.length; i++) {
     		if(yDataOrg[i] != 0 && i > 0) {
-    			dataStart = i-1;
+    			dataStart = i > offset ? i-offset : 0;
     			break;
     		}		
     	}
@@ -201,7 +202,7 @@ public class FitGaussian extends NLEngine {
     	dataEnd = 0;
     	for(int i=maxIndex; i<yDataOrg.length; i++) {
     		if(yDataOrg[i] == 0) {
-    			dataEnd = i;
+    			dataEnd = i+offset < yDataOrg.length-1 ? i+offset : yDataOrg.length-1;
     			break;
     		}
     	}
@@ -267,9 +268,9 @@ public class FitGaussian extends NLEngine {
     public void driver() {
         
     	boolean converged = false;
-    	int numItr = 0;
+    	kk = 0;
     	
-    	while(!converged && numItr < MAX_ITR) {
+    	while(!converged && kk < MAX_ITR) {
     		double oldAmp = amp;
         	double oldXInit = xInit;
         	double oldSigma = sigma;
@@ -287,21 +288,23 @@ public class FitGaussian extends NLEngine {
 	    	sigma = sigma + dLambda.get(2, 0);
 	    	if(Math.abs(Math.abs(oldAmp - amp) / ((oldAmp + amp) / 2)) < EPSILON && 
 	    			Math.abs(Math.abs(oldXInit - xInit) / ((oldXInit + xInit) / 2)) < EPSILON && 
-	    			Math.abs(Math.abs(oldSigma - sigma) / ((oldSigma + sigma) / 2)) < EPSILON && numItr > MIN_ITR) {
+	    			Math.abs(Math.abs(oldSigma - sigma) / ((oldSigma + sigma) / 2)) < EPSILON && kk > MIN_ITR) {
 	    		converged = true;    		
-	    		Preferences.debug("Converged after "+numItr+" iterations.");
-	    		System.out.println("Converged after "+numItr+" iterations.");
+	    		Preferences.debug("Converged after "+kk+" iterations.");
+	    		System.out.println("Converged after "+kk+" iterations.");
 	    	} else {
 	    		oldAmp = amp;
 	    		oldXInit = xInit;
 	    		oldSigma = sigma;
-	    		numItr++;
+	    		kk++;
 	    	}
     	}
     	
     	if(!converged) {
-    		Preferences.debug("Did not converge after "+numItr+" iterations.");
-    		System.out.println("Did not converge after "+numItr+" iterations.");
+    		Preferences.debug("Did not converge after "+kk+" iterations.");
+    		System.out.println("Did not converge after "+kk+" iterations.");
+    	} else {
+    		calculateChiSq();
     	}
     	
     	//a already initialized in super constructor, used to hold parameters for output
@@ -310,20 +313,47 @@ public class FitGaussian extends NLEngine {
     	a[2] = sigma;
     	
     }
+    
+    private void calculateChiSq() {
+    	Matrix residuals = generateResiduals();
+    	double sum = 0;
+    	for(int i=dataStart; i<dataEnd; i++) {
+    		double resTemp = residuals.get(i-dataStart, 0);
+    		residuals.set(i-dataStart, 0, Math.pow(resTemp, 2)/gauss(xDataOrg[i]));
+    		System.out.println("xValue: "+xDataOrg[i]+"\tActual: "+yDataOrg[i]+"\tExpected: "+gauss(xDataOrg[i])+"\tResidual: "+resTemp+"\tChi squared value: "+residuals.get(i-dataStart, 0));
+    		sum += Math.pow(resTemp, 2)/gauss(xDataOrg[i]);
+    	}
+    	System.out.println("Sum "+sum+"\tcompared to chisq "+chisq);
+    	chisq = residuals.norm1();
+    }
 
     /**
      * Display results of displaying exponential fitting parameters.
      */
     public void dumpResults() {
-        Preferences.debug(" ******* FitGaussian ********* \n\n");
-        Preferences.debug("Number of iterations: " + String.valueOf(kk) + "\n");
-        Preferences.debug("Chi-squared: " + String.valueOf(chisq) + "\n");
+    	ViewJFrameMessageGraph messageGraph = new ViewJFrameMessageGraph("Fitting Data");
+    	
+    	messageGraph.append(" ******* FitGaussian ********* \n\n");
+    	messageGraph.append("Number of iterations: " + kk + "\n");
+        messageGraph.append("Chi-squared: " + chisq + "\n\n");
 
-        // Preferences.debug("Final lamda: " + String.valueOf(flamda));
-        Preferences.debug("a0 " + String.valueOf(1) + "\n"); // + " +/- " + String.valueOf(Math.sqrt(covar[0][0])));
-        Preferences.debug("a1 " + String.valueOf(1) + "\n"); // + " +/- " + String.valueOf(Math.sqrt(covar[1][1])));
-        Preferences.debug("a2 " + String.valueOf(1) + "\n\n"); // + " +/- " +
-                                                                  // String.valueOf(Math.sqrt(covar[2][2])));
+        messageGraph.append("Valid for data from "+xDataOrg[dataStart]+" to "+xDataOrg[dataEnd]+" in "+(dataEnd-dataStart)+" parts\n\n");
+        
+        messageGraph.append("Fitting of gaussian function\n");
+        messageGraph.append(" y = " + amp + " * exp((x-" + xInit +
+                            ")^2/(2*" + sigma + "))\n");
+        messageGraph.append("\n");
+        
+        messageGraph.append("amp: " + amp + "\n"); 
+        messageGraph.append("Xo: " + xInit + "\n");
+        messageGraph.append("sigma " + sigma + "\n\n");
+        
+        if (messageGraph.isVisible() == false) {
+            System.out.println("Had to set visible");
+        	messageGraph.setLocation(100, 50);
+            messageGraph.setSize(500, 300);
+            messageGraph.setVisible(true);
+        }
     }
     
     @Override

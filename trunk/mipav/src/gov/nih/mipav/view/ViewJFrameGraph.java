@@ -1464,10 +1464,6 @@ public class ViewJFrameGraph extends JFrame
 
             try {
 
-                if (messageGraph == null) {
-                    messageGraph = new ViewJFrameMessageGraph("Fitting Data");
-                }
-
                 for (int i = 0; i < functions.length; i++) {
                     nPoints = graph.getFuncts()[i].getOriginalXs().length;
                     fe = new FitGaussian(nPoints, graph.getFuncts()[i].getOriginalXs(),
@@ -1489,25 +1485,10 @@ public class ViewJFrameGraph extends JFrame
                     fittedFunctions[i].setOriginalXs(x);
                     fittedFunctions[i].setYs(y);
                     fittedFunctions[i].setOriginalYs(y);
-
-                    messageGraph.append("*********************\n");
-                    messageGraph.append("Fitting of gaussian function " + i + "\n");
-                    messageGraph.append(" y = " + params[0] + " * exp((x-" + String.valueOf(params[1]) +
-                                        ")^2/(2*" + String.valueOf(params[2]) + "))\n");
-                    messageGraph.append("\n");
                 }
             } catch (OutOfMemoryError error) {
                 MipavUtil.displayError("Graph :  Out of memory ");
 
-            }
-
-            if (messageGraph != null) {
-
-                if (messageGraph.isVisible() == false) {
-                    messageGraph.setLocation(100, 50);
-                    messageGraph.setSize(500, 300);
-                    messageGraph.setVisible(true);
-                }
             }
 
             fitMode = fitGaussianMode;
