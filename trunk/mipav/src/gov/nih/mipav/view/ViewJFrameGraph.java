@@ -51,6 +51,9 @@ public class ViewJFrameGraph extends JFrame
     
     /** Mode indicates Gaussian fitting in progress*/
     private static final int fitGaussianMode = 4;
+    
+    /** Mode indicates Laplace fitting in progress*/
+    private static final int fitLaplaceMode = 5;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -258,6 +261,9 @@ public class ViewJFrameGraph extends JFrame
     
     /** Radio button for fitting graph data to exponential function */
     private JRadioButton radioFitExponential;
+    
+    /**Radio button for fitting graph data to Laplace distribution (double exponent) */
+    private JRadioButton radioFitLaplace;
 
     /** Radio button for fitting graph data to linear function */
     private JRadioButton radioFitLinear;
@@ -1451,7 +1457,6 @@ public class ViewJFrameGraph extends JFrame
 			//comment
             update(getGraphics());
         } else if (command.equals("FitGaussian")) { 
-        	//MipavUtil.displayError("Not currently implemented. ");
         	
         	double[] params;
             int nPoints;
@@ -1492,6 +1497,61 @@ public class ViewJFrameGraph extends JFrame
             }
 
             fitMode = fitGaussianMode;
+
+            for (int index = 0; index < 5; index++) {
+
+                if (index >= graph.getFuncts().length) {
+                    fitFunctVisibleCheckbox[index].setEnabled(false);
+                    fitFunctVisibleCheckbox[index].setSelected(false);
+                } else {
+                    fitFunctVisibleCheckbox[index].setEnabled(true);
+                    fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
+                }
+            }
+
+            update(getGraphics());
+        	
+    	} else if (command.equals("FitLaplace")) { 
+        	
+        	double[] params;
+            int nPoints;
+            FitLaplace fe = null;
+
+            ViewJComponentFunct[] functions = graph.getFuncts();
+            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
+            float[] x;
+            float[] y;
+
+            try {
+
+                for (int i = 0; i < functions.length; i++) {
+                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
+                    fe = new FitLaplace(nPoints, graph.getFuncts()[i].getOriginalXs(),
+                                            graph.getFuncts()[i].getOriginalYs());
+                    fe.driver();
+                    fe.dumpResults();
+                    params = fe.getParameters();
+
+                    x = new float[functions[i].getXs().length];
+                    y = new float[x.length];
+
+                    for (int j = 0; j < x.length; j++) {
+                        x[j] = (functions[i].getXs()[j]);
+                        double exp = -Math.pow(x[j]-params[1], 2) / (2 * Math.pow(params[2], 2));
+                    	y[j] = (float) (params[0]*Math.exp(exp));
+                    }
+
+                    fittedFunctions[i].setXs(x);
+                    fittedFunctions[i].setOriginalXs(x);
+                    fittedFunctions[i].setYs(y);
+                    fittedFunctions[i].setOriginalYs(y);
+                }
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Graph :  Out of memory ");
+
+            }
+
+            fitMode = fitLaplaceMode;
 
             for (int index = 0; index < 5; index++) {
 
@@ -3226,7 +3286,7 @@ public class ViewJFrameGraph extends JFrame
         	//TODO: Customize to Gaussian here
         	double[] params;
             int nPoints;
-            FitExponential fe = null;
+            FitGaussian fe = null;
 
             ViewJComponentFunct[] functions = graph.getFuncts();
             ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
@@ -3237,7 +3297,61 @@ public class ViewJFrameGraph extends JFrame
 
                 for (int i = 0; i < functions.length; i++) {
                     nPoints = graph.getFuncts()[i].getOriginalXs().length;
-                    fe = new FitExponential(nPoints, graph.getFuncts()[i].getOriginalXs(),
+                    fe = new FitGaussian(nPoints, graph.getFuncts()[i].getOriginalXs(),
+                                            graph.getFuncts()[i].getOriginalYs());
+                    fe.driver();
+                    fe.dumpResults();
+                    params = fe.getParameters();
+
+                    x = new float[functions[i].getXs().length];
+                    y = new float[x.length];
+
+                    for (int j = 0; j < x.length; j++) {
+                        x[j] = (functions[i].getXs()[j]);
+                        y[j] = (float) (params[0] + (params[1] * Math.exp(params[2] * x[j])));
+                    }
+
+                    fittedFunctions[i].setXs(x);
+                    fittedFunctions[i].setOriginalXs(x);
+                    fittedFunctions[i].setYs(y);
+                    fittedFunctions[i].setOriginalYs(y);
+                }
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Graph :  Out of memory ");
+
+            }
+
+            if (modifyDialog != null) {
+
+                for (int index = 0; index < 5; index++) {
+
+                    if (index >= graph.getFuncts().length) {
+                        fitFunctVisibleCheckbox[index].setEnabled(false);
+                        fitFunctVisibleCheckbox[index].setSelected(false);
+                    } else {
+                        fitFunctVisibleCheckbox[index].setEnabled(true);
+                        fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
+                    }
+                }
+            }
+
+            update(getGraphics());
+        } else if(fitMode == fitLaplaceMode) {
+        	//TODO: Customize to Gaussian here
+        	double[] params;
+            int nPoints;
+            FitLaplace fe = null;
+
+            ViewJComponentFunct[] functions = graph.getFuncts();
+            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
+            float[] x;
+            float[] y;
+
+            try {
+
+                for (int i = 0; i < functions.length; i++) {
+                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
+                    fe = new FitLaplace(nPoints, graph.getFuncts()[i].getOriginalXs(),
                                             graph.getFuncts()[i].getOriginalYs());
                     fe.driver();
                     fe.dumpResults();
@@ -3353,6 +3467,7 @@ public class ViewJFrameGraph extends JFrame
             radioFitLinear = new JRadioButton("Fit linear (a1*x + a0)");
             radioFitExponential = new JRadioButton("Fit exponential (a0+a1*exp(a2*x))");
             radioFitGaussian = new JRadioButton("Fit Gaussian (A*exp(-(X-Xo)^2/(2sigma^2)))");
+            radioFitLaplace = new JRadioButton("Fit Laplace (A*exp(-|x-mu|/beta))");
             radioFitNone = new JRadioButton("None");
             fitFunctVisibleCheckbox = new JCheckBox[5];
             name = new String[5];
@@ -3362,16 +3477,16 @@ public class ViewJFrameGraph extends JFrame
             return;
         }
 
-        fitFunctPanel.setBounds(10, 10, 480, 240);
+        fitFunctPanel.setBounds(10, 10, 480, 270);
         fitFunctPanel.setLayout(null);
         fitFunctPanel.setBorder(new EtchedBorder());
 
-        fitFunctTypePanel.setBounds(10, 10, 280, 150);
+        fitFunctTypePanel.setBounds(10, 10, 280, 180);
         fitFunctTypePanel.setLayout(null);
         fitFunctTypePanel.setBorder(new EtchedBorder());
         fitFunctPanel.add(fitFunctTypePanel);
 
-        fitFunctVisiblePanel.setBounds(10, 170, 390, 110);
+        fitFunctVisiblePanel.setBounds(10, 200, 420, 110);
         fitFunctVisiblePanel.setLayout(null);
         fitFunctVisiblePanel.setBorder(new EtchedBorder());
         fitFunctPanel.add(fitFunctVisiblePanel);
@@ -3397,7 +3512,14 @@ public class ViewJFrameGraph extends JFrame
         groupFitFunctType.add(radioFitGaussian);
         fitFunctTypePanel.add(radioFitGaussian);
         
-        radioFitNone.setBounds(10, 100, 180, 30);
+        radioFitLaplace.setBounds(10, 100, 260, 30);
+        radioFitLaplace.addActionListener(this);
+        radioFitLaplace.setActionCommand("FitLaplace");
+        radioFitLaplace.setFont(font12);
+        groupFitFunctType.add(radioFitLaplace);
+        fitFunctTypePanel.add(radioFitLaplace);
+        
+        radioFitNone.setBounds(10, 130, 180, 30);
         radioFitNone.addActionListener(this);
         radioFitNone.setActionCommand("FitNone");
         radioFitNone.setFont(font12);
@@ -3410,6 +3532,8 @@ public class ViewJFrameGraph extends JFrame
             radioFitExponential.setSelected(true);
         } else if (fitMode == fitGaussianMode) { 
         	radioFitGaussian.setSelected(true);
+        } else if(fitMode == fitLaplaceMode) {
+        	radioFitLaplace.setSelected(true);
         } else {
             radioFitNone.setSelected(true);
         }
@@ -4509,21 +4633,31 @@ public class ViewJFrameGraph extends JFrame
             radioFitNone.setSelected(false);
             radioFitExponential.setSelected(false);
             radioFitGaussian.setSelected(false);
+            radioFitLaplace.setSelected(false);
         } else if (fitMode == fitExpMode) {
             radioFitLinear.setSelected(false);
             radioFitNone.setSelected(false);
             radioFitExponential.setSelected(true);
             radioFitGaussian.setSelected(false);
+            radioFitLaplace.setSelected(false);
         } else if(fitMode == fitGaussianMode) { 
         	radioFitLinear.setSelected(false);
         	radioFitNone.setSelected(false);
         	radioFitExponential.setSelected(false);
         	radioFitGaussian.setSelected(true);
+        	radioFitLaplace.setSelected(false);
+        } else if(fitMode == fitLaplaceMode) {
+        	radioFitLinear.setSelected(false);
+            radioFitNone.setSelected(true);
+            radioFitExponential.setSelected(false);
+            radioFitGaussian.setSelected(false);
+            radioFitLaplace.setSelected(true);
         } else {
             radioFitLinear.setSelected(false);
             radioFitNone.setSelected(true);
             radioFitExponential.setSelected(false);
             radioFitGaussian.setSelected(false);
+            radioFitLaplace.setSelected(false);
         }
 
     }
