@@ -159,7 +159,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
      */
     // public static final String customLUTsLocation = "gov" + File.separator + "nih" + File.separator + "mipav" +
     // File.separator + "view" + File.separator + "WildMagic" + File.separator + "Shaders" + File.separator + "LUTs";
-    public static final String customLUTsLocation = "WildMagic" + File.separator + "Shaders" + File.separator + "LUTs";
+    public static final String customLUTsLocation = "WildMagic/Shaders/LUTs";
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1087,13 +1087,13 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
     }
 
     private static final Vector<String> getCustomLUTList() {
-        String listingFilename = ViewJPanelLUT.customLUTsLocation + File.separator + "LUT_listing";
+        String listingFilename = ViewJPanelLUT.customLUTsLocation + "/LUT_listing";
 
         // use this long call instead of ClassLoader.getSystemResource() to work properly from a jnlp launch
         URL listingFileURL = Thread.currentThread().getContextClassLoader().getResource(listingFilename);
 
         if (listingFileURL == null) {
-            Preferences.debug("Unable to open " + ViewJPanelLUT.customLUTsLocation + ".\n", Preferences.DEBUG_MINOR);
+            Preferences.debug("Unable to open " + listingFilename + ".\n", Preferences.DEBUG_MINOR);
         }
 
         // use buffering this implementation reads one line at a time
@@ -2617,7 +2617,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
      * @return A LUT file buffered reader.
      */
     public static final BufferedReader openLUTFile(String lutName) throws IOException {
-        String filename = customLUTsLocation + File.separator + lutName + ".txt";
+        String filename = customLUTsLocation + "/" + lutName + ".txt";
 
         // use this long call instead of ClassLoader.getSystemResource() to work properly from a jnlp launch
         URL fileURL = Thread.currentThread().getContextClassLoader().getResource(filename);
