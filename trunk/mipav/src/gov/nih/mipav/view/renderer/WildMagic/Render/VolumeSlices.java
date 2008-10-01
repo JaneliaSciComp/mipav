@@ -219,6 +219,12 @@ public class VolumeSlices extends VolumeObject
         }
     }
 
+    public boolean GetShowBoundingBox( int i )
+    {
+        int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
+        return m_abShowBoundingBox[iIndex];
+    }
+    
     /** Turns on/off displaying the given plane.
      * @param i, the plane index (0-3) in file coordinates.
      * @param bShow, when true, the plane is displayed.

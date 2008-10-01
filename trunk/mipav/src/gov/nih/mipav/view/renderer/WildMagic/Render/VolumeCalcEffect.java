@@ -24,7 +24,7 @@ import WildMagic.LibGraphics.Effects.*;
  * @see RenderViewBase.java
  * @see VolumeImageViewer.java
  */
-public class VolumeCalcEffect extends ShaderEffect
+public class VolumeCalcEffect extends VolumeClipEffect
     implements StreamInterface
 {
 
@@ -58,6 +58,23 @@ public class VolumeCalcEffect extends ShaderEffect
         GetPShader(0).SetTextureQuantity(1);
         GetPShader(0).SetImageName(0,kTextureName);
         GetPShader(0).SetTexture(0, kTexture );
+    }
+    
+    public VolumeCalcEffect ( VolumeImage kVolumeImageA, VolumeClipEffect kClip )
+    {
+        /* Set single-pass rendering: */
+        SetPassQuantity(1);
+        SetVShader(0,new VertexShader("CropClipped"));
+        SetPShader(0,new PixelShader("CropClipped", false));
+        GetPShader(0).SetTextureQuantity(1);
+        GetPShader(0).SetImageName(0,"VolumeImageA");
+        GetPShader(0).SetTexture(0, kVolumeImageA.GetVolumeTarget() );
+        m_bIsColor = kVolumeImageA.GetImage().isColorImage();
+        this.m_afDoClip = kClip.m_afDoClip;
+        this.m_aafClipData  = kClip.m_aafClipData;
+        this.m_afClipEyeData  = kClip.m_afClipEyeData;
+        this.m_afClipEyeInvData  = kClip.m_afClipEyeInvData;
+        this.m_afClipArbData  = kClip.m_afClipArbData;
     }
 
     /** This function is called in LoadPrograms once the shader programs are

@@ -763,60 +763,6 @@ public class FlythruRender extends SurfaceRender
         }
     }
 
-    /**
-     * Save quick time movie.
-     */
-    public void saveAVIMovie() {
-        File outputFile = null;
-        File[] inputFile = new File[saveCounter];
-
-        for (int i = 0; i < saveCounter; i++) {
-            inputFile[i] = new File(directory + "captureImage" + i + "." + "jpg");
-        }
-
-        // Save to AVI file.
-        String file = directory + "flythru.avi";
-        outputFile = new File(file);
-
-        try {
-            movieMake = new MovieMaker(capScreenWidth, capScreenHeight, 3, outputFile, inputFile);
-            movieMake.makeMovie();
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
-
-        inputFile = null;
-        outputFile = null;
-
-    }
-
-    /**
-     * Save AVI movie.
-     */
-    public void saveQuickTimeMovie() {
-        MediaLocator oml;
-        Vector inputFiles = new Vector();
-        String file;
-
-        file = "file:" + directory + "flythru.mov";
-
-        if ((oml = new MediaLocator(file)) == null) {
-            System.err.println("Cannot build media locator from: " + directory);
-
-            return;
-        }
-
-        for (int i = 0; i < saveCounter; i++) {
-            inputFiles.addElement(directory + "captureImage" + i + "." + "jpg");
-        }
-
-        imageToMovie = new JpegImagesToMovie();
-        imageToMovie.doIt(capScreenWidth, capScreenHeight, 3, inputFiles, oml);
-
-        inputFiles = null;
-        oml = null;
-
-    }
 
     /**
      * Set the current traversing branch.
@@ -1317,6 +1263,23 @@ public class FlythruRender extends SurfaceRender
         return true;
     }
 
+
+    public int getCounter() {
+        return saveCounter;
+    }
+
+    public String getDirectory() {
+        return directory;
+    }
+
+    public int getHeight() {
+        return capScreenHeight;
+    }
+
+    public int getWidth() {
+        return capScreenWidth;
+    }
+    
     /**
      * Called any time a change has been made to a new branch so that the connection between the branch and its parent
      * can be rendered.
@@ -1787,5 +1750,10 @@ public class FlythruRender extends SurfaceRender
                 super.processMouseEvent(kMouseEvent);
             }
         }
+    }
+
+    public void record(boolean bOn) {
+        // TODO Auto-generated method stub
+        
     }
 }

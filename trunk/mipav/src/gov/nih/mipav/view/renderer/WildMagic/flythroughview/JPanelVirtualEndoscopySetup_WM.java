@@ -1,14 +1,10 @@
 package gov.nih.mipav.view.renderer.WildMagic.flythroughview;
 
 import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.*;
-import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.MjCorticalMesh_WM;
-import gov.nih.mipav.view.renderer.WildMagic.Render.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -390,9 +386,8 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
                 MipavUtil.displayError("Value is smaller than " + String.valueOf(minValue));
 
                 return false;
-            } else {
-                return true;
-            }
+            } 
+            return true;
         } catch (NumberFormatException error) {
             MipavUtil.displayError("Must enter numeric value");
 

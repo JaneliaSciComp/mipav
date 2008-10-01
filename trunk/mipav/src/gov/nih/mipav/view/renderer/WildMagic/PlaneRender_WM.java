@@ -249,12 +249,18 @@ public class PlaneRender_WM extends GPURenderBase
                 }
 
                 float fBlend = 1;
+                boolean[] bShowBoundingBox = new boolean[]{ true, true, true };
                 VolumeSlices kSlices = null;
                 if ( m_kDisplayList.get(i) instanceof VolumeSlices )
                 {
                     kSlices = (VolumeSlices)m_kDisplayList.get(i);
                     fBlend = kSlices.GetSliceOpacity(m_iPlaneOrientation);
                     kSlices.SetSliceOpacity(m_iPlaneOrientation, 1);
+                    for ( int j = 0; j < 3; j++ )
+                    {
+                        bShowBoundingBox[j] = kSlices.GetShowBoundingBox(j);
+                        kSlices.ShowBoundingBox(j, m_bDrawXHairs);
+                    }
                 }
 
                 VolumeSurface kSurface = null;
@@ -272,7 +278,11 @@ public class PlaneRender_WM extends GPURenderBase
 
                 if ( kSlices != null )
                 {
-                    kSlices.SetSliceOpacity(m_iPlaneOrientation, fBlend);
+                    kSlices.SetSliceOpacity(m_iPlaneOrientation, fBlend);     
+                    for ( int j = 0; j < 3; j++ )
+                    {
+                        kSlices.ShowBoundingBox(j, bShowBoundingBox[j]);
+                    }
                 }
 
                 if ( kSurface != null )

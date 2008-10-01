@@ -1,12 +1,11 @@
 package gov.nih.mipav.view.renderer.WildMagic.flythroughview;
 
 import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.SceneGraph.*;
 import java.util.*;
 
 
 /**
- * Container which stores annotations which include the following: - point position and normal - branch and location
+ * Container which stores annotations which include the following: - point position and normal - camera location, view up and view direction, branch and location
  * along branch when point annotated - geometry and appearance - description.
  */
 public class FlyPathAnnotateList_WM {

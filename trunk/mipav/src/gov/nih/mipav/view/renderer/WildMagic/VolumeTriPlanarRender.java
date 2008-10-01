@@ -9,6 +9,7 @@ import java.awt.event.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.Render.*;
 
 import WildMagic.LibApplications.OpenGLApplication.*;
@@ -64,6 +65,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     private boolean m_bRight = true;    
 
     private boolean m_bPickCorrespondence = false;
+    private boolean m_bCrop = false;
 
 
     public VolumeTriPlanarRender( final String acWindowTitle, int iXPosition,
@@ -312,6 +314,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         ResetShaderParamsWindow();
     }
 
+    public void cropClipVolume()
+    {
+        m_bCrop = true;
+        GetCanvas().display();
+    }
+    
     /**
      * Display the volume in DDR mode.
      */
@@ -385,7 +393,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kVolumeRayCast.SetDisplay(false);   
             m_kSlices.SetDisplay(true);   
             m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-            VolumeImageViewer.main(m_kVolumeImageA);
+            VolumeImageViewer.main(m_kVolumeImageA, null);
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             CMPMode();
         }
@@ -393,6 +401,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_bSurfaceAdded = false;
             updateLighting( m_akLights );
+        }
+        if ( m_bCrop )
+        {
+            m_bCrop = false;
+            m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+            VolumeImageViewer.main(m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect());
+            m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         }
     }
 
@@ -1191,6 +1206,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             return false;
         }
         return m_kSculptor.save(options, filterType);
+    }
+    
+    public void saveImageFromTexture()
+    {
+        ModelImage kImage = m_kVolumeImageA.CreateImageFromTexture();
+        kImage.saveImage(m_kVolumeImageA.GetImage().getImageDirectory(), kImage.getImageName(), kImage.getType(), true);
     }
 
 

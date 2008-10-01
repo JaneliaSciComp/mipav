@@ -427,11 +427,11 @@ implements MouseListener, ItemListener, ChangeListener {
             clipBox.disable6Planes();
             insertTab("Clip", clipPanel);
         } else if (command.equals("CropClipVolume")) {
-//             surRender.cropClipVolume();
+            raycastRenderWM.cropClipVolume();
         } else if (command.equals("UndoCropVolume")) {
-//             surRender.undoCropVolume();
+            updateData();
         } else if (command.equals("SaveCropVolume")) {
-//             surRender.saveCropVolume();
+            raycastRenderWM.saveImageFromTexture();
         } else if (command.equals("Slices")) {
             sliceGUI.getMainPanel().setVisible(true);
             insertTab("Slices", slicePanel);
@@ -2035,15 +2035,12 @@ implements MouseListener, ItemListener, ChangeListener {
     /**
      * Causes the PlaneRender objects to update the texture maps when the underlying ModelImage changes.
      */
-    public void updateSliceData() {
-
-//         for (int iPlane = 0; iPlane < 3; iPlane++) {
-//             m_akPlaneRender[iPlane].updateData();
-//         }
+    public void updateData() {
         if ( raycastRenderWM != null )
         {
             raycastRenderWM.updateData(imageA);
         }
+        setModified();
     }
 
     /**

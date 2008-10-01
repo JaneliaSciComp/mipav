@@ -7,8 +7,10 @@ import gov.nih.mipav.view.renderer.*;
 import java.awt.*;
 import java.awt.event.*;
 
+import java.io.File;
 import java.util.*;
 
+import javax.media.MediaLocator;
 import javax.swing.*;
 import javax.swing.border.*;
 
@@ -224,9 +226,9 @@ public class JPanelFlythruMove extends JPanelRendererBase implements ActionListe
         String command = event.getActionCommand();
 
         if (command.equals("QuickTime")) {
-            parentScene.saveQuickTimeMovie();
+            saveQuickTimeMovie();
         } else if (command.equals("AVI")) {
-            parentScene.saveAVIMovie();
+            saveAVIMovie();
         } else if (command.equals("Home")) {
             parentScene.makeMove("home");
         } else if (command.equals("End")) {
@@ -252,6 +254,7 @@ public class JPanelFlythruMove extends JPanelRendererBase implements ActionListe
             if (!isAVIRecording()) {
                 changedMode = true;
                 first = true;
+                parentScene.record(true);
             }
 
             mode = AVI_MODE;
@@ -259,6 +262,7 @@ public class JPanelFlythruMove extends JPanelRendererBase implements ActionListe
 
             if (isAVIRecording()) {
                 mode = STOP_MODE;
+                parentScene.record(false);
             }
         } else if (command.equals("AVIplay")) {
             mode = PLAY_MODE;
@@ -1068,6 +1072,62 @@ public class JPanelFlythruMove extends JPanelRendererBase implements ActionListe
                 ((LeftButton) source).setIcon(MipavUtil.getIcon("leftarrow.gif"));
             }
         }
+    }
+    
+
+    /**
+     * Save quick time movie.
+     */
+    public void saveAVIMovie() {
+        File outputFile = null;
+        File[] inputFile = new File[parentScene.getCounter()];
+
+        for (int i = 0; i < parentScene.getCounter(); i++) {
+            inputFile[i] = new File(parentScene.getDirectory() + "captureImage" + i + "." + "jpg");
+        }
+
+        // Save to AVI file.
+        String file = parentScene.getDirectory() + "flythru.avi";
+        outputFile = new File(file);
+
+        try {
+            MovieMaker movieMake = new MovieMaker(parentScene.getWidth(), parentScene.getHeight(), 3, outputFile, inputFile);
+            movieMake.makeMovie();
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+
+        inputFile = null;
+        outputFile = null;
+
+    }
+
+    /**
+     * Save AVI movie.
+     */
+    public void saveQuickTimeMovie() {
+        MediaLocator oml;
+        Vector inputFiles = new Vector();
+        String file;
+
+        file = "file:" + parentScene.getDirectory() + "flythru.mov";
+
+        if ((oml = new MediaLocator(file)) == null) {
+            System.err.println("Cannot build media locator from: " + parentScene.getDirectory());
+
+            return;
+        }
+
+        for (int i = 0; i < parentScene.getCounter(); i++) {
+            inputFiles.addElement(parentScene.getDirectory() + "captureImage" + i + "." + "jpg");
+        }
+
+        JpegImagesToMovie imageToMovie = new JpegImagesToMovie();
+        imageToMovie.doIt(parentScene.getWidth(), parentScene.getHeight(), 3, inputFiles, oml);
+
+        inputFiles = null;
+        oml = null;
+
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
