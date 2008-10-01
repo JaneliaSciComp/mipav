@@ -184,7 +184,6 @@ public class VolumeImage
         kImage.calcMinMax();
         float fImageMax = (float)kImage.getMax();
         float fImageMin = (float)kImage.getMin();
-        System.err.println( "UpdateData " + fImageMax + " " + fImageMin );
 
         if ( kImage.isColorImage() )
         {
@@ -658,7 +657,6 @@ public class VolumeImage
         m_kImageA.calcMinMax();
         float fImageMax = (float)m_kImageA.getMax();
         float fImageMin = (float)m_kImageA.getMin();
-        System.err.println( fImageMax + " " + fImageMin );
         
         ModelImage kResult = null;
         if ( m_kImageA.isColorImage() )
