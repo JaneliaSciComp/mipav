@@ -11,6 +11,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
+import java.util.jar.*;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -1074,12 +1075,35 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
         LUTToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         LUTToolBar.setFloatable(false);
 
+        Vector<String> lutStrings = getCustomLUTList();
+
+        JComboBox lutList = new JComboBox(lutStrings);
+        lutList.setBackground(Color.white);
+        lutList.setSelectedIndex(0);
+        lutList.addActionListener(listener);
+
+        LUTToolBar.add(lutList);
+
+        return LUTToolBar;
+    }
+
+    private static final Vector<String> getCustomLUTList() {
         // use this long call instead of ClassLoader.getSystemResource() to work properly from a jnlp launch
         URL dirURL = Thread.currentThread().getContextClassLoader().getResource(ViewJPanelLUT.customLUTsLocation);
 
         if (dirURL == null) {
             Preferences.debug("Unable to open " + ViewJPanelLUT.customLUTsLocation + ".\n", Preferences.DEBUG_MINOR);
-            return null;
+
+            // TODO -- running from jar?
+            try {
+                JarFile jar = new JarFile("mipav.jar");
+                Enumeration<JarEntry> jarEntries = jar.entries();
+                while (jarEntries.hasMoreElements()) {
+                    System.out.println(jarEntries.nextElement());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         // use buffering this implementation reads one line at a time
@@ -1100,14 +1124,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
             lutStrings.set(i, lutStrings.get(i).replaceAll(".txt$", ""));
         }
 
-        JComboBox lutList = new JComboBox(lutStrings);
-        lutList.setBackground(Color.white);
-        lutList.setSelectedIndex(0);
-        lutList.addActionListener(listener);
-
-        LUTToolBar.add(lutList);
-
-        return LUTToolBar;
+        return lutStrings;
     }
 
     /**
