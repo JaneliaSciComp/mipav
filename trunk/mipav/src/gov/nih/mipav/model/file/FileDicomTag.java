@@ -142,7 +142,10 @@ public class FileDicomTag extends ModelSerialCloneable {
      */
     public void finalize() {
         value = null;
-
+        //if(tagInfo !0= null) {
+        	//tagInfo.finalize();
+        	//tagInfo = null;
+        //}
         try {
             super.finalize();
         } catch (Throwable er) {

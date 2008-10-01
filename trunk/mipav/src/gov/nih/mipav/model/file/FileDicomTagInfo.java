@@ -325,4 +325,15 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
 
         return str;
     }
+    
+    
+    public void finalize() {
+    	
+    	key =null;
+    	keyword = null;
+    	name = null;
+    	valueRepresentation = null;
+    	version = null;
+    	
+    }
 }
