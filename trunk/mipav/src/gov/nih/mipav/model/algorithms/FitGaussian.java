@@ -77,7 +77,7 @@ public class FitGaussian extends NLEngine {
         this.xDataOrg = xData;
         this.yDataOrg = yData;
         
-        yDataOrg = applyKernel();
+        //yDataOrg = applyKernel();
         
         estimateInitial();
         
@@ -102,7 +102,7 @@ public class FitGaussian extends NLEngine {
             yDataOrg[i] = yData[i];
         }
         
-        yDataOrg = applyKernel();
+        //yDataOrg = applyKernel();
         
         estimateInitial();
 
@@ -346,10 +346,9 @@ public class FitGaussian extends NLEngine {
         
         messageGraph.append("amp: " + amp + "\n"); 
         messageGraph.append("Xo: " + xInit + "\n");
-        messageGraph.append("sigma " + sigma + "\n\n");
+        messageGraph.append("sigma: " + sigma + "\n\n");
         
         if (messageGraph.isVisible() == false) {
-            System.out.println("Had to set visible");
         	messageGraph.setLocation(100, 50);
             messageGraph.setSize(500, 300);
             messageGraph.setVisible(true);
@@ -394,7 +393,7 @@ public class FitGaussian extends NLEngine {
     /**
      * Partial derivative of gaussian with respect to x.
      */
-    private double dgdx(double x) {
+    private double dgdxInit(double x) {
     	double exp = -Math.pow(x-xInit, 2) / (2 * Math.pow(sigma, 2));
     	
     	double coeff = (amp * (x-xInit))/(Math.pow(sigma, 2));
@@ -424,7 +423,7 @@ public class FitGaussian extends NLEngine {
     	Matrix jacobian = new Matrix(dataEnd - dataStart, 3);
     	for(int i=dataStart; i<dataEnd; i++) {
     		jacobian.set(i-dataStart, 0, dgdA(xDataOrg[i]));
-    		jacobian.set(i-dataStart, 1, dgdx(xDataOrg[i]));
+    		jacobian.set(i-dataStart, 1, dgdxInit(xDataOrg[i]));
     		jacobian.set(i-dataStart, 2, dgdsigma(xDataOrg[i]));
     	}
     	
