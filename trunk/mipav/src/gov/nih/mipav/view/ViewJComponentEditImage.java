@@ -16,9 +16,11 @@ import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.*;
 import java.io.*;
+import java.net.URL;
 import java.text.*;
 import java.util.*;
 
+import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -811,7 +813,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param intensityLockVector Vector containing Integers values which are indexed to the locked intensity values in
      *            the image
      */
-    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity, Vector<Integer> intensityLockVector, boolean commitMasksAs4D) {
+    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity,
+            Vector<Integer> intensityLockVector, boolean commitMasksAs4D) {
         commitMask(imagesDone, clearPaintMask, polarity, intensityLockVector, true, commitMasksAs4D);
     }
 
@@ -878,49 +881,45 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice, rgbString, intensityLockVector);
             } else {
                 if (imageA.getNDims() == 4) {
-                	if(commitMasksAs4D) {
-                		for(int i=0;i<imageA.getExtents()[3];i++) {
-                			maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
+                    if (commitMasksAs4D) {
+                        for (int i = 0; i < imageA.getExtents()[3]; i++) {
+                            maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
                             maskAlgo.setRunningInSeparateThread(false);
                             maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, i, intensityLockVector);
-                		}
-                	}else {
-                		maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
+                        }
+                    } else {
+                        maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
                         maskAlgo.setRunningInSeparateThread(false);
                         maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
-                	}
-                }else {
-                	maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
+                    }
+                } else {
+                    maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
                     maskAlgo.setRunningInSeparateThread(false);
                     maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
                 }
 
-              
-                
-                    
+                if (imageA.getType() == ModelStorageBase.UBYTE) {
+                    min = 0;
+                    max = 255;
+                } else if (imageA.getType() == ModelStorageBase.BYTE) {
+                    min = -128;
+                    max = 127;
+                } else {
+                    min = (float) imageA.getMin();
+                    max = (float) imageA.getMax();
+                }
 
-                    if (imageA.getType() == ModelStorageBase.UBYTE) {
-                        min = 0;
-                        max = 255;
-                    } else if (imageA.getType() == ModelStorageBase.BYTE) {
-                        min = -128;
-                        max = 127;
-                    } else {
-                        min = (float) imageA.getMin();
-                        max = (float) imageA.getMax();
+                float imgMin = (float) imageA.getMin();
+                float imgMax = (float) imageA.getMax();
+
+                if ( (intensityDropper < imgMinOrig) || (intensityDropper > imgMaxOrig)) {
+                    LUTa.resetTransferLine(min, imgMin, max, imgMax);
+
+                    if (imageA.getHistoLUTFrame() != null) {
+                        imageA.getHistoLUTFrame().update();
                     }
+                }
 
-                    float imgMin = (float) imageA.getMin();
-                    float imgMax = (float) imageA.getMax();
-
-                    if ( (intensityDropper < imgMinOrig) || (intensityDropper > imgMaxOrig)) {
-                        LUTa.resetTransferLine(min, imgMin, max, imgMax);
-
-                        if (imageA.getHistoLUTFrame() != null) {
-                            imageA.getHistoLUTFrame().update();
-                        }
-                    }
-                
             }
         }
 
@@ -934,24 +933,22 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice, rgbString, intensityLockVector);
             } else {
                 if (imageA.getNDims() == 4) {
-                	if(commitMasksAs4D) {
-                		for(int i=0;i<imageA.getExtents()[3];i++) {
-                			maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
+                    if (commitMasksAs4D) {
+                        for (int i = 0; i < imageA.getExtents()[3]; i++) {
+                            maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
                             maskAlgo.setRunningInSeparateThread(false);
                             maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, i, intensityLockVector);
-                		}
-                	}else {
-                		maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
+                        }
+                    } else {
+                        maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
                         maskAlgo.setRunningInSeparateThread(false);
                         maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
-                	}
-                }else {
-                	maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
+                    }
+                } else {
+                    maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
                     maskAlgo.setRunningInSeparateThread(false);
                     maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
                 }
-
-                
 
                 if (imageB.getType() == ModelStorageBase.UBYTE) {
                     min = 0;
@@ -2303,91 +2300,30 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     } // end loadLUTFrom()
 
     /**
-     * Loads built-in (.gif) or custom (.png) paint brushes based on the last-used paint brush in preferences.
+     * Reads in an image icon from either the set of mipav icons or the user's $HOME/mipav/brushes/ directory.
      * 
-     * @param paintName the name of the brush to load
+     * @param imageName The
+     * @return
+     * @throws IOException
      */
-    public void loadPaintBrush(String paintName) {
-        String fullPath = null;
+    private BufferedImage loadImageFile(String imageName) throws IOException {
+        URL imageURL = null;
 
-        if (paintName == null) {
-            fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
-        } else {
+        if (imageName == null) {
+            imageName = "square 8x8.gif";
+        }
 
-            try {
-                fullPath = PlaceHolder.class.getResource(paintName).getPath();
-            } catch (Exception e) {
-                fullPath = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes"
-                        + File.separator + paintName;
+        imageURL = PlaceHolder.class.getResource(imageName);
 
-                if ( ! (new File(fullPath)).exists()) {
-                    fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
-                }
-
+        if (imageURL == null) {
+            File imageFile = new File(System.getProperty("user.home") + File.separator + "mipav" + File.separator
+                    + "brushes" + File.separator + imageName);
+            if (imageFile.exists() && imageFile.canRead()) {
+                imageURL = imageFile.toURI().toURL();
             }
         }
 
-        // fix the URL nonsense with spaces
-        fullPath = fullPath.replaceAll("%20", " ");
-
-        File paintFile = new File(fullPath);
-        FileIO fileIO = new FileIO();
-        fileIO.setIsPaintBrush(true);
-
-        // read in the .gif or .png as a model image to create the BitSet
-        ModelImage brushImage = fileIO.readImage(paintFile.getPath());
-
-        if (brushImage == null) {
-            return;
-        }
-
-        int[] brushExtents = brushImage.getExtents();
-
-        // create the bitset and the brush dimensions
-        paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
-        paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
-
-        int counter = 0;
-
-        int[] buffer = new int[brushExtents[0] * brushExtents[1] * 4];
-
-        try {
-            brushImage.exportData(0, buffer.length, buffer);
-        } catch (Exception e) {
-            MipavUtil.displayError("Open brush failed.");
-            brushImage.disposeLocal();
-
-            return;
-        }
-
-        int length = buffer.length;
-
-        if (paintImage != null) {
-            paintImage.flush();
-            paintImage = null;
-        }
-
-        // create a buffered image that will be drawn in place of a cursor (with red transparent pixels)
-        paintImage = new BufferedImage(paintBrushDim.width, paintBrushDim.height, BufferedImage.TYPE_INT_ARGB);
-
-        // set or clear the bitset based on the black pixels (black == on)
-        for (int i = 0; i < length; i += 4, counter++) {
-
-            if (buffer[i + 1] == 0) {
-                paintBrush.set(counter);
-            } else {
-                paintBrush.clear(counter);
-            }
-        }
-
-        updatePaintBrushCursor();
-
-        // remove the image created as it is no longer needed
-        brushImage.disposeLocal();
-
-        if (buffer != null) {
-            buffer = null;
-        }
+        return ImageIO.read(imageURL);
     }
 
     /**
@@ -2402,87 +2338,57 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             quickSwitchBrush();
         }
 
-        String fullPath = null;
+        BufferedImage tempImage = null;
+        try {
+            tempImage = loadImageFile(paintName);
+        } catch (IOException e) {
+            MipavUtil.displayError("Could not load paint brush image: " + paintName);
+            e.printStackTrace();
+            return;
+        }
 
-        if (paintName == null) {
-            fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
-        } else {
+        if (tempImage == null) {
+            MipavUtil.displayError("Could not load paint brush image: " + paintName);
+            return;
+        }
 
-            try {
-                fullPath = PlaceHolder.class.getResource(paintName).getPath();
-            } catch (Exception e) {
-                fullPath = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes"
-                        + File.separator + paintName;
+        // create the bitset and the brush dimensions
+        paintBrushDim = new Dimension(tempImage.getWidth(), tempImage.getHeight());
 
-                if ( ! (new File(fullPath)).exists()) {
-                    fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
+        paintBrush = new BitSet(paintBrushDim.width * paintBrushDim.height);
+
+        int numBands = tempImage.getData().getNumBands();
+        int[] pixel = new int[numBands];
+        for (int y = 0, pix = 0; y < paintBrushDim.height; y++) {
+            for (int x = 0; x < paintBrushDim.width; x++, pix++) {
+                // calling getPixel is required to get this to work for both .png and .gif images.
+                tempImage.getData().getPixel(x, y, pixel);
+
+                boolean doSetPixel = true;
+                // if any of the pixel bands has a non-zero value, then the pixel shouldn't be used for painting
+                for (int b = 0; b < numBands; b++) {
+                    if (pixel[b] != 0) {
+                        doSetPixel = false;
+                    }
                 }
 
+                if (doSetPixel) {
+                    paintBrush.set(pix);
+                }
             }
         }
 
-        // fix the URL nonsense with spaces
-        fullPath = fullPath.replaceAll("%20", " ");
-
-        File paintFile = new File(fullPath);
-        FileIO fileIO = new FileIO();
-        fileIO.setIsPaintBrush(true);
-
-        // read in the .gif or .png as a model image to create the BitSet
-        ModelImage brushImage = fileIO.readImage(paintFile.getPath());
-
-        if (brushImage == null) {
-            return;
-        }
-
-        int[] brushExtents = brushImage.getExtents();
-
-        // create the bitset and the brush dimensions
-        paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
-        paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
-
-        int counter = 0;
-
-        int[] buffer = new int[brushExtents[0] * brushExtents[1] * 4];
-
-        try {
-            brushImage.exportData(0, buffer.length, buffer);
-        } catch (Exception e) {
-            MipavUtil.displayError("Open brush failed.");
-            brushImage.disposeLocal();
-
-            return;
-        }
-
-        int length = buffer.length;
+        paintBuffer = null;
+        tempImage.flush();
 
         if (paintImage != null) {
             paintImage.flush();
             paintImage = null;
         }
-
         // create a buffered image that will be drawn in place of a cursor (with red transparent pixels)
         paintImage = new BufferedImage(paintBrushDim.width, paintBrushDim.height, BufferedImage.TYPE_INT_ARGB);
 
-        // set or clear the bitset based on the black pixels (black == on)
-        for (int i = 0; i < length; i += 4, counter++) {
-
-            if (buffer[i + 1] == 0) {
-                paintBrush.set(counter);
-            } else {
-                paintBrush.clear(counter);
-            }
-        }
-
         updatePaintBrushCursor();
-
-        // remove the image created as it is no longer needed
-        brushImage.disposeLocal();
-
-        if (buffer != null) {
-            buffer = null;
-        }
-
     }
 
     // ************************************************************************
