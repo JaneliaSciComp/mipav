@@ -64,6 +64,9 @@ public class VolumeRayCast extends VolumeObject
         {
             return;
         }
+        m_iWidthSave = kRenderer.GetWidth();
+        m_iHeightSave = kRenderer.GetHeight();
+        kRenderer.Resize( m_spkSceneImage.GetBound(0), m_spkSceneImage.GetBound(1));
         m_kScene.UpdateGS();
         if ( !m_bDisplaySecond )
         {
@@ -108,8 +111,9 @@ public class VolumeRayCast extends VolumeObject
 
     /** Turns off rendering to the PBuffer. Called after all objects displayed
      * with the ray-cast volume have been pre-rendered. */
-    public void PostPreRender( )
+    public void PostPreRender( Renderer kRenderer )
     {
+        kRenderer.Resize(m_iWidthSave,m_iHeightSave);
         // Disable the PBuffer
         m_pkPBuffer.Disable();
     }
@@ -126,15 +130,15 @@ public class VolumeRayCast extends VolumeObject
             return;
         }
         // Second rendering pass:
-        // Draw the proxy grometry with the volume ray-tracing shader:
+        // Draw the proxy geometry with the volume ray-tracing shader:
         m_kMesh.DetachAllEffects();
         m_kMesh.AttachEffect( m_kVolumeShaderEffect );
         kCuller.ComputeVisibleSet(m_kScene);
         kRenderer.DrawScene(kCuller.GetVisibleSet());
 
-//         // Draw screne polygon:
-//         kRenderer.SetCamera(m_spkScreenCamera);
-//         kRenderer.Draw(m_kScenePolygon);
+         // Draw scene polygon:
+         //kRenderer.SetCamera(m_spkScreenCamera);
+         //kRenderer.Draw(m_spkScenePolygon);
     }
 
     /** Sets displaying the second pass. For debugging. Rendering the first
@@ -198,6 +202,7 @@ public class VolumeRayCast extends VolumeObject
         }
         super.dispose();
     }
+    
     
     /**
      * Called by the init() function. Creates and initialized the scene-graph.
@@ -502,33 +507,33 @@ public class VolumeRayCast extends VolumeObject
     /** Sets axis-aligned clipping for the VolumeShaderEffect.
      * @param afClip, the clipping parameters for axis-aligned clipping.
      */
-    public void SetClip( int iWhich, float data)
+    public void SetClip( int iWhich, float data, boolean bEnable)
     {
-        m_kVolumeShaderEffect.SetClip(iWhich, data);
+        m_kVolumeShaderEffect.SetClip(iWhich, data, bEnable);
     }
 
     /** Sets eye clipping for the VolumeShaderEffect.
      * @param afEquation, the eye clipping equation.
      */
-    public void SetClipEye( float[] afEquation )
+    public void SetClipEye( float[] afEquation, boolean bEnable )
     {
-        m_kVolumeShaderEffect.SetClipEye(afEquation);
+        m_kVolumeShaderEffect.SetClipEye(afEquation, bEnable);
     }
 
     /** Sets inverse-eye clipping for the VolumeShaderEffect.
      * @param afEquation, the inverse-eye clipping equation.
      */
-    public void SetClipEyeInv( float[] afEquation )
+    public void SetClipEyeInv( float[] afEquation, boolean bEnable )
     {
-        m_kVolumeShaderEffect.SetClipEyeInv(afEquation);
+        m_kVolumeShaderEffect.SetClipEyeInv(afEquation, bEnable);
     }
 
     /** Sets arbitrary clipping for the VolumeShaderEffect.
      * @param afEquation, the arbitrary-clip plane equation.
      */
-    public void SetClipArb( float[] afEquation )
+    public void SetClipArb( float[] afEquation, boolean bEnable )
     {
-        m_kVolumeShaderEffect.SetClipArb(afEquation);
+        m_kVolumeShaderEffect.SetClipArb(afEquation, bEnable);
     }
 
     /** Reloads the VolumeShaderEffect current shader program.
@@ -716,4 +721,5 @@ public class VolumeRayCast extends VolumeObject
     private OpenGLFrameBuffer m_pkPBuffer;
     /** For debugging, setting this to false causes only the proxy-geometry to be displayed. */
     private boolean m_bDisplaySecond = true;
+    private int m_iWidthSave, m_iHeightSave;
 }

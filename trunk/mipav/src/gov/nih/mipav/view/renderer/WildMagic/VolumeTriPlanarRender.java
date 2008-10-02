@@ -31,6 +31,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /** Arbitrary clip plane equation: */
     private Vector4f m_kArbitraryClip;
+    /** Enable Arbitrary clip plane: */
+    private boolean m_bArbClipOn = false;
 
     /** Window with the shader paramter interface: */
     private ApplicationGUI m_kShaderParamsWindow = null;
@@ -579,7 +581,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         if ( !bEnable )
         {
-            setArbitraryClipPlane((float)(m_kImageA.getExtents()[0] -1));
+            setArbitraryClipPlane((float)(m_kImageA.getExtents()[0] -1), bEnable);
         }
     }
 
@@ -610,13 +612,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         data[0] = fValue;
         if ( m_kVolumeRayCast != null )
         {
-            m_kVolumeRayCast.SetClip(iWhich,fValue);
+            m_kVolumeRayCast.SetClip(iWhich,fValue,bEnable);
         }
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
             if ( m_kDisplayList.get(i) instanceof VolumeSurface )
             {
-                ((VolumeSurface)m_kDisplayList.get(i)).SetClip(iWhich,fValue);
+                ((VolumeSurface)m_kDisplayList.get(i)).SetClip(iWhich,fValue,bEnable);
             }
         }
     }
@@ -636,7 +638,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         if ( !bEnable )
         {
-            setEyeClipPlane(0, bDisplay);
+            setEyeClipPlane(0, bDisplay, bEnable);
         }
     }
 
@@ -656,7 +658,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         if ( !bEnable )
         {
-            setEyeInvClipPlane(m_kImageA.getExtents()[2] - 1, bDisplay);
+            setEyeInvClipPlane(m_kImageA.getExtents()[2] - 1, bDisplay, bEnable);
         }
     }
 
@@ -1043,7 +1045,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 InitializeObjectMotion(m_kVolumeClip.ArbRotate());
                 super.mouseDragged(e);
                 InitializeObjectMotion(m_spkScene);
-                doClip();
+                doClip(m_bArbClipOn);
             }
             else if ( e.isControlDown() && m_bPaintEnabled )
             {
@@ -1246,11 +1248,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Enables the arbitrary clip plane position.
      * @param f4 clip position (same value as aSlice in JPanelClip)
      */
-    public void setArbitraryClipPlane( float f4 )
+    public void setArbitraryClipPlane( float f4, boolean bEnable )
     {
         f4 /= (m_kImageA.getExtents()[0] -1);     
         m_kArbitraryClip = new Vector4f(1,0,0,f4);
-        doClip();
+        doClip(bEnable);
     }
 
     public void setBackface(String kSurfaceName, boolean bOn)
@@ -1332,7 +1334,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * @param fValue, the new position of the clip plane (the same value as
      * the slider in JPanelClip).
      */
-    public void setClipPlane( int iWhich, float fValue )
+    public void setClipPlane( int iWhich, float fValue, boolean bEnable )
     {
         if ( iWhich < 2 )
         {
@@ -1355,13 +1357,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         data[0] = fValue;
         if ( m_kVolumeRayCast != null )
         {
-            m_kVolumeRayCast.SetClip(iWhich, fValue);
+            m_kVolumeRayCast.SetClip(iWhich, fValue, bEnable);
         }  
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
             if ( m_kDisplayList.get(i) instanceof VolumeSurface )
             {
-                ((VolumeSurface)m_kDisplayList.get(i)).SetClip(iWhich,fValue);
+                ((VolumeSurface)m_kDisplayList.get(i)).SetClip(iWhich,fValue,bEnable);
             }
         }
     }
@@ -1499,7 +1501,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * @param f4 clip position (same value as sSlice in JPanelClip)
      * @param bDisplay on/off.
      */
-    public void setEyeClipPlane( float f4, boolean bDisplay )
+    public void setEyeClipPlane( float f4, boolean bDisplay, boolean bEnable )
     {
         f4 /= (m_kImageA.getExtents()[2] -1);
         float[] afEquation = new float[]{0,0,1,f4};
@@ -1512,13 +1514,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         if ( m_kVolumeRayCast != null )
         {
-            m_kVolumeRayCast.SetClipEye(afEquation);
+            m_kVolumeRayCast.SetClipEye(afEquation, bEnable);
         }
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
             if ( m_kDisplayList.get(i) instanceof VolumeSurface )
             {
-                ((VolumeSurface)m_kDisplayList.get(i)).SetClipEye(afEquation);
+                ((VolumeSurface)m_kDisplayList.get(i)).SetClipEye(afEquation, bEnable);
             }
         }
     }
@@ -1543,7 +1545,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * @param f4 clip position (same value as sSliceInv in JPanelClip)
      * @param bDisplay on/off.
      */
-    public void setEyeInvClipPlane( float f4, boolean bDisplay )
+    public void setEyeInvClipPlane( float f4, boolean bDisplay, boolean bEnable )
     {
         f4 /= (m_kImageA.getExtents()[2] -1);
         float[] afEquation = new float[]{0,0,1,f4};
@@ -1556,13 +1558,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         if ( m_kVolumeRayCast != null )
         {
-            m_kVolumeRayCast.SetClipEyeInv(afEquation);
+            m_kVolumeRayCast.SetClipEyeInv(afEquation, bEnable);
         }
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
             if ( m_kDisplayList.get(i) instanceof VolumeSurface )
             {
-                ((VolumeSurface)m_kDisplayList.get(i)).SetClipEyeInv(afEquation);
+                ((VolumeSurface)m_kDisplayList.get(i)).SetClipEyeInv(afEquation, bEnable);
             }
         }
     }
@@ -2028,8 +2030,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /**
      * Calculates the rotation for the arbitrary clip plane.
      */
-    private void doClip( ) 
+    private void doClip( boolean bEnable ) 
     {           
+        m_bArbClipOn = bEnable;
         if ( m_kArbitraryClip == null )
         {
             m_kArbitraryClip = new Vector4f(1,0,0,0);            
@@ -2062,13 +2065,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         // Update shader with rotated normal and distance:
         if ( m_kVolumeRayCast != null )
         {
-            m_kVolumeRayCast.SetClipArb(m_afArbEquation);
+            m_kVolumeRayCast.SetClipArb(m_afArbEquation, bEnable);
         }
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
             if ( m_kDisplayList.get(i) instanceof VolumeSurface )
             {
-                ((VolumeSurface)m_kDisplayList.get(i)).SetClipArb(m_afArbEquation);
+                ((VolumeSurface)m_kDisplayList.get(i)).SetClipArb(m_afArbEquation, bEnable);
             }
         }
     }
@@ -2149,7 +2152,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             {
                 m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller );
             }
-            m_kVolumeRayCast.PostPreRender();
+            m_kVolumeRayCast.PostPreRender(m_pkRenderer);
 
             m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
             m_pkRenderer.ClearBuffers();

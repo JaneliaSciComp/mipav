@@ -205,9 +205,9 @@ public class VolumeSurface extends VolumeObject
     /** Sets axis-aligned clipping for the VolumeShaderEffect.
      * @param afClip, the clipping parameters for axis-aligned clipping.
      */
-    public void SetClip( int iWhich, float data)
+    public void SetClip( int iWhich, float data, boolean bEnable)
     {
-        m_kLightShader.SetClip(iWhich, data);
+        m_kLightShader.SetClip(iWhich, data, bEnable);
     }
     
     public void SetSecondaryClip( int iWhich, float data)
@@ -223,25 +223,25 @@ public class VolumeSurface extends VolumeObject
     /** Sets eye clipping for the VolumeShaderEffect.
      * @param afEquation, the eye clipping equation.
      */
-    public void SetClipEye( float[] afEquation )
+    public void SetClipEye( float[] afEquation, boolean bEnable )
     {
-        m_kLightShader.SetClipEye(afEquation);
+        m_kLightShader.SetClipEye(afEquation, bEnable);
     }
 
     /** Sets inverse-eye clipping for the VolumeShaderEffect.
      * @param afEquation, the inverse-eye clipping equation.
      */
-    public void SetClipEyeInv( float[] afEquation )
+    public void SetClipEyeInv( float[] afEquation, boolean bEnable )
     {
-        m_kLightShader.SetClipEyeInv(afEquation);
+        m_kLightShader.SetClipEyeInv(afEquation, bEnable);
     }
 
     /** Sets arbitrary clipping for the VolumeShaderEffect.
      * @param afEquation, the arbitrary-clip plane equation.
      */
-    public void SetClipArb( float[] afEquation )
+    public void SetClipArb( float[] afEquation, boolean bEnable )
     {
-        m_kLightShader.SetClipArb(afEquation);
+        m_kLightShader.SetClipArb(afEquation, bEnable);
     }
 
     public MaterialState GetMaterial()

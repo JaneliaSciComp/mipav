@@ -54,30 +54,32 @@ public abstract class VolumeClipEffect extends ShaderEffect
         {
             if ( m_aafClipData[i] != null )
             {
-                SetClip( i, m_aafClipData[i][0] );
+                SetClip( i, m_aafClipData[i][0], m_afClipAll[i] );
             }
         }
         if ( m_afClipEyeData != null )
         {
-            SetClipEye(m_afClipEyeData);
+            SetClipEye(m_afClipEyeData, m_afClipAll[6]);
         }
         if ( m_afClipEyeInvData != null )
         {
-            SetClipEyeInv(m_afClipEyeInvData);
+            SetClipEyeInv(m_afClipEyeInvData, m_afClipAll[7]);
         }
         if ( m_afClipArbData != null )
         {
-            SetClipArb(m_afClipArbData);
+            SetClipArb(m_afClipArbData, m_afClipAll[8]);
         }
     }
+
 
     /**
      * Enable and set the axis-aligned clip plane.
      * @param iWhich, one of 6 clip-planes to set.
      * @param data, the distance to the clip-plane.
      */
-    public void SetClip(int iWhich, float data)
+    public void SetClip(int iWhich, float data, boolean bEnable)
     {
+        m_afClipAll[iWhich] = bEnable;
         m_aafClipData[iWhich][0] = data;
         EnableClip();
         Program pkProgram = GetPProgram(0);
@@ -107,7 +109,12 @@ public abstract class VolumeClipEffect extends ShaderEffect
      */
     private void EnableClip()
     {
-        m_afDoClip[0] = 1;
+        boolean bEnable = false;
+        for ( int i = 0; i < m_afClipAll.length; i++ )
+        {
+            bEnable |= m_afClipAll[i];
+        }
+        m_afDoClip[0] = (bEnable) ? 1 : 0;
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("DoClip") != null ) 
         {
@@ -131,8 +138,9 @@ public abstract class VolumeClipEffect extends ShaderEffect
      * Enable and set the eye clip plane.
      * @param afEquation, the clip-plane equation.
      */
-    public void SetClipEye(float[] afEquation)
+    public void SetClipEye(float[] afEquation, boolean bEnable)
     {
+        m_afClipAll[6] = bEnable;
         m_afClipEyeData = afEquation;
         EnableClip();
         Program pkProgram = GetPProgram(0);
@@ -146,8 +154,9 @@ public abstract class VolumeClipEffect extends ShaderEffect
      * Enable and set the inverse-eye clip plane.
      * @param afEquation, the clip-plane equation.
      */
-    public void SetClipEyeInv(float[] afEquation)
+    public void SetClipEyeInv(float[] afEquation, boolean bEnable)
     {
+        m_afClipAll[7] = bEnable;
         m_afClipEyeInvData = afEquation;
         EnableClip();
         Program pkProgram = GetPProgram(0);
@@ -161,8 +170,9 @@ public abstract class VolumeClipEffect extends ShaderEffect
      * Enable and set the arbitrary clip plane.
      * @param afEquation, the clip-plane equation.
      */
-    public void SetClipArb(float[] afEquation)
+    public void SetClipArb(float[] afEquation, boolean bEnable)
     {
+        m_afClipAll[8] = bEnable;
         m_afClipArbData = afEquation;
         EnableClip();
         Program pkProgram = GetPProgram(0);
@@ -172,6 +182,7 @@ public abstract class VolumeClipEffect extends ShaderEffect
         }
     }
     protected float[] m_afDoClip = { 0, 0, 0, 0 };
+    protected boolean[] m_afClipAll = { false, false, false, false, false, false, false, false, false };
     /** stores the axis-aligned clip plane information: */
     protected float[][] m_aafClipData =  { { 0, 0, 0, 0 },
                                                           { 1, 1, 0, 0 },

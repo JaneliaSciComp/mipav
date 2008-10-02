@@ -163,7 +163,7 @@ public class MjCorticalMesh_WM {
                 } else {
 
                     /* second time edge encountered */
-                    int iE = ((Integer) (kEMap.get(kKey))).intValue();
+                    int iE = kEMap.get(kKey).intValue();
                     Edge rkE = m_akEdge[iE];
 
                     /* update edge */
@@ -399,7 +399,7 @@ public class MjCorticalMesh_WM {
 
             kOrigin.Add(m_akPlane[i]);
         }
-        kOrigin.Scale(1.0f / (float) iVQuantity);
+        kOrigin.Scale(1.0f / iVQuantity);
 
         m_kPlaneMin = new Vector2f();
         m_kPlaneMax = new Vector2f();
@@ -744,7 +744,7 @@ public class MjCorticalMesh_WM {
      * @return  DOCUMENT ME!
      */
     public float getDistance(int iV0, int iV1) {
-        Float kDistance = (Float) m_kDistance.get(new EdgeKey(iV0, iV1));
+        Float kDistance = m_kDistance.get(new EdgeKey(iV0, iV1));
 
         if (null != kDistance) {
             return kDistance.floatValue();
@@ -861,7 +861,6 @@ public class MjCorticalMesh_WM {
 
                 Vector3f kPos0 = new Vector3f();
                 Vector3f kPos1 = new Vector3f();
-                Vector3f kPos2= new Vector3f();
                 for (int j = 0; j < iCount; j++) {
 
                     /* Use the angle formed by the intersection point with the */
@@ -1518,7 +1517,7 @@ public class MjCorticalMesh_WM {
                 Vertex kCenter = m_akVertex[iCenter];
 
                 /* distance of path <source,center> */
-                float fPathLength = ((Float) (m_kDistance.get(new EdgeKey(iSource, iCenter)))).floatValue();
+                float fPathLength = m_kDistance.get(new EdgeKey(iSource, iCenter)).floatValue();
 
                 /* search immediate, exterior neighbors */
                 for (i = 0; i < kCenter.VQuantity; i++) {
@@ -1529,7 +1528,7 @@ public class MjCorticalMesh_WM {
                     if (!kInterior.contains(kNbr) && !kBoundary.contains(kNbr)) {
 
                         /* get distance of edge <center,nbr> */
-                        Float kDist = (Float) m_kDistance.get(new EdgeKey(iCenter, iNbr));
+                        Float kDist = m_kDistance.get(new EdgeKey(iCenter, iNbr));
                         kDiff.Sub( m_kMesh.VBuffer.GetPosition3(iNbr),
                         	       m_kMesh.VBuffer.GetPosition3(iCenter) );
                         float fDist = (null != kDist) ? kDist.floatValue()
@@ -1541,7 +1540,7 @@ public class MjCorticalMesh_WM {
                         /* update current distance to shorter one */
                         /* (if necessary) */
                         EdgeKey kKey = new EdgeKey(iSource, iNbr);
-                        kDist = (Float) m_kDistance.get(kKey);
+                        kDist = m_kDistance.get(kKey);
 
                         if (null != kDist) {
 
@@ -1703,7 +1702,7 @@ public class MjCorticalMesh_WM {
                 EdgeKey kKey = new EdgeKey(i0, i1);
                 assert (m_kInitDistance.containsKey(kKey));
 
-                Float kValue = (Float) m_kInitDistance.get(kKey);
+                Float kValue = m_kInitDistance.get(kKey);
                 assert (null != kValue);
 
                 float fValue = kValue.floatValue();
@@ -1765,7 +1764,7 @@ public class MjCorticalMesh_WM {
                 EdgeKey kKey = new EdgeKey(i0, i1);
                 assert (m_kInitDistance.containsKey(kKey));
 
-                Float kValue = (Float) m_kInitDistance.get(kKey);
+                Float kValue = m_kInitDistance.get(kKey);
                 assert (null != kValue);
 
                 float fValue = kValue.floatValue();
@@ -1792,7 +1791,6 @@ public class MjCorticalMesh_WM {
         int iMin = -1;
 
         for (int i = 0; i < iCount; i++) {
-            float fTest = kDPoly.Eval(afRoot[i]);
             float fValue = kPoly.Eval(afRoot[i]);
             assert (fValue >= 0.0f);
 
