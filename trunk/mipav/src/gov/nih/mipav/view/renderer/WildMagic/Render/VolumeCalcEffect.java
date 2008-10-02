@@ -70,6 +70,7 @@ public class VolumeCalcEffect extends VolumeClipEffect
         GetPShader(0).SetImageName(0,"VolumeImageA");
         GetPShader(0).SetTexture(0, kVolumeImageA.GetVolumeTarget() );
         m_bIsColor = kVolumeImageA.GetImage().isColorImage();
+        this.m_afClipAll = kClip.m_afClipAll;
         this.m_afDoClip = kClip.m_afDoClip;
         this.m_aafClipData  = kClip.m_aafClipData;
         this.m_afClipEyeData  = kClip.m_afClipEyeData;

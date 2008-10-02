@@ -259,7 +259,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     	if ( m_kImageA == null ) {
         	return;
         }
-    	
         if (iWidth > 0 && iHeight > 0)
         {
             m_iWidth = iWidth;
@@ -275,9 +274,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
             if (m_pkRenderer != null)
             {
-                //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
                 m_pkRenderer.Resize(iWidth,iHeight);
-                //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
             }
         }
     }

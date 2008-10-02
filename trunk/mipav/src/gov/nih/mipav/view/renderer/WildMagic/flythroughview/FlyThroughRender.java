@@ -471,7 +471,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
                         }
 
                         iPixColor = (int) (afYLUTa[iLut] + (fSlope * (fValue - afXLUTa[iLut])) + 0.5);
-                        //System.err.println( iLut + " " + fSlope + " " + iPixColor );
+                        System.err.println( iLut + " " + fSlope + " " + iPixColor );
                         break;
                     }
                 }
