@@ -156,7 +156,8 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
      * Find the bone, bone marrow, and the thigh tissue
      */
     private void segmentImage() {
-        long time = System.currentTimeMillis();
+        long totalTime = System.currentTimeMillis();
+    	long time = System.currentTimeMillis();
         boolean doVOI = false;
         // compute the bone label image
         doVOI =  segmentBone();
@@ -194,12 +195,8 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
                 rightBoneVOI = leftBoneVOI;
                 leftBoneVOI = tmp;
             }
-        
-	        //boneImage.unregisterAllVOIs();
-	        //boneImage.registerVOI(rightBoneVOI);
-	        //boneImage.registerVOI(leftBoneVOI);
-	        
-	        //boneImage.getParentFrame().updateImages(true);
+            
+            System.err.println("Total time for bone segmentation: "+(System.currentTimeMillis() - totalTime));
 	        
 	        // save the VOI to a file(s)
 	        System.out.println("directory: " +imageDir);

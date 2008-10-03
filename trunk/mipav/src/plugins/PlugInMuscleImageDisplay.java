@@ -233,10 +233,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         autoSegmentation();
         progressBar.updateValue(20);
     	progressBar.setMessage("Segmenting...");
-        System.out.println("Time spent creating algs: "+(System.currentTimeMillis() - time));
+        System.err.println("Time spent creating algs: "+(System.currentTimeMillis() - time));
         time = System.currentTimeMillis();
         waitAlg(progressBar);
-        System.out.println("Total time spent waiting for threads: "+(System.currentTimeMillis() - time));
+        System.err.println("Total time spent waiting for threads: "+(System.currentTimeMillis() - time));
         progressBar.updateValue(90);
     	progressBar.setMessage("Displaying results...");
         for(int i=voiList.length; i>0; i--) {
@@ -378,10 +378,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         progressBar.setVisible(true);
         progressBar.updateValue(20);
     	progressBar.setMessage("Segmenting...");
-        System.out.println("Time spent creating algs: "+(System.currentTimeMillis() - time));
+        System.err.println("Time spent creating algs: "+(System.currentTimeMillis() - time));
         time = System.currentTimeMillis();
         waitAlg(progressBar);
-        System.out.println("Total time spent waiting for threads: "+(System.currentTimeMillis() - time));
+        System.err.println("Total time spent waiting for threads: "+(System.currentTimeMillis() - time));
         progressBar.updateValue(90);
     	progressBar.setMessage("Displaying results...");
     	for(int i=voiList.length; i>0; i--) {
@@ -1900,7 +1900,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	
 	   getContentPane().add(controls, BorderLayout.NORTH);
 	    
-	    //call the normal init function here
+	    //call the normal init function here, 
 	    initNext();
 	} // end init()
 

@@ -167,20 +167,26 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
     private void calc2D() {
         
+    	long totalTime = System.currentTimeMillis();
+    	
         labelAbdomen2D();
         makeAbdomen2DVOI();
 
+        System.err.println("Total time for abdomen segmentation: "+(System.currentTimeMillis() - totalTime));
+        
+        totalTime = System.currentTimeMillis();
         // the new way to find the subcutaneous fat VOI
         // make the intensity profile for slice 0 
         makeIntensityProfiles();
         makeSubcutaneousFatVOIfromIntensityProfiles();
 //        snakeSubcutaneousVOI();
         
+        
         // the old way to find the subcutaneous fat VOI
 //        makeSubcutaneousFat2DVOI();
 //        snakeSubcutaneousVOI();
 
-        ShowImage(abdomenImage, "Segmented Abdomen");
+        //ShowImage(abdomenImage, "Segmented Abdomen");
         
         // the really old way to find the subcutaneous fat VOI
 //        JCATsegmentSubcutaneousFat2D();
@@ -239,6 +245,8 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
         // get the new subcutaneous VOI
         subcutaneousVOI = theVOI;
+        
+        System.err.println("Total time for subcutaneous fat segmentation: "+(System.currentTimeMillis() - totalTime));
 
         srcImage.unregisterAllVOIs();
         srcImage.registerVOI(abdomenVOI);
@@ -248,8 +256,14 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
 
     private void calc25D() {
-        labelAbdomen3D();
+        long totalTime = System.currentTimeMillis();
+    	
+    	labelAbdomen3D();
         makeAbdomen3DVOI();
+        
+        System.err.println("Total time for abdomen segmentation: "+(System.currentTimeMillis() - totalTime));
+        
+        totalTime = System.currentTimeMillis();
         
         subcutaneousVOI = new VOI((short)0, "Subcutaneous area", 0);
         Vector<VOIContour>[] v = new Vector[zDim];
@@ -267,6 +281,9 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
         System.out.println("Fixing the subcutaneous fat VOIs");
         fixSubcutaneousFatVOIs();
+        
+        System.err.println("Total time for subcutaneous fat segmentation: "+(System.currentTimeMillis() - totalTime));
+        
         srcImage.unregisterAllVOIs();
         srcImage.registerVOI(abdomenVOI);
         srcImage.registerVOI(subcutaneousVOI);
@@ -687,7 +704,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
          closeImage3D(abdomenImage);
          System.out.println(+((System.currentTimeMillis() - time)) / 1000.0f +" sec");
 
-         ShowImage(abdomenImage, "closed image");
+         //ShowImage(abdomenImage, "closed image");
 
          
          // update the volumeBitSet to match the closed abdomenImage
@@ -1626,7 +1643,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
 
         } // end for (int sliceIdx = 0; ...)
 
-        ShowImage(sliceImage, "sliceImage");
+        //ShowImage(sliceImage, "sliceImage");
 
     } // fixSubcutaneousFatVOIs()
     

@@ -170,7 +170,8 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
      * Find the bone, bone marrow, and the thigh tissue
      */
     private void segmentImage() {
-        long time = System.currentTimeMillis();
+        long totalTime = System.currentTimeMillis();
+    	long time = System.currentTimeMillis();
         boolean doVOI = false, completeVOI = false;
         // compute the bone label image
         doVOI = segmentBone();
@@ -185,6 +186,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
         if(doVOI)
         	completeVOI = makeThighTissueVOI();
         System.out.println("Thigh tissue VOIs: "+(System.currentTimeMillis() - time));
+        System.err.println("Total time for thigh segmentation: "+(System.currentTimeMillis() - totalTime));
         if(completeVOI) {
 	        
 	     // save the VOI to a file(s)

@@ -168,7 +168,8 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
      * Find the bone, bone marrow, and the thigh tissue
      */
     private void segmentImage() {
-        long time = System.currentTimeMillis();
+        long totalTime = System.currentTimeMillis();
+    	long time = System.currentTimeMillis();
         boolean doVOI = false;
         doVOI = segmentBone();
         if(doVOI)
@@ -208,19 +209,11 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
                 rightMarrowVOI = leftMarrowVOI;
                 leftMarrowVOI = tmp;
             }
-        
-
-	        //boneImage.unregisterAllVOIs();
-	        //boneImage.registerVOI(rightMarrowVOI);
-	        //boneImage.registerVOI(leftMarrowVOI);
-	        
-	        //boneImage.getParentFrame().updateImages(true);
+            
+            System.err.println("Total time for marrow segmentation: "+(System.currentTimeMillis() - totalTime));
 	        
 	     // save the VOI to a file(s)
 	        System.out.println("directory: " +imageDir);
-	        FileVOI fileVOI;
-	        
-	        String fileName = "Right Marrow.xml";
 	        System.out.println("directory: " +imageDir);
 	        ViewJFrameImage frame = new ViewJFrameImage(srcImage);
 	    	srcImage.unregisterAllVOIs();
