@@ -3477,7 +3477,7 @@ public class ViewJFrameGraph extends JFrame
             return;
         }
 
-        fitFunctPanel.setBounds(10, 10, 480, 270);
+        fitFunctPanel.setBounds(10, 10, 480, 300);
         fitFunctPanel.setLayout(null);
         fitFunctPanel.setBorder(new EtchedBorder());
 
@@ -4199,7 +4199,7 @@ public class ViewJFrameGraph extends JFrame
 
         tabbedPane.setFont(font12B);
 
-        modifyDialog.setSize(503, 415);
+        modifyDialog.setSize(503, 425);
         modifyDialog.getContentPane().setLayout(null);
         modifyDialog.setResizable(false);
 
@@ -4212,7 +4212,7 @@ public class ViewJFrameGraph extends JFrame
         modifyDialog.getContentPane().add(tabbedPane, "Center");
         tabbedPane.validate();
         tabbedPane.addChangeListener(this);
-        tabbedPane.setSize(490, 325);
+        tabbedPane.setSize(490, 345);
 
         applyButton.setFont(font12B);
         applyButton.addActionListener(this);
