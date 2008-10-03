@@ -197,6 +197,8 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
 	    	srcImage.unregisterAllVOIs();
 	    	srcImage.registerVOI(rightThighVOI);
 	    	srcImage.registerVOI(leftThighVOI);
+	    	rightThighVOI.setName("Right Thigh");
+	    	leftThighVOI.setName("Left Thigh");
 	    	frame.saveAllVOIsTo(imageDir);
 	    	frame.dispose();
         } else
