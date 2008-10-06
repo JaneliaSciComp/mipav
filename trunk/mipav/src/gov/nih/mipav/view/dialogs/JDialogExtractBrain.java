@@ -229,7 +229,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         Preferences.debug("Orient = " + orientation);
 
         if (sphereFlag) {
-            Preferences.debug("Brain extractor: extimateSphere: backgroundThreshold = " + backgroundThreshold + "\n");
+            Preferences.debug("Brain extractor: estimateSphere: backgroundThreshold = " + backgroundThreshold + "\n");
 
             int count = 0;
 
@@ -614,15 +614,18 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
                                            Float.parseFloat(initCenterZTF.getText()));
             Vector3f point = computeCenter(image, orient, flag);
 
-            if (oldPoint.equals(centerOfMass) || useCenterOfMass) {
+            if (centerOfMass != null) {
+            	if (oldPoint.equals(centerOfMass) || useCenterOfMass) {
 
-                // user hasn't changed the initial point from the center of mass (or has chosen to just use the center
-                // of mass), then we can change the values
-                initCenterXTF.setText("" + point.X);
-                initCenterYTF.setText("" + point.Y);
-                initCenterZTF.setText("" + point.Z);
+                    // user hasn't changed the initial point from the center of mass (or has chosen to just use the center
+                    // of mass), then we can change the values
+                    initCenterXTF.setText("" + point.X);
+                    initCenterYTF.setText("" + point.Y);
+                    initCenterZTF.setText("" + point.Z);
+                }
+
             }
-
+            
             centerOfMass = point;
         } else if ((event.getSource() == orientCheckbox) && !useSphereCheckbox.isSelected()) {
 
