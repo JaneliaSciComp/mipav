@@ -10,8 +10,8 @@ import java.util.*;
 
 import javax.swing.tree.*;
 
-//import ncsa.hdf.object.Attribute;
-//import ncsa.hdf.object.HObject;
+import ncsa.hdf.object.Attribute;
+import ncsa.hdf.object.HObject;
 import gov.nih.mipav.model.file.HDF.*;
 
 
