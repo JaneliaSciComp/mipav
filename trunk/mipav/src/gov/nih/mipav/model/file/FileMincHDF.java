@@ -12,8 +12,8 @@ import java.util.*;
 
 import javax.swing.tree.*;
 
-//import ncsa.hdf.object.*;
-//import ncsa.hdf.object.h5.*;
+import ncsa.hdf.object.*;
+import ncsa.hdf.object.h5.*;
 
 
 /**
@@ -673,13 +673,13 @@ public class FileMincHDF extends FileBase {
     public ModelImage readImage(boolean one) throws Exception {
 	ModelImage image = null;
 	DefaultMutableTreeNode fileRoot = null;
-    try {
+    /*try {
         Class fileclass = Class.forName("gov.nih.mipav.model.file.HDF.H5File");
         FileFormat fileformat = (FileFormat)fileclass.newInstance();
         if (fileformat != null) {
             FileFormat.addFileFormat("HDF5", fileformat);
         }
-    } catch (Throwable err ) {;}
+    } catch (Throwable err ) {;}*/
 	try {
 	    h5File = (H5File)fileFormat.createInstance(fileDir + fileName, FileFormat.READ);
 	    int fid = h5File.open();
