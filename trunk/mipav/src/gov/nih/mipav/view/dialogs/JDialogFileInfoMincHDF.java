@@ -15,8 +15,9 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 
-import ncsa.hdf.object.Attribute;
-import ncsa.hdf.object.HObject;
+//import ncsa.hdf.object.Attribute;
+//import ncsa.hdf.object.HObject;
+import gov.nih.mipav.model.file.HDF.*;
 
 
 public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListener {
