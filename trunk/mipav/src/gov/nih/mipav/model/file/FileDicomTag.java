@@ -549,41 +549,57 @@ public class FileDicomTag extends ModelSerialCloneable {
 
             setValue(val, val.length());
         }
-        // all other types convert the value to an appropriate type when a string,
-        // or just setValue.  ?May throw an exception?
-        else if (type.equals("typeFloat")) {
-
-            if (value instanceof java.lang.String) {
-                setValue(Float.valueOf((String) value), 4);
-            } else {
-                setValue(value, 4);
-            }
-        } else if (type.equals("typeDouble")) {
-
-            if (value instanceof java.lang.String) {
-                setValue(Float.valueOf((String) value), 8);
-            } else {
-                setValue(value, 8);
-            }
-        } else if (type.equals("typeShort")) {
-
-            if (value instanceof java.lang.String) {
-                setValue(Short.valueOf((String) value), 2);
-            } else {
-                setValue(value, 2);
-            }
-        } else if (type.equals("typeInt")) {
-
-            if (value instanceof java.lang.String) {
-                setValue(Integer.valueOf((String) value), 4);
-            } else {
-                setValue(value, 4);
-            }
-        }
         // explicitly call setValue(obj, len) for sequences, and unknowns
         else if (type.equals("typeSequence") || type.equals("typeUnknown") || type.equals("otherWordString") ||
                      type.equals("otherByteString")) {
             return;
+        }
+        else {
+            // all other types convert the value to an appropriate type when a string,
+            // or just setValue.  ?May throw an exception?
+            // if value has lower case letter l instead of number 1 substitute 1 for l
+            String valS = (String)value;
+            String valT = null;
+            for (int i = 0; i < valS.length(); i++) {
+                if ((valS.charAt(i) == 'l') && (valT == null)){
+                    valT = "1";
+                }
+                else if (valS.charAt(i) == '1') {   
+                    valT = valT.concat("1"); 
+                }
+                else {
+                    valT = valT.concat(valS.substring(i,i));
+                }
+            }
+            if (type.equals("typeFloat")) {
+    
+                if (value instanceof java.lang.String) {
+                    setValue(Float.valueOf(valT), 4);
+                } else {
+                    setValue(value, 4);
+                }
+            } else if (type.equals("typeDouble")) {
+    
+                if (value instanceof java.lang.String) {
+                    setValue(Float.valueOf(valT), 8);
+                } else {
+                    setValue(value, 8);
+                }
+            } else if (type.equals("typeShort")) {
+    
+                if (value instanceof java.lang.String) {
+                    setValue(Short.valueOf(valT), 2);
+                } else {
+                    setValue(value, 2);
+                }
+            } else if (type.equals("typeInt")) {
+    
+                if (value instanceof java.lang.String) {
+                    setValue(Integer.valueOf(valT), 4);
+                } else {
+                    setValue(value, 4);
+                }
+            }
         }
     }
 
