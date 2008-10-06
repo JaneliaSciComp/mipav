@@ -191,7 +191,7 @@ public abstract class FileFormat extends File
 
         // add default HDF5 modules
         try {
-            Class fileclass = Class.forName("ncsa.hdf.object.h5.H5File");
+            Class fileclass = Class.forName("gov.nih.mipav.model.file.HDF.H5File");
             FileFormat fileformat = (FileFormat)fileclass.newInstance();
             if (fileformat != null) {
                 FileFormat.addFileFormat("HDF5", fileformat);
