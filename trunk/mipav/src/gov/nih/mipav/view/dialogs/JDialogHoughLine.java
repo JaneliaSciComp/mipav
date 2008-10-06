@@ -88,7 +88,7 @@ public class JDialogHoughLine extends JDialogBase implements AlgorithmInterface,
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp("");
+            MipavUtil.showHelp("HoughLine001");
         } else if (command.equals("Cancel")) {
             dispose();
         }

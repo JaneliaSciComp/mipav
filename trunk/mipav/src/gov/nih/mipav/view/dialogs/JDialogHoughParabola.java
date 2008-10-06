@@ -126,7 +126,7 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp("");
+            MipavUtil.showHelp("HoughPar004");
         } else if (command.equals("Cancel")) {
             dispose();
         }

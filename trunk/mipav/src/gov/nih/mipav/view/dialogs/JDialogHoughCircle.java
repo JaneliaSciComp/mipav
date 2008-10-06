@@ -97,7 +97,7 @@ public class JDialogHoughCircle extends JDialogBase implements AlgorithmInterfac
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp("");
+            MipavUtil.showHelp("HoughCircle002");
         } else if (command.equals("Cancel")) {
             dispose();
         }
