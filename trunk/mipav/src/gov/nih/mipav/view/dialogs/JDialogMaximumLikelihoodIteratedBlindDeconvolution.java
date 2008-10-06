@@ -220,13 +220,13 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
 			updateFileInfo(originalImage, psfImage);
 			psfImage.clearMask();
 
-			/* Display PSF image; for testing purposes.
+			/* Display PSF image; for testing purposes. 
 			try {
 				new ViewJFrameImage(psfImage, null, new Dimension(610, 220));
 			} catch (OutOfMemoryError error) {
 				System.gc();
 				MipavUtil.displayError("Out of memory: unable to open new frame for psfImage");
-			} */
+			} */ 
 
 			insertScriptLine();
 
