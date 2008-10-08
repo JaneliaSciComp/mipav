@@ -147,7 +147,7 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
 
         /* Create the rendered scene, two spheres, a "Before" and "After"
          * sphere: */
-        setupScene(1.0f, akGeneralLights);
+        setupScene(akGeneralLights);
 
         /* Setup the user-interface: */
         setupInterface();
@@ -326,7 +326,7 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
     public void stateChanged(ChangeEvent event) {
 
         if (event.getSource() == m_kShininessSlider) {
-            m_fShininess = (float) (m_kShininessSlider.getValue());
+            m_fShininess = m_kShininessSlider.getValue();
             m_kMaterialNew.Shininess = m_fShininess;
             m_kMaterialNew.Specular.Set(m_kSpecular.R, m_kSpecular.G, m_kSpecular.B );
         	System.err.println( "stateChanged "  + m_fShininess );
@@ -736,13 +736,11 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
     /**
      * Sets up the rendered scenes. Two spheres, each displayed in a separate canvas window with the same lighting,
      * material, and transparency parameters as the original surface. The "Before" sphere only changes when the "Apply"
-     * button is presesd, the "After" sphere changes each time one of the color buttons or the shininess slider is
+     * button is pressed, the "After" sphere changes each time one of the color buttons or the shininess slider is
      * changed
-     *
-     * @param  fOpacity         float opacity value
      * @param  akGeneralLights  GeneralLight[] light array
      */
-    private void setupScene(float fOpacity, Light[] akGeneralLights) {
+    private void setupScene(Light[] akGeneralLights) {
 
         /* Create the Before/After displays: */
         m_akSurfaceMaterial = new SurfaceMaterialDisplay[2 + m_iNumPreset];

@@ -612,7 +612,7 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
         labelIntensityEnd.setForeground(Color.black);
         labelIntensityEnd.setFont(MipavUtil.font12);
 
-        Hashtable labelTableIntensity = new Hashtable();
+        Hashtable<Integer,JLabel> labelTableIntensity = new Hashtable<Integer,JLabel>();
         labelTableIntensity.put(new Integer(0), labelIntensityBegin);
         labelTableIntensity.put(new Integer(50), labelIntensityMid);
         labelTableIntensity.put(new Integer(100), labelIntensityEnd);
@@ -900,8 +900,8 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
         sliderLabelsTrg[2] = createLabel(String.valueOf(+1.0f * iScale), bEnableDirectional);
 
         // Labels for the x, y, and z sliders
-        Hashtable labelsPos = new Hashtable();
-        Hashtable labelsTrg = new Hashtable();
+        Hashtable<Integer,JLabel> labelsPos = new Hashtable<Integer,JLabel>();
+        Hashtable<Integer,JLabel> labelsTrg = new Hashtable<Integer,JLabel>();
 
         labelsPos.put(new Integer(-100 * iScale), sliderLabelsPos[0]);
         labelsPos.put(new Integer(0 * iScale), sliderLabelsPos[1]);
@@ -1023,9 +1023,8 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
 
         if ((index + decPts) < length) {
             return (String.valueOf(number).substring(0, index + decPts + 1));
-        } else {
-            return (String.valueOf(number));
-        }
+        } 
+        return (String.valueOf(number));
     }
    
     

@@ -163,7 +163,7 @@ public class VolumeImage
         int iLutHeight = 256;
         float[] afData = new float[iLutHeight];
         float fRange = (float)(kImage.getMax() - kImage.getMin());
-        float fStep = fRange / (float)iLutHeight;
+        float fStep = fRange / iLutHeight;
         float fDataValue = (float)kImage.getMin();
         for (int i = 0; i < iLutHeight; i++) {
             afData[i] = (float)( iLutHeight * (kImage.getMax() - fDataValue) / fRange);
@@ -493,7 +493,7 @@ public class VolumeImage
          float[] afData = kOpacityMap.GetFloatData();
 
          float fRange = (float)(kImage.getMax() - kImage.getMin());
-         float fStep = fRange / (float)iLutHeight;
+         float fStep = fRange / iLutHeight;
          float fDataValue = (float)kImage.getMin();
          for (int i = 0; i < iLutHeight; i++) {
              afData[i] = (kTransfer.getRemappedValue( fDataValue, iLutHeight )/255.0f);
@@ -510,17 +510,16 @@ public class VolumeImage
      */
     public void UpdateImages(ModelLUT kLUTa, ModelLUT kLUTb)
     {
-        if ( kLUTa == null )
+        if ( kLUTa != null )
         {
-            return;
+            this.UpdateImages( m_kColorMapTargetA, m_kColorMapA, kLUTa );
         }
-        this.UpdateImages( m_kColorMapTargetA, m_kColorMapA, kLUTa );
-        /*
-        if ( m_kImageB != null )
+
+        if ( kLUTb != null )
         {
-            this.UpdateImages( m_kColorMapTargetB, m_kColorMapB, kLUTb );
+            //this.UpdateImages( m_kColorMapTargetB, m_kColorMapB, kLUTb );
         }
-        */
+
         m_kLUT = kLUTa;
     }
 

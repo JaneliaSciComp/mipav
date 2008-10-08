@@ -303,7 +303,7 @@ public class VolumeSurface extends VolumeObject
             {
                 m_kMesh.VBuffer.GetPosition3(i, kPos2 );
                 kDiff.Sub( kPos1, kPos2);
-                if ( kDiff.Length() < ((float)iBrushSize/500.0f) )
+                if ( kDiff.Length() < (iBrushSize/500.0f) )
                 {
                     m_kMesh.VBuffer.SetColor4(0, i, kPaintColor.R, kPaintColor.G, kPaintColor.B, kPaintColor.A );
                     if ( iMin == -1 )
@@ -384,7 +384,7 @@ public class VolumeSurface extends VolumeObject
             {
                 m_kMesh.VBuffer.GetPosition3(i, kPos2 );
                 kDiff.Sub( kPos1, kPos2 );
-                if ( kDiff.Length() < ((float)iBrushSize/500.0f) )
+                if ( kDiff.Length() < (iBrushSize/500.0f) )
                 {
                     m_kMesh.VBuffer.SetColor4(0, i, m_akBackupColor[i] );
                     if ( iMin == -1 )
@@ -815,9 +815,6 @@ public class VolumeSurface extends VolumeObject
      */
     public void smoothMesh(int iteration, float alpha, boolean volumeLimit, float volumePercent)
     {
-   
-        int i;
-        int num;
         float initialVolume = 0.0f;
         float presentVolume;
         boolean noVolumeLimit = true;
@@ -883,7 +880,7 @@ public class VolumeSurface extends VolumeObject
             akAdjacent[i] = new UnorderedSetInt(6, 1);
         }
 
-        HashMap kEMap = new HashMap();
+        HashMap<Edge,Integer> kEMap = new HashMap<Edge,Integer>();
         Integer kInvalid = new Integer(-1);
 
         int iTQuantity = m_kMesh.GetTriangleQuantity();
@@ -995,7 +992,7 @@ public class VolumeSurface extends VolumeObject
             // xi+1 = xi + (alpha)*(sum of(points xi is connected to - xi))
 
             if (num > 1) {
-                kSum.Scale( 1.0f / (float)num );
+                kSum.Scale( 1.0f / num );
             }
 
             kSum.Scale( fValue );
@@ -1134,7 +1131,7 @@ public class VolumeSurface extends VolumeObject
             fMeanEdgeLength += kEdge.Length();
         }
 
-        fMeanEdgeLength /= (float)kEMap.size();
+        fMeanEdgeLength /= kEMap.size();
         return fMeanEdgeLength;
     }
 
@@ -1171,7 +1168,7 @@ public class VolumeSurface extends VolumeObject
                 akVMean[i].Add(kV0);
             }
 
-            akVMean[i].Scale(1.0f / (float)kAdj.getQuantity());
+            akVMean[i].Scale(1.0f / kAdj.getQuantity());
 
             // compute the normal and tangential components of mean-vertex
             Vector3f kV0 = m_kMesh.VBuffer.GetPosition3(i);
@@ -1342,7 +1339,6 @@ public class VolumeSurface extends VolumeObject
     private float m_fSurfaceArea = 0;
     private Vector3f m_kCenter = null;
     
-    private boolean m_bHasPerVertexColor = false;
     private ColorRGBA[] m_akBackupColor = null;
     private boolean m_bPainted = false;
     private boolean m_bTextureOn = false;

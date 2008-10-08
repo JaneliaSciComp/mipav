@@ -12,8 +12,6 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
-
-import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 
 /**
@@ -374,7 +372,7 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         for (int i = 0; i < 256; i++) {
 
             for (int j = 0; j < 256; j++) {
-                m_kLUTImageA.set(i, j, fMin + ((float) i / 255.0f * (fMax - fMin)));
+                m_kLUTImageA.set(i, j, fMin + (i / 255.0f * (fMax - fMin)));
             }
         }
 

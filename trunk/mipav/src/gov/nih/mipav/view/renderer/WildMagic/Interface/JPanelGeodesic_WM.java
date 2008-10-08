@@ -329,10 +329,7 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
      *
      * @param  flag  dispose super or not, not used now.
      */
-    public void disposeLocal(boolean flag) {
-        //surRender = null;
-        //flythruRender = null;
-
+    public void disposeLocal() {
         if (surfaceGeodesic != null) {
             surfaceGeodesic.dispose();
             surfaceGeodesic = null;
@@ -791,17 +788,6 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     }
 
     /**
-     * Set the flythru render reference.
-     *
-     * @param  _flythruRender  FlythruRender
-     */
-    //public void setFlythruRender(FlythruRender _flythruRender) {
-    //    flythruRender = _flythruRender;
-    //    flythruGeodesic = new Geodesic();
-    //    flythruGeodesic.setPanel(this);
-    //}
-
-    /**
      * Displays the Geodesic (smoothed) distance between the last two points picked in the Geodesic class, as well as
      * the running total for the current curve.
      *
@@ -876,7 +862,7 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
      * @throws  Throwable  DOCUMENT ME!
      */
     protected void finalize() throws Throwable {
-        this.disposeLocal(false);
+        this.disposeLocal();
         super.finalize();
     }
 

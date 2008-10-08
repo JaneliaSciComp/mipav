@@ -751,6 +751,4 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     private float[] m_afGradientMagnitude = new float[]{0,0,0,0};
 
     private float[] m_afBlend = new float[]{1,0,0,0};
-
-    private float[] m_afMinMax = new float[]{1,0,0,0};
 }

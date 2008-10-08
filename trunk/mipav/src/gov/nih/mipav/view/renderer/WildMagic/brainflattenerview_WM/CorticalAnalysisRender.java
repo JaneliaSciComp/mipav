@@ -115,7 +115,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
             VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb, ModelRGB kRGBTb  ) {
 
 
-        super("GPUVolumeRender",0,0,512,512, new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
+        super();
 
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
@@ -266,7 +266,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         kCLoc.Scale(-1.4f);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
-        CreateScene( arg0 );
+        CreateScene();
 
         // initial update of objects
         m_spkScene.UpdateGS();
@@ -289,7 +289,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
      * Called by the init() function. Creates and initialized the scene-graph.
      * @param arg0, the GLCanvas
      */
-    private void CreateScene (GLAutoDrawable arg0)
+    private void CreateScene ()
     {
         // Create a scene graph with the face model as the leaf node.
         m_spkScene = new Node();
@@ -298,9 +298,9 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         
         m_kTranslate = new Vector3f(Vector3f.ZERO);
 
-        float fMaxX = (float) (m_kImageA.getExtents()[0] - 1) * m_kImageA.getFileInfo(0).getResolutions()[0];
-        float fMaxY = (float) (m_kImageA.getExtents()[1] - 1) * m_kImageA.getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (float) (m_kImageA.getExtents()[2] - 1) * m_kImageA.getFileInfo(0).getResolutions()[2];
+        float fMaxX = (m_kImageA.getExtents()[0] - 1) * m_kImageA.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (m_kImageA.getExtents()[1] - 1) * m_kImageA.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (m_kImageA.getExtents()[2] - 1) * m_kImageA.getFileInfo(0).getResolutions()[2];
 
         m_fMax = fMaxX;
         if (fMaxY > m_fMax) {
@@ -825,7 +825,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         float fPBias = 0.01f;
 
         /* compute draw latitude lines */
-        for (int i = -(int) (iNumLat / 2); i <= (int) (iNumLat / 2); i++) {
+        for (int i = -(iNumLat / 2); i <= (iNumLat / 2); i++) {
             float fZNormal = i / (float) (1 + (iNumLat / 2));
 
             MjCorticalMesh_WM.Polylines kPolylines = m_kCortical.getLatitude(fZNormal, fMBias, fSBias, fPBias);
@@ -843,7 +843,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         }
         /* compute longitude lines */
         for (int i = 0; i <= (iNumLon - 1); i++) {
-            float fAngle = i * 2.0f * (float) Math.PI / (float) (iNumLon - 1);
+            float fAngle = i * 2.0f * (float) Math.PI / (iNumLon - 1);
 
             MjCorticalMesh_WM.Polylines kPolylines = m_kCortical.getLongitude(fAngle, fMBias, fSBias, fPBias);
             Polyline kMeshLon = new Polyline( kPolylines.kMVertex, false, true );  

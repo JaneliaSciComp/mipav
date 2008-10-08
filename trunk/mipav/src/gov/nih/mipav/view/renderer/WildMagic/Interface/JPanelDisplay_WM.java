@@ -62,15 +62,6 @@ public class JPanelDisplay_WM extends JInterfaceBase {
     /** Button group for projections. */
     protected ButtonGroup viewTextureButtonGroup;
 
-    /** Coarse and fine value. */
-    private float coarseValue, fineValue;
-
-    /** Coarse and fine value text field. */
-    private JTextField fine, coarse;
-
-    /** Coarse and fine value label. */
-    private JLabel fineLabel, coarseLabel;
-
     /** Flag indicating if the red bounding box is on or off. */
     private boolean flag = false;
 
@@ -137,7 +128,6 @@ public class JPanelDisplay_WM extends JInterfaceBase {
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
-        String command = event.getActionCommand();
 
         if ( source == saveButton ) {
         	saveParameters();
@@ -184,10 +174,6 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         viewButton = null;
         viewAlignedButton = null;
         viewTextureButtonGroup = null;
-        fineLabel = null;
-        coarseLabel = null;
-        fine = null;
-        coarse = null;
     }
 
     /**
@@ -257,9 +243,7 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         File file = new File(fileDir + File.separator + fileName);
         try {
         	RandomAccessFile raFile = new RandomAccessFile(file, "r");
-        	
-        	if ( raFile == null ) return;
-        	
+        	        	
         	cameraParams[0] = raFile.readFloat();
         	cameraParams[1] = raFile.readFloat();
         	cameraParams[2] = raFile.readFloat();
@@ -290,38 +274,6 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         	System.err.println("Error openning viewing parameters file");
         }
     }
-    
-    /**
-     * Get the coarse value.
-     *
-     * @return  float coarse value.
-     */
-    public float getCoarseVal() {
-        return Float.parseFloat(coarse.getText());
-    }
-
-    /**
-     * Get the fine value.
-     *
-     * @return  float fine value.
-     */
-    public float getFineVal() {
-        return Float.parseFloat(fine.getText());
-    }
-
-    /**
-     * Unchanged.
-     *
-     * @param  e  DOCUMENT ME!
-     */
-    public void keyPressed(KeyEvent e) { }
-
-    /**
-     * Unchanged.
-     *
-     * @param  e  DOCUMENT ME!
-     */
-    public void keyReleased(KeyEvent e) { }
 
     /**
      * Resizig the control panel with ViewJFrameVolumeView's frame width and height.

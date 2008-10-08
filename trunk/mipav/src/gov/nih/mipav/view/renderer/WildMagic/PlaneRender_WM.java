@@ -26,7 +26,7 @@ import java.io.FileNotFoundException;
 /**
  * Class PlaneRenderWM: renders a single dimension of the ModelImage data as a
  * texture-mapped polygon. The PlaneRenderWM class keeps track of whether it is
- * rendering the Axial, Sagital, or Coronal view of the data.
+ * rendering the Axial, Sagittal, or Coronal view of the data.
  *
  */
 public class PlaneRender_WM extends GPURenderBase
@@ -148,7 +148,6 @@ public class PlaneRender_WM extends GPURenderBase
     private boolean[] m_abAxisFlip;
     private float m_fUpFOV = 65f;
     private float m_fMouseY;
-    private boolean m_bDisplaySurface = false;
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -171,8 +170,7 @@ public class PlaneRender_WM extends GPURenderBase
                           VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb,
                           int iPlane, boolean bMemory)
     {
-        super( "PlaneRender", 0, 0, 512, 512,
-               new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
+        super();
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                                           m_eBuffering, m_eMultisampling,
                                            m_iWidth, m_iHeight );
@@ -222,13 +220,9 @@ public class PlaneRender_WM extends GPURenderBase
         m_afModelStep[2] = 2f/(m_kImageA.getExtents()[2] -1);
     }
 
-    public PlaneRender_WM ( final String acWindowTitle, int iXPosition,
-            int iYPosition, int iWidth, int iHeight,
-            final ColorRGBA rkBackgroundColor )
+    public PlaneRender_WM ()
     {
-
-        super( "PlaneRender", 0, 0, 512, 512,
-                new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
+        super();
     }
     public void display(GLAutoDrawable arg0) {
         if ( !m_bModified )
@@ -490,11 +484,6 @@ public class PlaneRender_WM extends GPURenderBase
         CreateLabels();
     }
 
-    public void displaySurface( boolean bDisplay )
-    {
-        m_bDisplaySurface = bDisplay;
-    }
-
     public void AddSlices( VolumeSlices kVolumeSlice  )
     {
         m_kDisplayList.add(kVolumeSlice);
@@ -673,7 +662,6 @@ public class PlaneRender_WM extends GPURenderBase
     public void setSliceHairColor(int iView, ColorRGB kColor) {
         int iX = 0;
         int iY = 1;
-        int iZ = 2;
         m_bModified = true;
 
         m_aakColors[m_iPlaneOrientation][m_aaiColorSwap[m_iPlaneOrientation][iView]] = kColor;
@@ -864,10 +852,8 @@ public class PlaneRender_WM extends GPURenderBase
      * @param iX mouse x coordinate value
      * @param iY mouse y coordinate value
      * @param kLocal mouse position in Local Coordinates
-     * @param bSetCenter if true updates the position for rendering the x-bar
-     * and y-bar colored axes (for left mouse drag)
      */
-    private void ScreenToLocal(int iX, int iY, Vector3f kLocal, boolean bSetCenter )
+    private void ScreenToLocal(int iX, int iY, Vector3f kLocal )
     {
         iX = Math.min( m_iWidth,  Math.max( 0, iX ) );
         iY = Math.min( m_iHeight, Math.max( 0, iY ) );
@@ -918,7 +904,7 @@ public class PlaneRender_WM extends GPURenderBase
         /* Calculate the center of the mouse in local coordineates, taking into
          * account zoom and translate: */
         Vector3f localPt = new Vector3f();
-        this.ScreenToLocal(kEvent.getX(), kEvent.getY(), localPt, true);
+        this.ScreenToLocal(kEvent.getX(), kEvent.getY(), localPt);
 
         /* Tell the ViewJFrameVolumeView parent to update the other
          * PlaneRenderWMs and the SurfaceRender with the changed Z position
@@ -988,7 +974,7 @@ public class PlaneRender_WM extends GPURenderBase
         m_kParent.actionPerformed(new ActionEvent(this, 0, "HistoLUT"));
         /* Get the coordinates of the mouse position in local coordinates: */
         Vector3f localPt = new Vector3f();
-        this.ScreenToLocal(kEvent.getX(), kEvent.getY(), localPt, false);
+        this.ScreenToLocal(kEvent.getX(), kEvent.getY(), localPt);
         m_kActiveLookupTable = null;
 
         /* Get which image is active, either m_kImageA or m_kImageB: */
@@ -1068,8 +1054,8 @@ public class PlaneRender_WM extends GPURenderBase
             afResolutions[2] = 1.0f;
         }
 
-        m_fXBox = (float) (m_aiLocalImageExtents[0] - 1) * afResolutions[0];
-        m_fYBox = (float) (m_aiLocalImageExtents[1] - 1) * afResolutions[1];
+        m_fXBox = (m_aiLocalImageExtents[0] - 1) * afResolutions[0];
+        m_fYBox = (m_aiLocalImageExtents[1] - 1) * afResolutions[1];
 
         m_fMaxBox = m_fXBox;
 

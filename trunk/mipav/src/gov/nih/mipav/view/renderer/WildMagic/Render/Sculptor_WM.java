@@ -278,9 +278,9 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
         int iYBound = m_kImageA.getExtents()[1];
         int iZBound = m_kImageA.getExtents()[2];
 
-        float fMaxX = (float) (iXBound - 1) * m_kImageA.getFileInfo(0).getResolutions()[0];
-        float fMaxY = (float) (iYBound - 1) * m_kImageA.getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (float) (iZBound - 1) * m_kImageA.getFileInfo(0).getResolutions()[2];
+        float fMaxX = (iXBound - 1) * m_kImageA.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (iYBound - 1) * m_kImageA.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (iZBound - 1) * m_kImageA.getFileInfo(0).getResolutions()[2];
 
         float fMax = fMaxX;
         if (fMaxY > fMax) {
@@ -296,8 +296,6 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
 
         Vector4f kIn = new Vector4f(0,0,0,1);
         Vector4f kOut = new Vector4f();
-        int iA = 0;
-        int iB = 0;
         for (int iZ = 0; iZ < iZBound; iZ++)
         {
             for (int iY = 0; iY < iYBound; iY++)
@@ -1484,7 +1482,6 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
             // and the directory --- get new fileName and directory
             // from options
             String fName = options.getFileName(); // if you use the name from img, then DICOM has funny names
-            String dirName = img.getFileInfo(0).getFileDirectory();
             String filebase;
             int ind = fName.lastIndexOf(".");
 
@@ -1511,9 +1508,6 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
                     filebase = filebase.substring(0, newIndex);
                 }
             }
-
-            // save any luts
-            String lutName = new String(filebase + ".lut");
         }
 
         // set the new fileName and directory in the fileInfo for the img -- so that it's
@@ -1521,10 +1515,9 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
         // that needs to look at the former settings!
         FileInfoBase[] fileInfo = img.getFileInfo();
 
-        if (suffix == null) {
-            suffix = FileUtility.getExtension(fileName);
-            fileType = FileUtility.getFileType(fileName, directory, false);
-        }
+        suffix = FileUtility.getExtension(fileName);
+        fileType = FileUtility.getFileType(fileName, directory, false);
+
 
         // now, get rid of any numbers at the end of the name (these
         // are part of the dicom file name, but we only want the 'base'

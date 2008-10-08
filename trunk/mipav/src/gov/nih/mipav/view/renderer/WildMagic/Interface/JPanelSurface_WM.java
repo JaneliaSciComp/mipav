@@ -10,7 +10,6 @@ import gov.nih.mipav.view.renderer.WildMagic.Decimate.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
 import java.util.*;
 
 import javax.swing.*;
@@ -62,9 +61,6 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** The polygon mode combo box label. */
     private JLabel comboLabel;
 
-    /** Current surface index being highlighted. */
-    private int currentIndex;
-
     /** Decimate button. */
     private JButton decimateButton;
 
@@ -78,18 +74,10 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** The labels below the detail slider. */
     private JLabel[] detailSliderLabels;
 
-
-    // Picking Behavior:
-    /** flag indicates arbitrary clpping bounding frame being picked. */
-    private boolean findArbitraryClipping = false;
-
-    /** flag indicates the probe being picked. */
-    private boolean findProbe = false;
-
     /** Save surface button. */
     private JButton levelSButton, levelVButton, levelWButton, levelXMLButton, levelSTLButton, levelPLYButton;
 
-    // Paint tool-bar (containted in the SurfacePaint class)
+    // Paint tool-bar (contained in the SurfacePaint class)
     private SurfacePaint_WM m_kSurfacePaint = null;
 
     /** The material options button, which launches the material editor window. */
@@ -97,9 +85,6 @@ public class JPanelSurface_WM extends JInterfaceBase
 
     /** Opens SurfaceTexture dialog:. */
     private JButton m_kSurfaceTextureButton;
-
-    /** ModelImage max dimension: (Extents * resolutions). */
-    private float maxBox;
 
     // Opacity labels/slider
     /** The opacity slider label. */
@@ -118,17 +103,9 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** The scroll pane holding the panel content. Useful when the screen is small. */
     private JScrollPane scroller;
 
-    // For Mouse Recording:
-    /** Indicator for the opacity slider moves. */
-    private boolean setSurfaceOpacityFlag;
-
     // Top tool-bar surface smooth, decimate, and save surface options:
     /** Smooth button. */
     private JButton smooth1Button, smooth2Button, smooth3Button;
-
-
-    /** The directory where a surface file was last loaded/saved. Defaults to MIPAV default directory. */
-    private String surfaceDirectoryName;
 
     /** Polyline list box in the dialog for surfaces. */
     private JList polylineList;
@@ -136,9 +113,6 @@ public class JPanelSurface_WM extends JInterfaceBase
     // Surface list:
     /** The list box in the dialog for surfaces. */
     private JList surfaceList;
-
-    /** Surface volume opacity. */
-    private int surfaceOpacitySlice;
 
     // Rendering/Picking options check boxes:
     /** Check Box for surface pickable. */
@@ -149,9 +123,6 @@ public class JPanelSurface_WM extends JInterfaceBase
 
     /** Check Box for surface clpping of the volume render. */
     private JCheckBox surfaceClipCB;
-
-    /** Counter for surface opacity slider moves. */
-    private int surfaceSliderCount;
 
     /** Check Box for surface transparency. */
     private JCheckBox surfaceTransparencyCB;
@@ -341,9 +312,9 @@ public class JPanelSurface_WM extends JInterfaceBase
     	Vector3f m_kTranslate = m_kVolumeViewer.getVolumeGPU().getTranslate();
     	
     	 float m_fMax, m_fX, m_fY, m_fZ;
-    	 float fMaxX = (float) (m_kVolumeViewer.getImageA().getExtents()[0] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[0];
-         float fMaxY = (float) (m_kVolumeViewer.getImageA().getExtents()[1] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[1];
-         float fMaxZ = (float) (m_kVolumeViewer.getImageA().getExtents()[2] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[2];
+    	 float fMaxX = (m_kVolumeViewer.getImageA().getExtents()[0] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[0];
+         float fMaxY = (m_kVolumeViewer.getImageA().getExtents()[1] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[1];
+         float fMaxZ = (m_kVolumeViewer.getImageA().getExtents()[2] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[2];
 
          m_fMax = fMaxX;
          if (fMaxY > m_fMax) {
@@ -472,9 +443,9 @@ public class JPanelSurface_WM extends JInterfaceBase
                     numTriangles += kCMesh.GetTriangleQuantity();
                     triangleText.setText("" + numTriangles);
                 }
-                else if ( m_kMeshes.get(aiSelected[i]) instanceof TriMesh )
+                else 
                 {
-                    TriMesh kMesh = ((TriMesh)(m_kMeshes.get(aiSelected[i])));
+                    TriMesh kMesh = m_kMeshes.get(aiSelected[i]);
                     
                     try {
                     	 for ( int j = 0; j < tmesh.length; j++ ) {
@@ -814,7 +785,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         detailSliderLabels[1] = createLabel("50");
         detailSliderLabels[2] = createLabel("100");
 
-        Hashtable labels = new Hashtable();
+        Hashtable<Integer,JLabel> labels = new Hashtable<Integer,JLabel>();
 
         labels.put(new Integer(0), opacitySliderLabels[0]);
         labels.put(new Integer(50), opacitySliderLabels[1]);
@@ -831,7 +802,6 @@ public class JPanelSurface_WM extends JInterfaceBase
         opacityLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         opacitySlider.setEnabled(true);
         opacityLabel.setEnabled(true);
-        surfaceOpacitySlice = opacitySlider.getValue();
         opacitySliderLabels[0].setEnabled(true);
         opacitySliderLabels[1].setEnabled(true);
         opacitySliderLabels[2].setEnabled(true);
@@ -893,7 +863,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         detailLabel.setFont(MipavUtil.font12B);
         detailLabel.setForeground(Color.black);
 
-        Hashtable labels2 = new Hashtable();
+        Hashtable<Integer,JLabel> labels2 = new Hashtable<Integer,JLabel>();
 
         labels2.put(new Integer(0), detailSliderLabels[0]);
         labels2.put(new Integer(50), detailSliderLabels[1]);
@@ -1055,46 +1025,6 @@ public class JPanelSurface_WM extends JInterfaceBase
         setElementsEnabled(true);
     }
 
-
-    /**
-     * Adding the surface with specific directory and file name. Called from the ViewJFrameVolumeView class from the
-     * JPanelEndoscopy loadingSurface function.
-     *
-     * @param  dir          directory name
-     * @param  surfaceFile  file name
-     */
-    public void addSurfaces(String dir, File surfaceFile) {
-        this.readSurface(dir, surfaceFile, 0.5f);
-    }
-
-    /**
-     * Adding the surface with specific directory, file name, and surfaceOpacity.
-     *
-     * @param  dir             directory name
-     * @param  surfaceFile     file name
-     * @param  surfaceOpacity  opacity
-     */
-    private void readSurface(String dir, File surfaceFile, float surfaceOpacity) {
-        /*
-        ViewUserInterface.getReference().setDefaultDirectory(dir);
-        surfaceDirectoryName = dir;
-
-        Color4f surfaceColor = getNewSurfaceColor(surfaceVector.size());
-        SurfaceAttributes[] surfaces = new SurfaceAttributes[1];
-        surfaces[0] = FileSurface.readSurface(parentScene.getImageA(), surfaceFile, surfaceColor);
-        addSurfaces(surfaces, false);
-        */
-    }
-
-    /**
-     * The action taken when the Remove button is clicked in the list box. All selected surfaces in the list box are
-     * removed from the scene graph.
-     *
-     * @param  surfaces  the selected surfaces (SurfaceAttributes[]) to be removed.
-    private void removeSurfaces(SurfaceAttributes[] surfaces) {
-    }
-     */
-
     /**
      * Sets the surface options GUI panel to enabled or disabled. If there are 0 or multiple surfaces selected, all the
      * options should be disabled.
@@ -1117,8 +1047,6 @@ public class JPanelSurface_WM extends JInterfaceBase
         colorLabel.setEnabled(flag);
         m_kAdvancedMaterialOptionsButton.setEnabled(flag);
         m_kSurfaceTextureButton.setEnabled(flag);
-        //detailLabel.setEnabled(flag);
-        //detailSlider.setEnabled(flag);
         opacityLabel.setEnabled(flag);
         opacitySlider.setEnabled(flag);
         triangleLabel.setEnabled(flag);
@@ -1127,10 +1055,6 @@ public class JPanelSurface_WM extends JInterfaceBase
         volumeText.setEnabled(flag);
         areaLabel.setEnabled(flag);
         areaText.setEnabled(flag);
-        
-        //for (int i = 0; i < detailSliderLabels.length; i++) {
-        //    detailSliderLabels[i].setEnabled(flag);
-        //}
 
         for (int i = 0; i < opacitySliderLabels.length; i++) {
             opacitySliderLabels[i].setEnabled(flag);
@@ -1145,30 +1069,6 @@ public class JPanelSurface_WM extends JInterfaceBase
         m_kPerPixelLightingCB.setEnabled(flag);
 
         m_kSurfacePaint.setEnabled(flag);
-
-//         if (((SurfaceRender) parentScene).getSurfaceTexture() != null) {
-//             ((SurfaceRender) parentScene).getSurfaceTexture().setEnabled(flag);
-//         }
-    }
-
-
-    /**
-     * Called when surfaces are added or removed from the surfaceVector SurfaceAttributes list. Updates the surfaceList
-     * combo-box displayed in the user-interface.
-     *
-     * @param  selected  array of names that are currently selected.
-     */
-    private void updateSurfaceNameList(int[] selected) {
-        /*
-        Vector surfaceNames = new Vector();
-
-        for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
-            surfaceNames.addElement(((SurfaceAttributes) en.nextElement()).getName());
-        }
-
-        surfaceList.setListData(surfaceNames);
-        surfaceList.setSelectedIndices(selected);
-        */
     }
 
     /**
@@ -1565,13 +1465,11 @@ public class JPanelSurface_WM extends JInterfaceBase
 
         if ( m_kVolumeViewer != null )
         {
-            TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
             DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             
             int numTriangles = 0;
             float volume = 0;
             float area = 0;
-
             
             for (int i = 0; i < aiSelected.length; i++) {
 
@@ -1634,7 +1532,6 @@ public class JPanelSurface_WM extends JInterfaceBase
         if ( m_kVolumeViewer != null )
         {
             TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
                 akSurfaces[i] = m_kMeshes.get(aiSelected[i]);
             }

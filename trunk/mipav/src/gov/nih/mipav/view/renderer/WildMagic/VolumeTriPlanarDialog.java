@@ -75,9 +75,6 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
     /** Temp Model image. */
     private ModelImage resampledImage = null;
 
-    /** An image with areas designated as special (vessels, etc). */
-    private ModelImage segmentationImage;
-
     /**
      * The action command to send to the volume renderer after we start it (can be used to open a tab). Used by RFAST to
      * open up the RFA simulation immediately.
@@ -246,7 +243,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
                 volExtents[0] = dimPowerOfTwo(volExtents[0]);
             }
 
-            newRes[0] = (float) (extents[0] * res[0]) / (float) volExtents[0];
+            newRes[0] = (extents[0] * res[0]) / volExtents[0];
 
             volExtents[1] = Integer.parseInt(extYOutput.getText());
 
@@ -255,7 +252,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
                 volExtents[1] = dimPowerOfTwo(volExtents[1]);
             }
 
-            newRes[1] = (float) (extents[1] * res[1]) / (float) volExtents[1];
+            newRes[1] = (extents[1] * res[1]) / volExtents[1];
 
             if (nDim >= 3) {
                 volExtents[2] = Integer.parseInt(extZOutput.getText());
@@ -264,7 +261,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
                     MipavUtil.displayInfo("Reample to Power of 2.");
                     volExtents[2] = dimPowerOfTwo(volExtents[2]);
                 }
-                newRes[2] = (float) (extents[2] * res[2]) / (float) volExtents[2];
+                newRes[2] = (extents[2] * res[2]) / volExtents[2];
             }
 
             if (nDim >= 3) {
@@ -287,13 +284,13 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
             exec();
         } else if (command.equals("Pad")) {
             volExtents[0] = dimPowerOfTwo(Integer.parseInt(extXOutput.getText()));
-            newRes[0] = (float) (extents[0] * res[0]) / (float) volExtents[0];
+            newRes[0] = (extents[0] * res[0]) / volExtents[0];
             volExtents[1] = dimPowerOfTwo(Integer.parseInt(extYOutput.getText()));
-            newRes[1] = (float) (extents[1] * res[1]) / (float) volExtents[1];
+            newRes[1] = (extents[1] * res[1]) / volExtents[1];
 
             if (nDim >= 3) {
                 volExtents[2] = dimPowerOfTwo(Integer.parseInt(extZOutput.getText()));
-                newRes[2] = (float) (extents[2] * res[2]) / (float) volExtents[2];
+                newRes[2] = (extents[2] * res[2]) / volExtents[2];
             }
 
             if (nDim >= 3) {
@@ -415,8 +412,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
         try {
             if (m_kVolViewType.equals("WMVolTriplanar")) {
-                VolumeTriPlanarInterface kWM = new VolumeTriPlanarInterface(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB,
-                        this);
+                VolumeTriPlanarInterface kWM = new VolumeTriPlanarInterface(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB);
                 kWM.setImageOriginal(imageAOriginal);
 
                 if (forcePadding) {
@@ -447,10 +443,6 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
                 if (startupCommand != null) {
                     kWM.actionPerformed(new ActionEvent(this, 0, startupCommand));
-                }
-
-                if (segmentationImage != null) {
-                    kWM.setSegmentationImage(segmentationImage);
                 }
             }
 
@@ -687,7 +679,8 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
      * 
      * @param event event that triggered this function
      */
-    public synchronized void itemStateChanged(ItemEvent event) {}
+    public synchronized void itemStateChanged(@SuppressWarnings("unused")
+    ItemEvent event) {}
 
     /**
      * Sets a command that should be sent to the renderer after it is started.
@@ -696,15 +689,6 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
      */
     public void sendActionOnStart(String cmd) {
         startupCommand = cmd;
-    }
-
-    /**
-     * Set the image which we can check to see if the probe is hitting anything important (such as vessels, etc).
-     * 
-     * @param img segmentation image
-     */
-    public void setSegmentationImage(ModelImage img) {
-        segmentationImage = img;
     }
 
     /**
@@ -819,30 +803,26 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
             if (dim > 40) {
                 return 64;
-            } else {
-                return 32;
-            }
+            } 
+            return 32;
         } else if (dim <= 128) {
 
             if (dim > 80) {
                 return 128;
-            } else {
-                return 64;
-            }
+            } 
+            return 64;
         } else if (dim <= 256) {
 
             if (dim > 160) {
                 return 256;
-            } else {
-                return 128;
-            }
+            } 
+            return 128;
         } else if (dim <= 512) {
 
             if (dim > 448) {
                 return 512;
-            } else {
-                return 256;
-            }
+            } 
+            return 256;
         } else {
             return 512;
         }

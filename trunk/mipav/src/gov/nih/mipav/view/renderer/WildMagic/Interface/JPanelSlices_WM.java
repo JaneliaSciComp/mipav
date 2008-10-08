@@ -41,7 +41,6 @@ public class JPanelSlices_WM extends JInterfaceBase
     /** Which time slice is currently displayed. */
     public int tSlice;
 
-    private Vector3f slicePosition = new Vector3f();
     /** Which slice is currently displayed in the ZY plane. */
     public int xSlice;
 
@@ -69,9 +68,6 @@ public class JPanelSlices_WM extends JInterfaceBase
     /** Main panel for sliders. */
     private JPanel controlPanel;
 
-    /** Current event vector index. */
-    private int current;
-
     /** Labels next to sliders. */
     private JLabel labelX, labelY, labelZ, labelT;
 
@@ -95,9 +91,6 @@ public class JPanelSlices_WM extends JInterfaceBase
 
     /** Scroll panel that holding the all the control components. */
     private DrawingPanel scrollPanel;
-
-    /** Flag to indicate the first time slider name changes. */
-    private boolean setSliderFlag;
 
     /** Text fields that display the slice number next to the sliders. */
     private JTextField textX, textY, textZ, textT;
@@ -237,19 +230,6 @@ public class JPanelSlices_WM extends JInterfaceBase
         }
 
     }
-
-    /**
-     * Build the slice pickable panel 
-     */
-    public void buildSlicePickPanel() {
-    	GridBagLayout cpGBL = new GridBagLayout();
-        GridBagConstraints cpGBC = new GridBagConstraints();
-
-        cpGBC.fill = GridBagConstraints.NONE;
-        cpGBC.weightx = 50;
-        cpGBC.weighty = 50;
-        
-    }
     
     /**
      * Builds panel that has 3 sliders for the 3 planes shown, 3 checkboxes
@@ -308,7 +288,7 @@ public class JPanelSlices_WM extends JInterfaceBase
         labelXEnd.setFont(MipavUtil.font12);
         labelXEnd.setEnabled(true);
 
-        Hashtable labelTableX = new Hashtable();
+        Hashtable<Integer,JLabel> labelTableX = new Hashtable<Integer,JLabel>();
 
         labelTableX.put(new Integer(0), labelX1);
         labelTableX.put(new Integer(xSlice), labelXMid);
@@ -360,7 +340,7 @@ public class JPanelSlices_WM extends JInterfaceBase
         labelYEnd.setFont(MipavUtil.font12);
         labelYEnd.setEnabled(true);
 
-        Hashtable labelTableY = new Hashtable();
+        Hashtable<Integer,JLabel> labelTableY = new Hashtable<Integer,JLabel>();
 
         labelTableY.put(new Integer(0), labelY1);
         labelTableY.put(new Integer(ySlice), labelYMid);
@@ -412,7 +392,7 @@ public class JPanelSlices_WM extends JInterfaceBase
         labelZEnd.setFont(MipavUtil.font12);
         labelZEnd.setEnabled(true);
 
-        Hashtable labelTableZ = new Hashtable();
+        Hashtable<Integer,JLabel> labelTableZ = new Hashtable<Integer,JLabel>();
 
         labelTableZ.put(new Integer(0), labelZ1);
         labelTableZ.put(new Integer(zSlice), labelZMid);
@@ -470,7 +450,7 @@ public class JPanelSlices_WM extends JInterfaceBase
         opacitySliderLabelsX[1] = createLabel("50");
         opacitySliderLabelsX[2] = createLabel("100");
 
-        Hashtable labelsX = new Hashtable();
+        Hashtable<Integer,JLabel> labelsX = new Hashtable<Integer,JLabel>();
 
         labelsX.put(new Integer(0), opacitySliderLabelsX[0]);
         labelsX.put(new Integer(50), opacitySliderLabelsX[1]);
@@ -505,7 +485,7 @@ public class JPanelSlices_WM extends JInterfaceBase
         opacitySliderLabelsY[1] = createLabel("50");
         opacitySliderLabelsY[2] = createLabel("100");
 
-        Hashtable labelsY = new Hashtable();
+        Hashtable<Integer,JLabel> labelsY = new Hashtable<Integer,JLabel>();
 
         labelsY.put(new Integer(0), opacitySliderLabelsY[0]);
         labelsY.put(new Integer(50), opacitySliderLabelsY[1]);
@@ -540,7 +520,7 @@ public class JPanelSlices_WM extends JInterfaceBase
         opacitySliderLabelsZ[1] = createLabel("50");
         opacitySliderLabelsZ[2] = createLabel("100");
 
-        Hashtable labelsZ = new Hashtable();
+        Hashtable<Integer,JLabel> labelsZ = new Hashtable<Integer,JLabel>();
 
         labelsZ.put(new Integer(0), opacitySliderLabelsZ[0]);
         labelsZ.put(new Integer(50), opacitySliderLabelsZ[1]);
@@ -861,7 +841,6 @@ public class JPanelSlices_WM extends JInterfaceBase
         buildBoundingBox();
         buildControlPanel();
         buildOpacityPanel();
-        buildSlicePickPanel();
 
         Box contentBox = new Box(BoxLayout.Y_AXIS);
 
@@ -1093,7 +1072,7 @@ public class JPanelSlices_WM extends JInterfaceBase
             zOpacitySlice = opacitySliderZ.getValue();
             if ( m_kVolumeViewer != null )
             {
-                m_kVolumeViewer.setSliceOpacity( 0, (float)xOpacitySlice/100.0f );
+                m_kVolumeViewer.setSliceOpacity( 0, xOpacitySlice/100.0f );
             }
         } else if (source == opacitySliderY) {
             xOpacitySlice = opacitySliderX.getValue();
@@ -1101,7 +1080,7 @@ public class JPanelSlices_WM extends JInterfaceBase
             zOpacitySlice = opacitySliderZ.getValue();
             if ( m_kVolumeViewer != null )
             {
-                m_kVolumeViewer.setSliceOpacity( 1, (float)yOpacitySlice/100.0f );
+                m_kVolumeViewer.setSliceOpacity( 1, yOpacitySlice/100.0f );
             }
         } else if (source == opacitySliderZ) {
             xOpacitySlice = opacitySliderX.getValue();
@@ -1109,7 +1088,7 @@ public class JPanelSlices_WM extends JInterfaceBase
             zOpacitySlice = opacitySliderZ.getValue();
             if ( m_kVolumeViewer != null )
             {
-                m_kVolumeViewer.setSliceOpacity( 2, (float)zOpacitySlice/100.0f );
+                m_kVolumeViewer.setSliceOpacity( 2, zOpacitySlice/100.0f );
             }
         }
     }
@@ -1266,7 +1245,7 @@ public class JPanelSlices_WM extends JInterfaceBase
         labelTEnd.setFont(MipavUtil.font12);
         labelTEnd.setEnabled(true);
 
-        Hashtable labelTableT = new Hashtable();
+        Hashtable<Integer,JLabel> labelTableT = new Hashtable<Integer,JLabel>();
 
         labelTableT.put(new Integer(1), labelT1);
         labelTableT.put(new Integer(tSlice + 1), labelTMid);

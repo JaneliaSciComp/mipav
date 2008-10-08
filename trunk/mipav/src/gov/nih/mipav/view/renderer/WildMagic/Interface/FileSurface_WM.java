@@ -68,13 +68,9 @@ public class FileSurface_WM {
                 kSurface[i] = readSurface(kImage, akFiles[i], kColor, 1.0f, null, 0 );
             } else if (kName.indexOf(".xml") != -1) {
                 FileSurfaceRefXML_WM kSurfaceXML = new FileSurfaceRefXML_WM(kName, akFiles[i].getParent());
-                try {
-                    FileInfoSurfaceRefXML_WM kFileInfo = kSurfaceXML.readSurfaceXML(kName, akFiles[i].getParent());
-                    akFiles[i] = new File(akFiles[i].getParent()+ File.separatorChar + kFileInfo.getSurfaceFileName());
-                    kSurface[i] = readSurface(kImage, akFiles[i], kColor, kFileInfo.getOpacity(), kFileInfo.getMaterial(), kFileInfo.getLevelDetail());
-                } catch (IOException e) {
-                    return null;
-                }
+                FileInfoSurfaceRefXML_WM kFileInfo = kSurfaceXML.readSurfaceXML(kName, akFiles[i].getParent());
+                akFiles[i] = new File(akFiles[i].getParent()+ File.separatorChar + kFileInfo.getSurfaceFileName());
+                kSurface[i] = readSurface(kImage, akFiles[i], kColor, kFileInfo.getOpacity(), kFileInfo.getMaterial(), kFileInfo.getLevelDetail());
             }
         }
 
@@ -111,7 +107,6 @@ public class FileSurface_WM {
         FileSurfaceRefXML_WM kSurfaceXML;
         FileInfoSurfaceRefXML kFileInfo = null;
         RandomAccessFile in = null;
-        boolean isXMLSurface = false;
         
         if (file.getName().endsWith("sur")) {
             try {
@@ -124,20 +119,15 @@ public class FileSurface_WM {
             }
         } 
         else if ( file.getName().endsWith("xml") ) {
-            isXMLSurface = true;
             kSurfaceXML = new FileSurfaceRefXML_WM(file.getName(), file.getParent());
+            kFileInfo = kSurfaceXML.readSurfaceXML(file.getName(), file.getParent());
+
+            file = new File(file.getParent()+ File.separatorChar + kFileInfo.getSurfaceFileName());
             try {
-                kFileInfo = kSurfaceXML.readSurfaceXML(file.getName(), file.getParent());
-                    
-                file = new File(file.getParent()+ File.separatorChar + kFileInfo.getSurfaceFileName());
-                try {
-                    in = new RandomAccessFile(file, "r");
-                    iType = in.readInt();
-                    iQuantity = in.readInt();
-                    isSur = true;
-                } catch (IOException e) {
-                    return null;
-                }
+                in = new RandomAccessFile(file, "r");
+                iType = in.readInt();
+                iQuantity = in.readInt();
+                isSur = true;
             } catch (IOException e) {
                 return null;
             }
@@ -199,7 +189,7 @@ public class FileSurface_WM {
                 
                 float[] startLocation = kImage.getFileInfo(0).getOrigin();
                 int[] aiModelDirection = MipavCoordinateSystems.getModelDirections(kImage);
-                float[] direction = new float[] { (int)aiModelDirection[0], (int)aiModelDirection[1], (int)aiModelDirection[2]}; 
+                float[] direction = new float[] { aiModelDirection[0], aiModelDirection[1], aiModelDirection[2]}; 
                 float[] box = new float[]{0f,0f,0f};
                 if (iType == 0) {
 
@@ -379,12 +369,10 @@ public class FileSurface_WM {
                 File[] files = chooser.getSelectedFiles();
 
                 return files;
-            } else {
-                File[] files = new File[1];
-                files[0] = chooser.getSelectedFile();
-
-                return files;
-            }
+            } 
+            File[] files = new File[1];
+            files[0] = chooser.getSelectedFile();
+            return files;
         }
 
         return null;
@@ -395,7 +383,7 @@ public class FileSurface_WM {
                                     int added, int total, boolean isVisible,
                                     ColorRGB kColor, float fOpacity, MaterialState kMaterial,
                                     float[] startLocation, float[] direction, float[] box )
-        throws IOException {
+{
 
         try {
             int i, index, tmpInt;
@@ -754,7 +742,7 @@ public class FileSurface_WM {
      * @exception  IOException  if there is an error reading from the file
      */
     public static ClodMesh loadCMesh(RandomAccessFile kIn, ViewJProgressBar pBar, int added, int piece)
-        throws IOException {
+    {
         ColorRGB kColor = new ColorRGB(ColorRGB.WHITE);
         float fOpacity = 1.0f;
         MaterialState kMaterial = new MaterialState();
@@ -885,17 +873,13 @@ public class FileSurface_WM {
     public static TriMesh loadVRMLMesh(RandomAccessFile kIn, ViewJProgressBar progress, int added, int total,
                                        boolean flag,
                                        float[] startLocation, float[] direction, float[] box
-                                       ) throws IOException {
+                                       ) {
 
         String str = null;
         String str2 = null;
         String str3 = null;
-        boolean flip = true;
         StringTokenizer stoken = null;
         try {
-            //progress.setLocation(200, 200);
-            //progress.setVisible(true);
-
             // read vertices
             if (flag) {
 
@@ -919,14 +903,6 @@ public class FileSurface_WM {
 
                     if (stoken.nextToken().equals("#flip")) {
                         stoken.nextToken();
-
-                        int flipInt = Integer.valueOf(stoken.nextToken()).intValue();
-
-                        if (flipInt == 1) {
-                            flip = true;
-                        } else {
-                            flip = false;
-                        }
                     }
 
                     // read direction line
@@ -1069,7 +1045,7 @@ public class FileSurface_WM {
             kAttr.SetCChannels(0,4);
             VertexBuffer kVBuffer = new VertexBuffer( kAttr, vertexPts.size() );
             for (int i = 0; i < vertexPts.size(); i++) {
-                Vector3f kVertex = (Vector3f) (vertexPts.get(i));
+                Vector3f kVertex = vertexPts.get(i);
                 
                 kVBuffer.SetPosition3(i, kVertex);      
                 kVBuffer.SetColor4( 0, i,
@@ -1125,7 +1101,7 @@ public class FileSurface_WM {
             int[] aiConnect = new int[connArray.size()];
 
             for (int i = 0; i < connArray.size(); i++) {
-                aiConnect[i] = ((Integer) (connArray.get(i))).intValue();
+                aiConnect[i] = connArray.get(i).intValue();
             }
 
             progress.updateValueImmed(added + (100 / total));
@@ -1151,7 +1127,7 @@ public class FileSurface_WM {
      * @throws IOException
      */
     private static TriMesh loadVTKLegacyMesh(RandomAccessFile kIn, ViewJProgressBar progress, int added, int total,
-                                            boolean flag, String fileName) throws IOException {
+                                            boolean flag, String fileName) {
         TriMesh kMesh;
     	
         System.out.println(fileName);
@@ -1393,7 +1369,7 @@ public class FileSurface_WM {
 
                         // Get the DICOM transform that describes the transformation from
                         // axial to this image orientation
-                        TransMatrix dicomMatrix = (TransMatrix) (kImage.getMatrix().clone());
+                        TransMatrix dicomMatrix = kImage.getMatrix().clone();
                         float[] coord = new float[3];
                         float[] tCoord = new float[3];
 
@@ -1418,7 +1394,7 @@ public class FileSurface_WM {
                     //double[][] inverseDicomArray = null;
                     TransMatrix inverse_DicomMatrix = null;
                     if (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
-                        inverse_DicomMatrix = (TransMatrix) (kImage.getMatrix().clone());
+                        inverse_DicomMatrix = kImage.getMatrix().clone();
                         inverse_DicomMatrix.Inverse();
                         //inverseDicomArray = inverseDicomMatrix.getMatrix();
                     }
@@ -1539,7 +1515,7 @@ public class FileSurface_WM {
 	        
     }
    
-    private static void printSTLAscii(PrintWriter kOut, TriMesh kMesh) throws IOException
+    private static void printSTLAscii(PrintWriter kOut, TriMesh kMesh)
     {
         int i;
         int index1, index2, index3;
@@ -1726,7 +1702,6 @@ public class FileSurface_WM {
      * @exception  IOException  if there is an error writing to the file
      */
     protected static void saveAsVRML(PrintWriter kOut, TriMesh kMesh, VertexBuffer kVBuffer, boolean flip, int[] direction, float[] startLocation, float[] box)
-        throws IOException
     {
         kOut.print("#flip { ");
 
@@ -1922,7 +1897,7 @@ public class FileSurface_WM {
         kOut.close();
     }
 
-    private static void printAscii(PrintWriter kOut, TriMesh kMesh) throws IOException {
+    private static void printAscii(PrintWriter kOut, TriMesh kMesh) {
     	Vector3f kVertex = new Vector3f();
         Vector3f kNormal = new Vector3f();
 

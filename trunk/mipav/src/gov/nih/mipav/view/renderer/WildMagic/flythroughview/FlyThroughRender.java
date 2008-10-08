@@ -4,7 +4,6 @@ package gov.nih.mipav.view.renderer.WildMagic.flythroughview;
 import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.ViewJFrameAnimateClip;
 import gov.nih.mipav.view.renderer.flythroughview.*;
 import gov.nih.mipav.view.renderer.WildMagic.*;
 import gov.nih.mipav.view.renderer.WildMagic.Render.*;
@@ -79,7 +78,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     public FlyThroughRender( VolumeTriPlanarInterface kParent, Animator kAnimator, VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa, ModelRGB kRGBTa,
             VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb, ModelRGB kRGBTb  )
     {
-        super("GPUVolumeRender",0,0,512,512, new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
+        super();
 
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
@@ -278,7 +277,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         kCLoc.Scale(-1.4f);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
-        CreateScene( arg0 );
+        CreateScene();
 
         // initial update of objects
         m_spkScene.UpdateGS();
@@ -286,12 +285,9 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
 
         // initial culling of scene
         m_kCuller.SetCamera(m_spkCamera);
-        //m_kCuller.ComputeVisibleSet(m_spkScene);
 
         InitializeCameraMotion(.05f,0.001f);
         InitializeObjectMotion(m_kRotation);
-
-        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
         m_kAnimator.add( GetCanvas() );      
         m_bInit = true;
@@ -301,7 +297,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
      * Called by the init() function. Creates and initialized the scene-graph.
      * @param arg0, the GLCanvas
      */
-    private void CreateScene (GLAutoDrawable arg0)
+    private void CreateScene ()
     {
         // Create a scene graph with the face model as the leaf node.
         m_spkScene = new Node();
@@ -621,7 +617,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         float[] afResolutions = m_kMaskImage.getFileInfo(0).getResolutions();
         float[] afOrigins = m_kMaskImage.getFileInfo(0).getOrigin();
         int[] aiModelDirection = MipavCoordinateSystems.getModelDirections(m_kMaskImage);
-        float[] aiDirections = new float[] { (int)aiModelDirection[0], (int)aiModelDirection[1], (int)aiModelDirection[2]}; 
+        float[] aiDirections = new float[] { aiModelDirection[0], aiModelDirection[1], aiModelDirection[2]}; 
         //int[] aiDirections = m_kMaskImage.getFileInfo(0).getAxisDirection();
 
         int xDim = aiExtents[0];
@@ -664,7 +660,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         float[] afResolutions = m_kMaskImage.getFileInfo(0).getResolutions();
         float[] afOrigins = m_kMaskImage.getFileInfo(0).getOrigin();
         int[] aiModelDirection = MipavCoordinateSystems.getModelDirections(m_kMaskImage);
-        float[] aiDirections = new float[] { (int)aiModelDirection[0], (int)aiModelDirection[1], (int)aiModelDirection[2]}; 
+        float[] aiDirections = new float[] { aiModelDirection[0], aiModelDirection[1], aiModelDirection[2]}; 
         //int[] aiDirections = m_kMaskImage.getFileInfo(0).getAxisDirection();
 
         int xDim = aiExtents[0];
