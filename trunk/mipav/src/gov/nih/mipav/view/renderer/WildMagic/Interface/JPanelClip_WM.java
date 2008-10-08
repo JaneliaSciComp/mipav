@@ -1851,9 +1851,9 @@ public class JPanelClip_WM extends JInterfaceBase
     public void setClipSliceAColor(Color color) {
         if ( rayBasedRenderWM != null )
         {
-            rayBasedRenderWM.setArbColor( new ColorRGB( colorButtonA.getBackground().getRed(),
-            		colorButtonA.getBackground().getGreen(),
-            		colorButtonA.getBackground().getBlue() ) );
+            rayBasedRenderWM.setArbColor( new ColorRGB( color.getRed(),
+                    color.getGreen(),
+                    color.getBlue() ) );
         }
    }
     
@@ -1865,9 +1865,9 @@ public class JPanelClip_WM extends JInterfaceBase
     public void setClipSliceSColor(Color color) {
         if ( rayBasedRenderWM != null )
         {
-            rayBasedRenderWM.setEyeColor( new ColorRGB( colorButtonStatic.getBackground().getRed(),
-                                                        colorButtonStatic.getBackground().getGreen(),
-                                                        colorButtonStatic.getBackground().getBlue() ) );
+            rayBasedRenderWM.setEyeColor( new ColorRGB( color.getRed(),
+                    color.getGreen(),
+                    color.getBlue() ) );
         }
    }
 
@@ -1879,9 +1879,9 @@ public class JPanelClip_WM extends JInterfaceBase
     public void setClipSliceSInvColor(Color color) {
         if ( rayBasedRenderWM != null )
         {
-            rayBasedRenderWM.setEyeInvColor(  new ColorRGB( colorButtonStaticInv.getBackground().getRed(),
-                                                            colorButtonStaticInv.getBackground().getGreen(),
-                                                            colorButtonStaticInv.getBackground().getBlue() ) );
+            rayBasedRenderWM.setEyeInvColor(  new ColorRGB( color.getRed(),
+                    color.getGreen(),
+                    color.getBlue() ) );
         }
     }
 
@@ -1894,9 +1894,9 @@ public class JPanelClip_WM extends JInterfaceBase
         if ( rayBasedRenderWM != null )
         {
             rayBasedRenderWM.setClipPlaneColor( 1,
-                                                new ColorRGB( colorButtonX.getBackground().getRed(),
-                                                              colorButtonX.getBackground().getGreen(),
-                                                              colorButtonX.getBackground().getBlue() ) );
+                                                new ColorRGB( color.getRed(),
+                                                        color.getGreen(),
+                                                        color.getBlue() ) );
         }
     }
 
@@ -1909,9 +1909,9 @@ public class JPanelClip_WM extends JInterfaceBase
         if ( rayBasedRenderWM != null )
         {
             rayBasedRenderWM.setClipPlaneColor( 0,
-                                                new ColorRGB( colorButtonXInv.getBackground().getRed(),
-                                                              colorButtonXInv.getBackground().getGreen(),
-                                                              colorButtonXInv.getBackground().getBlue() ) );
+                                                new ColorRGB( color.getRed(),
+                                                        color.getGreen(),
+                                                        color.getBlue() ) );
         }
     }
 
@@ -1924,9 +1924,9 @@ public class JPanelClip_WM extends JInterfaceBase
         if ( rayBasedRenderWM != null )
         {
             rayBasedRenderWM.setClipPlaneColor( 3,
-                                                new ColorRGB( colorButtonY.getBackground().getRed(),
-                                                              colorButtonY.getBackground().getGreen(),
-                                                              colorButtonY.getBackground().getBlue() ) );
+                                                new ColorRGB( color.getRed(),
+                                                        color.getGreen(),
+                                                        color.getBlue() ) );
         }
     }
 
@@ -1939,9 +1939,9 @@ public class JPanelClip_WM extends JInterfaceBase
         if ( rayBasedRenderWM != null )
         {
             rayBasedRenderWM.setClipPlaneColor( 2,
-                                                new ColorRGB( colorButtonYInv.getBackground().getRed(),
-                                                              colorButtonYInv.getBackground().getGreen(),
-                                                              colorButtonYInv.getBackground().getBlue() ) );
+                                                new ColorRGB( color.getRed(),
+                                                        color.getGreen(),
+                                                        color.getBlue() ) );
         }
     }
 
@@ -1954,9 +1954,9 @@ public class JPanelClip_WM extends JInterfaceBase
         if ( rayBasedRenderWM != null )
         {
             rayBasedRenderWM.setClipPlaneColor( 5,
-                                                new ColorRGB( colorButtonZ.getBackground().getRed(),
-                                                              colorButtonZ.getBackground().getGreen(),
-                                                              colorButtonZ.getBackground().getBlue() ) );
+                                                new ColorRGB( color.getRed(),
+                                                        color.getGreen(),
+                                                        color.getBlue() ) );
         }
     }
 
@@ -1969,9 +1969,9 @@ public class JPanelClip_WM extends JInterfaceBase
         if ( rayBasedRenderWM != null )
         {
             rayBasedRenderWM.setClipPlaneColor( 4,
-                                                new ColorRGB( colorButtonZInv.getBackground().getRed(),
-                                                              colorButtonZInv.getBackground().getGreen(),
-                                                              colorButtonZInv.getBackground().getBlue() ) );
+                                                new ColorRGB( color.getRed(),
+                                                        color.getGreen(),
+                                                        color.getBlue() ) );
         }
     }
 
@@ -2208,11 +2208,12 @@ public class JPanelClip_WM extends JInterfaceBase
     }
 
     /**
-     * Accessor that closing the mouse recorder window frame.
+     * Closing the mouse recorder window frame.
      *
      * @param  e  Window event.
      */
-    public void windowClosing(WindowEvent e) {
+    public void windowClosing(@SuppressWarnings("unused")
+    WindowEvent e) {
         disableClipPlanes();
         disableClipPlanesArbi();
     }

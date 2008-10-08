@@ -637,34 +637,28 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
         ViewJProgressBar progress = new ViewJProgressBar("Loading surface", "Loading surface", 0, 100, false, null,
                                                          null);
 
-        try {
+        if (iType == 0) {
 
-            if (iType == 0) {
-
-                // meshes are type TriangleMesh
-                if (isSur == true) {
-                    triMesh = FileSurface_WM.loadTMesh(in, progress, 0, 1, true, null, 1.0f, null, null, null, null);
-                } else {
-                    triMesh = FileSurface_WM.loadVRMLMesh(in, progress, 0, 1, true, null, null, null);
-                }
-
-                if (triMesh == null) {
-                    MipavUtil.displayError("Error while reading in triangle mesh.");
-
-                    return;
-                }
+            // meshes are type TriangleMesh
+            if (isSur == true) {
+                triMesh = FileSurface_WM.loadTMesh(in, progress, 0, 1, true, null, 1.0f, null, null, null, null);
             } else {
-
-                // meshes are type ClodMesh
-                ClodMesh kClod = FileSurface_WM.loadCMesh(in, null, 0, 1);
-                kClod.TargetRecord(kClod.GetMaximumLOD());
-                kClod.SelectLevelOfDetail();
-                triMesh = kClod;
+                triMesh = FileSurface_WM.loadVRMLMesh(in, progress, 0, 1, true, null, null, null);
             }
-        } catch (IOException e) {
-            return;
-        }
 
+            if (triMesh == null) {
+                MipavUtil.displayError("Error while reading in triangle mesh.");
+
+                return;
+            }
+        } else {
+
+            // meshes are type ClodMesh
+            ClodMesh kClod = FileSurface_WM.loadCMesh(in, null, 0, 1);
+            kClod.TargetRecord(kClod.GetMaximumLOD());
+            kClod.SelectLevelOfDetail();
+            triMesh = kClod;
+        }
         progress.dispose();
     }
 

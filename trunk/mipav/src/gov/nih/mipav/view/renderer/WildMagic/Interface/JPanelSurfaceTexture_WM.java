@@ -442,7 +442,7 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
             for (int i = 0; i < 256; i++) {
 
                 for (int j = 0; j < 256; j++) {
-                    mLUTImageA.set(i, j, fMin + ((float) i / 255.0f * (fMax - fMin)));
+                    mLUTImageA.set(i, j, fMin + ( i / 255.0f * (fMax - fMin)));
                 }
             }
 
@@ -479,9 +479,9 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
 
                 for (int i = 0; i < 256; i++) {
                     mLUTImageA.setC(i, j, 0, 255.0f);
-                    mLUTImageA.setC(i, j, 1, fMinR + ((float) j / 255.0f * (fMaxR - fMinR)));
-                    mLUTImageA.setC(i, j, 2, fMinG + ((float) j / 255.0f * (fMaxG - fMinG)));
-                    mLUTImageA.setC(i, j, 3, fMinB + ((float) j / 255.0f * (fMaxB - fMinB)));
+                    mLUTImageA.setC(i, j, 1, fMinR + (j / 255.0f * (fMaxR - fMinR)));
+                    mLUTImageA.setC(i, j, 2, fMinG + (j / 255.0f * (fMaxG - fMinG)));
+                    mLUTImageA.setC(i, j, 3, fMinB + (j / 255.0f * (fMaxB - fMinB)));
                 }
             }
 

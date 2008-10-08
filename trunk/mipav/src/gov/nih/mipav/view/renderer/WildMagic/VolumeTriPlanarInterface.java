@@ -16,6 +16,7 @@ import gov.nih.mipav.view.renderer.J3D.*;
 
 import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
 import gov.nih.mipav.view.renderer.WildMagic.Render.*;
+import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.*;
 import gov.nih.mipav.view.renderer.WildMagic.flythroughview.*;
 import gov.nih.mipav.view.renderer.flythroughview.JPanelFlythruMove;
 
@@ -55,19 +56,19 @@ implements MouseListener, ItemListener, ChangeListener {
     /** Menu items storage. */
     protected ViewMenuBuilder menuObj;
 
-    /** Labels for the current position in 3D ModelView coordinates:. */
+    /** Labels for the current position in 3D ModelView coordinates. */
     protected JLabel modelViewLabel = null;
 
-    /** DOCUMENT ME! */
+    /** Displayed values for the current position in 3D ModelView coordinates. */
     protected JLabel[] modelViewLabelVals = new JLabel[3];
 
     /** Panel that holds the toolbars. */
     protected JPanel panelToolbar = new JPanel();
 
-    /** Labels for the current position in PatientSlice coordinates:. */
+    /** Labels for the current position in PatientSlice coordinates. */
     protected JLabel patientSliceLabel = null;
 
-    /** DOCUMENT ME! */
+    /** Displayed values for the current position in PatientSlice coordinates. */
     protected JLabel[] patientSliceLabelVals = new JLabel[3];
 
     /** Lookup table of the color imageA, B. */
@@ -79,10 +80,10 @@ implements MouseListener, ItemListener, ChangeListener {
     /** Panel containing the position labels:. */
     JPanel panelLabels = new JPanel();
 
-    /** Control panels for the Brainsurface Flattener:. */
+    /** Control panels for the Brain Surface Flattener:. */
     protected JPanel m_kBrainsurfaceFlattenerPanel = null;
     /** Rendering the brainsurfaceFlattener objects. */
-    protected gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender brainsurfaceFlattenerRender = null;
+    protected CorticalAnalysisRender brainsurfaceFlattenerRender = null;
     protected FlyThroughRender m_kFlyThroughRender =  null;
     protected JPanel m_kFlyThroughPanel = null;
     protected JPanelVirtualEndoscopySetup_WM flythruControl;
@@ -299,9 +300,7 @@ implements MouseListener, ItemListener, ChangeListener {
      * @param  _resampleDialog        resample dialog reference.
      */
     public VolumeTriPlanarInterface(ModelImage _imageA, ModelLUT LUTa, ModelRGB _RGBTA, ModelImage _imageB, ModelLUT LUTb,
-                                ModelRGB _RGBTB,
-                                VolumeTriPlanarDialog _resampleDialog) {
-        //super(_imageA,LUTa,_RGBTA,_imageB,LUTb,_RGBTB,_leftPanelRenderMode,_rightPanelRenderMode,_resampleDialog);
+                                ModelRGB _RGBTB) {
         super(_imageA, _imageB);
         RGBTA = _RGBTA;
         RGBTB = _RGBTB;
@@ -366,7 +365,7 @@ implements MouseListener, ItemListener, ChangeListener {
             setSize(getSize().width, getSize().height - 1);
             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
                          panelToolbar.getHeight();
-            ((JPanelClip_WM)clipBox).resizePanel(maxPanelWidth, height);
+            clipBox.resizePanel(maxPanelWidth, height);
         } else if (command.equals("OpacityHistogram")) {
             insertTab("Opacity", opacityPanel);
         } else if (command.equals("Opacity")) {
@@ -412,13 +411,13 @@ implements MouseListener, ItemListener, ChangeListener {
             insertTab("Display", displayPanel);
         } else if (command.equals("InvokeClipping")) {
             clipBox.getMainPanel().setVisible(true);
-            ((JPanelClip_WM)clipBox).invokeClippingPlanes();
+            clipBox.invokeClippingPlanes();
             insertTab("Clip", clipPanel);
 
             setSize(getSize().width, getSize().height - 1);
             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
                          panelToolbar.getHeight();
-            ((JPanelClip_WM)clipBox).resizePanel(maxPanelWidth, height);
+            clipBox.resizePanel(maxPanelWidth, height);
 
             insertTab("Clip", clipPanel);
         } else if (command.equals("DisableClipping")) {
@@ -444,11 +443,6 @@ implements MouseListener, ItemListener, ChangeListener {
             insertTab("Surface", surfacePanel);
             surfaceGUI.getMainPanel().setVisible(true);
             setSize(getSize().width, getSize().height - 1);
-
-            int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
-                         panelToolbar.getHeight();
-
-//             surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
         } else if (command.equals("SurfaceTexture")) {
             insertTab("SurfaceTexture", surfaceTexturePanel);
             surfaceTextureGUI.getMainPanel().setVisible(true);
@@ -457,18 +451,6 @@ implements MouseListener, ItemListener, ChangeListener {
             {
                 surfaceTextureGUI.setEnabled(true);
             }
-        } else if (command.equals("RFA")) {
-//             insertTab("RFA", probePanel);
-//             insertSurfaceTab("RFA", probePanel);
-
-//             // hack to get the panel's scroll pane to show up correctly
-//             // the MIPAV version of the RFAST needs this setSize() for some messed up reason...
-//             setSize(getSize().width, getSize().height - 1);
-
-//             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
-//                          panelToolbar.getHeight();
-
-//             surRender.getProbeDialog().resizePanel(maxPanelWidth, height);
         } else if (command.equals("DTI")) {
              JDialogDTIInput kDTIIn = new JDialogDTIInput( JDialogDTIInput.TRACTS_PANEL,
                                                            this, imageA);
@@ -1177,10 +1159,7 @@ implements MouseListener, ItemListener, ChangeListener {
                 resetLUTMinMax(imageA, LUTa);
             }
 
-            if (transformFunct != null) {
-                transformFunct.disposeLocal();
-            }
-
+            transformFunct.disposeLocal();
             transformFunct = null;
             
             //new ViewJFrameImage((ModelImage)(imageA), null, new Dimension(610, 200), false);
@@ -1290,9 +1269,8 @@ implements MouseListener, ItemListener, ChangeListener {
 
             if (panelHistoLUT.getDisplayMode() == JPanelHistoLUT.IMAGE_A) {
                 return imageA;
-            } else {
-                return imageB;
-            }
+            } 
+            return imageB;
         }
 
         return null;
@@ -1310,9 +1288,8 @@ implements MouseListener, ItemListener, ChangeListener {
 
             if (panelHistoRGB.getDisplayMode() == JPanelHistoRGB.IMAGE_A) {
                 return imageA;
-            } else {
-                return imageB;
-            }
+            } 
+            return imageB;
         }
 
         return null;
@@ -1672,47 +1649,12 @@ implements MouseListener, ItemListener, ChangeListener {
     }
 
     /**
-     * Set material ( texture or voxels ) shininess value.
-     *
-     * @param  value  float
-     */
-    public void setMaterialShininess(float value) {
-
-//         if (raycastRenderWM != null) {
-//             raycastRenderWM.setMaterialShininess(value);
-//         }
-
-//         if (surRender != null) {
-//             surRender.setMaterialShininess(value);
-//         }
-    }
-
-    /**
      * Required by the parent super class, do nothing.
      *
      * @param  paintBitmapSwitch  boolean
      */
     public void setPaintBitmapSwitch(boolean paintBitmapSwitch) { }
 
-    /**
-     * Called when the view position changes in the FlyThruRenderer, updates the position representation in the Slice
-     * views:
-     *
-     * @param  kPosition        Ruida please add comment
-     * @param  kScaledPosition  Ruida please add comment
-     */
-//    public void setPathPosition(Point3f kPosition, Point3f kScaledPosition) {
-//        Vector3f kCenter = new Vector3f(kPosition.x * imageA.getExtents()[0], kPosition.y * imageA.getExtents()[1],
-//                                        kPosition.z * imageA.getExtents()[2]);
-
-//         for (int iPlane = 0; iPlane < 3; iPlane++) {
-//             m_akPlaneRender[iPlane].setCenter(kCenter);
-//         }
-
-//         surRender.setCenter(kCenter);
-//         surRender.getSurfaceDialog().setPathPosition(kScaledPosition);
-
-//    }
 
     /**
      * Sets the position labels.
@@ -1738,10 +1680,6 @@ implements MouseListener, ItemListener, ChangeListener {
      * @param  RGBT  RGB table
      */
     public void setRGBTA(ModelRGB RGBT) {
-//         if (surRender != null) {
-//             surRender.setRGBTA(RGBT);
-//         }
-
         if (m_kVolumeImageA != null) {
             m_kVolumeImageA.SetRGBT(RGBT, 0);
         }
@@ -1753,34 +1691,10 @@ implements MouseListener, ItemListener, ChangeListener {
      * @param  RGBT  RGB table
      */
     public void setRGBTB(ModelRGB RGBT) {
-//         if (surRender != null) {
-//             surRender.setRGBTB(RGBT);
-//         }
-
         if (m_kVolumeImageA != null) {
             m_kVolumeImageA.SetRGBT(RGBT, 1);
         }
     }
-
-    /**
-     * Set the image which we can check to see if the probe is hitting anything important (such as vessels, etc).
-     *
-     * @param  img  segmentation image
-     */
-    public void setSegmentationImage(ModelImage img) {
-
-//         if (surRender != null) {
-//             surRender.setSegmentationImage(img);
-//         }
-    }
-
-    /**
-     * Required by the parent super class, do nothing.
-     *
-     * @param  slice  int
-     */
-    public void setSlice(int slice) { }
-
 
     public void setSliceOpacity( int i, float fAlpha )
     {
@@ -1951,17 +1865,6 @@ implements MouseListener, ItemListener, ChangeListener {
      */
     public boolean updateImages(boolean forceShow) {
 
-//         for (int i = 0; i < 3; i++) {
-
-//             if (m_akPlaneRender[i] != null) {
-//                 m_akPlaneRender[i].updateData();
-//             }
-//         }
-
-//         if (surRender != null) {
-//             surRender.updateImages(forceShow);
-//         }
-
         if (m_kVolumeImageA != null) {
             ViewJComponentVolOpacityBase kSelectedComp = m_kVolOpacityPanel.getSelectedComponent();
             if ( imageB != null )
@@ -2008,10 +1911,6 @@ implements MouseListener, ItemListener, ChangeListener {
      * @return  boolean confirming successful update
      */
     public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean forceShow, int interpMode) {
-//         if (surRender != null) {
-//             surRender.updateImages(LUTa, LUTb, forceShow, interpMode);
-//         }
-
         if (m_kVolumeImageA != null) {
             m_kVolumeImageA.UpdateImages(LUTa, LUTb);    
             setModified();
@@ -2019,16 +1918,6 @@ implements MouseListener, ItemListener, ChangeListener {
 
 
         return true;
-    }
-
-    /**
-     * The navigation mode update the probe position in 3D texture volume. Not used now. Might be used later on.
-     */
-    public void updateProbePos() {
-
-//         if (surRender != null) {
-//             surRender.updateProbePos();
-//         }
     }
 
     /**
@@ -2040,27 +1929,6 @@ implements MouseListener, ItemListener, ChangeListener {
             raycastRenderWM.updateData(imageA);
         }
         setModified();
-    }
-
-    /**
-     * Hack. Update the the surface render win-level from the plane renderer.
-     *
-     * @param  flag  true update win-level, false not update.
-     */
-    public void updateSurRenderWinlevel(boolean flag) {
-
-//         if (surRender != null) {
-//             surRender.setDisplayMode3D(flag);
-//         }
-    }
-
-
-    /**
-     * Repaint the volume.
-     */
-    public void volumeRepaint() {
-//         surRender.updateVolume(LUTa, LUTb, false);
-        updateImages(true);
     }
 
     /**
@@ -2181,14 +2049,6 @@ implements MouseListener, ItemListener, ChangeListener {
         screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
         screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
 
-        /** Indicates that image orientation is unknown type or not. */
-        boolean axialOrientation = true;
-        if (imageOrientation == FileInfoBase.UNKNOWN_ORIENT) {
-            axialOrientation = false;
-        } else {
-            axialOrientation = true;
-        }
-
         imageA.setImageOrder(ModelImage.IMAGE_A);
 
         if (imageB != null) {
@@ -2268,34 +2128,20 @@ implements MouseListener, ItemListener, ChangeListener {
         gbc2.gridwidth = 1;
         gbc2.gridheight = 1;
         gbc2.anchor = GridBagConstraints.WEST;
-
         gbc2.weightx = 1;
         gbc2.weighty = 1;
-
         gbc2.ipadx = 5;
         gbc2.insets = new Insets(0, 5, 0, 5);
 
-        //imagePanel = new JPanel(new BorderLayout());
         gpuPanel = new JPanel(new BorderLayout());
-
         setLocation(100, 100);
 
-//         if (leftPanelRenderMode == SURFACE) {
-//             surfaceRenderPanel.add(surRender.getCanvas(), BorderLayout.CENTER);
         gpuPanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
-//             imagePanel.add(surfaceRenderPanel, BorderLayout.EAST);
-//             surfaceRenderPanel.setVisible(true);
-        //imagePanel.add(gpuPanel, BorderLayout.WEST);
         gpuPanel.setVisible(true);
         raycastRenderWM.setVisible(false);
-//         }
 
         int imagePanelWidth = (int) (screenWidth * 0.51f);
         int imagePanelHeight = (int) (screenHeight * 0.43f);
-
-        //imagePanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
-        //imagePanel.setMinimumSize(new Dimension(500, 500));
-        //imagePanel.setBorder(compound);
 
         gpuPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
         gpuPanel.setMinimumSize(new Dimension(250, 250));
@@ -2313,7 +2159,6 @@ implements MouseListener, ItemListener, ChangeListener {
         rightPane.setOneTouchExpandable(true);
         rightPane.setDividerSize(6);
         rightPane.setContinuousLayout(true);
-        //rightPane.setResizeWeight(0.75);
 
         tabbedPane.setPreferredSize(new Dimension(maxPanelWidth, tabbedPane.getPreferredSize().height));
 
@@ -2344,21 +2189,9 @@ implements MouseListener, ItemListener, ChangeListener {
         // initialize the sculptor region.
         sculptWidth = imagePanelWidth - (2 * getInsets().left);
         sculptHeight = imagePanelHeight - getInsets().top - getInsets().bottom;
-
-//         surRender.getSculptorPanel().setFrameSize(sculptWidth, sculptHeight);
         enableVolumeRender();
     }
 
-    /**
-     * Cleans up memory from gc.
-     *
-     * @throws  Throwable  DOCUMENT ME!
-
-    protected void finalize() throws Throwable {
-        disposeLocal(false);
-        super.finalize();
-    }
-     */
     /**
      * Creates and initializes the LUT for an image.
      *
@@ -2410,24 +2243,14 @@ implements MouseListener, ItemListener, ChangeListener {
         toolbarBuilder = new ViewToolBarBuilder(this);
         buildViewToolbar();
 
-//        if (isSurfaceRenderEnable) {
             buildSurRenderToolbar();
-//        }
 
         GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.gridx = 0;
         gbc.gridy = 1;
-//         gbc.gridwidth = 1;
-//         gbc.gridheight = 1;
-//         gbc.fill = GridBagConstraints.BOTH;
         gbc.anchor = GridBagConstraints.WEST;
-//         gbc.weightx = 1;
-//         gbc.weighty = 1;
-
- //       if (leftPanelRenderMode == SURFACE) {
         panelToolbar.add(surfaceToolBar, gbc);
- //       }
     }
 
     /**
@@ -2466,7 +2289,6 @@ implements MouseListener, ItemListener, ChangeListener {
         radioMIP.addItemListener(this);
         radioXRAY.addItemListener(this);
         radioCOMPOSITE.addItemListener(this);
-        //radioCOMPOSITE.setSelected(true);
         radioSURFACE.addItemListener(this);
         radioSURFACEFAST.addItemListener(this);
         surfaceToolBar.add(radioMIP);
@@ -2659,11 +2481,10 @@ implements MouseListener, ItemListener, ChangeListener {
         }
         sliceGUI.resizePanel(maxPanelWidth, height);
         surfaceGUI.resizePanel(maxPanelWidth, height);
-        //surfaceTextureGUI.resizePanel(maxPanelWidth, height);
         displayGUI.resizePanel(maxPanelWidth, height);
         geodesicGUI.resizePanel(maxPanelWidth, height);
         m_kLightsPanel.resizePanel(maxPanelWidth, height);
-        ((JPanelClip_WM)clipBox).resizePanel(maxPanelWidth, height);
+        clipBox.resizePanel(maxPanelWidth, height);
         
         if ( brainsurfaceFlattenerRender != null )
         {
@@ -2683,8 +2504,8 @@ implements MouseListener, ItemListener, ChangeListener {
     protected void set3DModelPosition(Vector3f position) {
 
         float fMaxX = (m_kVolumeImageA.GetImage().getExtents()[0] - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[0];
-        float fMaxY = (float) (m_kVolumeImageA.GetImage().getExtents()[1] - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (float) (m_kVolumeImageA.GetImage().getExtents()[2] - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[2];
+        float fMaxY = (m_kVolumeImageA.GetImage().getExtents()[1] - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (m_kVolumeImageA.GetImage().getExtents()[2] - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[2];
 
         float fMax = fMaxX;
         if (fMaxY > fMax) {
@@ -2806,11 +2627,7 @@ implements MouseListener, ItemListener, ChangeListener {
     {
         if ( raycastRenderWM != null )
         {
-            VolumeSurface[] akVolumeSurfaces = raycastRenderWM.addSurface(akSurfaces, bReplace);  
-            for (int i = 0; i < 3; i++) 
-            {
-                m_akPlaneRender[i].displaySurface(true);
-            }
+            raycastRenderWM.addSurface(akSurfaces, bReplace);  
             insertTab("Light", lightPanel);
             m_kLightsPanel.enableLight(0, true);
             insertTab("Surface", surfacePanel);
@@ -2852,10 +2669,6 @@ implements MouseListener, ItemListener, ChangeListener {
 
     public void removeSurface(String kSurfaceName)
     {       
-        for (int i = 0; i < 3; i++) 
-        {
-            m_akPlaneRender[i].displaySurface(false);
-        }
         if ( raycastRenderWM != null )
         {
             raycastRenderWM.removeSurface(kSurfaceName);
@@ -3270,5 +3083,8 @@ implements MouseListener, ItemListener, ChangeListener {
         raycastRenderWM.GetCanvas().display();
         setModified();
     }
+
+
+    public void setSlice(int slice) {}
     
 }

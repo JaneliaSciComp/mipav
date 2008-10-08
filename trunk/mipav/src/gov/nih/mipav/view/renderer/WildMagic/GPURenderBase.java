@@ -5,7 +5,6 @@ import javax.media.opengl.*;
 import com.sun.opengl.util.*;
 
 import java.awt.Dimension;
-import java.awt.Graphics2D;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -128,9 +127,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
     }
     
-    public GPURenderBase( final String acWindowTitle, int iXPosition,
-            int iYPosition, int iWidth, int iHeight,
-            final ColorRGBA rkBackgroundColor )
+    public GPURenderBase()
     {
         super("GPUVolumeRender",0,0,512,512, new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
     }
@@ -462,8 +459,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void updateImageFromRotation() {
         int interp = 0;
         double w, x, y, z;
-        double[][] result = new double[4][4];
-
         // Step.1
         Quaternion quat = new Quaternion();
         Matrix3f kRotate = m_spkScene.Local.GetRotate();

@@ -9,7 +9,6 @@ import java.awt.event.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.Render.*;
 
 import WildMagic.LibApplications.OpenGLApplication.*;
@@ -34,7 +33,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /** Enable Arbitrary clip plane: */
     private boolean m_bArbClipOn = false;
 
-    /** Window with the shader paramter interface: */
+    /** Window with the shader parameter interface: */
     private ApplicationGUI m_kShaderParamsWindow = null;
 
     /** Enables/Disables rendering the second pass. When disabled, the
@@ -70,11 +69,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     private boolean m_bCrop = false;
 
 
-    public VolumeTriPlanarRender( final String acWindowTitle, int iXPosition,
-            int iYPosition, int iWidth, int iHeight,
-            final ColorRGBA rkBackgroundColor )
+    public VolumeTriPlanarRender()
     {
-        super("GPUVolumeRender",0,0,512,512, new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
+        super();
     }
     
     
@@ -90,7 +87,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public VolumeTriPlanarRender( VolumeTriPlanarInterface kParent, Animator kAnimator, VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa, ModelRGB kRGBTa,
             VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb, ModelRGB kRGBTb  )
     {
-        super("GPUVolumeRender",0,0,512,512, new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
+        super();
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
                 m_iWidth, m_iHeight );
@@ -153,21 +150,19 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kDTIDisplay.SetDisplay( true );
     }
 
-    public VolumeSurface[] addSurface(TriMesh[] akSurfaces, boolean bReplace)
+    public void addSurface(TriMesh[] akSurfaces, boolean bReplace)
     {
-        VolumeSurface[] akVolumeSurfaces = new VolumeSurface[akSurfaces.length];
         for ( int i = 0; i < akSurfaces.length; i++ )
         {
-            akVolumeSurfaces[i] = new VolumeSurface( m_pkRenderer, m_kVolumeImageA,
+            VolumeSurface kVolumeSurfaces = new VolumeSurface( m_pkRenderer, m_kVolumeImageA,
                     m_kTranslate,
                     m_fX, m_fY, m_fZ,
                     akSurfaces[i], bReplace );
-            akVolumeSurfaces[i].SetPerPixelLighting( m_pkRenderer, true );
-            m_kDisplayList.add( akVolumeSurfaces[i] );
+            kVolumeSurfaces.SetPerPixelLighting( m_pkRenderer, true );
+            m_kDisplayList.add( kVolumeSurfaces );
         }
         UpdateSceneRotation();
         m_bSurfaceUpdate = true;
-        return akVolumeSurfaces;
     }
 
     public void addGeometry( Geometry kGeometry )
@@ -582,7 +577,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         if ( !bEnable )
         {
-            setArbitraryClipPlane((float)(m_kImageA.getExtents()[0] -1), bEnable);
+            setArbitraryClipPlane((m_kImageA.getExtents()[0] -1), bEnable);
         }
     }
 
@@ -1978,9 +1973,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kTranslate = m_kVolumeRayCast.GetTranslate();
 
 
-        float fMaxX = (float) (m_kImageA.getExtents()[0] - 1) * m_kImageA.getFileInfo(0).getResolutions()[0];
-        float fMaxY = (float) (m_kImageA.getExtents()[1] - 1) * m_kImageA.getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (float) (m_kImageA.getExtents()[2] - 1) * m_kImageA.getFileInfo(0).getResolutions()[2];
+        float fMaxX = (m_kImageA.getExtents()[0] - 1) * m_kImageA.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (m_kImageA.getExtents()[1] - 1) * m_kImageA.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (m_kImageA.getExtents()[2] - 1) * m_kImageA.getFileInfo(0).getResolutions()[2];
 
         m_fMax = fMaxX;
         if (fMaxY > m_fMax) {

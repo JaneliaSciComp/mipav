@@ -17,6 +17,10 @@ public class FileInfoSurfaceRefXML_WM extends FileInfoSurfaceRefXML {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 819907577181061024L;
     /** Material properties of the surface:. */
     private MaterialState m_kMaterial = null;
     

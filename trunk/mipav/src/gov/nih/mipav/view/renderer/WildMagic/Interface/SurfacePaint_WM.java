@@ -40,9 +40,6 @@ public class SurfacePaint_WM extends JInterfaceBase
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Curent paint mode. */
-    private int m_PaintMode = VERTEX;
-
     /** Enables painting */
     private boolean m_bEnabled = false;
 
@@ -230,17 +227,16 @@ public class SurfacePaint_WM extends JInterfaceBase
         {
             if ( !m_kPanel.isSurfacePickableSelected() ) {
                 String[] possibilities = {"OK" };
-                int result = JOptionPane.showOptionDialog(null,
-                                                          "Please, enable Surface Pickable.\nAnd, Ctrl + Mouse to paint.",
-                                                          null, JOptionPane.YES_NO_OPTION,
-                                                          JOptionPane.INFORMATION_MESSAGE, null, possibilities,
-                                                          new Integer(0));
+                JOptionPane.showOptionDialog(null,
+                        "Please, enable Surface Pickable.\nAnd, Ctrl + Mouse to paint.",
+                        null, JOptionPane.YES_NO_OPTION,
+                        JOptionPane.INFORMATION_MESSAGE, null, possibilities,
+                        new Integer(0));
 	        }
             Color color = mColorChooser.getColor();
             mPaintColor.Set( color.getRed()/255.0f, 
                     color.getGreen()/255.0f,
                     color.getBlue()/255.0f, mOpacity );
-            setPaintMode( SurfacePaint_WM.VERTEX );
         }
         else if ( command.equals( "PaintCan" ) )
         {
@@ -248,11 +244,9 @@ public class SurfacePaint_WM extends JInterfaceBase
         }
         else if ( command.equals( "Eraser" ) )
         {
-            setPaintMode( SurfacePaint_WM.VERTEX );
         }
         else if ( command.equals( "EraseAll" ) )
         {
-            setPaintMode( SurfacePaint_WM.VERTEX );
             m_kVolumeViewer.eraseAllPaint();
         }
         else if ( command.equals( "ColorPaint" ) )
@@ -293,16 +287,6 @@ public class SurfacePaint_WM extends JInterfaceBase
 
     public JToolBar getToolBar() {
         return mPaintToolBar;
-    }
-
-
-    /**
-     * Sets the type of paint, either vertex-color or texture value:
-     * @param mode, SurfacePaint.TEXTURE or SurfacePaint.VERTEX
-     */
-    public void setPaintMode( int mode )
-    {
-        m_PaintMode = mode;
     }
 
     /**

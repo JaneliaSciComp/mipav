@@ -659,7 +659,7 @@ public class Geodesic_WM {
             }
 
             while (!bDone) {
-                iNode = ((Integer) kLeft.getLast()).intValue();
+                iNode = (kLeft.getLast()).intValue();
 
                 if (iNode != -1) {
                     iNumEndPoints = findTriPoints(iNode, iPrevious, kEndPoints);
@@ -676,14 +676,14 @@ public class Geodesic_WM {
                             kLeft.add(new Integer(((Integer) kEndPoints.get(0)).intValue()));
                             iLeftPrev = iNode;
                         } else {
-                            kLeft.add(new Integer(((Integer) kLeft.getLast()).intValue()));
+                            kLeft.add(new Integer((kLeft.getLast()).intValue()));
                             bLeftDone = true;
                         }
                     } else if (((Integer) kEndPoints.get(1)).intValue() != iPreviousPrev) {
                         kLeft.add(new Integer(((Integer) kEndPoints.get(1)).intValue()));
                         iLeftPrev = iNode;
                     } else {
-                        kLeft.add(new Integer(((Integer) kLeft.getLast()).intValue()));
+                        kLeft.add(new Integer((kLeft.getLast()).intValue()));
                         bLeftDone = true;
                     }
                 } else {
@@ -692,7 +692,7 @@ public class Geodesic_WM {
                     bLeftDone = true;
                 }
 
-                iNode = ((Integer) kRight.getLast()).intValue();
+                iNode = (kRight.getLast()).intValue();
 
                 if (iNode != -1) {
                     iNumEndPoints = findTriPoints(iNode, iPrevious, kEndPoints);
@@ -709,14 +709,14 @@ public class Geodesic_WM {
                             kRight.add(new Integer(((Integer) kEndPoints.get(0)).intValue()));
                             iRightPrev = iNode;
                         } else {
-                            kRight.add(new Integer(((Integer) kRight.getLast()).intValue()));
+                            kRight.add(new Integer((kRight.getLast()).intValue()));
                             bRightDone = true;
                         }
                     } else if (((Integer) kEndPoints.get(1)).intValue() != iPreviousPrev) {
                         kRight.add(new Integer(((Integer) kEndPoints.get(1)).intValue()));
                         iRightPrev = iNode;
                     } else {
-                        kRight.add(new Integer(((Integer) kRight.getLast()).intValue()));
+                        kRight.add(new Integer((kRight.getLast()).intValue()));
                         bRightDone = true;
                     }
                 } else {
@@ -777,10 +777,10 @@ public class Geodesic_WM {
             if (iSide != -1) {
 
                 if (iSide != iPrevSide) {
-                    kNewLeft.add(new Integer(((Integer) kMiddle.get(iPath - 1)).intValue()));
-                    kNewRight.add(new Integer(((Integer) kMiddle.get(iPath)).intValue()));
+                    kNewLeft.add(new Integer((kMiddle.get(iPath - 1)).intValue()));
+                    kNewRight.add(new Integer((kMiddle.get(iPath)).intValue()));
 
-                    int iCoord = ((Integer) kMiddle.get(iPath)).intValue();
+                    int iCoord = (kMiddle.get(iPath)).intValue();
                     kNewVert.add( new Vector4f( kMesh.VBuffer.GetPosition3fX(iCoord),
                             kMesh.VBuffer.GetPosition3fY(iCoord),
                             kMesh.VBuffer.GetPosition3fZ(iCoord),
@@ -798,7 +798,7 @@ public class Geodesic_WM {
             kRightTemp.clear();
             kNewVertTemp.clear();
 
-            while (((Integer) kMiddle.get(iPath)).intValue() == ((Integer) kMiddle.get(iPath + 1)).intValue()) {
+            while ((kMiddle.get(iPath)).intValue() == (kMiddle.get(iPath + 1)).intValue()) {
                 iPath++;
             }
 
@@ -831,17 +831,17 @@ public class Geodesic_WM {
 
             for (int i = 1; i < (kNewVert.size() - 1); i++) {
                 Vector4f newPoint1 = new Vector4f();
-                Vector4f kStart = (Vector4f) (kNewVert.get(i - 1));
-                Vector4f kEnd = (Vector4f) (kNewVert.get(i + 1));
+                Vector4f kStart = kNewVert.get(i - 1);
+                Vector4f kEnd = kNewVert.get(i + 1);
 
-                int iMiddle = ((Integer) kLeft.get(i)).intValue();
-                int iSide = ((Integer) kRight.get(i)).intValue();
+                int iMiddle = kLeft.get(i).intValue();
+                int iSide = kRight.get(i).intValue();
 
                 if ((iMiddle != -1) && (iSide != -1)) {
                     findMin(kMesh, 
                             new Vector3f(kStart.X, kStart.Y, kStart.Z), iMiddle, iSide,
                             new Vector3f(kEnd.X, kEnd.Y, kEnd.Z), newPoint1);
-                    ((Vector4f) kNewVert.get(i)).Copy( newPoint1 );
+                    kNewVert.get(i).Copy( newPoint1 );
 
                     newPoint1 = null;
                 }
@@ -852,20 +852,20 @@ public class Geodesic_WM {
 
         while (iPath < (kNewVert.size() - 1)) {
             boolean bRemoved = false;
-            int iCurrentPoint = (int) ((Vector4f) kNewVert.get(iPath)).W;
+            int iCurrentPoint = (int) kNewVert.get(iPath).W;
 
             if (iCurrentPoint == -1) {
-                int iPrevPoint = (int) ((Vector4f) kNewVert.get(iPath - 1)).W;
-                int iNextPoint = (int) ((Vector4f) kNewVert.get(iPath + 1)).W;
+                int iPrevPoint = (int) kNewVert.get(iPath - 1).W;
+                int iNextPoint = (int) kNewVert.get(iPath + 1).W;
 
-                if ((((Integer) kLeft.get(iPath)).intValue() == iPrevPoint) ||
-                        (((Integer) kRight.get(iPath)).intValue() == iPrevPoint)) {
+                if ((kLeft.get(iPath).intValue() == iPrevPoint) ||
+                        (kRight.get(iPath).intValue() == iPrevPoint)) {
                     kNewVert.remove(iPath);
                     kLeft.remove(iPath);
                     kRight.remove(iPath);
                     bRemoved = true;
-                } else if ((((Integer) kLeft.get(iPath)).intValue() == iNextPoint) ||
-                               (((Integer) kRight.get(iPath)).intValue() == iNextPoint)) {
+                } else if ((kLeft.get(iPath).intValue() == iNextPoint) ||
+                               (kRight.get(iPath).intValue() == iNextPoint)) {
                     kNewVert.remove(iPath);
                     kLeft.remove(iPath);
                     kRight.remove(iPath);
@@ -888,9 +888,9 @@ public class Geodesic_WM {
         m_kGeodesicVertices = new Vector3f[m_iNumGeodesicVertices];
 
         for (int iVertex = 0; iVertex < m_iNumGeodesicVertices; iVertex++) {
-            m_kGeodesicVertices[iVertex] = new Vector3f(((Vector4f) kNewVert.get(iVertex)).X,
-                                                       ((Vector4f) kNewVert.get(iVertex)).Y,
-                                                       ((Vector4f) kNewVert.get(iVertex)).Z);
+            m_kGeodesicVertices[iVertex] = new Vector3f(kNewVert.get(iVertex).X,
+                                                       kNewVert.get(iVertex).Y,
+                                                        kNewVert.get(iVertex).Z);
 
             if (iVertex > 0) {
                 m_fSmoothedPathLength += distance(m_kGeodesicVertices[iVertex], m_kGeodesicVertices[iVertex - 1]);
@@ -944,12 +944,12 @@ public class Geodesic_WM {
 
         /* First, "unzip" all open paths & remove: */
         if (m_bOpen == true) {
-            LinkedList<Vector4f> kOpenPath = (LinkedList<Vector4f>) m_kGeodesic_Finished.get(0);
+            LinkedList<Vector4f> kOpenPath = m_kGeodesic_Finished.get(0);
             iVertexCount += unZip(m_kModified, kOpenPath, iVertexCount, true, null);
         } else {
 
             /* Second, "unzip" all closed paths, storing the new path vertices: */
-            LinkedList<Vector4f> kClosedPath = (LinkedList<Vector4f>) m_kGeodesic_Finished.get(0);
+            LinkedList<Vector4f> kClosedPath = m_kGeodesic_Finished.get(0);
             LinkedList<Integer> kNewClosedPath = new LinkedList<Integer>();
             iVertexCount += unZip(m_kModified, kClosedPath, iVertexCount, false, kNewClosedPath);
             kGeodesic_Separate.add(kNewClosedPath);
@@ -1248,9 +1248,8 @@ public class Geodesic_WM {
 
         if ((m_bFinished == true) || (m_kFirstPoint == null)) {
             return;
-        } else {
-            m_bFinished = true;
-        }
+        } 
+        m_bFinished = true;
 
         if (m_bLastWire) {
             m_bLastWire = false;
@@ -2000,7 +1999,7 @@ public class Geodesic_WM {
     
     private int containsVector(LinkedList<Vector3f> kVecList, Vector3f kNewTri) {
         for (int i = 0; i < kVecList.size(); i++) {
-            Vector3f kTri = (Vector3f) kVecList.get(i);
+            Vector3f kTri = kVecList.get(i);
 
             if ( kTri.IsEqual(kNewTri))
             {
@@ -2126,10 +2125,10 @@ public class Geodesic_WM {
 
         //System.err.println("CreateNewMesh 2");
         for (int i = 0; i < m_kNewVerts.size(); i++) {
-            kVBuffer.SetPosition3( iIndex, (Vector3f) m_kNewVerts.get(i));
-            kVBuffer.SetNormal3( iIndex, (Vector3f) m_kNewNormals.get(i));
-            kVBuffer.SetColor4( 0, iIndex, (ColorRGBA) m_kNewColors.get(i));
-            kVBuffer.SetTCoord3( 0, iIndex, (Vector3f) m_kNewTexCoords.get(i));
+            kVBuffer.SetPosition3( iIndex, m_kNewVerts.get(i));
+            kVBuffer.SetNormal3( iIndex, m_kNewNormals.get(i));
+            kVBuffer.SetColor4( 0, iIndex, m_kNewColors.get(i));
+            kVBuffer.SetTCoord3( 0, iIndex, m_kNewTexCoords.get(i));
             iIndex++;
         }
 
@@ -2164,7 +2163,7 @@ public class Geodesic_WM {
             else
             {
                 for (int i = 0; i < m_kRemoveTriangles.size(); i++) {
-                    aiRemoveTri.Copy((Vector3f)m_kRemoveTriangles.get(i));
+                    aiRemoveTri.Copy(m_kRemoveTriangles.get(i));
 
                     if (triangleEquals(aiIndex[(iTri * 3) + 0],
                                        aiIndex[(iTri * 3) + 1],
@@ -2215,7 +2214,7 @@ public class Geodesic_WM {
         /* Add new triangles to the mesh: */
         Vector3f aiAddTri = new Vector3f();
         for (int iTri = 0; iTri < m_kNewTriangles.size(); iTri++) {
-            aiAddTri.Copy((Vector3f) m_kNewTriangles.get(iTri));
+            aiAddTri.Copy(m_kNewTriangles.get(iTri));
             sortTriIndex(aiAddTri, kVBuffer);
             aiConnect[(iNumAdded * 3) + 0] = (int)aiAddTri.X;
             aiConnect[(iNumAdded * 3) + 1] = (int)aiAddTri.Y;
@@ -2349,7 +2348,6 @@ public class Geodesic_WM {
         }
 
         int iShiftAmount = 0;
-        int iNumNewVerts = 0;
         int iNumDeletedVerts = 0;
 
         for (int iVert = 0; iVert < m_iVertexCount; iVert++) {
@@ -2648,7 +2646,7 @@ public class Geodesic_WM {
             for (int iList = 0; iList < m_iNumWorking; iList++) {
 
                 /* Get the Geodesic segment: */
-                LinkedList<Vector4f> kGeodesicSegment = (LinkedList<Vector4f>) m_kGeodesic_Working.get(iList);
+                LinkedList<Vector4f> kGeodesicSegment = m_kGeodesic_Working.get(iList);
 
                 /* Add each vertex in the segment to the combined path: */
                 for (int iVert = 0; iVert < kGeodesicSegment.size(); iVert++) {
@@ -2679,7 +2677,7 @@ public class Geodesic_WM {
         }
         /* Just one path segment, so copy directly, no need to combine: */
         else {
-            kGeodesic = (LinkedList<Vector4f>) m_kGeodesic_Working.get(0);
+            kGeodesic = m_kGeodesic_Working.get(0);
         }
 
         /* Last vert in the last list: */
@@ -2891,12 +2889,10 @@ public class Geodesic_WM {
 
                     if (!bOpen) {
                         return iVertexCount + (kPath.size() - 2);
-                    } else {
-                        return iIndex;
-                    }
-                } else {
-                    return iVertexCount + (iPath - 1);
-                }
+                    } 
+                    return iIndex;
+                } 
+                return iVertexCount + (iPath - 1);
             }
         }
 
@@ -3609,10 +3605,10 @@ public class Geodesic_WM {
 
         VertexBuffer kVBuffer = new VertexBuffer( kSourceMesh.VBuffer.GetAttributes(), kVertices.size() );
         for (int i = 0; i < kVertices.size(); i++) {
-            kVBuffer.SetPosition3(i, (Vector3f) kVertices.get(i));
-            kVBuffer.SetNormal3(i, (Vector3f) kNormals.get(i));
-            kVBuffer.SetTCoord3(0, i, (Vector3f) kTexCoords.get(i));
-            kVBuffer.SetColor4(0, i, (ColorRGBA) kColors.get(i));
+            kVBuffer.SetPosition3(i, kVertices.get(i));
+            kVBuffer.SetNormal3(i, kNormals.get(i));
+            kVBuffer.SetTCoord3(0, i, kTexCoords.get(i));
+            kVBuffer.SetColor4(0, i, kColors.get(i));
         }
 
         kVertices.clear();
@@ -3645,11 +3641,10 @@ public class Geodesic_WM {
      * @param  iNode  int input vertex index
      */
     private void relaxEdges(TriMesh kMesh, int iNode) {
-        float fEdgeWeight, fEdgeSmoothedWeight;
         int iNeighbor;
         Integer kNeighbor;
         int iPreviousSave;
-        float fPathLength, fNewPathLength;
+        float fPathLength;
 
         /* Get the number of edges that are connected to the input vertex: */
         int iNumEdges = m_akEdgeList[iNode].size();

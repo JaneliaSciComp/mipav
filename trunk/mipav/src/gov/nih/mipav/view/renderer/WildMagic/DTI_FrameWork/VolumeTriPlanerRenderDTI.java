@@ -16,9 +16,7 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
 {
     public VolumeTriPlanerRenderDTI( )
     {
-
-        super("GPUVolumeRender",0,0,512,512, new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
-
+        super();
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
                 m_iWidth, m_iHeight );

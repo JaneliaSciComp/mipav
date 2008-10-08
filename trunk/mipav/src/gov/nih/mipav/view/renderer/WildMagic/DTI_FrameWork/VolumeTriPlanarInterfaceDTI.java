@@ -74,8 +74,7 @@ implements MouseListener, ItemListener, ChangeListener {
      */
     public VolumeTriPlanarInterfaceDTI(ModelImage _imageA, ModelLUT LUTa, ModelRGB _RGBTA, ModelImage _imageB, ModelLUT LUTb,
                                 ModelRGB _RGBTB) {
-        //super(_imageA,LUTa,_RGBTA,_imageB,LUTb,_RGBTB,_leftPanelRenderMode,_rightPanelRenderMode,_resampleDialog);
-        super(_imageA, LUTa, _RGBTA, _imageB, LUTb, _RGBTB, null);
+        super(_imageA, LUTa, _RGBTA, _imageB, LUTb, _RGBTB);
         
         RGBTA = _RGBTA;
         RGBTB = _RGBTB;

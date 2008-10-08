@@ -355,9 +355,9 @@ public class VolumeRayCast extends VolumeObject
         kAttr.SetTChannels(0,3);
         kAttr.SetTChannels(1,3);
 
-        float fMaxX = (float) (iXBound - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[0];
-        float fMaxY = (float) (iYBound - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (float) (iZBound - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[2];
+        float fMaxX = (iXBound - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[0];
+        float fMaxY = (iYBound - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (iZBound - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[2];
 
         m_fMax = fMaxX;
         if (fMaxY > m_fMax) {

@@ -252,9 +252,6 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         int iX = (int)(kTexCoord.X * (kImage.getExtents()[0]-1));
         int iY = (int)(kTexCoord.Y * (kImage.getExtents()[1]-1));
         int iZ = (int)(kTexCoord.Z * (kImage.getExtents()[2]-1));
-        int iIndex = iZ * kImage.getExtents()[1] * kImage.getExtents()[0] +
-                iY * kImage.getExtents()[0] +
-                iX;
         if ( kImage.isColorImage() )
         {}
         else

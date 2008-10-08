@@ -4,7 +4,6 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.Shaders.*;
 import WildMagic.LibGraphics.ObjectSystem.*;
-import WildMagic.LibGraphics.Effects.*;
 
 /** ShaderEffect class for calculating the volume normals on the GPU.  The
  * volume normals are calculated in two passes with two different shaders. The

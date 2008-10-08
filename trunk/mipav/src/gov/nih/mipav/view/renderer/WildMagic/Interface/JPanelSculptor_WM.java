@@ -117,10 +117,9 @@ public class JPanelSculptor_WM extends JInterfaceBase
         } else if (command.equals("UndoApplySculptRegion")) {
             undoSculptRegion();
         } else if (command.equals("SaveSculptImage")) {
-            boolean alreadySaved = false;
             if ( rayBasedRenderWM != null )
             {
-                alreadySaved = rayBasedRenderWM.save(new FileWriteOptions(true), -1);
+                rayBasedRenderWM.save(new FileWriteOptions(true), -1);
             }
         }
     }
@@ -174,7 +173,7 @@ public class JPanelSculptor_WM extends JInterfaceBase
      *
      * @param  flag  dispose super or not, not used now.
      */
-    public void disposeLocal(boolean flag) {
+    public void disposeLocal() {
         rayBasedRenderWM = null;
     }
 
@@ -204,8 +203,6 @@ public class JPanelSculptor_WM extends JInterfaceBase
         viewToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         viewToolBar.setLayout(new GridBagLayout());
         viewToolBar.setFloatable(false);
-
-        ButtonGroup group;
 
         mainPanel = new JPanel(new BorderLayout());
 
@@ -392,7 +389,7 @@ public class JPanelSculptor_WM extends JInterfaceBase
      * @throws  Throwable  DOCUMENT ME!
      */
     protected void finalize() throws Throwable {
-        this.disposeLocal(false);
+        this.disposeLocal();
         super.finalize();
     }
 

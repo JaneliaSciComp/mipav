@@ -36,7 +36,7 @@ public class VolumeDTI extends VolumeObject
         m_iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
         m_iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
         m_iDimZ = m_kVolumeImageA.GetImage().getExtents()[2];
-        m_fScale = 1.0f/(float)(Math.max(m_iDimX,Math.max(m_iDimY,m_iDimZ)));
+        m_fScale = 1.0f/(Math.max(m_iDimX,Math.max(m_iDimY,m_iDimZ)));
         m_iLen = m_iDimX*m_iDimY*m_iDimZ;
         
         m_kScene = new Node();
@@ -485,7 +485,7 @@ public class VolumeDTI extends VolumeObject
             }
             if ( (i%(m_iDimX*m_iDimY)) == 0 )
             {
-                int iValue = (int)(100 * (float)(i+1)/(float)m_iLen);
+                int iValue = (int)(100 * (float)(i+1)/m_iLen);
                 kProgressBar.updateValueImmed( iValue );
             }
         }

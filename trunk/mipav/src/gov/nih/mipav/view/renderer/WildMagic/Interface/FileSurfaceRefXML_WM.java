@@ -62,7 +62,8 @@ public class FileSurfaceRefXML_WM extends FileSurfaceRefXML {
      *
      * @throws  IOException  file exception
      */
-    public FileInfoSurfaceRefXML_WM readSurfaceXML(String headerFileName, String headerDir) throws IOException {
+    public FileInfoSurfaceRefXML_WM readSurfaceXML(String headerFileName, String headerDir) 
+    {
         SurfaceRefXMLHandler kHandler = null;
         
         // Set the ContentHandler of the XMLReader
@@ -96,10 +97,7 @@ public class FileSurfaceRefXML_WM extends FileSurfaceRefXML {
 
     	int dotIndex = fileName.lastIndexOf('.');
     	int slashIndex = fileName.lastIndexOf('\\');
-    	int nDims = 3;
-    	String headerName, headerDir;
-    	headerDir = fileName.substring(0, slashIndex);
-    	headerName = fileName.substring(slashIndex+1, dotIndex);
+    	String headerName = fileName.substring(slashIndex+1, dotIndex);
     	
         /* Create the SurfaceXMLHandler which processes the vertex, normal,
          * connectivity arrays and colors for writing in the xml format: */

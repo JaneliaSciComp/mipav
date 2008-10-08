@@ -20,7 +20,7 @@ public class MjSparseMatrix_WM {
     private Index m_kIndexKeyTmp = new Index(-1, -1);
 
     /** Mapping of Index(row,col). */
-    private HashMap m_kMap = new HashMap();
+    private HashMap<Index,Float> m_kMap = new HashMap<Index,Float>();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ public class MjSparseMatrix_WM {
         m_kIndexKeyTmp.m_iRow = iRow;
         m_kIndexKeyTmp.m_iCol = iCol;
 
-        Float kValue = (Float) m_kMap.get(m_kIndexKeyTmp);
+        Float kValue = m_kMap.get(m_kIndexKeyTmp);
 
         return (null == kValue) ? 0.0f : kValue.floatValue();
     }

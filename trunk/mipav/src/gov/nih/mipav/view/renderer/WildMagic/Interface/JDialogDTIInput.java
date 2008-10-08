@@ -119,8 +119,6 @@ public class JDialogDTIInput extends JInterfaceBase
     /** Dialog type. */
     private int m_iType;
 
-    /** JPanelSurface object for loading fiber bundle tracts. */
-    private JPanelSurface_WM m_kSurfaceDialog;
     /** Image displayed in the GPUVolumeRender and SurfaceRender*/
     private ModelImage m_kImage;
 
@@ -249,7 +247,6 @@ public class JDialogDTIInput extends JInterfaceBase
         }
         m_kBMatrix = null;
         m_aakDWIList = null;
-        m_kSurfaceDialog = null;
         m_kImage = null;
         m_aiMatrixEntries = null;
         m_kBundleList = null;
@@ -645,8 +642,8 @@ public class JDialogDTIInput extends JInterfaceBase
             {
                 loadBMatrixFile( bMatrixFileAbsPath );
             }
-            m_fResX /= (float)m_iDimX;
-            m_fResY /= (float)m_iDimY;
+            m_fResX /= m_iDimX;
+            m_fResY /= m_iDimY;
         }
     }
 
@@ -798,9 +795,7 @@ public class JDialogDTIInput extends JInterfaceBase
             ModelImage kDTIImageScaled = transformFunct.getTransformedImage();
             kDTIImageScaled.calcMinMax();
             
-            if (transformFunct != null) {
-                transformFunct.disposeLocal();
-            }
+            transformFunct.disposeLocal();
             transformFunct = null;
 
             m_kDTIImage.disposeLocal();
@@ -1619,9 +1614,9 @@ public class JDialogDTIInput extends JInterfaceBase
         int iXBound = m_kImage.getExtents()[0];
         int iYBound = m_kImage.getExtents()[1];
         int iZBound = m_kImage.getExtents()[2];
-        float fMaxX = (float) (iXBound - 1) * m_kImage.getFileInfo(0).getResolutions()[0];
-        float fMaxY = (float) (iYBound - 1) * m_kImage.getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (float) (iZBound - 1) * m_kImage.getFileInfo(0).getResolutions()[2];
+        float fMaxX = (iXBound - 1) * m_kImage.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (iYBound - 1) * m_kImage.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (iZBound - 1) * m_kImage.getFileInfo(0).getResolutions()[2];
 
         float fMax = fMaxX;
         if (fMaxY > fMax) {
@@ -1671,8 +1666,7 @@ public class JDialogDTIInput extends JInterfaceBase
             float fY = (float)(iY)/(float)(iDimY);
             float fZ = (float)(iZ)/(float)(iDimZ);
                                 
-            pkVBuffer.SetPosition3(i,
-                                   (float)(fX-.5f), (float)(fY-.5f), (float)(fZ-.5f) );
+            pkVBuffer.SetPosition3(i, fX-.5f, fY-.5f, fZ-.5f);
             pkVBuffer.SetColor3(0,i, new ColorRGB(fX, fY, fZ));
             pkVBuffer.SetColor3(1,i, kColor1 );
         }

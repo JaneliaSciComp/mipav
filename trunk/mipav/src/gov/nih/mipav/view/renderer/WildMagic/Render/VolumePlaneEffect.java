@@ -16,10 +16,6 @@ import WildMagic.LibGraphics.Effects.*;
 public class VolumePlaneEffect extends ShaderEffect
     implements StreamInterface
 {
-    private final static String[] m_akClip =
-        new String[]{ "clipXInv", "clipX", "clipYInv", "clipY", "clipZInv", "clipZ" };
-
-
     /** 
      * Creates a new VolumeShaderEffect object.
      * @param kVolumeImageA, the VolumeImage containing shared data and

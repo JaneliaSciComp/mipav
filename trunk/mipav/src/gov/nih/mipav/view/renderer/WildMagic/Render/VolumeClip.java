@@ -118,7 +118,6 @@ public class VolumeClip extends VolumeObject
             m_kClipEyeInv.dispose();
             m_kClipEyeInv = null;
         }
-        m_kArbitraryClip = null;
 
         if ( m_spkEyeCamera != null )
         {
@@ -525,8 +524,6 @@ public class VolumeClip extends VolumeObject
     /** Node for rotating the arbitrary clip plane with the mouse trackball: */
     private Node m_kArbRotate = new Node();
 
-    /** Arbitrary clip plane equation: */
-    private Vector4f m_kArbitraryClip;
     /** Enables/Disables displaying the arbitrary clip plane: */
     private boolean m_bDisplayClipArb = false;
     /** Enables/Disables displaying the eye clip plane: */

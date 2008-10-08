@@ -92,7 +92,9 @@ public abstract class VolumeObject
      * @param kRenderer, the OpenGLRenderer object.
      * @param kCuller, the Culler object.
      */
-    public void PostRender( Renderer kRenderer, Culler kCuller ) {}
+    public void PostRender( @SuppressWarnings("unused")
+    Renderer kRenderer, @SuppressWarnings("unused")
+    Culler kCuller ) {}
 
     /**
      * Set the object display to on/off.
@@ -211,13 +213,25 @@ public abstract class VolumeObject
         m_kTranslate.Add(kTranslate);
     }
 
-    public void Blend( float fValue ) {}
+    public void Blend( @SuppressWarnings("unused")
+    float fValue ) {}
     
-    public void SetColor( ColorRGB kColor ){}
+    public void SetColor( @SuppressWarnings("unused")
+    ColorRGB kColor ){}
 
-    public void Paint(Renderer kRenderer, PickRecord kRecord, ColorRGBA kPaintColor, int iBrushSize ) {}
-    public void Dropper(PickRecord kRecord, ColorRGBA rkDropperColor, Vector3f rkPickPoint ) {}
-    public void Erase(Renderer kRenderer, PickRecord kRecord, int iBrushSize ) {}
+    public void Paint(@SuppressWarnings("unused")
+    Renderer kRenderer, @SuppressWarnings("unused")
+    PickRecord kRecord, @SuppressWarnings("unused")
+    ColorRGBA kPaintColor, @SuppressWarnings("unused")
+    int iBrushSize ) {}
+    public void Dropper(@SuppressWarnings("unused")
+    PickRecord kRecord, @SuppressWarnings("unused")
+    ColorRGBA rkDropperColor, @SuppressWarnings("unused")
+    Vector3f rkPickPoint ) {}
+    public void Erase(@SuppressWarnings("unused")
+    Renderer kRenderer, @SuppressWarnings("unused")
+    PickRecord kRecord, @SuppressWarnings("unused")
+    int iBrushSize ) {}
     public TriMesh GetMesh() { return null; }
 
     /** boolean to turn rendering on/off for this object. */

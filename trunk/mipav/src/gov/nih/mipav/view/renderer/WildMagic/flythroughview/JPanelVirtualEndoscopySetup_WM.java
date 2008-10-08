@@ -400,7 +400,8 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
      *
      * @param  e  ActionEvent
      */
-    void m_kCheckBoxShowCurvatures_actionPerformed(ActionEvent e) {
+    void m_kCheckBoxShowCurvatures_actionPerformed(@SuppressWarnings("unused")
+    ActionEvent e) {
         m_bShowMeanCurvatures = m_kCheckBoxShowCurvatures.isSelected();
         m_kView.doPseudoColor(m_bShowMeanCurvatures);
     }
@@ -410,7 +411,8 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
      *
      * @param  e  ActionEvent
      */
-    void m_kContinueUpdate_actionPerformed(ActionEvent e) {
+    void m_kContinueUpdate_actionPerformed(@SuppressWarnings("unused")
+    ActionEvent e) {
         continueUpdate = m_kContinueUpdate.isSelected();
 
         if (continueUpdate == true) {
