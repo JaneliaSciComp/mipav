@@ -60,9 +60,6 @@ public class PlaneRender_WM extends GPURenderBase
     /** Turns on drawing of the X,Y bars and the Axis labels:. */
     private boolean m_bDrawXHairs = true;
 
-    /** Boolean to turn on/off the RFA probe entry point selection with mouse:. */
-    private boolean m_bEntryPointSelect = false;
-
     /** Change the mouse cursor with the first mouseDrag event */
     private boolean m_bFirstDrag = true;
 
@@ -119,6 +116,9 @@ public class PlaneRender_WM extends GPURenderBase
 
     /** Which slice is currently displayed in the XY plane. */
     private int m_iSlice;
+    private float[] m_afModelStep = new float[3];
+    private float[] m_afModelPosition = new float[3];
+    private float[] m_afScale = new float[3];
 
     /** Current active image for manipulating the LUT by dragging with the
      * right-mouse down. */
@@ -148,6 +148,8 @@ public class PlaneRender_WM extends GPURenderBase
     private boolean[] m_abAxisFlip;
     private float m_fUpFOV = 65f;
     private float m_fMouseY;
+    private boolean m_bDisplaySurface = false;
+
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -195,6 +197,29 @@ public class PlaneRender_WM extends GPURenderBase
 
         setOrientation();
         m_kWinLevel = new WindowLevel();
+        
+        float fMaxX = (m_kImageA.getExtents()[0] - 1) * m_kImageA.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (m_kImageA.getExtents()[1] - 1) * m_kImageA.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (m_kImageA.getExtents()[2] - 1) * m_kImageA.getFileInfo(0).getResolutions()[2];
+
+        m_fMax = fMaxX;
+        if (fMaxY > m_fMax) {
+            m_fMax = fMaxY;
+        }
+        if (fMaxZ > m_fMax) {
+            m_fMax = fMaxZ;
+        }
+        m_fX = fMaxX/m_fMax;
+        m_fY = fMaxY/m_fMax;
+        m_fZ = fMaxZ/m_fMax;
+        m_afScale[0] = m_fX;
+        m_afScale[1] = m_fY;
+        m_afScale[2] = m_fZ;
+        
+
+        m_afModelStep[0] = 2f/(m_kImageA.getExtents()[0] -1);
+        m_afModelStep[1] = 2f/(m_kImageA.getExtents()[1] -1);
+        m_afModelStep[2] = 2f/(m_kImageA.getExtents()[2] -1);
     }
 
     public PlaneRender_WM ( final String acWindowTitle, int iXPosition,
@@ -222,32 +247,13 @@ public class PlaneRender_WM extends GPURenderBase
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {
-            if ( m_bSurfaceAdded )
-            {
-                m_bSurfaceAdded = false;
-                updateLighting( m_akLights );
-            }
             for ( int i = 0; i < m_kDisplayList.size(); i++ )
             {
                 boolean bDisplaySave = m_kDisplayList.get(i).GetDisplay();
                 Matrix3f kSave = new Matrix3f(m_kDisplayList.get(i).GetScene().Local.GetRotate());
                 m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(Matrix3f.IDENTITY);
                 m_kDisplayList.get(i).SetDisplay(true);
-
-                float fSliceP1 = (float)(m_iSlice+3)/(float)m_aiLocalImageExtents[2];
-                float fSliceM1 = (float)(m_iSlice-3)/(float)m_aiLocalImageExtents[2];
-                if ( m_abAxisFlip[2] )
-                {
-                    fSliceP1 = 1.0f - fSliceP1;
-                    fSliceM1 = 1.0f - fSliceM1;
-                }
-                if ( fSliceP1 < fSliceM1 )
-                {
-                    float fTemp = fSliceP1;
-                    fSliceP1 = fSliceM1;
-                    fSliceM1 = fTemp;
-                }
-
+                
                 float fBlend = 1;
                 boolean[] bShowBoundingBox = new boolean[]{ true, true, true };
                 VolumeSlices kSlices = null;
@@ -256,6 +262,7 @@ public class PlaneRender_WM extends GPURenderBase
                     kSlices = (VolumeSlices)m_kDisplayList.get(i);
                     fBlend = kSlices.GetSliceOpacity(m_iPlaneOrientation);
                     kSlices.SetSliceOpacity(m_iPlaneOrientation, 1);
+                    kSlices.ShowSurface(true);
                     for ( int j = 0; j < 3; j++ )
                     {
                         bShowBoundingBox[j] = kSlices.GetShowBoundingBox(j);
@@ -263,14 +270,6 @@ public class PlaneRender_WM extends GPURenderBase
                     }
                 }
 
-                VolumeSurface kSurface = null;
-                if ( m_kDisplayList.get(i) instanceof VolumeSurface )
-                {
-                    kSurface = ((VolumeSurface)m_kDisplayList.get(i));
-                    kSurface.SetSecondaryClip(m_aiAxisOrder[2]*2, fSliceM1);
-                    kSurface.SetSecondaryClip(m_aiAxisOrder[2]*2 + 1, fSliceP1);
-                    kSurface.EnableSecondaryClip(true);
-                }
                 m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
 
                 m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(kSave);
@@ -283,18 +282,11 @@ public class PlaneRender_WM extends GPURenderBase
                     {
                         kSlices.ShowBoundingBox(j, bShowBoundingBox[j]);
                     }
-                }
-
-                if ( kSurface != null )
-                {
-                    kSurface.SetSecondaryClip(m_aiAxisOrder[2]*2, 0f);
-                    kSurface.SetSecondaryClip(m_aiAxisOrder[2]*2 + 1, 1f);
-                    kSurface.EnableSecondaryClip(false);
+                    kSlices.ShowSurface(false);
                 }
             }
             drawAxes();
             m_pkRenderer.EndScene();
-
         }
         m_pkRenderer.DisplayBackBuffer();
 
@@ -348,7 +340,8 @@ public class PlaneRender_WM extends GPURenderBase
         // initial culling of scene
         m_kCuller.SetCamera(m_spkCamera);
 
-        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        InitializeCameraMotion(.05f,0.001f);
+        InitializeObjectMotion(m_spkScene);
 
         m_kAnimator.add( GetCanvas() );
     }
@@ -496,15 +489,10 @@ public class PlaneRender_WM extends GPURenderBase
               
         CreateLabels();
     }
-    
-    public void AddSurfaces( VolumeSurface[] akVolumeSurfaces )
+
+    public void displaySurface( boolean bDisplay )
     {
-        for ( int i = 0; i < akVolumeSurfaces.length; i++ )
-        {
-            //m_kDisplayList.add(akVolumeSurfaces[i]);
-        }
-        //updateLighting( m_akLights );
-        //m_bSurfaceAdded = true;
+        m_bDisplaySurface = bDisplay;
     }
 
     public void AddSlices( VolumeSlices kVolumeSlice  )
@@ -538,96 +526,6 @@ public class PlaneRender_WM extends GPURenderBase
 
         m_kLabelX = null;
         m_kLabelY = null;
-        
-
-        //m_kAnimator.stop();
-   }
-
-    /**
-     * Given a point in FileCoordinates, transform the point to local
-     * PatientCoordinates, and draw with a red sphere:
-     *
-     * @param  kPoint  RFA indicator point coordinate
-     */
-//    public void drawRFAPoint(Point3f kPoint) {
-
-//         /* FileToPatient: */
-//         Vector3f patientPt = new Vector3f();
-//         MipavCoordinateSystems.fileToPatient( new Vector3f( kPoint.X,
-//                                                             kPoint.Y,
-//                                                             kPoint.Z ),
-//                                               patientPt, m_kImageA,
-//                                               m_iPlaneOrientation );
-//         /* PatientToLocal: */
-//         Vector3f localPt = new Vector3f();
-//         this.PatientToLocal( patientPt, localPt );
-
-//         /* If this is the first time drawing, create the BranchGroup to hold
-//          * the sphere representation: */
-//         if (m_kRFA_BranchGroup == null) {
-//             PolygonAttributes kPolygonAttributes = new PolygonAttributes();
-//             kPolygonAttributes.setCullFace(PolygonAttributes.CULL_NONE);
-//             Material kMaterial = new Material( m_akColors[0], m_akColors[0], m_akColors[0],
-//                                                m_akColors[0], 1.0f);
-//             Appearance kAppearance = new Appearance();
-//             kAppearance.setMaterial(kMaterial);
-//             kAppearance.setPolygonAttributes(kPolygonAttributes);
-//             Shape3D kSphere = new Sphere( 0.025f ).getShape();
-
-//             kSphere.setAppearance( kAppearance );
-//             kSphere.setPickable(false);
-
-//             Transform3D kTransform = new Transform3D();
-
-//             kTransform.set(new Vector3f(localPt.X, -localPt.Y, -2.5f));
-
-//             TransformGroup kTransformGroup = new TransformGroup();
-
-//             kTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-//             kTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-//             kTransformGroup.setTransform(kTransform);
-//             kTransformGroup.addChild(kSphere.cloneTree());
-//             m_kRFA_BranchGroup = new BranchGroup();
-//             m_kRFA_BranchGroup.setCapability(BranchGroup.ALLOW_DETACH);
-//             m_kRFA_BranchGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
-//             m_kRFA_BranchGroup.setCapability(BranchGroup.ALLOW_CHILDREN_WRITE);
-//             m_kRFA_BranchGroup.addChild(kTransformGroup);
-//             m_kRFA_BranchGroup.compile();
-//             m_kOrderedGroup.addChild(m_kRFA_BranchGroup);
-//         } /* Otherwise, update the position of the existing sphere: */
-//         else {
-//             Transform3D kTransform = new Transform3D();
-
-//             kTransform.set(new Vector3f(localPt.X, -localPt.Y, -2.5f));
-
-//             TransformGroup kTransformGroup =
-//                 (TransformGroup) (m_kRFA_BranchGroup.getChild(0));
-
-//             kTransformGroup.setTransform(kTransform);
-//         }
-//    }
-
-    /**
-     * Enable or disable target point for the RFA probe from within the plane
-     * renderer:
-     *
-     * @param  bEnable  true enable target point, false not.
-     */
-    public void enableTargetPointPicking(boolean bEnable) {
-
-//         if (m_bEntryPointSelect == bEnable) {
-//             return;
-//         }
-
-//         m_bEntryPointSelect = bEnable;
-
-//         /* If point selection is disabled, then detach the display group: */
-//         if (!bEnable && (m_kRFA_BranchGroup != null)) {
-//             m_kOrderedGroup.removeChild(m_kRFA_BranchGroup);
-//         } /* If point selection is enabled, then draw the display group: */
-//         else if (bEnable && (m_kRFA_BranchGroup != null)) {
-//             m_kOrderedGroup.addChild(m_kRFA_BranchGroup);
-//         }
     }
 
     /**
@@ -657,10 +555,12 @@ public class PlaneRender_WM extends GPURenderBase
      * @param  kEvent  the mouse event generated by a mouse drag
      */
     public void mouseDragged(MouseEvent kEvent) {
-
+        //super.mouseDragged(kEvent);
+        
         /* If the right mouse button is pressed and
          * dragged. processRightMouseDrag updates the HistoLUT window and
          * level (contrast and brightness) */
+
         if (m_bRightMousePressed && !kEvent.isShiftDown()) {
             processRightMouseDrag(kEvent);
         }
@@ -669,6 +569,7 @@ public class PlaneRender_WM extends GPURenderBase
          * positions of the X and Y cross bars, and therefor the ZSlice positions of the associated PlaneRenderWM objects
          * and the TriPlanar Surface. The new positions are calculated and passed onto the parent frame.
          */
+
         else if (m_bLeftMousePressed && !kEvent.isShiftDown()) {
             processLeftMouseDrag(kEvent);
         }
@@ -687,6 +588,7 @@ public class PlaneRender_WM extends GPURenderBase
             m_pkRenderer.OnFrustumChange();
             m_bModified = true;
         }
+
     }
 
     /**
@@ -1004,24 +906,6 @@ public class PlaneRender_WM extends GPURenderBase
     }
 
     /**
-     * Convert the position in PatientCoordinates into Local rendering
-     * coordinates:
-     * @param patientPt the current point in PatientCoordinates
-     * @param localPt, the transformed point in LocalCoordinates
-     */
-    private void PatientToLocal( Vector3f patientPt, Vector3f localPt )
-    {
-//         localPt.X = patientPt.X / (float)(m_aiLocalImageExtents[0] - 1);
-//         localPt.Y = patientPt.Y / (float)(m_aiLocalImageExtents[1] - 1);
-//         localPt.Z = patientPt.Z / (float)(m_aiLocalImageExtents[2] - 1);
-
-//         localPt.X = (localPt.X * m_fXRange) + m_fX0;
-//         localPt.Y = (localPt.Y * m_fYRange) + m_fY0;
-//         localPt.Z = 1.0f;
-    }
-
-
-    /**
      * Dragging the mouse with the left-mouse button held down changes the
      * positions of the X and Y cross bars, and therefor the ZSlice positions
      * of the associated PlaneRenderWM objects and the TriPlanar Surface. The
@@ -1031,18 +915,10 @@ public class PlaneRender_WM extends GPURenderBase
      */
     private void processLeftMouseDrag(MouseEvent kEvent) {
 
-        /* If the RFA point is enabled, then the mouse is used to select
-         * the Probe point, not to move the slice positions: */
-//         if (m_bEntryPointSelect) {
-//             return;
-//         }
-
         /* Calculate the center of the mouse in local coordineates, taking into
          * account zoom and translate: */
         Vector3f localPt = new Vector3f();
         this.ScreenToLocal(kEvent.getX(), kEvent.getY(), localPt, true);
-
-//         drawLabels();
 
         /* Tell the ViewJFrameVolumeView parent to update the other
          * PlaneRenderWMs and the SurfaceRender with the changed Z position
@@ -1064,6 +940,10 @@ public class PlaneRender_WM extends GPURenderBase
     public void setCenter( Vector3f center )
     {
         m_bModified = true;
+        //System.err.println( center.ToString() );
+        m_afModelPosition[0] = center.X/(m_kImageA.getExtents()[0] -1);
+        m_afModelPosition[1] = center.Y/(m_kImageA.getExtents()[1] -1);
+        m_afModelPosition[2] = center.Z/(m_kImageA.getExtents()[2] -1);
         Vector3f patientPt = new Vector3f();
         MipavCoordinateSystems.fileToPatient( center, patientPt, m_kImageA, m_iPlaneOrientation );
         setSlice( patientPt.Z );
@@ -1176,6 +1056,7 @@ public class PlaneRender_WM extends GPURenderBase
 
         m_aiAxisOrder = MipavCoordinateSystems.getAxisOrder(m_kImageA, m_iPlaneOrientation);
         m_abAxisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageA, m_iPlaneOrientation);
+        //System.err.println( m_iPlaneOrientation + " " + m_abAxisFlip[0] + " " + m_abAxisFlip[1] + " " + m_abAxisFlip[2] );
         //System.err.println( m_aiAxisOrder[2] + " " + m_abAxisFlip[2]);
         m_aiLocalImageExtents = m_kImageA.getExtents( m_iPlaneOrientation );
 

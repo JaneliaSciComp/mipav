@@ -147,9 +147,9 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
 
         UpdateFrameCount();       
 
-        if ( m_bSurfaceAdded )
+        if ( m_bSurfaceUpdate )
         {
-            m_bSurfaceAdded = false;
+            m_bSurfaceUpdate = false;
             //((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetPerPixelLighting(m_pkRenderer, true);
             updateLighting( m_akLights );
         }
@@ -389,7 +389,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         m_kSurface.AttachEffect(kLightShader);
         m_kSurface.UpdateRS();
         m_kSurface.UpdateMS();
-        m_bSurfaceAdded = true;
+        m_bSurfaceUpdate = true;
     }
     
     public void doPseudoColor( boolean bOn )
@@ -1063,7 +1063,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         m_spkScene.AttachChild(kMesh);
         //m_spkScene.UpdateGS();
         //m_spkScene.UpdateRS();
-        m_bSurfaceAdded = true;
+        m_bSurfaceUpdate = true;
     }
 
     /* (non-Javadoc)

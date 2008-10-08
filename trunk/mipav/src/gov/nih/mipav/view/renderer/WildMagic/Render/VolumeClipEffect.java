@@ -29,6 +29,12 @@ public abstract class VolumeClipEffect extends ShaderEffect
      */
     public void InitClip( )
     {
+        float[][] aafClipData =  { { 0, 0, 0, 0 },
+                { 1, 1, 0, 0 },
+                { 0, 0, 0, 0 },
+                { 1, 1, 0, 0 },
+                { 0, 0, 0, 0 },
+                { 1, 1, 0, 0 } };
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("DoClip") != null ) 
         {
@@ -39,7 +45,7 @@ public abstract class VolumeClipEffect extends ShaderEffect
         {       
             if ( pkProgram.GetUC(m_akClip[i]) != null ) 
             {
-                pkProgram.GetUC(m_akClip[i]).SetDataSource(m_aafClipData[i]);
+                pkProgram.GetUC(m_akClip[i]).SetDataSource(aafClipData[i]);
             }
         }
     }
@@ -83,22 +89,7 @@ public abstract class VolumeClipEffect extends ShaderEffect
         m_aafClipData[iWhich][0] = data;
         EnableClip();
         Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC(m_akClip[iWhich]) != null ) 
-        {
-            pkProgram.GetUC(m_akClip[iWhich]).SetDataSource(m_aafClipData[iWhich]);
-        }
-    }
-    
-    /**
-     * Enable and set the axis-aligned clip plane.
-     * @param iWhich, one of 6 clip-planes to set.
-     * @param data, the distance to the clip-plane.
-     */
-    public void SetSecondaryClip(int iWhich, float data)
-    {
-        m_aafClipData[iWhich][1] = data;
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC(m_akClip[iWhich]) != null ) 
+        if ( (pkProgram != null) && (pkProgram.GetUC(m_akClip[iWhich]) != null) ) 
         {
             pkProgram.GetUC(m_akClip[iWhich]).SetDataSource(m_aafClipData[iWhich]);
         }
@@ -116,23 +107,11 @@ public abstract class VolumeClipEffect extends ShaderEffect
         }
         m_afDoClip[0] = (bEnable) ? 1 : 0;
         Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("DoClip") != null ) 
+        if ( (pkProgram != null) && (pkProgram.GetUC("DoClip") != null) ) 
         {
             pkProgram.GetUC("DoClip").SetDataSource(m_afDoClip);
         }       
     }    
-    /**
-     * Enable clipping.
-     */
-    public void EnableSecondaryClip(boolean bEnable)
-    {
-        m_afDoClip[1] = (bEnable) ? 1 : 0;
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("DoClip") != null ) 
-        {
-            pkProgram.GetUC("DoClip").SetDataSource(m_afDoClip);
-        }       
-    }
 
     /**
      * Enable and set the eye clip plane.

@@ -77,7 +77,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     protected Vector<VolumeObject> m_kDisplayList = new Vector<VolumeObject>();
 
-    protected boolean m_bSurfaceAdded = false;
+    protected boolean m_bSurfaceUpdate = false;
    
 
     protected int m_iXPick = -1;

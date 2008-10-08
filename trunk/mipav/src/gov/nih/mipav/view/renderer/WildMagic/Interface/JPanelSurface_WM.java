@@ -275,6 +275,9 @@ public class JPanelSurface_WM extends JInterfaceBase
         else if (command.equals("Remove")) {
             removeSurface();
         }
+        else if (command.equals("updatePlanes")) {
+            m_kVolumeViewer.updatePlanes();
+        }
         else if (command.equals("AddPolyline")) {
             addPolyline();
         } 
@@ -682,21 +685,26 @@ public class JPanelSurface_WM extends JInterfaceBase
 
         // buttons for add/remove of surfaces from list
         JButton addButton = new JButton("Add");
-
         addButton.addActionListener(this);
         addButton.setActionCommand("Add");
         addButton.setFont(MipavUtil.font12B);
         addButton.setPreferredSize(MipavUtil.defaultButtonSize);
 
         JButton removeButton = new JButton("Remove");
-
         removeButton.addActionListener(this);
         removeButton.setActionCommand("Remove");
         removeButton.setFont(MipavUtil.font12B);
         removeButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        
+        JButton updatePlanes = new JButton("Update Planes");
+        updatePlanes.addActionListener(this);
+        updatePlanes.setActionCommand("updatePlanes");
+        updatePlanes.setFont(MipavUtil.font12B);
+        updatePlanes.setPreferredSize(MipavUtil.defaultButtonSize);
 
         buttonPanel.add(addButton);
         buttonPanel.add(removeButton);
+        buttonPanel.add(updatePlanes);
 
         // list panel for surface filenames
         surfaceList = new JList(new DefaultListModel());

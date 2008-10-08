@@ -562,7 +562,6 @@ void v_MipavLightingFragment(
                      in float4        kModelNormal : NORMAL,
                      in float4        kModelColor0 : COLOR0,
                      in float3        kInBaseTCoord : TEXCOORD0,
-
                      out float4       kClipPosition : POSITION,
                      out float3       kInPos,
                      out float3       kInVolumeClipPos,
@@ -570,7 +569,6 @@ void v_MipavLightingFragment(
                      out float4       kInColor0,
                      out float3       kOutBaseTCoord : TEXCOORD0,
                      uniform float ReverseFace,
-                     uniform float4x4 WVMatrix,
                      uniform float4x4 WVPMatrix)
 {
     // Transform the position from model space to clip space.
@@ -607,13 +605,13 @@ void p_MipavLightingFragment(
                      uniform float UseLUTNew,
                      uniform float Blend,
                      uniform float ClipEnabled,
-                     uniform float4 DoClip,
-                     uniform float4 clipX,
-                     uniform float4 clipXInv,
-                     uniform float4 clipY,
-                     uniform float4 clipYInv,
-                     uniform float4 clipZ,
-                     uniform float4 clipZInv,
+                     uniform float DoClip,
+                     uniform float clipX,
+                     uniform float clipXInv,
+                     uniform float clipY,
+                     uniform float clipYInv,
+                     uniform float clipZ,
+                     uniform float clipZInv,
                      uniform float4 clipArb,
                      uniform float4 clipEye,
                      uniform float4 clipEyeInv,
@@ -661,22 +659,17 @@ void p_MipavLightingFragment(
 {
     bool bClipped = false;
 
-    if ( (DoClip[1] != 0) && myClip( kInVolumeClipPos, clipX[1], clipXInv[1], clipY[1], clipYInv[1], clipZ[1], clipZInv[1] ) )
-    {
-        bClipped = true;
-    }
-
     if ( !bClipped && (ClipEnabled == 1.0) )
     {
         // axis-aligned clipping:
-        if ( (DoClip[0] != 0) && myClip( kInVolumeClipPos, clipX[0], clipXInv[0], clipY[0], clipYInv[0], clipZ[0], clipZInv[0] ) )
+        if ( (DoClip != 0) && myClip( kInVolumeClipPos, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
         {
             bClipped = true;
         }
         else
         {
             bClipped = false;
-            if ( DoClip[0] != 0 )
+            if ( DoClip != 0 )
             {
                 // eye clipping and arbitrary clipping:
                 float4 aPosition = float4(0,0,0,0);

@@ -164,6 +164,15 @@ public abstract class VolumeObject
             m_kWireframe.Fill = eType;
         }
     }
+    
+    public WireframeState.FillMode GetPolygonMode()
+    {
+        if ( m_kWireframe != null )
+        {
+            return m_kWireframe.Fill;
+        }
+        return WireframeState.FillMode.FM_QUANTITY;
+    }
 
     public String GetName()
     {
@@ -179,6 +188,14 @@ public abstract class VolumeObject
         }
     } 
     
+    public boolean GetBackface()
+    {
+        if ( m_kCull != null )
+        {
+            return m_kCull.Enabled;
+        }
+        return false;
+    }
 
     public void SetFrontface( boolean bOn )
     {

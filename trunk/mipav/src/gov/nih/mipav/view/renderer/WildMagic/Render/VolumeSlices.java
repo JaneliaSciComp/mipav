@@ -197,6 +197,14 @@ public class VolumeSlices extends VolumeObject
         m_akBoundingBox[iIndex].VBuffer.Release();
     }
 
+    public void ShowSurface( boolean bOn )
+    {
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlaneEffect[i].ShowSurface(bOn);
+        }
+    }
+    
     /** Turns on/off displaying the bounding box for the given plane.
      * @param i, the plane index (0-3) in file coordinates.
      * @param bShow, when true, the bounding box is displayed.
@@ -256,6 +264,8 @@ public class VolumeSlices extends VolumeObject
         float fY = m_fY * kCenter.Y;
         float fZ = m_fZ * kCenter.Z;
 
+        //System.err.println( kCenter.ToString() + " " + fX + " " + fY + " " + fZ );
+        
         float fTCX = kCenter.X;
         float fTCY = kCenter.Y;
         float fTCZ = kCenter.Z;

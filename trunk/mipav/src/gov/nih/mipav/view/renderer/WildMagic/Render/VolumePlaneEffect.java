@@ -48,14 +48,8 @@ public class VolumePlaneEffect extends ShaderEffect
      */
     public void dispose()
     {
-        m_aafClipData = null;
-        m_afClipEyeData = null;
-        m_afClipEyeInvData = null;
-        m_afClipArbData = null;
         m_afBlend = null;
-
-        m_afGradientMagnitude = null;
-
+        m_afShowSurface = null;
         super.dispose();
     }
 
@@ -72,8 +66,8 @@ public class VolumePlaneEffect extends ShaderEffect
         GetPShader(0).SetTexture(0, m_kVolumeImageA.GetVolumeTarget() );
         GetPShader(0).SetImageName(1, "ColorMapA");
         GetPShader(0).SetTexture(1, m_kVolumeImageA.GetColorMapTarget() );
-        GetPShader(0).SetImageName(2, "OpacityMapA");
-        GetPShader(0).SetTexture(2, m_kVolumeImageA.GetOpacityMapTarget() );
+        GetPShader(0).SetImageName(2, "SurfaceImage");
+        GetPShader(0).SetTexture(2, m_kVolumeImageA.GetSurfaceTarget() );
     }
 
     /** This function is called in LoadPrograms once the shader programs are
@@ -98,163 +92,7 @@ public class VolumePlaneEffect extends ShaderEffect
             }
         }       
     }
-    /**
-     * Reload the current shader programs from disk, compile and parse and
-     * send to the GPU.
-     * @param kRenderer, the Renderer object displaying the scene-graph which
-     * will apply the shader programs.
-     */
-    public void Reload( WildMagic.LibGraphics.Rendering.Renderer kRenderer )
-    {
-        Program kVProgram = GetVProgram(0);
-        kVProgram.Release();
-        VertexProgramCatalog.GetActive().Remove(kVProgram);
-
-        Program kPProgram = GetPProgram(0);
-        kPProgram.Release();
-        PixelProgramCatalog.GetActive().Remove(kPProgram);
-
-        VertexShader pkVShader = GetVShader(0);
-        pkVShader.OnReleaseProgram();
-        PixelShader pkPShader = GetPShader(0);
-        pkPShader.OnReleaseProgram();
-
-        LoadPrograms(kRenderer, 0,kRenderer.GetMaxColors(),
-                     kRenderer.GetMaxTCoords(),
-                     kRenderer.GetMaxVShaderImages(),
-                     kRenderer.GetMaxPShaderImages());
-    }
-
-    /**
-     * Init the axis-aligned clip planes.
-     * @param afData, the axis-aligned clip plane default positions.
-     */
-    public void InitClip( float[] afData )
-    {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("DoClip") != null ) 
-        {
-            pkProgram.GetUC("DoClip").SetDataSource(new float[]{0,0,0,0});
-        }       
-
-        for ( int i = 0; i < 6; i++ )
-        {
-            if ( pkProgram.GetUC(m_akClip[i]) != null ) 
-            {
-                pkProgram.GetUC(m_akClip[i]).SetDataSource(new float[]{afData[i],0,0,0});
-                m_aafClipData[i][0] = afData[i];
-            }       
-        }
-    }
-
-    /**
-     * Reset the axis-aligned clip planes, eye, inverse-eye and arbitrary clip
-     * planes to neutral.
-     */
-    private void ResetClip()
-    {
-        for ( int i = 0; i < 6; i++ )
-        {
-            if ( m_aafClipData[i] != null )
-            {
-                SetClip( i, m_aafClipData[i] );
-            }
-        }
-        if ( m_afClipEyeData != null )
-        {
-            SetClipEye(m_afClipEyeData);
-        }
-        if ( m_afClipEyeInvData != null )
-        {
-            SetClipEyeInv(m_afClipEyeInvData);
-        }
-        if ( m_afClipArbData != null )
-        {
-            SetClipArb(m_afClipArbData);
-        }
-    }
-
-    /**
-     * Enable and set the axis-aligned clip plane.
-     * @param iWhich, one of 6 clip-planes to set.
-     * @param data, the distance to the clip-plane.
-     */
-    public void SetClip(int iWhich, float[] data)
-    {
-        m_aafClipData[iWhich] = data;
-        EnableClip();
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC(m_akClip[iWhich]) != null ) 
-        {
-            pkProgram.GetUC(m_akClip[iWhich]).SetDataSource(data);
-        }
-    }
-    /**
-     * Enable clipping.
-     */
-    private void EnableClip()
-    {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("DoClip") != null ) 
-        {
-            pkProgram.GetUC("DoClip").SetDataSource(new float[]{1,0,0,0});
-        }       
-    }
-
-    /**
-     * Enable and set the eye clip plane.
-     * @param afEquation, the clip-plane equation.
-     */
-    public void SetClipEye(float[] afEquation)
-    {
-        m_afClipEyeData = afEquation;
-        EnableClip();
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("clipEye") != null ) 
-        {
-            pkProgram.GetUC("clipEye").SetDataSource(afEquation);
-        }
-    }
-
-    /**
-     * Enable and set the inverse-eye clip plane.
-     * @param afEquation, the clip-plane equation.
-     */
-    public void SetClipEyeInv(float[] afEquation)
-    {
-        m_afClipEyeInvData = afEquation;
-        EnableClip();
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("clipEyeInv") != null ) 
-        {
-            pkProgram.GetUC("clipEyeInv").SetDataSource(afEquation);
-        }
-    }
-
-    /**
-     * Enable and set the arbitrary clip plane.
-     * @param afEquation, the clip-plane equation.
-     */
-    public void SetClipArb(float[] afEquation)
-    {
-        m_afClipArbData = afEquation;
-        EnableClip();
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("clipArb") != null ) 
-        {
-            pkProgram.GetUC("clipArb").SetDataSource(afEquation);
-        }
-    }
-
-    /**
-     * Returns the current pixel program.
-     * @return the current pixel program.
-     */
-    public Program GetPProgram()
-    {
-        return GetPProgram(0);
-    }
-
+ 
     /**
      * Sets the blend factor shader parameter between imageA and imageB.
      * @param fBlend, blend factor (range = 0-1).
@@ -277,6 +115,16 @@ public class VolumePlaneEffect extends ShaderEffect
             pkProgram.GetUC("blend").SetDataSource(m_afBlend);
         }
     }
+    
+    public void ShowSurface( boolean bOn )
+    {
+        m_afShowSurface[0] = bOn ? 1 : 0;
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram != null && pkProgram.GetUC("ShowSurface") != null ) 
+        {
+            pkProgram.GetUC("ShowSurface").SetDataSource(m_afShowSurface);
+        } 
+    }
 
     /**
      * Sets the BackgroundColor shader parameter.
@@ -295,57 +143,6 @@ public class VolumePlaneEffect extends ShaderEffect
         }
     }
 
-    /** 
-     * Enables/Disables gradient magnitude filter.
-     * @param bShow, gradient magnitude filter on/off.
-     */
-    public void SetGradientMagnitude(boolean bShow)
-    {
-        m_afGradientMagnitude[0] = 0;
-        if ( bShow )
-        {
-            m_afGradientMagnitude[0] = 1;
-        }
-        SetGradientMagnitude();
-    }
-
-    /**
-     * Sets the GradientMagnitude shader parameter.
-     */
-    private void SetGradientMagnitude()
-    {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("GradientMagnitude") != null ) 
-        {
-            pkProgram.GetUC("GradientMagnitude").SetDataSource(m_afGradientMagnitude);
-        }
-    }
-
-    /**
-     * Loads this object from the input parameter rkStream, using the input
-     * Stream.Link to store the IDs of children objects of this object
-     * for linking after all objects are loaded from the Stream.
-     * @param rkStream, the Stream from which this object is being read.
-     * @param pkLink, the Link class for storing the IDs of this object's
-     * children objcts.
-     */
-    public void Load (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Load(rkStream,pkLink);
-
-        // native data
-    }
-
-    /**
-     * Copies this objects children objects from the input Stream's HashTable,
-     * based on the LinkID of the child stored in the pkLink paramter.
-     * @param rkStream, the Stream where the child objects are stored.
-     * @param pkLink, the Link class from which the child object IDs are read.
-     */
-    public void Link (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Link(rkStream,pkLink);
-    }
 
     /**
      * Registers this object with the input Stream parameter. All objects
@@ -422,18 +219,10 @@ public class VolumePlaneEffect extends ShaderEffect
     /** Shared volume data and textures. */
     private VolumeImage m_kVolumeImageA;
 
-    /** stores the axis-aligned clip plane information: */
-    private float[][] m_aafClipData = new float[6][4];
-    /** stores the eye clip plane information: */
-    private float[] m_afClipEyeData = null;
-    /** stores the inverse-eye clip plane information: */
-    private float[] m_afClipEyeInvData = null;
-    /** stores the arbitrary clip plane information: */
-    private float[] m_afClipArbData = null;
     /** stores the blend function */
     private float[] m_afBlend = new float[]{1f,0,0,0};
+    /** turns surface display on/off */
+    private float[] m_afShowSurface = new float[]{0f,0,0,0};
     /** stores the background color */
     private float[] m_afBackgroundColor = new float[4];
-    /** stores the gradient magnitude filter on/off value: */
-    private float[] m_afGradientMagnitude = new float[]{0,0,0,0};
 }
