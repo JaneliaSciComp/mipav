@@ -167,9 +167,9 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 
         UpdateFrameCount();       
         
-        if ( m_bSurfaceAdded )
+        if ( m_bSurfaceUpdate )
         {
-            m_bSurfaceAdded = false;
+            m_bSurfaceUpdate = false;
 
             UpdateSceneRotation();
             for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -697,7 +697,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         kSurface.SetDisplay(true);
         //kSurface.SetPolygonMode( true, WireframeState.FillMode.FM_LINE );
         m_kDisplayList.add( kSurface );
-        m_bSurfaceAdded = true;
+        m_bSurfaceUpdate = true;
         return kSurface;
     } 
     

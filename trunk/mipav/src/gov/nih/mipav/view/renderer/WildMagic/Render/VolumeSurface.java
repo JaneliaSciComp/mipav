@@ -7,6 +7,7 @@ import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibFoundation.System.*;
 import WildMagic.LibGraphics.Collision.*;
 import WildMagic.LibGraphics.Detail.*;
+import WildMagic.LibGraphics.Effects.*;
 import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 
@@ -143,6 +144,28 @@ public class VolumeSurface extends VolumeObject
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
     
+
+    /**
+     * Render the object.
+     * @param kRenderer, the OpenGLRenderer object.
+     * @param kCuller, the Culler object.
+     */
+    public void Render( Renderer kRenderer, Culler kCuller, Effect kEffect )
+    {
+        if ( !m_bDisplay )
+        {
+            return;
+        }
+        for ( int i = 0; i < m_kScene.GetQuantity(); i++ )
+        {
+            m_kScene.GetChild(i).DetachAllEffects();
+            m_kScene.GetChild(i).AttachEffect( kEffect );
+        }
+        m_kScene.UpdateGS();
+        kCuller.ComputeVisibleSet(m_kScene);
+        kRenderer.DrawScene(kCuller.GetVisibleSet());
+    }
+
     public String GetName()
     {
         return m_kMesh.GetName();
@@ -209,17 +232,7 @@ public class VolumeSurface extends VolumeObject
     {
         m_kLightShader.SetClip(iWhich, data, bEnable);
     }
-    
-    public void SetSecondaryClip( int iWhich, float data)
-    {
-        m_kLightShader.SetSecondaryClip(iWhich, data);
-    }
 
-    public void EnableSecondaryClip(boolean bEnable)
-    {
-        m_kLightShader.EnableSecondaryClip(bEnable);        
-    }
-    
     /** Sets eye clipping for the VolumeShaderEffect.
      * @param afEquation, the eye clipping equation.
      */

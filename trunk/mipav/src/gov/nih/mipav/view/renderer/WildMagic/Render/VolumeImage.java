@@ -50,9 +50,16 @@ public class VolumeImage
     /** Texture object for imageA normal map: */
     private Texture m_kNormalMapTargetA;
 
+    /** Data storage for surfaces: */
+    private GraphicsImage m_kSurfaceImage;
+    /** Texture object for surfaces: */
+    private Texture m_kSurfaceTarget;
+
     private boolean m_bByte = true;
     private ModelLUT m_kLUT = null;
 
+    private float m_fX = 1, m_fY = 1, m_fZ = 1;
+    
     public VolumeImage( ModelImage kImage, ModelLUT kLUTA, ModelRGB kRGBTA )
     {
         m_kImageA = kImage;
@@ -105,6 +112,20 @@ public class VolumeImage
 
         m_kOpacityMapTargetA_GM = new Texture();
         m_kOpacityMapTargetA_GM.SetShared(true);
+        
+
+        m_kSurfaceImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,
+                                       iXBound,iYBound,iZBound,(byte[])null,
+                                       "SurfaceImage");
+        m_kSurfaceTarget = new Texture();
+        m_kSurfaceTarget.SetImage(m_kSurfaceImage);
+        m_kSurfaceTarget.SetShared(true);
+        m_kSurfaceTarget.SetFilterType(Texture.FilterType.LINEAR);
+        m_kSurfaceTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
+        m_kSurfaceTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
+        m_kSurfaceTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
+        
+        InitScale();
     }
 
     /**
@@ -572,6 +593,11 @@ public class VolumeImage
         return m_kNormalMapTargetA;
     }
 
+    public Texture GetSurfaceTarget()
+    {
+        return m_kSurfaceTarget;
+    }
+    
     /**
      * Release the Textures containing the imageA (imageB) volume data. Once
      * Textures are released, they will be re-loaded onto the GPU during the
@@ -723,4 +749,36 @@ public class VolumeImage
     }
 
 
+    private void InitScale()
+    {
+        float fMaxX = (m_kImageA.getExtents()[0] - 1) * m_kImageA.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (m_kImageA.getExtents()[1] - 1) * m_kImageA.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (m_kImageA.getExtents()[2] - 1) * m_kImageA.getFileInfo(0).getResolutions()[2];
+
+        float fMax = fMaxX;
+        if (fMaxY > fMax) {
+            fMax = fMaxY;
+        }
+        if (fMaxZ > fMax) {
+            fMax = fMaxZ;
+        }
+        m_fX = fMaxX/fMax;
+        m_fY = fMaxY/fMax;
+        m_fZ = fMaxZ/fMax;
+    }
+    
+    public float GetScaleX()
+    {
+        return m_fX;
+    }    
+    public float GetScaleY()
+    {
+        return m_fY;
+    }    
+    public float GetScaleZ()
+    {
+        return m_fZ;
+    }
+    
+    
 }

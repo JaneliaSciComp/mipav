@@ -166,7 +166,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDisplayList.add( akVolumeSurfaces[i] );
         }
         UpdateSceneRotation();
-        m_bSurfaceAdded = true;
+        m_bSurfaceUpdate = true;
         return akVolumeSurfaces;
     }
 
@@ -395,20 +395,21 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kVolumeRayCast.SetDisplay(false);   
             m_kSlices.SetDisplay(true);   
             m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-            VolumeImageViewer.main(m_kVolumeImageA, null);
+            VolumeImageViewer.main(m_kVolumeImageA, null, null);
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             CMPMode();
         }
-        if ( m_bSurfaceAdded )
+        if ( m_bSurfaceUpdate )
         {
-            m_bSurfaceAdded = false;
+            m_bSurfaceUpdate = false;
             updateLighting( m_akLights );
+            VolumeImageViewer.main(m_kVolumeImageA, null, m_kDisplayList);
         }
         if ( m_bCrop )
         {
             m_bCrop = false;
             m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-            VolumeImageViewer.main(m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect());
+            VolumeImageViewer.main(m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect(), null);
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         }
     }
@@ -1176,6 +1177,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                     VolumeSurface kSurface = (VolumeSurface)m_kDisplayList.remove(i);
                     kSurface.dispose();
                     kSurface = null;
+                    m_bSurfaceUpdate = true;
                 }
             }
         }
@@ -2236,6 +2238,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 }
             }
         }
+    }
+    
+    public void redrawSurfaceTexture()
+    {
+        m_bSurfaceUpdate = true;
     }
     
 }

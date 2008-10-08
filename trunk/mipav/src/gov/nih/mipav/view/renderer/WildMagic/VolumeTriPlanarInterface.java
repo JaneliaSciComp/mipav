@@ -2809,7 +2809,7 @@ implements MouseListener, ItemListener, ChangeListener {
             VolumeSurface[] akVolumeSurfaces = raycastRenderWM.addSurface(akSurfaces, bReplace);  
             for (int i = 0; i < 3; i++) 
             {
-                m_akPlaneRender[i].AddSurfaces(akVolumeSurfaces);
+                m_akPlaneRender[i].displaySurface(true);
             }
             insertTab("Light", lightPanel);
             m_kLightsPanel.enableLight(0, true);
@@ -2851,7 +2851,11 @@ implements MouseListener, ItemListener, ChangeListener {
     }
 
     public void removeSurface(String kSurfaceName)
-    {
+    {       
+        for (int i = 0; i < 3; i++) 
+        {
+            m_akPlaneRender[i].displaySurface(false);
+        }
         if ( raycastRenderWM != null )
         {
             raycastRenderWM.removeSurface(kSurfaceName);
@@ -3258,6 +3262,13 @@ implements MouseListener, ItemListener, ChangeListener {
         {
             m_kFlyThroughRender.GetCanvas().display();
         }
+    }
+    
+    public void updatePlanes()
+    {
+        raycastRenderWM.redrawSurfaceTexture();
+        raycastRenderWM.GetCanvas().display();
+        setModified();
     }
     
 }
