@@ -286,16 +286,15 @@ public class PlaneRender_WM extends GPURenderBase
 
     }
 
-    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {
-        // TODO Auto-generated method stub
+    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2)
+    {
         m_bModified = true;
-
     }
 
     
     public void init(GLAutoDrawable arg0) {
     	if ( m_kImageA == null ) {
-        	return;
+            return;
         }
 
         m_bInit = true;
@@ -341,7 +340,6 @@ public class PlaneRender_WM extends GPURenderBase
     }
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-       // ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
     	if ( m_kImageA == null ) {
         	return;
         }
@@ -619,25 +617,6 @@ public class PlaneRender_WM extends GPURenderBase
         if ((kEvent.getButton() == MouseEvent.BUTTON1) && !kEvent.isShiftDown()) {
             processLeftMouseDrag( kEvent );
             m_bLeftMousePressed = false;
-
-//             /* If the RFA probe point is being set by the mouse, then
-//              * calculate the mouse position in FileCoordinates and pass the
-//              * information to the parent class: */
-//             if (m_bEntryPointSelect) {
-
-//                 /* Calculate the center of the mouse in LOCAL coordineates, taking
-//                  * into account zoom and translate: */
-//                 Vector3f localPt = new Vector3f();
-//                 this.ScreenToLocal(kEvent.getX(), kEvent.getY(), localPt, false);
-//                 Vector3f patientPt = new Vector3f();
-//                 this.LocalToPatient( localPt, patientPt );
-//                 Vector3f kRFAPoint = new Vector3f();
-//                 MipavCoordinateSystems.patientToFile(patientPt, kRFAPoint, m_kImageA,
-//                                                      m_iPlaneOrientation );
-//                 /* Tell the parent to draw the RFA point: */
-//                 m_kParent.
-//                     drawRFAPoint( new Point3f( kRFAPoint.X, kRFAPoint.Y, kRFAPoint.Z ) );
-//             }
         }
         m_bFirstDrag = true;
         m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
@@ -926,7 +905,6 @@ public class PlaneRender_WM extends GPURenderBase
     public void setCenter( Vector3f center )
     {
         m_bModified = true;
-        //System.err.println( center.ToString() );
         m_afModelPosition[0] = center.X/(m_kImageA.getExtents()[0] -1);
         m_afModelPosition[1] = center.Y/(m_kImageA.getExtents()[1] -1);
         m_afModelPosition[2] = center.Z/(m_kImageA.getExtents()[2] -1);
@@ -952,17 +930,6 @@ public class PlaneRender_WM extends GPURenderBase
         }
     }
     
-    
-    /**
-     * Returns the current center point of the 3 intersecting ModelImage
-     * planes in FileCoordinates.
-     * @return the current volume center point in FileCoordinates
-     */
-//    public Vector3f getCenter()
-//    {
-//         return m_kPatientSlice.getCenter();
-//    }
-
     /**
      * If the right mouse button is pressed and dragged. processRightMouseDrag
      * updates the HistoLUT window and level (contrast and brightness)
@@ -987,7 +954,7 @@ public class PlaneRender_WM extends GPURenderBase
             m_kActiveImage = m_kImageA;
         }
         
-        m_kActiveLookupTable = m_kParent.getLUTa();
+        m_kActiveLookupTable = m_kParent.getActiveLookupTable(m_kActiveImage);
         
         if ( m_kWinLevel.updateWinLevel( localPt.X, localPt.Y, m_bFirstDrag, m_kActiveLookupTable, m_kActiveImage ) )
         {
@@ -1042,8 +1009,6 @@ public class PlaneRender_WM extends GPURenderBase
 
         m_aiAxisOrder = MipavCoordinateSystems.getAxisOrder(m_kImageA, m_iPlaneOrientation);
         m_abAxisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageA, m_iPlaneOrientation);
-        //System.err.println( m_iPlaneOrientation + " " + m_abAxisFlip[0] + " " + m_abAxisFlip[1] + " " + m_abAxisFlip[2] );
-        //System.err.println( m_aiAxisOrder[2] + " " + m_abAxisFlip[2]);
         m_aiLocalImageExtents = m_kImageA.getExtents( m_iPlaneOrientation );
 
         float[] afResolutions = m_kImageA.getResolutions( 0, m_iPlaneOrientation );

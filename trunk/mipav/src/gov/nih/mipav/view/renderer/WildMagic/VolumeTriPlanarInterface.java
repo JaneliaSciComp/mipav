@@ -1256,6 +1256,28 @@ implements MouseListener, ItemListener, ChangeListener {
     public ViewControlsImage getControls() {
         return null;
     }
+    
+    /**
+     * Returns the ModelLUT or ModelRGB based on which image is currently active, either imageA or imageB and they type
+     * of image (color or grayscale).
+     *
+     * @return  the active LUT/RGB table.
+     */
+    public ModelStorageBase getActiveLookupTable(ModelImage kImage) {
+
+        if (kImage == imageA) {
+
+            if (imageA.isColorImage()) {
+                return RGBTA;
+            }
+
+            return LUTa;
+        } else if ((imageB != null) && (imageB.isColorImage())) {
+            return RGBTB;
+        }
+
+        return LUTb;
+    }
 
     /**
      * Returns which image is active in the HistoLUT -- either imageA or imageB. Called by the PlaneRenderer object to
