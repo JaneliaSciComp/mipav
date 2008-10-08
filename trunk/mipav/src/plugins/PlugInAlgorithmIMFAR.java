@@ -187,7 +187,7 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 							
 							//concatentate all sections to fullText
 							String fullText = title + " " + background + " " + objectives + " " + methods + " " + results + " " + conclusions;
-							
+							fullText = fullText.toLowerCase();
 							
 							boolean writeOut = false;
 							//we want to write out entries only if a search came back with yes
@@ -400,7 +400,8 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 		String[] keyWords = line.split("\\s+");
 		if(keyWords.length > 1) {
 			for(int j=0;j<keyWords.length;j++) {
-				containsSearch = fullText.contains(keyWords[j]);
+				String word = keyWords[j].toLowerCase();
+				containsSearch = fullText.contains(word);
 				//since we are ANDing all of them...if at least 1 is false, break out
 				if(!containsSearch) {
 					break;
