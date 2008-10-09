@@ -514,6 +514,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				}
 				firstBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setComputerGenerated(true);
+				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTThigh)algorithm).getSegmentationTimeThigh());
+				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTThigh)algorithm).getSegmentationTimeThigh());
 			}
 		} else if(algorithm instanceof PlugInAlgorithmCTMarrow) {
 			if(((PlugInAlgorithmCTMarrow)algorithm).getLeftMarrowVOI() != null && 
@@ -533,6 +535,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				}
 				firstBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setComputerGenerated(true);
+				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTMarrow)algorithm).getSegmentationTimeMarrow());
+				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTMarrow)algorithm).getSegmentationTimeMarrow());
 			}
 		} else if(algorithm instanceof PlugInAlgorithmCTBone) {
 			if(((PlugInAlgorithmCTBone)algorithm).getLeftBoneVOI() != null && 
@@ -552,6 +556,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				}
 				firstBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setComputerGenerated(true);
+				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTBone)algorithm).getSegmentationTimeBone());
+				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTBone)algorithm).getSegmentationTimeBone());
 			}
 		} else if(algorithm instanceof PlugInAlgorithmCTAbdomen) {
 			if(((PlugInAlgorithmCTAbdomen)algorithm).getAbdomenVOI() != null) {
@@ -564,6 +570,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					}
 				}
 				firstBufferVOI.setComputerGenerated(true);
+				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTAbdomen)algorithm).getSegmentationTimeAbd());
 			}
 			if(((PlugInAlgorithmCTAbdomen)algorithm).getSubcutaneousVOI() != null) {
 				secondVOI = ((PlugInAlgorithmCTAbdomen)algorithm).getSubcutaneousVOI().getCurves();
@@ -574,6 +581,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					}
 				}
 				secondBufferVOI.setComputerGenerated(true);
+				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTAbdomen)algorithm).getSegmentationTimeSub());
 			}
 		}
 	
@@ -3919,7 +3927,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		//~ Instance fields -------------------------------------------------------------------------------------
 		
 		/**The current VOI being calculated.*/
-		private VOI calculateVOI;
+		private PlugInSelectableVOI calculateVOI;
 		
 		/**Whether the Runnable has completed.*/
 		private boolean done = false;
@@ -3932,7 +3940,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 * @param newVOI the VOI to work on
 		 * @param name the name of the VOI
 		 */
-		public MuscleCalculation(VOI newVOI, String name) {
+		public MuscleCalculation(PlugInSelectableVOI newVOI, String name) {
 			super();
 			this.calculateVOI = newVOI;
 			this.name = name;
@@ -4125,20 +4133,64 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     			temp.setMeanTotalH(meanTotalH, k);
 			}
 			time = System.currentTimeMillis() - time;
-			
+			calculateVOI.setCalculationTime(time);
 			//only place where calculations are generated, setLastCalculated should only appear here
 			temp.setLastCalculated(System.currentTimeMillis());
 			
 			System.out.println("Finished "+calculateVOI.getName()+" in "+time);
+			
+			if(Preferences.getDebugLevels()[1]) {
+				writeVoiLine();
+			}
+			
 			done = true;
 		}
 		
 		/**
-		 * Sets the VOI being calculated in this runnable to a new value. Also resets name.
+		 * Writes the statistics about this voi to a new line
 		 */
-		public void setCurrentVOI(VOI currentVOI) {
-			this.calculateVOI = currentVOI;
-			this.name = currentVOI.getName();
+		private void writeVoiLine() {
+			PlugInSelectableVOI v = calculateVOI;
+			File containerFolder = new File(Preferences.getPreferencesDir()+File.separator+"SegmentationStatistics"+File.separator);
+			if(!containerFolder.exists())
+				containerFolder.mkdir();
+			File textFile = new File(Preferences.getPreferencesDir()+File.separator+"SegmentationStatistics"+File.separator+v.getName()+".txt");
+			BufferedWriter writer = null;
+			try {
+				boolean doCreate = false;
+				if(!textFile.exists()) 
+					doCreate = true;
+				
+				writer = new BufferedWriter(new FileWriter(textFile, !doCreate));
+				if(doCreate) {
+					String create = "File Location\tFat Area\tLean Area\tTotal Area\t"+
+								"Mean Fat HU\tMean Lean HU\tMean Total HU\tDate\tSegmentation Time\tCalculation Time";
+					writer.write(create);
+					writer.newLine();
+				}
+				
+				String s = new String(getActiveImage().getImageDirectory()+"\t"+v.getFatArea()+"\t"+v.getLeanArea()+"\t"+v.getTotalArea()+"\t"
+										+v.getMeanFatH()+"\t"+v.getMeanLeanH()+"\t"+v.getMeanTotalH()+"\t"+
+										new Date()+"\t"+v.getSegmentationTime()+"\t"+v.getCalculationTime());
+				writer.write(s);
+				writer.newLine();
+				
+				Preferences.debug("Wrote new line in file "+textFile+"\n");
+			} catch(IOException e) {
+				System.err.println("Error creating, writing or closing ucsd file.");
+				e.printStackTrace();
+				return;
+			} finally {
+
+	            try {
+	                if (writer != null) {
+	                    writer.flush();
+	                    writer.close();
+	                }
+	            } catch (IOException ex) {
+	                ex.printStackTrace();
+	            }
+			}
 		}
 
 		/**
