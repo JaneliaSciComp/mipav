@@ -421,6 +421,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     
     @Override
     public void actionPerformed(ActionEvent e) {
+    	System.out.println("An action: "+e);
     	String command = e.getActionCommand();
         //run through toggle buttons to see if a menu selected one (updates the button status)
         getControls().getTools().setToggleButtonSelected(command);
@@ -1291,12 +1292,20 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			pdfDocument.close();
 			pdfWriter.close();
 			
-			MipavUtil.displayInfo("PDF saved to: " + pdfFile+"\nText saved to: "+textFile);
-			ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile + 
-										"\nText saved to: "+textFile+"\n", ViewJFrameMessage.DATA);
+			if(((AnalysisDialogPrompt)tabs[resultTabLoc]).calcOutputSuccess()) {
+				MipavUtil.displayInfo("PDF saved to: " + pdfFile+"\nText saved to: "+textFile);
+				ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile + 
+											"\nText saved to: "+textFile+"\n", ViewJFrameMessage.DATA);
+			} else {
+				MipavUtil.displayError("<html>There was an error writing the output files.  "+
+						"<br>Please make sure the image location is still available:<br>"+textFile.getParent());
+			}
 			
 			} catch (Exception e) {
 				e.printStackTrace();
+				MipavUtil.displayError("<html>There was an error writing the output files.  "+
+						"<br>Please make sure the image location is still available:<br>"+textFile.getParent());
+				
 			}
 			
 		}
@@ -1554,7 +1563,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    componentImage.useHighlight(false);
 	    scrollPane.setFocusable(true);
 	    scrollPane.setBackground(Color.black);
-	    scrollPane.addKeyListener(this);
+	    //scrollPane.addKeyListener(this);
 	    
 	    dialogTabs = new JTabbedPane();
 	    dialogTabs.setMinimumSize(new Dimension (370, 532));
@@ -2258,7 +2267,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
          */
         public VoiDialogPrompt(PlugInMuscleImageDisplay theParentFrame) {
             super(theParentFrame, "VOI");
-           
+
             setButtons(buttonStringList);
             
             voiPromptBuffer = new VOIVector();
@@ -3242,6 +3251,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    	}
 		    }
 		}
+		
+		public boolean calcOutputSuccess() {
+			return ucsdOutput.isSuccess();
+		}
 
 		/**
 		 * Presses all enabled buttons.  Boolean selectMode has following actions:
@@ -3777,11 +3790,21 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			/** Whether this Runnable has completed*/
 			private boolean done = false;
 			
+			/** Whether the Runnable successfully wrote the file*/
+			private boolean success = false;
+			
 			/**
 			 * Whether the output has finished.
 			 */
 			public boolean isFinished() {
 				return done;
+			}
+			
+			/**
+			 * Whether the output completed successfully
+			 */
+			public boolean isSuccess() {
+				return success;
 			}
 
 			/**
@@ -3823,9 +3846,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					}
 					
 					writer.close();
+					success = true;
 				} catch(IOException e) {
 					System.err.println("Error creating, writing or closing ucsd file.");
 					e.printStackTrace();
+					success = false;
 					return;
 				}
 				System.out.println("Time for output: "+(System.currentTimeMillis() - time));
