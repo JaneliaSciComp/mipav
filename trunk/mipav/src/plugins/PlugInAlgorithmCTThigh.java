@@ -66,6 +66,8 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
     
     private Color voiColor;
     
+    private long segmentationTimeThigh = 0;
+    
     /**
      * Constructor.
      *
@@ -185,7 +187,8 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
         time = System.currentTimeMillis();
         if(doVOI)
         	completeVOI = makeThighTissueVOI();
-        System.out.println("Thigh tissue VOIs: "+(System.currentTimeMillis() - time));
+        segmentationTimeThigh = (System.currentTimeMillis() - time);
+        System.err.println("Thigh tissue VOIs: "+segmentationTimeThigh);
         System.err.println("Total time for thigh segmentation: "+(System.currentTimeMillis() - totalTime));
         if(completeVOI) {
 	        
@@ -946,6 +949,12 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
             System.out.println("VOI name: " +maxContour.getName());
 <<<<<<< .mine
             */
+	}
+
+
+
+	public long getSegmentationTimeThigh() {
+		return segmentationTimeThigh;
 	}
     
 
