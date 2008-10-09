@@ -189,12 +189,19 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
             leftCurve = ((VOIContour)leftBoneVOI.getCurves()[0].get(0));
             leftCurve.getBounds(leftBoundsX, leftBoundsY, leftBoundsZ);
             
+            //rightX should be to the LEFT of leftx in this orientation
+            float rightX = ((VOIContour)rightBoneVOI.getCurves()[0].get(0)).get(0).X;
+            float leftX = ((VOIContour)leftBoneVOI.getCurves()[0].get(0)).get(0).X;
+            
             // the rightBoneVOI should be the leftmost
-            if (rightBoundsX[0] > leftBoundsX[0] && rightBoundsX[1] > leftBoundsX[1]) {
+            if (rightX > leftX) {
                 VOI tmp = rightBoneVOI;
                 rightBoneVOI = leftBoneVOI;
                 leftBoneVOI = tmp;
             }
+            
+            rightBoneVOI.setName("Right Bone");
+            leftBoneVOI.setName("Left Bone");
             
             System.err.println("Total time for bone segmentation: "+(System.currentTimeMillis() - totalTime));
 	        

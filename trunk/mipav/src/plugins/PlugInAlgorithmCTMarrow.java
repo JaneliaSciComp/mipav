@@ -203,12 +203,19 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
             leftCurve = ((VOIContour)leftMarrowVOI.getCurves()[0].get(0));
             leftCurve.getBounds(leftBoundsX, leftBoundsY, leftBoundsZ);
             
+          //rightX should be to the LEFT of leftx in this orientation
+            float rightX = ((VOIContour)rightMarrowVOI.getCurves()[0].get(0)).get(0).X;
+            float leftX = ((VOIContour)leftMarrowVOI.getCurves()[0].get(0)).get(0).X;
+            
             // the rightBoneVOI should be the leftmost
-            if (rightBoundsX[0] > leftBoundsX[0] && rightBoundsX[1] > leftBoundsX[1]) {
+            if (rightX > leftX) {
                 VOI tmp = rightMarrowVOI;
                 rightMarrowVOI = leftMarrowVOI;
                 leftMarrowVOI = tmp;
             }
+            
+            rightMarrowVOI.setName("Right Marrow");
+            leftMarrowVOI.setName("Left Marrow");
             
             System.err.println("Total time for marrow segmentation: "+(System.currentTimeMillis() - totalTime));
 	        
