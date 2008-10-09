@@ -17,6 +17,12 @@ public class PlugInSelectableVOI extends VOI {
 	 */
 	private int outputLoc = INVALID_LOC_NUMBER;
 	
+	/** VOIs that this VOI uses in its calculations. */
+	private PlugInSelectableVOI[] children;
+	
+	/** VOIs that use this VOI in their calculations. */
+	private PlugInSelectableVOI[] dependents;
+	
 	/**Pane location of this VOI on the MuscleDialogPrompt*/
 	private int paneNum = INVALID_LOC_NUMBER;
 	
@@ -81,6 +87,7 @@ public class PlugInSelectableVOI extends VOI {
 								boolean fillEligible, boolean calcEligible, int imageSize, int outputLoc) {
 		this(name, closed, maxCurvesPerSlice, paneNum, fillEligible, calcEligible, imageSize, outputLoc, INVALID_COLOR);
 	}
+	
 	public PlugInSelectableVOI(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
 			boolean fillEligible, boolean calcEligible, int imageSize, int outputLoc, Color color) {
 		super((short)0, name, imageSize);
@@ -113,9 +120,46 @@ public class PlugInSelectableVOI extends VOI {
 			meanTotalH[i] = Double.MIN_VALUE;
 		}
 		
+		dependents = new PlugInSelectableVOI[0];
+		children = new PlugInSelectableVOI[0];
+		
 		setColor(color);
 	}
 
+	/**
+	 * Method for adding a child to the list of VOIs this VOI uses for its calculations.
+	 * Can only add a calc eligible child, can not add itself.
+	 * @param newChild
+	 * @return
+	 */
+	public boolean addChild(PlugInSelectableVOI newChild) {
+    	if(!newChild.getCalcEligible() || newChild.equals(this))
+    		return false;
+    	for(int i=0; i<children.length; i++) 
+    		if(children[i].equals(newChild))
+    			return false;
+    		
+		//able to be added
+		PlugInSelectableVOI[] oldChildren = children;
+    	children = new PlugInSelectableVOI[oldChildren.length+1];
+    	for(int i=0; i<oldChildren.length; i++) {
+    		children[i] = oldChildren[i];
+    	}
+    	children[oldChildren.length] = newChild;
+    	return true;
+    }
+	
+	/**
+     * Gets all VOIs that this VOI uses in its calculations.
+     * 
+     * @return all VOIs that require this VOI to have been calculated.
+     */
+    public PlugInSelectableVOI[] getChildren() {
+    	return children;
+    }
+    
+    
+	
 	public boolean getCreated() {
 		return created;
 	}
@@ -123,6 +167,37 @@ public class PlugInSelectableVOI extends VOI {
 	public void setCreated(boolean created) {
 		this.created = created;
 	}
+	
+	/**
+	 * Method for adding a dependent to the list of VOIs that use this VOI in its calculations.
+	 * Can only add a calcEligible dependent, can not add itself or a dependent twice.
+	 * @param newDependent
+	 */
+	public boolean addDependent(PlugInSelectableVOI newDependent) {
+		if(!newDependent.getCalcEligible() || newDependent.equals(this))
+			return false;
+		for(int i=0; i<dependents.length; i++) 
+    		if(dependents[i].equals(newDependent))
+    			return false;
+    		
+		//able to be added
+    	PlugInSelectableVOI[] oldDependents = dependents;
+    	dependents = new PlugInSelectableVOI[oldDependents.length+1];
+    	for(int i=0; i<oldDependents.length; i++) {
+    		dependents[i] = oldDependents[i];
+    	}
+    	dependents[oldDependents.length] = newDependent;
+    	return true;
+    }
+	
+	/**
+     * Gets all VOIs that are dependent on having this VOI recalculated.
+     * 
+     * @return all VOIs that require this VOI to have been calculated.
+     */
+    public PlugInSelectableVOI[] getDependents() {
+    	return dependents;
+    }
 
 	public int getMaxCurvesPerSlice() {
 		return maxCurvesPerSlice;
