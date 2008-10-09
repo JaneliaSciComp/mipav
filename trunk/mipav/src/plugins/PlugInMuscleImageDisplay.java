@@ -320,6 +320,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         progressBar.updateValue(5);
         imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
         
+        //Propagate children relationship backwards
+        setDependents();
     }
     
     /**
@@ -834,7 +836,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     	} 
     		
     	return null;
-    }
+    }  
     
     /**
 	 * Identifies which panel a particular VOI belongs to
@@ -1951,6 +1953,20 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        return false;
 	    }
 	}
+	
+	/**
+	 * Propagate inverse of children relationship as dependents to keep calculations correct.
+	 */
+	private void setDependents() {
+		Iterator itr = voiBuffer.values().iterator();
+		
+		while(itr.hasNext()) {
+			PlugInSelectableVOI voi = (PlugInSelectableVOI)itr.next();
+			for(int i=0; i<voi.getChildren().length; i++) {
+				voi.getChildren()[i].addDependent(voi);
+			}
+		}
+	}
 
 	/**
 	 * Waits for automatic segmentation algorithms to complete.
@@ -2299,7 +2315,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	                        MuscleCalculation muscleCalc = new MuscleCalculation(goodVoi, objectName);
 	                        Thread calc = new Thread(calcGroup, muscleCalc, objectName);
 	                        calc.start();
+	                        PlugInSelectableVOI[] dependents = voiBuffer.get(objectName).getDependents();
+	                        //Perform calculations on all VOIs that depend on this VOI
+	                        for(int i=0; i<dependents.length; i++) {
+	                        	MuscleCalculation muscleCalcDep = new MuscleCalculation(dependents[i], dependents[i].getName());
+	                        	Thread calcDep = new Thread(calcGroup, muscleCalcDep, dependents[i].getName());
+		                        calcDep.start();
+	                        }
                         }
+                        
                         getActiveImage().unregisterAllVOIs();
                         updateImages(true);
                     } else {
@@ -2328,7 +2352,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
                 	initMuscleImage(activeTab);
                 	initVoiImage(); //replacing current image and updating
                 	updateImages(true);
-                	
                 } else if (command.equals(HIDE_ONE)) {
                 	//cannot hide one if hide all has been changed to show all
                 	boolean hideEligible = false;
@@ -3067,7 +3090,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		private PlugInMuscleColorButtonPanel[][] mirrorCheckCalcItemsArr;
 		
 		/** Side check box for all non-symmetric objects. */
-		private PlugInMuscleColorButtonPanel[][] noMirrorCheckArr;
+		private PlugInMuscleColorButtonPanel[][] noMirrorCheckCalcItemsArr;
 		
 		/** Buttons for all symmetric objects. */
 		private JButton[][] mirrorButtonCalcItemsArr;
@@ -3289,6 +3312,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		public void setUpDialog() {
 			for(int i=0; i<mirrorButtonCalcItemsArr.length; i++) {
 				for(int j=0; j<mirrorButtonCalcItemsArr[i].length; j++) {
+					mirrorCheckCalcItemsArr[i][j].setColor(Color.BLACK);
 					if(mirrorButtonCalcItemsArr[i][j].isEnabled()) {
 						mirrorButtonCalcItemsArr[i][j].setSelected(false);
 					}	
@@ -3296,6 +3320,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			}
 			for(int i=0; i<noMirrorButtonCalcItemsArr.length; i++) {
 				for(int j=0; j<noMirrorButtonCalcItemsArr[i].length; j++) {
+					noMirrorCheckCalcItemsArr[i][j].setColor(Color.BLACK);
 					if(noMirrorButtonCalcItemsArr[i][j].isEnabled()) {
 						noMirrorButtonCalcItemsArr[i][j].setSelected(false);
 					}	
@@ -3321,7 +3346,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    mirrorCheckCalcItemsArr = new PlugInMuscleColorButtonPanel[mirrorCalcItemsArr.length][];
 		    mirrorButtonCalcItemsArr = new JButton[mirrorCalcItemsArr.length][];
 		    
-		    noMirrorCheckArr = new PlugInMuscleColorButtonPanel[noMirrorCalcItemsArr.length][];
+		    noMirrorCheckCalcItemsArr = new PlugInMuscleColorButtonPanel[noMirrorCalcItemsArr.length][];
 		    noMirrorButtonCalcItemsArr = new JButton[noMirrorCalcItemsArr.length][];
 		
 		    String title = "";
@@ -3485,7 +3510,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 */
 	    private JPanel initNonSymmetricalObjects(JPanel subPanel, int index) {
       
-	    	noMirrorCheckArr[index] = new PlugInMuscleColorButtonPanel[noMirrorCalcItemsArr[index].length];
+	    	noMirrorCheckCalcItemsArr[index] = new PlugInMuscleColorButtonPanel[noMirrorCalcItemsArr[index].length];
             noMirrorButtonCalcItemsArr[index] = new JButton[noMirrorCalcItemsArr[index].length];
 	    	
 	    	GridBagConstraints gbc = new GridBagConstraints();
@@ -3498,9 +3523,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             
             for(int i=0; i<noMirrorCalcItemsArr[index].length; i++) {
                                
-            	noMirrorCheckArr[index][i] = new PlugInMuscleColorButtonPanel(Color.BLACK, noMirrorCalcItemsArr[index][i], this);
+            	noMirrorCheckCalcItemsArr[index][i] = new PlugInMuscleColorButtonPanel(Color.BLACK, noMirrorCalcItemsArr[index][i], this);
                 
-                checkBoxLocationTree.put(noMirrorCalcItemsArr[index][i], noMirrorCheckArr[index][i]);
+                checkBoxLocationTree.put(noMirrorCalcItemsArr[index][i], noMirrorCheckCalcItemsArr[index][i]);
                 
                 noMirrorButtonCalcItemsArr[index][i] = new JButton(noMirrorCalcItemsArr[index][i]);
                 noMirrorButtonCalcItemsArr[index][i].setEnabled(voiExists(noMirrorCalcItemsArr[index][i]));
@@ -3514,7 +3539,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
                 }
                 gbc.weightx = 0;
                 gbc.insets = new Insets(0, 10, 0, 0);
-                subPanel.add(noMirrorCheckArr[index][i], gbc);
+                subPanel.add(noMirrorCheckCalcItemsArr[index][i], gbc);
                 gbc.insets = new Insets(0, 0, 0, 0);
                 gbc.gridx++;
                 gbc.weightx = 1;
@@ -3612,7 +3637,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    	}
 				for (int listNum = 0; listNum < noMirrorButtonCalcItemsArr.length; listNum++, subList = new ArrayList<String>())  {   	
 					for(int i=0; i<noMirrorButtonCalcItemsArr[listNum].length; i++) 
-						if(noMirrorCheckArr[listNum][i].isSelected())
+						if(noMirrorCheckCalcItemsArr[listNum][i].isSelected())
 							subList.add(noMirrorButtonCalcItemsArr[listNum][i].getText());
 					totalList.addAll(subList);
 		    	}
@@ -3935,7 +3960,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			//ViewJProgressBar progressBar = new ViewJProgressBar("Calculations", "Initializing...", 0, 100, true);
 			long time = System.currentTimeMillis();
 			
-			ArrayList<PlugInSelectableVOI> residuals = new ArrayList<PlugInSelectableVOI>();
+			PlugInSelectableVOI[] children = new PlugInSelectableVOI[0];
 			VOI v = calculateVOI;
 			double wholeMultiplier = 0.0, sliceMultiplier = 0.0;
 			wholeMultiplier = sliceMultiplier = Math.pow(getActiveImage().getResolutions(0)[0]*0.1, 2);
@@ -3943,12 +3968,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				wholeMultiplier *= (getActiveImage().getResolutions(0)[2]*0.1);
 			System.out.println("Whole Multiplier: "+wholeMultiplier+"\tSliceMultiplier: "+sliceMultiplier);
 			PlugInSelectableVOI temp = voiBuffer.get(name);
-			residuals = getVOIResiduals(temp);
-			ArrayList<Thread> calc = new ArrayList<Thread>(residuals.size());
+			children = temp.getChildren();
+			ArrayList<Thread> calc = new ArrayList<Thread>(children.length);
 			Thread tempThread = null;
-			for(int i=0; i<residuals.size(); i++) {
-				if(residuals.get(i).getLastCalculated() == null || residuals.get(i).getLastModified() == null || 
-						residuals.get(i).getLastCalculated().compareTo(residuals.get(i).getLastModified()) < 0) {
+			for(int i=0; i<children.length; i++) {
+				if(children[i].getLastCalculated() == null || children[i].getLastModified() == null || 
+						children[i].getLastCalculated().compareTo(children[i].getLastModified()) < 0) {
 					//since enumerate silently ignores threads greater than array size
 					//worst case scenario is extra calculation performed
 					Thread[] activeGroup = new Thread[calcGroup.activeCount()];
@@ -3957,21 +3982,21 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					boolean activeFound = false;
 					for(int j=0; j<activeGroup.length; j++) {
 						//System.out.println("About to compare "+ activeGroup[j].getName() +" to "+residuals.get(i).getName());
-						if(activeGroup[j] != null && activeGroup[j].getName().equals(residuals.get(i).getName())) {
+						if(activeGroup[j] != null && activeGroup[j].getName().equals(children[i].getName())) {
 							calc.add(activeGroup[j]);
-							System.out.println("Might avoid duplicate calculation "+activeGroup[j]);
+							System.out.println("Not calculating, because it's being calculated, should be yielding?: "+activeGroup[j]);
 							activeFound = true;
 						}
 					}
 					if(!activeFound) {
-						MuscleCalculation muscleCalc = new MuscleCalculation(residuals.get(i), residuals.get(i).getName());
+						MuscleCalculation muscleCalc = new MuscleCalculation(children[i], children[i].getName());
 			            //No thread group this time since just joining all later
 						calc.add(tempThread = new Thread(muscleCalc));
 			            tempThread.start();
 					}
 		            
 				} else
-					System.out.println("Just avoided calculating "+residuals.get(i).getName());
+					System.out.println("Just avoided calculating "+children[i].getName());
 			}
 			long time2 = System.currentTimeMillis();
 			System.out.println("Waiting for threads to complete");
@@ -3990,11 +4015,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			double totalAreaCount = getTotalAreaCount(v)*wholeMultiplier;
 			double fatAreaLarge = fatArea, leanAreaLarge = leanArea, totalAreaLarge = totalAreaCount;
 			//corrected area = abs(oldArea - sum(residual areas))
-			for(int j=0; j<residuals.size(); j++) {
-				fatArea = Math.abs(fatArea - residuals.get(j).getFatArea());
-				partialArea = Math.abs(partialArea - residuals.get(j).getPartialArea());
-				leanArea = Math.abs(leanArea - residuals.get(j).getLeanArea());
-				totalAreaCount = Math.abs(totalAreaCount - residuals.get(j).getTotalArea());
+			for(int j=0; j<children.length; j++) {
+				fatArea = Math.abs(fatArea - children[j].getFatArea());
+				partialArea = Math.abs(partialArea - children[j].getPartialArea());
+				leanArea = Math.abs(leanArea - children[j].getLeanArea());
+				totalAreaCount = Math.abs(totalAreaCount - children[j].getTotalArea());
 			}
 			
 			temp.setFatArea(fatArea);
@@ -4008,10 +4033,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    double meanFatHResidual = 0, meanLeanHResidual = 0, meanTotalHResidual = 0;
 		    
 		    //corrected mean = abs(oldMean*oldArea - sum(residualMean*residualArea))/abs(oldArea - sum(residualArea))
-		    for(int j=0; j<residuals.size(); j++) {
-		    	meanFatHResidual += residuals.get(j).getMeanFatH()*residuals.get(j).getFatArea();
-		    	meanLeanHResidual += residuals.get(j).getMeanLeanH()*residuals.get(j).getLeanArea();
-		    	meanTotalHResidual += residuals.get(j).getMeanTotalH()*residuals.get(j).getTotalArea();
+		    for(int j=0; j<children.length; j++) {
+		    	meanFatHResidual += children[j].getMeanFatH()*children[j].getFatArea();
+		    	meanLeanHResidual += children[j].getMeanLeanH()*children[j].getLeanArea();
+		    	meanTotalHResidual += children[j].getMeanTotalH()*children[j].getTotalArea();
 		    }
 		    
 		    meanFatH = (meanFatH*fatAreaLarge - meanFatHResidual) / fatArea;
@@ -4043,7 +4068,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					if(n != k)
 						v2.removeCurves(n);
 				}
-    			residuals = getVOIResiduals(temp);
+    			children = temp.getChildren();
     			//note that even for 3D images this will still be called area, even though refers to volume
     			fatArea = getPieceCount(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*sliceMultiplier;
     			partialArea = getPieceCount(v2, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*sliceMultiplier; 
@@ -4053,11 +4078,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     			leanAreaLarge = leanArea; 
     			totalAreaLarge = totalAreaCount;
     			//corrected area = abs(oldArea - sum(residual areas))
-    			for(int j=0; j<residuals.size(); j++) {
-    				fatArea = Math.abs(fatArea - residuals.get(j).getFatArea(k));
-    				partialArea = Math.abs(partialArea - residuals.get(j).getPartialArea(k));
-    				leanArea = Math.abs(leanArea - residuals.get(j).getLeanArea(k));
-    				totalAreaCount = Math.abs(totalAreaCount - residuals.get(j).getTotalArea(k));
+    			for(int j=0; j<children.length; j++) {
+    				fatArea = Math.abs(fatArea - children[j].getFatArea(k));
+    				partialArea = Math.abs(partialArea - children[j].getPartialArea(k));
+    				leanArea = Math.abs(leanArea - children[j].getLeanArea(k));
+    				totalAreaCount = Math.abs(totalAreaCount - children[j].getTotalArea(k));
     			}
     			
     			temp.setFatArea(fatArea, k);
@@ -4073,10 +4098,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     		    meanTotalHResidual = 0;
     		    
     		    //corrected mean = abs(oldMean*oldArea - sum(residualMean*residualArea))/abs(oldArea - sum(residualArea))
-    		    for(int j=0; j<residuals.size(); j++) {
-    		    	meanFatHResidual += residuals.get(j).getMeanFatH(k)*residuals.get(j).getFatArea(k);
-    		    	meanLeanHResidual += residuals.get(j).getMeanLeanH(k)*residuals.get(j).getLeanArea(k);
-    		    	meanTotalHResidual += residuals.get(j).getMeanTotalH(k)*residuals.get(j).getTotalArea(k);
+    		    for(int j=0; j<children.length; j++) {
+    		    	meanFatHResidual += children[j].getMeanFatH(k)*children[j].getFatArea(k);
+    		    	meanLeanHResidual += children[j].getMeanLeanH(k)*children[j].getLeanArea(k);
+    		    	meanTotalHResidual += children[j].getMeanTotalH(k)*children[j].getTotalArea(k);
     		    }
     		    
     		    meanFatH = (meanFatH*fatAreaLarge - meanFatHResidual) / fatArea;
@@ -4165,105 +4190,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) 
 		        totalArea++;
 			return totalArea;
-		}
-
-		/**
-		 * Produces dependents of a given VOI.  A dependent requires that the given (passed)\
-		 * VOI be created in order for calculations to be performed properly. 
-		 */
-		private ArrayList<PlugInSelectableVOI> getVOIDependents(VOI v) {
-			ArrayList<PlugInSelectableVOI> arr = new ArrayList<PlugInSelectableVOI>();
-			if(imageType.equals(ImageType.Abdomen)) {
-				if(v.getName().equals("Abdomen")) {
-					arr.add(voiBuffer.get("Subcutaneous area"));
-				} else if(v.getName().equals("Liver cysts")) {
-					arr.add(voiBuffer.get("Liver"));
-				}
-			} else if(imageType.equals(ImageType.Thigh)) {
-				if(v.getName().equals("Left Marrow")) {
-					arr.add(voiBuffer.get("Left Bone"));
-					arr.add(voiBuffer.get("Left Thigh"));
-				} else if(v.getName().equals("Right Marrow")) {
-					arr.add(voiBuffer.get("Right Bone"));
-					arr.add(voiBuffer.get("Right Thigh"));
-				} else if(v.getName().equals("Left Bone")) {
-					arr.add(voiBuffer.get("Left Thigh"));
-				} else if(v.getName().equals("Right Bone")) {
-					arr.add(voiBuffer.get("Right Thigh"));
-				} 
-			}
-			return arr;
-		}
-
-		/**
-		 * Produces residuals of a given VOI that are used to subtract out irrelevant portions of that VOI
-		 * Also see getDependents(VOI v)
-		 */
-		
-		private ArrayList<PlugInSelectableVOI> getVOIResiduals(VOI v) {
-			ArrayList<PlugInSelectableVOI> arr = new ArrayList<PlugInSelectableVOI>();
-			if(imageType.equals(ImageType.Abdomen)) {
-				if(v.getName().equals("Subcutaneous area")) {
-					arr.add(voiBuffer.get("Abdomen"));
-				} else if(v.getName().equals("Liver")) {
-					arr.add(voiBuffer.get("Liver cysts"));
-				}
-			} else if(imageType.equals(ImageType.Thigh)) {
-				if(v.getName().equals("Left Thigh")) {
-					arr.add(voiBuffer.get("Left Bone"));
-					arr.add(voiBuffer.get("Left Marrow"));
-				} else if(v.getName().equals("Right Thigh")) {
-					arr.add(voiBuffer.get("Right Bone"));
-					arr.add(voiBuffer.get("Right Marrow"));
-				} else if(v.getName().equals("Left Bone")) {
-					arr.add(voiBuffer.get("Left Marrow"));
-				} else if(v.getName().equals("Right Bone")) {
-					arr.add(voiBuffer.get("Right Marrow"));
-				} 
-			}
-			return arr;
-		}
-		
-		/**
-		 * Makes sure independent VOIs are calculated before their dependencies.  Example
-		 * left marrow calculated before left bone by properly ordering them.  Not needed
-		 * since joining of sub-MuscleCalculation threads are currnetly being performed.
-		 * @param tempVec
-		 * @return
-		 */
-		private VOIVector reorderVOIs(VOIVector tempVec) {
-			VOIVector vec = (VOIVector)tempVec.clone();
-			if(imageType.equals(ImageType.Abdomen)) {
-				int size = vec.size(), i = 0, count = 0;
-				while(count<size) {
-					if(vec.get(i).getName().equals("Subcutaneous area")) {
-						VOI tempVOI = vec.remove(i);
-						vec.add(size-1, tempVOI);
-					} else
-						i++;
-					count++;
-				}
-			} else if(imageType.equals(ImageType.Thigh)) {
-				int size = vec.size(), i = 0, count = 0;
-				while(count<size) {
-					if(vec.get(i).getName().equals("Left Thigh")) {
-						VOI tempVOI = vec.remove(i);
-						vec.add(size-1, tempVOI);
-					} else if(vec.get(i).getName().equals("Right Thigh")) {
-						VOI tempVOI = vec.remove(i);
-						vec.add(size-2, tempVOI);
-					} else if(vec.get(i).getName().equals("Left Bone")) {
-						VOI tempVOI = vec.remove(i);
-						vec.add(size-3, tempVOI);
-					} else if(vec.get(i).getName().equals("Right Bone")) {
-						VOI tempVOI = vec.remove(i);
-						vec.add(size-4, tempVOI);
-					} else
-						i++;
-					count++;
-				}
-			}
-			return vec;
 		}
 	}
 	/**

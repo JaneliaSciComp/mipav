@@ -341,6 +341,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     	voiList[2][7] = new PlugInSelectableVOI("Right Rectus", true, 1, 2, true, true, imageSize, 12, Color.CYAN);
     	voiList[2][8] = new PlugInSelectableVOI("Aortic Calcium", true, 5, 2, true, true, imageSize, 13, Color.MAGENTA);
         
+    	//Subcutaneous area has abdomen as child
+    	voiList[0][1].addChild(voiList[0][0]);
+    	//Liver has liver cysts as child
+    	voiList[1][1].addChild(voiList[1][2]);
+    	
         titles = new String[3];
         titles[0] = "Abdomen";
         titles[1] = "Tissue";
@@ -413,6 +418,20 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 
     	voiList[2][10] = new PlugInSelectableVOI("Water sample", true, 1, 1, false, false, imageSize, Color.CYAN);
 	    
+    	//Left thigh has left bone and left marrow as children
+    	voiList[0][0].addChild(voiList[1][0]);
+    	voiList[0][0].addChild(voiList[1][2]);
+    	
+    	//Left bone has left marrow as child
+    	voiList[1][0].addChild(voiList[1][2]);
+    	
+    	//Left thigh has right bone and right marrow as children
+    	voiList[0][1].addChild(voiList[1][1]);
+    	voiList[0][1].addChild(voiList[1][3]);
+    	
+    	//Left bone has right marrow as child
+    	voiList[1][1].addChild(voiList[1][3]);
+    	
 	    titles = new String[3];
 	    titles[0] = "Thigh";
 	    titles[1] = "Bone";
