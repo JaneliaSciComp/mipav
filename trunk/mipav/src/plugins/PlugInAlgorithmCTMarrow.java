@@ -65,6 +65,8 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
     
     private Color voiColor;
     
+    private long segmentationTimeMarrow = 0;
+    
     /**
      * Constructor.
      *
@@ -216,8 +218,8 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
             
             rightMarrowVOI.setName("Right Marrow");
             leftMarrowVOI.setName("Left Marrow");
-            
-            System.err.println("Total time for marrow segmentation: "+(System.currentTimeMillis() - totalTime));
+            segmentationTimeMarrow = (System.currentTimeMillis() - totalTime);
+            System.err.println("Total time for marrow segmentation: "+segmentationTimeMarrow);
 	        
 	     // save the VOI to a file(s)
 	        System.out.println("directory: " +imageDir);
@@ -518,6 +520,12 @@ public class PlugInAlgorithmCTMarrow extends AlgorithmBase {
 
 	public VOI getRightMarrowVOI() {
 		return rightMarrowVOI;
+	}
+
+
+
+	public long getSegmentationTimeMarrow() {
+		return segmentationTimeMarrow;
 	}
     
 

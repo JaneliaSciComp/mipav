@@ -64,6 +64,12 @@ public class PlugInSelectableVOI extends VOI {
 	
 	/**Keeps track of when this VOI was last saved*/
 	private Date lastModified = null;
+	
+	/** Amount of time in taken to segment VOI in ms*/
+	private long segmentationTime;
+	
+	/** Amount of time taken to calculate VOI in ms*/
+	private long calculationTime;
 
 	//~ Static fields --------------------------------------------------------------------------------------------------
 	
@@ -109,6 +115,8 @@ public class PlugInSelectableVOI extends VOI {
 		
 		this.lastCalculated = new Date(System.currentTimeMillis()-1000);
 		this.lastModified = new Date(System.currentTimeMillis());
+		this.segmentationTime = 0;
+		this.calculationTime = 0;
 		
 		for(int i=0; i<imageSize+1; i++) {
 			totalArea[i] = Double.MIN_VALUE;
@@ -431,5 +439,21 @@ public class PlugInSelectableVOI extends VOI {
 
 	public void setLastModified(long time) {
 		this.lastModified = new Date(time);
+	}
+
+	public long getSegmentationTime() {
+		return segmentationTime;
+	}
+
+	public void setSegmentationTime(long segmentationTime) {
+		this.segmentationTime = segmentationTime;
+	}
+
+	public long getCalculationTime() {
+		return calculationTime;
+	}
+
+	public void setCalculationTime(long calculationTime) {
+		this.calculationTime = calculationTime;
 	}
 }

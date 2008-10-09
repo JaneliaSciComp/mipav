@@ -60,6 +60,8 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
     
     private Color voiColor;
     
+    private long segmentationTimeBone = 0;
+    
     
     /**
      * Constructor.
@@ -202,8 +204,8 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
             
             rightBoneVOI.setName("Right Bone");
             leftBoneVOI.setName("Left Bone");
-            
-            System.err.println("Total time for bone segmentation: "+(System.currentTimeMillis() - totalTime));
+            segmentationTimeBone = (System.currentTimeMillis() - totalTime);
+            System.err.println("Total time for bone segmentation: "+segmentationTimeBone);
 	        
 	        // save the VOI to a file(s)
 	        System.out.println("directory: " +imageDir);
@@ -546,6 +548,12 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
 
 	public VOI getRightBoneVOI() {
 		return rightBoneVOI;
+	}
+
+
+
+	public long getSegmentationTimeBone() {
+		return segmentationTimeBone;
 	}
     
 

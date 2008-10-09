@@ -108,6 +108,12 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
     /** An array of lists of Y locations where the intensity profiles were acquired */
     private ArrayList<Integer>[] yProfileLocs;
 
+    /**Total segmentation time for abdomen. */
+    private long segmentationTimeAbd = 0;
+    
+    /**Total segmentation time for subcutaneous fat.*/
+    private long segmentationTimeSub = 0;
+    
     
     /**
      * Constructor.
@@ -172,7 +178,8 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         labelAbdomen2D();
         makeAbdomen2DVOI();
 
-        System.err.println("Total time for abdomen segmentation: "+(System.currentTimeMillis() - totalTime));
+        segmentationTimeAbd = (System.currentTimeMillis() - totalTime);
+        System.err.println("Total time for abdomen segmentation: "+segmentationTimeAbd);
         
         totalTime = System.currentTimeMillis();
         // the new way to find the subcutaneous fat VOI
@@ -245,8 +252,8 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         
         // get the new subcutaneous VOI
         subcutaneousVOI = theVOI;
-        
-        System.err.println("Total time for subcutaneous fat segmentation: "+(System.currentTimeMillis() - totalTime));
+        segmentationTimeSub = (System.currentTimeMillis() - totalTime);
+        System.err.println("Total time for subcutaneous fat segmentation: "+segmentationTimeSub);
 
         srcImage.unregisterAllVOIs();
         srcImage.registerVOI(abdomenVOI);
@@ -2686,5 +2693,17 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
         cloneImg.setImageName(Name);
         new ViewJFrameImage(cloneImg);
     }
+
+
+
+	public long getSegmentationTimeAbd() {
+		return segmentationTimeAbd;
+	}
+
+
+
+	public long getSegmentationTimeSub() {
+		return segmentationTimeSub;
+	}
 }
 
