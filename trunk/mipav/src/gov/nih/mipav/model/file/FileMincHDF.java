@@ -2,7 +2,7 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.file.HDF.*;
+//import gov.nih.mipav.model.file.HDF.*;
 
 import gov.nih.mipav.view.*;
 
@@ -84,6 +84,7 @@ public class FileMincHDF extends FileBase {
 
     /** will always use the HDF5 fileformat */
     private FileFormat fileFormat = FileFormat.getFileFormat(FileFormat.FILE_TYPE_HDF5);
+    //private FileFormat fileFormat;
 
     /** the file to be read/written */
     private H5File h5File;
@@ -675,13 +676,16 @@ public class FileMincHDF extends FileBase {
 	DefaultMutableTreeNode fileRoot = null;
     /*try {
         Class fileclass = Class.forName("gov.nih.mipav.model.file.HDF.H5File");
-        FileFormat fileformat = (FileFormat)fileclass.newInstance();
-        if (fileformat != null) {
-            FileFormat.addFileFormat("HDF5", fileformat);
+        fileFormat = (FileFormat)fileclass.newInstance();
+        if (fileFormat != null) {
+            FileFormat.addFileFormat("HDF5", fileFormat);
         }
+        
     } catch (Throwable err ) {;}*/
+    //fileFormat = FileFormat.getFileFormat(FileFormat.FILE_TYPE_HDF5);
 	try {
 	    h5File = (H5File)fileFormat.createInstance(fileDir + fileName, FileFormat.READ);
+        //h5File = new H5File(fileDir + fileName, FileFormat.READ);
 	    int fid = h5File.open();
 	} catch (Exception e) {
 	    e.printStackTrace();
