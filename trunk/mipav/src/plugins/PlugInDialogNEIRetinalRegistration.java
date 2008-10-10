@@ -322,13 +322,16 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         mainPanel.add(scrollPane, mainPanelConstraints);
 
         
-        JPanel OKCancelPanel = new JPanel();
+        JPanel OKCancelHelpPanel = new JPanel();
         buildOKButton();
         OKButton.setActionCommand("ok");
-        OKCancelPanel.add(OKButton, BorderLayout.WEST);
+        OKCancelHelpPanel.add(OKButton, BorderLayout.WEST);
         buildCancelButton();
         cancelButton.setActionCommand("cancel");
-        OKCancelPanel.add(cancelButton, BorderLayout.EAST);
+        OKCancelHelpPanel.add(cancelButton, BorderLayout.CENTER);
+        buildHelpButton();
+        helpButton.setActionCommand("help");
+        OKCancelHelpPanel.add(helpButton, BorderLayout.EAST);
   
         tabs.addTab("Create MPmaps", null, mainPanel);
         
@@ -409,7 +412,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         tabs.addTab("Analyze mpMap", null, secondPanel);
         
         getContentPane().add(tabs, BorderLayout.CENTER);
-        getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
+        getContentPane().add(OKCancelHelpPanel, BorderLayout.SOUTH);
         
 
         
@@ -621,7 +624,15 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
                 alg2.setThreadStopped(true);
             }
             dispose();
-        }        
+        }    
+        else if(command.equalsIgnoreCase("help")) {
+        	 if (tabs.getSelectedIndex() == 0) //if on registration tab
+             {
+        		MipavUtil.showHelp("AnMPmaps002"); 
+             }else {
+            	 MipavUtil.showHelp("AnMPmaps002"); 
+             }
+        }
         else if(command.equalsIgnoreCase("ok")) {
             if (tabs.getSelectedIndex() == 0) //if on registration tab
             {
