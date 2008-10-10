@@ -9046,7 +9046,7 @@ public class FileIO {
         String fileSuffix = "";
         FileInfoDicom myFileInfo = null;
         FileInfoBase[] originalFileInfos;
-        FileDicom dicomFile;
+        FileDicom dicomFile = null;
         String fileDir = null;
         String fileName = null;
         ModelImage clonedImage = null;
@@ -9535,6 +9535,11 @@ public class FileIO {
             }
         } else {
             originalImage.setFileInfo(originalFileInfos);
+        }
+        
+        if(dicomFile != null) {
+        	dicomFile.finalize();
+        	dicomFile = null;
         }
 
         return true;

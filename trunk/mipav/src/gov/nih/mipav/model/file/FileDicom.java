@@ -1725,6 +1725,8 @@ public class FileDicom extends FileDicomBase {
 
             rawChunkFile.close();
             data = null;
+            dataRGB = null;
+            fileInfo = null;
         } catch (IOException error) {
             throw new IOException("FileDicomWrite: " + error);
         } catch (OutOfMemoryError error) {
@@ -3279,6 +3281,15 @@ public class FileDicom extends FileDicomBase {
             writeInt(imageLength * nImages, endianess);
         } else {
             writeInt(imageLength, endianess);
+        }
+        
+        if(dicomTags != null) {
+	        for (int i = 0; i < dicomTags.length; i++) {
+	        	if(dicomTags[i] != null) {
+	        		dicomTags[i] = null;
+	        	}
+	        }
+	        dicomTags = null;
         }
     }
 
