@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -53,7 +54,9 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
     private PlugInAlgorithmNINDSAnonymizationTool alg;
     
     /** labels **/
-    private JLabel inputDirectoryLabel,outputMessageLabel, outputDirectoryLabel, errorMessageLabel;
+    private JLabel inputDirectoryLabel,outputMessageLabel, outputDirectoryLabel, errorMessageLabel, enableTextAreaLabel;
+    
+    private JCheckBox enableTextAreaCheckBox;
     
     /** panels **/
     private JPanel mainPanel, OKCancelPanel;
@@ -63,6 +66,9 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
     
     /** GridBagConstraints **/
     private GridBagConstraints mainPanelConstraints ;
+    
+   //SET TO FALSE FOR TESTING
+    private boolean enableTextArea = false;
   
 	
 	
@@ -138,9 +144,24 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 		outputDirectoryBrowseButton.setActionCommand("outputDirectoryBrowse");
 		mainPanel.add(outputDirectoryBrowseButton, mainPanelConstraints);
 		
+		
+		//enable textArea Checkbox
+		mainPanelConstraints.gridx = 0;
+		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.insets = new Insets(15,5,15,5);
+		enableTextAreaLabel = new JLabel(" Enable TextArea ");
+        mainPanel.add(enableTextAreaLabel, mainPanelConstraints);
+        
+		mainPanelConstraints.gridx = 1;
+		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.insets = new Insets(15,5,15,5);
+		enableTextAreaCheckBox = new JCheckBox();
+		enableTextAreaCheckBox.setSelected(true);
+        mainPanel.add(enableTextAreaCheckBox, mainPanelConstraints);
+		
 		//error message
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 2;
+		mainPanelConstraints.gridy = 3;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		errorMessageLabel = new JLabel(" ");
@@ -152,7 +173,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 		
 		//output message
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.gridy = 4;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		outputMessageLabel = new JLabel(" ");
@@ -162,7 +183,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 		//output text area
         mainPanelConstraints.fill = GridBagConstraints.BOTH;
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 4;
+		mainPanelConstraints.gridy = 5;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		outputTextArea = new JTextArea(15, 70);
@@ -248,7 +269,9 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 				dispose();
 			}
 		}else if(command.equalsIgnoreCase("ok")) {
-			outputTextArea.setText("");
+			if(enableTextArea) {
+				outputTextArea.setText("");
+			}
 			outputMessageLabel.setText(" ");
 			errorMessageLabel.setText(" ");
 			if(inputDirectoryTextField.getText().trim().equals("") || outputDirectoryTextField.getText().trim().equals("")) {
@@ -258,6 +281,11 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 			boolean success = validateFilePaths();
 			if(!success) {
 				return;
+			}
+			if(enableTextAreaCheckBox.isSelected()) {
+				enableTextArea = true;
+			}else {
+				enableTextArea = false;
 			}
 			OKButton.setEnabled(false);
 			inputDirectoryBrowseButton.setEnabled(false);
@@ -277,7 +305,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 	protected void callAlgorithm() {
 		String inputDirectoryPath = inputDirectoryTextField.getText().trim();
 		String outputDirectoryPath = outputDirectoryTextField.getText().trim();
-		alg = new PlugInAlgorithmNINDSAnonymizationTool(inputDirectoryPath, outputDirectoryPath, outputTextArea, errorMessageLabel);
+		alg = new PlugInAlgorithmNINDSAnonymizationTool(inputDirectoryPath, outputDirectoryPath, outputTextArea, errorMessageLabel, enableTextArea);
 		
 		alg.addListener(this);
 		
@@ -290,7 +318,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 				MipavUtil.displayError("A thread is already running on this object");
 			}
 		} else {
-			alg.run();
+			alg.start();
 		}
 
 	}
