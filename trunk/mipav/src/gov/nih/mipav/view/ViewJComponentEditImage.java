@@ -362,7 +362,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     private int lastWinRegionSlice = -1;
 
     /** window / level mouse control:. */
-    private WindowLevel m_kWinLevel;
+    protected WindowLevel m_kWinLevel;
 
     /** DOCUMENT ME! */
     private Image offscreenImage = null;
@@ -389,16 +389,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      */
     private int windowedRegionSize = 100;
 
-    private boolean useRComp = true;
+    protected boolean useRComp = true;
 
-    private boolean useGComp = true;
+    protected boolean useGComp = true;
 
-    private boolean useBComp = true;
+    protected boolean useBComp = true;
 
     /** flag indicating whether there is 0 to 1 LUT Adjustment * */
     private boolean zeroToOneLUTAdj = false;
 
-    private int[] paintBuffer;
+    protected int[] paintBuffer;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------

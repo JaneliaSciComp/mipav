@@ -15,6 +15,7 @@ import gov.nih.mipav.model.scripting.actions.ActionCloseFrame;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.dialogs.JDialogMagnificationControls;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 import gov.nih.mipav.view.dialogs.JDialogVOIStats;
 import gov.nih.mipav.view.dialogs.JDialogWinLevel;
@@ -4487,8 +4488,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
                 float zoom, int[] extents, boolean logMagDisplay, int _orientation) {
 			super(_frame, _imageA, _LUTa, imgBufferA, _imageB, _LUTb, imgBufferB, pixelBuffer, zoom, extents, logMagDisplay, _orientation);
 			
-			//voiHandler = new PlugInHandler(this);
-			//TODO: Implement new handler here
+			voiHandler = new PlugInHandler(this);
+			
+			addMouseListener(voiHandler);
+            addMouseMotionListener(voiHandler);
 		}
 		
 		/**
@@ -5441,8 +5444,41 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		
 		public PlugInHandler(ViewJComponentEditImage compImage) {
 			super(compImage);
-			
-			voiDialog = new PlugInVOIStats(compImage.getFrame(), compImage.getActiveImage(), null);
+
+	        /*if (compImage.getFrame() != null) {
+	            voiDialog = new JDialogVOIStats(compImage.getFrame(), compImage.getActiveImage(), null);
+	            addVOIUpdateListener(voiDialog);
+	        }*/
+		}
+
+		@Override
+		public void deleteContour(VOI voi, int slice) {
+			// TODO Auto-generated method stub
+			System.out.println("Working2");
+			super.deleteContour(voi, slice);
+			System.out.println("Working2");
+		}
+
+		@Override
+		public void deleteSelectedVOI(boolean contoursOnly) {
+			// TODO Auto-generated method stub
+			System.out.println("Working");
+			super.deleteSelectedVOI(contoursOnly);
+			System.out.println("Working");
+		}
+
+		@Override
+		public void deleteVOIActivePt() {
+			// TODO Auto-generated method stub
+			super.deleteVOIActivePt();
+			System.out.println("Working3");
+		}
+
+		@Override
+		public void deleteVOIs() {
+			// TODO Auto-generated method stub
+			super.deleteVOIs();
+			System.out.println("Working4");
 		}
 	}
 	
