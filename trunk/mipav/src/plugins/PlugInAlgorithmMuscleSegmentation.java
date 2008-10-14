@@ -8,6 +8,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseMotionListener;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -18,6 +24,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import javax.sound.sampled.Line;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -1097,7 +1104,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		}
 	}
 	
-	private class MusclePane extends JPanel implements Serializable, ActionListener {
+	private class MusclePane extends JPanel implements Serializable, ActionListener, MouseListener {
 		
 		/**The color identifier*/
 		private PlugInMuscleColorButtonPanel colorButton;
@@ -1122,6 +1129,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		
 		/**ColorChooser for selecting custom VOI colors*/
 	    private ViewJColorChooser colorChooser;
+	    
+	    /**List of potential children for this MusclePane*/
+	    private ArrayList<DependencyNode> lineList;
+	    
+	    /**Selected dependency node*/
+	    private DependencyNode selected = null;
 		
 		public MusclePane(ActionListener caller) {
 			super(new GridBagLayout());
@@ -1142,6 +1155,15 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			this.doFill = new JCheckBox("Fill VOI");
 			this.isClosed = new JCheckBox("Closed curves");
 			isClosed.setSelected(true);
+			
+			int size = 10;
+			lineList = new ArrayList(size);
+			for(int j=0; i<size-1; j++) {
+				Point p1 = this.getLocationOnScreen();
+				Point2D.Double p2 = new Point2D.Double(p1.x+10, p1.y);
+				DependencyNode l;
+				lineList.add(l = new DependencyNode(p1, p2));	
+			}
 			
 			initDialog();
 		}
@@ -1209,6 +1231,40 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 				colorChooser = new ViewJColorChooser(new Frame(), "Pick VOI color", 
 						this, this);
 			}
+		}
+
+		public void mouseClicked(MouseEvent e) {
+			boolean newLine = false;
+			for(int i=0; i<lineList.size(); i++) {
+				if(!lineList.get(i).isPointing()) {
+					selected = lineList.get(i);
+					newLine = true;
+				}
+			}
+			if(newLine) {
+				
+			}
+			
+		}
+
+		public void mouseEntered(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void mouseExited(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void mousePressed(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void mouseReleased(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
 		}
 
 		/**
@@ -1283,6 +1339,36 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			this.name.setText(name);
 		}
 		
+		
+		private class DependencyNode extends Line2D.Double implements Serializable, MouseMotionListener, ActionListener {
+
+			/**Whether the current node is pointing to another muscle pane.*/
+			private boolean isPointing;
+			
+			public DependencyNode(Point p1, Point2D.Double p2) {
+				super(p1,p2);
+				isPointing = false;
+				
+			}
+			
+			private boolean isPointing() {
+				return isPointing;
+			}
+			
+			public void mouseDragged(MouseEvent e) {
+				setLine(new Point2D.Double(x1, y1), e.getLocationOnScreen());
+			}
+
+			public void mouseMoved(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		}
 	}
 }
 
