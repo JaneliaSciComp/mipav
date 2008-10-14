@@ -707,6 +707,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		customPane.updateImages(true);
 		customPane.repaint();
 		
+		/*for(int i=0; i<customVOI.size(); i++) {
+			for(int j=0; j<customVOI.get(i).size(); j++) {
+				customVOI.get(i).get(j).initDependents(customVOI.get(i).size());
+			}
+		}*/
+		
 		return mainPanel;
 	}
 	
@@ -1156,15 +1162,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			this.isClosed = new JCheckBox("Closed curves");
 			isClosed.setSelected(true);
 			
-			int size = 10;
-			lineList = new ArrayList(size);
-			for(int j=0; i<size-1; j++) {
-				Point p1 = this.getLocationOnScreen();
-				Point2D.Double p2 = new Point2D.Double(p1.x+10, p1.y);
-				DependencyNode l;
-				lineList.add(l = new DependencyNode(p1, p2));	
-			}
-			
 			initDialog();
 		}
 		
@@ -1223,6 +1220,16 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			c.fill = GridBagConstraints.NONE;
 			add(numCurves, c);
 		}
+		
+		protected void initDependents(int size) {
+			lineList = new ArrayList(size);
+			for(int j=0; j<size-1; j++) {
+				Point p1 = this.getLocationOnScreen();
+				Point2D.Double p2 = new Point2D.Double(p1.x+10, p1.y);
+				DependencyNode l;
+				lineList.add(l = new DependencyNode(p1, p2));	
+			}
+		}
 
 		public void actionPerformed(ActionEvent e) {
 			if(e.getSource() instanceof JButton && ((JButton)e.getSource()).getText().equals("OK")) {
@@ -1234,16 +1241,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		}
 
 		public void mouseClicked(MouseEvent e) {
-			boolean newLine = false;
-			for(int i=0; i<lineList.size(); i++) {
-				if(!lineList.get(i).isPointing()) {
-					selected = lineList.get(i);
-					newLine = true;
-				}
-			}
-			if(newLine) {
-				
-			}
+			
 			
 		}
 
@@ -1258,13 +1256,23 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		}
 
 		public void mousePressed(MouseEvent e) {
-			// TODO Auto-generated method stub
+			DependencyNode possiblySelected = null;
+			boolean newLine = false;
+			for(int i=0; i<lineList.size(); i++) {
+				if(!lineList.get(i).isPointing()) {
+					possiblySelected = lineList.get(i);
+					newLine = true;
+				}
+			}
+			if(newLine && possiblySelected.contains(e.getPoint())) {
+				selected = possiblySelected;
+			}
 			
 		}
 
 		public void mouseReleased(MouseEvent e) {
-			// TODO Auto-generated method stub
-			
+			//Place selected in correct location
+			selected = null;
 		}
 
 		/**
@@ -1311,6 +1319,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			return isClosed.isSelected();
 		}
 		
+		public ArrayList<DependencyNode> getLineList() {
+			return lineList;
+		}
+
 		public void setColorButton(Color c) {
 			this.colorButton.getColorButton().getColorIcon().setColor(c);
 		}
@@ -1360,13 +1372,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			}
 
 			public void mouseMoved(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
+	
 			}
 
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-				
+				if(e.getSource() instanceof JButton && ((JButton)e.getSource()).getText().equals("OK")) {
+					
+				}
 			}
 		}
 	}
