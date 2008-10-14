@@ -595,6 +595,10 @@ public class JPanelVolOpacityBase extends JPanelRendererJ3D implements ChangeLis
         {
             if ( renderBase instanceof gov.nih.mipav.view.renderer.J3D.surfaceview.SurfaceRender )
             {
+            }   
+            else if ( m_kVolumeViewer != null )
+            {
+                m_kVolumeViewer.updateABBlend( );
             }
         }
         else if ( event.getSource() == stepsSlider )

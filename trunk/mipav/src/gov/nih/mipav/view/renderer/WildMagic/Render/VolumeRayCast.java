@@ -48,9 +48,9 @@ public class VolumeRayCast extends VolumeObject
      * @param kImageA the VolumeImage containing the data and textures for
      * rendering.
      */
-    public VolumeRayCast( VolumeImage kImageA )
+    public VolumeRayCast( VolumeImage kImageA, VolumeImage kImageB )
     {
-        super(kImageA);
+        super(kImageA,kImageB);
     }
 
     /** 
@@ -308,7 +308,7 @@ public class VolumeRayCast extends VolumeObject
         m_kScene.GetChild(0).Local.SetTranslate( m_kTranslate );
 
         
-        m_kVolumeShaderEffect = new VolumeShaderEffect_WM( m_kVolumeImageA,  
+        m_kVolumeShaderEffect = new VolumeShaderEffect_WM( m_kVolumeImageA, m_kVolumeImageB,
                 m_pkSceneTarget);
         kRenderer.LoadResources(m_kVolumeShaderEffect);
         m_kVolumeShaderEffect.SetPassQuantity(1);
@@ -602,9 +602,9 @@ public class VolumeRayCast extends VolumeObject
      * Sets blending between imageA and imageB.
      * @param fValue, the blend value (0-1)
      */
-    public void Blend( float fValue )
+    public void setABBlend( float fValue )
     {
-        m_kVolumeShaderEffect.Blend(fValue);
+        m_kVolumeShaderEffect.setABBlend(fValue);
     }
 
     /**

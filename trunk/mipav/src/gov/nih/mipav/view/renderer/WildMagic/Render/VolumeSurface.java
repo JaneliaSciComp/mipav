@@ -26,14 +26,14 @@ public class VolumeSurface extends VolumeObject
      * @param fY, the size of the volume in the y-dimension (extent * resolutions)
      * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
      */
-    public VolumeSurface ( Renderer kRenderer, VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ, TriMesh kMesh )
+    public VolumeSurface ( Renderer kRenderer, VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, float fX, float fY, float fZ, TriMesh kMesh )
     {
-        this(kRenderer,kImageA, kTranslate, fX, fY, fZ, kMesh, false );
+        this(kRenderer, kImageA, kImageB, kTranslate, fX, fY, fZ, kMesh, false );
     }
     
-    public VolumeSurface ( Renderer kRenderer, VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ, TriMesh kMesh, boolean bReplace )
+    public VolumeSurface ( Renderer kRenderer, VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, float fX, float fY, float fZ, TriMesh kMesh, boolean bReplace )
     {
-        super(kImageA,kTranslate,fX,fY,fZ);
+        super(kImageA,kImageB,kTranslate,fX,fY,fZ);
 
         CreateScene();
         if ( bReplace )

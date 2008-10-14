@@ -329,9 +329,6 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
             m_fShininess = m_kShininessSlider.getValue();
             m_kMaterialNew.Shininess = m_fShininess;
             m_kMaterialNew.Specular.Set(m_kSpecular.R, m_kSpecular.G, m_kSpecular.B );
-        	System.err.println( "stateChanged "  + m_fShininess );
-        	
-            //m_akSurfaceMaterial[1].setMaterial( m_kMaterialNew );
         }
     }
 

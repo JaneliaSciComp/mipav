@@ -22,9 +22,10 @@ public class VolumePlaneEffect extends ShaderEffect
      * textures for rendering.
      * @param bUnique, when true the shader program must be unique.
      */
-    public VolumePlaneEffect ( VolumeImage kVolumeImageA, boolean bUnique )
+    public VolumePlaneEffect ( VolumeImage kVolumeImageA, VolumeImage kVolumeImageB, boolean bUnique )
     {
         m_kVolumeImageA = kVolumeImageA;
+        m_kVolumeImageB = kVolumeImageB;
         Init( bUnique );
     }
     
@@ -33,9 +34,10 @@ public class VolumePlaneEffect extends ShaderEffect
      * @param kVolumeImageA, the VolumeImage containing shared data and
      * textures for rendering.
      */
-    public VolumePlaneEffect ( VolumeImage kVolumeImageA )
+    public VolumePlaneEffect ( VolumeImage kVolumeImageA, VolumeImage kVolumeImageB )
     {
         m_kVolumeImageA = kVolumeImageA;
+        m_kVolumeImageB = kVolumeImageB;
         Init( false );
     }
     
@@ -57,13 +59,24 @@ public class VolumePlaneEffect extends ShaderEffect
 
         SetVShader(0,new VertexShader("Color_Opacity_Texture"));
         SetPShader(0,new PixelShader("Color_Opacity_Texture", bUnique));
-        GetPShader(0).SetTextureQuantity(3);
+
+        //GetPShader(0).SetTextureQuantity(3);
+        GetPShader(0).SetTextureQuantity(5);
         GetPShader(0).SetImageName(0,"VolumeImageA");
         GetPShader(0).SetTexture(0, m_kVolumeImageA.GetVolumeTarget() );
         GetPShader(0).SetImageName(1, "ColorMapA");
         GetPShader(0).SetTexture(1, m_kVolumeImageA.GetColorMapTarget() );
-        GetPShader(0).SetImageName(2, "SurfaceImage");
-        GetPShader(0).SetTexture(2, m_kVolumeImageA.GetSurfaceTarget() );
+
+        if ( m_kVolumeImageB != null )
+        {
+            GetPShader(0).SetImageName(2,"VolumeImageB");
+            GetPShader(0).SetTexture(2, m_kVolumeImageB.GetVolumeTarget() );
+            GetPShader(0).SetImageName(3, "ColorMapB");
+            GetPShader(0).SetTexture(3, m_kVolumeImageB.GetColorMapTarget() );
+        }
+
+        GetPShader(0).SetImageName(4, "SurfaceImage");
+        GetPShader(0).SetTexture(4, m_kVolumeImageA.GetSurfaceTarget() );
     }
 
     /** This function is called in LoadPrograms once the shader programs are
@@ -86,7 +99,25 @@ public class VolumePlaneEffect extends ShaderEffect
             {
                 pkProgram.GetUC("IsColor").SetDataSource(new float[]{0,0,0,0});
             }
-        }       
+        }    
+        if ( m_kVolumeImageB != null )
+        {
+            if ( pkProgram.GetUC("IsColorB") != null ) 
+            {
+                if ( m_kVolumeImageB.GetImage().isColorImage() )
+                {
+                    pkProgram.GetUC("IsColorB").SetDataSource(new float[]{1,0,0,0});
+                }
+                else
+                {
+                    pkProgram.GetUC("IsColorB").SetDataSource(new float[]{0,0,0,0});
+                }
+            }  
+            if ( pkProgram.GetUC("ShowB") != null ) 
+            {    
+                pkProgram.GetUC("ShowB").SetDataSource(new float[]{1,0,0,0});
+            }               
+        }
     }
  
     /**
@@ -214,6 +245,8 @@ public class VolumePlaneEffect extends ShaderEffect
 
     /** Shared volume data and textures. */
     private VolumeImage m_kVolumeImageA;
+    /** Shared volume data and textures. */
+    private VolumeImage m_kVolumeImageB;
 
     /** stores the blend function */
     private float[] m_afBlend = new float[]{1f,0,0,0};

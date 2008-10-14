@@ -750,27 +750,7 @@ implements MouseListener, ItemListener, ChangeListener {
         opacityPanel.add(m_kVolOpacityPanel.getMainPanel());
         maxPanelWidth = Math.max(opacityPanel.getPreferredSize().width, maxPanelWidth);
     }
-    
-    /**
-     * Build the volume opacity control panel for the surface render.
 
-    public void buildOpacityPanel() {
-        opacityPanel = new JPanel();
-
-        GridBagLayout gbLayout = new GridBagLayout();
-        GridBagConstraints gbConstraints = new GridBagConstraints();
-
-        opacityPanel.setLayout(gbLayout);
-        gbConstraints.weightx = 1;
-        gbConstraints.weighty = 1;
-        gbConstraints.fill = GridBagConstraints.BOTH;
-        gbConstraints.anchor = GridBagConstraints.NORTH;
-        
-        gbLayout.setConstraints(m_kVolOpacityPanel.getMainPanel(), gbConstraints);
-        opacityPanel.add(m_kVolOpacityPanel.getMainPanel());
-        maxPanelWidth = Math.max(opacityPanel.getPreferredSize().width, maxPanelWidth);
-    }
-     */
     /**
      * Build the adding surface control panel for the surface render.
      */
@@ -778,15 +758,6 @@ implements MouseListener, ItemListener, ChangeListener {
         probePanel = new JPanel();
 //         probePanel.add(surRender.getProbeDialog().getMainPanel());
         maxPanelWidth = Math.max(probePanel.getPreferredSize().width, maxPanelWidth);
-    }
-
-    /**
-     * Build the camera control panel for the raycast render.
-     */
-    public void buildRayCastCameraPanel() {
-//         raycastCameraPanel = new JPanel();
-//         raycastCameraPanel.add(raycastRender.getCameraControl().getMainPanel());
-//         maxPanelWidth = Math.max(raycastCameraPanel.getPreferredSize().width, maxPanelWidth);
     }
 
     /**
@@ -868,10 +839,10 @@ implements MouseListener, ItemListener, ChangeListener {
             VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
             PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
             CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
-            m_kVolumeImageA = new VolumeImage(  imageA, LUTa, RGBTA );
+            m_kVolumeImageA = new VolumeImage(  imageA, LUTa, RGBTA, "A" );
             if ( imageB != null )
             {
-                m_kVolumeImageB = new VolumeImage( imageB, LUTb, RGBTB );
+                m_kVolumeImageB = new VolumeImage( imageB, LUTb, RGBTB, "B" );
             }
 
             m_kAnimator = new Animator();
@@ -896,6 +867,11 @@ implements MouseListener, ItemListener, ChangeListener {
 
             TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
             m_kVolumeImageA.UpdateImages(kTransfer, 0);
+            if ( imageB != null )
+            {
+                kTransfer = m_kVolOpacityPanel.getCompB().getOpacityTransferFunction();
+                m_kVolumeImageB.UpdateImages(kTransfer, 0);
+            }
 
             progressBar.updateValueImmed(80);
             progressBar.setMessage("Constructing Lookup Table...");
@@ -1703,7 +1679,7 @@ implements MouseListener, ItemListener, ChangeListener {
      */
     public void setRGBTA(ModelRGB RGBT) {
         if (m_kVolumeImageA != null) {
-            m_kVolumeImageA.SetRGBT(RGBT, 0);
+            m_kVolumeImageA.SetRGBT(RGBT);
         }
     }
 
@@ -1713,8 +1689,8 @@ implements MouseListener, ItemListener, ChangeListener {
      * @param  RGBT  RGB table
      */
     public void setRGBTB(ModelRGB RGBT) {
-        if (m_kVolumeImageA != null) {
-            m_kVolumeImageA.SetRGBT(RGBT, 1);
+        if (m_kVolumeImageB != null) {
+            m_kVolumeImageB.SetRGBT(RGBT);
         }
     }
 
@@ -1861,10 +1837,10 @@ implements MouseListener, ItemListener, ChangeListener {
     /** 
      * update blenading value.
      */
-    public void updateBlend()
+    public void updateABBlend()
     {
         if (raycastRenderWM != null) {
-            raycastRenderWM.Blend(1 - getBlendValue()/100.0f);
+            raycastRenderWM.setABBlend(1 - getBlendValue()/100.0f);
         }
     }
     
@@ -1887,34 +1863,38 @@ implements MouseListener, ItemListener, ChangeListener {
      */
     public boolean updateImages(boolean forceShow) {
 
+        if ( m_kVolOpacityPanel == null )
+        {
+            return false;
+        }
+        ViewJComponentVolOpacityBase kSelectedComp = m_kVolOpacityPanel.getSelectedComponent();
+        if ( kSelectedComp == null )
+        {
+            return false;
+        }
         if (m_kVolumeImageA != null) {
-            ViewJComponentVolOpacityBase kSelectedComp = m_kVolOpacityPanel.getSelectedComponent();
-            if ( imageB != null )
+            if ( kSelectedComp == m_kVolOpacityPanel.getCompA() )
             {
-                if ( kSelectedComp == m_kVolOpacityPanel.getCompA() )
-                {
-                    TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
-                    m_kVolumeImageA.UpdateImages(kTransfer, 0);
-                }
-                else
-                {
-                    TransferFunction kTransfer = m_kVolOpacityPanel.getCompB().getOpacityTransferFunction();
-                    m_kVolumeImageA.UpdateImages(kTransfer, 2);
-                }
+                TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
+                m_kVolumeImageA.UpdateImages(kTransfer, 0);
             }
-            else
+            else if ( kSelectedComp == m_kVolOpacityPanel.getCompA_GM() )
             {
-                if ( kSelectedComp == m_kVolOpacityPanel.getCompA() )
-                {
-                    TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
-                    m_kVolumeImageA.UpdateImages(kTransfer, 0);
-                    
-                }
-                else
-                {
-                    TransferFunction kTransfer = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
-                    m_kVolumeImageA.UpdateImages(kTransfer, 2);
-                }
+                TransferFunction kTransfer = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
+                m_kVolumeImageA.UpdateImages(kTransfer, 2);
+            }
+        }
+        if ( m_kVolumeImageB != null )
+        {
+            if ( kSelectedComp == m_kVolOpacityPanel.getCompB() )
+            {
+                TransferFunction kTransfer = m_kVolOpacityPanel.getCompB().getOpacityTransferFunction();
+                m_kVolumeImageB.UpdateImages(kTransfer, 0);
+            }
+            else if ( kSelectedComp == m_kVolOpacityPanel.getCompB_GM() )
+            {
+                TransferFunction kTransfer = m_kVolOpacityPanel.getCompB_GM().getOpacityTransferFunction();
+                m_kVolumeImageB.UpdateImages(kTransfer, 2);
             }
         }
 
@@ -1934,10 +1914,13 @@ implements MouseListener, ItemListener, ChangeListener {
      */
     public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean forceShow, int interpMode) {
         if (m_kVolumeImageA != null) {
-            m_kVolumeImageA.UpdateImages(LUTa, LUTb);    
+            m_kVolumeImageA.UpdateImages(LUTa);    
             setModified();
         }
-
+        if (m_kVolumeImageB != null) {
+            m_kVolumeImageB.UpdateImages(LUTb);    
+            setModified();
+        }
 
         return true;
     }
@@ -2626,6 +2609,11 @@ implements MouseListener, ItemListener, ChangeListener {
             raycastRenderWM.SetGradientMagnitude(bShow);
             TransferFunction kTransfer = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
             m_kVolumeImageA.UpdateImages(kTransfer, 2);
+            if ( imageB != null )
+            {
+                kTransfer = m_kVolOpacityPanel.getCompB_GM().getOpacityTransferFunction();
+                m_kVolumeImageB.UpdateImages(kTransfer, 2);
+            }
         }
     }
     

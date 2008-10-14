@@ -47,12 +47,21 @@ void p_VolumeShaderDDR(  in float3 inTexCoord1    : TEXCOORD0,
                          uniform sampler1D OpacityMapA : TEXUNIT3, 
                          uniform sampler3D VolumeImageA_GM : TEXUNIT4, 
                          uniform sampler1D OpacityMapA_GM : TEXUNIT5, 
+                         uniform sampler3D VolumeImageB : TEXUNIT7, 
+                         uniform sampler1D ColorMapB : TEXUNIT8, 
+                         uniform sampler1D OpacityMapB : TEXUNIT9, 
+                         uniform sampler3D VolumeImageB_GM : TEXUNIT10, 
+                         uniform sampler1D OpacityMapB_GM : TEXUNIT11, 
+                         uniform float ShowB,
+                         uniform float ABBlend,
                          uniform float blend,
                          uniform float stepsize,
                          uniform float4 steps,
                          uniform float IsColor,
+                         uniform float IsColorB,
                          uniform float DoClip,
                          uniform float GradientMagnitude,
+                         uniform float GradientMagnitudeB,
                          uniform float4 BackgroundColor,
                          uniform float clipX,
                          uniform float clipXInv,
@@ -88,6 +97,9 @@ void p_VolumeShaderDDR(  in float3 inTexCoord1    : TEXCOORD0,
     float4 color_acc = float4(0,0,0,0);
     float alpha_acc = 0;
 
+    float4 color_accB = float4(0,0,0,0);
+    float alpha_accB = 0;
+
     // output color:
     kColor = BackgroundColor;
     if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
@@ -104,13 +116,17 @@ void p_VolumeShaderDDR(  in float3 inTexCoord1    : TEXCOORD0,
 
     // The color at the current position along the ray:
     float4 color = (0,0,0,0);
+    float4 colorB = (0,0,0,0);
 
     // The opacity at the current position along the ray:
     float opacity = 0;
+    float opacityB = 0;
 
     // Gradient magnitude values along the ray:
     float4 colorGM = (0,0,0,0);
     float opacityGM = 0;
+    float4 colorGM_B = (0,0,0,0);
+    float opacityGM_B = 0;
 
     float alpha_sample = stepsize;
     float delta = stepsize;
@@ -171,6 +187,27 @@ void p_VolumeShaderDDR(  in float3 inTexCoord1    : TEXCOORD0,
                 {
                     color = tex1D(ColorMapA,color.r);
                 }
+                if ( ShowB != 0 )
+                {
+                    colorB = tex3D(VolumeImageB,position);
+                    opacityB = tex1D(OpacityMapB,color.r).r;
+                    if ( GradientMagnitudeB != 0 )
+                    {
+                        colorGM_B = tex3D(VolumeImageB_GM,position);
+                        opacityGM_B = tex1D(OpacityMapB_GM,colorGM_B.r).r;
+                        opacityB = opacityB * opacityGM_B;
+                    }
+                    if ( IsColorB != 0 )
+                    {
+                        colorB.r = tex1D(ColorMapB,colorB.r).r;
+                        colorB.g = tex1D(ColorMapB,colorB.g).g;
+                        colorB.b = tex1D(ColorMapB,colorB.b).b;
+                    }
+                    else
+                    {
+                        colorB = tex1D(ColorMapB,colorB.r);
+                    }
+                }
             }
         }
         // If the opacity is not zero:
@@ -179,15 +216,38 @@ void p_VolumeShaderDDR(  in float3 inTexCoord1    : TEXCOORD0,
             color_acc   += (1.0 - alpha_acc) * color * alpha_sample * 3;
             alpha_acc += (1 - alpha_acc) * alpha_sample;
         }
+        // If the opacity is not zero:
+        if ( opacityB > 0 )
+        {
+            color_accB   += (1.0 - alpha_accB) * colorB * alpha_sample * 3;
+            alpha_accB += (1 - alpha_accB) * alpha_sample;
+        }
         // Increment position along the ray:
         position += delta_dir;
         length_acc += delta_dir_len;
         // Break when the end of the ray is reached, or if alpha >= 1;
-        if ( (length_acc >= len) || (alpha_acc >= 1.0) )
+        if ( length_acc >= len )
+        {
+            break;
+        }
+        if ( (ShowB == 0) && (alpha_acc >= 1.0) )
+        {
+            break;
+        }
+        else if ( (ShowB != 0) && (alpha_acc >= 1.0) && (alpha_accB >= 1.0) )
         {
             break;
         }
     } 
-    kColor.rgb = alpha_acc * color_acc.rgb + (1 - alpha_acc)*BackgroundColor.rgb;
-    kColor.a = blend * alpha_acc;
+    if ( ShowB != 0 )
+    {
+        kColor.rgb = ABBlend * color_acc.rgb + (1 - ABBlend) * color_accB.rgb;
+        float fAlpha = blend * alpha_acc + (1 - blend) * alpha_accB;
+        kColor = fAlpha * kColor + (1 - fAlpha)*BackgroundColor;
+    }
+    else
+    {
+        kColor.rgb = alpha_acc * color_acc.rgb + (1 - alpha_acc)*BackgroundColor.rgb;
+    }
+    kColor.a = blend;
 }

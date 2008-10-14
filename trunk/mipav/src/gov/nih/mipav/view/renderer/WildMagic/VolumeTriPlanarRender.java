@@ -25,9 +25,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /** New sculpting object for WM-based sculpting. */
     private Sculptor_WM m_kSculptor = null;
 
-    /** Stores the transfer functions: */
-    private TransferFunction[] m_akTransfer = new TransferFunction[4];
-
     /** Arbitrary clip plane equation: */
     private Vector4f m_kArbitraryClip;
     /** Enable Arbitrary clip plane: */
@@ -154,7 +151,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         for ( int i = 0; i < akSurfaces.length; i++ )
         {
-            VolumeSurface kVolumeSurfaces = new VolumeSurface( m_pkRenderer, m_kVolumeImageA,
+            VolumeSurface kVolumeSurfaces = new VolumeSurface( m_pkRenderer, m_kVolumeImageA, m_kVolumeImageB,
                     m_kTranslate,
                     m_fX, m_fY, m_fZ,
                     akSurfaces[i], bReplace );
@@ -259,11 +256,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Sets blending between imageA and imageB.
      * @param fValue, the blend value (0-1)
      */
-    public void Blend( float fValue )
+    public void setABBlend( float fValue )
     {
         if ( m_kVolumeRayCast != null )
         {
-            m_kVolumeRayCast.Blend(fValue);
+            m_kVolumeRayCast.setABBlend(fValue);
         }
     }
 
@@ -391,6 +388,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kSlices.SetDisplay(true);   
             m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
             VolumeImageViewer.main(m_kVolumeImageA, null, null);
+            if ( m_kVolumeImageB != null )
+            {
+                //VolumeImageViewer.main(m_kVolumeImageB, null, null);
+            }
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             CMPMode();
         }
@@ -549,10 +550,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         { 
             m_kSculptor.disposeLocal();
             m_kSculptor = null;
-        }
-        for ( int i = 0; i < 4; i++ )
-        {
-            m_akTransfer[i] = null;
         }
         if ( m_kShaderParamsWindow != null )
         {
@@ -1941,7 +1938,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         if ( m_kVolumeImageA != null )
         {
-            m_kVolumeImageA.UpdateData(kImage, 0);
+            m_kVolumeImageA.UpdateData(kImage, "A");
         }
     }
 
@@ -1964,7 +1961,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_spkScene.AttachGlobalState(m_spkAlpha);
         */
 
-        m_kVolumeRayCast = new VolumeRayCast( m_kVolumeImageA );
+        m_kVolumeRayCast = new VolumeRayCast( m_kVolumeImageA, m_kVolumeImageB );
         m_kDisplayList.add(0, m_kVolumeRayCast);
         m_kVolumeRayCast.CreateScene( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
@@ -1987,23 +1984,24 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_fX = fMaxX/m_fMax;
         m_fY = fMaxY/m_fMax;
         m_fZ = fMaxZ/m_fMax;
-
-        for ( int i = 0; i < 4; i++ )
+/*
+        m_kVolumeImageA.UpdateImages(new TransferFunction(), 0);
+        m_kVolumeImageA.UpdateImages(new TransferFunction(), 2);
+        if ( m_kVolumeImageB != null )
         {
-            if ( m_akTransfer[i] != null )
-            {
-                m_kVolumeImageA.UpdateImages(m_akTransfer[i], i);
-            }
+            m_kVolumeImageB.UpdateImages(new TransferFunction(), 0);
+            m_kVolumeImageB.UpdateImages(new TransferFunction(), 2);  
         }
+       */
         if ( m_kRGBTa != null )
         {
-            m_kVolumeImageA.SetRGBT( m_kRGBTa, 0 );
+            m_kVolumeImageA.SetRGBT( m_kRGBTa );
         }
         if ( m_kRGBTb != null )
         {
-            m_kVolumeImageB.SetRGBT( m_kRGBTb, 1 );
+            m_kVolumeImageB.SetRGBT( m_kRGBTb );
         }
-        m_kSlices = new VolumeSlices( m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ );
+        m_kSlices = new VolumeSlices( m_kVolumeImageA, m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ );
         DisplayVolumeSlices( true );
         m_kDisplayList.add(m_kDisplayList.size(), m_kSlices);
 

@@ -16,29 +16,6 @@ void GetDirectionalLightFactors
     
     float cos_theta = 0;
     float cos_alpha = 0;
-
-    /*
-    fDiff = -dot(kModelNormal,kLightDirection);
-    if (fDiff > 0.0f)
-    {
-        float3 kViewVector = normalize(kCameraPosition - kModelPosition);
-        float3 kHalfVector = normalize(kViewVector - kLightDirection);
-        fSpec = dot(kModelNormal,kHalfVector);
-        if (fSpec > 0.0f)
-        {
-            fSpec = pow(1.03f*fSpec,32f);
-        }
-        else
-        {
-            fSpec = 0.0f;
-        }
-    }
-    else
-    {
-        fDiff = 0.0f;
-        fSpec = 0.0f;
-    }
-    */
     
     float3 V = normalize(kCameraPosition - kModelPosition);
     float3 N = normalize(kModelNormal);
@@ -59,7 +36,7 @@ void GetDirectionalLightFactors
        fDiff = 1.0f * cos_theta;
     }
     if ( cos_alpha > 0 ) {
-       fSpec = pow(cos_alpha, 5f);
+       fSpec = pow(cos_alpha, fSpecularExponent);
     }
     
     fDiffuseFactor = fDiff;
@@ -103,98 +80,9 @@ void GetPointLightFactors
         fDiff = 0.0f;
         fSpec = 0.0f;
     }
-    
-    /*
-    float3 V = normalize(kCameraPosition - kModelPosition);
-    float3 N = normalize(kModelNormal);
-    
-    float3 lightDirection = normalize(kLightPosition - kModelPosition);
-    float3 L = float3(lightDirection.x, lightDirection.y, lightDirection.z);
-    L = -L;
-    L = normalize(L);
-    
-    float3 R = float3(N.x, N.y, N.z);
-    R = R * ( 2 * dot(L, N));
-    R = R - L;
-    R = normalize(R);
-    
-    cos_theta = dot(L, N);
-    cos_alpha = dot(R, V);
-    
-    if ( cos_theta > 0 ) {
-       fDiff = 1.0f * cos_theta;
-    }
-    if ( cos_alpha > 0 ) {
-       fSpec = pow(cos_alpha, fSpecularExponent);
-    }
-    */
     fDiffuseFactor = fDiff;
     fSpecularFactor = fSpec;
 }
-// void GetPointLightFactors
-// (
-//  float3    kModelPosition,
-//  float3    kModelNormal,
-//  float3    kCameraPosition,
-//  float3    kLightPosition,
-//  float     fSpecularExponent,
-//  out float fDiffuseFactor,
-//  out float fSpecularFactor)
-// {
-//     float fDiff = 0;
-//     float fSpec = 0;
-//     float cos_theta = 0;
-//     float cos_alpha = 0;
-    
-    
-//     float3 kVertexDirection = normalize(kModelPosition - kLightPosition);
-//     fDiff = -dot(kModelNormal,kVertexDirection);
-//     if (fDiff > 0.0f)
-//     {
-//         float3 kViewVector = normalize(kCameraPosition - kModelPosition);
-//         float3 kHalfVector = normalize(kViewVector - kVertexDirection);
-//         fSpec = dot(kModelNormal,kHalfVector);
-//         if (fSpec > 0.0f)
-//         {
-//             fSpec = pow(fSpec,32f);
-//         }
-//         else
-//         {
-//             fSpec = 0.0f;
-//         }
-//     }
-//     else
-//     {
-//         fDiff = 0.0f;
-//         fSpec = 0.0f;
-//     }
-//     /*
-//    float3 V = normalize(kCameraPosition - kModelPosition);
-//     float3 N = normalize(kModelNormal);
-    
-//     float3 lightDirection = normalize(kLightPosition - kModelPosition);
-//     float3 L = float3(lightDirection.x, lightDirection.y, lightDirection.z);
-//     L = -L;
-//     L = normalize(L);
-    
-//     float3 R = float3(N.x, N.y, N.z);
-//     R = R * ( 2 * dot(L, N));
-//     R = R - L;
-//     R = normalize(R);
-    
-//     cos_theta = dot(L, N);
-//     cos_alpha = dot(R, V);
-    
-//     if ( cos_theta > 0 ) {
-//        fDiff = 1.0f * cos_theta;
-//     }
-//     if ( cos_alpha > 0 ) {
-//        fSpec = pow(cos_alpha, 32f);
-//     }
-//     */
-//     fDiffuseFactor = fDiff;
-//     fSpecularFactor = fSpec;
-// }
 //----------------------------------------------------------------------------
 void GetSpotLightFactors
 (
@@ -264,8 +152,6 @@ float GetAttenuation
     // factors.
     
     float3 kVertexWorldDir = kModelPos - kLightPos;
-    //float3 kVertexModelDir = kModelPos - kLightPos;
-    //float3 kVertexWorldDir = mul(kVertexModelDir,kWMatrix);
     float fDistance = sqrt(
                            kVertexWorldDir.x*kVertexWorldDir.x +
                            kVertexWorldDir.y*kVertexWorldDir.y +
@@ -354,45 +240,9 @@ void PointLight(    uniform float3 kModelPosition,
         }
     }
 
-    //kVertexColor.rgb = MaterialEmissive + fAttn*kColor;
-    kVertexColor.rgb = MaterialEmissive + kColor;
+    kVertexColor.rgb = MaterialEmissive + fAttn*kColor;
     kVertexColor.a = MaterialDiffuse.a;
 }
-// void PointLight(    uniform float3 kModelPosition,
-//                     uniform float3 kModelNormal,
-//                     uniform float3   CameraWorldPosition,
-//                     uniform float3   MaterialEmissive,
-//                     uniform float3   MaterialAmbient,
-//                     uniform float4   MaterialDiffuse,
-//                     uniform float4   MaterialSpecular,
-//                     uniform float3   LightWorldPosition,
-//                     uniform float3   LightAmbient,
-//                     uniform float3   LightDiffuse,
-//                     uniform float3   LightSpecular,
-//                     uniform float4   LightAttenuation,
-//                     out     float4 kVertexColor)
-// {
-//     float fDiff, fSpec;
-//     GetPointLightFactors(kModelPosition.xyz,kModelNormal,
-//                          CameraWorldPosition,LightWorldPosition,MaterialSpecular.a,
-//                          fDiff,fSpec);
-
-//     float fAttn = GetAttenuation(kModelPosition.xyz,
-//                                  LightWorldPosition,LightAttenuation);
-
-//     float3 kColor = MaterialAmbient*LightAmbient;
-//     if (fDiff > 0.0f)
-//     {
-//         kColor += fDiff*MaterialDiffuse.xyz*LightDiffuse;
-//         if (fSpec > 0.0f)
-//         {
-//             kColor += fSpec*MaterialSpecular.xyz*LightSpecular;
-//         }
-//     }
-
-//     kVertexColor.rgb = MaterialEmissive + fAttn*kColor;
-//     kVertexColor.a = MaterialDiffuse.a;
-// }
 
 void SpotLight(    uniform float3 kModelPosition,
                    uniform float3 kModelNormal,
@@ -755,10 +605,11 @@ void p_MipavLightingFragment(
         kVertexColor = color0 + color1 + color2 + color3;
         kVertexColor.a = Blend * kInColor0.a;
 
-//        kVertexColor -= (color0 + color1 + color2 + color3);
-//        kVertexColor.r += (kInNormal.x + 1.0)/2.0;
-//        kVertexColor.g += (kInNormal.y + 1.0)/2.0;
-//        kVertexColor.b += (kInNormal.z + 1.0)/2.0;
+        // Test normals:
+        //        kVertexColor -= (color0 + color1 + color2 + color3);
+        //        kVertexColor.r += (kInNormal.x + 1.0)/2.0;
+        //        kVertexColor.g += (kInNormal.y + 1.0)/2.0;
+        //        kVertexColor.b += (kInNormal.z + 1.0)/2.0;
 
         if ( kVertexColor.a == 0 )
         {
