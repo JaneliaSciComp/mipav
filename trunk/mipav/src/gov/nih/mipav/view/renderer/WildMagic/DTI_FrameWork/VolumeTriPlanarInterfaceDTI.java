@@ -330,10 +330,10 @@ implements MouseListener, ItemListener, ChangeListener {
         try {
             progressBar.updateValueImmed(5);
            
-            m_kVolumeImageA = new VolumeImage(  imageA, LUTa, RGBTA );
+            m_kVolumeImageA = new VolumeImage(  imageA, LUTa, RGBTA, "A" );
             if ( imageB != null )
             {
-                m_kVolumeImageB = new VolumeImage( imageB, LUTb, RGBTB );
+                m_kVolumeImageB = new VolumeImage( imageB, LUTb, RGBTB, "B" );
             }
           
             ((PlaneRenderDTI)m_akPlaneRender[0]).loadImage(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
@@ -393,7 +393,11 @@ implements MouseListener, ItemListener, ChangeListener {
             
             TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
             m_kVolumeImageA.UpdateImages(kTransfer, 0);          
-            
+            if ( imageB != null )
+            {
+                kTransfer = m_kVolOpacityPanel.getCompB().getOpacityTransferFunction();
+                m_kVolumeImageB.UpdateImages(kTransfer, 0);
+            }
         } finally {
             progressBar.dispose();
         }

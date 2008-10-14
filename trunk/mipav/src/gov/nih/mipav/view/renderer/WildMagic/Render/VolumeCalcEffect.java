@@ -31,17 +31,18 @@ public class VolumeCalcEffect extends VolumeClipEffect
      * fn creates the first-pass shader.
      * @param kVolumeImageA, the shared volume data and textures.
      */
-    public VolumeCalcEffect ( VolumeImage kVolumeImageA )
+    public VolumeCalcEffect ( VolumeImage kVolumeImage )
     {
         /* Set single-pass rendering: */
         SetPassQuantity(1);
         SetVShader(0,new VertexShader("CalcNormalsPerSlice_Pass1"));
         SetPShader(0,new PixelShader("CalcNormalsPerSlice_Pass1", false));
         GetPShader(0).SetTextureQuantity(1);
-        GetPShader(0).SetImageName(0,"VolumeImageA");
-        GetPShader(0).SetTexture(0, kVolumeImageA.GetVolumeTarget() );
+        GetPShader(0).SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
+        GetPShader(0).SetTexture(0, kVolumeImage.GetVolumeTarget() );
 
-        m_bIsColor = kVolumeImageA.GetImage().isColorImage();
+        m_bIsColor = kVolumeImage.GetImage().isColorImage();
+        m_bIsB = kVolumeImage.GetVolumeTarget().GetImage().GetName().equals("VolumeImageB") ? true : false;
     }
 
     /** Create a new VolumeCalcEffect shader with the VolumeImage data. This
@@ -59,16 +60,16 @@ public class VolumeCalcEffect extends VolumeClipEffect
         GetPShader(0).SetTexture(0, kTexture );
     }
     
-    public VolumeCalcEffect ( VolumeImage kVolumeImageA, VolumeClipEffect kClip )
+    public VolumeCalcEffect ( VolumeImage kVolumeImage, VolumeClipEffect kClip )
     {
         /* Set single-pass rendering: */
         SetPassQuantity(1);
         SetVShader(0,new VertexShader("CropClipped"));
         SetPShader(0,new PixelShader("CropClipped", false));
         GetPShader(0).SetTextureQuantity(1);
-        GetPShader(0).SetImageName(0,"VolumeImageA");
-        GetPShader(0).SetTexture(0, kVolumeImageA.GetVolumeTarget() );
-        m_bIsColor = kVolumeImageA.GetImage().isColorImage();
+        GetPShader(0).SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
+        GetPShader(0).SetTexture(0, kVolumeImage.GetVolumeTarget() );
+        m_bIsColor = kVolumeImage.GetImage().isColorImage();
         this.m_afClipAll = kClip.m_afClipAll;
         this.m_afDoClip = kClip.m_afDoClip;
         this.m_aafClipData  = kClip.m_aafClipData;
@@ -98,7 +99,18 @@ public class VolumeCalcEffect extends VolumeClipEffect
             {
                 pkProgram.GetUC("IsColor").SetDataSource(new float[]{0,0,0,0});
             }
-        }       
+        }  
+        if ( pkProgram.GetUC("UseB") != null ) 
+        {
+            if ( m_bIsB )
+            {
+                pkProgram.GetUC("UseB").SetDataSource(new float[]{1,0,0,0});
+            }
+            else
+            {
+                pkProgram.GetUC("UseB").SetDataSource(new float[]{0,0,0,0});
+            }
+        } 
     }
 
     
@@ -114,11 +126,11 @@ public class VolumeCalcEffect extends VolumeClipEffect
     /** Sets the step size shader parameter.
      * @param kVolumeImageA, the shared volume data and textures.
      */
-    public void SetStepSize(VolumeImage kVolumeImageA)
+    public void SetStepSize(VolumeImage kVolumeImage)
     {
-        m_afExtents[0] = 1.0f/((float)(kVolumeImageA.GetImage().getExtents()[0])-1);
-        m_afExtents[1] = 1.0f/((float)(kVolumeImageA.GetImage().getExtents()[1])-1);
-        m_afExtents[2] = 1.0f/((float)(kVolumeImageA.GetImage().getExtents()[2])-1);
+        m_afExtents[0] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[0])-1);
+        m_afExtents[1] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[1])-1);
+        m_afExtents[2] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[2])-1);
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("StepSize") != null ) 
         {
@@ -130,4 +142,5 @@ public class VolumeCalcEffect extends VolumeClipEffect
     private float[] m_afExtents = new float[]{0,0,0,0};
     /** When true the volume data is color. */
     private boolean m_bIsColor = false;
+    private boolean m_bIsB = false;
 }

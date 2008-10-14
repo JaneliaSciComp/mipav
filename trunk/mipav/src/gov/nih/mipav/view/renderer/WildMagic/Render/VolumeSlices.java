@@ -21,15 +21,15 @@ public class VolumeSlices extends VolumeObject
      * @param fY, the size of the volume in the y-dimension (extent * resolutions)
      * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
      */
-    public VolumeSlices ( VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ )
+    public VolumeSlices ( VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, float fX, float fY, float fZ )
     {
-        super(kImageA,kTranslate,fX,fY,fZ);
+        super(kImageA,kImageB,kTranslate,fX,fY,fZ);
 
         m_akPlaneEffect = new VolumePlaneEffect[3];
         m_kVolumePreShader = new VolumePreRenderEffect[3];
         for ( int i = 0; i < 3; i++ )
         {
-            m_akPlaneEffect[i] = new VolumePlaneEffect( m_kVolumeImageA, true );
+            m_akPlaneEffect[i] = new VolumePlaneEffect( m_kVolumeImageA, m_kVolumeImageB, true );
             m_kVolumePreShader[i] = new VolumePreRenderEffect(false, true);
         }
 

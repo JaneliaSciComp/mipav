@@ -689,7 +689,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
     
     public VolumeSurface addSurface(TriMesh kSurfaces, boolean bReplace)
     {
-        VolumeSurface kSurface = new VolumeSurface( m_pkRenderer, m_kVolumeImageA,
+        VolumeSurface kSurface = new VolumeSurface( m_pkRenderer, m_kVolumeImageA, m_kVolumeImageB,
                 m_kTranslate,
                 m_fX, m_fY, m_fZ,
                 kSurfaces, bReplace );

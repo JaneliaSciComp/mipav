@@ -21,21 +21,48 @@ void p_Color_Opacity_Texture
     uniform float     blend,
     uniform float     IsColor,
     uniform float     ShowSurface,
+    uniform float     ShowB,
+    uniform float     IsColorB,
+    uniform float     ABBlend,
     uniform sampler3D VolumeImageA : TEXUNIT1, 
     uniform sampler1D ColorMapA : TEXUNIT2,
-    uniform sampler3D SurfaceImage : TEXUNIT6
+    uniform sampler3D VolumeImageB : TEXUNIT7, 
+    uniform sampler1D ColorMapB : TEXUNIT8,
+    uniform sampler3D SurfaceImage : TEXUNIT13
 )
 {
     float4 color = tex3D(VolumeImageA,kBaseTCoord);
+    float3 colorA; 
     if ( IsColor != 0 )
     {
-        kPixelColor.r = tex1D(ColorMapA,color.r).r;
-        kPixelColor.g = tex1D(ColorMapA,color.g).g;
-        kPixelColor.b = tex1D(ColorMapA,color.b).b;
+        colorA.r = tex1D(ColorMapA,color.r).r;
+        colorA.g = tex1D(ColorMapA,color.g).g;
+        colorA.b = tex1D(ColorMapA,color.b).b;
     }
     else
     {
-        kPixelColor.rgb = tex1D(ColorMapA,color.r).rgb;
+        colorA.rgb = tex1D(ColorMapA,color.r).rgb;
+    }
+    if ( ShowB )
+    {
+        color = tex3D(VolumeImageB,kBaseTCoord);
+        float3 colorB; 
+        if ( IsColorB != 0 )
+        {
+            colorB.r = tex1D(ColorMapB,color.r).r;
+            colorB.g = tex1D(ColorMapB,color.g).g;
+            colorB.b = tex1D(ColorMapB,color.b).b;
+        }
+        else
+        {
+            colorB.rgb = tex1D(ColorMapB,color.r).rgb;
+        }
+        //kPixelColor.rgb = ABBlend * colorA + (1-ABBlend)*colorB;
+        kPixelColor.rgb = .5 * colorA + (1-.5)*colorB;
+    }
+    else
+    {
+        kPixelColor.rgb = colorA;
     }
    if ( ShowSurface != 0 )
    {

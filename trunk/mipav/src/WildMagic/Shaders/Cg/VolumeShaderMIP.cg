@@ -48,12 +48,21 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
                          uniform sampler1D OpacityMapA : TEXUNIT3, 
                          uniform sampler3D VolumeImageA_GM : TEXUNIT4, 
                          uniform sampler1D OpacityMapA_GM : TEXUNIT5, 
+                         uniform sampler3D VolumeImageB : TEXUNIT7, 
+                         uniform sampler1D ColorMapB : TEXUNIT8, 
+                         uniform sampler1D OpacityMapB : TEXUNIT9, 
+                         uniform sampler3D VolumeImageB_GM : TEXUNIT10, 
+                         uniform sampler1D OpacityMapB_GM : TEXUNIT11, 
+                         uniform float ShowB,
+                         uniform float ABBlend,
                          uniform float blend,
                          uniform float stepsize,
                          uniform float4  steps,
                          uniform float IsColor,
+                         uniform float IsColorB,
                          uniform float DoClip,
                          uniform float GradientMagnitude,
+                         uniform float GradientMagnitudeB,
                          uniform float4 BackgroundColor,
                          uniform float clipX,
                          uniform float clipXInv,
@@ -92,11 +101,6 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
         kColor.a = 0;
         return;
     }
-//     if ( (back_position.x == start.x) && (back_position.y == start.y) && (back_position.z == start.z) )
-//     {
-//         kColor.a = 0;
-//         return;
-//     }
 
     // limit the number of iterations to STEPS, make sure that the stepsize will
     // cover the entire ray:
@@ -107,13 +111,17 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
 
     // The color at the current position along the ray:
     float4 color = (0,0,0,0);
+    float4 colorB = (0,0,0,0);
 
     // The opacity at the current position along the ray:
     float opacity = 0;
+    float opacityB = 0;
 
     // Gradient magnitude values along the ray:
     float4 colorGM = (0,0,0,0);
     float opacityGM = 0;
+    float4 colorGM_B = (0,0,0,0);
+    float opacityGM_B = 0;
 
     // Maximum value along the ray for MIP
     float fMax = 0;
@@ -121,6 +129,13 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
     float intensity_color = 0;
     // maximum color value along the ray
     float3 color_max = (0,0,0);
+
+    // Maximum value along the ray for MIP
+    float fMaxB = 0;
+    // Intensity value of color:
+    float intensity_colorB = 0;
+    // maximum color value along the ray
+    float3 color_maxB = (0,0,0);
 
     float delta = stepsize;
     float3 delta_dir = norm_dir * delta;
@@ -177,6 +192,17 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
                     opacityGM = tex1D(OpacityMapA_GM,colorGM.r).r;
                     opacity = opacity * opacityGM;
                 }
+                if ( ShowB != 0 )
+                {
+                    colorB = tex3D(VolumeImageB,position);
+                    opacityB = tex1D(OpacityMapB,color.r).r;
+                    if ( GradientMagnitudeB != 0 )
+                    {
+                        colorGM_B = tex3D(VolumeImageB_GM,position);
+                        opacityGM_B = tex1D(OpacityMapB_GM,colorGM_B.r).r;
+                        opacityB = opacityB * opacityGM_B;
+                    }
+                }
             }
         }
         // If the opacity is not zero:
@@ -190,8 +216,24 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
                 color_max.rgb = color.rgb;
             }
         }
+        // If the opacity is not zero:
+        if ( opacityB > 0 )
+        {
+            // MIP: Store the maximum value:
+            intensity_colorB = dot(colorB.rgb, (.3,.3,.3));
+            if ( intensity_colorB > fMaxB ) 
+            {
+                fMaxB = intensity_colorB;
+                color_maxB.rgb = colorB.rgb;
+            }
+        }
+
         // Break early if the max is >= 1
-        if ( fMax>=1)
+        if ( (ShowB == 0) && (fMax>=1) )
+        {
+            break;
+        }
+        if ( (ShowB != 0) && (fMax>=1) && (fMaxB>=1) )
         {
             break;
         }
@@ -215,7 +257,30 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
     {
         kColor.rgb = tex1D(ColorMapA,fMax).rgb;
     }
-    // Blend with the background color:
-    kColor = fMax * kColor + (1 - fMax) * BackgroundColor;
-    kColor.a = blend * fMax;
+    if ( ShowB != 0 )
+    {
+        if ( IsColorB != 0 )
+        {
+            kColor.r = ABBlend * kColor.r +
+                (1 - ABBlend) * tex1D(ColorMapB,color_maxB.r).r;
+            kColor.g = ABBlend * kColor.g +
+                (1 - ABBlend) * tex1D(ColorMapB,color_maxB.g).g;
+            kColor.b = ABBlend * kColor.b +
+                (1 - ABBlend) * tex1D(ColorMapB,color_maxB.b).b;
+        }
+        else
+        {
+            kColor.rgb = ABBlend * kColor.rgb +
+                (1 - ABBlend) * tex1D(ColorMapB,fMaxB).rgb;
+        }
+        fMax = ABBlend * fMax + (1 - ABBlend) * fMaxB;
+        kColor = fMax * kColor + (1 - fMax) * BackgroundColor;
+        kColor.a = fMax;
+    }
+    else
+    {
+        // Blend with the background color:
+        kColor = fMax * kColor + (1 - fMax) * BackgroundColor;
+        kColor.a = blend * fMax;
+    }
 }

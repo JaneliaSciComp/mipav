@@ -68,7 +68,7 @@ public class VolumeImageViewer extends JavaApplication3D
          frame.setVisible(true);
          frame.setBounds(0,0,
                  kWorld.GetWidth(), kWorld.GetHeight() );
-         frame.setVisible(false);
+         //frame.setVisible(false);
          kWorld.SetAnimator(animator);
          kWorld.SetFrame(frame);
          animator.start();
@@ -94,7 +94,7 @@ public class VolumeImageViewer extends JavaApplication3D
             {
                 m_iSlice = 0;
                 m_bDisplayFirst = false;
-                //System.err.println("Done first pass");
+                System.err.println("Done first pass");
             }
         }
         while ( m_bDisplaySecond )
@@ -116,7 +116,7 @@ public class VolumeImageViewer extends JavaApplication3D
             {
                 m_bDisplaySecond = false;
                 m_iSlice = 0;
-                //System.err.println("Done second pass");
+                System.err.println("Done second pass");
             }
         }
         while ( m_bCrop )
@@ -193,7 +193,7 @@ public class VolumeImageViewer extends JavaApplication3D
             {
                 m_bSurfaceAdded = false;
                 m_iSlice = 0;
-                //System.err.println("Done SurfaceAdded");
+                System.err.println("Done SurfaceAdded");
             }
         }
         m_kAnimator.stop();

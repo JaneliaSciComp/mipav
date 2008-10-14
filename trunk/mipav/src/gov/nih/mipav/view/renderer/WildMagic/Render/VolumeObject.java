@@ -24,10 +24,12 @@ public abstract class VolumeObject
      * @param kImageA, the VolumeImage containing shared data and textures for
      * rendering.
      */
-    public VolumeObject (VolumeImage kImageA)
+    public VolumeObject (VolumeImage kImageA, VolumeImage kImageB)
     {
         m_kVolumeImageA = kImageA;
+        m_kVolumeImageB = kImageB;
     }
+    
     
     /** Create a new VolumeObject with the VolumeImage parameter.
      * @param kImageA, the VolumeImage containing shared data and textures for
@@ -39,7 +41,21 @@ public abstract class VolumeObject
      */
     public VolumeObject (VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ)
     {
+        this( kImageA, null, kTranslate, fX, fY, fZ);
+    }
+    
+    /** Create a new VolumeObject with the VolumeImage parameter.
+     * @param kImageA, the VolumeImage containing shared data and textures for
+     * rendering.
+     * @param kTranslate, translation in the scene-graph for this object.
+     * @param fX, the size of the volume in the x-dimension (extent * resolutions)
+     * @param fY, the size of the volume in the y-dimension (extent * resolutions)
+     * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
+     */
+    public VolumeObject (VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, float fX, float fY, float fZ)
+    {
         m_kVolumeImageA = kImageA;
+        m_kVolumeImageB = kImageB;
         m_kTranslate.Copy(kTranslate);
         
         m_fX = fX;
@@ -242,6 +258,8 @@ public abstract class VolumeObject
     protected Node m_kScene = null;
     /** a reference to the VolumeImage containing the shared data and textures for display. */
     protected VolumeImage m_kVolumeImageA;
+    /** a reference to the VolumeImage containing the shared data and textures for display. */
+    protected VolumeImage m_kVolumeImageB;
     /** local translation in the parent scene-graph. */
     protected Vector3f m_kTranslate = new Vector3f();;
     /** Culling of this object (front-face, back-face, none) */
