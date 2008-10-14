@@ -6902,6 +6902,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 // go ahead and recompute the boolean datasize manually
                 for (this.dataSize = 1, i = 0; i < this.nDims; i++) {
                     this.dataSize *= this.dimExtents[i];
+                    if (i == 1) {
+                        this.dataSize = 64 * ((this.dataSize + 63) >> 6);
+                    }
                 }
 
                 try {
