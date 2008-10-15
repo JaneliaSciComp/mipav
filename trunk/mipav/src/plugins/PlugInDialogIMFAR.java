@@ -19,6 +19,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 /**
@@ -60,6 +61,9 @@ public class PlugInDialogIMFAR extends JDialogScriptableBase implements Algorith
 
 	/** handle to algorithm **/
 	private PlugInAlgorithmIMFAR alg;
+	
+	/** current directory  **/
+    private String currDir = null;
 	
 	
 	/**
@@ -194,20 +198,32 @@ public class PlugInDialogIMFAR extends JDialogScriptableBase implements Algorith
 		String command = e.getActionCommand();
 		if(command.equalsIgnoreCase("imfarDocBrowse")) {
 			JFileChooser chooser = new JFileChooser();
+			if (currDir != null) {
+				chooser.setCurrentDirectory(new File(currDir));
+            }else {
+            	chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            }
 		    chooser.addChoosableFileFilter(new MyFilter());
 	        chooser.setDialogTitle("Select IMFAR document");
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	imfarDocPathTextField.setText(chooser.getSelectedFile().getAbsolutePath());
+	        	currDir = chooser.getSelectedFile().getAbsolutePath();
 
 	        }
 		}if(command.equalsIgnoreCase("searchDocBrowse")) {
 			JFileChooser chooser = new JFileChooser();
+			if (currDir != null) {
+				chooser.setCurrentDirectory(new File(currDir));
+            }else {
+            	chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            }
 		    chooser.addChoosableFileFilter(new MyFilter());
 	        chooser.setDialogTitle("Select Search document");
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	searchDocPathTextField.setText(chooser.getSelectedFile().getAbsolutePath());
+	        	currDir = chooser.getSelectedFile().getAbsolutePath();
 
 	        }
 		}else if(command.equalsIgnoreCase("ok")) {
