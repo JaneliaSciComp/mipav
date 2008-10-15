@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
@@ -86,6 +88,8 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 					bw.write("\t");
 				}
 			}
+			bw.write("Number Subjects");
+			bw.write("\t");
 			if(includeConclusion) {
 				bw.write("Abstract Conclusion");
 			}
@@ -249,14 +253,20 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 										boolean containsSearch = containsSearch(fullText,searchFields[i]);
 										String containsSearchString;
 										if(containsSearch) {
-											containsSearchString = "Yes";
+											containsSearchString = "1";
 										}else {
-											containsSearchString = "No";
+											containsSearchString = "0";
 										}
 										bw.write(containsSearchString);
 										bw.write("\t");
 									}
 								}
+								
+								//search on n= to get the number
+								String numberSubjectsString = getNumberSubjects(fullText);
+								bw.write(numberSubjectsString);
+								bw.write("\t");
+								
 								if(includeConclusion) {
 									bw.write(conclusions);
 								}
@@ -408,10 +418,41 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 				}
 			}
 		}else {
-			containsSearch = fullText.contains(keyWords[0]);
+			String word = keyWords[0].toLowerCase();
+			containsSearch = fullText.contains(word);
 		}
 
 		return containsSearch;
+	}
+	
+	
+	/**
+	 * gets number of subjects by searching for n=
+	 * @param fullText
+	 * @return
+	 */
+	public String getNumberSubjects(String fullText) {
+		int i=0;
+		String finalString = "";
+		String s1 = "";
+		String s2 = "";
+		Pattern p = Pattern.compile("[^a-z^A-Z][nN]\\s*?=\\s*?\\d+");
+		Matcher m = p.matcher(fullText);
+		
+		while(m.find()) {
+			s1 = m.group();
+			s2 = s1.substring(1, s1.length());
+			if(i==0) {
+				finalString = s2;
+			}else {
+				finalString = finalString + ", " + s2;
+			}
+			
+			i++;
+
+		}
+		
+		return finalString;
 	}
 	
 	/***
@@ -646,16 +687,16 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 				for(int i=0;i<authsSplit.length;i++) {
 					authsSplit[i] = authsSplit[i].trim();
 				}
-				//strip away first initials
-				authsSplit[0] = authsSplit[0].replaceAll("[a-zA-Z]\\. ", "");
+				//strip away first initials...commenting out 10/15/08
+				//authsSplit[0] = authsSplit[0].replaceAll("[a-zA-Z]\\. ", "");
 				authorsList.add(authsSplit[0]);
-				authsSplit[1] = authsSplit[1].replaceAll("[a-zA-Z]\\. ", "");
+				//authsSplit[1] = authsSplit[1].replaceAll("[a-zA-Z]\\. ", "");
 				authorsList.add(authsSplit[1]);
 				return authorsList;
 
 			}else {
-				//strip away first initials
-				splits[0] = splits[0].replaceAll("[a-zA-Z]\\. ", "");
+				//strip away first initials...commenting out 10/15/08
+				//splits[0] = splits[0].replaceAll("[a-zA-Z]\\. ", "");
 				authorsList.add(splits[0] );
 				return authorsList;
 			}
@@ -665,15 +706,15 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 				for(int i=0;i<authsSplit.length;i++) {
 					authsSplit[i] = authsSplit[i].trim();
 				}
-				//strip away first initials
+				//strip away first initials...commenting out 10/15/08
 
 				for(int i=0;i<splits.length - 2;i++) {
-					splits[i] = splits[i].replaceAll("[a-zA-Z]\\. ", "");
+					//splits[i] = splits[i].replaceAll("[a-zA-Z]\\. ", "");
 					authorsList.add(splits[i]);
 				}
-				authsSplit[0] = authsSplit[0].replaceAll("[a-zA-Z]\\. ", "");
+				//authsSplit[0] = authsSplit[0].replaceAll("[a-zA-Z]\\. ", "");
 				authorsList.add(authsSplit[0]);
-				authsSplit[1] = authsSplit[1].replaceAll("[a-zA-Z]\\. ", "");
+				//authsSplit[1] = authsSplit[1].replaceAll("[a-zA-Z]\\. ", "");
 				authorsList.add(authsSplit[1]);
 
 				return authorsList;
@@ -685,12 +726,12 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 			String[] authsSplit = splits[index - 1].split(" and");
 			for(int i=0;i<authsSplit.length;i++) {
 				authsSplit[i] = authsSplit[i].trim();
-				authsSplit[i].replaceAll("[a-zA-Z]\\. ", "");
+				//authsSplit[i].replaceAll("[a-zA-Z]\\. ", "");
 			}
 			
 			for(int i=0;i<index-1;i++) {
 				boolean hasAffiliation = true;
-				splits[i] = splits[i].replaceAll("[a-zA-Z]\\. ", "");
+				//splits[i] = splits[i].replaceAll("[a-zA-Z]\\. ", "");
 				affiliationString = splits[i].substring(splits[i].length() - 1);
 				try{
 					affiliationNumber = Integer.valueOf(affiliationString);
@@ -716,7 +757,7 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 				authorsList.add(splits[i]);
 			}
 			
-			authsSplit[0] = authsSplit[0].replaceAll("[a-zA-Z]\\. ", "");
+			//authsSplit[0] = authsSplit[0].replaceAll("[a-zA-Z]\\. ", "");
 			affiliationString = authsSplit[0].substring(authsSplit[0].length() - 1);
 			
 			boolean hasAffiliation = true;
@@ -745,7 +786,7 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 			}
 			authorsList.add(authsSplit[0]);
 			
-			authsSplit[1] = authsSplit[1].replaceAll("[a-zA-Z]\\. ", "");
+			//authsSplit[1] = authsSplit[1].replaceAll("[a-zA-Z]\\. ", "");
 			affiliationString = authsSplit[1].substring(authsSplit[1].length() - 1);
 			affiliationNumber = Integer.valueOf(affiliationString);
 			affiliationString2 = authsSplit[1].substring(authsSplit[1].length() - 2);
