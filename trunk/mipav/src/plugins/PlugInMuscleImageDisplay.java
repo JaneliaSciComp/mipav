@@ -4487,7 +4487,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
                 float zoom, int[] extents, boolean logMagDisplay, int _orientation) {
 			super(_frame, _imageA, _LUTa, imgBufferA, _imageB, _LUTb, imgBufferB, pixelBuffer, zoom, extents, logMagDisplay, _orientation);
 			
-			voiHandler = new PlugInHandler(this);
+			//voiHandler = new PlugInHandler(this);
 			
 			//addMouseListener(voiHandler);
             //addMouseMotionListener(voiHandler);
