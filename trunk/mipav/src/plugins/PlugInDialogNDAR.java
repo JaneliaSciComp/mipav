@@ -70,8 +70,8 @@ public class PlugInDialogNDAR extends JDialogBase implements ActionListener, Cha
 
     private static final int GUID_TABLE_GUID_COLUMN = 1;
 
-    public PlugInDialogNDAR(Frame theParentFrame) {
-        super(theParentFrame, false);
+    public PlugInDialogNDAR() {
+        super(false);
 
         init();
         setVisible(true);
