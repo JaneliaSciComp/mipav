@@ -5443,7 +5443,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		
 		public PlugInHandler(ViewJComponentEditImage compImage) {
 			super(compImage);
-
+			voiDialog = new PlugInVOIStats(compImage.getFrame(), compImage.getActiveImage(), null);
 	        /*if (compImage.getFrame() != null) {
 	            voiDialog = new JDialogVOIStats(compImage.getFrame(), compImage.getActiveImage(), null);
 	            addVOIUpdateListener(voiDialog);
