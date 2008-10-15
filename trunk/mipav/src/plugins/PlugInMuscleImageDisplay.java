@@ -15,7 +15,6 @@ import gov.nih.mipav.model.scripting.actions.ActionCloseFrame;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.dialogs.JDialogMagnificationControls;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 import gov.nih.mipav.view.dialogs.JDialogVOIStats;
 import gov.nih.mipav.view.dialogs.JDialogWinLevel;
@@ -4490,8 +4489,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			
 			voiHandler = new PlugInHandler(this);
 			
-			addMouseListener(voiHandler);
-            addMouseMotionListener(voiHandler);
+			//addMouseListener(voiHandler);
+            //addMouseMotionListener(voiHandler);
 		}
 		
 		/**
