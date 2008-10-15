@@ -118,6 +118,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
     
     /**Image directory*/
     private String imageDir;
+    
+    /**Button to add a VOI*/
+    private JButton incButton;
 
     /**
      * Constructor.
@@ -707,11 +710,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		customPane.updateImages(true);
 		customPane.repaint();
 		
-		/*for(int i=0; i<customVOI.size(); i++) {
+		for(int i=0; i<customVOI.size(); i++) {
 			for(int j=0; j<customVOI.get(i).size(); j++) {
 				customVOI.get(i).get(j).initDependents(customVOI.get(i).size());
 			}
-		}*/
+		}
 		
 		return mainPanel;
 	}
@@ -780,6 +783,17 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		gridPane.add(title);
 		titlesArr.add(title);
 		
+		JButton incPaneButton = new JButton(ADD_PANE);
+		incPaneButton.addActionListener(this);
+		incButton = new JButton(ADD_VOI);
+		incButton.addActionListener(this);
+		JButton launchButton = new JButton(LAUNCH);
+		launchButton.addActionListener(this);
+		JButton openButton = new JButton(OPEN_TEMPLATE);
+		openButton.addActionListener(this);
+		JButton saveButton = new JButton(SAVE_TEMPLATE);
+		saveButton.addActionListener(this);
+		
 		if(currentTab == 0)
 			customVOI = new ArrayList();
 		customVOI.add(new ArrayList());
@@ -788,16 +802,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			customVOI.get(currentTab).get(i).setBorder(MipavUtil.buildTitledBorder("VOI #"+(i+1)));
 			gridPane.add(customVOI.get(currentTab).get(i));
 		}
-		JButton incPaneButton = new JButton(ADD_PANE);
-		incPaneButton.addActionListener(this);
-		JButton incButton = new JButton(ADD_VOI);
-		incButton.addActionListener(this);
-		JButton launchButton = new JButton(LAUNCH);
-		launchButton.addActionListener(this);
-		JButton openButton = new JButton(OPEN_TEMPLATE);
-		openButton.addActionListener(this);
-		JButton saveButton = new JButton(SAVE_TEMPLATE);
-		saveButton.addActionListener(this);
+		
 		
 		gridPane.add(incPaneButton);
 		gridPane.add(incButton);
@@ -1162,6 +1167,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			this.isClosed = new JCheckBox("Closed curves");
 			isClosed.setSelected(true);
 			
+			//let this MusclePane be aware when a new VOI has been added
+			incButton.addActionListener(this);
+			
 			initDialog();
 		}
 		
@@ -1221,11 +1229,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			add(numCurves, c);
 		}
 		
-		protected void initDependents(int size) {
+		public void initDependents(int size) {
 			lineList = new ArrayList(size);
 			for(int j=0; j<size-1; j++) {
 				Point p1 = this.getLocationOnScreen();
-				Point2D.Double p2 = new Point2D.Double(p1.x+10, p1.y);
+				Point2D.Double p2 = new Point2D.Double(p1.x-10, p1.y);
 				DependencyNode l;
 				lineList.add(l = new DependencyNode(p1, p2));	
 			}
@@ -1234,9 +1242,15 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		public void actionPerformed(ActionEvent e) {
 			if(e.getSource() instanceof JButton && ((JButton)e.getSource()).getText().equals("OK")) {
 				colorButton.setColor(colorChooser.getColor());
+				getGraphics().setColor(colorChooser.getColor());
 			} else if(e.getSource() instanceof PlugInMuscleColorButton) {
 				colorChooser = new ViewJColorChooser(new Frame(), "Pick VOI color", 
 						this, this);
+			} else if(e.getActionCommand().equals(ADD_VOI)) {
+					Point p1 = this.getLocationOnScreen();
+					Point2D.Double p2 = new Point2D.Double(p1.x-10, p1.y);
+					DependencyNode l;
+					lineList.add(new DependencyNode(p1, p2));	
 			}
 		}
 
