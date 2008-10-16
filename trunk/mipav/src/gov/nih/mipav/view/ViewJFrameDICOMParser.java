@@ -140,6 +140,9 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         buildMenu();
         Preferences.setProperty(Preferences.PREF_IMAGE_DIR, dir);
         buildSourceTreeListing(true);
+        // selects the directory and parses it
+        directoryTree.setSelectionRow(0);
+        actionPerformed(new ActionEvent(this, 0, "Parse"));
         treePanel.setPreferredSize(new Dimension(200, 200));
         imagePanel = new JPanel();
         imagePanel.setPreferredSize(new Dimension(200, 350));
@@ -580,7 +583,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
             try {
                 Vector tableHeaderVector = imageTableModel.getColumnNames(); // Vector holding the names of the
-                                                                                // columns
+                // columns
 
                 int mod = (fileInfoVector.size() / 100);
 
@@ -611,13 +614,13 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                         for (int j = 0; j < tableHeaderVector.size(); j++) {
                             String columnName = (String) tableHeaderVector.elementAt(j); // get name of first column
                             String key = (String) columnKeyTable.get(columnName); // get key associated with this
-                                                                                    // column
+                            // column
 
                             if (isCompositeXYZPositionColumn(columnName)) // test to see if we have to populate this
                             // column manually i.e. non-native DICOM tag
                             {
                                 key = JDialogSelectDICOMColumnHeaders.CUSTOM; // assign CUSTOM to key to indicate it
-                                                                                // is
+                                // is
                                 // non-native DICOM tag
                             } else if (key == null) {
                                 key = DicomDictionary.getKeyFromTagName(columnName); // might return null
@@ -697,7 +700,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                                             // at this point, its not a number, so assume String
                                             imageTableModel.setColumnClass(new String().getClass(), j); // set lexical
-                                                                                                        // sorting
+                                            // sorting
                                             newRow.addElement(value);
                                         }
                                     } else if (type.equals("FD") || type.equals("FL")) {
@@ -705,7 +708,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                                         try {
                                             Double doubleObj = new Double(Double.parseDouble(value));
                                             imageTableModel.setColumnClass(doubleObj.getClass(), j); // set numerical
-                                                                                                        // sorting
+                                            // sorting
                                             newRow.addElement(doubleObj);
 
                                             continue;
@@ -713,12 +716,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                                             // at this point, its not a number, so assume String
                                             imageTableModel.setColumnClass(new String().getClass(), j); // set lexical
-                                                                                                        // sorting
+                                            // sorting
                                             newRow.addElement(value);
                                         }
                                     } else {
                                         imageTableModel.setColumnClass(new String().getClass(), j); // set lexical
-                                                                                                    // sorting
+                                        // sorting
                                         newRow.addElement(value);
                                     }
                                 }
