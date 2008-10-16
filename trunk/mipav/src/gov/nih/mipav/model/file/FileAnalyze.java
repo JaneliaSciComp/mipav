@@ -355,7 +355,6 @@ public class FileAnalyze extends FileBase {
      * @throws  IOException            thrown when the I/O error happens.
      */
     public static boolean isAnalyze(String absolutePath) throws FileNotFoundException, IOException {
-
         if ((absolutePath == null) || (absolutePath.length() == 0)) {
             return false;
         }
@@ -383,11 +382,9 @@ public class FileAnalyze extends FileBase {
 
         boolean bigEndian = true;
         int sizeOfHeader = FileBase.bytesToInt(bigEndian, 0, buffer);
-
         if (sizeOfHeader != HEADER_SIZE) {
             bigEndian = false;
             sizeOfHeader = FileBase.bytesToInt(bigEndian, 0, buffer);
-
             if (sizeOfHeader != HEADER_SIZE) {
                 return false;
             }
@@ -400,7 +397,7 @@ public class FileAnalyze extends FileBase {
         int extents = FileBase.bytesToInt(bigEndian, 0, buffer);
 
         if (extents != EXTENTS) {
-            return false;
+            Preferences.debug("extents = " + extents + " instead of the expected 16384\n");
         }
 
         /** Check whether the value of regular field equals to "r" */
