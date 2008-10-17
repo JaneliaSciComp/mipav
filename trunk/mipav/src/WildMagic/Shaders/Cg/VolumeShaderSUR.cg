@@ -529,6 +529,9 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
     float4 color_acc = float4(0,0,0,0);
     float alpha_acc = 0;
 
+    float4 color_accB = float4(0,0,0,0);
+    float alpha_accB = 0;
+
     // output color:
     kColor = BackgroundColor;
     if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
@@ -545,12 +548,16 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
 
     // The color at the current position along the ray:
     float4 color = (0,0,0,0);
+    float4 colorB = (0,0,0,0);
 
     // The opacity at the current position along the ray:
     float opacity = 0;
+    float opacityB = 0;
     // Gradient magnitude values along the ray:
     float4 colorGM = (0,0,0,0);
     float opacityGM = 0;
+    float4 colorGM_B = (0,0,0,0);
+    float opacityGM_B = 0;
 
     // The normal at the current position along the ray:
     float4 normal = (0,0,0,0);
@@ -624,10 +631,32 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                 {
                     color = tex1D(ColorMapA,color.r);
                 }
+                if ( ShowB != 0 )
+                {
+                    colorB = tex3D(VolumeImageB,position);
+                    opacityB = tex1D(OpacityMapB,colorB.r).r;
+                    if ( GradientMagnitude != 0 )
+                    {
+                        colorGM_B = tex3D(VolumeImageB_GM,position);
+                        opacityGM_B = tex1D(OpacityMapB_GM,colorGM_B.r).r;
+                        opacityB = opacityB * opacityGM_B;
+                    }
+
+                    if ( IsColorB != 0 )
+                    {
+                        colorB.r = tex1D(ColorMapB,colorB.r).r;
+                        colorB.g = tex1D(ColorMapB,colorB.g).g;
+                        colorB.b = tex1D(ColorMapB,colorB.b).b;
+                    }
+                    else
+                    {
+                        colorB = tex1D(ColorMapB,colorB.r);
+                    }
+                }
             }
         }
         // If the opacity is not zero:
-        if ( opacity > 0 )
+        if ( (opacity > 0) && (alpha_acc < 1) )
         {
             // Surface and Composite surface display:
             normal = tex3D(NormalMapA,position);
@@ -688,24 +717,92 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
             {
                 color_acc   = color;
                 alpha_acc = 1.0;
-                break;
             }
         }
-        // Break early if the accumulate alpha value for composite or composite surface is >= 1
-        if ( (Composite != 0) && (alpha_acc >= 1.0) )
+
+        // If the opacity is not zero:
+        if ( (opacityB > 0) && (alpha_accB < 1) )
         {
-            break;
+            // Surface and Composite surface display:
+            normal = tex3D(NormalMapB,position);
+            normal.w = 0;
+
+            // First light is static light:
+            color0 = colorB;
+            computeColor( position, normal, CameraModelPosition,
+                          MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
+                          Light0Ambient, Light0Diffuse, Light0Specular,
+                          Light0ModelPosition, Light0ModelDirection,
+                          Light0SpotCutoff, Light0Attenuation,
+                          Light0Type,
+                          Composite, color0 );
+
+            // Assume second light is alwasy an ambient light:
+            color1 = colorB;
+            if ( Composite != 0 )
+            {
+                LocalMaterialAmbient = color1 * MaterialAmbient;
+                LocalMaterialEmissive = color1 * MaterialEmissive;
+            }
+            AmbientLight( LocalMaterialEmissive,
+                          LocalMaterialAmbient,
+                          Light1Ambient,
+                          Light1Attenuation,
+                          color1 );
+
+            // Remaining lights:
+            color2 = colorB;
+            computeColor( position, normal, CameraModelPosition,
+                          MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
+                          Light2Ambient, Light2Diffuse, Light2Specular,
+                          Light2WorldPosition, Light2WorldDirection,
+                          Light2SpotCutoff, Light2Attenuation,
+                          Light2Type,
+                          Composite, color2 );
+
+            color3 = colorB;
+            computeColor( position, normal, CameraModelPosition,
+                          MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
+                          Light3Ambient, Light3Diffuse, Light3Specular,
+                          Light3WorldPosition, Light3WorldDirection,
+                          Light3SpotCutoff, Light3Attenuation,
+                          Light3Type,
+                          Composite, color3 );
+
+            colorB = color0 + color1 + color2 + color3;
+
+            // Composite surface:
+            if ( Composite != 0 )
+            {
+                color_accB   = (1.0 - alpha_accB) * colorB * opacityB + color_accB;
+                alpha_accB += (1 - alpha_accB) * opacityB;
+            }
+            // Surface:
+            else if ( (colorB.x != 0) || (colorB.y != 0) || (colorB.z != 0) )
+            {
+                color_accB   = colorB;
+                alpha_accB = 1.0;
+            }
         }
+
+
         // Increment position along the ray:
         position += delta_dir;
         length_acc += delta_dir_len;
         // Break when the end of the ray is reached, or if alpha >= 1;
-        if ( (length_acc >= len) || (alpha_acc >= 1.0) )
+        if ( length_acc >= len )
         {
             break;
         }
-    } 
-
+        if ( (ShowB == 0) && (alpha_acc >= 1) )
+        {
+            break;
+        }
+        if ( (ShowB != 0) && (alpha_acc >= 1) && (alpha_accB >= 1) )
+        {
+            break;
+        } 
+    }
 
     // Self-shadowing is possible for Surface mode:
     if ( (SelfShadow != 0) && (Composite == 0) && (alpha_acc == 1.0) ) {
@@ -870,6 +967,16 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
         }
     }
 
-    kColor.rgb = alpha_acc * color_acc.rgb + (1 - alpha_acc)*BackgroundColor.rgb;
-    kColor.a = blend * alpha_acc;
+    if ( ShowB != 0 )
+    {
+        kColor.rgb = ABBlend * color_acc.rgb + (1 - ABBlend) * color_accB.rgb;
+        float fAlpha = ABBlend * alpha_acc + (1 - ABBlend) * alpha_accB;
+        kColor.rgb = fAlpha * kColor.rgb + (1-fAlpha)*BackgroundColor.rgb;
+        kColor.a = blend;
+    }
+    else
+    {
+        kColor.rgb = alpha_acc * color_acc.rgb + (1 - alpha_acc)*BackgroundColor.rgb;
+        kColor.a = blend * alpha_acc;
+    }
 }

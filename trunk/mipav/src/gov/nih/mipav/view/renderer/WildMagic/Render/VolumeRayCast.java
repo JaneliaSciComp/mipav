@@ -314,6 +314,7 @@ public class VolumeRayCast extends VolumeObject
         m_kVolumeShaderEffect.SetPassQuantity(1);
         m_kVolumeShaderEffect.SURMode(kRenderer);
         m_kVolumeShaderEffect.Blend(0.75f);
+        m_kVolumeShaderEffect.setABBlend(0.5f);
 
         m_kScene.UpdateGS();
         m_kScene.UpdateRS();
