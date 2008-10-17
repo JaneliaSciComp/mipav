@@ -36,6 +36,9 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 	/** number of pre/post words to add on the n= search result **/
 	private int numSubjectsPrePost;
 	
+	/** delimter in search results **/
+	private String delimiter = "::";
+	
 	
 	/**
 	 * constructor
@@ -493,15 +496,15 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 				if(i == 0) {
 					result = result + s;
 				}else {
-					result = result + " :: " + s;
+					result = result + delimiter + s;
 				}
 				i++;
 			}
 			
-			result = result + " :: ";
+			result = result + delimiter;
 		}
 
-		result = result.substring(0, result.lastIndexOf("::"));
+		result = result.substring(0, result.lastIndexOf(delimiter));
 	
 		return result;
 	}
@@ -537,7 +540,7 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 			if(i==0) {
 				finalString = s1;
 			}else {
-				finalString = finalString + " :: " + s1;
+				finalString = finalString + delimiter + s1;
 			}
 			
 			i++;
