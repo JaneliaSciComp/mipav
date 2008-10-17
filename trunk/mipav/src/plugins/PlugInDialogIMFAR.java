@@ -30,10 +30,10 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 public class PlugInDialogIMFAR extends JDialogScriptableBase implements AlgorithmInterface {
 	
 	/** labels **/
-    private JLabel imfarDocLabel, searchDocLabel, outputFileNameLabel, includeConclusionLabel;
+    private JLabel imfarDocLabel, searchDocLabel, outputFileNameLabel, includeConclusionLabel, numSubjectsLabel, messageLabel;
     
     /** textfields **/
-	private JTextField imfarDocPathTextField, searchDocPathTextField, outputFileNameTextField;
+	private JTextField imfarDocPathTextField, searchDocPathTextField, outputFileNameTextField, numSubjectsTextField;
 	
 	/** buttons **/
 	private JButton imfarDocBrowseButton, searchDocBrowseButton;
@@ -64,6 +64,9 @@ public class PlugInDialogIMFAR extends JDialogScriptableBase implements Algorith
 	
 	/** current directory  **/
     private String currDir = null;
+    
+    /** number of pre/post words to add on the n= search result **/
+    private int numSubjectsPrePost;
 	
 	
 	/**
@@ -91,7 +94,7 @@ public class PlugInDialogIMFAR extends JDialogScriptableBase implements Algorith
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("IMFAR Parser Tool " + " v1.0");
+        setTitle("IMFAR Parser Tool " + " v1.1");
         
         mainPanelGridBagLayout = new GridBagLayout();
         mainPanelConstraints = new GridBagConstraints();
@@ -171,6 +174,33 @@ public class PlugInDialogIMFAR extends JDialogScriptableBase implements Algorith
 		includeConclusionCheckbox.setSelected(true);
 		mainPanel.add(includeConclusionCheckbox, mainPanelConstraints);
 		
+		
+		//num subjects pre/post words
+        mainPanelConstraints.gridx = 0;
+		mainPanelConstraints.gridy = 4;
+		mainPanelConstraints.insets = new Insets(15,5,15,0);
+		numSubjectsLabel = new JLabel(" Number of words pre/post n= ");
+        mainPanel.add(numSubjectsLabel, mainPanelConstraints);
+        
+        mainPanelConstraints.gridx = 1;
+		mainPanelConstraints.gridy = 4;
+		mainPanelConstraints.insets = new Insets(15,5,15,0);
+		numSubjectsTextField = new JTextField(3);
+		numSubjectsTextField.setText("3");
+		mainPanel.add(numSubjectsTextField, mainPanelConstraints);
+		
+		
+		//message
+		mainPanelConstraints.gridx = 0;
+		mainPanelConstraints.gridy = 5;
+		mainPanelConstraints.gridwidth = 3;
+		mainPanelConstraints.insets = new Insets(15,5,15,5);
+		messageLabel = new JLabel(" ");
+		messageLabel.setForeground(Color.RED);
+		mainPanelConstraints.anchor = GridBagConstraints.CENTER;
+        mainPanel.add(messageLabel, mainPanelConstraints);
+		
+		
 
 		//ok,cancel 
 		OKCancelPanel = new JPanel();
@@ -246,6 +276,7 @@ public class PlugInDialogIMFAR extends JDialogScriptableBase implements Algorith
 			}
 			
 			includeConclusion = includeConclusionCheckbox.isSelected();
+			messageLabel.setText(" ");
 			OKButton.setEnabled(false);
 			imfarDocBrowseButton.setEnabled(false);
 			searchDocBrowseButton.setEnabled(false);
@@ -288,6 +319,17 @@ public class PlugInDialogIMFAR extends JDialogScriptableBase implements Algorith
 			}
 		}
 		searchDocPath = searchDocPathTextField.getText().trim();
+		try {
+			Integer integ = new Integer(numSubjectsTextField.getText().trim());
+			numSubjectsPrePost = integ.intValue();
+		}catch(NumberFormatException e) {
+			MipavUtil.displayError("Number entered is not valid");
+			return false;
+		}
+		if(numSubjectsPrePost < 0) {
+			MipavUtil.displayError("Number entered must be >= 0");
+			return false;
+		}
 		
 		return true;
 	}
@@ -300,7 +342,7 @@ public class PlugInDialogIMFAR extends JDialogScriptableBase implements Algorith
 	 * call algorithm
 	 */
 	protected void callAlgorithm() {
-		alg = new PlugInAlgorithmIMFAR(imfarDocPath, searchDocPath, outputDocPath, includeConclusion);
+		alg = new PlugInAlgorithmIMFAR(imfarDocPath, searchDocPath, outputDocPath, includeConclusion, numSubjectsPrePost);
 		
 		alg.addListener(this);
 		
@@ -324,7 +366,7 @@ public class PlugInDialogIMFAR extends JDialogScriptableBase implements Algorith
 		if(alg.isCompleted()) {
 
 			alg = null;
-
+			messageLabel.setText("Algorithm Completed");
 			OKButton.setEnabled(true);
 			imfarDocBrowseButton.setEnabled(true);
 			searchDocBrowseButton.setEnabled(true);

@@ -33,16 +33,20 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 	/** boolean to include conclusion in output **/
 	private boolean includeConclusion;
 	
+	/** number of pre/post words to add on the n= search result **/
+	private int numSubjectsPrePost;
+	
 	
 	/**
 	 * constructor
 	 * @param imfarDocPath
 	 */
-	public PlugInAlgorithmIMFAR(String imfarDocPath, String searchDocPath, String outputDocPath, boolean includeConclusion) {
+	public PlugInAlgorithmIMFAR(String imfarDocPath, String searchDocPath, String outputDocPath, boolean includeConclusion, int numSubjectsPrePost) {
 		this.imfarDocPath = imfarDocPath;
 		this.searchDocPath = searchDocPath;
 		this.outputDocPath = outputDocPath;
 		this.includeConclusion = includeConclusion;
+		this.numSubjectsPrePost = numSubjectsPrePost;
 	}
 	
 
@@ -84,11 +88,11 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 			bw.write("\t");
 			if(searchFields != null && searchFields.length > 0) {
 				for(int i=0;i<searchFields.length;i++) {
-					bw.write("SEARCH RESULTS: " + searchFields[i]);
+					bw.write(searchFields[i]);
 					bw.write("\t");
 				}
 			}
-			bw.write("Number Subjects");
+			bw.write("n= ");
 			bw.write("\t");
 			if(includeConclusion) {
 				bw.write("Abstract Conclusion");
@@ -197,7 +201,11 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 							//we want to write out entries only if a search came back with yes
 							if(searchFields != null && searchFields.length > 0) {
 								for(int i=0;i<searchFields.length;i++) {
-									boolean containsSearch = containsSearch(fullText,searchFields[i]);
+									String field = searchFields[i];
+									if(searchFields[i].matches(".*:\\d+")) {
+										field = searchFields[i].substring(0, searchFields[i].lastIndexOf(":"));
+									}
+									boolean containsSearch = containsSearch(fullText,field);
 									if(containsSearch) {
 										writeOut = true;
 										break;
@@ -250,15 +258,34 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 								//do searching based on keywords from search document user optionally supplies
 								if(searchFields != null && searchFields.length > 0) {
 									for(int i=0;i<searchFields.length;i++) {
-										boolean containsSearch = containsSearch(fullText,searchFields[i]);
-										String containsSearchString;
-										if(containsSearch) {
-											containsSearchString = "1";
-										}else {
-											containsSearchString = "0";
+										if(searchFields[i].matches(".*:\\d+")) {
+											String field = searchFields[i];
+											if(searchFields[i].matches(".*:\\d+")) {
+												field = searchFields[i].substring(0, searchFields[i].lastIndexOf(":"));
+											}
+											boolean containsSearch = containsSearch(fullText,field);
+											String result = "";
+											if(containsSearch){
+												result  = getResultString(fullText,searchFields[i]);
+											}
+											bw.write(result);
+											bw.write("\t");
 										}
-										bw.write(containsSearchString);
-										bw.write("\t");
+										else {
+											String field = searchFields[i];
+											if(searchFields[i].matches(".*:\\d+")) {
+												field = searchFields[i].substring(0, searchFields[i].lastIndexOf(":"));
+											}
+											boolean containsSearch = containsSearch(fullText,field);
+											String containsSearchString;
+											if(containsSearch) {
+												containsSearchString = "1";
+											}else {
+												containsSearchString = "0";
+											}
+											bw.write(containsSearchString);
+											bw.write("\t");
+										}
 									}
 								}
 								
@@ -407,10 +434,14 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 	public boolean containsSearch(String fullText, String line) {
 		boolean containsSearch = false;
 		//line might contain multiple words separated by spaces...if this is the case, we must search using "AND" for all the words
-		String[] keyWords = line.split("\\s+");
+		String[] keyWords = line.split(",");
 		if(keyWords.length > 1) {
 			for(int j=0;j<keyWords.length;j++) {
-				String word = keyWords[j].toLowerCase();
+				String word = keyWords[j].trim().toLowerCase();
+				//phrases will be in quotes
+				if(word.startsWith("\"")) {
+					word = word.substring(1, word.length() - 1);
+				}
 				containsSearch = fullText.contains(word);
 				//since we are ANDing all of them...if at least 1 is false, break out
 				if(!containsSearch) {
@@ -419,12 +450,61 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 			}
 		}else {
 			String word = keyWords[0].toLowerCase();
+			if(word.startsWith("\"")) {
+				word = word.substring(1, word.length() - 1);
+			}
 			containsSearch = fullText.contains(word);
 		}
 
 		return containsSearch;
 	}
 	
+	
+	
+	public String getResultString(String fullText, String line) {
+		// get the number from :number
+		String numString = line.substring(line.lastIndexOf(":")+1, line.length());
+		int num = new Integer(numString).intValue();
+		num = num - 1;
+		//strip away the :number at end
+		line = line.substring(0, line.lastIndexOf(":"));
+		
+		String result = "";
+		String[] keyWords = line.split(",");
+
+		for(int j=0;j<keyWords.length;j++) {
+			String word = keyWords[j].trim().toLowerCase();
+			
+			//phrases will be in quotes
+			if(word.startsWith("\"")) {
+				word = word.substring(1, word.length() - 1);
+			}
+			//user might have entered 0...in that case bum woube be -1
+			Pattern p;
+			if(num == -1) {
+				p = Pattern.compile(word);
+			}else {
+				p = Pattern.compile("([^\\s]+\\s){0," + num + "}([^\\s]+\\s?)?" + word + "(\\s?[^\\s]+)?(\\s[^\\s]+){0," + num + "}");
+			}
+			Matcher m = p.matcher(fullText);
+			int i = 0;
+			while(m.find()) {
+				String s = m.group();
+				if(i == 0) {
+					result = result + s;
+				}else {
+					result = result + " :: " + s;
+				}
+				i++;
+			}
+			
+			result = result + " :: ";
+		}
+
+		result = result.substring(0, result.lastIndexOf("::"));
+	
+		return result;
+	}
 	
 	/**
 	 * gets number of subjects by searching for n=
@@ -435,17 +515,29 @@ public class PlugInAlgorithmIMFAR extends AlgorithmBase {
 		int i=0;
 		String finalString = "";
 		String s1 = "";
-		String s2 = "";
-		Pattern p = Pattern.compile("[^a-z^A-Z][nN]\\s*?=\\s*?\\d+");
+		int num = numSubjectsPrePost - 1;
+		//user might have entered 0...in that case bum woube be -1
+		Pattern p;
+		if(num == -1) {
+			p = Pattern.compile("[^a-z^A-Z][nN]\\s*?=\\s*?\\d+");
+		}else {
+			p = Pattern.compile("([^\\s]+\\s){0," + num + "}([^\\s]+\\s?)?[^a-z^A-Z][nN]\\s*?=\\s*?\\d+(\\s?[^\\s]+)?(\\s[^\\s]+){0," + num + "}");
+		}
+		
+		
+		
+		
 		Matcher m = p.matcher(fullText);
 		
 		while(m.find()) {
 			s1 = m.group();
-			s2 = s1.substring(1, s1.length());
+			if(num == -1) {
+				s1 = s1.substring(1, s1.length());
+			}
 			if(i==0) {
-				finalString = s2;
+				finalString = s1;
 			}else {
-				finalString = finalString + ", " + s2;
+				finalString = finalString + " :: " + s1;
 			}
 			
 			i++;
