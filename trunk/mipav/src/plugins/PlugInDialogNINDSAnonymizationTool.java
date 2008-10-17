@@ -93,7 +93,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("NINDS Anonymization Tool " + " v1.0");
+        setTitle("NINDS Anonymization Tool " + " v1.1");
         
         mainPanelGridBagLayout = new GridBagLayout();
         mainPanelConstraints = new GridBagConstraints();
@@ -335,9 +335,13 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 			MipavUtil.displayError("Input Directory is not valid");
 			return false;
 		}
-		test = new File(outputDirectoryTextField.getText().trim());
-		if(!test.exists()) {
+		File test2 = new File(outputDirectoryTextField.getText().trim());
+		if(!test2.exists()) {
 			MipavUtil.displayError("Output Directory is not valid");
+			return false;
+		}
+		if(test.getAbsolutePath().equalsIgnoreCase(test2.getAbsolutePath())) {
+			MipavUtil.displayError("Input and Ouput Directories need to be different directories");
 			return false;
 		}
 		
