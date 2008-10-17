@@ -390,7 +390,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             VolumeImageViewer.main(m_kVolumeImageA, null, null);
             if ( m_kVolumeImageB != null )
             {
-                //VolumeImageViewer.main(m_kVolumeImageB, null, null);
+                VolumeImageViewer.main(m_kVolumeImageB, null, null);
             }
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             CMPMode();
@@ -1984,15 +1984,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_fX = fMaxX/m_fMax;
         m_fY = fMaxY/m_fMax;
         m_fZ = fMaxZ/m_fMax;
-/*
-        m_kVolumeImageA.UpdateImages(new TransferFunction(), 0);
-        m_kVolumeImageA.UpdateImages(new TransferFunction(), 2);
-        if ( m_kVolumeImageB != null )
-        {
-            m_kVolumeImageB.UpdateImages(new TransferFunction(), 0);
-            m_kVolumeImageB.UpdateImages(new TransferFunction(), 2);  
-        }
-       */
+
         if ( m_kRGBTa != null )
         {
             m_kVolumeImageA.SetRGBT( m_kRGBTa );

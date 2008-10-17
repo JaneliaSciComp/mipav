@@ -59,6 +59,7 @@ public class VolumeImage
     private ModelLUT m_kLUT = null;
 
     private float m_fX = 1, m_fY = 1, m_fZ = 1;
+    private String m_kPostfix = null;
     
     public VolumeImage( ModelImage kImage, ModelLUT kLUT, ModelRGB kRGBT, String kPostfix )
     {
@@ -127,6 +128,8 @@ public class VolumeImage
         m_kSurfaceTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
         
         InitScale();
+        
+        m_kPostfix = new String(kPostfix);
     }
 
     /**
@@ -737,6 +740,11 @@ public class VolumeImage
     public float GetScaleZ()
     {
         return m_fZ;
+    }
+    
+    public String GetPostfix()
+    {
+        return m_kPostfix;
     }
     
     

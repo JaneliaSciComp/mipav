@@ -19,7 +19,7 @@ public class VolumeImageViewer extends JavaApplication3D
 {
     public VolumeImageViewer( VolumeImage kVolumeImage, VolumeClipEffect kClip, Vector<VolumeObject> kDisplayList )
     {
-        super( "MultiTextures", 0, 0,
+        super( new String("VolumeImageViewer" + kVolumeImage.GetPostfix() ), 0, 0,
                kVolumeImage.GetImage().getExtents()[0],
                kVolumeImage.GetImage().getExtents()[1],
                new ColorRGBA( 0.0f,0.0f,0.0f,1.0f ) );
@@ -68,7 +68,7 @@ public class VolumeImageViewer extends JavaApplication3D
          frame.setVisible(true);
          frame.setBounds(0,0,
                  kWorld.GetWidth(), kWorld.GetHeight() );
-         //frame.setVisible(false);
+         frame.setVisible(false);
          kWorld.SetAnimator(animator);
          kWorld.SetFrame(frame);
          animator.start();
@@ -94,7 +94,7 @@ public class VolumeImageViewer extends JavaApplication3D
             {
                 m_iSlice = 0;
                 m_bDisplayFirst = false;
-                System.err.println("Done first pass");
+                //System.err.println("Done first pass");
             }
         }
         while ( m_bDisplaySecond )
@@ -116,7 +116,7 @@ public class VolumeImageViewer extends JavaApplication3D
             {
                 m_bDisplaySecond = false;
                 m_iSlice = 0;
-                System.err.println("Done second pass");
+                //System.err.println("Done second pass");
             }
         }
         while ( m_bCrop )
@@ -303,7 +303,7 @@ public class VolumeImageViewer extends JavaApplication3D
 
             GraphicsImage kImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,m_iWidth,m_iHeight,
                     m_kVolumeImage.GetImage().getExtents()[2],(byte[])null,
-                    "VolumeNormals");
+                    "VolumeNormals" );
             m_pkVolumeNormalTarget = new Texture();
             m_pkVolumeNormalTarget.SetImage(kImage);
             m_spkEffect2 = new VolumeCalcEffect( "VolumeNormals", m_pkVolumeNormalTarget );

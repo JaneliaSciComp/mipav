@@ -35,14 +35,12 @@ public class VolumeCalcEffect extends VolumeClipEffect
     {
         /* Set single-pass rendering: */
         SetPassQuantity(1);
-        SetVShader(0,new VertexShader("CalcNormalsPerSlice_Pass1"));
-        SetPShader(0,new PixelShader("CalcNormalsPerSlice_Pass1", false));
+        SetVShader(0,new VertexShader("CalcNormalsPerSlice_Pass1" + kVolumeImage.GetPostfix()));
+        SetPShader(0,new PixelShader("CalcNormalsPerSlice_Pass1" + kVolumeImage.GetPostfix(), false));
         GetPShader(0).SetTextureQuantity(1);
         GetPShader(0).SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
         GetPShader(0).SetTexture(0, kVolumeImage.GetVolumeTarget() );
-
         m_bIsColor = kVolumeImage.GetImage().isColorImage();
-        m_bIsB = kVolumeImage.GetVolumeTarget().GetImage().GetName().equals("VolumeImageB") ? true : false;
     }
 
     /** Create a new VolumeCalcEffect shader with the VolumeImage data. This
@@ -100,17 +98,6 @@ public class VolumeCalcEffect extends VolumeClipEffect
                 pkProgram.GetUC("IsColor").SetDataSource(new float[]{0,0,0,0});
             }
         }  
-        if ( pkProgram.GetUC("UseB") != null ) 
-        {
-            if ( m_bIsB )
-            {
-                pkProgram.GetUC("UseB").SetDataSource(new float[]{1,0,0,0});
-            }
-            else
-            {
-                pkProgram.GetUC("UseB").SetDataSource(new float[]{0,0,0,0});
-            }
-        } 
     }
 
     
@@ -142,5 +129,4 @@ public class VolumeCalcEffect extends VolumeClipEffect
     private float[] m_afExtents = new float[]{0,0,0,0};
     /** When true the volume data is color. */
     private boolean m_bIsColor = false;
-    private boolean m_bIsB = false;
 }
