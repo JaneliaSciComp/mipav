@@ -332,14 +332,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
                 } else if (!children[i].isDirectory()) {
                 		try {
 	                		if((FileUtility.isDicom(children[i].getName(), children[i].getParent() + File.separator, true) == FileUtility.DICOM) || (FileUtility.isDicom_ver2(children[i].getName(), children[i].getParent() + File.separator, true) == FileUtility.DICOM)) {
-	                			/*
-	                			long begTime = System.currentTimeMillis();
+
 	                			success = anonymizeDICOM(children[i]);
-	                			long endTime = System.currentTimeMillis();
-	                	        long diffTime = endTime - begTime;
-	                	        float seconds = ((float) diffTime) / 1000;
-	                	        System.out.println(children[i].getParent() + File.separator + children[i].getName() + " : " + seconds);
-	                			*/
+
 	                	        if (success == false) {
 	                				if(enableTextArea) {
 	                					outputTextArea.append("!!!!!!!!!!!!!!!!!!!! ERROR IN ANONYMIZING " + children[i].getName() + " \n\n");
