@@ -963,7 +963,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 										}
 										
 										if(imageType.equals(PlugInMuscleImageDisplay.ImageType.Custom))
-											verticalPane.get(activeTab).setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+											verticalPane.get(activeTab).setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 										int lastHeight = (int)tabs.get(activeTab).getPreferredSize().getHeight();
 										tabs.get(activeTab).setPreferredSize(new Dimension(370, lastHeight+106));
 										
