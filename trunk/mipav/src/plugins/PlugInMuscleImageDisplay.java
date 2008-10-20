@@ -3932,7 +3932,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		}
 	}
     /**
-	 * Performs required calculations for plugin. Partial voluming error ~2%
+	 * Performs required calculations for plugin. Note partial voluming error likely exists for poor resolutions,
+	 * should be quantified.
 	 * 
 	 * @author senseneyj
 	 *
@@ -3996,7 +3997,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			PlugInSelectableVOI[] children = new PlugInSelectableVOI[0];
 			VOI v = calculateVOI;
 			double wholeMultiplier = 0.0, sliceMultiplier = 0.0;
-			wholeMultiplier = sliceMultiplier = Math.pow(getActiveImage().getResolutions(0)[0]*0.1, 2);
+			
+			//multiply x and y resolutions
+			wholeMultiplier = sliceMultiplier = getActiveImage().getResolutions(0)[0]*0.1*getActiveImage().getResolutions(0)[1]*0.1;
 			if(multipleSlices)
 				wholeMultiplier *= (getActiveImage().getResolutions(0)[2]*0.1);
 			System.out.println("Whole Multiplier: "+wholeMultiplier+"\tSliceMultiplier: "+sliceMultiplier);
@@ -4041,57 +4044,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				e.printStackTrace();
 			}
 			System.out.println("Time spent waiting: "+(System.currentTimeMillis() - time2)+" so that "+name+" can finish.");
+			
 			//note that even for 3D images this will still be called area, even though refers to volume
-			double fatArea = getPieceCount(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*wholeMultiplier;
-			double partialArea = getPieceCount(v, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*wholeMultiplier; 
-			double leanArea = getPieceCount(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*wholeMultiplier; 
-			double totalAreaCount = getTotalAreaCount(v)*wholeMultiplier;
-			double fatAreaLarge = fatArea, leanAreaLarge = leanArea, totalAreaLarge = totalAreaCount;
-			//corrected area = abs(oldArea - sum(residual areas))
-			for(int j=0; j<children.length; j++) {
-				fatArea = Math.abs(fatArea - children[j].getFatArea());
-				partialArea = Math.abs(partialArea - children[j].getPartialArea());
-				leanArea = Math.abs(leanArea - children[j].getLeanArea());
-				totalAreaCount = Math.abs(totalAreaCount - children[j].getTotalArea());
-			}
-			
-			temp.setFatArea(fatArea);
-			temp.setPartialArea(partialArea);
-			temp.setLeanArea(leanArea);
-			temp.setTotalArea(totalAreaCount);
-			
-			double meanFatH = getMeanH(v, FAT_LOWER_BOUND, FAT_UPPER_BOUND);// + OFFSET;
-			double meanLeanH = getMeanH(v, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND);// + OFFSET;
-		    double meanTotalH = getMeanH(v, FAR_LOWER_BOUND, FAR_UPPER_BOUND);// + OFFSET;
-		    double meanFatHResidual = 0, meanLeanHResidual = 0, meanTotalHResidual = 0;
-		    
-		    //corrected mean = abs(oldMean*oldArea - sum(residualMean*residualArea))/abs(oldArea - sum(residualArea))
-		    for(int j=0; j<children.length; j++) {
-		    	meanFatHResidual += children[j].getMeanFatH()*children[j].getFatArea();
-		    	meanLeanHResidual += children[j].getMeanLeanH()*children[j].getLeanArea();
-		    	meanTotalHResidual += children[j].getMeanTotalH()*children[j].getTotalArea();
-		    }
-		    
-		    meanFatH = (meanFatH*fatAreaLarge - meanFatHResidual) / fatArea;
-		    meanLeanH = (meanLeanH*leanAreaLarge - meanLeanHResidual) / leanArea;
-		    meanTotalH = (meanTotalH*totalAreaLarge - meanTotalHResidual) / totalAreaCount;
-		    
-		    //absolute positive function results requires confirmed negative values be flipped
-		    if(meanFatH > 0) {
-		    	meanFatH = -meanFatH;
-		    	meanTotalH = -meanTotalH;
-		    } else if(new Double(meanFatH).equals(Double.NaN)) 
-		    	meanFatH = 0;
-		    if(meanLeanH < 0)
-		    	meanLeanH = -meanLeanH;
-		    else if(new Double(meanLeanH).equals(Double.NaN))
-		    	meanLeanH = 0;
-		    if(new Double(meanTotalH).equals(Double.NaN))
-		    	meanTotalH = 0;
-		    
-		    temp.setMeanFatH(meanFatH);
-			temp.setMeanLeanH(meanLeanH);
-			temp.setMeanTotalH(meanTotalH);
+			performCalculations(v, PlugInSelectableVOI.WHOLE_VOLUME_SLICE_NUMBER, wholeMultiplier);
 			
 			System.out.println("Number of slices: "+temp.getZDim());
 			for(int k=0; k<temp.getZDim(); k++) {
@@ -4100,62 +4055,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				for(int n=0; n<temp.getZDim(); n++) {
 					if(n != k)
 						v2.removeCurves(n);
+					performCalculations(v2, k, sliceMultiplier);
 				}
-    			children = temp.getChildren();
-    			//note that even for 3D images this will still be called area, even though refers to volume
-    			fatArea = getPieceCount(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*sliceMultiplier;
-    			partialArea = getPieceCount(v2, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*sliceMultiplier; 
-    			leanArea = getPieceCount(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*sliceMultiplier; 
-    			totalAreaCount = getTotalAreaCount(v2)*sliceMultiplier;
-    			fatAreaLarge = fatArea;
-    			leanAreaLarge = leanArea; 
-    			totalAreaLarge = totalAreaCount;
-    			//corrected area = abs(oldArea - sum(residual areas))
-    			for(int j=0; j<children.length; j++) {
-    				fatArea = Math.abs(fatArea - children[j].getFatArea(k));
-    				partialArea = Math.abs(partialArea - children[j].getPartialArea(k));
-    				leanArea = Math.abs(leanArea - children[j].getLeanArea(k));
-    				totalAreaCount = Math.abs(totalAreaCount - children[j].getTotalArea(k));
-    			}
-    			
-    			temp.setFatArea(fatArea, k);
-    			temp.setLeanArea(leanArea, k);
-    			temp.setPartialArea(partialArea, k);
-    			temp.setTotalArea(totalAreaCount, k);
-    			
-    			meanFatH = getMeanH(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND);// + OFFSET;
-    			meanLeanH = getMeanH(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND);// + OFFSET;
-    		    meanTotalH = getMeanH(v2, FAR_LOWER_BOUND, FAR_UPPER_BOUND);// + OFFSET;
-    		    meanFatHResidual = 0;
-    		    meanLeanHResidual = 0;
-    		    meanTotalHResidual = 0;
-    		    
-    		    //corrected mean = abs(oldMean*oldArea - sum(residualMean*residualArea))/abs(oldArea - sum(residualArea))
-    		    for(int j=0; j<children.length; j++) {
-    		    	meanFatHResidual += children[j].getMeanFatH(k)*children[j].getFatArea(k);
-    		    	meanLeanHResidual += children[j].getMeanLeanH(k)*children[j].getLeanArea(k);
-    		    	meanTotalHResidual += children[j].getMeanTotalH(k)*children[j].getTotalArea(k);
-    		    }
-    		    
-    		    meanFatH = (meanFatH*fatAreaLarge - meanFatHResidual) / fatArea;
-    		    meanLeanH = (meanLeanH*leanAreaLarge - meanLeanHResidual) / leanArea;
-    		    meanTotalH = (meanTotalH*totalAreaLarge - meanTotalHResidual) / totalAreaCount;
-    		    
-    		    if(meanFatH > 0) {
-    		    	meanFatH = -meanFatH;
-    		    	meanTotalH = -meanTotalH;
-    		    } else if(new Double(meanFatH).equals(Double.NaN)) 
-    		    	meanFatH = 0;
-    		    if(meanLeanH < 0)
-    		    	meanLeanH = -meanLeanH;
-    		    else if(new Double(meanLeanH).equals(Double.NaN))
-    		    	meanLeanH = 0;
-    		    if(new Double(meanTotalH).equals(Double.NaN))
-    		    	meanTotalH = 0;
-    		    
-    		    temp.setMeanFatH(meanFatH, k);
-    			temp.setMeanLeanH(meanLeanH, k);
-    			temp.setMeanTotalH(meanTotalH, k);
 			}
 			time = System.currentTimeMillis() - time;
 			calculateVOI.setCalculationTime(time);
@@ -4218,6 +4119,65 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			}
 		}
 
+		private void performCalculations(VOI v2, int sliceNumber, double multiplier) {
+			PlugInSelectableVOI temp = voiBuffer.get(name);
+			PlugInSelectableVOI[] children = temp.getChildren();
+			//note that even for 3D images this will still be called area, even though refers to volume
+			double fatArea = getPieceCount(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*multiplier;
+			double partialArea = getPieceCount(v2, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*multiplier; 
+			double leanArea = getPieceCount(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND)*multiplier; 
+			double totalAreaCount = getTotalAreaCount(v2)*multiplier;
+			double fatAreaLarge = fatArea;
+			double leanAreaLarge = leanArea; 
+			double totalAreaLarge = totalAreaCount;
+			//corrected area = abs(oldArea - sum(residual areas))
+			for(int j=0; j<children.length; j++) {
+				fatArea = Math.abs(fatArea - children[j].getFatArea(sliceNumber));
+				partialArea = Math.abs(partialArea - children[j].getPartialArea(sliceNumber));
+				leanArea = Math.abs(leanArea - children[j].getLeanArea(sliceNumber));
+				totalAreaCount = Math.abs(totalAreaCount - children[j].getTotalArea(sliceNumber));
+			}
+			
+			temp.setFatArea(fatArea, sliceNumber);
+			temp.setLeanArea(leanArea, sliceNumber);
+			temp.setPartialArea(partialArea, sliceNumber);
+			temp.setTotalArea(totalAreaCount, sliceNumber);
+			
+			double meanFatH = getMeanH(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND);// + OFFSET;
+			double meanLeanH = getMeanH(v2, MUSCLE_LOWER_BOUND, MUSCLE_UPPER_BOUND);// + OFFSET;
+		    double meanTotalH = getMeanH(v2, FAR_LOWER_BOUND, FAR_UPPER_BOUND);// + OFFSET;
+		    double meanFatHResidual = 0;
+		    double meanLeanHResidual = 0;
+		    double meanTotalHResidual = 0;
+		    
+		    //corrected mean = abs(oldMean*oldArea - sum(residualMean*residualArea))/abs(oldArea - sum(residualArea))
+		    for(int j=0; j<children.length; j++) {
+		    	meanFatHResidual += children[j].getMeanFatH(sliceNumber)*children[j].getFatArea(sliceNumber);
+		    	meanLeanHResidual += children[j].getMeanLeanH(sliceNumber)*children[j].getLeanArea(sliceNumber);
+		    	meanTotalHResidual += children[j].getMeanTotalH(sliceNumber)*children[j].getTotalArea(sliceNumber);
+		    }
+		    
+		    meanFatH = (meanFatH*fatAreaLarge - meanFatHResidual) / fatArea;
+		    meanLeanH = (meanLeanH*leanAreaLarge - meanLeanHResidual) / leanArea;
+		    meanTotalH = (meanTotalH*totalAreaLarge - meanTotalHResidual) / totalAreaCount;
+		    
+		    if(meanFatH > 0) {
+		    	meanFatH = -meanFatH;
+		    	meanTotalH = -meanTotalH;
+		    } else if(new Double(meanFatH).equals(Double.NaN)) 
+		    	meanFatH = 0;
+		    if(meanLeanH < 0)
+		    	meanLeanH = -meanLeanH;
+		    else if(new Double(meanLeanH).equals(Double.NaN))
+		    	meanLeanH = 0;
+		    if(new Double(meanTotalH).equals(Double.NaN))
+		    	meanTotalH = 0;
+		    
+		    temp.setMeanFatH(meanFatH, sliceNumber);
+			temp.setMeanLeanH(meanLeanH, sliceNumber);
+			temp.setMeanTotalH(meanTotalH, sliceNumber);
+		}
+		
 		/**
 		 * Gets mean H-unit of all pixels that are bounded by lowerBound and upperBound.
 		 */

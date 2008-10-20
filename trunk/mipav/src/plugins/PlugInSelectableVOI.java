@@ -73,6 +73,9 @@ public class PlugInSelectableVOI extends VOI {
 
 	//~ Static fields --------------------------------------------------------------------------------------------------
 	
+	/**Slice number that represents whole volume for calculation purposes.*/
+	public static final int WHOLE_VOLUME_SLICE_NUMBER = -1;
+	
 	public static final double NOT_CALC = Double.MIN_VALUE;
 	
 	public static final int INVALID_LOC_NUMBER = -1;
@@ -237,6 +240,8 @@ public class PlugInSelectableVOI extends VOI {
 	 * @return
 	 */
 	public double getTotalArea(int slice) {
+		if(slice == WHOLE_VOLUME_SLICE_NUMBER) 
+			return getTotalArea();
 		return totalArea[slice];
 	}
 	
@@ -250,7 +255,10 @@ public class PlugInSelectableVOI extends VOI {
 	 * @param slice zero based slice number
 	 */
 	public void setTotalArea(double totalAreaCount, int slice) {
-		this.totalArea[slice] = totalAreaCount;
+		if(slice == WHOLE_VOLUME_SLICE_NUMBER) 
+			setTotalArea(totalAreaCount);
+		else
+			this.totalArea[slice] = totalAreaCount;
 	}
 
 	public double getPartialArea() {
@@ -263,6 +271,8 @@ public class PlugInSelectableVOI extends VOI {
 	 * @return
 	 */
 	public double getPartialArea(int slice) {
+		if(slice == WHOLE_VOLUME_SLICE_NUMBER) 
+			return getPartialArea();
 		return partialArea[slice];
 	}
 
@@ -276,7 +286,10 @@ public class PlugInSelectableVOI extends VOI {
 	 * @param slice zero based slice number
 	 */
 	public void setPartialArea(double partialArea, int slice) {
-		this.partialArea[slice] = partialArea;
+		if(slice == WHOLE_VOLUME_SLICE_NUMBER) 
+			setPartialArea(partialArea);
+		else
+			this.partialArea[slice] = partialArea;
 	}
 
 	public double getFatArea() {
@@ -289,6 +302,8 @@ public class PlugInSelectableVOI extends VOI {
 	 * @return
 	 */
 	public double getFatArea(int slice) {
+		if(slice == WHOLE_VOLUME_SLICE_NUMBER) 
+			return getFatArea();
 		return fatArea[slice];
 	}
 
@@ -302,7 +317,10 @@ public class PlugInSelectableVOI extends VOI {
 	 * @param slice zero based slice number
 	 */
 	public void setFatArea(double fatArea, int slice) {
-		this.fatArea[slice] = fatArea;
+		if(slice == WHOLE_VOLUME_SLICE_NUMBER) 
+			setFatArea(fatArea);
+		else
+			this.fatArea[slice] = fatArea;
 	}
 
 	public double getLeanArea() {
@@ -315,6 +333,8 @@ public class PlugInSelectableVOI extends VOI {
 	 * @return
 	 */
 	public double getLeanArea(int slice) {
+		if(slice == WHOLE_VOLUME_SLICE_NUMBER) 
+			return getLeanArea();
 		return leanArea[slice];
 	}
 
@@ -328,7 +348,10 @@ public class PlugInSelectableVOI extends VOI {
 	 * @param slice zero based slice number
 	 */
 	public void setLeanArea(double leanArea, int slice) {
-		this.leanArea[slice] = leanArea;
+		if(slice == WHOLE_VOLUME_SLICE_NUMBER) 
+			setLeanArea(leanArea);
+		else 
+			this.leanArea[slice] = leanArea;
 	}
 
 	public double getMeanFatH() {
@@ -341,6 +364,8 @@ public class PlugInSelectableVOI extends VOI {
 	 * @return
 	 */
 	public double getMeanFatH(int slice) {
+		if(slice == WHOLE_VOLUME_SLICE_NUMBER) 
+			return getMeanFatH();
 		return meanFatH[slice];
 	}
 
@@ -354,7 +379,10 @@ public class PlugInSelectableVOI extends VOI {
 	 * @param slice zero based slice number
 	 */
 	public void setMeanFatH(double meanFatH, int slice) {
-		this.meanFatH[slice] = meanFatH;
+		if(slice == WHOLE_VOLUME_SLICE_NUMBER) 
+			setMeanFatH(meanFatH);
+		else
+			this.meanFatH[slice] = meanFatH;
 	}
 
 	public double getMeanLeanH() {
@@ -367,6 +395,8 @@ public class PlugInSelectableVOI extends VOI {
 	 * @return
 	 */
 	public double getMeanLeanH(int slice) {
+		if(slice == WHOLE_VOLUME_SLICE_NUMBER) 
+			return getMeanLeanH();
 		return meanLeanH[slice];
 	}
 
@@ -380,7 +410,10 @@ public class PlugInSelectableVOI extends VOI {
 	 * @param slice zero based slice number
 	 */
 	public void setMeanLeanH(double meanLeanH, int slice) {
-		this.meanLeanH[slice] = meanLeanH;
+		if(slice == WHOLE_VOLUME_SLICE_NUMBER) 
+			setMeanLeanH(meanLeanH);
+		else
+			this.meanLeanH[slice] = meanLeanH;
 	}
 
 	public double getMeanTotalH() {
@@ -393,6 +426,8 @@ public class PlugInSelectableVOI extends VOI {
 	 * @return
 	 */
 	public double getMeanTotalH(int slice) {
+		if(slice == WHOLE_VOLUME_SLICE_NUMBER) 
+			return getMeanTotalH();
 		return meanTotalH[slice];
 	}
 
@@ -406,7 +441,10 @@ public class PlugInSelectableVOI extends VOI {
 	 * @param slice
 	 */
 	public void setMeanTotalH(double meanTotalH, int slice) {
-		this.meanTotalH[slice] = meanTotalH;
+		if(slice == WHOLE_VOLUME_SLICE_NUMBER) 
+			setMeanTotalH(meanTotalH);
+		else
+			this.meanTotalH[slice] = meanTotalH;
 	}
 
 	public boolean isClosed() {
