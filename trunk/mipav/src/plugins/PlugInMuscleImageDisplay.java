@@ -4119,6 +4119,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			}
 		}
 
+		/**
+		 * Perform calculation on voi slice given the slice number and individual multiplier
+		 * @param v2
+		 * @param sliceNumber
+		 * @param multiplier
+		 */
 		private void performCalculations(VOI v2, int sliceNumber, double multiplier) {
 			PlugInSelectableVOI temp = voiBuffer.get(name);
 			PlugInSelectableVOI[] children = temp.getChildren();
