@@ -238,6 +238,8 @@ public class FileUtility {
 
     /** Extension: .hdr for header, .bfloat for data */
     public static final int BFLOAT = 66;
+    
+    public static final int JP2 = 100;
 
     /**
      * Only for FreeSurfer COR volume files Looks in the image directory and returns all images with the same root up to

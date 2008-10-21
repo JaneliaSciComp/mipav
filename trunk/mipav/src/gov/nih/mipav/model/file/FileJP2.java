@@ -32,7 +32,7 @@ import javax.swing.JTextField;
 import jj2000.j2k.encoder.Encoder;
 import jj2000.j2k.image.*;
 import jj2000.j2k.util.ParameterList;
-import rawjp2.*;
+import gov.nih.mipav.model.file.rawjp2.*;
 
 
 /**
@@ -242,7 +242,7 @@ public class FileJP2 extends FileBase implements ActionListener{
         nStartFrameDec = Integer.parseInt(decFrameStart.getText());
         nEndFrameDec = Integer.parseInt(decFrameEnd.getText());
 //---
-        fileInfo = new FileInfoJP2(fileName, fileDir, FileUtility.AFNI);//FileUtility.JP2); // dummy fileInfo
+        fileInfo = new FileInfoJP2(fileName, fileDir, FileUtility.JP2);
         fileInfo.setEndianess(endianess);
         fileInfo.setExtents(dimExtents);
 //        fileInfo.s

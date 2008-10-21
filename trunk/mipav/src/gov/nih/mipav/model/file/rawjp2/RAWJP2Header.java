@@ -1,4 +1,5 @@
-package rawjp2;
+package gov.nih.mipav.model.file.rawjp2;
+
 import java.io.*;
 
 import javax.swing.JOptionPane;

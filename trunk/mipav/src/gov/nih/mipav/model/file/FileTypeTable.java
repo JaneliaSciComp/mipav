@@ -276,6 +276,9 @@ public class FileTypeTable {
         FILE_TYPE_TABLE.put(FileUtility.BFLOAT, new FileTypeInfo("BFLOAT", ".bfloat"));
         FILE_EXT_TABLE.put(".bfloat", FileUtility.BFLOAT);
         FILE_EXT_TABLE.put(".BFLOAT", FileUtility.BFLOAT);
+        
+        FILE_EXT_TABLE.put(".jp2", FileUtility.JP2);
+        FILE_EXT_TABLE.put(".JP2", FileUtility.JP2);
     }
 
     /**

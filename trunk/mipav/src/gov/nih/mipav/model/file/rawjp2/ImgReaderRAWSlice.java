@@ -1,4 +1,4 @@
-package rawjp2;
+package gov.nih.mipav.model.file.rawjp2;
 
 import jj2000.j2k.image.*;
 import jj2000.j2k.image.input.*;

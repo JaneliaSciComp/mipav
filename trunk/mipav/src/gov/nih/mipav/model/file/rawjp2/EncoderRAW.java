@@ -1,4 +1,4 @@
-package rawjp2;
+package gov.nih.mipav.model.file.rawjp2;
 
 import gov.nih.mipav.model.structures.ModelImage;
 
