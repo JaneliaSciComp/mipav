@@ -23,7 +23,7 @@ import javax.imageio.ImageIO;
  * 
  * <p>
  * The Hashtable is based upon the default DICOM dictionary which contains all possible standard DICOM tags. It also
- * contains many private tags that are commented out. If the user wishes a specific private tag to be recognized by this
+ * contains many privatehttp://www.google.com/search?hl=en&client=firefox-a&channel=s&rls=org.mozilla%3Aen-US%3Aofficial&hs=ptT&q=Agatston+method+aortic+calcium&btnG=Search tags that are commented out. If the user wishes a specific private tag to be recognized by this
  * program, he or she should edit the dictionary file. The tag will then be displayed as any other standard tag would be
  * displayed. Otherwise, all tags are read in, but if their value representation is unrecognized (only the case with
  * tags not defined in dictionary file) their value is stored as a string. When FileInfoDicom displays the tag

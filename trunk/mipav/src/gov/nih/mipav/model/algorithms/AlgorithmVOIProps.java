@@ -1645,7 +1645,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @param  selectedVOI  DOCUMENT ME!
      */
     private void calc34D(VOI selectedVOI) {
-        double minIntensity = Double.MAX_VALUE, totalMinIntensity = Double.MAX_VALUE;
+        long time = System.currentTimeMillis();
+    	
+    	double minIntensity = Double.MAX_VALUE, totalMinIntensity = Double.MAX_VALUE;
         double maxIntensity = -Double.MAX_VALUE, totalMaxIntensity = -Double.MAX_VALUE;
         double minIntenRed = Double.MAX_VALUE, totalMinIntenRed = Double.MAX_VALUE;
         double maxIntenRed = -Double.MAX_VALUE, totalMaxIntenRed = -Double.MAX_VALUE;
@@ -2644,6 +2646,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.massCenterDescription, comStr);
             }
         }
+        
+        System.out.println("Time required to calculate "+selectedVOI.getName()+": "+(System.currentTimeMillis() - time));
 
         setCompleted(true);
     }
