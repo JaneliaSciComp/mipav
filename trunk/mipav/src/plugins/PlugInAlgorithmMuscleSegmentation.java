@@ -1383,7 +1383,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			
 			public void mouseDragged(MouseEvent e) {
 				//TODO:Convert e.getLocationOnScreen to 1.5 compatible call
-				setLine(new Point2D.Double(x1, y1), e.getLocationOnScreen());
+				//setLine(new Point2D.Double(x1, y1), e.getLocationOnScreen());
 			}
 
 			public void mouseMoved(MouseEvent e) {
