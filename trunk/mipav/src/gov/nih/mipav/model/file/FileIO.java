@@ -1692,6 +1692,11 @@ public class FileIO {
                 case FileUtility.PARREC:
                     image = readPARREC(fileName, fileDir, one);
                     break;
+                    
+                case FileUtility.JP2:
+                    image = readJpeg2000(fileName, fileDir, one);
+                    break;
+
 
                 default:
                     return null;
@@ -2530,6 +2535,11 @@ public class FileIO {
             case FileUtility.NRRD:
                 success = writeNRRD(image, options);
                 break;
+                
+            case FileUtility.JP2:
+                success = writeJpeg2000(image, options);
+                break;
+
 
             default:
                 if ( !quiet) {
@@ -10352,6 +10362,103 @@ public class FileIO {
             }
 
             error.printStackTrace();
+
+            return false;
+        }
+
+        return true;
+    }
+    
+    
+    
+    /**
+     * Reads a JPEG2000 file by calling the read method of the file.
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
+     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
+     *                    from 3D dataset.
+     *
+     * @return  The image that was read in, or null if failure.
+     */
+    private ModelImage readJpeg2000(String fileName, String fileDir, boolean one) {
+        ModelImage image = null;
+        FileJP2 imageFile;
+//        System.out.println("Hello, world!");
+        try {
+            imageFile = new FileJP2(fileName, fileDir);
+            image = imageFile.readImage(false, one);
+            LUT = imageFile.getModelLUT();
+
+        } catch (IOException error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        } catch (OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        }
+
+        return image;
+    }
+    /**
+     * Writes a JPEG2000 file to store the image.
+     *
+     * @param   image    The image to write.
+     * @param   options  The options to use to write the image.
+     *
+     * @return  Flag indicating that this was a successful write.
+     */
+    private boolean writeJpeg2000(ModelImage image, FileWriteOptions options) {
+        FileJP2 imageFile;
+        int[] extents;
+
+        try { // Construct a new file object
+            imageFile = new FileJP2(options.getFileName(), options.getFileDirectory());
+            createProgressBar(imageFile, options.getFileName(), FILE_WRITE);
+
+            if (LUT == null) {
+                extents = new int[2];
+                extents[0] = 4;
+                extents[1] = 256;
+                ((FileJP2) imageFile).writeImage(image, new ModelLUT(1, 256, extents), options);
+            } else {
+                ((FileJP2) imageFile).writeImage(image, LUT, options);
+            }
+        } catch (IOException error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return false;
+        } catch (OutOfMemoryError error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
 
             return false;
         }

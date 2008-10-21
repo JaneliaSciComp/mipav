@@ -1,4 +1,4 @@
-package rawjp2;
+package gov.nih.mipav.model.file.rawjp2;
 
 //import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
