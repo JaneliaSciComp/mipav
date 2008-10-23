@@ -3542,8 +3542,8 @@ public class ViewJFrameGraph extends JFrame
 	
 		                    messageGraph.append("*********************\n");
 		                    messageGraph.append("Fitting of laplace function " + i + "\n");
-		                    messageGraph.append(" y = " + params[0] + " * exp((x-" + String.valueOf(params[1]) +
-		                                        ")^2/(2*" + String.valueOf(params[2]) + "))\n");
+		                    messageGraph.append(" y = " + params[0] + " * exp(|(x-" + String.valueOf(params[1]) +
+		                                        ")|/(" + String.valueOf(params[2]) + "))\n");
 		                    messageGraph.append("\n");
 	
 		                    float xValue = 0;
