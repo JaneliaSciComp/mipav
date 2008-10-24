@@ -104,6 +104,10 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 			color = true;
 			cFactor = 4;
 		}
+        int bufferExtents[] = new int[srcImage.getNDims()];
+        for (i = 0; i < srcImage.getNDims(); i++) {
+            bufferExtents[i] = srcImage.getExtents()[i];
+        }
 
 		int imgLength = cFactor
 				* MipavUtil.calculateImageSize(srcImage.getExtents());
@@ -137,7 +141,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		gaussianKernel = gkf.createKernel();
         kExtents = gaussianKernel.getExtents();
 
-		float[] xDerivativeBuffer = calculateDerivativeImage(buffer, color,
+		float[] xDerivativeBuffer = calculateDerivativeImage(buffer, bufferExtents, color,
 				gaussianKernel.getData(), progressFrom, progressTo);
 
 		if(threadStopped){
@@ -153,7 +157,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		}
 		gkf.setKernelType(GaussianKernelFactory.Y_DERIVATIVE_KERNEL);
 		gaussianKernel = gkf.createKernel();
-		float[] yDerivativeBuffer = calculateDerivativeImage(buffer, color,
+		float[] yDerivativeBuffer = calculateDerivativeImage(buffer, bufferExtents, color,
 				gaussianKernel.getData(), progressFrom, progressTo);
 
 		if(threadStopped){
@@ -168,7 +172,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 			gkf.setKernelType(GaussianKernelFactory.Z_DERIVATIVE_KERNEL);
 			gaussianKernel = gkf.createKernel();
 
-			float[] zDerivativeBuffer = calculateDerivativeImage(buffer, color,
+			float[] zDerivativeBuffer = calculateDerivativeImage(buffer, bufferExtents, color,
 					gaussianKernel.getData(), progressFrom, progressTo);
 
 			if (threadStopped) {
@@ -191,6 +195,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
             int max3DLength = cFactor * (srcImage.getExtents()[2] - kExtents[2] + kExtents[2]/2 + 1) *
                               srcImage.getSliceSize();
             zEnd = 2 * (kExtents[2]/2);
+            bufferExtents[2] = zEnd;
             doEndSlices = true;
             buffer = null;
             buffer = new float[2 * min3DLength];
@@ -235,7 +240,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
             progressFrom = progressTo + 1;
             progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.14)-1;
 
-            xDerivativeBuffer = calculateDerivativeImage(buffer, color,
+            xDerivativeBuffer = calculateDerivativeImage(buffer, bufferExtents, color,
                     gaussianKernel.getData(), progressFrom, progressTo);
             
             gkf.setKernelType(GaussianKernelFactory.Y_DERIVATIVE_KERNEL);
@@ -243,7 +248,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
             progressFrom = progressTo + 1;
             progressTo = progressFrom + (int)((maxProgressValue - minProgressValue) * 0.14)-1;
 
-            yDerivativeBuffer = calculateDerivativeImage(buffer, color,
+            yDerivativeBuffer = calculateDerivativeImage(buffer, bufferExtents, color,
                     gaussianKernel.getData(), progressFrom, progressTo);
             
             
@@ -277,10 +282,10 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 		setCompleted(true);
 	}
 
-	private float[] calculateDerivativeImage(float[] imgData, boolean color,
+	private float[] calculateDerivativeImage(float[] imgData, int[] imgExtents, boolean color,
 			float[][] kernelData, int progressFrom, int progressTo) {
 		AlgorithmSeparableConvolver convolver = new AlgorithmSeparableConvolver(
-				imgData, srcImage.getExtents(), kernelData, color);
+				imgData, imgExtents, kernelData, color);
 		convolver.setNumberOfThreads(Preferences.getNumberOfThreads());
 		convolver.setProgressValues(generateProgressValues(progressFrom,
 				progressTo));
