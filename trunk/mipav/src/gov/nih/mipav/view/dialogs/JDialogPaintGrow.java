@@ -1466,7 +1466,8 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
      * {@inheritDoc}
      */
     public void notifyPaintListeners(boolean isRegionGrow, boolean backup, BitSet paintMask) {
-        BitSet paintRegion = paintMask;
+        BitSet paintRegion = (BitSet)paintMask.clone();
+        
 
         // System.err.println("in notify paint listeners() of JDialogPaintGrow()");
 
