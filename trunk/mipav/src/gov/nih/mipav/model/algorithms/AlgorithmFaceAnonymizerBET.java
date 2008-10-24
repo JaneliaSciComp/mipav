@@ -573,7 +573,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
      *
      */
     
-    private static class CircleUtility
+    public static class CircleUtility
     {
         
         /**
