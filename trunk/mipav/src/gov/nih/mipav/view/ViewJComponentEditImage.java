@@ -4774,7 +4774,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param isGrower whether this paint listener is the one that did the region grow
      */
     public void updatePaint(BitSet region, boolean backup, boolean isGrower) {
-
+        
         if (isGrower) {
 
             if (backup) {
@@ -4794,7 +4794,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
             paintBitmap.clear();
 
-            for (int i = 0; i < imageBufferActive.length; i++) {
+            for (int i = 0; i < region.length(); i++) {
 
                 if (frame instanceof ViewJFramePaintVasculature) {
                     z = MipavMath.round( ((ViewJFramePaintVasculature) frame).getMIPZValue(i));
