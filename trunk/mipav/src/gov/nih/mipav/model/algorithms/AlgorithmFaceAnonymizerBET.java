@@ -584,7 +584,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
          * @return  Array of (x,y,z) coordinates of an approximate sphere.
          */
         
-        static int[][] get3DPointsInSphere(int xCenter, int yCenter, int zCenter, int radius)
+        public static int[][] get3DPointsInSphere(int xCenter, int yCenter, int zCenter, int radius)
         {
             if(radius>1)
             {
@@ -644,7 +644,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
          * @return  Array of (x,y) coordinates of an approximate circle.
          */
         
-        static int[][] get2DPointsInCircle(int xCenter, int yCenter, int r)
+        public static int[][] get2DPointsInCircle(int xCenter, int yCenter, int r)
         {
             if(r>1) {
                 ArrayList points = new ArrayList();
@@ -695,7 +695,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
          * @return  Array of points of an approximate sphere.
          */
         
-        static int[] get1DPointsInSphere(int xCenter, int yCenter, int zCenter, int radius, int xDim, int yDim)
+        public static int[] get1DPointsInSphere(int xCenter, int yCenter, int zCenter, int radius, int xDim, int yDim)
         {
             int[][] spherePoints = get3DPointsInSphere(xCenter, yCenter, zCenter, radius);
             int[] convertedPoints = new int[spherePoints.length];
@@ -713,7 +713,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
          * @return  Array of points of an approximate sphere.
          */
         
-        static int[] get1DPointsInSphere(int value, int radius, int xDim, int yDim)
+        public static int[] get1DPointsInSphere(int value, int radius, int xDim, int yDim)
         {
             int z = value / (xDim*yDim);
             int y = (value - z*(xDim*yDim)) / xDim;
@@ -729,7 +729,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
          * @return  Array of points of an approximate sphere.
          */
         
-        static int[] get1DPointsInCircle(int xCenter, int yCenter, int zCenter, int radius, int dimX, int dimY)
+        public static int[] get1DPointsInCircle(int xCenter, int yCenter, int zCenter, int radius, int dimX, int dimY)
         {
             int[][] circlePoints = get2DPointsInCircle(xCenter, yCenter, radius);
             int[] convertedPoints = new int[circlePoints.length];
@@ -754,7 +754,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
          * @author senseneyj
          */
         
-        static int[][] getQuadrantBoundaryPoints(int radius, int quadrant)
+        public static int[][] getQuadrantBoundaryPoints(int radius, int quadrant)
         {
             ArrayList quadrantPoints = new ArrayList();
             int x = 0, y = 0, dx = 0, dy = 0;
