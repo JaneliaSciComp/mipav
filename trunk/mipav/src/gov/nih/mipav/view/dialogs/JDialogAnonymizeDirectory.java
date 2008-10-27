@@ -166,6 +166,9 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     /** Defines options for WRITE, OVERWRITE, APPEND for the xlat file. */
     private int xlatDestinationUsage;
 
+    
+    
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -178,6 +181,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
      */
     public JDialogAnonymizeDirectory(String dir) {
         super(ViewUserInterface.getReference().getMainFrame(), false);
+
         setTitle("Anonymize DICOM directory");
         setJMenuBar(buildMenuEntries());
 
@@ -254,6 +258,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                 return; // error notification already done.
             }
 
+
             // check to make sure at least one tag has been selected to remove
             if (!isRemovalSelectionOkay()) {
                 return; // error notification already done.
@@ -263,6 +268,8 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
             if (!isXLATdestinationOkay()) {
                 return; // error notification already done.
             }
+            
+            
 
             applyGenericName(); // convert generic name text fields into native types
 
@@ -271,7 +278,13 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
 
             for (int i = 0; i < actOnPath.length; i++) {
                 s[i] = ((ViewFileTreeNode) actOnPath[i].getLastPathComponent()).getFile();
+                if(s[i].getAbsolutePath().equals(imageDestDirectory.getAbsolutePath())) {
+                	MipavUtil.displayError("Destination directory needs to be different that source directory");
+                	return;
+                }
             }
+
+            
 
             keyLog = newKeyLog(); // write in selected anonymize choices, create 'new' log-table.
 
@@ -1036,6 +1049,8 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
 
         return true;
     }
+    
+
 
     /**
      * Locates the translation/key-file destination directory. If the directory is not there already, the directory is
