@@ -73,10 +73,16 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     private boolean algCanceled = false;
     
     /** enable text area boolean **/
-    private boolean enableTextArea = true;
+    private boolean enableTextArea;
     
     /** tag table **/
     private FileDicomTagTable tagTable;
+    
+    /** boolean indicating whether to change greadGrandParentFileDir name to the newUID **/
+    private boolean renameGrandParentDir;
+    
+    /** newUID String **/
+    private String newUID;
     
     private static Vector<FileDicomKey> removeTagsVector;
     private static Vector<FileDicomKey> replaceTagsVector;
@@ -201,12 +207,13 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 	/**
 	 * constructor
 	 */
-	public PlugInAlgorithmNINDSAnonymizationTool(String inputDirectoryPath, String outputDirectoryPath, JTextArea outputTextArea, JLabel errorMessageLabel, boolean enableTextArea) {
+	public PlugInAlgorithmNINDSAnonymizationTool(String inputDirectoryPath, String outputDirectoryPath, JTextArea outputTextArea, JLabel errorMessageLabel, boolean enableTextArea, boolean renameGrandParentDir) {
 		this.inputDirectoryPath = inputDirectoryPath;
 		this.outputDirectoryPath = outputDirectoryPath;
 		this.outputTextArea = outputTextArea;
 		this.errorMessageLabel = errorMessageLabel;
 		this.enableTextArea = enableTextArea;
+		this.renameGrandParentDir = renameGrandParentDir;
 
 		fileIO = new FileIO();
 		fileIO.setQuiet(true);
@@ -399,6 +406,25 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 		
 		//save anonymized image
 		String outputDir = file.getParent().replace(inputDirectoryPath, outputDirectoryPath);
+		
+		//rename grandParentDir name with newUID if user chooses to
+		if(renameGrandParentDir) {
+			File outputFile = new File(outputDir);
+			File parentFile = outputFile.getParentFile();
+			File grandParentFile = parentFile.getParentFile();
+			if(!(grandParentFile.getName().equals(newUID))) {
+				String newName = grandParentFile.getParent() + File.separator + newUID;
+				File dest = new File(newName);
+				boolean succ = grandParentFile.renameTo(dest);
+				//if succ is false, then a folder already exists...so delete this dir
+				if(succ == false) {
+
+					delete(grandParentFile);
+				}
+			}
+			outputDir = outputDir.replace(grandParentFile.getName(), newUID);
+		}
+		
 		FileWriteOptions opts = new FileWriteOptions(true);
         opts.setFileType(FileUtility.DICOM);
         opts.setFileDirectory(outputDir + File.separator);
@@ -433,7 +459,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     	//example: id = 1234, DOB=9/23/1968 => 1234 + 9231968 = 9233202
     	String patientID = "";
     	String dob = "";
-    	String newUID = "";
+    	newUID = "";
     	int patientIDInt = 0;
     	if(tagTable.containsTag(patientIDKey)) {
     		patientID = ((String)tagTable.getValue(patientIDKey)).trim();
@@ -468,6 +494,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 		}
 		int newUIDInt = patientIDInt + dobInt;
 		newUID = String.valueOf(newUIDInt);
+
 
     	//one will get replaced with current date...so get current date
     	DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
@@ -1417,6 +1444,27 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     	}
 
     	return true;
+    }
+    
+    public boolean delete(File file) {
+    	if(file.isDirectory()) {
+    		File[] children = file.listFiles();
+    		for(int i=0;i<children.length;i++) {
+    			if(children[i].isDirectory()) {
+    				boolean success = delete(children[i]);
+    				if(!success) {
+    					return false;
+    				}
+    			}else {
+    				return false;
+    			}
+
+    		}
+    	}else {
+    		return false;
+    	}
+    	
+    	return file.delete();
     }
 	
     /**

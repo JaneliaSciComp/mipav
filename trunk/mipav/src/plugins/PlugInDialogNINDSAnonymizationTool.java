@@ -54,9 +54,9 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
     private PlugInAlgorithmNINDSAnonymizationTool alg;
     
     /** labels **/
-    private JLabel inputDirectoryLabel,outputMessageLabel, outputDirectoryLabel, errorMessageLabel, enableTextAreaLabel;
+    private JLabel inputDirectoryLabel,outputMessageLabel, outputDirectoryLabel, errorMessageLabel, enableTextAreaLabel, renameGrandParentDirLabel;
     
-    private JCheckBox enableTextAreaCheckBox;
+    private JCheckBox enableTextAreaCheckBox, renameGrandParentDirCheckBox;
     
     /** panels **/
     private JPanel mainPanel, OKCancelPanel;
@@ -67,8 +67,11 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
     /** GridBagConstraints **/
     private GridBagConstraints mainPanelConstraints ;
     
-   //SET TO FALSE FOR TESTING
-    private boolean enableTextArea = false;
+    /** enable text area **/
+    private boolean enableTextArea;
+    
+    /** rename grandparent dir name **/
+    private boolean renameGrandParentDir;
   
 	
 	
@@ -93,7 +96,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("NINDS Anonymization Tool " + " v1.1");
+        setTitle("NINDS Anonymization Tool " + " v1.2");
         
         mainPanelGridBagLayout = new GridBagLayout();
         mainPanelConstraints = new GridBagConstraints();
@@ -147,21 +150,37 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 		
 		//enable textArea Checkbox
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.gridy = 2;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		enableTextAreaLabel = new JLabel(" Enable TextArea ");
         mainPanel.add(enableTextAreaLabel, mainPanelConstraints);
         
 		mainPanelConstraints.gridx = 1;
-		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.gridy = 2;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		enableTextAreaCheckBox = new JCheckBox();
 		enableTextAreaCheckBox.setSelected(true);
         mainPanel.add(enableTextAreaCheckBox, mainPanelConstraints);
 		
-		//error message
+        
+        //renameGrandParent Checkbox
 		mainPanelConstraints.gridx = 0;
 		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.insets = new Insets(15,5,15,5);
+		renameGrandParentDirLabel = new JLabel(" Rename GrandParent Dir name to new UID ");
+        mainPanel.add(renameGrandParentDirLabel, mainPanelConstraints);
+        
+		mainPanelConstraints.gridx = 1;
+		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.insets = new Insets(15,5,15,5);
+		renameGrandParentDirCheckBox = new JCheckBox();
+		renameGrandParentDirCheckBox.setSelected(true);
+        mainPanel.add(renameGrandParentDirCheckBox, mainPanelConstraints);
+        
+        
+		//error message
+		mainPanelConstraints.gridx = 0;
+		mainPanelConstraints.gridy = 4;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		errorMessageLabel = new JLabel(" ");
@@ -169,11 +188,10 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 		mainPanelConstraints.anchor = GridBagConstraints.CENTER;
         mainPanel.add(errorMessageLabel, mainPanelConstraints);
 
-		
-		
+
 		//output message
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 4;
+		mainPanelConstraints.gridy = 5;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		outputMessageLabel = new JLabel(" ");
@@ -183,7 +201,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 		//output text area
         mainPanelConstraints.fill = GridBagConstraints.BOTH;
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 5;
+		mainPanelConstraints.gridy = 6;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		outputTextArea = new JTextArea(15, 70);
@@ -287,6 +305,11 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 			}else {
 				enableTextArea = false;
 			}
+			if(renameGrandParentDirCheckBox.isSelected()) {
+				renameGrandParentDir = true;
+			}else {
+				renameGrandParentDir = false;
+			}
 			OKButton.setEnabled(false);
 			inputDirectoryBrowseButton.setEnabled(false);
 			outputDirectoryBrowseButton.setEnabled(false);
@@ -305,7 +328,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 	protected void callAlgorithm() {
 		String inputDirectoryPath = inputDirectoryTextField.getText().trim();
 		String outputDirectoryPath = outputDirectoryTextField.getText().trim();
-		alg = new PlugInAlgorithmNINDSAnonymizationTool(inputDirectoryPath, outputDirectoryPath, outputTextArea, errorMessageLabel, enableTextArea);
+		alg = new PlugInAlgorithmNINDSAnonymizationTool(inputDirectoryPath, outputDirectoryPath, outputTextArea, errorMessageLabel, enableTextArea, renameGrandParentDir);
 		
 		alg.addListener(this);
 		
