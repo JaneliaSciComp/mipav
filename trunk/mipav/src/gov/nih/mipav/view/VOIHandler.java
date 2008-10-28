@@ -842,17 +842,21 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 int nVOI = VOIs.size();
 
                 if (compImage.getSlice() != -99) {
-                    float originX = (float) compImage.getActiveImage().getFileInfo(0).getOrigin()[0];
-                    float originY = (float) compImage.getActiveImage().getFileInfo(0).getOrigin()[1];
-
-                    for (int i = 0; i < nVOI; i++) {
-                        VOIs.VOIAt(i).drawSelf(compImage.getZoomX(), compImage.getZoomY(), compImage.getResolutionX(),
-                                               compImage.getResolutionY(), originX, originY,
-                                               compImage.getActiveImage().getFileInfo(0).getResolutions(),
-                                               compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(),
-                                               compImage.getSlice(), compImage.getOrientation(),
-                                               compImage.getActiveImage().getFileInfo(0),
-                                               compImage.getActiveImage().getNDims(), graphics);
+                     if ((compImage.getActiveImage().getFileInfo(0) != null) &&
+                        (compImage.getActiveImage().getFileInfo(0).getOrigin() != null)) {
+                        
+                        float originX = (float) compImage.getActiveImage().getFileInfo(0).getOrigin()[0];
+                        float originY = (float) compImage.getActiveImage().getFileInfo(0).getOrigin()[1];
+    
+                        for (int i = 0; i < nVOI; i++) {
+                            VOIs.VOIAt(i).drawSelf(compImage.getZoomX(), compImage.getZoomY(), compImage.getResolutionX(),
+                                                   compImage.getResolutionY(), originX, originY,
+                                                   compImage.getActiveImage().getFileInfo(0).getResolutions(),
+                                                   compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(),
+                                                   compImage.getSlice(), compImage.getOrientation(),
+                                                   compImage.getActiveImage().getFileInfo(0),
+                                                   compImage.getActiveImage().getNDims(), graphics);
+                        }
                     }
                 }
             } // if (VOIs != null)
