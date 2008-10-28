@@ -574,6 +574,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         if (image.getNDims() < 3) {
             // return null;
         }
+     
         MipavCoordinateSystems.fileToScanner(position, kOut, image);
 
         float[] tCoord = new float[3];
