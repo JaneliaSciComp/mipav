@@ -3709,7 +3709,7 @@ public class FileNIFTI extends FileBase {
                     }
                 }
             } else { // matrixQ == null
-                qform_code = FileInfoNIFTI.NIFTI_XFORM_ALIGNED_ANAT;
+                qform_code = FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT;
                 if ((axisOrientation != null) && 
                     (axisOrientation[0] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
                     (axisOrientation[1] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
