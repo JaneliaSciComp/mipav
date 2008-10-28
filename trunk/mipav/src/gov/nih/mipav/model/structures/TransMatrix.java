@@ -139,7 +139,7 @@ public class TransMatrix extends Matrix4f
     /** Array of transform ID strings. */
     private static final String[] TRANSFORM_ID_STR = {
         "Unknown", "Scanner Anatomical", "Another Dataset", "Talairach Tournoux", "MNI 152", "Composite",
-        "Scanner Anatomical"
+        "NIFTI Scanner Anatomical"
     };
     
     /** used for setting rotation */
