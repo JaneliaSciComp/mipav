@@ -75,8 +75,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
-    public FlyThroughRender( VolumeTriPlanarInterface kParent, Animator kAnimator, VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa, ModelRGB kRGBTa,
-            VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb, ModelRGB kRGBTb  )
+    public FlyThroughRender( VolumeTriPlanarInterface kParent, Animator kAnimator, VolumeImage kVolumeImageA, 
+            VolumeImage kVolumeImageB  )
     {
         super();
 
@@ -90,20 +90,13 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
 
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;
-        m_kImageA = kImageA;
-        m_kLUTa = kLUTa;
-        m_kRGBTa = kRGBTa;
-
         m_kVolumeImageB = kVolumeImageB;
-        m_kImageB = kImageB;
-        m_kLUTb = kLUTb;
-        m_kRGBTb = kRGBTb;
         m_kParent = kParent;
 
-
-        float fMaxX = (m_kImageA.getExtents()[0] - 1) * m_kImageA.getFileInfo(0).getResolutions()[0];
-        float fMaxY = (m_kImageA.getExtents()[1] - 1) * m_kImageA.getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (m_kImageA.getExtents()[2] - 1) * m_kImageA.getFileInfo(0).getResolutions()[2];
+        ModelImage kImage = m_kVolumeImageA.GetImage();
+        float fMaxX = (kImage.getExtents()[0] - 1) * kImage.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (kImage.getExtents()[1] - 1) * kImage.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (kImage.getExtents()[2] - 1) * kImage.getFileInfo(0).getResolutions()[2];
 
         m_fMax = fMaxX;
         if (fMaxY > m_fMax) {
@@ -312,7 +305,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         {
             m_pkRenderer.SetLight( i, new Light() );
         }
-        setupRender(m_kImageA, m_kOptions);
+        setupRender(m_kVolumeImageA.GetImage(), m_kOptions);
     }
 
     

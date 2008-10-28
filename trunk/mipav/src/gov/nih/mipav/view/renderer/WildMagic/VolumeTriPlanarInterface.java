@@ -487,8 +487,8 @@ implements MouseListener, ItemListener, ChangeListener {
             if ( m_kFlyThroughPanel == null )
             {
                 m_kFlyThroughRender = new FlyThroughRender( this, 
-                        m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
-                        m_kVolumeImageB, imageB, LUTb, RGBTB);
+                        m_kAnimator, m_kVolumeImageA,
+                        m_kVolumeImageB);
                 TriMesh kSurface = raycastRenderWM.getSurface( surfaceGUI.getSelectedSurface() );
                 m_kFlyThroughRender.addSurface(kSurface);
                 bf_flyPanel.add( m_kFlyThroughRender.GetCanvas(), BorderLayout.CENTER );
@@ -847,22 +847,16 @@ implements MouseListener, ItemListener, ChangeListener {
 
             m_kAnimator = new Animator();
             m_akPlaneRender = new PlaneRender_WM[3];
-            m_akPlaneRender[0] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
-                                                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.AXIAL,
-                                                    false);
-            m_akPlaneRender[1] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
-                                                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.SAGITTAL,
-                                                    false);
-            m_akPlaneRender[2] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
-                                                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.CORONAL,
-                                                    false);
+            m_akPlaneRender[0] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, FileInfoBase.AXIAL);
+            m_akPlaneRender[1] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, FileInfoBase.SAGITTAL);
+            m_akPlaneRender[2] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, FileInfoBase.CORONAL);
             
             progressBar.setMessage("Constructing gpu renderer...");
 
             
 
-            raycastRenderWM = new VolumeTriPlanarRender( this, m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
-                                                     m_kVolumeImageB, imageB, LUTb, RGBTB);
+            raycastRenderWM = new VolumeTriPlanarRender( this, m_kAnimator, m_kVolumeImageA,
+                                                     m_kVolumeImageB);
 
 
             TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
@@ -1929,9 +1923,13 @@ implements MouseListener, ItemListener, ChangeListener {
      * Causes the PlaneRender objects to update the texture maps when the underlying ModelImage changes.
      */
     public void updateData() {
+        if ( m_kVolumeImageA != null )
+        {
+            m_kVolumeImageA.UpdateData(imageA, "A");
+        }
         if ( raycastRenderWM != null )
         {
-            raycastRenderWM.updateData(imageA);
+            raycastRenderWM.updateData();
         }
         setModified();
     }
@@ -3000,7 +2998,7 @@ implements MouseListener, ItemListener, ChangeListener {
 		String class_path_key = "java.class.path";
 		String class_path = System.getProperty(class_path_key);
 		for (String fn : class_path.split(":")) {
-			if (fn.endsWith("WildMagic.jar")) {
+			if (fn.contains("WildMagic.jar")) {
 				jar_filename = fn;
 				String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib"));
 				externalDirs = externalDirs.concat("WildMagic");

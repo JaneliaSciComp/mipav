@@ -81,8 +81,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * @param kLUTb, LUT for ModelImage B
      * @param kRGBTb, RGB lookup table for ModelImage B
      */
-    public VolumeTriPlanarRender( VolumeTriPlanarInterface kParent, Animator kAnimator, VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa, ModelRGB kRGBTa,
-            VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb, ModelRGB kRGBTb  )
+    public VolumeTriPlanarRender( VolumeTriPlanarInterface kParent, Animator kAnimator, 
+            VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
     {
         super();
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
@@ -95,16 +95,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;
-        m_kImageA = kImageA;
-        m_kLUTa = kLUTa;
-        m_kRGBTa = kRGBTa;
-
         m_kVolumeImageB = kVolumeImageB;
-        m_kImageB = kImageB;
-        m_kLUTb = kLUTb;
-        m_kRGBTb = kRGBTb;
-        m_kParent = kParent;
-        
+        m_kParent = kParent;        
         m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
     }
     
@@ -337,7 +329,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             return;
         }
         
-        if ( m_kImageA == null ) {
+        if ( m_kVolumeImageA == null ) {
         	return;
         }
         
@@ -574,7 +566,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         if ( !bEnable )
         {
-            setArbitraryClipPlane((m_kImageA.getExtents()[0] -1), bEnable);
+            setArbitraryClipPlane((m_kVolumeImageA.GetImage().getExtents()[0] -1), bEnable);
         }
     }
 
@@ -651,7 +643,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         if ( !bEnable )
         {
-            setEyeInvClipPlane(m_kImageA.getExtents()[2] - 1, bDisplay, bEnable);
+            setEyeInvClipPlane(m_kVolumeImageA.GetImage().getExtents()[2] - 1, bDisplay, bEnable);
         }
     }
 
@@ -681,7 +673,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kSculptor == null )
         {
             m_kSculptor = new Sculptor_WM( ((OpenGLRenderer)m_pkRenderer).GetCanvas() );
-            m_kSculptor.setImage(m_kImageA, m_kImageB);
+            m_kSculptor.setImage(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
         }
         m_kSculptor.enableSculpt(bSculpt);
     }
@@ -832,18 +824,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * display.
      * @param arg0, GLCanvas
      */
-    public void init(GLAutoDrawable arg0) {
-//         if ( m_bInit )
-//         {
-//             if ( !m_kAnimator.isAnimating() )
-//             {
-//                 m_kAnimator.start();
-//             }        
-
-//             return;
-//         }
-    	
-    	if ( m_kImageA == null ) {
+    public void init(GLAutoDrawable arg0) {	
+    	if ( m_kVolumeImageA == null ) {
         	return;
         }
     	
@@ -1244,7 +1226,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void setArbitraryClipPlane( float f4, boolean bEnable )
     {
-        f4 /= (m_kImageA.getExtents()[0] -1);     
+        f4 /= (m_kVolumeImageA.GetImage().getExtents()[0] -1);     
         m_kArbitraryClip = new Vector4f(1,0,0,f4);
         doClip(bEnable);
     }
@@ -1301,9 +1283,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         if ( m_kSlices != null )
         {
-            m_kSlices.SetCenter( new Vector3f( (kCenter.X / (m_kImageA.getExtents()[0] -1)),
-                                               (kCenter.Y / (m_kImageA.getExtents()[1] -1)),
-                                               (kCenter.Z / (m_kImageA.getExtents()[2] -1))  ) );
+            int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+            m_kSlices.SetCenter( new Vector3f( (kCenter.X / (aiExtents[0] -1)),
+                                               (kCenter.Y / (aiExtents[1] -1)),
+                                               (kCenter.Z / (aiExtents[2] -1))  ) );
 
         }
     }
@@ -1330,17 +1313,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void setClipPlane( int iWhich, float fValue, boolean bEnable )
     {
+        int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
         if ( iWhich < 2 )
         {
-            fValue /= (m_kImageA.getExtents()[0] -1);
+            fValue /= (aiExtents[0] -1);
         }
         else if ( iWhich < 4 )
         {
-            fValue /= (m_kImageA.getExtents()[1]-1);
+            fValue /= (aiExtents[1]-1);
         }
         else
         {
-            fValue /= (m_kImageA.getExtents()[2] -1);
+            fValue /= (aiExtents[2] -1);
         }
         if ( m_kVolumeClip != null )
         {
@@ -1497,7 +1481,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void setEyeClipPlane( float f4, boolean bDisplay, boolean bEnable )
     {
-        f4 /= (m_kImageA.getExtents()[2] -1);
+        f4 /= (m_kVolumeImageA.GetImage().getExtents()[2] -1);
         float[] afEquation = new float[]{0,0,1,f4};
         float fZ = afEquation[3] * m_fZ;
 
@@ -1541,7 +1525,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void setEyeInvClipPlane( float f4, boolean bDisplay, boolean bEnable )
     {
-        f4 /= (m_kImageA.getExtents()[2] -1);
+        f4 /= (m_kVolumeImageA.GetImage().getExtents()[2] -1);
         float[] afEquation = new float[]{0,0,1,f4};
         float fZ = afEquation[3] * m_fZ;
 
@@ -1929,17 +1913,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * GPU.
      * @param kImage, the new image.
      */
-    public void updateData( ModelImage kImage )
+    public void updateData()
     {
-        m_kImageA = kImage;
         if ( m_kSculptor != null )
         {
-            m_kSculptor.setImage(m_kImageA, m_kImageB);
+            m_kSculptor.setImage(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
         }
-        if ( m_kVolumeImageA != null )
-        {
-            m_kVolumeImageA.UpdateData(kImage, "A");
-        }
+
     }
 
     
@@ -1969,10 +1949,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
         m_kTranslate = m_kVolumeRayCast.GetTranslate();
 
-
-        float fMaxX = (m_kImageA.getExtents()[0] - 1) * m_kImageA.getFileInfo(0).getResolutions()[0];
-        float fMaxY = (m_kImageA.getExtents()[1] - 1) * m_kImageA.getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (m_kImageA.getExtents()[2] - 1) * m_kImageA.getFileInfo(0).getResolutions()[2];
+        ModelImage kImage = m_kVolumeImageA.GetImage();
+        float fMaxX = (kImage.getExtents()[0] - 1) * kImage.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (kImage.getExtents()[1] - 1) * kImage.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (kImage.getExtents()[2] - 1) * kImage.getFileInfo(0).getResolutions()[2];
 
         m_fMax = fMaxX;
         if (fMaxY > m_fMax) {
@@ -1985,14 +1965,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_fY = fMaxY/m_fMax;
         m_fZ = fMaxZ/m_fMax;
 
-        if ( m_kRGBTa != null )
-        {
-            m_kVolumeImageA.SetRGBT( m_kRGBTa );
-        }
-        if ( m_kRGBTb != null )
-        {
-            m_kVolumeImageB.SetRGBT( m_kRGBTb );
-        }
         m_kSlices = new VolumeSlices( m_kVolumeImageA, m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ );
         DisplayVolumeSlices( true );
         m_kDisplayList.add(m_kDisplayList.size(), m_kSlices);
@@ -2229,5 +2201,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         m_bSurfaceUpdate = true;
     }
+
     
 }

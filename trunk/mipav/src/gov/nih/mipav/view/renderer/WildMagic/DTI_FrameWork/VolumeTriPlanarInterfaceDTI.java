@@ -336,20 +336,13 @@ implements MouseListener, ItemListener, ChangeListener {
                 m_kVolumeImageB = new VolumeImage( imageB, LUTb, RGBTB, "B" );
             }
           
-            ((PlaneRenderDTI)m_akPlaneRender[0]).loadImage(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
-                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.AXIAL,
-                    false);
-			((PlaneRenderDTI)m_akPlaneRender[1]).loadImage(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
-			                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.SAGITTAL,
-			                    false);
-			((PlaneRenderDTI)m_akPlaneRender[2]).loadImage(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
-			                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.CORONAL,
-			                    false);
+            ((PlaneRenderDTI)m_akPlaneRender[0]).loadImage(this, m_kAnimator, m_kVolumeImageA, FileInfoBase.AXIAL);
+			((PlaneRenderDTI)m_akPlaneRender[1]).loadImage(this, m_kAnimator, m_kVolumeImageA, FileInfoBase.SAGITTAL);
+			((PlaneRenderDTI)m_akPlaneRender[2]).loadImage(this, m_kAnimator, m_kVolumeImageA, FileInfoBase.CORONAL);
                       
             progressBar.setMessage("Constructing gpu renderer...");
             
-            ((VolumeTriPlanerRenderDTI)raycastRenderWM).loadImage(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
-                    m_kVolumeImageB, imageB, LUTb, RGBTB);
+            ((VolumeTriPlanerRenderDTI)raycastRenderWM).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB);
 
           
             progressBar.updateValueImmed(80);

@@ -29,9 +29,8 @@ public class PlaneRenderDTI extends PlaneRender_WM
     }
 
     
-    public void loadImage( VolumeTriPlanarInterface kParent, Animator kAnimator, VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa,
-                           VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb,
-                           int iPlane, boolean bMemory)
+    public void loadImage( VolumeTriPlanarInterface kParent, Animator kAnimator, 
+            VolumeImage kVolumeImageA, int iPlane)
     {
         
         m_kAnimator = kAnimator;
@@ -40,15 +39,6 @@ public class PlaneRenderDTI extends PlaneRender_WM
     	
         m_kVolumeImageA = kVolumeImageA;
         m_iPlaneOrientation = iPlane;
-        m_bMemoryUsage = bMemory;
-        
-        m_kImageA = kImageA;
-        m_kImageB = kImageB;
-        m_kImageA.setImageOrder(ModelImage.IMAGE_A);
-        
-        if (m_kImageB != null) {
-            m_kImageB.setImageOrder(ModelImage.IMAGE_B);
-        }
         
         setOrientation();
         m_kWinLevel = new WindowLevel();
