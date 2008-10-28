@@ -29,22 +29,13 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
 
     }
 
-    public void loadImage( VolumeTriPlanarInterfaceDTI kParent, Animator kAnimator, VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa, ModelRGB kRGBTa,
-            VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb, ModelRGB kRGBTb  )
+    public void loadImage( VolumeTriPlanarInterfaceDTI kParent, Animator kAnimator, 
+            VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
     {
-
         m_kParent = kParent;
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;
-        m_kImageA = kImageA;
-        m_kLUTa = kLUTa;
-        m_kRGBTa = kRGBTa;
-
         m_kVolumeImageB = kVolumeImageB;
-        m_kImageB = kImageB;
-        m_kLUTb = kLUTb;
-        m_kRGBTb = kRGBTb;
-
         m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
     }
 

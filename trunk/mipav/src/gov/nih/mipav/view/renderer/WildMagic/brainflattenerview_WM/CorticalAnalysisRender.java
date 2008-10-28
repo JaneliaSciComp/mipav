@@ -127,18 +127,11 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;
-        m_kImageA = kImageA;
-        m_kLUTa = kLUTa;
-        m_kRGBTa = kRGBTa;
-
         m_kVolumeImageB = kVolumeImageB;
-        m_kImageB = kImageB;
-        m_kLUTb = kLUTb;
-        m_kRGBTb = kRGBTb;
         m_kParent = kParent;
 
 
-        m_kPanel = new JPanelBrainSurfaceFlattener_WM(this, m_kImageA, kParent);
+        m_kPanel = new JPanelBrainSurfaceFlattener_WM(this, m_kVolumeImageA.GetImage(), kParent);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -297,10 +290,10 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         m_spkScene.AttachGlobalState(m_spkCull);
         
         m_kTranslate = new Vector3f(Vector3f.ZERO);
-
-        float fMaxX = (m_kImageA.getExtents()[0] - 1) * m_kImageA.getFileInfo(0).getResolutions()[0];
-        float fMaxY = (m_kImageA.getExtents()[1] - 1) * m_kImageA.getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (m_kImageA.getExtents()[2] - 1) * m_kImageA.getFileInfo(0).getResolutions()[2];
+        ModelImage kImage = m_kVolumeImageA.GetImage();
+        float fMaxX = (kImage.getExtents()[0] - 1) * kImage.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (kImage.getExtents()[1] - 1) * kImage.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (kImage.getExtents()[2] - 1) * kImage.getFileInfo(0).getResolutions()[2];
 
         m_fMax = fMaxX;
         if (fMaxY > m_fMax) {

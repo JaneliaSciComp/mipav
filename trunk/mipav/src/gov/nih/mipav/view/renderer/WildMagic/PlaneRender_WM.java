@@ -1,25 +1,41 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
-import gov.nih.mipav.*;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.WindowLevel;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 
-import gov.nih.mipav.view.*;
-
-import java.awt.*;
-import java.awt.event.*;
-
-import javax.media.opengl.*;
-import com.sun.opengl.util.*;
-
-import gov.nih.mipav.view.renderer.WildMagic.Render.*;
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibRenderers.OpenGLRenderer.*;
-
+import java.awt.Cursor;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
+
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLCanvas;
+import javax.media.opengl.GLEventListener;
+
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.VertexColor3Effect;
+import WildMagic.LibGraphics.Rendering.Camera;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
+
+import com.sun.opengl.util.Animator;
 
 
 
@@ -39,20 +55,29 @@ public class PlaneRender_WM extends GPURenderBase
     private static final long serialVersionUID = 2025132936439496099L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+    /** Camera Locations, for rendering the different Axial, Sagittal and Coronal views. */
+    Vector3f[] m_akCLoc = { new Vector3f(-1.0f,0.0f,0.0f), new Vector3f(0.0f,-1.0f,0.0f), new Vector3f(0.0f,0.0f,-1.0f) };
+    /** Camera Direction, UP, and Right vectors, for rendering the different Axial, Sagittal and Coronal views. */
+    Vector3f[] m_akCoords = { new Vector3f(Vector3f.UNIT_X), new Vector3f(Vector3f.UNIT_Y), new Vector3f(Vector3f.UNIT_Z) };
     
+    /** Actual image orientation. */
+    protected boolean m_bPatientOrientation = true;
+    /** Which dimension of the ModelImage to render. */
+    protected int m_iPlaneOrientation = 0;
+
+    /** Window-level interface. */
+    protected WindowLevel m_kWinLevel;
+
     /** The image dimensions in x,y,z:. */
     private int[] m_aiLocalImageExtents;
 
-    /** Set of colors used to draw the X and Y Bars and the Z box:. */
+    /** Set of colors used to draw the axis labels. */
     private ColorRGB[][] m_aakColors = { { new ColorRGB(1, 1, 0), new ColorRGB(0, 1, 0), new ColorRGB(1, 0, 0) },
                                          { new ColorRGB(1, 1, 0), new ColorRGB(1, 0, 0), new ColorRGB(0, 1, 0) },
                                          { new ColorRGB(0, 1, 0), new ColorRGB(1, 0, 0), new ColorRGB(1, 1, 0) } };
 
+    /** Axis labels color assignments.  */
     private int[][] m_aaiColorSwap = { { 2, 1, 0 }, { 1, 2, 0 }, { 1, 0, 2 } };
-    
-    Vector3f[] m_akCLoc = { new Vector3f(-1.0f,0.0f,0.0f), new Vector3f(0.0f,-1.0f,0.0f), new Vector3f(0.0f,0.0f,-1.0f) };
-    Vector3f[] m_akCoords = { new Vector3f(Vector3f.UNIT_X), new Vector3f(Vector3f.UNIT_Y), new Vector3f(Vector3f.UNIT_Z) };
-
 
     /** when true, the axis labels (P-> L-> S->) will be drawn */
     private boolean m_bDrawAxes = true;
@@ -67,12 +92,6 @@ public class PlaneRender_WM extends GPURenderBase
      * mouse button is released. */
     private boolean m_bLeftMousePressed = false;
 
-    /** Whether to store all the data in ImageComponent2D array or not:. */
-    protected boolean m_bMemoryUsage;
-
-    /** Actual image orietation. */
-    protected boolean m_bPatientOrientation = true;
-
     /** Flag indicating if the right mouse button is currently pressed
      * down: */
     private boolean m_bRightMousePressed = false;
@@ -86,7 +105,7 @@ public class PlaneRender_WM extends GPURenderBase
     /** upper x-bound of the texture-mapped polygon: */
     private float m_fX1;
 
-    /** Numbers dicatating the size of the plane based on the extents and
+    /** Numbers dictating the size of the plane based on the extents and
      * resolutions of the image. */
     private float m_fXBox, m_fYBox, m_fMaxBox;
 
@@ -105,25 +124,19 @@ public class PlaneRender_WM extends GPURenderBase
     /** Height of the texture-mapped polygon: */
     private float m_fYRange;
 
-    /** Y direction mouse translatioin. */
+    /** Y direction mouse translation. */
     private float m_fYTranslate = 0.0f;
 
     /** Image scaling from Zoom:. */
     private float m_fZoomScale = 1.0f;
-
-    /** Which dimension of the ModelImage to render. */
-    protected int m_iPlaneOrientation = 0;
-
     /** Which slice is currently displayed in the XY plane. */
     private int m_iSlice;
-    private float[] m_afModelStep = new float[3];
+    /** Model coordinates for current cursor position. */
     private float[] m_afModelPosition = new float[3];
-    private float[] m_afScale = new float[3];
 
     /** Current active image for manipulating the LUT by dragging with the
      * right-mouse down. */
     private ModelImage m_kActiveImage;
-
     /** x-axis label: */
     private String m_kLabelX = new String("X");
     private String m_kLabelXDisplay = new String("X");
@@ -131,44 +144,48 @@ public class PlaneRender_WM extends GPURenderBase
     /** y-axis label: */
     private String m_kLabelY = new String("Y");
 
-    protected WindowLevel m_kWinLevel;
-
+    /** x-axis arrow */
     private TriMesh[] m_kXArrow;
+    /** y-axis arrow */
     private TriMesh[] m_kYArrow;
-
+    
+    /** Drawing the axis arrows in screen-space. */
+    private Camera m_spkScreenCamera;
     private int m_iLabelX_SpacingX;
     private int m_iLabelX_SpacingY;
     private int m_iLabelY_SpacingX;
     private int m_iLabelY_SpacingY;
     private boolean m_bUpdateSpacing = false;
-    
-    private Camera m_spkScreenCamera;
 
+    /** ModelImage axis orientation. */
     private int[] m_aiAxisOrder;
+    /** ModelImage axis flip. */
     private boolean[] m_abAxisFlip;
+    /** Default field of view, changes with mouse zoom. */
     private float m_fUpFOV = 65f;
+    /** For zooming with the mouse. */
     private float m_fMouseY;
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates a new PlaneRenderWM object.
-     *
-     * @param  kParent  ViewJFrameVolumeView - reference to parent frame.
-     * @param  kImageA  First image to display, cannot be null.
-     * @param  kLUTa    LUT of the imageA (if null grayscale LUT is constructed).
-     * @param  kImageB  Second loaded image, may be null.
-     * @param  kLUTb    LUT of the imageB, may be null.
-     * @param  kConfig  GraphicsConfiguration
-     * @param  iPlane   Image dimension to be displayed.
-     * @param bMemory when true store all the data in memory, when false,
-     * write textures as the slices change
+     * Default PlaneRender interface.
+     */
+    public PlaneRender_WM ()
+    {
+        super();
+    }
+
+    /**
+     * @param kParent
+     * @param kAnimator
+     * @param kVolumeImageA
+     * @param iPlane
      */
     public PlaneRender_WM(VolumeTriPlanarInterface kParent, Animator kAnimator, 
-                          VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa,
-                          VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb,
-                          int iPlane, boolean bMemory)
+                          VolumeImage kVolumeImageA,
+                          int iPlane)
     {
         super();
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
@@ -183,22 +200,14 @@ public class PlaneRender_WM extends GPURenderBase
         m_kVolumeImageA = kVolumeImageA;
         m_kParent = kParent;
         m_iPlaneOrientation = iPlane;
-        m_bMemoryUsage = bMemory;
-
-        m_kImageA = kImageA;
-        m_kImageB = kImageB;
-        m_kImageA.setImageOrder(ModelImage.IMAGE_A);
-
-        if (m_kImageB != null) {
-            m_kImageB.setImageOrder(ModelImage.IMAGE_B);
-        }
 
         setOrientation();
         m_kWinLevel = new WindowLevel();
         
-        float fMaxX = (m_kImageA.getExtents()[0] - 1) * m_kImageA.getFileInfo(0).getResolutions()[0];
-        float fMaxY = (m_kImageA.getExtents()[1] - 1) * m_kImageA.getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (m_kImageA.getExtents()[2] - 1) * m_kImageA.getFileInfo(0).getResolutions()[2];
+        ModelImage kImageA = m_kVolumeImageA.GetImage();
+        float fMaxX = (kImageA.getExtents()[0] - 1) * kImageA.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (kImageA.getExtents()[1] - 1) * kImageA.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (kImageA.getExtents()[2] - 1) * kImageA.getFileInfo(0).getResolutions()[2];
 
         m_fMax = fMaxX;
         if (fMaxY > m_fMax) {
@@ -210,27 +219,35 @@ public class PlaneRender_WM extends GPURenderBase
         m_fX = fMaxX/m_fMax;
         m_fY = fMaxY/m_fMax;
         m_fZ = fMaxZ/m_fMax;
-        m_afScale[0] = m_fX;
-        m_afScale[1] = m_fY;
-        m_afScale[2] = m_fZ;
-        
-
-        m_afModelStep[0] = 2f/(m_kImageA.getExtents()[0] -1);
-        m_afModelStep[1] = 2f/(m_kImageA.getExtents()[1] -1);
-        m_afModelStep[2] = 2f/(m_kImageA.getExtents()[2] -1);
     }
-
-    public PlaneRender_WM ()
+    
+    /**
+     * Adds the VolumeSlices object to the display list for rendering.
+     * @param kVolumeSlice.
+     */
+    public void AddSlices( VolumeSlices kVolumeSlice  )
     {
-        super();
+        m_kDisplayList.add(kVolumeSlice);
     }
+
+    /**
+     * Closes the frame.
+     */
+    public void close() {
+        disposeLocal();
+    }
+
+    
+    /* (non-Javadoc)
+     * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
+     */
     public void display(GLAutoDrawable arg0) {
         if ( !m_bModified )
         {
             return;
         }
         
-        if ( m_kImageA == null ) {
+        if ( m_kVolumeImageA == null ) {
         	return;
         }
         if ( !m_bInit )
@@ -286,14 +303,45 @@ public class PlaneRender_WM extends GPURenderBase
 
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#displayChanged(javax.media.opengl.GLAutoDrawable, boolean, boolean)
+     */
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2)
     {
         m_bModified = true;
+    }   
+    
+    /**
+     * Clean memory.
+     */
+    public void disposeLocal() {
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                m_aakColors[i][j] = null;
+            }
+            m_aakColors[i] = null;
+        }
+        m_aakColors = null;
+
+        m_kLabelX = null;
+        m_kLabelY = null;
+    }
+        
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#GetCanvas()
+     */
+    public GLCanvas GetCanvas()
+    {
+        return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
     }
 
-    
+    /* (non-Javadoc)
+     * @see javax.media.opengl.GLEventListener#init(javax.media.opengl.GLAutoDrawable)
+     */
     public void init(GLAutoDrawable arg0) {
-    	if ( m_kImageA == null ) {
+    	if ( m_kVolumeImageA == null ) {
             return;
         }
 
@@ -338,208 +386,9 @@ public class PlaneRender_WM extends GPURenderBase
 
         m_kAnimator.add( GetCanvas() );
     }
-
-    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-    	if ( m_kImageA == null ) {
-        	return;
-        }
-    	
-        if (iWidth > 0 && iHeight > 0)
-        {            
-            if ( m_bUpdateSpacing )
-            {
-                m_iLabelX_SpacingX *= (float)iWidth/(float)m_iWidth;
-                m_iLabelX_SpacingY *= (float)iHeight/(float)m_iHeight;
-                m_iLabelY_SpacingX *= (float)iWidth/(float)m_iWidth;
-                m_iLabelY_SpacingY *= (float)iHeight/(float)m_iHeight;
-            }
-            m_bUpdateSpacing = true;
-            
-            
-            if (m_pkRenderer != null)
-            {
-                m_pkRenderer.Resize(iWidth,iHeight);
-            }
-            
-            m_iWidth = iWidth;
-            m_iHeight = iHeight;
-            m_bModified = true;
-            m_spkCamera.Perspective = false;
-            m_spkCamera.SetFrustum(m_fUpFOV,m_iWidth/(float)m_iHeight,1f,5.0f);
-            m_pkRenderer.OnFrustumChange();
-        }
-        
-    }   
     
-    public void setRadiologicalView( boolean bOn )
-    {
-        if ( m_iPlaneOrientation == FileInfoBase.SAGITTAL )
-        {
-            return;
-        }
-        
-        Vector3f kCLoc = new Vector3f(m_akCLoc[m_aiAxisOrder[2]]);
-        Vector3f kCDir = new Vector3f(m_akCoords[m_aiAxisOrder[2]]);
-        Vector3f kCUp = new Vector3f(m_akCoords[m_aiAxisOrder[1]]);
-        Vector3f kCRight = new Vector3f(m_akCoords[m_aiAxisOrder[0]]);
-        if ( m_abAxisFlip[2] )
-        {
-            kCLoc.Scale(-1);
-            kCDir.Scale(-1);
-        }
-        if ( m_abAxisFlip[1] )
-        {
-            kCUp.Scale(-1);
-        }
-        if ( m_abAxisFlip[0] )
-        {
-            kCRight.Scale(-1);
-        }
-        //invert y-axis
-        kCUp.Scale(-1);
-        if ( !bOn )
-        {
-            kCLoc.Scale(-1);
-            kCDir.Scale(-1);
-            kCRight.Scale(-1);
-        }
-        m_spkCamera.SetFrame( kCLoc, kCDir, kCUp, kCRight );
-    }
-        
-    public GLCanvas GetCanvas()
-    {
-        return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
-    }
-
-    private void drawAxes()
-    {
-        if ( m_bDrawAxes )
-        {     
-
-            ColorRGBA kXSliceHairColor =
-                new ColorRGBA( m_aakColors[m_iPlaneOrientation][0].R,
-                               m_aakColors[m_iPlaneOrientation][0].G,
-                               m_aakColors[m_iPlaneOrientation][0].B, 1.0f );
-
-            ColorRGBA kYSliceHairColor =
-                new ColorRGBA( m_aakColors[m_iPlaneOrientation][1].R,
-                               m_aakColors[m_iPlaneOrientation][1].G,
-                               m_aakColors[m_iPlaneOrientation][1].B, 1.0f );
-            
-            if ( !m_kImageA.getRadiologicalView() && (m_iPlaneOrientation != FileInfoBase.SAGITTAL) )
-            {
-                if ( !m_bPatientOrientation )
-                {
-                    m_kLabelXDisplay = new String( "-X" );
-                }
-                else
-                {
-                    m_kLabelXDisplay = new String( "R" );
-                }
-            }
-            else if ( m_iPlaneOrientation != FileInfoBase.SAGITTAL )
-            {
-                if ( !m_bPatientOrientation )
-                {
-                    m_kLabelXDisplay = new String( "X" );
-                }
-                else
-                {
-                    m_kLabelXDisplay = new String( "L" );
-                }
-            }
-            if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
-            {
-                m_pkRenderer.Draw( m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
-                m_pkRenderer.Draw( m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());
-            }
-            else
-            {
-                m_pkRenderer.Draw( m_iLabelX_SpacingX, m_iHeight - m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
-                m_pkRenderer.Draw( m_iLabelY_SpacingX, m_iHeight - m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());               
-            }
-            m_pkRenderer.SetCamera(m_spkScreenCamera);  
-            m_pkRenderer.Draw(m_kXArrow[0]);
-            m_pkRenderer.Draw(m_kXArrow[1]);
-            m_pkRenderer.Draw(m_kYArrow[0]);
-            m_pkRenderer.Draw(m_kYArrow[1]);
-            m_pkRenderer.SetCamera(m_spkCamera);
-        }
-    }
-    
-    private void CreateScene ()
-    {        
-        m_fX0 = -m_fXBox / m_fMaxBox;
-        m_fX1 = m_fXBox / m_fMaxBox;
-        m_fY0 = -m_fYBox / m_fMaxBox;
-        m_fY1 = m_fYBox / m_fMaxBox;
-        
-        m_fXRange = m_fX1 - m_fX0;
-        m_fYRange = m_fY1 - m_fY0;
-
-        m_iSlice = (m_aiLocalImageExtents[2]) / 2;
-              
-        CreateLabels();
-    }
-
-    public void AddSlices( VolumeSlices kVolumeSlice  )
-    {
-        m_kDisplayList.add(kVolumeSlice);
-    }
-
-    /**
-     * Closes the frame.
-     */
-    public void close() {
-        disposeLocal();
-    }
-
-    /**
-     * Clean memory.
-     */
-    public void disposeLocal() {
-        m_kImageA = null;
-        m_kImageB = null;
-
-        for (int i = 0; i < 3; i++)
-        {
-            for (int j = 0; j < 3; j++)
-            {
-                m_aakColors[i][j] = null;
-            }
-            m_aakColors[i] = null;
-        }
-        m_aakColors = null;
-
-        m_kLabelX = null;
-        m_kLabelY = null;
-    }
-
-    /**
-     * Accessor that returns the reference to image A.
-     *
-     * @return  Image A.
-     */
-    public ModelImage getImageA() {
-        return m_kImageA;
-    }
-
-    /**
-     * Accessor that returns the reference to image B.
-     *
-     * @return  Image B.
-     */
-    public ModelImage getImageB() {
-        return m_kImageB;
-    }
-
-
-    /**
-     * One of the overrides necessary to be a MouseListener. This function is
-     * invoked when a mouse button is held down and the mouse is dragged in
-     * the active window area.
-     *
-     * @param  kEvent  the mouse event generated by a mouse drag
+    /* (non-Javadoc)
+     * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
      */
     public void mouseDragged(MouseEvent kEvent) {
         //super.mouseDragged(kEvent);
@@ -578,14 +427,8 @@ public class PlaneRender_WM extends GPURenderBase
 
     }
 
-    /**
-     * One of the overrides necessary to be a MouseListener.
-     *
-     * <p>If the left mouse button is pressed, the function sets the
-     * m_bLeftMousePressed to be true, and records the current canvas width
-     * and height.</p>
-     *
-     * @param  kEvent  the mouse event generated by a mouse press
+    /* (non-Javadoc)
+     * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mousePressed(java.awt.event.MouseEvent)
      */
     public void mousePressed(MouseEvent kEvent) {
         super.mousePressed(kEvent);
@@ -600,10 +443,8 @@ public class PlaneRender_WM extends GPURenderBase
         m_fMouseY = kEvent.getY();
     }
 
-    /**
-     * One of the overrides necessary to be a MouseListener.
-     *
-     * @param  kEvent  the mouse event generated by a mouse release
+    /* (non-Javadoc)
+     * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseReleased(java.awt.event.MouseEvent)
      */
     public void mouseReleased(MouseEvent kEvent) {
 
@@ -622,6 +463,41 @@ public class PlaneRender_WM extends GPURenderBase
         m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#reshape(javax.media.opengl.GLAutoDrawable, int, int, int, int)
+     */
+    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
+    	if ( m_kVolumeImageA == null ) {
+        	return;
+        }
+    	
+        if (iWidth > 0 && iHeight > 0)
+        {            
+            if ( m_bUpdateSpacing )
+            {
+                m_iLabelX_SpacingX *= (float)iWidth/(float)m_iWidth;
+                m_iLabelX_SpacingY *= (float)iHeight/(float)m_iHeight;
+                m_iLabelY_SpacingX *= (float)iWidth/(float)m_iWidth;
+                m_iLabelY_SpacingY *= (float)iHeight/(float)m_iHeight;
+            }
+            m_bUpdateSpacing = true;
+            
+            
+            if (m_pkRenderer != null)
+            {
+                m_pkRenderer.Resize(iWidth,iHeight);
+            }
+            
+            m_iWidth = iWidth;
+            m_iHeight = iHeight;
+            m_bModified = true;
+            m_spkCamera.Perspective = false;
+            m_spkCamera.SetFrustum(m_fUpFOV,m_iWidth/(float)m_iHeight,1f,5.0f);
+            m_pkRenderer.OnFrustumChange();
+        }
+        
+    }
+
     /**
      * Sets the background color for the frame and rendered image.
      *
@@ -634,9 +510,77 @@ public class PlaneRender_WM extends GPURenderBase
     }
 
     /**
-     * Sets the default color for the SliceHairColor.
+     * setCenter sets the cursor and slice position for this PlaneRenderWM
+     * object, based on the 3D location of the three intersecting ModelImage
+     * planes.
+     * @param center, the 3D center in FileCoordinates of the three
+     * intersecting ModelImage planes.
+     */
+    public void setCenter( Vector3f center )
+    {
+        ModelImage kImage = m_kVolumeImageA.GetImage();
+        m_bModified = true;
+        m_afModelPosition[0] = center.X/(kImage.getExtents()[0] -1);
+        m_afModelPosition[1] = center.Y/(kImage.getExtents()[1] -1);
+        m_afModelPosition[2] = center.Z/(kImage.getExtents()[2] -1);
+        Vector3f patientPt = new Vector3f();
+        MipavCoordinateSystems.fileToPatient( center, patientPt, kImage, m_iPlaneOrientation );
+        setSlice( patientPt.Z );
+    }
+
+    /**
+     * Causes re-display.
+     * @param bModified
+     */
+    public void SetModified ( boolean bModified )
+    {
+        m_bModified = bModified;
+    }
+
+    /**
+     * Sets the view to Radiological (true) or Neurological (false) view.
+     * @param bOn
+     */
+    public void setRadiologicalView( boolean bOn )
+    {
+        if ( m_iPlaneOrientation == FileInfoBase.SAGITTAL )
+        {
+            return;
+        }
+        
+        Vector3f kCLoc = new Vector3f(m_akCLoc[m_aiAxisOrder[2]]);
+        Vector3f kCDir = new Vector3f(m_akCoords[m_aiAxisOrder[2]]);
+        Vector3f kCUp = new Vector3f(m_akCoords[m_aiAxisOrder[1]]);
+        Vector3f kCRight = new Vector3f(m_akCoords[m_aiAxisOrder[0]]);
+        if ( m_abAxisFlip[2] )
+        {
+            kCLoc.Scale(-1);
+            kCDir.Scale(-1);
+        }
+        if ( m_abAxisFlip[1] )
+        {
+            kCUp.Scale(-1);
+        }
+        if ( m_abAxisFlip[0] )
+        {
+            kCRight.Scale(-1);
+        }
+        //invert y-axis
+        kCUp.Scale(-1);
+        if ( !bOn )
+        {
+            kCLoc.Scale(-1);
+            kCDir.Scale(-1);
+            kCRight.Scale(-1);
+        }
+        m_spkCamera.SetFrame( kCLoc, kCDir, kCUp, kCRight );
+    }
+
+    /**
+     * Sets the color for the PlaneRender iView (AXIAL, SAGITTAL, CORONAL) slice.
      *
-     * @param  kColor  set the hair color to this color
+     * @param  iView  (AXIAL, SAGITTAL, CORONAL)
+     * @param  kColor  the new axis color attribute.
      */
     public void setSliceHairColor(int iView, ColorRGB kColor) {
         int iX = 0;
@@ -665,9 +609,9 @@ public class PlaneRender_WM extends GPURenderBase
     }
 
     /**
-     * Turns displaying the Axis labes on or off:
+     * Turns displaying the Axis labels on or off:
      *
-     * @param bShow when true display the axis lables, when false hide the
+     * @param bShow when true display the axis lablels, when false hide the
      * axis labels
      */
     public void showAxes(boolean bShow) {
@@ -689,7 +633,101 @@ public class PlaneRender_WM extends GPURenderBase
 
 
     /**
-     * Draws the Z box, the X bar and the Y bar:.
+     * Based on the orientation of the ModelImage, sets up the index
+     * parameters, m_aiLocalImageExtents[0], m_aiLocalImageExtents[1], and
+     * m_aiLocalImageExtents[2], the drawing colors for the z box, x and y
+     * bars, and the invert flags.
+     *
+     * <p>Once setup everything is rendered into an x,y plane where x,y may be
+     * any of the original x,y, or z dimensions in the original
+     * ModelImage.</p>
+     */
+    protected void setOrientation() 
+    {
+        ModelImage kImage = m_kVolumeImageA.GetImage();
+        m_aiAxisOrder = MipavCoordinateSystems.getAxisOrder(kImage, m_iPlaneOrientation);
+        m_abAxisFlip = MipavCoordinateSystems.getAxisFlip(kImage, m_iPlaneOrientation);
+        m_aiLocalImageExtents = kImage.getExtents( m_iPlaneOrientation );
+
+        float[] afResolutions = kImage.getResolutions( 0, m_iPlaneOrientation );
+
+        if ((afResolutions[0] == 0.0f) || (afResolutions[1] == 0.0f) || (afResolutions[2] == 0.0f)) {
+            afResolutions[0] = 1.0f;
+            afResolutions[1] = 1.0f;
+            afResolutions[2] = 1.0f;
+        }
+
+        m_fXBox = (m_aiLocalImageExtents[0] - 1) * afResolutions[0];
+        m_fYBox = (m_aiLocalImageExtents[1] - 1) * afResolutions[1];
+
+        m_fMaxBox = m_fXBox;
+
+        if (m_fYBox > m_fMaxBox) {
+            m_fMaxBox = m_fYBox;
+        }
+
+        if ( kImage.getImageOrientation() != FileInfoBase.UNKNOWN_ORIENT )
+        {
+            if ((m_iPlaneOrientation == FileInfoBase.AXIAL) ||
+                (m_iPlaneOrientation == FileInfoBase.CORONAL)) {
+                m_kLabelX = new String("L");
+            } else {
+                m_kLabelX = new String("P");
+            }
+
+            if ((m_iPlaneOrientation == FileInfoBase.SAGITTAL) ||
+                (m_iPlaneOrientation == FileInfoBase.CORONAL)) {
+                m_kLabelY = new String("S");
+            } else {
+                m_kLabelY = new String("P");
+            }
+        }
+        else
+        {
+            m_bPatientOrientation = false;
+            if ( m_iPlaneOrientation == FileInfoBase.SAGITTAL )
+            {
+                m_kLabelX = new String("Z");
+                m_kLabelY = new String("Y");
+            }
+            else if ( m_iPlaneOrientation == FileInfoBase.CORONAL )
+            {
+                m_kLabelX = new String("X");
+                m_kLabelY = new String("Z");
+            }
+        }
+
+        m_kLabelXDisplay = new String( m_kLabelX );
+        if ( !m_kVolumeImageA.GetImage().getRadiologicalView() && (m_iPlaneOrientation != FileInfoBase.SAGITTAL) )
+        {
+            if ( !m_bPatientOrientation )
+            {
+                m_kLabelXDisplay = new String( "-X" );
+            }
+            else
+            {
+                m_kLabelXDisplay = new String( "R" );
+            }
+        }
+        if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
+        {
+            m_iLabelX_SpacingX = 50;
+            m_iLabelX_SpacingY = 20;
+            m_iLabelY_SpacingX = 10;
+            m_iLabelY_SpacingY = 68;
+        }
+        else
+        {     
+            m_iLabelX_SpacingX = 50;
+            m_iLabelX_SpacingY = 10;
+            m_iLabelY_SpacingX = 10;
+            m_iLabelY_SpacingY = 55;
+        }
+        
+    }
+    
+    /**
+     * Creates the TriMesh data structures for the axis arrows.
      */
     private void CreateLabels()
     {
@@ -823,39 +861,82 @@ public class PlaneRender_WM extends GPURenderBase
             m_pkRenderer.LoadResources(m_kYArrow[1]);
         }
     }
-    
+
     /**
-     * Calculate the position of the mouse in the Local Coordinates, taking
-     * into account zoom and translate:
-     *
-     * @param iX mouse x coordinate value
-     * @param iY mouse y coordinate value
-     * @param kLocal mouse position in Local Coordinates
+     * Initializes the display parameters.
      */
-    private void ScreenToLocal(int iX, int iY, Vector3f kLocal )
+    private void CreateScene ()
+    {        
+        m_fX0 = -m_fXBox / m_fMaxBox;
+        m_fX1 = m_fXBox / m_fMaxBox;
+        m_fY0 = -m_fYBox / m_fMaxBox;
+        m_fY1 = m_fYBox / m_fMaxBox;
+        
+        m_fXRange = m_fX1 - m_fX0;
+        m_fYRange = m_fY1 - m_fY0;
+
+        m_iSlice = (m_aiLocalImageExtents[2]) / 2;
+              
+        CreateLabels();
+    }
+
+    /**
+     * Called from the display function. Draws the axis arrows.
+     */
+    private void drawAxes()
     {
-        iX = Math.min( m_iWidth,  Math.max( 0, iX ) );
-        iY = Math.min( m_iHeight, Math.max( 0, iY ) );
-        float fHalfWidth = ((float) m_iWidth-1) / 2.0f;
-        float fHalfHeight = ((float) m_iHeight-1) / 2.0f;
+        if ( m_bDrawAxes )
+        {     
 
-        kLocal.X = (iX - fHalfWidth) / fHalfWidth;
-        kLocal.Y = (iY - fHalfHeight) / fHalfWidth;
+            ColorRGBA kXSliceHairColor =
+                new ColorRGBA( m_aakColors[m_iPlaneOrientation][0].R,
+                               m_aakColors[m_iPlaneOrientation][0].G,
+                               m_aakColors[m_iPlaneOrientation][0].B, 1.0f );
 
-        kLocal.X /= m_fZoomScale;
-        kLocal.Y /= m_fZoomScale;
-
-        kLocal.X -= m_fXTranslate;
-        kLocal.Y -= m_fYTranslate;
-
-        /* Bounds checking: */
-        kLocal.X = Math.min( Math.max( kLocal.X, m_fX0 ), m_fX1 );
-        kLocal.Y = Math.min( Math.max( kLocal.Y, m_fY0 ), m_fY1 );
-
-        /* Normalize: */
-        kLocal.X = (kLocal.X - m_fX0) / m_fXRange;
-        kLocal.Y = (kLocal.Y - m_fY0) / m_fYRange;
-        kLocal.Z = m_iSlice / (float)(m_aiLocalImageExtents[2] - 1);
+            ColorRGBA kYSliceHairColor =
+                new ColorRGBA( m_aakColors[m_iPlaneOrientation][1].R,
+                               m_aakColors[m_iPlaneOrientation][1].G,
+                               m_aakColors[m_iPlaneOrientation][1].B, 1.0f );
+            
+            if ( !m_kVolumeImageA.GetImage().getRadiologicalView() && (m_iPlaneOrientation != FileInfoBase.SAGITTAL) )
+            {
+                if ( !m_bPatientOrientation )
+                {
+                    m_kLabelXDisplay = new String( "-X" );
+                }
+                else
+                {
+                    m_kLabelXDisplay = new String( "R" );
+                }
+            }
+            else if ( m_iPlaneOrientation != FileInfoBase.SAGITTAL )
+            {
+                if ( !m_bPatientOrientation )
+                {
+                    m_kLabelXDisplay = new String( "X" );
+                }
+                else
+                {
+                    m_kLabelXDisplay = new String( "L" );
+                }
+            }
+            if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
+            {
+                m_pkRenderer.Draw( m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
+                m_pkRenderer.Draw( m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());
+            }
+            else
+            {
+                m_pkRenderer.Draw( m_iLabelX_SpacingX, m_iHeight - m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
+                m_pkRenderer.Draw( m_iLabelY_SpacingX, m_iHeight - m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());               
+            }
+            m_pkRenderer.SetCamera(m_spkScreenCamera);  
+            m_pkRenderer.Draw(m_kXArrow[0]);
+            m_pkRenderer.Draw(m_kXArrow[1]);
+            m_pkRenderer.Draw(m_kYArrow[0]);
+            m_pkRenderer.Draw(m_kYArrow[1]);
+            m_pkRenderer.SetCamera(m_spkCamera);
+        }
     }
 
     /* Convert the position in LocalCoordinates (rendering space) into
@@ -891,43 +972,8 @@ public class PlaneRender_WM extends GPURenderBase
         Vector3f patientPt = new Vector3f();
         this.LocalToPatient( localPt, patientPt );
         Vector3f volumePt = new Vector3f();
-        MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kImageA, m_iPlaneOrientation );
+        MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
         m_kParent.setSliceFromPlane( volumePt );
-    }
-
-    /**
-     * setCenter sets the cursor and slice position for this PlaneRenderWM
-     * object, based on the 3D location of the three intersecting ModelImage
-     * planes.
-     * @param center, the 3D center in FileCoordinates of the three
-     * intersecting ModelImage planes.
-     */
-    public void setCenter( Vector3f center )
-    {
-        m_bModified = true;
-        m_afModelPosition[0] = center.X/(m_kImageA.getExtents()[0] -1);
-        m_afModelPosition[1] = center.Y/(m_kImageA.getExtents()[1] -1);
-        m_afModelPosition[2] = center.Z/(m_kImageA.getExtents()[2] -1);
-        Vector3f patientPt = new Vector3f();
-        MipavCoordinateSystems.fileToPatient( center, patientPt, m_kImageA, m_iPlaneOrientation );
-        setSlice( patientPt.Z );
-    }
-
-    private void setSlice(float fSlice) {
-        int iSlice = (int)fSlice;
-
-        /* Check bounds: */
-        if (iSlice > (m_aiLocalImageExtents[2] - 1)) {
-            iSlice = m_aiLocalImageExtents[2] - 1;
-        }
-
-        if (iSlice < 0) {
-            iSlice = 0;
-        }
-
-        if (iSlice != m_iSlice) {
-            m_iSlice = iSlice;
-        }
     }
     
     /**
@@ -951,16 +997,16 @@ public class PlaneRender_WM extends GPURenderBase
             m_kActiveImage = m_kParent.getHistoRGBActiveImage();
         }
         if (m_kActiveImage == null) {
-            m_kActiveImage = m_kImageA;
+            m_kActiveImage = m_kVolumeImageA.GetImage();
         }
         
         m_kActiveLookupTable = m_kParent.getActiveLookupTable(m_kActiveImage);
         
         if ( m_kWinLevel.updateWinLevel( localPt.X, localPt.Y, m_bFirstDrag, m_kActiveLookupTable, m_kActiveImage ) )
         {
-            if ( m_kActiveImage == m_kImageA )
+            if ( m_kActiveImage == m_kVolumeImageA.GetImage() )
             {
-                if ( m_kImageA.isColorImage() )
+                if ( m_kVolumeImageA.GetImage().isColorImage() )
                 {
                     m_kParent.getRGBDialog().setRGBTA((ModelRGB)m_kActiveLookupTable);
                     m_kParent.getRGBDialog().update( );
@@ -970,9 +1016,9 @@ public class PlaneRender_WM extends GPURenderBase
                     m_kParent.getLUTDialog().setLUTA((ModelLUT)m_kActiveLookupTable);
                 }
             }
-            else if ( m_kActiveImage == m_kImageB )
+            else if ( m_kActiveImage == m_kVolumeImageB.GetImage() )
             {
-                if ( m_kImageB.isColorImage() )
+                if ( m_kVolumeImageB.GetImage().isColorImage() )
                 {
                     m_kParent.getRGBDialog().setRGBTB((ModelRGB)m_kActiveLookupTable);
                     m_kParent.getRGBDialog().update( );
@@ -996,101 +1042,58 @@ public class PlaneRender_WM extends GPURenderBase
     }
 
     /**
-     * Based on the orientaion of the ModelImage, sets up the index
-     * parameters, m_aiLocalImageExtents[0], m_aiLocalImageExtents[1], and
-     * m_aiLocalImageExtents[2], the drawing colors for the z box, x and y
-     * bars, and the invert flags.
+     * Calculate the position of the mouse in the Local Coordinates, taking
+     * into account zoom and translate:
      *
-     * <p>Once setup everything is rendered into an x,y plane where x,y may be
-     * any of the original x,y, or z dimensions in the original
-     * ModelImage.</p>
+     * @param iX mouse x coordinate value
+     * @param iY mouse y coordinate value
+     * @param kLocal mouse position in Local Coordinates
      */
-    protected void setOrientation() {
+    private void ScreenToLocal(int iX, int iY, Vector3f kLocal )
+    {
+        iX = Math.min( m_iWidth,  Math.max( 0, iX ) );
+        iY = Math.min( m_iHeight, Math.max( 0, iY ) );
+        float fHalfWidth = ((float) m_iWidth-1) / 2.0f;
+        float fHalfHeight = ((float) m_iHeight-1) / 2.0f;
 
-        m_aiAxisOrder = MipavCoordinateSystems.getAxisOrder(m_kImageA, m_iPlaneOrientation);
-        m_abAxisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageA, m_iPlaneOrientation);
-        m_aiLocalImageExtents = m_kImageA.getExtents( m_iPlaneOrientation );
+        kLocal.X = (iX - fHalfWidth) / fHalfWidth;
+        kLocal.Y = (iY - fHalfHeight) / fHalfWidth;
 
-        float[] afResolutions = m_kImageA.getResolutions( 0, m_iPlaneOrientation );
+        kLocal.X /= m_fZoomScale;
+        kLocal.Y /= m_fZoomScale;
 
-        if ((afResolutions[0] == 0.0f) || (afResolutions[1] == 0.0f) || (afResolutions[2] == 0.0f)) {
-            afResolutions[0] = 1.0f;
-            afResolutions[1] = 1.0f;
-            afResolutions[2] = 1.0f;
-        }
+        kLocal.X -= m_fXTranslate;
+        kLocal.Y -= m_fYTranslate;
 
-        m_fXBox = (m_aiLocalImageExtents[0] - 1) * afResolutions[0];
-        m_fYBox = (m_aiLocalImageExtents[1] - 1) * afResolutions[1];
+        /* Bounds checking: */
+        kLocal.X = Math.min( Math.max( kLocal.X, m_fX0 ), m_fX1 );
+        kLocal.Y = Math.min( Math.max( kLocal.Y, m_fY0 ), m_fY1 );
 
-        m_fMaxBox = m_fXBox;
-
-        if (m_fYBox > m_fMaxBox) {
-            m_fMaxBox = m_fYBox;
-        }
-
-        if ( m_kImageA.getImageOrientation() != FileInfoBase.UNKNOWN_ORIENT )
-        {
-            if ((m_iPlaneOrientation == FileInfoBase.AXIAL) ||
-                (m_iPlaneOrientation == FileInfoBase.CORONAL)) {
-                m_kLabelX = new String("L");
-            } else {
-                m_kLabelX = new String("P");
-            }
-
-            if ((m_iPlaneOrientation == FileInfoBase.SAGITTAL) ||
-                (m_iPlaneOrientation == FileInfoBase.CORONAL)) {
-                m_kLabelY = new String("S");
-            } else {
-                m_kLabelY = new String("P");
-            }
-        }
-        else
-        {
-            m_bPatientOrientation = false;
-            if ( m_iPlaneOrientation == FileInfoBase.SAGITTAL )
-            {
-                m_kLabelX = new String("Z");
-                m_kLabelY = new String("Y");
-            }
-            else if ( m_iPlaneOrientation == FileInfoBase.CORONAL )
-            {
-                m_kLabelX = new String("X");
-                m_kLabelY = new String("Z");
-            }
-        }
-
-        m_kLabelXDisplay = new String( m_kLabelX );
-        if ( !m_kImageA.getRadiologicalView() && (m_iPlaneOrientation != FileInfoBase.SAGITTAL) )
-        {
-            if ( !m_bPatientOrientation )
-            {
-                m_kLabelXDisplay = new String( "-X" );
-            }
-            else
-            {
-                m_kLabelXDisplay = new String( "R" );
-            }
-        }
-        if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
-        {
-            m_iLabelX_SpacingX = 50;
-            m_iLabelX_SpacingY = 20;
-            m_iLabelY_SpacingX = 10;
-            m_iLabelY_SpacingY = 68;
-        }
-        else
-        {     
-            m_iLabelX_SpacingX = 50;
-            m_iLabelX_SpacingY = 10;
-            m_iLabelY_SpacingX = 10;
-            m_iLabelY_SpacingY = 55;
-        }
-        
+        /* Normalize: */
+        kLocal.X = (kLocal.X - m_fX0) / m_fXRange;
+        kLocal.Y = (kLocal.Y - m_fY0) / m_fYRange;
+        kLocal.Z = m_iSlice / (float)(m_aiLocalImageExtents[2] - 1);
     }
 
-    public void SetModified ( boolean bModified )
-    {
-        m_bModified = bModified;
+    /**
+     * Sets the local slice value.
+     * @param fSlice
+     */
+    private void setSlice(float fSlice) {
+        int iSlice = (int)fSlice;
+
+        /* Check bounds: */
+        if (iSlice > (m_aiLocalImageExtents[2] - 1)) {
+            iSlice = m_aiLocalImageExtents[2] - 1;
+        }
+
+        if (iSlice < 0) {
+            iSlice = 0;
+        }
+
+        if (iSlice != m_iSlice) {
+            m_iSlice = iSlice;
+        }
     }
     
 }

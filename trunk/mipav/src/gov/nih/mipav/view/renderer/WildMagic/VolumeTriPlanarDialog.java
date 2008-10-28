@@ -1,18 +1,37 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
 
-import gov.nih.mipav.model.structures.*;
-
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
 
-import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
 
 
+/**
+ * @author Alexandra
+ *
+ */
 public class VolumeTriPlanarDialog extends JInterfaceBase {
 
     // ~ Static fields/initializers
@@ -60,7 +79,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
     /** Number of available dimension. */
     private int nDim;
 
-    /** Resample resolutioin corresponding to Power of 2. */
+    /** Resample resolution corresponding to Power of 2. */
     private float[] newRes = new float[3];
 
     /**
@@ -69,7 +88,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
      */
     private JButton padButton;
 
-    /** Original resolutioin arrray. */
+    /** Original resolution array. */
     private float[] res;
 
     /** Temp Model image. */
@@ -98,11 +117,9 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
      * 
      * @param _imageA Model image A.
      * @param _imageB Model image B.
+     * @param kCommand, the re-sample command.
      */
     public VolumeTriPlanarDialog(ModelImage _imageA, ModelImage _imageB, String kCommand) {
-
-        // super(ViewUserInterface.getReference().getMainFrame(), false);
-
         m_kVolViewType = kCommand;
         imageAOriginal = _imageA;
         imageA = (ModelImage) (_imageA.clone());
@@ -206,30 +223,9 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Makes the dialog visible in center of screen.
-     * 
-     * @param status Flag indicating if the dialog should be visible.
-     */
-    public void setVisible(boolean status) {
 
-        if ( (status == true) && (isVisible() == false)) {
-
-            // move to center if not yet visible. note that if 'status' param is false
-            // the dialog should not be centered, because centering it just before
-            // it is made invisible will cause it to flash on screen briefly in the
-            // center of the screen. its not noticable if the dialog is already
-            // centered, but if the user has moved the dialog, it is annoying to see.
-            MipavUtil.centerOnScreen(this);
-        }
-
-        super.setVisible(status);
-    }
-
-    /**
-     * On "OK", sets the name variable to the text entered. On "Cancel" disposes of this dialog and sets cancel flag.
-     * 
-     * @param event Event that triggered this method.
+    /* (non-Javadoc)
+     * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -460,6 +456,9 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
     }
 
+    /**
+     * Initializes the dialog user-interface.
+     */
     public void init() {
         setTitle("Resample Dialog");
 
@@ -675,9 +674,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
     }
 
     /**
-     * Sets the flags for the checkboxes.
-     * 
-     * @param event event that triggered this function
+     * @param event
      */
     public synchronized void itemStateChanged(@SuppressWarnings("unused")
     ItemEvent event) {}
@@ -689,6 +686,26 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
      */
     public void sendActionOnStart(String cmd) {
         startupCommand = cmd;
+    }
+
+    /**
+     * Makes the dialog visible in center of screen.
+     * 
+     * @param status Flag indicating if the dialog should be visible.
+     */
+    public void setVisible(boolean status) {
+
+        if ( (status == true) && (isVisible() == false)) {
+
+            // move to center if not yet visible. note that if 'status' param is false
+            // the dialog should not be centered, because centering it just before
+            // it is made invisible will cause it to flash on screen briefly in the
+            // center of the screen. its not noticable if the dialog is already
+            // centered, but if the user has moved the dialog, it is annoying to see.
+            MipavUtil.centerOnScreen(this);
+        }
+
+        super.setVisible(status);
     }
 
     /**
@@ -829,10 +846,8 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
     }
 
     /**
-     * Check if given value is power of 2 withint the range 16 to 512.
-     * 
+     * Check if given value is power of 2 within the range 16 to 512.
      * @param value given integer value.
-     * 
      * @return true is power of 2, false not.
      */
     private boolean isPowerOfTwo(int value) {
