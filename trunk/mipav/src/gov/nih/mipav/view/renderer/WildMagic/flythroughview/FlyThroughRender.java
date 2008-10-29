@@ -539,7 +539,11 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             Polyline kGeometryBranchPath = createBranchPathGeometryScaled(iBranch);
             kGeometryBranchPath.AttachEffect( new VertexColor3Effect() );
             m_spkScene.AttachChild(kGeometryBranchPath);
-            m_kParent.addGeometry(new Polyline(kGeometryBranchPath.VBuffer, false, true));
+            Polyline kPoly = new Polyline(kGeometryBranchPath.VBuffer, false, true);
+            kPoly.AttachEffect( new VertexColor3Effect() );
+            Node kPolyNode = new Node();
+            kPolyNode.AttachChild(kPoly);
+            m_kParent.addNode( kPolyNode );
 
             m_aiBranchIndexUnvisitedMin[iBranch] = 0;
             m_aiBranchIndexUnvisitedMax[iBranch] = kGeometryBranchPath.VBuffer.GetVertexQuantity() - 1;
@@ -547,7 +551,11 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             kGeometryBranchPath = createBranchConnectGeometryScaled(iBranch);
             kGeometryBranchPath.AttachEffect( new VertexColor3Effect() );
             m_spkScene.AttachChild(kGeometryBranchPath);
-            m_kParent.addGeometry(new Polyline(kGeometryBranchPath.VBuffer, false, true));
+            kPoly = new Polyline(kGeometryBranchPath.VBuffer, false, true);
+            kPoly.AttachEffect( new VertexColor3Effect() );
+            kPolyNode = new Node();
+            kPolyNode.AttachChild(kPoly);
+            m_kParent.addNode( kPolyNode );
         }
         
 
@@ -567,8 +575,11 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         {
             kSpherePosition.VBuffer.SetColor3(0, i, 1, 0, 0 );
         }
-        kSpherePosition.SetName( "FlyThrough" );
-        m_kParent.addGeometry( kSpherePosition );
+        kSpherePosition.AttachEffect( new VertexColor3Effect() );
+        Node kSphereNode = new Node();
+        kSphereNode.AttachChild(kSpherePosition);
+        kSphereNode.SetName( "FlyThrough" );
+        m_kParent.addNode( kSphereNode );
 
         // Setup behavior to handle flying down the path and
         // looking around.

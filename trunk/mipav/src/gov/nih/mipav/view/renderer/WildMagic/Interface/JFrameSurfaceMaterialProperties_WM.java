@@ -131,7 +131,7 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
      */
     public JFrameSurfaceMaterialProperties_WM(JPanelSurface_WM kParent, int iSurface,
                                               Light[] akGeneralLights,
-                                              /*float fOpacity,*/ MaterialState kMaterial, Animator kAnimator)
+                                              /*float fOpacity,*/ MaterialState kMaterial )
     {
 
         /* Create the window: */
@@ -139,7 +139,7 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
 
         m_kParent = kParent;
         m_iSurfaceIndex = iSurface;
-        m_kAnimator = kAnimator;
+        m_kAnimator = new Animator();
         
         /* Setup the material properties of the two spheres, backing up the
          * original data: */
@@ -352,6 +352,7 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
      * @param  e  WindowEvent
      */
     public void windowClosing(WindowEvent e) {
+        m_kAnimator.stop();
         for (int i = 0; i < (2 + m_iNumPreset); i++) {
             m_kAnimator.remove(m_akSurfaceMaterial[i].GetCanvas());
         }
@@ -384,7 +385,10 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
      *
      * @param  e  WindowEvent
      */
-    public void windowOpened(WindowEvent e) { }
+    public void windowOpened(WindowEvent e) 
+    {
+        m_kAnimator.start();
+    }
 
     /**
      * Update the color changes to the Before sphere and the original surface.

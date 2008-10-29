@@ -23,7 +23,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 public class VolumeTriPlanarInterfaceDTI extends VolumeTriPlanarInterface 
-implements MouseListener, ItemListener, ChangeListener {
+implements ItemListener, ChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -360,7 +360,6 @@ implements MouseListener, ItemListener, ChangeListener {
             buildClipPanel();
             buildSlicePanel();
             buildSurfacePanel();
-            buildProbePanel();
             buildGeodesic();
             buildSculpt();
             
