@@ -1726,7 +1726,7 @@ public class FileDicom extends FileDicomBase {
             rawChunkFile.close();
             data = null;
             dataRGB = null;
-            fileInfo = null;
+            //fileInfo = null;
         } catch (IOException error) {
             throw new IOException("FileDicomWrite: " + error);
         } catch (OutOfMemoryError error) {

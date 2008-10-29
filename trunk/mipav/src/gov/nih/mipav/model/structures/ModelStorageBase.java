@@ -6322,9 +6322,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public void setFileInfo(FileInfoBase[] fInfo) {
     	
         if ((fInfo != null) && (fileInfo != fInfo)) {
-        	for(int i=0;i<fileInfo.length;i++) {
-        		fileInfo[i].finalize();
-        	}
+        	//for(int i=0;i<fileInfo.length;i++) {
+        	//	fileInfo[i].finalize();
+        	//}
             fileInfo = fInfo;
         }      
     }
@@ -6336,12 +6336,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  idx    index that typically indicates image slice.
      */
     public void setFileInfo(FileInfoBase fInfo, int idx) {
-    	if(fileInfo == null) {
-    		return;
-    	}
-    	if((fileInfo[idx] != null) && (fileInfo[idx] != fInfo)) {
-    		fileInfo[idx].finalize();
-    	}
+    	//if(fileInfo == null) {
+    	//	return;
+    	//}
+    	//if((fileInfo[idx] != null) && (fileInfo[idx] != fInfo)) {
+    	//	fileInfo[idx].finalize();
+    	//}
         fileInfo[idx] = fInfo;
     }
 
