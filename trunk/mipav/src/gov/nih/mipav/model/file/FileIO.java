@@ -8692,22 +8692,10 @@ public class FileIO {
                 } else {
                     newType = ModelImage.SHORT;
                 }
-                double newMin, newMax;
-                if (originalImageMin >= 0) {
-                    // give USHORT range
-                    newMin = 0;
-                    newMax = 65535;
 
-                } else {
-                    // give SHORT range
-                    newMin = Short.MIN_VALUE;
-                    newMax = Short.MAX_VALUE;
-                }
-                volMin = newMin;
-                volMax = newMax;
                 // in-place conversion is required so that the minc file info is retained
                 AlgorithmChangeType convertType = new AlgorithmChangeType(clonedImage, newType, originalImageMin,
-                        originalImageMax, newMin, newMax, false);
+                        originalImageMax, clonedImage.getMin(), clonedImage.getMax(), false);
                 convertType.run();
 
                 image = clonedImage;
@@ -9158,20 +9146,9 @@ public class FileIO {
                 } else {
                     newType = ModelImage.SHORT;
                 }
-                double newMin, newMax;
-                if (image.getMin() >= 0) {
-                    // give USHORT range
-                    newMin = 0;
-                    newMax = 65535;
-
-                } else {
-                    // give SHORT range
-                    newMin = Short.MIN_VALUE;
-                    newMax = Short.MAX_VALUE;
-                }
                 // in-place conversion is required so that the minc file info is retained
                 AlgorithmChangeType convertType = new AlgorithmChangeType(clonedImage, newType, clonedImage.getMin(),
-                        clonedImage.getMax(), newMin, newMax, false);
+                        clonedImage.getMax(), clonedImage.getMin(), clonedImage.getMax(), false);
                 convertType.run();
 
                 image = clonedImage;
