@@ -628,7 +628,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         else if(command.equalsIgnoreCase("help")) {
         	 if (tabs.getSelectedIndex() == 0) //if on registration tab
              {
-        		MipavUtil.showHelp("AnMPmaps002"); 
+        		MipavUtil.showHelp("CrMPmaps001"); 
              }else {
             	 MipavUtil.showHelp("AnMPmaps002"); 
              }
