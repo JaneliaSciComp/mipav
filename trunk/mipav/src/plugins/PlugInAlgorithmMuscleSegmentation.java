@@ -10,7 +10,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
@@ -24,7 +23,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-import javax.sound.sampled.Line;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -36,6 +34,8 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
+
+import PlugInAlgorithmMuscleSegmentation.MusclePane.DependencyNode;
 
 
 /**
@@ -138,7 +138,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
         this.fileName = fileName;
         this.imageDir = srcImg.getImageDirectory();
         
-        tabs = new ArrayList();
+        tabs = new ArrayList<JPanel>();
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -174,14 +174,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
             case RunTimeDefined: 
             	customPane = new ViewJFrameImage(srcImage);
             	customPane.setVisible(false);
-        		titlesArr = new ArrayList();
+        		titlesArr = new ArrayList<JTextField>();
         	    
         		//removes extra scrollPane from the mipav-loaded plugin
         		if (ViewUserInterface.getReference().isAppFrameVisible()) {
         			customPane.getContentPane().remove(0);
         	    } 
             	
-        		customVOI = new ArrayList();
+        		customVOI = new ArrayList<ArrayList<MusclePane>>();
         		FileManager manager = new FileManager(this);
 		    	manager.fileRead(srcImage.getImageDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator+fileName);	
         		
@@ -684,7 +684,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	 */
 	private JPanel initDialogBox() {
 		customPane = new ViewJFrameImage(srcImage);
-		titlesArr = new ArrayList();
+		titlesArr = new ArrayList<JTextField>();
 		
 		JPanel mainPanel = initMainPanel();
 		
@@ -755,7 +755,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 	    tabs[0].setPreferredSize(new Dimension(370, 585));
 	    tabs[0].setMaximumSize(new Dimension (370, 8000));
     	
-	    verticalPane = new ArrayList();
+	    verticalPane = new ArrayList<JScrollPane>();
 	    JScrollPane verticalPaneSingle = new JScrollPane(tabs[0], ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, 
 										ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 	    verticalPaneSingle.addComponentListener(this);
@@ -795,8 +795,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		saveButton.addActionListener(this);
 		
 		if(currentTab == 0)
-			customVOI = new ArrayList();
-		customVOI.add(new ArrayList());
+			customVOI = new ArrayList<ArrayList<MusclePane>>();
+		customVOI.add(new ArrayList<MusclePane>());
 		for(int i=0; i<4; i++) {
 			customVOI.get(currentTab).add(new MusclePane(this));
 			customVOI.get(currentTab).get(i).setBorder(MipavUtil.buildTitledBorder("VOI #"+(i+1)));
@@ -862,24 +862,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		
 		public FileManager(PlugInAlgorithmMuscleSegmentation parent) {
 			this.parent = parent;
-		}
-		
-		/**
-		 * Checks that the file specified by name exists and is the correct extension (nia).  Does
-		 * not check validity of file. Returned value indicates success of
-		 * checking file.
-		 * @param fileName
-		 * @return
-		 */
-		private boolean fileCheck(String fileName) {
-			File file = new File(fileName);
-			if(!file.exists())
-				return false;
-			JFileChooser fileChoose = new JFileChooser();
-			String fileType = fileChoose.getTypeDescription(file);
-			if(!fileType.equals("Text Document"))
-				return false;
-			return true;
 		}
 		
 		/**
@@ -1230,7 +1212,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 		}
 		
 		public void initDependents(int size) {
-			lineList = new ArrayList(size);
+			lineList = new ArrayList<DependencyNode>(size);
 			for(int j=0; j<size-1; j++) {
 				Point p1 = this.getLocationOnScreen();
 				Point2D.Double p2 = new Point2D.Double(p1.x-10, p1.y);
