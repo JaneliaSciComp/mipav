@@ -1648,7 +1648,7 @@ public class ViewJFrameGraph extends JFrame
             	if (messageGraph == null) {
                     messageGraph = new ViewJFrameMessageGraph("Fitting Data");
                 }
-
+            	
                 for (int i = 0; i < functions.length; i++) {
                 	float[] origX = graph.getFuncts()[i].getOriginalXs();
                 	float[] origY = graph.getFuncts()[i].getOriginalYs();
