@@ -1288,7 +1288,7 @@ public class FileIO {
         imageFile.finalize();
         imageFile = null;
         matrix = null;
-        refFileInfo = null;
+        //refFileInfo = null;
         bufferShort = null;
         bufferFloat = null;
 
@@ -9546,12 +9546,12 @@ public class FileIO {
         } else {
             originalImage.setFileInfo(originalFileInfos);
         }
-        
+        /*
         if(dicomFile != null) {
         	dicomFile.finalize();
         	dicomFile = null;
         }
-
+         */
         return true;
     }
 
