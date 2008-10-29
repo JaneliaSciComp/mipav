@@ -1,22 +1,50 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
-import javax.media.opengl.*;
-
-import com.sun.opengl.util.*;
+import gov.nih.mipav.model.file.FileWriteOptions;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeBoundingBox;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClip;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeDTI;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeOrientationCube;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeRayCast;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 
 import java.awt.Cursor;
-import java.awt.event.*;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 
-import gov.nih.mipav.view.renderer.WildMagic.Render.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLEventListener;
 
-import WildMagic.LibApplications.OpenGLApplication.*;
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Collision.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibRenderers.OpenGLRenderer.*;
+import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Vector4f;
+import WildMagic.LibGraphics.Collision.PickRecord;
+import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.Light;
+import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.Rendering.WireframeState;
+import WildMagic.LibGraphics.SceneGraph.Geometry;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
+
+import com.sun.opengl.util.Animator;
 
 public class VolumeTriPlanarRender extends GPURenderBase
 implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
@@ -26,6 +54,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     private Sculptor_WM m_kSculptor = null;
 
     /** Arbitrary clip plane equation: */
+    private float[] m_afArbEquation = new float[4];
     private Vector4f m_kArbitraryClip;
     /** Enable Arbitrary clip plane: */
     private boolean m_bArbClipOn = false;
@@ -37,17 +66,23 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * back-facing polygons of the proxy-geometry are shown instead of the volume: */
     private boolean m_bDisplaySecond = true;
 
+    /** 3D Slice renderer. */
     private VolumeSlices m_kSlices = null;
+    /** GPU-based ray cast renderer. */
     private VolumeRayCast m_kVolumeRayCast = null;
+    /** Clipping planes renderer */
     private VolumeClip m_kVolumeClip = null;
+    /** DTI renderer. */
     private VolumeDTI m_kDTIDisplay = null;
+    /** Volume bounding box renderer. */
     private VolumeBoundingBox m_kVolumeBox = null;
+    /** Orientation cube renderer */
     private VolumeOrientationCube m_kVolumeCube = null;
 
+    /** The first time the frame is rendererd use the shader to calculate the normals for the volume data. */
     private boolean m_bFirstRender = true;
 
-    private float[] m_afArbEquation = new float[4];
-
+    /** Painting parameters: */
     private boolean m_bPaintEnabled = false;
     private boolean m_bPaint = false;
     private boolean m_bErase = false;
@@ -56,30 +91,36 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     private ColorRGBA m_kPaintColor = null;
     private int m_iBrushSize = 1;
     
+    /** Geodesic enabled on/off. */
     private boolean m_bGeodesicEnabled = false;
 
+    /** Stereo on/off. */
     private boolean m_bStereo = false;
+    /** Stereo left-eye view */
     private boolean m_bLeft = true;
+    /** Stereo right-eye view */
     private boolean m_bRight = true;    
-
+    
+    /** BrainSurfaceFlattener pick correspondence enabled on/off. */
     private boolean m_bPickCorrespondence = false;
+    
+    /** Set to true when cropping the volume in the shader. */
     private boolean m_bCrop = false;
 
-
+    /**
+     * Default Constructor.
+     */
     public VolumeTriPlanarRender()
     {
         super();
     }
-    
-    
+        
     /**
-     * Constructs a new GPUVolumeRender object.
-     * @param kImageA ModelImage A
-     * @param kLUTa, LUT for ModelImage A
-     * @param kRGBTa, RGB lookup table for ModelImage A
-     * @param kImageB ModelImage B
-     * @param kLUTb, LUT for ModelImage B
-     * @param kRGBTb, RGB lookup table for ModelImage B
+     * Construct the Volume/Surface/Tri-Planar renderer.
+     * @param kParent, parent user-interface and frame.
+     * @param kAnimator, animator used to display the canvas.
+     * @param kVolumeImageA, volume data and textures for ModelImage A.
+     * @param kVolumeImageB, volume data and textures for ModelImage B.
      */
     public VolumeTriPlanarRender( VolumeTriPlanarInterface kParent, Animator kAnimator, 
             VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
@@ -101,6 +142,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
     
     
+    /**
+     * Add a new geodesic component to the surface.
+     * @param kSurface, the surface the geodesic component is added to.
+     * @param kNew, the new geodesic component.
+     * @param iGroup, the display group to add to.
+     */
     public void addGeodesic( TriMesh kSurface, Geometry kNew, int iGroup )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -116,6 +163,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
 
 
+    /**
+     * Add a new scene-graph node to the display list.
+     * @param kNode
+     */
     public void addNode(Node kNode)
     {
         m_kDisplayList.add( new VolumeNode( m_pkRenderer, m_kVolumeImageA,
@@ -139,6 +190,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kDTIDisplay.SetDisplay( true );
     }
 
+    /**
+     * Add surfaces to the display list.
+     * @param akSurfaces
+     */
     public void addSurface(TriMesh[] akSurfaces)
     {
         for ( int i = 0; i < akSurfaces.length; i++ )
@@ -154,25 +209,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_bSurfaceUpdate = true;
     }
 
-    public VolumeSurface[] getSurfaces( String[] akSurfaceNames )
-    {
-        VolumeSurface[] akVolumeSurfaces = new VolumeSurface[akSurfaceNames.length];
-        int iCount = 0;
-        for ( int i = 0; i < m_kDisplayList.size(); i++ )
-        {
-            if ( m_kDisplayList.get(i).GetName() != null )
-            {
-                for ( int j = 0; j < akSurfaceNames.length; j++ )
-                {
-                    if ( m_kDisplayList.get(i).GetName().equals(akSurfaceNames[j]))
-                    {
-                        akVolumeSurfaces[iCount++] = (VolumeSurface)m_kDisplayList.get(i);
-                    }
-                }
-            }
-        }
-        return akVolumeSurfaces;
-    }
     /**
      * Add tract into the DTI display
      * @param kLine   polyline
@@ -191,7 +227,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kDTIDisplay.SetDisplay( true );
        
     }
-
     /**
      * Apply the sculpt region to the volume.
      */
@@ -238,20 +273,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Sets blending between imageA and imageB.
      * @param fValue, the blend value (0-1)
      */
-    public void setABBlend( float fValue )
-    {
-        if ( m_kVolumeRayCast != null )
-        {
-            m_kVolumeRayCast.setABBlend(fValue);
-        }
-    }
-
-    
-    /**
-     * Sets blending between imageA and imageB.
-     * @param fValue, the blend value (0-1)
-     */
-    public void Blend( String kSurfaceName, float fValue )
+    public void blend( String kSurfaceName, float fValue )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
@@ -265,7 +287,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
-
     /**
      * Clear the sculpt region.
      */
@@ -277,7 +298,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
-
+    
     /**
      * Display the volume in Composite mode.
      */
@@ -290,12 +311,17 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         ResetShaderParamsWindow();
     }
 
+
+    /**
+     * Crop the clipped volume.
+     */
     public void cropClipVolume()
     {
         m_bCrop = true;
         GetCanvas().display();
     }
-    
+
+
     /**
      * Display the volume in DDR mode.
      */
@@ -308,10 +334,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         ResetShaderParamsWindow();
     }
 
-    /**
-     * Part of the GLEventListener interface.
-     * display is called by the Animator object.
-     * @param arg0, the GLAutoDrawable (GLCanvas) to display.
+    /* (non-Javadoc)
+     * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
      */
     public void display(GLAutoDrawable arg0) {
         if ( !m_bVisible )
@@ -333,10 +357,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kVolumeRayCast.SetDisplay(true);   
             m_kSlices.SetDisplay(false);   
         }
-
-        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         MeasureTime();
-
         Move();
         Pick();
 
@@ -391,7 +412,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         }
     }
-
+    
     /**
      * Displays the arbitrary clip plane position.
      * @param bDisplay on/off.
@@ -408,7 +429,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Called from JPanelDisplay. Sets the bounding box display on/off.
      * @param bDisplay on/off.
      */
-    public void DisplayBoundingBox( boolean bDisplay )
+    public void displayBoundingBox( boolean bDisplay )
     {
         if ( m_kVolumeBox != null )
         {
@@ -426,7 +447,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kVolumeClip != null )
         {
             m_kVolumeClip.displayClipPlane(iWhich, bDisplay);
-            //m_kVolumeClip.SetDisplay(bDisplay);
         }
     }
 
@@ -442,7 +462,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         displayClipPlane( iWhich, bDisplay );
     }
 
-    public void DisplayNode( Node kNode, boolean bDisplay )
+    /**
+     * Toggle display of the scene-graphe node on/off.
+     * @param kNode, the node to toggle.
+     * @param bDisplay on/off.
+     */
+    public void displayNode( Node kNode, boolean bDisplay )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
@@ -460,22 +485,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Called from JPanelDisplay. Sets the orientation cube display on/off.
      * @param bDisplay on/off.
      */
-    public void DisplayOrientationCube( boolean bDisplay )
+    public void displayOrientationCube( boolean bDisplay )
     {
         if ( m_kVolumeCube != null )
         {
             m_kVolumeCube.SetDisplay(bDisplay);
-        }
-    }
-
-    public void DisplayPolyline(boolean bDisplay)
-    {
-        for ( int i = 0; i < m_kDisplayList.size(); i++ )
-        {
-            if ( m_kDisplayList.get(i) instanceof VolumeSurface )
-            {
-                m_kDisplayList.get(i).SetDisplay(bDisplay);
-            }
         }
     }
 
@@ -496,7 +510,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kShaderParamsWindow.setParent(this);
     }
 
-    public void DisplaySurface(boolean bDisplay)
+    /**
+     * Toggle surface display on/off.
+     * @param bDisplay
+     */
+    public void displaySurface(boolean bDisplay)
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
@@ -507,7 +525,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
-    public void DisplayVolumeRaycast( boolean bDisplay )
+    /**
+     * Toggle volume display on/off.
+     * @param bDisplay
+     */
+    public void displayVolumeRaycast( boolean bDisplay )
     {
         if ( m_kVolumeRayCast != null )
         {
@@ -515,7 +537,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
-    public void DisplayVolumeSlices( boolean bDisplay )
+    /**
+     * Toggle 3D Slice display on/off.
+     * @param bDisplay
+     */
+    public void displayVolumeSlices( boolean bDisplay )
     {
         if ( m_kSlices != null )
         {
@@ -523,8 +549,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
-    /**
-     * memory cleanup.
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#dispose()
      */
     public void dispose()
     {
@@ -617,7 +643,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
-
     /**
      * Enables the inverse-eye clip plane.
      * @param bEnable clipping enabled
@@ -637,11 +662,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
+    /**
+     * Enable geodesic curve calculations/display.
+     * @param bEnable
+     */
     public void enableGeodesic( boolean bEnable )
     {
         m_bGeodesicEnabled = bEnable;
     }
 
+    /**
+     * Enable painting on TriMesh surfaces.
+     * @param kPaintColor, paint color.
+     * @param iBrushSize, brush size.
+     * @param bEnabled, painting on/off.
+     * @param bPaint, when true apply paint.
+     * @param bDropper, when true do dropper mode.
+     * @param bPaintCan, when true do paint can mode.
+     * @param bErase, when true erase.
+     */
     public void enablePaint( ColorRGBA kPaintColor, int iBrushSize, boolean bEnabled, boolean bPaint, boolean bDropper, boolean bPaintCan, boolean bErase )
     {
         m_kPaintColor = kPaintColor;
@@ -652,7 +691,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_bPaintCan = bPaintCan;
         m_bErase = bErase;
     }
-
 
     /**
      * Enables and disables sculpting.
@@ -667,7 +705,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         m_kSculptor.enableSculpt(bSculpt);
     }
-
+    
+    /**
+     * Erase all surface paint.
+     */
     public void eraseAllPaint()
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -679,27 +720,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
-
     /**
+     * Return the material properties of the given surface.
+     * @param kSurfaceName, the surface to query.
+     * @return the material properties of the surface.
      */
-    public Vector3f GetCenter( String kSurfaceName )
-    {
-        for ( int i = 0; i < m_kDisplayList.size(); i++ )
-        {
-            if ( m_kDisplayList.get(i).GetName() != null )
-            {
-                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
-                {
-                    return ((VolumeSurface)(m_kDisplayList.get(i))).GetCenter();
-                }
-            }
-        }
-        return new Vector3f( Vector3f.ZERO );
-    }
-
-    /**
-     */
-    public MaterialState GetMaterial( String kSurfaceName )
+    public MaterialState getMaterial( String kSurfaceName )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
@@ -710,20 +736,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                     return ((VolumeSurface)(m_kDisplayList.get(i))).GetMaterial();
                 }
             }
-        }
-        return null;
-    }
-
-    /**
-     * Called from the JPanelDisplay dialog. Gets the material properties for
-     * the VolumeShaderSUR (Surface and Composite Surface volume shaders.)
-     * @return material properties for the surface mode.
-     */
-    public MaterialState GetMaterialState( )
-    {
-        if ( m_kVolumeRayCast != null )
-        {
-            return m_kVolumeRayCast.GetMaterialState();
         }
         return null;
     }
@@ -754,6 +766,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         return m_kSculptor.getEnable();
     }
 
+    /**
+     * Return the TriMesh surface with the given name.
+     * @param kSurfaceName, the name of the surface.
+     * @return TriMesh.
+     */
     public TriMesh getSurface( String kSurfaceName )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -769,9 +786,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         return null;
     }
 
+
     /**
+     * Return the surface area for the given TriMesh surface.
+     * @param kSurfaceName, the surface name.
+     * @return the surface-area of the mesh.
      */
-    public float GetSurfaceArea( String kSurfaceName )
+    public float getSurfaceArea( String kSurfaceName )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
@@ -785,10 +806,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         return 0;
     }
-    
+
     /**
+     * Return the volume of the TriMesh surface.
+     * @param kSurfaceName, the surface name.
+     * @return the calculated volume.
      */
-    public float GetVolume( String kSurfaceName )
+    public float getVolume( String kSurfaceName )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
@@ -803,10 +827,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         return 0;
     }
     
-    /** Rotates the object with a virtual trackball:
-     * @param e, the MouseEvent
-     */
-
     /**
      * Part of the GLEventListener interface. Init is called once when the
      * GLCanvas is first displayed. Called again if the GLCanvas is removed
@@ -859,7 +879,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kAnimator.setRunAsFastAsPossible(true); 
         m_kAnimator.start();
     }
-
+    
     /**
      * Invert the sculpt region.
      */
@@ -889,10 +909,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
             return;
         case 'p':
-            DisplayBoundingBox( !m_kVolumeBox.GetDisplay() );
+            displayBoundingBox( !m_kVolumeBox.GetDisplay() );
             return;
         case 'o':
-            DisplayOrientationCube( !m_kVolumeCube.GetDisplay() );
+            displayOrientationCube( !m_kVolumeCube.GetDisplay() );
             return;
         case '1':
             m_bStereo = false;
@@ -980,7 +1000,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         return;
     }
 
-
     /**
      * Display the volume in MIP mode.
      */
@@ -992,6 +1011,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         ResetShaderParamsWindow();
     }
+
 
     /** Rotates the object with a virtual trackball:
      * @param e, the MouseEvent
@@ -1022,7 +1042,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kParent.setCameraParameters();
     	m_kParent.setObjectParameters();
     }
-
 
     /** Rotates the object with a virtual trackball:
      * @param e, the MouseEvent
@@ -1059,6 +1078,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
+
     /** Rotates the object with a virtual trackball:
      * @param e, the MouseEvent
      */
@@ -1067,9 +1087,21 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     	super.mouseReleased(e);
     }
 
-    public void PickCorrespondence( boolean bOn )
+    /**
+     * Enables/disables picking correspondence points between the mesh and BrainSurfaceFlattener render.
+     * @param bOn
+     */
+    public void pickCorrespondence( boolean bOn )
     {
         m_bPickCorrespondence = bOn;
+    }
+    
+    /**
+     * Causes the texture representation of all the surface meshes to be recalculated.
+     */
+    public void redrawSurfaceTexture()
+    {
+        m_bSurfaceUpdate = true;
     }
 
     /**
@@ -1085,6 +1117,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         updateLighting(m_akLights);
     }
 
+    /**
+     * Removes all geodesic components from the given surface.
+     * @param kSurface
+     */
     public void removeAllGeodesic( TriMesh kSurface )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -1099,6 +1135,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
+    /**
+     * Removes the specific geodesic component from the given surface.
+     * @param kSurface
+     * @param iNode
+     * @param iGroup
+     */
     public void removeGeodesic( TriMesh kSurface, int iNode, int iGroup )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -1147,6 +1189,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
+    /**
+     * When the Geodesic object cuts the mesh along an open curve, the old mesh changes, but does not need to be deleted
+     * and no new mesh needs to be added. This function allows the Geodesic object to replace the original mesh with the
+     * sliced mesh in the surface renderer. ReplaceMesh is also used to undo cutting operations.
+     *
+     * @param  kOld  TriMesh old surface mesh
+     * @param  kNew  TriMesh new surface mesh
+     */
     public void replaceGeodesic(TriMesh kOld, TriMesh kNew)
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -1176,6 +1226,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         return m_kSculptor.save(options, filterType);
     }
     
+    /**
+     * Copies the volume data from the texture representation into the ModelImage and writes it to disk.
+     */
     public void saveImageFromTexture()
     {
         ModelImage kImage = m_kVolumeImageA.CreateImageFromTexture();
@@ -1187,11 +1240,23 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Enables/Disables self-shadowing in the Surface mode.
      * @param bShadow, shadow on/off.
      */
-    public void SelfShadow(boolean bShadow)
+    public void selfShadow(boolean bShadow)
     {
         if ( m_kVolumeRayCast != null )
         {
             m_kVolumeRayCast.SelfShadow(bShadow);
+        }
+    }
+
+    /**
+     * Sets blending between imageA and imageB.
+     * @param fValue, the blend value (0-1)
+     */
+    public void setABBlend( float fValue )
+    {
+        if ( m_kVolumeRayCast != null )
+        {
+            m_kVolumeRayCast.setABBlend(fValue);
         }
     }
 
@@ -1220,7 +1285,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kArbitraryClip = new Vector4f(1,0,0,f4);
         doClip(bEnable);
     }
-
+    
+    /**
+     * Turn backface culling on/off for the given surface.
+     * @param kSurfaceName, surface name.
+     * @param bOn
+     */
     public void setBackface(String kSurfaceName, boolean bOn)
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -1234,12 +1304,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-    
+
     /**
      * Sets the background color.
      * @param kColor, new background color.
      */
-    public void SetBackgroundColor( ColorRGBA kColor )
+    public void setBackgroundColor( ColorRGBA kColor )
     {
         m_kBackgroundColor = kColor;
         if ( m_kVolumeRayCast != null )
@@ -1252,7 +1322,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Called from JPanelDisplay. Sets the bounding box color.
      * @param kColor bounding box color.
      */
-    public void SetBoundingBoxColor( ColorRGB kColor )
+    public void setBoundingBoxColor( ColorRGB kColor )
     {
         if ( m_kVolumeBox != null )
         {
@@ -1260,7 +1330,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
-    public void SetBoundingBoxColor( int i, ColorRGB kColor )
+    /**
+     * Sets the color for the input slice frame.
+     *
+     * @param  i, the slice bounding frame.
+     * @param  color  the new color.
+     */
+    public void setBoundingBoxColor( int i, ColorRGB kColor )
     {
         if ( m_kSlices != null )
         {
@@ -1268,8 +1344,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
-
-    public void SetCenter( Vector3f kCenter )
+    /**
+     * Sets the position of the 3D slices.
+     * @param kCenter, the intersection point of the three slices.
+     */
+    public void setCenter( Vector3f kCenter )
     {
         if ( m_kSlices != null )
         {
@@ -1281,6 +1360,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
+    /**
+     * Enable clipping for the given surface.
+     * @param kSurfaceName, the surface to modify.
+     * @param bClip, true enables clipping, false disables clipping.
+     */
     public void setClipping(String kSurfaceName, boolean bClip)
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -1370,7 +1454,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-
+    
     /** Turns on/off displaying all the ellipsoids.
      * @param bDisplay, when true display all the cylinders in the volume.
      */
@@ -1392,7 +1476,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDTIDisplay.setDisplayAllEllipsoids(bDisplay);
         }
     }
-    
+
     /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
      * @param bDisplay, when true display the tracts with Cylinders.
      */
@@ -1414,7 +1498,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDTIDisplay.setDisplayEllipsoids( bDisplay );
         }
     }
-
+    
     /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
      * @param bDisplay, when true display the tracts with Cylinders.
      */
@@ -1425,7 +1509,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDTIDisplay.setDisplayTubes( bDisplay );
         }
     }
-    
+
     /**
      * Sets the sculpt drawing shape.
      * @param shape, (0 = free-hand, 1 = rectangular)
@@ -1439,6 +1523,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kSculptor.setDrawingShape(shape);
     }
 
+
     /** Sets the DTI Image for displaying the tensors as ellipsoids.
      * @param kDTIImage.
      */
@@ -1451,7 +1536,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         m_kDTIDisplay.setDTIImage(kDTIImage);
     }
-
 
     /** Set the m_iEllipsoidMod value. 
      * @param iMod, new m_iEllipsoidMod value.
@@ -1507,7 +1591,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kVolumeClip.setEyeColor(kColor);
         }
     }
-
+    
     /**
      * Sets the inverse-eye clip plane position.
      * @param f4 clip position (same value as sSliceInv in JPanelClip)
@@ -1535,7 +1619,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 ((VolumeSurface)m_kDisplayList.get(i)).SetClipEyeInv(afEquation, bEnable);
             }
         }
-    }
+    }    
+    
     
     /**
      * Sets the inverse-eye clip plane color.
@@ -1550,23 +1635,27 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_kVolumeClip.setEyeInvColor(kColor);
         }
-    }    
+    }  
     
-    
+
     /**
      * Enables/Disables Gradient Magnitude filter.
      * @param bShow, gradient magnitude filter on/off
      */
-    public void SetGradientMagnitude(boolean bShow)
+    public void setGradientMagnitude(boolean bShow)
     {
         if ( m_kVolumeRayCast != null )
         {
             m_kVolumeRayCast.SetGradientMagnitude(bShow);
         }
-    }  
+    }
     
-
-    public void SetImageNew( String kSurfaceName, ModelImage kImage )
+    /**
+     * Sets the ModelImage to use as an alternative to the volume ModelImage for surface texturing.
+     * @param kSurfaceName, the surface to modify.
+     * @param kImage, the alternate ModelImage to use for the surface texture.
+     */
+    public void setImageNew( String kSurfaceName, ModelImage kImage )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
@@ -1580,14 +1669,22 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
     
+    /**
+     * Sets the inter-pupillary distance for stereo rendering.
+     * @param fIPD, the IPD value.
+     */
     public void setIPD( float fIPD )
     {
         m_fTrnSpeed = fIPD;        
     }
     
-    
-    
-    public void SetLUTNew( String kSurfaceName, ModelLUT kLUT, ModelRGB kRGBT )
+    /**
+     * Sets the LUT to use as an alternative to the volume lut for surface texturing.
+     * @param kSurfaceName, the surface to modify.
+     * @param kLUT, the new LUT.
+     * @param kRGBT, the new ModelRGB (for color images).
+     */
+    public void setLUTNew( String kSurfaceName, ModelLUT kLUT, ModelRGB kRGBT )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
@@ -1600,10 +1697,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-
+    
     /**
+     * Sets the material for the given surface.
+     * @param kSurfaceName, the surface to update.
+     * @param kMaterial, the new material.
      */
-    public void SetMaterial( String kSurfaceName, MaterialState kMaterial )
+    public void setMaterial( String kSurfaceName, MaterialState kMaterial )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
@@ -1616,36 +1716,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
+
     
     /**
-     * Called from the AdvancedMaterialProperties dialog. Sets the material
-     * properties for the VolumeShaderSUR (Surface and Composite Surface
-     * volume shaders.)
-     * @param kMaterial, new material properties for the surface mode.
+     * Enable surface picking for the given surface.
+     * @param kSurfaceName, surface name.
+     * @param bOn picking on/off.
      */
-    public void SetMaterialState( MaterialState kMaterial )
-    {
-        if ( m_kVolumeRayCast != null )
-        {
-            m_kVolumeRayCast.SetMaterialState(  kMaterial );
-        }
-    }
-
-    public void setPerPixelLighting(String kSurfaceName, boolean bOn)
-    {
-        for ( int i = 0; i < m_kDisplayList.size(); i++ )
-        {
-            if ( m_kDisplayList.get(i).GetName() != null )
-            {
-                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
-                {
-                    ((VolumeSurface)m_kDisplayList.get(i)).SetPerPixelLighting( m_pkRenderer, bOn );
-                }
-            }
-        }
-        updateLighting(m_akLights);
-    }
-
     public void setPickable(String kSurfaceName, boolean bOn)
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -1660,6 +1737,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
     
+    /**
+     * Set the polygon mode (FILL, LINE, POINT) for the given surface.
+     * @param kSurfaceName, the surface to modify.
+     * @param eMode, FILL, LINE, or POINT.
+     */
     public void setPolygonMode(String kSurfaceName, WireframeState.FillMode eMode)
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -1673,8 +1755,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-    
-    
+
     /** Sets the polyline color for the specified fiber bundle tract group. 
      * @param iGroup, the fiber bundle group to set.
      * @param kColor the new polyline color for the specified fiber bundle tract group. 
@@ -1686,8 +1767,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDTIDisplay.setPolylineColor(iGroup, kColor);
         }
     }
-
-    public void SetSliceOpacity( int i, float fAlpha )
+    
+    /**
+     * Set the transparency value for the slice.
+     * @param i, the slice to modify.
+     * @param fAlpha, the new transparency value.
+     */
+    public void setSliceOpacity( int i, float fAlpha )
     {
         if ( m_kSlices != null )
         {
@@ -1695,11 +1781,22 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
     
-    public void SetStereo( boolean bEnable )
+    /**
+     * Enable/disable stereo rendering.
+     * @param bEnable
+     */
+    public void setStereo( boolean bEnable )
     {
         m_bStereo = bEnable;
     }
-    
+
+    /**
+     * Turns on surface texture display for the given surface. The user can use a separate ModelImage and LUT than the one displayed in the volume renderer.
+     * @param kSurfaceName, the name of the surface to texture.
+     * @param bOn, texture on/off.
+     * @param bUseNewImage, when false use the current ModelImage, when true the user specifies the model image.
+     * @param bUseNewLUT, when false use the current LUT, when true the user specifies the LUT.
+     */
     public void setSurfaceTexture(String kSurfaceName, boolean bOn, boolean bUseNewImage, boolean bUseNewLUT)
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -1713,18 +1810,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-
-    
-    /**
-     * Sets the currently visible flag. Used when the GLCanvas is removed from
-     * the display panel or frame.
-     * @param bVisible, set to false when the GLCanvas container is not displayed.
+      
+    /** Sets the blend factor for displaying the ray-cast volume with other objects in the scene.
+     * @param fBlend, the blend factor for the ray-cast volume.
      */
-    public void setVisible( boolean bVisible )
-    {
-        m_bVisible = bVisible;
-    }
-    
     public void setVolumeBlend( float fBlend )
     {
         if ( m_kVolumeRayCast != null )
@@ -1733,7 +1822,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
     
-    public void ShowBoundingBox( int i, boolean bShow )
+    /** Turns on/off displaying the bounding box for the given plane.
+     * @param i, the plane index (0-3) in file coordinates.
+     * @param bShow, when true, the bounding box is displayed.
+     */
+    public void showBoundingBox( int i, boolean bShow )
     {
         if ( m_kSlices != null )
         {
@@ -1741,16 +1834,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
     
-    
-    public void ShowSlice( int i, boolean bShow )
+    /** Turns on/off displaying the given plane.
+     * @param i, the plane index (0-3) in file coordinates.
+     * @param bShow, when true, the plane is displayed.
+     */
+    public void showSlice( int i, boolean bShow )
     {
         if ( m_kSlices != null )
         {
             m_kSlices.ShowSlice( i, bShow );
         }
     }
-    
-    
+    /**
+     * Smooth the given surface.
+     * @param kSurfaceName, the name of the surface to smooth.
+     * @param iteration, smooth iterations.
+     * @param alpha, smooth factor.
+     * @param volumeLimit, whether to use a volume % change limit.
+     * @param volumePercent, the % volume change limiting factor
+     */
     public void smoothMesh( String kSurfaceName, int iteration, float alpha, boolean volumeLimit, float volumePercent)
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -1764,7 +1866,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-    
+    /**
+     * Smooth the given surface.
+     * @param kSurfaceName, the name of the surface to smooth.
+     * @param iteration, smooth iterations.
+     * @param lambda, smooth factor.
+     * @param mu, smooth factor.
+     */
     public void smoothThree( String kSurfaceName, int iteration, float lambda, float mu)
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -1778,7 +1886,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-    
+        
+    /**
+     * Smooth the given surface.
+     * @param kSurfaceName, the name of the surface to smooth.
+     * @param iteration, smooth iterations.
+     * @param fStiffness, stiffness factor.
+     * @param volumeLimit, whether to use a volume % change limit.
+     * @param volumePercent, the % volume change limiting factor.
+     */
     public void smoothTwo( String kSurfaceName, int iteration, float fStiffness, boolean volumeLimit, float volumePercent)
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -1794,18 +1910,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
     
     
+    
     /**
      * Sets the raytracing steps size.
      * @param fValue, the steps value (0-450)
      */
-    public void StepsSize( float fValue )
+    public void stepsSize( float fValue )
     {
         if ( m_kVolumeRayCast != null )
         {
             m_kVolumeRayCast.StepsSize(fValue);
         }
     }
-    
     
     
     /**
@@ -1820,7 +1936,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         ResetShaderParamsWindow();
     }
     
-    
     /**
      * Display the volume in Composite Surface mode.
      */
@@ -1832,21 +1947,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         ResetShaderParamsWindow();
     }
-    
-    public void translateSurface(String kSurfaceName, Vector3f kTranslate)
-    {
-        for ( int i = 0; i < m_kDisplayList.size(); i++ )
-        {
-            if ( m_kDisplayList.get(i).GetName() != null )
-            {
-                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
-                {
-                    m_kDisplayList.get(i).Translate(kTranslate);
-                }
-            }
-        }
-    }
-    
+    /**
+     * Switches between different ways of displaying the geodesic path (Euclidean, Geodesic, or Mesh).
+     * @param kSurfaceName, the surface the path is on.
+     * @param iWhich, the type of display.
+     */
     public void toggleGeodesicPathDisplay(String kSurfaceName, int iWhich)
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
@@ -1861,6 +1966,24 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
     
+    /**
+     * Changes the translation vector for the surface with the given name.
+     * @param kSurfaceName, the surface to move.
+     * @param kTranslate, the new translation vector
+     */
+    public void translateSurface(String kSurfaceName, Vector3f kTranslate)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    m_kDisplayList.get(i).Translate(kTranslate);
+                }
+            }
+        }
+    }    
     
     /**
      * Undo applying the sculpt region to the volume.
@@ -1896,7 +2019,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kSculptor.undoSculpt();
         m_kVolumeImageA.ReleaseVolume();
         m_kParent.setModified();
-    }    
+    }
+
     
     /**
      * Causes the VolumeShader to update the copy of the ModelImage on the
@@ -1911,226 +2035,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
 
     }
-
     
     /**
-     * Called by the init() function. Creates and initialized the scene-graph.
-     * @param arg0, the GLCanvas
+     * Picking. If a display list object has picking enabled, find the picked polygon based on the mouse position. 
      */
-    private void CreateScene (GLAutoDrawable arg0)
-    {
-        // Create a scene graph with the face model as the leaf node.
-        m_spkScene = new Node();
-        m_spkCull = new CullState();
-        m_spkScene.AttachGlobalState(m_spkCull);
-        /*
-        m_spkAlpha = new AlphaState();
-        m_spkAlpha.BlendEnabled = false;
-        m_spkAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
-        m_spkAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
-        m_spkScene.AttachGlobalState(m_spkAlpha);
-        */
-
-        m_kVolumeRayCast = new VolumeRayCast( m_kVolumeImageA, m_kVolumeImageB );
-        m_kDisplayList.add(0, m_kVolumeRayCast);
-        m_kVolumeRayCast.CreateScene( m_eFormat, m_eDepth, m_eStencil,
-                m_eBuffering, m_eMultisampling,
-                m_iWidth, m_iHeight, arg0, m_pkRenderer );
-
-        m_kTranslate = m_kVolumeRayCast.GetTranslate();
-
-        ModelImage kImage = m_kVolumeImageA.GetImage();
-        float fMaxX = (kImage.getExtents()[0] - 1) * kImage.getFileInfo(0).getResolutions()[0];
-        float fMaxY = (kImage.getExtents()[1] - 1) * kImage.getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (kImage.getExtents()[2] - 1) * kImage.getFileInfo(0).getResolutions()[2];
-
-        m_fMax = fMaxX;
-        if (fMaxY > m_fMax) {
-            m_fMax = fMaxY;
-        }
-        if (fMaxZ > m_fMax) {
-            m_fMax = fMaxZ;
-        }
-        m_fX = fMaxX/m_fMax;
-        m_fY = fMaxY/m_fMax;
-        m_fZ = fMaxZ/m_fMax;
-
-        m_kSlices = new VolumeSlices( m_kVolumeImageA, m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ );
-        DisplayVolumeSlices( true );
-        m_kDisplayList.add(m_kDisplayList.size(), m_kSlices);
-
-        m_kVolumeClip = new VolumeClip( m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ );
-        m_kDisplayList.add( m_kDisplayList.size(), m_kVolumeClip);
-
-        m_kVolumeBox = new VolumeBoundingBox( m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ );
-        m_kDisplayList.add( m_kDisplayList.size(), m_kVolumeBox);
-
-        m_kVolumeCube = new VolumeOrientationCube( m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ );
-        m_kDisplayList.add( m_kDisplayList.size(), m_kVolumeCube);
-
-        for ( int i = 0; i < m_pkRenderer.GetMaxLights(); i++ )
-        {
-            m_pkRenderer.SetLight( i, new Light() );
-        }
-        
-        m_kParent.addSlices(m_kSlices);
-    }
-    
-    /**
-     * Calculates the rotation for the arbitrary clip plane.
-     */
-    private void doClip( boolean bEnable ) 
-    {           
-        m_bArbClipOn = bEnable;
-        if ( m_kArbitraryClip == null )
-        {
-            m_kArbitraryClip = new Vector4f(1,0,0,0);            
-        }
-        if ( m_kVolumeClip != null )
-        {
-            m_kVolumeClip.SetArbPlane( m_kArbitraryClip.W * m_fX );
-        }
-
-        // Rotate normal vector:
-        Matrix3f kClipRotate = m_kVolumeClip.ArbRotate().Local.GetRotate();
-        Vector3f kNormal = new Vector3f( 1,0,0 );
-        kClipRotate.Mult(kNormal, kNormal);
-        kNormal.Normalize();
-
-        // Scale kNormal based on the scaled volume:
-        kNormal.Set( kNormal.X * m_fX, kNormal.Y * m_fY, kNormal.Z * m_fZ );
-        float fLength = kNormal.Length();
-        kNormal.Normalize();
-        m_afArbEquation[0] = kNormal.X;
-        m_afArbEquation[1] = kNormal.Y;
-        m_afArbEquation[2] = kNormal.Z;
-
-        // Calculate the distance to the plane, scaled based on the scaled kNormal:
-        Vector3f kPos = new Vector3f();
-        kPos.Scale( (m_kArbitraryClip.W - 0.5f)/fLength, kNormal );
-        kPos.Add( new Vector3f( .5f, .5f, .5f ));
-        m_afArbEquation[3] = kNormal.Dot(kPos);   
-        
-        // Update shader with rotated normal and distance:
-        if ( m_kVolumeRayCast != null )
-        {
-            m_kVolumeRayCast.SetClipArb(m_afArbEquation, bEnable);
-        }
-        for ( int i = 0; i < m_kDisplayList.size(); i++ )
-        {
-            if ( m_kDisplayList.get(i) instanceof VolumeSurface )
-            {
-                ((VolumeSurface)m_kDisplayList.get(i)).SetClipArb(m_afArbEquation, bEnable);
-            }
-        }
-    }
-    
-    private void RenderNoVolume()
-    {
-        m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
-        m_pkRenderer.ClearBuffers();
-
-        if ( !m_bStereo )
-        {
-            for ( int i = 1; i < m_kDisplayList.size(); i++ )
-            {
-                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
-            }
-            for ( int i = 1; i < m_kDisplayList.size(); i++ )
-            {
-                m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
-            }
-        }
-        else
-        {          
-            MoveRight();
-            if ( m_bRight )
-            {
-                m_kCuller.ComputeVisibleSet(m_spkScene);
-                m_pkRenderer.SetColorMask( false, false, true, true );
-                for ( int i = 1; i < m_kDisplayList.size(); i++ )
-                {
-                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
-                }
-                for ( int i = 1; i < m_kDisplayList.size(); i++ )
-                {
-                    m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
-                }
-            }
-            m_pkRenderer.ClearZBuffer();
-            MoveLeft();
-            MoveLeft();
-            if ( m_bLeft )
-            {
-                m_kCuller.ComputeVisibleSet(m_spkScene);
-                m_pkRenderer.SetColorMask( true, false, false, true );
-                for ( int i = 1; i < m_kDisplayList.size(); i++ )
-                {
-                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
-                }
-                for ( int i = 1; i < m_kDisplayList.size(); i++ )
-                {
-                    m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
-                }
-            }
-            MoveRight();
-            m_pkRenderer.SetColorMask( true, true, true, true );
-        }
-    }    
-    
-    private void RenderSculpt()
-    {
-        if ( (m_kSculptor != null) && m_kSculptor.IsSculptDrawn() )
-        {
-            m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
-        }
-    }
-    
-    private void RenderVolume()
-    {
-        if ( !m_bDisplaySecond )
-        {
-            for ( int i = 0; i < m_kDisplayList.size(); i++ )
-            {
-                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller );
-            }
-        }
-        else
-        {
-            for ( int i = 0; i < m_kDisplayList.size(); i++ )
-            {
-                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller );
-            }
-            m_kVolumeRayCast.PostPreRender(m_pkRenderer);
-
-            m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
-            m_pkRenderer.ClearBuffers();
-
-            for ( int i = 1; i < m_kDisplayList.size(); i++ )
-            {
-                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
-            }
-            m_kDisplayList.get(0).Render( m_pkRenderer, m_kCuller );
-
-            for ( int i = 1; i < m_kDisplayList.size(); i++ )
-            {
-                m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
-            }
-        }
-    }
-
-    /**
-     * Closes the shader parameters window.
-     */
-    private void ResetShaderParamsWindow()
-    {
-        if ( m_kShaderParamsWindow != null )
-        {
-            m_kShaderParamsWindow.close();
-        }
-    }
-    
-    
     protected void Pick()
     {
         Vector3f kPos = new Vector3f(0,0,10);
@@ -2187,9 +2095,236 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
     
-    public void redrawSurfaceTexture()
+    /**
+     * Called by the init() function. Creates and initialized the scene-graph.
+     * @param arg0, the GLCanvas
+     */
+    private void CreateScene (GLAutoDrawable arg0)
     {
-        m_bSurfaceUpdate = true;
+        // Create a scene graph with the face model as the leaf node.
+        m_spkScene = new Node();
+        m_spkCull = new CullState();
+        m_spkScene.AttachGlobalState(m_spkCull);
+        /*
+        m_spkAlpha = new AlphaState();
+        m_spkAlpha.BlendEnabled = false;
+        m_spkAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
+        m_spkAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+        m_spkScene.AttachGlobalState(m_spkAlpha);
+        */
+
+        m_kVolumeRayCast = new VolumeRayCast( m_kVolumeImageA, m_kVolumeImageB );
+        m_kDisplayList.add(0, m_kVolumeRayCast);
+        m_kVolumeRayCast.CreateScene( m_eFormat, m_eDepth, m_eStencil,
+                m_eBuffering, m_eMultisampling,
+                m_iWidth, m_iHeight, arg0, m_pkRenderer );
+
+        m_kTranslate = m_kVolumeRayCast.GetTranslate();
+
+        ModelImage kImage = m_kVolumeImageA.GetImage();
+        float fMaxX = (kImage.getExtents()[0] - 1) * kImage.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (kImage.getExtents()[1] - 1) * kImage.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (kImage.getExtents()[2] - 1) * kImage.getFileInfo(0).getResolutions()[2];
+
+        m_fMax = fMaxX;
+        if (fMaxY > m_fMax) {
+            m_fMax = fMaxY;
+        }
+        if (fMaxZ > m_fMax) {
+            m_fMax = fMaxZ;
+        }
+        m_fX = fMaxX/m_fMax;
+        m_fY = fMaxY/m_fMax;
+        m_fZ = fMaxZ/m_fMax;
+
+        m_kSlices = new VolumeSlices( m_kVolumeImageA, m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ );
+        displayVolumeSlices( true );
+        m_kDisplayList.add(m_kDisplayList.size(), m_kSlices);
+
+        m_kVolumeClip = new VolumeClip( m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ );
+        m_kDisplayList.add( m_kDisplayList.size(), m_kVolumeClip);
+
+        m_kVolumeBox = new VolumeBoundingBox( m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ );
+        m_kDisplayList.add( m_kDisplayList.size(), m_kVolumeBox);
+
+        m_kVolumeCube = new VolumeOrientationCube( m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ );
+        m_kDisplayList.add( m_kDisplayList.size(), m_kVolumeCube);
+
+        for ( int i = 0; i < m_pkRenderer.GetMaxLights(); i++ )
+        {
+            m_pkRenderer.SetLight( i, new Light() );
+        }
+        
+        m_kParent.addSlices(m_kSlices);
+    }    
+    
+    /**
+     * Calculates the rotation for the arbitrary clip plane.
+     * @param bEnable, arbitrary clip plane on/off.
+     */
+    private void doClip( boolean bEnable ) 
+    {           
+        m_bArbClipOn = bEnable;
+        if ( m_kArbitraryClip == null )
+        {
+            m_kArbitraryClip = new Vector4f(1,0,0,0);            
+        }
+        if ( m_kVolumeClip != null )
+        {
+            m_kVolumeClip.SetArbPlane( m_kArbitraryClip.W * m_fX );
+        }
+
+        // Rotate normal vector:
+        Matrix3f kClipRotate = m_kVolumeClip.ArbRotate().Local.GetRotate();
+        Vector3f kNormal = new Vector3f( 1,0,0 );
+        kClipRotate.Mult(kNormal, kNormal);
+        kNormal.Normalize();
+
+        // Scale kNormal based on the scaled volume:
+        kNormal.Set( kNormal.X * m_fX, kNormal.Y * m_fY, kNormal.Z * m_fZ );
+        float fLength = kNormal.Length();
+        kNormal.Normalize();
+        m_afArbEquation[0] = kNormal.X;
+        m_afArbEquation[1] = kNormal.Y;
+        m_afArbEquation[2] = kNormal.Z;
+
+        // Calculate the distance to the plane, scaled based on the scaled kNormal:
+        Vector3f kPos = new Vector3f();
+        kPos.Scale( (m_kArbitraryClip.W - 0.5f)/fLength, kNormal );
+        kPos.Add( new Vector3f( .5f, .5f, .5f ));
+        m_afArbEquation[3] = kNormal.Dot(kPos);   
+        
+        // Update shader with rotated normal and distance:
+        if ( m_kVolumeRayCast != null )
+        {
+            m_kVolumeRayCast.SetClipArb(m_afArbEquation, bEnable);
+        }
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+            {
+                ((VolumeSurface)m_kDisplayList.get(i)).SetClipArb(m_afArbEquation, bEnable);
+            }
+        }
+    }
+    
+    /**
+     * Render the display list objects without the raycast volume.
+     */
+    private void RenderNoVolume()
+    {
+        m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
+        m_pkRenderer.ClearBuffers();
+
+        if ( !m_bStereo )
+        {
+            for ( int i = 1; i < m_kDisplayList.size(); i++ )
+            {
+                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
+            }
+            for ( int i = 1; i < m_kDisplayList.size(); i++ )
+            {
+                m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
+            }
+        }
+        else
+        {          
+            MoveRight();
+            if ( m_bRight )
+            {
+                m_kCuller.ComputeVisibleSet(m_spkScene);
+                m_pkRenderer.SetColorMask( false, false, true, true );
+                for ( int i = 1; i < m_kDisplayList.size(); i++ )
+                {
+                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
+                }
+                for ( int i = 1; i < m_kDisplayList.size(); i++ )
+                {
+                    m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
+                }
+            }
+            m_pkRenderer.ClearZBuffer();
+            MoveLeft();
+            MoveLeft();
+            if ( m_bLeft )
+            {
+                m_kCuller.ComputeVisibleSet(m_spkScene);
+                m_pkRenderer.SetColorMask( true, false, false, true );
+                for ( int i = 1; i < m_kDisplayList.size(); i++ )
+                {
+                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
+                }
+                for ( int i = 1; i < m_kDisplayList.size(); i++ )
+                {
+                    m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
+                }
+            }
+            MoveRight();
+            m_pkRenderer.SetColorMask( true, true, true, true );
+        }
+    }
+
+    /**
+     * Render the sculpt image.
+     */
+    private void RenderSculpt()
+    {
+        if ( (m_kSculptor != null) && m_kSculptor.IsSculptDrawn() )
+        {
+            m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
+        }
+    }
+    
+    
+    /**
+     * Render the display list objecst embedded in the ray-cast volume.
+     * This is a two-pass rendering. First the background is rendered with all objects displayed with
+     * the color corresponding to the texture coordinates. The resulting color image is used to calculate
+     * the ray endpoints for rendering the ray-cast volume. In the second pass the display list
+     * objects are rendered normally and the ray-cast volume is rendered last.
+     */
+    private void RenderVolume()
+    {
+        if ( !m_bDisplaySecond )
+        {
+            for ( int i = 0; i < m_kDisplayList.size(); i++ )
+            {
+                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller );
+            }
+        }
+        else
+        {
+            for ( int i = 0; i < m_kDisplayList.size(); i++ )
+            {
+                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller );
+            }
+            m_kVolumeRayCast.PostPreRender(m_pkRenderer);
+
+            m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
+            m_pkRenderer.ClearBuffers();
+
+            for ( int i = 1; i < m_kDisplayList.size(); i++ )
+            {
+                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
+            }
+            m_kDisplayList.get(0).Render( m_pkRenderer, m_kCuller );
+
+            for ( int i = 1; i < m_kDisplayList.size(); i++ )
+            {
+                m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
+            }
+        }
+    }
+    
+    /**
+     * Closes the shader parameters window.
+     */
+    private void ResetShaderParamsWindow()
+    {
+        if ( m_kShaderParamsWindow != null )
+        {
+            m_kShaderParamsWindow.close();
+        }
     }
 
     

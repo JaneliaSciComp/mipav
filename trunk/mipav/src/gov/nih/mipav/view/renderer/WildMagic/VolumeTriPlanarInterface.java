@@ -501,7 +501,7 @@ implements ItemListener, ChangeListener {
             insertTab("Opacity", opacityPanel);
             enableVolumeRender();
             updateRayTracingSteps();
-            raycastRenderWM.DisplayVolumeRaycast( m_kDisplayVolumeCheck.isSelected() );
+            raycastRenderWM.displayVolumeRaycast( m_kDisplayVolumeCheck.isSelected() );
         } else if ( command.equals( "VolumeRayCast") ) {
             clipBox.getMainPanel().setVisible(true);
             clipButton.setEnabled(true);
@@ -514,7 +514,7 @@ implements ItemListener, ChangeListener {
             insertTab("Opacity", opacityPanel);
             enableVolumeRender();
             updateRayTracingSteps();
-            raycastRenderWM.DisplayVolumeRaycast( m_kDisplayVolumeCheck.isSelected() );
+            raycastRenderWM.displayVolumeRaycast( m_kDisplayVolumeCheck.isSelected() );
         } else if (command.equals("Stereo")) {
             if ( (m_kStereoIPD == null) && m_kStereoCheck.isSelected() )
             {
@@ -525,7 +525,7 @@ implements ItemListener, ChangeListener {
                 m_kStereoIPD.close();
                 m_kStereoIPD = null;
             }
-            raycastRenderWM.SetStereo( m_kStereoCheck.isSelected() );
+            raycastRenderWM.setStereo( m_kStereoCheck.isSelected() );
         } else if (command.equals("ChangeLight")) {
             insertTab("Light", lightPanel);
         } else if (command.equals("Box")) {
@@ -554,12 +554,12 @@ implements ItemListener, ChangeListener {
         } else if (command.equals("Slices")) {
             sliceGUI.getMainPanel().setVisible(true);
             insertTab("Slices", slicePanel);
-            raycastRenderWM.DisplayVolumeSlices( m_kDisplaySlicesCheck.isSelected() );
+            raycastRenderWM.displayVolumeSlices( m_kDisplaySlicesCheck.isSelected() );
         } else if (command.equals("VolumeSlices")) {
             sliceGUI.getMainPanel().setVisible(true);
-            raycastRenderWM.DisplayVolumeSlices( m_kDisplaySlicesCheck.isSelected() );
+            raycastRenderWM.displayVolumeSlices( m_kDisplaySlicesCheck.isSelected() );
         } else if (command.equals("Surface")) {
-            raycastRenderWM.DisplaySurface( m_kDisplaySurfaceCheck.isSelected() );
+            raycastRenderWM.displaySurface( m_kDisplaySurfaceCheck.isSelected() );
         } else if (command.equals("SurfaceDialog")) {
             insertTab("Surface", surfacePanel);
             surfaceGUI.getMainPanel().setVisible(true);
@@ -722,7 +722,7 @@ implements ItemListener, ChangeListener {
             insertTab("Surface", surfacePanel);
             m_kDisplaySurfaceCheck.setSelected(true);
             m_kDisplaySurfaceCheck.setEnabled(true);
-            raycastRenderWM.DisplaySurface(true);
+            raycastRenderWM.displaySurface(true);
             
             menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", true);  
             menuObj.setMenuItemEnabled("Open Fly Through view", true);       
@@ -1548,7 +1548,7 @@ implements ItemListener, ChangeListener {
     {
         if ( raycastRenderWM != null )
         {
-            return raycastRenderWM.GetMaterial(kSurfaceName);
+            return raycastRenderWM.getMaterial(kSurfaceName);
         }
         return null;
     }
@@ -1599,7 +1599,7 @@ implements ItemListener, ChangeListener {
     {
         if ( raycastRenderWM != null )
         {
-            return raycastRenderWM.GetSurfaceArea(kSurfaceName);
+            return raycastRenderWM.getSurfaceArea(kSurfaceName);
         }
         return 0;
     }
@@ -1613,7 +1613,7 @@ implements ItemListener, ChangeListener {
     {
         if ( raycastRenderWM != null )
         {
-            return raycastRenderWM.GetVolume(kSurfaceName);
+            return raycastRenderWM.getVolume(kSurfaceName);
         }
         return 0;
     }
@@ -1673,7 +1673,7 @@ implements ItemListener, ChangeListener {
                 updateRayTracingSteps();
                 m_kLightsPanel.refreshLighting();
             } else if (radioSURFACEFAST.isSelected() && (source == kSelfShadow) )
-                raycastRenderWM.SelfShadow( kSelfShadow.isSelected() );
+                raycastRenderWM.selfShadow( kSelfShadow.isSelected() );
             	updateRayTracingSteps();
         	}
         if ( (imageB == null) )
@@ -1690,7 +1690,7 @@ implements ItemListener, ChangeListener {
     {
         if ( raycastRenderWM != null )
         {
-            raycastRenderWM.PickCorrespondence(bOn);
+            raycastRenderWM.pickCorrespondence(bOn);
         }        
     }
 
@@ -1837,7 +1837,7 @@ implements ItemListener, ChangeListener {
     public void setBackgroundColor(Color color)
     {
         if (raycastRenderWM != null) {
-            raycastRenderWM.SetBackgroundColor(new ColorRGBA( color.getRed()/255.0f, color.getGreen()/255.0f, color.getBlue()/255.0f, 1.0f ) );
+            raycastRenderWM.setBackgroundColor(new ColorRGBA( color.getRed()/255.0f, color.getGreen()/255.0f, color.getBlue()/255.0f, 1.0f ) );
         }
     }
     
@@ -1848,7 +1848,7 @@ implements ItemListener, ChangeListener {
     public void setBoundingBoxColor(Color color)
     {
         if (raycastRenderWM != null) {
-            raycastRenderWM.SetBoundingBoxColor(new ColorRGB( color.getRed()/255.0f, color.getGreen()/255.0f, color.getBlue()/255.0f ) );
+            raycastRenderWM.setBoundingBoxColor(new ColorRGB( color.getRed()/255.0f, color.getGreen()/255.0f, color.getBlue()/255.0f ) );
         }
     }
 
@@ -1939,7 +1939,7 @@ implements ItemListener, ChangeListener {
     {
         if ( raycastRenderWM != null )
         {
-            raycastRenderWM.SetGradientMagnitude(bShow);
+            raycastRenderWM.setGradientMagnitude(bShow);
             TransferFunction kTransfer = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
             m_kVolumeImageA.UpdateImages(kTransfer, 2);
             if ( imageB != null )
@@ -1964,7 +1964,7 @@ implements ItemListener, ChangeListener {
     {
         if ( raycastRenderWM != null )
         {
-            raycastRenderWM.SetImageNew(kSurfaceName, kImage);
+            raycastRenderWM.setImageNew(kSurfaceName, kImage);
         }
     }
 
@@ -2000,7 +2000,7 @@ implements ItemListener, ChangeListener {
     {
         if ( raycastRenderWM != null )
         {
-            raycastRenderWM.SetLUTNew(kSurfaceName, kLUT, kRGBT);
+            raycastRenderWM.setLUTNew(kSurfaceName, kLUT, kRGBT);
         }
     }
 
@@ -2013,7 +2013,7 @@ implements ItemListener, ChangeListener {
     {
         if ( raycastRenderWM != null )
         {
-            raycastRenderWM.SetMaterial(kSurfaceName, kMaterial);
+            raycastRenderWM.setMaterial(kSurfaceName, kMaterial);
         }
     }
 
@@ -2105,7 +2105,7 @@ implements ItemListener, ChangeListener {
             imageB.setRadiologicalView(bOn);
         }
         Vector3f center = sliceGUI.getCenter();
-        raycastRenderWM.SetCenter( new Vector3f( center.X, center.Y, center.Z ) );    
+        raycastRenderWM.setCenter( new Vector3f( center.X, center.Y, center.Z ) );    
         for (int i = 0; i < 3; i++) {
             m_akPlaneRender[i].setRadiologicalView(bOn);
             m_akPlaneRender[i].setCenter(center);
@@ -2154,7 +2154,7 @@ implements ItemListener, ChangeListener {
     public void setShowBoxFrame(boolean bShow)
     {
         if (raycastRenderWM != null) {
-            raycastRenderWM.DisplayBoundingBox(bShow);
+            raycastRenderWM.displayBoundingBox(bShow);
         }
     }
 
@@ -2165,7 +2165,7 @@ implements ItemListener, ChangeListener {
     public void setShowOrientationCube(boolean bShow)
     {
         if (raycastRenderWM != null) {
-            raycastRenderWM.DisplayOrientationCube(bShow);
+            raycastRenderWM.displayOrientationCube(bShow);
         }
     }    
     
@@ -2186,7 +2186,7 @@ implements ItemListener, ChangeListener {
              m_akPlaneRender[i].setCenter(center);
          }
 
-         raycastRenderWM.SetCenter( center );
+         raycastRenderWM.setCenter( center );
          sliceGUI.setCenter((int)center.X, (int)center.Y, (int)center.Z);
     }
     
@@ -2208,7 +2208,7 @@ implements ItemListener, ChangeListener {
                 }
             }
         }
-        raycastRenderWM.SetCenter( new Vector3f( center.X, center.Y, center.Z ) );
+        raycastRenderWM.setCenter( new Vector3f( center.X, center.Y, center.Z ) );
     }
 
     /**
@@ -2227,7 +2227,7 @@ implements ItemListener, ChangeListener {
             m_akPlaneRender[iPlane].
                 setSliceHairColor(iView, kColor );
         }
-        raycastRenderWM.SetBoundingBoxColor( iView, kColor);
+        raycastRenderWM.setBoundingBoxColor( iView, kColor);
     }    
 
     /**
@@ -2237,7 +2237,7 @@ implements ItemListener, ChangeListener {
      */
     public void setSliceOpacity( int i, float fAlpha )
     {
-        raycastRenderWM.SetSliceOpacity( i, fAlpha );
+        raycastRenderWM.setSliceOpacity( i, fAlpha );
     }
 
     /**
@@ -2285,7 +2285,7 @@ implements ItemListener, ChangeListener {
     {
         if ( raycastRenderWM != null )
         {
-            raycastRenderWM.Blend(kSurfaceName, fValue );
+            raycastRenderWM.blend(kSurfaceName, fValue );
         }
     }
     
@@ -2296,7 +2296,7 @@ implements ItemListener, ChangeListener {
      */
     public void showBoundingBox( int i, boolean bShow )
     {
-        raycastRenderWM.ShowBoundingBox( i, bShow );
+        raycastRenderWM.showBoundingBox( i, bShow );
     }
     
     /**
@@ -2306,7 +2306,7 @@ implements ItemListener, ChangeListener {
      */
     public void showSlice( int i, boolean bShow )
     {
-        raycastRenderWM.ShowSlice( i, bShow );
+        raycastRenderWM.showSlice( i, bShow );
     }
   
     /**
@@ -2394,7 +2394,7 @@ implements ItemListener, ChangeListener {
     {
         if ( raycastRenderWM != null )
         {
-            raycastRenderWM.DisplayNode(kNode, bDisplay);
+            raycastRenderWM.displayNode(kNode, bDisplay);
         }
     }
     
@@ -2539,6 +2539,9 @@ implements ItemListener, ChangeListener {
         }
     }
 
+    /**
+     * Causes the texture representation of all the surface meshes to be recalculated.
+     */
     public void updatePlanes()
     {
         raycastRenderWM.redrawSurfaceTexture();
@@ -2552,7 +2555,7 @@ implements ItemListener, ChangeListener {
     public void updateRayTracingSteps()
     {
         if (raycastRenderWM != null) {
-            raycastRenderWM.StepsSize(Math.round(getStepsValue() * 4.5f));
+            raycastRenderWM.stepsSize(Math.round(getStepsValue() * 4.5f));
         }
     }
     
