@@ -35,8 +35,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 
-import PlugInAlgorithmMuscleSegmentation.MusclePane.DependencyNode;
-
 
 /**
  * Creates an interface for working with Iceland CT images.
