@@ -506,6 +506,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         refWeight = _refWeight;
         inputWeight = _inputWeight;
         costChoice = _costChoice;
+        maxPossibleCost = 1;
         DOF = _DOF;
         interp = _interp;
         resRef = refImage.getFileInfo(0).getResolutions();
@@ -2498,6 +2499,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             for (int j = 0; j < fineNumY; j++) {
 
                 for (int k = 0; k < fineNumZ; k++) {
+                    
                     boolean minimum = true; // possible minimum
 
                     for (int itest = -1; (itest <= 1) && minimum; itest++) {
