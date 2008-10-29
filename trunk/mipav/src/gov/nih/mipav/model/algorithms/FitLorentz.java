@@ -47,8 +47,8 @@ public class FitLorentz extends NLEngine {
     /**Center parameter*/
     private double xInit;
     
-    /**Sigma parameter*/
-    private double sigma;
+    /**Gamma parameter*/
+    private double gamma;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -249,16 +249,16 @@ public class FitLorentz extends NLEngine {
     	
     	//use both measurements to estimate stdev
     	if(twoSigmaEstimate != 0)
-    		sigma = (oneSigmaEstimate + .5*twoSigmaEstimate) / 2;
+    		gamma = (oneSigmaEstimate + .5*twoSigmaEstimate) / 2;
     	else 
-    		sigma = oneSigmaEstimate;
+    		gamma = oneSigmaEstimate;
     	
     	//estimate for amplitude
     	amp = yDataOrg[maxIndex];
     	
     	a[0] = amp;
     	a[1] = xInit;
-    	a[2] = sigma;
+    	a[2] = gamma;
     }
     
     /**
@@ -273,7 +273,7 @@ public class FitLorentz extends NLEngine {
     	while(!converged && kk < MAX_ITR) {
     		double oldAmp = amp;
         	double oldXInit = xInit;
-        	double oldSigma = sigma;
+        	double oldSigma = gamma;
     	
 	    	Matrix jacobian = generateJacobian();
 	    	Matrix residuals = generateResiduals();
@@ -285,17 +285,17 @@ public class FitLorentz extends NLEngine {
 	    	
 	    	amp = amp + dLambda.get(0, 0);
 	    	xInit = xInit + dLambda.get(1, 0);
-	    	sigma = sigma + dLambda.get(2, 0);
+	    	gamma = gamma + dLambda.get(2, 0);
 	    	if(Math.abs(Math.abs(oldAmp - amp) / ((oldAmp + amp) / 2)) < EPSILON && 
 	    			Math.abs(Math.abs(oldXInit - xInit) / ((oldXInit + xInit) / 2)) < EPSILON && 
-	    			Math.abs(Math.abs(oldSigma - sigma) / ((oldSigma + sigma) / 2)) < EPSILON && kk > MIN_ITR) {
+	    			Math.abs(Math.abs(oldSigma - gamma) / ((oldSigma + gamma) / 2)) < EPSILON && kk > MIN_ITR) {
 	    		converged = true;    		
 	    		Preferences.debug("Converged after "+kk+" iterations.");
 	    		System.out.println("Converged after "+kk+" iterations.");
 	    	} else {
 	    		oldAmp = amp;
 	    		oldXInit = xInit;
-	    		oldSigma = sigma;
+	    		oldSigma = gamma;
 	    		kk++;
 	    	}
     	}
@@ -310,7 +310,7 @@ public class FitLorentz extends NLEngine {
     	//a already initialized in super constructor, used to hold parameters for output
     	a[0] = amp;
     	a[1] = xInit;
-    	a[2] = sigma;
+    	a[2] = gamma;
     	
     }
     
@@ -341,12 +341,12 @@ public class FitLorentz extends NLEngine {
         
         messageGraph.append("Fitting of gaussian function\n");
         messageGraph.append(" y = .5 * " + amp + " * exp(sqrt(x-" + xInit +
-                            ")/(" + sigma + "^3))\n");
+                            ")/(" + gamma + "^3))\n");
         messageGraph.append("\n");
         
         messageGraph.append("amp: " + amp + "\n"); 
         messageGraph.append("Xo: " + xInit + "\n");
-        messageGraph.append("sigma: " + sigma + "\n\n");
+        messageGraph.append("sigma: " + gamma + "\n\n");
         
         if (messageGraph.isVisible() == false) {
         	messageGraph.setLocation(100, 50);
@@ -371,7 +371,7 @@ public class FitLorentz extends NLEngine {
      * Gaussian evaluated at a point with given parameters
      */
     private double lorentz(double x) {
-    	double exp = -Math.pow(x-xInit, .5) / (Math.pow(sigma, 3));
+    	double exp = -Math.pow(x-xInit, .5) / (Math.pow(gamma, 3));
     	
     	double f = amp*Math.exp(exp);
     	
@@ -382,7 +382,7 @@ public class FitLorentz extends NLEngine {
      * Partial derivative of Lorentz distribution with respect to A.
      */
     private double dLdA(double x) {
-    	double exp = -Math.pow(x-xInit, .5) / (Math.pow(sigma, 3));
+    	double exp = -Math.pow(x-xInit, .5) / (Math.pow(gamma, 3));
     	
     	double f = Math.exp(exp);
     	
@@ -394,9 +394,9 @@ public class FitLorentz extends NLEngine {
      * Partial derivative of Lorentz distribution with respect to x.
      */
     private double dLdxInit(double x) {
-    	double exp = -.5*Math.pow(x-xInit, -.5) / (Math.pow(sigma, 3));
+    	double exp = -.5*Math.pow(x-xInit, -.5) / (Math.pow(gamma, 3));
     	
-    	double coeff = (amp * (x-xInit))/(Math.pow(sigma, 2));
+    	double coeff = (amp * (x-xInit))/(Math.pow(gamma, 2));
     	
     	double f = coeff*Math.exp(exp);
     	
@@ -404,12 +404,12 @@ public class FitLorentz extends NLEngine {
     }
     
     /**
-     * Partial derivative of Lorentz distribution with respect to sigma.
+     * Partial derivative of Lorentz distribution with respect to gamma.
      */
-    private double dLdsigma(double x) {
-    	double exp = -Math.pow(x-xInit, .5) / (Math.pow(sigma, 3));
+    private double dLdgamma(double x) {
+    	double exp = -Math.pow(x-xInit, .5) / (Math.pow(gamma, 3));
     	
-    	double coeff = (amp/3 * Math.pow(x-xInit, .5))/(Math.pow(sigma, 4));
+    	double coeff = (amp/3 * Math.pow(x-xInit, .5))/(Math.pow(gamma, 4));
     	
     	double f = coeff*Math.exp(exp);
     	
@@ -424,7 +424,7 @@ public class FitLorentz extends NLEngine {
     	for(int i=dataStart; i<dataEnd; i++) {
     		jacobian.set(i-dataStart, 0, dLdA(xDataOrg[i]));
     		jacobian.set(i-dataStart, 1, dLdxInit(xDataOrg[i]));
-    		jacobian.set(i-dataStart, 2, dLdsigma(xDataOrg[i]));
+    		jacobian.set(i-dataStart, 2, dLdgamma(xDataOrg[i]));
     	}
     	
     	return jacobian;
