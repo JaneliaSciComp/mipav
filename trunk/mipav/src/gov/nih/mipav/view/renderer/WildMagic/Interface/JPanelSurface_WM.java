@@ -145,9 +145,6 @@ public class JPanelSurface_WM extends JInterfaceBase
 
     private Vector<TriMesh> m_kMeshes = new Vector<TriMesh>();
 
-    /** Check Box for per-pixel lighting. */
-    private JCheckBox m_kPerPixelLightingCB;
-
     /** Polyline counter list <index, groupID> */
     private DefaultListModel polylineCounterList = new DefaultListModel();
     
@@ -277,9 +274,6 @@ public class JPanelSurface_WM extends JInterfaceBase
         }
         else if (command.equals("transparency")) {
             setTransparency(surfaceList.getSelectedIndices());
-        }
-        else if (command.equals("perPixelLighting")) {
-            setPerPixelLighting(surfaceList.getSelectedIndices());
         }
         else if (command.equals("Clipping") )
         {
@@ -483,7 +477,7 @@ public class JPanelSurface_WM extends JInterfaceBase
             if ( found ) {
 	            numTriangles /= 3;
 	            triangleText.setText("" + numTriangles);
-	            m_kVolumeViewer.addSurface(akSurfaces, false);
+	            m_kVolumeViewer.addSurface(akSurfaces);
 	            // keep the current selected mesh type: fill, points, or lines. 
 	            changePolyMode(polygonIndexToMode(polygonModeCB.getSelectedIndex()));
             }
@@ -930,20 +924,13 @@ public class JPanelSurface_WM extends JInterfaceBase
         surfaceTransparencyCB.setActionCommand("transparency");
         surfaceTransparencyCB.setFont(MipavUtil.font12B);
         surfaceTransparencyCB.setSelected(true);
-
-        m_kPerPixelLightingCB = new JCheckBox("Per-Pixel Lighting", false);
-        m_kPerPixelLightingCB.addActionListener(this);
-        m_kPerPixelLightingCB.setActionCommand("perPixelLighting");
-        m_kPerPixelLightingCB.setFont(MipavUtil.font12B);
-        m_kPerPixelLightingCB.setSelected(false);
-
+        
         JPanel cbSurfacePanel = new JPanel();
         cbSurfacePanel.setLayout(new BoxLayout(cbSurfacePanel, BoxLayout.Y_AXIS));
         cbSurfacePanel.add(surfacePickableCB);
         cbSurfacePanel.add(surfaceClipCB);
         cbSurfacePanel.add(surfaceBackFaceCB);
         cbSurfacePanel.add(surfaceTransparencyCB);
-        //cbSurfacePanel.add(m_kPerPixelLightingCB);
 
         JPanel cbPanel = new JPanel();
         cbPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -1006,13 +993,13 @@ public class JPanelSurface_WM extends JInterfaceBase
         TriMesh[] akSurfaces = FileSurface_WM.openSurfaces(m_kVolumeViewer.getImageA(), surfaceVector.size());
         if ( akSurfaces != null )
         {
-            addSurfaces(akSurfaces, false);
+            addSurfaces(akSurfaces);
         }
     }
     
-    public void addSurfaces( TriMesh[] akSurfaces, boolean bReplace )
+    public void addSurfaces( TriMesh[] akSurfaces )
     {
-        m_kVolumeViewer.addSurface(akSurfaces, bReplace);
+        m_kVolumeViewer.addSurface(akSurfaces);
 
         DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
         int iSize = kList.getSize();
@@ -1066,8 +1053,6 @@ public class JPanelSurface_WM extends JInterfaceBase
         surfaceClipCB.setEnabled(flag);
         surfaceBackFaceCB.setEnabled(flag);
         surfaceTransparencyCB.setEnabled(flag);
-        m_kPerPixelLightingCB.setEnabled(flag);
-
         m_kSurfacePaint.setEnabled(flag);
     }
 
@@ -1151,23 +1136,6 @@ public class JPanelSurface_WM extends JInterfaceBase
         }
     }
     
-    /**
-     * Turns Transparency on/off for the selected surfaces.
-     *
-     * @param  surfaces  the list of selected surfaces (SurfaceAttributes)
-     */
-    private void setPerPixelLighting(int[] aiSelected) {
-
-        if ( m_kVolumeViewer != null )
-        {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.setPerPixelLighting( (String)kList.elementAt(aiSelected[i]), m_kPerPixelLightingCB.isSelected());
-            }
-
-        }
-    }
-
     /**
      * Turns Clipping on/off for the selected surfaces.
      *
@@ -1255,8 +1223,7 @@ public class JPanelSurface_WM extends JInterfaceBase
             DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
                 new JFrameSurfaceMaterialProperties_WM(this, aiSelected[i], m_kVolumeViewer.GetLights(),
-                        m_kVolumeViewer.getMaterial( (String)kList.elementAt(aiSelected[i]) ),
-                        m_kVolumeViewer.GetAnimator() );
+                        m_kVolumeViewer.getMaterial( (String)kList.elementAt(aiSelected[i]) ) );
             }
         }
     }
@@ -1428,7 +1395,7 @@ public class JPanelSurface_WM extends JInterfaceBase
             }
 
 
-            m_kVolumeViewer.addSurface(akSurfaces, false);
+            m_kVolumeViewer.addSurface(akSurfaces);
 
 
             decimateButton.setEnabled(false);

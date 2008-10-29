@@ -340,9 +340,9 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         }
         
         /* Setup for sphere nodes. */
-        m_kSphere = addSurface( m_kCortical.getSphere(), false );
+        m_kSphere = addSurface( m_kCortical.getSphere() );
         /* Setup for plane nodes. */
-        m_kCylinder = addSurface( m_kCortical.getCylinder(), false );
+        m_kCylinder = addSurface( m_kCortical.getCylinder() );
         m_kCylinder.SetBackface(true);
         
         if ( !m_bFirst )
@@ -456,10 +456,9 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
     /**
      * Draw the user-selected point, either as a sphere on the triangle mesh, or as a black triangle, depending on which
      * picking is enabled:
-     *
-     * @param  kStart   DOCUMENT ME!
-     * @param  aiIndex  DOCUMENT ME!
-     * @param  iWhich   DOCUMENT ME!
+     * @param iV0, index 0 of the picked triangle.
+     * @param iV1, index 1 of the picked triangle.
+     * @param iV2, index 2 of the picked triangle.
      */
     public void drawPicked(int iV0, int iV1, int iV2) {
 
@@ -680,12 +679,12 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
     }
 
     
-    public VolumeSurface addSurface(TriMesh kSurfaces, boolean bReplace)
+    public VolumeSurface addSurface(TriMesh kSurfaces)
     {
-        VolumeSurface kSurface = new VolumeSurface( m_pkRenderer, m_kVolumeImageA, m_kVolumeImageB,
+        VolumeSurface kSurface = new VolumeSurface( m_kVolumeImageA, m_kVolumeImageB,
                 m_kTranslate,
                 m_fX, m_fY, m_fZ,
-                kSurfaces, bReplace );
+                kSurfaces );
         kSurface.SetPickable(true);
         kSurface.SetDisplay(true);
         //kSurface.SetPolygonMode( true, WireframeState.FillMode.FM_LINE );

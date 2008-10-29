@@ -248,7 +248,7 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     public void addSurface(TriMesh kNew) {
         TriMesh[] akSurfaces = new TriMesh[1];
         akSurfaces[0] = kNew;
-        m_kSurfacePanel.addSurfaces(akSurfaces, false);
+        m_kSurfacePanel.addSurfaces(akSurfaces);
     }
 
     /**
@@ -693,11 +693,21 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     }
     
     
+    /**
+     * Remove the specific geodesic curves from the given surface.
+     * @param kSurface, the surface to modify.
+     * @param iNode, the node to remove.
+     * @param iGroup, the group the node belongs to.
+     */
     public void removeGeodesic( TriMesh kSurface, int iNode, int iGroup )
     {
         m_kVolumeViewer.removeGeodesic(kSurface, iNode, iGroup);
     }    
     
+    /**
+     * Removes all geodesic curves for the given surface.
+     * @param kSurface, the surface to modify.
+     */
     public void removeAllGeodesic( TriMesh kSurface )
     {
         m_kVolumeViewer.removeAllGeodesic(kSurface);

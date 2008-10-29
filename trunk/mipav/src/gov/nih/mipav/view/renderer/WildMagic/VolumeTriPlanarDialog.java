@@ -409,8 +409,6 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         try {
             if (m_kVolViewType.equals("WMVolTriplanar")) {
                 VolumeTriPlanarInterface kWM = new VolumeTriPlanarInterface(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB);
-                kWM.setImageOriginal(imageAOriginal);
-
                 if (forcePadding) {
                     kWM.doPadding(extents, volExtents);
                 } else if (forceResample) {

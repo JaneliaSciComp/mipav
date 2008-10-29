@@ -26,28 +26,12 @@ public class VolumeSurface extends VolumeObject
      * @param fY, the size of the volume in the y-dimension (extent * resolutions)
      * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
      */
-    public VolumeSurface ( Renderer kRenderer, VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, float fX, float fY, float fZ, TriMesh kMesh )
-    {
-        this(kRenderer, kImageA, kImageB, kTranslate, fX, fY, fZ, kMesh, false );
-    }
-    
-    public VolumeSurface ( Renderer kRenderer, VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, float fX, float fY, float fZ, TriMesh kMesh, boolean bReplace )
+    public VolumeSurface ( VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, float fX, float fY, float fZ, TriMesh kMesh )
     {
         super(kImageA,kImageB,kTranslate,fX,fY,fZ);
 
         CreateScene();
-        if ( bReplace )
-        {
-            StandardMesh kSM = new StandardMesh( kMesh.VBuffer.GetAttributes() );
-            TriMesh kLocal = kSM.Sphere( 10, 10, .5f );
-            m_kMesh = new TriMesh(kLocal);
-            //m_kMesh = new HierarchicalTriMesh(kLocal);
-        }
-        else
-        {
-            //m_kMesh = new HierarchicalTriMesh(kMesh);
-            m_kMesh = kMesh;
-        }
+        m_kMesh = kMesh;
         m_kMesh.SetName( new String( kMesh.GetName() ) );
         
         boolean bHasMaterial = true;

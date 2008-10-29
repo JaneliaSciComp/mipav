@@ -139,29 +139,19 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kDTIDisplay.SetDisplay( true );
     }
 
-    public void addSurface(TriMesh[] akSurfaces, boolean bReplace)
+    public void addSurface(TriMesh[] akSurfaces)
     {
         for ( int i = 0; i < akSurfaces.length; i++ )
         {
-            VolumeSurface kVolumeSurfaces = new VolumeSurface( m_pkRenderer, m_kVolumeImageA, m_kVolumeImageB,
+            VolumeSurface kVolumeSurfaces = new VolumeSurface( m_kVolumeImageA, m_kVolumeImageB,
                     m_kTranslate,
                     m_fX, m_fY, m_fZ,
-                    akSurfaces[i], bReplace );
+                    akSurfaces[i] );
             kVolumeSurfaces.SetPerPixelLighting( m_pkRenderer, true );
             m_kDisplayList.add( kVolumeSurfaces );
         }
         UpdateSceneRotation();
         m_bSurfaceUpdate = true;
-    }
-
-    public void addGeometry( Geometry kGeometry )
-    {
-        VolumeGeometry kVLine = new VolumeGeometry( kGeometry, m_kVolumeImageA, 
-                                                    m_kTranslate,
-                                                    m_fX, m_fY, m_fZ );
-        kVLine.SetDisplay(true);
-        m_kDisplayList.add( 1, kVLine );
-        UpdateSceneRotation();
     }
 
     public VolumeSurface[] getSurfaces( String[] akSurfaceNames )
@@ -1983,7 +1973,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_pkRenderer.SetLight( i, new Light() );
         }
         
-        m_kParent.AddSlices(m_kSlices);
+        m_kParent.addSlices(m_kSlices);
     }
     
     /**

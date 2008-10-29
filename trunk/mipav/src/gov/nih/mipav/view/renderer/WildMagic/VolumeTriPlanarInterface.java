@@ -1,57 +1,152 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
 
-import gov.nih.mipav.*;
-
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.utilities.*;
-
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
-
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.view.renderer.*;
-import gov.nih.mipav.view.renderer.J3D.*;
-
-import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
-import gov.nih.mipav.view.renderer.WildMagic.Render.*;
-import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.*;
-import gov.nih.mipav.view.renderer.WildMagic.flythroughview.*;
+import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcat;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.TransferFunction;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewControlsImage;
+import gov.nih.mipav.view.ViewJComponentBase;
+import gov.nih.mipav.view.ViewJFrameBase;
+import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ViewMenuBuilder;
+import gov.nih.mipav.view.ViewToolBarBuilder;
+import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.dialogs.JDialogIntensityPaint;
+import gov.nih.mipav.view.dialogs.JDialogOpacityControls;
+import gov.nih.mipav.view.renderer.JPanelHistoLUT;
+import gov.nih.mipav.view.renderer.JPanelHistoRGB;
+import gov.nih.mipav.view.renderer.JPanelRendererBase;
+import gov.nih.mipav.view.renderer.JPanelVolOpacityRGB;
+import gov.nih.mipav.view.renderer.ViewJComponentVolOpacityBase;
+import gov.nih.mipav.view.renderer.J3D.JPanelVolOpacity;
+import gov.nih.mipav.view.renderer.J3D.JPanelVolOpacityBase;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogStereoControls;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelDisplay_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelGeodesic_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSculptor_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSlices_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurface_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
+import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender;
+import gov.nih.mipav.view.renderer.WildMagic.flythroughview.FlyThroughRender;
+import gov.nih.mipav.view.renderer.WildMagic.flythroughview.JPanelVirtualEndoscopySetup_WM;
 import gov.nih.mipav.view.renderer.flythroughview.JPanelFlythruMove;
 
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Collision.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.WindowEvent;
+import java.util.Vector;
+
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JRadioButton;
+import javax.swing.JSeparator;
+import javax.swing.JSlider;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JToolBar;
+import javax.swing.border.Border;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Collision.PickRecord;
+import WildMagic.LibGraphics.Rendering.Light;
+import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.Rendering.WireframeState;
+import WildMagic.LibGraphics.SceneGraph.Geometry;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
 import WildMagic.LibGraphics.Shaders.ImageCatalog;
 import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
 import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 
-import com.sun.opengl.util.*;
+import com.sun.opengl.util.Animator;
 
-import java.awt.*;
-import java.awt.event.*;
-
-import java.util.*;
-
-import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.event.*;
-
+/**
+ * @author Alexandra
+ *
+ */
 public class VolumeTriPlanarInterface extends ViewJFrameBase 
-implements MouseListener, ItemListener, ChangeListener {
+implements ItemListener, ChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /**
+     * Item to hold tab name and corresponding panel.
+     */
+    class TabbedItem {
+
+        /** Panel name */
+        public String name;
+
+        /** Panel */
+        public JPanel panel;
+
+        /**
+         * Creates a new TabbedItem object.
+         *
+         * @param  _name   panel name.
+         * @param  _panel  JPanel to display in tab.
+         */
+        public TabbedItem(String _name, JPanel _panel) {
+            name = _name;
+            panel = _panel;
+        }
+    }
 
     /** Use serialVersionUID for interoperability. */
     protected static final long serialVersionUID = 1898957906984534260L;
 
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
     /** The small bar on the top right corner the volume view frame. */
     protected static JProgressBar rendererProgressBar;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    /** Panel containing the position labels:. */
+    private JPanel panelLabels = new JPanel();
+
+    //** Check box to enable/disable surface self-shadowing */
+    private JCheckBox kSelfShadow;
 
     /** Menu items storage. */
     protected ViewMenuBuilder menuObj;
@@ -73,35 +168,32 @@ implements MouseListener, ItemListener, ChangeListener {
 
     /** Lookup table of the color imageA, B. */
     protected ModelRGB RGBTA = null, RGBTB = null;
-
     /** Fonts, same as <code>MipavUtil.font12</code> and <code>MipavUtil.font12B.</code> */
     protected Font serif12, serif12B;
-
-    /** Panel containing the position labels:. */
-    JPanel panelLabels = new JPanel();
-
     /** Control panels for the Brain Surface Flattener:. */
     protected JPanel m_kBrainsurfaceFlattenerPanel = null;
     /** Rendering the brainsurfaceFlattener objects. */
     protected CorticalAnalysisRender brainsurfaceFlattenerRender = null;
     protected FlyThroughRender m_kFlyThroughRender =  null;
     protected JPanel m_kFlyThroughPanel = null;
-    protected JPanelVirtualEndoscopySetup_WM flythruControl;
+    protected JPanelVirtualEndoscopySetup_WM flythruControl; 
     protected JPanel flythruMovePanel;
-    protected JPanelFlythruMove flythruMoveControl; 
+    protected JPanelFlythruMove flythruMoveControl;
     /** DOCUMENT ME! */
     protected JPanelClip_WM clipBox;
     protected JPanelSlices_WM sliceGUI;
     protected JPanelSurface_WM surfaceGUI;
     protected JPanelDisplay_WM displayGUI;
     protected JPanelGeodesic_WM geodesicGUI;
+
     protected JPanelSculptor_WM sculptGUI;
     protected JPanelSurfaceTexture_WM surfaceTextureGUI;
-
     protected JCheckBox m_kDisplayVolumeCheck;
     protected JCheckBox m_kDisplaySlicesCheck;
     protected JCheckBox m_kDisplaySurfaceCheck;
+
     protected JCheckBox m_kStereoCheck;
+
     /** Button to invoke all the six clipping planes. */
     protected JButton clipButton;
 
@@ -129,14 +221,12 @@ implements MouseListener, ItemListener, ChangeListener {
     /** Control panel for the surface renderer. */
     protected JPanel histoLUTPanel;
 
-    /** Reference to the imageA original copy. */
-    protected ModelImage imageAOriginal;
-
     /** Image orientation: coronal, sagittal, axial, unknown. */
     protected int imageOrientation;
 
     /** The image panel to hold one Canvas3D. */
     protected JPanel gpuPanel;
+
     protected JPanel bf_flyPanel;
 
     /** DOCUMENT ME! */
@@ -198,9 +288,6 @@ implements MouseListener, ItemListener, ChangeListener {
     /** Radio button of the surface render composite mode. */
     protected JRadioButton radioSurrenderCOMPOSITE;
 
-    //** Check box to enable/disable surface self-shadowing */
-    JCheckBox kSelfShadow;
-
     /** Radio button of the surface render lighting mode. */
     protected JRadioButton radioSurrenderLIGHT;
 
@@ -209,8 +296,8 @@ implements MouseListener, ItemListener, ChangeListener {
 
     /** Panel Border view. */
     protected Border raisedbevel, loweredbevel, compound, redBorder, etchedBorder, pressedBorder;
-
     protected VolumeImage m_kVolumeImageA;
+
     protected VolumeImage m_kVolumeImageB;
 
     protected Animator m_kAnimator;
@@ -240,10 +327,10 @@ implements MouseListener, ItemListener, ChangeListener {
 
     /** Sculpt region width. */
     protected int sculptWidth;
-
+    
     /** DOCUMENT ME! */
     protected JPanel slicePanel;
-    
+
     /** DOCUMENT ME! */
     protected JPanel surfaceTexturePanel;
 
@@ -262,18 +349,19 @@ implements MouseListener, ItemListener, ChangeListener {
     /** Surface Render toolbar. */
     protected JToolBar surfaceToolBar;
 
-    protected boolean m_bSurfaceVisible = true;
 
+    protected boolean m_bSurfaceVisible = true;
 
     protected JPanelVolOpacityBase m_kVolOpacityPanel;
 
     protected JSlider m_kVolumeBlendSlider;
-
-    protected JDialogStereoControls m_kStereoIPD = null;
     
+    protected JDialogStereoControls m_kStereoIPD = null;
     protected JPanel panelAxial;
     protected JPanel panelSagittal;
+    
     protected JPanel panelCoronal;
+    
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
     /**
@@ -282,8 +370,9 @@ implements MouseListener, ItemListener, ChangeListener {
     public VolumeTriPlanarInterface() {
     	super(null, null);
     }
-    
-    
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
      * Make a volume rendering frame, which contains the toolbars on the top, control panel on the left, the volume
      * rendering panel on the right, and the three orthogonal view ( axial, sagittal, coronal, views) on the bottom
@@ -295,9 +384,6 @@ implements MouseListener, ItemListener, ChangeListener {
      * @param  _imageB                Second loaded image
      * @param  LUTb                   LUT of the imageB
      * @param  _RGBTB                 RGB table of imageB
-     * @param  _leftPanelRenderMode   shear warp render mode enabled or not
-     * @param  _rightPanelRenderMode  volume rendering panel render mode ( Raycast, shearwarp, etc).
-     * @param  _resampleDialog        resample dialog reference.
      */
     public VolumeTriPlanarInterface(ModelImage _imageA, ModelLUT LUTa, ModelRGB _RGBTA, ModelImage _imageB, ModelLUT LUTb,
                                 ModelRGB _RGBTB) {
@@ -316,13 +402,6 @@ implements MouseListener, ItemListener, ChangeListener {
         imageOrientation = imageA.getImageOrientation();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
-    public VolumeTriPlanarRender getVolumeGPU()
-    {
-        return raycastRenderWM; 
-    }
-
 
     /**
      * Retrieve the progress bar used in the volume renderer (the one in the upper right hand corner).
@@ -339,9 +418,51 @@ implements MouseListener, ItemListener, ChangeListener {
     }
 
     /**
-     * Calls various methods depending on the action.
+     * Creates and initializes the LUT for an image.
      *
-     * @param  event  Event that triggers function.
+     * @param   img  the image to create a LUT for
+     *
+     * @return  a LUT for the image <code>img</code> (null if a color image)
+     *
+     * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
+     */
+    public static ModelLUT initLUT(ModelImage img) throws OutOfMemoryError {
+        ModelLUT newLUT = null;
+
+        // only make a lut for non color images
+        if (img.isColorImage() == false) {
+            int[] dimExtentsLUT = new int[2];
+
+            dimExtentsLUT[0] = 4;
+            dimExtentsLUT[1] = 256;
+
+            newLUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+
+            float min, max;
+
+            if (img.getType() == ModelStorageBase.UBYTE) {
+                min = 0;
+                max = 255;
+            } else if (img.getType() == ModelStorageBase.BYTE) {
+                min = -128;
+                max = 127;
+            } else {
+                min = (float) img.getMin();
+                max = (float) img.getMax();
+            }
+
+            float imgMin = (float) img.getMin();
+            float imgMax = (float) img.getMax();
+
+            newLUT.resetTransferLine(min, imgMin, max, imgMax);
+        }
+
+        return newLUT;
+    }
+
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#actionPerformed(java.awt.event.ActionEvent)
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -523,10 +644,6 @@ implements MouseListener, ItemListener, ChangeListener {
             boolean showRFA = menuObj.isMenuItemSelected("RFA toolbar");
 
             setRFAToolbarVisible(showRFA);
-        } else if (command.equals("ProbeTargetPoint")) {
-            enableTargetPointPicking();
-        } else if (command.equals("traverse")) {
-            disableTargetPointPicking();
         } else if (command.equals("RadiologicalView")) {          
             setRadiological(true);
         } else if (command.equals("NeurologicalView")) {
@@ -541,15 +658,82 @@ implements MouseListener, ItemListener, ChangeListener {
     }
 
     /**
-     * Add any attached surfaces the current image has in its file info (if the file info is in the xml format).
+     * Add a geodesic element to the surface display.
+     * @param kSurface, the surface the geodesic element is attached to.
+     * @param kNew, the new geodesic element.
+     * @param iGroup, the Node index.
      */
-    public void addAttachedSurfaces() {
-
-//         if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
-//             surRender.getSurfaceDialog().addAttachedSurfaces();
-//         }
+    public void addGeodesic( TriMesh kSurface, Geometry kNew, int iGroup )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.addGeodesic(kSurface, kNew, iGroup);
+        }
+    }
+  
+    /**
+     * Add a new display node to the volume/surface display list. This is done from the other renderers: BrainSurfaceFlattener and Flythrough.
+     * @param kNode
+     */
+    public void addNode( Node kNode )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.addNode( kNode );
+        }
     }
 
+    /**
+     * Add a polyline to the VolumeDTI display.
+     * @param akPolyline, new polyline.
+     * @param groupIndex, Node index.
+     */
+    public void addPolyline(Polyline akPolyline, int groupIndex)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.addPolyline(akPolyline, groupIndex);
+        }
+    }
+
+    /**
+     * Pass the VolumeSlices from the Volume Renderer to the PlaneRender objects.
+     * @param kSlices
+     */
+    public void addSlices(VolumeSlices kSlices)
+    {
+        for (int i = 0; i < 3; i++) 
+        {
+            m_akPlaneRender[i].addSlices(kSlices);
+        }
+    }
+
+    /**
+     * Add TriMesh surfaces to the Volume Renderer.
+     * @param akSurfaces, new surfaces.
+     */
+    public void addSurface(TriMesh[] akSurfaces)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.addSurface(akSurfaces);  
+            insertTab("Light", lightPanel);
+            m_kLightsPanel.enableLight(0, true);
+            insertTab("Surface", surfacePanel);
+            m_kDisplaySurfaceCheck.setSelected(true);
+            m_kDisplaySurfaceCheck.setEnabled(true);
+            raycastRenderWM.DisplaySurface(true);
+            
+            menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", true);  
+            menuObj.setMenuItemEnabled("Open Fly Through view", true);       
+        }
+        if ( geodesicGUI != null )
+        {
+            geodesicGUI.setEnabled(true);
+            geodesicGUI.setSurfacePanel(surfaceGUI);
+        }
+    }
+    
     /**
      * Build the clipping control panel for the surface render.
      */
@@ -566,7 +750,6 @@ implements MouseListener, ItemListener, ChangeListener {
     public void buildDisplayPanel() {
         displayPanel = new JPanel();
         displayGUI = new JPanelDisplay_WM(this);
-        //displayGUI.setVisible(true);
         displayPanel.add(displayGUI.getMainPanel());
         maxPanelWidth = Math.max(displayPanel.getPreferredSize().width, maxPanelWidth);
     }
@@ -587,7 +770,7 @@ implements MouseListener, ItemListener, ChangeListener {
         m_kFlyThroughRender.setupRenderControl(flythruControl);
         maxPanelWidth = Math.max(m_kFlyThroughPanel.getPreferredSize().width, maxPanelWidth);
     }
-    
+
     /**
      * Build the Geodesic control panel.
      */
@@ -613,9 +796,9 @@ implements MouseListener, ItemListener, ChangeListener {
 
         maxPanelWidth = Math.max(histoLUTPanel.getPreferredSize().width, maxPanelWidth);
     }
-
-    /**
-     * The label panel of the x, y, z slider position.
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#buildLabelPanel()
      */
     public void buildLabelPanel() {
         super.buildLabelPanel();
@@ -718,11 +901,10 @@ implements MouseListener, ItemListener, ChangeListener {
     public void buildLightPanel() {
         lightPanel = new JPanel();
         m_kLightsPanel = new JPanelLights_WM(this);
-        //m_kLightsPanel.setVisible(true);
         lightPanel.add(m_kLightsPanel.getMainPanel());
         maxPanelWidth = Math.max(lightPanel.getPreferredSize().width, maxPanelWidth);
     }
-    
+
     /**
      * Build the volume opacity control panel for the surface render.
      */
@@ -752,15 +934,6 @@ implements MouseListener, ItemListener, ChangeListener {
     }
 
     /**
-     * Build the adding surface control panel for the surface render.
-     */
-    public void buildProbePanel() {
-        probePanel = new JPanel();
-//         probePanel.add(surRender.getProbeDialog().getMainPanel());
-        maxPanelWidth = Math.max(probePanel.getPreferredSize().width, maxPanelWidth);
-    }
-
-    /**
      * Build the Sculpturing control panel.
      */
     public void buildSculpt() {
@@ -780,14 +953,6 @@ implements MouseListener, ItemListener, ChangeListener {
         maxPanelWidth = Math.max(slicePanel.getPreferredSize().width, maxPanelWidth);
     }
 
-    public void buildSurfaceTexturePanel()
-    {
-        surfaceTexturePanel = new JPanel();
-        surfaceTextureGUI = new JPanelSurfaceTexture_WM(this);
-        surfaceTexturePanel.add(surfaceTextureGUI.getMainPanel());
-        maxPanelWidth = Math.max(surfaceTexturePanel.getPreferredSize().width, maxPanelWidth);
-    }
-    
     /**
      * Build the adding surface control panel for the surface render.
      */
@@ -798,6 +963,25 @@ implements MouseListener, ItemListener, ChangeListener {
         maxPanelWidth = Math.max(surfacePanel.getPreferredSize().width, maxPanelWidth);
     }
 
+    /**
+     * Builds the Surface texture panel.
+     */
+    public void buildSurfaceTexturePanel()
+    {
+        surfaceTexturePanel = new JPanel();
+        surfaceTextureGUI = new JPanelSurfaceTexture_WM(this);
+        surfaceTexturePanel.add(surfaceTextureGUI.getMainPanel());
+        maxPanelWidth = Math.max(surfaceTexturePanel.getPreferredSize().width, maxPanelWidth);
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#componentMoved(java.awt.event.ComponentEvent)
+     */
+    public void componentMoved(ComponentEvent event)
+    {       
+        setModified();
+    }
+    
     /**
      * Method called when a component resize event is generated. This method snaps the size of the frame and pagePanel
      * to the nearest row, column sizing (so the gridRow and gridColumn and page layout may change).
@@ -898,15 +1082,21 @@ implements MouseListener, ItemListener, ChangeListener {
         }
         // Toolkit.getDefaultToolkit().setDynamicLayout( false );
     }
-
+    
     /**
-     * Disable target point for the RFA probe from within the plane renderer.
+     * Causes redisplay of all components.
      */
-    public void disableTargetPointPicking() {
-
-//         for (int iPlane = 0; iPlane < 3; iPlane++) {
-//             m_akPlaneRender[iPlane].enableTargetPointPicking(false);
-//         }
+    public void displayAll()
+    {
+        for (int i = 0; i < 3; i++) 
+        {
+            m_akPlaneRender[i].GetCanvas().display();
+        }
+        raycastRenderWM.GetCanvas().display();
+        if ( m_kFlyThroughRender != null )
+        {
+            m_kFlyThroughRender.GetCanvas().display();
+        }
     }
 
     /**
@@ -1173,60 +1363,48 @@ implements MouseListener, ItemListener, ChangeListener {
     }
 
     /**
-     * Called from the PlaneRender class when a new Probe Entry Point has been selected. The point is passed into each
-     * PlaneRender class for display, and to the SurfaceRender class for display
-     *
-     * @param  kPoint  target point position
+     * Enable geodesic calculations and display.
+     * @param bEnable, when true geodesic curves are enabled.
      */
-//    public void drawRFAPoint(Point3f kPoint) {
+    public void enableGeodesic( boolean bEnable )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.enableGeodesic(bEnable);
+        }
+    }
 
-//        for (int iPlane = 0; iPlane < 3; iPlane++) {
-//            m_akPlaneRender[iPlane].drawRFAPoint(kPoint);
-//            m_akPlaneRender[iPlane].update();
-//        }
-
-//         surRender.drawRFAPoint(kPoint);
- //   }
 
     /**
-     * Enable target point for the RFA probe from within the plane renderer.
+     * Enable painting on TriMesh surfaces.
+     * @param kPaintColor, paint color.
+     * @param iBrushSize, brush size.
+     * @param bEnabled, painting on/off.
+     * @param bPaint, when true apply paint.
+     * @param bDropper, when true do dropper mode.
+     * @param bPaintCan, when true do paint can mode.
+     * @param bErase, when true erase.
      */
-    public void enableTargetPointPicking() {
-
-//         for (int iPlane = 0; iPlane < 3; iPlane++) {
-//             m_akPlaneRender[iPlane].enableTargetPointPicking(true);
-//         }
+    public void enablePaint( ColorRGBA kPaintColor, int iBrushSize, boolean bEnabled, boolean bPaint, boolean bDropper, boolean bPaintCan, boolean bErase )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.enablePaint(kPaintColor, iBrushSize, bEnabled, bPaint, bDropper, bPaintCan, bErase);
+        }
     }
 
     /**
-     * Get the imageA and imageB blending value from the PlaneRender.
-     *
-     * @return  blendValue blender slider value.
+     * Erase all surface paint.
      */
-    public int getBlendValue() {
-        JPanelVolOpacityBase opacityPanel = m_kVolOpacityPanel;
-        return opacityPanel.getAlphaBlendSliderValue();
-    }
-    
-    /**
-     * Get the raytracing steps value.
-     *
-     * @return  raytrcing steps slider value.
-     */
-    public int getStepsValue() {
-        JPanelVolOpacityBase opacityPanel = m_kVolOpacityPanel;
-        return opacityPanel.getStepsSliderValue();
+    public void eraseAllPaint( )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.eraseAllPaint();
+        }
     }
 
-    /**
-     * Required by the parent super class, do nothing.
-     *
-     * @return  null
-     */
-    public ViewControlsImage getControls() {
-        return null;
-    }
-    
+
     /**
      * Returns the ModelLUT or ModelRGB based on which image is currently active, either imageA or imageB and they type
      * of image (color or grayscale).
@@ -1247,6 +1425,39 @@ implements MouseListener, ItemListener, ChangeListener {
         }
 
         return LUTb;
+    }
+
+    /**
+     * Get the imageA and imageB blending value from the PlaneRender.
+     *
+     * @return  blendValue blender slider value.
+     */
+    public int getBlendValue() {
+        JPanelVolOpacityBase opacityPanel = m_kVolOpacityPanel;
+        return opacityPanel.getAlphaBlendSliderValue();
+    }
+
+    /**
+     * Get the camera current location 
+     * @return camera position vector
+     */
+    public Vector3f getCameraLocation() {
+    	return raycastRenderWM.getCameraLocation();
+    }
+
+    /**
+     * Get the camera parameters. 
+     * @return  camera parameters array. 
+     */
+    public float[] getCameraParameters() {
+    	return raycastRenderWM.getCameraParameters();
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#getControls()
+     */
+    public ViewControlsImage getControls() {
+        return null;
     }
 
     /**
@@ -1305,15 +1516,19 @@ implements MouseListener, ItemListener, ChangeListener {
         return imageB;
     }
 
-    /**
-     * Get a reference to the original image we passed into the renderer from MIPAV (non-cloned).
-     *
-     * @return  the original image
-     */
-    public ModelImage getImageOriginal() {
-        return imageAOriginal;
-    }
 
+    /**
+     * Return the Light[] used in the volume/surface display. 
+     * @return
+     */
+    public Light[] GetLights()
+    {
+        if ( raycastRenderWM != null )
+        {
+            return raycastRenderWM.GetLights();
+        }
+        return null;
+    }
 
     /**
      * Get the LUT panel (only should be used with grayscale images).
@@ -1324,16 +1539,37 @@ implements MouseListener, ItemListener, ChangeListener {
         return panelHistoLUT;
     }
 
+    /**
+     * Return the material properties of the given surface.
+     * @param kSurfaceName, the surface to query.
+     * @return the material properties of the surface.
+     */
+    public MaterialState getMaterial(String kSurfaceName)
+    {
+        if ( raycastRenderWM != null )
+        {
+            return raycastRenderWM.GetMaterial(kSurfaceName);
+        }
+        return null;
+    }
+
 
     /**
-     * Return the rfa probe panel.
-     *
-     * @return  the rfa probe panel
+     * Get the object parameters.
+     * @return Get the object rotation parameters array.
      */
-//    public JPanelProbe getProbeDialog() {
-//         return surRender.getProbeDialog();
-//        return null;
-//    }
+    public float[] getObjectParameters() {
+    	return raycastRenderWM.getObjectParameters();
+    }
+
+    /**
+     * Get the object rotation matrix.
+     * @return rotation matrix
+     */
+    public Matrix3f getObjectRotation() {
+    	return raycastRenderWM.getObjectRotation();
+    }
+
 
     /**
      * Get the RGB panel (only should be used with color images).
@@ -1345,27 +1581,49 @@ implements MouseListener, ItemListener, ChangeListener {
     }
 
     /**
-     * Return the segmentation region map image which contains info on where the vascualture, etc are located.
+     * Get the raytracing steps value.
      *
-     * @return  (vessel, etc) segmentation image
+     * @return  raytrcing steps slider value.
      */
-    public ModelImage getSegmentationImage() {
-
-//         if (surRender != null) {
-//             return surRender.getSegmentationImage();
-//         } else {
-            return null;
-//         }
+    public int getStepsValue() {
+        JPanelVolOpacityBase opacityPanel = m_kVolOpacityPanel;
+        return opacityPanel.getStepsSliderValue();
+    }
+    
+    /**
+     * Return the size of the surface-area of the given surface.
+     * @param kSurfaceName, the surface to calculate the surface-area for.
+     * @return the surface-area of the surface.
+     */
+    public float getSurfaceArea(String kSurfaceName)
+    {
+        if ( raycastRenderWM != null )
+        {
+            return raycastRenderWM.GetSurfaceArea(kSurfaceName);
+        }
+        return 0;
     }
 
+    /**
+     * Return the size of the volume of the given surface.
+     * @param kSurfaceName, the surface to calculate the volume for.
+     * @return the volume of the surface.
+     */
+    public float getVolume(String kSurfaceName)
+    {
+        if ( raycastRenderWM != null )
+        {
+            return raycastRenderWM.GetVolume(kSurfaceName);
+        }
+        return 0;
+    }
 
     /**
-     * Return the image panel.
-     *
-     * @return  JSplitPane
+     * @return VolumeTriPlanarRender object.
      */
-    public JSplitPane getViewPanel() {
-        return rightPane;
+    public VolumeTriPlanarRender getVolumeGPU()
+    {
+        return raycastRenderWM; 
     }
 
     /**
@@ -1390,20 +1648,8 @@ implements MouseListener, ItemListener, ChangeListener {
         tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
     }
 
-    /**
-     * Check whether the Geodesic drawing is enabled or not.
-     *
-     * @return  boolean <code>true</code> Geodesic drawing enabled, <code>false</code> Geodesic disable.
-     */
-    public boolean isGeodesicEnable() {
-//         return surRender.getGeodesicPanel().isGeodesicEnable();
-        return false;
-    }
-
-    /**
-     * Sets the flags for the getOptionses and resets labels.
-     *
-     * @param  event  Event that triggered this function.
+    /* (non-Javadoc)
+     * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
      */
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
@@ -1437,60 +1683,102 @@ implements MouseListener, ItemListener, ChangeListener {
     }
 
     /**
-     * Handle the double mouse click event when the use swith between the dual image panel view.
-     *
-     * @param  e  MouseEvent
+     * Enables picking correspondence points between the surface renderer and the BrainSurfaceFlattener renderer.
+     * @param bOn, true enables, false disables.
      */
-    public void mouseClicked(MouseEvent e) {
-        //Object source = e.getSource();
+    public void PickCorrespondence( boolean bOn )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.PickCorrespondence(bOn);
+        }        
     }
 
     /**
-     * Methods do nothing, implemented mouseListener.
-     *
-     * @param  e  MouseEvent
+     * Passes the triangle indices of the picked triangle to the BrainSurfaceFlattener renderer for display.
+     * @param iV0, index 0 of the picked triangle.
+     * @param iV1, index 1 of the picked triangle.
+     * @param iV2, index 2 of the picked triangle.
      */
-    public void mouseEntered(MouseEvent e) { }
+    public void PickCorrespondence( int iV0, int iV1, int iV2 )
+    {
+        if ( m_kBrainsurfaceFlattenerPanel != null )
+        {
+            brainsurfaceFlattenerRender.drawPicked(iV0, iV1, iV2);
+        }        
+    }
 
     /**
-     * Methods do nothing, implemented mouseListener.
-     *
-     * @param  e  MouseEvent
+     * Removes all geodesic curves for the given surface.
+     * @param kSurface, the surface to modify.
      */
-    public void mouseExited(MouseEvent e) { }
-
-    /**
-     * Methods do nothing, implemented mouseListener.
-     *
-     * @param  e  MouseEvent
-     */
-    public void mousePressed(MouseEvent e) { }
-
-    /**
-     * Methods do nothing, implemented mouseListener.
-     *
-     * @param  e  MouseEvent
-     */
-    public void mouseReleased(MouseEvent e) { }
-
-    /**
-     * Required by the parent super class, do nothing.
+    public void removeAllGeodesic( TriMesh kSurface )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.removeAllGeodesic(kSurface);
+        }
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#removeControls()
      */
     public void removeControls() { }
-
+    
     /**
-     * Remove the red line showing where the probe will pass through. Used when changing the probe target point through
-     * the tri-images.
+     * Remove the specific geodesic curves from the given surface.
+     * @param kSurface, the surface to modify.
+     * @param iNode, the node to remove.
+     * @param iGroup, the group the node belongs to.
      */
-    public void removeProbeLine() {
-
-//         if (surRender != null) {
-//             surRender.getProbeDialog().removeProbingPath();
-//         }
+    public void removeGeodesic( TriMesh kSurface, int iNode, int iGroup )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.removeGeodesic(kSurface, iNode, iGroup);
+        }
     }
 
     /**
-     * Reset image volume orieint along X axis.
+     * Remove the polyline from the volume DTI display.
+     * @param groupIndex, the polyline to remove.
+     */
+    public void removePolyline(int groupIndex)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.removePolyline(groupIndex);
+        }
+    }
+
+    /**
+     * Remove the given surface from the render display list.
+     * @param kSurfaceName, the name of the surface to remove.
+     */
+    public void removeSurface(String kSurfaceName)
+    {       
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.removeSurface(kSurfaceName);
+        }
+    }
+    /**
+     * When the Geodesic object cuts the mesh along an open curve, the old mesh changes, but does not need to be deleted
+     * and no new mesh needs to be added. This function allows the Geodesic object to replace the original mesh with the
+     * sliced mesh in the surface renderer. ReplaceMesh is also used to undo cutting operations.
+     *
+     * @param  kOld  TriMesh old surface mesh
+     * @param  kNew  TriMesh new surface mesh
+     */
+    public void replaceGeodesic(TriMesh kOld, TriMesh kNew) {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.replaceGeodesic(kOld, kNew);
+        }
+    }
+
+    /**
+     * Reset image volume orientation along X axis.
      */
     public void resetAxisX() {
         if ( raycastRenderWM != null )
@@ -1500,7 +1788,7 @@ implements MouseListener, ItemListener, ChangeListener {
     }
 
     /**
-     * Reset image volume orieint along Y axis.
+     * Reset image volume orientation along Y axis.
      */
     public void resetAxisY() {
         if ( raycastRenderWM != null )
@@ -1508,9 +1796,9 @@ implements MouseListener, ItemListener, ChangeListener {
             raycastRenderWM.resetAxisY();
         }
     }
-
+    
     /**
-     * Reset image volume orieint along Z axis.
+     * Reset image volume orientation along Z axis.
      */
     public void resetImage() {
         if ( raycastRenderWM != null )
@@ -1519,37 +1807,31 @@ implements MouseListener, ItemListener, ChangeListener {
         }
     }
 
-
-    /**
-     * Required by the parent super class, do nothing.
-     *
-     * @param  active  int
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#setActiveImage(int)
      */
     public void setActiveImage(int active) { }
 
-    /**
-     * Required by the parent super class, do nothing.
-     *
-     * @param  value  DOCUMENT ME!
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#setAlphaBlend(int)
      */
     public void setAlphaBlend(int value) { }
 
-
     /**
-     * Required by the parent super class, do nothing.
+     * Enables backface culling for the given surface.
+     * @param kSurfaceName, the surface to modify.
+     * @param bOn, when true back-face culling is enabled, false disables backface culling.
      */
-    public void setControls() { }
+    public void setBackface(String kSurfaceName, boolean bOn)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setBackface(kSurfaceName, bOn );
+        }
+    }
 
     /**
-     * Do nothing methods, just extend the ViewJframeBase.
-     *
-     * @param  flag  DOCUMENT ME!
-     */
-    public void setEnabled(boolean flag) { }
-
-
-    /**
-     *
+     * Sets the background color.
      * @param  color  
      */
     public void setBackgroundColor(Color color)
@@ -1558,10 +1840,10 @@ implements MouseListener, ItemListener, ChangeListener {
             raycastRenderWM.SetBackgroundColor(new ColorRGBA( color.getRed()/255.0f, color.getGreen()/255.0f, color.getBlue()/255.0f, 1.0f ) );
         }
     }
-
+    
     /**
-     *
-     * @param  color  
+     * Sets the volume bounding box color.
+     * @param  color
      */
     public void setBoundingBoxColor(Color color)
     {
@@ -1571,83 +1853,229 @@ implements MouseListener, ItemListener, ChangeListener {
     }
 
     /**
-     *
-     * @param  color  
+     * Set the camera location.
+     * @param v  camera position vector
      */
-    public void setShowBoxFrame(boolean bShow)
+    public void setCameraLocation(Vector3f v) {
+    	raycastRenderWM.setCameraLocation(v);
+    }
+    
+    /**
+	 * Display the camera parameters in the user-interface.
+	 */
+    public void setCameraParameters() {
+    	displayGUI.displayCameraParams(raycastRenderWM.getCameraParameters());
+    }
+    
+
+    /**
+     * Enable clipping for the given surface.
+     * @param kSurfaceName, the surface to modify.
+     * @param bClip, true enables clipping, false disables clipping.
+     */
+    public void setClipping(String kSurfaceName, boolean bClip)
     {
-        if (raycastRenderWM != null) {
-            raycastRenderWM.DisplayBoundingBox(bShow);
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setClipping(kSurfaceName, bClip );
+        }
+    }
+    
+    /**
+     * Set the color for the given surface.
+     * @param kSurfaceName, the surface to modify.
+     * @param kColor, the new color.
+     */
+    public void setColor(String kSurfaceName, ColorRGB kColor)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setColor(kSurfaceName, kColor);
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#setControls()
+     */
+    public void setControls() { }
+
+
+    /**
+     * Passes the picked dropper color to the surface interface.
+     * @param kDropperColor, the color of the surface at the picked point.
+     * @param kPickPoint, the picked point for use in the region-grow operation.
+     */
+    public void setDropperColor( ColorRGBA kDropperColor, Vector3f kPickPoint )
+    {
+        if ( surfaceGUI != null )
+        {
+            surfaceGUI.setDropperColor(kDropperColor, kPickPoint);
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#setEnabled(boolean)
+     */
+    public void setEnabled(boolean flag) { }
+
+    /**
+     * Passes the picked point to the Geodesic object for calculating the geodesic curve on the TriMesh surface.
+     * @param kMesh, the surface that was picked.
+     * @param kPickPoint, the picked point.
+     */
+    public void setGeodesic( TriMesh kMesh, PickRecord kPickPoint )
+    {
+        if ( geodesicGUI != null )
+        {
+            geodesicGUI.setPickedPoint( kPickPoint, kMesh );
         }
     }
 
     /**
-     *
-     * @param  color  
+     * Turn the gradient magnitude filter on/off for volume shaders.
+     * @param bShow, on/off.
      */
-    public void setShowOrientationCube(boolean bShow)
+    public void setGradientMagnitude( boolean bShow )
     {
-        if (raycastRenderWM != null) {
-            raycastRenderWM.DisplayOrientationCube(bShow);
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.SetGradientMagnitude(bShow);
+            TransferFunction kTransfer = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
+            m_kVolumeImageA.UpdateImages(kTransfer, 2);
+            if ( imageB != null )
+            {
+                kTransfer = m_kVolOpacityPanel.getCompB_GM().getOpacityTransferFunction();
+                m_kVolumeImageB.UpdateImages(kTransfer, 2);
+            }
         }
     }
 
-    /**
-     * Required by the parent super class, do nothing.
-     *
-     * @param  _imageB  image to set the frame to
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#setImageB(gov.nih.mipav.model.structures.ModelImage)
      */
     public void setImageB(ModelImage _imageB) { }
 
     /**
-     * Set the reference to the original image we passed into the renderer from MIPAV (non-cloned).
-     *
-     * @param  img  the original image
+     * Sets the ModelImage to use as an alternative to the volume ModelImage for surface texturing.
+     * @param kSurfaceName, the surface to modify.
+     * @param kImage, the alternate ModelImage to use for the surface texture.
      */
-    public void setImageOriginal(ModelImage img) {
-        imageAOriginal = img;
+    public void SetImageNew(  String kSurfaceName, ModelImage kImage )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.SetImageNew(kSurfaceName, kImage);
+        }
     }
 
     /**
-     * Accessor that sets the LUT.
-     *
-     * @param  LUT  the LUT
+     * Sets the inter-pupillary distance for stereo rendering.
+     * @param fIPD, the IPD value.
      */
-    public void setLUTa(ModelLUT LUT) {
+    public void setIPD( float fIPD )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setIPD(fIPD);
+        }
+    }
 
-//         if (surRender != null) {
-//             surRender.setLUTa(LUT);
-//         }
+     /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#setLUTa(gov.nih.mipav.model.structures.ModelLUT)
+     */
+    public void setLUTa(ModelLUT LUT) {}
 
-//         if (raycastRenderWM != null) {
-//             raycastRenderWM.setLUTa(LUT);
-//         }
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#setLUTb(gov.nih.mipav.model.structures.ModelLUT)
+     */
+    public void setLUTb(ModelLUT LUT) {}
+
+    /**
+     * Sets the LUT to use as an alternative to the volume lut for surface texturing.
+     * @param kSurfaceName, the surface to modify.
+     * @param kLUT, the new LUT.
+     * @param kRGBT, the new ModelRGB (for color images).
+     */
+    public void SetLUTNew( String kSurfaceName, ModelLUT kLUT, ModelRGB kRGBT )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.SetLUTNew(kSurfaceName, kLUT, kRGBT);
+        }
     }
 
     /**
-     * Accessor that sets the LUT.
-     *
-     * @param  LUT  the LUT
+     * Sets the material for the given surface.
+     * @param kSurfaceName, the surface to update.
+     * @param kMaterial, the new material.
      */
-    public void setLUTb(ModelLUT LUT) {
-
-//         if (surRender != null) {
-//             surRender.setLUTb(LUT);
-//         }
-
-//         if (raycastRenderWM != null) {
-//             raycastRenderWM.setLUTb(LUT);
-//         }
+    public void setMaterial(String kSurfaceName, MaterialState kMaterial)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.SetMaterial(kSurfaceName, kMaterial);
+        }
     }
 
     /**
-     * Required by the parent super class, do nothing.
-     *
-     * @param  paintBitmapSwitch  boolean
+     * Causes the bottom three panels to re-display.
+     */
+    public void setModified()
+    {
+        if ( m_akPlaneRender != null )
+        {
+            for (int i = 0; i < 3; i++) {
+                m_akPlaneRender[i].SetModified(true);
+            }
+        }
+    }
+
+    /**
+     * Set the object rotation parameters for displaying. 
+     */
+    public void setObjectParameters() {
+    	displayGUI.displayObjectParams(raycastRenderWM.getObjectParameters());
+    }
+    
+    /**
+     * Set the object rotation matrix
+     * @param rot  rotation matrix
+     */
+    public void setObjectRotation(Matrix3f rot) {
+    	raycastRenderWM.setObjectRotation(rot);
+    }    
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#setPaintBitmapSwitch(boolean)
      */
     public void setPaintBitmapSwitch(boolean paintBitmapSwitch) { }
+      
+    /**
+     * Turn picking on/off for the given surface.
+     * @param kSurfaceName, the surface to modify.
+     * @param bOn, when true enable picking, false disables picking.
+     */
+    public void setPickable(String kSurfaceName, boolean bOn)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setPickable(kSurfaceName, bOn );
+        }
+    }
 
-
+    /**
+     * Set the polygon mode (FILL, LINE, POINT) for the given surface.
+     * @param kSurfaceName, the surface to modify.
+     * @param eMode, FILL, LINE, or POINT.
+     */
+    public void setPolygonMode(String kSurfaceName, WireframeState.FillMode eMode)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setPolygonMode(kSurfaceName, eMode );
+        }
+    }
+    
     /**
      * Sets the position labels.
      *
@@ -1665,35 +2093,87 @@ implements MouseListener, ItemListener, ChangeListener {
         setAbsPositionLabels(position);
     }
 
+    /**
+     * Toggles between radiological and neurological views of the data.
+     * @param bOn, when true display using radiological coordinates, when false use neurological.
+     */
+    public void setRadiological( boolean bOn )
+    {
+        imageA.setRadiologicalView(bOn);
+
+        if (imageB != null) {
+            imageB.setRadiologicalView(bOn);
+        }
+        Vector3f center = sliceGUI.getCenter();
+        raycastRenderWM.SetCenter( new Vector3f( center.X, center.Y, center.Z ) );    
+        for (int i = 0; i < 3; i++) {
+            m_akPlaneRender[i].setRadiologicalView(bOn);
+            m_akPlaneRender[i].setCenter(center);
+        }
+        setPositionLabels(center);
+    }
 
     /**
-     * Sets the RGB table for ARGB image A.
-     *
-     * @param  RGBT  RGB table
+     * Switches between orthographic and perspective projection.
+     * @param bEnable, when true enable perspective projection, when false use orthographic projection.
+     */
+    public void setRenderPerspective(boolean bEnable)
+    {
+        if ( bEnable )
+        {
+            raycastRenderWM.setPerspectiveProjection();
+        }
+        else
+        {
+            raycastRenderWM.setOrthographicProjection();
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#setRGBTA(gov.nih.mipav.model.structures.ModelRGB)
      */
     public void setRGBTA(ModelRGB RGBT) {
         if (m_kVolumeImageA != null) {
             m_kVolumeImageA.SetRGBT(RGBT);
         }
-    }
+    } 
 
-    /**
-     * Sets the RGB table for image B.
-     *
-     * @param  RGBT  RGB table
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#setRGBTB(gov.nih.mipav.model.structures.ModelRGB)
      */
     public void setRGBTB(ModelRGB RGBT) {
         if (m_kVolumeImageB != null) {
             m_kVolumeImageB.SetRGBT(RGBT);
         }
-    }
+    }    
 
-    public void setSliceOpacity( int i, float fAlpha )
+    /**
+     * Turn the volume bounding box frame on/off.
+     * @param bShow, when true display the bounding box.
+     */
+    public void setShowBoxFrame(boolean bShow)
     {
-        raycastRenderWM.SetSliceOpacity( i, fAlpha );
+        if (raycastRenderWM != null) {
+            raycastRenderWM.DisplayBoundingBox(bShow);
+        }
     }
 
-
+    /**
+     * Turn the orientation cube on/off.
+     * @param bShow, when true display the orientation cube, when false do not display the cube.
+     */
+    public void setShowOrientationCube(boolean bShow)
+    {
+        if (raycastRenderWM != null) {
+            raycastRenderWM.DisplayOrientationCube(bShow);
+        }
+    }    
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewImageUpdateInterface#setSlice(int)
+     */
+    public void setSlice(int slice) {}    
+    
     /**
      * Sets the position of the slices in the SurfaceRender and PlaneRender objects. Called from the PlaneRender class.
      *
@@ -1709,7 +2189,8 @@ implements MouseListener, ItemListener, ChangeListener {
          raycastRenderWM.SetCenter( center );
          sliceGUI.setCenter((int)center.X, (int)center.Y, (int)center.Z);
     }
-
+    
+    
     /**
      * Sets the position of the slices in the PlaneRender. Called from the SurfaceRender class.
      *
@@ -1730,17 +2211,6 @@ implements MouseListener, ItemListener, ChangeListener {
         raycastRenderWM.SetCenter( new Vector3f( center.X, center.Y, center.Z ) );
     }
 
-
-    public void showSlice( int i, boolean bShow )
-    {
-        raycastRenderWM.ShowSlice( i, bShow );
-    }
-
-    public void showBoundingBox( int i, boolean bShow )
-    {
-        raycastRenderWM.ShowBoundingBox( i, bShow );
-    }
-
     /**
      * Sets the color for the PlaneRender iView (AXIAL, SAGITTAL, CORONAL) slice.
      *
@@ -1758,17 +2228,40 @@ implements MouseListener, ItemListener, ChangeListener {
                 setSliceHairColor(iView, kColor );
         }
         raycastRenderWM.SetBoundingBoxColor( iView, kColor);
+    }    
+
+    /**
+     * Set the transparency value for the slice.
+     * @param i, the slice to modify.
+     * @param fAlpha, the new transparency value.
+     */
+    public void setSliceOpacity( int i, float fAlpha )
+    {
+        raycastRenderWM.SetSliceOpacity( i, fAlpha );
     }
 
     /**
-     * Required by the parent super class, do nothing.
-     *
-     * @param  slice  int
+     * Turns on surface texture display for the given surface. The user can use a separate ModelImage and LUT than the one displayed in the volume renderer.
+     * @param kSurfaceName, the name of the surface to texture.
+     * @param bOn, texture on/off.
+     * @param bUseNewImage, when false use the current ModelImage, when true the user specifies the model image.
+     * @param bUseNewLUT, when false use the current LUT, when true the user specifies the LUT.
+     */
+    public void setSurfaceTexture(String kSurfaceName, boolean bOn, boolean bUseNewImage, boolean bUseNewLUT)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.setSurfaceTexture(kSurfaceName, bOn, bUseNewImage, bUseNewLUT );
+        }
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewImageUpdateInterface#setTimeSlice(int)
      */
     public void setTimeSlice(int slice) { }
-
-    /**
-     * Set the title of the frame with the image name of slice location.
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#setTitle()
      */
     public void setTitle() {
         String str;
@@ -1781,11 +2274,91 @@ implements MouseListener, ItemListener, ChangeListener {
             setTitle(str);
         }
     }
-
+    
+    
     /**
-     * Switch between slices control button and surface render button of the surface toolbar.
-     *
-     * @param  event  ChangeEvent
+     * Set the transparency for the given surface.
+     * @param kSurfaceName, the name of the surface to modify.
+     * @param fValue, transparency value.
+     */
+    public void setTransparency(String kSurfaceName, float fValue)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.Blend(kSurfaceName, fValue );
+        }
+    }
+    
+    /**
+     * Turns showing the slice bounding box on/off.
+     * @param i, which slice bounding box to turn off.
+     * @param bShow, on/off.
+     */
+    public void showBoundingBox( int i, boolean bShow )
+    {
+        raycastRenderWM.ShowBoundingBox( i, bShow );
+    }
+    
+    /**
+     * Turns showing the slice on/off.
+     * @param i, which slice to turn off.
+     * @param bShow, on/off.
+     */
+    public void showSlice( int i, boolean bShow )
+    {
+        raycastRenderWM.ShowSlice( i, bShow );
+    }
+  
+    /**
+     * Smooth the given surface.
+     * @param kSurfaceName, the name of the surface to smooth.
+     * @param iteration, smooth iterations.
+     * @param alpha, smooth factor.
+     * @param volumeLimit, whether to use a volume % change limit.
+     * @param volumePercent, the % volume change limiting factor
+     */
+    public void smoothMesh( String kSurfaceName, int iteration, float alpha, boolean volumeLimit, float volumePercent)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.smoothMesh(kSurfaceName, iteration, alpha, volumeLimit, volumePercent);
+        }
+    }
+    
+    /**
+     * Smooth the given surface.
+     * @param kSurfaceName, the name of the surface to smooth.
+     * @param iteration, smooth iterations.
+     * @param lambda, smooth factor.
+     * @param mu, smooth factor.
+     */
+    public void smoothThree( String kSurfaceName, int iteration, float lambda, float mu)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.smoothThree(kSurfaceName, iteration, lambda, mu);
+        }
+    }
+    
+    
+    /**
+     * Smooth the given surface.
+     * @param kSurfaceName, the name of the surface to smooth.
+     * @param iteration, smooth iterations.
+     * @param fStiffness, stiffness factor.
+     * @param volumeLimit, whether to use a volume % change limit.
+     * @param volumePercent, the % volume change limiting factor.
+     */
+    public void smoothTwo( String kSurfaceName, int iteration, float fStiffness, boolean volumeLimit, float volumePercent)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.smoothTwo(kSurfaceName, iteration, fStiffness, volumeLimit, volumePercent);
+        }
+    }    
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#stateChanged(javax.swing.event.ChangeEvent)
      */
     public void stateChanged(ChangeEvent event) {
         Object source = event.getSource();
@@ -1797,63 +2370,89 @@ implements MouseListener, ItemListener, ChangeListener {
             }
         }
     }
-
+    
+    
     /**
-     * Update image extends from the ModelImage. Now, disabled.
-     *
-     * @return  DOCUMENT ME!
+     * Switches between different ways of displaying the geodesic path (Euclidean, Geodesic, or Mesh).
+     * @param kSurfaceName, the surface the path is on.
+     * @param iWhich, the type of display.
      */
-    public boolean updateImageExtents() {
-        return false;
+    public void toggleGeodesicPathDisplay(String kSurfaceName, int iWhich)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.toggleGeodesicPathDisplay(kSurfaceName, iWhich);
+        }
     }
-
+    
     /**
-     * Update images in surface render, raycast render and shearwarp render.
-     *
-     * @return  boolean boolean confirming successful update
+     * Toggle the display on/off for the given Node.
+     * @param kNode, node to toggle on/off.
+     * @param bDisplay, display toggle on/off.
      */
-    public boolean updateImages() {
-
-//         for (int i = 0; i < 3; i++) {
-
-//             if (m_akPlaneRender[i] != null) {
-//                 m_akPlaneRender[i].updateData();
-//             }
-//         }
-
-//         if (surRender != null) {
-//             surRender.updateImages();
-//         }
-
-        return true;
+    public void toggleNode( Node kNode, boolean bDisplay )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.DisplayNode(kNode, bDisplay);
+        }
     }
-
+    
+    /**
+     * Changes the translation vector for the surface with the given name.
+     * @param kSurfaceName, the surface to move.
+     * @param kTranslate, the new translation vector
+     */
+    public void translateSurface(String kSurfaceName, Vector3f kTranslate)
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.translateSurface(kSurfaceName, kTranslate);
+        }
+    }   
+    
     /** 
-     * update blenading value.
+     * update blending between images A/B.
      */
     public void updateABBlend()
     {
         if (raycastRenderWM != null) {
             raycastRenderWM.setABBlend(1 - getBlendValue()/100.0f);
         }
-    }
+    }    
     
     /**
-     * Update the raytrcing step size. 
+     * Causes the PlaneRender objects to update the texture maps when the underlying ModelImage changes.
      */
-    public void updateRayTracingSteps()
-    {
-        if (raycastRenderWM != null) {
-            raycastRenderWM.StepsSize(Math.round(getStepsValue() * 4.5f));
+    public void updateData() {
+        if ( m_kVolumeImageA != null )
+        {
+            m_kVolumeImageA.UpdateData(imageA, "A");
         }
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.updateData();
+        }
+        setModified();
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#updateImageExtents()
+     */
+    public boolean updateImageExtents() {
+         return false;
     }
 
-    /**
-     * This methods calls corresponding render to update images without LUT changes.
-     *
-     * @param   forceShow  forces show to reimport image and calc. java image
-     *
-     * @return  boolean confirming successful update
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewImageUpdateInterface#updateImages()
+     */
+    public boolean updateImages() {
+        return true;
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewImageUpdateInterface#updateImages(boolean)
      */
     public boolean updateImages(boolean forceShow) {
 
@@ -1895,7 +2494,8 @@ implements MouseListener, ItemListener, ChangeListener {
         return true;
 
     }
-
+    
+    
     /**
      * This methods calls corresponding render to update images with LUT changes.
      *
@@ -1918,26 +2518,54 @@ implements MouseListener, ItemListener, ChangeListener {
 
         return true;
     }
-
-    /**
-     * Causes the PlaneRender objects to update the texture maps when the underlying ModelImage changes.
-     */
-    public void updateData() {
-        if ( m_kVolumeImageA != null )
-        {
-            m_kVolumeImageA.UpdateData(imageA, "A");
-        }
+    
+    public void updateLighting( Light[] akGLights )
+    {
         if ( raycastRenderWM != null )
         {
-            raycastRenderWM.updateData();
+            raycastRenderWM.updateLighting(akGLights);
+            for (int i = 0; i < 3; i++) 
+            {
+                m_akPlaneRender[i].updateLighting(akGLights);
+            }
         }
-        setModified();
+        if ( brainsurfaceFlattenerRender != null )
+        {
+            brainsurfaceFlattenerRender.updateLighting(akGLights);
+        }  
+        if ( m_kFlyThroughRender != null )
+        {
+            m_kFlyThroughRender.updateLighting(akGLights);
+        }
     }
 
+    public void updatePlanes()
+    {
+        raycastRenderWM.redrawSurfaceTexture();
+        raycastRenderWM.GetCanvas().display();
+        setModified();
+    }
+    
     /**
-     * Closes window and disposes of frame and component.
-     *
-     * @param  event  Event that triggered function
+     * Update the raytracing step size. 
+     */
+    public void updateRayTracingSteps()
+    {
+        if (raycastRenderWM != null) {
+            raycastRenderWM.StepsSize(Math.round(getStepsValue() * 4.5f));
+        }
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#windowActivated(java.awt.event.WindowEvent)
+     */
+    public void windowActivated(WindowEvent event) {
+        setModified();
+        super.windowActivated(event);
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#windowClosing(java.awt.event.WindowEvent)
      */
     public void windowClosing(WindowEvent event) {
         close();
@@ -1945,51 +2573,23 @@ implements MouseListener, ItemListener, ChangeListener {
         dispose();
     }
     
-    /**
-     * Tells the UI that this frame is the currently active one.
-     *
-     * @param  event  the window event
-     */
-    public void windowActivated(WindowEvent event) {
-        setModified();
-        super.windowActivated(event);
-    }
-
-    public void setModified()
-    {
-        if ( m_akPlaneRender != null )
-        {
-            for (int i = 0; i < 3; i++) {
-                m_akPlaneRender[i].SetModified(true);
-            }
-        }
-    }
     
     /**
-     * Does nothing.
-     *
-     * @param  event  the component event
+     * Add surface volume renderer control buttons.
      */
-    public void componentMoved(ComponentEvent event)
-    {       
-        setModified();
-    }
-    
+    protected void addToolbar() {
+        etchedBorder = BorderFactory.createEtchedBorder();
+        toolbarBuilder = new ViewToolBarBuilder(this);
+        buildViewToolbar();
 
-    public void setRadiological( boolean bOn )
-    {
-        imageA.setRadiologicalView(bOn);
+            buildSurRenderToolbar();
 
-        if (imageB != null) {
-            imageB.setRadiologicalView(bOn);
-        }
-        Vector3f center = sliceGUI.getCenter();
-        raycastRenderWM.SetCenter( new Vector3f( center.X, center.Y, center.Z ) );    
-        for (int i = 0; i < 3; i++) {
-            m_akPlaneRender[i].setRadiologicalView(bOn);
-            m_akPlaneRender[i].setCenter(center);
-        }
-        setPositionLabels(center);
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        panelToolbar.add(surfaceToolBar, gbc);
     }
     
     /**
@@ -2028,234 +2628,7 @@ implements MouseListener, ItemListener, ChangeListener {
         
         return menuBar;
     }
-
-    /**
-     * Builds the toolbars for the tri-planar view.
-     */
-    protected void buildToolbars() {
-        panelToolbar.setLayout(new GridBagLayout());
-        panelToolbar.setVisible(true);
-        getContentPane().add(panelToolbar, BorderLayout.NORTH);
-    }
-
-
-    /**
-     * Constructs main frame structures for image canvas.
-     */
-    protected void configureFrame( boolean bVolumeViewer ) {
-        tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(MipavUtil.font12B);
-        tabbedPane.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
-        tabbedPane.addChangeListener(this);
-        getContentPane().add(tabbedPane, BorderLayout.WEST);
-
-        screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
-        screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
-
-        imageA.setImageOrder(ModelImage.IMAGE_A);
-
-        if (imageB != null) {
-            imageB.setImageOrder(ModelImage.IMAGE_B);
-        }
-
-        menuBar = buildMenu();
-
-        setJMenuBar(menuBar);
-        buildToolbars();
-        addToolbar();
-
-        if (imageA == null) {
-            return;
-        }
-
-        setResizable(true);
-        addComponentListener(this);
-
-        raisedbevel = BorderFactory.createRaisedBevelBorder();
-        loweredbevel = BorderFactory.createLoweredBevelBorder();
-        compound = BorderFactory.createCompoundBorder(raisedbevel, loweredbevel);
-
-        Border redline = BorderFactory.createLineBorder(Color.red);
-
-        redBorder = BorderFactory.createCompoundBorder(redline, compound);
-
-        buildLabelPanel();
-        if ( bVolumeViewer )
-        {
-            buildHistoLUTPanel();
-            buildOpacityPanel();
-        }
-
-        buildDisplayPanel();
-        buildLightPanel();
-        buildClipPanel();
-        buildSlicePanel();
-        buildSurfacePanel();
-        buildSurfaceTexturePanel();
-        buildProbePanel();
-        buildGeodesic();
-        buildSculpt();
-
-        setTitle();
-
-        triImagePanel = new JPanel();
-        triImagePanel.setLayout(new GridLayout(1, 3, 10, 10));
-
-        if ( bVolumeViewer )
-        {
-            panelAxial = new JPanel(new BorderLayout());
-            panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
-
-            panelSagittal = new JPanel(new BorderLayout());
-            panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
-
-            panelCoronal = new JPanel(new BorderLayout());
-            panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
-            
-            triImagePanel.add(panelAxial);
-            triImagePanel.add(panelSagittal);
-            triImagePanel.add(panelCoronal);
-        }
-        triImagePanel.setBorder(raisedbevel);
-
-        int triImagePanelWidth = (int) (screenWidth * 0.51f);
-        int triImagePanelHeight = (int) (screenHeight * 0.25f);
-
-        triImagePanel.setPreferredSize(new Dimension(triImagePanelWidth, triImagePanelHeight));
-        triImagePanel.setMinimumSize(new Dimension(150, 50));
-
-        GridBagConstraints gbc2 = new GridBagConstraints();
-
-        gbc2.gridx = 0;
-        gbc2.gridy = 0;
-        gbc2.gridwidth = 1;
-        gbc2.gridheight = 1;
-        gbc2.anchor = GridBagConstraints.WEST;
-        gbc2.weightx = 1;
-        gbc2.weighty = 1;
-        gbc2.ipadx = 5;
-        gbc2.insets = new Insets(0, 5, 0, 5);
-
-        gpuPanel = new JPanel(new BorderLayout());
-        setLocation(100, 100);
-
-        gpuPanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
-        gpuPanel.setVisible(true);
-        raycastRenderWM.setVisible(false);
-
-        int imagePanelWidth = (int) (screenWidth * 0.51f);
-        int imagePanelHeight = (int) (screenHeight * 0.43f);
-
-        gpuPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
-        gpuPanel.setMinimumSize(new Dimension(250, 250));
-        
-        bf_flyPanel = new JPanel(new BorderLayout());
-        bf_flyPanel.setBorder(compound);
-        
-        dualPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, gpuPanel, bf_flyPanel);
-        dualPane.setOneTouchExpandable(false);
-        dualPane.setDividerSize(6);
-        dualPane.setContinuousLayout(true);
-        dualPane.setResizeWeight(1);
-        
-        rightPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, dualPane, triImagePanel);
-        rightPane.setOneTouchExpandable(true);
-        rightPane.setDividerSize(6);
-        rightPane.setContinuousLayout(true);
-
-        tabbedPane.setPreferredSize(new Dimension(maxPanelWidth, tabbedPane.getPreferredSize().height));
-
-        JPanel tabPanel = new JPanel(new BorderLayout());
-
-        tabPanel.add(tabbedPane);
-        tabPanel.setMinimumSize(new Dimension(maxPanelWidth, 789));
-
-        JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tabPanel, rightPane);
-
-        mainPane.setOneTouchExpandable(true);
-        mainPane.setDividerSize(6);
-        mainPane.setContinuousLayout(true);
-
-        getContentPane().add(mainPane, BorderLayout.CENTER);
-
-        // MUST register frame to image models
-        imageA.addImageDisplayListener(this);
-
-        if (imageB != null) {
-            imageB.addImageDisplayListener(this);
-        }
-
-        pack();
-        setVisible(true);
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
-        // initialize the sculptor region.
-        sculptWidth = imagePanelWidth - (2 * getInsets().left);
-        sculptHeight = imagePanelHeight - getInsets().top - getInsets().bottom;
-        enableVolumeRender();
-    }
-
-    /**
-     * Creates and initializes the LUT for an image.
-     *
-     * @param   img  the image to create a LUT for
-     *
-     * @return  a LUT for the image <code>img</code> (null if a color image)
-     *
-     * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
-     */
-    public static ModelLUT initLUT(ModelImage img) throws OutOfMemoryError {
-        ModelLUT newLUT = null;
-
-        // only make a lut for non color images
-        if (img.isColorImage() == false) {
-            int[] dimExtentsLUT = new int[2];
-
-            dimExtentsLUT[0] = 4;
-            dimExtentsLUT[1] = 256;
-
-            newLUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
-
-            float min, max;
-
-            if (img.getType() == ModelStorageBase.UBYTE) {
-                min = 0;
-                max = 255;
-            } else if (img.getType() == ModelStorageBase.BYTE) {
-                min = -128;
-                max = 127;
-            } else {
-                min = (float) img.getMin();
-                max = (float) img.getMax();
-            }
-
-            float imgMin = (float) img.getMin();
-            float imgMax = (float) img.getMax();
-
-            newLUT.resetTransferLine(min, imgMin, max, imgMax);
-        }
-
-        return newLUT;
-    }
-
-    /**
-     * Add surface volume renderer control buttons.
-     */
-    protected void addToolbar() {
-        etchedBorder = BorderFactory.createEtchedBorder();
-        toolbarBuilder = new ViewToolBarBuilder(this);
-        buildViewToolbar();
-
-            buildSurRenderToolbar();
-
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        panelToolbar.add(surfaceToolBar, gbc);
-    }
-
+    
     /**
      * Build the surface render toolbar.
      */
@@ -2326,7 +2699,15 @@ implements MouseListener, ItemListener, ChangeListener {
         surfaceToolBar.add(m_kVolumeBlendSlider);
     }
 
-
+    /**
+     * Builds the toolbars for the tri-planar view.
+     */
+    protected void buildToolbars() {
+        panelToolbar.setLayout(new GridBagLayout());
+        panelToolbar.setVisible(true);
+        getContentPane().add(panelToolbar, BorderLayout.NORTH);
+    }
+    
     /**
      * The the top one volume view toolbar.
      */
@@ -2428,7 +2809,162 @@ implements MouseListener, ItemListener, ChangeListener {
         panelToolbar.add(viewToolBar, gbc);
 
     }
+    
+    /**
+     * Constructs main frame structures for image canvas.
+     */
+    protected void configureFrame( boolean bVolumeViewer ) {
+        tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(MipavUtil.font12B);
+        tabbedPane.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
+        tabbedPane.addChangeListener(this);
+        getContentPane().add(tabbedPane, BorderLayout.WEST);
 
+        screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
+        screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
+
+        imageA.setImageOrder(ModelImage.IMAGE_A);
+
+        if (imageB != null) {
+            imageB.setImageOrder(ModelImage.IMAGE_B);
+        }
+
+        menuBar = buildMenu();
+
+        setJMenuBar(menuBar);
+        buildToolbars();
+        addToolbar();
+
+        if (imageA == null) {
+            return;
+        }
+
+        setResizable(true);
+        addComponentListener(this);
+
+        raisedbevel = BorderFactory.createRaisedBevelBorder();
+        loweredbevel = BorderFactory.createLoweredBevelBorder();
+        compound = BorderFactory.createCompoundBorder(raisedbevel, loweredbevel);
+
+        Border redline = BorderFactory.createLineBorder(Color.red);
+
+        redBorder = BorderFactory.createCompoundBorder(redline, compound);
+
+        buildLabelPanel();
+        if ( bVolumeViewer )
+        {
+            buildHistoLUTPanel();
+            buildOpacityPanel();
+        }
+
+        buildDisplayPanel();
+        buildLightPanel();
+        buildClipPanel();
+        buildSlicePanel();
+        buildSurfacePanel();
+        buildSurfaceTexturePanel();
+        buildGeodesic();
+        buildSculpt();
+
+        setTitle();
+
+        triImagePanel = new JPanel();
+        triImagePanel.setLayout(new GridLayout(1, 3, 10, 10));
+
+        if ( bVolumeViewer )
+        {
+            panelAxial = new JPanel(new BorderLayout());
+            panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
+
+            panelSagittal = new JPanel(new BorderLayout());
+            panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
+
+            panelCoronal = new JPanel(new BorderLayout());
+            panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
+            
+            triImagePanel.add(panelAxial);
+            triImagePanel.add(panelSagittal);
+            triImagePanel.add(panelCoronal);
+        }
+        triImagePanel.setBorder(raisedbevel);
+
+        int triImagePanelWidth = (int) (screenWidth * 0.51f);
+        int triImagePanelHeight = (int) (screenHeight * 0.25f);
+
+        triImagePanel.setPreferredSize(new Dimension(triImagePanelWidth, triImagePanelHeight));
+        triImagePanel.setMinimumSize(new Dimension(150, 50));
+
+        GridBagConstraints gbc2 = new GridBagConstraints();
+
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        gbc2.gridwidth = 1;
+        gbc2.gridheight = 1;
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.weightx = 1;
+        gbc2.weighty = 1;
+        gbc2.ipadx = 5;
+        gbc2.insets = new Insets(0, 5, 0, 5);
+
+        gpuPanel = new JPanel(new BorderLayout());
+        setLocation(100, 100);
+
+        gpuPanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
+        gpuPanel.setVisible(true);
+        raycastRenderWM.setVisible(false);
+
+        int imagePanelWidth = (int) (screenWidth * 0.51f);
+        int imagePanelHeight = (int) (screenHeight * 0.43f);
+
+        gpuPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
+        gpuPanel.setMinimumSize(new Dimension(250, 250));
+        
+        bf_flyPanel = new JPanel(new BorderLayout());
+        bf_flyPanel.setBorder(compound);
+        
+        dualPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, gpuPanel, bf_flyPanel);
+        dualPane.setOneTouchExpandable(false);
+        dualPane.setDividerSize(6);
+        dualPane.setContinuousLayout(true);
+        dualPane.setResizeWeight(1);
+        
+        rightPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, dualPane, triImagePanel);
+        rightPane.setOneTouchExpandable(true);
+        rightPane.setDividerSize(6);
+        rightPane.setContinuousLayout(true);
+
+        tabbedPane.setPreferredSize(new Dimension(maxPanelWidth, tabbedPane.getPreferredSize().height));
+
+        JPanel tabPanel = new JPanel(new BorderLayout());
+
+        tabPanel.add(tabbedPane);
+        tabPanel.setMinimumSize(new Dimension(maxPanelWidth, 789));
+
+        JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tabPanel, rightPane);
+
+        mainPane.setOneTouchExpandable(true);
+        mainPane.setDividerSize(6);
+        mainPane.setContinuousLayout(true);
+
+        getContentPane().add(mainPane, BorderLayout.CENTER);
+
+        // MUST register frame to image models
+        imageA.addImageDisplayListener(this);
+
+        if (imageB != null) {
+            imageB.addImageDisplayListener(this);
+        }
+
+        pack();
+        setVisible(true);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        // initialize the sculptor region.
+        sculptWidth = imagePanelWidth - (2 * getInsets().left);
+        sculptHeight = imagePanelHeight - getInsets().top - getInsets().bottom;
+        enableVolumeRender();
+    }
+    
     /**
      * Enable volume render.
      */
@@ -2440,7 +2976,25 @@ implements MouseListener, ItemListener, ChangeListener {
             m_bSurfaceVisible = false;
         }
     }
-
+    
+    protected String getExternalDirs()
+	{
+		String jar_filename = "";
+		String class_path_key = "java.class.path";
+		String class_path = System.getProperty(class_path_key);
+		for (String fn : class_path.split(":")) {
+			if (fn.contains("WildMagic.jar")) {
+				jar_filename = fn;
+				String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib"));
+				externalDirs = externalDirs.concat("WildMagic");
+				System.err.println("Shader dir found: " + externalDirs);
+				return externalDirs;
+			}
+		}
+		System.err.println("Shader dir not found");
+		return System.getProperties().getProperty("user.dir");
+	}
+    
     /**
      * Calculate the LUT from the resampled image.
      *
@@ -2465,7 +3019,7 @@ implements MouseListener, ItemListener, ChangeListener {
         lut.getTransferFunction().importArrays(x, y, nPts);
 
     }
-
+    
     /**
      * Method that resizes the frame and adjusts the rows, columns as needed.
      */
@@ -2498,7 +3052,7 @@ implements MouseListener, ItemListener, ChangeListener {
             flythruControl.resizePanel(maxPanelWidth, height);
         }
     }
-
+    
     /**
      * Sets the 3DModel position label.
      *
@@ -2530,7 +3084,7 @@ implements MouseListener, ItemListener, ChangeListener {
          modelViewLabelVals[2].setText("Z: " + fZ);
 
     }
-
+    
     /**
      * Sets the PatientSlice position label.
      *
@@ -2551,6 +3105,7 @@ implements MouseListener, ItemListener, ChangeListener {
         patientSliceLabelVals[2].setText("axial slice: " + (int) axial.Z);
     }
 
+
     /**
      * Set the RFA button visible or not.
      *
@@ -2562,537 +3117,5 @@ implements MouseListener, ItemListener, ChangeListener {
         viewToolBar.validate();
         viewToolBar.repaint();
     }
-
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    /**
-     * Item to hold tab name and corresponding panel.
-     */
-    class TabbedItem {
-
-        /** DOCUMENT ME! */
-        public String name;
-
-        /** DOCUMENT ME! */
-        public JPanel panel;
-
-        /**
-         * Creates a new TabbedItem object.
-         *
-         * @param  _name   DOCUMENT ME!
-         * @param  _panel  DOCUMENT ME!
-         */
-        public TabbedItem(String _name, JPanel _panel) {
-            name = _name;
-            panel = _panel;
-        }
-    }
-
-    public void setRenderPerspective(boolean bEnable)
-    {
-        if ( bEnable )
-        {
-            raycastRenderWM.setPerspectiveProjection();
-        }
-        else
-        {
-            raycastRenderWM.setOrthographicProjection();
-        }
-    }
-
-    public void setGradientMagnitude( boolean bShow )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.SetGradientMagnitude(bShow);
-            TransferFunction kTransfer = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
-            m_kVolumeImageA.UpdateImages(kTransfer, 2);
-            if ( imageB != null )
-            {
-                kTransfer = m_kVolOpacityPanel.getCompB_GM().getOpacityTransferFunction();
-                m_kVolumeImageB.UpdateImages(kTransfer, 2);
-            }
-        }
-    }
-    
-    public void addPolyline(Polyline akPolyline, int groupIndex)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.addPolyline(akPolyline, groupIndex);
-        }
-    }    
-    
-    public void removePolyline(int groupIndex)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.removePolyline(groupIndex);
-        }
-    }
-    
-    public void addSurface(TriMesh[] akSurfaces, boolean bReplace)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.addSurface(akSurfaces, bReplace);  
-            insertTab("Light", lightPanel);
-            m_kLightsPanel.enableLight(0, true);
-            insertTab("Surface", surfacePanel);
-            m_kDisplaySurfaceCheck.setSelected(true);
-            m_kDisplaySurfaceCheck.setEnabled(true);
-            raycastRenderWM.DisplaySurface(true);
-            
-            menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", true);  
-            menuObj.setMenuItemEnabled("Open Fly Through view", true);       
-        }
-        if ( geodesicGUI != null )
-        {
-            geodesicGUI.setEnabled(true);
-            geodesicGUI.setSurfacePanel(surfaceGUI);
-        }
-    }  
-    
-    public void addGeometry( Geometry kGeometry )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.addGeometry(kGeometry);
-        }
-    }
-
-    public void AddSlices(VolumeSlices kSlices)
-    {
-        for (int i = 0; i < 3; i++) 
-        {
-            m_akPlaneRender[i].AddSlices(kSlices);
-        }
-    }
-    
-    public void updateLighting()
-    {
-        insertTab("Light", lightPanel);
-        m_kLightsPanel.enableLight(0, true);
-    }
-
-    public void removeSurface(String kSurfaceName)
-    {       
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.removeSurface(kSurfaceName);
-        }
-    }
-
-    public void translateSurface(String kSurfaceName, Vector3f kTranslate)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.translateSurface(kSurfaceName, kTranslate);
-        }
-    }
-
-    public void setPolygonMode(String kSurfaceName, WireframeState.FillMode eMode)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setPolygonMode(kSurfaceName, eMode );
-        }
-    }
-    
-
-    public void setTransparency(String kSurfaceName, float fValue)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.Blend(kSurfaceName, fValue );
-        }
-    }    
-
-    public void setPerPixelLighting(String kSurfaceName, boolean bOn)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setPerPixelLighting(kSurfaceName, bOn );
-        }
-    }
-    
-    public void setClipping(String kSurfaceName, boolean bClip)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setClipping(kSurfaceName, bClip );
-        }
-    }    
-    
-    public void setBackface(String kSurfaceName, boolean bOn)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setBackface(kSurfaceName, bOn );
-        }
-    }    
-    
-    public void setPickable(String kSurfaceName, boolean bOn)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setPickable(kSurfaceName, bOn );
-        }
-    }
-    
-    
-    public void setSurfaceTexture(String kSurfaceName, boolean bOn, boolean bUseNewImage, boolean bUseNewLUT)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setSurfaceTexture(kSurfaceName, bOn, bUseNewImage, bUseNewLUT );
-        }
-    }
-
-    public void setColor(String kSurfaceName, ColorRGB kColor)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setColor(kSurfaceName, kColor);
-        }
-    }    
-
-    public float getVolume(String kSurfaceName)
-    {
-        if ( raycastRenderWM != null )
-        {
-            return raycastRenderWM.GetVolume(kSurfaceName);
-        }
-        return 0;
-    }
-
-    public float getSurfaceArea(String kSurfaceName)
-    {
-        if ( raycastRenderWM != null )
-        {
-            return raycastRenderWM.GetSurfaceArea(kSurfaceName);
-        }
-        return 0;
-    }
-    
-    public MaterialState getMaterial(String kSurfaceName)
-    {
-        if ( raycastRenderWM != null )
-        {
-            return raycastRenderWM.GetMaterial(kSurfaceName);
-        }
-        return null;
-    }
-    
-    public void setMaterial(String kSurfaceName, MaterialState kMaterial)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.SetMaterial(kSurfaceName, kMaterial);
-        }
-    }
-    
-    
-    public Light[] GetLights()
-    {
-        if ( raycastRenderWM != null )
-        {
-            return raycastRenderWM.GetLights();
-        }
-        return null;
-    }
-    
-    public Animator GetAnimator()
-    {
-        return m_kAnimator;
-    }
-    
-    public void enablePaint( ColorRGBA kPaintColor, int iBrushSize, boolean bEnabled, boolean bPaint, boolean bDropper, boolean bPaintCan, boolean bErase )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.enablePaint(kPaintColor, iBrushSize, bEnabled, bPaint, bDropper, bPaintCan, bErase);
-        }
-    }
-  
-    public void eraseAllPaint( )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.eraseAllPaint();
-        }
-    }
-    
-    public void setDropperColor( ColorRGBA kDropperColor, Vector3f kPickPoint )
-    {
-        if ( surfaceGUI != null )
-        {
-            surfaceGUI.setDropperColor(kDropperColor, kPickPoint);
-        }
-    }
-    
-    
-    public void SetLUTNew( String kSurfaceName, ModelLUT kLUT, ModelRGB kRGBT )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.SetLUTNew(kSurfaceName, kLUT, kRGBT);
-        }
-    }    
-    
-    public void SetImageNew(  String kSurfaceName, ModelImage kImage )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.SetImageNew(kSurfaceName, kImage);
-        }
-    }
-    
-    
-    public void enableGeodesic( boolean bEnable )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.enableGeodesic(bEnable);
-        }
-    }
-    
-    public void setGeodesic( TriMesh kMesh, PickRecord kPickPoint )
-    {
-        if ( geodesicGUI != null )
-        {
-            geodesicGUI.setPickedPoint( kPickPoint, kMesh );
-        }
-    }
-    
-    public void addGeodesic( TriMesh kSurface, Geometry kNew, int iGroup )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.addGeodesic(kSurface, kNew, iGroup);
-        }
-    }   
-    
-    public void removeGeodesic( TriMesh kSurface, int iNode, int iGroup )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.removeGeodesic(kSurface, iNode, iGroup);
-        }
-    }    
-    
-    public void removeAllGeodesic( TriMesh kSurface )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.removeAllGeodesic(kSurface);
-        }
-    }
-    
-    public void replaceGeodesic(TriMesh kOld, TriMesh kNew) {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.replaceGeodesic(kOld, kNew);
-        }
-    }
-
-    public void toggleGeodesicPathDisplay(String kSurfaceName, int iWhich)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.toggleGeodesicPathDisplay(kSurfaceName, iWhich);
-        }
-    }
-    
-    public void smoothMesh( String kSurfaceName, int iteration, float alpha, boolean volumeLimit, float volumePercent)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.smoothMesh(kSurfaceName, iteration, alpha, volumeLimit, volumePercent);
-        }
-    }
-    
-    
-    public void smoothTwo( String kSurfaceName, int iteration, float fStiffness, boolean volumeLimit, float volumePercent)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.smoothTwo(kSurfaceName, iteration, fStiffness, volumeLimit, volumePercent);
-        }
-    }
-    
-    
-    
-    public void smoothThree( String kSurfaceName, int iteration, float lambda, float mu)
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.smoothThree(kSurfaceName, iteration, lambda, mu);
-        }
-    }
-
-    public void setIPD( float fIPD )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setIPD(fIPD);
-        }
-    }
-
-    public void updateLighting( Light[] akGLights )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.updateLighting(akGLights);
-            for (int i = 0; i < 3; i++) 
-            {
-                m_akPlaneRender[i].updateLighting(akGLights);
-            }
-        }
-        if ( brainsurfaceFlattenerRender != null )
-        {
-            brainsurfaceFlattenerRender.updateLighting(akGLights);
-        }  
-        if ( m_kFlyThroughRender != null )
-        {
-            m_kFlyThroughRender.updateLighting(akGLights);
-        }
-    }
-    
-    public void addNode( Node kNode )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.addNode( kNode );
-        }
-    }
-    
-    public void toggleNode( Node kNode, boolean bDisplay )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.DisplayNode(kNode, bDisplay);
-        }
-    }
-    
-    public void PickCorrespondence( boolean bOn )
-    {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.PickCorrespondence(bOn);
-        }        
-    }
-    
-    
-    public void PickCorrespondence( int iV0, int iV1, int iV2 )
-    {
-        if ( m_kBrainsurfaceFlattenerPanel != null )
-        {
-            brainsurfaceFlattenerRender.drawPicked(iV0, iV1, iV2);
-        }        
-    }
-    
-    protected String getExternalDirs()
-	{
-		String jar_filename = "";
-		String class_path_key = "java.class.path";
-		String class_path = System.getProperty(class_path_key);
-		for (String fn : class_path.split(":")) {
-			if (fn.contains("WildMagic.jar")) {
-				jar_filename = fn;
-				String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib"));
-				externalDirs = externalDirs.concat("WildMagic");
-				System.err.println("Shader dir found: " + externalDirs);
-				return externalDirs;
-			}
-		}
-		System.err.println("Shader dir not found");
-		return System.getProperties().getProperty("user.dir");
-	}
-    
-    /**
-	 * Set the camera parameters for displaying.
-	 */
-    public void setCameraParameters() {
-    	displayGUI.displayCameraParams(raycastRenderWM.getCameraParameters());
-    }
-
-    /**
-     * Set the object rotation parameters for displaying. 
-     */
-    public void setObjectParameters() {
-    	displayGUI.displayObjectParams(raycastRenderWM.getObjectParameters());
-    }
-    
-    /**
-     * Get the camera parameters. 
-     * @return  camera parameters array. 
-     */
-    public float[] getCameraParameters() {
-    	return raycastRenderWM.getCameraParameters();
-    }
-    
-    /**
-     * Get the object parameters.
-     * @return Get the object rotation parameters array.
-     */
-    public float[] getObjectParameters() {
-    	return raycastRenderWM.getObjectParameters();
-    }
-    
-    /**
-     * Get the camera current location 
-     * @return camera position vector
-     */
-    public Vector3f getCameraLocation() {
-    	return raycastRenderWM.getCameraLocation();
-    }
-    
-    /**
-     * Get the object rotation matrix.
-     * @return rotation matrix
-     */
-    public Matrix3f getObjectRotation() {
-    	return raycastRenderWM.getObjectRotation();
-    }
-    
-    /**
-     * Set the camera location.
-     * @param v  camera position vector
-     */
-    public void setCameraLocation(Vector3f v) {
-    	raycastRenderWM.setCameraLocation(v);
-    }
-    
-    /**
-     * Set the object rotation matrix
-     * @param rot  rotation matrix
-     */
-    public void setObjectRotation(Matrix3f rot) {
-    	raycastRenderWM.setObjectRotation(rot);
-    }
-    
-    public void displayAll()
-    {
-        for (int i = 0; i < 3; i++) 
-        {
-            m_akPlaneRender[i].GetCanvas().display();
-        }
-        raycastRenderWM.GetCanvas().display();
-        if ( m_kFlyThroughRender != null )
-        {
-            m_kFlyThroughRender.GetCanvas().display();
-        }
-    }
-    
-    public void updatePlanes()
-    {
-        raycastRenderWM.redrawSurfaceTexture();
-        raycastRenderWM.GetCanvas().display();
-        setModified();
-    }
-
-
-    public void setSlice(int slice) {}
     
 }

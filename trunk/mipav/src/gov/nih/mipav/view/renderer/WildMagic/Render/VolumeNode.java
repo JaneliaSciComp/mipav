@@ -79,6 +79,14 @@ public class VolumeNode extends VolumeObject
         m_kScene.AttachGlobalState(m_kAlpha);
     }
 
+    public void Translate(Vector3f kTranslate)
+    {
+        super.Translate(kTranslate);
+        m_kNode.Local.SetTranslate(kTranslate);
+        m_kScene.UpdateGS();
+    }
+
+
     /** Delete local memory. */
     public void dispose()
     {

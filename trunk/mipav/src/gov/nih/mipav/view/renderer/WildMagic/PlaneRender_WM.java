@@ -225,7 +225,7 @@ public class PlaneRender_WM extends GPURenderBase
      * Adds the VolumeSlices object to the display list for rendering.
      * @param kVolumeSlice.
      */
-    public void AddSlices( VolumeSlices kVolumeSlice  )
+    public void addSlices( VolumeSlices kVolumeSlice  )
     {
         m_kDisplayList.add(kVolumeSlice);
     }
