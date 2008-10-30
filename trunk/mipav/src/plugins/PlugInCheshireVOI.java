@@ -46,9 +46,6 @@ public class PlugInCheshireVOI implements PlugInGeneric {
     /** Cheshire overlay files to process. */
     private Vector cheshireFiles;
 
-    /** Number of cheshire files loaded. */
-    private int filesLoaded;
-
     /** JFrameImage for the collected VOIs. */
     private ViewJFrameImage imageFrame;
 
@@ -65,13 +62,11 @@ public class PlugInCheshireVOI implements PlugInGeneric {
     public void run() {
         cheshireDialog = new PlugInDialogCheshireVOI(false, this);
         cheshireFiles = cheshireDialog.getCheshireFiles();
-        filesLoaded = 0;
-
         int[] dimExtents = new int[3];
         dimExtents[0] = DEFAULT_X_DIM;
         dimExtents[1] = DEFAULT_Y_DIM;
         dimExtents[2] = DEFAULT_Z_DIM;
-        cheshireComposite = new ModelImage(ModelImage.FLOAT, dimExtents, "Cheshire Composite");
+        cheshireComposite = new ModelImage(ModelStorageBase.FLOAT, dimExtents, "Cheshire Composite");
 
     }
 
@@ -83,7 +78,6 @@ public class PlugInCheshireVOI implements PlugInGeneric {
 
         if (cheshireDialog.isSuccessfulExit()) {
             FileCheshireVOI[] cheshireArray = new FileCheshireVOI[cheshireFiles.size()];
-            String directory = ((File) cheshireFiles.get(0)).getAbsolutePath();
             String[] cheshireNames = new String[cheshireFiles.size()];
             ViewJProgressBar progressBar = new ViewJProgressBar("Cheshire Overlay Loading", "loading cheshire files...",
                                                                 0, 100, true, null, null);
@@ -166,7 +160,7 @@ public class PlugInCheshireVOI implements PlugInGeneric {
             dimExtents[1] = ((int) (highY * 1.5));
             dimExtents[2] = ((int) (highZ * 1.5));
 
-            ModelImage newImage = new ModelImage(ModelImage.BYTE, dimExtents, "Cheshire Composite");
+            ModelImage newImage = new ModelImage(ModelStorageBase.BYTE, dimExtents, "Cheshire Composite");
             imageFrame = new ViewJFrameImage(newImage);
 
             for (int i = 0; i < voiListVec.size(); i++) {
