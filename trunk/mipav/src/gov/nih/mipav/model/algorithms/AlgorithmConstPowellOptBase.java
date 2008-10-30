@@ -326,6 +326,11 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase {
 
             // Preferences.debug("Starting with bracket: \n" + bracket);
             xNew = estimateMinimum(bracket);
+            
+            if (Double.isNaN(xNew)) {
+                // Quadratic only has a maximum or near linear condtion
+                return oneDimension(bracket.b, direct);
+            }
 
             if (testBounds1D(xNew)) {
                 Preferences.debug("Minimum that was found is out of bounds. \n");
@@ -379,8 +384,10 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase {
         bd = (-((bracket.b * bracket.b) - (bracket.c * bracket.c)) * (bracket.functionAtB - bracket.functionAtA)) +
              (((bracket.b * bracket.b) - (bracket.a * bracket.a)) * (bracket.functionAtB - bracket.functionAtC));
         det = (bracket.b - bracket.c) * (bracket.c - bracket.a) * (bracket.a - bracket.b);
+        Preferences.debug("ad = " + ad + " bd = " + bd + " det = " + det + "\n");
 
         if ((Math.abs(det) > TINY) && ((ad / det) < 0)) { // quadratic only has a maxima
+            Preferences.debug("Estimate minimum Quadratic only has a maximum\n");
             xNew = Double.NaN;
 
             return xNew;
@@ -391,6 +398,7 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase {
 
             return xNew;
         } else { // near linear condition -> get closer to an end point
+            Preferences.debug("Estimate minimum Near linear condition -> get closer to end point\n");
             xNew = Double.NaN;
 
             return xNew;
