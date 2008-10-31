@@ -384,7 +384,6 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase {
         bd = (-((bracket.b * bracket.b) - (bracket.c * bracket.c)) * (bracket.functionAtB - bracket.functionAtA)) +
              (((bracket.b * bracket.b) - (bracket.a * bracket.a)) * (bracket.functionAtB - bracket.functionAtC));
         det = (bracket.b - bracket.c) * (bracket.c - bracket.a) * (bracket.a - bracket.b);
-        Preferences.debug("ad = " + ad + " bd = " + bd + " det = " + det + "\n");
 
         if ((Math.abs(det) > TINY) && ((ad / det) < 0)) { // quadratic only has a maxima
             Preferences.debug("Estimate minimum Quadratic only has a maximum\n");
