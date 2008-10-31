@@ -2250,38 +2250,86 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         }
 
         Vector<MatrixListItem> minima = new Vector<MatrixListItem>();
+        
+        boolean possibleMinima[][][] = new boolean[fineNumX][fineNumY][fineNumZ];
 
         for (int i = 0; i < fineNumX; i++) {
 
             for (int j = 0; j < fineNumY; j++) {
 
                 for (int k = 0; k < fineNumZ; k++) {
-                    boolean minimum = true; // possible minimum
+                    
+                    possibleMinima[i][j][k] = true; // possible minimum
 
-                    for (int itest = -1; (itest <= 1) && minimum; itest++) { // as long as still possible minimum,
-                                                                             // check neighbors one degree off
+                    for (int itest = -1; (itest <= 1) && possibleMinima[i][j][k]; itest++) {
 
-                        for (int jtest = -1; (jtest <= 1) && minimum; jtest++) {
+                        // as long as still possible minimum, check neighbors one degree off
+                        for (int jtest = -1; (jtest <= 1) && possibleMinima[i][j][k]; jtest++) {
 
-                            for (int ktest = -1; (ktest <= 1) && minimum; ktest++) {
+                            for (int ktest = -1; (ktest <= 1) && possibleMinima[i][j][k]; ktest++) {
 
                                 if (((i + itest) >= 0) && ((i + itest) < fineNumX) && ((j + jtest) >= 0) &&
                                         ((j + jtest) < fineNumY) && ((k + ktest) >= 0) && ((k + ktest) < fineNumZ)) {
 
                                     if (matrixList[i][j][k].cost > matrixList[i + itest][j + jtest][k + ktest].cost) {
-                                        minimum = false;
+                                        possibleMinima[i][j][k] = false;
                                     } // not a minimum if a neighbor has a lower cost
                                 }
                             }
                         }
                     }
 
-                    if (minimum) {
-                        minima.add(matrixList[i][j][k]);
-                    }
                 }
             }
         }
+        
+        
+       boolean change = true;
+       while (change) {
+           change = false;
+           for (int i = 0; i < fineNumX; i++) {
+
+               for (int j = 0; j < fineNumY; j++) {
+
+                   for (int k = 0; k < fineNumZ; k++) {
+
+                       for (int itest = -1; (itest <= 1) && possibleMinima[i][j][k]; itest++) {
+
+                           // as long as still possible minimum, check neighbors one degree off
+                           for (int jtest = -1; (jtest <= 1) && possibleMinima[i][j][k]; jtest++) {
+
+                               for (int ktest = -1; (ktest <= 1) && possibleMinima[i][j][k]; ktest++) {
+
+                                   if (((i + itest) >= 0) && ((i + itest) < fineNumX) && ((j + jtest) >= 0) &&
+                                           ((j + jtest) < fineNumY) && ((k + ktest) >= 0) && ((k + ktest) < fineNumZ)) {
+
+                                       if ((matrixList[i][j][k].cost == matrixList[i + itest][j + jtest][k + ktest].cost) &&
+                                               (!possibleMinima[i + itest][j + jtest][k + ktest])) {
+                                           possibleMinima[i][j][k] = false;
+                                           change = true;
+                                       } // not a minimum if equal value neighbor is not a minimum
+                                   }
+                               }
+                           }
+                       }
+
+                   }
+               }
+           }
+       }
+       
+       for (int i = 0; i < fineNumX; i++) {
+
+           for (int j = 0; j < fineNumY; j++) {
+
+               for (int k = 0; k < fineNumZ; k++) {
+                   if (possibleMinima[i][j][k]) {
+                       minima.add(matrixList[i][j][k]);
+                   }
+               }
+               
+           }
+       }
 
         if (threadStopped) {
             return null;
