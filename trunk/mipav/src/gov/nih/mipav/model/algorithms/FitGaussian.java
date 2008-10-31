@@ -393,7 +393,7 @@ public class FitGaussian extends NLEngine {
     /**
      * Partial derivative of gaussian with respect to x.
      */
-    private double dgdxInit(double x) {
+    private double dgdx(double x) {
     	double exp = -Math.pow(x-xInit, 2) / (2 * Math.pow(sigma, 2));
     	
     	double coeff = (amp * (x-xInit))/(Math.pow(sigma, 2));
@@ -423,7 +423,7 @@ public class FitGaussian extends NLEngine {
     	Matrix jacobian = new Matrix(dataEnd - dataStart, 3);
     	for(int i=dataStart; i<dataEnd; i++) {
     		jacobian.set(i-dataStart, 0, dgdA(xDataOrg[i]));
-    		jacobian.set(i-dataStart, 1, dgdxInit(xDataOrg[i]));
+    		jacobian.set(i-dataStart, 1, dgdx(xDataOrg[i]));
     		jacobian.set(i-dataStart, 2, dgdsigma(xDataOrg[i]));
     	}
     	
