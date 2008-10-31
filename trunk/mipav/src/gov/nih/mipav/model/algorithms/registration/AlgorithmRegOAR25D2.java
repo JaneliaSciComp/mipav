@@ -2747,22 +2747,41 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         }
 
         Vector<MatrixListItem> minima = new Vector<MatrixListItem>();
+        boolean possibleMinima[] = new boolean[fineNum];
 
         for (int i = 0; i < fineNum; i++) {
-            boolean minimum = true; // possible minimum
+            possibleMinima[i] = true; // possible minimum
 
             // as long as still possible minimum, check neighbors one degree off
-            for (int itest = -1; (itest <= 1) && minimum; itest += 2) {
+            for (int itest = -1; (itest <= 1) && possibleMinima[i]; itest += 2) {
 
                 if (((i + itest) >= 0) && ((i + itest) < fineNum)) {
 
                     if (matrixList[i].cost > matrixList[i + itest].cost) {
-                        minimum = false;
+                        possibleMinima[i] = false;
                     } // not a minimum if a neighbor has a lower cost
                 }
             }
-
-            if (minimum) {
+        }
+        
+        boolean change = true;
+        while (change) {
+            change = false;
+            for (int i = 0; i < fineNum; i++) {
+                for (int itest = -1; (itest <= 1) && possibleMinima[i]; itest+=2) {
+                    if (((i + itest) >= 0) && ((i + itest) < fineNum)) {
+                        if ((matrixList[i].cost == matrixList[i + itest].cost) &&
+                                (!possibleMinima[i + itest])) {
+                            possibleMinima[i] = false;
+                            change = true;
+                        } // not a minimum if equal value neighbor is not a minimum
+                    }
+                }
+            }
+        }
+        
+        for (int i = 0; i < fineNum; i++) {
+            if (possibleMinima[i]) {
                 minima.add(matrixList[i]);
             }
         }
