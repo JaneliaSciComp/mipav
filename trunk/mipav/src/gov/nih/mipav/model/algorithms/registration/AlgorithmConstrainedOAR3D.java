@@ -2444,6 +2444,10 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         // Sorting costs and calculating 20% cut-off value.
         Arrays.sort(costs);
+        if (costs[0] == costs[costs.length - 1]) {
+            Preferences.debug("!Warning all " + (costs.length) + " costs values = " + costs[0] + "\n");
+            System.err.println("!Warning all " + (costs.length) + " costs values = " + costs[0]);
+        }
 
         double threshold = costs[0] + (0.2 * (costs[costs.length - 1] - costs[0]));
 
@@ -2486,6 +2490,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 }
             }
         }
+        powell.disposeLocal();
 
         if (threadStopped) {
             return null;
@@ -3229,6 +3234,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             degree = 9;
             fireProgressStateChanged("Optimizing with " + degree + " DOF");
             fireProgressStateChanged(43);
+            powell.disposeLocal();
             powell = new AlgorithmConstPowellOpt3D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
                                                    bracketBound);
             linkProgressToAlgorithm(powell);
@@ -3249,6 +3255,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 degree = 12;
                 fireProgressStateChanged("Optimizing with " + degree + " DOF");
                 fireProgressStateChanged(51);
+                powell.disposeLocal();
                 powell = new AlgorithmConstPowellOpt3D(this, cog, 12, cost, item.initial, getTolerance(12), maxIter,
                                                        bracketBound);
 
