@@ -2550,7 +2550,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                                                (!possibleMinima[i + itest][j + jtest][k + ktest])) {
                                            possibleMinima[i][j][k] = false;
                                            change = true;
-                                       } // not a minimum if a neighbor has a lower cost
+                                       } // not a minimum if equal value neighbor is not a minimum
                                    }
                                }
                            }
