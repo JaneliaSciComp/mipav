@@ -394,7 +394,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         }
 
         costChoice = _costChoice;
-        maxPossibleCost = 1;
+        maxPossibleCost = Double.MAX_VALUE;
         DOF = _DOF;
         interp = _interp;
         resRef = refImage.getFileInfo(0).getResolutions();
@@ -506,7 +506,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         refWeight = _refWeight;
         inputWeight = _inputWeight;
         costChoice = _costChoice;
-        maxPossibleCost = 1;
+        maxPossibleCost = Double.MAX_VALUE;
         DOF = _DOF;
         interp = _interp;
         resRef = refImage.getFileInfo(0).getResolutions();
@@ -2493,6 +2493,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         // Examine points to see if they are minima
         Vector minima = new Vector();
+        boolean possibleMinima[][][] = new boolean[fineNumX][fineNumY][fineNumZ];
 
         for (int i = 0; i < fineNumX; i++) {
 
@@ -2500,33 +2501,78 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
                 for (int k = 0; k < fineNumZ; k++) {
                     
-                    boolean minimum = true; // possible minimum
+                    possibleMinima[i][j][k] = true; // possible minimum
 
-                    for (int itest = -1; (itest <= 1) && minimum; itest++) {
+                    for (int itest = -1; (itest <= 1) && possibleMinima[i][j][k]; itest++) {
 
                         // as long as still possible minimum, check neighbors one degree off
-                        for (int jtest = -1; (jtest <= 1) && minimum; jtest++) {
+                        for (int jtest = -1; (jtest <= 1) && possibleMinima[i][j][k]; jtest++) {
 
-                            for (int ktest = -1; (ktest <= 1) && minimum; ktest++) {
+                            for (int ktest = -1; (ktest <= 1) && possibleMinima[i][j][k]; ktest++) {
 
                                 if (((i + itest) >= 0) && ((i + itest) < fineNumX) && ((j + jtest) >= 0) &&
                                         ((j + jtest) < fineNumY) && ((k + ktest) >= 0) && ((k + ktest) < fineNumZ)) {
 
                                     if ((matrixList[i][j][k].cost > matrixList[i + itest][j + jtest][k + ktest].cost) ||
                                             (matrixList[i][j][k].cost == maxPossibleCost)) {
-                                        minimum = false;
+                                        possibleMinima[i][j][k] = false;
                                     } // not a minimum if a neighbor has a lower cost
                                 }
                             }
                         }
                     }
 
-                    if (minimum) {
-                        minima.add(matrixList[i][j][k]);
-                    }
                 }
             }
         }
+        
+        
+       boolean change = true;
+       while (change) {
+           change = false;
+           for (int i = 0; i < fineNumX; i++) {
+
+               for (int j = 0; j < fineNumY; j++) {
+
+                   for (int k = 0; k < fineNumZ; k++) {
+
+                       for (int itest = -1; (itest <= 1) && possibleMinima[i][j][k]; itest++) {
+
+                           // as long as still possible minimum, check neighbors one degree off
+                           for (int jtest = -1; (jtest <= 1) && possibleMinima[i][j][k]; jtest++) {
+
+                               for (int ktest = -1; (ktest <= 1) && possibleMinima[i][j][k]; ktest++) {
+
+                                   if (((i + itest) >= 0) && ((i + itest) < fineNumX) && ((j + jtest) >= 0) &&
+                                           ((j + jtest) < fineNumY) && ((k + ktest) >= 0) && ((k + ktest) < fineNumZ)) {
+
+                                       if ((matrixList[i][j][k].cost == matrixList[i + itest][j + jtest][k + ktest].cost) &&
+                                               (!possibleMinima[i + itest][j + jtest][k + ktest])) {
+                                           possibleMinima[i][j][k] = false;
+                                           change = true;
+                                       } // not a minimum if a neighbor has a lower cost
+                                   }
+                               }
+                           }
+                       }
+
+                   }
+               }
+           }
+       }
+       
+       for (int i = 0; i < fineNumX; i++) {
+
+           for (int j = 0; j < fineNumY; j++) {
+
+               for (int k = 0; k < fineNumZ; k++) {
+                   if (possibleMinima[i][j][k]) {
+                       minima.add(matrixList[i][j][k]);
+                   }
+               }
+               
+           }
+       }
 
         if (threadStopped) {
             return null;
@@ -2942,7 +2988,78 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         if (weighted) {
             cost.setRefWgtImage(simpleWeightRef);
             cost.setInputWgtImage(simpleWeightInput);
+            double min = Double.MAX_VALUE;
+            double max = -Double.MAX_VALUE;
+            for (int i = 0; i < simpleWeightInput.data.length; i++) {
+                if (simpleWeightInput.data[i] < min) {
+                    min = simpleWeightInput.data[i];
+                }
+                if (simpleWeightInput.data[i] > max) {
+                    max = simpleWeightInput.data[i];
+                }
+                if (Double.isNaN(simpleWeightInput.data[i])) {
+                    Preferences.debug("simpleWeightInput[" + i + "] = NaN\n");
+                }
+                if (Double.isInfinite(simpleWeightInput.data[i])) {
+                    Preferences.debug("simpleWeightInput[" + i + "] = Infinite\n");
+                }
+            }
+            Preferences.debug("simpleWeightInput.min = " + min + " simpleWeightInput.max = " + max + "\n");
+            
+            min = Double.MAX_VALUE;
+            max = -Double.MAX_VALUE;
+            for (int i = 0; i < simpleWeightRef.data.length; i++) {
+                if (simpleWeightRef.data[i] < min) {
+                    min = simpleWeightRef.data[i];
+                }
+                if (simpleWeightRef.data[i] > max) {
+                    max = simpleWeightRef.data[i];
+                }
+                if (Double.isNaN(simpleWeightRef.data[i])) {
+                    Preferences.debug("simpleWeightRef[" + i + "] = NaN\n");
+                }
+                if (Double.isInfinite(simpleWeightRef.data[i])) {
+                    Preferences.debug("simpleWeightRef[" + i + "] = Infinite\n");
+                }
+            }
+            Preferences.debug("simpleWeightRef.min = " + min + " simpleWeightRef.max = " + max + "\n");
         }
+        
+        double min = Double.MAX_VALUE;
+        double max = -Double.MAX_VALUE;
+        for (int i = 0; i < input.data.length; i++) {
+            if (input.data[i] < min) {
+                min = input.data[i];
+            }
+            if (input.data[i] > max) {
+                max = input.data[i];
+            }
+            if (Double.isNaN(input.data[i])) {
+                Preferences.debug("input[" + i + "] = NaN\n");
+            }
+            if (Double.isInfinite(input.data[i])) {
+                Preferences.debug("input[" + i + "] = Infinite\n");
+            }
+        }
+        Preferences.debug("input.min = " + min + " input.max = " + max + "\n");
+        
+        min = Double.MAX_VALUE;
+        max = -Double.MAX_VALUE;
+        for (int i = 0; i < ref.data.length; i++) {
+            if (ref.data[i] < min) {
+                min = ref.data[i];
+            }
+            if (ref.data[i] > max) {
+                max = ref.data[i];
+            }
+            if (Double.isNaN(ref.data[i])) {
+                Preferences.debug("ref[" + i + "] = NaN\n");
+            }
+            if (Double.isInfinite(ref.data[i])) {
+                Preferences.debug("ref[" + i + "] = Infinite\n");
+            }
+        }
+        Preferences.debug("ref.min = " + min + " ref.max = " + max + "\n");
 
         Vector3f cog = new Vector3f(0, 0, 0);
 
@@ -2957,6 +3074,25 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         int degree = (DOF < 12) ? DOF : 12;
 
         fireProgressStateChanged("Starting last optimization");
+        Preferences.debug("cog.X = " + cog.X + " cog.Y = " + cog.Y + " cog.Z = " + cog.Z + "\n");
+        Preferences.debug("degree = " + degree + "\n");
+        Preferences.debug("cost = " + cost + "\n");
+        for (int i = 0; i < item.initial.length; i++) {
+            Preferences.debug("item.initial[" + i + "] = " + item.initial[i] + "\n");
+        }
+        for (int i = 0; i < getTolerance(degree).length; i++ ) {
+            Preferences.debug("getTolerance(degree)[" + i + "] = " + getTolerance(degree)[i] + "\n");
+        }
+        Preferences.debug("maxIter = " + maxIter + "\n");
+        Preferences.debug("bracketBound = " + bracketBound + "\n");
+        for (int i = 0; i < limits.length; i++) {
+
+            for (int j = 0; j < limits[i].length; j++) {
+                Preferences.debug("limits[" + i + "][" + j + "] = " + limits[i][j] + "\n");    
+            }
+        }
+        Preferences.debug("input.xRes = " + input.xRes + " input.yRes = " + input.yRes +  
+                          " input.zRes = " + input.zRes + "\n");
 
         AlgorithmConstPowellOpt3D powell = new AlgorithmConstPowellOpt3D(this, cog, degree, cost, item.initial,
                                                                          getTolerance(degree), maxIter, bracketBound);
@@ -2978,6 +3114,12 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         item2.midsagMatrix = powell.getMatrixMidsagittal(input.xRes);
         fireProgressStateChanged(100);
         Preferences.debug("Best answer: \n" + item2 + "\n");
+        Preferences.debug("item2.initial[3] = " + item2.initial[3] + "\n");
+        Preferences.debug("item2.initial[4] = " + item2.initial[4] + "\n");
+        Preferences.debug("item2.initial[5] = " + item2.initial[5] + "\n");
+        Preferences.debug("resRef[0] = " + resRef[0] + "\n");
+        Preferences.debug("resRef[1] = " + resRef[1] + "\n");
+        Preferences.debug("resRef[2] = " + resRef[2] + "\n");
 
         cost.disposeLocal();
         powell.disposeLocal();
