@@ -3076,7 +3076,6 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         fireProgressStateChanged("Starting last optimization");
         Preferences.debug("cog.X = " + cog.X + " cog.Y = " + cog.Y + " cog.Z = " + cog.Z + "\n");
         Preferences.debug("degree = " + degree + "\n");
-        Preferences.debug("cost = " + cost + "\n");
         for (int i = 0; i < item.initial.length; i++) {
             Preferences.debug("item.initial[" + i + "] = " + item.initial[i] + "\n");
         }
