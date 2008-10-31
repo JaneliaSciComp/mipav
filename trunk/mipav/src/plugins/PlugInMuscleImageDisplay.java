@@ -173,27 +173,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         /** Indicates the image has top-bottom symmetry. */
         TOP_BOTTOM("Top", "Bottom");
         
-        final String text;
-        
         final String side1;
         final String side2;
         
         Symmetry(String side1, String side2) {
         	this.side1 = side1;
         	this.side2 = side2;
-        	if(side2.length() == 0)
-        		this.text = side1;
-        	else
-        		this.text = side1+"/"+side2;
         }
         
         public String toString() {
-        	if(this.equals(Symmetry.LEFT_RIGHT))
-        		return "Left/Right";
-        	else if(this.equals(Symmetry.TOP_BOTTOM))
-        		return "Top/Bottom";
-        	else
-        		return "No Symmetry";
+        	if(side2.length() == 0)
+        		return side1;
+        	return side1+"/"+side2;
         }
     }
  

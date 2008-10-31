@@ -1134,7 +1134,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase implements 
 			String[] text = new String[PlugInMuscleImageDisplay.Symmetry.values().length];
 			
 			for(PlugInMuscleImageDisplay.Symmetry symmetry : PlugInMuscleImageDisplay.Symmetry.values())
-				text[i++] = symmetry.text;
+				text[i++] = symmetry.toString();
 			
 			this.symmetry = new JComboBox(PlugInMuscleImageDisplay.Symmetry.values());
 			this.name = new JTextField(DEFAULT_VOI);
