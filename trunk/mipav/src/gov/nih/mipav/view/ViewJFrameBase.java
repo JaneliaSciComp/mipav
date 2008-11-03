@@ -3594,6 +3594,10 @@ public abstract class ViewJFrameBase extends JFrame
         int index = (int) ((position.Z * dimExtents[0] * dimExtents[1]) + (position.Y * dimExtents[0]) + position.X);
 
         int iBuffFactor = imageA.isColorImage() ? 4 : 1;
+        if ( (index*iBuffFactor > imageA.getSize()) || (index < 0) )
+        {
+            return;
+        }
         absoluteLabelVals[3].setText("1D index: " + index + " = " + imageA.getFloat(index * iBuffFactor));
     }
 
