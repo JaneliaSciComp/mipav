@@ -49,6 +49,9 @@ public class FitGaussian extends NLEngine {
     
     /**Sigma parameter*/
     private double sigma;
+    
+    /**R squared*/
+    private double rSquared;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -317,14 +320,20 @@ public class FitGaussian extends NLEngine {
     private void calculateChiSq() {
     	Matrix residuals = generateResiduals();
     	double sum = 0;
+    	double resSum = 0;
     	for(int i=dataStart; i<dataEnd; i++) {
     		double resTemp = residuals.get(i-dataStart, 0);
+    		resSum += Math.abs(resTemp);
     		residuals.set(i-dataStart, 0, Math.pow(resTemp, 2)/gauss(xDataOrg[i]));
     		System.out.println("xValue: "+xDataOrg[i]+"\tActual: "+yDataOrg[i]+"\tExpected: "+gauss(xDataOrg[i])+"\tResidual: "+resTemp+"\tChi squared value: "+residuals.get(i-dataStart, 0));
     		sum += Math.pow(resTemp, 2)/gauss(xDataOrg[i]);
     	}
-    	System.out.println("Sum "+sum+"\tcompared to chisq "+chisq);
+    	
     	chisq = residuals.norm1();
+    	System.out.println("Sum "+sum+"\tcompared to chisq "+chisq);
+    	rSquared = 1.0-(chisq/resSum);
+    	System.out.println("Residual sum: "+resSum+"\tChisquared: "+chisq+"\trSquared: "+rSquared);
+    	
     }
 
     /**
@@ -335,7 +344,8 @@ public class FitGaussian extends NLEngine {
     	
     	messageGraph.append(" ******* FitGaussian ********* \n\n");
     	messageGraph.append("Number of iterations: " + kk + "\n");
-        messageGraph.append("Chi-squared: " + chisq + "\n\n");
+        messageGraph.append("Chi-squared: " + chisq + "\n");
+        messageGraph.append("R-squared: "+ rSquared +"\n\n");
 
         messageGraph.append("Valid for data from "+xDataOrg[dataStart]+" to "+xDataOrg[dataEnd]+" in "+(dataEnd-dataStart)+" parts\n\n");
         
@@ -355,7 +365,11 @@ public class FitGaussian extends NLEngine {
         }
     }
     
-    @Override
+    public double getRSquared() {
+		return rSquared;
+	}
+
+	@Override
 	public double fitToFunction(double x1, double[] atry, double[] dyda) {
 		// TODO Auto-generated method stub
 		return 0;
