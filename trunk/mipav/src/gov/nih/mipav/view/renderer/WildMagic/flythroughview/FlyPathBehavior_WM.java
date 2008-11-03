@@ -17,8 +17,6 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  */
 public class FlyPathBehavior_WM implements KeyListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
     /**
      * Instances which want to be notified of updates to this behavior should implement this interface by providing the
      * viewChanged method implementation.

@@ -2809,7 +2809,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * nD get data fuction where bounds checking is NOT performed.
+     * nD get data function where bounds checking is NOT performed.
      *
      * @param   position  index into the one dimensional data array
      *
