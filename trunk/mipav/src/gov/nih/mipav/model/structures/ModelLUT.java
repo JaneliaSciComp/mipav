@@ -223,9 +223,9 @@ public class ModelLUT extends ModelStorageBase {
     }
 
     /**
-     * @param kLUT, model lut
-     * @param kTransferLine, transfer function
-     * @param iHeight, lut height
+     * @param kLUT model lut
+     * @param kTransferLine transfer function
+     * @param iHeight lut height
      * @param iTable
      */
     public static byte[] exportIndexedLUTMin(ModelLUT kLut) {

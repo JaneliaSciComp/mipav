@@ -1,16 +1,36 @@
 package gov.nih.mipav.view.renderer.WildMagic.flythroughview;
 
-import WildMagic.LibFoundation.Mathematics.*;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.*;
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewImageFileFilter;
+import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.renderer.JPanelRendererBase;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
-import java.text.*;
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.text.DecimalFormat;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 
@@ -22,10 +42,27 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** Use serialVersionUID for interoperability. */
-    private static final long serialVersionUID = 5676430934584329807L;
+    /**
+     * Wrapper in order to hold the control panel layout in the JScrollPane.
+     */
+    class DrawingPanel extends JPanel {
+
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = -7360089445417194229L;
+
+        /* (non-Javadoc)
+         * @see javax.swing.JComponent#paintComponent(java.awt.Graphics)
+         */
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+        }
+    }
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 5676430934584329807L;
 
     /** Box layout for control panel. */
     private Box contentBox;
@@ -39,10 +76,10 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
     /** File name and directory. */
     private String fileName, directory;
 
-    /** DOCUMENT ME! */
+    /** Load image button. */
     private JButton flythruButtonLoadImage = new JButton();
 
-    /** DOCUMENT ME! */
+    /** Image file name label. */
     private JLabel flythruLabelFileName = new JLabel();
 
     /** Button panel. */
@@ -51,46 +88,46 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
     /** Flag indicates to show pseudo color or not. */
     private boolean m_bShowMeanCurvatures = false;
 
-    /** DOCUMENT ME! */
+    /** Show curvature colors check box. */
     private JCheckBox m_kCheckBoxShowCurvatures = new JCheckBox();
 
-    /** DOCUMENT ME! */
+    /** Continuous update check box. */
     private JCheckBox m_kContinueUpdate = new JCheckBox();
 
     /** Used to create text representations of numbers. */
     private final DecimalFormat m_kDecimalFormat;
 
-    /** DOCUMENT ME! */
+    /** Branch label. */
     private JLabel m_kLabelBranch = new JLabel();
 
-    /** DOCUMENT ME! */
+    /** View direction label. */
     private JLabel m_kLabelDirection = new JLabel();
 
-    /** DOCUMENT ME! */
+    /** Path distance label. */
     private JLabel m_kLabelDistance = new JLabel();
 
     /** Automatically inserted by JBuilder Designer. */
     private JLabel m_kLabelFileName = new JLabel();
 
-    /** DOCUMENT ME! */
+    /** Orientation label. */
     private JLabel m_kLabelOrientation = new JLabel();
 
-    /** DOCUMENT ME! */
+    /** Current path position label. */
     private JLabel m_kLabelPosition = new JLabel();
 
-    /** DOCUMENT ME! */
+    /** Step gaze label. */
     private JLabel m_kLabelStepGaze = new JLabel();
 
     /** Image option panel. */
     private FlyThroughRender.SetupOptions m_kOptions = new FlyThroughRender.SetupOptions();
 
-    /** DOCUMENT ME! */
+    /** Current branch text box. */
     private JTextField m_kTextBranch = new JTextField();
 
-    /** DOCUMENT ME! */
+    /** View direction text box. */
     private JTextField m_kTextDirection = new JTextField();
 
-    /** DOCUMENT ME! */
+    /** Distance along path text box. */
     private JTextField m_kTextDistance = new JTextField();
 
     /** maximum number of branches created for the endoscopy view. */
@@ -99,19 +136,19 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
     /** minimum branch length. */
     private JTextField m_kTextMinBranchLength;
 
-    /** DOCUMENT ME! */
+    /** Orientation text box. */
     private JTextField m_kTextOrientation = new JTextField();
 
     /** BSpline control points fraction of branch samples. */
     private JTextField m_kTextPercentBSplineNumControlPoints;
 
-    /** DOCUMENT ME! */
+    /** Position text box. */
     private JTextField m_kTextPosition = new JTextField();
 
-    /** DOCUMENT ME! */
+    /** Step gaze text box.*/
     private JTextField m_kTextStepGaze = new JTextField();
 
-    /** Applet that is associated with the controls in this frame. */
+    /** Renderer for displaying the scene-graph. */
     private final FlyThroughRender m_kView;
 
     /** Scroll pane. */
@@ -120,16 +157,16 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
     /** Scroll panel that holding all the control components. */
     private DrawingPanel scrollPanel;
 
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /** continue update button. */
     private JButton updateButton = new JButton();
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Creates endoscopy registration control panel.
-     *
      * @param  _kView        FlythruRender refrence.
-     * @param  _parentFrame  ViewJFrameVolumeView parent frame reference.
      */
     public JPanelVirtualEndoscopySetup_WM(FlyThroughRender _kView) {
         super();
@@ -145,12 +182,34 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
 
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    /**
+     * Show the psesudo color.
+     * @param  e  ActionEvent
+     */
+    void m_kCheckBoxShowCurvatures_actionPerformed(@SuppressWarnings("unused")
+    ActionEvent e) {
+        m_bShowMeanCurvatures = m_kCheckBoxShowCurvatures.isSelected();
+        m_kView.doPseudoColor(m_bShowMeanCurvatures);
+    }
+
+    /**
+     * Continue update the surface render and the plane render.
+     * @param  e  ActionEvent
+     */
+    void m_kContinueUpdate_actionPerformed(@SuppressWarnings("unused")
+    ActionEvent e) {
+        continueUpdate = m_kContinueUpdate.isSelected();
+
+        if (continueUpdate == true) {
+            updateButton.setEnabled(false);
+        } else {
+            updateButton.setEnabled(true);
+        }
+    }
 
     /**
      * Closes dialog box when the OK button is pressed, sets up the variables needed for running the algorithm, and
      * calls the algorithm.
-     *
      * @param  event  Event that triggers function
      */
     public void actionPerformed(ActionEvent event) {
@@ -200,7 +259,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
 
     /**
      * Dispose memory.
-     *
      * @param  flag  dispose super or not.
      */
     public void dispose(boolean flag) {
@@ -238,8 +296,16 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
     }
 
     /**
+     * Return whether to update the Volume Tri-Planar view continuously as the fly path changes.
+     * @return true when updating the Volume Tri-Planar view continuously as the fly path changes.
+     */
+    public boolean getContinuousUpdate()
+    {
+        return continueUpdate;
+    }
+
+    /**
      * Return the main control panel.
-     *
      * @return  JPanel the main control panel
      */
     public JPanel getMainPanel() {
@@ -268,7 +334,7 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
     public void updateOrientation(Matrix3f kOrientation) {
         setViewOrientation(kOrientation);
     }
-
+    
     /**
      * Update the appropriate controls based on the current settings of the position-based information in the
      * FlyPathBehavior instance.
@@ -298,7 +364,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
 
     /**
      * Update the display to show the current distance along the length of the path.
-     *
      * @param  fDist       distance along the path from the start
      * @param  fTotalDist  total distance along the path from start to end
      */
@@ -311,7 +376,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
 
     /**
      * Update the display to show the coordinates of the current position along the path.
-     *
      * @param  kPosition  3D coordinates of current position
      */
     protected void setPathPosition(Vector3f kPosition) {
@@ -320,15 +384,9 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         m_kTextPosition.setText(m_kDecimalFormat.format(kPosition.X) + " " + m_kDecimalFormat.format(kPosition.Y) +
                                 " " + m_kDecimalFormat.format(kPosition.Z));
     }
-    
-    public boolean getContinuousUpdate()
-    {
-        return continueUpdate;
-    }
 
     /**
      * Update the display to show the current gaze distance for looking ahead down the path.
-     *
      * @param  fStepDist  magnitude is the distance increment along the path for moving; sign is the direction of moving
      *                    along the path from one end to the other or vice versa.
      * @param  fGazeDist  distance ahead for looking down the path.
@@ -340,7 +398,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
 
     /**
      * Update the display to show the current base viewing direction at the current point along the path.
-     *
      * @param  kVector  normalized direciton vector
      */
     protected void setViewDirection(Vector3f kVector) {
@@ -353,7 +410,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
     /**
      * Update the display to show the current viewing orientation which is always relative to the base viewing
      * direction.
-     *
      * @param  kMatrix  3x3 matrix containing orientation transform
      */
     protected void setViewOrientation(Matrix3f kMatrix) {
@@ -370,10 +426,8 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
 
     /**
      * Tests that the entered parameter is larger than the specified value.
-     *
      * @param   str       The value entered by the user.
      * @param   minValue  The minimum value this variable may be set to.
-     *
      * @return  <code>true</code> if parameters passed range test, <code>false</code> if failed.
      */
     protected boolean testParameterMin(String str, double minValue) {
@@ -392,33 +446,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
             MipavUtil.displayError("Must enter numeric value");
 
             return false;
-        }
-    }
-
-    /**
-     * Show the psesudo color.
-     *
-     * @param  e  ActionEvent
-     */
-    void m_kCheckBoxShowCurvatures_actionPerformed(@SuppressWarnings("unused")
-    ActionEvent e) {
-        m_bShowMeanCurvatures = m_kCheckBoxShowCurvatures.isSelected();
-        m_kView.doPseudoColor(m_bShowMeanCurvatures);
-    }
-
-    /**
-     * Continue update the surface render and the plane render.
-     *
-     * @param  e  ActionEvent
-     */
-    void m_kContinueUpdate_actionPerformed(@SuppressWarnings("unused")
-    ActionEvent e) {
-        continueUpdate = m_kContinueUpdate.isSelected();
-
-        if (continueUpdate == true) {
-            updateButton.setEnabled(false);
-        } else {
-            updateButton.setEnabled(true);
         }
     }
 
@@ -712,8 +739,8 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         updateButton.setFont(MipavUtil.font12B);
         updateButton.setMinimumSize(MipavUtil.defaultButtonSize);
         updateButton.setEnabled(false);
-    }
-
+    } 
+    
     /**
      * Method to load the mask image.
      */
@@ -722,11 +749,10 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         fileIO.setQuiet(true);
         endoscopyImage = fileIO.readImage(fileName, directory, false, null);
         m_kView.setupRender(endoscopyImage, m_kOptions);
-    } 
-    
-    /**
+    }
+
+ /**
      * Sets up the variables needed for the algorithm from the GUI components.
-     *
      * @return  Flag indicating if the setup was successful.
      */
     private boolean setVariables() {
@@ -770,27 +796,6 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
             return false;
         }
         return true;
-    }
-
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    /**
-     * Wrapper in order to hold the control panel layout in the JScrollPane.
-     */
-    class DrawingPanel extends JPanel {
-
-        /** Use serialVersionUID for interoperability. */
-        private static final long serialVersionUID = -7360089445417194229L;
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param  g  DOCUMENT ME!
-         */
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-
-        }
     }
 
 }

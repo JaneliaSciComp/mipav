@@ -1450,7 +1450,7 @@ public class SurfaceView extends SurfaceRender {
     /**
      * Sets the values for JPanelSlices, based on the positions in the
      * PlaneRender class for the AXIAL, CORONAL, and SAGITTAL views.
-     * @param center, the three slider values in File Coordinates
+     * @param center the three slider values in File Coordinates
      */
     public void setCenter( Vector3f center )
     {
@@ -1673,7 +1673,7 @@ public class SurfaceView extends SurfaceRender {
  
     /**
      * transform the points used to render the triSliceImages textures.
-     * @param kTransform, the Transform3D used to rotate the boxes.
+     * @param kTransform the Transform3D used to rotate the boxes.
      */
     private void transformBoxSlices( Transform3D kTransform )
     {
@@ -1740,7 +1740,7 @@ public class SurfaceView extends SurfaceRender {
      * ModelCoordinates.
      * @param Vector3f[] the reordered (x,y,z) coordinates for each boxSlice
      * remapped into ModelCoordinates.
-     * @param boxSliceConstants, the reordered mode value (X_SLICE, Y_SLICE,
+     * @param boxSliceConstants the reordered mode value (X_SLICE, Y_SLICE,
      * Z_SLICE) remapped into ModelCoordinates
      */
     private void getBoxSliceInScreen( Vector3f[] screenBoxPoints, int[] boxSliceConstants )
@@ -2442,9 +2442,9 @@ public class SurfaceView extends SurfaceRender {
     /**
      * create texture coordmaps for the texture-mapped planes displaying the
      * triSliceImages.
-     * @param orientation, the orientation of the plane for which the texture
+     * @param orientation the orientation of the plane for which the texture
      * coordinates are generated (AXIAL, CORONAL, or SAGITTAL)
-     * @param texCoord, the dimension along which the texture coordinate varies
+     * @param texCoord the dimension along which the texture coordinate varies
      */
     private Vector4f generateRFACoordMaps( int orientation, int texCoord )
     {

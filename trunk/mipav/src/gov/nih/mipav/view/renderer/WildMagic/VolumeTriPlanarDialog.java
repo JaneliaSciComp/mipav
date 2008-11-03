@@ -117,7 +117,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
      * 
      * @param _imageA Model image A.
      * @param _imageB Model image B.
-     * @param kCommand, the re-sample command.
+     * @param kCommand the re-sample command.
      */
     public VolumeTriPlanarDialog(ModelImage _imageA, ModelImage _imageB, String kCommand) {
         m_kVolViewType = kCommand;

@@ -1,21 +1,90 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJColorChooser;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
-
-import gov.nih.mipav.view.renderer.WildMagic.*;
 
 
 /**
  */
 public abstract class JInterfaceBase extends JDialog implements ActionListener
 {
+
+    /**
+     * Pick up the selected color and call method to change the color.
+     */
+    class OkColorListener implements ActionListener {
+
+        /** Color Button */
+        JButton button;
+
+        /**
+         * Creates a new OkColorListener object.
+         *
+         * @param  _button  DOCUMENT ME!
+         */
+        OkColorListener(JButton _button) {
+            super();
+            button = _button;
+        }
+
+        /**
+         * Get color from chooser and set button and color.
+         *
+         * @param  e  Event that triggered function.
+         */
+        public void actionPerformed(ActionEvent e) {
+            Color color = colorChooser.getColor();
+
+            button.setBackground(color);
+            setButtonColor(button, color);
+        }
+    }
+    
+    /**
+     * Does nothing.
+     */
+    public class CancelListener implements ActionListener {
+
+        /* (non-Javadoc)
+         * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+         */
+        public void actionPerformed(ActionEvent e) { }
+    }
+
+    /**
+     * Wrapper in order to hold the control panel layout in the JScrollPane.
+     */
+    public class DrawingPanel extends JPanel {
+
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = -6456589720445279985L;
+
+        /* (non-Javadoc)
+         * @see javax.swing.JComponent#paintComponent(java.awt.Graphics)
+         */
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+        }
+    }
+    
+
+    /** Color chooser dialog. */
+    protected ViewJColorChooser colorChooser;
+    
     /** The main control. */
     protected JPanel mainPanel = null;    
 
@@ -36,20 +105,34 @@ public abstract class JInterfaceBase extends JDialog implements ActionListener
     /** Render base. */
     protected VolumeTriPlanarInterface m_kVolumeViewer = null;
 
+    /**
+     * Default constructor.
+     */
     public JInterfaceBase() {}
     
     /**
-     * 3D texture surface renderer clipping dialog control.
-     *
-     * @param  xBox    float unit box x length
-     * @param  yBox    float unit box y length
-     * @param  zBox    float unit box z length
+     * Construct Base.
+     * @param kVolumeViewer parent frame.
      */
     public JInterfaceBase(VolumeTriPlanarInterface kVolumeViewer)
     {
         m_kVolumeViewer = kVolumeViewer;
         rayBasedRenderWM = m_kVolumeViewer.getVolumeGPU();
     }
+
+    /**
+     * Builds a titled border with the given title, an etched border, and the
+     * proper font and color.  Changed to public static member so that it can
+     * be used for other JPanels not inherited from this base class.
+     * @param   title  Title of the border
+     *
+     * @return  The titled border.
+     */
+    public static TitledBorder buildTitledBorder(String title) {
+        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
+                                Color.black);
+    }
+
 
     /**
      * Get the main control panel.
@@ -59,8 +142,7 @@ public abstract class JInterfaceBase extends JDialog implements ActionListener
     public JPanel getMainPanel() {
         return mainPanel;
     }
-
-
+    
     /**
      * Builds the cancel button. Sets it internally as well return the just-built button.
      *
@@ -77,7 +159,7 @@ public abstract class JInterfaceBase extends JDialog implements ActionListener
 
         return cancelButton;
     }
-    
+
     /**
      * Builds the OK button. Sets it internally as well return the just-built button.
      *
@@ -94,19 +176,18 @@ public abstract class JInterfaceBase extends JDialog implements ActionListener
 
         return OKButton;
     }
-
-    /**
-     * Builds a titled border with the given title, an etched border, and the
-     * proper font and color.  Changed to public static member so that it can
-     * be used for other JPanels not inherited from this base class.
-     * @param   title  Title of the border
-     *
-     * @return  The titled border.
-     */
-    public static TitledBorder buildTitledBorder(String title) {
-        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
-                                Color.black);
-    }
     
+    /**
+     * Set the color of the button. Derived classes may also perform other functions.
+     * @param _button button.
+     * @param _color color.
+     */
+    public void setButtonColor(JButton _button, Color _color)
+    {
+        if ( (_button != null) && (_color != null) )
+        {
+            _button.setBackground(_color);
+        }
+    }
 
 }

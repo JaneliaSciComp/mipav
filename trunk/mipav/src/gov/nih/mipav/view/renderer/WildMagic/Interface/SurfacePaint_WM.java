@@ -1,36 +1,45 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
-import gov.nih.mipav.view.renderer.WildMagic.*;
-import WildMagic.LibFoundation.Mathematics.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
+import gov.nih.mipav.model.structures.CubeBounds;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.Point3D;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewToolBarBuilder;
+import gov.nih.mipav.view.dialogs.JDialogOpacityControls;
+import gov.nih.mipav.view.dialogs.JDialogPaintGrow;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.util.BitSet;
 
-import java.util.*;
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JColorChooser;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import javax.swing.JToggleButton;
+import javax.swing.JToolBar;
+
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /*
  * SurfacePaint class performs paint operations on a TriMesh
- * surfaces. When the mouse is moved over the surface, the PickCanvas is used
- * to retrieve the picked triangle in the mesh. The triangle vertex colors are
- * set to a user-specified color.
+ * surfaces.
  * 
- * @see SurfaceAttributes.java
- * @see JPanelSurface.java
  */
 public class SurfacePaint_WM extends JInterfaceBase
 {
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
-    /**
-     * 
-     */
-    private static final long serialVersionUID = -3767599197318881261L;
 
     /** Paint the TriMesh vertex color: */
     public static final int VERTEX = 0;
@@ -38,7 +47,8 @@ public class SurfacePaint_WM extends JInterfaceBase
     /** Paint into the 3D texture map: */
     public static final int TEXTURE = 1;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -3767599197318881261L;
 
     /** Enables painting */
     private boolean m_bEnabled = false;
@@ -79,10 +89,14 @@ public class SurfacePaint_WM extends JInterfaceBase
 
     /** Paint Grow Dialog. */
     private JDialogPaintGrow mPaintGrowDialog = null;
+    /** Surface panel. */
     private JPanelSurface_WM m_kPanel;
-    //~ Constructors ---------------------------------------------------------------------------------------------------
 
-    /** Default Constructor */
+    /**
+     * Constructor.
+     * @param parent Surface Panel.
+     * @param kVolumeViewer parent frame.
+     */
     public SurfacePaint_WM( JPanelSurface_WM parent, VolumeTriPlanarInterface kVolumeViewer )
     {
         super(kVolumeViewer);
@@ -90,136 +104,9 @@ public class SurfacePaint_WM extends JInterfaceBase
         init();
     }
 
-
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
-    private void init()
-    {
-    	ViewToolBarBuilder toolbarBuilder = new ViewToolBarBuilder(this);
-        mPaintToolBar = ViewToolBarBuilder.initToolBar();
-        mPaintToolBar.setSize(320, 30);
-        mPaintToolBar.setBounds(0, 0, 340, 30);
-
-        mButtonGroup = new ButtonGroup();
-
-        mPaintBrushButton = toolbarBuilder.buildToggleButton("PaintBrush", "Draw using a brush.", "brush", mButtonGroup);
-        mPaintToolBar.add( mPaintBrushButton );
-        mButtonGroup.add( mPaintBrushButton );
-
-        mDropperButton = toolbarBuilder.buildToggleButton("Dropper", "Picks up a color from the image.", "dropper", mButtonGroup);
-        mPaintToolBar.add( mDropperButton );
-        mButtonGroup.add( mDropperButton );
-
-        mPaintCanButton = toolbarBuilder.buildToggleButton("PaintCan", "Fills an area with desired color.", "paintcan", mButtonGroup);
-        mPaintToolBar.add( mPaintCanButton );
-        mButtonGroup.add( mPaintCanButton );
-        
-        mEraserButton = toolbarBuilder.buildToggleButton("Eraser", "Erases paint.", "eraser", mButtonGroup);
-        mPaintToolBar.add( mEraserButton );
-        mButtonGroup.add( mEraserButton );        
-        
-        mEraseAllButton = toolbarBuilder.buildButton("EraseAll", "Erases all paint.", "clear");
-        mPaintToolBar.add( mEraseAllButton );
-        
-        mPaintToolBar.add( ViewToolBarBuilder.makeSeparator() );
-
-        JLabel brushSizeLabel = new JLabel("Brush size:");
-        brushSizeLabel.setForeground(Color.black);
-        brushSizeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        mBrushSizeText = new JTextField( "1", 2 );
-        mBrushSizeText.setEditable(true);
-        mBrushSizeText.setAlignmentX(Component.LEFT_ALIGNMENT);
-        mBrushSizeText.addActionListener(this);
-        mBrushSizeText.setActionCommand("BrushSizeChanged");
-        mBrushSizeText.setEnabled(false );
-        mPaintToolBar.add( brushSizeLabel );
-        mPaintToolBar.add( mBrushSizeText );
-
-        mPaintToolBar.add( ViewToolBarBuilder.makeSeparator() );
-
-        mColorPaintButton = new JButton( MipavUtil.getIcon( "colorpaint.gif" ) );
-        mColorPaintButton.addActionListener( this );
-        mColorPaintButton.setActionCommand( "ColorPaint" );
-        mColorPaintButton.setToolTipText( "Change paint color." );
-        mColorPaintButton.setBackground( new Color(mPaintColor.R, mPaintColor.G, mPaintColor.B) );
-        mColorPaintButton.setEnabled( false );
-        mPaintToolBar.add( mColorPaintButton);
-
-        mOpacityPaintButton = new JButton("Opacity");
-        mOpacityPaintButton.addActionListener(this);
-        mOpacityPaintButton.setToolTipText("Change opacity of paint.");
-        mOpacityPaintButton.setFont(MipavUtil.font12B);
-        mOpacityPaintButton.setMinimumSize(new Dimension(20, 20));
-        mOpacityPaintButton.setMargin(new Insets(2, 7, 2, 7));
-        mOpacityPaintButton.setActionCommand("OpacityPaint");
-        mOpacityPaintButton.setEnabled(false );
-        mPaintToolBar.add( mOpacityPaintButton);
-
-        mColorChooser = new JColorChooser(mColorPaintButton.getBackground());
-    }
-
-    /** Enables/disables the user-interface
-     * @param flag, when true the user-interface is enabled, when false the
-     * user-interface is disabled.
-     */
-    public void setEnabled( boolean flag )
-    {
-        mPaintBrushButton.setEnabled( flag );
-        mDropperButton.setEnabled( flag );
-        mEraserButton.setEnabled( flag );
-        mEraseAllButton.setEnabled( flag );
-        mBrushSizeText.setEnabled( flag );
-        mColorPaintButton.setEnabled( flag );
-        mOpacityPaintButton.setEnabled( flag );
-        if ( flag == false )
-        {
-            mPaintCanButton.setEnabled( flag );
-        }
-    }
-
-    /** Enables/disables the Paint Can user-interface
-     * @param flag, when true Paint Can is enabled, when false the Paint Can
-     * is disabled.
-     */
-    public void enableSurfacePaintCan( boolean flag )
-    {
-        mPaintCanButton.setEnabled( flag );
-    }
-
-    /** Enables/disables the Surface per-vertex paint user-interface
-     * @param flag, when true per-vertex paint is enabled, when false the per-vertex paint is disabled
-     * is disabled.
-     */
-    public void enableSurfacePaint( boolean flag )
-    {
-        mPaintBrushButton.setEnabled( flag );
-        mDropperButton.setEnabled( flag );
-        mEraserButton.setEnabled( flag );
-        mBrushSizeText.setEnabled( flag );
-    }
-
-    /**
-     * Returns true if the user has enabled the paint brush.
-     * @return the enabled/disbled status of the paint brush.
-     */
-    public boolean getEnabled()
-    {
-        return m_bEnabled;
-    }
-
-//     /**
-//      * Returns the ModelImage to paint into.
-//      * @return paint/texture ModelImage
-//      */
-//     public ModelImage getPaintImage()
-//     {
-//         return m_kPanel.getTextureImage();
-//     }
-
     /**
      * actionPerformed, listens for interface events.
-     * @param event, ActionEvent generated by the interface.
+     * @param event ActionEvent generated by the interface.
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -285,8 +172,39 @@ public class SurfacePaint_WM extends JInterfaceBase
                 mDropperButton.isSelected(), mPaintCanButton.isSelected(), mEraserButton.isSelected());
     }
 
-    public JToolBar getToolBar() {
-        return mPaintToolBar;
+    /**
+     * Deletes all member variables, clean memory.
+     */
+    public void dispose() {}
+
+    /** Enables/disables the Surface per-vertex paint user-interface
+     * @param flag when true per-vertex paint is enabled, when false the per-vertex paint is disabled
+     * is disabled.
+     */
+    public void enableSurfacePaint( boolean flag )
+    {
+        mPaintBrushButton.setEnabled( flag );
+        mDropperButton.setEnabled( flag );
+        mEraserButton.setEnabled( flag );
+        mBrushSizeText.setEnabled( flag );
+    }
+
+    /** Enables/disables the Paint Can user-interface
+     * @param flag when true Paint Can is enabled, when false the Paint Can
+     * is disabled.
+     */
+    public void enableSurfacePaintCan( boolean flag )
+    {
+        mPaintCanButton.setEnabled( flag );
+    }
+
+    /**
+     * Returns true if the user has enabled the paint brush.
+     * @return the enabled/disabled status of the paint brush.
+     */
+    public boolean getEnabled()
+    {
+        return m_bEnabled;
     }
 
     /**
@@ -297,36 +215,15 @@ public class SurfacePaint_WM extends JInterfaceBase
     {
         return m_kVolumeViewer.getImageA();
     }
-    /**
-     * Deletes all member variables, clean memory.
-     */
-    public void dispose() {}
 
     /**
-     * Sets the opacity of the paint.
-     * @param opacity paint opacity.
+     * Return paint tool-bar.
+     * @return paint tool-bar.
      */
-    public void setOpacity( float opacity )
-    {
-        mOpacity = opacity;
-        mPaintColor.A = mOpacity;
-    }
-    
-    public void setDropperColor( ColorRGBA kDropperColor, Vector3f kPickPoint )
-    {
-        if (  mPaintCanButton.isSelected() && (mPaintGrowDialog != null) )
-        {
-            regionGrow( m_kVolumeViewer.getImageA(), kPickPoint, kDropperColor );
-        }
-        else
-        {
-            mColorPaintButton.setBackground( new Color(kDropperColor.R, kDropperColor.G, kDropperColor.B) );
-            mOpacity = kDropperColor.A;
-            mPaintColor.Copy(kDropperColor);
-        }
+    public JToolBar getToolBar() {
+        return mPaintToolBar;
     }
 
-    
     /**
      * Grows a region based on a starting point supplied. A voxel is added to
      * the the paintMask mask if its intensity is between the the bounds which
@@ -334,6 +231,7 @@ public class SurfacePaint_WM extends JInterfaceBase
      *
      * @param  kImage the image to grow the region in
      * @param  kSeedPoint the starting point in the image
+     * @param  kSeedColor seed color.
      */
     public void regionGrow( ModelImage kImage, Vector3f kSeedPoint, ColorRGBA kSeedColor  )
     {
@@ -342,8 +240,6 @@ public class SurfacePaint_WM extends JInterfaceBase
                                          " Y: " + String.valueOf(kSeedPoint.Y) +
                                          " Z: " + String.valueOf(kSeedPoint.Z) + "  Color:  " +
                                          kSeedColor.R * 255.0f + " " + kSeedColor.G * 255.0f + " " + kSeedColor.B * 255.0f );
-        //Cursor cursor = getCursor();
-        //setCursor(MipavUtil.waitCursor);
         
         if ((mPaintGrowDialog.getFuzzyThreshold() == -2.0f) ||
             (mPaintGrowDialog.getMaxSize() == -2) || (mPaintGrowDialog.getMaxDistance() == -2)) {
@@ -403,24 +299,122 @@ public class SurfacePaint_WM extends JInterfaceBase
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
         }
-        //setCursor(cursor);
+    }
+    /**
+     * Sets the dropper color. Initializes the region grow.
+     * @param kDropperColor dropper color.
+     * @param kPickPoint picked point on the surface.
+     */
+    public void setDropperColor( ColorRGBA kDropperColor, Vector3f kPickPoint )
+    {
+        if (  mPaintCanButton.isSelected() && (mPaintGrowDialog != null) )
+        {
+            regionGrow( m_kVolumeViewer.getImageA(), kPickPoint, kDropperColor );
+        }
+        else
+        {
+            mColorPaintButton.setBackground( new Color(kDropperColor.R, kDropperColor.G, kDropperColor.B) );
+            mOpacity = kDropperColor.A;
+            mPaintColor.Copy(kDropperColor);
+        }
+    }
+
+    /** Enables/disables the user-interface
+     * @param flag when true the user-interface is enabled, when false the
+     * user-interface is disabled.
+     */
+    public void setEnabled( boolean flag )
+    {
+        mPaintBrushButton.setEnabled( flag );
+        mDropperButton.setEnabled( flag );
+        mEraserButton.setEnabled( flag );
+        mEraseAllButton.setEnabled( flag );
+        mBrushSizeText.setEnabled( flag );
+        mColorPaintButton.setEnabled( flag );
+        mOpacityPaintButton.setEnabled( flag );
+        if ( flag == false )
+        {
+            mPaintCanButton.setEnabled( flag );
+        }
     }
     
     /**
-     * Display the ModelImage color in the JDialogPaintGrow interface.
-     * @param kPickPoint, the model triangle mesh point under the mouse.
-
-    private void getModelColor( Point3f kPickPoint  )
+     * Sets the opacity of the paint.
+     * @param opacity paint opacity.
+     */
+    public void setOpacity( float opacity )
     {
-        ModelImage kImage = m_kPanel.getTextureImage();
-
-        // Get the coordinates of the picked point on the mesh.
-        Point3f modelPoint = m_kPanel.getSurfaceMask().getModelImagePoint( kPickPoint );
-        Color4f modelColor =  m_kPanel.getSurfaceMask().getModelImageColor( kImage, 1, modelPoint );
-        mPaintGrowDialog.setPositionText("  X: " + String.valueOf(modelPoint.x) +
-                                         " Y: " + String.valueOf(modelPoint.y) +
-                                         " Z: " + String.valueOf(modelPoint.z) + "  Color:  " +
-                                         modelColor.x * 255.0f + " " + modelColor.y * 255.0f + " " + modelColor.z * 255.0f );
+        mOpacity = opacity;
+        mPaintColor.A = mOpacity;
     }
-*/
+
+    
+    /**
+     * Initialize user-interface
+     */
+    private void init()
+    {
+    	ViewToolBarBuilder toolbarBuilder = new ViewToolBarBuilder(this);
+        mPaintToolBar = ViewToolBarBuilder.initToolBar();
+        mPaintToolBar.setSize(320, 30);
+        mPaintToolBar.setBounds(0, 0, 340, 30);
+
+        mButtonGroup = new ButtonGroup();
+
+        mPaintBrushButton = toolbarBuilder.buildToggleButton("PaintBrush", "Draw using a brush.", "brush", mButtonGroup);
+        mPaintToolBar.add( mPaintBrushButton );
+        mButtonGroup.add( mPaintBrushButton );
+
+        mDropperButton = toolbarBuilder.buildToggleButton("Dropper", "Picks up a color from the image.", "dropper", mButtonGroup);
+        mPaintToolBar.add( mDropperButton );
+        mButtonGroup.add( mDropperButton );
+
+        mPaintCanButton = toolbarBuilder.buildToggleButton("PaintCan", "Fills an area with desired color.", "paintcan", mButtonGroup);
+        mPaintToolBar.add( mPaintCanButton );
+        mButtonGroup.add( mPaintCanButton );
+        
+        mEraserButton = toolbarBuilder.buildToggleButton("Eraser", "Erases paint.", "eraser", mButtonGroup);
+        mPaintToolBar.add( mEraserButton );
+        mButtonGroup.add( mEraserButton );        
+        
+        mEraseAllButton = toolbarBuilder.buildButton("EraseAll", "Erases all paint.", "clear");
+        mPaintToolBar.add( mEraseAllButton );
+        
+        mPaintToolBar.add( ViewToolBarBuilder.makeSeparator() );
+
+        JLabel brushSizeLabel = new JLabel("Brush size:");
+        brushSizeLabel.setForeground(Color.black);
+        brushSizeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        mBrushSizeText = new JTextField( "1", 2 );
+        mBrushSizeText.setEditable(true);
+        mBrushSizeText.setAlignmentX(Component.LEFT_ALIGNMENT);
+        mBrushSizeText.addActionListener(this);
+        mBrushSizeText.setActionCommand("BrushSizeChanged");
+        mBrushSizeText.setEnabled(false );
+        mPaintToolBar.add( brushSizeLabel );
+        mPaintToolBar.add( mBrushSizeText );
+
+        mPaintToolBar.add( ViewToolBarBuilder.makeSeparator() );
+
+        mColorPaintButton = new JButton( MipavUtil.getIcon( "colorpaint.gif" ) );
+        mColorPaintButton.addActionListener( this );
+        mColorPaintButton.setActionCommand( "ColorPaint" );
+        mColorPaintButton.setToolTipText( "Change paint color." );
+        mColorPaintButton.setBackground( new Color(mPaintColor.R, mPaintColor.G, mPaintColor.B) );
+        mColorPaintButton.setEnabled( false );
+        mPaintToolBar.add( mColorPaintButton);
+
+        mOpacityPaintButton = new JButton("Opacity");
+        mOpacityPaintButton.addActionListener(this);
+        mOpacityPaintButton.setToolTipText("Change opacity of paint.");
+        mOpacityPaintButton.setFont(MipavUtil.font12B);
+        mOpacityPaintButton.setMinimumSize(new Dimension(20, 20));
+        mOpacityPaintButton.setMargin(new Insets(2, 7, 2, 7));
+        mOpacityPaintButton.setActionCommand("OpacityPaint");
+        mOpacityPaintButton.setEnabled(false );
+        mPaintToolBar.add( mOpacityPaintButton);
+
+        mColorChooser = new JColorChooser(mColorPaintButton.getBackground());
+    }  
 }

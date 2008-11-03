@@ -204,7 +204,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Part of the KeyListener interface. 
-     * @param e, the key event.
+     * @param e the key event.
      */
     public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
@@ -260,11 +260,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Part of the GLEventListener interface. Called when the GLCanvas is resized.
-     * @param arg0, the GLCanvas
-     * @param iX, the new x-position in screen coordinates.
-     * @param iY, the new y-position in screen coordinates.
-     * @param iWidth, the new width
-     * @param iHeight, the new height
+     * @param arg0 the GLCanvas
+     * @param iX the new x-position in screen coordinates.
+     * @param iY the new y-position in screen coordinates.
+     * @param iWidth the new width
+     * @param iHeight the new height
      */
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
     	
@@ -314,7 +314,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /**
      * Sets the currently visible flag. Used when the GLCanvas is removed from
      * the display panel or frame.
-     * @param bVisible, set to false when the GLCanvas container is not displayed.
+     * @param bVisible set to false when the GLCanvas container is not displayed.
      */
     public void setVisible( boolean bVisible )
     {
@@ -404,7 +404,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Called from JPanelLight. Updates the lighting parameters.
-     * @param akGLights, the set of GeneralLight objects.
+     * @param akGLights the set of GeneralLight objects.
      */
     public void updateLighting(Light[] akGLights )
     {

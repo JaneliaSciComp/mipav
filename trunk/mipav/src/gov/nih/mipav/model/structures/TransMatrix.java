@@ -196,7 +196,7 @@ public class TransMatrix extends Matrix4f
     }
 
     /** copy constructor.
-     * @param rkTM, matrix to copy
+     * @param rkTM matrix to copy
      */
     public TransMatrix(TransMatrix rkTM) {
         Copy(rkTM);
@@ -236,7 +236,7 @@ public class TransMatrix extends Matrix4f
 
 
     /** copy, overwrite this. 
-     * @param rkTM, matrix to copy
+     * @param rkTM matrix to copy
      */
     public void Copy(TransMatrix rkTM) {
         m_Is2D = rkTM.m_Is2D;

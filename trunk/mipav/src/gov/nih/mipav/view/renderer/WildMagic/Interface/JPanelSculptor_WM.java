@@ -1,17 +1,29 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileWriteOptions;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewToolBarBuilder;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.WildMagic.*;
-import gov.nih.mipav.view.renderer.WildMagic.Render.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
 
-import java.awt.*;
-import java.awt.event.*;
-
-import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JToggleButton;
+import javax.swing.JToolBar;
+import javax.swing.border.Border;
 
 /**
  * <p>Title: JPanelSculptor</p>
@@ -22,18 +34,13 @@ import javax.swing.border.*;
  */
 public class JPanelSculptor_WM extends JInterfaceBase
 {
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 4235930260988710821L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
+    /** Window width information for Sculpting. */
     int m_iSculptHeight = 0;
 
-    /** Window information for Sculpting:. */
+    /** Window width information for Sculpting. */
     int m_iSculptWidth = 0;
 
     /** Line shape button. */
@@ -51,10 +58,10 @@ public class JPanelSculptor_WM extends JInterfaceBase
     /** Button for inverting the sculpt region. */
     private JButton m_kInvertOutlineButton;
 
+    /* Sculpturing interface */
+
     /** Button to save the sculpt image. */
     private JButton m_kSaveSculptButton;
-
-    /* Sculpturing interface */
 
     /** Button to undo the sculpt and restor the original volume. */
     private JButton m_kUndoSculptButton;
@@ -68,11 +75,13 @@ public class JPanelSculptor_WM extends JInterfaceBase
     /** Scroll panel that holding the all the control components. */
     private DrawingPanel scrollPanel;
 
-    /** Toolbar builder reference. */
-    private ViewToolBarBuilder toolbarBuilder;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
+
+    /** Toolbar builder reference. */
+    private ViewToolBarBuilder toolbarBuilder;
+    
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Contructor. Called from the surface render to create the sculptor control panel.
@@ -83,8 +92,7 @@ public class JPanelSculptor_WM extends JInterfaceBase
         super(kVolumeViewer);
         init();
     }
-    
-    //~ Methods --------------------------------------------------------------------------------------------------------
+
 
     /**
      * Command processor to handle the geodesic button events.
@@ -123,7 +131,6 @@ public class JPanelSculptor_WM extends JInterfaceBase
             }
         }
     }
-
 
     /**
      * Cull the sculpt region through the 3D volume.
@@ -383,34 +390,11 @@ public class JPanelSculptor_WM extends JInterfaceBase
 
     }
 
-    /**
-     * Calls disposeLocal.
-     *
-     * @throws  Throwable  DOCUMENT ME!
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
      */
     protected void finalize() throws Throwable {
         this.disposeLocal();
         super.finalize();
     }
-
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    /**
-     * Wrapper in order to hold the control panel layout in the JScrollPane.
-     */
-    class DrawingPanel extends JPanel {
-
-        /** Use serialVersionUID for interoperability. */
-        private static final long serialVersionUID = -2213835536118628636L;
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param  g  DOCUMENT ME!
-         */
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-        }
-    }
-
 }

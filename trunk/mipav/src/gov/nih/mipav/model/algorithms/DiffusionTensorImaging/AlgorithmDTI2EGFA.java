@@ -27,7 +27,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
     private ModelImage m_kFAImage = null;
 
     /** Initialize the Algorithm with the input DTI Image:
-     * @param kDTIImage, input DTI Image.
+     * @param kDTIImage input DTI Image.
      */
     public AlgorithmDTI2EGFA( ModelImage kDTIImage )
     {

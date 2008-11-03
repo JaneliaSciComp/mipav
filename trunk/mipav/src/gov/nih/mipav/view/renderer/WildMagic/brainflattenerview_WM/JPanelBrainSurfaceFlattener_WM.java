@@ -1,22 +1,38 @@
 package gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM;
 
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewImageUpdateInterface;
+import gov.nih.mipav.view.renderer.JPanelHistoLUT;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
-import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-import java.awt.*;
-import java.awt.event.*;
-
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
-import WildMagic.LibGraphics.SceneGraph.*;
 
-/**
- * DOCUMENT ME!
- */
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+
 public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionListener, ViewImageUpdateInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -26,101 +42,100 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private boolean m_bFileLoaded = false;
-
-    /** DOCUMENT ME! */
-    private boolean m_bFirstSurface = true;
-
-    /** DOCUMENT ME! */
-    private int m_iGridY = 0;
-
-    /** DOCUMENT ME! */
-    private JRadioButton m_kDisablePick = new JRadioButton();
-
-    /** DOCUMENT ME! */
-    private ButtonGroup m_kDisplayButtonGroup = new ButtonGroup();
-
-    /** DOCUMENT ME! */
-    private JRadioButton m_kDisplayPlane = new JRadioButton();
-
-    /** DOCUMENT ME! */
-    private JRadioButton m_kDisplaySphere = new JRadioButton();
-
-    /** DOCUMENT ME! */
-    private ModelImage m_kImage = null;
-
-    /** DOCUMENT ME! */
-    private JCheckBox m_kLatLonLines = new JCheckBox();
-
-    /** DOCUMENT ME! */
-    private ModelLUT m_kLUTa = null;
-
-    /** DOCUMENT ME! */
-    private ModelImage m_kLUTImageA = null;
-
-    /** DOCUMENT ME! */
-    private JTextField m_kNumLatText = new JTextField("9", 3);
-
-    /** DOCUMENT ME! */
-    private JTextField m_kNumLonText = new JTextField("13", 3);
-
-    /** DOCUMENT ME! */
-    private JPanelHistoLUT m_kPanelBrainsurfaceFlattenerLUT = null;
-
-    /** DOCUMENT ME! */
-    private ButtonGroup m_kPickButtonGroup = new ButtonGroup();
-
-    /** DOCUMENT ME! */
-    private JRadioButton m_kPickCorrespondence = new JRadioButton();
-
-    /** DOCUMENT ME! */
-    private JRadioButton m_kPickPuncture = new JRadioButton();
-
-    /** DOCUMENT ME! */
-    private TriMesh m_kTriangleMesh = null;
-
-    /** DOCUMENT ME! */
-    private CorticalAnalysisRender m_kView;
-
-    /** The scroll pane holding the panel content. Useful when the screen is small. */
-    private JScrollPane scroller;
     /** The main control. */
     protected JPanel mainPanel = null;
-    private JPanel m_kInsidePanel;
-    
-    /** Fonts, same as <code>MipavUtil.font12</code> and <code>MipavUtil.font12B.</code> */
+
+    /** Fonts, same as <code>MipavUtil.font12</code> and
+     * <code>MipavUtil.font12B.</code> */
     protected Font serif12, serif12B;
-    
+
     /**
-     * OK button is used on most dialogs. Defining it in the base allows default actions if the user presses return and
-     * the button is in focus.
+     * OK button is used on most dialogs. Defining it in the base allows
+     * default actions if the user presses return and the button is in focus.
      */
     protected JButton OKButton;
+
     /**
-     * Cancel button is used on most dialogs. Defining it in the base allows default actions if the user presses return
-     * and the button is in focus.
+     * Cancel button is used on most dialogs. Defining it in the base allows
+     * default actions if the user presses return and the button is in focus.
      */
     protected JButton cancelButton;
+
+    /** Set to true when a surface has been loaded */
+    private boolean m_bFileLoaded = false;
+
+    /** Causes the surface LUT to be calculated for the first time. */
+    private boolean m_bFirstSurface = true;
+
+    /** Keeps track of the user-interface position in the main panel. */
+    private int m_iGridY = 0;
+
+    /** Enable/disable correspondence picking */
+    private JRadioButton m_kDisablePick = new JRadioButton();
+
+    /** ButtonGroup for the plane/surface display selection. */
+    private ButtonGroup m_kDisplayButtonGroup = new ButtonGroup();
+
+    /** Toggle displaying the plane on/off */
+    private JRadioButton m_kDisplayPlane = new JRadioButton();
+
+    /** Toggle displaying the sphere on/off */
+    private JRadioButton m_kDisplaySphere = new JRadioButton();
+
+    /** Toggle display of latitude/longitude lines on/off. */
+    private JCheckBox m_kLatLonLines = new JCheckBox();
+
+    /** Color LUT based on Volume Data */
+    private ModelLUT m_kLUTa = null;
+
+    /** Volume data for LUT */
+    private ModelImage m_kLUTImageA = null;
+
+    /** Text box for entering the number of latitude lines. */
+    private JTextField m_kNumLatText = new JTextField("9", 3);
+
+    /** Text box for entering the number of longitude lines. */
+    private JTextField m_kNumLonText = new JTextField("13", 3);
+
+    /** LUT Panel based on surface curvature. */
+    private JPanelHistoLUT m_kPanelBrainsurfaceFlattenerLUT = null;
+
+    /** Picking button group -- switch between picking correspondence points
+     * and the puncture triangle. */
+    private ButtonGroup m_kPickButtonGroup = new ButtonGroup();
+
+    /** Correspondence point picking. */
+    private JRadioButton m_kPickCorrespondence = new JRadioButton();
+    /** Puncture triangle picking. */
+    private JRadioButton m_kPickPuncture = new JRadioButton();
+    /** Brain Surface TriMesh */
+    private TriMesh m_kTriangleMesh = null;
     
+    /** Brain Surface Renderer. */
+    private CorticalAnalysisRender m_kView;
+    
+    /** The scroll pane holding the panel content. Useful when the screen is small. */
+    private JScrollPane scroller;
+    /** Panel container. */
+    private JPanel m_kInsidePanel;
+    
+    /** Parent user-interface frame. */
     private VolumeTriPlanarInterface m_kVolumeViewer;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Create the control-panel for the brainsurfaceFlattener interface:
      *
-     * @param  kView         the engine behind the brainsurfaceFlattener and one of the parent frames affected by the
-     *                       interface
-     * @param  kImage        the ModelImage data
-     * @param  kParentFrame  the parent frame for the panel, contains the surfaceRenderer, where the brain model is
-     *                       displayed
+     * @param kView the engine behind the brainsurfaceFlattener and one of the
+     * parent frames affected by the interface
+     * @param kParentFrame the parent frame for the panel, contains the
+     * surfaceRenderer, where the brain model is displayed
      */
-    public JPanelBrainSurfaceFlattener_WM(CorticalAnalysisRender kView, ModelImage kImage, VolumeTriPlanarInterface kParent) {
-
+    public JPanelBrainSurfaceFlattener_WM(CorticalAnalysisRender kView,
+                                          VolumeTriPlanarInterface kParent)
+    {
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
-        
-        m_kImage = kImage;
         m_kVolumeViewer = kParent;
         m_kView = kView;
         init();
@@ -129,10 +144,22 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Closes dialog box when the OK button is pressed, sets up the variables needed for running the algorithm, and
-     * calls the algorithm.
+     * Builds a titled border with the given title, an etched border, and the
+     * proper font and color.  Changed to public static member so that it can
+     * be used for other JPanels not inherited from this base class.
+     * @param   title  Title of the border
      *
-     * @param  event  Event that triggers function
+     * @return  The titled border.
+     */
+    public static TitledBorder buildTitledBorder(String title) {
+        return new TitledBorder(new EtchedBorder(), title,
+                                TitledBorder.LEFT, TitledBorder.CENTER,
+                                MipavUtil.font12B, Color.black);
+    }
+
+
+    /* (non-Javadoc)
+     * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
@@ -224,7 +251,45 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
     }
 
     /**
-     * DOCUMENT ME!
+     * @param kMesh
+     * @return Scene-graph node containing the TriMesh lat/lon lines.
+     */
+    public Node displayCorticalAnalysis( TriMesh kMesh ) {
+        m_kTriangleMesh = kMesh;
+        if ( !m_kView.setup(m_kTriangleMesh) )
+        {
+        	return null;
+        }
+
+        int iNumLat = Integer.parseInt(m_kNumLatText.getText());
+        int iNumLon = Integer.parseInt(m_kNumLonText.getText());
+        m_kView.setupLatLon(iNumLat, iNumLon);
+
+        /* If this is the first surface loaded, create and display the
+         * LUT: */
+        if (m_bFirstSurface == true) {
+            m_bFirstSurface = false;
+            createLUTFromSurface();
+        } else {
+
+            /* Otherwise, reset the LUT to grayscale:
+             * m_kLUTa.makeGrayTransferFunctions(); m_kLUTa.makeLUT( 256 ); m_kPanelBrainsurfaceFlattenerLUT.setLUTA(
+             * m_kLUTa ); m_kPanelBrainsurfaceFlattenerLUT.selectLUTa( );mainPanel.updateUI(); */
+            m_kView.setLUTCurvature(m_kLUTa);
+        }
+        m_bFileLoaded = true;
+
+        /* Display the latitude/longitude lines: */
+        m_kLatLonLines.setSelected(true);
+
+        /* Reset the color map to display curvature: */
+        m_kView.displayCurvatureColors();
+
+        return m_kView.getMeshLines();
+    }
+
+    /**
+     * Memory cleanup.
      */
     public void disposeLocal() {
         m_kLatLonLines = null;
@@ -240,10 +305,6 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
             m_kTriangleMesh = null;
         }
 
-        if (m_kImage != null) {
-            m_kImage = null;
-        }
-
         if (m_kLUTImageA != null) {
             m_kLUTImageA = null;
         }
@@ -253,28 +314,25 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         }
     }
 
+
     /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * Return ModelImage A.
+     * @return  ModelImage A.
      */
     public ModelImage getImageA() {
         return m_kLUTImageA;
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * Return ModelImage B.
+     * @return ModelImage B.
      */
     public ModelImage getImageB() {
         return null;
     }
 
-
     /**
      * Return the main control panel.
-     *
      * @return  JPanel the main control panel
      */
     public JPanel getMainPanel() {
@@ -282,57 +340,51 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
     }
 
     /**
-     * setSlice.
-     *
-     * @param  slice  int
+     * Resizing the control panel.
+     * @param  panelWidth   int width
+     * @param  frameHeight  int height
+     */
+    public void resizePanel(int panelWidth, int frameHeight) {
+        frameHeight = frameHeight - (40 * 2);
+        scroller.setPreferredSize(new Dimension(panelWidth, frameHeight));
+        scroller.setSize(new Dimension(panelWidth, frameHeight));
+        scroller.revalidate();
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewImageUpdateInterface#setSlice(int)
      */
     public void setSlice(int slice) { }
 
-    /**
-     * setTimeSlice.
-     *
-     * @param  tSlice  int
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewImageUpdateInterface#setTimeSlice(int)
      */
     public void setTimeSlice(int tSlice) { }
 
-    /**
-     * updateImageExtents.
-     *
-     * @return  boolean
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewImageUpdateInterface#updateImageExtents()
      */
     public boolean updateImageExtents() {
         return false;
     }
 
-    /**
-     * updateImages.
-     *
-     * @return  boolean
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewImageUpdateInterface#updateImages()
      */
     public boolean updateImages() {
         return false;
     }
 
-    /**
-     * updateImages.
-     *
-     * @param   flag  boolean
-     *
-     * @return  boolean
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewImageUpdateInterface#updateImages(boolean)
      */
     public boolean updateImages(boolean flag) {
         return false;
     }
 
-    /**
-     * updateImages.
-     *
-     * @param   LUTa        ModelLUT
-     * @param   LUTb        ModelLUT
-     * @param   flag        boolean
-     * @param   interpMode  int
-     *
-     * @return  boolean
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewImageUpdateInterface#updateImages(gov.nih.mipav.model.structures.ModelLUT, gov.nih.mipav.model.structures.ModelLUT, boolean, int)
      */
     public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag, int interpMode) {
 
@@ -344,20 +396,34 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
 
         return true;
     }
-
+    
     /**
-     * Delete all local member variables:
-     *
-     * @throws  Throwable  DOCUMENT ME!
+     * Builds the OK button. Sets it internally as well return the just-built button.
+     * @return  OK button.
+     */
+    protected JButton buildOKButton() {
+        OKButton = new JButton("OK");
+        OKButton.addActionListener(this);
+
+        // OKButton.setToolTipText("Accept values and perform action.");
+        OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        OKButton.setFont(serif12B);
+
+        return OKButton;
+    }
+    
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
      */
     protected void finalize() throws Throwable {
         disposeLocal();
         super.finalize();
     }
-
+    
     /**
-     * Creates a LUT for the surface, where the curvature values are used in the look-up table instead of the ModelImage
-     * values:
+     * Creates a LUT for the surface, where the curvature values are used in
+     * the look-up table instead of the ModelImage values:
      */
     private void createLUTFromSurface() {
 
@@ -399,43 +465,6 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         m_kView.setLUTCurvature(m_kLUTa);
     }
 
-    /**
-     * Resets the Mesh Display, when the file is reloaded:
-     */
-    public Node displayCorticalAnalysis( TriMesh kMesh ) {
-        m_kTriangleMesh = kMesh;
-        if ( !m_kView.setup(m_kTriangleMesh) )
-        {
-        	return null;
-        }
-
-        int iNumLat = Integer.parseInt(m_kNumLatText.getText());
-        int iNumLon = Integer.parseInt(m_kNumLonText.getText());
-        m_kView.setupLatLon(iNumLat, iNumLon);
-
-        /* If this is fht first surface loaded, create and display the
-         * LUT: */
-        if (m_bFirstSurface == true) {
-            m_bFirstSurface = false;
-            createLUTFromSurface();
-        } else {
-
-            /* Otherwise, reset the LUT to grayscale:
-             * m_kLUTa.makeGrayTransferFunctions(); m_kLUTa.makeLUT( 256 ); m_kPanelBrainsurfaceFlattenerLUT.setLUTA(
-             * m_kLUTa ); m_kPanelBrainsurfaceFlattenerLUT.selectLUTa( );mainPanel.updateUI(); */
-            m_kView.setLUTCurvature(m_kLUTa);
-        }
-        m_bFileLoaded = true;
-
-        /* Display the latitude/longitude lines: */
-        m_kLatLonLines.setSelected(true);
-
-        /* Reset the color map to display curvature: */
-        m_kView.displayCurvatureColors();
-
-        return m_kView.getMeshLines();
-    }
-    
     /**
      * Initialize the user-interface, buttons and ActionCommands.
      */
@@ -651,49 +680,5 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         /* Create and add the mainPanel: */
         mainPanel = new JPanel();
         mainPanel.add(scroller, BorderLayout.CENTER);
-    }
-    
-
-    /**
-     * Resizing the control panel with ViewJFrameVolumeView's frame width and height.
-     *
-     * @param  panelWidth   int width
-     * @param  frameHeight  int height
-     */
-    public void resizePanel(int panelWidth, int frameHeight) {
-        frameHeight = frameHeight - (40 * 2);
-        scroller.setPreferredSize(new Dimension(panelWidth, frameHeight));
-        scroller.setSize(new Dimension(panelWidth, frameHeight));
-        scroller.revalidate();
-    }
-    
-    /**
-     * Builds the OK button. Sets it internally as well return the just-built button.
-     *
-     * @return  DOCUMENT ME!
-     */
-    protected JButton buildOKButton() {
-        OKButton = new JButton("OK");
-        OKButton.addActionListener(this);
-
-        // OKButton.setToolTipText("Accept values and perform action.");
-        OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
-        OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        OKButton.setFont(serif12B);
-
-        return OKButton;
-    }
-
-    /**
-     * Builds a titled border with the given title, an etched border, and the
-     * proper font and color.  Changed to public static member so that it can
-     * be used for other JPanels not inherited from this base class.
-     * @param   title  Title of the border
-     *
-     * @return  The titled border.
-     */
-    public static TitledBorder buildTitledBorder(String title) {
-        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
-                                Color.black);
     }
 }

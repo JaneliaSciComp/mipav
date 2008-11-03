@@ -176,7 +176,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
     /** image orientation **/
     private String imageOrientationString;
     
-    /** vol paramters **/
+    /** vol parameters **/
     private HashMap volParameters;
 
     

@@ -271,9 +271,9 @@ public class ViewJComponentTriSliceImage {
 
     /**
      * setCenter sets the PatientSlice center:
-     * @param i, FileCoordinates
-     * @param j, FileCoordinates
-     * @param k, FileCoordinates
+     * @param i FileCoordinates
+     * @param j FileCoordinates
+     * @param k FileCoordinates
      */
     public void setCenter( int i, int j, int k )
     {

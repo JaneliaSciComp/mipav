@@ -21,7 +21,7 @@ import WildMagic.LibGraphics.SceneGraph.*;
 public abstract class VolumeObject
 {
     /** Create a new VolumeObject with the VolumeImage parameter.
-     * @param kImageA, the VolumeImage containing shared data and textures for
+     * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
      */
     public VolumeObject (VolumeImage kImageA, VolumeImage kImageB)
@@ -32,12 +32,12 @@ public abstract class VolumeObject
     
     
     /** Create a new VolumeObject with the VolumeImage parameter.
-     * @param kImageA, the VolumeImage containing shared data and textures for
+     * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
-     * @param kTranslate, translation in the scene-graph for this object.
-     * @param fX, the size of the volume in the x-dimension (extent * resolutions)
-     * @param fY, the size of the volume in the y-dimension (extent * resolutions)
-     * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
+     * @param kTranslate translation in the scene-graph for this object.
+     * @param fX the size of the volume in the x-dimension (extent * resolutions)
+     * @param fY the size of the volume in the y-dimension (extent * resolutions)
+     * @param fZ the size of the volume in the z-dimension (extent * resolutions)
      */
     public VolumeObject (VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ)
     {
@@ -45,12 +45,12 @@ public abstract class VolumeObject
     }
     
     /** Create a new VolumeObject with the VolumeImage parameter.
-     * @param kImageA, the VolumeImage containing shared data and textures for
+     * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
-     * @param kTranslate, translation in the scene-graph for this object.
-     * @param fX, the size of the volume in the x-dimension (extent * resolutions)
-     * @param fY, the size of the volume in the y-dimension (extent * resolutions)
-     * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
+     * @param kTranslate translation in the scene-graph for this object.
+     * @param fX the size of the volume in the x-dimension (extent * resolutions)
+     * @param fY the size of the volume in the y-dimension (extent * resolutions)
+     * @param fZ the size of the volume in the z-dimension (extent * resolutions)
      */
     public VolumeObject (VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, float fX, float fY, float fZ)
     {
@@ -90,23 +90,23 @@ public abstract class VolumeObject
 
     /**
      * PreRender the object, for embedding in the ray-cast volume.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public abstract void PreRender( Renderer kRenderer, Culler kCuller );
 
     /**
      * Render the object.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public abstract void Render( Renderer kRenderer, Culler kCuller );
 
     /** 
      * Render the object after all other objects have been rendererd. Useful
      * for screen-space objects such as the eye-clip plane.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void PostRender( @SuppressWarnings("unused")
     Renderer kRenderer, @SuppressWarnings("unused")
@@ -152,7 +152,7 @@ public abstract class VolumeObject
 
     /**
      * Get the object's parent node in the scene graph.
-     * @param m_kScene, the Node containing this object.
+     * @param m_kScene the Node containing this object.
      */
     public Node GetScene()
     {
@@ -162,8 +162,8 @@ public abstract class VolumeObject
 
     /**
      * Sets the light for the EllipsoidsShader.
-     * @param kLightType, the name of the light to set (Light0, Light1, etc.)
-     * @param afType, the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
+     * @param kLightType the name of the light to set (Light0, Light1, etc.)
+     * @param afType the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
      */
     public void SetLight( String kLightType, float[] afType )
     {

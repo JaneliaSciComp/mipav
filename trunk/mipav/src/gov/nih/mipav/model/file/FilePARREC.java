@@ -53,7 +53,7 @@ public class FilePARREC extends FileBase {
     /** slice map **/
     private HashMap SliceMap;
     
-    /** vol paramters **/
+    /** vol parameters **/
     private HashMap VolParameters;
     
     /** slice parameters **/

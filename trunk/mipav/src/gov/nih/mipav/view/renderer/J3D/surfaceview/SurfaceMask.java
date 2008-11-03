@@ -510,9 +510,9 @@ public class SurfaceMask
 
     /** Get the color from the RGB lookup table:
      * @param RGBIndexBuffer the color lookup table index buffer
-     * @param kOffset, the color offset
-     * @param fNorm, the color normalization
-     * @param currentColor, the current color (changed)
+     * @param kOffset the color offset
+     * @param fNorm the color normalization
+     * @param currentColor the current color (changed)
      */
     private void getColorMapped( int[] RGBIndexBuffer, Color3f kOffset, float fNorm,
                                  Color4f currentColor )
@@ -537,9 +537,9 @@ public class SurfaceMask
 
     /**
      * calculates the color normalization factors
-     * @param kImage, the model image from which the normalization factors are
+     * @param kImage the model image from which the normalization factors are
      * calculated
-     * @param kOffset, the calculated color offset
+     * @param kOffset the calculated color offset
      * @return the color normalization factor.
      */
     private float calcMaxNormColors( ModelImage kImage, Color3f kOffset )

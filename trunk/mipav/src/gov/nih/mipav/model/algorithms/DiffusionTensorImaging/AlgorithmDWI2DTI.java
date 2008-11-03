@@ -70,18 +70,18 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
 
 
     /** Create a new AlgorithmDWI2DTI 
-     * @param kMaskImage, mask image masking non-brain regions, if null it is calculated.
-     * @param bDisplayB0, when true open and display the B0 weighted image and return.
-     * @param iSlices, number of slices in the raw data.
-     * @param iDimX, x-dimensions of the raw data.
-     * @param iDimY, y-dimensions of the raw data.
-     * @param iBOrig, number of different entries in the BMatrix.
-     * @param iWeights, number of weighted series.
-     * @param fMeanNoise, mean noise value.
-     * @param aakDWIList, list of file names in the weighted series.
-     * @param repidx,
-     * @param kBMatrix, BMatrix values.
-     * @param kRawFormat, format string for the raw data.
+     * @param kMaskImage mask image masking non-brain regions, if null it is calculated.
+     * @param bDisplayB0 when true open and display the B0 weighted image and return.
+     * @param iSlices number of slices in the raw data.
+     * @param iDimX x-dimensions of the raw data.
+     * @param iDimY y-dimensions of the raw data.
+     * @param iBOrig number of different entries in the BMatrix.
+     * @param iWeights number of weighted series.
+     * @param fMeanNoise mean noise value.
+     * @param aakDWIList list of file names in the weighted series.
+     * @param repidx
+     * @param kBMatrix BMatrix values.
+     * @param kRawFormat format string for the raw data.
      */
     public AlgorithmDWI2DTI( ModelImage kMaskImage, boolean bDisplayB0, int iSlices, int iDimX, int iDimY,
                              int iBOrig, int iWeights, float fMeanNoise, String[][] aakDWIList, int[] aiMatrixEntries, GMatrixf kBMatrix,
@@ -137,8 +137,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     }
 
     /** Get the slice data for the image with the given slice and weight.
-     * @param iSlice, slice to read.
-     * @param iWeight, weight to read.
+     * @param iSlice slice to read.
+     * @param iWeight weight to read.
      * @return float[] containing the data.
      */
     private float[] readDicomWeight( int iSlice, int iWeight )
@@ -170,8 +170,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     }
 
     /** Get the slice data for the image with the given slice and weight.
-     * @param iSlice, slice to read.
-     * @param iWeight, weight to read.
+     * @param iSlice slice to read.
+     * @param iWeight weight to read.
      * @return float[] containing the data.
      */
     private float[] readFloatWeight( int iSlice, int iWeight )
@@ -212,8 +212,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     
 
     /** Get the slice data for the image with the given slice and weight.
-     * @param iSlice, slice to read.
-     * @param iWeight, weight to read.
+     * @param iSlice slice to read.
+     * @param iWeight weight to read.
      * @return float[] containing the data.
      */
     private float[] readIntegerWeight( int iSlice, int iWeight )
@@ -252,8 +252,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
 
 
     /** Get the slice data for the image with the given slice and weight.
-     * @param iSlice, slice to read.
-     * @param iWeight, weight to read.
+     * @param iSlice slice to read.
+     * @param iWeight weight to read.
      * @return float[] containing the data.
      */
     private float[] readSliceWeight( int iSlice, int iWeight )
@@ -393,7 +393,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
      * calculations are performed.  The tensor is calculated, then the
      * eigen vectors and functional anisotropy images. The
      * DialogDTIColorDisplay is then launched.
-     * @param kMaskImage, mask image representing the brain.
+     * @param kMaskImage mask image representing the brain.
      */
     public float[] createDWIImage( )
     {
@@ -611,8 +611,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     }
     
     /** Translates the byte[] into float values at the given indes iIndex.
-     * @param abData, byte[] containing float values.
-     * @param iIndex, index into the array to get the float from.
+     * @param abData byte[] containing float values.
+     * @param iIndex index into the array to get the float from.
      * @return float value representing 4 bytes starting at abData[iIndex*4].
      */
     private float readFloat( byte[] abData, int iIndex )
@@ -628,8 +628,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
 
 
     /** Translates the byte[] into integer values at the given indes iIndex.
-     * @param abData, byte[] containing integer values.
-     * @param iIndex, index into the array to get the float from.
+     * @param abData byte[] containing integer values.
+     * @param iIndex index into the array to get the float from.
      * @return integer value representing 4 bytes starting at abData[iIndex*4].
      */
     private int readInteger( byte[] abData, int iIndex )

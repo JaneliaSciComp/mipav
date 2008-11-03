@@ -1,33 +1,44 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.Render.Geodesic_WM;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JToggleButton;
+import javax.swing.JToolBar;
+
 import WildMagic.LibGraphics.Collision.PickRecord;
 import WildMagic.LibGraphics.Rendering.WireframeState;
-import WildMagic.LibGraphics.SceneGraph.*;
-
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.WildMagic.*;
-import gov.nih.mipav.view.renderer.WildMagic.Render.*;
-
-import java.awt.*;
-import java.awt.event.*;
-
-import javax.swing.*;
+import WildMagic.LibGraphics.SceneGraph.Geometry;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
 
 /**
  * <p>Title: JPanelGeodesic</p>
  *
- * <p>Description: Geodesic drawing interface. Drawing the Geodesic curve on the surfaces. Depending on the type of
- * surface displayed: either the SurfaceRender or the FlythruRenderer.</p>
+ * <p>Description: Geodesic drawing interface. Drawing the Geodesic curve on the surfaces. </p>
  *
  * <p>This file also includes the interface for cutting the mesh along the geodesic curve. The mesh can be cut along an
  * open curve (which replaces the original mesh in the scene graph) or the mesh can be cut along a closed curve (which
  * replaces the original mesh with two or more new meshes in the scene graph.</p>
- *
- * <p>The interface for drawing geodesics with a "livewire" interface. When livewire mode is selected, by checking the
- * "Livewire Mode" checkbox, then when the user selects points along the geodesic curve with the mouse, the Dijkstra's
- * version of the geodesic is calculated and displayed as the mouse moves.</p>
  *
  * <p>The user may display the geodesic in one of three ways: (1) the smoothed geodesic curve, which is based on a
  * re-triangulation of the surface along Dijkstra's path and a smoothed version of Dijkstra's path. (2) Dijkstra's path
@@ -35,7 +46,7 @@ import javax.swing.*;
  * distance. Of the three display modes the Euclidian path is the only path *NOT* constrained to lie on the surface of
  * the triangle mesh.</p>
  *
- * <p>Distances for all three path types, for the total path lenths and the most recent point-pairs are displayed in the
+ * <p>Distances for all three path types, for the total path lengths and the most recent point-pairs are displayed in the
  * interface as well.</p>
  *
  * @author  Alexandra Bokinsky, Ph.D.
@@ -43,23 +54,21 @@ import javax.swing.*;
 public class JPanelGeodesic_WM  extends JInterfaceBase
 {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 4382184418236793404L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-
     /** Geodesic line draw control label. */
     private JLabel drawLabel;
 
-    /** DOCUMENT ME! */
+    /** Current Dijkstra path length. */
     private float m_fDijkstraCurrent = 0;
 
-    /** DOCUMENT ME! */
+    /** Previous Dijkstra path length. */
     private float m_fDijkstraPrevious = 0;
 
-    /** DOCUMENT ME! */
+    /** Total Dijkstra path length. */
     private float m_fDijkstraTotal = 0;
 
     /** Values for the current path length between the last two selected points: */
@@ -71,25 +80,25 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     /** Values for the total path lengths:. */
     private float m_fEuclidianTotal = 0;
 
-    /** DOCUMENT ME! */
+    /** Current Geodesic path length */
     private float m_fGeodesicSmoothCurrent = 0;
 
-    /** DOCUMENT ME! */
+    /** Previous Geodesic path length */
     private float m_fGeodesicSmoothPrevious = 0;
 
-    /** DOCUMENT ME! */
+    /** Total Geodesic path length */
     private float m_fGeodesicSmoothTotal = 0;
 
     /** Toggle between LiveWire Interaction and point & click interaction:. */
     private JCheckBox m_kCheckLivewire;
 
-    /** DOCUMENT ME! */
+    /** Clearsall cuts. */
     private JButton m_kClearAllCutsButton;
 
-    /** DOCUMENT ME! */
+    /** Clearsall Geodesic components. */
     private JButton m_kClearAllGeodesicButton;
 
-    /** DOCUMENT ME! */
+    /** Clear the last cut. */
     private JButton m_kClearLastCutButton;
 
     /** Button for deleting the geodesic. */
@@ -98,22 +107,22 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     /** Button for cutting the mesh along the geodesic:. */
     private JButton m_kCutGeodesicButton;
 
-    /** DOCUMENT ME! */
+    /** Label displaying the current Dijkstra path length. */
     private JLabel m_kDijkstraDistance;
 
-    /** DOCUMENT ME! */
+    /** Label displaying the previous Dijkstra path length. */
     private JLabel m_kDijkstraDistanceValueLast;
 
-    /** DOCUMENT ME! */
+    /** Label displaying the total Dijkstra path length.*/
     private JLabel m_kDijkstraDistanceValueTotal;
 
-    /** DOCUMENT ME! */
+    /** ButtonGroup for the different path display options. */
     private ButtonGroup m_kDisplayButtonGroup;
 
-    /** DOCUMENT ME! */
+    /** Display Dijkstra's path. */
     private JRadioButton m_kDisplayDijkstra;
 
-    /** DOCUMENT ME! */
+    /** Display the Euclidian path. */
     private JRadioButton m_kDisplayEuclidian;
 
     /** Radio buttons for displaying the smoothed geodesic, dijkstra's path, or the euclidian path:. */
@@ -123,34 +132,32 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     private JToggleButton m_kDrawGeodesicButton;
 
     /**
-     * Labels to indicate the path length between the picked points, in Euclidian distance, geodesic smoothed distance,
-     * and Dijkstra's path mesh distance. Two labels each, one for the distances between the last two points picked, and
-     * one for the total length of the curve, from starting point to end point:
+     *  Label displaying the current Euclidian path length.
      */
     private JLabel m_kEuclidianDistance;
 
-    /** DOCUMENT ME! */
+    /**  Label displaying the previous Euclidian path length. */
     private JLabel m_kEuclidianDistanceValueLast;
 
-    /** DOCUMENT ME! */
+    /**  Label displaying the total Euclidian path length. */
     private JLabel m_kEuclidianDistanceValueTotal;
 
-    /** DOCUMENT ME! */
+    /** Close and finish the Geodesic path. */
     private JButton m_kFinishClosedGeodesicButton;
 
-    /** DOCUMENT ME! */
+    /** Finish the Geodesic path without closing. */
     private JButton m_kFinishOpenGeodesicButton;
 
-    /** DOCUMENT ME! */
+    /** Label displaying the current Geodesic path length. */
     private JLabel m_kGeodesicSmoothDistance;
 
-    /** DOCUMENT ME! */
+    /** Label displaying the previous Geodesic path length. */
     private JLabel m_kGeodesicSmoothDistanceValueLast;
 
-    /** DOCUMENT ME! */
+    /** Label displaying the total Geodesic path length. */
     private JLabel m_kGeodesicSmoothDistanceValueTotal;
 
-    /** DOCUMENT ME! */
+    /** Toggle wireframe */
     private JToggleButton m_kGeodesicToggleWireframe;
 
     /** The scroll pane holding the panel content. Useful when the screen is small. */
@@ -165,27 +172,18 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     /** Label to indicate that enable Surface pickable before drawing geodesic line. */
     private JLabel surPickLabel;
 
+    /**  Surface panel. */
     private JPanelSurface_WM m_kSurfacePanel = null;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
-
     /**
-     * Contructor to initialize the geodesic control panel and create geodesic image scene graph.
-     *
-     * @param  parent  RenderViewBase
+     * Constructor to initialize the geodesic control panel and create geodesic image scene graph.
+     * @param  kVolumeViewer  parent frame
      */
     public JPanelGeodesic_WM(VolumeTriPlanarInterface kVolumeViewer) {
         super(kVolumeViewer);
         init();
         surfaceGeodesic = new Geodesic_WM();
         surfaceGeodesic.setPanel(this);
-    }
-
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
-    public void setSurfacePanel( JPanelSurface_WM kSurfacePanel )
-    {
-        m_kSurfacePanel = kSurfacePanel;
     }
     
     /**
@@ -239,11 +237,19 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     }
 
     /**
+     * Add a new geodesic component to the TriMesh surface display.
+     * @param kSurface TriMesh surface.
+     * @param kNew geodesic component (point, line)
+     * @param iGroup display group (Dijkstra, Euclidian, Geodesic).
+     */
+    public void addGeodesic( TriMesh kSurface, Geometry kNew, int iGroup )
+    {
+        m_kVolumeViewer.addGeodesic(kSurface, kNew, iGroup);
+    }
+
+    /**
      * Add new mesh to the volume rendering.
-     *
-     * @param  kOld   TriMesh old surface mesh
      * @param  kNew   TriMesh new surface mesh
-     * @param  kName  String name
      */
     public void addSurface(TriMesh kNew) {
         TriMesh[] akSurfaces = new TriMesh[1];
@@ -324,6 +330,7 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
         m_kVolumeViewer.enableGeodesic( m_kDrawGeodesicButton.isSelected() );
     }
 
+
     /**
      * Sets all variables to null, disposes, and garbage collects.
      *
@@ -336,7 +343,6 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
         }
     }
 
-
     /**
      * Enables picking points and drawing the Geodesic curve on the surfaces. Depending on the type of surface
      * displayed: either the SurfaceRender or the FlythruRenderer.
@@ -348,14 +354,6 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     public void drawGeodesic() {
 
         if ((surfaceGeodesic != null)) {
-            //if ((surfaceGeodesic != null) && (surRender != null)) {
-
-            //if (!m_bPickSetSurface) {
-            //    surfaceGeodesic.setPickCanvas(surRender.getSurfaceDialog().getPickCanvas());
-            //    surfaceGeodesic.setGeodesicGroup(surRender.getSurfaceDialog().getGeodesicGroup());
-            //    m_bPickSetSurface = true;
-            //}
-
             m_kVolumeViewer.enableGeodesic( m_kDrawGeodesicButton.isSelected() );
             
             surfaceGeodesic.setRadius(0.002f);
@@ -384,7 +382,6 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     /**
      * When a new line segment is added to the geodesic curve, the Geodesic object enables removing the last point
      * added.
-     *
      * @param  bEnable  enable the remove button or not.
      */
     public void enableClearLast(boolean bEnable) {
@@ -394,28 +391,25 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     /**
      * When a new line segment is added to the geodesic curve, the Geodesic object enables removing the last point
      * added.
-     *
      * @param  bEnable  enable the last cut button or not.
      */
     public void enableClearLastCut(boolean bEnable) {
         m_kClearLastCutButton.setEnabled(bEnable);
     }
 
+
     /**
      * The Geodesic object enables cutting the mesh when the line segments are finished, either finished open or
      * finished closed.
-     *
      * @param  bEnable  enable the last button or not.
      */
     public void enableCut(boolean bEnable) {
         m_kCutGeodesicButton.setEnabled(bEnable);
     }
 
-
     /**
      * finishGeodesic, called when the "Finish Closed" or "Finish Open" buttons are pressed, finish the current geodesic
      * polyline.
-     *
      * @param  bOpen  bOpen when true leaves the curve open, if false, then closes the curve by connecting the last and
      *                first points.
      */
@@ -441,7 +435,7 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     }
 
     /**
-     * Initilize the mainPanel with the geodesic drawing buttons.
+     * Initialize the mainPanel with the geodesic drawing buttons.
      */
     public void init() {
 
@@ -677,40 +671,34 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
         setEnabled(false);
     }
 
+    
     /**
      * Check whether the Geodesic drawing is enabled or not.
-     *
      * @return  boolean <code>true</code> Geodesic drawing enabled, <code>false</code> Geodesic disable.
      */
     public boolean isGeodesicEnable() {
         return surfaceGeodesic.getEnable();
     }
-
     
-    public void addGeodesic( TriMesh kSurface, Geometry kNew, int iGroup )
-    {
-        m_kVolumeViewer.addGeodesic(kSurface, kNew, iGroup);
-    }
-    
-    
-    /**
-     * Remove the specific geodesic curves from the given surface.
-     * @param kSurface, the surface to modify.
-     * @param iNode, the node to remove.
-     * @param iGroup, the group the node belongs to.
-     */
-    public void removeGeodesic( TriMesh kSurface, int iNode, int iGroup )
-    {
-        m_kVolumeViewer.removeGeodesic(kSurface, iNode, iGroup);
-    }    
     
     /**
      * Removes all geodesic curves for the given surface.
-     * @param kSurface, the surface to modify.
+     * @param kSurface the surface to modify.
      */
     public void removeAllGeodesic( TriMesh kSurface )
     {
         m_kVolumeViewer.removeAllGeodesic(kSurface);
+    }    
+    
+    /**
+     * Remove the specific geodesic curves from the given surface.
+     * @param kSurface the surface to modify.
+     * @param iNode the node to remove.
+     * @param iGroup the group the node belongs to.
+     */
+    public void removeGeodesic( TriMesh kSurface, int iNode, int iGroup )
+    {
+        m_kVolumeViewer.removeGeodesic(kSurface, iNode, iGroup);
     }
     
     /**
@@ -727,7 +715,7 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     }
 
     /**
-     * Resizig the control panel with ViewJFrameVolumeView's frame width and height.
+     * Resizing the control panel with ViewJFrameVolumeView's frame width and height.
      *
      * @param  panelWidth   int width
      * @param  frameHeight  int height
@@ -818,16 +806,27 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
     }
 
     /**
-     * Toggles between live wire mode and point and click mode for drawing geodesics on the surfaces. When live wire is
-     * active, then the use clicks to add the first point in a curve and then moves the mouse to see Dijkstra's path
-     * drawn between that point and the Mesh vertex that is nearest the mouse. When the user clicks again the point is
-     * drawn, and the displaay is between the last point clicked and the current mouse point.
+     * Set the picked point.
+     * @param kPickPoint PickRecord.
+     * @param kMesh picked TriMesh
      */
-    public void toggleLivewire() {
-        if (surfaceGeodesic != null) {
-            surfaceGeodesic.toggleLivewire();
+    public void setPickedPoint( PickRecord kPickPoint, TriMesh kMesh )
+    {
+        if ( surfaceGeodesic != null )
+        {
+            surfaceGeodesic.setPickedPoint( kPickPoint, kMesh );
         }
     }
+
+    /**
+     * Set the surface panel.
+     * @param kSurfacePanel JPanelSurface
+     */
+    public void setSurfacePanel( JPanelSurface_WM kSurfacePanel )
+    {
+        m_kSurfacePanel = kSurfacePanel;
+    }
+
 
     /**
      * Causes the Geodesic class to switch between displaying the Smoothed Geodesic, Dijkst'ra path along the mesh, or
@@ -843,7 +842,18 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
         }
     }
 
-
+    /**
+     * Toggles between live wire mode and point and click mode for drawing geodesics on the surfaces. When live wire is
+     * active, then the use clicks to add the first point in a curve and then moves the mouse to see Dijkstra's path
+     * drawn between that point and the Mesh vertex that is nearest the mouse. When the user clicks again the point is
+     * drawn, and the displaay is between the last point clicked and the current mouse point.
+     */
+    public void toggleLivewire() {
+        if (surfaceGeodesic != null) {
+            surfaceGeodesic.toggleLivewire();
+        }
+    }
+    
     /**
      * Toggles between wireframe and filled polygon drawing for the surfaces. Useful for testing the Geodesic curves:
      */
@@ -858,18 +868,8 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
         }
     }
 
-    public void setPickedPoint( PickRecord kPickPoint, TriMesh kMesh )
-    {
-        if ( surfaceGeodesic != null )
-        {
-            surfaceGeodesic.setPickedPoint( kPickPoint, kMesh );
-        }
-    }
-    
-    /**
-     * Calls disposeLocal.
-     *
-     * @throws  Throwable  DOCUMENT ME!
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
      */
     protected void finalize() throws Throwable {
         this.disposeLocal();
@@ -912,26 +912,6 @@ public class JPanelGeodesic_WM  extends JInterfaceBase
         m_kCutGeodesicButton.setEnabled(false);
         m_kClearLastCutButton.setEnabled(true);
         m_kClearAllCutsButton.setEnabled(true);
-    }
-
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    /**
-     * Wrapper in order to hold the control panel layout in the JScrollPane.
-     */
-    class DrawingPanel extends JPanel {
-
-        /** Use serialVersionUID for interoperability. */
-        private static final long serialVersionUID = 5463323212747126723L;
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param  g  DOCUMENT ME!
-         */
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-        }
     }
 
 }

@@ -25,7 +25,7 @@ public abstract class VolumeClipEffect extends ShaderEffect
     
     /**
      * Init the axis-aligned clip planes.
-     * @param afData, the axis-aligned clip plane default positions.
+     * @param afData the axis-aligned clip plane default positions.
      */
     public void InitClip( )
     {
@@ -80,8 +80,8 @@ public abstract class VolumeClipEffect extends ShaderEffect
 
     /**
      * Enable and set the axis-aligned clip plane.
-     * @param iWhich, one of 6 clip-planes to set.
-     * @param data, the distance to the clip-plane.
+     * @param iWhich one of 6 clip-planes to set.
+     * @param data the distance to the clip-plane.
      */
     public void SetClip(int iWhich, float data, boolean bEnable)
     {
@@ -115,7 +115,7 @@ public abstract class VolumeClipEffect extends ShaderEffect
 
     /**
      * Enable and set the eye clip plane.
-     * @param afEquation, the clip-plane equation.
+     * @param afEquation the clip-plane equation.
      */
     public void SetClipEye(float[] afEquation, boolean bEnable)
     {
@@ -131,7 +131,7 @@ public abstract class VolumeClipEffect extends ShaderEffect
 
     /**
      * Enable and set the inverse-eye clip plane.
-     * @param afEquation, the clip-plane equation.
+     * @param afEquation the clip-plane equation.
      */
     public void SetClipEyeInv(float[] afEquation, boolean bEnable)
     {
@@ -147,7 +147,7 @@ public abstract class VolumeClipEffect extends ShaderEffect
 
     /**
      * Enable and set the arbitrary clip plane.
-     * @param afEquation, the clip-plane equation.
+     * @param afEquation the clip-plane equation.
      */
     public void SetClipArb(float[] afEquation, boolean bEnable)
     {

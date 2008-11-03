@@ -2955,8 +2955,8 @@ public class DialogDTIColorDisplay extends ViewJFrameBase implements AlgorithmIn
     /**
      * Sets the correct resolutions for the image that is created by captureImage.
      * 
-     * @param afResolutions, correct image resolutions.
-     * @param fSlice, slice thickness
+     * @param afResolutions correct image resolutions.
+     * @param fSlice slice thickness
      */
     public void setScreenImageResolutions(float[] afResolutions, float fSlice) {
         m_afScreenResolutions = afResolutions;

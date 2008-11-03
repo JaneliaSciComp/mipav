@@ -469,7 +469,7 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
      * Adds the slice frame for slice of the given orientation to the scene
      * graph. It is necessary to make a new branch group and transform group
      * because otherwise there is a RestrictedAccessException.
-     * @param orientation, the slice to add: AXIAL, CORONAL, or SAGITTAL
+     * @param orientation the slice to add: AXIAL, CORONAL, or SAGITTAL
      */
     private void addBoxSlice( int orientation )
     {
@@ -1344,7 +1344,7 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
 
     /**
      * Detaches the slice frame on the slice for the given orientation.
-     * @param orientation, the slice to add: AXIAL, CORONAL, or SAGITTAL
+     * @param orientation the slice to add: AXIAL, CORONAL, or SAGITTAL
      */
     public void removeBoxSlice( int orientation )
     {
@@ -1828,7 +1828,7 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
     /**
      * Sets the values for JPanelSlices, based on the positions in the
      * PlaneRender class for the AXIAL, CORONAL, and SAGITTAL views.
-     * @param center, the three slider values in File Coordinates
+     * @param center the three slider values in File Coordinates
      */
     public void setCenter( Vector3f center )
     {
@@ -2176,7 +2176,7 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
 
     /**
      * transform the points used to render the triSliceImages textures.
-     * @param kTransform, the Transform3D used to rotate the boxes.
+     * @param kTransform the Transform3D used to rotate the boxes.
      */
     private void transformBoxSlices( Transform3D kTransform )
     {
@@ -2243,7 +2243,7 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
      * ModelCoordinates.
      * @param Vector3f[] the reordered (x,y,z) coordinates for each boxSlice
      * remapped into ModelCoordinates.
-     * @param boxSliceConstants, the reordered mode value (X_SLICE, Y_SLICE,
+     * @param boxSliceConstants the reordered mode value (X_SLICE, Y_SLICE,
      * Z_SLICE) remapped into ModelCoordinates
      */
     private void getBoxSliceInScreen( Vector3f[] screenBoxPoints, int[] boxSliceConstants )
@@ -2275,7 +2275,7 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
 
     /**
      * Update the X, Y, Z box frame positions.
-     * @param bParentUpdate, if true, update the positions in the ParentFrame.
+     * @param bParentUpdate if true, update the positions in the ParentFrame.
      */
     public void updateBoxSlicePos( boolean bParentUpdate  ) {
         Vector3f[] screenBoxPoints = new Vector3f[3];
@@ -3103,9 +3103,9 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
     /**
      * create texture coordmaps for the texture-mapped planes displaying the
      * triSliceImages.
-     * @param orientation, the orientation of the plane for which the texture
+     * @param orientation the orientation of the plane for which the texture
      * coordinates are generated (AXIAL, CORONAL, or SAGITTAL)
-     * @param texCoord, the dimension along which the texture coordinate varies
+     * @param texCoord the dimension along which the texture coordinate varies
      */
     private Vector4f generateRFACoordMaps( int orientation, int texCoord )
     {

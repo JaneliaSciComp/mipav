@@ -92,7 +92,7 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
 
 
     /** Rotates the object with a virtual trackball:
-     * @param e, the MouseEvent
+     * @param e the MouseEvent
      */
     public void mousePressed(MouseEvent e)
     {
@@ -108,7 +108,7 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
     }
 
     /** Rotates the object with a virtual trackball:
-     * @param e, the MouseEvent
+     * @param e the MouseEvent
      */
     public void mouseReleased(MouseEvent e)
     {
@@ -120,7 +120,7 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
     }
 
     /** Rotates the object with a virtual trackball:
-     * @param e, the MouseEvent
+     * @param e the MouseEvent
      */
     public void mouseDragged(MouseEvent e)
     {

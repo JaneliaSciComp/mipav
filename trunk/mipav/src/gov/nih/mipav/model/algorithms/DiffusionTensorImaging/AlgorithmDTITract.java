@@ -34,7 +34,7 @@ public class AlgorithmDTITract extends AlgorithmBase
 
 
     /** Initialize the Algorithm with the input DTI Image:
-     * @param kDTIImage, input DTI Image.
+     * @param kDTIImage input DTI Image.
      */
     public AlgorithmDTITract( ModelImage kDTIImage, ModelImage kEigenImage,
                               String kFile )
@@ -66,8 +66,8 @@ public class AlgorithmDTITract extends AlgorithmBase
     /** Constructs the Fiber Bundle Tracts from the dtiImage and the
      * eigenImage parameters. The fiber bundles are output to a file
      * sepecified by the user.
-     * @param dtiImage, Diffusion Tensor Image.
-     * @param eigenImage, EigenVector Image.
+     * @param dtiImage Diffusion Tensor Image.
+     * @param eigenImage EigenVector Image.
      */
     private void reconstructTract(int iX, int iY, int iZ)
     {
@@ -151,8 +151,8 @@ public class AlgorithmDTITract extends AlgorithmBase
     /** Constructs the Fiber Bundle Tracts from the dtiImage and the
      * eigenImage parameters. The fiber bundles are output to a file
      * sepecified by the user.
-     * @param dtiImage, Diffusion Tensor Image.
-     * @param eigenImage, EigenVector Image.
+     * @param dtiImage Diffusion Tensor Image.
+     * @param eigenImage EigenVector Image.
      */
     private void reconstructTracts()
     {
@@ -246,11 +246,11 @@ public class AlgorithmDTITract extends AlgorithmBase
 
     /** Traces a single fiber bundle tract starting at the input
      * position and following the input direction.
-     * @param kTract, fiber bundle tract, new positions are stored in this tract as the fiber is traced.
-     * @param kStart, starting positon of the tract.
-     * @param kDir, direction from the position.
-     * @param dtiImage, Diffusion Tensor image used to calculate next direction of tract.
-     * @param bDir, boolean when true the positions are added to the
+     * @param kTract fiber bundle tract, new positions are stored in this tract as the fiber is traced.
+     * @param kStart starting positon of the tract.
+     * @param kDir direction from the position.
+     * @param dtiImage Diffusion Tensor image used to calculate next direction of tract.
+     * @param bDir boolean when true the positions are added to the
      * end of the tract (positive direction). When false the positions
      * are added to the beginning of the tract (negative direction).
      */
@@ -336,11 +336,11 @@ public class AlgorithmDTITract extends AlgorithmBase
     }
 
     /** Writes the fiber bundle tract to disk.
-     * @param kTract, the fiber bundle tract.
-     * @param iDimX, x-dimension of the diffusion tensor image.
-     * @param iDimY, y-dimension of the diffusion tensor image.
-     * @param iDimZ, z-dimension of the diffusion tensor image.
-     * @param kFileWrite, FileOutputStream.
+     * @param kTract the fiber bundle tract.
+     * @param iDimX x-dimension of the diffusion tensor image.
+     * @param iDimY y-dimension of the diffusion tensor image.
+     * @param iDimZ z-dimension of the diffusion tensor image.
+     * @param kFileWrite FileOutputStream.
      */
     private void outputTract( Vector<Integer> kTract, int iDimX, int iDimY, int iDimZ,
 			      FileOutputStream kFileWriter )

@@ -13,7 +13,7 @@ public interface FlyThroughRenderInterface
 {
     /**
      * Passes move command from the JPanelFlythruMove to the FlyPathBehavior class.
-     * @param cmd, move command.
+     * @param cmd move command.
      */
     public void makeMove(String cmd);
     /**

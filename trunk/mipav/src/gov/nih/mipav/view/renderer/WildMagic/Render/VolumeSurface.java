@@ -19,12 +19,12 @@ import WildMagic.LibGraphics.SceneGraph.*;
 public class VolumeSurface extends VolumeObject
 {
     /** Create a new VolumeObject with the VolumeImage parameter.
-     * @param kImageA, the VolumeImage containing shared data and textures for
+     * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
-     * @param kTranslate, translation in the scene-graph for this object.
-     * @param fX, the size of the volume in the x-dimension (extent * resolutions)
-     * @param fY, the size of the volume in the y-dimension (extent * resolutions)
-     * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
+     * @param kTranslate translation in the scene-graph for this object.
+     * @param fX the size of the volume in the x-dimension (extent * resolutions)
+     * @param fY the size of the volume in the y-dimension (extent * resolutions)
+     * @param fZ the size of the volume in the z-dimension (extent * resolutions)
      */
     public VolumeSurface ( VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, float fX, float fY, float fZ, TriMesh kMesh )
     {
@@ -87,8 +87,8 @@ public class VolumeSurface extends VolumeObject
 
     /**
      * PreRender the object, for embedding in the ray-cast volume.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void PreRender( Renderer kRenderer, Culler kCuller )
     {
@@ -109,8 +109,8 @@ public class VolumeSurface extends VolumeObject
 
     /**
      * Render the object.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void Render( Renderer kRenderer, Culler kCuller )
     {
@@ -131,8 +131,8 @@ public class VolumeSurface extends VolumeObject
 
     /**
      * Render the object.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void Render( Renderer kRenderer, Culler kCuller, Effect kEffect )
     {
@@ -185,8 +185,8 @@ public class VolumeSurface extends VolumeObject
     
         /**
      * Sets the light for the EllipsoidsShader.
-     * @param kLightType, the name of the light to set (Light0, Light1, etc.)
-     * @param afType, the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
+     * @param kLightType the name of the light to set (Light0, Light1, etc.)
+     * @param afType the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
      */
     public void SetLight( String kLightType, float[] afType )
     {
@@ -210,7 +210,7 @@ public class VolumeSurface extends VolumeObject
     } 
 
     /** Sets axis-aligned clipping for the VolumeShaderEffect.
-     * @param afClip, the clipping parameters for axis-aligned clipping.
+     * @param afClip the clipping parameters for axis-aligned clipping.
      */
     public void SetClip( int iWhich, float data, boolean bEnable)
     {
@@ -218,7 +218,7 @@ public class VolumeSurface extends VolumeObject
     }
 
     /** Sets eye clipping for the VolumeShaderEffect.
-     * @param afEquation, the eye clipping equation.
+     * @param afEquation the eye clipping equation.
      */
     public void SetClipEye( float[] afEquation, boolean bEnable )
     {
@@ -226,7 +226,7 @@ public class VolumeSurface extends VolumeObject
     }
 
     /** Sets inverse-eye clipping for the VolumeShaderEffect.
-     * @param afEquation, the inverse-eye clipping equation.
+     * @param afEquation the inverse-eye clipping equation.
      */
     public void SetClipEyeInv( float[] afEquation, boolean bEnable )
     {
@@ -234,7 +234,7 @@ public class VolumeSurface extends VolumeObject
     }
 
     /** Sets arbitrary clipping for the VolumeShaderEffect.
-     * @param afEquation, the arbitrary-clip plane equation.
+     * @param afEquation the arbitrary-clip plane equation.
      */
     public void SetClipArb( float[] afEquation, boolean bEnable )
     {

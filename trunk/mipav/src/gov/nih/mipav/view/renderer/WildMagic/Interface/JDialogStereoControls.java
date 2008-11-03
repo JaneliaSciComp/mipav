@@ -16,12 +16,8 @@ import javax.swing.event.*;
 public class JDialogStereoControls extends JInterfaceBase
 implements ActionListener, ChangeListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 844490628214011726L;
-
-    //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Label that gives current value of slider. */
     private JLabel mkCurrent;
@@ -43,9 +39,6 @@ implements ActionListener, ChangeListener {
         super(kVolumeViewer);
         init(initVal);
     }
-
-
-    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Sets opacity once close button is pressed.
@@ -84,6 +77,9 @@ implements ActionListener, ChangeListener {
         }
     }
 
+    /**
+     * Called to close dialog.
+     */
     public void close()
     {
         dispose();

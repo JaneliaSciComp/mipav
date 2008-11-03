@@ -1330,7 +1330,7 @@ public class FileInfoProject extends FileInfoBase {
          *
          * @param   key  information name (key)
          *
-         * @return  boolean contains paramter
+         * @return  boolean contains parameter
          */
         public boolean containsKey(String key) {
             return infoTable.containsKey(key);

@@ -730,8 +730,8 @@ public class JPanelSurface extends JPanelRendererJ3D
     /**
      * Called from the JDialogDTIInput. Adds a line array representing the
      * fiber bundle tract to the SurfaceRender.
-     * @param kLine, LineArray to add
-     * @param iGroup, branch group index to add the line to.
+     * @param kLine LineArray to add
+     * @param iGroup branch group index to add the line to.
      * @return the BranchGroup the line is added to. 
      */
     public BranchGroup addLineArray(LineArray kLine, int iGroup ) {
@@ -2089,7 +2089,7 @@ public class JPanelSurface extends JPanelRendererJ3D
     }
 
     /**
-     * containsMesh returns the SurfaceAttributes[] containing the input ModelTriangleMesh paramter, where the
+     * containsMesh returns the SurfaceAttributes[] containing the input ModelTriangleMesh parameter, where the
      * SurfaceAttributes[] array is of length 1. If the input mesh is not in the scene graph, then null is returned.
      *
      * @param   kOld  the ModelTriangleMesh that is being searched for in the scene graph

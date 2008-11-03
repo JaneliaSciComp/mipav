@@ -22,12 +22,12 @@ public class VolumeDTI extends VolumeObject
 {
 
     /** Creates a new VolumeDTI object.
-     * @param kImageA, the VolumeImage containing shared data and textures for
+     * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
-     * @param kTranslate, translation in the scene-graph for this object.
-     * @param fX, the size of the volume in the x-dimension (extent * resolutions)
-     * @param fY, the size of the volume in the y-dimension (extent * resolutions)
-     * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
+     * @param kTranslate translation in the scene-graph for this object.
+     * @param fX the size of the volume in the x-dimension (extent * resolutions)
+     * @param fY the size of the volume in the y-dimension (extent * resolutions)
+     * @param fZ the size of the volume in the z-dimension (extent * resolutions)
      */
     public VolumeDTI( VolumeImage kVolumeImage, Vector3f kTranslate, float fX, float fY, float fZ )
     {
@@ -49,8 +49,8 @@ public class VolumeDTI extends VolumeObject
     
     /**
      * PreRender the object, for embedding in the ray-cast volume.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void PreRender(Renderer kRenderer, Culler kCuller )
     {
@@ -70,8 +70,8 @@ public class VolumeDTI extends VolumeObject
 
     /**
      * Render the object.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void Render( Renderer kRenderer, Culler kCuller )
     {
@@ -110,8 +110,8 @@ public class VolumeDTI extends VolumeObject
 
     /**
      * Sets the light for the EllipsoidsShader.
-     * @param kLightType, the name of the light to set (Light0, Light1, etc.)
-     * @param afType, the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
+     * @param kLightType the name of the light to set (Light0, Light1, etc.)
+     * @param afType the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
      */
     public void SetLight( String kLightType, float[] afType )
     {
@@ -127,8 +127,8 @@ public class VolumeDTI extends VolumeObject
 
 
     /** Add a polyline to the display. Used to display fiber tract bundles.
-     * @param kLine, new polyline to display.
-     * @param iGroup, the group the polyline belongs to.
+     * @param kLine new polyline to display.
+     * @param iGroup the group the polyline belongs to.
      */
     public void addPolyline( Polyline kLine, int iGroup )
     {
@@ -269,7 +269,7 @@ public class VolumeDTI extends VolumeObject
     
     /** 
      * Removes the specified polyline tract group.
-     * @param iGroup, the group of polylines to remove.
+     * @param iGroup the group of polylines to remove.
      */
     public void removePolyline( int iGroup )
     {
@@ -362,7 +362,7 @@ public class VolumeDTI extends VolumeObject
     }
 
     /** Sets the polyline color for the specified fiber bundle tract group. 
-     * @param iGroup, the fiber bundle group to set.
+     * @param iGroup the fiber bundle group to set.
      * @param kColor the new polyline color for the specified fiber bundle tract group. 
      */
     public void setPolylineColor( int iGroup, ColorRGB kColor )
@@ -405,7 +405,7 @@ public class VolumeDTI extends VolumeObject
     }
 
     /** Returns the polyline color for the specified fiber bundle tract group. 
-     * @param iGroup, the fiber bundle group to query.
+     * @param iGroup the fiber bundle group to query.
      * @return the polyline color for the specified fiber bundle tract group. 
      */
     public ColorRGB getPolylineColor( int iGroup )
@@ -608,7 +608,7 @@ public class VolumeDTI extends VolumeObject
     }
 
     /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
-     * @param bDisplay, when true display the tracts with ellipsods.
+     * @param bDisplay when true display the tracts with ellipsods.
      */
     public void setDisplayEllipsoids( boolean bDisplay )
     {
@@ -616,7 +616,7 @@ public class VolumeDTI extends VolumeObject
     }
 
     /** Turns on/off displaying all the ellipsoids.
-     * @param bDisplay, when true display all the ellipsods in the volume.
+     * @param bDisplay when true display all the ellipsods in the volume.
      */
     public void setDisplayAllEllipsoids( boolean bDisplay )
     {
@@ -624,7 +624,7 @@ public class VolumeDTI extends VolumeObject
     }
 
     /** Turns on/off displaying the fiber bundle tracts with cylinders.
-     * @param bDisplay, when true display the tracts with cylinders.
+     * @param bDisplay when true display the tracts with cylinders.
      */
     public void setDisplayCylinders( boolean bDisplay )
     {
@@ -632,7 +632,7 @@ public class VolumeDTI extends VolumeObject
     }
 
     /** Turns on/off displaying all the cylinders.
-     * @param bDisplay, when true display all the cylinders in the volume.
+     * @param bDisplay when true display all the cylinders in the volume.
      */
     public void setDisplayAllCylinders( boolean bDisplay )
     {
@@ -640,7 +640,7 @@ public class VolumeDTI extends VolumeObject
     }
     
     /** Turns on/off displaying the fiber bundle tracts with cylinders.
-     * @param bDisplay, when true display the tracts with cylinders.
+     * @param bDisplay when true display the tracts with cylinders.
      */
     public void setDisplayTubes( boolean bDisplay )
     {
@@ -649,7 +649,7 @@ public class VolumeDTI extends VolumeObject
     
 
     /** Set the m_iEllipsoidMod value. 
-     * @param iMod, new m_iEllipsoidMod value.
+     * @param iMod new m_iEllipsoidMod value.
      */
     public void setEllipseMod( int iMod )
     {
@@ -937,7 +937,7 @@ public class VolumeDTI extends VolumeObject
     }
     
     /** Displays a tube fiber bundle tract with the given shader attached.
-     * @param kInputStader, shader to apply to the tube.
+     * @param kInputStader shader to apply to the tube.
      */    
     private void DisplayTubes( ModelImage kImage, Renderer kRenderer )
     {
@@ -1007,7 +1007,7 @@ public class VolumeDTI extends VolumeObject
     }
     
     /** Displays a polyline fiber bundle tract with the given shader attached.
-     * @param kInputStader, shader to apply to the polyline.
+     * @param kInputStader shader to apply to the polyline.
      */    
     private void DisplayTract( ShaderEffect kInputShader, Renderer kRenderer )
     {

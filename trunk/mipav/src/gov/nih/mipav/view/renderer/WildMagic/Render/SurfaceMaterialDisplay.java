@@ -177,7 +177,7 @@ implements GLEventListener, KeyListener
 
     /**
      * Called from JPanelLight. Updates the lighting parameters.
-     * @param akGLights, the set of GeneralLight objects.
+     * @param akGLights the set of GeneralLight objects.
      */
     public void updateLighting(Light[] akGLights )
     {

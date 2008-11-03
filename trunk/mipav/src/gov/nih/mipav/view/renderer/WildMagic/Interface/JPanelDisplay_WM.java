@@ -1,30 +1,48 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.WildMagic.*;
-import WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJColorChooser;
+import gov.nih.mipav.view.ViewToolBarBuilder;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.JToolBar;
+
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  * The display panel control the red bounding box frame ( on/off ), texture aligned rendering mode, cubic controk,
- * perspective and parrallel viewing mode, and back ground color.
+ * perspective and parallel viewing mode, and back ground color.
  */
 public class JPanelDisplay_WM extends JInterfaceBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 926266253314679850L;
-
-    //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Check box for turning box on and off. */
     protected JCheckBox boundingCheck;
@@ -34,9 +52,6 @@ public class JPanelDisplay_WM extends JInterfaceBase {
 
     /** Color button for changing z color. */
     protected JButton colorButtonBackground;
-
-    /** Color chooser dialog. */
-    protected ViewJColorChooser colorChooser;
 
     /** Panel for the rotation cube. */
     protected JPanel cubePanel;
@@ -61,16 +76,19 @@ public class JPanelDisplay_WM extends JInterfaceBase {
 
     /** Button group for projections. */
     protected ButtonGroup viewTextureButtonGroup;
-
+   
+    /** Fonts, same as <code>MipavUtil.font12</code> and <code>MipavUtil.font12B.</code> */
+    protected Font serif12, serif12B;
+    
     /** Flag indicating if the red bounding box is on or off. */
     private boolean flag = false;
-
+    
     /** The scroll pane holding the panel content. Useful when the screen is small. */
     private JScrollPane scroller;
-
+    
     /** Scroll panel that holding the all the control components. */
     private DrawingPanel scrollPanel;
-   
+    
     /** Save and Load camera and object parameters buttons. */
     private JButton saveButton, loadButton;
     
@@ -88,28 +106,22 @@ public class JPanelDisplay_WM extends JInterfaceBase {
     
     /** Camera move parameter values */
     private float xCameraTurn, yCameraTurn;
-    
+
     /** Camera move parameter text-field */
     private JTextField xCameraTurnText, yCameraTurnText;
-    
+
     /** Object rotation parameter labels. */
     private JLabel objectXRotLabel, objectYRotLabel, objectZRotLabel;
-    
+
     /** Object rotation parameter text-field. */
     private JTextField xObjectRotateText, yObjectRotateText, zObjectRotateText;
-    
+
     /** Object rotation angle parameter values. */
     private float xObjectRotate, yObjectRotate, zObjectRotate;
 
-    /** Fonts, same as <code>MipavUtil.font12</code> and <code>MipavUtil.font12B.</code> */
-    protected Font serif12, serif12B;
-    
-    //~ Constructors ---------------------------------------------------------------------------------------------------
-
     /**
      * Creates new dialog for turning bounding box frame on and off.
-     *
-     * @param  parent  Should be of type ViewJFrameSurfaceRenderer
+     * @param  parent  parent frame.
      */
     public JPanelDisplay_WM(VolumeTriPlanarInterface parent) {
         m_kVolumeViewer = parent;
@@ -117,9 +129,7 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         serif12B = MipavUtil.font12B;
         init();
     }
-
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
+    
     /**
      * Changes color of box frame and button if color button was pressed; turns bounding box on and off if checkbox was
      * pressed; and closes dialog if "Close" button was pressed.
@@ -158,6 +168,28 @@ public class JPanelDisplay_WM extends JInterfaceBase {
     }
 
     /**
+     * Display camera related parameters
+     * @param params
+     */
+    public void displayCameraParams(float[] params) {
+    	xCameraMoveText.setText(MipavUtil.makeFloatString(params[0], 7));
+    	yCameraMoveText.setText(MipavUtil.makeFloatString(params[1], 7));
+    	zCameraMoveText.setText(MipavUtil.makeFloatString(params[2], 7));
+        xCameraTurnText.setText(MipavUtil.makeFloatString(params[3], 7));
+        yCameraTurnText.setText(MipavUtil.makeFloatString(params[4], 7));
+    }
+
+    /**
+     * Display object related parameters
+     * @param params
+     */
+    public void displayObjectParams(float[] params) {
+    	xObjectRotateText.setText(MipavUtil.makeFloatString(params[0], 7));
+    	yObjectRotateText.setText(MipavUtil.makeFloatString(params[1], 7));
+    	zObjectRotateText.setText(MipavUtil.makeFloatString(params[2], 7));
+    }
+
+    /**
      * Dispose memory.
      */
     public void dispose() {
@@ -176,6 +208,64 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         viewTextureButtonGroup = null;
     }
 
+    /**
+     * Load camera and object viewing parameters.
+     */
+    public void loadParameters() {
+    	float[] cameraParams = new float[5];
+    	float[] objectParams = new float[3];
+    	Matrix3f objectRotation = new Matrix3f();
+    	Vector3f cameraLocation = new Vector3f();
+    	float[] data = new float[9];
+    	String fileName = "viewParameters.txt";
+        String fileDir = System.getProperties().getProperty("user.dir");
+        File file = new File(fileDir + File.separator + fileName);
+        try {
+        	RandomAccessFile raFile = new RandomAccessFile(file, "r");
+        	        	
+        	cameraParams[0] = raFile.readFloat();
+        	cameraParams[1] = raFile.readFloat();
+        	cameraParams[2] = raFile.readFloat();
+        	cameraParams[3] = raFile.readFloat();
+        	cameraParams[4] = raFile.readFloat();
+        	
+        	objectParams[0] = raFile.readFloat();
+        	objectParams[1] = raFile.readFloat();
+        	objectParams[2] = raFile.readFloat();
+        	
+        	cameraLocation.X = raFile.readFloat();
+        	cameraLocation.Y = raFile.readFloat();
+        	cameraLocation.Z = raFile.readFloat();
+        	
+        	for ( int i = 0; i < data.length; i++ ) {
+        		objectRotation.Set(i, raFile.readFloat());
+        	}
+        	
+        	m_kVolumeViewer.setCameraLocation(cameraLocation);
+        	m_kVolumeViewer.setObjectRotation(objectRotation);
+        	
+        	displayCameraParams(cameraParams);
+        	displayObjectParams(objectParams);
+        	
+        	raFile.close();
+        } catch ( IOException e ) {
+        	e.printStackTrace();
+        	System.err.println("Error openning viewing parameters file");
+        }
+    }
+    
+    /**
+     * Resizing the control panel with ViewJFrameVolumeView's frame width and height.
+     *
+     * @param  panelWidth   int width
+     * @param  frameHeight  int height
+     */
+    public void resizePanel(int panelWidth, int frameHeight) {
+        scroller.setPreferredSize(new Dimension(panelWidth, frameHeight - 40));
+        scroller.setSize(new Dimension(panelWidth, frameHeight - 40));
+        scroller.revalidate();
+    }
+    
     /**
      * Save camera and object viewing parameters.
      */
@@ -228,87 +318,19 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         }
         
     }
-    
-    /**
-     * Load camera and object viewing parameters.
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase#setButtonColor(javax.swing.JButton, java.awt.Color)
      */
-    public void loadParameters() {
-    	float[] cameraParams = new float[5];
-    	float[] objectParams = new float[3];
-    	Matrix3f objectRotation = new Matrix3f();
-    	Vector3f cameraLocation = new Vector3f();
-    	float[] data = new float[9];
-    	String fileName = "viewParameters.txt";
-        String fileDir = System.getProperties().getProperty("user.dir");
-        File file = new File(fileDir + File.separator + fileName);
-        try {
-        	RandomAccessFile raFile = new RandomAccessFile(file, "r");
-        	        	
-        	cameraParams[0] = raFile.readFloat();
-        	cameraParams[1] = raFile.readFloat();
-        	cameraParams[2] = raFile.readFloat();
-        	cameraParams[3] = raFile.readFloat();
-        	cameraParams[4] = raFile.readFloat();
-        	
-        	objectParams[0] = raFile.readFloat();
-        	objectParams[1] = raFile.readFloat();
-        	objectParams[2] = raFile.readFloat();
-        	
-        	cameraLocation.X = raFile.readFloat();
-        	cameraLocation.Y = raFile.readFloat();
-        	cameraLocation.Z = raFile.readFloat();
-        	
-        	for ( int i = 0; i < data.length; i++ ) {
-        		objectRotation.Set(i, raFile.readFloat());
-        	}
-        	
-        	m_kVolumeViewer.setCameraLocation(cameraLocation);
-        	m_kVolumeViewer.setObjectRotation(objectRotation);
-        	
-        	displayCameraParams(cameraParams);
-        	displayObjectParams(objectParams);
-        	
-        	raFile.close();
-        } catch ( IOException e ) {
-        	e.printStackTrace();
-        	System.err.println("Error openning viewing parameters file");
+    public void setButtonColor(JButton _button, Color _color) {
+
+        super.setButtonColor(_button, _color);
+
+        if (_button == colorButton) {
+            m_kVolumeViewer.setBoundingBoxColor(_color);
         }
-    }
-
-    /**
-     * Resizig the control panel with ViewJFrameVolumeView's frame width and height.
-     *
-     * @param  panelWidth   int width
-     * @param  frameHeight  int height
-     */
-    public void resizePanel(int panelWidth, int frameHeight) {
-        scroller.setPreferredSize(new Dimension(panelWidth, frameHeight - 40));
-        scroller.setSize(new Dimension(panelWidth, frameHeight - 40));
-        scroller.revalidate();
-    }
-
-    /**
-     * Set the color for the color button.
-     *
-     * @param  _color  Color
-     */
-    public void setColorButton(Color _color) {
-        colorButtonBackground.setBackground(_color);
-    }
-
-    /**
-     * Calls the appropriate method in the parent frame.
-     *
-     * @param  button  DOCUMENT ME!
-     * @param  color   Color to set box frame to.
-     */
-    protected void setBoxColor(JButton button, Color color) {
-
-        if (button == colorButton) {
-            m_kVolumeViewer.setBoundingBoxColor(color);
-        }
-        if (button == colorButtonBackground) {
-            m_kVolumeViewer.setBackgroundColor(color);
+        if (_button == colorButtonBackground) {
+            m_kVolumeViewer.setBackgroundColor(_color);
         }
     }
 
@@ -557,91 +579,5 @@ public class JPanelDisplay_WM extends JInterfaceBase {
 
         mainPanel = new JPanel();
         mainPanel.add(scroller);
-    }
-    
-    /**
-     * Display camera related parameters
-     * @param params
-     */
-    public void displayCameraParams(float[] params) {
-    	xCameraMoveText.setText(MipavUtil.makeFloatString(params[0], 7));
-    	yCameraMoveText.setText(MipavUtil.makeFloatString(params[1], 7));
-    	zCameraMoveText.setText(MipavUtil.makeFloatString(params[2], 7));
-        xCameraTurnText.setText(MipavUtil.makeFloatString(params[3], 7));
-        yCameraTurnText.setText(MipavUtil.makeFloatString(params[4], 7));
-    }
-    
-    /**
-     * Display object related parameters
-     * @param params
-     */
-    public void displayObjectParams(float[] params) {
-    	xObjectRotateText.setText(MipavUtil.makeFloatString(params[0], 7));
-    	yObjectRotateText.setText(MipavUtil.makeFloatString(params[1], 7));
-    	zObjectRotateText.setText(MipavUtil.makeFloatString(params[2], 7));
-    }
-
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    /**
-     * Does nothing.
-     */
-    class CancelListener implements ActionListener {
-
-        /**
-         * Does nothing.
-         *
-         * @param  e  DOCUMENT ME!
-         */
-        public void actionPerformed(ActionEvent e) { }
-    }
-
-    /**
-     * Wrapper in order to hold the control panel layout in the JScrollPane.
-     */
-    class DrawingPanel extends JPanel {
-
-        /** Use serialVersionUID for interoperability. */
-        private static final long serialVersionUID = -375187487188025368L;
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param  g  DOCUMENT ME!
-         */
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-        }
-    }
-
-    /**
-     * Pick up the selected color and call method to change the color.
-     */
-    class OkColorListener implements ActionListener {
-
-        /** DOCUMENT ME! */
-        JButton button;
-
-        /**
-         * Creates a new OkColorListener object.
-         *
-         * @param  _button  DOCUMENT ME!
-         */
-        OkColorListener(JButton _button) {
-            super();
-            button = _button;
-        }
-
-        /**
-         * Get color from chooser and set button and color.
-         *
-         * @param  e  Event that triggered function.
-         */
-        public void actionPerformed(ActionEvent e) {
-            Color color = colorChooser.getColor();
-
-            button.setBackground(color);
-            setBoxColor(button, color);
-        }
     }
 }

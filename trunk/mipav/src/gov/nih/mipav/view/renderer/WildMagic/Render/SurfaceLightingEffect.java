@@ -49,8 +49,8 @@ public class SurfaceLightingEffect extends VolumeClipEffect
     
     /**
      * Sets the light type for the given light.
-     * @param kLightType, the name of the light to set (Light0, Light1, etc.)
-     * @param afType, the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
+     * @param kLightType the name of the light to set (Light0, Light1, etc.)
+     * @param afType the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
      */
     public void SetLight( String kLightType, float[] afType )
     {
