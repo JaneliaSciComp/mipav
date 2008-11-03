@@ -102,8 +102,6 @@ import com.sun.opengl.util.Animator;
 public class VolumeTriPlanarInterface extends ViewJFrameBase 
     implements ItemListener, ChangeListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
     /**
      * Item to hold tab name and corresponding panel.
      */
@@ -130,16 +128,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     /** Use serialVersionUID for interoperability. */
     protected static final long serialVersionUID = 1898957906984534260L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-
     /** The small bar on the top right corner the volume view frame. */
     protected static JProgressBar rendererProgressBar;
-
-    /** Panel containing the position labels:. */
-    private JPanel panelLabels = new JPanel();
-
-    //** Check box to enable/disable surface self-shadowing */
-    private JCheckBox kSelfShadow;
 
     /** Menu items storage. */
     protected ViewMenuBuilder menuObj;
@@ -161,8 +151,10 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
     /** Lookup table of the color imageA, B. */
     protected ModelRGB RGBTA = null, RGBTB = null;
+
     /** Fonts, same as <code>MipavUtil.font12</code> and <code>MipavUtil.font12B.</code> */
     protected Font serif12, serif12B;
+
     /** Control panels for the Brain Surface Flattener:. */
     protected JPanel m_kBrainsurfaceFlattenerPanel = null;
     /** Rendering the brainsurfaceFlattener objects. */
@@ -172,11 +164,11 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     /** Flythough setup user-interface container: */
     protected JPanel m_kFlyThroughPanel = null;
     /** Flythough setup panel: */
-    protected JPanelVirtualEndoscopySetup_WM flythruControl; 
+    protected JPanelVirtualEndoscopySetup_WM flythruControl;
     /** Flythough Move container: */
     protected JPanel flythruMovePanel;
     /** Flythough Move panel: */
-    protected JPanelFlythruMove flythruMoveControl;
+    protected JPanelFlythruMove flythruMoveControl; 
     /** Clipping user-interface panel: */
     protected JPanelClip_WM clipBox;
     /** 3D Slice-view user-interface panel: */
@@ -191,28 +183,26 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     protected JPanelSculptor_WM sculptGUI;
     /** Surface Texture user-interface panel: */
     protected JPanelSurfaceTexture_WM surfaceTextureGUI;
-
     /** Clip user-interface container:  */
     protected JPanel clipPanel;
     /** 3D Slice panel container. */
     protected JPanel slicePanel;
+
     /** Surface texture panel container */
     protected JPanel surfaceTexturePanel;
     /** Surface user-interface panel container */
     protected JPanel surfacePanel;
-
     /** Turn display volume on/off */
     protected JCheckBox m_kDisplayVolumeCheck;
     /** Turn display 3D Slices on/off */
     protected JCheckBox m_kDisplaySlicesCheck;
+
     /** Turn display 3D TriMesh Surface on/off */
     protected JCheckBox m_kDisplaySurfaceCheck;
     /** Turn display 3D Stereo on/off */
     protected JCheckBox m_kStereoCheck;
-
     /** Button to invoke all the six clipping planes. */
     protected JButton clipButton;
-
     /** Button to disable all the six clipping planes. */
     protected JButton clipDisableButton;
 
@@ -245,12 +235,12 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
     /** Light panel container */
     protected JPanel lightPanel;
+
     /** Light panel */
     protected JPanelLights_WM m_kLightsPanel;
 
     /** The three slice views displayed as texture-mapped polygons:. */
     protected PlaneRender_WM[] m_akPlaneRender;
-
     /** Control panel for drawing geodesic curves. */
     protected JPanel m_kGeodesicPanel;
 
@@ -301,16 +291,16 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
     /** Panel Border view. */
     protected Border raisedbevel, loweredbevel, compound, redBorder, etchedBorder, pressedBorder;
+
     /** VolumeImage contains data and textures for ModelImage A. */
     protected VolumeImage m_kVolumeImageA;
+
     /** VolumeImage contains data and textures for ModelImage B. */
     protected VolumeImage m_kVolumeImageB;
     /** Animator for GPU-based rendering with JOGL. */
     protected Animator m_kAnimator;
-
     /** Volume/Slice/Surface renderer. */
     protected VolumeTriPlanarRender raycastRenderWM;
-
     /** Button for RFA. */
     protected JButton rfaButton;
 
@@ -319,12 +309,12 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
     /** The view pane that contains the image view and tri-planar view panels. */
     protected JSplitPane rightPane;
+
     /** For displaying the BrainSurfaceFlattener or Flythrough renderers. */
     protected JSplitPane dualPane;
 
     /** Toolbar builder reference. */
     protected ViewToolBarBuilder toolbarBuilder;
-
     /** Tri image planar render panels. */
     protected JPanel triImagePanel;
 
@@ -339,20 +329,25 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
     /** Volume alpha-blending slider. */
     protected JSlider m_kVolumeBlendSlider;
-    
+
     /** Stereo view IPD control. */
     protected JDialogStereoControls m_kStereoIPD = null;
+
     /** Axial view panel. */
     protected JPanel panelAxial;
+    
     /** Sagittal view panel. */
     protected JPanel panelSagittal;
     /** Coronal view panel. */
     protected JPanel panelCoronal;
-    
     /** Current frame width and height. */
     protected int screenWidth, screenHeight;
+    /** Panel containing the position labels:. */
+    private JPanel panelLabels = new JPanel();
     
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    //** Check box to enable/disable surface self-shadowing */
+    private JCheckBox kSelfShadow;
+
     /**
      * Specific constructor call from the VolumeViewerDTI.   
      */
@@ -360,8 +355,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {
     	super(null, null);
     }
-
-    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Make a volume rendering frame, which contains the toolbars on the top,
@@ -396,6 +389,28 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
 
     /**
+     * Get the default Shader directory.
+     * @return string containing the default Shader directory.
+     */
+    static public String getExternalDirs()
+    {
+        String jar_filename = "";
+        String class_path_key = "java.class.path";
+        String class_path = System.getProperty(class_path_key);
+        for (String fn : class_path.split(":")) {
+            if (fn.contains("WildMagic.jar")) {
+                jar_filename = fn;
+                String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib"));
+                externalDirs = externalDirs.concat("WildMagic");
+                //System.err.println("Shader dir found: " + externalDirs);
+                return externalDirs;
+            }
+        }
+        System.err.println("Shader dir not found");
+        return System.getProperties().getProperty("user.dir");
+    }
+
+    /**
      * Retrieve the progress bar used in the volume renderer (the one in the
      * upper right hand corner).
      *
@@ -409,6 +424,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
         return rendererProgressBar;
     }
+
 
     /**
      * Creates and initializes the LUT for an image.
@@ -449,7 +465,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
         return newLUT;
     }
-
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#actionPerformed(java.awt.event.ActionEvent)
@@ -639,7 +654,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         }
 
     }
-
+  
     /**
      * Add a geodesic element to the surface display.
      * @param kSurface the surface the geodesic element is attached to.
@@ -650,7 +665,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {
         raycastRenderWM.addGeodesic(kSurface, kNew, iGroup);
     }
-  
+
     /**
      * Add a new display node to the volume/surface display list. This is done
      * from the other renderers: BrainSurfaceFlattener and Flythrough.
@@ -682,7 +697,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
             m_akPlaneRender[i].addSlices(kSlices);
         }
     }
-
+    
     /**
      * Add TriMesh surfaces to the Volume Renderer.
      * @param akSurfaces new surfaces.
@@ -706,7 +721,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
             geodesicGUI.setSurfacePanel(surfaceGUI);
         }
     }
-    
+
     /**
      * Build the clipping control panel for the surface render.
      */
@@ -754,7 +769,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         m_kGeodesicPanel.add(geodesicGUI.getMainPanel());
         maxPanelWidth = Math.max(m_kGeodesicPanel.getPreferredSize().width, maxPanelWidth);
     }
-
+    
     /**
      * The histogram control panel of the lookup table.
      */
@@ -769,7 +784,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
         maxPanelWidth = Math.max(histoLUTPanel.getPreferredSize().width, maxPanelWidth);
     }
-    
+
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#buildLabelPanel()
      */
@@ -946,7 +961,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         surfaceTexturePanel.add(surfaceTextureGUI.getMainPanel());
         maxPanelWidth = Math.max(surfaceTexturePanel.getPreferredSize().width, maxPanelWidth);
     }
-
+    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#componentMoved(java.awt.event.ComponentEvent)
      */
@@ -954,7 +969,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {       
         setModified();
     }
-    
+
     /**
      * Method called when a component resize event is generated. This method
      * snaps the size of the frame and pagePanel to the nearest row, column
@@ -965,7 +980,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     public synchronized void componentResized(ComponentEvent event) {
         resizePanel();
     }
-
+    
     /**
      * Construct the volume rendering methods based on the choices made from
      * the resample dialog. This method is called by the Resample dialog.
@@ -1056,7 +1071,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         }
         // Toolkit.getDefaultToolkit().setDynamicLayout( false );
     }
-    
+
     /**
      * Causes redisplay of all components.
      */
@@ -1322,6 +1337,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         }
     }
 
+
     /**
      * Enable geodesic calculations and display.
      * @param bEnable when true geodesic curves are enabled.
@@ -1330,7 +1346,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {
         raycastRenderWM.enableGeodesic(bEnable);
     }
-
 
     /**
      * Enable painting on TriMesh surfaces.
@@ -1350,6 +1365,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
                                     bEnabled, bPaint, bDropper, bPaintCan, bErase);
     }
 
+
     /**
      * Erase all surface paint.
      */
@@ -1357,7 +1373,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {
         raycastRenderWM.eraseAllPaint();
     }
-
 
     /**
      * Returns the ModelLUT or ModelRGB based on which image is currently
@@ -1466,6 +1481,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         return imageA;
     }
 
+
     /**
      * Get the imageB reference.
      *
@@ -1474,7 +1490,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     public ModelImage getImageB() {
         return imageB;
     }
-
 
     /**
      * Return the Light[] used in the volume/surface display. 
@@ -1494,6 +1509,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         return panelHistoLUT;
     }
 
+
     /**
      * Return the material properties of the given surface.
      * @param kSurfaceName the surface to query.
@@ -1504,7 +1520,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         return raycastRenderWM.getMaterial(kSurfaceName);
     }
 
-
     /**
      * Get the object parameters.
      * @return Get the object rotation parameters array.
@@ -1512,6 +1527,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     public float[] getObjectParameters() {
     	return raycastRenderWM.getObjectParameters();
     }
+
 
     /**
      * Get the object rotation matrix.
@@ -1521,7 +1537,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     	return raycastRenderWM.getObjectRotation();
     }
 
-
     /**
      * Get the RGB panel (only should be used with color images).
      *
@@ -1530,7 +1545,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     public JPanelHistoRGB getRGBDialog() {
         return panelHistoRGB;
     }
-
+    
     /**
      * Get the raytracing steps value.
      *
@@ -1540,7 +1555,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         JPanelVolOpacityBase opacityPanel = m_kVolOpacityPanel;
         return opacityPanel.getStepsSliderValue();
     }
-    
+
     /**
      * Return the size of the surface-area of the given surface.
      * @param kSurfaceName the surface to calculate the surface-area for.
@@ -1647,7 +1662,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
             brainsurfaceFlattenerRender.drawPicked(iV0, iV1, iV2);
         }        
     }
-
+    
     /**
      * Removes all geodesic curves for the given surface.
      * @param kSurface the surface to modify.
@@ -1661,7 +1676,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
      * @see gov.nih.mipav.view.ViewJFrameBase#removeControls()
      */
     public void removeControls() { }
-    
+
     /**
      * Remove the specific geodesic curves from the given surface.
      * @param kSurface the surface to modify.
@@ -1681,7 +1696,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {
         raycastRenderWM.removePolyline(groupIndex);
     }
-
     /**
      * Remove the given surface from the render display list.
      * @param kSurfaceName the name of the surface to remove.
@@ -1690,6 +1704,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {       
         raycastRenderWM.removeSurface(kSurfaceName);
     }
+
     /**
      * When the Geodesic object cuts the mesh along an open curve, the old
      * mesh changes, but does not need to be deleted and no new mesh needs to
@@ -1710,14 +1725,14 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     public void resetAxisX() {
         raycastRenderWM.resetAxisX();
     }
-
+    
     /**
      * Reset image volume orientation along Y axis.
      */
     public void resetAxisY() {
         raycastRenderWM.resetAxisY();
     }
-    
+
     /**
      * Reset image volume orientation along Z axis.
      */
@@ -1745,7 +1760,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {
         raycastRenderWM.setBackface(kSurfaceName, bOn );
     }
-
+    
     /**
      * Sets the background color.
      * @param  color  
@@ -1757,7 +1772,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
                                                           color.getBlue()/255.0f,
                                                           1.0f ) );
     }
-    
+
     /**
      * Sets the volume bounding box color.
      * @param  color
@@ -1768,7 +1783,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
                                                           color.getGreen()/255.0f,
                                                           color.getBlue()/255.0f ) );
     }
-
+    
     /**
      * Set the camera location.
      * @param v  camera position vector
@@ -1777,6 +1792,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     	raycastRenderWM.setCameraLocation(v);
     }
     
+
     /**
      * Display the camera parameters in the user-interface.
      */
@@ -1784,7 +1800,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     	displayGUI.displayCameraParams(raycastRenderWM.getCameraParameters());
     }
     
-
     /**
      * Enable clipping for the given surface.
      * @param kSurfaceName the surface to modify.
@@ -1794,7 +1809,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {
         raycastRenderWM.setClipping(kSurfaceName, bClip );
     }
-    
+
     /**
      * Set the color for the given surface.
      * @param kSurfaceName the surface to modify.
@@ -1805,11 +1820,11 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         raycastRenderWM.setColor(kSurfaceName, kColor);
     }
 
+
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#setControls()
      */
     public void setControls() { }
-
 
     /**
      * Passes the picked dropper color to the surface interface.
@@ -1928,13 +1943,13 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
             }
         }
     }
-
+    
     /**
      * Set the object rotation parameters for displaying. 
      */
     public void setObjectParameters() {
     	displayGUI.displayObjectParams(raycastRenderWM.getObjectParameters());
-    }
+    }    
     
     /**
      * Set the object rotation matrix
@@ -1942,13 +1957,13 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
      */
     public void setObjectRotation(Matrix3f rot) {
     	raycastRenderWM.setObjectRotation(rot);
-    }    
-    
+    }
+      
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#setPaintBitmapSwitch(boolean)
      */
     public void setPaintBitmapSwitch(boolean paintBitmapSwitch) { }
-      
+
     /**
      * Turn picking on/off for the given surface.
      * @param kSurfaceName the surface to modify.
@@ -1958,7 +1973,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {
         raycastRenderWM.setPickable(kSurfaceName, bOn );
     }
-
+    
     /**
      * Set the polygon mode (FILL, LINE, POINT) for the given surface.
      * @param kSurfaceName the surface to modify.
@@ -1968,7 +1983,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {
         raycastRenderWM.setPolygonMode(kSurfaceName, eMode );
     }
-    
+
     /**
      * Sets the position labels.
      *
@@ -2022,7 +2037,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         {
             raycastRenderWM.setOrthographicProjection();
         }
-    }
+    } 
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#setRGBTA(gov.nih.mipav.model.structures.ModelRGB)
@@ -2031,7 +2046,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         if (m_kVolumeImageA != null) {
             m_kVolumeImageA.SetRGBT(RGBT);
         }
-    } 
+    }    
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#setRGBTB(gov.nih.mipav.model.structures.ModelRGB)
@@ -2040,7 +2055,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         if (m_kVolumeImageB != null) {
             m_kVolumeImageB.SetRGBT(RGBT);
         }
-    }    
+    }
 
     /**
      * Turn the volume bounding box frame on/off.
@@ -2049,8 +2064,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     public void setShowBoxFrame(boolean bShow)
     {
         raycastRenderWM.displayBoundingBox(bShow);
-    }
-
+    }    
+    
     /**
      * Turn the orientation cube on/off.
      * @param bShow when true display the orientation cube, when false do not
@@ -2064,7 +2079,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewImageUpdateInterface#setSlice(int)
      */
-    public void setSlice(int slice) {}    
+    public void setSlice(int slice) {}
+    
     
     /**
      * Sets the position of the slices in the SurfaceRender and PlaneRender
@@ -2081,8 +2097,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         raycastRenderWM.setCenter( center );
         sliceGUI.setCenter((int)center.X, (int)center.Y, (int)center.Z);
     }
-    
-    
+
     /**
      * Sets the position of the slices in the PlaneRender. Called from the
      * SurfaceRender class.
@@ -2101,7 +2116,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
             }
         }
         raycastRenderWM.setCenter( new Vector3f( center.X, center.Y, center.Z ) );
-    }
+    }    
 
     /**
      * Sets the color for the PlaneRender iView (AXIAL, SAGITTAL, CORONAL) slice.
@@ -2120,7 +2135,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
                 setSliceHairColor(iView, kColor );
         }
         raycastRenderWM.setBoundingBoxColor( iView, kColor);
-    }    
+    }
 
     /**
      * Set the transparency value for the slice.
@@ -2131,7 +2146,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {
         raycastRenderWM.setSliceOpacity( i, fAlpha );
     }
-
+    
     /**
      * Turns on surface texture display for the given surface. The user can
      * use a separate ModelImage and LUT than the one displayed in the volume
@@ -2153,6 +2168,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
      */
     public void setTimeSlice(int slice) { }
     
+    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#setTitle()
      */
@@ -2167,7 +2183,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
             setTitle(str);
         }
     }
-    
     
     /**
      * Set the transparency for the given surface.
@@ -2188,7 +2203,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {
         raycastRenderWM.showBoundingBox( i, bShow );
     }
-    
+  
     /**
      * Turns showing the slice on/off.
      * @param i which slice to turn off.
@@ -2198,7 +2213,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {
         raycastRenderWM.showSlice( i, bShow );
     }
-  
+    
     /**
      * Smooth the given surface.
      * @param kSurfaceName the name of the surface to smooth.
@@ -2214,6 +2229,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
                                    volumeLimit, volumePercent);
     }
     
+    
     /**
      * Smooth the given surface.
      * @param kSurfaceName the name of the surface to smooth.
@@ -2224,8 +2240,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     public void smoothThree( String kSurfaceName, int iteration, float lambda, float mu)
     {
         raycastRenderWM.smoothThree(kSurfaceName, iteration, lambda, mu);
-    }
-    
+    }    
     
     /**
      * Smooth the given surface.
@@ -2240,7 +2255,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     {
         raycastRenderWM.smoothTwo(kSurfaceName, iteration,
                                   fStiffness, volumeLimit, volumePercent);
-    }    
+    }
+    
     
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#stateChanged(javax.swing.event.ChangeEvent)
@@ -2252,7 +2268,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
             raycastRenderWM.setVolumeBlend( m_kVolumeBlendSlider.getValue()/100.0f );
         }
     }
-    
     
     /**
      * Switches between different ways of displaying the geodesic path
@@ -2273,7 +2288,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     public void toggleNode( Node kNode, boolean bDisplay )
     {
         raycastRenderWM.displayNode(kNode, bDisplay);
-    }
+    }   
     
     /**
      * Changes the translation vector for the surface with the given name.
@@ -2283,7 +2298,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     public void translateSurface(String kSurfaceName, Vector3f kTranslate)
     {
         raycastRenderWM.translateSurface(kSurfaceName, kTranslate);
-    }   
+    }    
     
     /** 
      * update blending between images A/B.
@@ -2291,7 +2306,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     public void updateABBlend()
     {
         raycastRenderWM.setABBlend(1 - getBlendValue()/100.0f);
-    }    
+    }
     
     /**
      * Causes the PlaneRender objects to update the texture maps when the
@@ -2305,21 +2320,22 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         }
         setModified();
     }
-    
+
+
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#updateImageExtents()
      */
     public boolean updateImageExtents() {
         return false;
     }
-
-
+    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewImageUpdateInterface#updateImages()
      */
     public boolean updateImages() {
         return true;
     }
+    
     
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewImageUpdateInterface#updateImages(boolean)
@@ -2365,7 +2381,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
     }
     
-    
     /**
      * This methods calls corresponding render to update images with LUT changes.
      *
@@ -2388,7 +2403,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
         return true;
     }
-    
+
     public void updateLighting( Light[] akGLights )
     {
         raycastRenderWM.updateLighting(akGLights);
@@ -2405,7 +2420,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
             m_kFlyThroughRender.updateLighting(akGLights);
         }
     }
-
+    
     /**
      * Causes the texture representation of all the surface meshes to be recalculated.
      */
@@ -2432,6 +2447,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         super.windowActivated(event);
     }
     
+    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#windowClosing(java.awt.event.WindowEvent)
      */
@@ -2440,7 +2456,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         disposeLocal(true);
         dispose();
     }
-    
     
     /**
      * Add surface volume renderer control buttons.
@@ -2495,7 +2510,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         
         return menuBar;
     }
-    
+
     /**
      * Build the surface render toolbar.
      */
@@ -2565,7 +2580,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         m_kVolumeBlendSlider.addChangeListener(this);
         surfaceToolBar.add(m_kVolumeBlendSlider);
     }
-
+    
     /**
      * Builds the toolbars for the tri-planar view.
      */
@@ -2676,6 +2691,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         panelToolbar.add(viewToolBar, gbc);
 
     }
+    
     
     /**
      * Constructs main frame structures for image canvas.
@@ -2828,25 +2844,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
         gpuPanel.setVisible(true);
         raycastRenderWM.setVisible(true);
-    }
-    
-    
-    protected String getExternalDirs()
-    {
-        String jar_filename = "";
-        String class_path_key = "java.class.path";
-        String class_path = System.getProperty(class_path_key);
-        for (String fn : class_path.split(":")) {
-            if (fn.contains("WildMagic.jar")) {
-                jar_filename = fn;
-                String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib"));
-                externalDirs = externalDirs.concat("WildMagic");
-                System.err.println("Shader dir found: " + externalDirs);
-                return externalDirs;
-            }
-        }
-        System.err.println("Shader dir not found");
-        return System.getProperties().getProperty("user.dir");
     }
     
     /**

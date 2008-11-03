@@ -1,10 +1,15 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.Shaders.*;
-import WildMagic.LibGraphics.ObjectSystem.*;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
+import WildMagic.LibGraphics.ObjectSystem.StringTree;
+import WildMagic.LibGraphics.Rendering.Texture;
+import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
+import WildMagic.LibGraphics.Shaders.PixelShader;
+import WildMagic.LibGraphics.Shaders.Program;
+import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
+import WildMagic.LibGraphics.Shaders.VertexShader;
 
 /** 
  * VolumeShaderEffect is the workhorse of the GPU-based rendering in MIPAV. It
@@ -18,22 +23,65 @@ import WildMagic.LibGraphics.ObjectSystem.*;
 public class VolumeShaderEffect_WM extends VolumeClipEffect
     implements StreamInterface
 {
-    /** View Mode Constants: */
+    /** View Mode MIP Constant: */
     private final static int MIP = 0;
+    /** View Mode DDR Constant: */
     private final static int DDR = 1;
+    /** View Mode Composite Constant: */
     private final static int CMP = 2;
+    /** View Mode Surface Constant: */
     private final static int SUR = 3;
+    /** View Mode Composite-Surface Constant: */
     private final static int CMP_SUR = 4;
 
 
+    /** Shared volume data and textures. */
+    private VolumeImage m_kVolumeImageA;
+    
+    /** Shared volume data and textures. */
+    private VolumeImage m_kVolumeImageB;
+
+    /** PixelShader program and data for MIP mode: */
+    private PixelShader m_kPShaderMIP = null;
+
+
+    /** PixelShader program and data for DDR mode: */
+    private PixelShader m_kPShaderDDR = null;
+
+    /** PixelShader program and data for Composite mode: */
+    private PixelShader m_kPShaderCMP = null;
+
+    /** PixelShader program and data for Composite Surface and Surface modes: */
+    private PixelShader m_kPShaderSUR = null;
+
+    /** Indicates which shader to use (MIP, DDR, CMP, SUR, CMP_SUR): */
+    private int m_iWhichShader = -1;
+
+    /** Reference to the SceneImage texture: */
+    private Texture m_kSceneTarget;
+
+    /** stores the steps size */
+    private float[] stepsSize = new float[]{450f,0,0,0};
+
+    /** stores the background color */
+    private ColorRGBA m_kBackgroundColor = ColorRGBA.BLACK;
+    
+
+
+    /** stores the self-shadow parameter on/off value: */
+    private float[] m_afSelfShadow = new float[]{0,0,0,0};
+
+    /** stores the gradient magnitude filter on/off value: */
+    private float[] m_afGradientMagnitude = new float[]{0,0,0,0};
+
+    /** Blend value for alpha-blending volume with other objects in the scene. */
+    private float[] m_afBlend = new float[]{1,0,0,0};
+
     /** 
      * Creates a new VolumeShaderEffect object.
-     * @param kImageA ModelImage A
-     * @param kLUTa LUT for ModelImage A
-     * @param kRGBTa RGB lookup table for ModelImage A
-     * @param kImageB ModelImage B
-     * @param kLUTb LUT for ModelImage B
-     * @param kRGBTb RGB lookup table for ModelImage B
+     * @param kImageA the VolumeImage containing the data and textures for
+     * rendering.
+     * @param kVolumeImageB second VolumeImage.
      * @param kSceneTarget the SceneImage texture with the back-facing polygon texture coordinates.
      */
     public VolumeShaderEffect_WM ( VolumeImage kVolumeImageA, VolumeImage kVolumeImageB, 
@@ -45,6 +93,52 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
         CreateVolumeTexture();
     }
     
+
+    /**
+     * Sets the blend factor shader parameter between imageA and imageB.
+     * @param fBlend blend factor (range = 0-1).
+     */
+    public void Blend(float fBlend)
+    {
+        m_afBlend[0] = fBlend;
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("blend") != null ) 
+        {
+            pkProgram.GetUC("blend").SetDataSource(m_afBlend);
+        }
+    }
+
+    /**
+     * Change to the Composite mode pixel shader program.
+     * @param kRenderer the Renderer displaying the scene-graph, to which the
+     * new shader program is passed.
+     */
+    public void CMPMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    {
+        if ( m_iWhichShader == CMP )
+        {
+            return;
+        }
+        m_iWhichShader = CMP;
+        SetProgram(m_kPShaderCMP, kRenderer);
+    }
+
+    
+    /**
+     * Change to the DDR mode pixel shader program.
+     * @param kRenderer the Renderer displaying the scene-graph, to which the
+     * new shader program is passed.
+     */
+    public void DDRMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    {
+        if ( m_iWhichShader == DDR )
+        {
+            return;
+        }
+        m_iWhichShader = DDR;
+        SetProgram( m_kPShaderDDR, kRenderer );
+    }
+
     /**
      * memory cleanup.
      */
@@ -81,6 +175,239 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
         super.dispose();
     }
 
+    /**
+     * Returns the current pixel program.
+     * @return the current pixel program.
+     */
+    public Program GetPProgram()
+    {
+        return GetPProgram(0);
+    }
+
+    /**
+     * Change to the MIP mode pixel shader program.
+     * @param kRenderer the Renderer displaying the scene-graph, to which the
+     * new shader program is passed.
+     */
+    public void MIPMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    {
+        if ( m_iWhichShader == MIP )
+        {
+            return;
+        }
+        m_iWhichShader = MIP;
+        SetProgram( m_kPShaderMIP, kRenderer );
+    }
+
+    /**
+     * Reload the current shader programs from disk, compile and parse and
+     * send to the GPU.
+     * @param kRenderer the Renderer object displaying the scene-graph which
+     * will apply the shader programs.
+     */
+    public void Reload( WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    {
+        Program kVProgram = GetVProgram(0);
+        kVProgram.Release();
+        VertexProgramCatalog.GetActive().Remove(kVProgram);
+
+        Program kPProgram = GetPProgram(0);
+        kPProgram.Release();
+        PixelProgramCatalog.GetActive().Remove(kPProgram);
+
+        VertexShader pkVShader = GetVShader(0);
+        pkVShader.OnReleaseProgram();
+        PixelShader pkPShader = GetPShader(0);
+        pkPShader.OnReleaseProgram();
+
+        LoadPrograms(kRenderer, 0,kRenderer.GetMaxColors(),
+                     kRenderer.GetMaxTCoords(),
+                     kRenderer.GetMaxVShaderImages(),
+                     kRenderer.GetMaxPShaderImages());
+
+        if ( m_iWhichShader == MIP )
+        {
+            m_iWhichShader = -1;
+            MIPMode(kRenderer);
+        }
+        else if ( m_iWhichShader == DDR )
+        {
+            m_iWhichShader = -1;
+            DDRMode(kRenderer);
+        }
+        else if ( m_iWhichShader == CMP )
+        {
+            m_iWhichShader = -1;
+            CMPMode(kRenderer);
+        }
+        else if ( m_iWhichShader == SUR )
+        {
+            m_iWhichShader = -1;
+            SURFASTMode(kRenderer);
+        }
+        else if ( m_iWhichShader == CMP_SUR )
+        {
+            m_iWhichShader = -1;
+            SURMode(kRenderer);
+        }
+    }
+
+
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
+    public StringTree SaveStrings (final String acTitle)
+    {
+        StringTree pkTree = new StringTree();
+        pkTree.Append(StringTree.Format("VolumeShaderEffect",GetName()));
+        pkTree.Append(super.SaveStrings(null));
+
+        return pkTree;
+    }
+
+    /** 
+     * Enables/Disables self-shadowing for the Surface mode.
+     * @param bShadow self-shadowing on/off.
+     */
+    public void SelfShadow( boolean bShadow )
+    {
+        m_afSelfShadow[0] = 0;
+        if ( bShadow )
+        {
+            m_afSelfShadow[0] = 1;
+        }
+        SetSelfShadow();
+    }
+    /**
+     * Sets the blend factor shader parameter between imageA and imageB.
+     * @param fBlend blend factor (range = 0-1).
+     */
+    public void setABBlend(float fBlend)
+    {
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("ABBlend") != null ) 
+        {
+            pkProgram.GetUC("ABBlend").SetDataSource(new float[]{fBlend,0,0,0});
+        }
+    }
+
+    /**
+     * Sets the BackgroundColor shader parameter.
+     * @param kColor new BackgroundColor.
+     */
+    public void SetBackgroundColor( ColorRGBA kColor )
+    {
+        m_kBackgroundColor = kColor;
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("BackgroundColor") != null ) 
+        {
+            float[] afColor = new float[4];
+            afColor[0] = kColor.R;
+            afColor[1] = kColor.G;
+            afColor[2] = kColor.B;
+            afColor[3] = kColor.A;
+            pkProgram.GetUC("BackgroundColor").SetDataSource(afColor);
+        }
+    }
+    /** 
+     * Enables/Disables gradient magnitude filter.
+     * @param bShow gradient magnitude filter on/off.
+     */
+    public void SetGradientMagnitude(boolean bShow)
+    {
+        m_afGradientMagnitude[0] = 0;
+        if ( bShow )
+        {
+            m_afGradientMagnitude[0] = 1;
+        }
+        SetGradientMagnitude();
+    }
+    /**
+     * Sets the light type for the given light.
+     * @param kLightType the name of the light to set (Light0, Light1, etc.)
+     * @param afType the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
+     */
+    public void SetLight( String kLightType, float[] afType )
+    {
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC(kLightType) != null)
+        {
+            pkProgram.GetUC(kLightType).SetDataSource(afType);
+        }
+    }
+    /**
+     * Sets the steps size factor shader parameter.
+     * @param stepsSize blend factor (range = 0-1).
+     */
+    public void setSteps(float fsteps)
+    {
+        stepsSize[0] = fsteps;
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("steps") != null ) 
+        {
+            pkProgram.GetUC("steps").SetDataSource(stepsSize);
+        }
+    }
+
+    /**
+     * Change to the Surface mode pixel shader program.
+     * @param kRenderer the Renderer displaying the scene-graph, to which the
+     * new shader program is passed.
+     */
+    public void SURFASTMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    {
+        if ( m_iWhichShader == SUR )
+        {
+            return;
+        }
+        m_iWhichShader = SUR;
+        SetProgram(m_kPShaderSUR, kRenderer);
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("Composite") != null )
+        {
+            pkProgram.GetUC("Composite").SetDataSource(new float[] {0,0,0,0});
+        }
+        if ( pkProgram.GetUC("CompositeA") != null )
+        {
+            pkProgram.GetUC("CompositeA").SetDataSource(new float[] {0,0,0,0});
+        }
+        if ( pkProgram.GetUC("CompositeB") != null )
+        {
+            pkProgram.GetUC("CompositeB").SetDataSource(new float[] {0,0,0,0});
+        }
+    }
+    /**
+     * Change to the Composite Surface mode pixel shader program.
+     * @param kRenderer the Renderer displaying the scene-graph, to which the
+     * new shader program is passed.
+     */
+    public void SURMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    {
+
+        if ( m_iWhichShader == CMP_SUR )
+        {
+            return;
+        }
+
+        m_iWhichShader = CMP_SUR;
+        SetProgram(m_kPShaderSUR, kRenderer);
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("Composite") != null )
+        {
+            pkProgram.GetUC("Composite").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("CompositeA") != null )
+        {
+            pkProgram.GetUC("CompositeA").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("CompositeB") != null )
+        {
+            pkProgram.GetUC("CompositeB").SetDataSource(new float[] {1,0,0,0});
+        }
+    }
     /**
      * The VolumeShaderEffect.CreateVolumeTexture() function constructs and
      * initializes the vertex and pixel shader programs for volume
@@ -247,23 +574,46 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
         /* The pixel shader defaults to MIP: */
         SetPShader(0,m_kPShaderCMP);
     }
-
-
     /**
-     * Change to the MIP mode pixel shader program.
-     * @param kRenderer the Renderer displaying the scene-graph, to which the
-     * new shader program is passed.
+     * Sets the IsColor shader parameter values.
      */
-    public void MIPMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    private void SetColorImage()
     {
-        if ( m_iWhichShader == MIP )
+        Program pkProgram = GetPProgram(0);
+        if ( m_kVolumeImageA.IsColorImage() )
         {
-            return;
+            if ( pkProgram.GetUC("IsColor") != null ) 
+            {
+                pkProgram.GetUC("IsColor").SetDataSource(new float[]{1,0,0,0});
+            }
+            if ( pkProgram.GetUC("IsColorA") != null ) 
+            {
+                pkProgram.GetUC("IsColorA").SetDataSource(new float[]{1,0,0,0});
+            }
         }
-        m_iWhichShader = MIP;
-        SetProgram( m_kPShaderMIP, kRenderer );
+        if ( (m_kVolumeImageB != null) && m_kVolumeImageB.IsColorImage() )
+        {
+            if ( pkProgram.GetUC("IsColorB") != null ) 
+            {
+                pkProgram.GetUC("IsColorB").SetDataSource(new float[]{1,0,0,0});
+            }                
+            else
+            {
+                pkProgram.GetUC("IsColorB").SetDataSource(new float[]{0,0,0,0});
+            }
+        }
     }
-
+    /**
+     * Sets the GradientMagnitude shader parameter.
+     */
+    private void SetGradientMagnitude()
+    {
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("GradientMagnitude") != null ) 
+        {
+            pkProgram.GetUC("GradientMagnitude").SetDataSource(m_afGradientMagnitude);
+        }
+    }
     /**
      * Change to the input pixel shader program.
      * @param kShader the new pixel shader program to use.
@@ -296,278 +646,6 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     }
 
     /**
-     * Change to the DDR mode pixel shader program.
-     * @param kRenderer the Renderer displaying the scene-graph, to which the
-     * new shader program is passed.
-     */
-    public void DDRMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
-    {
-        if ( m_iWhichShader == DDR )
-        {
-            return;
-        }
-        m_iWhichShader = DDR;
-        SetProgram( m_kPShaderDDR, kRenderer );
-    }
-
-    /**
-     * Change to the Composite mode pixel shader program.
-     * @param kRenderer the Renderer displaying the scene-graph, to which the
-     * new shader program is passed.
-     */
-    public void CMPMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
-    {
-        if ( m_iWhichShader == CMP )
-        {
-            return;
-        }
-        m_iWhichShader = CMP;
-        SetProgram(m_kPShaderCMP, kRenderer);
-    }
-
-    /**
-     * Change to the Composite Surface mode pixel shader program.
-     * @param kRenderer the Renderer displaying the scene-graph, to which the
-     * new shader program is passed.
-     */
-    public void SURMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
-    {
-
-        if ( m_iWhichShader == CMP_SUR )
-        {
-            return;
-        }
-
-        m_iWhichShader = CMP_SUR;
-        SetProgram(m_kPShaderSUR, kRenderer);
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("Composite") != null )
-        {
-            pkProgram.GetUC("Composite").SetDataSource(new float[] {1,0,0,0});
-        }
-        if ( pkProgram.GetUC("CompositeA") != null )
-        {
-            pkProgram.GetUC("CompositeA").SetDataSource(new float[] {1,0,0,0});
-        }
-        if ( pkProgram.GetUC("CompositeB") != null )
-        {
-            pkProgram.GetUC("CompositeB").SetDataSource(new float[] {1,0,0,0});
-        }
-    }
-
-    /**
-     * Change to the Surface mode pixel shader program.
-     * @param kRenderer the Renderer displaying the scene-graph, to which the
-     * new shader program is passed.
-     */
-    public void SURFASTMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
-    {
-        if ( m_iWhichShader == SUR )
-        {
-            return;
-        }
-        m_iWhichShader = SUR;
-        SetProgram(m_kPShaderSUR, kRenderer);
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("Composite") != null )
-        {
-            pkProgram.GetUC("Composite").SetDataSource(new float[] {0,0,0,0});
-        }
-        if ( pkProgram.GetUC("CompositeA") != null )
-        {
-            pkProgram.GetUC("CompositeA").SetDataSource(new float[] {0,0,0,0});
-        }
-        if ( pkProgram.GetUC("CompositeB") != null )
-        {
-            pkProgram.GetUC("CompositeB").SetDataSource(new float[] {0,0,0,0});
-        }
-    }
-
-    /**
-     * Sets the IsColor shader parameter values.
-     */
-    private void SetColorImage()
-    {
-        Program pkProgram = GetPProgram(0);
-        if ( m_kVolumeImageA.IsColorImage() )
-        {
-            if ( pkProgram.GetUC("IsColor") != null ) 
-            {
-                pkProgram.GetUC("IsColor").SetDataSource(new float[]{1,0,0,0});
-            }
-            if ( pkProgram.GetUC("IsColorA") != null ) 
-            {
-                pkProgram.GetUC("IsColorA").SetDataSource(new float[]{1,0,0,0});
-            }
-        }
-        if ( (m_kVolumeImageB != null) && m_kVolumeImageB.IsColorImage() )
-        {
-            if ( pkProgram.GetUC("IsColorB") != null ) 
-            {
-                pkProgram.GetUC("IsColorB").SetDataSource(new float[]{1,0,0,0});
-            }                
-            else
-            {
-                pkProgram.GetUC("IsColorB").SetDataSource(new float[]{0,0,0,0});
-            }
-        }
-    }
-    
-
-
-    /**
-     * Reload the current shader programs from disk, compile and parse and
-     * send to the GPU.
-     * @param kRenderer the Renderer object displaying the scene-graph which
-     * will apply the shader programs.
-     */
-    public void Reload( WildMagic.LibGraphics.Rendering.Renderer kRenderer )
-    {
-        Program kVProgram = GetVProgram(0);
-        kVProgram.Release();
-        VertexProgramCatalog.GetActive().Remove(kVProgram);
-
-        Program kPProgram = GetPProgram(0);
-        kPProgram.Release();
-        PixelProgramCatalog.GetActive().Remove(kPProgram);
-
-        VertexShader pkVShader = GetVShader(0);
-        pkVShader.OnReleaseProgram();
-        PixelShader pkPShader = GetPShader(0);
-        pkPShader.OnReleaseProgram();
-
-        LoadPrograms(kRenderer, 0,kRenderer.GetMaxColors(),
-                     kRenderer.GetMaxTCoords(),
-                     kRenderer.GetMaxVShaderImages(),
-                     kRenderer.GetMaxPShaderImages());
-
-        if ( m_iWhichShader == MIP )
-        {
-            m_iWhichShader = -1;
-            MIPMode(kRenderer);
-        }
-        else if ( m_iWhichShader == DDR )
-        {
-            m_iWhichShader = -1;
-            DDRMode(kRenderer);
-        }
-        else if ( m_iWhichShader == CMP )
-        {
-            m_iWhichShader = -1;
-            CMPMode(kRenderer);
-        }
-        else if ( m_iWhichShader == SUR )
-        {
-            m_iWhichShader = -1;
-            SURFASTMode(kRenderer);
-        }
-        else if ( m_iWhichShader == CMP_SUR )
-        {
-            m_iWhichShader = -1;
-            SURMode(kRenderer);
-        }
-    }
-
-    /**
-     * Sets the light type for the given light.
-     * @param kLightType the name of the light to set (Light0, Light1, etc.)
-     * @param afType the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
-     */
-    public void SetLight( String kLightType, float[] afType )
-    {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC(kLightType) != null)
-        {
-            pkProgram.GetUC(kLightType).SetDataSource(afType);
-        }
-    }
-
-    /**
-     * Returns the current pixel program.
-     * @return the current pixel program.
-     */
-    public Program GetPProgram()
-    {
-        return GetPProgram(0);
-    }
-
-    /**
-     * Sets the blend factor shader parameter between imageA and imageB.
-     * @param fBlend blend factor (range = 0-1).
-     */
-    public void Blend(float fBlend)
-    {
-        m_afBlend[0] = fBlend;
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("blend") != null ) 
-        {
-            pkProgram.GetUC("blend").SetDataSource(m_afBlend);
-        }
-    }
-    
-
-    /**
-     * Sets the blend factor shader parameter between imageA and imageB.
-     * @param fBlend blend factor (range = 0-1).
-     */
-    public void setABBlend(float fBlend)
-    {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("ABBlend") != null ) 
-        {
-            pkProgram.GetUC("ABBlend").SetDataSource(new float[]{fBlend,0,0,0});
-        }
-    }
-
-    /**
-     * Sets the steps size factor shader parameter.
-     * @param stepsSize blend factor (range = 0-1).
-     */
-    public void setSteps(float fsteps)
-    {
-        stepsSize[0] = fsteps;
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("steps") != null ) 
-        {
-            pkProgram.GetUC("steps").SetDataSource(stepsSize);
-        }
-    }
-
-    
-    /**
-     * Sets the BackgroundColor shader parameter.
-     * @param kColor new BackgroundColor.
-     */
-    public void SetBackgroundColor( ColorRGBA kColor )
-    {
-        m_kBackgroundColor = kColor;
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("BackgroundColor") != null ) 
-        {
-            float[] afColor = new float[4];
-            afColor[0] = kColor.R;
-            afColor[1] = kColor.G;
-            afColor[2] = kColor.B;
-            afColor[3] = kColor.A;
-            pkProgram.GetUC("BackgroundColor").SetDataSource(afColor);
-        }
-    }
-
-    /** 
-     * Enables/Disables self-shadowing for the Surface mode.
-     * @param bShadow self-shadowing on/off.
-     */
-    public void SelfShadow( boolean bShadow )
-    {
-        m_afSelfShadow[0] = 0;
-        if ( bShadow )
-        {
-            m_afSelfShadow[0] = 1;
-        }
-        SetSelfShadow();
-    }
-
-    /**
      * Sets the SelfShadow shader parameter.
      */
     private void SetSelfShadow()
@@ -578,155 +656,4 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
             pkProgram.GetUC("SelfShadow").SetDataSource(m_afSelfShadow);
         }
     }
-
-    /** 
-     * Enables/Disables gradient magnitude filter.
-     * @param bShow gradient magnitude filter on/off.
-     */
-    public void SetGradientMagnitude(boolean bShow)
-    {
-        m_afGradientMagnitude[0] = 0;
-        if ( bShow )
-        {
-            m_afGradientMagnitude[0] = 1;
-        }
-        SetGradientMagnitude();
-    }
-
-    /**
-     * Sets the GradientMagnitude shader parameter.
-     */
-    private void SetGradientMagnitude()
-    {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("GradientMagnitude") != null ) 
-        {
-            pkProgram.GetUC("GradientMagnitude").SetDataSource(m_afGradientMagnitude);
-        }
-    }
-
-    /**
-     * Loads this object from the input parameter rkStream, using the input
-     * Stream.Link to store the IDs of children objects of this object
-     * for linking after all objects are loaded from the Stream.
-     * @param rkStream the Stream from which this object is being read.
-     * @param pkLink the Link class for storing the IDs of this object's
-     * children objects.
-     */
-    public void Load (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Load(rkStream,pkLink);
-
-        // native data
-    }
-
-    /**
-     * Copies this objects children objects from the input Stream's HashTable,
-     * based on the LinkID of the child stored in the pkLink parameter.
-     * @param rkStream the Stream where the child objects are stored.
-     * @param pkLink the Link class from which the child object IDs are read.
-     */
-    public void Link (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Link(rkStream,pkLink);
-    }
-
-    /**
-     * Registers this object with the input Stream parameter. All objects
-     * streamed to disk are registered with the Stream so that a unique list
-     * of objects is maintained.
-     * @param rkStream the Stream where the child objects are stored.
-     * @return true if this object is registered, false if the object has
-     * already been registered.
-     */
-    public boolean Register (Stream rkStream)
-    {
-        if (!super.Register(rkStream))
-        {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Write this object and all it's children to the Stream.
-     * @param rkStream the Stream where the child objects are stored.
-     */
-    public void Save (Stream rkStream)
-    {
-        super.Save(rkStream);
-
-        // native data
-        //rkStream.Write(m_iPassQuantity);
-
-        // link data
-//         for (int iPass = 0; iPass < m_iPassQuantity; iPass++)
-//         {
-//             rkStream.Write(m_kVShader.get(iPass).GetID());
-//             rkStream.Write(m_kPShader.get(iPass).GetID());
-//         }
-//         int iQuantity = m_kAlphaState.size();
-//         rkStream.Write(iQuantity);
-//         for (int i = 0; i < iQuantity; i++)
-//         {
-//             rkStream.Write(m_kAlphaState.get(i).GetID());
-//         }
-
-    }
-
-    /**
-     * Returns the size of this object and it's children on disk for the
-     * current StreamVersion parameter.
-     * @param rkVersion the current version of the Stream file being created.
-     * @return the size of this object on disk.
-     */
-    public int GetDiskUsed (StreamVersion rkVersion)
-    {
-        int iSize = super.GetDiskUsed(rkVersion);
-
-        return iSize;
-    }
-
-    /**
-     * Write this object into a StringTree for the scene-graph visualization.
-     * @param acTitle the header for this object in the StringTree.
-     * @return StringTree containing a String-based representation of this
-     * object and it's children.
-     */
-    public StringTree SaveStrings (final String acTitle)
-    {
-        StringTree pkTree = new StringTree();
-        // strings
-        pkTree.Append(StringTree.Format("VolumeShaderEffect",GetName()));
-        pkTree.Append(super.SaveStrings(null));
-
-        return pkTree;
-    }
-
-    private VolumeImage m_kVolumeImageA;
-    private VolumeImage m_kVolumeImageB;
-
-    /** PixelShader program and data for MIP mode: */
-    private PixelShader m_kPShaderMIP = null;
-    /** PixelShader program and data for DDR mode: */
-    private PixelShader m_kPShaderDDR = null;
-    /** PixelShader program and data for Composite mode: */
-    private PixelShader m_kPShaderCMP = null;
-    /** PixelShader program and data for Composite Surface and Surface modes: */
-    private PixelShader m_kPShaderSUR = null;
-
-    /** Indicates which shader to use (MIP, DDR, CMP, SUR, CMP_SUR): */
-    private int m_iWhichShader = -1;
-    /** Reference to the SceneImage texture: */
-    private Texture m_kSceneTarget;
-    /** stores the steps size */
-    private float[] stepsSize = new float[]{450f,0,0,0};
-    /** stores the background color */
-    private ColorRGBA m_kBackgroundColor = ColorRGBA.BLACK;
-    /** stores the self-shadow parameter on/off value: */
-    private float[] m_afSelfShadow = new float[]{0,0,0,0};
-    /** stores the gradient magnitude filter on/off value: */
-    private float[] m_afGradientMagnitude = new float[]{0,0,0,0};
-
-    private float[] m_afBlend = new float[]{1,0,0,0};
 }

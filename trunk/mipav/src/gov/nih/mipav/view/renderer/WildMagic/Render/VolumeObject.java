@@ -1,9 +1,16 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Collision.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Collision.PickRecord;
+import WildMagic.LibGraphics.Rendering.AlphaState;
+import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.Renderer;
+import WildMagic.LibGraphics.Rendering.WireframeState;
+import WildMagic.LibGraphics.SceneGraph.Culler;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
 /**
  * VolumeObect: abstract base class for all rendered objects in the Volume
@@ -20,17 +27,40 @@ import WildMagic.LibGraphics.SceneGraph.*;
  */
 public abstract class VolumeObject
 {
-    /** Create a new VolumeObject with the VolumeImage parameter.
-     * @param kImageA the VolumeImage containing shared data and textures for
-     * rendering.
-     */
-    public VolumeObject (VolumeImage kImageA, VolumeImage kImageB)
-    {
-        m_kVolumeImageA = kImageA;
-        m_kVolumeImageB = kImageB;
-    }
+    /** boolean to turn rendering on/off for this object. */
+    protected boolean m_bDisplay = false;
     
     
+    /** boolean to turn picking on/off for this object. */
+    protected boolean m_bPickable = false;
+    
+    /** the scene-graph node containing the rendered object. */
+    protected Node m_kScene = null;
+
+    /** a reference to the VolumeImage containing the shared data and textures for display. */
+    protected VolumeImage m_kVolumeImageA;
+
+    /** a reference to the VolumeImage containing the shared data and textures for display. */
+    protected VolumeImage m_kVolumeImageB;
+
+    /** local translation in the parent scene-graph. */
+    protected Vector3f m_kTranslate = new Vector3f();
+
+    /** Culling of this object (front-face, back-face, none) */
+    protected CullState m_kCull;
+
+    /** Alpha blending for this object. */
+    protected AlphaState m_kAlpha;
+
+    /** Wire-frame for this object. */
+    protected WireframeState m_kWireframe = null;
+    
+    /** Volume coordinates of the data (extents * resolutions): */
+    protected float m_fX, m_fY, m_fZ;
+
+    /** Surface light shader for rendering objects without volume-texture mapping. */
+    protected MipavLightingEffect m_kLightShader = null;
+
     /** Create a new VolumeObject with the VolumeImage parameter.
      * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
@@ -44,6 +74,18 @@ public abstract class VolumeObject
         this( kImageA, null, kTranslate, fX, fY, fZ);
     }
     
+
+    /** Create a new VolumeObject with the VolumeImage parameter.
+     * @param kImageA the VolumeImage containing shared data and textures for
+     * rendering.
+     */
+    public VolumeObject (VolumeImage kImageA, VolumeImage kImageB)
+    {
+        m_kVolumeImageA = kImageA;
+        m_kVolumeImageB = kImageB;
+    }
+
+
     /** Create a new VolumeObject with the VolumeImage parameter.
      * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
@@ -62,6 +104,12 @@ public abstract class VolumeObject
         m_fY = fY;
         m_fZ = fZ;
     }
+    
+    /**
+     * Set object blend value.
+     * @param fValue blend value.
+     */
+    public void Blend( @SuppressWarnings("unused")float fValue ) {}
 
     /** delete local memory. */
     public void dispose()
@@ -87,40 +135,38 @@ public abstract class VolumeObject
             m_kLightShader = null;
         }
     }
+    /**
+     * Paint can support.
+     * @param kRecord pick record.
+     * @param kPaintColor paint color.
+     * @param rkPickPoint, picked point.
+     */
+    public void Dropper(@SuppressWarnings("unused") PickRecord kRecord,
+            @SuppressWarnings("unused") ColorRGBA rkDropperColor, 
+            @SuppressWarnings("unused") Vector3f rkPickPoint ) {} 
 
     /**
-     * PreRender the object, for embedding in the ray-cast volume.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
+     * Erase paint.
+     * @param kRenderer Renderer.
+     * @param kRecord pick record.
+     * @param iBrushSize brush size.
      */
-    public abstract void PreRender( Renderer kRenderer, Culler kCuller );
+    public void Erase(@SuppressWarnings("unused") Renderer kRenderer, 
+            @SuppressWarnings("unused") PickRecord kRecord,
+            @SuppressWarnings("unused") int iBrushSize ) {}
 
     /**
-     * Render the object.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
+     * Return true if back-face culling is on, false otherwise.
+     * @return true if back-face culling is on, false otherwise.
      */
-    public abstract void Render( Renderer kRenderer, Culler kCuller );
-
-    /** 
-     * Render the object after all other objects have been rendererd. Useful
-     * for screen-space objects such as the eye-clip plane.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
-     */
-    public void PostRender( @SuppressWarnings("unused")
-    Renderer kRenderer, @SuppressWarnings("unused")
-    Culler kCuller ) {}
-
-    /**
-     * Set the object display to on/off.
-     * @param bDisplay when true display this object, when false do not
-     * display the object.
-     */
-    public void SetDisplay( boolean bDisplay )
+    public boolean GetBackface()
     {
-        m_bDisplay = bDisplay;
-    }
+        if ( m_kCull != null )
+        {
+            return m_kCull.Enabled;
+        }
+        return false;
+    } 
 
     /**
      * Get the object display either on/off.
@@ -131,13 +177,20 @@ public abstract class VolumeObject
     {
         return m_bDisplay;
     }
+
+    /**
+     * Return the TriMesh object (if, any) associated with this object.
+     * @return the TriMesh object (if, any) associated with this object.
+     */
+    public TriMesh GetMesh() { return null; }
     
     /**
-
+     * Return the name of this object.
+     * @return name of this object.
      */
-    public void SetPickable( boolean bPickable )
+    public String GetName()
     {
-        m_bPickable = bPickable;
+        return null;
     }
 
     /**
@@ -149,7 +202,19 @@ public abstract class VolumeObject
     {
         return (m_bDisplay&&m_bPickable);
     }
-
+    
+    /**
+     * Return the Wireframe fill mode (FILL, LINE, POINT).
+     * @return the Wireframe fill mode (FILL, LINE, POINT).
+     */
+    public WireframeState.FillMode GetPolygonMode()
+    {
+        if ( m_kWireframe != null )
+        {
+            return m_kWireframe.Fill;
+        }
+        return WireframeState.FillMode.FM_QUANTITY;
+    }
     /**
      * Get the object's parent node in the scene graph.
      * @param m_kScene the Node containing this object.
@@ -159,7 +224,80 @@ public abstract class VolumeObject
         return m_kScene;
     }
     
+    /**
+     * Painting support.
+     * @param kRenderer Renderer.
+     * @param kRecord pick record.
+     * @param kPaintColor paint color.
+     * @param iBrushSize brush size.
+     */
+    public void Paint(@SuppressWarnings("unused") Renderer kRenderer,
+            @SuppressWarnings("unused") PickRecord kRecord, 
+            @SuppressWarnings("unused") ColorRGBA kPaintColor, 
+            @SuppressWarnings("unused") int iBrushSize ) {}
 
+    /** 
+     * Render the object after all other objects have been rendererd. Useful
+     * for screen-space objects such as the eye-clip plane.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
+     */
+    public void PostRender( @SuppressWarnings("unused") Renderer kRenderer, 
+            @SuppressWarnings("unused") Culler kCuller ) {}
+    /**
+     * PreRender the object, for embedding in the ray-cast volume.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
+     */
+    public abstract void PreRender( Renderer kRenderer, Culler kCuller );
+    /**
+     * Render the object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
+     */
+    public abstract void Render( Renderer kRenderer, Culler kCuller );
+    
+    /**
+     * Set back-face culling on/off.
+     * @param bOn on/off.
+     */
+    public void SetBackface( boolean bOn )
+    {
+        if ( m_kCull != null )
+        {
+            m_kCull.Enabled = bOn;
+            m_kCull.CullFace = CullState.CullMode.CT_BACK;
+        }
+    }
+    
+    /**
+     * Set the object color.
+     * @param kColor new color.
+     */
+    public void SetColor( @SuppressWarnings("unused") ColorRGB kColor ){}
+    
+    /**
+     * Set the object display to on/off.
+     * @param bDisplay when true display this object, when false do not
+     * display the object.
+     */
+    public void SetDisplay( boolean bDisplay )
+    {
+        m_bDisplay = bDisplay;
+    }
+    
+    /**
+     * Sets front-face culling on/off.
+     * @param bOn on/off.
+     */
+    public void SetFrontface( boolean bOn )
+    {
+        if ( m_kCull != null )
+        {
+            m_kCull.Enabled = bOn;
+            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
+        }
+    }
     /**
      * Sets the light for the EllipsoidsShader.
      * @param kLightType the name of the light to set (Light0, Light1, etc.)
@@ -172,8 +310,21 @@ public abstract class VolumeObject
             m_kLightShader.SetLight(kLightType, afType);
         }
     }
-
-
+    
+    /**
+     * Enables/disables picking for this object.
+     * @param bPickable picking on/off.
+     */
+    public void SetPickable( boolean bPickable )
+    {
+        m_bPickable = bPickable;
+    }
+    
+    /**
+     * Enables/disables wireframe and sets the mode: FILL, LINE, POINT.
+     * @param bEnable turns the Wireframe State on/off.
+     * @param eType wireframe mode: FILL, LINE, POINT.
+     */
     public void SetPolygonMode( boolean bEnable, WireframeState.FillMode eType )
     {
         if ( m_kWireframe != null )
@@ -183,95 +334,13 @@ public abstract class VolumeObject
         }
     }
     
-    public WireframeState.FillMode GetPolygonMode()
-    {
-        if ( m_kWireframe != null )
-        {
-            return m_kWireframe.Fill;
-        }
-        return WireframeState.FillMode.FM_QUANTITY;
-    }
 
-    public String GetName()
-    {
-        return null;
-    }
-
-    public void SetBackface( boolean bOn )
-    {
-        if ( m_kCull != null )
-        {
-            m_kCull.Enabled = bOn;
-            m_kCull.CullFace = CullState.CullMode.CT_BACK;
-        }
-    } 
-    
-    public boolean GetBackface()
-    {
-        if ( m_kCull != null )
-        {
-            return m_kCull.Enabled;
-        }
-        return false;
-    }
-
-    public void SetFrontface( boolean bOn )
-    {
-        if ( m_kCull != null )
-        {
-            m_kCull.Enabled = bOn;
-            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
-        }
-    } 
-
+    /**
+     * Add to the object translation vector.
+     * @param kTranslate new translation amount.
+     */
     public void Translate(Vector3f kTranslate)
     {
         m_kTranslate.Add(kTranslate);
     }
-
-    public void Blend( @SuppressWarnings("unused")
-    float fValue ) {}
-    
-    public void SetColor( @SuppressWarnings("unused")
-    ColorRGB kColor ){}
-
-    public void Paint(@SuppressWarnings("unused")
-    Renderer kRenderer, @SuppressWarnings("unused")
-    PickRecord kRecord, @SuppressWarnings("unused")
-    ColorRGBA kPaintColor, @SuppressWarnings("unused")
-    int iBrushSize ) {}
-    public void Dropper(@SuppressWarnings("unused")
-    PickRecord kRecord, @SuppressWarnings("unused")
-    ColorRGBA rkDropperColor, @SuppressWarnings("unused")
-    Vector3f rkPickPoint ) {}
-    public void Erase(@SuppressWarnings("unused")
-    Renderer kRenderer, @SuppressWarnings("unused")
-    PickRecord kRecord, @SuppressWarnings("unused")
-    int iBrushSize ) {}
-    public TriMesh GetMesh() { return null; }
-
-    /** boolean to turn rendering on/off for this object. */
-    protected boolean m_bDisplay = false;
-    /** boolean to turn picking on/off for this object. */
-    protected boolean m_bPickable = false;
-    /** the scene-graph node containing the rendered object. */
-    protected Node m_kScene = null;
-    /** a reference to the VolumeImage containing the shared data and textures for display. */
-    protected VolumeImage m_kVolumeImageA;
-    /** a reference to the VolumeImage containing the shared data and textures for display. */
-    protected VolumeImage m_kVolumeImageB;
-    /** local translation in the parent scene-graph. */
-    protected Vector3f m_kTranslate = new Vector3f();;
-    /** Culling of this object (front-face, back-face, none) */
-    protected CullState m_kCull;
-    /** Alpha blending for this object. */
-    protected AlphaState m_kAlpha;
-    /** Wireframe for this object. */
-    protected WireframeState m_kWireframe = null;
-    
-    /** Volume coordinates of the data (extents * resolutions): */
-    protected float m_fX, m_fY, m_fZ;
-    
-
-    protected MipavLightingEffect m_kLightShader = null;
 }

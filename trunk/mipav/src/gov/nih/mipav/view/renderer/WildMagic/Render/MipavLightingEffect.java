@@ -3,15 +3,22 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 import WildMagic.LibGraphics.Effects.*;
 import WildMagic.LibGraphics.Shaders.*;
 
+/**
+ * MipavLightingEffect uses the lights defined in the Volume/Surface/Tri-Planar view in the light shader.
+ */
 public class MipavLightingEffect extends ShaderEffect
 {
 
-    /** Creates a LightingEffect */
+    /** Creates a MIPAV lighting effect. */
     public MipavLightingEffect ()
     {
         this(false);
     }
     
+    /**
+     * Create a new MIPAV lighting effect. 
+     * @param bUnique determines if the VertexShader is shared or unique.
+     */
     public MipavLightingEffect ( boolean bUnique )
     {
         super(1);
@@ -48,6 +55,10 @@ public class MipavLightingEffect extends ShaderEffect
         }
     }
     
+    /**
+     * Set surface blend value.
+     * @param fValue surface blend/transparency value.
+     */
     public void Blend( float fValue )
     {
         Program pkProgram = GetVProgram(0);

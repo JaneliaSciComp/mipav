@@ -61,6 +61,15 @@ public class VolumeImage
     private float m_fX = 1, m_fY = 1, m_fZ = 1;
     private String m_kPostfix = null;
     
+    /**
+     * Constructor. Stores the ModelImage Volume data.
+     * Creates Textures for the Volume, Normals, Gradient Magnitude, Volume opacity transfer function.
+     * Volume color map, GM opacity transfer function, and GM colormap.
+     * @param kImage ModelImage volume data.
+     * @param kLUT LUT.
+     * @param kRGBT color LUT.
+     * @param kPostfix String postfix for the Texture names.
+     */
     public VolumeImage( ModelImage kImage, ModelLUT kLUT, ModelRGB kRGBT, String kPostfix )
     {
         m_kImage = kImage;
@@ -372,6 +381,9 @@ public class VolumeImage
         return null;
     }
 
+    /**
+     * Memory cleanup.
+     */
     public void dispose()
     {
         m_kImage = null;
@@ -528,10 +540,19 @@ public class VolumeImage
         }
     }
 
+    /**
+     * Return the gradient magnitude Texture.
+     * @return gradient magnitude Texture.
+     */
     public Texture GetVolumeGMTarget()
     {
         return m_kVolumeTarget_GM;
     }
+    
+    /**
+     * Return the gradient magnitude opacity transfer function Texture.
+     * @return gradient magnitude opacity transfer function Texture.
+     */
     public Texture GetOpacityMapGMTarget()
     {
         return m_kOpacityMapTarget_GM;
@@ -556,21 +577,37 @@ public class VolumeImage
         return m_kVolumeTarget.GetImage().GetDataBuffer();
     }
 
+    /**
+     * Return the Volume color map Texture.
+     * @return Volume color map Texture.
+     */
     public Texture GetColorMapTarget()
     {
         return m_kColorMapTarget;
     }
 
+    /**
+     * Return the Volume opacity transfer function Texture.
+     * @return Volume opacity transfer function Texture.
+     */
     public Texture GetOpacityMapTarget()
     {
         return m_kOpacityMapTarget;
     }
 
+    /**
+     * Return the Volume normal Texture.
+     * @return Volume normal Texture.
+     */
     public Texture GetNormalMapTarget()
     {
         return m_kNormalMapTarget;
     }
 
+    /**
+     * Return the surface mask Texture.
+     * @return surface mask Texture.
+     */
     public Texture GetSurfaceTarget()
     {
         return m_kSurfaceTarget;
@@ -622,21 +659,37 @@ public class VolumeImage
         }
     }
 
+    /**
+     * Return true if the Volume image is a color image.
+     * @return true if the Volume image is a color image.
+     */
     public boolean IsColorImage()
     {
         return m_kImage.isColorImage();
     }
     
+    /**
+     * Return the ModelImage volume data.
+     * @return ModelImage volume data.
+     */
     public ModelImage GetImage()
     {
         return m_kImage;
     }
     
+    /**
+     * Return the Volume LUT.
+     * @return Volume LUT.
+     */
     public ModelLUT GetLUT()
     {
         return m_kLUT;
     }
 
+    /**
+     * Read the current Volume Texture from the GPU and return a new ModelImage of that data.
+     * @return new ModelImage from Volume Texture on GPU.
+     */
     public ModelImage CreateImageFromTexture()
     {
         int iXBound = m_kImage.getExtents()[0];
@@ -711,6 +764,9 @@ public class VolumeImage
     }
 
 
+    /**
+     * Initialize the scale factors. Based on the ModelImage Volume.
+     */
     private void InitScale()
     {
         float fMaxX = (m_kImage.getExtents()[0] - 1) * m_kImage.getFileInfo(0).getResolutions()[0];
@@ -729,19 +785,35 @@ public class VolumeImage
         m_fZ = fMaxZ/fMax;
     }
     
+    /**
+     * The ModelImage Volume x-scale factor.
+     * @return Volume x-scale factor.
+     */
     public float GetScaleX()
     {
         return m_fX;
-    }    
+    }   
+    /**
+     * The ModelImage Volume y-scale factor.
+     * @return Volume y-scale factor.
+     */
     public float GetScaleY()
     {
         return m_fY;
     }    
+    /**
+     * The ModelImage Volume z-scale factor.
+     * @return Volume z-scale factor.
+     */
     public float GetScaleZ()
     {
         return m_fZ;
     }
     
+    /**
+     * Return the postfix for this VolumeImage.
+     * @return postfix for this VolumeImage.
+     */
     public String GetPostfix()
     {
         return m_kPostfix;

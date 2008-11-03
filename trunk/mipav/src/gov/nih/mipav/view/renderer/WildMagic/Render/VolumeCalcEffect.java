@@ -1,9 +1,12 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.Shaders.*;
-import WildMagic.LibGraphics.ObjectSystem.*;
+import gov.nih.mipav.view.renderer.J3D.RenderViewBase;
+import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
+import WildMagic.LibGraphics.Rendering.Texture;
+import WildMagic.LibGraphics.Shaders.PixelShader;
+import WildMagic.LibGraphics.Shaders.Program;
+import WildMagic.LibGraphics.Shaders.VertexShader;
 
 /** ShaderEffect class for calculating the volume normals on the GPU.  The
  * volume normals are calculated in two passes with two different shaders. The
@@ -27,6 +30,27 @@ public class VolumeCalcEffect extends VolumeClipEffect
     implements StreamInterface
 {
 
+    /** Extents of the volume data for setting the texture step size. */    
+    private float[] m_afExtents = new float[]{0,0,0,0};
+
+    /** When true the volume data is color. */
+    private boolean m_bIsColor = false;
+    
+    /** Create a new VolumeCalcEffect shader with the VolumeImage data. This
+     * fn creates the second-pass shader.
+     * @param kTextureName the name of the output texture from the first pass.
+     * @param kTexture the output texture from the first pass.
+     */
+    public VolumeCalcEffect ( String kTextureName, Texture kTexture )
+    {
+        SetPassQuantity(1);
+        SetVShader(0,new VertexShader("CalcNormalsPerSlice_Pass2"));
+        SetPShader(0,new PixelShader("CalcNormalsPerSlice_Pass2", false));
+        GetPShader(0).SetTextureQuantity(1);
+        GetPShader(0).SetImageName(0,kTextureName);
+        GetPShader(0).SetTexture(0, kTexture );
+    }
+
     /** Create a new VolumeCalcEffect shader with the VolumeImage data. This
      * fn creates the first-pass shader.
      * @param kVolumeImageA the shared volume data and textures.
@@ -43,21 +67,12 @@ public class VolumeCalcEffect extends VolumeClipEffect
         m_bIsColor = kVolumeImage.GetImage().isColorImage();
     }
 
-    /** Create a new VolumeCalcEffect shader with the VolumeImage data. This
-     * fn creates the second-pass shader.
-     * @param kTextureName the name of the output texture from the first pass.
-     * @param kTexture the output texture from the first pass.
-     */
-    public VolumeCalcEffect ( String kTextureName, Texture kTexture )
-    {
-        SetPassQuantity(1);
-        SetVShader(0,new VertexShader("CalcNormalsPerSlice_Pass2"));
-        SetPShader(0,new PixelShader("CalcNormalsPerSlice_Pass2", false));
-        GetPShader(0).SetTextureQuantity(1);
-        GetPShader(0).SetImageName(0,kTextureName);
-        GetPShader(0).SetTexture(0, kTexture );
-    }
     
+    /**
+     * For creating the surface mask texture.
+     * @param kVolumeImage Volume data
+     * @param kClip current clipping state.
+     */
     public VolumeCalcEffect ( VolumeImage kVolumeImage, VolumeClipEffect kClip )
     {
         /* Set single-pass rendering: */
@@ -76,10 +91,16 @@ public class VolumeCalcEffect extends VolumeClipEffect
         this.m_afClipArbData  = kClip.m_afClipArbData;
     }
 
-    /** This function is called in LoadPrograms once the shader programs are
-     * created.  It gives the ShaderEffect-derived classes a chance to do
-     * any additional work to hook up the effect with the low-level objects.
-     * @param iPass the ith rendering pass
+    /**
+     * memory cleanup.
+     */
+    public void dispose()
+    {
+        m_afExtents = null;
+        super.dispose();
+    }
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClipEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)
      */
     public void OnLoadPrograms (int iPass, Program pkVProgram,
                                 Program pkPProgram)
@@ -99,19 +120,8 @@ public class VolumeCalcEffect extends VolumeClipEffect
             }
         }  
     }
-
-    
-    /**
-     * memory cleanup.
-     */
-    public void dispose()
-    {
-        m_afExtents = null;
-        super.dispose();
-    }
-
     /** Sets the step size shader parameter.
-     * @param kVolumeImageA the shared volume data and textures.
+     * @param kVolumeImage the shared volume data and textures.
      */
     public void SetStepSize(VolumeImage kVolumeImage)
     {
@@ -125,8 +135,4 @@ public class VolumeCalcEffect extends VolumeClipEffect
             //System.err.println( m_afExtents[0] + " " + m_afExtents[1] + " " + m_afExtents[2] );
         }
     }
-    /** Extents of the volume data for setting the texture step size. */    
-    private float[] m_afExtents = new float[]{0,0,0,0};
-    /** When true the volume data is color. */
-    private boolean m_bIsColor = false;
 }

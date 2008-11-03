@@ -1,10 +1,16 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.VertexColor3Effect;
+import WildMagic.LibGraphics.Rendering.Renderer;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Culler;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 /** Displays the BoundingBox frame around the volume data in the VolumeViewer.
  * @see VolumeObject.java
@@ -12,6 +18,12 @@ import WildMagic.LibGraphics.SceneGraph.*;
  */
 public class VolumeBoundingBox extends VolumeObject
 {
+    /** The bounding box Polyline array. */
+    private Polyline[] m_akBoundingBox;
+
+    /** The ShaderEffect for the bounding box. */
+    private VertexColor3Effect m_kVertexColor3Shader;
+
     /** Creates a new bounding box object.
      * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
@@ -31,29 +43,6 @@ public class VolumeBoundingBox extends VolumeObject
         m_kScene.UpdateRS();
     }
 
-    /**
-     * PreRender the object, for embedding in the ray-cast volume.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
-     */
-    public void PreRender( Renderer kRenderer, Culler kCuller )  { }
-
-    /**
-     * Render the object.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
-     */
-    public void Render( Renderer kRenderer, Culler kCuller )
-    {
-        if ( !m_bDisplay )
-        {
-            return;
-        }
-        m_kScene.UpdateGS();
-        kCuller.ComputeVisibleSet(m_kScene);
-        kRenderer.DrawScene(kCuller.GetVisibleSet());
-    }
-
     /** Delete local memory. */
     public void dispose()
     {
@@ -70,6 +59,24 @@ public class VolumeBoundingBox extends VolumeObject
         }
     }
     
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#PreRender(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
+     */
+    public void PreRender( Renderer kRenderer, Culler kCuller )  { }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
+     */
+    public void Render( Renderer kRenderer, Culler kCuller )
+    {
+        if ( !m_bDisplay )
+        {
+            return;
+        }
+        m_kScene.UpdateGS();
+        kCuller.ComputeVisibleSet(m_kScene);
+        kRenderer.DrawScene(kCuller.GetVisibleSet());
+    }
     /**
      * Called from JPanelDisplay. Sets the bounding box color.
      * @param kColor bounding box color.
@@ -85,7 +92,6 @@ public class VolumeBoundingBox extends VolumeObject
             m_akBoundingBox[i].VBuffer.Release();
         }
     }
-
     /** Creates the bounding box Polylines. */
     private void CreateBox()
     {
@@ -163,8 +169,4 @@ public class VolumeBoundingBox extends VolumeObject
             m_kScene.AttachChild(m_akBoundingBox[i]);
         }
     }
-    /** The bounding box Polyline array. */
-    private Polyline[] m_akBoundingBox;
-    /** The ShaderEffect for the bounding box. */
-    private VertexColor3Effect m_kVertexColor3Shader;
 }

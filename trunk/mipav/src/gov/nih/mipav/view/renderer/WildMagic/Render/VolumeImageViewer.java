@@ -193,7 +193,7 @@ public class VolumeImageViewer extends JavaApplication3D
             {
                 m_bSurfaceAdded = false;
                 m_iSlice = 0;
-                System.err.println("Done SurfaceAdded");
+                //System.err.println("Done SurfaceAdded");
             }
         }
         m_kAnimator.stop();

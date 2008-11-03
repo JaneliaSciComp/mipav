@@ -1,21 +1,59 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import javax.media.opengl.*;
-import com.sun.opengl.util.*;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyListener;
+
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLCanvas;
+import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibGraphics.Shaders.*;
-import WildMagic.LibRenderers.OpenGLRenderer.*;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Rendering.Light;
+import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Culler;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
+import WildMagic.LibGraphics.Shaders.ImageCatalog;
+import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
+import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
+/**
+ * Display component in the dialog that displays the material parameters for the surface. Allows the user to 
+ * set the Material: ambient, diffuse, specular, emissive colors and shininess.
+ */
 public class SurfaceMaterialDisplay extends JavaApplication3D
 implements GLEventListener, KeyListener
 {
+    private Node m_spkScene;
+
+
+    private TriMesh m_spkSphere;
+
+    private Culler m_kCuller = new Culler(0,0,null);
+
+    private MipavLightingEffect m_kLightShader = null;
+
+    private MaterialState m_pkMaterial;
+
+    private boolean m_bInit = false;
+
+    private Light[] m_akLights = null;
+
+    private boolean m_bMain = false;
+
+    /**
+     * Constructor.
+     * @param kMaterial material
+     * @param akLights current lights in the scene
+     * @param bMain indicates if this is a large (true) or small (false) display component.
+     */
     public SurfaceMaterialDisplay( MaterialState kMaterial, Light[] akLights, boolean bMain )
     {
         super("Lighting",0,0,512,512, new ColorRGBA(ColorRGBA.BLACK));
@@ -27,7 +65,7 @@ implements GLEventListener, KeyListener
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
 
-        String kExternalDirs = getExternalDirs();        
+        String kExternalDirs = VolumeTriPlanarInterface.getExternalDirs();        
         ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
         VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
         PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
@@ -39,34 +77,9 @@ implements GLEventListener, KeyListener
     }
 
 
-    /**
-     * @param args
+    /* (non-Javadoc)
+     * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
      */
-    public static void main(MaterialState kMaterial, Light[] akLights ) {
-        SurfaceMaterialDisplay kWorld = new SurfaceMaterialDisplay(kMaterial, akLights, true);
-        Frame frame = new Frame(kWorld.GetWindowTitle());
-
-        frame.add( kWorld.GetCanvas() );
-        frame.setSize(kWorld.GetWidth(), kWorld.GetHeight());
-        /* Animator serves the purpose of the idle function, calls display: */
-        final Animator animator = new Animator( kWorld.GetCanvas() );
-        frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                // Run this on another thread than the AWT event queue to
-                // avoid deadlocks on shutdown on some platforms
-                new Thread(new Runnable() {
-                    public void run() {
-                        animator.stop();
-                    }
-                }).start();
-            }
-        });
-        frame.setVisible(true);
-        animator.start();
-        // and all the rest happens in the display function...
-
-    }
-
     public void display(GLAutoDrawable arg0) {
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
@@ -76,12 +89,24 @@ implements GLEventListener, KeyListener
         }
         m_pkRenderer.DisplayBackBuffer();
     }
-
-    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {
-        // TODO Auto-generated method stub
-
+    
+    /* (non-Javadoc)
+     * @see javax.media.opengl.GLEventListener#displayChanged(javax.media.opengl.GLAutoDrawable, boolean, boolean)
+     */
+    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
+    
+    /**
+     * Return the GLCanvas for display.
+     * @return GLCanvas
+     */
+    public GLCanvas GetCanvas()
+    {
+        return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
     }
 
+    /* (non-Javadoc)
+     * @see javax.media.opengl.GLEventListener#init(javax.media.opengl.GLAutoDrawable)
+     */
     public void init(GLAutoDrawable arg0) {
         m_bInit = true;
 
@@ -118,12 +143,11 @@ implements GLEventListener, KeyListener
         // initial culling of scene
         m_kCuller.SetCamera(m_spkCamera);
         m_kCuller.ComputeVisibleSet(m_spkScene);
-
-        // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
-
+    /* (non-Javadoc)
+     * @see javax.media.opengl.GLEventListener#reshape(javax.media.opengl.GLAutoDrawable, int, int, int, int)
+     */
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if (iWidth > 0 && iHeight > 0)
         {
             if (m_pkRenderer != null)
@@ -135,46 +159,20 @@ implements GLEventListener, KeyListener
             m_iHeight = iHeight;
             m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
         }
-        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
-
-    public GLCanvas GetCanvas()
-    {
-        return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
-    }
-
-    private void CreateScene ()
-    {
-        m_spkScene = new Node();
-
-        Attributes kAttr = new Attributes();
-        kAttr.SetPChannels(3);
-        kAttr.SetNChannels(3);
-        StandardMesh kSM = new StandardMesh(kAttr);
-        m_spkSphere = kSM.Sphere(64,64,1.0f);
-
-        m_spkSphere.AttachGlobalState(m_pkMaterial);
-
-        m_kLightShader = new MipavLightingEffect( );
-        m_spkSphere.AttachEffect(m_kLightShader);
-        m_spkScene.AttachChild(m_spkSphere);
-        m_pkRenderer.LoadResources(m_spkSphere);
-        updateLighting( m_akLights );
-    }
-
+    /**
+     * Set the material.
+     * @param kMaterial new material values.
+     */
     public void setMaterial( MaterialState kMaterial )
     {
-    	System.err.println( "setMaterial "  + kMaterial.Shininess );
-    	
-        //m_pkMaterial.Ambient.Copy( kMaterial.Ambient );
-        //m_pkMaterial.Diffuse.Copy( kMaterial.Diffuse );
-        //m_pkMaterial.Specular.Copy( kMaterial.Specular );
-        //m_pkMaterial.Emissive.Copy( kMaterial.Emissive );
-        //m_pkMaterial.Shininess = kMaterial.Shininess;
-        //m_pkMaterial.Shininess = 1.0f;
-        //m_spkScene.UpdateGS();
+        m_pkMaterial.Ambient.Copy( kMaterial.Ambient );
+        m_pkMaterial.Diffuse.Copy( kMaterial.Diffuse );
+        m_pkMaterial.Specular.Copy( kMaterial.Specular );
+        m_pkMaterial.Emissive.Copy( kMaterial.Emissive );
+        m_pkMaterial.Shininess = kMaterial.Shininess;
+        m_spkScene.UpdateGS();
     }
-
     /**
      * Called from JPanelLight. Updates the lighting parameters.
      * @param akGLights the set of GeneralLight objects.
@@ -226,30 +224,25 @@ implements GLEventListener, KeyListener
             }
         }
     }
-
-    private Node m_spkScene;
-    private TriMesh m_spkSphere;
-    private Culler m_kCuller = new Culler(0,0,null);
-
-    private MipavLightingEffect m_kLightShader = null;
-    private MaterialState m_pkMaterial;
-    private boolean m_bInit = false;
-    private Light[] m_akLights = null;
-    private boolean m_bMain = false;
-    
-    private String getExternalDirs()
+    /**
+     * Create the scene.
+     */
+    private void CreateScene ()
     {
-        String jar_filename = "";
-        String class_path_key = "java.class.path";
-        String class_path = System.getProperty(class_path_key);
-        for (String fn : class_path.split(";") ) {
-            if (fn.endsWith("WildMagic.jar")) {
-                jar_filename = fn;   
-                String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib\\"));
-                externalDirs = externalDirs.concat("WildMagic");
-                return externalDirs;
-            }
-        }
-        return System.getProperties().getProperty("user.dir");
+        m_spkScene = new Node();
+
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetNChannels(3);
+        StandardMesh kSM = new StandardMesh(kAttr);
+        m_spkSphere = kSM.Sphere(64,64,1.0f);
+
+        m_spkSphere.AttachGlobalState(m_pkMaterial);
+
+        m_kLightShader = new MipavLightingEffect( );
+        m_spkSphere.AttachEffect(m_kLightShader);
+        m_spkScene.AttachChild(m_spkSphere);
+        m_pkRenderer.LoadResources(m_spkSphere);
+        updateLighting( m_akLights );
     }
 }

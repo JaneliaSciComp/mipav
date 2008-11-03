@@ -1,9 +1,18 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.MipavCoordinateSystems;
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Rendering.AlphaState;
+import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.Renderer;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Culler;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 /**
  * Displays the three orthogonal planes with the volume data.
@@ -13,9 +22,31 @@ import WildMagic.LibGraphics.SceneGraph.*;
  */
 public class VolumeSlices extends VolumeObject
 {
+    /** ShaderEffect for the plane bounding-boxes. */
+    private VolumePreRenderEffect[] m_kVolumePreShader;
+
+    /** ShaderEffects for the planes. Each is unique so they can have different alpha values. */
+    private VolumePlaneEffect[] m_akPlaneEffect;
+
+    /** The three orthogonal plane TriMeshes. */
+    private TriMesh[] m_akPlanes;
+
+    /** Displaying each plane: */
+    private boolean[] m_abShowPlanes = new boolean[]{true,true,true};
+
+    /** The three plane bounding-box Polylines. */
+    private Polyline[] m_akBoundingBox;
+    
+    /** Displaying each bounding-box: */
+    private boolean[] m_abShowBoundingBox = new boolean[]{true,true,true};
+    
+    /** Set of colors used to draw the X and Y Bars and the Z box:. */
+    private ColorRGB[] m_akColors = { new ColorRGB(1, 0, 0), new ColorRGB(0, 1, 0), new ColorRGB(1, 1, 0) };
+
     /** Create a new VolumeObject with the VolumeImage parameter.
      * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
+     * @param kVolumeImageB second VolumeImage.
      * @param kTranslate translation in the scene-graph for this object.
      * @param fX the size of the volume in the x-dimension (extent * resolutions)
      * @param fY the size of the volume in the y-dimension (extent * resolutions)
@@ -44,10 +75,77 @@ public class VolumeSlices extends VolumeObject
         m_kScene.UpdateRS();
     }
 
+    /** Delete local memory. */
+    public void dispose()
+    {
+        for ( int i = 0; i < 3; i++ )
+        {   
+            if ( m_kVolumePreShader != null )
+            {
+                if ( m_kVolumePreShader[i] != null )
+                {
+                    m_kVolumePreShader[i].dispose();
+                    m_kVolumePreShader[i] = null;
+                }
+                m_kVolumePreShader = null;
+            }
+            if ( m_akPlaneEffect != null )
+            {
+                if ( m_akPlaneEffect[i] != null )
+                {
+                    m_akPlaneEffect[i].dispose();
+                    m_akPlaneEffect[i] = null;
+                }
+                m_akPlaneEffect = null;
+            }
+            if ( m_akPlanes != null )
+            {
+                if ( m_akPlanes[i] != null )
+                {
+                    m_akPlanes[i].dispose();
+                    m_akPlanes[i] = null;
+                }
+                m_akPlanes = null;
+            }
+            if ( m_akBoundingBox != null )
+            {
+                if ( m_akBoundingBox[i] != null )
+                {
+                    m_akBoundingBox[i].dispose();
+                    m_akBoundingBox[i] = null;
+                }
+                m_akBoundingBox = null;
+            }
+            m_akColors[i] = null;
+        }
+        m_akColors = null;
+        m_abShowPlanes = null;
+        m_abShowBoundingBox = null;
+
+    }
+    
+    /** Return the current display status for the bounding box for the given plane.
+     * @param i the plane index (0-3) in file coordinates.
+     * @return true when the bounding box is displayed.
+     */
+    public boolean GetShowBoundingBox( int i )
+    {
+        int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
+        return m_abShowBoundingBox[iIndex];
+    }
     /**
-     * PreRender the object, for embedding in the ray-cast volume.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
+     * Return the opacity for the given plane.
+     * @param i the plane index (0-3) in file coordinates.
+     * @return the opacity for the given plane.
+     */
+    public float GetSliceOpacity( int i )
+    {
+        int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
+        return m_akPlaneEffect[iIndex].GetBlend(); 
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#PreRender(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */
     public void PreRender( Renderer kRenderer, Culler kCuller )
     {
@@ -65,10 +163,8 @@ public class VolumeSlices extends VolumeObject
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
 
-    /**
-     * Render the object.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */
     public void Render( Renderer kRenderer, Culler kCuller )
     {
@@ -86,102 +182,6 @@ public class VolumeSlices extends VolumeObject
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
 
-    /** Creates the scene graph. */
-    private void CreatePlanes ( )
-    {
-        m_kScene = new Node();
-
-        m_kCull = new CullState();
-        m_kCull.Enabled = false;
-        m_kScene.AttachGlobalState(m_kCull);
-
-        m_kAlpha = new AlphaState();
-        m_kAlpha.BlendEnabled = true;
-        m_kScene.AttachGlobalState(m_kAlpha);
-
-        Attributes kAttr = new Attributes();
-        kAttr.SetPChannels(3);
-        kAttr.SetCChannels(0,3);
-        kAttr.SetTChannels(0,3);
-
-        StandardMesh kSM = new StandardMesh(kAttr);
-        m_akPlanes = new TriMesh[3];
-        for ( int i = 0; i < 3; i++ )
-        {
-            m_akPlanes[i] = kSM.Rectangle(2,2,1.0f,1.0f);
-            m_akPlanes[i].Local.SetTranslate(m_kTranslate);
-            m_kScene.AttachChild(m_akPlanes[i]);
-            //m_akPlanes[i].VBuffer.SetShared(true);
-            //m_akPlanes[i].IBuffer.SetShared(true);
-        }
-    }
-
-    /** Creates the bounding frames for the planes. */
-    private void CreateBoundingBox ( )
-    {
-        Attributes kAttr = new Attributes();
-        kAttr.SetPChannels(3);
-        kAttr.SetCChannels(0,3);
-
-        float fX = m_fX * .5f;
-        float fY = m_fY * .5f;
-        float fZ = m_fZ * .5f;
-        
-        VertexBuffer[] akOutlineSquare = new VertexBuffer[3];
-        for ( int i = 0; i < 3; i++ )
-        {
-            akOutlineSquare[i] = new VertexBuffer(kAttr, 4 );
-            for ( int j = 0; j < 4; j++ )
-            {
-                akOutlineSquare[i].SetColor3( 0, j, m_akColors[i] );
-            }
-        }
-
-        akOutlineSquare[0].SetPosition3( 0, fX, 0, 0 ) ;
-        akOutlineSquare[0].SetPosition3( 1, fX, 0, m_fZ ) ;
-        akOutlineSquare[0].SetPosition3( 2, fX, m_fY, m_fZ ) ;
-        akOutlineSquare[0].SetPosition3( 3, fX, m_fY, 0 ) ;
-
-        akOutlineSquare[1].SetPosition3( 0, m_fX, fY, m_fZ ) ;
-        akOutlineSquare[1].SetPosition3( 1, 0, fY, m_fZ ) ;
-        akOutlineSquare[1].SetPosition3( 2, 0, fY, 0 ) ;
-        akOutlineSquare[1].SetPosition3( 3, m_fX, fY, 0 ) ;
-
-        akOutlineSquare[2].SetPosition3( 0, m_fX, 0, fZ ) ;
-        akOutlineSquare[2].SetPosition3( 1, 0, 0, fZ ) ;
-        akOutlineSquare[2].SetPosition3( 2, 0, m_fY, fZ ) ;
-        akOutlineSquare[2].SetPosition3( 3, m_fX, m_fY, fZ ) ;
-
-        //System.err.println( "Bounding box " + m_fX + " " + m_fY + " " + m_fZ );
-        
-        m_akBoundingBox = new Polyline[3];
-        for ( int i = 0; i < 3; i++ )
-        {
-            m_akBoundingBox[i] = new Polyline( new VertexBuffer(akOutlineSquare[i]), true, true );
-            m_akBoundingBox[i].AttachEffect( m_kVolumePreShader[i] );
-            m_akBoundingBox[i].Local.SetTranslate(m_kTranslate);
-            m_kScene.AttachChild(m_akBoundingBox[i]);
-            //m_akBoundingBox[i].VBuffer.SetShared(true);
-            //m_akBoundingBox[i].IBuffer.SetShared(true);
-        }
-    }
-    public float GetSliceOpacity( int i )
-    {
-        int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
-        return m_akPlaneEffect[iIndex].GetBlend(); 
-    }
-    
-    /** Sets the opacity for the given plane.
-     * @param i the plane index (0-3) in file coordinates.
-     * @param fAlpha the opacity for the given plane.
-     */
-    public void SetSliceOpacity( int i, float fAlpha )
-    {
-        int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
-        m_akPlaneEffect[iIndex].Blend( fAlpha );
-        m_kVolumePreShader[iIndex].Blend(fAlpha);
-    }
-
     /** Sets the bounding box color for the given plane.
      * @param i the plane index (0-3) in file coordinates.
      * @param kColor the new color.
@@ -194,64 +194,6 @@ public class VolumeSlices extends VolumeObject
             m_akBoundingBox[iIndex].VBuffer.SetColor3(0, j, kColor );
         }
         m_akBoundingBox[iIndex].VBuffer.Release();
-    }
-
-    public void ShowSurface( boolean bOn )
-    {
-        for ( int i = 0; i < 3; i++ )
-        {
-            m_akPlaneEffect[i].ShowSurface(bOn);
-        }
-    }
-    
-    /** Turns on/off displaying the bounding box for the given plane.
-     * @param i the plane index (0-3) in file coordinates.
-     * @param bShow when true, the bounding box is displayed.
-     */
-    public void ShowBoundingBox( int i, boolean bShow )
-    {
-        int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
-        if ( m_abShowBoundingBox[iIndex] == bShow )
-        {
-            return;
-        }
-        m_abShowBoundingBox[iIndex] = bShow;
-        if ( m_abShowBoundingBox[iIndex] )
-        {
-            m_kScene.AttachChild(m_akBoundingBox[iIndex]);
-        }
-        else
-        {
-            m_kScene.DetachChild(m_akBoundingBox[iIndex]);
-        }
-    }
-
-    public boolean GetShowBoundingBox( int i )
-    {
-        int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
-        return m_abShowBoundingBox[iIndex];
-    }
-    
-    /** Turns on/off displaying the given plane.
-     * @param i the plane index (0-3) in file coordinates.
-     * @param bShow when true, the plane is displayed.
-     */
-    public void ShowSlice( int i, boolean bShow )
-    {
-        int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
-        if ( m_abShowPlanes[iIndex] == bShow )
-        {
-            return;
-        }
-        m_abShowPlanes[iIndex] = bShow;
-        if ( m_abShowPlanes[iIndex] )
-        {
-            m_kScene.AttachChild(m_akPlanes[iIndex]);
-        }
-        else
-        {
-            m_kScene.DetachChild(m_akPlanes[iIndex]);
-        }
     }
 
     /** Sets the positions of the three orthogonal planes. 
@@ -340,69 +282,146 @@ public class VolumeSlices extends VolumeObject
             m_akBoundingBox[i].VBuffer.Release();
         }
     }
-
-    /** Delete local memory. */
-    public void dispose()
+    /** Sets the opacity for the given plane.
+     * @param i the plane index (0-3) in file coordinates.
+     * @param fAlpha the opacity for the given plane.
+     */
+    public void SetSliceOpacity( int i, float fAlpha )
+    {
+        int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
+        m_akPlaneEffect[iIndex].Blend( fAlpha );
+        m_kVolumePreShader[iIndex].Blend(fAlpha);
+    }
+    /** Turns on/off displaying the bounding box for the given plane.
+     * @param i the plane index (0-3) in file coordinates.
+     * @param bShow when true, the bounding box is displayed.
+     */
+    public void ShowBoundingBox( int i, boolean bShow )
+    {
+        int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
+        if ( m_abShowBoundingBox[iIndex] == bShow )
+        {
+            return;
+        }
+        m_abShowBoundingBox[iIndex] = bShow;
+        if ( m_abShowBoundingBox[iIndex] )
+        {
+            m_kScene.AttachChild(m_akBoundingBox[iIndex]);
+        }
+        else
+        {
+            m_kScene.DetachChild(m_akBoundingBox[iIndex]);
+        }
+    }
+    /** Turns on/off displaying the given plane.
+     * @param i the plane index (0-3) in file coordinates.
+     * @param bShow when true, the plane is displayed.
+     */
+    public void ShowSlice( int i, boolean bShow )
+    {
+        int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
+        if ( m_abShowPlanes[iIndex] == bShow )
+        {
+            return;
+        }
+        m_abShowPlanes[iIndex] = bShow;
+        if ( m_abShowPlanes[iIndex] )
+        {
+            m_kScene.AttachChild(m_akPlanes[iIndex]);
+        }
+        else
+        {
+            m_kScene.DetachChild(m_akPlanes[iIndex]);
+        }
+    }
+    /**
+     * Turns rendering the planes with the surface mask on/off.
+     * @param bOn on/off.
+     */
+    public void ShowSurface( boolean bOn )
     {
         for ( int i = 0; i < 3; i++ )
-        {   
-            if ( m_kVolumePreShader != null )
-            {
-                if ( m_kVolumePreShader[i] != null )
-                {
-                    m_kVolumePreShader[i].dispose();
-                    m_kVolumePreShader[i] = null;
-                }
-                m_kVolumePreShader = null;
-            }
-            if ( m_akPlaneEffect != null )
-            {
-                if ( m_akPlaneEffect[i] != null )
-                {
-                    m_akPlaneEffect[i].dispose();
-                    m_akPlaneEffect[i] = null;
-                }
-                m_akPlaneEffect = null;
-            }
-            if ( m_akPlanes != null )
-            {
-                if ( m_akPlanes[i] != null )
-                {
-                    m_akPlanes[i].dispose();
-                    m_akPlanes[i] = null;
-                }
-                m_akPlanes = null;
-            }
-            if ( m_akBoundingBox != null )
-            {
-                if ( m_akBoundingBox[i] != null )
-                {
-                    m_akBoundingBox[i].dispose();
-                    m_akBoundingBox[i] = null;
-                }
-                m_akBoundingBox = null;
-            }
-            m_akColors[i] = null;
+        {
+            m_akPlaneEffect[i].ShowSurface(bOn);
         }
-        m_akColors = null;
-        m_abShowPlanes = null;
-        m_abShowBoundingBox = null;
+    }
+    /** Creates the bounding frames for the planes. */
+    private void CreateBoundingBox ( )
+    {
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetCChannels(0,3);
 
+        float fX = m_fX * .5f;
+        float fY = m_fY * .5f;
+        float fZ = m_fZ * .5f;
+        
+        VertexBuffer[] akOutlineSquare = new VertexBuffer[3];
+        for ( int i = 0; i < 3; i++ )
+        {
+            akOutlineSquare[i] = new VertexBuffer(kAttr, 4 );
+            for ( int j = 0; j < 4; j++ )
+            {
+                akOutlineSquare[i].SetColor3( 0, j, m_akColors[i] );
+            }
+        }
+
+        akOutlineSquare[0].SetPosition3( 0, fX, 0, 0 ) ;
+        akOutlineSquare[0].SetPosition3( 1, fX, 0, m_fZ ) ;
+        akOutlineSquare[0].SetPosition3( 2, fX, m_fY, m_fZ ) ;
+        akOutlineSquare[0].SetPosition3( 3, fX, m_fY, 0 ) ;
+
+        akOutlineSquare[1].SetPosition3( 0, m_fX, fY, m_fZ ) ;
+        akOutlineSquare[1].SetPosition3( 1, 0, fY, m_fZ ) ;
+        akOutlineSquare[1].SetPosition3( 2, 0, fY, 0 ) ;
+        akOutlineSquare[1].SetPosition3( 3, m_fX, fY, 0 ) ;
+
+        akOutlineSquare[2].SetPosition3( 0, m_fX, 0, fZ ) ;
+        akOutlineSquare[2].SetPosition3( 1, 0, 0, fZ ) ;
+        akOutlineSquare[2].SetPosition3( 2, 0, m_fY, fZ ) ;
+        akOutlineSquare[2].SetPosition3( 3, m_fX, m_fY, fZ ) ;
+
+        //System.err.println( "Bounding box " + m_fX + " " + m_fY + " " + m_fZ );
+        
+        m_akBoundingBox = new Polyline[3];
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akBoundingBox[i] = new Polyline( new VertexBuffer(akOutlineSquare[i]), true, true );
+            m_akBoundingBox[i].AttachEffect( m_kVolumePreShader[i] );
+            m_akBoundingBox[i].Local.SetTranslate(m_kTranslate);
+            m_kScene.AttachChild(m_akBoundingBox[i]);
+            //m_akBoundingBox[i].VBuffer.SetShared(true);
+            //m_akBoundingBox[i].IBuffer.SetShared(true);
+        }
     }
 
-    /** ShaderEffect for the plane bounding-boxes. */
-    private VolumePreRenderEffect[] m_kVolumePreShader;
-    /** ShaderEffects for the planes. Each is unique so they can have different alpha values. */
-    private VolumePlaneEffect[] m_akPlaneEffect;
-    /** The three orthogonal plane TriMeshes. */
-    private TriMesh[] m_akPlanes;
-    /** Displaying each plane: */
-    private boolean[] m_abShowPlanes = new boolean[]{true,true,true};
-    /** The three plane bounding-box Polylines. */
-    private Polyline[] m_akBoundingBox;
-    /** Displaying each bounding-box: */
-    private boolean[] m_abShowBoundingBox = new boolean[]{true,true,true};
+    /** Creates the scene graph. */
+    private void CreatePlanes ( )
+    {
+        m_kScene = new Node();
 
-    /** Set of colors used to draw the X and Y Bars and the Z box:. */
-    private ColorRGB[] m_akColors = { new ColorRGB(1, 0, 0), new ColorRGB(0, 1, 0), new ColorRGB(1, 1, 0) };
+        m_kCull = new CullState();
+        m_kCull.Enabled = false;
+        m_kScene.AttachGlobalState(m_kCull);
+
+        m_kAlpha = new AlphaState();
+        m_kAlpha.BlendEnabled = true;
+        m_kScene.AttachGlobalState(m_kAlpha);
+
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetCChannels(0,3);
+        kAttr.SetTChannels(0,3);
+
+        StandardMesh kSM = new StandardMesh(kAttr);
+        m_akPlanes = new TriMesh[3];
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlanes[i] = kSM.Rectangle(2,2,1.0f,1.0f);
+            m_akPlanes[i].Local.SetTranslate(m_kTranslate);
+            m_kScene.AttachChild(m_akPlanes[i]);
+            //m_akPlanes[i].VBuffer.SetShared(true);
+            //m_akPlanes[i].IBuffer.SetShared(true);
+        }
+    }
 }
