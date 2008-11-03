@@ -1,31 +1,62 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJColorChooser;
+import gov.nih.mipav.view.ViewToolBarBuilder;
+import gov.nih.mipav.view.dialogs.JDialogSmoothMesh;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.Decimate.TriangleMesh;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.view.renderer.WildMagic.*;
-import gov.nih.mipav.view.renderer.WildMagic.Decimate.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.util.Hashtable;
+import java.util.Random;
+import java.util.Vector;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+import javax.swing.JToolBar;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
-import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.event.*;
-
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Detail.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Detail.ClodMesh;
+import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.Rendering.WireframeState;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 
 public class JPanelSurface_WM extends JInterfaceBase
         implements ListSelectionListener, ChangeListener {
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -4600563188022683359L;
@@ -40,8 +71,6 @@ public class JPanelSurface_WM extends JInterfaceBase
         new ColorRGB(0.5f, 0.5f, 0.0f) // yellow
     };
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-
     /** The area label. */
     private JLabel areaLabel;
 
@@ -51,20 +80,15 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** The color button, which calls a color chooser. */
     private JButton colorButton;
 
-    /** Color chooser for when the user wants to change the color of the surface. */
-    private ViewJColorChooser colorChooser;
-
     /** The color button label. */
     private JLabel colorLabel;
 
-    // Polygon mode selection box:
     /** The polygon mode combo box label. */
     private JLabel comboLabel;
 
     /** Decimate button. */
     private JButton decimateButton;
 
-    // Level of detail labels/slider:
     /** The level of detail slider label. */
     private JLabel detailLabel;
 
@@ -77,7 +101,7 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** Save surface button. */
     private JButton levelSButton, levelVButton, levelWButton, levelXMLButton, levelSTLButton, levelPLYButton;
 
-    // Paint tool-bar (contained in the SurfacePaint class)
+    /** Paint tool-bar (contained in the SurfacePaint class) */
     private SurfacePaint_WM m_kSurfacePaint = null;
 
     /** The material options button, which launches the material editor window. */
@@ -86,7 +110,6 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** Opens SurfaceTexture dialog:. */
     private JButton m_kSurfaceTextureButton;
 
-    // Opacity labels/slider
     /** The opacity slider label. */
     private JLabel opacityLabel;
 
@@ -99,23 +122,19 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** The combo box for the polygon mode to display. */
     private JComboBox polygonModeCB;
 
-    // Interface Components in lay-out order:
     /** The scroll pane holding the panel content. Useful when the screen is small. */
     private JScrollPane scroller;
 
-    // Top tool-bar surface smooth, decimate, and save surface options:
     /** Smooth button. */
     private JButton smooth1Button, smooth2Button, smooth3Button;
 
     /** Polyline list box in the dialog for surfaces. */
     private JList polylineList;
     
-    // Surface list:
     /** The list box in the dialog for surfaces. */
     private JList surfaceList;
 
-    // Rendering/Picking options check boxes:
-    /** Check Box for surface pickable. */
+    /** Check Box for surface picking. */
     private JCheckBox surfacePickableCB;
 
     /** Check Box for surface back face culling. */
@@ -127,10 +146,6 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** Check Box for surface transparency. */
     private JCheckBox surfaceTransparencyCB;
 
-    /** A list of the surfaces. The elements are of type SurfaceAttributes. */
-    private Vector surfaceVector;
-
-    // Mesh statistics: Number of triangles, volume, surface area:
     /** The number of triangles label. */
     private JLabel triangleLabel;
 
@@ -143,6 +158,7 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** Displays the volume of triangle. */
     private JTextField volumeText;
 
+    /** List of TriMeshes */
     private Vector<TriMesh> m_kMeshes = new Vector<TriMesh>();
 
     /** Polyline counter list <index, groupID> */
@@ -157,45 +173,17 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** triangle mesh for decimation. */
     private TriangleMesh[] tmesh;
     
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    /**
+     * Constructor.
+     * @param kVolumeViewer parent frame.
+     */
     public JPanelSurface_WM( VolumeTriPlanarInterface kVolumeViewer )
     {
         super(kVolumeViewer);
-        surfaceVector = new Vector();
         m_kSurfacePaint = new SurfacePaint_WM(this, m_kVolumeViewer);
         init();
     }
     
-    /**
-     * Dispose the local memory.
-     */
-    public void dispose() {
-    	int i;
-    	
-    	if ( tmesh != null ) {
-    		for ( i = 0; i < tmesh.length; i++ ) {
-    			tmesh[i].dispose();
-    			tmesh[i] = null;
-    		}
-    		tmesh = null;
-    	}
-    	
-    	if (  m_kMeshes != null ) {
-    		for ( i = 0; i < m_kMeshes.size(); i++ ) {
-    			m_kMeshes.set(i, null);
-    		}
-    		m_kMeshes = null;
-    	}
-    	
-    	if ( m_kSurfacePaint != null ) {
-    		m_kSurfacePaint.dispose();
-    		m_kSurfacePaint = null;
-    	}
-    	
-    }
-
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
     /**
      * static function returns the next default surface color, based on the current number of surfaces displayed. If the
      * number of surfaces is less than the fixedColor.length then fixedColor is the source of the surface color,
@@ -253,7 +241,7 @@ public class JPanelSurface_WM extends JInterfaceBase
             removePolyline();
         }
         else if (command.equals("ChangeColor")) {
-            colorChooser = new ViewJColorChooser(new Frame(), "Pick surface color", new OkColorListener(),
+            colorChooser = new ViewJColorChooser(new Frame(), "Pick surface color", new OkColorListener(colorButton),
                                                  new CancelListener());
         } /* 
          else if (command.equals("ImageAsTexture")) {
@@ -297,85 +285,160 @@ public class JPanelSurface_WM extends JInterfaceBase
             decimate(surfaceList.getSelectedIndices());
         }
     }
-     
-    /** 
-     * Add polyline to the render.
+
+    /**
+     * Add surface to the volume image. Calls the FileSurface.openSurfaces function to open a file dialog so the user
+     * can choose the surfaces to add.
      */
-    private void addPolyline() {
-    	Polyline[] akPolylines = FilePolyline_WM.openPolylines(m_kVolumeViewer.getImageA(), surfaceVector.size());
-    	Vector3f m_kTranslate = m_kVolumeViewer.getVolumeGPU().getTranslate();
-    	
-    	 float m_fMax, m_fX, m_fY, m_fZ;
-    	 float fMaxX = (m_kVolumeViewer.getImageA().getExtents()[0] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[0];
-         float fMaxY = (m_kVolumeViewer.getImageA().getExtents()[1] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[1];
-         float fMaxZ = (m_kVolumeViewer.getImageA().getExtents()[2] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[2];
-
-         m_fMax = fMaxX;
-         if (fMaxY > m_fMax) {
-             m_fMax = fMaxY;
-         }
-         if (fMaxZ > m_fMax) {
-             m_fMax = fMaxZ;
-         }
-         m_fX = fMaxX/m_fMax;
-         m_fY = fMaxY/m_fMax;
-         m_fZ = fMaxZ/m_fMax;
-    	
-    	if ( akPolylines != null )
+    public void addSurface() {
+        TriMesh[] akSurfaces = FileSurface_WM.openSurfaces(m_kVolumeViewer.getImageA());
+        if ( akSurfaces != null )
         {
-        	DefaultListModel kList = (DefaultListModel)polylineList.getModel();
-            int iSize = kList.getSize();
-            
-            for ( int i = 0; i < akPolylines.length ; i++ ) {
-            	polylineCounterList.add(iSize + i, polylineCounter);
-            	
-            	 
-            	 for ( int j = 0; j < akPolylines[i].VBuffer.GetVertexQuantity(); j++ )
-                 {
+            addSurfaces(akSurfaces);
+        }
+    }
+     
+    /**
+     * Add surfaces to the Volume Tri-Planar renderer.
+     * @param akSurfaces new surfaces.
+     */
+    public void addSurfaces( TriMesh[] akSurfaces )
+    {
+        m_kVolumeViewer.addSurface(akSurfaces);
 
-           		  akPolylines[i].VBuffer.SetPosition3(j, akPolylines[i].VBuffer.GetPosition3fX(j) - m_kTranslate.X,
-           				  akPolylines[i].VBuffer.GetPosition3fY(j) - m_kTranslate.Y, 
-           				  akPolylines[i].VBuffer.GetPosition3fZ(j) - m_kTranslate.Z );
-           		   akPolylines[i].VBuffer.SetPosition3(j, 
-           				akPolylines[i].VBuffer.GetPosition3fX(j) * 1.0f/m_fX,
-           				akPolylines[i].VBuffer.GetPosition3fY(j) * 1.0f/m_fY,
-           				akPolylines[i].VBuffer.GetPosition3fZ(j) * 1.0f/m_fZ);
-                 } 
-                
-                akPolylines[i].Local.SetTranslate(new Vector3f(m_kTranslate.X, m_kTranslate.Y, m_kTranslate.Z));
-            	m_kVolumeViewer.addPolyline(akPolylines[i], polylineCounter);
-            	
-            	polylineCounter++;
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+        int iSize = kList.getSize();
+        for ( int i = 0; i < akSurfaces.length; i++ )
+        {
+            kList.add( iSize + i, akSurfaces[i].GetName() );
+            m_kMeshes.add(akSurfaces[i]);
+        }
+        surfaceList.setSelectedIndex(iSize);
+        setElementsEnabled(true);
+    }
+
+    /**
+     * Changes the polygon mode of the selected surface by detaching it, calling the appropriate method, and reattaching
+     * it.
+     *
+     * @param  mode  The new polygon mode to set.
+     */
+    public void changePolyMode(WireframeState.FillMode mode) {
+        int[] aiSelected = surfaceList.getSelectedIndices();
+
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.setPolygonMode( (String)kList.elementAt(aiSelected[i]), mode);
             }
-            
-            for ( int i = 0; i < akPolylines.length; i++ )
-            {
-                kList.add( iSize + i, akPolylines[i].GetName() );
-               
-            }
-            polylineList.setSelectedIndex(iSize);
-            
         }
     }
 
     /**
-     * Remove polyline from the render
+     * Dispose the local memory.
      */
-    private void removePolyline() {
-    	int[] aiSelected = polylineList.getSelectedIndices();
-    	int index;
-        DefaultListModel kList = (DefaultListModel)polylineList.getModel();
+    public void dispose() {
+    	int i;
+    	
+    	if ( tmesh != null ) {
+    		for ( i = 0; i < tmesh.length; i++ ) {
+    			tmesh[i].dispose();
+    			tmesh[i] = null;
+    		}
+    		tmesh = null;
+    	}
+    	
+    	if (  m_kMeshes != null ) {
+    		for ( i = 0; i < m_kMeshes.size(); i++ ) {
+    			m_kMeshes.set(i, null);
+    		}
+    		m_kMeshes = null;
+    	}
+    	
+    	if ( m_kSurfacePaint != null ) {
+    		m_kSurfacePaint.dispose();
+    		m_kSurfacePaint = null;
+    	}
+    	
+    }
+
+
+
+    /**
+     * Enables/Disables the SurfacePaint per-vertex functions.
+     * @param  bEnable  when true the SurfacePaint per-vertex functions (PaintBrush, Dropper, Eraser, BrushSize) are
+     *                  enabled, when false they are disabled.
+     */
+    public void enableSurfacePaint(boolean bEnable) {
+        m_kSurfacePaint.enableSurfacePaint(bEnable);
+    }
+
+
+    /**
+     * Enables/Disables the SurfacePaint Paint Can function.
+     * @param  bEnable  when true the Paint Can function is enabled, when false it is disabled.
+     */
+    public void enableSurfacePaintCan(boolean bEnable) {
+        m_kSurfacePaint.enableSurfacePaintCan(bEnable);
+    }
+
+    /**
+     * Return the name of the selected surface.
+     * @return name of the selected surface.
+     */
+    public String getSelectedSurface()
+    {
+        int[] aiSelected = surfaceList.getSelectedIndices();
+        if ( aiSelected.length == 0 )
+        {
+            return null;
+        }               
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+        return (String)kList.elementAt(aiSelected[aiSelected.length - 1]);
+    }
+
+    /**
+     * Return the names of the selected surfaces.
+     * @return names of the selected surfaces.
+     */
+    public String[] getSelectedSurfaces() {
+        int[] aiSelected = surfaceList.getSelectedIndices();
+        String[] akNames = new String[aiSelected.length];
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+        for (int i = 0; i < aiSelected.length; i++) {
+            akNames[i] = new String((String)kList.elementAt(aiSelected[i]));
+        }
+        return akNames;
+    }
+
+
+    /**
+     * Turn surface texture on/off.
+     * @param bTextureOn texture on/off.
+     * @param bUseNewImage when true use the user-specified ModelImage, when false use default ModelImage.
+     * @param bUseNewLUT when true use the user-specified LUT, when false use the defaulet LUT.
+     */
+    public void ImageAsTexture( boolean bTextureOn, boolean bUseNewImage, boolean bUseNewLUT )
+    {
+        int[] aiSelected = surfaceList.getSelectedIndices();
         if ( m_kVolumeViewer != null )
         {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
-            	index = (Integer)(polylineCounterList.elementAt(aiSelected[i]));
-                m_kVolumeViewer.removePolyline( index );
-                polylineCounterList.remove(aiSelected[i]);
+                m_kVolumeViewer.setSurfaceTexture( (String)kList.elementAt(aiSelected[i]),
+                        bTextureOn, bUseNewImage, bUseNewLUT);
             }
         }
-        for (int i = 0; i < aiSelected.length; i++) {
-            kList.remove(aiSelected[i]);
-        }
+        enableSurfacePaintCan(bTextureOn);
+    }
+
+    /**
+     * Check if the surface pickable checkbox be selected or not.
+     * @return  isSelected Surface pickable check box selected or not.
+     */
+    public boolean isSurfacePickableSelected() {
+        return surfacePickableCB.isSelected();
     }
 
     /**
@@ -390,9 +453,92 @@ public class JPanelSurface_WM extends JInterfaceBase
         scroller.setSize(new Dimension(panelWidth, frameHeight));
         scroller.revalidate();
     }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase#setButtonColor(javax.swing.JButton, java.awt.Color)
+     */
+    public void setButtonColor(JButton _button, Color _color) {
 
+        super.setButtonColor(_button, _color);
+
+        if ( m_kVolumeViewer != null )
+        {
+            int[] aiSelected = surfaceList.getSelectedIndices();
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.setColor( (String)kList.elementAt(aiSelected[i]),
+                        new ColorRGB( _color.getRed()/255.0f, 
+                                _color.getGreen()/255.0f,
+                                _color.getBlue()/255.0f ));
+            }
+        }
+    }
 
     /**
+     * Set the paint can color.
+     * @param kDropperColor color.
+     * @param kPickPoint picked point on the surface.
+     */
+    public void setDropperColor( ColorRGBA kDropperColor, Vector3f kPickPoint )
+    {
+        if ( m_kSurfacePaint != null )
+        {
+            m_kSurfacePaint.setDropperColor(kDropperColor, kPickPoint);
+        }
+    }
+
+    /**
+     * Set the user-specified ModelImage to use as the surface texture.
+     * @param kImage ModelImage to use as the surface texture.
+     */
+    public void SetImageNew(  ModelImage kImage )
+    {
+        int[] aiSelected = surfaceList.getSelectedIndices();
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.SetImageNew( (String)kList.elementAt(aiSelected[i]), kImage);
+            }
+        }
+    }
+
+    /**
+     * Set the user-specified LUT for surface texture.
+     * @param kLUT ModelLUT
+     * @param kRGBT ModelRGB for color images.
+     */
+    public void SetLUTNew(  ModelLUT kLUT, ModelRGB kRGBT )
+    {
+        int[] aiSelected = surfaceList.getSelectedIndices();
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.SetLUTNew( (String)kList.elementAt(aiSelected[i]), kLUT, kRGBT);
+            }
+        }
+    }
+
+    /**
+     * Called from the JPanelSurfaceMAterialProperties.java dialog when the dialog is used to change the material
+     * properties of a surface. The surface is determined by the index iIndex. The color button is set to the Material
+     * diffuse color.
+     *
+     * @param  kMaterial  Material reference
+     * @param  iIndex     int material index
+     */
+    public void setMaterial(MaterialState kMaterial, int iIndex) {
+        colorButton.setBackground( new Color(kMaterial.Diffuse.R, kMaterial.Diffuse.G, kMaterial.Diffuse.B) );
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            m_kVolumeViewer.setMaterial( (String)kList.elementAt(iIndex), kMaterial);
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
      */
     public void stateChanged(ChangeEvent event)
     {
@@ -484,10 +630,38 @@ public class JPanelSurface_WM extends JInterfaceBase
             
         }
     }
-
-
-
+    
     /**
+     * Returns true if a surface exists in the Renderer.
+     * @return true if a surface exists in the Renderer.
+     */
+    public boolean surfaceAdded()
+    {
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+        if ( kList.size() > 0 )
+        {
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Toggle which type of Geodesic is displayed on the surface (Euclidian, Dijkstra, Geodesic).
+     * @param iWhich type of Geodesic is displayed on the surface (Euclidian, Dijkstra, Geodesic).
+     */
+    public void toggleGeodesicPathDisplay(int iWhich) {
+        int[] aiSelected = surfaceList.getSelectedIndices();
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.toggleGeodesicPathDisplay( (String)kList.elementAt(aiSelected[i]),
+                        iWhich);
+            }
+        }
+    }    
+    /* (non-Javadoc)
+     * @see javax.swing.event.ListSelectionListener#valueChanged(javax.swing.event.ListSelectionEvent)
      */
     public void valueChanged(ListSelectionEvent kEvent)
     {
@@ -518,6 +692,66 @@ public class JPanelSurface_WM extends JInterfaceBase
         }
     }
 
+    /** 
+     * Add polyline to the render.
+     */
+    private void addPolyline() {
+    	Polyline[] akPolylines = FilePolyline_WM.openPolylines(m_kVolumeViewer.getImageA());
+    	Vector3f m_kTranslate = m_kVolumeViewer.getVolumeGPU().getTranslate();
+    	
+    	 float m_fMax, m_fX, m_fY, m_fZ;
+    	 float fMaxX = (m_kVolumeViewer.getImageA().getExtents()[0] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[0];
+         float fMaxY = (m_kVolumeViewer.getImageA().getExtents()[1] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[1];
+         float fMaxZ = (m_kVolumeViewer.getImageA().getExtents()[2] - 1) * m_kVolumeViewer.getImageA().getFileInfo(0).getResolutions()[2];
+
+         m_fMax = fMaxX;
+         if (fMaxY > m_fMax) {
+             m_fMax = fMaxY;
+         }
+         if (fMaxZ > m_fMax) {
+             m_fMax = fMaxZ;
+         }
+         m_fX = fMaxX/m_fMax;
+         m_fY = fMaxY/m_fMax;
+         m_fZ = fMaxZ/m_fMax;
+    	
+    	if ( akPolylines != null )
+        {
+        	DefaultListModel kList = (DefaultListModel)polylineList.getModel();
+            int iSize = kList.getSize();
+            
+            for ( int i = 0; i < akPolylines.length ; i++ ) {
+            	polylineCounterList.add(iSize + i, polylineCounter);
+            	
+            	 
+            	 for ( int j = 0; j < akPolylines[i].VBuffer.GetVertexQuantity(); j++ )
+                 {
+
+           		  akPolylines[i].VBuffer.SetPosition3(j, akPolylines[i].VBuffer.GetPosition3fX(j) - m_kTranslate.X,
+           				  akPolylines[i].VBuffer.GetPosition3fY(j) - m_kTranslate.Y, 
+           				  akPolylines[i].VBuffer.GetPosition3fZ(j) - m_kTranslate.Z );
+           		   akPolylines[i].VBuffer.SetPosition3(j, 
+           				akPolylines[i].VBuffer.GetPosition3fX(j) * 1.0f/m_fX,
+           				akPolylines[i].VBuffer.GetPosition3fY(j) * 1.0f/m_fY,
+           				akPolylines[i].VBuffer.GetPosition3fZ(j) * 1.0f/m_fZ);
+                 } 
+                
+                akPolylines[i].Local.SetTranslate(new Vector3f(m_kTranslate.X, m_kTranslate.Y, m_kTranslate.Z));
+            	m_kVolumeViewer.addPolyline(akPolylines[i], polylineCounter);
+            	
+            	polylineCounter++;
+            }
+            
+            for ( int i = 0; i < akPolylines.length; i++ )
+            {
+                kList.add( iSize + i, akPolylines[i].GetName() );
+               
+            }
+            polylineList.setSelectedIndex(iSize);
+            
+        }
+    }
+    
     /**
      * Build the toolbar.
      */
@@ -557,7 +791,7 @@ public class JPanelSurface_WM extends JInterfaceBase
 
         mainPanel.add(toolBarPanel, BorderLayout.NORTH);
     }
-
+    
     /**
      * Creates a label in the proper font and color.
      *
@@ -574,51 +808,89 @@ public class JPanelSurface_WM extends JInterfaceBase
         return label;
     }
 
-
     /**
-     * This is called when the user chooses a new color for the surface. It changes the color of the surface.
-     *
-     * @param  color  Color to change surface to.
+     * Decimate the selected surfaces.
+     * @param  aiSelected   selected surfaces.
      */
-    private void getColorChange(Color color)
-    {
+    private void decimate(int[] aiSelected) {
+        
         if ( m_kVolumeViewer != null )
         {
-            int[] aiSelected = surfaceList.getSelectedIndices();
+            TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
+           
             DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            tmesh = new TriangleMesh[ aiSelected.length ];
             for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.setColor( (String)kList.elementAt(aiSelected[i]),
-                        new ColorRGB( color.getRed()/255.0f, 
-                                color.getGreen()/255.0f,
-                                color.getBlue()/255.0f ));
+            	
+                TriMesh kMesh = m_kMeshes.get(aiSelected[i]);
+                VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
+                IndexBuffer kIBuffer = new IndexBuffer( kMesh.IBuffer);
+                
+                
+                /*
+                ClodCreator decimator = new ClodCreator(kVBuffer, kIBuffer);
+               
+                vertices = decimator.getVertices();
+                indices = decimator.getIndices();
+                record = decimator.getRecords();
+               
+        		int iVQuantity = kVBuffer.GetVertexQuantity();
+                
+                int m_iTQuantity = kIBuffer.GetIndexQuantity()/3;
+                int[] m_aiConnect = kIBuffer.GetData();
+                indices.get(m_aiConnect);
+                kIBuffer = new IndexBuffer(m_aiConnect.length, m_aiConnect);
+                
+                WildMagic.LibGraphics.SceneGraph.lod.CollapseRecordArray records = new WildMagic.LibGraphics.SceneGraph.lod.CollapseRecordArray(record.length, record);
+                WildMagic.LibGraphics.SceneGraph.lod.ClodMesh kClod = new WildMagic.LibGraphics.SceneGraph.lod.ClodMesh(kVBuffer, kIBuffer, records);
+                
+                */
+                
+                // CreateClodMesh kDecimator = new CreateClodMesh(kVBuffer, kIBuffer);
+
+                // kDecimator.decimate();
+                // ClodMesh kClod = new ClodMesh(kVBuffer, kIBuffer, kDecimator.getRecords());
+                // kClod.SetName( kMesh.GetName() );
+                tmesh[i] = new TriangleMesh(kVBuffer, kIBuffer);
+                TriMesh mesh = new TriMesh(kVBuffer, kIBuffer);
+                mesh.SetName( kMesh.GetName() );
+                tmesh[i].SetName(kMesh.GetName());
+                akSurfaces[i] = mesh;
+
+                m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
+
+                m_kMeshes.set(aiSelected[i], mesh);
+            }
+
+
+            m_kVolumeViewer.addSurface(akSurfaces);
+
+
+            decimateButton.setEnabled(false);
+            detailSlider.setEnabled(true);
+            detailLabel.setEnabled(true);
+
+            for (int j = 0; j < detailSliderLabels.length; j++) {
+                detailSliderLabels[j].setEnabled(true);
             }
         }
     }
 
-
     /**
-     * Returns an array of SurfaceAttributes based on which surfaces are selected by the user in the surfaceList
-     * combo-box. Only surfaces are selected, VOI points are ignored.
-     *
-     * @param   aiSelected  the list of selected indices in the surfaceList
-     *
-     * @return  an array of SurfaceAttributes that contains the corresponding list of surfaces from the surfaceVector.
-    private SurfaceAttributes[] getSelectedSurfaces(int[] aiSelected) {
-
-        if (aiSelected.length == 0) {
-            return null;
-        }
-
-        SurfaceAttributes[] selectedSurfaces = new SurfaceAttributes[aiSelected.length];
-
-        for (int i = 0; i < aiSelected.length; i++) {
-            selectedSurfaces[i] = (SurfaceAttributes) surfaceVector.get(aiSelected[i]);
-        }
-
-        return selectedSurfaces;
-    }
+     * Display the Surface Material dialog for the selected surfaces.
+     * @param aiSelected the selected surfaces.
      */
-
+    private void displayAdvancedMaterialOptions(int[] aiSelected) {
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                new JFrameSurfaceMaterialProperties_WM(this, aiSelected[i], m_kVolumeViewer.GetLights(),
+                        m_kVolumeViewer.getMaterial( (String)kList.elementAt(aiSelected[i]) ) );
+            }
+        }
+    }
+   
     /**
      * Initializes the GUI components.
      */
@@ -985,33 +1257,123 @@ public class JPanelSurface_WM extends JInterfaceBase
     }
 
     /**
-     * Add surface to the volume image. Calls the FileSurface.openSurfaces function to open a file dialog so the user
-     * can choose the surfaces to add.
+     * Convert from the polygon mode combo-box list index to the PolygonAttributes.POLYGON_LINE,
+     * PolygonAttributes.POLYGON_POINT, and PolygonAttributes.POLYGON_FILL values:
+     *
+     * @param   index  the index of the selected polygon mode in the polygonModeCB combo box.
+     *
+     * @return  the corresponding PolygonAttributes defined value.
      */
-    public void addSurface() {
-        //SurfaceAttributes[] surface = FileSurface.openSurfaces(parentScene.getImageA(), surfaceVector.size());
-        TriMesh[] akSurfaces = FileSurface_WM.openSurfaces(m_kVolumeViewer.getImageA(), surfaceVector.size());
-        if ( akSurfaces != null )
+    private WireframeState.FillMode polygonIndexToMode(int index) {
+        switch (index) {
+
+            case 1:
+                return WireframeState.FillMode.FM_LINE;
+
+            case 2:
+                return WireframeState.FillMode.FM_POINT;
+
+            case 0:
+            default:
+                return WireframeState.FillMode.FM_FILL;
+        }
+    }
+
+    /**
+     * Remove polyline from the render
+     */
+    private void removePolyline() {
+    	int[] aiSelected = polylineList.getSelectedIndices();
+    	int index;
+        DefaultListModel kList = (DefaultListModel)polylineList.getModel();
+        if ( m_kVolumeViewer != null )
         {
-            addSurfaces(akSurfaces);
+            for (int i = 0; i < aiSelected.length; i++) {
+            	index = (Integer)(polylineCounterList.elementAt(aiSelected[i]));
+                m_kVolumeViewer.removePolyline( index );
+                polylineCounterList.remove(aiSelected[i]);
+            }
+        }
+        for (int i = 0; i < aiSelected.length; i++) {
+            kList.remove(aiSelected[i]);
+        }
+    }
+
+    /**
+     * Remove the selected surfaces.
+     */
+    private void removeSurface()
+    {
+        int[] aiSelected = surfaceList.getSelectedIndices();
+
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+        if ( m_kVolumeViewer != null )
+        {
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
+            }
+        }
+        for (int i = 0; i < aiSelected.length; i++) {
+            kList.remove(aiSelected[i]);
+            m_kMeshes.remove(aiSelected[i]);
         }
     }
     
-    public void addSurfaces( TriMesh[] akSurfaces )
+    /**
+     * Save the selected surfaces. The kCommand parameter determines the file type.
+     * @param aiSelected selected surfaces.
+     * @param kCommand save command, specifies the file type.
+     */
+    private void saveSurfaces( int[] aiSelected, String kCommand )
     {
-        m_kVolumeViewer.addSurface(akSurfaces);
 
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-        int iSize = kList.getSize();
-        for ( int i = 0; i < akSurfaces.length; i++ )
-        {
-            kList.add( iSize + i, akSurfaces[i].GetName() );
-            m_kMeshes.add(akSurfaces[i]);
+        if (aiSelected == null) {
+            MipavUtil.displayError("Select a surface to save.");
+            return;
         }
-        surfaceList.setSelectedIndex(iSize);
-        setElementsEnabled(true);
-    }
 
+        if ( m_kVolumeViewer != null )
+        {
+            TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
+            for (int i = 0; i < aiSelected.length; i++) {
+                akSurfaces[i] = m_kMeshes.get(aiSelected[i]);
+            }
+            FileSurface_WM.saveSurfaces(m_kVolumeViewer.getImageA(), akSurfaces, kCommand );
+        }
+    }
+    
+    /**
+     * Turn backface culling on/off for the selected surfaces.
+     * @param aiSelected selected surfaces.
+     */
+    private void setBackface(int[] aiSelected) {
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.setBackface( (String)kList.elementAt(aiSelected[i]),
+                        surfaceBackFaceCB.isSelected());
+            }
+
+        }
+    }
+    
+    /**
+     * Turns Clipping on/off for the selected surfaces.
+     * @param  aiSelected  the list of selected surfaces (SurfaceAttributes)
+     */
+    private void setClipping(int[] aiSelected) {
+        if ( m_kVolumeViewer != null )
+        {
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_kVolumeViewer.setClipping( (String)kList.elementAt(aiSelected[i]),
+                                             surfaceClipCB.isSelected());
+            }
+
+        }
+    }
+    
     /**
      * Sets the surface options GUI panel to enabled or disabled. If there are 0 or multiple surfaces selected, all the
      * options should be disabled.
@@ -1055,71 +1417,25 @@ public class JPanelSurface_WM extends JInterfaceBase
         surfaceTransparencyCB.setEnabled(flag);
         m_kSurfacePaint.setEnabled(flag);
     }
-
+    
     /**
-     * Changes the polygon mode of the selected surface by detaching it, calling the appropriate method, and reattaching
-     * it.
-     *
-     * @param  mode  The new polygon mode to set.
+     * Turn picking culling on/off for the selected surfaces.
+     * @param aiSelected selected surfaces.
      */
-    public void changePolyMode(WireframeState.FillMode mode) {
-        int[] aiSelected = surfaceList.getSelectedIndices();
-
+    private void setPickable(int[] aiSelected) {
         if ( m_kVolumeViewer != null )
         {
             DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.setPolygonMode( (String)kList.elementAt(aiSelected[i]), mode);
+                m_kVolumeViewer.setPickable( (String)kList.elementAt(aiSelected[i]),
+                        surfacePickableCB.isSelected());
             }
         }
     }
-
-    /**
-     */
-    private void removeSurface()
-    {
-        int[] aiSelected = surfaceList.getSelectedIndices();
-
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-        if ( m_kVolumeViewer != null )
-        {
-            for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
-            }
-        }
-        for (int i = 0; i < aiSelected.length; i++) {
-            kList.remove(aiSelected[i]);
-            m_kMeshes.remove(aiSelected[i]);
-        }
-    }
-
-    /**
-     * Convert from the polygon mode combo-box list index to the PolygonAttributes.POLYGON_LINE,
-     * PolygonAttributes.POLYGON_POINT, and PolygonAttributes.POLYGON_FILL values:
-     *
-     * @param   index  the index of the selected polygon mode in the polygonModeCB combo box.
-     *
-     * @return  the corresponding PolygonAttributes defined value.
-     */
-    private WireframeState.FillMode polygonIndexToMode(int index) {
-        switch (index) {
-
-            case 1:
-                return WireframeState.FillMode.FM_LINE;
-
-            case 2:
-                return WireframeState.FillMode.FM_POINT;
-
-            case 0:
-            default:
-                return WireframeState.FillMode.FM_FILL;
-        }
-    }
-
+    
     /**
      * Turns Transparency on/off for the selected surfaces.
-     *
-     * @param  surfaces  the list of selected surfaces (SurfaceAttributes)
+     * @param  aiSelected  the list of selected surfaces (SurfaceAttributes)
      */
     private void setTransparency(int[] aiSelected) {
 
@@ -1135,285 +1451,14 @@ public class JPanelSurface_WM extends JInterfaceBase
             }
         }
     }
-    
-    /**
-     * Turns Clipping on/off for the selected surfaces.
-     *
-     * @param  surfaces  the list of selected surfaces (SurfaceAttributes)
-     */
-    private void setClipping(int[] aiSelected) {
-        if ( m_kVolumeViewer != null )
-        {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.setClipping( (String)kList.elementAt(aiSelected[i]),
-                                             surfaceClipCB.isSelected());
-            }
-
-        }
-    }
-    
-
-    private void setBackface(int[] aiSelected) {
-        if ( m_kVolumeViewer != null )
-        {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.setBackface( (String)kList.elementAt(aiSelected[i]),
-                        surfaceBackFaceCB.isSelected());
-            }
-
-        }
-    }    
-
-    private void setPickable(int[] aiSelected) {
-        if ( m_kVolumeViewer != null )
-        {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.setPickable( (String)kList.elementAt(aiSelected[i]),
-                        surfacePickableCB.isSelected());
-            }
-        }
-    }
-
-    public void ImageAsTexture( boolean bTextureOn, boolean bUseNewImage, boolean bUseNewLUT )
-    {
-        int[] aiSelected = surfaceList.getSelectedIndices();
-        if ( m_kVolumeViewer != null )
-        {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.setSurfaceTexture( (String)kList.elementAt(aiSelected[i]),
-                        bTextureOn, bUseNewImage, bUseNewLUT);
-            }
-        }
-        enableSurfacePaintCan(bTextureOn);
-    }
-    
-    public void SetLUTNew(  ModelLUT kLUT, ModelRGB kRGBT )
-    {
-        int[] aiSelected = surfaceList.getSelectedIndices();
-        if ( m_kVolumeViewer != null )
-        {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.SetLUTNew( (String)kList.elementAt(aiSelected[i]), kLUT, kRGBT);
-            }
-        }
-    }
-    
-    public void SetImageNew(  ModelImage kImage )
-    {
-        int[] aiSelected = surfaceList.getSelectedIndices();
-        if ( m_kVolumeViewer != null )
-        {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.SetImageNew( (String)kList.elementAt(aiSelected[i]), kImage);
-            }
-        }
-    }
-
-    /**
-     */
-    private void displayAdvancedMaterialOptions(int[] aiSelected) {
-        if ( m_kVolumeViewer != null )
-        {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            for (int i = 0; i < aiSelected.length; i++) {
-                new JFrameSurfaceMaterialProperties_WM(this, aiSelected[i], m_kVolumeViewer.GetLights(),
-                        m_kVolumeViewer.getMaterial( (String)kList.elementAt(aiSelected[i]) ) );
-            }
-        }
-    }
-
-    /**
-     * Called from the JPanelSurfaceMAterialProperties.java dialog when the dialog is used to change the material
-     * properties of a surface. The surface is determined by the index iIndex. The color button is set to the Material
-     * diffuse color.
-     *
-     * @param  kMaterial  Material reference
-     * @param  iIndex     int material index
-     */
-    public void setMaterial(MaterialState kMaterial, int iIndex) {
-        colorButton.setBackground( new Color(kMaterial.Diffuse.R, kMaterial.Diffuse.G, kMaterial.Diffuse.B) );
-        if ( m_kVolumeViewer != null )
-        {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            m_kVolumeViewer.setMaterial( (String)kList.elementAt(iIndex), kMaterial);
-        }
-    }
 
 
-    /**
-     * Builds a titled border with the given title, an etched border, and the
-     * proper font and color.  Changed to public static member so that it can
-     * be used for other JPanels not inherited from this base class.
-     * @param   title  Title of the border
-     *
-     * @return  The titled border.
-     */
-    public static TitledBorder buildTitledBorder(String title) {
-        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
-                                Color.black);
-    }
-    
-    /**
-     * Enables/Disables the SurfacePaint per-vertex functions.
-     *
-     * @param  bEnable  when true the SurfacePaint per-vertex functions (PaintBrush, Dropper, Eraser, BrushSize) are
-     *                  enabled, when false they are disabled.
-     */
-    public void enableSurfacePaint(boolean bEnable) {
-        m_kSurfacePaint.enableSurfacePaint(bEnable);
-    }
-
-    /**
-     * Enables/Disables the SurfacePaint Paint Can function.
-     *
-     * @param  bEnable  when true the Paint Can function is enabled, when false it is disabled.
-     */
-    public void enableSurfacePaintCan(boolean bEnable) {
-        m_kSurfacePaint.enableSurfacePaintCan(bEnable);
-    }
-
-    /**
-     * Check if the surface pickable checkbox be selected or not.
-     *
-     * @return  isSelected Surface pickable check box selected or not.
-     */
-    public boolean isSurfacePickableSelected() {
-        return surfacePickableCB.isSelected();
-    }
-
-    public boolean surfaceAdded()
-    {
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-        if ( kList.size() > 0 )
-        {
-            return true;
-        }
-        return false;
-    }
-    
-    public String getSelectedSurface()
-    {
-        int[] aiSelected = surfaceList.getSelectedIndices();
-        if ( aiSelected.length == 0 )
-        {
-            return null;
-        }               
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-        return (String)kList.elementAt(aiSelected[aiSelected.length - 1]);
-    }
-    
-    
-    public String[] getSelectedSurfaces() {
-        int[] aiSelected = surfaceList.getSelectedIndices();
-        String[] akNames = new String[aiSelected.length];
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-        for (int i = 0; i < aiSelected.length; i++) {
-            akNames[i] = new String((String)kList.elementAt(aiSelected[i]));
-        }
-        return akNames;
-    }
-    
-    public void setDropperColor( ColorRGBA kDropperColor, Vector3f kPickPoint )
-    {
-        if ( m_kSurfacePaint != null )
-        {
-            m_kSurfacePaint.setDropperColor(kDropperColor, kPickPoint);
-        }
-    }
-    
-    public void toggleGeodesicPathDisplay(int iWhich) {
-        int[] aiSelected = surfaceList.getSelectedIndices();
-        if ( m_kVolumeViewer != null )
-        {
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.toggleGeodesicPathDisplay( (String)kList.elementAt(aiSelected[i]),
-                        iWhich);
-            }
-        }
-    }
-    
-    /**
-     * Decimate the surface.
-     *
-     * @param  surfaces  DOCUMENT ME!
-     */
-    private void decimate(int[] aiSelected) {
-        
-        if ( m_kVolumeViewer != null )
-        {
-            TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
-           
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            tmesh = new TriangleMesh[ aiSelected.length ];
-            for (int i = 0; i < aiSelected.length; i++) {
-            	
-                TriMesh kMesh = m_kMeshes.get(aiSelected[i]);
-                VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
-                IndexBuffer kIBuffer = new IndexBuffer( kMesh.IBuffer);
-                
-                
-                /*
-                ClodCreator decimator = new ClodCreator(kVBuffer, kIBuffer);
-               
-                vertices = decimator.getVertices();
-                indices = decimator.getIndices();
-                record = decimator.getRecords();
-               
-        		int iVQuantity = kVBuffer.GetVertexQuantity();
-                
-                int m_iTQuantity = kIBuffer.GetIndexQuantity()/3;
-                int[] m_aiConnect = kIBuffer.GetData();
-                indices.get(m_aiConnect);
-                kIBuffer = new IndexBuffer(m_aiConnect.length, m_aiConnect);
-                
-                WildMagic.LibGraphics.SceneGraph.lod.CollapseRecordArray records = new WildMagic.LibGraphics.SceneGraph.lod.CollapseRecordArray(record.length, record);
-                WildMagic.LibGraphics.SceneGraph.lod.ClodMesh kClod = new WildMagic.LibGraphics.SceneGraph.lod.ClodMesh(kVBuffer, kIBuffer, records);
-                
-                */
-                
-                // CreateClodMesh kDecimator = new CreateClodMesh(kVBuffer, kIBuffer);
-
-                // kDecimator.decimate();
-                // ClodMesh kClod = new ClodMesh(kVBuffer, kIBuffer, kDecimator.getRecords());
-                // kClod.SetName( kMesh.GetName() );
-                tmesh[i] = new TriangleMesh(kVBuffer, kIBuffer);
-                TriMesh mesh = new TriMesh(kVBuffer, kIBuffer);
-                mesh.SetName( kMesh.GetName() );
-                tmesh[i].SetName(kMesh.GetName());
-                akSurfaces[i] = mesh;
-
-                m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
-
-                m_kMeshes.set(aiSelected[i], mesh);
-            }
-
-
-            m_kVolumeViewer.addSurface(akSurfaces);
-
-
-            decimateButton.setEnabled(false);
-            detailSlider.setEnabled(true);
-            detailLabel.setEnabled(true);
-
-            for (int j = 0; j < detailSliderLabels.length; j++) {
-                detailSliderLabels[j].setEnabled(true);
-            }
-        }
-    }
-    
     /**
      * Smoothes the selected surfaces. One dialog per group of selected surfaces is displayed (not a different dialog
-     * per-serface).
+     * per-surface).
      *
-     * @param  surfaces    the list of selected surfaces (SurfaceAttributes)
-     * @param  smoothType  the level of smoothing JDialogSmoothMesh.SMOOTH1, JDialogSmoothMesh.SMOOTH2, or
+     * @param  aiSelected    the list of selected surfaces (SurfaceAttributes)
+     * @param  iSmoothType  the level of smoothing JDialogSmoothMesh.SMOOTH1, JDialogSmoothMesh.SMOOTH2, or
      *                     JDialogSmoothMesh.SMOOTH3
      */
     private void smoothSurface(int[] aiSelected, int iSmoothType )
@@ -1484,57 +1529,6 @@ public class JPanelSurface_WM extends JInterfaceBase
             // while one length across the actual volume changes by ((dim-1)*res)max
             volumeText.setText("" + volume);
             areaText.setText("" + area);
-        }
-    }
-
-
-    private void saveSurfaces( int[] aiSelected, String kCommand )
-    {
-
-        if (aiSelected == null) {
-            MipavUtil.displayError("Select a surface to save.");
-            return;
-        }
-
-        if ( m_kVolumeViewer != null )
-        {
-            TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
-            for (int i = 0; i < aiSelected.length; i++) {
-                akSurfaces[i] = m_kMeshes.get(aiSelected[i]);
-            }
-            FileSurface_WM.saveSurfaces(m_kVolumeViewer.getImageA(), akSurfaces, kCommand );
-        }
-    }
-    
-    /**
-     * Cancel the color dialog, change nothing.
-     */
-    class CancelListener implements ActionListener {
-
-        /**
-         * Do nothing.
-         *
-         * @param  e  action event
-         */
-        public void actionPerformed(ActionEvent e) { }
-    }
-
-
-    /**
-     * Pick up the selected color and call method to change the surface color.
-     */
-    class OkColorListener implements ActionListener {
-
-        /**
-         * Sets the button color to the chosen color and changes the color of the surface.
-         *
-         * @param  e  Event that triggered this method.
-         */
-        public void actionPerformed(ActionEvent e) {
-            Color color = colorChooser.getColor();
-
-            colorButton.setBackground(color);
-            getColorChange(color);
         }
     }
 }

@@ -203,7 +203,7 @@ implements ItemListener, ChangeListener {
     public void buildDTIParametersPanel() {
     	DTIParametersPanel = new JPanel();
     	
-    	DTIparamsPanel = new JPanelDTIParametersPanel(this, ((VolumeTriPlanerRenderDTI)raycastRenderWM));
+    	DTIparamsPanel = new JPanelDTIParametersPanel(this, raycastRenderWM);
     	
     	DTIParametersPanel.add(DTIparamsPanel.getMainPanel());
     	
@@ -424,7 +424,7 @@ implements ItemListener, ChangeListener {
      */
     protected void resizePanel() {
         super.resizePanel();        
-        int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
+        //int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
         panelToolbar.getHeight();
         //if (DTIimageLoadPanel != null) {
         //	DTIimageLoadPanel.resizePanel(maxPanelWidth, height);

@@ -332,17 +332,13 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
         }
     }
 
-    /**
-     * windowActivated.
-     *
-     * @param  e  WindowEvent
+    /* (non-Javadoc)
+     * @see java.awt.event.WindowListener#windowActivated(java.awt.event.WindowEvent)
      */
     public void windowActivated(WindowEvent e) { }
 
-    /**
-     * windowClosed.
-     *
-     * @param  e  WindowEvent
+    /* (non-Javadoc)
+     * @see java.awt.event.WindowListener#windowClosed(java.awt.event.WindowEvent)
      */
     public void windowClosed(WindowEvent e) { }
 
@@ -359,29 +355,23 @@ public class JFrameSurfaceMaterialProperties_WM extends JFrame
         this.dispose();
     }
 
-    /**
-     * windowDeactivated.
-     *
-     * @param  e  WindowEvent
+    /* (non-Javadoc)
+     * @see java.awt.event.WindowListener#windowDeactivated(java.awt.event.WindowEvent)
      */
     public void windowDeactivated(WindowEvent e) { }
 
-    /**
-     * windowDeiconified.
-     *
-     * @param  e  WindowEvent
+    /* (non-Javadoc)
+     * @see java.awt.event.WindowListener#windowDeiconified(java.awt.event.WindowEvent)
      */
     public void windowDeiconified(WindowEvent e) { }
 
-    /**
-     * windowIconified.
-     *
-     * @param  e  WindowEvent
+    /* (non-Javadoc)
+     * @see java.awt.event.WindowListener#windowIconified(java.awt.event.WindowEvent)
      */
     public void windowIconified(WindowEvent e) { }
 
     /**
-     * windowOpened.
+     * Starts Animator on windowOpened.
      *
      * @param  e  WindowEvent
      */

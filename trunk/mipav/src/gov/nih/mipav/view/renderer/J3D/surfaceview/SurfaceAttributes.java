@@ -96,9 +96,9 @@ public class SurfaceAttributes {
 
 
     /** Constructor. Most common usage of SurfaceAttributes. 
-     * @param mesh, array of ModelTriangleMesh objects the SurfaceAttributes describes
-     * @param fullPath, directory/file name containing the triangle mesh
-     * @param name, file name
+     * @param mesh array of ModelTriangleMesh objects the SurfaceAttributes describes
+     * @param fullPath directory/file name containing the triangle mesh
+     * @param name file name
      */
     public SurfaceAttributes( ModelTriangleMesh[] mesh,
                               String fullPath, String name )
@@ -138,7 +138,7 @@ public class SurfaceAttributes {
 
     /**
      * sets the array of ModelTriangleMesh objects:
-     * @param mesh, array of ModelTriangleMesh objects.
+     * @param mesh array of ModelTriangleMesh objects.
      */
     public void setMesh( ModelTriangleMesh[] mesh )
     {
@@ -156,7 +156,7 @@ public class SurfaceAttributes {
 
     /**
      * sets the array of Shape3D objects:
-     * @param surfaceShape, array of Shape3D objects.
+     * @param surfaceShape array of Shape3D objects.
      */
     public void setShape( Shape3D[] surfaceShape )
     {
@@ -175,7 +175,7 @@ public class SurfaceAttributes {
     /**
      * sets the surface Material. the Material diffuse color is used to set
      * the color value as well.
-     * @param material, new surface Material.
+     * @param material new surface Material.
      */
     public void setMaterial( Material material )
     {
@@ -275,7 +275,7 @@ public class SurfaceAttributes {
 
     /**
      * sets the surface Opacity. 
-     * @param opacity, new opacity value.
+     * @param opacity new opacity value.
      */
     public void setOpacity( float opacity )
     {
@@ -303,7 +303,7 @@ public class SurfaceAttributes {
 
     /**
      * sets the level of detail for the ClodMesh
-     * @param levelDetail, the level of detail
+     * @param levelDetail the level of detail
      */
     public void setLevelDetail( int levelDetail )
     {
@@ -321,7 +321,7 @@ public class SurfaceAttributes {
 
     /**
      * sets the BranchGroup in the scene graph that renders the surface.
-     * @param branch, BranchGroup in the scenegraph
+     * @param branch BranchGroup in the scenegraph
      */
     public void setBranch( BranchGroup branch )
     {
@@ -340,7 +340,7 @@ public class SurfaceAttributes {
     /**
      * Sets the volume mask data -- the intersection of the triangle mesh with
      * the volume data.
-     * @param mask, the BitSet mask data
+     * @param mask the BitSet mask data
      */
     public void setMask( BitSet mask )
     {
@@ -358,7 +358,7 @@ public class SurfaceAttributes {
 
     /**
      * Sets the clod mesh flag.
-     * @param isClod, when true the mesh is of type ClodMesh, when false the
+     * @param isClod when true the mesh is of type ClodMesh, when false the
      * mesh is ModelTriangleMesh
      */
     public void setIsClodMesh( boolean isClod )
@@ -406,7 +406,7 @@ public class SurfaceAttributes {
 
     /**
      * Restores the ModelTriangleMesh per-vertex colors to the saved per-vertex colors. 
-     * @param material, the material to restore.
+     * @param material the material to restore.
      */
     public void restorePerVertexColors( Material material )
     {
@@ -427,7 +427,7 @@ public class SurfaceAttributes {
     /**
      * Sets the surface color. Also sets the Material diffuse, specular, and
      * ambient colors.
-     * @param color, the new surface Color.
+     * @param color the new surface Color.
      */
     public void setColor( Color4f color )
     {
@@ -487,7 +487,7 @@ public class SurfaceAttributes {
     /**
      * Sets the surface polygon mode. PolygonAttributes.POLYGON_FILL,
      * PolygonAttributes.POLYGON_LINE, or PolygonAttributes.POLYGON_POINT
-     * @param mode, PolygonAttributes mode
+     * @param mode PolygonAttributes mode
      */
     public void setPolygonMode( int mode )
     {
@@ -511,7 +511,7 @@ public class SurfaceAttributes {
 
     /**
      * Sets the value of the surface volume.
-     * @param volume, the surface volume contained in the ModelTriangleMesh objects.
+     * @param volume the surface volume contained in the ModelTriangleMesh objects.
      */
     public void setVolume( float volume )
     {
@@ -529,7 +529,7 @@ public class SurfaceAttributes {
 
     /**
      * Sets the value of the surface area of the ModelTriangleMesh objects.
-     * @param area, the surface area of the ModelTriangleMesh objects.
+     * @param area the surface area of the ModelTriangleMesh objects.
      */
     public void setArea( float area )
     {
@@ -547,7 +547,7 @@ public class SurfaceAttributes {
 
     /**
      * Sets the number of triangles of the ModelTriangleMesh objects.
-     * @param nTriangles, the number of triangles of the ModelTriangleMesh objects.
+     * @param nTriangles the number of triangles of the ModelTriangleMesh objects.
      */
     public void setNumberTriangles( int nTriangles )
     {

@@ -693,7 +693,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
 	/**
 	 * Loads the BMatrix file.
 	 * 
-	 * @param kFileName,
+	 * @param kFileName
 	 *            name of BMatrix file.
 	 */
 	private void loadBMatrixFile(String kFileName) {
@@ -754,7 +754,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
 	 * 
 	 * @param kFileName
 	 *            path file name.
-	 * @param kPathName,
+	 * @param kPathName
 	 *            parent directory.
 	 */
 	public void loadPathFile(String kFileName, String kPathName) {

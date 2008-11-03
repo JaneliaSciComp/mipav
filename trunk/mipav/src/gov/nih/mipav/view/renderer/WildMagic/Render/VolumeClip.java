@@ -13,12 +13,12 @@ import WildMagic.LibGraphics.SceneGraph.*;
 public class VolumeClip extends VolumeObject
 {
     /** Creates a new VolumeClip object.
-     * @param kImageA, the VolumeImage containing shared data and textures for
+     * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
-     * @param kTranslate, translation in the scene-graph for this object.
-     * @param fX, the size of the volume in the x-dimension (extent * resolutions)
-     * @param fY, the size of the volume in the y-dimension (extent * resolutions)
-     * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
+     * @param kTranslate translation in the scene-graph for this object.
+     * @param fX the size of the volume in the x-dimension (extent * resolutions)
+     * @param fY the size of the volume in the y-dimension (extent * resolutions)
+     * @param fZ the size of the volume in the z-dimension (extent * resolutions)
      */
     public VolumeClip ( VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ )
     {
@@ -32,8 +32,8 @@ public class VolumeClip extends VolumeObject
 
     /**
      * PreRender the object, for embedding in the ray-cast volume.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void PreRender( Renderer kRenderer, Culler kCuller )
     {
@@ -48,8 +48,8 @@ public class VolumeClip extends VolumeObject
 
     /**
      * Render the object.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void Render( Renderer kRenderer, Culler kCuller )
     {
@@ -65,8 +65,8 @@ public class VolumeClip extends VolumeObject
     /** 
      * Render the object after all other objects have been rendererd. Useful
      * for screen-space objects such as the eye-clip plane.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void PostRender( Renderer kRenderer, Culler kCuller )
     {
@@ -134,7 +134,7 @@ public class VolumeClip extends VolumeObject
 
     /**
      * Called from JPanelClip. Sets the axis-aligned clip plane display on/off.
-     * @param iWhich, the clip plane to set.
+     * @param iWhich the clip plane to set.
      * @param bDisplay on/off.
      */
     public void displayClipPlane( int iWhich, boolean bDisplay )
@@ -163,8 +163,8 @@ public class VolumeClip extends VolumeObject
 
     /**
      * Sets the axis-aligned clip plane color.
-     * @param iWhich, one of the 6 clip planes
-     * @param kColor, the new color.
+     * @param iWhich one of the 6 clip planes
+     * @param kColor the new color.
      */
     public void setClipPlaneColor( int iWhich, ColorRGB kColor )
     {
@@ -177,7 +177,7 @@ public class VolumeClip extends VolumeObject
 
     /**
      * Sets the eye clip plane color.
-     * @param kColor, the new color.
+     * @param kColor the new color.
      */
     public void setEyeColor( ColorRGB kColor )
     {
@@ -190,7 +190,7 @@ public class VolumeClip extends VolumeObject
 
     /**
      * Sets the eye clip plane color.
-     * @param kColor, the new color.
+     * @param kColor the new color.
      */
     public void setEyeInvColor( ColorRGB kColor )
     {
@@ -203,8 +203,8 @@ public class VolumeClip extends VolumeObject
 
     /**
      * Sets the axis-aligned clip plane clipping position.
-     * @param iWhich, one of the 6 clip planes
-     * @param fValue, the clipping position.
+     * @param iWhich one of the 6 clip planes
+     * @param fValue the clipping position.
      */
     public void setClipPlane( int iWhich, float fValue )
     {
@@ -276,7 +276,7 @@ public class VolumeClip extends VolumeObject
     }
 
     /** Turns displaying the eye clip plane on/off.
-     * @param bDisplay, when true display the eye clip plane.
+     * @param bDisplay when true display the eye clip plane.
      */
     public void DisplayEye(boolean bDisplay)
     {
@@ -284,7 +284,7 @@ public class VolumeClip extends VolumeObject
     }
 
     /** Turns displaying the inverse-eye clip plane on/off.
-     * @param bDisplay, when true display the inverse-eye clip plane.
+     * @param bDisplay when true display the inverse-eye clip plane.
      */
     public void DisplayEyeInv(boolean bDisplay)
     {
@@ -293,7 +293,7 @@ public class VolumeClip extends VolumeObject
 
 
     /** Turns displaying the aribtrary clip plane on/off.
-     * @param bDisplay, when true display the arbitrary clip plane.
+     * @param bDisplay when true display the arbitrary clip plane.
      */
     public void DisplayArb(boolean bDisplay)
     {
@@ -322,7 +322,7 @@ public class VolumeClip extends VolumeObject
 
     /**
      * Sets the arbitrary clip plane color.
-     * @param kColor, the new color.
+     * @param kColor the new color.
      */
     public void setArbColor( ColorRGB kColor )
     {
@@ -344,7 +344,7 @@ public class VolumeClip extends VolumeObject
     }
 
     /** Returns the value of the specified axis-aligend clip plane.
-     * @param iWhich, one of the 6 clip planes
+     * @param iWhich one of the 6 clip planes
      * @return the value of the specified axis-aligend clip plane.
      */
     public float GetValue(int iWhich)

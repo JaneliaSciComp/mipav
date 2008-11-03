@@ -1,20 +1,35 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
+import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJColorChooser;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.util.Hashtable;
+
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.JTextField;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-
-import gov.nih.mipav.*;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.WildMagic.*;
-
-import java.awt.*;
-import java.awt.event.*;
-
-import java.util.*;
-
-
-import javax.swing.*;
-import javax.swing.event.*;
 
 
 /**
@@ -25,12 +40,9 @@ import javax.swing.event.*;
 public class JPanelSlices_WM extends JInterfaceBase
     implements ChangeListener 
 {
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -8359831093707979536L;
-
-    //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Check boxes that turn the image plane on and off. */
     public JCheckBox boxX, boxY, boxZ;
@@ -61,9 +73,6 @@ public class JPanelSlices_WM extends JInterfaceBase
 
     /** Color button for changing bounding box color. */
     private JButton[] colorButton = new JButton[3];
-
-    /** Color chooser dialog. */
-    private ViewJColorChooser colorChooser;
 
     /** Main panel for sliders. */
     private JPanel controlPanel;
@@ -100,16 +109,13 @@ public class JPanelSlices_WM extends JInterfaceBase
 
     /** x, y, z opacity slider values. */
     private int xOpacitySlice, yOpacitySlice, zOpacitySlice;
-
+    
     /** Probe x, y, z position. */
     private int xProbe, yProbe, zProbe;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
-
-
     /**
-     * Creates new dialog for turning slices bounding box frame on and off.
-     *
+     * Constructor.
+     * @param kVolumeViewer parent frame.
      */
     public JPanelSlices_WM(VolumeTriPlanarInterface kVolumeViewer) {
         super(kVolumeViewer);
@@ -142,8 +148,6 @@ public class JPanelSlices_WM extends JInterfaceBase
 
         init();
     }
-
-    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Changes color of slices box frame and button if color button was
@@ -230,7 +234,7 @@ public class JPanelSlices_WM extends JInterfaceBase
         }
 
     }
-    
+
     /**
      * Builds panel that has 3 sliders for the 3 planes shown, 3 checkboxes
      * for showing the planes, 3 text boxes for the current values of the
@@ -546,13 +550,6 @@ public class JPanelSlices_WM extends JInterfaceBase
     }
 
     /**
-     * When 3D texture volume render is invoked, disable all the slices and
-     * bounding frame boxes.
-     */
-    public void disableSlices() {
-    }
-
-    /**
      * Dispose memory.
      */
     public void dispose() {
@@ -593,13 +590,6 @@ public class JPanelSlices_WM extends JInterfaceBase
         opacityControlPanel = null;
         controlPanel = null;
         colorChooser = null;
-        //sliderEvents = null;
-    }
-
-    /**
-     * Enable slider X, Y, Z and triplanar.
-     */
-    public void enableSlices() {
     }
 
     /**
@@ -630,6 +620,24 @@ public class JPanelSlices_WM extends JInterfaceBase
     }
 
     /**
+     * Gets the three slider positions, representing the center point of the
+     * three orthogonal planes. The center point is translated from local
+     * ModelCoordinates into FileCoordinates.
+     * @return, the center of the three orthogonal planes (the three slider
+     * positions) in FileCoordinates.
+     */
+    public Vector3f getCenter( )
+    {
+        Vector3f center = new Vector3f();
+        if ( m_kVolumeViewer != null )
+        {
+            MipavCoordinateSystems.modelToFile( new Vector3f( xSlice, ySlice, zSlice ), center,
+                                                m_kVolumeViewer.getImageA() );
+        }        
+        return center;
+    }
+
+    /**
      * Return the X opacity slider.
      *
      * @return  opcitySliderX Opacity slider X.
@@ -654,6 +662,26 @@ public class JPanelSlices_WM extends JInterfaceBase
      */
     public JSlider getOpacitySliderZ() {
         return opacitySliderZ;
+    }
+
+    /**
+     * Get the current slider value for the slider that matches the
+     * orientation input parameter.
+     * @param orientation either FileInfoBase.AXIAL, FileInfoBase.CORONAL,
+     * FileInfoBase.SAGITTAL, or FileInfoBase.UNKNOWN_ORIENT.
+     * @return The slider position for the given orientation is returned.  *
+     */
+    public int getSlice( int orientation )
+    {
+        if ( orientation == FileInfoBase.AXIAL )
+        {
+            return xSlice;
+        }
+        else if ( orientation == FileInfoBase.CORONAL )
+        {
+            return ySlice;
+        }
+        return zSlice;
     }
 
     /**
@@ -684,6 +712,16 @@ public class JPanelSlices_WM extends JInterfaceBase
     }
 
     /**
+     * slice slider visible or not.
+     *
+     * @return sliceVisible if <code>true</code> visible, otherwise invisible.
+     */
+    public boolean getVisible( int orientation )
+    {
+        return sliceVisible[orientation];
+    }
+
+    /**
      * Get the x opacity slider value.
      *
      * @return  xOpacityslice X opacity slider value.
@@ -702,81 +740,12 @@ public class JPanelSlices_WM extends JInterfaceBase
     }
 
     /**
-     * Get the current slider value for the slider that matches the
-     * orientation input parameter.
-     * @param orientation, either FileInfoBase.AXIAL, FileInfoBase.CORONAL,
-     * FileInfoBase.SAGITTAL, or FileInfoBase.UNKNOWN_ORIENT.
-     * @return The slider position for the given orientation is returned.  *
-     */
-    public int getSlice( int orientation )
-    {
-        if ( orientation == FileInfoBase.AXIAL )
-        {
-            return xSlice;
-        }
-        else if ( orientation == FileInfoBase.CORONAL )
-        {
-            return ySlice;
-        }
-        return zSlice;
-    }
-
-    /**
-     * Sets the three slider positions, based on the position of the
-     * three orthogonal planes: AXIAL, CORONAL, and SAGITTAL.
-     * @param x, center x-position in FileCoordinates
-     * @param y, center y-position in FileCoordinates
-     * @param z, center z-position in FileCoordinates
-     */
-    public void setCenter( int x, int y, int z )
-    {
-        Vector3f center = new Vector3f();
-        if ( m_kVolumeViewer != null )
-        {
-            MipavCoordinateSystems.fileToModel( new Vector3f( x, y, z ), center,
-                                                m_kVolumeViewer.getImageA() );
-        }
-
-        setXSlicePos( (int)center.X );
-        setYSlicePos( (int)center.Y );
-        setZSlicePos( (int)center.Z );
-    }
-
-    /**
-     * Gets the three slider positions, representing the center point of the
-     * three orthogonal planes. The center point is translated from local
-     * ModelCoordinates into FileCoordinates.
-     * @return, the center of the three orthogonal planes (the three slider
-     * positions) in FileCoordinates.
-     */
-    public Vector3f getCenter( )
-    {
-        Vector3f center = new Vector3f();
-        if ( m_kVolumeViewer != null )
-        {
-            MipavCoordinateSystems.modelToFile( new Vector3f( xSlice, ySlice, zSlice ), center,
-                                                m_kVolumeViewer.getImageA() );
-        }        
-        return center;
-    }
-
-    /**
      * Get the X slider value.
      *
      * @return  xSlice X slider value.
      */
     public int getXSlice() {
         return xSlice;
-    }
-
-    /**
-     * slice slider visible or not.
-     *
-     * @return sliceVisible if <code>true</code> visible, otherwise invisible.
-     */
-    public boolean getVisible( int orientation )
-    {
-        return sliceVisible[orientation];
     }
 
     /**
@@ -815,6 +784,7 @@ public class JPanelSlices_WM extends JInterfaceBase
         return zOpacitySlice;
     }
 
+
     /**
      * Get the probe z coordinate.
      *
@@ -824,6 +794,7 @@ public class JPanelSlices_WM extends JInterfaceBase
         return zProbe;
     }
 
+
     /**
      * Get the z slider value.
      *
@@ -832,7 +803,6 @@ public class JPanelSlices_WM extends JInterfaceBase
     public int getZSlice() {
         return zSlice;
     }
-
 
     /**
      * Initializes GUI components.
@@ -860,9 +830,8 @@ public class JPanelSlices_WM extends JInterfaceBase
         mainPanel.add(scroller);
     }
 
-
     /**
-     * Resizig the control panel with ViewJFrameVolumeView's frame width and height.
+     * Resizing the control panel with ViewJFrameVolumeView's frame width and height.
      *
      * @param  panelWidth   DOCUMENT ME!
      * @param  frameHeight  DOCUMENT ME!
@@ -871,6 +840,49 @@ public class JPanelSlices_WM extends JInterfaceBase
         scroller.setPreferredSize(new Dimension(panelWidth, frameHeight - 40));
         scroller.setSize(new Dimension(panelWidth, frameHeight - 40));
         scroller.revalidate();
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase#setButtonColor(javax.swing.JButton, java.awt.Color)
+     */
+    public void setButtonColor(JButton _button, Color _color) {
+
+        super.setButtonColor(_button, _color);
+        if ( m_kVolumeViewer == null )
+        {
+            return;
+        }
+        if ( m_kVolumeViewer != null )
+        {
+            if (_button == colorButton[0]) {
+                m_kVolumeViewer.setSliceHairColor( 0, _color );
+            } else if (_button == colorButton[1]) {
+                m_kVolumeViewer.setSliceHairColor( 1, _color );
+            } else if (_button == colorButton[2]) {
+                m_kVolumeViewer.setSliceHairColor( 2, _color );
+            }
+        }
+    }
+
+    /**
+     * Sets the three slider positions, based on the position of the
+     * three orthogonal planes: AXIAL, CORONAL, and SAGITTAL.
+     * @param x center x-position in FileCoordinates
+     * @param y center y-position in FileCoordinates
+     * @param z center z-position in FileCoordinates
+     */
+    public void setCenter( int x, int y, int z )
+    {
+        Vector3f center = new Vector3f();
+        if ( m_kVolumeViewer != null )
+        {
+            MipavCoordinateSystems.fileToModel( new Vector3f( x, y, z ), center,
+                                                m_kVolumeViewer.getImageA() );
+        }
+
+        setXSlicePos( (int)center.X );
+        setYSlicePos( (int)center.Y );
+        setZSlicePos( (int)center.Z );
     }
 
     /**
@@ -922,18 +934,6 @@ public class JPanelSlices_WM extends JInterfaceBase
     }
 
     /**
-     * Set the current x slider move position.
-     *
-     * @param  _xSlice  x slider position
-     */
-    private void setXSlicePos(int _xSlice)
-    {
-        xSlice = _xSlice;
-        sliderX.setValue(xSlice);
-        textX.setText(String.valueOf(xSlice + 1));
-    }
-
-    /**
      * Sets the x slider and the labels beside and beneath it to the state
      * given by <code>flag</code>.
      *
@@ -957,17 +957,6 @@ public class JPanelSlices_WM extends JInterfaceBase
     }
 
     /**
-     * Set the current y slider move position.
-     *
-     * @param  _ySlice  y slider position
-     */
-    private void setYSlicePos(int _ySlice) {
-        ySlice = _ySlice;
-        sliderY.setValue(ySlice);
-        textY.setText(String.valueOf(ySlice + 1));
-    }
-
-    /**
      * Sets the y slider and the labels beside and beneath it to the state
      * given by <code>flag</code>.
      *
@@ -988,17 +977,6 @@ public class JPanelSlices_WM extends JInterfaceBase
      */
     public void setZProbePos(int _zProbe) {
         zProbe = _zProbe;
-    }
-
-    /**
-     * Set the current z slider move position.
-     *
-     * @param  _zSlice  z slider position
-     */
-    private void setZSlicePos(int _zSlice) {
-        zSlice = _zSlice;
-        sliderZ.setValue(zSlice);
-        textZ.setText(String.valueOf(zSlice + 1));
     }
 
     /**
@@ -1089,29 +1067,6 @@ public class JPanelSlices_WM extends JInterfaceBase
             if ( m_kVolumeViewer != null )
             {
                 m_kVolumeViewer.setSliceOpacity( 2, zOpacitySlice/100.0f );
-            }
-        }
-    }
-
-    /**
-     * Calls the appropriate method in the parent frame.
-     *
-     * @param  button  DOCUMENT ME!
-     * @param  color   Color to set box frame to.
-     */
-    protected void setBoxColor(JButton button, Color color) {
-        if ( m_kVolumeViewer == null )
-        {
-            return;
-        }
-        if ( m_kVolumeViewer != null )
-        {
-            if (button == colorButton[0]) {
-                m_kVolumeViewer.setSliceHairColor( 0, color );
-            } else if (button == colorButton[1]) {
-                m_kVolumeViewer.setSliceHairColor( 1, color );
-            } else if (button == colorButton[2]) {
-                m_kVolumeViewer.setSliceHairColor( 2, color );
             }
         }
     }
@@ -1278,68 +1233,37 @@ public class JPanelSlices_WM extends JInterfaceBase
         return label;
     }
 
-   
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
     /**
-     * Does nothing.
+     * Set the current x slider move position.
+     *
+     * @param  _xSlice  x slider position
      */
-    class CancelListener implements ActionListener {
-
-        /**
-         * Does nothing.
-         *
-         * @param  e  DOCUMENT ME!
-         */
-        public void actionPerformed(ActionEvent e) { }
+    private void setXSlicePos(int _xSlice)
+    {
+        xSlice = _xSlice;
+        sliderX.setValue(xSlice);
+        textX.setText(String.valueOf(xSlice + 1));
     }
 
     /**
-     * Wrapper in order to hold the control panel layout in the JScrollPane.
+     * Set the current y slider move position.
+     *
+     * @param  _ySlice  y slider position
      */
-    class DrawingPanel extends JPanel {
-
-        /** Use serialVersionUID for interoperability. */
-        private static final long serialVersionUID = -6456589720445279985L;
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param  g  DOCUMENT ME!
-         */
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-        }
+    private void setYSlicePos(int _ySlice) {
+        ySlice = _ySlice;
+        sliderY.setValue(ySlice);
+        textY.setText(String.valueOf(ySlice + 1));
     }
 
     /**
-     * Pick up the selected color and call method to change the VOI color.
+     * Set the current z slider move position.
+     *
+     * @param  _zSlice  z slider position
      */
-    class OkColorListener implements ActionListener {
-
-        /** DOCUMENT ME! */
-        JButton button;
-
-        /**
-         * Creates a new OkColorListener object.
-         *
-         * @param  _button  DOCUMENT ME!
-         */
-        OkColorListener(JButton _button) {
-            super();
-            button = _button;
-        }
-
-        /**
-         * Get color from chooser and set button and VOI color.
-         *
-         * @param  e  Event that triggered function.
-         */
-        public void actionPerformed(ActionEvent e) {
-            Color color = colorChooser.getColor();
-
-            button.setBackground(color);
-            setBoxColor(button, color);
-        }
+    private void setZSlicePos(int _zSlice) {
+        zSlice = _zSlice;
+        sliderZ.setValue(zSlice);
+        textZ.setText(String.valueOf(zSlice + 1));
     }
 }

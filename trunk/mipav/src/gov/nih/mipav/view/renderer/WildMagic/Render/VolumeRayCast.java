@@ -55,8 +55,8 @@ public class VolumeRayCast extends VolumeObject
 
     /** 
      * PreRender renders the proxy geometry into the PBuffer texture.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void PreRender( Renderer kRenderer, Culler kCuller )
     {
@@ -120,8 +120,8 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Render the object.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void Render( Renderer kRenderer, Culler kCuller )
     {
@@ -143,7 +143,7 @@ public class VolumeRayCast extends VolumeObject
 
     /** Sets displaying the second pass. For debugging. Rendering the first
      * pass obly displays the proxy-geometry bounding box.
-     * @param bDisplay, when true display both passes (the default). When
+     * @param bDisplay when true display both passes (the default). When
      * false display only the proxy-geometry.
      */
     public void SetDisplaySecond( boolean bDisplay )
@@ -206,15 +206,15 @@ public class VolumeRayCast extends VolumeObject
     
     /**
      * Called by the init() function. Creates and initialized the scene-graph.
-     * @param eFormat, FrameBuffer.FormatType 
-     * @param eDepth, FrameBuffer.DepthType
-     * @param eStencil, FrameBuffer.StencilType
-     * @param eBuffering, FrameBuffer.BufferingType
-     * @param eMultisampling, FrameBuffer.MultisamplingType
-     * @param iWidth, canvas width
-     * @param iHeight, canvas height
-     * @param arg0, the GLCanvas
-     * @param kRenderer, the OpenGLRenderer.
+     * @param eFormat FrameBuffer.FormatType 
+     * @param eDepth FrameBuffer.DepthType
+     * @param eStencil FrameBuffer.StencilType
+     * @param eBuffering FrameBuffer.BufferingType
+     * @param eMultisampling FrameBuffer.MultisamplingType
+     * @param iWidth canvas width
+     * @param iHeight canvas height
+     * @param arg0 the GLCanvas
+     * @param kRenderer the OpenGLRenderer.
      */
     public void CreateScene ( FrameBuffer.FormatType eFormat,
             FrameBuffer.DepthType eDepth, FrameBuffer.StencilType eStencil,
@@ -506,7 +506,7 @@ public class VolumeRayCast extends VolumeObject
     }
 
     /** Sets axis-aligned clipping for the VolumeShaderEffect.
-     * @param afClip, the clipping parameters for axis-aligned clipping.
+     * @param afClip the clipping parameters for axis-aligned clipping.
      */
     public void SetClip( int iWhich, float data, boolean bEnable)
     {
@@ -514,7 +514,7 @@ public class VolumeRayCast extends VolumeObject
     }
 
     /** Sets eye clipping for the VolumeShaderEffect.
-     * @param afEquation, the eye clipping equation.
+     * @param afEquation the eye clipping equation.
      */
     public void SetClipEye( float[] afEquation, boolean bEnable )
     {
@@ -522,7 +522,7 @@ public class VolumeRayCast extends VolumeObject
     }
 
     /** Sets inverse-eye clipping for the VolumeShaderEffect.
-     * @param afEquation, the inverse-eye clipping equation.
+     * @param afEquation the inverse-eye clipping equation.
      */
     public void SetClipEyeInv( float[] afEquation, boolean bEnable )
     {
@@ -530,7 +530,7 @@ public class VolumeRayCast extends VolumeObject
     }
 
     /** Sets arbitrary clipping for the VolumeShaderEffect.
-     * @param afEquation, the arbitrary-clip plane equation.
+     * @param afEquation the arbitrary-clip plane equation.
      */
     public void SetClipArb( float[] afEquation, boolean bEnable )
     {
@@ -538,7 +538,7 @@ public class VolumeRayCast extends VolumeObject
     }
 
     /** Reloads the VolumeShaderEffect current shader program.
-     * @param kRenderer, the OpenGLRenderer object.
+     * @param kRenderer the OpenGLRenderer object.
      */
     public void ReloadVolumeShader( Renderer kRenderer )
     {
@@ -546,8 +546,8 @@ public class VolumeRayCast extends VolumeObject
     }
 
     /** Sets lighting in the VolumeShaderEffect.
-     * @param kLightType, name of the light to set.
-     * @param afType, the type of light to set.
+     * @param kLightType name of the light to set.
+     * @param afType the type of light to set.
      */
     public void SetLight( String kLightType, float[] afType )
     {
@@ -556,7 +556,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Display the volume in MIP mode.
-     * @param kRenderer, the OpenGLRenderer object.
+     * @param kRenderer the OpenGLRenderer object.
      */
     public void MIPMode( Renderer kRenderer )
     {
@@ -565,7 +565,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Display the volume in DDR mode.
-     * @param kRenderer, the OpenGLRenderer object.
+     * @param kRenderer the OpenGLRenderer object.
      */
     public void DDRMode(Renderer kRenderer)
     {
@@ -574,7 +574,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Display the volume in Composite mode.
-     * @param kRenderer, the OpenGLRenderer object.
+     * @param kRenderer the OpenGLRenderer object.
      */
     public void CMPMode(Renderer kRenderer)
     {
@@ -583,7 +583,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Display the volume in Composite Surface mode.
-     * @param kRenderer, the OpenGLRenderer object.
+     * @param kRenderer the OpenGLRenderer object.
      */
     public void SURMode(Renderer kRenderer)
     {
@@ -592,7 +592,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Display the volume in Surface mode.
-     * @param kRenderer, the OpenGLRenderer object.
+     * @param kRenderer the OpenGLRenderer object.
      */
     public void SURFASTMode(Renderer kRenderer)
     {
@@ -601,7 +601,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Sets blending between imageA and imageB.
-     * @param fValue, the blend value (0-1)
+     * @param fValue the blend value (0-1)
      */
     public void setABBlend( float fValue )
     {
@@ -610,7 +610,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Sets the raytracing steps size.
-     * @param fValue, the steps value (0-450)
+     * @param fValue the steps value (0-450)
      */
     public void StepsSize( float fValue )
     {
@@ -619,7 +619,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Sets the background color.
-     * @param kColor, new background color.
+     * @param kColor new background color.
      */
     public void SetBackgroundColor( ColorRGBA kColor )
     {
@@ -628,7 +628,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Enables/Disables Gradient Magnitude filter.
-     * @param bShow, gradient magnitude filter on/off
+     * @param bShow gradient magnitude filter on/off
      */
     public void SetGradientMagnitude(boolean bShow)
     {
@@ -637,7 +637,7 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Enables/Disables self-shadowing in the Surface mode.
-     * @param bShadow, shadow on/off.
+     * @param bShadow shadow on/off.
      */
     public void SelfShadow(boolean bShadow)
     {
@@ -654,7 +654,7 @@ public class VolumeRayCast extends VolumeObject
     }
 
     /** Sets the blend factor for displaying the ray-cast volume with other objects in the scene.
-     * @param fBlend, the blend factor for the ray-cast volume.
+     * @param fBlend the blend factor for the ray-cast volume.
      */
     public void setVolumeBlend( float fBlend )
     {
@@ -668,7 +668,7 @@ public class VolumeRayCast extends VolumeObject
      * Called from the AdvancedMaterialProperties dialog. Sets the material
      * properties for the VolumeShaderSUR (Surface and Composite Surface
      * volume shaders.)
-     * @param kMaterial, new material properties for the surface mode.
+     * @param kMaterial new material properties for the surface mode.
      */
     public void SetMaterialState( MaterialState kMaterial )
     {

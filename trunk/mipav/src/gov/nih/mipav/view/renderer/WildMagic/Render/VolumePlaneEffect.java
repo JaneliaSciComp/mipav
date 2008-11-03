@@ -18,9 +18,9 @@ public class VolumePlaneEffect extends ShaderEffect
 {
     /** 
      * Creates a new VolumeShaderEffect object.
-     * @param kVolumeImageA, the VolumeImage containing shared data and
+     * @param kVolumeImageA the VolumeImage containing shared data and
      * textures for rendering.
-     * @param bUnique, when true the shader program must be unique.
+     * @param bUnique when true the shader program must be unique.
      */
     public VolumePlaneEffect ( VolumeImage kVolumeImageA, VolumeImage kVolumeImageB, boolean bUnique )
     {
@@ -31,7 +31,7 @@ public class VolumePlaneEffect extends ShaderEffect
     
     /** 
      * Creates a new VolumeShaderEffect object.
-     * @param kVolumeImageA, the VolumeImage containing shared data and
+     * @param kVolumeImageA the VolumeImage containing shared data and
      * textures for rendering.
      */
     public VolumePlaneEffect ( VolumeImage kVolumeImageA, VolumeImage kVolumeImageB )
@@ -122,7 +122,7 @@ public class VolumePlaneEffect extends ShaderEffect
  
     /**
      * Sets the blend factor shader parameter between imageA and imageB.
-     * @param fBlend, blend factor (range = 0-1).
+     * @param fBlend blend factor (range = 0-1).
      */
     public float GetBlend()
     {
@@ -131,7 +131,7 @@ public class VolumePlaneEffect extends ShaderEffect
     
     /**
      * Sets the blend factor shader parameter between imageA and imageB.
-     * @param fBlend, blend factor (range = 0-1).
+     * @param fBlend blend factor (range = 0-1).
      */
     public void Blend(float fBlend)
     {
@@ -155,7 +155,7 @@ public class VolumePlaneEffect extends ShaderEffect
 
     /**
      * Sets the BackgroundColor shader parameter.
-     * @param kColor, new BackgroundColor.
+     * @param kColor new BackgroundColor.
      */
     public void SetBackgroundColor( ColorRGBA kColor )
     {
@@ -175,7 +175,7 @@ public class VolumePlaneEffect extends ShaderEffect
      * Registers this object with the input Stream parameter. All objects
      * streamed to disk are registered with the Stream so that a unique list
      * of objects is maintained.
-     * @param rkStream, the Stream where the child objects are stored.
+     * @param rkStream the Stream where the child objects are stored.
      * @return true if this object is registered, false if the object has
      * already been registered.
      */
@@ -190,7 +190,7 @@ public class VolumePlaneEffect extends ShaderEffect
 
     /**
      * Write this object and all it's children to the Stream.
-     * @param rkStream, the Stream where the child objects are stored.
+     * @param rkStream the Stream where the child objects are stored.
      */
     public void Save (Stream rkStream)
     {
@@ -217,7 +217,7 @@ public class VolumePlaneEffect extends ShaderEffect
     /**
      * Returns the size of this object and it's children on disk for the
      * current StreamVersion parameter.
-     * @param rkVersion, the current version of the Stream file being created.
+     * @param rkVersion the current version of the Stream file being created.
      * @return the size of this object on disk.
      */
     public int GetDiskUsed (StreamVersion rkVersion)
@@ -229,7 +229,7 @@ public class VolumePlaneEffect extends ShaderEffect
 
     /**
      * Write this object into a StringTree for the scene-graph visualization.
-     * @param acTitle, the header for this object in the StringTree.
+     * @param acTitle the header for this object in the StringTree.
      * @return StringTree containing a String-based representation of this
      * object and it's children.
      */

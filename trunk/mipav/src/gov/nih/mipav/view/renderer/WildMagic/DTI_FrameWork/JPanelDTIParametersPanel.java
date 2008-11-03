@@ -340,7 +340,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     /**
      * Pass the DTI image to the GPUVolumeRender.
      * 
-     * @param kDTIImage,
+     * @param kDTIImage
      *            new DTI image.
      */
     protected void setDTIImage(ModelImage kDTIImage) {
@@ -357,7 +357,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     /**
      * Gets a new fiber bundle index.
      * 
-     * @param kBundleList,
+     * @param kBundleList
      *            list of fiber bundles.
      */
     private int getMinUnused(Vector<Integer> kBundleList) {
@@ -483,11 +483,11 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     }
 
     /** Adds a fiber bundle tract to the GPUVolumeRender and JPanelSurface.
-     * @param kTract, list of voxels in the fiber bundle.
-     * @param iVQuantity, number of voxels in the fiber bundle.
-     * @param iDimX, the x-dimensions of the DTI image used to create the tract.
-     * @param iDimY, the y-dimensions of the DTI image used to create the tract.
-     * @param iDimZ, the z-dimensions of the DTI image used to create the tract.
+     * @param kTract list of voxels in the fiber bundle.
+     * @param iVQuantity number of voxels in the fiber bundle.
+     * @param iDimX the x-dimensions of the DTI image used to create the tract.
+     * @param iDimY the y-dimensions of the DTI image used to create the tract.
+     * @param iDimZ the z-dimensions of the DTI image used to create the tract.
      */
     protected void addTract( Vector<Integer> kTract, int iVQuantity, int iDimX, int iDimY, int iDimZ )
     {
@@ -576,11 +576,11 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     /**
      * Smooth the fiber tracks with B-spline interpolation
      * 
-     * @param pkVBuffer,
+     * @param pkVBuffer
      *            fiber track vertex coordinates as the control points.
-     * @param kTract,
+     * @param kTract
      *            fiber track index list.
-     * @param iVQuantity,
+     * @param iVQuantity
      *            number of voxels in the fiber bundle.
      * @return  B-spline interpolated fiber track
      */
@@ -705,7 +705,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     /**
      * Add a polyline to the GPUVolumeRender.
      * 
-     * @param kLine,
+     * @param kLine
      *            the Polyline to add.
      */
     protected void addPolyline(Polyline kLine) {
@@ -1021,7 +1021,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     /**
      * Reads a single fiber bundle tract from disk.
      * 
-     * @param kFileReader,
+     * @param kFileReader
      *            FileInputStream.
      * @return Vector<Integer> fiber bundle tract -- list of voxel indices in
      *         order in which they appear in the tract.
@@ -1075,7 +1075,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
      * 
      * @param kVOIImage
      *            user-selected VOI image.
-     * @param kTract,
+     * @param kTract
      *            list of voxels in the current fiber bundle tract.
      * @return true if the tract passes through the VOI or if the VOIImage is
      *         null, false otherwise.
@@ -1097,8 +1097,8 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     /** Constructs the Fiber Bundle Tracts from the dtiImage and the
      * eigenImage parameters. The fiber bundles are output to a file
      * sepecified by the user.
-     * @param dtiImage, Diffusion Tensor Image.
-     * @param eigenImage, EigenVector Image.
+     * @param dtiImage Diffusion Tensor Image.
+     * @param eigenImage EigenVector Image.
      */
     public void diplayTract(int iX, int iY, int iZ)
     {
@@ -1156,11 +1156,11 @@ implements ItemListener, ListSelectionListener, ChangeListener {
 
     /** Traces a single fiber bundle tract starting at the input
      * position and following the input direction.
-     * @param kTract, fiber bundle tract, new positions are stored in this tract as the fiber is traced.
-     * @param kStart, starting positon of the tract.
-     * @param kDir, direction from the position.
-     * @param dtiImage, Diffusion Tensor image used to calculate next direction of tract.
-     * @param bDir, boolean when true the positions are added to the
+     * @param kTract fiber bundle tract, new positions are stored in this tract as the fiber is traced.
+     * @param kStart starting positon of the tract.
+     * @param kDir direction from the position.
+     * @param dtiImage Diffusion Tensor image used to calculate next direction of tract.
+     * @param bDir boolean when true the positions are added to the
      * end of the tract (positive direction). When false the positions
      * are added to the beginning of the tract (negative direction).
      */

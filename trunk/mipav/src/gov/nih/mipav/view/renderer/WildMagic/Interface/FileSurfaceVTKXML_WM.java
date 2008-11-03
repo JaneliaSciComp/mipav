@@ -1,5 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
+import gov.nih.mipav.model.file.FileSurfaceVTKXML;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -19,9 +21,11 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import gov.nih.mipav.model.file.*;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 /**
  * This class facilitates reading and writing vtk xml
@@ -164,6 +168,13 @@ public class FileSurfaceVTKXML_WM extends FileSurfaceVTKXML {
         return kMesh;
     }
     
+    /**
+     * Output TriMesh as vtk xml
+     * @param fileName file name
+     * @param kMesh TriMesh
+     * @return true on write success
+     * @throws IOException I/O write error.
+     */
     public boolean writeXMLsurface(String fileName, TriMesh kMesh) throws IOException {
         FileWriter fw;
         File headerFile;

@@ -20,8 +20,6 @@ import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.dialogs.JDialogIntensityPaint;
-import gov.nih.mipav.view.dialogs.JDialogOpacityControls;
 import gov.nih.mipav.view.renderer.JPanelHistoLUT;
 import gov.nih.mipav.view.renderer.JPanelHistoRGB;
 import gov.nih.mipav.view.renderer.JPanelRendererBase;
@@ -60,7 +58,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowEvent;
-import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -102,12 +99,8 @@ import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 
 import com.sun.opengl.util.Animator;
 
-/**
- * @author Alexandra
- *
- */
 public class VolumeTriPlanarInterface extends ViewJFrameBase 
-implements ItemListener, ChangeListener {
+    implements ItemListener, ChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -174,24 +167,47 @@ implements ItemListener, ChangeListener {
     protected JPanel m_kBrainsurfaceFlattenerPanel = null;
     /** Rendering the brainsurfaceFlattener objects. */
     protected CorticalAnalysisRender brainsurfaceFlattenerRender = null;
+    /** Flythrough renderer: */
     protected FlyThroughRender m_kFlyThroughRender =  null;
+    /** Flythough setup user-interface container: */
     protected JPanel m_kFlyThroughPanel = null;
+    /** Flythough setup panel: */
     protected JPanelVirtualEndoscopySetup_WM flythruControl; 
+    /** Flythough Move container: */
     protected JPanel flythruMovePanel;
+    /** Flythough Move panel: */
     protected JPanelFlythruMove flythruMoveControl;
-    /** DOCUMENT ME! */
+    /** Clipping user-interface panel: */
     protected JPanelClip_WM clipBox;
+    /** 3D Slice-view user-interface panel: */
     protected JPanelSlices_WM sliceGUI;
+    /** 3D Surface user-interface panel: */
     protected JPanelSurface_WM surfaceGUI;
+    /** Display options panel: */
     protected JPanelDisplay_WM displayGUI;
+    /** Geodesic user-interface panel: */
     protected JPanelGeodesic_WM geodesicGUI;
-
+    /** Sculpting user-interface panel: */
     protected JPanelSculptor_WM sculptGUI;
+    /** Surface Texture user-interface panel: */
     protected JPanelSurfaceTexture_WM surfaceTextureGUI;
-    protected JCheckBox m_kDisplayVolumeCheck;
-    protected JCheckBox m_kDisplaySlicesCheck;
-    protected JCheckBox m_kDisplaySurfaceCheck;
 
+    /** Clip user-interface container:  */
+    protected JPanel clipPanel;
+    /** 3D Slice panel container. */
+    protected JPanel slicePanel;
+    /** Surface texture panel container */
+    protected JPanel surfaceTexturePanel;
+    /** Surface user-interface panel container */
+    protected JPanel surfacePanel;
+
+    /** Turn display volume on/off */
+    protected JCheckBox m_kDisplayVolumeCheck;
+    /** Turn display 3D Slices on/off */
+    protected JCheckBox m_kDisplaySlicesCheck;
+    /** Turn display 3D TriMesh Surface on/off */
+    protected JCheckBox m_kDisplaySurfaceCheck;
+    /** Turn display 3D Stereo on/off */
     protected JCheckBox m_kStereoCheck;
 
     /** Button to invoke all the six clipping planes. */
@@ -206,16 +222,13 @@ implements ItemListener, ChangeListener {
     /** Button to undo crop the clip volume. */
     protected JButton clipMaskUndoButton;
 
-    /** DOCUMENT ME! */
-    protected JPanel clipPanel;
-
     /** Button to invoke clipping planes. */
     protected JButton clipPlaneButton;
 
     /** Button to save clipped region. */
     protected JButton clipSaveButton;
 
-    /** DOCUMENT ME! */
+    /** Display panel container */
     protected JPanel displayPanel;
 
     /** Control panel for the surface renderer. */
@@ -227,14 +240,12 @@ implements ItemListener, ChangeListener {
     /** The image panel to hold one Canvas3D. */
     protected JPanel gpuPanel;
 
+    /** Panel to hold the BrainSurfaceFlattener or Flythrough views.*/
     protected JPanel bf_flyPanel;
 
-    /** DOCUMENT ME! */
-    protected JDialogIntensityPaint intensityDialog;
-
-    /** DOCUMENT ME! */
+    /** Light panel container */
     protected JPanel lightPanel;
-
+    /** Light panel */
     protected JPanelLights_WM m_kLightsPanel;
 
     /** The three slice views displayed as texture-mapped polygons:. */
@@ -252,10 +263,7 @@ implements ItemListener, ChangeListener {
     /** Menu bar. */
     protected JMenuBar menuBar;
 
-    /** DOCUMENT ME! */
-    protected JDialogOpacityControls opacityDialog;
-
-    /** DOCUMENT ME! */
+    /** Volume Opacity panel. */
     protected JPanel opacityPanel = null;
 
     /** Padding imageA with blank images feeding. */
@@ -269,9 +277,6 @@ implements ItemListener, ChangeListener {
 
     /** RGB control panel of the color image. */
     protected JPanelHistoRGB panelHistoRGB;
-
-    /** DOCUMENT ME! */
-    protected JPanel probePanel;
 
     /** Radio button of the COMPOSITE mode option. */
     protected JRadioButton radioCOMPOSITE;
@@ -296,17 +301,15 @@ implements ItemListener, ChangeListener {
 
     /** Panel Border view. */
     protected Border raisedbevel, loweredbevel, compound, redBorder, etchedBorder, pressedBorder;
+    /** VolumeImage contains data and textures for ModelImage A. */
     protected VolumeImage m_kVolumeImageA;
-
+    /** VolumeImage contains data and textures for ModelImage B. */
     protected VolumeImage m_kVolumeImageB;
-
+    /** Animator for GPU-based rendering with JOGL. */
     protected Animator m_kAnimator;
 
-    /** DOCUMENT ME! */
+    /** Volume/Slice/Surface renderer. */
     protected VolumeTriPlanarRender raycastRenderWM;
-
-    /** DOCUMENT ME! */
-    protected Vector raycastTabVector = new Vector();
 
     /** Button for RFA. */
     protected JButton rfaButton;
@@ -316,26 +319,8 @@ implements ItemListener, ChangeListener {
 
     /** The view pane that contains the image view and tri-planar view panels. */
     protected JSplitPane rightPane;
-
+    /** For displaying the BrainSurfaceFlattener or Flythrough renderers. */
     protected JSplitPane dualPane;
-
-    /** Screen width, screen height. */
-    protected int screenWidth, screenHeight;
-
-    /** Sculpt region height. */
-    protected int sculptHeight;
-
-    /** Sculpt region width. */
-    protected int sculptWidth;
-    
-    /** DOCUMENT ME! */
-    protected JPanel slicePanel;
-
-    /** DOCUMENT ME! */
-    protected JPanel surfaceTexturePanel;
-
-    /** DOCUMENT ME! */
-    protected JPanel surfacePanel;
 
     /** Toolbar builder reference. */
     protected ViewToolBarBuilder toolbarBuilder;
@@ -349,44 +334,51 @@ implements ItemListener, ChangeListener {
     /** Surface Render toolbar. */
     protected JToolBar surfaceToolBar;
 
-
-    protected boolean m_bSurfaceVisible = true;
-
+    /** Opacity panel. */
     protected JPanelVolOpacityBase m_kVolOpacityPanel;
 
+    /** Volume alpha-blending slider. */
     protected JSlider m_kVolumeBlendSlider;
     
+    /** Stereo view IPD control. */
     protected JDialogStereoControls m_kStereoIPD = null;
+    /** Axial view panel. */
     protected JPanel panelAxial;
+    /** Sagittal view panel. */
     protected JPanel panelSagittal;
-    
+    /** Coronal view panel. */
     protected JPanel panelCoronal;
     
+    /** Current frame width and height. */
+    protected int screenWidth, screenHeight;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
     /**
      * Specific constructor call from the VolumeViewerDTI.   
      */
-    public VolumeTriPlanarInterface() {
+    public VolumeTriPlanarInterface()
+    {
     	super(null, null);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Make a volume rendering frame, which contains the toolbars on the top, control panel on the left, the volume
-     * rendering panel on the right, and the three orthogonal view ( axial, sagittal, coronal, views) on the bottom
-     * right.
+     * Make a volume rendering frame, which contains the toolbars on the top,
+     * control panel on the left, the volume rendering panel on the right, and
+     * the three orthogonal view ( axial, sagittal, coronal, views) on the
+     * bottom right.
      *
-     * @param  _imageA                First image to display
-     * @param  LUTa                   LUT of the imageA (if null grayscale LUT is constructed)
-     * @param  _RGBTA                 RGB table of imageA
-     * @param  _imageB                Second loaded image
-     * @param  LUTb                   LUT of the imageB
-     * @param  _RGBTB                 RGB table of imageB
+     * @param  _imageA First image to display
+     * @param LUTa  LUT of the imageA (if null grayscale LUT is constructed)
+     * @param  _RGBTA  RGB table of imageA
+     * @param  _imageB Second loaded image
+     * @param  LUTb LUT of the imageB
+     * @param  _RGBTB RGB table of imageB
      */
-    public VolumeTriPlanarInterface(ModelImage _imageA, ModelLUT LUTa, ModelRGB _RGBTA, ModelImage _imageB, ModelLUT LUTb,
-                                ModelRGB _RGBTB) {
+    public VolumeTriPlanarInterface(ModelImage _imageA, ModelLUT LUTa, ModelRGB _RGBTA,
+                                    ModelImage _imageB, ModelLUT LUTb, ModelRGB _RGBTB)
+    {
         super(_imageA, _imageB);
         RGBTA = _RGBTA;
         RGBTB = _RGBTB;
@@ -404,7 +396,8 @@ implements ItemListener, ChangeListener {
 
 
     /**
-     * Retrieve the progress bar used in the volume renderer (the one in the upper right hand corner).
+     * Retrieve the progress bar used in the volume renderer (the one in the
+     * upper right hand corner).
      *
      * @return  the volume renderer progress bar
      */
@@ -419,11 +412,8 @@ implements ItemListener, ChangeListener {
 
     /**
      * Creates and initializes the LUT for an image.
-     *
      * @param   img  the image to create a LUT for
-     *
      * @return  a LUT for the image <code>img</code> (null if a color image)
-     *
      * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
      */
     public static ModelLUT initLUT(ModelImage img) throws OutOfMemoryError {
@@ -468,11 +458,10 @@ implements ItemListener, ChangeListener {
         String command = event.getActionCommand();
 
         if (command.equals("Extract")) {
-        	raycastRenderWM.updateImageFromRotation();
+            raycastRenderWM.updateImageFromRotation();
         } else if (command.equals("HistoLUT")) {
             insertTab("LUT", histoLUTPanel);
         } else if (command.equals("VolRender")) {
-            enableVolumeRender();
             updateRayTracingSteps();
         } else if (command.equals("Geodesic")) {
             insertTab("Geodesic", m_kGeodesicPanel);
@@ -485,7 +474,7 @@ implements ItemListener, ChangeListener {
 
             setSize(getSize().width, getSize().height - 1);
             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
-                         panelToolbar.getHeight();
+                panelToolbar.getHeight();
             clipBox.resizePanel(maxPanelWidth, height);
         } else if (command.equals("OpacityHistogram")) {
             insertTab("Opacity", opacityPanel);
@@ -499,7 +488,6 @@ implements ItemListener, ChangeListener {
             clipSaveButton.setEnabled(true);
 
             insertTab("Opacity", opacityPanel);
-            enableVolumeRender();
             updateRayTracingSteps();
             raycastRenderWM.displayVolumeRaycast( m_kDisplayVolumeCheck.isSelected() );
         } else if ( command.equals( "VolumeRayCast") ) {
@@ -512,7 +500,6 @@ implements ItemListener, ChangeListener {
             clipSaveButton.setEnabled(true);
 
             insertTab("Opacity", opacityPanel);
-            enableVolumeRender();
             updateRayTracingSteps();
             raycastRenderWM.displayVolumeRaycast( m_kDisplayVolumeCheck.isSelected() );
         } else if (command.equals("Stereo")) {
@@ -537,7 +524,7 @@ implements ItemListener, ChangeListener {
 
             setSize(getSize().width, getSize().height - 1);
             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
-                         panelToolbar.getHeight();
+                panelToolbar.getHeight();
             clipBox.resizePanel(maxPanelWidth, height);
 
             insertTab("Clip", clipPanel);
@@ -573,17 +560,16 @@ implements ItemListener, ChangeListener {
                 surfaceTextureGUI.setEnabled(true);
             }
         } else if (command.equals("DTI")) {
-             JDialogDTIInput kDTIIn = new JDialogDTIInput( JDialogDTIInput.TRACTS_PANEL,
-                                                           this, imageA);
-             insertTab("DTI", kDTIIn.getMainPanel() );
-             kDTIIn.getMainPanel().setVisible(true);
+            JDialogDTIInput kDTIIn = new JDialogDTIInput( JDialogDTIInput.TRACTS_PANEL,
+                                                          this, imageA);
+            insertTab("DTI", kDTIIn.getMainPanel() );
+            kDTIIn.getMainPanel().setVisible(true);
         } else if (command.equals("BrainSurface")) {
             if ( m_kBrainsurfaceFlattenerPanel == null )
             {
                 brainsurfaceFlattenerRender = 
                     new gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender(this, 
-                            m_kAnimator, m_kVolumeImageA, imageA, LUTa, RGBTA,
-                        m_kVolumeImageB, imageB, LUTb, RGBTB);
+                                                                                                           m_kAnimator, m_kVolumeImageA, m_kVolumeImageB);
                 TriMesh kSurface = raycastRenderWM.getSurface( surfaceGUI.getSelectedSurface() );
                 Node kMeshLines = brainsurfaceFlattenerRender.getPanel().displayCorticalAnalysis(kSurface);       
                 if ( kMeshLines != null )
@@ -608,8 +594,8 @@ implements ItemListener, ChangeListener {
             if ( m_kFlyThroughPanel == null )
             {
                 m_kFlyThroughRender = new FlyThroughRender( this, 
-                        m_kAnimator, m_kVolumeImageA,
-                        m_kVolumeImageB);
+                                                            m_kAnimator, m_kVolumeImageA,
+                                                            m_kVolumeImageB);
                 TriMesh kSurface = raycastRenderWM.getSurface( surfaceGUI.getSelectedSurface() );
                 m_kFlyThroughRender.addSurface(kSurface);
                 bf_flyPanel.add( m_kFlyThroughRender.GetCanvas(), BorderLayout.CENTER );
@@ -649,51 +635,40 @@ implements ItemListener, ChangeListener {
         } else if (command.equals("NeurologicalView")) {
             setRadiological(false);
         } else if (command.equals("ShaderParameters") ) {
-            if ( raycastRenderWM != null )
-            {
-                raycastRenderWM.displayShaderParameters();
-            }
+            raycastRenderWM.displayShaderParameters();
         }
 
     }
 
     /**
      * Add a geodesic element to the surface display.
-     * @param kSurface, the surface the geodesic element is attached to.
-     * @param kNew, the new geodesic element.
-     * @param iGroup, the Node index.
+     * @param kSurface the surface the geodesic element is attached to.
+     * @param kNew the new geodesic element.
+     * @param iGroup the Node index.
      */
     public void addGeodesic( TriMesh kSurface, Geometry kNew, int iGroup )
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.addGeodesic(kSurface, kNew, iGroup);
-        }
+        raycastRenderWM.addGeodesic(kSurface, kNew, iGroup);
     }
   
     /**
-     * Add a new display node to the volume/surface display list. This is done from the other renderers: BrainSurfaceFlattener and Flythrough.
+     * Add a new display node to the volume/surface display list. This is done
+     * from the other renderers: BrainSurfaceFlattener and Flythrough.
      * @param kNode
      */
     public void addNode( Node kNode )
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.addNode( kNode );
-        }
+        raycastRenderWM.addNode( kNode );
     }
 
     /**
      * Add a polyline to the VolumeDTI display.
-     * @param akPolyline, new polyline.
-     * @param groupIndex, Node index.
+     * @param akPolyline new polyline.
+     * @param groupIndex Node index.
      */
     public void addPolyline(Polyline akPolyline, int groupIndex)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.addPolyline(akPolyline, groupIndex);
-        }
+        raycastRenderWM.addPolyline(akPolyline, groupIndex);
     }
 
     /**
@@ -710,23 +685,21 @@ implements ItemListener, ChangeListener {
 
     /**
      * Add TriMesh surfaces to the Volume Renderer.
-     * @param akSurfaces, new surfaces.
+     * @param akSurfaces new surfaces.
      */
     public void addSurface(TriMesh[] akSurfaces)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.addSurface(akSurfaces);  
-            insertTab("Light", lightPanel);
-            m_kLightsPanel.enableLight(0, true);
-            insertTab("Surface", surfacePanel);
-            m_kDisplaySurfaceCheck.setSelected(true);
-            m_kDisplaySurfaceCheck.setEnabled(true);
-            raycastRenderWM.displaySurface(true);
-            
-            menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", true);  
-            menuObj.setMenuItemEnabled("Open Fly Through view", true);       
-        }
+        raycastRenderWM.addSurface(akSurfaces);  
+        insertTab("Light", lightPanel);
+        m_kLightsPanel.enableLight(0, true);
+        insertTab("Surface", surfacePanel);
+        m_kDisplaySurfaceCheck.setSelected(true);
+        m_kDisplaySurfaceCheck.setEnabled(true);
+        raycastRenderWM.displaySurface(true);
+        
+        menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", true);  
+        menuObj.setMenuItemEnabled("Open Fly Through view", true);       
+
         if ( geodesicGUI != null )
         {
             geodesicGUI.setEnabled(true);
@@ -983,8 +956,9 @@ implements ItemListener, ChangeListener {
     }
     
     /**
-     * Method called when a component resize event is generated. This method snaps the size of the frame and pagePanel
-     * to the nearest row, column sizing (so the gridRow and gridColumn and page layout may change).
+     * Method called when a component resize event is generated. This method
+     * snaps the size of the frame and pagePanel to the nearest row, column
+     * sizing (so the gridRow and gridColumn and page layout may change).
      *
      * @param  event  frame resize event
      */
@@ -993,8 +967,8 @@ implements ItemListener, ChangeListener {
     }
 
     /**
-     * Construct the volume rendering methods based on the choices made from the resample dialog. This method is called
-     * by the Resample dialog.
+     * Construct the volume rendering methods based on the choices made from
+     * the resample dialog. This method is called by the Resample dialog.
      */
     public void constructRenderers() {
 
@@ -1040,7 +1014,7 @@ implements ItemListener, ChangeListener {
             
 
             raycastRenderWM = new VolumeTriPlanarRender( this, m_kAnimator, m_kVolumeImageA,
-                                                     m_kVolumeImageB);
+                                                         m_kVolumeImageB);
 
 
             TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
@@ -1123,26 +1097,16 @@ implements ItemListener, ChangeListener {
         clipBox = null;
 
         if ( surfaceTextureGUI != null ) {
-        	surfaceTextureGUI.dispose();
-        	surfaceTextureGUI = null;
+            surfaceTextureGUI.dispose();
+            surfaceTextureGUI = null;
         }
         
         if ( surfaceGUI != null ) {
-        	surfaceGUI.dispose();
-        	surfaceGUI = null;
+            surfaceGUI.dispose();
+            surfaceGUI = null;
         }
         
         
-        if (intensityDialog != null) {
-            intensityDialog.dispose();
-            intensityDialog = null;
-        }
-
-        if (opacityDialog != null) {
-            opacityDialog.dispose();
-            opacityDialog = null;
-        }
-
         if (m_kVolumeImageA != null) {
             m_kVolumeImageA.dispose();
             m_kVolumeImageA = null;
@@ -1282,14 +1246,15 @@ implements ItemListener, ChangeListener {
      * @param  newRes         new resampled resolution
      * @param  forceResample  resampled or not
      * @param  nDim           number of dimensions
-     * @param  iFilterType    type of sample filter, may be one of 7 different filters: TriLinear Interpolation,
-     *                        NearestNeighbor, CubicBSpline, QuadraticBSpline, CubicLagragian, QuinticLagragian,
-     *                        HepticLagragian, or WindowedSinc (see AlgorithmTransform.java).
+     * @param iFilterType type of sample filter, may be one of 7 different
+     * filters: TriLinear Interpolation, NearestNeighbor, CubicBSpline,
+     * QuadraticBSpline, CubicLagragian, QuinticLagragian, HepticLagragian, or
+     * WindowedSinc (see AlgorithmTransform.java).
      */
-    public void doResample(int[] volExtents, float[] newRes, boolean forceResample, int nDim, int iFilterType) {
-
+    public void doResample(int[] volExtents, float[] newRes
+                           , boolean forceResample, int nDim, int iFilterType)
+    {
         AlgorithmTransform transformFunct = null;
-
         if (forceResample) {
 
             // resample imageA
@@ -1355,42 +1320,34 @@ implements ItemListener, ChangeListener {
                 resetLUTMinMax(imageB, LUTb);
             }
         }
-
-        /*
-        imageA = (ModelImage)imageA.clone( imageA.getImageFileName() );
-        imageA.calcMinMax();
-        */
     }
 
     /**
      * Enable geodesic calculations and display.
-     * @param bEnable, when true geodesic curves are enabled.
+     * @param bEnable when true geodesic curves are enabled.
      */
     public void enableGeodesic( boolean bEnable )
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.enableGeodesic(bEnable);
-        }
+        raycastRenderWM.enableGeodesic(bEnable);
     }
 
 
     /**
      * Enable painting on TriMesh surfaces.
-     * @param kPaintColor, paint color.
-     * @param iBrushSize, brush size.
-     * @param bEnabled, painting on/off.
-     * @param bPaint, when true apply paint.
-     * @param bDropper, when true do dropper mode.
-     * @param bPaintCan, when true do paint can mode.
-     * @param bErase, when true erase.
+     * @param kPaintColor paint color.
+     * @param iBrushSize brush size.
+     * @param bEnabled painting on/off.
+     * @param bPaint when true apply paint.
+     * @param bDropper when true do dropper mode.
+     * @param bPaintCan when true do paint can mode.
+     * @param bErase when true erase.
      */
-    public void enablePaint( ColorRGBA kPaintColor, int iBrushSize, boolean bEnabled, boolean bPaint, boolean bDropper, boolean bPaintCan, boolean bErase )
+    public void enablePaint( ColorRGBA kPaintColor, int iBrushSize,
+                             boolean bEnabled, boolean bPaint,
+                             boolean bDropper, boolean bPaintCan, boolean bErase )
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.enablePaint(kPaintColor, iBrushSize, bEnabled, bPaint, bDropper, bPaintCan, bErase);
-        }
+        raycastRenderWM.enablePaint(kPaintColor, iBrushSize,
+                                    bEnabled, bPaint, bDropper, bPaintCan, bErase);
     }
 
     /**
@@ -1398,16 +1355,14 @@ implements ItemListener, ChangeListener {
      */
     public void eraseAllPaint( )
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.eraseAllPaint();
-        }
+        raycastRenderWM.eraseAllPaint();
     }
 
 
     /**
-     * Returns the ModelLUT or ModelRGB based on which image is currently active, either imageA or imageB and they type
-     * of image (color or grayscale).
+     * Returns the ModelLUT or ModelRGB based on which image is currently
+     * active, either imageA or imageB and they type of image (color or
+     * grayscale).
      *
      * @return  the active LUT/RGB table.
      */
@@ -1461,10 +1416,12 @@ implements ItemListener, ChangeListener {
     }
 
     /**
-     * Returns which image is active in the HistoLUT -- either imageA or imageB. Called by the PlaneRenderer object to
-     * determine which LUT to update based on dragging the right-mouse in the PlaneRender window:
+     * Returns which image is active in the HistoLUT -- either imageA or
+     * imageB. Called by the PlaneRenderer object to determine which LUT to
+     * update based on dragging the right-mouse in the PlaneRender window:
      *
-     * @return  ModelImage, either imageA or imageB, depending on which is selected in the HistoLUT
+     * @return ModelImage, either imageA or imageB, depending on which is
+     * selected in the HistoLUT
      */
     public ModelImage getHistoLUTActiveImage() {
 
@@ -1480,10 +1437,12 @@ implements ItemListener, ChangeListener {
     }
 
     /**
-     * Returns which image is active in the HistoRGB -- either imageA or imageB. Called by the PlaneRenderer object to
-     * determine which LUT to update based on dragging the right-mouse in the PlaneRender window:
+     * Returns which image is active in the HistoRGB -- either imageA or
+     * imageB. Called by the PlaneRenderer object to determine which LUT to
+     * update based on dragging the right-mouse in the PlaneRender window:
      *
-     * @return  ModelImage, either imageA or imageB, depending on which is selected in the HistoLUT
+     * @return ModelImage, either imageA or imageB, depending on which is
+     * selected in the HistoLUT
      */
     public ModelImage getHistoRGBActiveImage() {
 
@@ -1523,11 +1482,7 @@ implements ItemListener, ChangeListener {
      */
     public Light[] GetLights()
     {
-        if ( raycastRenderWM != null )
-        {
-            return raycastRenderWM.GetLights();
-        }
-        return null;
+        return raycastRenderWM.GetLights();
     }
 
     /**
@@ -1541,16 +1496,12 @@ implements ItemListener, ChangeListener {
 
     /**
      * Return the material properties of the given surface.
-     * @param kSurfaceName, the surface to query.
+     * @param kSurfaceName the surface to query.
      * @return the material properties of the surface.
      */
     public MaterialState getMaterial(String kSurfaceName)
     {
-        if ( raycastRenderWM != null )
-        {
-            return raycastRenderWM.getMaterial(kSurfaceName);
-        }
-        return null;
+        return raycastRenderWM.getMaterial(kSurfaceName);
     }
 
 
@@ -1592,30 +1543,22 @@ implements ItemListener, ChangeListener {
     
     /**
      * Return the size of the surface-area of the given surface.
-     * @param kSurfaceName, the surface to calculate the surface-area for.
+     * @param kSurfaceName the surface to calculate the surface-area for.
      * @return the surface-area of the surface.
      */
     public float getSurfaceArea(String kSurfaceName)
     {
-        if ( raycastRenderWM != null )
-        {
-            return raycastRenderWM.getSurfaceArea(kSurfaceName);
-        }
-        return 0;
+        return raycastRenderWM.getSurfaceArea(kSurfaceName);
     }
 
     /**
      * Return the size of the volume of the given surface.
-     * @param kSurfaceName, the surface to calculate the volume for.
+     * @param kSurfaceName the surface to calculate the volume for.
      * @return the volume of the surface.
      */
     public float getVolume(String kSurfaceName)
     {
-        if ( raycastRenderWM != null )
-        {
-            return raycastRenderWM.getVolume(kSurfaceName);
-        }
-        return 0;
+        return raycastRenderWM.getVolume(kSurfaceName);
     }
 
     /**
@@ -1654,28 +1597,26 @@ implements ItemListener, ChangeListener {
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
 
-        if (raycastRenderWM != null) {
-            if (radioMIP.isSelected() && (source == radioMIP)) {
-                raycastRenderWM.MIPMode();
-                updateRayTracingSteps();
-            } else if (radioXRAY.isSelected() && (source == radioXRAY)) {
-                raycastRenderWM.DDRMode();
-                updateRayTracingSteps();
-            } else if (radioCOMPOSITE.isSelected() && (source == radioCOMPOSITE)) {
-                raycastRenderWM.CMPMode();
-                updateRayTracingSteps();
-            } else if (radioSURFACE.isSelected() && (source == radioSURFACE)) {
-                raycastRenderWM.SURMode();
-                updateRayTracingSteps();
-                m_kLightsPanel.refreshLighting();
-            } else if (radioSURFACEFAST.isSelected() && (source == radioSURFACEFAST)) {
-                raycastRenderWM.SURFASTMode();
-                updateRayTracingSteps();
-                m_kLightsPanel.refreshLighting();
-            } else if (radioSURFACEFAST.isSelected() && (source == kSelfShadow) )
-                raycastRenderWM.selfShadow( kSelfShadow.isSelected() );
-            	updateRayTracingSteps();
-        	}
+        if (radioMIP.isSelected() && (source == radioMIP)) {
+            raycastRenderWM.MIPMode();
+            updateRayTracingSteps();
+        } else if (radioXRAY.isSelected() && (source == radioXRAY)) {
+            raycastRenderWM.DDRMode();
+            updateRayTracingSteps();
+        } else if (radioCOMPOSITE.isSelected() && (source == radioCOMPOSITE)) {
+            raycastRenderWM.CMPMode();
+            updateRayTracingSteps();
+        } else if (radioSURFACE.isSelected() && (source == radioSURFACE)) {
+            raycastRenderWM.SURMode();
+            updateRayTracingSteps();
+            m_kLightsPanel.refreshLighting();
+        } else if (radioSURFACEFAST.isSelected() && (source == radioSURFACEFAST)) {
+            raycastRenderWM.SURFASTMode();
+            updateRayTracingSteps();
+            m_kLightsPanel.refreshLighting();
+        } else if (radioSURFACEFAST.isSelected() && (source == kSelfShadow) )
+            raycastRenderWM.selfShadow( kSelfShadow.isSelected() );
+        updateRayTracingSteps();
         if ( (imageB == null) )
         {
             kSelfShadow.setEnabled(radioSURFACEFAST.isSelected());
@@ -1683,22 +1624,21 @@ implements ItemListener, ChangeListener {
     }
 
     /**
-     * Enables picking correspondence points between the surface renderer and the BrainSurfaceFlattener renderer.
-     * @param bOn, true enables, false disables.
+     * Enables picking correspondence points between the surface renderer and
+     * the BrainSurfaceFlattener renderer.
+     * @param bOn true enables, false disables.
      */
     public void PickCorrespondence( boolean bOn )
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.pickCorrespondence(bOn);
-        }        
+        raycastRenderWM.pickCorrespondence(bOn);
     }
 
     /**
-     * Passes the triangle indices of the picked triangle to the BrainSurfaceFlattener renderer for display.
-     * @param iV0, index 0 of the picked triangle.
-     * @param iV1, index 1 of the picked triangle.
-     * @param iV2, index 2 of the picked triangle.
+     * Passes the triangle indices of the picked triangle to the
+     * BrainSurfaceFlattener renderer for display.
+     * @param iV0 index 0 of the picked triangle.
+     * @param iV1 index 1 of the picked triangle.
+     * @param iV2 index 2 of the picked triangle.
      */
     public void PickCorrespondence( int iV0, int iV1, int iV2 )
     {
@@ -1710,14 +1650,11 @@ implements ItemListener, ChangeListener {
 
     /**
      * Removes all geodesic curves for the given surface.
-     * @param kSurface, the surface to modify.
+     * @param kSurface the surface to modify.
      */
     public void removeAllGeodesic( TriMesh kSurface )
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.removeAllGeodesic(kSurface);
-        }
+        raycastRenderWM.removeAllGeodesic(kSurface);
     }
     
     /* (non-Javadoc)
@@ -1727,84 +1664,65 @@ implements ItemListener, ChangeListener {
     
     /**
      * Remove the specific geodesic curves from the given surface.
-     * @param kSurface, the surface to modify.
-     * @param iNode, the node to remove.
-     * @param iGroup, the group the node belongs to.
+     * @param kSurface the surface to modify.
+     * @param iNode the node to remove.
+     * @param iGroup the group the node belongs to.
      */
     public void removeGeodesic( TriMesh kSurface, int iNode, int iGroup )
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.removeGeodesic(kSurface, iNode, iGroup);
-        }
+        raycastRenderWM.removeGeodesic(kSurface, iNode, iGroup);
     }
 
     /**
      * Remove the polyline from the volume DTI display.
-     * @param groupIndex, the polyline to remove.
+     * @param groupIndex the polyline to remove.
      */
     public void removePolyline(int groupIndex)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.removePolyline(groupIndex);
-        }
+        raycastRenderWM.removePolyline(groupIndex);
     }
 
     /**
      * Remove the given surface from the render display list.
-     * @param kSurfaceName, the name of the surface to remove.
+     * @param kSurfaceName the name of the surface to remove.
      */
     public void removeSurface(String kSurfaceName)
     {       
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.removeSurface(kSurfaceName);
-        }
+        raycastRenderWM.removeSurface(kSurfaceName);
     }
     /**
-     * When the Geodesic object cuts the mesh along an open curve, the old mesh changes, but does not need to be deleted
-     * and no new mesh needs to be added. This function allows the Geodesic object to replace the original mesh with the
-     * sliced mesh in the surface renderer. ReplaceMesh is also used to undo cutting operations.
+     * When the Geodesic object cuts the mesh along an open curve, the old
+     * mesh changes, but does not need to be deleted and no new mesh needs to
+     * be added. This function allows the Geodesic object to replace the
+     * original mesh with the sliced mesh in the surface renderer. ReplaceMesh
+     * is also used to undo cutting operations.
      *
      * @param  kOld  TriMesh old surface mesh
      * @param  kNew  TriMesh new surface mesh
      */
     public void replaceGeodesic(TriMesh kOld, TriMesh kNew) {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.replaceGeodesic(kOld, kNew);
-        }
+        raycastRenderWM.replaceGeodesic(kOld, kNew);
     }
 
     /**
      * Reset image volume orientation along X axis.
      */
     public void resetAxisX() {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.resetAxisX();
-        }
+        raycastRenderWM.resetAxisX();
     }
 
     /**
      * Reset image volume orientation along Y axis.
      */
     public void resetAxisY() {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.resetAxisY();
-        }
+        raycastRenderWM.resetAxisY();
     }
     
     /**
      * Reset image volume orientation along Z axis.
      */
     public void resetImage() {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.resetAxis();
-        }
+        raycastRenderWM.resetAxis();
     }
 
     /* (non-Javadoc)
@@ -1819,15 +1737,13 @@ implements ItemListener, ChangeListener {
 
     /**
      * Enables backface culling for the given surface.
-     * @param kSurfaceName, the surface to modify.
-     * @param bOn, when true back-face culling is enabled, false disables backface culling.
+     * @param kSurfaceName the surface to modify.
+     * @param bOn when true back-face culling is enabled, false disables
+     * backface culling.
      */
     public void setBackface(String kSurfaceName, boolean bOn)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setBackface(kSurfaceName, bOn );
-        }
+        raycastRenderWM.setBackface(kSurfaceName, bOn );
     }
 
     /**
@@ -1836,9 +1752,10 @@ implements ItemListener, ChangeListener {
      */
     public void setBackgroundColor(Color color)
     {
-        if (raycastRenderWM != null) {
-            raycastRenderWM.setBackgroundColor(new ColorRGBA( color.getRed()/255.0f, color.getGreen()/255.0f, color.getBlue()/255.0f, 1.0f ) );
-        }
+        raycastRenderWM.setBackgroundColor(new ColorRGBA( color.getRed()/255.0f,
+                                                          color.getGreen()/255.0f,
+                                                          color.getBlue()/255.0f,
+                                                          1.0f ) );
     }
     
     /**
@@ -1847,9 +1764,9 @@ implements ItemListener, ChangeListener {
      */
     public void setBoundingBoxColor(Color color)
     {
-        if (raycastRenderWM != null) {
-            raycastRenderWM.setBoundingBoxColor(new ColorRGB( color.getRed()/255.0f, color.getGreen()/255.0f, color.getBlue()/255.0f ) );
-        }
+        raycastRenderWM.setBoundingBoxColor(new ColorRGB( color.getRed()/255.0f,
+                                                          color.getGreen()/255.0f,
+                                                          color.getBlue()/255.0f ) );
     }
 
     /**
@@ -1861,8 +1778,8 @@ implements ItemListener, ChangeListener {
     }
     
     /**
-	 * Display the camera parameters in the user-interface.
-	 */
+     * Display the camera parameters in the user-interface.
+     */
     public void setCameraParameters() {
     	displayGUI.displayCameraParams(raycastRenderWM.getCameraParameters());
     }
@@ -1870,28 +1787,22 @@ implements ItemListener, ChangeListener {
 
     /**
      * Enable clipping for the given surface.
-     * @param kSurfaceName, the surface to modify.
-     * @param bClip, true enables clipping, false disables clipping.
+     * @param kSurfaceName the surface to modify.
+     * @param bClip true enables clipping, false disables clipping.
      */
     public void setClipping(String kSurfaceName, boolean bClip)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setClipping(kSurfaceName, bClip );
-        }
+        raycastRenderWM.setClipping(kSurfaceName, bClip );
     }
     
     /**
      * Set the color for the given surface.
-     * @param kSurfaceName, the surface to modify.
-     * @param kColor, the new color.
+     * @param kSurfaceName the surface to modify.
+     * @param kColor the new color.
      */
     public void setColor(String kSurfaceName, ColorRGB kColor)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setColor(kSurfaceName, kColor);
-        }
+        raycastRenderWM.setColor(kSurfaceName, kColor);
     }
 
     /* (non-Javadoc)
@@ -1902,8 +1813,8 @@ implements ItemListener, ChangeListener {
 
     /**
      * Passes the picked dropper color to the surface interface.
-     * @param kDropperColor, the color of the surface at the picked point.
-     * @param kPickPoint, the picked point for use in the region-grow operation.
+     * @param kDropperColor the color of the surface at the picked point.
+     * @param kPickPoint the picked point for use in the region-grow operation.
      */
     public void setDropperColor( ColorRGBA kDropperColor, Vector3f kPickPoint )
     {
@@ -1919,9 +1830,10 @@ implements ItemListener, ChangeListener {
     public void setEnabled(boolean flag) { }
 
     /**
-     * Passes the picked point to the Geodesic object for calculating the geodesic curve on the TriMesh surface.
-     * @param kMesh, the surface that was picked.
-     * @param kPickPoint, the picked point.
+     * Passes the picked point to the Geodesic object for calculating the
+     * geodesic curve on the TriMesh surface.
+     * @param kMesh the surface that was picked.
+     * @param kPickPoint the picked point.
      */
     public void setGeodesic( TriMesh kMesh, PickRecord kPickPoint )
     {
@@ -1933,20 +1845,18 @@ implements ItemListener, ChangeListener {
 
     /**
      * Turn the gradient magnitude filter on/off for volume shaders.
-     * @param bShow, on/off.
+     * @param bShow on/off.
      */
     public void setGradientMagnitude( boolean bShow )
     {
-        if ( raycastRenderWM != null )
+        raycastRenderWM.setGradientMagnitude(bShow);
+        TransferFunction kTransfer =
+            m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
+        m_kVolumeImageA.UpdateImages(kTransfer, 2);
+        if ( imageB != null )
         {
-            raycastRenderWM.setGradientMagnitude(bShow);
-            TransferFunction kTransfer = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
-            m_kVolumeImageA.UpdateImages(kTransfer, 2);
-            if ( imageB != null )
-            {
-                kTransfer = m_kVolOpacityPanel.getCompB_GM().getOpacityTransferFunction();
-                m_kVolumeImageB.UpdateImages(kTransfer, 2);
-            }
+            kTransfer = m_kVolOpacityPanel.getCompB_GM().getOpacityTransferFunction();
+            m_kVolumeImageB.UpdateImages(kTransfer, 2);
         }
     }
 
@@ -1956,31 +1866,26 @@ implements ItemListener, ChangeListener {
     public void setImageB(ModelImage _imageB) { }
 
     /**
-     * Sets the ModelImage to use as an alternative to the volume ModelImage for surface texturing.
-     * @param kSurfaceName, the surface to modify.
-     * @param kImage, the alternate ModelImage to use for the surface texture.
+     * Sets the ModelImage to use as an alternative to the volume ModelImage
+     * for surface texturing.
+     * @param kSurfaceName the surface to modify.
+     * @param kImage the alternate ModelImage to use for the surface texture.
      */
     public void SetImageNew(  String kSurfaceName, ModelImage kImage )
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setImageNew(kSurfaceName, kImage);
-        }
+        raycastRenderWM.setImageNew(kSurfaceName, kImage);
     }
 
     /**
      * Sets the inter-pupillary distance for stereo rendering.
-     * @param fIPD, the IPD value.
+     * @param fIPD the IPD value.
      */
     public void setIPD( float fIPD )
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setIPD(fIPD);
-        }
+        raycastRenderWM.setIPD(fIPD);
     }
 
-     /* (non-Javadoc)
+    /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#setLUTa(gov.nih.mipav.model.structures.ModelLUT)
      */
     public void setLUTa(ModelLUT LUT) {}
@@ -1992,29 +1897,23 @@ implements ItemListener, ChangeListener {
 
     /**
      * Sets the LUT to use as an alternative to the volume lut for surface texturing.
-     * @param kSurfaceName, the surface to modify.
-     * @param kLUT, the new LUT.
-     * @param kRGBT, the new ModelRGB (for color images).
+     * @param kSurfaceName the surface to modify.
+     * @param kLUT the new LUT.
+     * @param kRGBT the new ModelRGB (for color images).
      */
     public void SetLUTNew( String kSurfaceName, ModelLUT kLUT, ModelRGB kRGBT )
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setLUTNew(kSurfaceName, kLUT, kRGBT);
-        }
+        raycastRenderWM.setLUTNew(kSurfaceName, kLUT, kRGBT);
     }
 
     /**
      * Sets the material for the given surface.
-     * @param kSurfaceName, the surface to update.
-     * @param kMaterial, the new material.
+     * @param kSurfaceName the surface to update.
+     * @param kMaterial the new material.
      */
     public void setMaterial(String kSurfaceName, MaterialState kMaterial)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setMaterial(kSurfaceName, kMaterial);
-        }
+        raycastRenderWM.setMaterial(kSurfaceName, kMaterial);
     }
 
     /**
@@ -2052,28 +1951,22 @@ implements ItemListener, ChangeListener {
       
     /**
      * Turn picking on/off for the given surface.
-     * @param kSurfaceName, the surface to modify.
-     * @param bOn, when true enable picking, false disables picking.
+     * @param kSurfaceName the surface to modify.
+     * @param bOn when true enable picking, false disables picking.
      */
     public void setPickable(String kSurfaceName, boolean bOn)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setPickable(kSurfaceName, bOn );
-        }
+        raycastRenderWM.setPickable(kSurfaceName, bOn );
     }
 
     /**
      * Set the polygon mode (FILL, LINE, POINT) for the given surface.
-     * @param kSurfaceName, the surface to modify.
-     * @param eMode, FILL, LINE, or POINT.
+     * @param kSurfaceName the surface to modify.
+     * @param eMode FILL, LINE, or POINT.
      */
     public void setPolygonMode(String kSurfaceName, WireframeState.FillMode eMode)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setPolygonMode(kSurfaceName, eMode );
-        }
+        raycastRenderWM.setPolygonMode(kSurfaceName, eMode );
     }
     
     /**
@@ -2095,7 +1988,8 @@ implements ItemListener, ChangeListener {
 
     /**
      * Toggles between radiological and neurological views of the data.
-     * @param bOn, when true display using radiological coordinates, when false use neurological.
+     * @param bOn when true display using radiological coordinates, when
+     * false use neurological.
      */
     public void setRadiological( boolean bOn )
     {
@@ -2115,7 +2009,8 @@ implements ItemListener, ChangeListener {
 
     /**
      * Switches between orthographic and perspective projection.
-     * @param bEnable, when true enable perspective projection, when false use orthographic projection.
+     * @param bEnable when true enable perspective projection, when false use
+     * orthographic projection.
      */
     public void setRenderPerspective(boolean bEnable)
     {
@@ -2149,24 +2044,21 @@ implements ItemListener, ChangeListener {
 
     /**
      * Turn the volume bounding box frame on/off.
-     * @param bShow, when true display the bounding box.
+     * @param bShow when true display the bounding box.
      */
     public void setShowBoxFrame(boolean bShow)
     {
-        if (raycastRenderWM != null) {
-            raycastRenderWM.displayBoundingBox(bShow);
-        }
+        raycastRenderWM.displayBoundingBox(bShow);
     }
 
     /**
      * Turn the orientation cube on/off.
-     * @param bShow, when true display the orientation cube, when false do not display the cube.
+     * @param bShow when true display the orientation cube, when false do not
+     * display the cube.
      */
     public void setShowOrientationCube(boolean bShow)
     {
-        if (raycastRenderWM != null) {
-            raycastRenderWM.displayOrientationCube(bShow);
-        }
+        raycastRenderWM.displayOrientationCube(bShow);
     }    
     
     /* (non-Javadoc)
@@ -2175,25 +2067,25 @@ implements ItemListener, ChangeListener {
     public void setSlice(int slice) {}    
     
     /**
-     * Sets the position of the slices in the SurfaceRender and PlaneRender objects. Called from the PlaneRender class.
-     *
+     * Sets the position of the slices in the SurfaceRender and PlaneRender
+     * objects. Called from the PlaneRender class.
      * @param  center  the new slice positions in FileCoordinates
      */
     public void setSliceFromPlane(Vector3f center) {
         setPositionLabels(center);
 
-         for (int i = 0; i < 3; i++) {
-             m_akPlaneRender[i].setCenter(center);
-         }
+        for (int i = 0; i < 3; i++) {
+            m_akPlaneRender[i].setCenter(center);
+        }
 
-         raycastRenderWM.setCenter( center );
-         sliceGUI.setCenter((int)center.X, (int)center.Y, (int)center.Z);
+        raycastRenderWM.setCenter( center );
+        sliceGUI.setCenter((int)center.X, (int)center.Y, (int)center.Z);
     }
     
     
     /**
-     * Sets the position of the slices in the PlaneRender. Called from the SurfaceRender class.
-     *
+     * Sets the position of the slices in the PlaneRender. Called from the
+     * SurfaceRender class.
      * @param  center  the new slice positions in FileCoordinates
      */
     public void setSliceFromSurface(Vector3f center) {
@@ -2232,8 +2124,8 @@ implements ItemListener, ChangeListener {
 
     /**
      * Set the transparency value for the slice.
-     * @param i, the slice to modify.
-     * @param fAlpha, the new transparency value.
+     * @param i the slice to modify.
+     * @param fAlpha the new transparency value.
      */
     public void setSliceOpacity( int i, float fAlpha )
     {
@@ -2241,18 +2133,19 @@ implements ItemListener, ChangeListener {
     }
 
     /**
-     * Turns on surface texture display for the given surface. The user can use a separate ModelImage and LUT than the one displayed in the volume renderer.
-     * @param kSurfaceName, the name of the surface to texture.
-     * @param bOn, texture on/off.
-     * @param bUseNewImage, when false use the current ModelImage, when true the user specifies the model image.
-     * @param bUseNewLUT, when false use the current LUT, when true the user specifies the LUT.
+     * Turns on surface texture display for the given surface. The user can
+     * use a separate ModelImage and LUT than the one displayed in the volume
+     * renderer.
+     * @param kSurfaceName the name of the surface to texture.
+     * @param bOn texture on/off.
+     * @param bUseNewImage when false use the current ModelImage, when true
+     * the user specifies the model image.
+     * @param bUseNewLUT when false use the current LUT, when true the user
+     * specifies the LUT.
      */
     public void setSurfaceTexture(String kSurfaceName, boolean bOn, boolean bUseNewImage, boolean bUseNewLUT)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.setSurfaceTexture(kSurfaceName, bOn, bUseNewImage, bUseNewLUT );
-        }
+        raycastRenderWM.setSurfaceTexture(kSurfaceName, bOn, bUseNewImage, bUseNewLUT );
     }
     
     /* (non-Javadoc)
@@ -2278,21 +2171,18 @@ implements ItemListener, ChangeListener {
     
     /**
      * Set the transparency for the given surface.
-     * @param kSurfaceName, the name of the surface to modify.
-     * @param fValue, transparency value.
+     * @param kSurfaceName the name of the surface to modify.
+     * @param fValue transparency value.
      */
     public void setTransparency(String kSurfaceName, float fValue)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.blend(kSurfaceName, fValue );
-        }
+        raycastRenderWM.blend(kSurfaceName, fValue );
     }
     
     /**
      * Turns showing the slice bounding box on/off.
-     * @param i, which slice bounding box to turn off.
-     * @param bShow, on/off.
+     * @param i which slice bounding box to turn off.
+     * @param bShow on/off.
      */
     public void showBoundingBox( int i, boolean bShow )
     {
@@ -2301,8 +2191,8 @@ implements ItemListener, ChangeListener {
     
     /**
      * Turns showing the slice on/off.
-     * @param i, which slice to turn off.
-     * @param bShow, on/off.
+     * @param i which slice to turn off.
+     * @param bShow on/off.
      */
     public void showSlice( int i, boolean bShow )
     {
@@ -2311,50 +2201,45 @@ implements ItemListener, ChangeListener {
   
     /**
      * Smooth the given surface.
-     * @param kSurfaceName, the name of the surface to smooth.
-     * @param iteration, smooth iterations.
-     * @param alpha, smooth factor.
-     * @param volumeLimit, whether to use a volume % change limit.
-     * @param volumePercent, the % volume change limiting factor
+     * @param kSurfaceName the name of the surface to smooth.
+     * @param iteration smooth iterations.
+     * @param alpha smooth factor.
+     * @param volumeLimit whether to use a volume % change limit.
+     * @param volumePercent the % volume change limiting factor
      */
-    public void smoothMesh( String kSurfaceName, int iteration, float alpha, boolean volumeLimit, float volumePercent)
+    public void smoothMesh( String kSurfaceName, int iteration,
+                            float alpha, boolean volumeLimit, float volumePercent)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.smoothMesh(kSurfaceName, iteration, alpha, volumeLimit, volumePercent);
-        }
+        raycastRenderWM.smoothMesh(kSurfaceName, iteration, alpha,
+                                   volumeLimit, volumePercent);
     }
     
     /**
      * Smooth the given surface.
-     * @param kSurfaceName, the name of the surface to smooth.
-     * @param iteration, smooth iterations.
-     * @param lambda, smooth factor.
-     * @param mu, smooth factor.
+     * @param kSurfaceName the name of the surface to smooth.
+     * @param iteration smooth iterations.
+     * @param lambda smooth factor.
+     * @param mu smooth factor.
      */
     public void smoothThree( String kSurfaceName, int iteration, float lambda, float mu)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.smoothThree(kSurfaceName, iteration, lambda, mu);
-        }
+        raycastRenderWM.smoothThree(kSurfaceName, iteration, lambda, mu);
     }
     
     
     /**
      * Smooth the given surface.
-     * @param kSurfaceName, the name of the surface to smooth.
-     * @param iteration, smooth iterations.
-     * @param fStiffness, stiffness factor.
-     * @param volumeLimit, whether to use a volume % change limit.
-     * @param volumePercent, the % volume change limiting factor.
+     * @param kSurfaceName the name of the surface to smooth.
+     * @param iteration smooth iterations.
+     * @param fStiffness stiffness factor.
+     * @param volumeLimit whether to use a volume % change limit.
+     * @param volumePercent the % volume change limiting factor.
      */
-    public void smoothTwo( String kSurfaceName, int iteration, float fStiffness, boolean volumeLimit, float volumePercent)
+    public void smoothTwo( String kSurfaceName, int iteration,
+                           float fStiffness, boolean volumeLimit, float volumePercent)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.smoothTwo(kSurfaceName, iteration, fStiffness, volumeLimit, volumePercent);
-        }
+        raycastRenderWM.smoothTwo(kSurfaceName, iteration,
+                                  fStiffness, volumeLimit, volumePercent);
     }    
     
     /* (non-Javadoc)
@@ -2364,51 +2249,40 @@ implements ItemListener, ChangeListener {
         Object source = event.getSource();
         if ( source == m_kVolumeBlendSlider )
         {
-            if (raycastRenderWM != null)
-            {
-                raycastRenderWM.setVolumeBlend( m_kVolumeBlendSlider.getValue()/100.0f );
-            }
+            raycastRenderWM.setVolumeBlend( m_kVolumeBlendSlider.getValue()/100.0f );
         }
     }
     
     
     /**
-     * Switches between different ways of displaying the geodesic path (Euclidean, Geodesic, or Mesh).
-     * @param kSurfaceName, the surface the path is on.
-     * @param iWhich, the type of display.
+     * Switches between different ways of displaying the geodesic path
+     * (Euclidean, Geodesic, or Mesh).
+     * @param kSurfaceName the surface the path is on.
+     * @param iWhich the type of display.
      */
     public void toggleGeodesicPathDisplay(String kSurfaceName, int iWhich)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.toggleGeodesicPathDisplay(kSurfaceName, iWhich);
-        }
+        raycastRenderWM.toggleGeodesicPathDisplay(kSurfaceName, iWhich);
     }
     
     /**
      * Toggle the display on/off for the given Node.
-     * @param kNode, node to toggle on/off.
-     * @param bDisplay, display toggle on/off.
+     * @param kNode node to toggle on/off.
+     * @param bDisplay display toggle on/off.
      */
     public void toggleNode( Node kNode, boolean bDisplay )
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.displayNode(kNode, bDisplay);
-        }
+        raycastRenderWM.displayNode(kNode, bDisplay);
     }
     
     /**
      * Changes the translation vector for the surface with the given name.
-     * @param kSurfaceName, the surface to move.
-     * @param kTranslate, the new translation vector
+     * @param kSurfaceName the surface to move.
+     * @param kTranslate the new translation vector
      */
     public void translateSurface(String kSurfaceName, Vector3f kTranslate)
     {
-        if ( raycastRenderWM != null )
-        {
-            raycastRenderWM.translateSurface(kSurfaceName, kTranslate);
-        }
+        raycastRenderWM.translateSurface(kSurfaceName, kTranslate);
     }   
     
     /** 
@@ -2416,21 +2290,17 @@ implements ItemListener, ChangeListener {
      */
     public void updateABBlend()
     {
-        if (raycastRenderWM != null) {
-            raycastRenderWM.setABBlend(1 - getBlendValue()/100.0f);
-        }
+        raycastRenderWM.setABBlend(1 - getBlendValue()/100.0f);
     }    
     
     /**
-     * Causes the PlaneRender objects to update the texture maps when the underlying ModelImage changes.
+     * Causes the PlaneRender objects to update the texture maps when the
+     * underlying ModelImage changes.
      */
     public void updateData() {
         if ( m_kVolumeImageA != null )
         {
             m_kVolumeImageA.UpdateData(imageA, "A");
-        }
-        if ( raycastRenderWM != null )
-        {
             raycastRenderWM.updateData();
         }
         setModified();
@@ -2440,7 +2310,7 @@ implements ItemListener, ChangeListener {
      * @see gov.nih.mipav.view.ViewJFrameBase#updateImageExtents()
      */
     public boolean updateImageExtents() {
-         return false;
+        return false;
     }
 
 
@@ -2521,13 +2391,10 @@ implements ItemListener, ChangeListener {
     
     public void updateLighting( Light[] akGLights )
     {
-        if ( raycastRenderWM != null )
+        raycastRenderWM.updateLighting(akGLights);
+        for (int i = 0; i < 3; i++) 
         {
-            raycastRenderWM.updateLighting(akGLights);
-            for (int i = 0; i < 3; i++) 
-            {
-                m_akPlaneRender[i].updateLighting(akGLights);
-            }
+            m_akPlaneRender[i].updateLighting(akGLights);
         }
         if ( brainsurfaceFlattenerRender != null )
         {
@@ -2554,9 +2421,7 @@ implements ItemListener, ChangeListener {
      */
     public void updateRayTracingSteps()
     {
-        if (raycastRenderWM != null) {
-            raycastRenderWM.stepsSize(Math.round(getStepsValue() * 4.5f));
-        }
+        raycastRenderWM.stepsSize(Math.round(getStepsValue() * 4.5f));
     }
     
     /* (non-Javadoc)
@@ -2585,7 +2450,7 @@ implements ItemListener, ChangeListener {
         toolbarBuilder = new ViewToolBarBuilder(this);
         buildViewToolbar();
 
-            buildSurRenderToolbar();
+        buildSurRenderToolbar();
 
         GridBagConstraints gbc = new GridBagConstraints();
 
@@ -2597,8 +2462,7 @@ implements ItemListener, ChangeListener {
     
     /**
      * Builds menus for the tri-planar view.
-     *
-     * @return  DOCUMENT ME!
+     * @return  new menu bar containing menus.
      */
     protected JMenuBar buildMenu() {
         JSeparator separator = new JSeparator();
@@ -2962,41 +2826,28 @@ implements ItemListener, ChangeListener {
         setVisible(true);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-        // initialize the sculptor region.
-        sculptWidth = imagePanelWidth - (2 * getInsets().left);
-        sculptHeight = imagePanelHeight - getInsets().top - getInsets().bottom;
-        enableVolumeRender();
+        gpuPanel.setVisible(true);
+        raycastRenderWM.setVisible(true);
     }
     
-    /**
-     * Enable volume render.
-     */
-    protected void enableVolumeRender() {
-        if ( m_bSurfaceVisible )
-        {
-            gpuPanel.setVisible(true);
-            raycastRenderWM.setVisible(true);
-            m_bSurfaceVisible = false;
-        }
-    }
     
     protected String getExternalDirs()
-	{
-		String jar_filename = "";
-		String class_path_key = "java.class.path";
-		String class_path = System.getProperty(class_path_key);
-		for (String fn : class_path.split(":")) {
-			if (fn.contains("WildMagic.jar")) {
-				jar_filename = fn;
-				String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib"));
-				externalDirs = externalDirs.concat("WildMagic");
-				System.err.println("Shader dir found: " + externalDirs);
-				return externalDirs;
-			}
-		}
-		System.err.println("Shader dir not found");
-		return System.getProperties().getProperty("user.dir");
-	}
+    {
+        String jar_filename = "";
+        String class_path_key = "java.class.path";
+        String class_path = System.getProperty(class_path_key);
+        for (String fn : class_path.split(":")) {
+            if (fn.contains("WildMagic.jar")) {
+                jar_filename = fn;
+                String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib"));
+                externalDirs = externalDirs.concat("WildMagic");
+                System.err.println("Shader dir found: " + externalDirs);
+                return externalDirs;
+            }
+        }
+        System.err.println("Shader dir not found");
+        return System.getProperties().getProperty("user.dir");
+    }
     
     /**
      * Calculate the LUT from the resampled image.
@@ -3030,7 +2881,7 @@ implements ItemListener, ChangeListener {
         int height;
 
         height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
-        panelToolbar.getHeight();
+            panelToolbar.getHeight();
 
         if (panelHistoLUT != null) {
             panelHistoLUT.resizePanel(maxPanelWidth, height);
@@ -3058,8 +2909,7 @@ implements ItemListener, ChangeListener {
     
     /**
      * Sets the 3DModel position label.
-     *
-     * @param  position  DOCUMENT ME!
+     * @param  position  3DModel position values.
      */
     protected void set3DModelPosition(Vector3f position) {
 
@@ -3082,16 +2932,15 @@ implements ItemListener, ChangeListener {
         fY *= position.Y/(m_kVolumeImageA.GetImage().getExtents()[1] - 1);
         fZ *= position.Z/(m_kVolumeImageA.GetImage().getExtents()[2] - 1);
 
-         modelViewLabelVals[0].setText("X: " + fX);
-         modelViewLabelVals[1].setText("Y: " + fY);
-         modelViewLabelVals[2].setText("Z: " + fZ);
+        modelViewLabelVals[0].setText("X: " + fX);
+        modelViewLabelVals[1].setText("Y: " + fY);
+        modelViewLabelVals[2].setText("Z: " + fZ);
 
     }
     
     /**
      * Sets the PatientSlice position label.
-     *
-     * @param  position  DOCUMENT ME!
+     * @param  position value.
      */
     protected void setPatientSlicePosition(Vector3f position) {
         Vector3f axial = new Vector3f();

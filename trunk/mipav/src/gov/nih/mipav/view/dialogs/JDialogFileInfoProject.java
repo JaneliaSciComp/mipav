@@ -1566,7 +1566,7 @@ public class JDialogFileInfoProject extends JDialogBase implements ActionListene
         /**
          * Gets the table of parameters.
          *
-         * @return  paramter set table
+         * @return  parameter set table
          */
         public JTable getTable() {
             return this.setTable;

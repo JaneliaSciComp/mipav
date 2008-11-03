@@ -1,11 +1,15 @@
 package gov.nih.mipav.view.renderer.WildMagic.flythroughview;
 
 
-import WildMagic.LibFoundation.Curves.*;
-import WildMagic.LibFoundation.Mathematics.*;
-import gov.nih.mipav.view.renderer.flythroughview.*;
-import java.awt.*;
-import java.awt.event.*;
+import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
+
+import java.awt.Toolkit;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+
+import WildMagic.LibFoundation.Curves.Curve3f;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -15,22 +19,227 @@ public class FlyPathBehavior_WM implements KeyListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    public static final int EVENT_CHANGE_ALL = 0xffffffff;
+    /**
+     * Instances which want to be notified of updates to this behavior should implement this interface by providing the
+     * viewChanged method implementation.
+     */
+    public static interface Callback {
 
-    /** DOCUMENT ME! */
+        /**
+         * ViewChanged callback for flythrough renderers.
+         * @param  kBehavior  reference to this MjFlyPathBehavior in which the view changed.
+         * @param  iEvent     Bitmask identifies the event(s) which caused the view to change. Bitmask created from OR
+         *                    of EVENT_* defintions.
+         */
+        void viewChanged(FlyPathBehavior_WM kBehavior, int iEvent);
+    }
+
+    /**
+     * Branch information.
+     */
+    private class BranchState extends Object implements Cloneable {
+
+        /** List of branch points (normalized path distances where one or more branches starts). */
+        public float[] m_afBranchPoint;
+
+        /** Current direction. True if forward, false if reverse. */
+        public boolean m_bMoveForward;
+
+        /** Current position along the path. */
+        public float m_fNormalizedPathDist;
+
+        /** Normalized distance (in range [0,1]) along parent branch where the specified 
+         * branch starts. */
+        public float m_fParentBranchPoint;
+
+        /** Identifies the current curve in the path graph. */
+        public int m_iBranchIndex;
+
+        /** Information about the parent branch, if one exists. */
+        public int m_iParentBranchIndex;
+
+        /** Branch curve */
+        public Curve3f m_kBranchCurve;
+
+        /** Range of normalized path distances that have not been visited. */
+        private float m_fDistUnvisitedMax;
+
+        /** Range of normalized path distances that have not been visited. */
+        private float m_fDistUnvisitedMin;
+
+        /**
+         * Constructor.
+         *
+         * @param  iBranchIndex   int Index which identifies the branch.
+         * @param  kFlyPathGraph  FlyPathGraphCurve Data structure which contains all of the information about each
+         *                        branch and its connections.
+         */
+        public BranchState(int iBranchIndex, FlyPathGraphCurve kFlyPathGraph) {
+            m_iBranchIndex = iBranchIndex;
+            m_kBranchCurve = kFlyPathGraph.getCurvePosition(iBranchIndex);
+
+            m_fDistUnvisitedMin = 0.0f;
+            m_fDistUnvisitedMax = 1.0f;
+
+            m_afBranchPoint = kFlyPathGraph.getBranchPoints(iBranchIndex);
+            m_iParentBranchIndex = kFlyPathGraph.getBranchParentIndex(iBranchIndex);
+            m_fParentBranchPoint = kFlyPathGraph.getBranchParentNormalizedDist(iBranchIndex);
+
+            start();
+        }
+
+        /**
+         * Create a copy of this instance.
+         * @return  BranchState New instance which is a copy of this instance.
+         */
+        public BranchState createCopy() {
+            return (BranchState) clone();
+        }
+
+        /**
+         * Create a copy of this instance which has the same information except that the state of the moving forward is
+         * inverted.
+         * @return  BranchState New instance which is a copy of this instance except that the moving forward flag is
+         *          inverted.
+         */
+        public BranchState createReverseCopy() {
+            BranchState kCopy = createCopy();
+
+            kCopy.m_bMoveForward = !kCopy.m_bMoveForward;
+
+            return kCopy;
+        }
+
+        /**
+         * Return an index which identifies segment the specified normalized path distance belongs.
+         *
+         * @param   fNormalizedPathDist  float Normalized path distance in the range [0,1] along the branch path.
+         *
+         * @return  int An index of zero is returned if the distance is before the first branch point or if there are no
+         *          branch points. An index of one is returned if the distance is greater than or equal to the first
+         *          branch point but less than or equal to second branch point.
+         */
+        public int getBranchPointSegment(float fNormalizedPathDist) {
+            int iSegment = 0;
+
+            while (iSegment < m_afBranchPoint.length) {
+
+                // When moving forward, the branch point counts as being
+                // in the next segment if equal to the input distance.
+                if (m_bMoveForward) {
+
+                    if (fNormalizedPathDist < m_afBranchPoint[iSegment]) {
+                        break;
+                    }
+                } // When moving backward, the branch point counts as being
+
+                // in the previous segment if equal to the input distance.
+                else {
+
+                    if (fNormalizedPathDist <= m_afBranchPoint[iSegment]) {
+                        break;
+                    }
+                }
+
+                ++iSegment;
+            }
+
+            return iSegment;
+        }
+
+        /**
+         * Return the position of the curve of the point further down the curve the specified distance in the current
+         * heading.
+         *
+         * @param   fDist  float Distance further down the branch curve in the current heading. This value can be
+         *                 negative for a point in the reverse heading.
+         *
+         * @return  Point3f Coordinates of the 3D point further down along the curve.
+         */
+        public Vector3f getForwardNormalizedPosition(float fDist) {
+        	return m_kBranchCurve.GetPosition(getForwardNormalizedTime(fDist));
+        }
+
+        /**
+         * Return the normalized path distance of a point further down the branch curve in the current heading.
+         *
+         * @param   fForwardDist  float Distance further down the branch curve in the current heading. This value can be
+         *                        negative for a point in the reverse heading.
+         *
+         * @return  float Normalized path distance in the [0,1] range for the requested point.
+         */
+        public float getForwardNormalizedTime(float fForwardDist) {
+
+            // Normalize the input distance.
+            float fPathDist = m_fNormalizedPathDist * m_kBranchCurve.GetTotalLength();
+
+            return m_bMoveForward ? m_kBranchCurve.GetTime(fPathDist + fForwardDist, 100, 1e-02f)
+                                  : m_kBranchCurve.GetTime(fPathDist - fForwardDist, 100, 1e-02f);
+
+        }
+
+        /**
+         * Reset parameters to start at the beginning of the path moving in the forward direction.
+         */
+        public void start() {
+            m_fNormalizedPathDist = 0.0f;
+            m_bMoveForward = true;
+        }
+
+        /**
+         * Update the range of normalized path distances that have not been visited. Call this method before changing
+         * the current normalized path distance!
+         *
+         * @param  fNewNormalizedPathDistance  float Normalized path distance about to be set for this branch.
+         */
+        public void updateDistUnvisited(float fNewNormalizedPathDistance) {
+
+            if (m_fNormalizedPathDist <= m_fDistUnvisitedMin) {
+                m_fDistUnvisitedMin = Math.max(m_fDistUnvisitedMin, fNewNormalizedPathDistance);
+            }
+
+            if (m_fNormalizedPathDist >= m_fDistUnvisitedMax) {
+                m_fDistUnvisitedMax = Math.min(m_fDistUnvisitedMax, fNewNormalizedPathDistance);
+            }
+        }
+
+        /**
+         * Clone the current branch state. Used by the mouse recording process.
+         *
+         * @return  Object
+         *
+         * @throws  InternalError  DOCUMENT ME!
+         */
+        protected Object clone() {
+
+            // Should not get clone unsupported exception since we use
+            // the Object mehtod's clone which just replicated data
+            // values and references.
+            try {
+                return super.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new InternalError(e.toString());
+            }
+        }
+    }
+
+    /** on a viewChanged event change both the view position and direction vector */
+    public static final int EVENT_CHANGE_ALL = 0xffffffff;
+    
+    /** on a viewChanged event change just the view position  */
     public static final int EVENT_CHANGE_POSITION = 0x00000001;
 
-    /** DOCUMENT ME! */
+    /** on a viewChanged event change just the view direction */
     public static final int EVENT_CHANGE_VIEW = 0x00000002;
-    
-    /** DOCUMENT ME! */
+
+    /** on a viewChanged event change just the view orientation */
     public static final int EVENT_RESET_ORIENTATION = 0x00000004;
 
-    /** DOCUMENT ME! */
+    /** on a viewChanged event change the fly path branch */
     public static final int EVENT_CHANGE_BRANCH = 0x00000008;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    /** current and previous key press time. */
+    long currEventTime, prevEventTime;
 
     /**
      * How far ahead down the path should the view be aimed. If zero, then the view direction is the tangent to the
@@ -43,9 +252,6 @@ public class FlyPathBehavior_WM implements KeyListener {
      * the path is being followed in the opposite direction.
      */
     public float m_fPathStep;
-
-    /** current and previous key press time. */
-    long currEventTime, prevEventTime;
 
     /**
      * When a branch point along the current branch is reached, this array is filled with the possible BranchState
@@ -64,16 +270,16 @@ public class FlyPathBehavior_WM implements KeyListener {
      */
     private boolean m_bChooseBranch = false;
 
-    /** DOCUMENT ME! */
+    /** Current annotation in the list. */
     private int m_iAnnotateListItemSelected = -1;
 
-    /** DOCUMENT ME! */
+    /** Index of the closest branch at a fork in the path. */
     private int m_iBranchChoiceIndex = -1;
 
     /** Keep reference to instance which describes the annotation points. */
     private FlyPathAnnotateList_WM m_kAnnotateList;
 
-    /** DOCUMENT ME! */
+    /** Current branch state of traversing the fly path. */
     private BranchState m_kBranchState = null;
 
     /**
@@ -91,18 +297,19 @@ public class FlyPathBehavior_WM implements KeyListener {
      * some other view up vector would have to be chosen and some rule would have to be defined for that.
      */
     private Vector3f m_kViewup1 = new Vector3f(0.0f, 1.0f, 0.0f);
-
-    /** DOCUMENT ME! */
+    /** For calculating the view up vector. */
     private Vector3f m_kViewup2 = new Vector3f(0.0f, 0.0f, 1.0f);
-
     /** Parent frame references. */
     private FlyThroughRender parentScene;
-
+    
+    /** Current view position along the path. */
     private Vector3f m_kViewPoint = new Vector3f(0f,0f,0f);
-    private Vector3f m_kViewDirection = new Vector3f(0f,0f,0f);
-    private Vector3f m_kViewUp = new Vector3f(0f,0f,0f);
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    /** Current view direction along the path. */
+    private Vector3f m_kViewDirection = new Vector3f(0f,0f,0f);
+
+    /** Current view up vector. */
+    private Vector3f m_kViewUp = new Vector3f(0f,0f,0f);
 
     /**
      * Setup to fly along the specified path and look around.
@@ -140,7 +347,12 @@ public class FlyPathBehavior_WM implements KeyListener {
         setBranch(0);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    /**
+     * Sound a beep.
+     */
+    private static void beep() {
+        Toolkit.getDefaultToolkit().beep();
+    }
 
     /**
      * One round trip path walk through.
@@ -176,7 +388,6 @@ public class FlyPathBehavior_WM implements KeyListener {
 
     /**
      * Access the curve in the path graph currently positioned along.
-     *
      * @return  Curve3 Reference to Curve3 instance in path graph.
      */
     public Curve3f getBranchCurve() {
@@ -186,7 +397,6 @@ public class FlyPathBehavior_WM implements KeyListener {
     /**
      * Access the normalized distance traveled from the end of the current branch path. Also represents the maximum of
      * the range that has been unvisited.
-     *
      * @return  float Normalized distance along the current branch path that is maximum of the unvisited range.
      */
     public float getBranchDistUnvisitedMax() {
@@ -196,7 +406,6 @@ public class FlyPathBehavior_WM implements KeyListener {
     /**
      * Access the normalized distance traveled from the beginning of the current branch path. Also represents the
      * minimum of the range that has been unvisited.
-     *
      * @return  float Normalized distance along the current branch path that is minimum of the unvisited range.
      */
     public float getBranchDistUnvisitedMin() {
@@ -205,7 +414,6 @@ public class FlyPathBehavior_WM implements KeyListener {
 
     /**
      * Access the index of the curve in the path graph currrently positioned along.
-     *
      * @return  int Index of Curve3 instance in path graph.
      */
     public int getBranchIndex() {
@@ -214,7 +422,6 @@ public class FlyPathBehavior_WM implements KeyListener {
 
     /**
      * Get the current state of traversing.
-     *
      * @return  BranchState
      */
     public BranchState getBranchState() {
@@ -224,7 +431,6 @@ public class FlyPathBehavior_WM implements KeyListener {
     /**
      * Get the current distance ahead for looking down the path. If this distance is zero, then the view direction is
      * the tangent to the path curve at the current position.
-     *
      * @return  float Distance ahead for looking down the path.
      */
     public float getGazeDistance() {
@@ -233,16 +439,14 @@ public class FlyPathBehavior_WM implements KeyListener {
 
     /**
      * Get the normalized distance along the current path.
-     *
      * @return  float Value in the range [0,1].
      */
     public float getNormalizedPathDistance() {
         return m_kBranchState.m_fNormalizedPathDist;
     }
-
+    
     /**
      * Get the current position distance along the path.
-     *
      * @return  float path distance.
      */
     public float getPathDist() {
@@ -251,25 +455,23 @@ public class FlyPathBehavior_WM implements KeyListener {
 
     /**
      * Get the current distance along the path.
-     *
      * @return  distance along the path.
      */
     public float getPathDistance() {
         return getNormalizedPathDistance() * getPathLength();
     }
 
+
     /**
      * Get the total length of the current path.
-     *
      * @return  float Length of the path.
      */
     public float getPathLength() {
         return m_kBranchState.m_kBranchCurve.GetTotalLength();
     }
-    
+
     /**
      * Get the current distance increment for moving along the path.
-     *
      * @return  distance increment for moving along path. Always positive regardless of which direction moving along the
      *          path.
      */
@@ -279,7 +481,6 @@ public class FlyPathBehavior_WM implements KeyListener {
 
     /**
      * Access the index of the currently selected branch at a branch point.
-     *
      * @return  int Index of currently selected branch; -1 if not currently at a branch point.
      */
     public int getSelectedBranchIndex() {
@@ -291,10 +492,33 @@ public class FlyPathBehavior_WM implements KeyListener {
         return -1;
     }
 
+    /**
+     * Returns the view direction vector at the current position on the path.
+     * @return view direction vector at the current position on the path.
+     */
+    public Vector3f getViewDirection()
+    {
+        return m_kViewDirection;
+    }
+    /**
+     * Returns the current position on the path.
+     * @return current position on the path.
+     */
+    public Vector3f getViewPoint()
+    {
+        return m_kViewPoint;
+    }
+    /**
+     * Returns the view up vector at the current position on the path.
+     * @return view up vector at the current position on the path.
+     */
+    public Vector3f getViewUp()
+    {
+        return m_kViewUp;
+    }
 
     /**
      * Get indication of whether the movement along the current path is in the forward or reverse direction.
-     *
      * @return  boolean True if the movement is along the forward direction along the path.
      */
     public boolean isPathMoveForward() {
@@ -303,7 +527,6 @@ public class FlyPathBehavior_WM implements KeyListener {
 
     /**
      * Handle the key pressed event from the text field.
-     *
      * @param  event  key event to handle
      */
     public void keyPressed(KeyEvent event) {
@@ -448,23 +671,18 @@ public class FlyPathBehavior_WM implements KeyListener {
         }
     }
 
-    /**
-     * Handle the key released event from the text field.
-     *
-     * @param  event  key event to handle
+    /* (non-Javadoc)
+     * @see java.awt.event.KeyListener#keyReleased(java.awt.event.KeyEvent)
      */
     public void keyReleased(KeyEvent event) {}
 
-    /**
-     * Does nothing.
-     *
-     * @param  event  key event to handle
+    /* (non-Javadoc)
+     * @see java.awt.event.KeyListener#keyTyped(java.awt.event.KeyEvent)
      */
     public void keyTyped(KeyEvent event) {}
 
     /**
      * Call from the JPanelFlythruMove.
-     *
      * @param  command  move command.
      */
     public void move(String command) {
@@ -633,8 +851,7 @@ public class FlyPathBehavior_WM implements KeyListener {
 
     /**
      * Move along the path step width.
-     *
-     * @param  _step  step size.
+      * @param  _step  step size.
      */
     public void moveAlongPath(int _step) {
         doPathStep(_step);
@@ -642,7 +859,6 @@ public class FlyPathBehavior_WM implements KeyListener {
 
     /**
      * Make the specified branch be the current state for following.
-     *
      * @param  _kBranchState  BranchState Instance which describes the state of the branch.
      */
     public void setBranch(Object _kBranchState) {
@@ -655,7 +871,6 @@ public class FlyPathBehavior_WM implements KeyListener {
     /**
      * Identify the instance which implements the Callback interface. The viewChanged method of the Callback interface
      * will be called whenever anything about this behavior changes.
-     *
      * @param  kCallback  reference to instance implementing the Callback interface; may pass null reference to disable
      *                    the callback
      */
@@ -665,18 +880,9 @@ public class FlyPathBehavior_WM implements KeyListener {
     }
 
     /**
-     * Sound a beep.
-     */
-    private static void beep() {
-        Toolkit.getDefaultToolkit().beep();
-    }
-
-    /**
      * Clamp the input normalized path distance to the range [0,1]. If the value is outside that range, then sound a
      * beep.
-     *
      * @param   fDistance  float Input normalized path distance.
-     *
      * @return  float Input distance clamped to the range [0,1].
      */
     private float clampNormalizedPathDistance(float fDistance) {
@@ -698,7 +904,6 @@ public class FlyPathBehavior_WM implements KeyListener {
     /**
      * Take the specified number of steps along the current path using the current path step size. If the number of
      * steps is negative, then the steps are taken in reverse.
-     *
      * @param  iNumSteps  int Number of steps to take along the current path.
      */
     private void doPathStep(int iNumSteps) {
@@ -796,7 +1001,6 @@ public class FlyPathBehavior_WM implements KeyListener {
 
     /**
      * Call the implementation of the callback's notification method, if a callback instance has been defined.
-     *
      * @param  iEvent  Bitmask identifies the event(s) which caused the view to change. Bitmask created from OR of
      *                 EVENT_* defintions.
      */
@@ -806,19 +1010,9 @@ public class FlyPathBehavior_WM implements KeyListener {
             m_kCallback.viewChanged(this, iEvent);
         }
     }
-
+    
     /**
      * Make the specified branch be the current state for following.
-     *
-     * @param  iBranch  int Index of the branch path to follow.
-     */
-    private void setBranch(int iBranch) {
-        setBranch(m_akBranchState[iBranch]);
-    }
-
-    /**
-     * Make the specified branch be the current state for following.
-     *
      * @param  kBranchState  BranchState Instance which describes the state of the branch.
      */
     private void setBranch(BranchState kBranchState) {
@@ -827,6 +1021,14 @@ public class FlyPathBehavior_WM implements KeyListener {
 
         setPathDist(m_kBranchState.m_fNormalizedPathDist);
         setIdentityViewOrientation();
+    }
+
+    /**
+     * Make the specified branch be the current state for following.
+     * @param  iBranch  int Index of the branch path to follow.
+     */
+    private void setBranch(int iBranch) {
+        setBranch(m_akBranchState[iBranch]);
     }
 
     /**
@@ -882,10 +1084,9 @@ public class FlyPathBehavior_WM implements KeyListener {
             beep();
         }
     }
-
+    
     /**
      * Set the annotation point along the path.
-     *
      * @param  iItem  int
      */
     private void setCurvePathAnnotateItem(int iItem) {
@@ -906,7 +1107,7 @@ public class FlyPathBehavior_WM implements KeyListener {
         notifyCallback(EVENT_CHANGE_POSITION);
 
     }
-
+    
     /**
      * Reset the view orientation transformation to the identity. That is, remove all yaw/pitch/roll.
      */
@@ -916,7 +1117,6 @@ public class FlyPathBehavior_WM implements KeyListener {
     
     /**
      * Update the camera position along the path based on the specified distance from the beginning.
-     *
      * @param  fNormalizedDist  normalized distance from the beginning of the path for the location of the camera for
      *                          viewing
      */
@@ -971,11 +1171,14 @@ public class FlyPathBehavior_WM implements KeyListener {
         // Notify listener that we are updated.
         notifyCallback(EVENT_CHANGE_POSITION);
     }
+    
+
+
+    //~ Inner Interfaces -----------------------------------------------------------------------------------------------
 
     /**
      * Create the array of branch choices and set the mode which forces the user to select from among the branch
      * choices.
-     *
      * @param  iBranchParent  int Index which identifies the parent branch.
      * @param  iBranchPoint   int Index which identifies the point along the branch path where the branching occurs for
      *                        the choices.
@@ -1007,9 +1210,11 @@ public class FlyPathBehavior_WM implements KeyListener {
         m_iBranchChoiceIndex = -1;
     }
 
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
+
+
     /**
      * Set the camera to the specified be located at the specified view point and looking in the specified direction.
-     *
      * @param  kViewPoint      coordinates of the camera view point
      * @param  kViewdirVector  coordinates of the camera view direction vector. This vector must be normalized.
      */
@@ -1048,233 +1253,5 @@ public class FlyPathBehavior_WM implements KeyListener {
         m_kViewPoint.Copy(kViewPoint);
         m_kViewDirection.Copy(kViewdirVector);
         m_kViewUp.Copy(kViewupVector);
-    }
-    
-    public Vector3f getViewPoint()
-    {
-        return m_kViewPoint;
-    }
-    
-    public Vector3f getViewDirection()
-    {
-        return m_kViewDirection;
-    }
-    
-    public Vector3f getViewUp()
-    {
-        return m_kViewUp;
-    }
-    
-
-
-    //~ Inner Interfaces -----------------------------------------------------------------------------------------------
-
-    /**
-     * Instances which want to be notified of updates to this behavior should implement this interface by providing the
-     * viewChanged method implementation.
-     */
-    public static interface Callback {
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param  kBehavior  reference to this MjFlyPathBehavior in which the view changed.
-         * @param  iEvent     Bitmask identifies the event(s) which caused the view to change. Bitmask created from OR
-         *                    of EVENT_* defintions.
-         */
-        void viewChanged(FlyPathBehavior_WM kBehavior, int iEvent);
-    }
-
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-
-    /**
-     * DOCUMENT ME!
-     */
-    private class BranchState extends Object implements Cloneable {
-
-        /** List of branch points (normalized path distances where one or more branches starts). */
-        public float[] m_afBranchPoint;
-
-        /** Current direction. True if forward, false if reverse. */
-        public boolean m_bMoveForward;
-
-        /** Current position along the path. */
-        public float m_fNormalizedPathDist;
-
-        /** DOCUMENT ME! */
-        public float m_fParentBranchPoint;
-
-        /** Identifies the current curve in the path graph. */
-        public int m_iBranchIndex;
-
-        /** Information about the parent branch, if one exists. */
-        public int m_iParentBranchIndex;
-
-        /** DOCUMENT ME! */
-        public Curve3f m_kBranchCurve;
-
-        /** DOCUMENT ME! */
-        private float m_fDistUnvisitedMax;
-
-        /** Range of normalized path distances that have not been visited. */
-        private float m_fDistUnvisitedMin;
-
-        /**
-         * Constructor.
-         *
-         * @param  iBranchIndex   int Index which identifies the branch.
-         * @param  kFlyPathGraph  FlyPathGraphCurve Data structure which contains all of the information about each
-         *                        branch and its connections.
-         */
-        public BranchState(int iBranchIndex, FlyPathGraphCurve kFlyPathGraph) {
-            m_iBranchIndex = iBranchIndex;
-            m_kBranchCurve = kFlyPathGraph.getCurvePosition(iBranchIndex);
-
-            m_fDistUnvisitedMin = 0.0f;
-            m_fDistUnvisitedMax = 1.0f;
-
-            m_afBranchPoint = kFlyPathGraph.getBranchPoints(iBranchIndex);
-            m_iParentBranchIndex = kFlyPathGraph.getBranchParentIndex(iBranchIndex);
-            m_fParentBranchPoint = kFlyPathGraph.getBranchParentNormalizedDist(iBranchIndex);
-
-            start();
-        }
-
-        /**
-         * Create a copy of this instance.
-         *
-         * @return  BranchState New instance which is a copy of this instance.
-         */
-        public BranchState createCopy() {
-            return (BranchState) clone();
-        }
-
-        /**
-         * Create a copy of this instance which has the same information except that the state of the moving forward is
-         * inverted.
-         *
-         * @return  BranchState New instance which is a copy of this instance except that the moving forward flag is
-         *          inverted.
-         */
-        public BranchState createReverseCopy() {
-            BranchState kCopy = createCopy();
-
-            kCopy.m_bMoveForward = !kCopy.m_bMoveForward;
-
-            return kCopy;
-        }
-
-        /**
-         * Return an index which identifies segment the specified normalized path distance belongs.
-         *
-         * @param   fNormalizedPathDist  float Normalized path distance in the range [0,1] along the branch path.
-         *
-         * @return  int An index of zero is returned if the distance is before the first branch point or if there are no
-         *          branch points. An index of one is returned if the distance is greater than or equal to the first
-         *          branch point but less than or equal to second branch point.
-         */
-        public int getBranchPointSegment(float fNormalizedPathDist) {
-            int iSegment = 0;
-
-            while (iSegment < m_afBranchPoint.length) {
-
-                // When moving forward, the branch point counts as being
-                // in the next segment if equal to the input distance.
-                if (m_bMoveForward) {
-
-                    if (fNormalizedPathDist < m_afBranchPoint[iSegment]) {
-                        break;
-                    }
-                } // When moving backward, the branch point counts as being
-
-                // in the previous segment if equal to the input distance.
-                else {
-
-                    if (fNormalizedPathDist <= m_afBranchPoint[iSegment]) {
-                        break;
-                    }
-                }
-
-                ++iSegment;
-            }
-
-            return iSegment;
-        }
-
-        /**
-         * Return the position of the curve of the point further down the curve the specified distance in the current
-         * heading.
-         *
-         * @param   fDist  float Distance further down the branch curve in the current heading. This value can be
-         *                 negative for a point in the reverse heading.
-         *
-         * @return  Point3f Coordinates of the 3D point further down along the curve.
-         */
-        public Vector3f getForwardNormalizedPosition(float fDist) {
-        	return m_kBranchCurve.GetPosition(getForwardNormalizedTime(fDist));
-        }
-
-        /**
-         * Return the normalized path distance of a point further down the branch curve in the current heading.
-         *
-         * @param   fForwardDist  float Distance further down the branch curve in the current heading. This value can be
-         *                        negative for a point in the reverse heading.
-         *
-         * @return  float Normalized path distance in the [0,1] range for the requested point.
-         */
-        public float getForwardNormalizedTime(float fForwardDist) {
-
-            // Normalize the input distance.
-            float fPathDist = m_fNormalizedPathDist * m_kBranchCurve.GetTotalLength();
-
-            return m_bMoveForward ? m_kBranchCurve.GetTime(fPathDist + fForwardDist, 100, 1e-02f)
-                                  : m_kBranchCurve.GetTime(fPathDist - fForwardDist, 100, 1e-02f);
-
-        }
-
-        /**
-         * Reset parameters to start at the beginning of the path moving in the forward direction.
-         */
-        public void start() {
-            m_fNormalizedPathDist = 0.0f;
-            m_bMoveForward = true;
-        }
-
-        /**
-         * Update the range of normalized path distances that have not been visited. Call this method before changing
-         * the current normalized path distance!
-         *
-         * @param  fNewNormalizedPathDistance  float Normalized path distance about to be set for this branch.
-         */
-        public void updateDistUnvisited(float fNewNormalizedPathDistance) {
-
-            if (m_fNormalizedPathDist <= m_fDistUnvisitedMin) {
-                m_fDistUnvisitedMin = Math.max(m_fDistUnvisitedMin, fNewNormalizedPathDistance);
-            }
-
-            if (m_fNormalizedPathDist >= m_fDistUnvisitedMax) {
-                m_fDistUnvisitedMax = Math.min(m_fDistUnvisitedMax, fNewNormalizedPathDistance);
-            }
-        }
-
-        /**
-         * Clone the current branch state. Used by the mouse recording process.
-         *
-         * @return  Object
-         *
-         * @throws  InternalError  DOCUMENT ME!
-         */
-        protected Object clone() {
-
-            // Should not get clone unsupported exception since we use
-            // the Object mehtod's clone which just replicated data
-            // values and references.
-            try {
-                return super.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new InternalError(e.toString());
-            }
-        }
     }
 }

@@ -241,8 +241,8 @@ public abstract class ViewJComponentBase extends JComponent {
     /**
      * creates object of size defined by width & height.
      *
-     * @param extents, the image width and height
-     * @param _imageA, the image that this ViewJComponentBase is a view of
+     * @param extents the image width and height
+     * @param _imageA the image that this ViewJComponentBase is a view of
      */
     public ViewJComponentBase( int width, int height, ModelImage _imageA ) {
         img = null;
@@ -386,9 +386,9 @@ public abstract class ViewJComponentBase extends JComponent {
 
     /**
      * LocalToScreen converts a point from local coordinates to screen coordinates.
-     * @param localPoint, a 3D point, where x,y represent the point in local
+     * @param localPoint a 3D point, where x,y represent the point in local
      * slice coordinates and the z value is the slice value.
-     * @param screenPoint, the transfromed localPoint, scaled with the image
+     * @param screenPoint the transfromed localPoint, scaled with the image
      * pixel resolution and zoom.
      */
     public void LocalToScreen( Vector3f localPoint, Vector3f screenPoint )
@@ -401,10 +401,10 @@ public abstract class ViewJComponentBase extends JComponent {
 
     /**
      * ScreenToLocal converts a point from screen coordinates to local coordinates.
-     * @param screenPoint, a 3D point, where x,y represent the point in local
+     * @param screenPoint a 3D point, where x,y represent the point in local
      * slice coordinates and the z value is the slice value. screenPoint is
      * usually taken from the MouseEvent point.
-     * @param localPoint, the transfromed point in local slice
+     * @param localPoint the transfromed point in local slice
      * coordinates. The z-value represents the current slice.
      */
     public void ScreenToLocal( Vector3f screenPoint, Vector3f localPoint )
@@ -844,10 +844,10 @@ public abstract class ViewJComponentBase extends JComponent {
      *
      * @param paintImageBuffer int[] the buffer to fill that will make the
      * paint image
-     * @param paintBitmap, the bit map representing the painted pixels
-     * @param slice, the current slice to paint if this is a 3D image
-     * @param frame, the ViewJFrameBase containing the painted component.
-     * @param b2D, when true this is a 2D image component, when false it is
+     * @param paintBitmap the bit map representing the painted pixels
+     * @param slice the current slice to paint if this is a 3D image
+     * @param frame the ViewJFrameBase containing the painted component.
+     * @param b2D when true this is a 2D image component, when false it is
      * greater than 2D
      */
     protected void makePaintImage(int[] paintImageBuffer, BitSet paintBitmap,
@@ -903,9 +903,9 @@ public abstract class ViewJComponentBase extends JComponent {
      *
      * @param paintImageBuffer int[] the buffer the paint image will be
      * created from
-     * @param paintBitmap, the bit map representing the painted pixels
-     * @param slice, the current slice to paint if this is a 3D image
-     * @param frame, the ViewJFrameBase containing the painted component.
+     * @param paintBitmap the bit map representing the painted pixels
+     * @param slice the current slice to paint if this is a 3D image
+     * @param frame the ViewJFrameBase containing the painted component.
      */
     protected void makePaintBitmapBorder(int[] paintImageBuffer, BitSet paintBitmap,
                                          int slice, ViewJFrameBase frame )
@@ -1020,7 +1020,7 @@ public abstract class ViewJComponentBase extends JComponent {
      * Gets the color of the paint the user has selected from the paint
      * toolbar.
      *
-     * @param vjfb, the ViewJFrameBase object that contains the paint toolbar.
+     * @param vjfb the ViewJFrameBase object that contains the paint toolbar.
      * @return int the color of the paint selected by the user, represented as
      * a packed integer
      */

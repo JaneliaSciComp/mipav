@@ -134,9 +134,9 @@ public class VolumeImage
 
     /**
      * Initialize the textures for the color lookup table.
-     * @param kLUT, the new LUT.
-     * @param kRGBT, the new RGB table.
-     * @param kPostfix, the string postfix to concatenate to the "ColorMap" image name.
+     * @param kLUT the new LUT.
+     * @param kRGBT the new RGB table.
+     * @param kPostfix the string postfix to concatenate to the "ColorMap" image name.
      * @return GraphicsImage, the new GraphicsImage storing the colormap lookup table.
      */
     public static GraphicsImage InitColorMap ( ModelLUT kLUT, ModelRGB kRGBT, String kPostFix )
@@ -158,8 +158,8 @@ public class VolumeImage
 
     /**
      * Initialize the textures for the opacity lookup table.
-     * @param kImage, the ModelImage the opacity transfer function applies to.
-     * @param kPostfix, the string postfix to concatenate to the "OpacityMap" image name.
+     * @param kImage the ModelImage the opacity transfer function applies to.
+     * @param kPostfix the string postfix to concatenate to the "OpacityMap" image name.
      * @return GraphicsImage, the new GraphicsImage storing the colormap lookup table.
      */
     public GraphicsImage InitOpacityMap (ModelImage kImage, String kPostFix )
@@ -181,8 +181,8 @@ public class VolumeImage
 
     /**
      * Update the image data.
-     * @param kImage, the modified ModelImage
-     * @param kPostfix, which image (imageA, imageB)
+     * @param kImage the modified ModelImage
+     * @param kPostfix which image (imageA, imageB)
      */
     public void UpdateData( ModelImage kImage, String kPostfix )
     {
@@ -192,10 +192,10 @@ public class VolumeImage
 
     /**
      * Update the image volume data on the GPU.
-     * @param kImage, the new ModelImage
-     * @param kVolumeImage, the volume data image.
-     * @param kVolumeTexture, the volume data texture.
-     * @param kPostFix, the postfix string for the image name.
+     * @param kImage the new ModelImage
+     * @param kVolumeImage the volume data image.
+     * @param kVolumeTexture the volume data texture.
+     * @param kPostFix the postfix string for the image name.
      */
     public static GraphicsImage UpdateData( ModelImage kImage, GraphicsImage kVolumeImage,
                                       Texture kVolumeTexture, boolean bByte, String kPostFix )
@@ -306,7 +306,7 @@ public class VolumeImage
 
     /**
      * Calculates histogram for the gradient magnitude ModelImage
-     * @param kImage, the image to calculate the gradient magnitude.
+     * @param kImage the image to calculate the gradient magnitude.
      * @return  ModelImage containing GM image, null when no image calculated.
      */
     private ModelImage CalcHistogramsGM( ModelImage kImage )
@@ -445,8 +445,8 @@ public class VolumeImage
 
     /**
      * Update the transfer function for the image iImage.
-     * @param kTransfer, the new opacity transfer function
-     * @param iImage, the image to modify (0 = volume image, 2 = gradient mag)
+     * @param kTransfer the new opacity transfer function
+     * @param iImage the image to modify (0 = volume image, 2 = gradient mag)
      * @return boolean true when updated, false otherwise.
      */
     public boolean UpdateImages(TransferFunction kTransfer, int iImage)
@@ -467,10 +467,10 @@ public class VolumeImage
 
     /**
      * Update the opacity transfer function.
-     * @param kImage, the ModelImage the transfer function applies to.
-     * @param kOpacityTexture, the opacity Texture passed to the GPU
-     * @param kOpacityMap, the opacity data stored in the GraphicsImage
-     * @param kTransfer, the new transfer function.
+     * @param kImage the ModelImage the transfer function applies to.
+     * @param kOpacityTexture the opacity Texture passed to the GPU
+     * @param kOpacityMap the opacity data stored in the GraphicsImage
+     * @param kTransfer the new transfer function.
      */
     private boolean UpdateImages(ModelImage kImage, Texture kOpacityTexture,
                                  GraphicsImage kOpacityMap, TransferFunction kTransfer)
@@ -491,7 +491,7 @@ public class VolumeImage
 
     /**
      * Update the LUT for the ModelImage.
-     * @param kLUT, new LUT for ModelImage.
+     * @param kLUT new LUT for ModelImage.
      */
     public void UpdateImages(ModelLUT kLUT)
     {
@@ -504,9 +504,9 @@ public class VolumeImage
 
     /**
      * Update the LUT texture sent to the GPU.
-     * @param kColorTexture, the color-map Texture object.
-     * @param kColorMap, the color-map GraphicsImage object (stores data).
-     * @param kLUT, the new LUT.
+     * @param kColorTexture the color-map Texture object.
+     * @param kColorMap the color-map GraphicsImage object (stores data).
+     * @param kLUT the new LUT.
      */
     public static void UpdateImages(Texture kColorTexture, GraphicsImage kColorMap, ModelLUT kLUT)
     {
@@ -589,7 +589,7 @@ public class VolumeImage
 
     /**
      * Sets the ModelRGB for the iImage.
-     * @param kRGBT, new ModelRGB
+     * @param kRGBT new ModelRGB
      */
     public void SetRGBT(ModelRGB kRGBT)
     {
@@ -599,9 +599,9 @@ public class VolumeImage
 
     /**
      * Sets the Texture object containing the color lookup table based on the ModelRGB.
-     * @param kTexture, the Texture object containing the colormap GraphicsImage.
-     * @param kImage, the GraphicsImage containing the colormap data.
-     * @param kRGBT, the new ModelRGB.
+     * @param kTexture the Texture object containing the colormap GraphicsImage.
+     * @param kImage the GraphicsImage containing the colormap data.
+     * @param kRGBT the new ModelRGB.
      */
     public static void SetRGBT( Texture kTexture, GraphicsImage kImage, ModelRGB kRGBT )
     {

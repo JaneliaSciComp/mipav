@@ -1,18 +1,23 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FilePolylineVOIXML;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.view.ViewImageFileFilter;
+import gov.nih.mipav.view.ViewUserInterface;
 
-import gov.nih.mipav.view.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.Vector;
 
-import java.io.*;
-import java.util.*;
+import javax.swing.JFileChooser;
 
-import javax.swing.*;
-
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.SceneGraph.*;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 /**
  * FilePolyline. Reads and writes Polyline files for the JPanelSurface class. When polyline files are loaded by the user in
@@ -37,52 +42,6 @@ public class FilePolyline_WM {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * The action taken when the Add button is clicked in the JPanelSurface class. A file dialog is launched that allows
-     * the user to select new surfaces to load from disk.
-     *
-     * @param   kImage     the ModelImage displayed in the SurfaceRender class
-     * @param   iListSize  the current number of triangle-mesh surfaces displayed in the SurfaceRender class (for
-     *                     calculating the surface color)
-     *
-     * @return  SurfaceAttributes[] an array of surfaces described by their SurfaceAttributes, used to add the surfaces
-     *          to a scene graph.
-     */
-    public static Polyline[] openPolylines(ModelImage kImage, int iListSize) {
-        File[] akFiles = openFiles(true);
-        
-        if (akFiles == null) {
-            return null;
-        }
-
-        Polyline[] kPolyline = new Polyline[akFiles.length];
-        for (int i = 0; i < akFiles.length; i++) {
-            String kName = akFiles[i].getName();
-            if (kName.indexOf(".xml") != -1) {	           	 
-	           	Vector<Vector3f> coordVector = new Vector<Vector3f>();
-            	
-	           	try {
-            	   FilePolylineVOIXML polylineXML = new FilePolylineVOIXML(kName, akFiles[i].getParent());
-            	   coordVector = polylineXML.readVOI(false);
-                   flip = polylineXML.getFlip();
-                   direction = polylineXML.getDirection();
-                   startLocation = polylineXML.getOrigin();
-                   box = polylineXML.getBox();
-                   inverseDicomArray = polylineXML.getInverseDicomArray();
-                   
-                   kPolyline[i] = createPolyline(kImage, coordVector);
-                   kPolyline[i].SetName(kName);
-               
-            	 } catch (IOException e) {
-            		 e.printStackTrace();
-                     return null;
-                 }
-            } 
-        }
-
-        return kPolyline;
-    }
-
-    /**
      * Create the polyline from the given polyline coordinates vector.  
      * This method converts the image space to viewing space
      * @param kImage        Image A
@@ -91,12 +50,9 @@ public class FilePolyline_WM {
      */
     public static Polyline createPolyline(ModelImage kImage, Vector<Vector3f> coordVector) {
 
-		int iType = 0, iQuantity = 0;
 		ColorRGB kColor1;
 		float fX, fY, fZ;
-		boolean isSur = true;
-
-	    TransMatrix inverseDicomMatrix = new TransMatrix(4);
+		TransMatrix inverseDicomMatrix = new TransMatrix(4);
 		
 		int[] extents = kImage.getExtents();
 		int xDim = extents[0];
@@ -155,7 +111,7 @@ public class FilePolyline_WM {
 		VertexBuffer pkVBuffer = new VertexBuffer(kAttr, coordVector.size());
 		kColor1 = new ColorRGB(0.5f, 0f, 0f);
 		for (int i = 0; i < coordVector.size(); i++) {
-			Vector3f point = (Vector3f) (coordVector.elementAt(i));
+			Vector3f point = (coordVector.elementAt(i));
 
 			fX = point.X;
 			fY = point.Y;
@@ -208,7 +164,7 @@ public class FilePolyline_WM {
                      */
         
             
-			pkVBuffer.SetPosition3(i, (float) (fX), (float) (fY), (float) (fZ));
+			pkVBuffer.SetPosition3(i, (fX), (fY), (fZ));
 			// pkVBuffer.SetColor3(0, i, new ColorRGB(fX, fY, fZ));
 			pkVBuffer.SetColor3(0, i, kColor1);
 			pkVBuffer.SetColor3(1, i, kColor1);
@@ -220,6 +176,47 @@ public class FilePolyline_WM {
 		return new Polyline(pkVBuffer, bClosed, bContiguous);
 
 	}
+
+    /**
+     * The action taken when the Add button is clicked in the JPanelSurface class. A file dialog is launched that allows
+     * the user to select new surfaces to load from disk.
+     *
+     * @param   kImage     the ModelImage displayed in the SurfaceRender class
+     */
+    public static Polyline[] openPolylines(ModelImage kImage) {
+        File[] akFiles = openFiles(true);
+        
+        if (akFiles == null) {
+            return null;
+        }
+
+        Polyline[] kPolyline = new Polyline[akFiles.length];
+        for (int i = 0; i < akFiles.length; i++) {
+            String kName = akFiles[i].getName();
+            if (kName.indexOf(".xml") != -1) {	           	 
+	           	Vector<Vector3f> coordVector = new Vector<Vector3f>();
+            	
+	           	try {
+            	   FilePolylineVOIXML polylineXML = new FilePolylineVOIXML(kName, akFiles[i].getParent());
+            	   coordVector = polylineXML.readVOI(false);
+                   flip = polylineXML.getFlip();
+                   direction = polylineXML.getDirection();
+                   startLocation = polylineXML.getOrigin();
+                   box = polylineXML.getBox();
+                   inverseDicomArray = polylineXML.getInverseDicomArray();
+                   
+                   kPolyline[i] = createPolyline(kImage, coordVector);
+                   kPolyline[i].SetName(kName);
+               
+            	 } catch (IOException e) {
+            		 e.printStackTrace();
+                     return null;
+                 }
+            } 
+        }
+
+        return kPolyline;
+    }
    
     /**
      * Returns an array of File objects, based on the user-selected files from the FileChooser dialog.
@@ -256,12 +253,11 @@ public class FilePolyline_WM {
                 File[] files = chooser.getSelectedFiles();
 
                 return files;
-            } else {
-                File[] files = new File[1];
-                files[0] = chooser.getSelectedFile();
+            } 
+            File[] files = new File[1];
+            files[0] = chooser.getSelectedFile();
 
-                return files;
-            }
+            return files;
         }
 
         return null;

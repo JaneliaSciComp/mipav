@@ -14,12 +14,12 @@ import WildMagic.LibGraphics.SceneGraph.*;
 public class VolumeSlices extends VolumeObject
 {
     /** Create a new VolumeObject with the VolumeImage parameter.
-     * @param kImageA, the VolumeImage containing shared data and textures for
+     * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
-     * @param kTranslate, translation in the scene-graph for this object.
-     * @param fX, the size of the volume in the x-dimension (extent * resolutions)
-     * @param fY, the size of the volume in the y-dimension (extent * resolutions)
-     * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
+     * @param kTranslate translation in the scene-graph for this object.
+     * @param fX the size of the volume in the x-dimension (extent * resolutions)
+     * @param fY the size of the volume in the y-dimension (extent * resolutions)
+     * @param fZ the size of the volume in the z-dimension (extent * resolutions)
      */
     public VolumeSlices ( VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, float fX, float fY, float fZ )
     {
@@ -46,8 +46,8 @@ public class VolumeSlices extends VolumeObject
 
     /**
      * PreRender the object, for embedding in the ray-cast volume.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void PreRender( Renderer kRenderer, Culler kCuller )
     {
@@ -67,8 +67,8 @@ public class VolumeSlices extends VolumeObject
 
     /**
      * Render the object.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void Render( Renderer kRenderer, Culler kCuller )
     {
@@ -172,8 +172,8 @@ public class VolumeSlices extends VolumeObject
     }
     
     /** Sets the opacity for the given plane.
-     * @param i, the plane index (0-3) in file coordinates.
-     * @param fAlpha, the opacity for the given plane.
+     * @param i the plane index (0-3) in file coordinates.
+     * @param fAlpha the opacity for the given plane.
      */
     public void SetSliceOpacity( int i, float fAlpha )
     {
@@ -183,8 +183,8 @@ public class VolumeSlices extends VolumeObject
     }
 
     /** Sets the bounding box color for the given plane.
-     * @param i, the plane index (0-3) in file coordinates.
-     * @param kColor, the new color.
+     * @param i the plane index (0-3) in file coordinates.
+     * @param kColor the new color.
      */
     public void SetBoundingBoxColor( int i, ColorRGB kColor )
     {
@@ -205,8 +205,8 @@ public class VolumeSlices extends VolumeObject
     }
     
     /** Turns on/off displaying the bounding box for the given plane.
-     * @param i, the plane index (0-3) in file coordinates.
-     * @param bShow, when true, the bounding box is displayed.
+     * @param i the plane index (0-3) in file coordinates.
+     * @param bShow when true, the bounding box is displayed.
      */
     public void ShowBoundingBox( int i, boolean bShow )
     {
@@ -233,8 +233,8 @@ public class VolumeSlices extends VolumeObject
     }
     
     /** Turns on/off displaying the given plane.
-     * @param i, the plane index (0-3) in file coordinates.
-     * @param bShow, when true, the plane is displayed.
+     * @param i the plane index (0-3) in file coordinates.
+     * @param bShow when true, the plane is displayed.
      */
     public void ShowSlice( int i, boolean bShow )
     {
@@ -255,7 +255,7 @@ public class VolumeSlices extends VolumeObject
     }
 
     /** Sets the positions of the three orthogonal planes. 
-     * @param kCenter, the positions in file coordinates.
+     * @param kCenter the positions in file coordinates.
      */
     public void SetCenter( Vector3f kCenter )
     {

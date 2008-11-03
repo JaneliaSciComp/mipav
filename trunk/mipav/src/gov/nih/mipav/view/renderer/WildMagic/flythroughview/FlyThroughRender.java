@@ -2,79 +2,131 @@ package gov.nih.mipav.view.renderer.WildMagic.flythroughview;
 
 
 import gov.nih.mipav.MipavCoordinateSystems;
-import gov.nih.mipav.model.structures.*;
-
-import gov.nih.mipav.view.renderer.flythroughview.*;
-import gov.nih.mipav.view.renderer.WildMagic.*;
-import gov.nih.mipav.view.renderer.WildMagic.Render.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.view.renderer.WildMagic.GPURenderBase;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.Render.SurfaceLightingEffect;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.MjCorticalMesh_WM;
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
+import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphSamples;
 import gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface;
 import gov.nih.mipav.view.renderer.flythroughview.ModelImage3DLayout;
 import gov.nih.mipav.view.renderer.flythroughview.Skeleton3D;
 
 import java.awt.Canvas;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 
-import com.sun.opengl.util.Animator;
-
 import WildMagic.LibFoundation.Curves.Curve3f;
-import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Collision.PickRecord;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.GlobalState;
 import WildMagic.LibGraphics.Rendering.Light;
 import WildMagic.LibGraphics.Rendering.MaterialState;
-import WildMagic.LibGraphics.SceneGraph.*;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
+
+import com.sun.opengl.util.Animator;
 
 
 public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderInterface, FlyPathBehavior_WM.Callback, GLEventListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
+    public static class SetupOptions {
+
+        /**
+         * Percentage of path samples points to use for the number of control points for a BSpline curve fit. A larger
+         * number may create a curve which oscillates more. A smaller number may create a curve which is too smooth to
+         * even be close to the original path samples.
+         */
+        public float m_fFractionNumControlPoints = 0.07f;
+
+        /** Minimum length of branch to extract. */
+        public float m_fMinBranchLength = 100.0f;
+
+        /** Maximum number of branches to extract. */
+        public int m_iMaxBranches = 1;
+
+        /**
+         * The number of samples which define each branch path is reduced by this factor for the purpose of speeding up
+         * the segmentation of the surface.
+         */
+        public int m_iSegmentSurfaceBranchSamplesReductionFactor = 2;
+    }
+
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -6130870790192175575L;
-
-    ModelImage3DLayout m_kVolumeLayout = null;
-    Skeleton3D m_kSkeleton = null;
-    FlyPathGraphSamples m_kFlyPathGraphSamples = null;
-    FlyPathGraphCurve m_kFlyPathGraphCurve = null;
-    FlyPathBehavior_WM m_kFlyPathBehavior = null; 
+    /** 3D Layout of the ModelImage. */
+    private ModelImage3DLayout m_kVolumeLayout = null;
+    /** 3D Skeleton of the ModelImage. */
+    private Skeleton3D m_kSkeleton = null;
+    /** Fly path curve. */
+    private FlyPathGraphCurve m_kFlyPathGraphCurve = null; 
+    /** Fly path behavior. */
+    private FlyPathBehavior_WM m_kFlyPathBehavior = null;
+    /** Annotations along the fly path. */
+    private FlyPathAnnotateList_WM m_kAnnotateList = null; 
+    /** ModelImage used to generate the fly path. */
+    private ModelImage m_kMaskImage = null;
     /** Keep track of the last branch that was selected (at a branch point). */
     private int m_iLastSelectedBranchIndex = -1;
-    FlyPathAnnotateList_WM m_kAnnotateList = null; 
-    //private Node m_kAnnotatePointGroup = new Node();
-    ModelImage m_kMaskImage = null;
-    /** DOCUMENT ME! */
+    /** This is the range of path samples for each branch that are unvisited. */
     private int[] m_aiBranchIndexUnvisitedMax = null;
+    /** Color for the parts of the path that have been visited (Light Green) */
     private ColorRGB m_kNormalColorPathVisited = new ColorRGB(0.0f, 1.0f, 0.0f);
+    /** Color for the parts of the path that have not yet been visited (Dark Green) */
     private ColorRGB m_kNormalColorPathUnvisited = new ColorRGB(0.0f, 0.25f, 0.0f);
+    /** Color for selecting previously-visited parts of the path at a branch (Red) */
     private ColorRGB m_kSelectColorPathVisited = new ColorRGB(1.0f, 0.0f, 0.0f);
+    /** Color for selecting previously-unvisited parts of the path at a branch (Dark Red) */
     private ColorRGB m_kSelectColorPathUnvisited = new ColorRGB(0.25f, 0.0f, 0.0f);
-
     /** This is the range of path samples for each branch that are unvisited. */
     private int[] m_aiBranchIndexUnvisitedMin = null;
-    //private VolumeSurface m_kSurface = null;
+    /** The surface to fly through. */
     private TriMesh m_kSurface = null;
+    /** Lighting in the scene. */
     private Light m_kLight = null;
+    /**  Setup options. */
     private SetupOptions m_kOptions = new SetupOptions();
     /** This is the control frame which may need to be updated as the view changes. */
     private JPanelVirtualEndoscopySetup_WM m_kControlFrame = null;
+    /** Mouse rotation. */
     private Node m_kRotation = new Node();
+    /** Calculating the mesh curvatures. */
     private MjCorticalMesh_WM m_kCortical = null;
     /** kMean curvature LUT. Pseudo color look up table. */
     private ModelLUT m_kMeanCurvaturesLUT = null;
+    /** Lighting effect. */
     private SurfaceLightingEffect m_kLightShader;
+    /** Original surface color for undoing the pseudo-color curvature map. */
     private ColorRGB[] m_akColorBackup;
-    private boolean m_bSnapshot = false;
-    
-    //~ Constructors ---------------------------------------------------------------------------------------------------
 
+    /** Set to true when taking a snapshot of the fly path. */
+    private boolean m_bSnapshot = false;
+
+    /**
+     * Construct the FlyThroughRenderer.
+     * @param kParent parent user-interface and frame.
+     * @param kAnimator animator used to display the canvas.
+     * @param kVolumeImageA volume data and textures for ModelImage A.
+     * @param kVolumeImageB volume data and textures for ModelImage B.
+     */
     public FlyThroughRender( VolumeTriPlanarInterface kParent, Animator kAnimator, VolumeImage kVolumeImageA, 
             VolumeImage kVolumeImageB  )
     {
@@ -110,8 +162,32 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         m_fZ = fMaxZ/m_fMax;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
+    /**
+     * Add the fly-through surface.
+     * @param kSurface the TriMesh surface to fly through.
+     */
+    public void addSurface(TriMesh kSurface)
+    {
+        m_kSurface = new TriMesh(kSurface);
+        m_kSurface.AttachGlobalState(kSurface.GetGlobalState( GlobalState.StateType.MATERIAL ));
+        SurfaceLightingEffect kLightShader = new SurfaceLightingEffect( m_kVolumeImageA );
+        m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA );
+        m_kSurface.AttachEffect(kLightShader);
+        m_kSurface.UpdateRS();
+        m_kSurface.UpdateMS();
+        m_bSurfaceUpdate = true;
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#autoRun()
+     */
+    public void autoRun() {
+        m_kFlyPathBehavior.autoRun();        
+    }
+    
+    /* (non-Javadoc)
+     * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
+     */
     public void display(GLAutoDrawable arg0)
     {
         if ( !m_bInit )
@@ -147,240 +223,10 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         }
     }
 
-    protected void Move()
-    {
-        if (MoveCamera())
-        {
-            m_kCuller.ComputeVisibleSet(m_spkScene);
-        }        
-        if (MoveObject())
-        {
-            m_spkScene.UpdateGS();
-            m_kCuller.ComputeVisibleSet(m_spkScene);
-        }
-    }
-    
-    protected void Pick()
-    {
-        Vector3f kPos = new Vector3f(0,0,10);
-        Vector3f kDir = new Vector3f(0,0,1);  // the pick ray
-
-        if (m_bPickPending)
-        {
-            if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
-                    GetHeight(),kPos,kDir))
-            {
-                m_bPickPending = false;
-                m_kPicker.Execute(m_spkScene,kPos,kDir,0.0f,
-                        Float.MAX_VALUE);
-                if (m_kPicker.Records.size() > 0)
-                {
-                    PickRecord kRecord = m_kPicker.GetClosestToZero();
-                    // Get the normal vector for the picked point.
-                    Vector3f kN0 = m_kSurface.VBuffer.GetNormal3( kRecord.iV0 );
-                    kN0.Scale(kRecord.B0);
-                    Vector3f kN1 = m_kSurface.VBuffer.GetNormal3( kRecord.iV1 );
-                    kN1.Scale( kRecord.B1);
-                    Vector3f kN2 = m_kSurface.VBuffer.GetNormal3( kRecord.iV2 );
-                    kN2.Scale( kRecord.B2 );
-                    Vector3f kNormal = new Vector3f();
-                    kNormal.Add( kN0, kN1 );
-                    kNormal.Add( kN2 );
-                    kNormal.Normalize();
-                    
-                    // Get picked point.
-                    Vector3f kP0 = m_kSurface.VBuffer.GetPosition3( kRecord.iV0 );
-                    kP0.Scale(kRecord.B0);
-                    Vector3f kP1 = m_kSurface.VBuffer.GetPosition3( kRecord.iV1 );
-                    kP1.Scale( kRecord.B1);
-                    Vector3f kP2 = m_kSurface.VBuffer.GetPosition3( kRecord.iV2 );
-                    kP2.Scale( kRecord.B2 );
-                    Vector3f kPoint = new Vector3f();
-                    kPoint.Add( kP0, kP1 );
-                    kPoint.Add( kP2 );
-
-                    createAnnotatePoint(kPoint);
-                    
-                    // Get vector from current path position to the picked
-                    // point.  This vector and the normal vector must be
-                    // pointing in opposite directions.  If not, then the
-                    // normal vector needs to be negated since the vertex
-                    // ordering for the triangle mesh is not guaranteed.
-                    Vector3f kV = new Vector3f();
-                    kV.Sub(kPoint, m_spkCamera.GetLocation());
-
-                    if (kV.Dot(kNormal) > 0.0f) {
-                        kNormal.Neg();
-                    }
-
-                    // Add the point to the annotation list.
-                    m_kAnnotateList.addItem(m_kFlyPathBehavior.getBranchIndex(),
-                            m_kFlyPathBehavior.getNormalizedPathDistance(),
-                            m_kFlyPathBehavior.isPathMoveForward(), kPoint, kNormal,
-                            getPositionUnScaled(m_spkCamera.GetLocation()), m_spkCamera.GetDVector(), 
-                            m_spkCamera.GetUVector(), m_spkCamera.GetRVector() );
-                }
-            }
-        }
-    }
-    
-    private void Render()
-    {
-        m_kCuller.ComputeVisibleSet(m_spkScene);
-        m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-    }
-
     /**
-     * Called from JPanelLight. Updates the lighting parameters.
-     * @param akGLights, the set of GeneralLight objects.
+     * Turn curvature-based color map on/off.
+     * @param bOn turns curvature-based color map on when true and off when false.
      */
-    public void updateLighting(Light[] akGLights )
-    {
-        if ( m_bInit )
-        {
-            if ( m_kLight == null )
-            {
-                m_kLight = new Light(Light.LightType.LT_POINT);
-                m_kLight.Diffuse.Set(1f, 1f, 1f);
-                m_pkRenderer.SetLight( 0, m_kLight );
-            }
-            String kLightType = new String("Light0Type");
-            ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetPerPixelLighting(m_pkRenderer, true);
-            ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetLight(kLightType, new float[]{2,-1,-1,-1});
-            ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetReverseFace(1);
-            m_kLightShader.SetLight(kLightType, new float[]{2,-1,-1,-1});
-        }
-    }
-
-
-    public void init(GLAutoDrawable arg0) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        ((OpenGLRenderer)m_pkRenderer).InitializeState();
-        m_pkRenderer.SetLineWidth(3);
-
-        super.OnInitialize();
-
-        // set up camera
-        m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
-        Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
-        Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
-        Vector3f kCRight = new Vector3f();
-        kCRight.Cross( kCDir, kCUp );
-        Vector3f kCLoc = new Vector3f(kCDir);
-        kCLoc.Scale(-1.4f);
-        m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
-
-        CreateScene();
-
-        // initial update of objects
-        m_spkScene.UpdateGS();
-        m_spkScene.UpdateRS();
-
-        // initial culling of scene
-        m_kCuller.SetCamera(m_spkCamera);
-
-        InitializeCameraMotion(.05f,0.001f);
-        InitializeObjectMotion(m_kRotation);
-
-        m_kAnimator.add( GetCanvas() );      
-        m_bInit = true;
-    }
-
-    /**
-     * Called by the init() function. Creates and initialized the scene-graph.
-     * @param arg0, the GLCanvas
-     */
-    private void CreateScene ()
-    {
-        // Create a scene graph with the face model as the leaf node.
-        m_spkScene = new Node();
-        m_spkCull = new CullState();
-        m_spkCull.FrontFace = CullState.FrontMode.FT_CW; 
-        m_spkCull.Enabled = false;
-        m_spkScene.AttachGlobalState(m_spkCull);
-        m_spkScene.AttachChild(m_kSurface);
-
-        m_kTranslate = new Vector3f(Vector3f.ZERO);      
-        for ( int i = 0; i < m_pkRenderer.GetMaxLights(); i++ )
-        {
-            m_pkRenderer.SetLight( i, new Light() );
-        }
-        setupRender(m_kVolumeImageA.GetImage(), m_kOptions);
-    }
-
-    
-    
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  kMouseEvent  the mouse event generated by a mouse press
-     */
-    public void mousePressed(MouseEvent e) {
-        super.mousePressed(e);
-
-        /* Only capture mouse events when enabled, and only when the control key is down and the left mouse
-         * button is pressed. */
-        if (e.isShiftDown()) {
-
-            /* m_bMousePressed and m_bMouseReleased are set explicitly to
-             * prevent multiple mouse clicks at the same location.  If the mouse has been released, then set
-             * mousePressed to true and save the location of the mouse event.
-             */
-            if ((e.getButton() == MouseEvent.BUTTON1)) {
-                m_iXPick = e.getX();
-                m_iYPick = e.getY();
-                m_bPickPending = true;
-            }
-        }
-
-    }
-
-    public void mouseDragged(MouseEvent e)
-    {
-        super.mouseDragged(e);
-        updateCamera();
-    }
-    
-    private void updateCamera()
-    {
-        Matrix3f kRotate = m_kRotation.Local.GetRotate();
-        Vector3f kUp = new Vector3f();
-        Vector3f kDir = new Vector3f();
-        Vector3f kRight = new Vector3f();
-        
-
-        Vector3f kCUp = m_kFlyPathBehavior.getViewUp();
-        kCUp.Normalize();
-        Vector3f kCDir = m_kFlyPathBehavior.getViewDirection();
-        kCDir.Normalize();
-        Vector3f kCRight = new Vector3f();
-        kCRight.UnitCross( kCDir, kCUp );
-        
-        kRotate.Mult( kCUp, kUp );
-        kRotate.Mult( kCDir, kDir );
-        kRotate.Mult( kCRight, kRight );
-        m_spkCamera.SetFrame( m_spkCamera.GetLocation(), kDir, kUp, kRight);
-        if ( m_kControlFrame != null )
-        {
-            m_kControlFrame.updateOrientation(kRotate);
-        }
-    }
-
-    public void addSurface(TriMesh kSurface)
-    {
-        //IndexBuffer kIBuffer = new IndexBuffer(kSurface.IBuffer);
-        //StandardMesh.ReverseTriangleOrder(kSurface.GetTriangleQuantity(), kIBuffer.GetData());
-        //m_kSurface = new TriMesh(kSurface.VBuffer, kIBuffer);
-        m_kSurface = new TriMesh(kSurface);
-        m_kSurface.AttachGlobalState(kSurface.GetGlobalState( GlobalState.StateType.MATERIAL ));
-        SurfaceLightingEffect kLightShader = new SurfaceLightingEffect( m_kVolumeImageA );
-        m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA );
-        m_kSurface.AttachEffect(kLightShader);
-        m_kSurface.UpdateRS();
-        m_kSurface.UpdateMS();
-        m_bSurfaceUpdate = true;
-    }
-    
     public void doPseudoColor( boolean bOn )
     {
         if ( bOn )
@@ -490,6 +336,215 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     }
 
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getBranchState()
+     */
+    public Object getBranchState() {
+        return m_kFlyPathBehavior.getBranchState();
+    }
+
+    /**
+     * Return the camera direction vector.
+     * @return camera direction vector.
+     */
+    public Vector3f getCameraDirection()
+    {
+        return new Vector3f( m_spkCamera.GetDVector() );
+    }
+
+    /**
+     * Return the camera up vector.
+     * @return camera up vector.
+     */
+    public Vector3f getCameraUp()
+    {
+        return new Vector3f( m_spkCamera.GetUVector() );
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getCanvas()
+     */
+    public Canvas getCanvas() {
+        return GetCanvas();
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getHeight()
+     */
+    public int getHeight() {
+        return m_pkRenderer.GetHeight();
+    }
+
+    /**
+     * Scaled coordinates for the current position along the path for viewing.
+     * @param   Point in normalized path coordinates.
+     * @return  Point3f A new instance created which contains the path position coordinates, scaled to match the
+     *          TriMesh in JPanelSurface.
+     */
+    public Vector3f getPositionScaled( Vector3f kPoint) {
+
+        int[] aiExtents = m_kMaskImage.getExtents();
+        float[] afResolutions = m_kMaskImage.getFileInfo(0).getResolutions();
+        float[] afOrigins = m_kMaskImage.getFileInfo(0).getOrigin();
+        int[] aiDirections = m_kMaskImage.getFileInfo(0).getAxisDirection();
+
+        int xDim = aiExtents[0];
+        int yDim = aiExtents[1];
+        int zDim = aiExtents[2];
+
+        float xBox = (xDim - 1) * afResolutions[0];
+        float yBox = (yDim - 1) * afResolutions[1];
+        float zBox = (zDim - 1) * afResolutions[2];
+        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+        Vector3f kPointScaled = new Vector3f();
+        kPointScaled.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
+                xBox) / (2.0f*maxBox);
+        kPointScaled.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
+                yBox) / (2.0f*maxBox);
+        kPointScaled.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
+                zBox) / (2.0f*maxBox);
+        return kPointScaled;
+    }
+    
+    /**
+     * Scaled coordinates for the current position along the path for viewing.
+     * @param  The path position coordinates, scaled to match the TriMesh.
+     * @return   Point in normalized path coordinates.
+     */
+    public Vector3f getPositionUnScaled( Vector3f kPoint) {
+
+        int[] aiExtents = m_kMaskImage.getExtents();
+        float[] afResolutions = m_kMaskImage.getFileInfo(0).getResolutions();
+        float[] afOrigins = m_kMaskImage.getFileInfo(0).getOrigin();
+        int[] aiDirections = m_kMaskImage.getFileInfo(0).getAxisDirection();
+
+        int xDim = aiExtents[0];
+        int yDim = aiExtents[1];
+        int zDim = aiExtents[2];
+
+        float xBox = (xDim - 1) * afResolutions[0];
+        float yBox = (yDim - 1) * afResolutions[1];
+        float zBox = (zDim - 1) * afResolutions[2];
+        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+        Vector3f kPointScaled = new Vector3f();      
+        kPointScaled.X  = (((kPoint.X * (2.0f*maxBox) + xBox) * aiDirections[0]) / 2.0f) + afOrigins[0];
+        kPointScaled.Y  = (((kPoint.Y * (2.0f*maxBox) + yBox) * aiDirections[1]) / 2.0f) + afOrigins[1];
+        kPointScaled.Z  = (((kPoint.Z * (2.0f*maxBox) + zBox) * aiDirections[2]) / 2.0f) + afOrigins[2];
+        return kPointScaled;
+    }
+
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getWidth()
+     */
+    public int getWidth() {
+        return m_pkRenderer.GetWidth();
+    }
+
+
+    /* (non-Javadoc)
+     * @see javax.media.opengl.GLEventListener#init(javax.media.opengl.GLAutoDrawable)
+     */
+    public void init(GLAutoDrawable arg0) {
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        ((OpenGLRenderer)m_pkRenderer).InitializeState();
+        m_pkRenderer.SetLineWidth(3);
+
+        super.OnInitialize();
+
+        // set up camera
+        m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
+        Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
+        Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
+        Vector3f kCRight = new Vector3f();
+        kCRight.Cross( kCDir, kCUp );
+        Vector3f kCLoc = new Vector3f(kCDir);
+        kCLoc.Scale(-1.4f);
+        m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
+
+        CreateScene();
+
+        // initial update of objects
+        m_spkScene.UpdateGS();
+        m_spkScene.UpdateRS();
+
+        // initial culling of scene
+        m_kCuller.SetCamera(m_spkCamera);
+
+        InitializeCameraMotion(.05f,0.001f);
+        InitializeObjectMotion(m_kRotation);
+
+        m_kAnimator.add( GetCanvas() );      
+        m_bInit = true;
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#keyPressed(java.awt.event.KeyEvent)
+     */
+    public void keyPressed(KeyEvent e) {
+        int iKeyCode = e.getKeyCode();
+        if ( (iKeyCode != KeyEvent.VK_UP) && (iKeyCode != KeyEvent.VK_DOWN) )
+        {
+            super.keyPressed(e);
+        }
+    }
+
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#makeMove(java.lang.String)
+     */
+    public void makeMove(String cmd) {
+        m_kFlyPathBehavior.move(cmd);
+    }
+
+
+    /* (non-Javadoc)
+     * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
+     */
+    public void mouseDragged(MouseEvent e)
+    {
+        super.mouseDragged(e);
+        updateCamera();
+    }
+    
+    /* (non-Javadoc)
+     * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mousePressed(java.awt.event.MouseEvent)
+     */
+    public void mousePressed(MouseEvent e) {
+        super.mousePressed(e);
+
+        /* Only capture mouse events when enabled, and only when the control key is down and the left mouse
+         * button is pressed. */
+        if (e.isShiftDown()) {
+
+            /* m_bMousePressed and m_bMouseReleased are set explicitly to
+             * prevent multiple mouse clicks at the same location.  If the mouse has been released, then set
+             * mousePressed to true and save the location of the mouse event.
+             */
+            if ((e.getButton() == MouseEvent.BUTTON1)) {
+                m_iXPick = e.getX();
+                m_iYPick = e.getY();
+                m_bPickPending = true;
+            }
+        }
+
+    } 
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#record(boolean)
+     */
+    public void record(boolean bOn)
+    {
+        m_bSnapshot = bOn;
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#setCurrentState(java.lang.Object)
+     */
+    public void setCurrentState(Object _state) {
+        m_kFlyPathBehavior.setBranch(_state);
+    }
+
     /**
      * Setup flythru renderer.
      *
@@ -522,9 +577,9 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         // Extract the centerline curve.
         m_kSkeleton = new Skeleton3D(m_kMaskImage, m_kVolumeLayout);
 
-        m_kFlyPathGraphSamples = m_kSkeleton.getPathGraph(m_kOptions.m_iMaxBranches, m_kOptions.m_fMinBranchLength);
+        FlyPathGraphSamples kFlyPathGraphSamples = m_kSkeleton.getPathGraph(m_kOptions.m_iMaxBranches, m_kOptions.m_fMinBranchLength);
 
-        m_kFlyPathGraphCurve = new FlyPathGraphCurve(m_kFlyPathGraphSamples, 0.07f, 2);
+        m_kFlyPathGraphCurve = new FlyPathGraphCurve(kFlyPathGraphSamples, 0.07f, 2);
 
         // Default geometry/appearance properties.
         // Set the radius based on the maximum distance of "inside"
@@ -587,212 +642,189 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         m_kFlyPathBehavior.setupCallback(this);
     }
 
-
     /**
-     * DOCUMENT ME!
-     *
-     * @param  _control  DOCUMENT ME!
+     * Set the JPanelVirtualEndoscopySetup user-interface.
+     * @param _control the JPanelVirtualEndoscopySetup user-interface.
      */
     public void setupRenderControl(JPanelVirtualEndoscopySetup_WM _control) {
         m_kControlFrame = _control;
     }
-
+    
     /**
-     * Get the geometry to be used for rendering the path of the specified branch.
-     *
-     * @param   iBranch  Index which identifies the branch.
-     *
-     * @return  LineStripArray instance that can be attached to a Shape3D node for rendering.
-     *
-     *          <p>The LineStripArray coordinates are scaled to match the ModelTriangleMesh in JPanelSurface.</p>
+     * Update the representation of the current viewpoint in the Volume Tri-Planar renderer.
      */
-    private Polyline createBranchPathGeometryScaled(int iBranch) {
-        int iNumVertex = 500;
-        Attributes kAttributes = new Attributes();
-        kAttributes.SetPChannels(3);
-        kAttributes.SetCChannels(0,3);
-        VertexBuffer kVBuffer = new VertexBuffer(kAttributes, iNumVertex);
+    public void update()
+    {                
+        Vector3f kCLoc = getPositionUnScaled(m_spkCamera.GetLocation());
+        Vector3f kPositionScaled = m_spkCamera.GetLocation();
+        Vector3f kVolumePt = m_kVolumeLayout.getSamplePoint(kCLoc.X, kCLoc.Y, kCLoc.Z);
+        kVolumePt.X *= m_kMaskImage.getExtents()[0];
+        kVolumePt.Y *= m_kMaskImage.getExtents()[1];
+        kVolumePt.Z *= m_kMaskImage.getExtents()[2];
+        m_kParent.setSliceFromPlane(kVolumePt);
+        m_kParent.translateSurface( "FlyThrough", kPositionScaled );
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#updateLighting(WildMagic.LibGraphics.Rendering.Light[])
+     */
+    public void updateLighting(Light[] akGLights )
+    {
+        if ( m_bInit )
+        {
+            if ( m_kLight == null )
+            {
+                m_kLight = new Light(Light.LightType.LT_POINT);
+                m_kLight.Diffuse.Set(1f, 1f, 1f);
+                m_pkRenderer.SetLight( 0, m_kLight );
+            }
+            String kLightType = new String("Light0Type");
+            ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetPerPixelLighting(m_pkRenderer, true);
+            ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetLight(kLightType, new float[]{2,-1,-1,-1});
+            ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetReverseFace(1);
+            m_kLightShader.SetLight(kLightType, new float[]{2,-1,-1,-1});
+        }
+    }
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.flythroughview.FlyPathBehavior_WM.Callback#viewChanged(gov.nih.mipav.view.renderer.WildMagic.flythroughview.FlyPathBehavior_WM, int)
+     */
+    public void viewChanged(FlyPathBehavior_WM behavior, int iEvent)
+    {
+        if ( m_kFlyPathBehavior != behavior )
+        {
+            return;
+        }
+        if (FlyPathBehavior_WM.EVENT_RESET_ORIENTATION == 
+            (FlyPathBehavior_WM.EVENT_RESET_ORIENTATION & iEvent))
+        {       
+            m_kRotation.Local.SetRotateCopy(Matrix3f.IDENTITY);
+            if ( m_kControlFrame != null )
+            {
+                m_kControlFrame.updateOrientation(m_kRotation.Local.GetRotate());
+            }
+        }  
+         
+        if ( m_kControlFrame != null )
+        {
+            m_kControlFrame.updatePosition(behavior);
+        }
+        Vector3f kCDir = behavior.getViewDirection();
+        kCDir.Normalize();
+        Vector3f kCUp = behavior.getViewUp();
+        kCUp.Normalize();
+        Vector3f kCLoc = behavior.getViewPoint();
+        Vector3f kCRight = new Vector3f();
+        kCRight.UnitCross( kCDir, kCUp );
+        Vector3f kPositionScaled = getPositionScaled(kCLoc);
+        m_spkCamera.SetFrame(kPositionScaled,kCDir,kCUp,kCRight);
 
-
-        Curve3f kCurve = m_kFlyPathGraphCurve.getCurvePosition(iBranch);
-        float fStep = kCurve.GetTotalLength() / (iNumVertex - 1);
-
-        int[] aiExtents = m_kMaskImage.getExtents();
-        float[] afResolutions = m_kMaskImage.getFileInfo(0).getResolutions();
-        float[] afOrigins = m_kMaskImage.getFileInfo(0).getOrigin();
-        int[] aiModelDirection = MipavCoordinateSystems.getModelDirections(m_kMaskImage);
-        float[] aiDirections = new float[] { aiModelDirection[0], aiModelDirection[1], aiModelDirection[2]}; 
-        //int[] aiDirections = m_kMaskImage.getFileInfo(0).getAxisDirection();
-
-        int xDim = aiExtents[0];
-        int yDim = aiExtents[1];
-        int zDim = aiExtents[2];
-
-        float xBox = (xDim - 1) * afResolutions[0];
-        float yBox = (yDim - 1) * afResolutions[1];
-        float zBox = (zDim - 1) * afResolutions[2];
-        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-
-        for (int iPoint = 0; iPoint < iNumVertex; ++iPoint) {
-            float fDist = iPoint * fStep;
-            float fTime = kCurve.GetTime(fDist, 100, 1e-02f);      
-            Vector3f kPoint = kCurve.GetPosition(fTime);
-
-            kPoint.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
-                    xBox) / (2.0f*maxBox);
-            kPoint.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
-                    yBox) / (2.0f*maxBox);
-            kPoint.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
-                    zBox) / (2.0f*maxBox);
-            kVBuffer.SetPosition3(iPoint, kPoint);
-            kVBuffer.SetColor3(0, iPoint, m_kNormalColorPathUnvisited);
+        if ( m_kLight != null )
+        {
+            m_kLight.Position.Copy(kPositionScaled);
+            m_kLight.DVector.Copy(kCDir);
         }
 
-        return new Polyline( kVBuffer, false, true );
-    }
-
-
-    /**
-     * Get the geometry to be used for rendering the connection of the specified branch to its parent branch.
-     *
-     * @param   iBranch  Index which identifies the branch.
-     *
-     * @return  LineArray instance that can be attached to a Shape3D node for rendering
-     */
-    private Polyline createBranchConnectGeometryScaled(int iBranch) {
-        int[] aiExtents = m_kMaskImage.getExtents();
-        float[] afResolutions = m_kMaskImage.getFileInfo(0).getResolutions();
-        float[] afOrigins = m_kMaskImage.getFileInfo(0).getOrigin();
-        int[] aiModelDirection = MipavCoordinateSystems.getModelDirections(m_kMaskImage);
-        float[] aiDirections = new float[] { aiModelDirection[0], aiModelDirection[1], aiModelDirection[2]}; 
-        //int[] aiDirections = m_kMaskImage.getFileInfo(0).getAxisDirection();
-
-        int xDim = aiExtents[0];
-        int yDim = aiExtents[1];
-        int zDim = aiExtents[2];
-
-        float xBox = (xDim - 1) * afResolutions[0];
-        float yBox = (yDim - 1) * afResolutions[1];
-        float zBox = (zDim - 1) * afResolutions[2];
-        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+        resetRenderBranchPath();
         
-        Attributes kAttributes = new Attributes();
-        kAttributes.SetPChannels(3);
-        kAttributes.SetCChannels(0,3);
-        VertexBuffer kVBuffer = new VertexBuffer(kAttributes, 2);
-
-        // Get the index of the parent.
-        int iBranchParent = m_kFlyPathGraphCurve.getBranchParentIndex(iBranch);
-
-        // Set the point for the start of the child branch.
-        Curve3f kCurveChild = m_kFlyPathGraphCurve.getCurvePosition(iBranch);
-        float fTimeChild = kCurveChild.GetTime(0.0f, 100, 1e-02f);
-
-        Vector3f kPoint = kCurveChild.GetPosition(fTimeChild);
-        kPoint.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
-                    xBox) / (2.0f*maxBox);
-        kPoint.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
-                    yBox) / (2.0f*maxBox);
-        kPoint.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
-                    zBox) / (2.0f*maxBox);
-        kVBuffer.SetPosition3(0, kPoint);
-        kVBuffer.SetColor3(0, 0, m_kNormalColorPathUnvisited);
-
-        // If there is no parent, then replicate the child start point
-        if (iBranchParent < 0) {
-            kPoint = kCurveChild.GetPosition(fTimeChild);
-            kPoint.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
-                        xBox) / (2.0f*maxBox);
-            kPoint.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
-                        yBox) / (2.0f*maxBox);
-            kPoint.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
-                        zBox) / (2.0f*maxBox);
-            kVBuffer.SetPosition3(1, kPoint);
-            kVBuffer.SetColor3(0, 1, m_kNormalColorPathUnvisited);
-        } // Otherwise, set the point for the position along the parent
-
-        // branch where the child branch starts.
-        else {
-            float fParentNormalizedDist = m_kFlyPathGraphCurve.getBranchParentNormalizedDist(iBranch);
-            Curve3f kCurveParent = m_kFlyPathGraphCurve.getCurvePosition(iBranchParent);
-            float fTimeParent = kCurveParent.GetTime(kCurveParent.GetTotalLength() * fParentNormalizedDist, 100,
-                                                     1e-02f);
-            kPoint = kCurveParent.GetPosition(fTimeParent); 
-            kPoint.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
-                        xBox) / (2.0f*maxBox);
-            kPoint.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
-                        yBox) / (2.0f*maxBox);
-            kPoint.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
-                        zBox) / (2.0f*maxBox);
-            kVBuffer.SetPosition3(1, kPoint);
-            kVBuffer.SetColor3(0, 1, m_kNormalColorPathUnvisited);
+        if (FlyPathBehavior_WM.EVENT_CHANGE_BRANCH == (FlyPathBehavior_WM.EVENT_CHANGE_BRANCH & iEvent)) {
+            resetRenderBranchConnect();
         }
-
-        return new Polyline( kVBuffer, false, true );
+        if ( m_kControlFrame.getContinuousUpdate() )
+        {
+            update();
+            m_kParent.displayAll();
+        }
+        else
+        {
+            GetCanvas().display();
+        }
+        
     }
-
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#Move()
+     */
+    protected void Move()
+    {
+        if (MoveCamera())
+        {
+            m_kCuller.ComputeVisibleSet(m_spkScene);
+        }        
+        if (MoveObject())
+        {
+            m_spkScene.UpdateGS();
+            m_kCuller.ComputeVisibleSet(m_spkScene);
+        }
+    }
 
     /**
-     * Scaled coordinates for the current position along the path for viewing.
-     *
-     * @return  Point3f A new instance created which contains the path position coordinates, scaled to match the
-     *          ModelTriangleMesh in JPanelSurface.
+     * Picking support for adding Annotation points to the scene.
      */
-    public Vector3f getPositionScaled( Vector3f kPoint) {
+    protected void Pick()
+    {
+        Vector3f kPos = new Vector3f(0,0,10);
+        Vector3f kDir = new Vector3f(0,0,1);  // the pick ray
 
-        int[] aiExtents = m_kMaskImage.getExtents();
-        float[] afResolutions = m_kMaskImage.getFileInfo(0).getResolutions();
-        float[] afOrigins = m_kMaskImage.getFileInfo(0).getOrigin();
-        int[] aiDirections = m_kMaskImage.getFileInfo(0).getAxisDirection();
+        if (m_bPickPending)
+        {
+            if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
+                    GetHeight(),kPos,kDir))
+            {
+                m_bPickPending = false;
+                m_kPicker.Execute(m_spkScene,kPos,kDir,0.0f,
+                        Float.MAX_VALUE);
+                if (m_kPicker.Records.size() > 0)
+                {
+                    PickRecord kRecord = m_kPicker.GetClosestToZero();
+                    // Get the normal vector for the picked point.
+                    Vector3f kN0 = m_kSurface.VBuffer.GetNormal3( kRecord.iV0 );
+                    kN0.Scale(kRecord.B0);
+                    Vector3f kN1 = m_kSurface.VBuffer.GetNormal3( kRecord.iV1 );
+                    kN1.Scale( kRecord.B1);
+                    Vector3f kN2 = m_kSurface.VBuffer.GetNormal3( kRecord.iV2 );
+                    kN2.Scale( kRecord.B2 );
+                    Vector3f kNormal = new Vector3f();
+                    kNormal.Add( kN0, kN1 );
+                    kNormal.Add( kN2 );
+                    kNormal.Normalize();
+                    
+                    // Get picked point.
+                    Vector3f kP0 = m_kSurface.VBuffer.GetPosition3( kRecord.iV0 );
+                    kP0.Scale(kRecord.B0);
+                    Vector3f kP1 = m_kSurface.VBuffer.GetPosition3( kRecord.iV1 );
+                    kP1.Scale( kRecord.B1);
+                    Vector3f kP2 = m_kSurface.VBuffer.GetPosition3( kRecord.iV2 );
+                    kP2.Scale( kRecord.B2 );
+                    Vector3f kPoint = new Vector3f();
+                    kPoint.Add( kP0, kP1 );
+                    kPoint.Add( kP2 );
 
-        int xDim = aiExtents[0];
-        int yDim = aiExtents[1];
-        int zDim = aiExtents[2];
+                    createAnnotatePoint(kPoint);
+                    
+                    // Get vector from current path position to the picked
+                    // point.  This vector and the normal vector must be
+                    // pointing in opposite directions.  If not, then the
+                    // normal vector needs to be negated since the vertex
+                    // ordering for the triangle mesh is not guaranteed.
+                    Vector3f kV = new Vector3f();
+                    kV.Sub(kPoint, m_spkCamera.GetLocation());
 
-        float xBox = (xDim - 1) * afResolutions[0];
-        float yBox = (yDim - 1) * afResolutions[1];
-        float zBox = (zDim - 1) * afResolutions[2];
-        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-        Vector3f kPointScaled = new Vector3f();
-        kPointScaled.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
-                xBox) / (2.0f*maxBox);
-        kPointScaled.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
-                yBox) / (2.0f*maxBox);
-        kPointScaled.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
-                zBox) / (2.0f*maxBox);
-        return kPointScaled;
+                    if (kV.Dot(kNormal) > 0.0f) {
+                        kNormal.Neg();
+                    }
+
+                    // Add the point to the annotation list.
+                    m_kAnnotateList.addItem(m_kFlyPathBehavior.getBranchIndex(),
+                            m_kFlyPathBehavior.getNormalizedPathDistance(),
+                            m_kFlyPathBehavior.isPathMoveForward(), kPoint, kNormal,
+                            getPositionUnScaled(m_spkCamera.GetLocation()), m_spkCamera.GetDVector(), 
+                            m_spkCamera.GetUVector(), m_spkCamera.GetRVector() );
+                }
+            }
+        }
     }
-    
 
-    /**
-     * Scaled coordinates for the current position along the path for viewing.
-     *
-     * @return  Point3f A new instance created which contains the path position coordinates, scaled to match the
-     *          ModelTriangleMesh in JPanelSurface.
-     */
-    public Vector3f getPositionUnScaled( Vector3f kPoint) {
-
-        int[] aiExtents = m_kMaskImage.getExtents();
-        float[] afResolutions = m_kMaskImage.getFileInfo(0).getResolutions();
-        float[] afOrigins = m_kMaskImage.getFileInfo(0).getOrigin();
-        int[] aiDirections = m_kMaskImage.getFileInfo(0).getAxisDirection();
-
-        int xDim = aiExtents[0];
-        int yDim = aiExtents[1];
-        int zDim = aiExtents[2];
-
-        float xBox = (xDim - 1) * afResolutions[0];
-        float yBox = (yDim - 1) * afResolutions[1];
-        float zBox = (zDim - 1) * afResolutions[2];
-        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-        Vector3f kPointScaled = new Vector3f();      
-        kPointScaled.X  = (((kPoint.X * (2.0f*maxBox) + xBox) * aiDirections[0]) / 2.0f) + afOrigins[0];
-        kPointScaled.Y  = (((kPoint.Y * (2.0f*maxBox) + yBox) * aiDirections[1]) / 2.0f) + afOrigins[1];
-        kPointScaled.Z  = (((kPoint.Z * (2.0f*maxBox) + zBox) * aiDirections[2]) / 2.0f) + afOrigins[2];
-        return kPointScaled;
-    }
-    
-    
     /**
      * Called any time a change has been made to a new branch so that the connection between the branch and its parent
      * can be rendered.
@@ -888,9 +920,6 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         m_iLastSelectedBranchIndex = iSelectedBranch;
     }
 
-    
-    
-    
     /**
      * Called any time the position along the current curve changes and the color of the curve needs to change to show
      * what has been visited.
@@ -928,120 +957,10 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         kLine.VBuffer.Release();
     }
 
-    public static class SetupOptions {
-
-        /**
-         * Percentage of path samples points to use for the number of control points for a BSpline curve fit. A larger
-         * number may create a curve which oscilates more. A smaller number may create a curve which is too smooth to
-         * even be close to the original path samples.
-         */
-        public float m_fFractionNumControlPoints = 0.07f;
-
-        /** Minimum length of branch to extract. */
-        public float m_fMinBranchLength = 100.0f;
-
-        /** Maximum number of branches to extract. */
-        public int m_iMaxBranches = 1;
-
-        /**
-         * The number of samples which define each branch path is reduced by this factor for the purpose of speeding up
-         * the segmentation of the surface.
-         */
-        public int m_iSegmentSurfaceBranchSamplesReductionFactor = 2;
-    }
-
-
-
-
     /**
-     * Part of the KeyListener interface. Pressing 'b' toggles displaying the
-     * proxy-geometry versus the ray-traced volume.
-     * @param e, the key event.
+     * Create a new Annotation point at the position specified.
+     * @param kPosition position of new annotation point.
      */
-    public void keyPressed(KeyEvent e) {
-        int iKeyCode = e.getKeyCode();
-        if ( (iKeyCode != KeyEvent.VK_UP) && (iKeyCode != KeyEvent.VK_DOWN) )
-        {
-            super.keyPressed(e);
-        }
-    }
-    
-    public void update()
-    {                
-        Vector3f kCLoc = getPositionUnScaled(m_spkCamera.GetLocation());
-        Vector3f kPositionScaled = m_spkCamera.GetLocation();
-        Vector3f kVolumePt = m_kVolumeLayout.getSamplePoint(kCLoc.X, kCLoc.Y, kCLoc.Z);
-        kVolumePt.X *= m_kMaskImage.getExtents()[0];
-        kVolumePt.Y *= m_kMaskImage.getExtents()[1];
-        kVolumePt.Z *= m_kMaskImage.getExtents()[2];
-        m_kParent.setSliceFromPlane(kVolumePt);
-        m_kParent.translateSurface( "FlyThrough", kPositionScaled );
-    }
-    
-    public void viewChanged(FlyPathBehavior_WM behavior, int iEvent)
-    {
-        if ( m_kFlyPathBehavior != behavior )
-        {
-            return;
-        }
-        if (FlyPathBehavior_WM.EVENT_RESET_ORIENTATION == 
-            (FlyPathBehavior_WM.EVENT_RESET_ORIENTATION & iEvent))
-        {       
-            m_kRotation.Local.SetRotateCopy(Matrix3f.IDENTITY);
-            if ( m_kControlFrame != null )
-            {
-                m_kControlFrame.updateOrientation(m_kRotation.Local.GetRotate());
-            }
-        }  
-         
-        if ( m_kControlFrame != null )
-        {
-            m_kControlFrame.updatePosition(behavior);
-        }
-        Vector3f kCDir = behavior.getViewDirection();
-        kCDir.Normalize();
-        Vector3f kCUp = behavior.getViewUp();
-        kCUp.Normalize();
-        Vector3f kCLoc = behavior.getViewPoint();
-        Vector3f kCRight = new Vector3f();
-        kCRight.UnitCross( kCDir, kCUp );
-        Vector3f kPositionScaled = getPositionScaled(kCLoc);
-        m_spkCamera.SetFrame(kPositionScaled,kCDir,kCUp,kCRight);
-
-        if ( m_kLight != null )
-        {
-            m_kLight.Position.Copy(kPositionScaled);
-            m_kLight.DVector.Copy(kCDir);
-        }
-
-        resetRenderBranchPath();
-        
-        if (FlyPathBehavior_WM.EVENT_CHANGE_BRANCH == (FlyPathBehavior_WM.EVENT_CHANGE_BRANCH & iEvent)) {
-            resetRenderBranchConnect();
-        }
-        if ( m_kControlFrame.getContinuousUpdate() )
-        {
-            update();
-            m_kParent.displayAll();
-        }
-        else
-        {
-            GetCanvas().display();
-        }
-        
-    }
-    
-    public Vector3f getCameraDirection()
-    {
-        return new Vector3f( m_spkCamera.GetDVector() );
-    }
-    
-    
-    public Vector3f getCameraUp()
-    {
-        return new Vector3f( m_spkCamera.GetUVector() );
-    }
-
     private void createAnnotatePoint(Vector3f kPosition)
     {
         float fRadius = 0.0003f * m_kSkeleton.getMaxBoundaryDistance();
@@ -1061,65 +980,193 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         kMesh.UpdateRS();
         kMesh.UpdateMS();
         m_spkScene.AttachChild(kMesh);
-        //m_spkScene.UpdateGS();
-        //m_spkScene.UpdateRS();
         m_bSurfaceUpdate = true;
     }
 
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#autoRun()
+    /**
+     * Get the geometry to be used for rendering the connection of the specified branch to its parent branch.
+     * @param   iBranch  Index which identifies the branch.
+     * @return  Polyline instance that can be attached to a scene-graph Node for rendering
      */
-    public void autoRun() {
-        m_kFlyPathBehavior.autoRun();        
+    private Polyline createBranchConnectGeometryScaled(int iBranch) {
+        int[] aiExtents = m_kMaskImage.getExtents();
+        float[] afResolutions = m_kMaskImage.getFileInfo(0).getResolutions();
+        float[] afOrigins = m_kMaskImage.getFileInfo(0).getOrigin();
+        int[] aiModelDirection = MipavCoordinateSystems.getModelDirections(m_kMaskImage);
+        float[] aiDirections = new float[] { aiModelDirection[0], aiModelDirection[1], aiModelDirection[2]}; 
+        //int[] aiDirections = m_kMaskImage.getFileInfo(0).getAxisDirection();
+
+        int xDim = aiExtents[0];
+        int yDim = aiExtents[1];
+        int zDim = aiExtents[2];
+
+        float xBox = (xDim - 1) * afResolutions[0];
+        float yBox = (yDim - 1) * afResolutions[1];
+        float zBox = (zDim - 1) * afResolutions[2];
+        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+        
+        Attributes kAttributes = new Attributes();
+        kAttributes.SetPChannels(3);
+        kAttributes.SetCChannels(0,3);
+        VertexBuffer kVBuffer = new VertexBuffer(kAttributes, 2);
+
+        // Get the index of the parent.
+        int iBranchParent = m_kFlyPathGraphCurve.getBranchParentIndex(iBranch);
+
+        // Set the point for the start of the child branch.
+        Curve3f kCurveChild = m_kFlyPathGraphCurve.getCurvePosition(iBranch);
+        float fTimeChild = kCurveChild.GetTime(0.0f, 100, 1e-02f);
+
+        Vector3f kPoint = kCurveChild.GetPosition(fTimeChild);
+        kPoint.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
+                    xBox) / (2.0f*maxBox);
+        kPoint.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
+                    yBox) / (2.0f*maxBox);
+        kPoint.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
+                    zBox) / (2.0f*maxBox);
+        kVBuffer.SetPosition3(0, kPoint);
+        kVBuffer.SetColor3(0, 0, m_kNormalColorPathUnvisited);
+
+        // If there is no parent, then replicate the child start point
+        if (iBranchParent < 0) {
+            kPoint = kCurveChild.GetPosition(fTimeChild);
+            kPoint.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
+                        xBox) / (2.0f*maxBox);
+            kPoint.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
+                        yBox) / (2.0f*maxBox);
+            kPoint.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
+                        zBox) / (2.0f*maxBox);
+            kVBuffer.SetPosition3(1, kPoint);
+            kVBuffer.SetColor3(0, 1, m_kNormalColorPathUnvisited);
+        } // Otherwise, set the point for the position along the parent
+
+        // branch where the child branch starts.
+        else {
+            float fParentNormalizedDist = m_kFlyPathGraphCurve.getBranchParentNormalizedDist(iBranch);
+            Curve3f kCurveParent = m_kFlyPathGraphCurve.getCurvePosition(iBranchParent);
+            float fTimeParent = kCurveParent.GetTime(kCurveParent.GetTotalLength() * fParentNormalizedDist, 100,
+                                                     1e-02f);
+            kPoint = kCurveParent.GetPosition(fTimeParent); 
+            kPoint.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
+                        xBox) / (2.0f*maxBox);
+            kPoint.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
+                        yBox) / (2.0f*maxBox);
+            kPoint.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
+                        zBox) / (2.0f*maxBox);
+            kVBuffer.SetPosition3(1, kPoint);
+            kVBuffer.SetColor3(0, 1, m_kNormalColorPathUnvisited);
+        }
+
+        return new Polyline( kVBuffer, false, true );
     }
 
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getBranchState()
+    /**
+     * Get the geometry to be used for rendering the path of the specified branch.
+     * @param   iBranch  Index which identifies the branch.
+     * @return  Polyline instance that can be attached to a scene-graph Node for rendering
+     *          <p>The  coordinates are scaled to match the TriMesh in JPanelSurface.</p>
      */
-    public Object getBranchState() {
-        return m_kFlyPathBehavior.getBranchState();
-    }
+    private Polyline createBranchPathGeometryScaled(int iBranch) {
+        int iNumVertex = 500;
+        Attributes kAttributes = new Attributes();
+        kAttributes.SetPChannels(3);
+        kAttributes.SetCChannels(0,3);
+        VertexBuffer kVBuffer = new VertexBuffer(kAttributes, iNumVertex);
 
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getCanvas()
-     */
-    public Canvas getCanvas() {
-        return GetCanvas();
-    }
 
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#makeMove(java.lang.String)
-     */
-    public void makeMove(String cmd) {
-        m_kFlyPathBehavior.move(cmd);
-    }
+        Curve3f kCurve = m_kFlyPathGraphCurve.getCurvePosition(iBranch);
+        float fStep = kCurve.GetTotalLength() / (iNumVertex - 1);
 
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#setCurrentState(java.lang.Object)
-     */
-    public void setCurrentState(Object _state) {
-        m_kFlyPathBehavior.setBranch(_state);
+        int[] aiExtents = m_kMaskImage.getExtents();
+        float[] afResolutions = m_kMaskImage.getFileInfo(0).getResolutions();
+        float[] afOrigins = m_kMaskImage.getFileInfo(0).getOrigin();
+        int[] aiModelDirection = MipavCoordinateSystems.getModelDirections(m_kMaskImage);
+        float[] aiDirections = new float[] { aiModelDirection[0], aiModelDirection[1], aiModelDirection[2]}; 
+        //int[] aiDirections = m_kMaskImage.getFileInfo(0).getAxisDirection();
+
+        int xDim = aiExtents[0];
+        int yDim = aiExtents[1];
+        int zDim = aiExtents[2];
+
+        float xBox = (xDim - 1) * afResolutions[0];
+        float yBox = (yDim - 1) * afResolutions[1];
+        float zBox = (zDim - 1) * afResolutions[2];
+        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+
+        for (int iPoint = 0; iPoint < iNumVertex; ++iPoint) {
+            float fDist = iPoint * fStep;
+            float fTime = kCurve.GetTime(fDist, 100, 1e-02f);      
+            Vector3f kPoint = kCurve.GetPosition(fTime);
+
+            kPoint.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
+                    xBox) / (2.0f*maxBox);
+            kPoint.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
+                    yBox) / (2.0f*maxBox);
+            kPoint.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
+                    zBox) / (2.0f*maxBox);
+            kVBuffer.SetPosition3(iPoint, kPoint);
+            kVBuffer.SetColor3(0, iPoint, m_kNormalColorPathUnvisited);
+        }
+
+        return new Polyline( kVBuffer, false, true );
     }
     
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#record(boolean)
+    /**
+     * Called by the init() function. Creates and initialized the scene-graph.
+     * @param arg0 the GLCanvas
      */
-    public void record(boolean bOn)
+    private void CreateScene ()
     {
-        m_bSnapshot = bOn;
+        // Create a scene graph with the face model as the leaf node.
+        m_spkScene = new Node();
+        m_spkCull = new CullState();
+        m_spkCull.FrontFace = CullState.FrontMode.FT_CW; 
+        m_spkCull.Enabled = false;
+        m_spkScene.AttachGlobalState(m_spkCull);
+        m_spkScene.AttachChild(m_kSurface);
+
+        m_kTranslate = new Vector3f(Vector3f.ZERO);      
+        for ( int i = 0; i < m_pkRenderer.GetMaxLights(); i++ )
+        {
+            m_pkRenderer.SetLight( i, new Light() );
+        }
+        setupRender(m_kVolumeImageA.GetImage(), m_kOptions);
     }
 
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getHeight()
+    /**
+     * Render the scene-graph.
      */
-    public int getHeight() {
-        return m_pkRenderer.GetHeight();
+    private void Render()
+    {
+        m_kCuller.ComputeVisibleSet(m_spkScene);
+        m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
     }
 
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#getWidth()
+    /**
+     * Update the camera location and view direction. Called from mouse dragged. Implements "inside looking out" object rotation.
      */
-    public int getWidth() {
-        return m_pkRenderer.GetWidth();
+    private void updateCamera()
+    {
+        Matrix3f kRotate = m_kRotation.Local.GetRotate();
+        Vector3f kUp = new Vector3f();
+        Vector3f kDir = new Vector3f();
+        Vector3f kRight = new Vector3f();
+        
+
+        Vector3f kCUp = m_kFlyPathBehavior.getViewUp();
+        kCUp.Normalize();
+        Vector3f kCDir = m_kFlyPathBehavior.getViewDirection();
+        kCDir.Normalize();
+        Vector3f kCRight = new Vector3f();
+        kCRight.UnitCross( kCDir, kCUp );
+        
+        kRotate.Mult( kCUp, kUp );
+        kRotate.Mult( kCDir, kDir );
+        kRotate.Mult( kCRight, kRight );
+        m_spkCamera.SetFrame( m_spkCamera.GetLocation(), kDir, kUp, kRight);
+        if ( m_kControlFrame != null )
+        {
+            m_kControlFrame.updateOrientation(kRotate);
+        }
     }
 }

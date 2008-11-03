@@ -268,7 +268,7 @@ public class Gooch extends JavaApplication3D
     private Culler m_kCuller = new Culler(0,0,null);
     private TriMesh m_pkMesh;
 
-    /** Window with the shader paramter interface: */
+    /** Window with the shader parameter interface: */
     private ApplicationGUI m_kShaderParamsWindow = null;
     
     private String getExternalDirs()

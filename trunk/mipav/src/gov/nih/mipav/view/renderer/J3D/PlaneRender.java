@@ -1100,7 +1100,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
     /* Convert the position in LocalCoordinates (rendering space) into
      * PatientCoordinates:
-     * @param localPt, the current point in LocalCoordinates
+     * @param localPt the current point in LocalCoordinates
      * @param patientPt transformed localPt in PatientCoordinates
      */
     private void LocalToPatient( WildMagic.LibFoundation.Mathematics.Vector3f localPt, WildMagic.LibFoundation.Mathematics.Vector3f patientPt )
@@ -1114,7 +1114,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      * Convert the position in PatientCoordinates into Local rendering
      * coordinates:
      * @param patientPt the current point in PatientCoordinates
-     * @param localPt, the transformed point in LocalCoordinates
+     * @param localPt the transformed point in LocalCoordinates
      */
     private void PatientToLocal( WildMagic.LibFoundation.Mathematics.Vector3f patientPt, WildMagic.LibFoundation.Mathematics.Vector3f localPt )
     {
@@ -1357,7 +1357,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      * setCenter sets the cursor and slice position for this PlaneRender
      * object, based on the 3D location of the three intersecting ModelImage
      * planes.
-     * @param center, the 3D center in FileCoordinates of the three
+     * @param center the 3D center in FileCoordinates of the three
      * intersecting ModelImage planes.
      */
     public void setCenter( WildMagic.LibFoundation.Mathematics.Vector3f center )

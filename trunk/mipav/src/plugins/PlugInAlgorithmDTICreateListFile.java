@@ -162,7 +162,7 @@ public class PlugInAlgorithmDTICreateListFile extends AlgorithmBase {
     /** image orientation **/
     private String imageOrientationString;
     
-    /** vol paramters **/
+    /** vol parameters **/
     private HashMap volParameters;
 
     

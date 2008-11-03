@@ -303,7 +303,7 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
 
     private Culler m_kCuller = new Culler(0, 0, null);
 
-    /** Window with the shader paramter interface: */
+    /** Window with the shader parameter interface: */
     private ApplicationGUI m_kShaderParamsWindow = null;
 
     private boolean[] m_abColorMask = new boolean[] {true, true, true, true};

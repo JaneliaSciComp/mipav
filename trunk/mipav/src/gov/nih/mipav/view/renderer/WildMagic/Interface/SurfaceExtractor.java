@@ -1,10 +1,17 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.SceneGraph.*;
+import gov.nih.mipav.model.structures.TransMatrix;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibImagics.Extraction.ExtractSurfaceTetra;
-import gov.nih.mipav.model.structures.*;
-import java.util.*;
 
 
 /**
@@ -16,21 +23,17 @@ import java.util.*;
 
 public class SurfaceExtractor extends ExtractSurfaceTetra {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
+    /** Dicom Matrix */
     private TransMatrix dicomMatrix = null;
 
-    /** DOCUMENT ME! */
+    /** Surface direction */
     private int[] direction;
 
-    /** DOCUMENT ME! */
+    /** Relative voxel size. */
     private float m_fXDelta, m_fYDelta, m_fZDelta;
 
-    /** DOCUMENT ME! */
+    /** Surface 3D location */
     private float[] startLocation;
-
-    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Create a level surface extractor for a 3D image. The delta input values are important when the voxels are not
@@ -62,14 +65,10 @@ public class SurfaceExtractor extends ExtractSurfaceTetra {
         this.dicomMatrix = dicomMatrix;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Construct a level surface from the 3D image managed by the extractor.
-     *
      * @param   iLevel       the desired level value, in [min(image),max(image)]
-     * @param   progressBar  DOCUMENT ME!
-     *
      * @return  a triangle mesh that represents the level surface
      */
     public TriMesh get(float iLevel) {

@@ -1,16 +1,26 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.FileWriteOptions;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewFileChooserBase;
+import gov.nih.mipav.view.ViewImageFileFilter;
+import gov.nih.mipav.view.ViewUserInterface;
 
-import gov.nih.mipav.view.*;
-import java.awt.event.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.io.File;
 
-import javax.swing.*;
-import java.io.*;
+import javax.media.opengl.GLCanvas;
+import javax.swing.JFileChooser;
 
-import javax.media.opengl.*;
-import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
+import WildMagic.LibFoundation.Mathematics.Vector4f;
 
 /**
  * Volume Sculpturing allows the user to draw a region on the screen in the volume render view, and to remove the parts
@@ -49,26 +59,22 @@ import WildMagic.LibFoundation.Mathematics.*;
  */
 public class Sculptor_WM implements MouseMotionListener, MouseListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
+    /** Free-hand sculpting */
     public static int LINES = 0;
 
-    /** DOCUMENT ME! */
+    /** rectangle sculpt */
     public static int RECTANGLE = 1;
-
-    //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Mouse positions in x,y for drawing the sculpt region:. */
     protected int[] m_aiXPoints;
 
-    /** DOCUMENT ME! */
+    /** Mouse positions in x,y for drawing the sculpt region:. */
     protected int[] m_aiYPoints;
 
     /** m_bMousePressed is set to true when the mousePressed callback is activated and the left mouse button is down. */
     protected boolean m_bMousePressed;
 
-    /** DOCUMENT ME! */
+    /** True when a sculpt region has been drawn. */
     protected boolean m_bSculptDrawn = false;
 
     /** m_bSculptEnabled is turned on when the user presses the "Draw Sculpt Outline" button. */
@@ -77,49 +83,49 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
     /** The sculpt region color. */
     protected int[] m_aiColorSculpt = new int[] { 0, 0, 255 };
 
-    /** DOCUMENT ME! */
+    /** First x mouse position */
     protected int m_iFirstX;
 
-    /** DOCUMENT ME! */
+    /** First y mouse position */
     protected int m_iFirstY;
 
-    /** DOCUMENT ME! */
+    /** Last x mouse position */
     protected int m_iLastX;
 
-    /** DOCUMENT ME! */
+    /** Last y mouse position */
     protected int m_iLastY;
 
-    /** DOCUMENT ME! */
+    /** Number of points in the free-hand line. */
     protected int m_iNumberPoints;
 
     /** Previous and first mouse positions:. */
     protected int m_iPreviousX;
 
-    /** DOCUMENT ME! */
+    /** Previous and first mouse positions:. */
     protected int m_iPreviousY;
 
-    /** DOCUMENT ME! */
+    /** sculpt image height */
     protected int m_iSculptImageHeight;
 
-    /** Size of the m_kSculptImage, when it is captured. */
+    /** sculpt image width */
     protected int m_iSculptImageWidth;
 
-    /** DOCUMENT ME! */
+    /** The min and max x,y mouse values */
     protected int m_iXMax;
 
-    /** The min and max x,y mouse values:. */
+    /** The min and max x,y mouse values */
     protected int m_iXMin;
 
-    /** DOCUMENT ME! */
+    /** The min and max x,y mouse values */
     protected int m_iYMax;
 
-    /** DOCUMENT ME! */
+    /** The min and max x,y mouse values */
     protected int m_iYMin;
 
     /** Canvas reference for drawing :. */
     protected GLCanvas m_kCanvas;
 
-    /** DOCUMENT ME! */
+    /** Backup image */
     protected byte[] m_aucSavedImage;
 
     /**
@@ -131,126 +137,41 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
     /** Shape of the drawing rectangle. */
     private int drawShape = LINES;
 
+    /** ModelImage A */
     private ModelImage m_kImageA = null;
+    /** Backup of ModelImage A */
     private ModelImage m_kImageBackupA = null;
 
+    /** ModelImage B */
     private ModelImage m_kImageB = null;
+    /** Backup of ModelImage B */
     private ModelImage m_kImageBackupB = null;
 
+    /**  World-view-project matrix for applying the sculpt to the volume. */
     private Matrix4f m_kWVPMatrix = null;
+    /** Texture data for ModelImage A in byte */
     private byte[] m_aucTextureImageDataA = null;
+    /** Texture data for ModelImage A in float */
     private float[] m_afTextureImageDataA = null;
 
+    /** Texture data for ModelImage B in byte */
     private byte[] m_aucTextureImageDataB = null;
+    /** Texture data for ModelImage B in float */
     private float[] m_afTextureImageDataB = null;
     
+    /**
+     * Constructor.
+     * @param kCanvas the canvas to draw the sculpt image on.
+     */
     public Sculptor_WM( GLCanvas kCanvas )
     {
         m_kCanvas = kCanvas;
         initVolumeSculptor();
     }
 
-    public void disposeLocal()
-    {
-        m_kCanvas.removeMouseMotionListener(this);
-        m_kCanvas.removeMouseListener(this);
-
-        if (m_aucSculptImage != null) {
-            m_aucSculptImage = null;
-        }
-
-        if (m_aucSavedImage != null) {
-            m_aucSavedImage = null;
-        }
-
-        m_aiColorSculpt = null;
-        m_aiXPoints = null;
-        m_aiYPoints = null;
-
-        m_kImageA = null;
-        if ( m_kImageBackupA != null )
-        {
-            m_kImageBackupA.disposeLocal(true);
-            m_kImageBackupA = null;
-        }
-        m_kImageB = null;
-        if ( m_kImageBackupB != null )
-        {
-            m_kImageBackupB.disposeLocal(true);
-            m_kImageBackupB = null;
-        }
-
-        m_kWVPMatrix = null;
-        m_aucTextureImageDataA = null;
-        m_afTextureImageDataA = null;
-        m_aucTextureImageDataB = null;
-        m_afTextureImageDataB = null;
-   }
-
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
-    public byte[] getSculptImage()
-    {
-        return m_aucSculptImage;
-    }
-
-    public boolean IsSculptDrawn()
-    {
-        return m_bSculptDrawn;
-    }
-
-    public void setImage( ModelImage kImageA, ModelImage kImageB )
-    {
-        m_kImageA = kImageA;
-        if ( m_kImageBackupA != null )
-        {
-            m_kImageBackupA.disposeLocal(true);
-            m_kImageBackupA = null;
-        }
-        m_kImageBackupA = (ModelImage)m_kImageA.clone("sculpt_backupA");
-        if ( kImageB != null )
-        {
-            m_kImageB = kImageB;
-            if ( m_kImageBackupB != null )
-            {
-                m_kImageBackupB.disposeLocal(true);
-                m_kImageBackupB = null;
-            }
-            m_kImageBackupB = (ModelImage)m_kImageB.clone("sculpt_backupB");
-        }
-    }
-    
-    public void setWVPMatrix( Matrix4f kMatrix )
-    {
-        m_kWVPMatrix = kMatrix;
-    }
-
-    public void setTextureImageDataA( byte[] data )
-    {
-        m_aucTextureImageDataA = data;
-    }
-
-    public void setTextureImageFloatDataA( float[] data )
-    {
-        m_afTextureImageDataA = data;
-    }
-
-    public void setTextureImageDataB( byte[] data )
-    {
-        m_aucTextureImageDataB = data;
-    }
-
-    public void setTextureImageFloatDataB( float[] data )
-    {
-        m_afTextureImageDataB = data;
-    }
-
-    
     /**
-     * applySculpt: abstract function, implementation depends on whether the instance is VolumeTextureSculptor or
-     * VolumeSculptor.
-     *
-     * @return  DOCUMENT ME!
+     * Apply the sculpt region to the volume data.
+     * @return true if the volume has changed, false indicates no change.
      */
     public boolean applySculpt() { 
         /* Disable drawing the sculpt region outline: */
@@ -341,152 +262,7 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
     }
 
     /**
-     */
-    public void undoSculpt()
-    {
-        float fImageMaxA = (float)m_kImageA.getMax();
-        float fImageMinA = (float)m_kImageA.getMin();
-        int iXBound = m_kImageA.getExtents()[0];
-        int iYBound = m_kImageA.getExtents()[1];
-        int iZBound = m_kImageA.getExtents()[2];
-
-        float fImageMaxB = 0, fImageMinB = 0;
-        if ( m_kImageB != null )
-        {
-            fImageMaxB = (float)m_kImageB.getMax();
-            fImageMinB = (float)m_kImageB.getMin();
-        }
-
-        int iA = 0;
-        int iB = 0;
-        for (int iZ = 0; iZ < iZBound; iZ++)
-        {
-            for (int iY = 0; iY < iYBound; iY++)
-            {
-                for (int iX = 0; iX < iXBound; iX++)
-                {
-                    int iDataIndex = iZ * (iXBound * iYBound) + (iY * iXBound) + iX;
-                    backupData( m_kImageBackupA, m_kImageA, iDataIndex );
-                    if ( m_kImageA.isColorImage() )
-                    {
-                        if ( m_aucTextureImageDataA != null )
-                        {
-                            m_aucTextureImageDataA[iA++] = m_kImageA.get(iDataIndex*4 +1).byteValue();
-                            m_aucTextureImageDataA[iA++] = m_kImageA.get(iDataIndex*4 +2).byteValue();
-                            m_aucTextureImageDataA[iA++] = m_kImageA.get(iDataIndex*4 +3).byteValue();
-                            m_aucTextureImageDataA[iA++] = (byte)255;
-                        }
-                        else
-                        {}
-                    }
-                    else
-                    {
-                        float fValue = m_kImageA.get(iDataIndex).floatValue();
-                        fValue = (fValue - fImageMinA)/(fImageMaxA - fImageMinA);
-                        byte bValue = (byte)(255.0f * fValue);
-                        if ( m_aucTextureImageDataA != null )
-                        {
-                            m_aucTextureImageDataA[iA++] = bValue;
-                        }
-                        else
-                        {
-                            m_afTextureImageDataA[iA++] = fValue;
-                        }
-                    }
-
-                    if ( m_kImageB != null )
-                    {
-                        backupData( m_kImageBackupB, m_kImageB, iDataIndex );
-                        if ( m_kImageB.isColorImage() )
-                        {
-                            if ( m_aucTextureImageDataB != null )
-                            {
-                                m_aucTextureImageDataB[iB++] = m_kImageB.get(iDataIndex*4 +1).byteValue();
-                                m_aucTextureImageDataB[iB++] = m_kImageB.get(iDataIndex*4 +2).byteValue();
-                                m_aucTextureImageDataB[iB++] = m_kImageB.get(iDataIndex*4 +3).byteValue();
-                                m_aucTextureImageDataB[iB++] = (byte)255;
-                            }
-                        }
-                        else
-                        {
-                            float fValue = m_kImageB.get(iDataIndex).floatValue();
-                            fValue = (fValue - fImageMinB)/(fImageMaxB - fImageMinB);
-                            byte bValue = (byte)(255.0f * fValue);
-                            if ( m_aucTextureImageDataB != null )
-                            {
-                                m_aucTextureImageDataB[iB++] = bValue;
-                            }
-                            else
-                            {
-                                m_afTextureImageDataB[iB++] = fValue;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-    private void backupData( ModelImage kImage, ModelImage kImageBackup, int iDataIndex )
-    {
-        if ( !kImage.isColorImage() )
-        {
-            kImageBackup.set(iDataIndex, kImage.get(iDataIndex));
-        }
-        else
-        {
-            for ( int c = 0; c < 4; c++ )
-            {
-                kImageBackup.set(iDataIndex * 4 + c, kImage.get(iDataIndex * 4 + c));
-            }
-        }
-    }
-
-    private void sculptData( ModelImage kImage, int iDataIndex,
-                             byte[] aucTextureImageData, float[] afTextureImageData )
-    {
-        if ( !kImage.isColorImage() )
-        {
-            kImage.set(iDataIndex, (float)kImage.getMin());
-        }
-        else
-        {
-            kImage.set(iDataIndex*4 + 1, (float)kImage.getMinR());
-            kImage.set(iDataIndex*4 + 2, (float)kImage.getMinG());
-            kImage.set(iDataIndex*4 + 3, (float)kImage.getMinB());
-        }
-        
-        if ( aucTextureImageData != null )
-        {
-            if ( kImage.isColorImage() )
-            {
-                aucTextureImageData[iDataIndex * 4 + 0] = (byte)0;
-                aucTextureImageData[iDataIndex * 4 + 1] = (byte)0;
-                aucTextureImageData[iDataIndex * 4 + 2] = (byte)0;
-                aucTextureImageData[iDataIndex * 4 + 3] = (byte)0;
-            }
-            else
-            {
-                aucTextureImageData[iDataIndex] = (byte)0;
-            }
-        }
-        else
-        {
-            afTextureImageData[iDataIndex] = 0f;
-        }
-
-    }
-
-    /**
-     * DOCUMENT ME!
-     */
-    public void update() {}
-
-    /**
-     * clearSculpt: called by ViewJFrameVolumeView when the user presses the "Clear Ouline" button, clearing the sculpt
-     * outline from the canvas image. The function disables sculpting and reactivates the mouse events for the
-     * m_kVolumeRenderer.
+     * Clears the sculpt image.
      */
     public void clearSculpt() {
         m_bSculptEnabled = false;
@@ -496,11 +272,48 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
     }
 
     /**
-     * enableSculpt: called by the ViewJFrameVolumeView object when the Draw Sculpt button is pressed. This function
-     * deactivates the m_kVolumeRenderer's mouse response, so the mouse can be used to draw the sculpt outline. It also
-     * allocates and initializes the m_iSculptImage buffer for drawing.
-     *
-     * @param  bEnabled  DOCUMENT ME!
+     * Memory cleanup.
+     */
+    public void disposeLocal()
+    {
+        m_kCanvas.removeMouseMotionListener(this);
+        m_kCanvas.removeMouseListener(this);
+
+        if (m_aucSculptImage != null) {
+            m_aucSculptImage = null;
+        }
+
+        if (m_aucSavedImage != null) {
+            m_aucSavedImage = null;
+        }
+
+        m_aiColorSculpt = null;
+        m_aiXPoints = null;
+        m_aiYPoints = null;
+
+        m_kImageA = null;
+        if ( m_kImageBackupA != null )
+        {
+            m_kImageBackupA.disposeLocal(true);
+            m_kImageBackupA = null;
+        }
+        m_kImageB = null;
+        if ( m_kImageBackupB != null )
+        {
+            m_kImageBackupB.disposeLocal(true);
+            m_kImageBackupB = null;
+        }
+
+        m_kWVPMatrix = null;
+        m_aucTextureImageDataA = null;
+        m_afTextureImageDataA = null;
+        m_aucTextureImageDataB = null;
+        m_afTextureImageDataB = null;
+   }
+
+    /**
+     * Turn sculpt drawing on/off.
+     * @param bEnabled turns sculpting on/off.
      */
     public void enableSculpt(boolean bEnabled) {
         m_bSculptEnabled = bEnabled;
@@ -526,19 +339,26 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
         m_aucSculptImage = new byte[m_iSculptImageWidth * m_iSculptImageHeight *4];
         m_aucSavedImage = new byte[m_iSculptImageWidth * m_iSculptImageHeight *4];
     }
-
+    
     /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * Return the sculpt enabled status.
+     * @return sculpt enabled status.
      */
     public boolean getEnable() {
         return m_bSculptEnabled;
     }
 
     /**
-     * Initialize the Mouse events, store the progress bar, and get the original canvas widths. Disable sculpting and
-     * drawing with the mouse. Note - this function should be called once per instance only, as it sets up the
+     * Return sculpt image for display.
+     * @return byte[] containing the sculpt image.
+     */
+    public byte[] getSculptImage()
+    {
+        return m_aucSculptImage;
+    }
+
+    /**
+     * Initialize the Mouse listener. Note - this function should be called once per instance only, as it sets up the
      * MouseMotionListener and MouseListener.
      */
     public void initVolumeSculptor() {
@@ -550,74 +370,8 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
         m_bMousePressed = false;
     }
 
-    private void setSculpt( int iX, int iY, int[] aiColors )
-    {
-        int index = (iY * m_iSculptImageWidth + iX)*4;
-        if ( aiColors != null )
-        {
-            m_aucSculptImage[index + 0] = (byte)aiColors[0];
-            m_aucSculptImage[index + 1] = (byte)aiColors[1];
-            m_aucSculptImage[index + 2] = (byte)aiColors[2];
-            m_aucSculptImage[index + 3] = (byte)200;
-        }
-        else
-        {
-            if ( drawShape == RECTANGLE )
-            {
-                m_aucSculptImage[index + 0] = m_aucSavedImage[index + 0];
-                m_aucSculptImage[index + 1] = m_aucSavedImage[index + 1];
-                m_aucSculptImage[index + 2] = m_aucSavedImage[index + 2];
-                m_aucSculptImage[index + 3] = m_aucSavedImage[index + 3];
-            }
-            else
-            {
-                m_aucSculptImage[index + 0] = (byte)0;
-                m_aucSculptImage[index + 1] = (byte)0;
-                m_aucSculptImage[index + 2] = (byte)0;
-                m_aucSculptImage[index + 3] = (byte)0;
-            }
-        }
-        m_bSculptDrawn = true;
-    }
-
-    private void invertSculpt( int iX, int iY, int[] aiColors )
-    {
-        int index = (iY * m_iSculptImageWidth + iX)*4;
-        if ( aiColors != null )
-        {
-            m_aucSculptImage[index + 0] = (byte)aiColors[0];
-            m_aucSculptImage[index + 1] = (byte)aiColors[1];
-            m_aucSculptImage[index + 2] = (byte)aiColors[2];
-            m_aucSculptImage[index + 3] = (byte)200;
-        }
-        else
-        {
-            m_aucSculptImage[index + 0] = (byte)0;
-            m_aucSculptImage[index + 1] = (byte)0;
-            m_aucSculptImage[index + 2] = (byte)0;
-            m_aucSculptImage[index + 3] = (byte)0;
-        }
-        m_bSculptDrawn = true;
-    }
-
-
-    private boolean getSculpt( int iX, int iY )
-    {
-        int index = (iY * m_iSculptImageWidth + iX)*4;
-        if ( (m_aucSculptImage[index + 0] == 0) &&
-             (m_aucSculptImage[index + 1] == 0) &&
-             (m_aucSculptImage[index + 2] == 0) &&
-             (m_aucSculptImage[index + 3] == 0)     )
-        {
-            return false;
-        }
-        return true;                
-    }
-
-    
     /**
-     * invertSculpt: called by ViewJFrameVolumeView when the user presses the "Invert Sculpt Region" button, inverting
-     * the sculpt region.
+     * Inverts the sculpt image.
      */
     public void invertSculpt() {
 
@@ -649,14 +403,18 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
     }
 
     /**
-     * One of the overrides necessary to be a MouseListener. This function is invoked when a button has been pressed and
-     * released.
-     *
-     * @param  kEvent  the mouse event generated by a mouse clicked
+     * Return true if the sculpt image has been drawn.
+     * @return true if the sculpt image has been drawn.
      */
-    public void mouseClicked(MouseEvent kEvent) { /* stub */
+    public boolean IsSculptDrawn()
+    {
+        return m_bSculptDrawn;
     }
 
+    /* (non-Javadoc)
+     * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
+     */
+    public void mouseClicked(MouseEvent kEvent) {}
 
     /**
      * Invoked when the mouse is dragged while a button is held down. If this occurs while sculpting is enabled, then
@@ -748,10 +506,8 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
         }
     }
 
-    /**
-     * One of the overrides necessary to be a MouseListener. Invoked when the mouse enters a component.
-     *
-     * @param  kEvent  the mouse event generated by a mouse entered
+    /* (non-Javadoc)
+     * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
      */
     public void mouseEntered(MouseEvent kEvent) { }
 
@@ -769,14 +525,10 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
         }
     }
 
-    /**
-     * One of the overrides necessary to be a MouseMotionListener. Invoked when the mouse is moved, but no buttons are
-     * pressed.
-     *
-     * @param  kEvent  the event generated by a mouse movement
+    /* (non-Javadoc)
+     * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
      */
     public void mouseMoved(MouseEvent kEvent) { }
-
 
     /**
      * Invoked when a mouse button is pressed. When the left mouse button is pressed, and sculpting is enabled, then the
@@ -907,415 +659,12 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
     }
 
     /**
-     * Set the shape of the drawing sculptor.
-     *
-     * @param  shape  0 for LINES, 1 for RECTANGLE
-     */
-    public void setDrawingShape(int shape) {
-        drawShape = shape;
-        if ( drawShape == RECTANGLE )
-        {
-            backupSculptImage();
-        }
-    }
-
-    private void backupSculptImage()
-    {
-        /* Loop over the pixels in the sculpt buffer: */
-        for (int iY = 0; iY < m_iSculptImageHeight; iY++)
-        {
-            for (int iX = 0; iX < m_iSculptImageWidth; iX++)
-            {
-                int index = (iY * m_iSculptImageWidth + iX)*4;
-                m_aucSavedImage[index + 0] = m_aucSculptImage[index + 0];
-                m_aucSavedImage[index + 1] = m_aucSculptImage[index + 1];
-                m_aucSavedImage[index + 2] = m_aucSculptImage[index + 2];
-                m_aucSavedImage[index + 3] = m_aucSculptImage[index + 3];
-            }
-        }
-    }
-
-    /**
-     * Draw rectangle shape object.
-     */
-    protected void drawRectangleArea() {
-
-        // /*
-        if (!(m_iLastX < m_iFirstX)) {
-            line(m_iXMin, m_iYMax, m_iXMax, m_iYMax, m_aiColorSculpt);
-            m_aiXPoints[m_iNumberPoints] = m_iXMin;
-            m_aiYPoints[m_iNumberPoints] = m_iYMax;
-            m_iNumberPoints++;
-            m_aiXPoints[m_iNumberPoints] = m_iXMax;
-            m_aiYPoints[m_iNumberPoints] = m_iYMax;
-            m_iNumberPoints++;
-        }
-
-        line(m_iXMax, m_iYMax, m_iXMax, m_iYMin, m_aiColorSculpt);
-        m_aiXPoints[m_iNumberPoints] = m_iXMax;
-        m_aiYPoints[m_iNumberPoints] = m_iYMax;
-        m_iNumberPoints++;
-        m_aiXPoints[m_iNumberPoints] = m_iXMax;
-        m_aiYPoints[m_iNumberPoints] = m_iYMin;
-        m_iNumberPoints++;
-
-        line(m_iXMax, m_iYMin, m_iXMin, m_iYMin, m_aiColorSculpt);
-        m_aiXPoints[m_iNumberPoints] = m_iXMax;
-        m_aiYPoints[m_iNumberPoints] = m_iYMin;
-        m_iNumberPoints++;
-        m_aiXPoints[m_iNumberPoints] = m_iXMin;
-        m_aiYPoints[m_iNumberPoints] = m_iYMin;
-        m_iNumberPoints++;
-
-        line(m_iXMin, m_iYMin, m_iXMin, m_iYMax, m_aiColorSculpt);
-        m_aiXPoints[m_iNumberPoints] = m_iXMin;
-        m_aiYPoints[m_iNumberPoints] = m_iYMin;
-        m_iNumberPoints++;
-        m_aiXPoints[m_iNumberPoints] = m_iXMin;
-        m_aiYPoints[m_iNumberPoints] = m_iYMax;
-        m_iNumberPoints++;
-
-        if ((m_iLastX < m_iFirstX)) {
-            line(m_iXMin, m_iYMax, m_iXMax, m_iYMax, m_aiColorSculpt);
-            m_aiXPoints[m_iNumberPoints] = m_iXMin;
-            m_aiYPoints[m_iNumberPoints] = m_iYMax;
-            m_iNumberPoints++;
-            m_aiXPoints[m_iNumberPoints] = m_iXMax;
-            m_aiYPoints[m_iNumberPoints] = m_iYMax;
-            m_iNumberPoints++;
-        }
-
-    }
-
-    /**
-     * fill: fill the sculpt outline drawn by the user. Pixels are determined to be inside or outside the sculpt region
-     * based on the parameters, aaiCrossingPoints and aiNumCrossings, using a scan-conversion algorithm that traverses
-     * each row and column of the bounding box of the sculpt region coloring inside points as it goes.
-     *
-     * @param  aaiCrossingPoints  DOCUMENT ME!
-     * @param  aiNumCrossings     DOCUMENT ME!
-     */
-    protected void fill(int[][] aaiCrossingPoints, int[] aiNumCrossings) {
-        int iColumn = 0;
-
-        /* Loop over the width of the sculpt region bounding-box: */
-        for (int iX = m_iXMin; iX < m_iXMax; iX++) {
-            boolean bInside = false;
-
-            /* Loop over the height of the sculpt region bounding-box: */
-            for (int iY = m_iYMin; iY < m_iYMax; iY++) {
-
-                /* loop over each crossing point for this column: */
-                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
-
-                    if (iY == aaiCrossingPoints[iColumn][iCross]) {
-
-                        /* Each time an edge is cross the point alternates
-                         * from outside to inside: */
-                        bInside = !bInside;
-                    }
-                }
-
-                if (bInside == true) {
-
-                    /* The current pixel is inside the sculpt region.  Get the
-                     * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
-                     * the canvas image.
-                     */
-                    setSculpt( iX, iY, m_aiColorSculpt );
-                }
-            }
-
-            iColumn++;
-        }
-    }
-
-    /**
-     * This function draws a 2D line on the canvas image -- ontop of the currently rendered image. To implement the line
-     * drawing I use the midpoint line algorithm, in Foley and van Dam, originally Bresenham's algorithm. The first part
-     * of the function sets up the step sizes for x and y depending on what type of line is being drawn. The second part
-     * loops over the line, drawing pixels into the canvas image.
-     *
-     * @param  iX0  DOCUMENT ME!
-     * @param  iY0  DOCUMENT ME!
-     * @param  iX1  DOCUMENT ME!
-     * @param  iY1  DOCUMENT ME!
-     */
-    protected void line(int iX0, int iY0, int iX1, int iY1, int[] aiColors ) {
-
-        if ((iX0 == iX1) && (iY0 == iY1)) {
-            return;
-        }
-
-        /* incremental steps along the x, and y-directions */
-        int iXStep, iYStep;
-
-        /* The slope of the line in the y-direction: */
-        int iSlopeY = (iY1 - iY0);
-
-        if (iSlopeY >= 0) {
-
-            /* The slope is positive in the y direction. */
-            iYStep = 1;
-        } else {
-
-            /* The slope is negative in the y direction */
-            iSlopeY = -iSlopeY;
-            iYStep = -1;
-        }
-
-        /* The slope of the line in the x-direction: */
-        int iSlopeX = (iX1 - iX0);
-
-        if (iSlopeX >= 0) {
-
-            /* The slope is positive in the x direction */
-            iXStep = 1;
-        } else {
-
-            /* The slope is negative in the x direction  */
-            iSlopeX = -iSlopeX;
-            iXStep = -1;
-        }
-
-        /* Iterators iX,iY: initialize to the first x,y position of the
-         * line: */
-        int iX = iX0;
-        int iY = iY0;
-
-        /* partial increments for x, and y */
-        int iD, iIncrE, iIncrNE;
-
-        /* The line is vertical.*/
-        if (iSlopeX == 0) {
-            setSculpt( iX, iY, aiColors );
-
-            iY = iY + iYStep;
-
-            while (iY != iY1) {
-                setSculpt( iX, iY, aiColors );
-
-                iY = iY + iYStep;
-            }
-        }
-        /* The line is horixontal. */
-        else if (iSlopeY == 0) {
-            setSculpt( iX, iY, aiColors );
-
-            iX = iX + iXStep;
-
-            while (iX != iX1) {
-                setSculpt( iX, iY, aiColors );
-
-                iX = iX + iXStep;
-            }
-        }
-
-        /* The line has a slope <= -1 or between 1 and 0  */
-        else if (iSlopeY < iSlopeX) {
-            iD = (2 * iSlopeY) - iSlopeX;
-            iIncrE = iSlopeY * 2;
-            iIncrNE = 2 * (iSlopeY - iSlopeX);
-
-            /* Draw the line into the frame buffer until the index reaches
-             * the greatest point in the line:  */
-            setSculpt( iX, iY, aiColors );
-
-            iX = iX + iXStep;
-
-            if (iD > 0) {
-                iD = iD + iIncrNE;
-                iY = iY + iYStep;
-            } else {
-                iD = iD + iIncrE;
-            }
-
-            while ((iX != iX1) || (iY != iY1)) {
-                setSculpt( iX, iY, aiColors );
-
-                iX = iX + iXStep;
-
-                if (iD > 0) {
-                    iD = iD + iIncrNE;
-                    iY = iY + iYStep;
-                } else {
-                    iD = iD + iIncrE;
-                }
-            }
-        }
-
-        /* The line has a slope >= 1 or between -1 and 0 */
-        else {
-            iD = (2 * iSlopeX) - iSlopeY;
-            iIncrE = iSlopeX * 2;
-            iIncrNE = 2 * (iSlopeX - iSlopeY);
-
-            /* Draw the line into the frame buffer until the index reaches
-             * the greatest point in the line */
-            setSculpt( iX, iY, aiColors );
-
-            iY = iY + iYStep;
-
-            if (iD > 0) {
-                iX = iX + iXStep;
-                iD = iD + iIncrNE;
-            } else {
-                iD = iD + iIncrE;
-            }
-
-            while ((iX != iX1) || (iY != iY1)) {
-                setSculpt( iX, iY, aiColors );
-
-                iY = iY + iYStep;
-
-                if (iD > 0) {
-                    iX = iX + iXStep;
-                    iD = iD + iIncrNE;
-                } else {
-                    iD = iD + iIncrE;
-                }
-            }
-        }
-    }
-
-    /**
-     * This function computes the set of spans indicated by column crossings for the sculpt outline drawn by the user,
-     * by doing a polygon scan conversion in gridded space. The outline must be closed with last point = first point.
-     *
-     * @param  aaiCrossingPoints  DOCUMENT ME!
-     * @param  aiNumCrossings     DOCUMENT ME!
-     */
-    protected void outlineRegion(int[][] aaiCrossingPoints, int[] aiNumCrossings) {
-
-        /*
-         * nudge the vertices off of the exact integer coords by a factor of 0.1 to avoid vertices on pixel centers,
-         * which would create spans of zero length
-         */
-        double dNudge = 0.1;
-        double[][][] aaadEdgeList = new double[m_iNumberPoints][2][2];
-
-        for (int iPoint = 0; iPoint < (m_iNumberPoints - 1); iPoint++) {
-            aaadEdgeList[iPoint][0][0] = m_aiXPoints[iPoint] - dNudge;
-            aaadEdgeList[iPoint][0][1] = m_aiYPoints[iPoint] - dNudge;
-            aaadEdgeList[iPoint][1][0] = m_aiXPoints[iPoint + 1] - dNudge;
-            aaadEdgeList[iPoint][1][1] = m_aiYPoints[iPoint + 1] - dNudge;
-        }
-
-        /*
-         * Compute the crossing points for this column and produce spans.
-         */
-        for (int iColumn = m_iXMin; iColumn <= m_iXMax; iColumn++) {
-            int iIndex = iColumn - m_iXMin;
-
-            /* for each edge, figure out if it crosses this column and add its
-             * crossing point to the list if so. */
-            aiNumCrossings[iIndex] = 0;
-
-            for (int iPoint = 0; iPoint < (m_iNumberPoints - 1); iPoint++) {
-                double dX0 = aaadEdgeList[iPoint][0][0];
-                double dX1 = aaadEdgeList[iPoint][1][0];
-                double dY0 = aaadEdgeList[iPoint][0][1];
-                double dY1 = aaadEdgeList[iPoint][1][1];
-                double dMinX = (dX0 <= dX1) ? dX0 : dX1;
-                double dMaxX = (dX0 > dX1) ? dX0 : dX1;
-
-                if ((dMinX < iColumn) && (dMaxX > iColumn)) {
-
-                    /* The edge crosses this column, so compute the
-                     * intersection.
-                     */
-                    double dDX = dX1 - dX0;
-                    double dDY = dY1 - dY0;
-                    double dM = (dDX == 0) ? 0 : (dDY / dDX);
-                    double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
-
-                    double dYCross = (dM * iColumn) + dB;
-                    double dRound = 0.5;
-                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound)
-                                                                                      : (int) (dYCross + dRound);
-                    aiNumCrossings[iIndex]++;
-                }
-            }
-
-            /* sort the set of crossings for this column: */
-            sortCrossingPoints(aaiCrossingPoints[iIndex], aiNumCrossings[iIndex]);
-        }
-
-        aaadEdgeList = null;
-    }
-
-    /**
-     * Called when the left mouse button is released, indicating that the sculpt outline is complete, or when the
-     * outline is being drawn and the mouse is fragged outside the canvas area. The function closes the outline, using
-     * the first and last recorded mouse positions. It then fills the outline, by blending the fill color with the
-     * background data on the canvas. Filling is done as a 2D polygon scan conversion so that any closed loop, including
-     * concave and self-intersecting loops, can be processed accurately.
-     *
-     * @param  iX  int, the x position of the mouse recorded when the mouse button was released.
-     * @param  iY  int, the y position of the mouse recorded when the mouse button was released.
-     */
-    protected void processMouseReleased(int iX, int iY) {
-
-        /* Close the sculpt outline by connecting the last point input: iX,iY
-         * to the first recorded point: m_iFirstX,m_iFirstY.
-         */
-        if (drawShape == LINES) {
-            line(iX, iY, m_iFirstX, m_iFirstY, m_aiColorSculpt);
-
-            /* Store the first point redundantly in the point array: */
-            m_aiXPoints[m_iNumberPoints] = m_iFirstX;
-            m_aiYPoints[m_iNumberPoints] = m_iFirstY;
-            m_iNumberPoints++;
-        }
-
-        int[][] aaiCrossingPoints = new int[m_iXMax - m_iXMin + 1][];
-        int[] aiNumCrossings = new int[m_iXMax - m_iXMin + 1];
-
-        for (int i = 0; i < (m_iXMax - m_iXMin + 1); i++) {
-            aaiCrossingPoints[i] = new int[m_iNumberPoints];
-        }
-
-        outlineRegion(aaiCrossingPoints, aiNumCrossings);
-        fill(aaiCrossingPoints, aiNumCrossings);
-        m_iNumberPoints = 0;
-
-        aaiCrossingPoints = null;
-        aiNumCrossings = null;
-
-        backupSculptImage();
-    }
-
-    /**
-     * Sorts the edge crossing points in place.
-     *
-     * @param  aiList        DOCUMENT ME!
-     * @param  iNumElements  DOCUMENT ME!
-     */
-    protected void sortCrossingPoints(int[] aiList, int iNumElements) {
-        boolean bDidSwap = true;
-
-        while (bDidSwap) {
-            bDidSwap = false;
-
-            for (int iPoint = 0; iPoint < (iNumElements - 1); iPoint++) {
-
-                if (aiList[iPoint] > aiList[iPoint + 1]) {
-                    int iTmp = aiList[iPoint];
-                    aiList[iPoint] = aiList[iPoint + 1];
-                    aiList[iPoint + 1] = iTmp;
-                    bDidSwap = true;
-                }
-            }
-        }
-    }
-
-    /**
      * Creates save dialog so that the image can be saved // This should be moved to imageModel.save();
      *
      * @param   options     File-write options.
      * @param   filterType  only used if >= 0
      *
-     * @return  DOCUMENT ME!
+     * @return  true on successful write, false otherwise.
      */
     public boolean save(FileWriteOptions options, int filterType) {
         String fileName = null;
@@ -1568,6 +917,719 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
         }
 
         return true;
+    }
+
+    /**
+     * Set the shape of the drawing sculptor.
+     *
+     * @param  shape  0 for LINES, 1 for RECTANGLE
+     */
+    public void setDrawingShape(int shape) {
+        drawShape = shape;
+        if ( drawShape == RECTANGLE )
+        {
+            backupSculptImage();
+        }
+    }
+
+    /**
+     * Set the ModelImage data
+     * @param kImageA ModelImage A
+     * @param kImageB ModelImage B (or null)
+     */
+    public void setImage( ModelImage kImageA, ModelImage kImageB )
+    {
+        m_kImageA = kImageA;
+        if ( m_kImageBackupA != null )
+        {
+            m_kImageBackupA.disposeLocal(true);
+            m_kImageBackupA = null;
+        }
+        m_kImageBackupA = (ModelImage)m_kImageA.clone("sculpt_backupA");
+        if ( kImageB != null )
+        {
+            m_kImageB = kImageB;
+            if ( m_kImageBackupB != null )
+            {
+                m_kImageBackupB.disposeLocal(true);
+                m_kImageBackupB = null;
+            }
+            m_kImageBackupB = (ModelImage)m_kImageB.clone("sculpt_backupB");
+        }
+    }
+
+    /**
+     * Set the texture data byte[] for ModelImage A
+     * @param data the texture data byte[] for ModelImage A
+     */
+    public void setTextureImageDataA( byte[] data )
+    {
+        m_aucTextureImageDataA = data;
+    }
+
+
+    /**
+     * Set the texture data byte[] for ModelImage B
+     * @param data the texture data byte[] for ModelImage B
+     */
+    public void setTextureImageDataB( byte[] data )
+    {
+        m_aucTextureImageDataB = data;
+    }
+
+
+    /**
+     * Set the texture data float[] for ModelImage A
+     * @param data the texture data float[] for ModelImage A
+     */
+    public void setTextureImageFloatDataA( float[] data )
+    {
+        m_afTextureImageDataA = data;
+    }
+    
+    /**
+     * Set the texture data float[] for ModelImage B
+     * @param data the texture data float[] for ModelImage B
+     */
+    public void setTextureImageFloatDataB( float[] data )
+    {
+        m_afTextureImageDataB = data;
+    }
+
+
+    /**
+     * Set the World-view-projection matrix from the renderer. Used to apply the sculpt image to the volume data.
+     * @param kMatrix World-view-projection matrix
+     */
+    public void setWVPMatrix( Matrix4f kMatrix )
+    {
+        m_kWVPMatrix = kMatrix;
+    }
+
+    /**
+     * Undo the sculpt.
+     */
+    public void undoSculpt()
+    {
+        float fImageMaxA = (float)m_kImageA.getMax();
+        float fImageMinA = (float)m_kImageA.getMin();
+        int iXBound = m_kImageA.getExtents()[0];
+        int iYBound = m_kImageA.getExtents()[1];
+        int iZBound = m_kImageA.getExtents()[2];
+
+        float fImageMaxB = 0, fImageMinB = 0;
+        if ( m_kImageB != null )
+        {
+            fImageMaxB = (float)m_kImageB.getMax();
+            fImageMinB = (float)m_kImageB.getMin();
+        }
+
+        int iA = 0;
+        int iB = 0;
+        for (int iZ = 0; iZ < iZBound; iZ++)
+        {
+            for (int iY = 0; iY < iYBound; iY++)
+            {
+                for (int iX = 0; iX < iXBound; iX++)
+                {
+                    int iDataIndex = iZ * (iXBound * iYBound) + (iY * iXBound) + iX;
+                    backupData( m_kImageBackupA, m_kImageA, iDataIndex );
+                    if ( m_kImageA.isColorImage() )
+                    {
+                        if ( m_aucTextureImageDataA != null )
+                        {
+                            m_aucTextureImageDataA[iA++] = m_kImageA.get(iDataIndex*4 +1).byteValue();
+                            m_aucTextureImageDataA[iA++] = m_kImageA.get(iDataIndex*4 +2).byteValue();
+                            m_aucTextureImageDataA[iA++] = m_kImageA.get(iDataIndex*4 +3).byteValue();
+                            m_aucTextureImageDataA[iA++] = (byte)255;
+                        }
+                        else
+                        {}
+                    }
+                    else
+                    {
+                        float fValue = m_kImageA.get(iDataIndex).floatValue();
+                        fValue = (fValue - fImageMinA)/(fImageMaxA - fImageMinA);
+                        byte bValue = (byte)(255.0f * fValue);
+                        if ( m_aucTextureImageDataA != null )
+                        {
+                            m_aucTextureImageDataA[iA++] = bValue;
+                        }
+                        else
+                        {
+                            m_afTextureImageDataA[iA++] = fValue;
+                        }
+                    }
+
+                    if ( m_kImageB != null )
+                    {
+                        backupData( m_kImageBackupB, m_kImageB, iDataIndex );
+                        if ( m_kImageB.isColorImage() )
+                        {
+                            if ( m_aucTextureImageDataB != null )
+                            {
+                                m_aucTextureImageDataB[iB++] = m_kImageB.get(iDataIndex*4 +1).byteValue();
+                                m_aucTextureImageDataB[iB++] = m_kImageB.get(iDataIndex*4 +2).byteValue();
+                                m_aucTextureImageDataB[iB++] = m_kImageB.get(iDataIndex*4 +3).byteValue();
+                                m_aucTextureImageDataB[iB++] = (byte)255;
+                            }
+                        }
+                        else
+                        {
+                            float fValue = m_kImageB.get(iDataIndex).floatValue();
+                            fValue = (fValue - fImageMinB)/(fImageMaxB - fImageMinB);
+                            byte bValue = (byte)(255.0f * fValue);
+                            if ( m_aucTextureImageDataB != null )
+                            {
+                                m_aucTextureImageDataB[iB++] = bValue;
+                            }
+                            else
+                            {
+                                m_afTextureImageDataB[iB++] = fValue;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Draw rectangle shape object.
+     */
+    protected void drawRectangleArea() {
+
+        if (!(m_iLastX < m_iFirstX)) {
+            line(m_iXMin, m_iYMax, m_iXMax, m_iYMax, m_aiColorSculpt);
+            m_aiXPoints[m_iNumberPoints] = m_iXMin;
+            m_aiYPoints[m_iNumberPoints] = m_iYMax;
+            m_iNumberPoints++;
+            m_aiXPoints[m_iNumberPoints] = m_iXMax;
+            m_aiYPoints[m_iNumberPoints] = m_iYMax;
+            m_iNumberPoints++;
+        }
+
+        line(m_iXMax, m_iYMax, m_iXMax, m_iYMin, m_aiColorSculpt);
+        m_aiXPoints[m_iNumberPoints] = m_iXMax;
+        m_aiYPoints[m_iNumberPoints] = m_iYMax;
+        m_iNumberPoints++;
+        m_aiXPoints[m_iNumberPoints] = m_iXMax;
+        m_aiYPoints[m_iNumberPoints] = m_iYMin;
+        m_iNumberPoints++;
+
+        line(m_iXMax, m_iYMin, m_iXMin, m_iYMin, m_aiColorSculpt);
+        m_aiXPoints[m_iNumberPoints] = m_iXMax;
+        m_aiYPoints[m_iNumberPoints] = m_iYMin;
+        m_iNumberPoints++;
+        m_aiXPoints[m_iNumberPoints] = m_iXMin;
+        m_aiYPoints[m_iNumberPoints] = m_iYMin;
+        m_iNumberPoints++;
+
+        line(m_iXMin, m_iYMin, m_iXMin, m_iYMax, m_aiColorSculpt);
+        m_aiXPoints[m_iNumberPoints] = m_iXMin;
+        m_aiYPoints[m_iNumberPoints] = m_iYMin;
+        m_iNumberPoints++;
+        m_aiXPoints[m_iNumberPoints] = m_iXMin;
+        m_aiYPoints[m_iNumberPoints] = m_iYMax;
+        m_iNumberPoints++;
+
+        if ((m_iLastX < m_iFirstX)) {
+            line(m_iXMin, m_iYMax, m_iXMax, m_iYMax, m_aiColorSculpt);
+            m_aiXPoints[m_iNumberPoints] = m_iXMin;
+            m_aiYPoints[m_iNumberPoints] = m_iYMax;
+            m_iNumberPoints++;
+            m_aiXPoints[m_iNumberPoints] = m_iXMax;
+            m_aiYPoints[m_iNumberPoints] = m_iYMax;
+            m_iNumberPoints++;
+        }
+
+    }
+
+
+    /**
+     * fill: fill the sculpt outline drawn by the user. Pixels are determined to be inside or outside the sculpt region
+     * based on the parameters, aaiCrossingPoints and aiNumCrossings, using a scan-conversion algorithm that traverses
+     * each row and column of the bounding box of the sculpt region coloring inside points as it goes.
+     *
+     * @param  aaiCrossingPoints  DOCUMENT ME!
+     * @param  aiNumCrossings     DOCUMENT ME!
+     */
+    protected void fill(int[][] aaiCrossingPoints, int[] aiNumCrossings) {
+        int iColumn = 0;
+
+        /* Loop over the width of the sculpt region bounding-box: */
+        for (int iX = m_iXMin; iX < m_iXMax; iX++) {
+            boolean bInside = false;
+
+            /* Loop over the height of the sculpt region bounding-box: */
+            for (int iY = m_iYMin; iY < m_iYMax; iY++) {
+
+                /* loop over each crossing point for this column: */
+                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
+
+                    if (iY == aaiCrossingPoints[iColumn][iCross]) {
+
+                        /* Each time an edge is cross the point alternates
+                         * from outside to inside: */
+                        bInside = !bInside;
+                    }
+                }
+
+                if (bInside == true) {
+
+                    /* The current pixel is inside the sculpt region.  Get the
+                     * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
+                     * the canvas image.
+                     */
+                    setSculpt( iX, iY, m_aiColorSculpt );
+                }
+            }
+
+            iColumn++;
+        }
+    }
+
+    /**
+     * This function draws a 2D line on the canvas image -- on top of the currently rendered image. To implement the line
+     * drawing I use the midpoint line algorithm, in Foley and van Dam, originally Bresenham's algorithm. The first part
+     * of the function sets up the step sizes for x and y depending on what type of line is being drawn. The second part
+     * loops over the line, drawing pixels into the canvas image.
+     *
+     * @param  iX0  mouse x0
+     * @param  iY0  mouse y0
+     * @param  iX1  mouse x1
+     * @param  iY1  mouse y1
+     * @param aiColors line color.
+     */
+    protected void line(int iX0, int iY0, int iX1, int iY1, int[] aiColors ) {
+
+        if ((iX0 == iX1) && (iY0 == iY1)) {
+            return;
+        }
+
+        /* incremental steps along the x, and y-directions */
+        int iXStep, iYStep;
+
+        /* The slope of the line in the y-direction: */
+        int iSlopeY = (iY1 - iY0);
+
+        if (iSlopeY >= 0) {
+
+            /* The slope is positive in the y direction. */
+            iYStep = 1;
+        } else {
+
+            /* The slope is negative in the y direction */
+            iSlopeY = -iSlopeY;
+            iYStep = -1;
+        }
+
+        /* The slope of the line in the x-direction: */
+        int iSlopeX = (iX1 - iX0);
+
+        if (iSlopeX >= 0) {
+
+            /* The slope is positive in the x direction */
+            iXStep = 1;
+        } else {
+
+            /* The slope is negative in the x direction  */
+            iSlopeX = -iSlopeX;
+            iXStep = -1;
+        }
+
+        /* Iterators iX,iY: initialize to the first x,y position of the
+         * line: */
+        int iX = iX0;
+        int iY = iY0;
+
+        /* partial increments for x, and y */
+        int iD, iIncrE, iIncrNE;
+
+        /* The line is vertical.*/
+        if (iSlopeX == 0) {
+            setSculpt( iX, iY, aiColors );
+
+            iY = iY + iYStep;
+
+            while (iY != iY1) {
+                setSculpt( iX, iY, aiColors );
+
+                iY = iY + iYStep;
+            }
+        }
+        /* The line is horixontal. */
+        else if (iSlopeY == 0) {
+            setSculpt( iX, iY, aiColors );
+
+            iX = iX + iXStep;
+
+            while (iX != iX1) {
+                setSculpt( iX, iY, aiColors );
+
+                iX = iX + iXStep;
+            }
+        }
+
+        /* The line has a slope <= -1 or between 1 and 0  */
+        else if (iSlopeY < iSlopeX) {
+            iD = (2 * iSlopeY) - iSlopeX;
+            iIncrE = iSlopeY * 2;
+            iIncrNE = 2 * (iSlopeY - iSlopeX);
+
+            /* Draw the line into the frame buffer until the index reaches
+             * the greatest point in the line:  */
+            setSculpt( iX, iY, aiColors );
+
+            iX = iX + iXStep;
+
+            if (iD > 0) {
+                iD = iD + iIncrNE;
+                iY = iY + iYStep;
+            } else {
+                iD = iD + iIncrE;
+            }
+
+            while ((iX != iX1) || (iY != iY1)) {
+                setSculpt( iX, iY, aiColors );
+
+                iX = iX + iXStep;
+
+                if (iD > 0) {
+                    iD = iD + iIncrNE;
+                    iY = iY + iYStep;
+                } else {
+                    iD = iD + iIncrE;
+                }
+            }
+        }
+
+        /* The line has a slope >= 1 or between -1 and 0 */
+        else {
+            iD = (2 * iSlopeX) - iSlopeY;
+            iIncrE = iSlopeX * 2;
+            iIncrNE = 2 * (iSlopeX - iSlopeY);
+
+            /* Draw the line into the frame buffer until the index reaches
+             * the greatest point in the line */
+            setSculpt( iX, iY, aiColors );
+
+            iY = iY + iYStep;
+
+            if (iD > 0) {
+                iX = iX + iXStep;
+                iD = iD + iIncrNE;
+            } else {
+                iD = iD + iIncrE;
+            }
+
+            while ((iX != iX1) || (iY != iY1)) {
+                setSculpt( iX, iY, aiColors );
+
+                iY = iY + iYStep;
+
+                if (iD > 0) {
+                    iX = iX + iXStep;
+                    iD = iD + iIncrNE;
+                } else {
+                    iD = iD + iIncrE;
+                }
+            }
+        }
+    }
+
+    /**
+     * This function computes the set of spans indicated by column crossings for the sculpt outline drawn by the user,
+     * by doing a polygon scan conversion in gridded space. The outline must be closed with last point = first point.
+     *
+     * @param  aaiCrossingPoints  DOCUMENT ME!
+     * @param  aiNumCrossings     DOCUMENT ME!
+     */
+    protected void outlineRegion(int[][] aaiCrossingPoints, int[] aiNumCrossings) {
+
+        /*
+         * nudge the vertices off of the exact integer coords by a factor of 0.1 to avoid vertices on pixel centers,
+         * which would create spans of zero length
+         */
+        double dNudge = 0.1;
+        double[][][] aaadEdgeList = new double[m_iNumberPoints][2][2];
+
+        for (int iPoint = 0; iPoint < (m_iNumberPoints - 1); iPoint++) {
+            aaadEdgeList[iPoint][0][0] = m_aiXPoints[iPoint] - dNudge;
+            aaadEdgeList[iPoint][0][1] = m_aiYPoints[iPoint] - dNudge;
+            aaadEdgeList[iPoint][1][0] = m_aiXPoints[iPoint + 1] - dNudge;
+            aaadEdgeList[iPoint][1][1] = m_aiYPoints[iPoint + 1] - dNudge;
+        }
+
+        /*
+         * Compute the crossing points for this column and produce spans.
+         */
+        for (int iColumn = m_iXMin; iColumn <= m_iXMax; iColumn++) {
+            int iIndex = iColumn - m_iXMin;
+
+            /* for each edge, figure out if it crosses this column and add its
+             * crossing point to the list if so. */
+            aiNumCrossings[iIndex] = 0;
+
+            for (int iPoint = 0; iPoint < (m_iNumberPoints - 1); iPoint++) {
+                double dX0 = aaadEdgeList[iPoint][0][0];
+                double dX1 = aaadEdgeList[iPoint][1][0];
+                double dY0 = aaadEdgeList[iPoint][0][1];
+                double dY1 = aaadEdgeList[iPoint][1][1];
+                double dMinX = (dX0 <= dX1) ? dX0 : dX1;
+                double dMaxX = (dX0 > dX1) ? dX0 : dX1;
+
+                if ((dMinX < iColumn) && (dMaxX > iColumn)) {
+
+                    /* The edge crosses this column, so compute the
+                     * intersection.
+                     */
+                    double dDX = dX1 - dX0;
+                    double dDY = dY1 - dY0;
+                    double dM = (dDX == 0) ? 0 : (dDY / dDX);
+                    double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
+
+                    double dYCross = (dM * iColumn) + dB;
+                    double dRound = 0.5;
+                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound)
+                                                                                      : (int) (dYCross + dRound);
+                    aiNumCrossings[iIndex]++;
+                }
+            }
+
+            /* sort the set of crossings for this column: */
+            sortCrossingPoints(aaiCrossingPoints[iIndex], aiNumCrossings[iIndex]);
+        }
+
+        aaadEdgeList = null;
+    }
+
+    /**
+     * Called when the left mouse button is released, indicating that the sculpt outline is complete, or when the
+     * outline is being drawn and the mouse is dragged outside the canvas area. The function closes the outline, using
+     * the first and last recorded mouse positions. It then fills the outline, by blending the fill color with the
+     * background data on the canvas. Filling is done as a 2D polygon scan conversion so that any closed loop, including
+     * concave and self-intersecting loops, can be processed accurately.
+     *
+     * @param  iX  int, the x position of the mouse recorded when the mouse button was released.
+     * @param  iY  int, the y position of the mouse recorded when the mouse button was released.
+     */
+    protected void processMouseReleased(int iX, int iY) {
+
+        /* Close the sculpt outline by connecting the last point input: iX,iY
+         * to the first recorded point: m_iFirstX,m_iFirstY.
+         */
+        if (drawShape == LINES) {
+            line(iX, iY, m_iFirstX, m_iFirstY, m_aiColorSculpt);
+
+            /* Store the first point redundantly in the point array: */
+            m_aiXPoints[m_iNumberPoints] = m_iFirstX;
+            m_aiYPoints[m_iNumberPoints] = m_iFirstY;
+            m_iNumberPoints++;
+        }
+
+        int[][] aaiCrossingPoints = new int[m_iXMax - m_iXMin + 1][];
+        int[] aiNumCrossings = new int[m_iXMax - m_iXMin + 1];
+
+        for (int i = 0; i < (m_iXMax - m_iXMin + 1); i++) {
+            aaiCrossingPoints[i] = new int[m_iNumberPoints];
+        }
+
+        outlineRegion(aaiCrossingPoints, aiNumCrossings);
+        fill(aaiCrossingPoints, aiNumCrossings);
+        m_iNumberPoints = 0;
+
+        aaiCrossingPoints = null;
+        aiNumCrossings = null;
+
+        backupSculptImage();
+    }
+
+    /**
+     * Sorts the edge crossing points in place.
+     *
+     * @param  aiList        list of positions
+     * @param  iNumElements  number of positions.
+     */
+    protected void sortCrossingPoints(int[] aiList, int iNumElements) {
+        boolean bDidSwap = true;
+
+        while (bDidSwap) {
+            bDidSwap = false;
+
+            for (int iPoint = 0; iPoint < (iNumElements - 1); iPoint++) {
+
+                if (aiList[iPoint] > aiList[iPoint + 1]) {
+                    int iTmp = aiList[iPoint];
+                    aiList[iPoint] = aiList[iPoint + 1];
+                    aiList[iPoint + 1] = iTmp;
+                    bDidSwap = true;
+                }
+            }
+        }
+    }
+
+    /**
+     * Backup ModelImage data.
+     * @param kImage original ModelImage
+     * @param kImageBackup backup of ModelImage
+     * @param iDataIndex index of the position in the ModelImage to backup
+     */
+    private void backupData( ModelImage kImage, ModelImage kImageBackup, int iDataIndex )
+    {
+        if ( !kImage.isColorImage() )
+        {
+            kImageBackup.set(iDataIndex, kImage.get(iDataIndex));
+        }
+        else
+        {
+            for ( int c = 0; c < 4; c++ )
+            {
+                kImageBackup.set(iDataIndex * 4 + c, kImage.get(iDataIndex * 4 + c));
+            }
+        }
+    }
+
+    /**
+     * Backup the sculpt image.
+     */
+    private void backupSculptImage()
+    {
+        /* Loop over the pixels in the sculpt buffer: */
+        for (int iY = 0; iY < m_iSculptImageHeight; iY++)
+        {
+            for (int iX = 0; iX < m_iSculptImageWidth; iX++)
+            {
+                int index = (iY * m_iSculptImageWidth + iX)*4;
+                m_aucSavedImage[index + 0] = m_aucSculptImage[index + 0];
+                m_aucSavedImage[index + 1] = m_aucSculptImage[index + 1];
+                m_aucSavedImage[index + 2] = m_aucSculptImage[index + 2];
+                m_aucSavedImage[index + 3] = m_aucSculptImage[index + 3];
+            }
+        }
+    }
+
+    /**
+     * Get the sculpt on/off at the position.
+     * @param iX x-position
+     * @param iY y-position
+     * @return true if the position should be sculpted, false otherwise.
+     */
+    private boolean getSculpt( int iX, int iY )
+    {
+        int index = (iY * m_iSculptImageWidth + iX)*4;
+        if ( (m_aucSculptImage[index + 0] == 0) &&
+             (m_aucSculptImage[index + 1] == 0) &&
+             (m_aucSculptImage[index + 2] == 0) &&
+             (m_aucSculptImage[index + 3] == 0)     )
+        {
+            return false;
+        }
+        return true;                
+    }
+
+    /**
+     * Invert the sculpt image at the position
+     * @param iX x-position
+     * @param iY y-position
+     * @param aiColors sculpt color.
+     */
+    private void invertSculpt( int iX, int iY, int[] aiColors )
+    {
+        int index = (iY * m_iSculptImageWidth + iX)*4;
+        if ( aiColors != null )
+        {
+            m_aucSculptImage[index + 0] = (byte)aiColors[0];
+            m_aucSculptImage[index + 1] = (byte)aiColors[1];
+            m_aucSculptImage[index + 2] = (byte)aiColors[2];
+            m_aucSculptImage[index + 3] = (byte)200;
+        }
+        else
+        {
+            m_aucSculptImage[index + 0] = (byte)0;
+            m_aucSculptImage[index + 1] = (byte)0;
+            m_aucSculptImage[index + 2] = (byte)0;
+            m_aucSculptImage[index + 3] = (byte)0;
+        }
+        m_bSculptDrawn = true;
+    }
+
+    /**
+     * Sculpt the ModelImage and Textures at the index.
+     * @param kImage ModelImage
+     * @param iDataIndex index to sculpt
+     * @param aucTextureImageData byte[] Texture
+     * @param afTextureImageData float[] Texture
+     */
+    private void sculptData( ModelImage kImage, int iDataIndex,
+                             byte[] aucTextureImageData, float[] afTextureImageData )
+    {
+        if ( !kImage.isColorImage() )
+        {
+            kImage.set(iDataIndex, (float)kImage.getMin());
+        }
+        else
+        {
+            kImage.set(iDataIndex*4 + 1, (float)kImage.getMinR());
+            kImage.set(iDataIndex*4 + 2, (float)kImage.getMinG());
+            kImage.set(iDataIndex*4 + 3, (float)kImage.getMinB());
+        }
+        
+        if ( aucTextureImageData != null )
+        {
+            if ( kImage.isColorImage() )
+            {
+                aucTextureImageData[iDataIndex * 4 + 0] = (byte)0;
+                aucTextureImageData[iDataIndex * 4 + 1] = (byte)0;
+                aucTextureImageData[iDataIndex * 4 + 2] = (byte)0;
+                aucTextureImageData[iDataIndex * 4 + 3] = (byte)0;
+            }
+            else
+            {
+                aucTextureImageData[iDataIndex] = (byte)0;
+            }
+        }
+        else
+        {
+            afTextureImageData[iDataIndex] = 0f;
+        }
+
+    }
+
+    /**
+     * Set the sculpt image
+     * @param iX x-position
+     * @param iY y-position
+     * @param aiColors sculpt color
+     */
+    private void setSculpt( int iX, int iY, int[] aiColors )
+    {
+        int index = (iY * m_iSculptImageWidth + iX)*4;
+        if ( aiColors != null )
+        {
+            m_aucSculptImage[index + 0] = (byte)aiColors[0];
+            m_aucSculptImage[index + 1] = (byte)aiColors[1];
+            m_aucSculptImage[index + 2] = (byte)aiColors[2];
+            m_aucSculptImage[index + 3] = (byte)200;
+        }
+        else
+        {
+            if ( drawShape == RECTANGLE )
+            {
+                m_aucSculptImage[index + 0] = m_aucSavedImage[index + 0];
+                m_aucSculptImage[index + 1] = m_aucSavedImage[index + 1];
+                m_aucSculptImage[index + 2] = m_aucSavedImage[index + 2];
+                m_aucSculptImage[index + 3] = m_aucSavedImage[index + 3];
+            }
+            else
+            {
+                m_aucSculptImage[index + 0] = (byte)0;
+                m_aucSculptImage[index + 1] = (byte)0;
+                m_aucSculptImage[index + 2] = (byte)0;
+                m_aucSculptImage[index + 3] = (byte)0;
+            }
+        }
+        m_bSculptDrawn = true;
     }
 
 

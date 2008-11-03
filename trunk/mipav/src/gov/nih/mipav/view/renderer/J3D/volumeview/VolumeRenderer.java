@@ -1685,9 +1685,9 @@ public abstract class VolumeRenderer extends RenderViewBase implements MouseMoti
     }
 
     private boolean m_bTestFrameRate = false;
-    /** Framerate Performance paramters: */
+    /** Framerate Performance parameters: */
     protected double m_dLastTime = -1.0f, m_dAccumulatedTime = 0.0f, m_dFrameRate = 0.0f;
-    /** Framerate Performance paramters: */
+    /** Framerate Performance parameters: */
     protected int m_iFrameCount = 0, m_iAccumulatedFrameCount = 0, m_iTimer = 30, m_iMaxTimer = 30;
 
     /** Resets time */

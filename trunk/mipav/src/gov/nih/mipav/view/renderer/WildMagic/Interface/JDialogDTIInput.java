@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.*;
+
 import javax.swing.*;
 import javax.swing.event.*;
 import java.io.*;
@@ -28,7 +29,7 @@ import java.io.FileInputStream;
  *
  * DWI: The DWI dialog loads the raw Diffusion Weighted
  * Images. Calculates the tensor image from the set of weighed
- * images. The dilog requires the user to specify the raw image
+ * images. The dialog requires the user to specify the raw image
  * dimensions, and the number of weighted image sets. The user must
  * also specify the mean noise value, the name of the B-Matrix file,
  * and the .path file which specifies the locations of the weighted
@@ -143,9 +144,6 @@ public class JDialogDTIInput extends JInterfaceBase
 
     /** The list box in the dialog for fiber bundle tracts. */
     private JList m_kTractList;
-
-    /** Color chooser for when the user wants to change the color of the fiber bundle tracts. */
-    private ViewJColorChooser m_kColorChooser;
 
     /** Color button for changing the color of the fiber bundles. */
     private JButton m_kColorButton;
@@ -353,20 +351,20 @@ public class JDialogDTIInput extends JInterfaceBase
         }
 	else if ( kCommand.equals("ChangeColor") )
 	{
-	    m_kColorChooser = new ViewJColorChooser(new Frame(),
+	    colorChooser = new ViewJColorChooser(new Frame(),
 						    "Pick fiber bundle color",
-						    new OkColorListener(),
+						    new OkColorListener(m_kColorButton),
 						    new CancelListener());
         } 
 	else if ( kCommand.equals("VolumeColor") )
 	{
             if ( m_kUseVolumeColor.isSelected() )
             {
-                setColor(null);
+                setButtonColor(null, null);
             }
             else
             {
-                setColor( m_kColorButton.getBackground() );
+                setButtonColor( m_kColorButton, m_kColorButton.getBackground() );
             }
         } 
 	else if ( kCommand.equals("UseEllipsoids") )
@@ -1864,45 +1862,12 @@ public class JDialogDTIInput extends JInterfaceBase
     }
 
 
-    /**
-     * Cancel the color dialog, change nothing.
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase#setButtonColor(javax.swing.JButton, java.awt.Color)
      */
-    class CancelListener implements ActionListener {
-
-        /**
-         * Do nothing.
-         *
-         * @param  e  action event
-         */
-        public void actionPerformed(ActionEvent e) { }
-    }
-
-
-    /**
-     * Pick up the selected color and call method to change the fiber bundle color.
-     */
-    class OkColorListener implements ActionListener {
-
-        /**
-         * Sets the button color to the chosen color and changes the color of the fiber bundle.
-         *
-         * @param  e  Event that triggered this method.
-         */
-        public void actionPerformed(ActionEvent e) {
-            Color color = m_kColorChooser.getColor();
-
-            m_kColorButton.setBackground(color);
-            setColor(color);
-        }
-    }
-
-    /**
-     * This is called when the user chooses a new color for the fiber bundle. It changes the color of the fiber bundle.
-     *
-     * @param  color  Color to change fiber bundle to.
-     */
-    private void setColor(Color color)
+    public void setButtonColor(JButton _button, Color _color)
     {
+        super.setButtonColor(_button, _color);
         int[] aiSelected = m_kTractList.getSelectedIndices();
         DefaultListModel kList = (DefaultListModel)m_kTractList.getModel();
         int iHeaderLength = (new String("FiberBundle")).length();
@@ -1914,7 +1879,7 @@ public class JDialogDTIInput extends JInterfaceBase
                 String kName = ((String)(kList.elementAt(aiSelected[i])));
                 int iLength = kName.length();
                 int iGroup = (new Integer(kName.substring( iHeaderLength, iLength ))).intValue();
-                if ( color == null )
+                if ( _color == null )
                 {
                     rayBasedRenderWM.setPolylineColor( iGroup,null);
                 }
@@ -1922,9 +1887,9 @@ public class JDialogDTIInput extends JInterfaceBase
                 else if ( !m_kUseVolumeColor.isSelected() )
                 {
                     rayBasedRenderWM.setPolylineColor( iGroup,
-                                                       new ColorRGB( color.getRed()/255.0f,
-                                                                     color.getGreen()/255.0f,
-                                                                     color.getBlue()/255.0f  ));
+                                                       new ColorRGB( _color.getRed()/255.0f,
+                                                               _color.getGreen()/255.0f,
+                                                               _color.getBlue()/255.0f  ));
                 }
             }
         }

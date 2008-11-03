@@ -12,12 +12,12 @@ import WildMagic.LibGraphics.SceneGraph.*;
 public class VolumeNode extends VolumeObject
 {
     /** Create a new VolumeObject with the VolumeImage parameter.
-     * @param kImageA, the VolumeImage containing shared data and textures for
+     * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
-     * @param kTranslate, translation in the scene-graph for this object.
-     * @param fX, the size of the volume in the x-dimension (extent * resolutions)
-     * @param fY, the size of the volume in the y-dimension (extent * resolutions)
-     * @param fZ, the size of the volume in the z-dimension (extent * resolutions)
+     * @param kTranslate translation in the scene-graph for this object.
+     * @param fX the size of the volume in the x-dimension (extent * resolutions)
+     * @param fY the size of the volume in the y-dimension (extent * resolutions)
+     * @param fZ the size of the volume in the z-dimension (extent * resolutions)
      */
     public VolumeNode ( Renderer kRenderer, VolumeImage kImageA, Vector3f kTranslate,
                         float fX, float fY, float fZ, Node kNode )
@@ -35,15 +35,15 @@ public class VolumeNode extends VolumeObject
 
     /**
      * PreRender the object, for embedding in the ray-cast volume.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void PreRender( Renderer kRenderer, Culler kCuller ){}
 
     /**
      * Render the object.
-     * @param kRenderer, the OpenGLRenderer object.
-     * @param kCuller, the Culler object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
      */
     public void Render( Renderer kRenderer, Culler kCuller )
     {

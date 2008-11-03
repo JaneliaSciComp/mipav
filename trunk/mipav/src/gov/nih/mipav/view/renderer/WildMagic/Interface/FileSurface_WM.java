@@ -1,21 +1,55 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
-import gov.nih.mipav.*;
+import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.model.file.FileBase;
+import gov.nih.mipav.model.file.FileInfoSurfaceRefXML;
+import gov.nih.mipav.model.file.FileSurfaceXML;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewImageFileFilter;
+import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurface;
+import gov.nih.mipav.view.renderer.J3D.surfaceview.SurfaceAttributes;
+import gov.nih.mipav.view.renderer.J3D.surfaceview.SurfaceRender;
 
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.file.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.RandomAccessFile;
+import java.io.StreamTokenizer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
+import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import gov.nih.mipav.view.*;
-import java.io.*;
-import java.util.*;
-import java.util.regex.*;
-import javax.swing.*;
+import javax.swing.JFileChooser;
 
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Detail.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Detail.ClodMesh;
+import WildMagic.LibGraphics.Detail.CollapseRecord;
+import WildMagic.LibGraphics.Detail.CollapseRecordArray;
+import WildMagic.LibGraphics.Rendering.GlobalState;
+import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 /**
  * FileSurface. Reads and writes surface files for the JPanelSurface class. When surface files are loaded by the user in
@@ -37,351 +71,87 @@ public class FileSurface_WM {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * The action taken when the Add button is clicked in the JPanelSurface class. A file dialog is launched that allows
-     * the user to select new surfaces to load from disk.
+     * Load the clod mesh from a binary file. The caller must have already opened the file and read the mesh type (0 =
+     * TriMesh, 1 = ModelClodMesh) and the number of meshes in the file. The caller then calls this function
+     * for each mesh. The format for a mesh is
      *
-     * @param   kImage     the ModelImage displayed in the SurfaceRender class
-     * @param   iListSize  the current number of triangle-mesh surfaces displayed in the SurfaceRender class (for
-     *                     calculating the surface color)
+     * <pre>
+     int vCount;  // number of vertices
+     Point3f vertices[vCount];
+     Point3f normals[vCount];
+     int iCount;  // number of indices in the connectivity array
+     int indices[iCount];
+     int rCount;
+     ModelCollapseRecord collapses[rCount];
+     * </pre>
      *
-     * @return  SurfaceAttributes[] an array of surfaces described by their SurfaceAttributes, used to add the surfaces
-     *          to a scene graph.
+     * with 4-byte quantities stored in Big Endian format.
+     *
+     * @param      kIn    the file from which the triangle mesh is loaded
+     * @param      pBar   DOCUMENT ME!
+     * @param      added  DOCUMENT ME!
+     * @param      piece  DOCUMENT ME!
+     *
+     * @return     the loaded triangle mesh
+     *
+     * @exception  IOException  if there is an error reading from the file
      */
-    //public static SurfaceAttributes_WM[] openSurfaces(ModelImage kImage, int iListSize) {
-    public static TriMesh[] openSurfaces(ModelImage kImage, int iListSize) {
-        File[] akFiles = openFiles(true);
-
-        if (akFiles == null) {
-            return null;
-        }
-
-        TriMesh[] kSurface = new TriMesh[akFiles.length];
-        for (int i = 0; i < akFiles.length; i++) {
-            String kName = akFiles[i].getName();
-            
-            ColorRGB kColor = JPanelSurface_WM.getNewSurfaceColor(iListSize + i);
-
-            if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1) || 
-            	(kName.indexOf(".vtk") != -1) || (kName.indexOf(".vtp") != -1) || 
-            	(kName.indexOf(".stla")!= -1) || (kName.indexOf(".stlb")!= -1) || 
-            	(kName.indexOf(".ply") != -1) || (kName.indexOf(".txt") != -1)) {
-                kSurface[i] = readSurface(kImage, akFiles[i], kColor, 1.0f, null, 0 );
-            } else if (kName.indexOf(".xml") != -1) {
-                FileSurfaceRefXML_WM kSurfaceXML = new FileSurfaceRefXML_WM(kName, akFiles[i].getParent());
-                FileInfoSurfaceRefXML_WM kFileInfo = kSurfaceXML.readSurfaceXML(kName, akFiles[i].getParent());
-                akFiles[i] = new File(akFiles[i].getParent()+ File.separatorChar + kFileInfo.getSurfaceFileName());
-                kSurface[i] = readSurface(kImage, akFiles[i], kColor, kFileInfo.getOpacity(), kFileInfo.getMaterial(), kFileInfo.getLevelDetail());
-            }
-        }
-
-        return kSurface;
-    }
-
-
-    /**
-     * Load a triangle mesh from the specified file and assign to it the specified color.
-     *
-     * @param   kImage  ModelImage displayed in the SurfaceRender class
-     * @param   file    The triangle mesh file to load.
-     * @param   color   The diffuse and specular color for the surface material.
-     *
-     * @return  DOCUMENT ME!
-     */
-    //public static SurfaceAttributes_WM readSurface(ModelImage kImage, File file, Color4f color) {
-    private static TriMesh readSurface(ModelImage kImage, File file, ColorRGB kColor, float fOpacity, MaterialState kMaterial, int iLOD )
+    public static ClodMesh loadCMesh(RandomAccessFile kIn, ViewJProgressBar pBar, int added, int piece)
     {
-        int iType = 0, iQuantity = 0;
-        boolean isSur = true;
-        int[] extents = kImage.getExtents();
-        int xDim = extents[0];
-        int yDim = extents[1];
-        int zDim = extents[2];
-
-
-        float[] resols = kImage.getFileInfo()[0].getResolutions();
-        float xBox = (xDim - 1) * resols[0];
-        float yBox = (yDim - 1) * resols[1];
-        float zBox = (zDim - 1) * resols[2];
-        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-
-        FileSurfaceRefXML_WM kSurfaceXML;
-        FileInfoSurfaceRefXML kFileInfo = null;
-        RandomAccessFile in = null;
+        MaterialState kMaterial = new MaterialState();
+        float[] startLocation = new float[3];
+        float[] direction = new float[3];
+        float[] box = new float[3]; 
+        TriMesh kMesh = loadTMesh(kIn, pBar, added, piece,
+                true, kMaterial,
+                startLocation, direction, box );
         
-        if (file.getName().endsWith("sur")) {
-            try {
-                in = new RandomAccessFile(file, "r");
-                iType = in.readInt();
-                iQuantity = in.readInt();
-                isSur = true;
-            } catch (IOException e) {
-                return null;
-            }
-        } 
-        else if ( file.getName().endsWith("xml") ) {
-            kSurfaceXML = new FileSurfaceRefXML_WM(file.getName(), file.getParent());
-            kFileInfo = kSurfaceXML.readSurfaceXML(file.getName(), file.getParent());
-
-            file = new File(file.getParent()+ File.separatorChar + kFileInfo.getSurfaceFileName());
-            try {
-                in = new RandomAccessFile(file, "r");
-                iType = in.readInt();
-                iQuantity = in.readInt();
-                isSur = true;
-            } catch (IOException e) {
-                return null;
-            }
-        } else if ( file.getName().endsWith("wrl") ) {
-
-            try {
-                in = new RandomAccessFile(file, "r");
-                iType = 0;
-                iQuantity = parseVRMLMesh(in);
-                in.seek(0);
-                isSur = false;
-            } catch (NoSuchElementException e) {
-                MipavUtil.displayError("Only load VRML file specifically written by MIPAV! ");
-
-                return null;
-            } catch (IOException e) {
-                return null;
-            }
-        } else if ( file.getName().endsWith("stla") ) {
-            iType = 0;
-            iQuantity = 1;
-            isSur = false;
-        } else if ( file.getName().endsWith("stlb") ) {
-            try {
-                in = new RandomAccessFile(file, "r");
-                iType = 0;
-                iQuantity = 1;
-                isSur = false;
-            } catch (IOException e) {
-                return null;
-            }
-        } else if ( file.getName().endsWith("ply") ) {
-            iType = 0;
-            iQuantity = 1;
-            isSur = false;
-        } else {
-            //has to be vtk legacy or vtk xml
-            try {
-                in = new RandomAccessFile(file, "r");
-                iType = 0;
-                iQuantity = 1;
-                in.seek(0);
-                //not sure what this flag means
-                isSur = false;
-            }
-            catch (IOException e) {
-                return null;
-            }
-        }
-
-        TriMesh[] akComponent = new TriMesh[iQuantity];
-        ViewJProgressBar progress = new ViewJProgressBar("Loading surface", "Loading surface", 0, 100, false, null,
-                                                         null);
-        progress.setVisible(true);
-
         try {
-            // meshes are type TriangleMesh
-            for (int i = 0; i < iQuantity; i++) {
-                
-                float[] startLocation = kImage.getFileInfo(0).getOrigin();
-                int[] aiModelDirection = MipavCoordinateSystems.getModelDirections(kImage);
-                float[] direction = new float[] { aiModelDirection[0], aiModelDirection[1], aiModelDirection[2]}; 
-                float[] box = new float[]{0f,0f,0f};
-                if (iType == 0) {
+            int iRecordCount = kIn.readInt();
+            CollapseRecord[] akRecord = new CollapseRecord[iRecordCount];
+            int prog = iRecordCount * piece / 25;
 
-                    if (isSur == true) {
-                        akComponent[i] = loadTMesh(in, progress, i * 100 / iQuantity, iQuantity,
-                                                   true, kColor, fOpacity, kMaterial,
-                                                   startLocation, direction, box );
-                        //xBox = box[0];
-                        //yBox = box[1];
-                        //zBox = box[2];
-                        //maxBox = Math.max(xBox, Math.max(yBox, zBox));
-                    }
-                    else {
-                    	if ( file.getName().endsWith("wrl") ) {
-                            akComponent[i] = loadVRMLMesh(in, progress, i * 100 / iQuantity, iQuantity,
-                                                          (i == 0),
-                                                          startLocation, direction, box );
-                    	}
-                        else if (file.getName().endsWith("vtk")){
-                            //vtk legacy
-                            akComponent[i] = loadVTKLegacyMesh(in, progress, i * 100 / iQuantity, iQuantity, (i == 0), file.getName());
-                        }
-                    	else if(file.getName().endsWith("vtp")) {
-                            //vtk xml
-                            akComponent[i] = loadVTKXMLMesh( file.getAbsolutePath(), file.getName(), file.getParent());
-                    	}
-                    	else if (file.getName().endsWith("stla")) {
-                            akComponent[i] = loadSTLAsciiMesh( file );
-                    	}
-                    	else if (file.getName().endsWith("stlb")) {
-                            akComponent[i] = loadSTLBinaryMesh( in );
-                    	}
-                    	else if (file.getName().endsWith("ply")) {
-                            akComponent[i] = loadPlyAsciiMesh( file );
-                    	}
-                        else if (file.getName().endsWith("txt")) {
-                            akComponent[i] = readAscii( file );
-                        }
-                    }
-                }
-                else
-                {
-                    ClodMesh kClod = loadCMesh(in, progress, i * 100 / iQuantity, iQuantity );
-                    kClod.TargetRecord(0);
-                    kClod.SelectLevelOfDetail();
-                    akComponent[i] = kClod;
-                }
-                if (akComponent[i] != null) 
-                {
-                    for (int j = 0; j < akComponent[i].VBuffer.GetVertexQuantity(); j++) {
+            for (int i = 0; i < iRecordCount; i++) {
+                akRecord[i] = load(kIn);
 
-                        // The mesh files save the verticies as
-                        // pt.x*resX*direction[0] + startLocation
-                        // The loaded vertices go from -1 to 1
-                        // The loaded vertex is at (2.0f*pt.x*xRes - (xDim-1)*xRes)/((dim-1)*res)max
-                        akComponent[i].VBuffer.SetPosition3( j, 
-                                ((2.0f * (akComponent[i].VBuffer.GetPosition3fX(j) - startLocation[0]) / direction[0]) -
-                                        xBox) / (2.0f*maxBox),
-                                        ((2.0f * (akComponent[i].VBuffer.GetPosition3fY(j) - startLocation[1]) / direction[1]) -
-                                                yBox) / (2.0f*maxBox),
-                                                ((2.0f * (akComponent[i].VBuffer.GetPosition3fZ(j) - startLocation[2]) / direction[2]) -
-                                                        zBox) / (2.0f*maxBox) );
-                    }
-                    akComponent[i].SetName( file.getName() );
-                }
-                if (akComponent[i] == null) {
-                    MipavUtil.displayError("Error while reading in triangle mesh.");
-                    return null;
+                if ((pBar != null) && (prog != 0) && ((i % prog) == 0)) {
+                    pBar.updateValueImmed(Math.round(75 / piece) + added + (i / prog));
+                    pBar.update(pBar.getGraphics());
                 }
             }
+
+            return new ClodMesh( kMesh.VBuffer, 
+                                 kMesh.IBuffer, new CollapseRecordArray(iRecordCount,akRecord));
         } catch (IOException e) {
             return null;
         }
-
-        progress.dispose();
-        akComponent[0].UpdateMS();
-        return akComponent[0];
-    }
-
-    /**
-     * The action taken when the one of the save surface buttons is pressed in the JPanelSurface class. A file dialog is
-     * launched that allows the user to select where to save the surfaces.
-     *
-     * @param  kImage      the ModelImage displayed in the SurfaceRender class
-     * @param  akSurfaces  an array of surfaces described by their SurfaceAttributes, containing information that is
-     *                     saved with the TriMesh
-     * @param  kCommand    the type of save operation to perform
-     */
-    public static void saveSurfaces(ModelImage kImage, TriMesh[] akSurfaces, String kCommand) {
-
-        if (akSurfaces.length == 0) {
-            MipavUtil.displayError("Select a surface to save.");
-
-            return;
-        }
-
-        if (kCommand.equals("LevelS") || kCommand.equals("LevelV")) {
-
-            for (int i = 0; i < akSurfaces.length; i++) {
-                saveSingleMesh(kImage, kCommand.equals("LevelS"), akSurfaces[i]);
-            }
-        }
-        //         else if (kCommand.equals("LevelW")) {
-        //             saveMultiMesh(kImage, akSurfaces);
-        //         }
-        else if (kCommand.equals("LevelXML")) {
-
-            for (int i = 0; i < akSurfaces.length; i++) {
-                writeTriangleMeshXML(null, kImage, akSurfaces[i]);
-            }
-        }
-        else if (kCommand.equals("LevelSTL")) {
-
-            for (int i = 0; i < akSurfaces.length; i++) {
-            	saveSingleSTLMesh(null, akSurfaces[i]);
-            }
-        }
-        else if (kCommand.equals("LevelPLY")) {
-
-            for (int i = 0; i < akSurfaces.length; i++) {
-            	saveSinglePlyMesh(null, akSurfaces[i] );
-            }
-        }
     }
 
 
     /**
-     * Calls a dialog to get a file name.
+     * Load the TriMesh from a binary file. The caller must have already opened the file and read the mesh type (0 =
+     * TriMesh, 1 = ClodMesh) and the number of meshes in the file. The caller then calls this function
+     * for each mesh. The format for a mesh is
      *
-     * @param   bLoad  if <code>true</code>, make it a load dialog.
-     *
-     * @return  File name.
+     * <pre>
+     int vCount;  // number of vertices
+     Point3f vertices[vCount];
+     Point3f normals[vCount];
+     int iCount;  // number of indices in the connectivity array
+     int indices[iCount];
+     * @param kIn file containing TriMesh data
+     * @param progress progress bar
+     * @param added number of meshes added so far
+     * @param total total number of meshes to add
+     * @param isVisible sets the visibility of the progress bar
+     * @param kMaterial MaterialState for the new mesh
+     * @param startLocation 3D location of the mesh
+     * @param direction 3D orientation of the mesh
+     * @param box mesh bounding box
+     * @return new TriMesh
      */
-    private static String getFileName(boolean bLoad) {
-        File[] files = openFiles(bLoad);
-
-        if (files != null) {
-            return new String(files[0].getPath());
-        }
-
-        return null;
-    }
-
-    /**
-     * Returns an array of File objects, based on the user-selected files from the FileChooser dialog.
-     *
-     * @param   bLoad  whether the files are opened for reading (bLoad = true) or writing (bLoad = false)
-     *
-     * @return  File[] array of opened files.
-     */
-    private static File[] openFiles(boolean bLoad) {
-
-        // file dialog to select surface mesh files (*.sur)
-        JFileChooser chooser = new JFileChooser();
-        chooser.setMultiSelectionEnabled(bLoad);
-        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.SURFACE));
-
-        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-        } else {
-            chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-        }
-
-        int returnVal;
-
-        if (bLoad) {
-            returnVal = chooser.showOpenDialog(null);
-        } else {
-            returnVal = chooser.showSaveDialog(null);
-        }
-
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            ViewUserInterface.getReference().setDefaultDirectory(String.valueOf(chooser.getCurrentDirectory()) +
-                                                                 File.separatorChar);
-
-            if (bLoad) {
-                File[] files = chooser.getSelectedFiles();
-
-                return files;
-            } 
-            File[] files = new File[1];
-            files[0] = chooser.getSelectedFile();
-            return files;
-        }
-
-        return null;
-    }
-
-    
     public static TriMesh loadTMesh(RandomAccessFile kIn, ViewJProgressBar progress,
-                                    int added, int total, boolean isVisible,
-                                    ColorRGB kColor, float fOpacity, MaterialState kMaterial,
+                                    int added, int total, boolean isVisible, MaterialState kMaterial,
                                     float[] startLocation, float[] direction, float[] box )
 {
 
@@ -714,161 +484,18 @@ public class FileSurface_WM {
         }
     }
     
-    
     /**
-     * Load the clod mesh from a binary file. The caller must have already opened the file and read the mesh type (0 =
-     * TriMesh, 1 = ModelClodMesh) and the number of meshes in the file. The caller then calls this function
-     * for each mesh. The format for a mesh is
-     *
-     * <pre>
-     int vCount;  // number of vertices
-     Point3f vertices[vCount];
-     Point3f normals[vCount];
-     int iCount;  // number of indices in the connectivity array
-     int indices[iCount];
-     int rCount;
-     ModelCollapseRecord collapses[rCount];
-     * </pre>
-     *
-     * with 4-byte quantities stored in Big Endian format.
-     *
-     * @param      kIn    the file from which the triangle mesh is loaded
-     * @param      pBar   DOCUMENT ME!
-     * @param      added  DOCUMENT ME!
-     * @param      piece  DOCUMENT ME!
-     *
-     * @return     the loaded triangle mesh
-     *
-     * @exception  IOException  if there is an error reading from the file
-     */
-    public static ClodMesh loadCMesh(RandomAccessFile kIn, ViewJProgressBar pBar, int added, int piece)
-    {
-        ColorRGB kColor = new ColorRGB(ColorRGB.WHITE);
-        float fOpacity = 1.0f;
-        MaterialState kMaterial = new MaterialState();
-        float[] startLocation = new float[3];
-        float[] direction = new float[3];
-        float[] box = new float[3]; 
-        TriMesh kMesh = loadTMesh(kIn, pBar, added, piece,
-                true, kColor, fOpacity, kMaterial,
-                startLocation, direction, box );
-        
-        try {
-            int iRecordCount = kIn.readInt();
-            CollapseRecord[] akRecord = new CollapseRecord[iRecordCount];
-            int prog = iRecordCount * piece / 25;
-
-            for (int i = 0; i < iRecordCount; i++) {
-                akRecord[i] = load(kIn);
-
-                if ((pBar != null) && (prog != 0) && ((i % prog) == 0)) {
-                    pBar.updateValueImmed(Math.round(75 / piece) + added + (i / prog));
-                    pBar.update(pBar.getGraphics());
-                }
-            }
-
-            return new ClodMesh( kMesh.VBuffer, 
-                                 kMesh.IBuffer, new CollapseRecordArray(iRecordCount,akRecord));
-        } catch (IOException e) {
-            return null;
-        }
-    }
-
-    /**
-     * Support for loading the collapse records from a binary file. This function is called by
-     * ModelClodMesh.load(RandomAccessFile).
-     *
-     * @param      kIn  the file from which the records are loaded
-     *
-     * @exception  IOException  if the there is an error reading from the file
-     */
-    private static CollapseRecord load(RandomAccessFile kIn)
-    {
-    	try {
-            int iVKeep = kIn.readInt();
-            int iVThrow = kIn.readInt();
-            int iVQuantity = kIn.readInt();
-            int iTQuantity = kIn.readInt();
-            CollapseRecord kRecord = new CollapseRecord(iVKeep, iVThrow, iVQuantity, iTQuantity);
-            kRecord.IQuantity = kIn.readInt();
-            if ( kRecord.IQuantity > 0 ) {
-                byte[] bufferByte = new byte[ kRecord.IQuantity * 4 ];
-                int b1 = 0, b2 = 0, b3 = 0, b4 = 0;
-                kRecord.Index = new int[kRecord.IQuantity];
-                kIn.read(bufferByte);
-
-                for (int i = 0, index = 0; i < kRecord.IQuantity; i++) {
-                    b1 = bufferByte[index++] & 0x000000ff;
-                    b2 = bufferByte[index++] & 0x000000ff;
-                    b3 = bufferByte[index++] & 0x000000ff;
-                    b4 = bufferByte[index++] & 0x000000ff;
-                    kRecord.Index[i] = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-                }
-            }
-            return kRecord;
-    	} catch (IOException kIOError ) {}
-    	return null;
-    }
-    
-    
-    public static void saveClodMesh(String kName, ClodMesh[] akComponent,
-                                    boolean flip, int[] direction,
-                                    float[] startLocation, float[] box,
-                                    TransMatrix inverseDicomMatrix)
-    {
-        if (akComponent.length == 0) {
-            return;
-        }
-        try {
-            for (int i = 0; i < akComponent.length; i++) {
-                saveSur(kName, akComponent[i], 1, akComponent[i].VBuffer, flip,
-                     direction, startLocation, box, inverseDicomMatrix);
-            }
-        } catch ( IOException kIOError ) {}
-    }
-    
-    
-    /**
-     * Support for saving the collapse records to a binary file. This function is called by
-     * ModelClodMesh.save(RandomAccessFile).
-     *
-     * @param      kOut  the file to which the records are saved
-     *
-     * @exception  IOException  if the there is an error writing to the file
-     */
-    private static void saveCollapseRecord(RandomAccessFile kOut, CollapseRecord kRecord) throws IOException {
-        kOut.writeInt(kRecord.VKeep);
-        kOut.writeInt(kRecord.VThrow);
-        kOut.writeInt(kRecord.VQuantity);
-        kOut.writeInt(kRecord.TQuantity);
-        kOut.writeInt(kRecord.IQuantity);
-
-        byte[] bufferInt = new byte[kRecord.IQuantity * 4];
-        int tmpInt;
-        for (int i = 0, index = 0; i < kRecord.IQuantity; i++) {
-            tmpInt = kRecord.Index[i];
-            bufferInt[index++] = (byte) (tmpInt >>> 24);
-            bufferInt[index++] = (byte) (tmpInt >>> 16);
-            bufferInt[index++] = (byte) (tmpInt >>> 8);
-            bufferInt[index++] = (byte) (tmpInt & 0xff);
-        }
-        kOut.write(bufferInt);
-    }
-    
-    
-    /**
-     * Load the triangle mesh from a VRML file specifically written by MIPAV!. The caller must have already opened the
-     * file. Must be made more robust to better parse the file. It only reads VRML 2.0 that MIPAV has written.
-     *
-     * @param      kIn       the file from which the triangle mesh is loaded
-     * @param      progress  DOCUMENT ME!
-     * @param      added     DOCUMENT ME!
-     * @param      total     DOCUMENT ME!
-     * @param      flag      DOCUMENT ME!
-     *
-     * @return     the loaded triangle mesh
-     *
-     * @exception  IOException  if there is an error reading from the file
+     *Load the triangle mesh from a VRML file specifically written by MIPAV. The caller must have already opened the
+     * file. 
+     * @param kIn the file from which the triangle mesh is loaded
+     * @param progress progress bar
+     * @param added number of meshes added so far
+     * @param total number of meshes to add
+     * @param flag when true this is the first mesh, read header info.
+     * @param startLocation 3D location of mesh
+     * @param direction 3D orientation of mesh
+     * @param box mesh bounding box
+     * @return new TriMesh
      */
     public static TriMesh loadVRMLMesh(RandomAccessFile kIn, ViewJProgressBar progress, int added, int total,
                                        boolean flag,
@@ -1117,17 +744,707 @@ public class FileSurface_WM {
 
 
     /**
-     * 
-     * @param kIn
-     * @param progress
-     * @param added
-     * @param total
-     * @param flag
-     * @return
+     * The action taken when the Add button is clicked in the JPanelSurface class. A file dialog is launched that allows
+     * the user to select new surfaces to load from disk.
+     * @param kImage ModelImage for location/orientation and scale information.
+     * @return array of TriMesh objects.
+     */
+    public static TriMesh[] openSurfaces(ModelImage kImage) {
+        File[] akFiles = openFiles(true);
+
+        if (akFiles == null) {
+            return null;
+        }
+
+        TriMesh[] kSurface = new TriMesh[akFiles.length];
+        for (int i = 0; i < akFiles.length; i++) {
+            String kName = akFiles[i].getName();
+            if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1) || 
+            	(kName.indexOf(".vtk") != -1) || (kName.indexOf(".vtp") != -1) || 
+            	(kName.indexOf(".stla")!= -1) || (kName.indexOf(".stlb")!= -1) || 
+            	(kName.indexOf(".ply") != -1) || (kName.indexOf(".txt") != -1)) {
+                kSurface[i] = readSurface(kImage, akFiles[i], null);
+            } else if (kName.indexOf(".xml") != -1) {
+                FileSurfaceRefXML_WM kSurfaceXML = new FileSurfaceRefXML_WM(kName, akFiles[i].getParent());
+                FileInfoSurfaceRefXML_WM kFileInfo = kSurfaceXML.readSurfaceXML(kName, akFiles[i].getParent());
+                akFiles[i] = new File(akFiles[i].getParent()+ File.separatorChar + kFileInfo.getSurfaceFileName());
+                kSurface[i] = readSurface(kImage, akFiles[i], kFileInfo.getMaterial());
+            }
+        }
+
+        return kSurface;
+    }
+
+    /**
+     * Parses the VRML to see how many surfaces there are.
+     * @param   kIn  the file to parse
+     * @return  int value for the number of surfaces in the file.
+     * @throws  IOException             
+     * @throws  NoSuchElementException  
+     */
+    public static int parseVRMLMesh(RandomAccessFile kIn) throws IOException, NoSuchElementException {
+        String str = kIn.readLine();
+
+        str = kIn.readLine();
+        str = kIn.readLine();
+
+        StringTokenizer token = new StringTokenizer(str);
+
+        token.nextToken();
+        token.nextToken();
+        token.nextToken();
+        token.nextToken();
+
+        return Integer.valueOf(token.nextToken()).intValue();
+    }
+
+    
+    /**
+     * Save a TriMesh to disk
+     * @param kName file name
+     * @param kMesh TriMesh
+     * @param iType type of mesh TriMesh or ClodMesh
+     * @param kVBuffer VertexBuffer
+     * @param flip invert y,z values
+     * @param direction 3D orientation of mesh
+     * @param startLocation 3D location of mesh
+     * @param box 3D bounding box
+     * @param inverseDicomMatrix dicom matrix
+     * @throws IOException file I/O exception
+     */
+    public static void save(String kName, TriMesh kMesh,
+                            int iType, VertexBuffer kVBuffer,
+                            boolean flip, int[] direction, float[] startLocation, float[] box,
+                            TransMatrix inverseDicomMatrix)
+    throws IOException
+    {
+        if (kName == null)
+        {
+            return;
+        }
+        
+        int i = kName.lastIndexOf('.');
+        String kExt = kName.substring(i);
+        if ( kExt.equals(".sur" ) )
+        { 
+        	saveSur(kName,kMesh,iType,kVBuffer,flip,direction,startLocation,box,inverseDicomMatrix);
+        }
+        else if ( kExt.equals(".ply" ) )
+        {
+            saveSinglePlyMesh(kName, kMesh);
+        }
+        else if ( kExt.equals(".stla" ) )
+        {
+        	saveSingleSTLMesh(kName, kMesh);
+        }
+        else if ( kExt.equals(".stlb" ) )
+        {
+        	saveSingleSTLMesh(kName, kMesh);
+        }
+        else if ( kExt.equals(".txt" ) )
+        {
+            saveAsTextFile(kName, kMesh );
+        }
+        else if ( kExt.equals(".vtk" ) )
+        {
+            saveAsVTKLegacy(kName, kMesh);
+        }
+        else if ( kExt.equals(".vtp" ) )
+        {
+            saveAsVTKXML(kName, kMesh);
+        }
+        else if ( kExt.equals(".xml" ) )
+        {
+            try {
+                FileSurfaceRefXML_WM kSurfaceXML = new FileSurfaceRefXML_WM(null, null);
+                MaterialState kMaterial = (MaterialState)kMesh.GetGlobalState(GlobalState.StateType.MATERIAL);
+                if ( kMaterial == null )
+                {
+                    kMaterial = new MaterialState();
+                }
+                float fOpacity = 0f;
+                if ( kMesh.VBuffer.GetAttributes().GetCChannels(0) == 4 )
+                {
+                    fOpacity = 1.0f - kMesh.VBuffer.GetColor4(0, 0).A;
+                }
+                int iLOD = 0;
+                kSurfaceXML.writeXMLsurface_WM(kName, kMaterial, fOpacity, iLOD );     
+                String surfaceName = kName.substring(0, i) + ".sur"; 
+                saveSur(surfaceName,kMesh,iType,kVBuffer,flip,direction,startLocation,box,inverseDicomMatrix);
+            } catch ( IOException kError ) { }
+        }
+        else if ( kExt.equals(".wrl" ) )
+        {
+            saveAsVRML( kName, kMesh, kVBuffer, flip, direction, startLocation,  box );
+        }
+    }
+    
+    
+    /**
+     * Save ClodMesh to disk
+     * @param kName file name
+     * @param akComponent array of ClodMesh to save
+     * @param flip invert y,z values
+     * @param direction 3D mesh orientation
+     * @param startLocation 3D mesh location
+     * @param box mesh bounding box
+     * @param inverseDicomMatrix dicom matrix
+     */
+    public static void saveClodMesh(String kName, ClodMesh[] akComponent,
+                                    boolean flip, int[] direction,
+                                    float[] startLocation, float[] box,
+                                    TransMatrix inverseDicomMatrix)
+    {
+        if (akComponent.length == 0) {
+            return;
+        }
+        try {
+            for (int i = 0; i < akComponent.length; i++) {
+                saveSur(kName, akComponent[i], 1, akComponent[i].VBuffer, flip,
+                     direction, startLocation, box, inverseDicomMatrix);
+            }
+        } catch ( IOException kIOError ) {}
+    }
+
+    /**
+     * The action taken when the one of the save surface buttons is pressed in the JPanelSurface class. A file dialog is
+     * launched that allows the user to select where to save the surfaces.
+     *
+     * @param  kImage      the ModelImage displayed in the SurfaceRender class
+     * @param  akSurfaces  an array of surfaces described by their SurfaceAttributes, containing information that is
+     *                     saved with the TriMesh
+     * @param  kCommand    the type of save operation to perform
+     */
+    public static void saveSurfaces(ModelImage kImage, TriMesh[] akSurfaces, String kCommand) {
+
+        if (akSurfaces.length == 0) {
+            MipavUtil.displayError("Select a surface to save.");
+
+            return;
+        }
+
+        if (kCommand.equals("LevelS") || kCommand.equals("LevelV")) {
+
+            for (int i = 0; i < akSurfaces.length; i++) {
+                saveSingleMesh(kImage, kCommand.equals("LevelS"), akSurfaces[i]);
+            }
+        }
+        //         else if (kCommand.equals("LevelW")) {
+        //             saveMultiMesh(kImage, akSurfaces);
+        //         }
+        else if (kCommand.equals("LevelXML")) {
+
+            for (int i = 0; i < akSurfaces.length; i++) {
+                writeTriangleMeshXML(null, kImage, akSurfaces[i]);
+            }
+        }
+        else if (kCommand.equals("LevelSTL")) {
+
+            for (int i = 0; i < akSurfaces.length; i++) {
+            	saveSingleSTLMesh(null, akSurfaces[i]);
+            }
+        }
+        else if (kCommand.equals("LevelPLY")) {
+
+            for (int i = 0; i < akSurfaces.length; i++) {
+            	saveSinglePlyMesh(null, akSurfaces[i] );
+            }
+        }
+    }
+    
+    
+    /**
+     * Saves the triangle mesh in VRML97 (VRML 2.0) format. File name should end with ".wrl"
+     *
+     * @param      kOut           the file to which the triangle mesh is saved
+     * @param      flip           if the y and z axes should be flipped - true in extract and in save of JDialogSurface
+     *                            To have proper orientations in surface file if flip is true flip y and z on reading.
+     * @param      direction      1 or -1 for each axis
+     * @param      startLocation  DOCUMENT ME!
+     * @param      box            (dimension-1)*resolution
+     * @param      color          DOCUMENT ME!
+     *
+     * @exception  IOException  if there is an error writing to the file
+     */
+    protected static void saveAsVRML(PrintWriter kOut, TriMesh kMesh, VertexBuffer kVBuffer, boolean flip, int[] direction, float[] startLocation, float[] box)
+    {
+        kOut.print("#flip { ");
+
+        if (flip) {
+            kOut.print(1);
+        } else {
+            kOut.print(0);
+        }
+
+        kOut.print(" }\n");
+
+        kOut.print("#direction { ");
+        kOut.print(direction[0]);
+        kOut.print(' ');
+        kOut.print(direction[1]);
+        kOut.print(' ');
+        kOut.print(direction[2]);
+        kOut.print(" }\n");
+
+        kOut.print("#startLocation { ");
+        kOut.print(startLocation[0]);
+        kOut.print(' ');
+        kOut.print(startLocation[1]);
+        kOut.print(' ');
+        kOut.print(startLocation[2]);
+        kOut.print(" }\n");
+
+        kOut.print("#box { ");
+        kOut.print(box[0]);
+        kOut.print(' ');
+        kOut.print(box[1]);
+        kOut.print(' ');
+        kOut.print(box[2]);
+        kOut.print(" }\n");
+
+        MaterialState kMaterial = (MaterialState)kMesh.GetGlobalState( GlobalState.StateType.MATERIAL );
+        if ( kMaterial == null )
+        {
+            kMaterial = new MaterialState();
+        }
+
+        kOut.print("Shape\n{\n");
+        kOut.print("\tappearance Appearance {\n");
+        kOut.print("\t\tmaterial Material {\n");
+        kOut.print("\t\t\temissiveColor\t");
+        kOut.print( kMaterial.Emissive.R + " ");
+        kOut.print( kMaterial.Emissive.G + " ");
+        kOut.print( kMaterial.Emissive.B );
+        kOut.print("\n\t\t\tdiffuseColor\t");
+        kOut.print( kMaterial.Diffuse.R + " ");
+        kOut.print( kMaterial.Diffuse.G + " ");
+        kOut.print( kMaterial.Diffuse.B );
+        kOut.print("\n\t\t\tspecularColor\t");
+        kOut.print( kMaterial.Specular.R + " ");
+        kOut.print( kMaterial.Specular.G + " ");
+        kOut.print( kMaterial.Specular.B );
+
+        float fTransparency = 0f;
+        if ( kVBuffer.GetAttributes().GetCChannels(0) == 4)
+        {
+        	fTransparency = 1.0f - kVBuffer.GetColor4(0, 0).A;
+        }
+        kOut.print("\n\t\t\ttransparency " + fTransparency + "\n");
+        kOut.print("\t\t}\n");
+        kOut.print("\t}\n");
+
+        kOut.print("\tgeometry IndexedFaceSet\n\t{\n");
+
+        kOut.print("\t\tcoord Coordinate\n");
+        kOut.print("\t\t{\n");
+        kOut.print("\t\t\tpoint [\n\t\t\t\t");
+
+        // write vertices
+        Vector3f kPos = new Vector3f();
+        int i;
+        for (i = 0; i < kVBuffer.GetVertexQuantity(); i++) {
+            kVBuffer.GetPosition3(i, kPos);
+            kOut.print(kPos.X);
+            kOut.print(' ');
+
+            kOut.print(kPos.Y);
+            kOut.print(' ');
+
+            kOut.print(kPos.Z);
+
+            if (i < (kVBuffer.GetVertexQuantity() - 1)) {
+                kOut.print(" ,\n\t\t\t\t");
+            } else {
+                kOut.print("\n\t\t\t\t]\n");
+            }
+        }
+
+        // write connectivity
+        kOut.print("\t\t\t}\n\t\t\tcoordIndex [\n\t\t\t\t");
+        int iTriangleCount = kMesh.IBuffer.GetIndexQuantity() / 3;
+        int[] aiIndex = kMesh.IBuffer.GetData();
+        for (i = 0; i < iTriangleCount; i++) {
+            kOut.print(aiIndex[3 * i]);
+            kOut.print(' ');
+            kOut.print(aiIndex[(3 * i) + 1]);
+            kOut.print(' ');
+            kOut.print(aiIndex[(3 * i) + 2]);
+
+            if (i < (iTriangleCount - 1)) {
+                kOut.print(" -1\n\t\t\t\t");
+            } else {
+                kOut.print("\n\t\t\t\t]\n");
+            }
+        }
+
+        kOut.print("\t\t\tconvex FALSE\n");
+        kOut.print("\t\t\tcreaseAngle 1.5\n");
+        kOut.print("\t}\n}\n");
+    }
+    
+    
+    /**
+     * Calls a dialog to get a file name.
+     * @param   bLoad  if <code>true</code>, make it a load dialog.
+     * @return  File name.
+     */
+    private static String getFileName(boolean bLoad) {
+        File[] files = openFiles(bLoad);
+
+        if (files != null) {
+            return new String(files[0].getPath());
+        }
+
+        return null;
+    }
+    
+    
+    /**
+     * Support for loading the collapse records from a binary file. 
+     * @param      kIn  the file from which the records are loaded
+     * @return CollapseRecord 
+     * @exception  IOException  if the there is an error reading from the file
+     */
+    private static CollapseRecord load(RandomAccessFile kIn)
+    {
+    	try {
+            int iVKeep = kIn.readInt();
+            int iVThrow = kIn.readInt();
+            int iVQuantity = kIn.readInt();
+            int iTQuantity = kIn.readInt();
+            CollapseRecord kRecord = new CollapseRecord(iVKeep, iVThrow, iVQuantity, iTQuantity);
+            kRecord.IQuantity = kIn.readInt();
+            if ( kRecord.IQuantity > 0 ) {
+                byte[] bufferByte = new byte[ kRecord.IQuantity * 4 ];
+                int b1 = 0, b2 = 0, b3 = 0, b4 = 0;
+                kRecord.Index = new int[kRecord.IQuantity];
+                kIn.read(bufferByte);
+
+                for (int i = 0, index = 0; i < kRecord.IQuantity; i++) {
+                    b1 = bufferByte[index++] & 0x000000ff;
+                    b2 = bufferByte[index++] & 0x000000ff;
+                    b3 = bufferByte[index++] & 0x000000ff;
+                    b4 = bufferByte[index++] & 0x000000ff;
+                    kRecord.Index[i] = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+                }
+            }
+            return kRecord;
+    	} catch (IOException kIOError ) {}
+    	return null;
+    }
+
+
+    /**
+     * Read a TriMesh from a Ply ascii file.
+     * @param file file storing the mesh
+     * @return TriMesh
+     */
+    private static TriMesh loadPlyAsciiMesh(File file) {
+
+        TriMesh mesh;
+        int i;
+        int iVertexCount = 0;
+        int iTriangleCount = 0;
+        boolean readHeader = true;
+        float x = 0f, y = 0f, z = 0f;
+        int idx1 = 0, idx2 = 0, idx3 = 0;
+		
+        Vector<Vector3f> vertexArray = new Vector<Vector3f>();
+        Vector<Integer> connectivity = new Vector<Integer>();
+        VertexBuffer kVBuffer;
+        int[] aiConnect;
+		
+        try {
+            DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+            String s, token;
+            while ( (s = readLine(in)).length() > 0) {
+                StringTokenizer st = new StringTokenizer(s);
+                while ( st.hasMoreTokens() && readHeader ) {
+                    // System.err.print(st.nextToken() + " ");
+                    token = st.nextToken();
+                    if ( token.equals("vertex")) {
+                        iVertexCount = Integer.valueOf(st.nextToken());
+                    } else if ( token.equals("face") ) {
+                        iTriangleCount = Integer.valueOf(st.nextToken());
+                        readLine(in);
+                        readLine(in);  // skip two lines follow the face count attribute in PLY file format.
+                        readHeader = false;
+                        break;
+                    }
+                }
+                if ( readHeader == false) break;
+            }
+		    
+            // read Vertex 
+            for ( i = 0; i < iVertexCount; i++ ) {
+                s = readLine(in);
+                StringTokenizer st = new StringTokenizer(s);
+                x = Float.valueOf(st.nextToken());
+                y = Float.valueOf(st.nextToken());
+                z = Float.valueOf(st.nextToken());
+                vertexArray.add(new Vector3f(x, y, z));
+            }
+		    
+            // read connectivity
+            for ( i = 0; i < iTriangleCount; i++ ) {
+                s = readLine(in);
+                StringTokenizer st = new StringTokenizer(s);
+                st.nextToken();  // skip 3
+                idx1 = Integer.valueOf(st.nextToken());
+                connectivity.add(idx1);
+                idx2 = Integer.valueOf(st.nextToken());
+                connectivity.add(idx2);
+                idx3 = Integer.valueOf(st.nextToken());
+                connectivity.add(idx3);
+            }
+		    
+            int vertexCount = vertexArray.size();
+            Attributes kAttr = new Attributes();
+            kAttr.SetPChannels(3);
+            kAttr.SetNChannels(3);
+            kAttr.SetTChannels(0, 3);
+            kAttr.SetCChannels(0, 4);
+            kVBuffer = new VertexBuffer(kAttr, vertexCount);
+
+            int index = 0;
+            Vector3f pos;
+            for (i = 0; i < vertexCount; i++) {
+                pos = vertexArray.elementAt(i);
+                kVBuffer.SetPosition3(index, pos);
+                kVBuffer.SetColor4(0, index, 1.0f, 1.0f, 1.0f, 1.0f);
+                index++;
+            }
+
+            int indexCount = connectivity.size();
+            aiConnect = new int[indexCount];
+            for (i = 0; i < indexCount; i++) {
+                aiConnect[i] = connectivity.get(i);
+            }
+		    
+            IndexBuffer kIBuffer = new IndexBuffer( aiConnect.length, aiConnect );
+            mesh = new TriMesh(kVBuffer, kIBuffer);
+            MaterialState kMaterial = new MaterialState();
+            mesh.AttachGlobalState( kMaterial );
+            return mesh;
+        } catch (FileNotFoundException e) {
+            System.err.println("ERROR: Can't find file " + file);
+            return null;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Load the STL ASCII file.
+     * @param file STL surface file reference
+     * @return TriMesh
+     */
+    private static TriMesh loadSTLAsciiMesh(File file) {
+
+        TriMesh mesh; 
+        try {
+            BufferedReader reader;
+            reader = new BufferedReader(new FileReader(file));
+            StreamTokenizer tokenizer = new StreamTokenizer(reader);
+            tokenizer.resetSyntax();
+            tokenizer.whitespaceChars(0, 0x20);
+            tokenizer.wordChars(0x21, 0xff);
+            mesh = readSTLAscii(tokenizer);
+            reader.close();
+            return mesh;
+        } catch (FileNotFoundException e) {
+            System.err.println("ERROR: Can't find file " + file);
+            return null;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Load the STL Binary file.
+     * @param file STL surface file reference
+     * @return TriMesh
+     */
+    private static TriMesh loadSTLBinaryMesh(RandomAccessFile kIn)
+    {
+        int iTriangleCount;
+        HashMap<String, Integer> vertexHashtable = new HashMap<String, Integer>();
+        float x, y, z;
+        byte[] value = new byte[4];
+        byte[] header = new byte[80];
+        byte[] attribute = new byte[2];
+        VertexBuffer kVBuffer;
+        int[] aiConnect;
+        TriMesh kMesh = null;
+        Vector<Vector3f> vertexArray = new Vector<Vector3f>();
+        Integer searchIndex;
+        Vector<Integer> connectivity = new Vector<Integer>();
+        Vector3f vertex1, vertex2, vertex3;
+        Vector3f temp = new Vector3f();
+        Vector3f normal = new Vector3f();
+        Vector3f side1 = new Vector3f();
+        Vector3f side2 = new Vector3f();
+        Vector3f surfaceNormal = new Vector3f();
+
+        try {
+            // nothing header
+            kIn.read(header);
+
+            // number of facets
+            kIn.read(value);
+            iTriangleCount = FileBase.bytesToInt(false, 0, value);
+
+            int index = 0;
+
+            for (int i = 0; i < iTriangleCount; i++) {
+                // read normal.x, normal.y, normal.z
+                kIn.read(value);
+                x = FileBase.bytesToFloat(false, 0, value);
+                kIn.read(value);
+                y = FileBase.bytesToFloat(false, 0, value);
+                kIn.read(value);
+                z = FileBase.bytesToFloat(false, 0, value);
+                normal = new Vector3f(x, y, z);
+
+                // index 1
+                kIn.read(value);
+                x = FileBase.bytesToFloat(false, 0, value);
+                kIn.read(value);
+                y = FileBase.bytesToFloat(false, 0, value);
+                kIn.read(value);
+                z = FileBase.bytesToFloat(false, 0, value);
+
+                vertex1 = new Vector3f(x, y, z);
+
+                // index 2
+                kIn.read(value);
+                x = FileBase.bytesToFloat(false, 0, value);
+                kIn.read(value);
+                y = FileBase.bytesToFloat(false, 0, value);
+                kIn.read(value);
+                z = FileBase.bytesToFloat(false, 0, value);
+
+                vertex2 = new Vector3f(x, y, z);
+
+                // index 3
+                kIn.read(value);
+                x = FileBase.bytesToFloat(false, 0, value);
+                kIn.read(value);
+                y = FileBase.bytesToFloat(false, 0, value);
+                kIn.read(value);
+                z = FileBase.bytesToFloat(false, 0, value);
+
+                vertex3 = new Vector3f(x, y, z);
+
+                // Check that the normal is in the correct direction
+                side1.Sub(vertex2, vertex1);
+                side2.Sub(vertex3, vertex2);
+                surfaceNormal.Cross(side1, side2);
+                //side1.Cross(side2, surfaceNormal);
+                if (normal.Dot(surfaceNormal) < 0) {
+                    // vertices were specified in the wrong order, so reverse
+                    // two of them
+                    temp.Copy(vertex2);
+                    vertex2.Copy(vertex3);
+                    vertex3.Copy(temp);
+                }
+
+                // index1
+                x = vertex1.X;
+                y = vertex1.Y;
+                z = vertex1.Z;
+                searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+                if (searchIndex == null) { // not found
+                    vertexHashtable.put((x + " " + y + " " + z), new Integer(
+                                                                             index));
+                    connectivity.add(new Integer(index));
+                    vertexArray.add(new Vector3f(x, y, z));
+                    index++;
+                } else {
+                    connectivity.add(searchIndex);
+                }
+
+                // index 2
+                x = vertex2.X;
+                y = vertex2.Y;
+                z = vertex2.Z;
+                searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+                if (searchIndex == null) {
+                    vertexHashtable.put((x + " " + y + " " + z), new Integer(
+                                                                             index));
+                    connectivity.add(new Integer(index));
+                    vertexArray.add(new Vector3f(x, y, z));
+                    index++;
+                } else {
+                    connectivity.add(searchIndex);
+                }
+
+                // index 3
+                x = vertex3.X;
+                y = vertex3.Y;
+                z = vertex3.Z;
+                searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+                if (searchIndex == null) {
+                    vertexHashtable.put((x + " " + y + " " + z), new Integer(
+                                                                             index));
+                    vertexArray.add(new Vector3f(x, y, z));
+                    connectivity.add(new Integer(index));
+                    index++;
+                } else {
+                    connectivity.add(searchIndex);
+                }
+
+                // attribute
+                kIn.read(attribute);
+            }
+
+            int vertexCount = vertexArray.size();
+            Attributes kAttr = new Attributes();
+            kAttr.SetPChannels(3);
+            kAttr.SetNChannels(3);
+            kAttr.SetTChannels(0, 3);
+            kAttr.SetCChannels(0, 4);
+            kVBuffer = new VertexBuffer(kAttr, vertexCount);
+
+            index = 0;
+            Vector3f pos;
+            for (int i = 0; i < vertexCount; i++) {
+                pos = vertexArray.elementAt(i);
+                kVBuffer.SetPosition3(index, pos);
+                kVBuffer.SetColor4(0, index, 1.0f, 1.0f, 1.0f, 1.0f);
+                index++;
+            }
+
+            int indexCount = connectivity.size();
+            aiConnect = new int[indexCount];
+            for (int i = 0; i < indexCount; i++) {
+                aiConnect[i] = connectivity.get(i);
+            }
+
+        } catch (IOException e) {
+            return null;
+        }
+        IndexBuffer kIBuffer = new IndexBuffer(aiConnect.length, aiConnect);
+        kMesh = new TriMesh(kVBuffer, kIBuffer);
+        MaterialState kMaterial = new MaterialState();
+        kMesh.AttachGlobalState(kMaterial);
+        return kMesh;
+
+    }
+
+
+    /**
+     * Load legacy VTK mesh.
+     * @param kIn file containing mesh
+     * @param progress progress bar
+     * @param added number of meshes read from file so far
+     * @param total total number of meshes in file
+     * @param flag invert y,z values
+     * @return TriMesh
      * @throws IOException
      */
-    private static TriMesh loadVTKLegacyMesh(RandomAccessFile kIn, ViewJProgressBar progress, int added, int total,
-                                            boolean flag, String fileName) {
+    private static TriMesh loadVTKLegacyMesh(RandomAccessFile kIn, ViewJProgressBar progress, 
+            int added, int total, String fileName) {
         TriMesh kMesh;
     	
         System.out.println(fileName);
@@ -1278,12 +1595,834 @@ public class FileSurface_WM {
         kMesh = new TriMesh( kVBuffer, kIBuffer );
         return kMesh;
     }
+    
+    
+    /**
+     * Read VTK mesh from file.
+     * @param absPath file path
+     * @param fileName file name
+     * @param dir file directory
+     * @return TriMesh
+     */
+    private static TriMesh loadVTKXMLMesh(String absPath, String fileName, String dir)
+    {
+        TriMesh kMesh = null;
+        
+        FileSurfaceVTKXML_WM surfaceVTKXML = new FileSurfaceVTKXML_WM(fileName, dir);
+        kMesh = surfaceVTKXML.readXMLSurface_WM(absPath);
 
+        return kMesh;
+    }
+   
+    /**
+     * Returns an array of File objects, based on the user-selected files from the FileChooser dialog.
+     * @param   bLoad  whether the files are opened for reading (bLoad = true) or writing (bLoad = false)
+     * @return  File[] array of opened files.
+     */
+    private static File[] openFiles(boolean bLoad) {
+
+        // file dialog to select surface mesh files (*.sur)
+        JFileChooser chooser = new JFileChooser();
+        chooser.setMultiSelectionEnabled(bLoad);
+        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.SURFACE));
+
+        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+        } else {
+            chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+        }
+
+        int returnVal;
+
+        if (bLoad) {
+            returnVal = chooser.showOpenDialog(null);
+        } else {
+            returnVal = chooser.showSaveDialog(null);
+        }
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            ViewUserInterface.getReference().setDefaultDirectory(String.valueOf(chooser.getCurrentDirectory()) +
+                                                                 File.separatorChar);
+
+            if (bLoad) {
+                File[] files = chooser.getSelectedFiles();
+
+                return files;
+            } 
+            File[] files = new File[1];
+            files[0] = chooser.getSelectedFile();
+            return files;
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Print the contents of the TriMesh in ascii format.
+     * @param kOut output
+     * @param kMesh TriMesh
+     */
+    private static void printAscii(PrintWriter kOut, TriMesh kMesh) {
+    	Vector3f kVertex = new Vector3f();
+        Vector3f kNormal = new Vector3f();
+
+        // write vertices
+        kOut.println(kMesh.VBuffer.GetVertexQuantity());
+        kOut.println("Vertices");
+
+        int i;
+
+        for (i = 0; i < kMesh.VBuffer.GetVertexQuantity(); i++) {
+            kMesh.VBuffer.GetPosition3(i, kVertex);
+            kOut.print(kVertex.X);
+            kOut.print(' ');
+            kOut.print(kVertex.Y);
+            kOut.print(' ');
+            kOut.println(kVertex.Z);
+        }
+
+        kOut.println("Normals");
+
+        // write normals
+        for (i = 0; i < kMesh.VBuffer.GetVertexQuantity(); i++) {
+        	kMesh.VBuffer.GetNormal3(i, kNormal);
+            kOut.print(kNormal.X);
+            kOut.print(' ');
+            kOut.print(kNormal.Y);
+            kOut.print(' ');
+            kOut.println(kNormal.Z);
+        }
+
+        kOut.println("Connectivity");
+
+        // write connectivity
+        int iTriangleCount = kMesh.GetTriangleQuantity();
+        int[] aiIndex = kMesh.IBuffer.GetData();
+        kOut.println(iTriangleCount);
+
+        for (i = 0; i < iTriangleCount; i++) {
+            kOut.print(aiIndex[(3 * i)]);
+            kOut.print(' ');
+            kOut.print(aiIndex[((3 * i) + 1)]);
+            kOut.print(' ');
+            kOut.println(aiIndex[((3 * i) + 2)]);
+        }
+    }
+
+    /**
+     * Print the contents of the TriMesh in STL ascii format.
+     * @param kOut output
+     * @param kMesh TriMesh
+     */
+    private static void printSTLAscii(PrintWriter kOut, TriMesh kMesh)
+    {
+        int i;
+        int index1, index2, index3;
+        int iTriangleCount = kMesh.IBuffer.GetIndexQuantity() / 3;
+        int[] aiIndex = kMesh.IBuffer.GetData();
+        Vector3f kVertex = new Vector3f();
+        Vector3f kNormal = new Vector3f();
+        Vector3f kNormal1 = new Vector3f();
+        Vector3f kNormal2 = new Vector3f();
+        Vector3f kNormal3 = new Vector3f();
+
+        kOut.println("solid");
+        
+        for (i = 0; i < iTriangleCount; i++) {
+            index1 = aiIndex[(3 * i)];    
+            index2 = aiIndex[((3 * i) + 1)];
+            index3 = aiIndex[((3 * i) + 2)];
+            
+            kMesh.VBuffer.GetPosition3(index1, kNormal1);
+            kMesh.VBuffer.GetPosition3(index2, kNormal2);
+            kMesh.VBuffer.GetPosition3(index3, kNormal3);
+	            
+            // Compute facet normal
+            kNormal.Set(0f, 0f, 0f);
+            kNormal.Add(kNormal1);
+            kNormal.Add(kNormal2);
+            kNormal.Add(kNormal3);
+            kNormal.Scale(1f/3f);
+            
+            kOut.print(" facet normal  ");
+            kOut.print(kNormal.X);
+            kOut.print(' ');
+            kOut.print(kNormal.Y);
+            kOut.print(' ');
+            kOut.println(kNormal.Z);
+            
+            kOut.println("   outer loop");
+            // index 1
+            kMesh.VBuffer.GetPosition3(index1, kVertex);
+            kOut.print("     vertex ");
+            kOut.print(kVertex.X);
+            kOut.print(' ');
+            kOut.print(kVertex.Y);
+            kOut.print(' ');
+            kOut.println(kVertex.Z);
+            // index 2
+            kMesh.VBuffer.GetPosition3(index2, kVertex);
+            kOut.print("     vertex ");
+            kOut.print(kVertex.X);
+            kOut.print(' ');
+            kOut.print(kVertex.Y);
+            kOut.print(' ');
+            kOut.println(kVertex.Z);
+            // index 3
+            kMesh.VBuffer.GetPosition3(index3, kVertex);
+            kOut.print("     vertex ");
+            kOut.print(kVertex.X);
+            kOut.print(' ');
+            kOut.print(kVertex.Y);
+            kOut.print(' ');
+            kOut.println(kVertex.Z);
+            
+            kOut.println("   endloop");
+            kOut.println(" endfacet");
+        }
+        kOut.println("endsolid");
+    }
+    /**
+     * Print the contents of the TriMesh in STL binary format.
+     * @param kOut output
+     * @param kMesh TriMesh
+     * @throws IOException I/O exception.
+     */
+    private static void printSTLBinary( RandomAccessFile kOut, TriMesh kMesh ) throws IOException
+    {
+        int index1, index2, index3;
+        byte[] attribute = new byte[2];
+        int iTriangleCount = kMesh.IBuffer.GetIndexQuantity() / 3;
+        int[] aiIndex = kMesh.IBuffer.GetData();
+	               
+        Vector3f kVertex = new Vector3f();
+        Vector3f kNormal = new Vector3f();
+        Vector3f kNormal1 = new Vector3f();
+        Vector3f kNormal2 = new Vector3f();
+        Vector3f kNormal3 = new Vector3f();
+	        
+        // nothing header
+        byte[] header = new byte[80];
+        kOut.write(header);
+	       
+        // number of facets
+        kOut.write(FileBase.intToBytes(iTriangleCount, false));
+	        
+        for (int i = 0; i < iTriangleCount; i++) {	            
+            index1 = aiIndex[(3 * i)];    
+            index2 = aiIndex[((3 * i) + 1)];
+            index3 = aiIndex[((3 * i) + 2)];
+	            
+            kMesh.VBuffer.GetPosition3(index1, kNormal1);
+            kMesh.VBuffer.GetPosition3(index2, kNormal2);
+            kMesh.VBuffer.GetPosition3(index3, kNormal3);
+	            
+            // Compute facet normal
+            kNormal.Set(0f, 0f, 0f);
+            kNormal.Add(kNormal1);
+            kNormal.Add(kNormal2);
+            kNormal.Add(kNormal3);
+            kNormal.Scale(1f/3f);
+	        
+            // facet normal
+            kOut.write(FileBase.floatToBytes(kNormal.X, false));
+            kOut.write(FileBase.floatToBytes(kNormal.Y, false));
+            kOut.write(FileBase.floatToBytes(kNormal.Z, false));
+	            
+            // index 1
+            kMesh.VBuffer.GetPosition3(index1, kVertex);;            
+            kOut.write(FileBase.floatToBytes(kVertex.X, false));
+            kOut.write(FileBase.floatToBytes(kVertex.Y, false));
+            kOut.write(FileBase.floatToBytes(kVertex.Z, false));
+	                       
+            // index 2
+            kMesh.VBuffer.GetPosition3(index2, kVertex);;
+            kOut.write(FileBase.floatToBytes(kVertex.X, false));
+            kOut.write(FileBase.floatToBytes(kVertex.Y, false));
+            kOut.write(FileBase.floatToBytes(kVertex.Z, false));
+
+            // index 3
+            kMesh.VBuffer.GetPosition3(index3, kVertex);
+            kOut.write(FileBase.floatToBytes(kVertex.X, false));
+            kOut.write(FileBase.floatToBytes(kVertex.Y, false));
+            kOut.write(FileBase.floatToBytes(kVertex.Z, false));
+	            
+            // 2 byte attribute == 0
+            kOut.write(attribute);
+	            
+        }
+
+    }
+
+    /**
+     * Read a TriMesh from an ascii file.
+     * @param kFile file containing TriMesh
+     * @return TriMesh
+     * @throws IOException I/O exception
+     */
+    private static TriMesh readAscii(File kFile) throws IOException {
+        DataInputStream in =
+            new DataInputStream(new BufferedInputStream(new FileInputStream(kFile)));
+        String s, token;
+        s = readLine(in);
+        s = readLine(in);
+        s = readLine(in);
+        StringTokenizer st = new StringTokenizer(s);
+        int iNumVertices = 1;
+        if ( st.hasMoreTokens() )
+        {
+            token = st.nextToken();
+            iNumVertices = Integer.valueOf(token).intValue();
+        }
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetNChannels(3);
+        kAttr.SetTChannels(0, 3);
+        kAttr.SetCChannels(0, 4);
+        VertexBuffer kVBuffer = new VertexBuffer(kAttr, iNumVertices);
+        float fX, fY, fZ;
+        s = readLine(in);
+        for ( int i = 0; i < iNumVertices; i++ )
+        {
+            s = readLine(in);
+            st = new StringTokenizer(s);
+            token = st.nextToken();
+            fX = Float.valueOf(token).floatValue();
+            token = st.nextToken();
+            fY = Float.valueOf(token).floatValue();
+            token = st.nextToken();
+            fZ = Float.valueOf(token).floatValue();
+            kVBuffer.SetPosition3( i, fX, fY, fZ );
+            kVBuffer.SetColor4( 0, i, ColorRGBA.WHITE);
+        }
+        s = readLine(in);
+        for ( int i = 0; i < iNumVertices; i++ )
+        {
+            s = readLine(in);
+            st = new StringTokenizer(s);
+            token = st.nextToken();
+            fX = Float.valueOf(token).floatValue();
+            token = st.nextToken();
+            fY = Float.valueOf(token).floatValue();
+            token = st.nextToken();
+            fZ = Float.valueOf(token).floatValue();
+            kVBuffer.SetNormal3( i, fX, fY, fZ );
+        }
+        
+        int iTriangleCount = 0;
+        s = readLine(in);
+        s = readLine(in);
+        st = new StringTokenizer(s);
+        if ( st.hasMoreTokens() )
+        {
+            token = st.nextToken();
+            iTriangleCount = Integer.valueOf(token).intValue();
+        }
+
+        int[] aiIndex = new int[ iTriangleCount * 3 ];
+
+        for (int i = 0; i < iTriangleCount; i++) {
+            s = readLine(in);
+            st = new StringTokenizer(s);
+            token = st.nextToken();
+            aiIndex[(3 * i)] = Integer.valueOf(token).intValue();
+            token = st.nextToken();
+            aiIndex[((3 * i) + 1)] = Integer.valueOf(token).intValue();
+            token = st.nextToken();
+            aiIndex[((3 * i) + 2)] = Integer.valueOf(token).intValue();
+        }
+        return new TriMesh( kVBuffer, new IndexBuffer(aiIndex) );
+    }
+    
+    /** Read a line of ASCII text from the input stream. 
+     * @param in InputStream
+     * @return line of the ascii file as a String
+     * @throws IOException I/O exception
+     */
+    private static String readLine(InputStream in) throws IOException
+    {
+        StringBuffer buf = new StringBuffer();
+        int c;
+        while ((c = in.read()) > -1 && c != '\n')
+        {
+            buf.append((char) c);
+        }
+        return buf.toString();
+    }
+
+    /**
+     * Find the given label in the tokenizer stream and then return the next
+     * three numbers as a point. Return null if end of stream
+     * @param tokenizer stream in
+     * @param label string label (vertex, normal ) in the STL ASCII file.
+     * @return Vector3f point coordinate.
+     * @throws IOException
+     */
+    private static Vector3f readPoint(StreamTokenizer tokenizer, String label)
+        throws IOException {
+        while (true) {
+            if (tokenizer.nextToken() == StreamTokenizer.TT_EOF)
+                return null;
+            if (tokenizer.sval.equals(label))
+                break;
+        }
+
+        if (tokenizer.nextToken() == StreamTokenizer.TT_EOF)
+            return null;
+        float x = Float.valueOf(tokenizer.sval).floatValue();
+        if (tokenizer.nextToken() == StreamTokenizer.TT_EOF)
+            return null;
+        float y = Float.valueOf(tokenizer.sval).floatValue();
+        if (tokenizer.nextToken() == StreamTokenizer.TT_EOF)
+            return null;
+        float z = Float.valueOf(tokenizer.sval).floatValue();
+
+        return new Vector3f(x, y, z);
+    }
+    
+    /**
+     * Read the STL ASCII file as a single stream tokenizer.
+     * @param tokenizer  stream in
+     * @return  Triangle mesh
+     * @throws IOException
+     */
+    private static TriMesh readSTLAscii(StreamTokenizer tokenizer) throws IOException {
+		
+        Vector3f temp = new Vector3f();
+        Vector3f normal = new Vector3f(); 
+        Vector3f side1 = new Vector3f();
+        Vector3f side2 = new Vector3f();
+        Vector3f surfaceNormal = new Vector3f();
+        Vector<Vector3f> vertexArray = new Vector<Vector3f>();
+        VertexBuffer kVBuffer;
+        int[] aiConnect;
+        
+        TriMesh kMesh = null;
+        float x, y, z;
+        Vector3f vertex1, vertex2, vertex3;
+        int index = 0;
+        Integer searchIndex;
+        Vector<Integer> connectivity = new Vector<Integer>();
+        HashMap<String, Integer> vertexHashtable = new HashMap<String, Integer>();
+        try {
+            while (true) {
+                if ((temp = readPoint(tokenizer, "normal")) == null)
+                    break;
+                normal = new Vector3f(temp);
+
+                vertex1 = readPoint(tokenizer, "vertex");
+                vertex2 = readPoint(tokenizer, "vertex");
+                vertex3 = readPoint(tokenizer, "vertex");
+
+                // Check that the normal is in the correct direction
+                side1.Sub(vertex2, vertex1);
+                side2.Sub(vertex3, vertex2);
+				
+                surfaceNormal.Cross(side1, side2);
+                //side1.Cross(side2, surfaceNormal);
+                if (normal.Dot(surfaceNormal) < 0) {
+                    // vertices were specified in the wrong order, so reverse
+                    // two of them
+                    temp.Copy(vertex2);
+                    vertex2.Copy(vertex3);
+                    vertex3.Copy(temp);
+                }
+
+                // index 1;
+                x = vertex1.X;
+                y = vertex1.Y;
+                z = vertex1.Z;
+
+                searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+                if (searchIndex == null) { // not found
+                    vertexHashtable.put((x + " " + y + " " + z), new Integer(
+                                                                             index));
+                    connectivity.add(new Integer(index));
+                    vertexArray.add(new Vector3f(x, y, z));
+                    index++;
+                } else {
+                    connectivity.add(searchIndex);
+                }
+				
+                // index 2;
+                x = vertex2.X;
+                y = vertex2.Y;
+                z = vertex2.Z;
+
+                searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+                if (searchIndex == null) { // not found
+                    vertexHashtable.put((x + " " + y + " " + z), new Integer(
+                                                                             index));
+                    connectivity.add(new Integer(index));
+                    vertexArray.add(new Vector3f(x, y, z));
+                    index++;
+                } else {
+                    connectivity.add(searchIndex);
+                }
+				
+                // index 3;
+                x = vertex3.X;
+                y = vertex3.Y;
+                z = vertex3.Z;
+
+                searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+                if (searchIndex == null) { // not found
+                    vertexHashtable.put((x + " " + y + " " + z), new Integer(
+                                                                             index));
+                    connectivity.add(new Integer(index));
+                    vertexArray.add(new Vector3f(x, y, z));
+                    index++;
+                } else {
+                    connectivity.add(searchIndex);
+                }
+
+            }
+
+            int vertexCount = vertexArray.size();
+            Attributes kAttr = new Attributes();
+            kAttr.SetPChannels(3);
+            kAttr.SetNChannels(3);
+            kAttr.SetTChannels(0, 3);
+            kAttr.SetCChannels(0, 4);
+            kVBuffer = new VertexBuffer(kAttr, vertexCount);
+
+            index = 0;
+            Vector3f pos;
+            for (int i = 0; i < vertexCount; i++) {
+                pos = vertexArray.elementAt(i);
+                kVBuffer.SetPosition3(index, pos);
+                kVBuffer.SetColor4(0, index, 1.0f, 1.0f, 1.0f, 1.0f);
+                index++;
+            }
+
+            int indexCount = connectivity.size();
+            aiConnect = new int[indexCount];
+            for (int i = 0; i < indexCount; i++) {
+                aiConnect[i] = connectivity.get(i);
+            }
+
+        } catch (IOException e) {
+            throw e;
+        }
+        IndexBuffer kIBuffer = new IndexBuffer( aiConnect.length, aiConnect );
+        kMesh = new TriMesh(kVBuffer, kIBuffer);
+        MaterialState kMaterial = new MaterialState();
+        kMesh.AttachGlobalState( kMaterial );
+        return kMesh;
+    }
+    
+
+    /**
+     * Load a triangle mesh from the specified file and assign to it the MaterialState.
+     * @param   kImage  ModelImage displayed in the SurfaceRender class
+     * @param   file    The triangle mesh file to load.
+     * @param   kMaterial The Material for the surface.
+     * @return  TriMesh
+     */
+    private static TriMesh readSurface(ModelImage kImage, File file, MaterialState kMaterial )
+    {
+        int iType = 0, iQuantity = 0;
+        boolean isSur = true;
+        int[] extents = kImage.getExtents();
+        int xDim = extents[0];
+        int yDim = extents[1];
+        int zDim = extents[2];
+
+
+        float[] resols = kImage.getFileInfo()[0].getResolutions();
+        float xBox = (xDim - 1) * resols[0];
+        float yBox = (yDim - 1) * resols[1];
+        float zBox = (zDim - 1) * resols[2];
+        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+
+        FileSurfaceRefXML_WM kSurfaceXML;
+        FileInfoSurfaceRefXML kFileInfo = null;
+        RandomAccessFile in = null;
+        
+        if (file.getName().endsWith("sur")) {
+            try {
+                in = new RandomAccessFile(file, "r");
+                iType = in.readInt();
+                iQuantity = in.readInt();
+                isSur = true;
+            } catch (IOException e) {
+                return null;
+            }
+        } 
+        else if ( file.getName().endsWith("xml") ) {
+            kSurfaceXML = new FileSurfaceRefXML_WM(file.getName(), file.getParent());
+            kFileInfo = kSurfaceXML.readSurfaceXML(file.getName(), file.getParent());
+
+            file = new File(file.getParent()+ File.separatorChar + kFileInfo.getSurfaceFileName());
+            try {
+                in = new RandomAccessFile(file, "r");
+                iType = in.readInt();
+                iQuantity = in.readInt();
+                isSur = true;
+            } catch (IOException e) {
+                return null;
+            }
+        } else if ( file.getName().endsWith("wrl") ) {
+
+            try {
+                in = new RandomAccessFile(file, "r");
+                iType = 0;
+                iQuantity = parseVRMLMesh(in);
+                in.seek(0);
+                isSur = false;
+            } catch (NoSuchElementException e) {
+                MipavUtil.displayError("Only load VRML file specifically written by MIPAV! ");
+
+                return null;
+            } catch (IOException e) {
+                return null;
+            }
+        } else if ( file.getName().endsWith("stla") ) {
+            iType = 0;
+            iQuantity = 1;
+            isSur = false;
+        } else if ( file.getName().endsWith("stlb") ) {
+            try {
+                in = new RandomAccessFile(file, "r");
+                iType = 0;
+                iQuantity = 1;
+                isSur = false;
+            } catch (IOException e) {
+                return null;
+            }
+        } else if ( file.getName().endsWith("ply") ) {
+            iType = 0;
+            iQuantity = 1;
+            isSur = false;
+        } else {
+            //has to be vtk legacy or vtk xml
+            try {
+                in = new RandomAccessFile(file, "r");
+                iType = 0;
+                iQuantity = 1;
+                in.seek(0);
+                //not sure what this flag means
+                isSur = false;
+            }
+            catch (IOException e) {
+                return null;
+            }
+        }
+
+        TriMesh[] akComponent = new TriMesh[iQuantity];
+        ViewJProgressBar progress = new ViewJProgressBar("Loading surface", "Loading surface", 0, 100, false, null,
+                                                         null);
+        progress.setVisible(true);
+
+        try {
+            // meshes are type TriangleMesh
+            for (int i = 0; i < iQuantity; i++) {
+                
+                float[] startLocation = kImage.getFileInfo(0).getOrigin();
+                int[] aiModelDirection = MipavCoordinateSystems.getModelDirections(kImage);
+                float[] direction = new float[] { aiModelDirection[0], aiModelDirection[1], aiModelDirection[2]}; 
+                float[] box = new float[]{0f,0f,0f};
+                if (iType == 0) {
+
+                    if (isSur == true) {
+                        akComponent[i] = loadTMesh(in, progress, i * 100 / iQuantity, iQuantity,
+                                                   true, kMaterial,
+                                                   startLocation, direction, box );
+                        //xBox = box[0];
+                        //yBox = box[1];
+                        //zBox = box[2];
+                        //maxBox = Math.max(xBox, Math.max(yBox, zBox));
+                    }
+                    else {
+                    	if ( file.getName().endsWith("wrl") ) {
+                            akComponent[i] = loadVRMLMesh(in, progress, i * 100 / iQuantity, iQuantity,
+                                                          (i == 0),
+                                                          startLocation, direction, box );
+                    	}
+                        else if (file.getName().endsWith("vtk")){
+                            //vtk legacy
+                            akComponent[i] = loadVTKLegacyMesh(in, progress, i * 100 / iQuantity, iQuantity, file.getName());
+                        }
+                    	else if(file.getName().endsWith("vtp")) {
+                            //vtk xml
+                            akComponent[i] = loadVTKXMLMesh( file.getAbsolutePath(), file.getName(), file.getParent());
+                    	}
+                    	else if (file.getName().endsWith("stla")) {
+                            akComponent[i] = loadSTLAsciiMesh( file );
+                    	}
+                    	else if (file.getName().endsWith("stlb")) {
+                            akComponent[i] = loadSTLBinaryMesh( in );
+                    	}
+                    	else if (file.getName().endsWith("ply")) {
+                            akComponent[i] = loadPlyAsciiMesh( file );
+                    	}
+                        else if (file.getName().endsWith("txt")) {
+                            akComponent[i] = readAscii( file );
+                        }
+                    }
+                }
+                else
+                {
+                    ClodMesh kClod = loadCMesh(in, progress, i * 100 / iQuantity, iQuantity );
+                    kClod.TargetRecord(0);
+                    kClod.SelectLevelOfDetail();
+                    akComponent[i] = kClod;
+                }
+                if (akComponent[i] != null) 
+                {
+                    for (int j = 0; j < akComponent[i].VBuffer.GetVertexQuantity(); j++) {
+
+                        // The mesh files save the verticies as
+                        // pt.x*resX*direction[0] + startLocation
+                        // The loaded vertices go from -1 to 1
+                        // The loaded vertex is at (2.0f*pt.x*xRes - (xDim-1)*xRes)/((dim-1)*res)max
+                        akComponent[i].VBuffer.SetPosition3( j, 
+                                ((2.0f * (akComponent[i].VBuffer.GetPosition3fX(j) - startLocation[0]) / direction[0]) -
+                                        xBox) / (2.0f*maxBox),
+                                        ((2.0f * (akComponent[i].VBuffer.GetPosition3fY(j) - startLocation[1]) / direction[1]) -
+                                                yBox) / (2.0f*maxBox),
+                                                ((2.0f * (akComponent[i].VBuffer.GetPosition3fZ(j) - startLocation[2]) / direction[2]) -
+                                                        zBox) / (2.0f*maxBox) );
+                    }
+                    akComponent[i].SetName( file.getName() );
+                }
+                if (akComponent[i] == null) {
+                    MipavUtil.displayError("Error while reading in triangle mesh.");
+                    return null;
+                }
+            }
+        } catch (IOException e) {
+            return null;
+        }
+
+        progress.dispose();
+        akComponent[0].UpdateMS();
+        return akComponent[0];
+    }
+
+    
+    /**
+     * Save the TriMesh as an ascii text file.
+     * @param kName file name
+     * @param kMesh TriMesh
+     * @throws IOException I/O exception
+     */
+    private static void saveAsTextFile(String kName, TriMesh kMesh) throws IOException {
+
+
+        PrintWriter kOut = new PrintWriter(new FileWriter(kName));
+
+        kOut.println('0');
+        kOut.println(1);
+
+        printAscii(kOut, kMesh);
+
+        kOut.close();
+    }
+
+    /**
+     * Saves the triangle mesh in VRML97 (VRML 2.0) format (text format).
+     *
+     * @param kName the name of file to which the triangle mesh is saved
+     * @param kMesh TriMesh to save.
+     * @param kVBuffer TriMesh VertexBuffer
+     * @param      flip           if the y and z axes should be flipped - true in extract and in save of JDialogSurface
+     *                            To have proper orientations in surface file if flip is true flip y and z on reading.
+     *                            param direction 1 or -1 for each axis param startLocation param box (dim-1)*resolution
+
+     * @param direction 3D mesh orientation
+     * @param startLocation 3D mesh location
+     * @param box 3D mesh bounding box
+     * @throws IOException  if the specified file could not be opened for writing
+     */
+    private static void saveAsVRML(String kName, TriMesh kMesh, VertexBuffer kVBuffer, boolean flip, int[] direction,
+                                  float[] startLocation, float[] box) 
+        throws IOException
+    {
+        PrintWriter kOut = new PrintWriter(new FileWriter(kName));
+
+        kOut.println("#VRML V2.0 utf8");
+        kOut.println("#MIPAV");
+        kOut.println("#Number of shapes = " + 1);
+        saveAsVRML(kOut, kMesh, kVBuffer, flip, direction, startLocation, box);
+        kOut.close();
+    }
+    
+    /**
+     * Save the TriMesh in VTK legacy format.
+     * @param kName file name
+     * @param kMesh TriMesh
+     * @throws IOException I/O exception
+     */
+    private static void saveAsVTKLegacy(String kName, TriMesh kMesh) throws IOException {
+    	PrintWriter kOut = new PrintWriter(new FileWriter(kName));
+    	int pointCount = kMesh.VBuffer.GetVertexQuantity();
+        int indexCount = kMesh.IBuffer.GetIndexQuantity();
+        kOut.println("# vtk DataFile Version 2.0");
+        kOut.println(kMesh.GetName());
+        kOut.println("ASCII");
+        kOut.println("DATASET POLYDATA");
+        kOut.println("POINTS "+pointCount+" float");
+        Vector3f p=new Vector3f();
+        String tmp;
+        for(int i=0;i<pointCount;i++){
+            kMesh.VBuffer.GetPosition3(i,p);
+            tmp=String.format("%.5f %.5f %.5f\n", p.X,p.Y,p.Z);
+            kOut.print(tmp);
+        }
+        kOut.println("POLYGONS "+indexCount/3+" "+(4*indexCount/3));
+        int[] aiIndex = kMesh.IBuffer.GetData();
+        for(int i=0;i<indexCount;i+=3){
+            kOut.println(3+" "+aiIndex[i]+" "+aiIndex[i+1]+" "+aiIndex[i+2]);
+        }
+        kOut.close();
+    }
+   
+    /**
+     * Save the TriMesh in VTK format.
+     * @param fileName file name
+     * @param kMesh TriMesh
+     */
+    private static void saveAsVTKXML(String fileName, TriMesh kMesh)
+    {
+    	try {
+    		FileSurfaceVTKXML_WM surfaceVTKXML = new FileSurfaceVTKXML_WM(null, null);
+        	surfaceVTKXML.writeXMLsurface(fileName, kMesh);
+        } catch (IOException kError) { }
+    }
+
+    /**
+     * Support for saving the collapse records to a binary file. 
+     * @param kOut  the file to which the records are saved
+     * @param kRecord CollapseRecord to save.
+     * @exception  IOException  if the there is an error writing to the file
+     */
+    private static void saveCollapseRecord(RandomAccessFile kOut, CollapseRecord kRecord) throws IOException {
+        kOut.writeInt(kRecord.VKeep);
+        kOut.writeInt(kRecord.VThrow);
+        kOut.writeInt(kRecord.VQuantity);
+        kOut.writeInt(kRecord.TQuantity);
+        kOut.writeInt(kRecord.IQuantity);
+
+        byte[] bufferInt = new byte[kRecord.IQuantity * 4];
+        int tmpInt;
+        for (int i = 0, index = 0; i < kRecord.IQuantity; i++) {
+            tmpInt = kRecord.Index[i];
+            bufferInt[index++] = (byte) (tmpInt >>> 24);
+            bufferInt[index++] = (byte) (tmpInt >>> 16);
+            bufferInt[index++] = (byte) (tmpInt >>> 8);
+            bufferInt[index++] = (byte) (tmpInt & 0xff);
+        }
+        kOut.write(bufferInt);
+    }
+	
     /**
      * Saves a single level of detail to a mesh file. Opens a file dialog to get the output file name from the user.
      *
      * @param  kImage  ModelImage displayed in the SurfaceRender object
      * @param  isSur   true if .sur file, otherwise .wrl file
+     * @param kMesh TruNesg
      */
     private static void saveSingleMesh(ModelImage kImage, boolean isSur, TriMesh kMesh)
     {
@@ -1315,13 +2454,14 @@ public class FileSurface_WM {
 
         saveSingleMesh( name, kImage, isSur, kMesh );
     }
-
+	
     /**
      * Saves a single level of detail to a mesh file. The file name is passed as a parameter.
      *
      * @param  name    the file name
      * @param  kImage  ModelImage displayed in the SurfaceRender object
      * @param  isSur   true if .sur file, otherwise .wrl file
+     * @param kMesh TriMesh
      */
     private static void saveSingleMesh(String name, ModelImage kImage, boolean isSur, TriMesh kMesh )
     {
@@ -1409,11 +2549,9 @@ public class FileSurface_WM {
         }
     }
 
-
     /**
      * Saves a single level of detail to a STL mesh file.
-     *
-     * @param  kImage  ModelImage displayed in the SurfaceRender object
+     * @param  kName file name.
      * @param  kMesh   Triangle mesh
      */
     private static void saveSinglePlyMesh(String kName, TriMesh kMesh)
@@ -1471,12 +2609,10 @@ public class FileSurface_WM {
         }
 	        
     }
-    
-    
+
     /**
      * Saves a single level of detail to a STL mesh file.
-     *
-     * @param  kImage  ModelImage displayed in the SurfaceRender object
+     * @param  kName file name.
      * @param  kMesh   Triangle mesh
      */
     private static void saveSingleSTLMesh(String kName, TriMesh kMesh ) {
@@ -1514,539 +2650,20 @@ public class FileSurface_WM {
         }
 	        
     }
-   
-    private static void printSTLAscii(PrintWriter kOut, TriMesh kMesh)
-    {
-        int i;
-        int index1, index2, index3;
-        int iTriangleCount = kMesh.IBuffer.GetIndexQuantity() / 3;
-        int[] aiIndex = kMesh.IBuffer.GetData();
-        Vector3f kVertex = new Vector3f();
-        Vector3f kNormal = new Vector3f();
-        Vector3f kNormal1 = new Vector3f();
-        Vector3f kNormal2 = new Vector3f();
-        Vector3f kNormal3 = new Vector3f();
 
-        kOut.println("solid");
-        
-        for (i = 0; i < iTriangleCount; i++) {
-            index1 = aiIndex[(3 * i)];    
-            index2 = aiIndex[((3 * i) + 1)];
-            index3 = aiIndex[((3 * i) + 2)];
-            
-            kMesh.VBuffer.GetPosition3(index1, kNormal1);
-            kMesh.VBuffer.GetPosition3(index2, kNormal2);
-            kMesh.VBuffer.GetPosition3(index3, kNormal3);
-	            
-            // Compute facet normal
-            kNormal.Set(0f, 0f, 0f);
-            kNormal.Add(kNormal1);
-            kNormal.Add(kNormal2);
-            kNormal.Add(kNormal3);
-            kNormal.Scale(1f/3f);
-            
-            kOut.print(" facet normal  ");
-            kOut.print(kNormal.X);
-            kOut.print(' ');
-            kOut.print(kNormal.Y);
-            kOut.print(' ');
-            kOut.println(kNormal.Z);
-            
-            kOut.println("   outer loop");
-            // index 1
-            kMesh.VBuffer.GetPosition3(index1, kVertex);
-            kOut.print("     vertex ");
-            kOut.print(kVertex.X);
-            kOut.print(' ');
-            kOut.print(kVertex.Y);
-            kOut.print(' ');
-            kOut.println(kVertex.Z);
-            // index 2
-            kMesh.VBuffer.GetPosition3(index2, kVertex);
-            kOut.print("     vertex ");
-            kOut.print(kVertex.X);
-            kOut.print(' ');
-            kOut.print(kVertex.Y);
-            kOut.print(' ');
-            kOut.println(kVertex.Z);
-            // index 3
-            kMesh.VBuffer.GetPosition3(index3, kVertex);
-            kOut.print("     vertex ");
-            kOut.print(kVertex.X);
-            kOut.print(' ');
-            kOut.print(kVertex.Y);
-            kOut.print(' ');
-            kOut.println(kVertex.Z);
-            
-            kOut.println("   endloop");
-            kOut.println(" endfacet");
-        }
-        kOut.println("endsolid");
-    }
-
-
-    private static void printSTLBinary( RandomAccessFile kOut, TriMesh kMesh ) throws IOException
-    {
-        int index1, index2, index3;
-        byte[] attribute = new byte[2];
-        int iTriangleCount = kMesh.IBuffer.GetIndexQuantity() / 3;
-        int[] aiIndex = kMesh.IBuffer.GetData();
-	               
-        Vector3f kVertex = new Vector3f();
-        Vector3f kNormal = new Vector3f();
-        Vector3f kNormal1 = new Vector3f();
-        Vector3f kNormal2 = new Vector3f();
-        Vector3f kNormal3 = new Vector3f();
-	        
-        // nothing header
-        byte[] header = new byte[80];
-        kOut.write(header);
-	       
-        // number of facets
-        kOut.write(FileBase.intToBytes(iTriangleCount, false));
-	        
-        for (int i = 0; i < iTriangleCount; i++) {	            
-            index1 = aiIndex[(3 * i)];    
-            index2 = aiIndex[((3 * i) + 1)];
-            index3 = aiIndex[((3 * i) + 2)];
-	            
-            kMesh.VBuffer.GetPosition3(index1, kNormal1);
-            kMesh.VBuffer.GetPosition3(index2, kNormal2);
-            kMesh.VBuffer.GetPosition3(index3, kNormal3);
-	            
-            // Compute facet normal
-            kNormal.Set(0f, 0f, 0f);
-            kNormal.Add(kNormal1);
-            kNormal.Add(kNormal2);
-            kNormal.Add(kNormal3);
-            kNormal.Scale(1f/3f);
-	        
-            // facet normal
-            kOut.write(FileBase.floatToBytes(kNormal.X, false));
-            kOut.write(FileBase.floatToBytes(kNormal.Y, false));
-            kOut.write(FileBase.floatToBytes(kNormal.Z, false));
-	            
-            // index 1
-            kMesh.VBuffer.GetPosition3(index1, kVertex);;            
-            kOut.write(FileBase.floatToBytes(kVertex.X, false));
-            kOut.write(FileBase.floatToBytes(kVertex.Y, false));
-            kOut.write(FileBase.floatToBytes(kVertex.Z, false));
-	                       
-            // index 2
-            kMesh.VBuffer.GetPosition3(index2, kVertex);;
-            kOut.write(FileBase.floatToBytes(kVertex.X, false));
-            kOut.write(FileBase.floatToBytes(kVertex.Y, false));
-            kOut.write(FileBase.floatToBytes(kVertex.Z, false));
-
-            // index 3
-            kMesh.VBuffer.GetPosition3(index3, kVertex);
-            kOut.write(FileBase.floatToBytes(kVertex.X, false));
-            kOut.write(FileBase.floatToBytes(kVertex.Y, false));
-            kOut.write(FileBase.floatToBytes(kVertex.Z, false));
-	            
-            // 2 byte attribute == 0
-            kOut.write(attribute);
-	            
-        }
-
-    }
 
     /**
-     * Saves the triangle mesh in VRML97 (VRML 2.0) format (text format).
-     *
-     * @param      kName          the name of file to which the triangle mesh is saved
-     * @param      akComponent    DOCUMENT ME!
-     * @param      flip           if the y and z axes should be flipped - true in extract and in save of JDialogSurface
-     *                            To have proper orientations in surface file if flip is true flip y and z on reading.
-     *                            param direction 1 or -1 for each axis param startLocation param box (dim-1)*resolution
-     * @param      direction      DOCUMENT ME!
-     * @param      startLocation  DOCUMENT ME!
-     * @param      box            DOCUMENT ME!
-     * @param      color          DOCUMENT ME!
-     *
-     * @exception  IOException  if the specified file could not be opened for writing
-     */
-    private static void saveAsVRML(String kName, TriMesh kMesh, VertexBuffer kVBuffer, boolean flip, int[] direction,
-                                  float[] startLocation, float[] box) 
-        throws IOException
-    {
-
-        //         if (akComponent.length == 0) {
-        //             return;
-        //         }
-
-        PrintWriter kOut = new PrintWriter(new FileWriter(kName));
-
-        kOut.println("#VRML V2.0 utf8");
-        kOut.println("#MIPAV");
-        //kOut.println("#Number of shapes = " + akComponent.length);
-        kOut.println("#Number of shapes = " + 1);
-        //         for (int i = 0; i < akComponent.length; i++) {
-        saveAsVRML(kOut, kMesh, kVBuffer, flip, direction, startLocation, box);
-        //         }
-
-        kOut.close();
-    }
-    
-    /**
-     * Saves the triangle mesh in VRML97 (VRML 2.0) format. File name should end with ".wrl"
-     *
-     * @param      kOut           the file to which the triangle mesh is saved
-     * @param      flip           if the y and z axes should be flipped - true in extract and in save of JDialogSurface
-     *                            To have proper orientations in surface file if flip is true flip y and z on reading.
-     * @param      direction      1 or -1 for each axis
-     * @param      startLocation  DOCUMENT ME!
-     * @param      box            (dimension-1)*resolution
-     * @param      color          DOCUMENT ME!
-     *
-     * @exception  IOException  if there is an error writing to the file
-     */
-    protected static void saveAsVRML(PrintWriter kOut, TriMesh kMesh, VertexBuffer kVBuffer, boolean flip, int[] direction, float[] startLocation, float[] box)
-    {
-        kOut.print("#flip { ");
-
-        if (flip) {
-            kOut.print(1);
-        } else {
-            kOut.print(0);
-        }
-
-        kOut.print(" }\n");
-
-        kOut.print("#direction { ");
-        kOut.print(direction[0]);
-        kOut.print(' ');
-        kOut.print(direction[1]);
-        kOut.print(' ');
-        kOut.print(direction[2]);
-        kOut.print(" }\n");
-
-        kOut.print("#startLocation { ");
-        kOut.print(startLocation[0]);
-        kOut.print(' ');
-        kOut.print(startLocation[1]);
-        kOut.print(' ');
-        kOut.print(startLocation[2]);
-        kOut.print(" }\n");
-
-        kOut.print("#box { ");
-        kOut.print(box[0]);
-        kOut.print(' ');
-        kOut.print(box[1]);
-        kOut.print(' ');
-        kOut.print(box[2]);
-        kOut.print(" }\n");
-
-        MaterialState kMaterial = (MaterialState)kMesh.GetGlobalState( GlobalState.StateType.MATERIAL );
-        if ( kMaterial == null )
-        {
-            kMaterial = new MaterialState();
-        }
-
-        kOut.print("Shape\n{\n");
-        kOut.print("\tappearance Appearance {\n");
-        kOut.print("\t\tmaterial Material {\n");
-        kOut.print("\t\t\temissiveColor\t");
-        kOut.print( kMaterial.Emissive.R + " ");
-        kOut.print( kMaterial.Emissive.G + " ");
-        kOut.print( kMaterial.Emissive.B );
-        kOut.print("\n\t\t\tdiffuseColor\t");
-        kOut.print( kMaterial.Diffuse.R + " ");
-        kOut.print( kMaterial.Diffuse.G + " ");
-        kOut.print( kMaterial.Diffuse.B );
-        kOut.print("\n\t\t\tspecularColor\t");
-        kOut.print( kMaterial.Specular.R + " ");
-        kOut.print( kMaterial.Specular.G + " ");
-        kOut.print( kMaterial.Specular.B );
-
-        float fTransparency = 0f;
-        if ( kVBuffer.GetAttributes().GetCChannels(0) == 4)
-        {
-        	fTransparency = 1.0f - kVBuffer.GetColor4(0, 0).A;
-        }
-        kOut.print("\n\t\t\ttransparency " + fTransparency + "\n");
-        kOut.print("\t\t}\n");
-        kOut.print("\t}\n");
-
-        kOut.print("\tgeometry IndexedFaceSet\n\t{\n");
-
-        kOut.print("\t\tcoord Coordinate\n");
-        kOut.print("\t\t{\n");
-        kOut.print("\t\t\tpoint [\n\t\t\t\t");
-
-        // write vertices
-        Vector3f kPos = new Vector3f();
-        int i;
-        for (i = 0; i < kVBuffer.GetVertexQuantity(); i++) {
-            kVBuffer.GetPosition3(i, kPos);
-            kOut.print(kPos.X);
-            kOut.print(' ');
-
-            kOut.print(kPos.Y);
-            kOut.print(' ');
-
-            kOut.print(kPos.Z);
-
-            if (i < (kVBuffer.GetVertexQuantity() - 1)) {
-                kOut.print(" ,\n\t\t\t\t");
-            } else {
-                kOut.print("\n\t\t\t\t]\n");
-            }
-        }
-
-        // write connectivity
-        kOut.print("\t\t\t}\n\t\t\tcoordIndex [\n\t\t\t\t");
-        int iTriangleCount = kMesh.IBuffer.GetIndexQuantity() / 3;
-        int[] aiIndex = kMesh.IBuffer.GetData();
-        for (i = 0; i < iTriangleCount; i++) {
-            kOut.print(aiIndex[3 * i]);
-            kOut.print(' ');
-            kOut.print(aiIndex[(3 * i) + 1]);
-            kOut.print(' ');
-            kOut.print(aiIndex[(3 * i) + 2]);
-
-            if (i < (iTriangleCount - 1)) {
-                kOut.print(" -1\n\t\t\t\t");
-            } else {
-                kOut.print("\n\t\t\t\t]\n");
-            }
-        }
-
-        kOut.print("\t\t\tconvex FALSE\n");
-        kOut.print("\t\t\tcreaseAngle 1.5\n");
-        kOut.print("\t}\n}\n");
-    }
-
-    public static void save(String kName, TriMesh kMesh,
-                            int iType, VertexBuffer kVBuffer,
-                            boolean flip, int[] direction, float[] startLocation, float[] box,
-                            TransMatrix inverseDicomMatrix)
-    throws IOException
-    {
-        if (kName == null)
-        {
-            return;
-        }
-        
-        int i = kName.lastIndexOf('.');
-        String kExt = kName.substring(i);
-        if ( kExt.equals(".sur" ) )
-        { 
-        	saveSur(kName,kMesh,iType,kVBuffer,flip,direction,startLocation,box,inverseDicomMatrix);
-        }
-        else if ( kExt.equals(".ply" ) )
-        {
-            saveSinglePlyMesh(kName, kMesh);
-        }
-        else if ( kExt.equals(".stla" ) )
-        {
-        	saveSingleSTLMesh(kName, kMesh);
-        }
-        else if ( kExt.equals(".stlb" ) )
-        {
-        	saveSingleSTLMesh(kName, kMesh);
-        }
-        else if ( kExt.equals(".txt" ) )
-        {
-            saveAsTextFile(kName, kMesh );
-        }
-        else if ( kExt.equals(".vtk" ) )
-        {
-            saveAsVTKLegacy(kName, kMesh);
-        }
-        else if ( kExt.equals(".vtp" ) )
-        {
-            saveAsVTKXML(kName, kMesh);
-        }
-        else if ( kExt.equals(".xml" ) )
-        {
-            try {
-                FileSurfaceRefXML_WM kSurfaceXML = new FileSurfaceRefXML_WM(null, null);
-                MaterialState kMaterial = (MaterialState)kMesh.GetGlobalState(GlobalState.StateType.MATERIAL);
-                if ( kMaterial == null )
-                {
-                    kMaterial = new MaterialState();
-                }
-                float fOpacity = 0f;
-                if ( kMesh.VBuffer.GetAttributes().GetCChannels(0) == 4 )
-                {
-                    fOpacity = 1.0f - kMesh.VBuffer.GetColor4(0, 0).A;
-                }
-                int iLOD = 0;
-                kSurfaceXML.writeXMLsurface_WM(kName, kMaterial, fOpacity, iLOD );     
-                String surfaceName = kName.substring(0, i) + ".sur"; 
-                saveSur(surfaceName,kMesh,iType,kVBuffer,flip,direction,startLocation,box,inverseDicomMatrix);
-            } catch ( IOException kError ) { }
-        }
-        else if ( kExt.equals(".wrl" ) )
-        {
-            saveAsVRML( kName, kMesh, kVBuffer, flip, direction, startLocation,  box );
-        }
-    }
-    
-    private static void saveAsTextFile(String kName, TriMesh kMesh) throws IOException {
-
-
-        PrintWriter kOut = new PrintWriter(new FileWriter(kName));
-
-        kOut.println('0');
-        kOut.println(1);
-
-        printAscii(kOut, kMesh);
-
-        kOut.close();
-    }
-
-    private static void printAscii(PrintWriter kOut, TriMesh kMesh) {
-    	Vector3f kVertex = new Vector3f();
-        Vector3f kNormal = new Vector3f();
-
-        // write vertices
-        kOut.println(kMesh.VBuffer.GetVertexQuantity());
-        kOut.println("Vertices");
-
-        int i;
-
-        for (i = 0; i < kMesh.VBuffer.GetVertexQuantity(); i++) {
-            kMesh.VBuffer.GetPosition3(i, kVertex);
-            kOut.print(kVertex.X);
-            kOut.print(' ');
-            kOut.print(kVertex.Y);
-            kOut.print(' ');
-            kOut.println(kVertex.Z);
-        }
-
-        kOut.println("Normals");
-
-        // write normals
-        for (i = 0; i < kMesh.VBuffer.GetVertexQuantity(); i++) {
-        	kMesh.VBuffer.GetNormal3(i, kNormal);
-            kOut.print(kNormal.X);
-            kOut.print(' ');
-            kOut.print(kNormal.Y);
-            kOut.print(' ');
-            kOut.println(kNormal.Z);
-        }
-
-        kOut.println("Connectivity");
-
-        // write connectivity
-        int iTriangleCount = kMesh.GetTriangleQuantity();
-        int[] aiIndex = kMesh.IBuffer.GetData();
-        kOut.println(iTriangleCount);
-
-        for (i = 0; i < iTriangleCount; i++) {
-            kOut.print(aiIndex[(3 * i)]);
-            kOut.print(' ');
-            kOut.print(aiIndex[((3 * i) + 1)]);
-            kOut.print(' ');
-            kOut.println(aiIndex[((3 * i) + 2)]);
-        }
-    }
-    
-    private static TriMesh readAscii(File kFile) throws IOException {
-        DataInputStream in =
-            new DataInputStream(new BufferedInputStream(new FileInputStream(kFile)));
-        String s, token;
-        s = readLine(in);
-        s = readLine(in);
-        s = readLine(in);
-        StringTokenizer st = new StringTokenizer(s);
-        int iNumVertices = 1;
-        if ( st.hasMoreTokens() )
-        {
-            token = st.nextToken();
-            iNumVertices = Integer.valueOf(token).intValue();
-        }
-        Attributes kAttr = new Attributes();
-        kAttr.SetPChannels(3);
-        kAttr.SetNChannels(3);
-        kAttr.SetTChannels(0, 3);
-        kAttr.SetCChannels(0, 4);
-        VertexBuffer kVBuffer = new VertexBuffer(kAttr, iNumVertices);
-        float fX, fY, fZ;
-        s = readLine(in);
-        for ( int i = 0; i < iNumVertices; i++ )
-        {
-            s = readLine(in);
-            st = new StringTokenizer(s);
-            token = st.nextToken();
-            fX = Float.valueOf(token).floatValue();
-            token = st.nextToken();
-            fY = Float.valueOf(token).floatValue();
-            token = st.nextToken();
-            fZ = Float.valueOf(token).floatValue();
-            kVBuffer.SetPosition3( i, fX, fY, fZ );
-            kVBuffer.SetColor4( 0, i, ColorRGBA.WHITE);
-        }
-        s = readLine(in);
-        for ( int i = 0; i < iNumVertices; i++ )
-        {
-            s = readLine(in);
-            st = new StringTokenizer(s);
-            token = st.nextToken();
-            fX = Float.valueOf(token).floatValue();
-            token = st.nextToken();
-            fY = Float.valueOf(token).floatValue();
-            token = st.nextToken();
-            fZ = Float.valueOf(token).floatValue();
-            kVBuffer.SetNormal3( i, fX, fY, fZ );
-        }
-        
-        int iTriangleCount = 0;
-        s = readLine(in);
-        s = readLine(in);
-        st = new StringTokenizer(s);
-        if ( st.hasMoreTokens() )
-        {
-            token = st.nextToken();
-            iTriangleCount = Integer.valueOf(token).intValue();
-        }
-
-        int[] aiIndex = new int[ iTriangleCount * 3 ];
-
-        for (int i = 0; i < iTriangleCount; i++) {
-            s = readLine(in);
-            st = new StringTokenizer(s);
-            token = st.nextToken();
-            aiIndex[(3 * i)] = Integer.valueOf(token).intValue();
-            token = st.nextToken();
-            aiIndex[((3 * i) + 1)] = Integer.valueOf(token).intValue();
-            token = st.nextToken();
-            aiIndex[((3 * i) + 2)] = Integer.valueOf(token).intValue();
-        }
-        return new TriMesh( kVBuffer, new IndexBuffer(aiIndex) );
-    }
-    
-
-    private static void saveAsVTKLegacy(String kName, TriMesh kMesh) throws IOException {
-    	PrintWriter kOut = new PrintWriter(new FileWriter(kName));
-    	int pointCount = kMesh.VBuffer.GetVertexQuantity();
-        int indexCount = kMesh.IBuffer.GetIndexQuantity();
-        kOut.println("# vtk DataFile Version 2.0");
-        kOut.println(kMesh.GetName());
-        kOut.println("ASCII");
-        kOut.println("DATASET POLYDATA");
-        kOut.println("POINTS "+pointCount+" float");
-        Vector3f p=new Vector3f();
-        String tmp;
-        for(int i=0;i<pointCount;i++){
-            kMesh.VBuffer.GetPosition3(i,p);
-            tmp=String.format("%.5f %.5f %.5f\n", p.X,p.Y,p.Z);
-            kOut.print(tmp);
-        }
-        kOut.println("POLYGONS "+indexCount/3+" "+(4*indexCount/3));
-        int[] aiIndex = kMesh.IBuffer.GetData();
-        for(int i=0;i<indexCount;i+=3){
-            kOut.println(3+" "+aiIndex[i]+" "+aiIndex[i+1]+" "+aiIndex[i+2]);
-        }
-        kOut.close();
-    }
-
-    
-    /**
-     * 
-     * @exception  IOException  if there is an error writing to the file
+     * Write the TriMesh to disk in the .sur format.
+     * @param kName file name.
+     * @param kMesh TriMesh.
+     * @param iType type == 0 for TriMesh, type == 1 for ClodMesh
+     * @param kVBuffer TriMesh VertexBuffer
+     * @param flip flag for inverting the y,z values
+     * @param direction 3D mesh direction
+     * @param startLocation 3D mesh location
+     * @param box 3D mesh bounding box
+     * @param inverseDicomMatrix dicom matrix information.
+     * @throws IOException if there is an error writing to the file
      */
     private static void saveSur(String kName, TriMesh kMesh,
                                int iType, VertexBuffer kVBuffer,
@@ -2262,503 +2879,14 @@ public class FileSurface_WM {
         kOut.close();
     }
 
-    private static void saveAsVTKXML(String fileName, TriMesh kMesh) throws IOException{
-    	try {
-    		FileSurfaceVTKXML_WM surfaceVTKXML = new FileSurfaceVTKXML_WM(null, null);
-        	surfaceVTKXML.writeXMLsurface(fileName, kMesh);
-        } catch (IOException kError) { }
-    }
     
-    private static TriMesh loadVTKXMLMesh(String absPath, String fileName, String dir)
-        throws IOException
-    {
-        TriMesh kMesh = null;
-        
-        FileSurfaceVTKXML_WM surfaceVTKXML = new FileSurfaceVTKXML_WM(fileName, dir);
-        kMesh = surfaceVTKXML.readXMLSurface_WM(absPath);
-
-        return kMesh;
-    }
-   
-    /**
-     * Load the STL Binary file.
-     * 
-     * @param file
-     *            STL surface file reference
-     * @return Triangle mesh
-     */
-    private static TriMesh loadSTLBinaryMesh(RandomAccessFile kIn)
-        throws IOException {
-        int iTriangleCount;
-        HashMap<String, Integer> vertexHashtable = new HashMap<String, Integer>();
-        float x, y, z;
-        byte[] value = new byte[4];
-        byte[] header = new byte[80];
-        byte[] attribute = new byte[2];
-        VertexBuffer kVBuffer;
-        int[] aiConnect;
-        TriMesh kMesh = null;
-        Vector<Vector3f> vertexArray = new Vector<Vector3f>();
-        Integer searchIndex;
-        Vector<Integer> connectivity = new Vector<Integer>();
-        Vector3f vertex1, vertex2, vertex3;
-        Vector3f temp = new Vector3f();
-        Vector3f normal = new Vector3f();
-        Vector3f side1 = new Vector3f();
-        Vector3f side2 = new Vector3f();
-        Vector3f surfaceNormal = new Vector3f();
-
-        try {
-            // nothing header
-            kIn.read(header);
-
-            // number of facets
-            kIn.read(value);
-            iTriangleCount = FileBase.bytesToInt(false, 0, value);
-
-            int index = 0;
-
-            for (int i = 0; i < iTriangleCount; i++) {
-                // read normal.x, normal.y, normal.z
-                kIn.read(value);
-                x = FileBase.bytesToFloat(false, 0, value);
-                kIn.read(value);
-                y = FileBase.bytesToFloat(false, 0, value);
-                kIn.read(value);
-                z = FileBase.bytesToFloat(false, 0, value);
-                normal = new Vector3f(x, y, z);
-
-                // index 1
-                kIn.read(value);
-                x = FileBase.bytesToFloat(false, 0, value);
-                kIn.read(value);
-                y = FileBase.bytesToFloat(false, 0, value);
-                kIn.read(value);
-                z = FileBase.bytesToFloat(false, 0, value);
-
-                vertex1 = new Vector3f(x, y, z);
-
-                // index 2
-                kIn.read(value);
-                x = FileBase.bytesToFloat(false, 0, value);
-                kIn.read(value);
-                y = FileBase.bytesToFloat(false, 0, value);
-                kIn.read(value);
-                z = FileBase.bytesToFloat(false, 0, value);
-
-                vertex2 = new Vector3f(x, y, z);
-
-                // index 3
-                kIn.read(value);
-                x = FileBase.bytesToFloat(false, 0, value);
-                kIn.read(value);
-                y = FileBase.bytesToFloat(false, 0, value);
-                kIn.read(value);
-                z = FileBase.bytesToFloat(false, 0, value);
-
-                vertex3 = new Vector3f(x, y, z);
-
-                // Check that the normal is in the correct direction
-                side1.Sub(vertex2, vertex1);
-                side2.Sub(vertex3, vertex2);
-                surfaceNormal.Cross(side1, side2);
-                //side1.Cross(side2, surfaceNormal);
-                if (normal.Dot(surfaceNormal) < 0) {
-                    // vertices were specified in the wrong order, so reverse
-                    // two of them
-                    temp.Copy(vertex2);
-                    vertex2.Copy(vertex3);
-                    vertex3.Copy(temp);
-                }
-
-                // index1
-                x = vertex1.X;
-                y = vertex1.Y;
-                z = vertex1.Z;
-                searchIndex = vertexHashtable.get((x + " " + y + " " + z));
-                if (searchIndex == null) { // not found
-                    vertexHashtable.put((x + " " + y + " " + z), new Integer(
-                                                                             index));
-                    connectivity.add(new Integer(index));
-                    vertexArray.add(new Vector3f(x, y, z));
-                    index++;
-                } else {
-                    connectivity.add(searchIndex);
-                }
-
-                // index 2
-                x = vertex2.X;
-                y = vertex2.Y;
-                z = vertex2.Z;
-                searchIndex = vertexHashtable.get((x + " " + y + " " + z));
-                if (searchIndex == null) {
-                    vertexHashtable.put((x + " " + y + " " + z), new Integer(
-                                                                             index));
-                    connectivity.add(new Integer(index));
-                    vertexArray.add(new Vector3f(x, y, z));
-                    index++;
-                } else {
-                    connectivity.add(searchIndex);
-                }
-
-                // index 3
-                x = vertex3.X;
-                y = vertex3.Y;
-                z = vertex3.Z;
-                searchIndex = vertexHashtable.get((x + " " + y + " " + z));
-                if (searchIndex == null) {
-                    vertexHashtable.put((x + " " + y + " " + z), new Integer(
-                                                                             index));
-                    vertexArray.add(new Vector3f(x, y, z));
-                    connectivity.add(new Integer(index));
-                    index++;
-                } else {
-                    connectivity.add(searchIndex);
-                }
-
-                // attribute
-                kIn.read(attribute);
-            }
-
-            int vertexCount = vertexArray.size();
-            Attributes kAttr = new Attributes();
-            kAttr.SetPChannels(3);
-            kAttr.SetNChannels(3);
-            kAttr.SetTChannels(0, 3);
-            kAttr.SetCChannels(0, 4);
-            kVBuffer = new VertexBuffer(kAttr, vertexCount);
-
-            index = 0;
-            Vector3f pos;
-            for (int i = 0; i < vertexCount; i++) {
-                pos = (Vector3f) vertexArray.elementAt(i);
-                kVBuffer.SetPosition3(index, pos);
-                kVBuffer.SetColor4(0, index, 1.0f, 1.0f, 1.0f, 1.0f);
-                index++;
-            }
-
-            int indexCount = connectivity.size();
-            aiConnect = new int[indexCount];
-            for (int i = 0; i < indexCount; i++) {
-                aiConnect[i] = connectivity.get(i);
-            }
-
-        } catch (IOException e) {
-            return null;
-        }
-        IndexBuffer kIBuffer = new IndexBuffer(aiConnect.length, aiConnect);
-        kMesh = new TriMesh(kVBuffer, kIBuffer);
-        MaterialState kMaterial = new MaterialState();
-        kMesh.AttachGlobalState(kMaterial);
-        return kMesh;
-
-    }
-
-    /** Read a line of ASCII text from the input stream. */
-	  
-    private static String readLine(InputStream in) throws IOException
-    {
-        StringBuffer buf = new StringBuffer();
-        int c;
-        while ((c = in.read()) > -1 && c != '\n')
-        {
-            buf.append((char) c);
-        }
-        return buf.toString();
-    }
-	
-    private static TriMesh loadPlyAsciiMesh(File file) {
-
-        TriMesh mesh;
-        int i;
-        int iVertexCount = 0;
-        int iTriangleCount = 0;
-        boolean readHeader = true;
-        float x = 0f, y = 0f, z = 0f;
-        int idx1 = 0, idx2 = 0, idx3 = 0;
-		
-        Vector<Vector3f> vertexArray = new Vector<Vector3f>();
-        Vector<Integer> connectivity = new Vector<Integer>();
-        VertexBuffer kVBuffer;
-        int[] aiConnect;
-		
-        try {
-            DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-            String s, token;
-            while ( (s = readLine(in)).length() > 0) {
-                StringTokenizer st = new StringTokenizer(s);
-                while ( st.hasMoreTokens() && readHeader ) {
-                    // System.err.print(st.nextToken() + " ");
-                    token = st.nextToken();
-                    if ( token.equals("vertex")) {
-                        iVertexCount = Integer.valueOf(st.nextToken());
-                    } else if ( token.equals("face") ) {
-                        iTriangleCount = Integer.valueOf(st.nextToken());
-                        readLine(in);
-                        readLine(in);  // skip two lines follow the face count attribute in PLY file format.
-                        readHeader = false;
-                        break;
-                    }
-                }
-                if ( readHeader == false) break;
-            }
-		    
-            // read Vertex 
-            for ( i = 0; i < iVertexCount; i++ ) {
-                s = readLine(in);
-                StringTokenizer st = new StringTokenizer(s);
-                x = Float.valueOf(st.nextToken());
-                y = Float.valueOf(st.nextToken());
-                z = Float.valueOf(st.nextToken());
-                vertexArray.add(new Vector3f(x, y, z));
-            }
-		    
-            // read connectivity
-            for ( i = 0; i < iTriangleCount; i++ ) {
-                s = readLine(in);
-                StringTokenizer st = new StringTokenizer(s);
-                st.nextToken();  // skip 3
-                idx1 = Integer.valueOf(st.nextToken());
-                connectivity.add(idx1);
-                idx2 = Integer.valueOf(st.nextToken());
-                connectivity.add(idx2);
-                idx3 = Integer.valueOf(st.nextToken());
-                connectivity.add(idx3);
-            }
-		    
-            int vertexCount = vertexArray.size();
-            Attributes kAttr = new Attributes();
-            kAttr.SetPChannels(3);
-            kAttr.SetNChannels(3);
-            kAttr.SetTChannels(0, 3);
-            kAttr.SetCChannels(0, 4);
-            kVBuffer = new VertexBuffer(kAttr, vertexCount);
-
-            int index = 0;
-            Vector3f pos;
-            for (i = 0; i < vertexCount; i++) {
-                pos = (Vector3f) vertexArray.elementAt(i);
-                kVBuffer.SetPosition3(index, pos);
-                kVBuffer.SetColor4(0, index, 1.0f, 1.0f, 1.0f, 1.0f);
-                index++;
-            }
-
-            int indexCount = connectivity.size();
-            aiConnect = new int[indexCount];
-            for (i = 0; i < indexCount; i++) {
-                aiConnect[i] = connectivity.get(i);
-            }
-		    
-            IndexBuffer kIBuffer = new IndexBuffer( aiConnect.length, aiConnect );
-            mesh = new TriMesh(kVBuffer, kIBuffer);
-            MaterialState kMaterial = new MaterialState();
-            mesh.AttachGlobalState( kMaterial );
-            return mesh;
-        } catch (FileNotFoundException e) {
-            System.err.println("ERROR: Can't find file " + file);
-            return null;
-        } catch (IOException e) {
-            return null;
-        }
-    }
-	
-    /**
-     * Load the STL ASCII file.
-     * 
-     * @param file
-     *            STL surface file reference
-     * @return Triangle mesh
-     */
-    private static TriMesh loadSTLAsciiMesh(File file) {
-
-        TriMesh mesh; 
-        try {
-            BufferedReader reader;
-            reader = new BufferedReader(new FileReader(file));
-            StreamTokenizer tokenizer = new StreamTokenizer(reader);
-            tokenizer.resetSyntax();
-            tokenizer.whitespaceChars(0, 0x20);
-            tokenizer.wordChars(0x21, 0xff);
-            mesh = readSTLAscii(tokenizer);
-            reader.close();
-            return mesh;
-        } catch (FileNotFoundException e) {
-            System.err.println("ERROR: Can't find file " + file);
-            return null;
-        } catch (IOException e) {
-            return null;
-        }
-    }
+    
 
     /**
-     * Read the STL ASCII file as a single stream tokenizer.
-     * @param tokenizer  stream in
-     * @return  Triangle mesh
-     * @throws IOException
-     */
-    private static TriMesh readSTLAscii(StreamTokenizer tokenizer) throws IOException {
-		
-        Vector3f temp = new Vector3f();
-        Vector3f normal = new Vector3f(); 
-        Vector3f side1 = new Vector3f();
-        Vector3f side2 = new Vector3f();
-        Vector3f surfaceNormal = new Vector3f();
-        Vector<Vector3f> vertexArray = new Vector<Vector3f>();
-        VertexBuffer kVBuffer;
-        int[] aiConnect;
-        
-        TriMesh kMesh = null;
-        float x, y, z;
-        Vector3f vertex1, vertex2, vertex3;
-        int index = 0;
-        Integer searchIndex;
-        Vector<Integer> connectivity = new Vector<Integer>();
-        HashMap<String, Integer> vertexHashtable = new HashMap<String, Integer>();
-        try {
-            while (true) {
-                if ((temp = readPoint(tokenizer, "normal")) == null)
-                    break;
-                normal = new Vector3f(temp);
-
-                vertex1 = readPoint(tokenizer, "vertex");
-                vertex2 = readPoint(tokenizer, "vertex");
-                vertex3 = readPoint(tokenizer, "vertex");
-
-                // Check that the normal is in the correct direction
-                side1.Sub(vertex2, vertex1);
-                side2.Sub(vertex3, vertex2);
-				
-                surfaceNormal.Cross(side1, side2);
-                //side1.Cross(side2, surfaceNormal);
-                if (normal.Dot(surfaceNormal) < 0) {
-                    // vertices were specified in the wrong order, so reverse
-                    // two of them
-                    temp.Copy(vertex2);
-                    vertex2.Copy(vertex3);
-                    vertex3.Copy(temp);
-                }
-
-                // index 1;
-                x = vertex1.X;
-                y = vertex1.Y;
-                z = vertex1.Z;
-
-                searchIndex = vertexHashtable.get((x + " " + y + " " + z));
-                if (searchIndex == null) { // not found
-                    vertexHashtable.put((x + " " + y + " " + z), new Integer(
-                                                                             index));
-                    connectivity.add(new Integer(index));
-                    vertexArray.add(new Vector3f(x, y, z));
-                    index++;
-                } else {
-                    connectivity.add(searchIndex);
-                }
-				
-                // index 2;
-                x = vertex2.X;
-                y = vertex2.Y;
-                z = vertex2.Z;
-
-                searchIndex = vertexHashtable.get((x + " " + y + " " + z));
-                if (searchIndex == null) { // not found
-                    vertexHashtable.put((x + " " + y + " " + z), new Integer(
-                                                                             index));
-                    connectivity.add(new Integer(index));
-                    vertexArray.add(new Vector3f(x, y, z));
-                    index++;
-                } else {
-                    connectivity.add(searchIndex);
-                }
-				
-                // index 3;
-                x = vertex3.X;
-                y = vertex3.Y;
-                z = vertex3.Z;
-
-                searchIndex = vertexHashtable.get((x + " " + y + " " + z));
-                if (searchIndex == null) { // not found
-                    vertexHashtable.put((x + " " + y + " " + z), new Integer(
-                                                                             index));
-                    connectivity.add(new Integer(index));
-                    vertexArray.add(new Vector3f(x, y, z));
-                    index++;
-                } else {
-                    connectivity.add(searchIndex);
-                }
-
-            }
-
-            int vertexCount = vertexArray.size();
-            Attributes kAttr = new Attributes();
-            kAttr.SetPChannels(3);
-            kAttr.SetNChannels(3);
-            kAttr.SetTChannels(0, 3);
-            kAttr.SetCChannels(0, 4);
-            kVBuffer = new VertexBuffer(kAttr, vertexCount);
-
-            index = 0;
-            Vector3f pos;
-            for (int i = 0; i < vertexCount; i++) {
-                pos = (Vector3f) vertexArray.elementAt(i);
-                kVBuffer.SetPosition3(index, pos);
-                kVBuffer.SetColor4(0, index, 1.0f, 1.0f, 1.0f, 1.0f);
-                index++;
-            }
-
-            int indexCount = connectivity.size();
-            aiConnect = new int[indexCount];
-            for (int i = 0; i < indexCount; i++) {
-                aiConnect[i] = connectivity.get(i);
-            }
-
-        } catch (IOException e) {
-            throw e;
-        }
-        IndexBuffer kIBuffer = new IndexBuffer( aiConnect.length, aiConnect );
-        kMesh = new TriMesh(kVBuffer, kIBuffer);
-        MaterialState kMaterial = new MaterialState();
-        kMesh.AttachGlobalState( kMaterial );
-        return kMesh;
-    }
-
-    /**
-     * Find the given label in the tokenizer stream and then return the next
-     * three numbers as a point. Return null if end of stream
-     * 
-     * @param tokenizer
-     *            stream in
-     * @param label
-     *            string label (vertex, normal ) in the STL ASCII file.
-     * @return Vector3f point coordinate.
-     * @throws IOException
-     */
-    private static Vector3f readPoint(StreamTokenizer tokenizer, String label)
-        throws IOException {
-        while (true) {
-            if (tokenizer.nextToken() == StreamTokenizer.TT_EOF)
-                return null;
-            if (tokenizer.sval.equals(label))
-                break;
-        }
-
-        if (tokenizer.nextToken() == StreamTokenizer.TT_EOF)
-            return null;
-        float x = Float.valueOf(tokenizer.sval).floatValue();
-        if (tokenizer.nextToken() == StreamTokenizer.TT_EOF)
-            return null;
-        float y = Float.valueOf(tokenizer.sval).floatValue();
-        if (tokenizer.nextToken() == StreamTokenizer.TT_EOF)
-            return null;
-        float z = Float.valueOf(tokenizer.sval).floatValue();
-
-        return new Vector3f(x, y, z);
-    }
-
-    /**
-     * Writes a TriMesh and Material to disk in the xml format, based on surface.xsd.
-     *
-     * @param  kMesh    TriMesh surface mesh
-     * @param  surface  Material material reference.
+     * Writes a TriMesh to disk in the xml format, based on surface.xsd.
+     * @param  kName file name.
+     * @param kImage ModelImage associated with the TriMesh.
+     * @param  kMesh    TriMesh surface mesh.
      */
     private static void writeTriangleMeshXML(String kName, ModelImage kImage, TriMesh kMesh)
     {
@@ -2772,11 +2900,6 @@ public class FileSurface_WM {
             return;
         } 
         String surfaceName = null;
-
-        if (name == null) {
-            return;
-        }
-
         // Check the filename extension:
         int i = name.lastIndexOf('.');
         surfaceName = name.substring(0, i) + ".sur";
@@ -2802,35 +2925,6 @@ public class FileSurface_WM {
             kSurfaceXML.writeXMLsurface_WM(name, kMaterial, fOpacity, iLOD );
             saveSingleMesh( surfaceName, kImage, true, kMesh );
         } catch ( IOException kError ) { }
-    }
-
-    
-    
-
-    /**
-     * Parses the VRML to see how many surfaces there are.
-     *
-     * @param   kIn  the file to parse
-     *
-     * @return  DOCUMENT ME!
-     *
-     * @throws  IOException             DOCUMENT ME!
-     * @throws  NoSuchElementException  DOCUMENT ME!
-     */
-    public static int parseVRMLMesh(RandomAccessFile kIn) throws IOException, NoSuchElementException {
-        String str = kIn.readLine();
-
-        str = kIn.readLine();
-        str = kIn.readLine();
-
-        StringTokenizer token = new StringTokenizer(str);
-
-        token.nextToken();
-        token.nextToken();
-        token.nextToken();
-        token.nextToken();
-
-        return Integer.valueOf(token.nextToken()).intValue();
     }
 
 }

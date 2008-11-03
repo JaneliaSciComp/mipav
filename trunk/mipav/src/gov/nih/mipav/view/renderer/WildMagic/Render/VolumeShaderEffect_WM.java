@@ -29,12 +29,12 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     /** 
      * Creates a new VolumeShaderEffect object.
      * @param kImageA ModelImage A
-     * @param kLUTa, LUT for ModelImage A
-     * @param kRGBTa, RGB lookup table for ModelImage A
+     * @param kLUTa LUT for ModelImage A
+     * @param kRGBTa RGB lookup table for ModelImage A
      * @param kImageB ModelImage B
-     * @param kLUTb, LUT for ModelImage B
-     * @param kRGBTb, RGB lookup table for ModelImage B
-     * @param kSceneTarget, the SceneImage texture with the back-facing polygon texture coordinates.
+     * @param kLUTb LUT for ModelImage B
+     * @param kRGBTb RGB lookup table for ModelImage B
+     * @param kSceneTarget the SceneImage texture with the back-facing polygon texture coordinates.
      */
     public VolumeShaderEffect_WM ( VolumeImage kVolumeImageA, VolumeImage kVolumeImageB, 
                                 Texture kSceneTarget )
@@ -251,7 +251,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /**
      * Change to the MIP mode pixel shader program.
-     * @param kRenderer, the Renderer displaying the scene-graph, to which the
+     * @param kRenderer the Renderer displaying the scene-graph, to which the
      * new shader program is passed.
      */
     public void MIPMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
@@ -266,8 +266,8 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /**
      * Change to the input pixel shader program.
-     * @param kShader, the new pixel shader program to use.
-     * @param kRenderer, the Renderer displaying the scene-graph, to which the
+     * @param kShader the new pixel shader program to use.
+     * @param kRenderer the Renderer displaying the scene-graph, to which the
      * new shader program is passed.
      */
     private void SetProgram(PixelShader kShader,
@@ -297,7 +297,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /**
      * Change to the DDR mode pixel shader program.
-     * @param kRenderer, the Renderer displaying the scene-graph, to which the
+     * @param kRenderer the Renderer displaying the scene-graph, to which the
      * new shader program is passed.
      */
     public void DDRMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
@@ -312,7 +312,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /**
      * Change to the Composite mode pixel shader program.
-     * @param kRenderer, the Renderer displaying the scene-graph, to which the
+     * @param kRenderer the Renderer displaying the scene-graph, to which the
      * new shader program is passed.
      */
     public void CMPMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
@@ -327,7 +327,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /**
      * Change to the Composite Surface mode pixel shader program.
-     * @param kRenderer, the Renderer displaying the scene-graph, to which the
+     * @param kRenderer the Renderer displaying the scene-graph, to which the
      * new shader program is passed.
      */
     public void SURMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
@@ -357,7 +357,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /**
      * Change to the Surface mode pixel shader program.
-     * @param kRenderer, the Renderer displaying the scene-graph, to which the
+     * @param kRenderer the Renderer displaying the scene-graph, to which the
      * new shader program is passed.
      */
     public void SURFASTMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
@@ -418,7 +418,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     /**
      * Reload the current shader programs from disk, compile and parse and
      * send to the GPU.
-     * @param kRenderer, the Renderer object displaying the scene-graph which
+     * @param kRenderer the Renderer object displaying the scene-graph which
      * will apply the shader programs.
      */
     public void Reload( WildMagic.LibGraphics.Rendering.Renderer kRenderer )
@@ -470,8 +470,8 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /**
      * Sets the light type for the given light.
-     * @param kLightType, the name of the light to set (Light0, Light1, etc.)
-     * @param afType, the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
+     * @param kLightType the name of the light to set (Light0, Light1, etc.)
+     * @param afType the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
      */
     public void SetLight( String kLightType, float[] afType )
     {
@@ -493,7 +493,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /**
      * Sets the blend factor shader parameter between imageA and imageB.
-     * @param fBlend, blend factor (range = 0-1).
+     * @param fBlend blend factor (range = 0-1).
      */
     public void Blend(float fBlend)
     {
@@ -508,7 +508,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /**
      * Sets the blend factor shader parameter between imageA and imageB.
-     * @param fBlend, blend factor (range = 0-1).
+     * @param fBlend blend factor (range = 0-1).
      */
     public void setABBlend(float fBlend)
     {
@@ -521,7 +521,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /**
      * Sets the steps size factor shader parameter.
-     * @param stepsSize, blend factor (range = 0-1).
+     * @param stepsSize blend factor (range = 0-1).
      */
     public void setSteps(float fsteps)
     {
@@ -536,7 +536,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     
     /**
      * Sets the BackgroundColor shader parameter.
-     * @param kColor, new BackgroundColor.
+     * @param kColor new BackgroundColor.
      */
     public void SetBackgroundColor( ColorRGBA kColor )
     {
@@ -555,7 +555,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /** 
      * Enables/Disables self-shadowing for the Surface mode.
-     * @param bShadow, self-shadowing on/off.
+     * @param bShadow self-shadowing on/off.
      */
     public void SelfShadow( boolean bShadow )
     {
@@ -581,7 +581,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /** 
      * Enables/Disables gradient magnitude filter.
-     * @param bShow, gradient magnitude filter on/off.
+     * @param bShow gradient magnitude filter on/off.
      */
     public void SetGradientMagnitude(boolean bShow)
     {
@@ -609,9 +609,9 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
      * Loads this object from the input parameter rkStream, using the input
      * Stream.Link to store the IDs of children objects of this object
      * for linking after all objects are loaded from the Stream.
-     * @param rkStream, the Stream from which this object is being read.
-     * @param pkLink, the Link class for storing the IDs of this object's
-     * children objcts.
+     * @param rkStream the Stream from which this object is being read.
+     * @param pkLink the Link class for storing the IDs of this object's
+     * children objects.
      */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
@@ -622,9 +622,9 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /**
      * Copies this objects children objects from the input Stream's HashTable,
-     * based on the LinkID of the child stored in the pkLink paramter.
-     * @param rkStream, the Stream where the child objects are stored.
-     * @param pkLink, the Link class from which the child object IDs are read.
+     * based on the LinkID of the child stored in the pkLink parameter.
+     * @param rkStream the Stream where the child objects are stored.
+     * @param pkLink the Link class from which the child object IDs are read.
      */
     public void Link (Stream rkStream, Stream.Link pkLink)
     {
@@ -635,7 +635,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
      * Registers this object with the input Stream parameter. All objects
      * streamed to disk are registered with the Stream so that a unique list
      * of objects is maintained.
-     * @param rkStream, the Stream where the child objects are stored.
+     * @param rkStream the Stream where the child objects are stored.
      * @return true if this object is registered, false if the object has
      * already been registered.
      */
@@ -650,7 +650,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /**
      * Write this object and all it's children to the Stream.
-     * @param rkStream, the Stream where the child objects are stored.
+     * @param rkStream the Stream where the child objects are stored.
      */
     public void Save (Stream rkStream)
     {
@@ -677,7 +677,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     /**
      * Returns the size of this object and it's children on disk for the
      * current StreamVersion parameter.
-     * @param rkVersion, the current version of the Stream file being created.
+     * @param rkVersion the current version of the Stream file being created.
      * @return the size of this object on disk.
      */
     public int GetDiskUsed (StreamVersion rkVersion)
@@ -689,7 +689,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
     /**
      * Write this object into a StringTree for the scene-graph visualization.
-     * @param acTitle, the header for this object in the StringTree.
+     * @param acTitle the header for this object in the StringTree.
      * @return StringTree containing a String-based representation of this
      * object and it's children.
      */
@@ -723,7 +723,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     private float[] stepsSize = new float[]{450f,0,0,0};
     /** stores the background color */
     private ColorRGBA m_kBackgroundColor = ColorRGBA.BLACK;
-    /** stores the self-shadow paramter on/off value: */
+    /** stores the self-shadow parameter on/off value: */
     private float[] m_afSelfShadow = new float[]{0,0,0,0};
     /** stores the gradient magnitude filter on/off value: */
     private float[] m_afGradientMagnitude = new float[]{0,0,0,0};

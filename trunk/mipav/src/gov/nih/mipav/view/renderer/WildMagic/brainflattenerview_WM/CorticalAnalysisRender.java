@@ -1,26 +1,36 @@
 package gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM;
 
 
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.view.renderer.WildMagic.GPURenderBase;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MipavLightingEffect;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 
-import gov.nih.mipav.view.renderer.WildMagic.*;
-import gov.nih.mipav.view.renderer.WildMagic.Render.*;
+import java.awt.event.MouseEvent;
 
-import java.awt.event.*;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
-import javax.swing.*;
-import com.sun.opengl.util.Animator;
+import javax.swing.JPanel;
 
-
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Collision.*;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Collision.PickRecord;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.Light;
 import WildMagic.LibGraphics.Rendering.MaterialState;
-import WildMagic.LibGraphics.SceneGraph.*;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
+
+import com.sun.opengl.util.Animator;
 
 
 /**
@@ -37,17 +47,16 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Point indices of the puncture triangle. */
     private int[] m_aiTriIndex = null;
-
+    /** puncture triangle color */
+    private ColorRGBA[] m_akTriColors = null;
+    
     /** Colors for the picked points:. */
     private ColorRGB[] m_akPickColors = {
         new ColorRGB(1, 0, 0), new ColorRGB(0, 1, 0), new ColorRGB(0, 0, 1), new ColorRGB(1, 1, 0), new ColorRGB(0, 1, 1),
         new ColorRGB(1, 0, 1)
     };
-
-    /** DOCUMENT ME! */
-    private ColorRGBA[] m_akTriColors = null;
 
     /**
      * Flag set to indicate whether curvature colors are rendered on the mesh surface. If not, then average convexity
@@ -61,62 +70,68 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
     /** Turned on when picking with the mouse is enabled:. */
     private boolean m_bPickCorrespondenceEnabled = false;
 
-    /** DOCUMENT ME! */
+    /** Enable/disable picking puncture triangle */
     private boolean m_bPickPunctureEnabled = false;
 
     /** number of picked points displayed. */
     private int m_iNumPicked = 0;
 
-    /** DOCUMENT ME! */
+    /** Cycle through the number of correspondence points. */
     private int m_iRunningNumPicked = 0;
 
     /** Cortical mesh to be used in rendering scene. */
     private MjCorticalMesh_WM m_kCortical = null;
 
-    /** DOCUMENT ME! */
+    /** LUT for the triangle mesh convexity colors. */
     private ModelLUT m_kLUTConvexity = null;
 
     /** local reference to ModelLUT. */
     private ModelLUT m_kLUTCurvature = null;
 
-    /** DOCUMENT ME! */
+    /** BrainSurfaceFlattener User-Interface panel */
     private JPanelBrainSurfaceFlattener_WM m_kPanel = null;
 
-    /** DOCUMENT ME! */
+    /** Maximum number of correspondence points. */
     private int MAX_POINTS = 6;
 
+    /** First time the scene is rendered. */
     private boolean m_bFirst = true;
 
+    /** Sphere renderer. */
     private VolumeSurface m_kSphere = null;
+    /** Cylinder renderer */
     private VolumeSurface m_kCylinder = null;
+    /** Sphere longitude/latitude lines. */
     private Node m_kSphereLines = null;
+    /** Cylinder longitude/latitude lines. */
     private Node m_kCylinderLines = null;
+    /** TriMesh longitude/latitude lines. */
     private Node m_kMeshLines = null;
+    /** Shader for longitude/latitude lines. */
     private VertexColor3Effect m_kPolylineShader;
+    /** Toggle latitude/longitude display on/off. */
     private boolean m_bDisplayLines = true;
     
+    /** Scene-graph node for displaying correspondence points on the sphere. */
     private Node m_kSpherePoints = null;
+    /** Scene-graph node for displaying correspondence points on the cylinder. */
     private Node m_kCylinderPoints = null;
+    /** Scene-graph node for displaying correspondence points on the TriMesh surface. */
     private Node m_kMeshPoints = null;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
+
     /**
-     * A simple universe is created that contains a viewing platform. A canvas is created and attached to the simple
-     * universe and is added to this instance The canvas is used for the 3D rendering. An initially empty scene graph
-     * for the application is created and assigned to the universe.
-     *
-     * @param  _imageA  DOCUMENT ME!
-     * @param  _imageB  DOCUMENT ME!
-     * @param  _config  DOCUMENT ME!
-     * @param  kParent  DOCUMENT ME!
+     * Construct the BrainSurfaceFlattener renderer.
+     * @param kParent parent user-interface and frame.
+     * @param kAnimator animator used to display the canvas.
+     * @param kVolumeImageA volume data and textures for ModelImage A.
+     * @param kVolumeImageB volume data and textures for ModelImage B.
      */
-    public CorticalAnalysisRender( VolumeTriPlanarInterface kParent, Animator kAnimator, VolumeImage kVolumeImageA, ModelImage kImageA, ModelLUT kLUTa, ModelRGB kRGBTa,
-            VolumeImage kVolumeImageB, ModelImage kImageB, ModelLUT kLUTb, ModelRGB kRGBTb  ) {
-
-
+    public CorticalAnalysisRender( VolumeTriPlanarInterface kParent, Animator kAnimator, 
+            VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  ) {
         super();
-
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
                 m_iWidth, m_iHeight );
@@ -131,11 +146,76 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         m_kParent = kParent;
 
 
-        m_kPanel = new JPanelBrainSurfaceFlattener_WM(this, m_kVolumeImageA.GetImage(), kParent);
+        m_kPanel = new JPanelBrainSurfaceFlattener_WM(this, kParent);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /**
+     * Add a surface to the display list.
+     * @param kSurfaces
+     * @return VolumeSurface representation.
+     */
+    public VolumeSurface addSurface(TriMesh kSurfaces)
+    {
+        VolumeSurface kSurface = new VolumeSurface( m_kVolumeImageA, m_kVolumeImageB,
+                m_kTranslate,
+                m_fX, m_fY, m_fZ,
+                kSurfaces );
+        kSurface.SetPickable(true);
+        kSurface.SetDisplay(true);
+        //kSurface.SetPolygonMode( true, WireframeState.FillMode.FM_LINE );
+        m_kDisplayList.add( kSurface );
+        m_bSurfaceUpdate = true;
+        return kSurface;
+    }
+
+    /**
+     * Called on setup, when a new triangle mesh is loaded, or when the puncture triangle is selected and the
+     * "recalculate conformal" button is pressed by the user:
+     */
+    public void calculateConformal() {
+
+        /* conformally map mesh to plane, sphere, and cylinder */
+        /* set the user-selected puncture triangle: */
+        m_kCortical.setPunctureTriangle(m_aiTriIndex);
+
+        /* Restore previously picked triangle colors: */
+        restoreTriColor();
+        m_kCortical.computeConformalMapping();
+
+        if ( m_kSphere != null )
+        {
+            m_kDisplayList.remove( m_kSphere );
+            m_kSphere.dispose();
+            m_kSphere = null;
+        }
+        if ( m_kCylinder != null )
+        {
+            m_kDisplayList.remove( m_kCylinder );
+            m_kCylinder.dispose();
+            m_kCylinder = null;
+        }
+        
+        /* Setup for sphere nodes. */
+        m_kSphere = addSurface( m_kCortical.getSphere() );
+        /* Setup for plane nodes. */
+        m_kCylinder = addSurface( m_kCortical.getCylinder() );
+        m_kCylinder.SetBackface(true);
+        
+        if ( !m_bFirst )
+        {
+            m_pkRenderer.LoadResources( m_kSphere.GetMesh() );
+            m_pkRenderer.LoadResources( m_kCylinder.GetMesh() );
+        }
+        
+        m_iNumPicked = 0;
+        m_iRunningNumPicked = 0;
+    }
+
+    /* (non-Javadoc)
+     * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
+     */
     public void display(GLAutoDrawable arg0)
     {
         if ( !m_bInit )
@@ -180,211 +260,29 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
             displayPlane();
         }
     }
-
-    private void Render()
-    {
-        m_kCuller.ComputeVisibleSet(m_spkScene);
-        m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-        for ( int i = 0; i < m_kDisplayList.size(); i++ )
-        {
-            m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
-        }
-    }
-
-    protected void Pick()
-    {
-        Vector3f kPos = new Vector3f(0,0,10);
-        Vector3f kDir = new Vector3f(0,0,1);  // the pick ray
-
-        if (m_bPickPending)
-        {
-            if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
-                                       GetHeight(),kPos,kDir))
-            {
-                m_bPickPending = false;
-                for ( int i = 0; i < m_kDisplayList.size(); i++ )
-                {
-                    if ( m_kDisplayList.get(i).GetPickable() )
-                    {
-                        m_kPicker.Execute(m_kDisplayList.get(i).GetScene(),kPos,kDir,0.0f,
-                                          Float.MAX_VALUE);
-                        if (m_kPicker.Records.size() > 0)
-                        {
-                            int iClosestPick = 0;
-                            PickRecord kPicked = null;
-                            if (m_kDisplayList.get(i) == m_kCylinder )
-                            {
-                                float fMinDistance = Float.MAX_VALUE;
-
-                                for (int j = 0; j < m_kPicker.Records.size(); j++)
-                                {
-                                    float fDistance = closestPlanePointIndex(m_kPicker.Records.elementAt(j));
-
-                                    if (fDistance < fMinDistance) {
-                                        fMinDistance = fDistance;
-                                        iClosestPick = j;
-                                    }
-                                }
-                                kPicked = m_kPicker.Records.elementAt(iClosestPick);
-                            }
-                            else
-                            {
-                                kPicked = m_kPicker.GetClosestNonnegative();
-                            }
-                            if ( kPicked != null )
-                            {
-                                drawPicked( kPicked.iV0, kPicked.iV1, kPicked.iV2 );
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
     
-    public void init(GLAutoDrawable arg0) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        ((OpenGLRenderer)m_pkRenderer).InitializeState();
-        m_pkRenderer.SetLineWidth(3);
-
-        super.OnInitialize();
-
-        // set up camera
-        m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
-        Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
-        Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
-        Vector3f kCRight = new Vector3f();
-        kCRight.Cross( kCDir, kCUp );
-        Vector3f kCLoc = new Vector3f(kCDir);
-        kCLoc.Scale(-1.4f);
-        m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
-
-        CreateScene();
-
-        // initial update of objects
-        m_spkScene.UpdateGS();
-        m_spkScene.UpdateRS();
-
-        // initial culling of scene
-        m_kCuller.SetCamera(m_spkCamera);
-        m_kCuller.ComputeVisibleSet(m_spkScene);
-
-        InitializeCameraMotion(.05f,0.001f);
-        InitializeObjectMotion(m_spkScene);
-
-        //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
-
-        m_kAnimator.add( GetCanvas() );      
-        m_bInit = true;
-    }
-
-    /**
-     * Called by the init() function. Creates and initialized the scene-graph.
-     * @param arg0, the GLCanvas
-     */
-    private void CreateScene ()
-    {
-        // Create a scene graph with the face model as the leaf node.
-        m_spkScene = new Node();
-        m_spkCull = new CullState();
-        m_spkScene.AttachGlobalState(m_spkCull);
-        
-        m_kTranslate = new Vector3f(Vector3f.ZERO);
-        ModelImage kImage = m_kVolumeImageA.GetImage();
-        float fMaxX = (kImage.getExtents()[0] - 1) * kImage.getFileInfo(0).getResolutions()[0];
-        float fMaxY = (kImage.getExtents()[1] - 1) * kImage.getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (kImage.getExtents()[2] - 1) * kImage.getFileInfo(0).getResolutions()[2];
-
-        m_fMax = fMaxX;
-        if (fMaxY > m_fMax) {
-            m_fMax = fMaxY;
-        }
-        if (fMaxZ > m_fMax) {
-            m_fMax = fMaxZ;
-        }
-        m_fX = fMaxX/m_fMax;
-        m_fY = fMaxY/m_fMax;
-        m_fZ = fMaxZ/m_fMax;
-        
-        for ( int i = 0; i < m_pkRenderer.GetMaxLights(); i++ )
-        {
-            m_pkRenderer.SetLight( i, new Light() );
-        }
-    }
-    
-    /**
-     * Called on setup, when a new triangle mesh is loaded, or when the puncture triangle is selected and the
-     * "recalculate conformal" button is pressed by the user:
-     */
-    public void calculateConformal() {
-
-        /* conformally map mesh to plane, sphere, and cylinder */
-        /* set the user-selected puncture triangle: */
-        m_kCortical.setPunctureTriangle(m_aiTriIndex);
-
-        /* Restore previously picked triangle colors: */
-        restoreTriColor();
-        m_kCortical.computeConformalMapping();
-
-        if ( m_kSphere != null )
-        {
-            m_kDisplayList.remove( m_kSphere );
-            m_kSphere.dispose();
-            m_kSphere = null;
-        }
-        if ( m_kCylinder != null )
-        {
-            m_kDisplayList.remove( m_kCylinder );
-            m_kCylinder.dispose();
-            m_kCylinder = null;
-        }
-        
-        /* Setup for sphere nodes. */
-        m_kSphere = addSurface( m_kCortical.getSphere() );
-        /* Setup for plane nodes. */
-        m_kCylinder = addSurface( m_kCortical.getCylinder() );
-        m_kCylinder.SetBackface(true);
-        
-        if ( !m_bFirst )
-        {
-            m_pkRenderer.LoadResources( m_kSphere.GetMesh() );
-            m_pkRenderer.LoadResources( m_kCylinder.GetMesh() );
-        }
-        
-        m_iNumPicked = 0;
-        m_iRunningNumPicked = 0;
-    }
-
     /**
      * toggle between display of mean curvature-based colors and average convexity-based colors.
-     *
-     * @return  DOCUMENT ME!
      */
-    public boolean displayConvexityColors() {
+    public void displayConvexityColors() {
 
         if (m_bCurvatureColors && (null != m_kCortical.getAvrConvexity())) {
             m_bCurvatureColors = false;
             setColorsLUT();
         }
-
-        return m_bCurvatureColors;
     }
 
     /**
      * toggle between display of mean curvature-based colors and average convexity-based colors.
-     *
-     * @return  DOCUMENT ME!
      */
-    public boolean displayCurvatureColors() {
+    public void displayCurvatureColors() {
 
         if (!m_bCurvatureColors) {
             m_bCurvatureColors = true;
             setColorsLUT();
         }
-
-        return m_bCurvatureColors;
     }
-
+    
     /**
      * Switch to displaying the plane:
      */
@@ -424,7 +322,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
     }
 
     /**
-     * DOCUMENT ME!
+     * Memory cleanup.
      */
     public void disposeLocal() {
 
@@ -456,9 +354,9 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
     /**
      * Draw the user-selected point, either as a sphere on the triangle mesh, or as a black triangle, depending on which
      * picking is enabled:
-     * @param iV0, index 0 of the picked triangle.
-     * @param iV1, index 1 of the picked triangle.
-     * @param iV2, index 2 of the picked triangle.
+     * @param iV0 index 0 of the picked triangle.
+     * @param iV1 index 1 of the picked triangle.
+     * @param iV2 index 2 of the picked triangle.
      */
     public void drawPicked(int iV0, int iV1, int iV2) {
 
@@ -470,70 +368,46 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * Return the main panel display.
+     * @return  main panel display.
      */
     public JPanel getMainPanel() {
         return m_kPanel.getMainPanel();
-    }
-    
-    public JPanelBrainSurfaceFlattener_WM getPanel() {
-        return m_kPanel;
-    }
-    
-    /**
-     * Resizig the control panel with ViewJFrameVolumeView's frame width and height.
-     *
-     * @param  panelWidth   int width
-     * @param  frameHeight  int height
-     */
-    public void resizePanel(int panelWidth, int frameHeight) {
-        m_kPanel.resizePanel(panelWidth, frameHeight);
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public float getMaxAverageConvexity() {
-        return m_kCortical.getMaxAvrConvexity();
     }
 
     /**
      * return the max mean curvature:
      *
-     * @return  DOCUMENT ME!
+     * @return  max mean curvature.
      */
     public float getMaxCurvature() {
         return m_kCortical.getMaxMeanCurvature();
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * @return scene-graph Node containing the TriMesh latitude/longitude lines.
      */
-    public float getMinAverageConvexity() {
-        return m_kCortical.getMinAvrConvexity();
+    public Node getMeshLines()
+    {
+        return m_kMeshLines;
     }
-
     /**
      * return the min mean curvature:
      *
-     * @return  DOCUMENT ME!
+     * @return  min mean curvature.
      */
     public float getMinCurvature() {
         return m_kCortical.getMinMeanCurvature();
     }
 
+    public JPanelBrainSurfaceFlattener_WM getPanel() {
+        return m_kPanel;
+    }
+
     /**
      * perform inflation step and then render shapes using the average convexity colors.
-     *
-     * @return  DOCUMENT ME!
      */
-    public boolean inflation() {
+    public void inflation() {
 
         if (!m_bInflationInitialized) {
             m_bInflationInitialized = true;
@@ -544,17 +418,48 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         m_kCortical.doInflation(2);
 
         m_kCortical.updateMesh( true );
-        
-        // m_bCurvatureColors = false;
-        //m_kTriangleMesh.setCoordinates(0, m_kCortical.getPoints());
+    }
 
-        return m_bCurvatureColors;
+    /* (non-Javadoc)
+     * @see javax.media.opengl.GLEventListener#init(javax.media.opengl.GLAutoDrawable)
+     */
+    public void init(GLAutoDrawable arg0) {
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        ((OpenGLRenderer)m_pkRenderer).InitializeState();
+        m_pkRenderer.SetLineWidth(3);
+
+        super.OnInitialize();
+
+        // set up camera
+        m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
+        Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
+        Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
+        Vector3f kCRight = new Vector3f();
+        kCRight.Cross( kCDir, kCUp );
+        Vector3f kCLoc = new Vector3f(kCDir);
+        kCLoc.Scale(-1.4f);
+        m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
+
+        CreateScene();
+
+        // initial update of objects
+        m_spkScene.UpdateGS();
+        m_spkScene.UpdateRS();
+
+        // initial culling of scene
+        m_kCuller.SetCamera(m_spkCamera);
+        m_kCuller.ComputeVisibleSet(m_spkScene);
+
+        InitializeCameraMotion(.05f,0.001f);
+        InitializeObjectMotion(m_spkScene);
+
+        m_kAnimator.add( GetCanvas() );      
+        m_bInit = true;
     }
 
     /**
      * Return whether or not picking correspondence points is enabled:
-     *
-     * @return  DOCUMENT ME!
+     * @return  true when picking correspondence points in enabled, false otherwise.
      */
     public boolean isCorrespondencePickEnabled() {
         return m_bPickCorrespondenceEnabled;
@@ -562,17 +467,14 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 
     /**
      * Return whether or not picking the puncture triangle is enabled:
-     *
-     * @return  DOCUMENT ME!
+     * @return  true when picking the puncture triangle is enabled, false otherwise.
      */
     public boolean isPuncturePickEnabled() {
         return m_bPickPunctureEnabled;
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  kEvent  the mouse event generated by a mouse drag
+    /* (non-Javadoc)
+     * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
      */
     public void mouseDragged(MouseEvent e)
     {
@@ -585,10 +487,8 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  kMouseEvent  the mouse event generated by a mouse press
+    /* (non-Javadoc)
+     * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mousePressed(java.awt.event.MouseEvent)
      */
     public void mousePressed(MouseEvent e) {
         super.mousePressed(e);
@@ -614,19 +514,30 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
      * Remove all points drawn on the mesh, sphere, and plane:
      */
     public void removePoints() {
-
-        m_kSpherePoints.DetachAllChildren();
-        m_kCylinderPoints.DetachAllChildren();
-        m_kMeshPoints.DetachAllChildren();
+        if ( m_kSpherePoints != null )
+        {
+            m_kSpherePoints.DetachAllChildren();
+            m_kCylinderPoints.DetachAllChildren();
+            m_kMeshPoints.DetachAllChildren();
+        }
         m_spkScene.UpdateGS();
         m_iNumPicked = 0;
         m_iRunningNumPicked = 0;
     }
 
     /**
-     * DOCUMENT ME!
+     * Resizing the control panel with ViewJFrameVolumeView's frame width and height.
      *
-     * @param  kLUT  DOCUMENT ME!
+     * @param  panelWidth   int width
+     * @param  frameHeight  int height
+     */
+    public void resizePanel(int panelWidth, int frameHeight) {
+        m_kPanel.resizePanel(panelWidth, frameHeight);
+    }
+
+    /**
+     * Update the colormap based on the LUT:
+     * @param  kLUT new LUT.
      */
     public void setLUTConvexity(ModelLUT kLUT) {
 
@@ -641,8 +552,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 
     /**
      * Update the colormap based on the LUT:
-     *
-     * @param  kLUT  DOCUMENT ME!
+     * @param  kLUT new LUT.
      */
     public void setLUTCurvature(ModelLUT kLUT) {
 
@@ -659,7 +569,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
      * Perform all initialization prior to executing. Loads the sample mesh surface and sets up the rendering of the
      * scene.
      *
-     * @param  kTriangleMesh  DOCUMENT ME!
+     * @param  kMesh, TriMesh.
      */
     public boolean setup(TriMesh kMesh ) {
 
@@ -678,29 +588,144 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         return false;
     }
 
+    /**
+     * Called when the mesh is created, or when the number of latitude or longitude lines is changed by the user. When
+     * the user changes the number of latitude or longitude lines, the meshes are removed from the scene and recreated.
+     *
+     * @param  iNumLat  number of latitude lines to display.
+     * @param  iNumLon  number of longitude lines to display.
+     */
+    public void setupLatLon(int iNumLat, int iNumLon) {
+
+        if ( m_kSphereLines == null )
+        {
+            m_kSphereLines = new Node();
+        }
+        if ( m_kCylinderLines == null )
+        {
+            m_kCylinderLines = new Node();
+        }
+        if ( m_kMeshLines == null )
+        {
+            m_kMeshLines = new Node();
+        }
+        
+        m_kSphereLines.DetachAllChildren();
+        m_kCylinderLines.DetachAllChildren();
+        m_kMeshLines.DetachAllChildren();
+        
+        if ( m_kPolylineShader == null )
+        {
+            m_kPolylineShader = new VertexColor3Effect();
+        }
+        
+        /* bias for latitude/longitude to handle z-buffer fighting */
+        float fMBias = 0.01f;
+        float fSBias = 0.01f;
+        float fPBias = 0.01f;
+
+        /* compute draw latitude lines */
+        for (int i = -(iNumLat / 2); i <= (iNumLat / 2); i++) {
+            float fZNormal = i / (float) (1 + (iNumLat / 2));
+
+            MjCorticalMesh_WM.Polylines kPolylines = m_kCortical.getLatitude(fZNormal, fMBias, fSBias, fPBias);
+            Polyline kMeshLat = new Polyline( kPolylines.kMVertex, false, true );  
+            kMeshLat.AttachEffect( m_kPolylineShader );
+            m_kMeshLines.AttachChild( kMeshLat );
+            
+            Polyline kSphereLat = new Polyline( kPolylines.kSVertex, false, true );  
+            kSphereLat.AttachEffect( m_kPolylineShader );
+            m_kSphereLines.AttachChild( kSphereLat );
+            
+            Polyline kPlaneLat = new Polyline( kPolylines.kPVertex, false, true );  
+            kPlaneLat.AttachEffect( m_kPolylineShader );
+            m_kCylinderLines.AttachChild( kPlaneLat );
+        }
+        /* compute longitude lines */
+        for (int i = 0; i <= (iNumLon - 1); i++) {
+            float fAngle = i * 2.0f * (float) Math.PI / (iNumLon - 1);
+
+            MjCorticalMesh_WM.Polylines kPolylines = m_kCortical.getLongitude(fAngle, fMBias, fSBias, fPBias);
+            Polyline kMeshLon = new Polyline( kPolylines.kMVertex, false, true );  
+            kMeshLon.AttachEffect( m_kPolylineShader );
+            m_kMeshLines.AttachChild( kMeshLon );
+            
+            Polyline kSphereLon = new Polyline( kPolylines.kSVertex, false, true );  
+            kSphereLon.AttachEffect( m_kPolylineShader );
+            m_kSphereLines.AttachChild( kSphereLon );
+            
+            Polyline kPlaneLon = new Polyline( kPolylines.kPVertex, false, true );  
+            kPlaneLon.AttachEffect( m_kPolylineShader );
+            m_kCylinderLines.AttachChild( kPlaneLon );
+        }
+        if ( m_spkScene != null )
+        {
+            m_spkScene.UpdateGS();            
+        }
+    }
+
     
-    public VolumeSurface addSurface(TriMesh kSurfaces)
+    /**
+     * Toggle between displaying the latitude and longitude lines:
+     * @param bDisplay display on/off.
+     */
+    public void toggleLatLonLines( boolean bDisplay )
     {
-        VolumeSurface kSurface = new VolumeSurface( m_kVolumeImageA, m_kVolumeImageB,
-                m_kTranslate,
-                m_fX, m_fY, m_fZ,
-                kSurfaces );
-        kSurface.SetPickable(true);
-        kSurface.SetDisplay(true);
-        //kSurface.SetPolygonMode( true, WireframeState.FillMode.FM_LINE );
-        m_kDisplayList.add( kSurface );
-        m_bSurfaceUpdate = true;
-        return kSurface;
+        if ( m_bDisplayLines == bDisplay )
+        {
+            return;
+        }
+        m_bDisplayLines = bDisplay;
+        if ( !bDisplay )
+        {
+            if ( m_kSphere.GetDisplay() )
+            {
+                m_spkScene.DetachChild( m_kSphereLines );
+            }
+            if ( m_kCylinder.GetDisplay() )
+            {
+                m_spkScene.DetachChild( m_kCylinderLines );
+            }
+        }
+        else
+        {
+            if ( m_kSphere.GetDisplay() )
+            {
+                m_spkScene.AttachChild( m_kSphereLines );
+            }
+            if ( m_kCylinder.GetDisplay() )
+            {
+                m_spkScene.AttachChild( m_kCylinderLines );
+            }
+        }
+        m_spkScene.UpdateGS();
     } 
     
-    public Node getMeshLines()
-    {
-        return m_kMeshLines;
+    /**
+     * Enables picking with the mouse and drawing the curve on the mesh.
+     */
+    public void togglePickCorrespondence() {
+        m_bPickCorrespondenceEnabled = !m_bPickCorrespondenceEnabled;
     }
     
     /**
+     * Enables picking with the mouse and drawing the curve on the mesh.
+     */
+    public void togglePickPuncture() {
+        m_bPickPunctureEnabled = !m_bPickPunctureEnabled;
+
+        if (m_bPickPunctureEnabled == false) {
+
+            /* Restore previously picked triangle colors: */
+            restoreTriColor();
+        }
+    }
+
+
+    
+    /**
      * Called from JPanelLight. Updates the lighting parameters.
-     * @param akGLights, the set of GeneralLight objects.
+     * @param akGLights the set of GeneralLight objects.
      */
     public void updateLighting(Light[] akGLights )
     {
@@ -778,147 +803,64 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         }
     }
 
-
-    
-    /**
-     * Called when the mesh is created, or when the number of latitude or longitude lines is changed by the user. When
-     * the user changes the number of latitude or longitude lines, the meshes are removed from the scene and recreated.
-     *
-     * @param  iNumLat  DOCUMENT ME!
-     * @param  iNumLon  DOCUMENT ME!
-     */
-    public void setupLatLon(int iNumLat, int iNumLon) {
-
-        if ( m_kSphereLines == null )
-        {
-            m_kSphereLines = new Node();
-        }
-        if ( m_kCylinderLines == null )
-        {
-            m_kCylinderLines = new Node();
-        }
-        if ( m_kMeshLines == null )
-        {
-            m_kMeshLines = new Node();
-        }
-        
-        m_kSphereLines.DetachAllChildren();
-        m_kCylinderLines.DetachAllChildren();
-        m_kMeshLines.DetachAllChildren();
-        
-        if ( m_kPolylineShader == null )
-        {
-            m_kPolylineShader = new VertexColor3Effect();
-        }
-        
-        /* bias for latitude/longitude to handle z-buffer fighting */
-        float fMBias = 0.01f;
-        float fSBias = 0.01f;
-        float fPBias = 0.01f;
-
-        /* compute draw latitude lines */
-        for (int i = -(iNumLat / 2); i <= (iNumLat / 2); i++) {
-            float fZNormal = i / (float) (1 + (iNumLat / 2));
-
-            MjCorticalMesh_WM.Polylines kPolylines = m_kCortical.getLatitude(fZNormal, fMBias, fSBias, fPBias);
-            Polyline kMeshLat = new Polyline( kPolylines.kMVertex, false, true );  
-            kMeshLat.AttachEffect( m_kPolylineShader );
-            m_kMeshLines.AttachChild( kMeshLat );
-            
-            Polyline kSphereLat = new Polyline( kPolylines.kSVertex, false, true );  
-            kSphereLat.AttachEffect( m_kPolylineShader );
-            m_kSphereLines.AttachChild( kSphereLat );
-            
-            Polyline kPlaneLat = new Polyline( kPolylines.kPVertex, false, true );  
-            kPlaneLat.AttachEffect( m_kPolylineShader );
-            m_kCylinderLines.AttachChild( kPlaneLat );
-        }
-        /* compute longitude lines */
-        for (int i = 0; i <= (iNumLon - 1); i++) {
-            float fAngle = i * 2.0f * (float) Math.PI / (iNumLon - 1);
-
-            MjCorticalMesh_WM.Polylines kPolylines = m_kCortical.getLongitude(fAngle, fMBias, fSBias, fPBias);
-            Polyline kMeshLon = new Polyline( kPolylines.kMVertex, false, true );  
-            kMeshLon.AttachEffect( m_kPolylineShader );
-            m_kMeshLines.AttachChild( kMeshLon );
-            
-            Polyline kSphereLon = new Polyline( kPolylines.kSVertex, false, true );  
-            kSphereLon.AttachEffect( m_kPolylineShader );
-            m_kSphereLines.AttachChild( kSphereLon );
-            
-            Polyline kPlaneLon = new Polyline( kPolylines.kPVertex, false, true );  
-            kPlaneLon.AttachEffect( m_kPolylineShader );
-            m_kCylinderLines.AttachChild( kPlaneLon );
-        }
-        if ( m_spkScene != null )
-        {
-            m_spkScene.UpdateGS();            
-        }
-    }
-
-    /**
-     * Toggle between displaying the latitude and longitude lines:
-     */
-    public void toggleLatLonLines( boolean bDisplay )
-    {
-        if ( m_bDisplayLines == bDisplay )
-        {
-            return;
-        }
-        m_bDisplayLines = bDisplay;
-        if ( !bDisplay )
-        {
-            if ( m_kSphere.GetDisplay() )
-            {
-                m_spkScene.DetachChild( m_kSphereLines );
-            }
-            if ( m_kCylinder.GetDisplay() )
-            {
-                m_spkScene.DetachChild( m_kCylinderLines );
-            }
-        }
-        else
-        {
-            if ( m_kSphere.GetDisplay() )
-            {
-                m_spkScene.AttachChild( m_kSphereLines );
-            }
-            if ( m_kCylinder.GetDisplay() )
-            {
-                m_spkScene.AttachChild( m_kCylinderLines );
-            }
-        }
-        m_spkScene.UpdateGS();
-    }
-
-    /**
-     * Enables picking with the mouse and drawing the curve on the mesh.
-     */
-    public void togglePickCorrespondence() {
-        m_bPickCorrespondenceEnabled = !m_bPickCorrespondenceEnabled;
-    }
-
-    /**
-     * Enables picking with the mouse and drawing the curve on the mesh.
-     */
-    public void togglePickPuncture() {
-        m_bPickPunctureEnabled = !m_bPickPunctureEnabled;
-
-        if (m_bPickPunctureEnabled == false) {
-
-            /* Restore previously picked triangle colors: */
-            restoreTriColor();
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @throws  Throwable  DOCUMENT ME!
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
      */
     protected void finalize() throws Throwable {
         disposeLocal();
         super.finalize();
+    }
+
+    /** Picking. */
+    protected void Pick()
+    {
+        Vector3f kPos = new Vector3f(0,0,10);
+        Vector3f kDir = new Vector3f(0,0,1);  // the pick ray
+
+        if (m_bPickPending)
+        {
+            if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
+                                       GetHeight(),kPos,kDir))
+            {
+                m_bPickPending = false;
+                for ( int i = 0; i < m_kDisplayList.size(); i++ )
+                {
+                    if ( m_kDisplayList.get(i).GetPickable() )
+                    {
+                        m_kPicker.Execute(m_kDisplayList.get(i).GetScene(),kPos,kDir,0.0f,
+                                          Float.MAX_VALUE);
+                        if (m_kPicker.Records.size() > 0)
+                        {
+                            int iClosestPick = 0;
+                            PickRecord kPicked = null;
+                            if (m_kDisplayList.get(i) == m_kCylinder )
+                            {
+                                float fMinDistance = Float.MAX_VALUE;
+
+                                for (int j = 0; j < m_kPicker.Records.size(); j++)
+                                {
+                                    float fDistance = closestPlanePointIndex(m_kPicker.Records.elementAt(j));
+
+                                    if (fDistance < fMinDistance) {
+                                        fMinDistance = fDistance;
+                                        iClosestPick = j;
+                                    }
+                                }
+                                kPicked = m_kPicker.Records.elementAt(iClosestPick);
+                            }
+                            else
+                            {
+                                kPicked = m_kPicker.GetClosestNonnegative();
+                            }
+                            if ( kPicked != null )
+                            {
+                                drawPicked( kPicked.iV0, kPicked.iV1, kPicked.iV2 );
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -927,10 +869,8 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
      * display the data) -- when picking is done, the pickClosest sometimes returns the back-facing triangle. This
      * function returns the correct, visible triangle for the plane:
      *
-     * @param   kStart   DOCUMENT ME!
-     * @param   aiIndex  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * @param   kPickPoint, the PickRecord containing information about the picked triangle.
+     * @return  the minimum distance to the plane.
      */
     private float closestPlanePointIndex( PickRecord kPickPoint )
     {     
@@ -971,11 +911,41 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
     }
 
     /**
+     * Called by the init() function. Creates and initialized the scene-graph.
+     */
+    private void CreateScene ()
+    {
+        // Create a scene graph with the face model as the leaf node.
+        m_spkScene = new Node();
+        m_spkCull = new CullState();
+        m_spkScene.AttachGlobalState(m_spkCull);
+        
+        m_kTranslate = new Vector3f(Vector3f.ZERO);
+        ModelImage kImage = m_kVolumeImageA.GetImage();
+        float fMaxX = (kImage.getExtents()[0] - 1) * kImage.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (kImage.getExtents()[1] - 1) * kImage.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (kImage.getExtents()[2] - 1) * kImage.getFileInfo(0).getResolutions()[2];
+
+        m_fMax = fMaxX;
+        if (fMaxY > m_fMax) {
+            m_fMax = fMaxY;
+        }
+        if (fMaxZ > m_fMax) {
+            m_fMax = fMaxZ;
+        }
+        m_fX = fMaxX/m_fMax;
+        m_fY = fMaxY/m_fMax;
+        m_fZ = fMaxZ/m_fMax;
+        
+        for ( int i = 0; i < m_pkRenderer.GetMaxLights(); i++ )
+        {
+            m_pkRenderer.SetLight( i, new Light() );
+        }
+    }
+
+    /**
      * Draw the user-selected point as a sphere on the triangle mesh:
-     *
-     * @param  kStart   DOCUMENT ME!
-     * @param  aiIndex  DOCUMENT ME!
-     * @param  iWhich   DOCUMENT ME!
+     * @param iIndex the index of the TriMesh vertex at which to draw the sphere.
      */
     private void drawPoint( int iIndex )
     {
@@ -1063,10 +1033,9 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 
     /**
      * Draw the user-selected triangle as a black triangle, save the original color so it can be restored:
-     *
-     * @param  kStart   DOCUMENT ME!
-     * @param  aiIndex  DOCUMENT ME!
-     * @param  iWhich   DOCUMENT ME!
+     * @param iV0 triangle index 0.
+     * @param iV1 triangle index 1.
+     * @param iV2 triangle index 2.
      */
     private void drawTriangle(int iV0, int iV1, int iV2)
     {
@@ -1096,7 +1065,20 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
     }
 
     /**
-     * Resets the previously picked triangle to it's orginal color:
+     * Render the scene.
+     */
+    private void Render()
+    {
+        m_kCuller.ComputeVisibleSet(m_spkScene);
+        m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
+        }
+    }
+
+    /**
+     * Resets the previously picked triangle to it's original color:
      */
     private void restoreTriColor() {
 

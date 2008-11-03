@@ -1,10 +1,29 @@
 package gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM;
 
-import java.util.*;
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibFoundation.Meshes.*;
-import WildMagic.LibFoundation.Intersection.*;
-import WildMagic.LibGraphics.SceneGraph.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+import WildMagic.LibFoundation.Intersection.IntrRay2Segment2f;
+import WildMagic.LibFoundation.Intersection.IntrSegment2Circle2f;
+import WildMagic.LibFoundation.Mathematics.Circle2f;
+import WildMagic.LibFoundation.Mathematics.Mathf;
+import WildMagic.LibFoundation.Mathematics.Polynomial1f;
+import WildMagic.LibFoundation.Mathematics.Ray2f;
+import WildMagic.LibFoundation.Mathematics.Segment2f;
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Meshes.BasicMesh;
+import WildMagic.LibFoundation.Meshes.ConformalMap;
+import WildMagic.LibFoundation.Meshes.EdgeKey;
+import WildMagic.LibFoundation.Meshes.MeshCurvature;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 /**
  * DOCUMENT ME!
@@ -12,6 +31,21 @@ import WildMagic.LibGraphics.SceneGraph.*;
 public class MjCorticalMesh_WM {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /**
+     * DOCUMENT ME!
+     */
+    public static class Polylines {
+
+        /** Array of mesh points. */
+        VertexBuffer kMVertex;
+
+        /** Array of plane points. */
+        VertexBuffer kPVertex;
+
+        /** Array of sphere points. */
+        VertexBuffer kSVertex;
+    }
 
     /** DOCUMENT ME! */
     private float[] m_afAvrConvexity;
@@ -23,7 +57,7 @@ public class MjCorticalMesh_WM {
     private Vector3f[] m_akCylinder = null;
 
     /** DOCUMENT ME! */
-    private Edge[] m_akEdge = null;
+    private BasicMesh.Edge[] m_akEdge = null;
 
     /** Conformal mapping to a plane. The (u,v) points correspond to the (x,y,z) mesh points. */
     private Vector2f[] m_akPlane = null;
@@ -32,10 +66,10 @@ public class MjCorticalMesh_WM {
     private Vector3f[] m_akSphere = null;
 
     /** DOCUMENT ME! */
-    private Triangle[] m_akTriangle = null;
+    private BasicMesh.Triangle[] m_akTriangle = null;
 
     /** DOCUMENT ME! */
-    private Vertex[] m_akVertex = null;
+    private BasicMesh.Vertex[] m_akVertex = null;
 
     /** DOCUMENT ME! */
     private float m_fMaxAvrConvexity;
@@ -69,21 +103,18 @@ public class MjCorticalMesh_WM {
 
     /** vertex-vertex distances measured along edge paths. */
     private HashMap<EdgeKey, Float> m_kDistance = new HashMap<EdgeKey, Float>(); /* map MjEdgeKey to Float */
-
     /** surface inflation. */
     private HashMap<EdgeKey, Float> m_kInitDistance = new HashMap<EdgeKey, Float>(); /* map MjEdgeKey to Float */
-
-    /** DOCUMENT ME! */
-    private Vector2f m_kPlaneMax;
-
-    /** DOCUMENT ME! */
-    private Vector2f m_kPlaneMin;
-
+    
     private TriMesh m_kMesh;
-    private TriMesh m_kSphereMesh = null;
-    private TriMesh m_kCylinderMesh = null;
+    private BasicMesh m_kBasicMesh;
+    private Vector3f[] m_akPoint;
+    
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    private TriMesh m_kSphereMesh = null;
+    
+    private TriMesh m_kCylinderMesh = null;
 
     /**
      * Creates a new MjCorticalMesh object.
@@ -93,8 +124,19 @@ public class MjCorticalMesh_WM {
         m_kMesh = kMesh;
         int iVQuantity = kMesh.VBuffer.GetVertexQuantity();
         int iTQuantity = kMesh.GetTriangleQuantity();
+        m_akPoint = new Vector3f[iVQuantity];
+        for ( int i = 0; i < iVQuantity; i++ )
+        {
+            m_akPoint[i] = new Vector3f();
+            m_kMesh.VBuffer.GetPosition3(i, m_akPoint[i] );
+        }
+        m_kBasicMesh = new BasicMesh(iVQuantity,m_akPoint,iTQuantity,m_kMesh.IBuffer.GetData());
 
-        m_iEQuantity = 0;
+        m_iEQuantity = m_kBasicMesh.GetEQuantity();
+        m_akEdge = m_kBasicMesh.GetEdges();
+        m_akTriangle = m_kBasicMesh.GetTriangles();
+        m_akVertex = m_kBasicMesh.GetVertices();
+        
         m_fMinMeanCurvature = 0.0f;
         m_fMaxMeanCurvature = 0.0f;
         m_afMeanCurvature = null;
@@ -104,364 +146,57 @@ public class MjCorticalMesh_WM {
         m_fMinAvrConvexity = 0.0f;
         m_fMaxAvrConvexity = 0.0f;
         m_afAvrConvexity = null;
-
-        /* dynamically construct triangle mesh from input */
-        m_akVertex = new Vertex[iVQuantity];
-
-        for (int i = 0; i < m_akVertex.length; i++) {
-            m_akVertex[i] = new Vertex();
-        }
-
-        m_akEdge = new Edge[3 * iTQuantity];
-        for (int i = 0; i < m_akEdge.length; i++) {
-            m_akEdge[i] = new Edge();
-        }
-
-        m_akTriangle = new Triangle[iTQuantity];
-        for (int i = 0; i < m_akTriangle.length; i++) {
-            m_akTriangle[i] = new Triangle();
-        }
-
-        HashMap<EdgeKey, Integer> kEMap = new HashMap<EdgeKey, Integer>(); /* map MjEdgeKey -> int */
-
-        int[] aiConnect = kMesh.IBuffer.GetData();
-        for (int iT = 0; iT < iTQuantity; iT++) {
-
-            /* update triangle */
-            Triangle rkT = m_akTriangle[iT];
-            rkT.V[0] = aiConnect[(3 * iT) + 0];
-            rkT.V[1] = aiConnect[(3 * iT) + 1];
-            rkT.V[2] = aiConnect[(3 * iT) + 2];
-
-            /* add edges to mesh */
-            for (int i0 = 2, i1 = 0; i1 < 3; i0 = i1++) {
-
-                /* update vertices */
-                m_akVertex[rkT.V[i1]].InsertTriangle(iT);
-
-                EdgeKey kKey = new EdgeKey(rkT.V[i0], rkT.V[i1]);
-
-                if (!kEMap.containsKey(kKey)) {
-
-                    /* first time edge encountered */
-                    kEMap.put(kKey, new Integer(m_iEQuantity));
-
-                    /* update edge */
-                    Edge rkE = m_akEdge[m_iEQuantity];
-                    rkE.V[0] = rkT.V[i0];
-                    rkE.V[1] = rkT.V[i1];
-                    rkE.T[0] = iT;
-
-                    /* update vertices */
-                    m_akVertex[rkE.V[0]].InsertEdge(rkE.V[1], m_iEQuantity);
-                    m_akVertex[rkE.V[1]].InsertEdge(rkE.V[0], m_iEQuantity);
-
-                    /* update triangle */
-                    rkT.E[i0] = m_iEQuantity;
-
-                    m_iEQuantity++;
-                } else {
-
-                    /* second time edge encountered */
-                    int iE = kEMap.get(kKey).intValue();
-                    Edge rkE = m_akEdge[iE];
-
-                    /* update edge */
-                    assert (rkE.T[1] == -1); /* mesh must be manifold */
-                    rkE.T[1] = iT;
-
-                    /* update triangles */
-                    int iAdj = rkE.T[0];
-                    Triangle rkAdj = m_akTriangle[iAdj];
-
-                    for (int j = 0; j < 3; j++) {
-
-                        if (rkAdj.E[j] == iE) {
-                            rkAdj.T[j] = iT;
-
-                            break;
-                        }
-                    }
-
-                    rkT.E[i0] = iE;
-                    rkT.T[i0] = iAdj;
-                }
-            }
-        }
     }
-    
-    public boolean CheckManifold()
-    {
-        for (int i = 0; i < m_akEdge.length; i++) {
-            if ( m_akEdge[i].T[1] == -1 )
-            {
-            	return false;
+
+    /**
+     * support for point-in-triangle tests; The akVertex array must have length 3.
+     *
+     * @param   akVertex  DOCUMENT ME!
+     * @param   kP        DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private static boolean contains(Vector2f[] akVertex, Vector2f kP) {
+        /* assert:  <V0,V1,V2> is clockwise ordered */
+
+        final float fEpsilon = 1e-05f;
+        Vector2f kV1mV0 = new Vector2f();
+        Vector2f kInnerNormal = new Vector2f();
+        Vector2f kDiff = new Vector2f();
+
+        for (int i0 = 2, i1 = 0; i1 < 3; i0 = i1++) {
+        	kV1mV0.Sub( akVertex[i1], akVertex[i0] );
+            kInnerNormal.Perp(kV1mV0);
+            kDiff.Sub( kP, akVertex[i0] );
+            kInnerNormal.Normalize();
+            kDiff.Normalize();
+
+            float fCos = kInnerNormal.Dot(kDiff);
+
+            if (fCos < -fEpsilon) {
+                return false;
             }
         }
+
         return true;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
-    public int getVQuantity()
+    public boolean CheckManifold()
     {
-        return m_kMesh.VBuffer.GetVertexQuantity();
+        return m_kBasicMesh.IsValid();
     }
-    
+
     /**
      * conformal mapping of mesh to plane and sphere, projection to cylinder.
      */
     public void computeConformalMapping()
     {
         int iVQuantity = m_kMesh.VBuffer.GetVertexQuantity();
-
-        Vector3f kE0 = new Vector3f();
-        Vector3f kE1 = new Vector3f();
-        Vector3f kNormal = new Vector3f();
-        Vector3f kE10 = new Vector3f();
-        Vector3f kE20 = new Vector3f();
-        Vector3f kE12 = new Vector3f();
-        Vector3f kCross = new Vector3f();
-
-        int iV0, iV1, iV2;
-        float fValue = 0.0f;
-
-        /* construct sparse matrix A nondiagonal entries */
-        MjSparseMatrix_WM kAMat = new MjSparseMatrix_WM();
-
-        Vector3f kPos0 = new Vector3f();
-        Vector3f kPos1 = new Vector3f();
-        Vector3f kPos2= new Vector3f();
-
-        for (int iE = 0; iE < m_iEQuantity; iE++) {
-            Edge kE = m_akEdge[iE];
-            iV0 = kE.V[0];
-            iV1 = kE.V[1];
-            
-            m_kMesh.VBuffer.GetPosition3( iV0, kPos0 );
-            m_kMesh.VBuffer.GetPosition3( iV1, kPos1 );
-
-            Triangle kT0 = m_akTriangle[kE.T[0]];
-
-            for (int i = 0; i < 3; i++) {
-                iV2 = kT0.V[i];
-
-                if ((iV2 != iV0) && (iV2 != iV1)) {
-                    m_kMesh.VBuffer.GetPosition3( iV2, kPos2 );
-
-                    kE0.Sub( kPos0, kPos2 );
-                    kE1.Sub( kPos1, kPos2 );
-                    kNormal.Cross( kE0, kE1 );
-                    fValue = kE0.Dot(kE1) / kNormal.Length();
-                }
-            }
-            
-            Triangle kT1 = m_akTriangle[kE.T[1]];
-
-            for (int i = 0; i < 3; i++) {
-                iV2 = kT1.V[i];
-
-                if ((iV2 != iV0) && (iV2 != iV1)) {
-                    m_kMesh.VBuffer.GetPosition3( iV2, kPos2 );
-
-                    kE0.Sub( kPos0, kPos2 );
-                    kE1.Sub( kPos1, kPos2 );
-                    kNormal.Cross( kE0, kE1 );
-                    fValue += kE0.Dot(kE1) / kNormal.Length();
-                }
-            }
-
-            fValue *= -0.5f;
-            kAMat.setElement(iV0, iV1, fValue);
-        }
-
-        /* construct sparse matrix A diagonal entries */
-        float[] afTmp = new float[iVQuantity];
-
-        for (int i = 0; i < iVQuantity; i++) {
-            afTmp[i] = 0.0f;
-        }
-
-        Iterator kIter = kAMat.iterator();
-
-        while (kIter.hasNext()) {
-            Map.Entry kEntry = (Map.Entry) kIter.next();
-            MjSparseMatrix_WM.Index kIndex = (MjSparseMatrix_WM.Index) kEntry.getKey();
-            Float kValue = (Float) kEntry.getValue();
-            iV0 = kIndex.m_iRow;
-            iV1 = kIndex.m_iCol;
-            fValue = kValue.floatValue();
-            assert (iV0 != iV1);
-            afTmp[iV0] -= fValue;
-            afTmp[iV1] -= fValue;
-        }        
-        for (int iV = 0; iV < iVQuantity; iV++) {
-            kAMat.setElement(iV, iV, afTmp[iV]);
-        }
-
-        assert (kAMat.size() == (iVQuantity + m_iEQuantity));
-
-        /* Construct column vector B (happens to be sparse).  Triangle 0 is
-         * the default for the puncture, but may also be set by the user */
-        Triangle kT = m_akTriangle[m_iPunctureTri];
-        iV0 = kT.V[0];
-        iV1 = kT.V[1];
-        iV2 = kT.V[2];
-
-        Vector3f kV0 = m_kMesh.VBuffer.GetPosition3( iV0 );
-        Vector3f kV1 = m_kMesh.VBuffer.GetPosition3( iV1 );
-        Vector3f kV2 = m_kMesh.VBuffer.GetPosition3( iV2 );
-        kE10.Sub( kV1, kV0 );
-        kE20.Sub( kV2, kV0 );
-        kE12.Sub( kV1, kV2 );
-        kCross.Cross( kE20, kE10 );
-
-        float fLen10 = kE10.Length();
-        float fInvLen10 = 1.0f / fLen10;
-        float fTwoArea = kCross.Length();
-        float fInvLenCross = 1.0f / fTwoArea;
-        float fInvProd = fInvLen10 * fInvLenCross;
-        float fRe0 = -fInvLen10;
-        float fIm0 = fInvProd * kE12.Dot(kE10);
-        float fRe1 = fInvLen10;
-        float fIm1 = fInvProd * kE20.Dot(kE10);
-        float fRe2 = 0.0f;
-        float fIm2 = -fLen10 * fInvLenCross;
-
-        /* solve sparse system for real parts */
-        for (int i = 0; i < iVQuantity; i++) {
-            afTmp[i] = 0.0f;
-        }
-
-        afTmp[iV0] = fRe0;
-        afTmp[iV1] = fRe1;
-        afTmp[iV2] = fRe2;
-
-        float[] afResult = new float[iVQuantity];
-        boolean bSolved = kAMat.solveSymmetricCG(iVQuantity, afTmp, afResult);
-        assert (bSolved);
-
-        m_akPlane = new Vector2f[iVQuantity];
-        for (int i = 0; i < iVQuantity; i++) {
-            m_akPlane[i] = new Vector2f();
-            m_akPlane[i].X = afResult[i];
-            
-            afTmp[i] = 0.0f;
-        }
-
-        afTmp[iV0] = -fIm0;
-        afTmp[iV1] = -fIm1;
-        afTmp[iV2] = -fIm2;
-        bSolved = kAMat.solveSymmetricCG(iVQuantity, afTmp, afResult);
-        assert (bSolved);
-        
-        /* scale to [-1,1]^2 for numerical conditioning in later steps */
-        float fMin = -1;
-        float fMax = -1;
-        
-        for (int i = 0; i < iVQuantity; i++) {
-            m_akPlane[i].Y = afResult[i];
-            
-            if ( i == 0 )
-            {
-                fMin = m_akPlane[0].X;
-                fMax = fMin;
-            }
-            if (m_akPlane[i].X < fMin) {
-                fMin = m_akPlane[i].X;
-            } else if (m_akPlane[i].X > fMax) {
-                fMax = m_akPlane[i].X;
-            }
-
-            if (m_akPlane[i].Y < fMin) {
-                fMin = m_akPlane[i].Y;
-            } else if (m_akPlane[i].Y > fMax) {
-                fMax = m_akPlane[i].Y;
-            }
-        }
-
-        float fHalfRange = 0.5f * (fMax - fMin);
-        float fInvHalfRange = 1.0f / fHalfRange;
-
-        /* Map plane points to sphere using inverse stereographic projection. */
-        /* The main issue is selecting a translation in (x,y) and a radius of */
-        /* the projection sphere.  Both factors strongly influence the final */
-        /* result. */
-        
-        /* Use the average as the south pole.  The points tend to be clustered */
-        /* approximately in the middle of the conformally mapped punctured */
-        /* triangle, so the average is a good choice to place the pole. */
-        Vector2f kOrigin = new Vector2f(0.0f, 0.0f);
-        for (int i = 0; i < iVQuantity; i++) {
-            m_akPlane[i].X = ( -1.0f + (fInvHalfRange * (m_akPlane[i].X - fMin)) );
-            m_akPlane[i].Y = ( -1.0f + (fInvHalfRange * (m_akPlane[i].Y - fMin)) );
-            
-
-            kOrigin.Add(m_akPlane[i]);
-        }
-        kOrigin.Scale(1.0f / iVQuantity);
-
-        m_kPlaneMin = new Vector2f();
-        m_kPlaneMax = new Vector2f();
-        for (int i = 0; i < iVQuantity; i++) {
-            m_akPlane[i].Sub(kOrigin);
-            
-            if ( i == 0 )
-            {
-                m_kPlaneMin.Copy(m_akPlane[0]);
-                m_kPlaneMax.Copy(m_akPlane[0]);
-            }
-            if (m_akPlane[i].X < m_kPlaneMin.X) {
-                m_kPlaneMin.X =  m_akPlane[i].X;
-            } else if (m_akPlane[i].X > m_kPlaneMax.X) {
-                m_kPlaneMax.X = m_akPlane[i].X;
-            }
-
-            if (m_akPlane[i].Y < m_kPlaneMin.Y) {
-                m_kPlaneMin.Y = m_akPlane[i].Y;
-            } else if (m_akPlane[i].Y > m_kPlaneMax.Y) {
-                m_kPlaneMax.Y = m_akPlane[i].Y;
-            }
-        }
-
-        /* Select the radius of the sphere so that the projected punctured */
-        /* triangle has an area whose fraction of total spherical area is the */
-        /* same fraction as the area of the punctured triangle to the total area */
-        /* of the original triangle mesh. */
-        float fTwoTotalArea = 0.0f;
-        int iTQuantity = m_kMesh.GetTriangleQuantity();
-        for (int iT = 0; iT < iTQuantity; iT++) {
-            Triangle kT0 = m_akTriangle[iT];
-            m_kMesh.VBuffer.GetPosition3( kT0.V[0], kV0 );
-            m_kMesh.VBuffer.GetPosition3( kT0.V[1], kV1 );
-            m_kMesh.VBuffer.GetPosition3( kT0.V[2], kV2 );
-            kE0.Sub( kV1, kV0 );
-            kE1.Sub( kV2, kV0 );
-            kCross.Cross( kE0, kE1 );
-            fTwoTotalArea += kCross.Length();
-        }
-
-        m_fRho = computeRadius(new Vector2f(m_akPlane[iV0]), new Vector2f(m_akPlane[iV1]),
-                               new Vector2f(m_akPlane[iV2]), fTwoArea / fTwoTotalArea);
-
-        float fRhoSqr = m_fRho * m_fRho;
-
-        /* Inverse stereographic projection to obtain sphere coordinates.  The */
-        /* sphere is centered at the origin and has radius 1. */
-        Vector2f kPlaneVector = new Vector2f();
-        m_akSphere = new Vector3f[iVQuantity];
-        for (int i = 0; i < iVQuantity; i++) {
-            kPlaneVector.Copy(m_akPlane[i]);
-
-            float fRSqr = kPlaneVector.SquaredLength();
-            float fMult = 1.0f / (fRSqr + fRhoSqr);
-            float fX = 2.0f * fMult * fRhoSqr * m_akPlane[i].X;
-            float fY = 2.0f * fMult * fRhoSqr * m_akPlane[i].Y;
-            float fZ = fMult * m_fRho * (fRSqr - fRhoSqr);
-
-            m_akSphere[i] = new Vector3f(fX, fY, fZ);
-            m_akSphere[i].Scale(1.0f / m_fRho);
-        }
+        ConformalMap kConformalMap = new ConformalMap ( m_kBasicMesh, iVQuantity, m_akPoint,
+                m_kMesh.GetTriangleQuantity(), m_iPunctureTri );
+        m_akSphere = kConformalMap.GetSphereCoordinates();
+        m_akPlane = kConformalMap.GetPlaneCoordinates();
+        m_fRho = kConformalMap.GetSphereRadius();
 
         /* Project the sphere onto a cylinder.  The cylinder is centered at the */
         /* origin and has axis direction (0,0,1).  The radius of the cylinder is */
@@ -513,21 +248,9 @@ public class MjCorticalMesh_WM {
     public void computeMeanCurvature( ) {
         int iVQuantity = m_kMesh.VBuffer.GetVertexQuantity();
         m_afMeanCurvature = new float[iVQuantity];
-
-
-        Vector3f[] akPoint = new Vector3f[iVQuantity]; 
-        for ( int i = 0; i < iVQuantity; i++ )
-        {
-            akPoint[i] = new Vector3f( m_kMesh.VBuffer.GetPosition3fX(i),
-                    m_kMesh.VBuffer.GetPosition3fY(i),
-                    m_kMesh.VBuffer.GetPosition3fZ(i) );
-                    
-        }
         int iTQuantity = m_kMesh.GetTriangleQuantity(); 
         int[] aiConnect = m_kMesh.IBuffer.GetData();
-        
-
-        MeshCurvature kMG = new MeshCurvature(iVQuantity, akPoint, iTQuantity, aiConnect);
+        MeshCurvature kMG = new MeshCurvature(iVQuantity, m_akPoint, iTQuantity, aiConnect);
 
         float[] afMinCurv = kMG.GetMinCurvatures();
         float[] afMaxCurv = kMG.GetMaxCurvatures();
@@ -576,6 +299,7 @@ public class MjCorticalMesh_WM {
             m_fSurfaceArea += 0.5f * kCross.Length();
         }
     }
+    
 
     /**
      * DOCUMENT ME!
@@ -724,7 +448,6 @@ public class MjCorticalMesh_WM {
         }
         return m_kCylinderMesh;
     }
-    
 
     /**
      * DOCUMENT ME!
@@ -755,32 +478,6 @@ public class MjCorticalMesh_WM {
         return -1.0f;
     }
 
-    /**
-     * access to the distance map - stored in map from MjEdgeKey to Float.
-     *
-     * @return  DOCUMENT ME!
-     */
-    public HashMap getDistanceMap() {
-        return m_kDistance;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public Edge[] getEdges() {
-        return m_akEdge;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public int getEQuantity() {
-        return m_iEQuantity;
-    }
 
     /**
      * Produce polylines that are superimposed on the input cortical mesh, sphere, and plane. The znormal value
@@ -1170,29 +867,6 @@ public class MjCorticalMesh_WM {
 
         return kPolylines;
     }
-    
-    public TriMesh getMesh()
-    {
-        return m_kMesh;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public float getMaxAvrConvexity() {
-        return m_fMaxAvrConvexity;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public float getMaxDistance() {
-        return m_fMaxDistance;
-    }
 
     /**
      * DOCUMENT ME!
@@ -1212,22 +886,9 @@ public class MjCorticalMesh_WM {
         return m_afMeanCurvature;
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public float getMinAvrConvexity() {
-        return m_fMinAvrConvexity;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public float getMinDistance() {
-        return m_fMinDistance;
+    public TriMesh getMesh()
+    {
+        return m_kMesh;
     }
 
     /**
@@ -1239,32 +900,6 @@ public class MjCorticalMesh_WM {
         return m_fMinMeanCurvature;
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public Vector2f[] getPlaneCoordinates() {
-        return m_akPlane;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public Vector2f getPlaneMax() {
-        return m_kPlaneMax;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public Vector2f getPlaneMin() {
-        return m_kPlaneMin;
-    }
 
     /**
      * DOCUMENT ME!
@@ -1301,78 +936,16 @@ public class MjCorticalMesh_WM {
         return m_fSurfaceArea;
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public Triangle[] getTriangles() {
-        return m_akTriangle;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public Vertex[] getVertices() {
-        return m_akVertex;
+    
+    public int getVQuantity()
+    {
+        return m_kMesh.VBuffer.GetVertexQuantity();
     }
 
 
     public void setColor( int i, float fRed, float fGreen, float fBlue )
     {
         m_kMesh.VBuffer.SetColor4( 0, i, fRed, fGreen, fBlue, 1.0f );
-    }
-
-    /**
-     * uniformly scale points to [-1,1]^3, originally in [min,max]^3 returns 2D vector with (min,max) as the elements
-     * public Vector2f scaleToCube ().
-     *
-     * @return  DOCUMENT ME!
-     */
-    public float scaleToCube() {
-        float fMin = m_kMesh.VBuffer.GetPosition3fX( 0 );
-        float fMax = fMin;
-        int iVQuantity = m_kMesh.VBuffer.GetVertexQuantity();
-        for (int i = 0; i < iVQuantity; i++) {
-
-            if ( m_kMesh.VBuffer.GetPosition3fX( i ) < fMin) {
-                fMin = m_kMesh.VBuffer.GetPosition3fX( i );
-            } else if (m_kMesh.VBuffer.GetPosition3fX( i ) > fMax) {
-                fMax = m_kMesh.VBuffer.GetPosition3fX( i );
-            }
-
-            if (m_kMesh.VBuffer.GetPosition3fY( i ) < fMin) {
-                fMin = m_kMesh.VBuffer.GetPosition3fY( i );
-            } else if (m_kMesh.VBuffer.GetPosition3fY( i ) > fMax) {
-                fMax = m_kMesh.VBuffer.GetPosition3fY( i );
-            }
-
-            if (m_kMesh.VBuffer.GetPosition3fZ( i ) < fMin) {
-                fMin = m_kMesh.VBuffer.GetPosition3fZ( i );
-            } else if (m_kMesh.VBuffer.GetPosition3fZ( i ) > fMax) {
-                fMax = m_kMesh.VBuffer.GetPosition3fZ( i );
-            }
-        }
-
-        float fHalfRange = 0.5f * (fMax - fMin);
-        float fInvHalfRange = 1.0f / fHalfRange;
-        Vector3f kOne = new Vector3f(1.0f, 1.0f, 1.0f);
-        Vector3f kOneScaled = new Vector3f();
-
-        Vector3f kPos = new Vector3f();
-        for (int i = 0; i < iVQuantity; i++) {
-            m_kMesh.VBuffer.GetPosition3( i, kPos );
-            kOneScaled.Scale( -fMin, kOne );
-            kPos.Add( kOneScaled );
-            kPos.Scale(fInvHalfRange);
-            kPos.Sub(kOne);
-            m_kMesh.VBuffer.SetPosition3( i, kPos );
-        }
-
-        /*        return new Vector2f(fMin,fMax); */
-        return (float) (1.0 / fInvHalfRange);
     }
 
     /**
@@ -1419,7 +992,7 @@ public class MjCorticalMesh_WM {
         }
         m_kMesh.VBuffer.Release();
     }
-    
+
     /**
      * DOCUMENT ME!
      *
@@ -1427,39 +1000,6 @@ public class MjCorticalMesh_WM {
      */
     protected void finalize() throws Throwable {
         disposeLocal();
-    }
-
-    /**
-     * support for point-in-triangle tests; The akVertex array must have length 3.
-     *
-     * @param   akVertex  DOCUMENT ME!
-     * @param   kP        DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private static boolean contains(Vector2f[] akVertex, Vector2f kP) {
-        /* assert:  <V0,V1,V2> is clockwise ordered */
-
-        final float fEpsilon = 1e-05f;
-        Vector2f kV1mV0 = new Vector2f();
-        Vector2f kInnerNormal = new Vector2f();
-        Vector2f kDiff = new Vector2f();
-
-        for (int i0 = 2, i1 = 0; i1 < 3; i0 = i1++) {
-        	kV1mV0.Sub( akVertex[i1], akVertex[i0] );
-            kInnerNormal.Perp(kV1mV0);
-            kDiff.Sub( kP, akVertex[i0] );
-            kInnerNormal.Normalize();
-            kDiff.Normalize();
-
-            float fCos = kInnerNormal.Dot(kDiff);
-
-            if (fCos < -fEpsilon) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**
@@ -1482,7 +1022,7 @@ public class MjCorticalMesh_WM {
         kInterior.add(new Integer(iSource));
 
         /* compute distances to all 1-neighbors */
-        Vertex kSource = m_akVertex[iSource];
+        BasicMesh.Vertex kSource = m_akVertex[iSource];
         int i, iNbr;
         Set<Integer> kBoundary = new HashSet<Integer>(); /* set of int */
         Vector3f kDiff = new Vector3f();
@@ -1514,7 +1054,7 @@ public class MjCorticalMesh_WM {
 
                 /* current boundary point to process */
                 int iCenter = ((Integer) (kIter.next())).intValue();
-                Vertex kCenter = m_akVertex[iCenter];
+                BasicMesh.Vertex kCenter = m_akVertex[iCenter];
 
                 /* distance of path <source,center> */
                 float fPathLength = m_kDistance.get(new EdgeKey(iSource, iCenter)).floatValue();
@@ -1592,80 +1132,6 @@ public class MjCorticalMesh_WM {
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @param   kV0            DOCUMENT ME!
-     * @param   kV1            DOCUMENT ME!
-     * @param   kV2            DOCUMENT ME!
-     * @param   fAreaFraction  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private float computeRadius(Vector2f kV0, Vector2f kV1, Vector2f kV2, float fAreaFraction) {
-        float fR0Sqr = kV0.SquaredLength();
-        float fR1Sqr = kV1.SquaredLength();
-        float fR2Sqr = kV2.SquaredLength();
-        float fDR10 = fR1Sqr - fR0Sqr;
-        float fDR20 = fR2Sqr - fR0Sqr;
-        float fDX10 = kV1.X - kV0.X;
-        float fDY10 = kV1.Y - kV0.Y;
-        float fDX20 = kV2.X - kV0.X;
-        float fDY20 = kV2.Y - kV0.Y;
-        float fDRX10 = (kV1.X * fR0Sqr) - (kV0.X * fR1Sqr);
-        float fDRY10 = (kV1.Y * fR0Sqr) - (kV0.Y * fR1Sqr);
-        float fDRX20 = (kV2.X * fR0Sqr) - (kV0.X * fR2Sqr);
-        float fDRY20 = (kV2.Y * fR0Sqr) - (kV0.Y * fR2Sqr);
-
-        float fC0 = (fDR20 * fDRY10) - (fDR10 * fDRY20);
-        float fC1 = (fDR20 * fDY10) - (fDR10 * fDY20);
-        float fD0 = (fDR10 * fDRX20) - (fDR20 * fDRX10);
-        float fD1 = (fDR10 * fDX20) - (fDR20 * fDX10);
-        float fE0 = (fDRX10 * fDRY20) - (fDRX20 * fDRY10);
-        float fE1 = (fDRX10 * fDY20) - (fDRX20 * fDY10);
-        float fE2 = (fDX10 * fDY20) - (fDX20 * fDY10);
-
-        Polynomial1f kP0 = new Polynomial1f(6);
-        kP0.SetCoeff(0, 0.0f);
-        kP0.SetCoeff(1, 0.0f);
-        kP0.SetCoeff(2, fE0 * fE0);
-        kP0.SetCoeff(3, (fC0 * fC0) + (fD0 * fD0) + (2.0f * fE0 * fE1));
-        kP0.SetCoeff(4, (2.0f * ((fC0 * fC1) + (fD0 * fD1) + (fE0 * fE1))) + (fE1 * fE1));
-        kP0.SetCoeff(5, (fC1 * fC1) + (fD1 * fD1) + (2.0f * fE1 * fE2));
-        kP0.SetCoeff(6, fE2 * fE2);
-
-        Polynomial1f kQ0 = new Polynomial1f(1);
-        kQ0.SetCoeff(0, fR0Sqr);
-        kQ0.SetCoeff(1, 1.0f);
-
-        Polynomial1f kQ1 = new Polynomial1f(1);
-        kQ1.SetCoeff(0, fR1Sqr);
-        kQ1.SetCoeff(1, 1.0f);
-
-        Polynomial1f kQ2 = new Polynomial1f(1);
-        kQ2.SetCoeff(0, fR2Sqr);
-        kQ2.SetCoeff(1, 1.0f);
-
-        float fTmp = fAreaFraction * (float) Math.PI;
-        float fAmp = fTmp * fTmp;
-        Polynomial1f kP1 = new Polynomial1f();
-        kP1.Copy(kQ0);
-        kP1.Scale(fAmp);
-        kP1.Mult(kP1, kQ0);
-        kP1.Mult(kP1, kQ0);
-        kP1.Mult(kP1, kQ0);
-        kP1.Mult(kP1, kQ1);
-        kP1.Mult(kP1, kQ1);
-        kP1.Mult(kP1, kQ2);
-        kP1.Mult(kP1, kQ2);
-
-        Polynomial1f kFinal = new Polynomial1f();
-        kFinal.Sub(kP1, kP0);
-        assert (kFinal.GetDegree() <= 8);
-
-        return kFinal.GetRootBisection();
-    }
-
-    /**
      * surface inflation.
      *
      * @return  DOCUMENT ME!
@@ -1688,7 +1154,7 @@ public class MjCorticalMesh_WM {
         for (int i0 = 0; i0 < iVQuantity; i0++) {
             akDJDX[i0] = new Vector3f(Vector3f.ZERO);
 
-            Vertex kVertex = m_akVertex[i0];
+            BasicMesh.Vertex kVertex = m_akVertex[i0];
 
             m_kMesh.VBuffer.GetPosition3( i0, kPos0 );
 
@@ -1748,7 +1214,7 @@ public class MjCorticalMesh_WM {
         }
 
         for (int i0 = 0; i0 < iVQuantity; i0++) {
-            Vertex kVertex = m_akVertex[i0];
+            BasicMesh.Vertex kVertex = m_akVertex[i0];
             m_kMesh.VBuffer.GetPosition3( i0, kPos0 );
             
             for (int j = 0; j < kVertex.VQuantity; j++) {
@@ -1836,7 +1302,7 @@ public class MjCorticalMesh_WM {
     private Vector3f getBarycentric(Vector2f kP, int i) {
 
         /* get barycentric coordinates */
-        Triangle kT = m_akTriangle[i];
+        BasicMesh.Triangle kT = m_akTriangle[i];
         Vector2f kV0 = m_akPlane[kT.V[0]];
         Vector2f kV1 = m_akPlane[kT.V[1]];
         Vector2f kV2 = m_akPlane[kT.V[2]];
@@ -1888,7 +1354,7 @@ public class MjCorticalMesh_WM {
         for (int i = 0; i < iTQuantity; i++) {
 
             /* get vertices of current triangle */
-            Triangle kT = m_akTriangle[iStart];
+            BasicMesh.Triangle kT = m_akTriangle[iStart];
             akVertex[0] = m_akPlane[kT.V[0]];
             akVertex[1] = m_akPlane[kT.V[1]];
             akVertex[2] = m_akPlane[kT.V[2]];
@@ -1920,7 +1386,7 @@ public class MjCorticalMesh_WM {
 
                 /* intersects? */
                 if (0 != iQuantity) {
-                    Edge kE = m_akEdge[kT.E[i0]];
+                    BasicMesh.Edge kE = m_akEdge[kT.E[i0]];
                     iStart = ((kE.T[0] == iStart) ? kE.T[1] : kE.T[0]);
 
                     break;
@@ -1941,165 +1407,5 @@ public class MjCorticalMesh_WM {
      */
     private float getStereographicRadius() {
         return m_fRho;
-    }
-
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    /**
-     * DOCUMENT ME!
-     */
-    public static class Edge {
-
-        /** DOCUMENT ME! */
-        public final int[] T = new int[2];
-
-        /** DOCUMENT ME! */
-        public final int[] V = new int[2];
-
-        /**
-         * Creates a new Edge object.
-         */
-        public Edge() {
-
-            for (int i = 0; i < 2; i++) {
-                V[i] = -1;
-                T[i] = -1;
-            }
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     */
-    public static class Polylines {
-
-        /** Array of mesh points. */
-        VertexBuffer kMVertex;
-
-        /** Array of plane points. */
-        VertexBuffer kPVertex;
-
-        /** Array of sphere points. */
-        VertexBuffer kSVertex;
-    }
-
-    /**
-     * DOCUMENT ME!
-     */
-    public static class Triangle {
-
-        /** DOCUMENT ME! */
-        public final int[] E = new int[3];
-
-        /** DOCUMENT ME! */
-        public final int[] T = new int[3];
-
-        /** DOCUMENT ME! */
-        public final int[] V = new int[3];
-
-        /**
-         * Creates a new Triangle object.
-         */
-        public Triangle() {
-
-            for (int i = 0; i < 3; i++) {
-                V[i] = -1;
-                E[i] = -1;
-                T[i] = -1;
-            }
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     */
-    public static class Vertex {
-
-        /** DOCUMENT ME! */
-        private static final int MV_CHUNK = 8;
-
-        /** DOCUMENT ME! */
-        public int[] E;
-
-        /** DOCUMENT ME! */
-        public int[] T;
-
-        /** DOCUMENT ME! */
-        public int TQuantity;
-
-        /** DOCUMENT ME! */
-        public int[] V;
-
-        /** DOCUMENT ME! */
-        public int VQuantity;
-
-        /**
-         * Creates a new Vertex object.
-         */
-        public Vertex() {
-            VQuantity = 0;
-            V = new int[0];
-            E = new int[0];
-            TQuantity = 0;
-            T = new int[0];
-        }
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param  iV  DOCUMENT ME!
-         * @param  iE  DOCUMENT ME!
-         */
-        public void InsertEdge(int iV, int iE) {
-
-            /* check if vertex/edge in adjacency array */
-            /* nothing to do if in array) */
-            for (int i = 0; i < VQuantity; i++) {
-
-                if (iV == V[i]) {
-                    return;
-                }
-            }
-
-            if ((VQuantity % MV_CHUNK) == 0) {
-                int[] aiSave = V;
-                V = new int[VQuantity + MV_CHUNK];
-                System.arraycopy(aiSave, 0, V, 0, VQuantity);
-
-                aiSave = E;
-                E = new int[VQuantity + MV_CHUNK];
-                System.arraycopy(aiSave, 0, E, 0, VQuantity);
-            }
-
-            V[VQuantity] = iV;
-            E[VQuantity] = iE;
-            VQuantity++;
-        }
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param  iT  DOCUMENT ME!
-         */
-        public void InsertTriangle(int iT) {
-
-            /* check if triangle in adjacency array */
-            /* (nothing to do if in array) */
-            for (int i = 0; i < TQuantity; i++) {
-
-                if (iT == T[i]) {
-                    return;
-                }
-            }
-
-            if ((TQuantity % MV_CHUNK) == 0) {
-                int[] aiSave = T;
-                T = new int[TQuantity + MV_CHUNK];
-                System.arraycopy(aiSave, 0, T, 0, TQuantity);
-            }
-
-            T[TQuantity] = iT;
-            TQuantity++;
-        }
     }
 }

@@ -836,7 +836,7 @@ public class JPanelSlices extends JPanelRendererJ3D
     /**
      * Get the current slider value for the slider that matches the
      * orientation input parameter.
-     * @param orientation, either FileInfoBase.AXIAL, FileInfoBase.CORONAL,
+     * @param orientation either FileInfoBase.AXIAL, FileInfoBase.CORONAL,
      * FileInfoBase.SAGITTAL, or FileInfoBase.UNKNOWN_ORIENT.
      * @return The slider position for the given orientation is returned.  *
      */
@@ -856,9 +856,9 @@ public class JPanelSlices extends JPanelRendererJ3D
     /**
      * Sets the three slider positions, based on the position of the
      * three orthogonal planes: AXIAL, CORONAL, and SAGITTAL.
-     * @param x, center x-position in FileCoordinates
-     * @param y, center y-position in FileCoordinates
-     * @param z, center z-position in FileCoordinates
+     * @param x center x-position in FileCoordinates
+     * @param y center y-position in FileCoordinates
+     * @param z center z-position in FileCoordinates
      */
     public void setCenter( int x, int y, int z )
     {

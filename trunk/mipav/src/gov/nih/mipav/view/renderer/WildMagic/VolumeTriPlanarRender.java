@@ -117,10 +117,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         
     /**
      * Construct the Volume/Surface/Tri-Planar renderer.
-     * @param kParent, parent user-interface and frame.
-     * @param kAnimator, animator used to display the canvas.
-     * @param kVolumeImageA, volume data and textures for ModelImage A.
-     * @param kVolumeImageB, volume data and textures for ModelImage B.
+     * @param kParent parent user-interface and frame.
+     * @param kAnimator animator used to display the canvas.
+     * @param kVolumeImageA volume data and textures for ModelImage A.
+     * @param kVolumeImageB volume data and textures for ModelImage B.
      */
     public VolumeTriPlanarRender( VolumeTriPlanarInterface kParent, Animator kAnimator, 
             VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
@@ -144,9 +144,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Add a new geodesic component to the surface.
-     * @param kSurface, the surface the geodesic component is added to.
-     * @param kNew, the new geodesic component.
-     * @param iGroup, the display group to add to.
+     * @param kSurface the surface the geodesic component is added to.
+     * @param kNew the new geodesic component.
+     * @param iGroup the display group to add to.
      */
     public void addGeodesic( TriMesh kSurface, Geometry kNew, int iGroup )
     {
@@ -176,8 +176,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
 
     /** Add a polyline to the display. Used to display fiber tract bundles.
-     * @param kLine, new polyline to display.
-     * @param iGroup, the group the polyline belongs to.
+     * @param kLine new polyline to display.
+     * @param iGroup the group the polyline belongs to.
      */
     public void addPolyline( Polyline kLine, int iGroup )
     {
@@ -248,22 +248,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_kSculptor.setTextureImageFloatDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetFloatData() );
         }
-        /*
-        if ( m_kImageB != null )
+
+        if ( m_kVolumeImageB != null )
         {
-            if ( m_kVolumeShaderEffect.GetVolumeTargetB().GetImage().GetData() != null )
+            if ( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() != null )
             {
-                m_kSculptor.setTextureImageDataB( m_kVolumeShaderEffect.GetVolumeTargetB().GetImage().GetData() );
+                m_kSculptor.setTextureImageDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() );
             }
             else
             {
-                m_kSculptor.setTextureImageFloatDataB( m_kVolumeShaderEffect.GetVolumeTargetB().GetImage().GetFloatData() );
+                m_kSculptor.setTextureImageFloatDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetFloatData() );
             }
         }
-        */
         if ( m_kSculptor.applySculpt() )
         {
             m_kVolumeImageA.ReleaseVolume();
+            if ( m_kVolumeImageB != null )
+            {
+                m_kVolumeImageB.ReleaseVolume();
+            }
             m_kSculptor.clearSculpt();
             m_kParent.setModified();
         }
@@ -271,7 +274,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Sets blending between imageA and imageB.
-     * @param fValue, the blend value (0-1)
+     * @param fValue the blend value (0-1)
      */
     public void blend( String kSurfaceName, float fValue )
     {
@@ -439,7 +442,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Called from JPanelClip. Sets the axis-aligned clip plane display on/off.
-     * @param iWhich, the clip plane to set.
+     * @param iWhich the clip plane to set.
      * @param bDisplay on/off.
      */
     public void displayClipPlane( int iWhich, boolean bDisplay )
@@ -452,9 +455,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Called from JPanelClip. Sets the axis-aligned clip plane display on/off and color.
-     * @param iWhich, the clip plane to set.
+     * @param iWhich the clip plane to set.
      * @param bDisplay on/off.
-     * @param kColor, the clipping plane color.
+     * @param kColor the clipping plane color.
      */
     public void displayClipPlane( int iWhich, boolean bDisplay, ColorRGB kColor )
     {
@@ -464,7 +467,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Toggle display of the scene-graphe node on/off.
-     * @param kNode, the node to toggle.
+     * @param kNode the node to toggle.
      * @param bDisplay on/off.
      */
     public void displayNode( Node kNode, boolean bDisplay )
@@ -571,7 +574,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Enables the arbitrary clip plane position.
      * @param bEnable clipping enabled
      * @param bDisplay on/off.
-     * @param kColor, the arbitrary clip plane color.
+     * @param kColor the arbitrary clip plane color.
      */
     public void enableArbitraryClipPlane( boolean bEnable, boolean bDisplay, ColorRGB kColor )
     {
@@ -588,7 +591,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Enables the axis-aligned clipping planes.
-     * @param iWhich, the clip plane to enable.
+     * @param iWhich the clip plane to enable.
      * @param bEnable clipping enabled
      * @param bDisplay on/off.
      */
@@ -628,7 +631,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Enables the eye clip plane.
      * @param bEnable clipping enabled
      * @param bDisplay on/off.
-     * @param kColor, the eye clip plane color.
+     * @param kColor the eye clip plane color.
      */
     public void enableEyeClipPlane( boolean bEnable, boolean bDisplay, ColorRGB kColor )
     {
@@ -647,7 +650,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Enables the inverse-eye clip plane.
      * @param bEnable clipping enabled
      * @param bDisplay on/off.
-     * @param kColor, the inverse-eye clip plane color.
+     * @param kColor the inverse-eye clip plane color.
      */
     public void enableEyeInvClipPlane( boolean bEnable, boolean bDisplay, ColorRGB kColor )
     {
@@ -673,13 +676,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Enable painting on TriMesh surfaces.
-     * @param kPaintColor, paint color.
-     * @param iBrushSize, brush size.
-     * @param bEnabled, painting on/off.
-     * @param bPaint, when true apply paint.
-     * @param bDropper, when true do dropper mode.
-     * @param bPaintCan, when true do paint can mode.
-     * @param bErase, when true erase.
+     * @param kPaintColor paint color.
+     * @param iBrushSize brush size.
+     * @param bEnabled painting on/off.
+     * @param bPaint when true apply paint.
+     * @param bDropper when true do dropper mode.
+     * @param bPaintCan when true do paint can mode.
+     * @param bErase when true erase.
      */
     public void enablePaint( ColorRGBA kPaintColor, int iBrushSize, boolean bEnabled, boolean bPaint, boolean bDropper, boolean bPaintCan, boolean bErase )
     {
@@ -694,14 +697,21 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Enables and disables sculpting.
-     * @param bSculpt, true to enable sculpting, false to disable.
+     * @param bSculpt true to enable sculpting, false to disable.
      */
     public void enableSculpt( boolean bSculpt )
     {
         if ( m_kSculptor == null )
         {
             m_kSculptor = new Sculptor_WM( ((OpenGLRenderer)m_pkRenderer).GetCanvas() );
-            m_kSculptor.setImage(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
+            if ( m_kVolumeImageB != null )
+            {
+                m_kSculptor.setImage(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
+            }
+            else
+            {
+                m_kSculptor.setImage(m_kVolumeImageA.GetImage(), null);
+            }
         }
         m_kSculptor.enableSculpt(bSculpt);
     }
@@ -722,7 +732,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Return the material properties of the given surface.
-     * @param kSurfaceName, the surface to query.
+     * @param kSurfaceName the surface to query.
      * @return the material properties of the surface.
      */
     public MaterialState getMaterial( String kSurfaceName )
@@ -741,7 +751,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
 
     /** Returns the polyline color for the specified fiber bundle tract group. 
-     * @param iGroup, the fiber bundle group to query.
+     * @param iGroup the fiber bundle group to query.
      * @return the polyline color for the specified fiber bundle tract group. 
      */
     public ColorRGB getPolylineColor( int iGroup )
@@ -768,7 +778,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Return the TriMesh surface with the given name.
-     * @param kSurfaceName, the name of the surface.
+     * @param kSurfaceName the name of the surface.
      * @return TriMesh.
      */
     public TriMesh getSurface( String kSurfaceName )
@@ -789,7 +799,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Return the surface area for the given TriMesh surface.
-     * @param kSurfaceName, the surface name.
+     * @param kSurfaceName the surface name.
      * @return the surface-area of the mesh.
      */
     public float getSurfaceArea( String kSurfaceName )
@@ -809,7 +819,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Return the volume of the TriMesh surface.
-     * @param kSurfaceName, the surface name.
+     * @param kSurfaceName the surface name.
      * @return the calculated volume.
      */
     public float getVolume( String kSurfaceName )
@@ -832,7 +842,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * GLCanvas is first displayed. Called again if the GLCanvas is removed
      * from the frame and added to another window or panel. Initializes the
      * display.
-     * @param arg0, GLCanvas
+     * @param arg0 GLCanvas
      */
     public void init(GLAutoDrawable arg0) {	
     	if ( m_kVolumeImageA == null ) {
@@ -894,7 +904,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /**
      * Part of the KeyListener interface. Pressing 'b' toggles displaying the
      * proxy-geometry versus the ray-traced volume.
-     * @param e, the key event.
+     * @param e the key event.
      */
     public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
@@ -1014,7 +1024,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
 
     /** Rotates the object with a virtual trackball:
-     * @param e, the MouseEvent
+     * @param e the MouseEvent
      */
     public void mouseDragged(MouseEvent e)
     {
@@ -1044,7 +1054,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
 
     /** Rotates the object with a virtual trackball:
-     * @param e, the MouseEvent
+     * @param e the MouseEvent
      */
     public void mousePressed(MouseEvent e)
     {
@@ -1080,7 +1090,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
 
     /** Rotates the object with a virtual trackball:
-     * @param e, the MouseEvent
+     * @param e the MouseEvent
      */
     public void mouseReleased(MouseEvent e)
     {
@@ -1157,7 +1167,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /** 
      * Removes the specified polyline tract group.
-     * @param iGroup, the group of polylines to remove.
+     * @param iGroup the group of polylines to remove.
      */
     public void removePolyline( int iGroup )
     {
@@ -1170,7 +1180,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Sets blending between imageA and imageB.
-     * @param fValue, the blend value (0-1)
+     * @param fValue the blend value (0-1)
      */
     public void removeSurface( String kSurfaceName )
     {
@@ -1213,8 +1223,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Save the sculpted volume.
-     * @param options, file writing options
-     * @param filtertype, 
+     * @param options file writing options
+     * @param filtertype 
      * @return boolean, true on sucess.
      */
     public boolean save(FileWriteOptions options, int filterType)
@@ -1238,7 +1248,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Enables/Disables self-shadowing in the Surface mode.
-     * @param bShadow, shadow on/off.
+     * @param bShadow shadow on/off.
      */
     public void selfShadow(boolean bShadow)
     {
@@ -1250,7 +1260,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Sets blending between imageA and imageB.
-     * @param fValue, the blend value (0-1)
+     * @param fValue the blend value (0-1)
      */
     public void setABBlend( float fValue )
     {
@@ -1262,7 +1272,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Sets the arbitrary clip plane color.
-     * @param kColor, the new color.
+     * @param kColor the new color.
      */
     public void setArbColor( ColorRGB kColor )
     {
@@ -1288,7 +1298,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Turn backface culling on/off for the given surface.
-     * @param kSurfaceName, surface name.
+     * @param kSurfaceName surface name.
      * @param bOn
      */
     public void setBackface(String kSurfaceName, boolean bOn)
@@ -1307,7 +1317,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Sets the background color.
-     * @param kColor, new background color.
+     * @param kColor new background color.
      */
     public void setBackgroundColor( ColorRGBA kColor )
     {
@@ -1346,7 +1356,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Sets the position of the 3D slices.
-     * @param kCenter, the intersection point of the three slices.
+     * @param kCenter the intersection point of the three slices.
      */
     public void setCenter( Vector3f kCenter )
     {
@@ -1362,8 +1372,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Enable clipping for the given surface.
-     * @param kSurfaceName, the surface to modify.
-     * @param bClip, true enables clipping, false disables clipping.
+     * @param kSurfaceName the surface to modify.
+     * @param bClip true enables clipping, false disables clipping.
      */
     public void setClipping(String kSurfaceName, boolean bClip)
     {
@@ -1381,8 +1391,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Called from JPanelClip. Sets the axis-aligned clip plane.
-     * @param iWhich, the clip plane to set.
-     * @param fValue, the new position of the clip plane (the same value as
+     * @param iWhich the clip plane to set.
+     * @param fValue the new position of the clip plane (the same value as
      * the slider in JPanelClip).
      */
     public void setClipPlane( int iWhich, float fValue, boolean bEnable )
@@ -1422,8 +1432,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Sets the axis-aligned clip plane color.
-     * @param iWhich, one of the 6 clip planes
-     * @param kColor, the new color.
+     * @param iWhich one of the 6 clip planes
+     * @param kColor the new color.
      */
     public void setClipPlaneColor( int iWhich, ColorRGB kColor )
     {
@@ -1439,7 +1449,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Sets blending between imageA and imageB.
-     * @param fValue, the blend value (0-1)
+     * @param fValue the blend value (0-1)
      */
     public void setColor( String kSurfaceName, ColorRGB kColor )
     {
@@ -1456,7 +1466,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
     
     /** Turns on/off displaying all the ellipsoids.
-     * @param bDisplay, when true display all the cylinders in the volume.
+     * @param bDisplay when true display all the cylinders in the volume.
      */
     public void setDisplayAllCylinders( boolean bDisplay )
     {
@@ -1467,7 +1477,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
     
     /** Turns on/off displaying all the ellipsoids.
-     * @param bDisplay, when true display all the ellipsods in the volume.
+     * @param bDisplay when true display all the ellipsods in the volume.
      */
     public void setDisplayAllEllipsoids( boolean bDisplay )
     {
@@ -1478,7 +1488,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
 
     /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
-     * @param bDisplay, when true display the tracts with Cylinders.
+     * @param bDisplay when true display the tracts with Cylinders.
      */
     public void setDisplayCylinders( boolean bDisplay )
     {
@@ -1489,7 +1499,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
 
     /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
-     * @param bDisplay, when true display the tracts with ellipsods.
+     * @param bDisplay when true display the tracts with ellipsods.
      */
     public void setDisplayEllipsoids( boolean bDisplay )
     {
@@ -1500,7 +1510,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
     
     /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
-     * @param bDisplay, when true display the tracts with Cylinders.
+     * @param bDisplay when true display the tracts with Cylinders.
      */
     public void setDisplayTubes( boolean bDisplay )
     {
@@ -1512,7 +1522,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Sets the sculpt drawing shape.
-     * @param shape, (0 = free-hand, 1 = rectangular)
+     * @param shape (0 = free-hand, 1 = rectangular)
      */
     public void setDrawingShape(int shape)
     {
@@ -1538,7 +1548,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
 
     /** Set the m_iEllipsoidMod value. 
-     * @param iMod, new m_iEllipsoidMod value.
+     * @param iMod new m_iEllipsoidMod value.
      */
     public void setEllipseMod( int iMod )
     {
@@ -1579,7 +1589,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Sets the eye clip plane color.
-     * @param kColor, the new color.
+     * @param kColor the new color.
      */
     public void setEyeColor( ColorRGB kColor )
     {
@@ -1624,7 +1634,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Sets the inverse-eye clip plane color.
-     * @param kColor, the new color.
+     * @param kColor the new color.
      */
     public void setEyeInvColor( ColorRGB kColor )
     {
@@ -1640,7 +1650,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Enables/Disables Gradient Magnitude filter.
-     * @param bShow, gradient magnitude filter on/off
+     * @param bShow gradient magnitude filter on/off
      */
     public void setGradientMagnitude(boolean bShow)
     {
@@ -1652,8 +1662,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Sets the ModelImage to use as an alternative to the volume ModelImage for surface texturing.
-     * @param kSurfaceName, the surface to modify.
-     * @param kImage, the alternate ModelImage to use for the surface texture.
+     * @param kSurfaceName the surface to modify.
+     * @param kImage the alternate ModelImage to use for the surface texture.
      */
     public void setImageNew( String kSurfaceName, ModelImage kImage )
     {
@@ -1671,7 +1681,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Sets the inter-pupillary distance for stereo rendering.
-     * @param fIPD, the IPD value.
+     * @param fIPD the IPD value.
      */
     public void setIPD( float fIPD )
     {
@@ -1680,9 +1690,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Sets the LUT to use as an alternative to the volume lut for surface texturing.
-     * @param kSurfaceName, the surface to modify.
-     * @param kLUT, the new LUT.
-     * @param kRGBT, the new ModelRGB (for color images).
+     * @param kSurfaceName the surface to modify.
+     * @param kLUT the new LUT.
+     * @param kRGBT the new ModelRGB (for color images).
      */
     public void setLUTNew( String kSurfaceName, ModelLUT kLUT, ModelRGB kRGBT )
     {
@@ -1700,8 +1710,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Sets the material for the given surface.
-     * @param kSurfaceName, the surface to update.
-     * @param kMaterial, the new material.
+     * @param kSurfaceName the surface to update.
+     * @param kMaterial the new material.
      */
     public void setMaterial( String kSurfaceName, MaterialState kMaterial )
     {
@@ -1720,7 +1730,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Enable surface picking for the given surface.
-     * @param kSurfaceName, surface name.
+     * @param kSurfaceName surface name.
      * @param bOn picking on/off.
      */
     public void setPickable(String kSurfaceName, boolean bOn)
@@ -1739,8 +1749,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Set the polygon mode (FILL, LINE, POINT) for the given surface.
-     * @param kSurfaceName, the surface to modify.
-     * @param eMode, FILL, LINE, or POINT.
+     * @param kSurfaceName the surface to modify.
+     * @param eMode FILL, LINE, or POINT.
      */
     public void setPolygonMode(String kSurfaceName, WireframeState.FillMode eMode)
     {
@@ -1757,7 +1767,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
 
     /** Sets the polyline color for the specified fiber bundle tract group. 
-     * @param iGroup, the fiber bundle group to set.
+     * @param iGroup the fiber bundle group to set.
      * @param kColor the new polyline color for the specified fiber bundle tract group. 
      */
     public void setPolylineColor( int iGroup, ColorRGB kColor )
@@ -1770,8 +1780,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Set the transparency value for the slice.
-     * @param i, the slice to modify.
-     * @param fAlpha, the new transparency value.
+     * @param i the slice to modify.
+     * @param fAlpha the new transparency value.
      */
     public void setSliceOpacity( int i, float fAlpha )
     {
@@ -1792,10 +1802,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /**
      * Turns on surface texture display for the given surface. The user can use a separate ModelImage and LUT than the one displayed in the volume renderer.
-     * @param kSurfaceName, the name of the surface to texture.
-     * @param bOn, texture on/off.
-     * @param bUseNewImage, when false use the current ModelImage, when true the user specifies the model image.
-     * @param bUseNewLUT, when false use the current LUT, when true the user specifies the LUT.
+     * @param kSurfaceName the name of the surface to texture.
+     * @param bOn texture on/off.
+     * @param bUseNewImage when false use the current ModelImage, when true the user specifies the model image.
+     * @param bUseNewLUT when false use the current LUT, when true the user specifies the LUT.
      */
     public void setSurfaceTexture(String kSurfaceName, boolean bOn, boolean bUseNewImage, boolean bUseNewLUT)
     {
@@ -1812,7 +1822,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
       
     /** Sets the blend factor for displaying the ray-cast volume with other objects in the scene.
-     * @param fBlend, the blend factor for the ray-cast volume.
+     * @param fBlend the blend factor for the ray-cast volume.
      */
     public void setVolumeBlend( float fBlend )
     {
@@ -1823,8 +1833,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
     
     /** Turns on/off displaying the bounding box for the given plane.
-     * @param i, the plane index (0-3) in file coordinates.
-     * @param bShow, when true, the bounding box is displayed.
+     * @param i the plane index (0-3) in file coordinates.
+     * @param bShow when true, the bounding box is displayed.
      */
     public void showBoundingBox( int i, boolean bShow )
     {
@@ -1835,8 +1845,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
     
     /** Turns on/off displaying the given plane.
-     * @param i, the plane index (0-3) in file coordinates.
-     * @param bShow, when true, the plane is displayed.
+     * @param i the plane index (0-3) in file coordinates.
+     * @param bShow when true, the plane is displayed.
      */
     public void showSlice( int i, boolean bShow )
     {
@@ -1847,11 +1857,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
     /**
      * Smooth the given surface.
-     * @param kSurfaceName, the name of the surface to smooth.
-     * @param iteration, smooth iterations.
-     * @param alpha, smooth factor.
-     * @param volumeLimit, whether to use a volume % change limit.
-     * @param volumePercent, the % volume change limiting factor
+     * @param kSurfaceName the name of the surface to smooth.
+     * @param iteration smooth iterations.
+     * @param alpha smooth factor.
+     * @param volumeLimit whether to use a volume % change limit.
+     * @param volumePercent the % volume change limiting factor
      */
     public void smoothMesh( String kSurfaceName, int iteration, float alpha, boolean volumeLimit, float volumePercent)
     {
@@ -1868,10 +1878,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
     /**
      * Smooth the given surface.
-     * @param kSurfaceName, the name of the surface to smooth.
-     * @param iteration, smooth iterations.
-     * @param lambda, smooth factor.
-     * @param mu, smooth factor.
+     * @param kSurfaceName the name of the surface to smooth.
+     * @param iteration smooth iterations.
+     * @param lambda smooth factor.
+     * @param mu smooth factor.
      */
     public void smoothThree( String kSurfaceName, int iteration, float lambda, float mu)
     {
@@ -1889,11 +1899,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         
     /**
      * Smooth the given surface.
-     * @param kSurfaceName, the name of the surface to smooth.
-     * @param iteration, smooth iterations.
-     * @param fStiffness, stiffness factor.
-     * @param volumeLimit, whether to use a volume % change limit.
-     * @param volumePercent, the % volume change limiting factor.
+     * @param kSurfaceName the name of the surface to smooth.
+     * @param iteration smooth iterations.
+     * @param fStiffness stiffness factor.
+     * @param volumeLimit whether to use a volume % change limit.
+     * @param volumePercent the % volume change limiting factor.
      */
     public void smoothTwo( String kSurfaceName, int iteration, float fStiffness, boolean volumeLimit, float volumePercent)
     {
@@ -1913,7 +1923,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Sets the raytracing steps size.
-     * @param fValue, the steps value (0-450)
+     * @param fValue the steps value (0-450)
      */
     public void stepsSize( float fValue )
     {
@@ -1949,8 +1959,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
     /**
      * Switches between different ways of displaying the geodesic path (Euclidean, Geodesic, or Mesh).
-     * @param kSurfaceName, the surface the path is on.
-     * @param iWhich, the type of display.
+     * @param kSurfaceName the surface the path is on.
+     * @param iWhich the type of display.
      */
     public void toggleGeodesicPathDisplay(String kSurfaceName, int iWhich)
     {
@@ -1968,8 +1978,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Changes the translation vector for the surface with the given name.
-     * @param kSurfaceName, the surface to move.
-     * @param kTranslate, the new translation vector
+     * @param kSurfaceName the surface to move.
+     * @param kTranslate the new translation vector
      */
     public void translateSurface(String kSurfaceName, Vector3f kTranslate)
     {
@@ -2003,21 +2013,23 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_kSculptor.setTextureImageFloatDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetFloatData() );
         }
-        /*
-        if ( m_kImageB != null )
+        if ( m_kVolumeImageB != null )
         {
-            if ( m_kVolumeShaderEffect.GetVolumeTargetB().GetImage().GetData() != null )
+            if ( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() != null )
             {
-                m_kSculptor.setTextureImageDataB( m_kVolumeShaderEffect.GetVolumeTargetB().GetImage().GetData() );
+                m_kSculptor.setTextureImageDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() );
             }
             else
             {
-                m_kSculptor.setTextureImageFloatDataB( m_kVolumeShaderEffect.GetVolumeTargetB().GetImage().GetFloatData() );
+                m_kSculptor.setTextureImageFloatDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetFloatData() );
             }
         }
-        */
         m_kSculptor.undoSculpt();
         m_kVolumeImageA.ReleaseVolume();
+        if ( m_kVolumeImageB != null )
+        {
+            m_kVolumeImageB.ReleaseVolume();
+        }
         m_kParent.setModified();
     }
 
@@ -2025,7 +2037,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /**
      * Causes the VolumeShader to update the copy of the ModelImage on the
      * GPU.
-     * @param kImage, the new image.
+     * @param kImage the new image.
      */
     public void updateData()
     {
@@ -2097,7 +2109,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Called by the init() function. Creates and initialized the scene-graph.
-     * @param arg0, the GLCanvas
+     * @param arg0 the GLCanvas
      */
     private void CreateScene (GLAutoDrawable arg0)
     {
@@ -2160,7 +2172,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /**
      * Calculates the rotation for the arbitrary clip plane.
-     * @param bEnable, arbitrary clip plane on/off.
+     * @param bEnable arbitrary clip plane on/off.
      */
     private void doClip( boolean bEnable ) 
     {           

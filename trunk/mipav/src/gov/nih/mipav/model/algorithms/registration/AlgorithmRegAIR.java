@@ -8054,7 +8054,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         dy[3][7] = dy[2][7] * cospitch /*+dz[1][7]*sinpitch*/;
 
         ey[3][7][0] = -dy[2][7] * sinpitch;
-        ey[3][7][1] = 0; /*paramter 1 not yet applied*/
+        ey[3][7][1] = 0; /*parameter 1 not yet applied*/
         ey[3][7][2] = ey[2][7][2] * cospitch;
         ey[3][7][6] = 0; /*ey[2][7][6]*cospitch*/
         ey[3][7][7] = 0; /*ey[2][7][7]*cospitch*/

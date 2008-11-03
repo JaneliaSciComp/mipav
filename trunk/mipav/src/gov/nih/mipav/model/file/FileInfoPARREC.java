@@ -20,7 +20,7 @@ public class FileInfoPARREC extends FileInfoBase {
 	
 	
 
-    /** vol paramters **/
+    /** vol parameters **/
     private static HashMap VolParameters;
 
     

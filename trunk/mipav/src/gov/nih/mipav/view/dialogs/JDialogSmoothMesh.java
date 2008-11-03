@@ -106,7 +106,7 @@ public class JDialogSmoothMesh extends JDialogBase {
      * Creates new dialog to get iterations and alpha for smoothing a mesh surface.
      *
      * @param  parent  Parent frame.
-     * @param show, when true display the interface in a dialog.
+     * @param show when true display the interface in a dialog.
      * @param type smooth level (1, 2, 3)
      */
     public JDialogSmoothMesh( Frame parent, boolean show, int type )
@@ -302,8 +302,8 @@ public class JDialogSmoothMesh extends JDialogBase {
     /**
      * Initializes GUI components based on the type parameter.. When show
      * parameter is true the interface is displayed as a separate dialog box.
-     * @param show, when true display the interface as a separate dialog box.
-     * @param type, the type of smooth dialog to create (SMOOTH1, SMOOTH2,
+     * @param show when true display the interface as a separate dialog box.
+     * @param type the type of smooth dialog to create (SMOOTH1, SMOOTH2,
      * SMOOTH3). The type will determine which components of the
      * user-interface are displayed to match the ModelTriangleMesh smooth type
      * operation parameters.

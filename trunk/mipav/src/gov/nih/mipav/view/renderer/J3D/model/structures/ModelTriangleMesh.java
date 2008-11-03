@@ -2209,10 +2209,10 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     /**
      * Copies the components of a ModelTriangleMesh into the parameters. More
      * efficient than copying the components individually.
-     * @param akVertex, the array of coordinates to copy into.
-     * @param akNormal, the array of normals to copy into.
-     * @param akColor, the array of colors to copy into.
-     * @param akTexCoord, the array of texture coordinates to copy into.
+     * @param akVertex the array of coordinates to copy into.
+     * @param akNormal the array of normals to copy into.
+     * @param akColor the array of colors to copy into.
+     * @param akTexCoord the array of texture coordinates to copy into.
      */
     public void getCopies( Point3f[] akVertex, Vector3f[] akNormal, Color4f[] akColor, TexCoord3f[] akTexCoord  )
     {
@@ -2249,8 +2249,8 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     /**
      * Used for fast color update while painting the triangle mesh, stores the
      * color update information for later loading into the surface.
-     * @param index, the vertex index to set the color for
-     * @param kColor, the new color
+     * @param index the vertex index to set the color for
+     * @param kColor the new color
      */
     public void setColorDelay( int index, Color4f kColor )
     {
@@ -2262,8 +2262,8 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 
     /**
      * Sets the color and stores the color update information in a local copy.
-     * @param index, the vertex index to set the color for
-     * @param kColor, the new color
+     * @param index the vertex index to set the color for
+     * @param kColor the new color
      */
     public void setColor( int index, Color4f kColor )
     {
@@ -2276,8 +2276,8 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 
     /**
      * Gets the stored local color.
-     * @param index, the vertex index to get the color for.
-     * @param kColor, the stored local color.
+     * @param index the vertex index to get the color for.
+     * @param kColor the stored local color.
      */
     public void getColorLocal( int index, Color4f kColor )
     {
@@ -4213,7 +4213,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     }
 
     /** Sets the material properties of the mesh.
-     * @param kMaterial, new material properties.
+     * @param kMaterial new material properties.
      */
     public void setMaterial( Material kMaterial )
     {
@@ -4229,7 +4229,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     }
 
     /** Sets the mesh transparency.
-     * @param transparency, mesh transparency
+     * @param transparency mesh transparency
      */
     public void setTransparency( float transparency )
     {

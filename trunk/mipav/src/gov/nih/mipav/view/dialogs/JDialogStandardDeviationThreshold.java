@@ -353,7 +353,7 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
         
         
         
-        //thresholdParamters Panel
+        //thresholdparameters Panel
         thresholdParametersPanel = new JPanel(gbl);
         thresholdParametersPanel.setBorder(buildTitledBorder("Threshold Parameters"));
         thresholdParametersLeftPanel = new JPanel(gbl);

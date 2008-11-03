@@ -29,7 +29,7 @@ public class VolumeCalcEffect extends VolumeClipEffect
 
     /** Create a new VolumeCalcEffect shader with the VolumeImage data. This
      * fn creates the first-pass shader.
-     * @param kVolumeImageA, the shared volume data and textures.
+     * @param kVolumeImageA the shared volume data and textures.
      */
     public VolumeCalcEffect ( VolumeImage kVolumeImage )
     {
@@ -45,8 +45,8 @@ public class VolumeCalcEffect extends VolumeClipEffect
 
     /** Create a new VolumeCalcEffect shader with the VolumeImage data. This
      * fn creates the second-pass shader.
-     * @param kTextureName, the name of the output texture from the first pass.
-     * @param kTexture, the output texture from the first pass.
+     * @param kTextureName the name of the output texture from the first pass.
+     * @param kTexture the output texture from the first pass.
      */
     public VolumeCalcEffect ( String kTextureName, Texture kTexture )
     {
@@ -111,7 +111,7 @@ public class VolumeCalcEffect extends VolumeClipEffect
     }
 
     /** Sets the step size shader parameter.
-     * @param kVolumeImageA, the shared volume data and textures.
+     * @param kVolumeImageA the shared volume data and textures.
      */
     public void SetStepSize(VolumeImage kVolumeImage)
     {

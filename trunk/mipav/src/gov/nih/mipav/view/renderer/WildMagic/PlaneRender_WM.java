@@ -513,7 +513,7 @@ public class PlaneRender_WM extends GPURenderBase
      * setCenter sets the cursor and slice position for this PlaneRenderWM
      * object, based on the 3D location of the three intersecting ModelImage
      * planes.
-     * @param center, the 3D center in FileCoordinates of the three
+     * @param center the 3D center in FileCoordinates of the three
      * intersecting ModelImage planes.
      */
     public void setCenter( Vector3f center )
@@ -941,7 +941,7 @@ public class PlaneRender_WM extends GPURenderBase
 
     /* Convert the position in LocalCoordinates (rendering space) into
      * PatientCoordinates:
-     * @param localPt, the current point in LocalCoordinates
+     * @param localPt the current point in LocalCoordinates
      * @param patientPt transformed localPt in PatientCoordinates
      */
     private void LocalToPatient( Vector3f localPt, Vector3f patientPt )

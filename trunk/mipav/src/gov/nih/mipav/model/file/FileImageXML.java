@@ -2144,7 +2144,7 @@ public class FileImageXML extends FileXML {
                     closedTag(parameterStr[1], temp2);
                 }
 
-                // Paramter VALUE TYPE
+                // parameter VALUE TYPE
                 closedTag(parameterStr[2], currentParam.getValueType());
 
                 // Parameter VALUE

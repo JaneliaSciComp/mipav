@@ -1,20 +1,43 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJColorChooser;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.WildMagic.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.util.Hashtable;
 
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Rendering.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
-import java.awt.*;
-import java.awt.event.*;
-
-import java.util.*;
-import javax.swing.*;
-import javax.swing.event.*;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Rendering.Light;
 
 
 /**
@@ -22,11 +45,6 @@ import javax.swing.event.*;
  * also control the X, Y, Z slices movements.
  */
 public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, ListSelectionListener {
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
-    /** Use serialVersionUID for interoperability. */
-    private static final long serialVersionUID = 8549491288085975699L;
 
     /** Static light index. */
     public static final int LIGHT_INDEX_STATIC = 0;
@@ -63,14 +81,14 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 8549491288085975699L;
+
     /** Radio button for different light type. */
     private JRadioButton ambientRadio;
 
     /** Color button, checkBox On/Off. */
     private JButton colorButton;
-
-    /** Color choose dialog reference. */
-    private ViewJColorChooser colorChooser;
 
     /** Color label. */
     private JLabel colorLabel;
@@ -192,10 +210,9 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
     /** x, y, z box size. */
     private float xBox, yBox, zBox, maxBox;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
     /**
      * Constructor.
-     *
+     * @param kVolumeViewer parent frame.
      */
     public JPanelLights_WM(VolumeTriPlanarInterface kVolumeViewer) {
         super(kVolumeViewer);
@@ -302,8 +319,6 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
     }
 
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
     /**
      * Changes color of slices box frame and button if color button was pressed; turns bounding box on and off if
      * checkbox was pressed; and closes dialog if "Close" button was pressed.
@@ -347,7 +362,7 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
                 refreshLighting();
             }
         } else if (source == colorButton) {
-            colorChooser = new ViewJColorChooser(new Frame(), "Pick light color", new OkColorListener(),
+            colorChooser = new ViewJColorChooser(new Frame(), "Pick light color", new OkColorListener(colorButton),
                                                  new CancelListener());
         } else if (command.equals("Close")) {
             disposeLocal();
@@ -357,13 +372,6 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
 
     /**
      * Clear memory and garbage collection.
-     *
-     * @param  flag  calling super dispose or not.
-     */
-    /**
-     * Clear memory and garbage collection.
-     *
-     * @param  flag  call super dispose or not
      */
     public void disposeLocal() {
 
@@ -410,19 +418,20 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
     }
 
     /**
-     * The the general light with the given index.
-     *
-     * @param   iIndex  light index
-     *
-     * @return  GeneralLight general light model.
+     * Enable the selected light.
+     * @param iSelect the light to enable.
+     * @param bOn turns light on/off.
      */
-    public Light getLight(int iIndex) {
-        return m_akLights[iIndex];
+    public void enableLight( int iSelect, boolean bOn )
+    {
+        onOffCheckBox.setSelected(bOn);
+        m_akLights[iSelect].On = bOn;
+        refreshControlPanel();
+        refreshLighting();
     }
 
     /**
      * Returns all general lights.
-     *
      * @return  GeneralLight[] general light model.
      */
     public Light[] getAllLights() {
@@ -430,12 +439,199 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
     }
 
     /**
+     * The the general light with the given index.
+     * @param   iIndex  light index
+     * @return  GeneralLight general light model.
+     */
+    public Light getLight(int iIndex) {
+        return m_akLights[iIndex];
+    }
+
+    /**
      * Get the number of lights.
-     *
      * @return  int max light number
      */
     public int getNumLights() {
         return LIGHT_INDEX_MAX;
+    }
+
+    /**
+     * Makes a string of a floating point number with a specific number of decimal points.
+     *
+     * @param   number  Number to be converted to a string.
+     * @param   decPts  The number of decimal points.
+     *
+     * @return  String representation of the number.
+     */
+    public String makeString(float number, int decPts) {
+
+        int index = String.valueOf(number).indexOf(".");
+        int length = String.valueOf(number).length();
+
+        if ((index + decPts) < length) {
+            return (String.valueOf(number).substring(0, index + decPts + 1));
+        } 
+        return (String.valueOf(number));
+    }
+
+    /**
+     * Refresh the light control panel.
+     */
+    public void refreshControlPanel() {
+
+        DefaultListModel listModel = (DefaultListModel) list.getModel();
+
+        for (int i = 0; i < m_akLights.length; i++) {
+            listModel.set(i,
+                          new String( "Light" + i + " - " + m_akLights[i].Type.Name() + " - " +
+                          (m_akLights[i].On ? "ON" : "off") ));
+        }
+
+        list.repaint();
+        list.setSelectedIndex(iSelect);
+
+        int iScale = m_aiLightScale[iSelect];
+        Light light = m_akLights[iSelect];
+        boolean bEnable = light.On;
+        boolean bEnablePosition = bEnable && !(light.Type == Light.LightType.LT_AMBIENT);
+        boolean bEnableDirectional = bEnable && (light.Type == Light.LightType.LT_DIRECTIONAL || light.Type == Light.LightType.LT_SPOT);
+
+        Vector3f kPosition = light.Position;
+        Vector3f kTarget = light.DVector;
+        Color kColor = new Color( light.Diffuse.R, light.Diffuse.G, light.Diffuse.B );
+
+        onOffCheckBox.setSelected(bEnable);
+
+        float intensityValue = light.Intensity;
+        intensitySlider.setValue((int) (intensityValue * 100));
+        textIntensity.setText(String.valueOf(intensityValue));
+        intensitySlider.setEnabled(bEnable);
+        textIntensity.setEnabled(bEnable);
+
+        colorButton.setBackground(kColor);
+        colorButton.setEnabled(bEnable);
+        colorLabel.setEnabled(bEnable);
+
+        // update light intensity
+
+        if (bEnable) {
+            intensitySlider.addChangeListener(this);
+            // colorButton.addActionListener( this );
+        } else {
+            intensitySlider.removeChangeListener(this);
+            // colorButton.removeActionListener( this );
+        }
+
+
+        // Labels for the x, y, and z sliders
+        JLabel[] sliderLabelsPos = new JLabel[3];
+        sliderLabelsPos[0] = createLabel(String.valueOf(-1.0f * iScale), bEnablePosition);
+        sliderLabelsPos[1] = createLabel(String.valueOf(0.0f * iScale), bEnablePosition);
+        sliderLabelsPos[2] = createLabel(String.valueOf(+1.0f * iScale), bEnablePosition);
+
+        // Labels for the x, y, and z sliders
+        JLabel[] sliderLabelsTrg = new JLabel[3];
+        sliderLabelsTrg[0] = createLabel(String.valueOf(-1.0f * iScale), bEnableDirectional);
+        sliderLabelsTrg[1] = createLabel(String.valueOf(0.0f * iScale), bEnableDirectional);
+        sliderLabelsTrg[2] = createLabel(String.valueOf(+1.0f * iScale), bEnableDirectional);
+
+        // Labels for the x, y, and z sliders
+        Hashtable<Integer,JLabel> labelsPos = new Hashtable<Integer,JLabel>();
+        Hashtable<Integer,JLabel> labelsTrg = new Hashtable<Integer,JLabel>();
+
+        labelsPos.put(new Integer(-100 * iScale), sliderLabelsPos[0]);
+        labelsPos.put(new Integer(0 * iScale), sliderLabelsPos[1]);
+        labelsPos.put(new Integer(100 * iScale), sliderLabelsPos[2]);
+        labelsTrg.put(new Integer(-100 * iScale), sliderLabelsTrg[0]);
+        labelsTrg.put(new Integer(0 * iScale), sliderLabelsTrg[1]);
+        labelsTrg.put(new Integer(100 * iScale), sliderLabelsTrg[2]);
+
+        // update light position
+        m_kSliderPosX.removeChangeListener(this);
+        m_kSliderPosX.setMinimum(-100 * iScale);
+        m_kSliderPosX.setMaximum(+100 * iScale);
+        m_kSliderPosX.setValue(Math.round(kPosition.X * 100));
+        m_kSliderPosX.setLabelTable(labelsPos);
+        m_kSliderPosX.addChangeListener(this);
+        m_kTextPosX.setText(makeString(kPosition.X, 2));
+
+        m_kSliderPosY.removeChangeListener(this);
+        m_kSliderPosY.setMinimum(-100 * iScale);
+        m_kSliderPosY.setMaximum(+100 * iScale);
+        m_kSliderPosY.setValue(Math.round(kPosition.Y * 100));
+        m_kSliderPosY.setLabelTable(labelsPos);
+        m_kSliderPosY.addChangeListener(this);
+        m_kTextPosY.setText(makeString(kPosition.Y, 2));
+
+        m_kSliderPosZ.removeChangeListener(this);
+        m_kSliderPosZ.setMinimum(-100 * iScale);
+        m_kSliderPosZ.setMaximum(+100 * iScale);
+        m_kSliderPosZ.setValue(Math.round(kPosition.Z * 100));
+        m_kSliderPosZ.setLabelTable(labelsPos);
+        m_kSliderPosZ.addChangeListener(this);
+        m_kTextPosZ.setText(makeString(kPosition.Z, 2));
+
+        // update light target
+        m_kSliderTrgX.removeChangeListener(this);
+        m_kSliderTrgX.setMinimum(-100 * iScale);
+        m_kSliderTrgX.setMaximum(+100 * iScale);
+        m_kSliderTrgX.setValue(Math.round((kTarget.X + kPosition.X) * 100));
+        m_kSliderTrgX.setLabelTable(labelsTrg);
+        m_kSliderTrgX.addChangeListener(this);
+        m_kTextTrgX.setText(makeString((kTarget.X + kPosition.X), 2));
+
+        m_kSliderTrgY.removeChangeListener(this);
+        m_kSliderTrgY.setMinimum(-100 * iScale);
+        m_kSliderTrgY.setMaximum(+100 * iScale);
+        m_kSliderTrgY.setValue(Math.round((kTarget.Y + kPosition.Y) * 100));
+        m_kSliderTrgY.setLabelTable(labelsTrg);
+        m_kSliderTrgY.addChangeListener(this);
+        m_kTextTrgY.setText(makeString((kTarget.Y + kPosition.Y), 2));
+
+        m_kSliderTrgZ.removeChangeListener(this);
+        m_kSliderTrgZ.setMinimum(-100 * iScale);
+        m_kSliderTrgZ.setMaximum(+100 * iScale);
+        m_kSliderTrgZ.setValue(Math.round(-(kTarget.Z + kPosition.Z) * 100));
+        m_kSliderTrgZ.setLabelTable(labelsTrg);
+        m_kSliderTrgZ.addChangeListener(this);
+        m_kTextTrgZ.setText(makeString(-(kTarget.Z + kPosition.Z), 2));
+
+        // Enable slider and value controls
+        m_kSliderPosX.setEnabled(bEnablePosition);
+        m_kSliderPosY.setEnabled(bEnablePosition);
+        m_kSliderPosZ.setEnabled(bEnablePosition);
+        m_kLabelPosX.setEnabled(bEnablePosition);
+        m_kLabelPosY.setEnabled(bEnablePosition);
+        m_kLabelPosZ.setEnabled(bEnablePosition);
+        m_kTextPosX.setEnabled(bEnablePosition);
+        m_kTextPosY.setEnabled(bEnablePosition);
+        m_kTextPosZ.setEnabled(bEnablePosition);
+        m_kSliderTrgX.setEnabled(bEnableDirectional);
+        m_kSliderTrgY.setEnabled(bEnableDirectional);
+        m_kSliderTrgZ.setEnabled(bEnableDirectional);
+        m_kLabelTrgX.setEnabled(bEnableDirectional);
+        m_kLabelTrgY.setEnabled(bEnableDirectional);
+        m_kLabelTrgZ.setEnabled(bEnableDirectional);
+        m_kTextTrgX.setEnabled(bEnableDirectional);
+        m_kTextTrgY.setEnabled(bEnableDirectional);
+        m_kTextTrgZ.setEnabled(bEnableDirectional);
+
+        // Enable radio buttons only for types allowed for this light.
+        ambientRadio.setEnabled(bEnable);
+        spotRadio.setEnabled(bEnable & (iSelect != LIGHT_INDEX_AMBIENT));
+        directionalRadio.setEnabled(bEnable & (iSelect != LIGHT_INDEX_AMBIENT));
+        pointRadio.setEnabled(bEnable & (iSelect != LIGHT_INDEX_AMBIENT));
+
+        // Set the radio button corresponding to the current light type.
+        if (light.Type == Light.LightType.LT_AMBIENT) {
+            ambientRadio.setSelected(true);
+        } else if (light.Type == Light.LightType.LT_SPOT) {
+            spotRadio.setSelected(true);
+        } else if (light.Type == Light.LightType.LT_DIRECTIONAL) {
+            directionalRadio.setSelected(true);
+        } else if (light.Type == Light.LightType.LT_POINT) {
+            pointRadio.setSelected(true);
+        }
     }
 
     /**
@@ -448,7 +644,7 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
     }
 
     /**
-     * Resizig the control panel with ViewJFrameVolumeView's frame width and height.
+     * Resizing the control panel with ViewJFrameVolumeView's frame width and height.
      *
      * @param  panelWidth   width
      * @param  frameHeight  height
@@ -459,9 +655,20 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
         scroller.revalidate();
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase#setButtonColor(javax.swing.JButton, java.awt.Color)
+     */
+    public void setButtonColor(JButton _button, Color _color) {
+
+        super.setButtonColor(_button, _color);
+        m_akLights[iSelect].Ambient.Set(_color.getRed()/255.0f, _color.getGreen()/255.0f, _color.getBlue()/255.0f);
+        m_akLights[iSelect].Diffuse.Set(_color.getRed()/255.0f, _color.getGreen()/255.0f, _color.getBlue()/255.0f);
+        refreshControlPanel();
+        refreshLighting();
+    }
+
     /**
      * Sets the light to selected.
-     *
      * @param  index  Index of light
      */
     public void setSelectedIndex(int index) {
@@ -472,7 +679,6 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
 
     /**
      * Slider move event handler.
-     *
      * @param  e  Slider move events
      */
     public void stateChanged(ChangeEvent e) {
@@ -509,7 +715,6 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
 
     /**
      * Sets values of sliders and intensities appropriately based on which light was chosen in the list.
-     *
      * @param  kEvent  Event that triggered this function.
      */
     public void valueChanged(ListSelectionEvent kEvent) {
@@ -522,10 +727,8 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
         }
     }
 
-    /**
-     * Calls dispose.
-     *
-     * @throws  Throwable  throw exception.
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
      */
     protected void finalize() throws Throwable {
         disposeLocal();
@@ -836,234 +1039,5 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
         label.setEnabled(bEnable);
 
         return label;
-    }
-
-    /**
-     * Refresh the light control panel.
-     */
-    public void refreshControlPanel() {
-
-        DefaultListModel listModel = (DefaultListModel) list.getModel();
-
-        for (int i = 0; i < m_akLights.length; i++) {
-            listModel.set(i,
-                          new String( "Light" + i + " - " + m_akLights[i].Type.Name() + " - " +
-                          (m_akLights[i].On ? "ON" : "off") ));
-        }
-
-        list.repaint();
-        list.setSelectedIndex(iSelect);
-
-        int iScale = m_aiLightScale[iSelect];
-        Light light = m_akLights[iSelect];
-        boolean bEnable = light.On;
-        boolean bEnablePosition = bEnable && !(light.Type == Light.LightType.LT_AMBIENT);
-        boolean bEnableDirectional = bEnable && (light.Type == Light.LightType.LT_DIRECTIONAL || light.Type == Light.LightType.LT_SPOT);
-
-        Vector3f kPosition = light.Position;
-        Vector3f kTarget = light.DVector;
-        Color kColor = new Color( light.Diffuse.R, light.Diffuse.G, light.Diffuse.B );
-
-        onOffCheckBox.setSelected(bEnable);
-
-        float intensityValue = light.Intensity;
-        intensitySlider.setValue((int) (intensityValue * 100));
-        textIntensity.setText(String.valueOf(intensityValue));
-        intensitySlider.setEnabled(bEnable);
-        textIntensity.setEnabled(bEnable);
-
-        colorButton.setBackground(kColor);
-        colorButton.setEnabled(bEnable);
-        colorLabel.setEnabled(bEnable);
-
-        // update light intensity
-
-        if (bEnable) {
-            intensitySlider.addChangeListener(this);
-            // colorButton.addActionListener( this );
-        } else {
-            intensitySlider.removeChangeListener(this);
-            // colorButton.removeActionListener( this );
-        }
-
-
-        // Labels for the x, y, and z sliders
-        JLabel[] sliderLabelsPos = new JLabel[3];
-        sliderLabelsPos[0] = createLabel(String.valueOf(-1.0f * iScale), bEnablePosition);
-        sliderLabelsPos[1] = createLabel(String.valueOf(0.0f * iScale), bEnablePosition);
-        sliderLabelsPos[2] = createLabel(String.valueOf(+1.0f * iScale), bEnablePosition);
-
-        // Labels for the x, y, and z sliders
-        JLabel[] sliderLabelsTrg = new JLabel[3];
-        sliderLabelsTrg[0] = createLabel(String.valueOf(-1.0f * iScale), bEnableDirectional);
-        sliderLabelsTrg[1] = createLabel(String.valueOf(0.0f * iScale), bEnableDirectional);
-        sliderLabelsTrg[2] = createLabel(String.valueOf(+1.0f * iScale), bEnableDirectional);
-
-        // Labels for the x, y, and z sliders
-        Hashtable<Integer,JLabel> labelsPos = new Hashtable<Integer,JLabel>();
-        Hashtable<Integer,JLabel> labelsTrg = new Hashtable<Integer,JLabel>();
-
-        labelsPos.put(new Integer(-100 * iScale), sliderLabelsPos[0]);
-        labelsPos.put(new Integer(0 * iScale), sliderLabelsPos[1]);
-        labelsPos.put(new Integer(100 * iScale), sliderLabelsPos[2]);
-        labelsTrg.put(new Integer(-100 * iScale), sliderLabelsTrg[0]);
-        labelsTrg.put(new Integer(0 * iScale), sliderLabelsTrg[1]);
-        labelsTrg.put(new Integer(100 * iScale), sliderLabelsTrg[2]);
-
-        // update light position
-        m_kSliderPosX.removeChangeListener(this);
-        m_kSliderPosX.setMinimum(-100 * iScale);
-        m_kSliderPosX.setMaximum(+100 * iScale);
-        m_kSliderPosX.setValue(Math.round(kPosition.X * 100));
-        m_kSliderPosX.setLabelTable(labelsPos);
-        m_kSliderPosX.addChangeListener(this);
-        m_kTextPosX.setText(makeString(kPosition.X, 2));
-
-        m_kSliderPosY.removeChangeListener(this);
-        m_kSliderPosY.setMinimum(-100 * iScale);
-        m_kSliderPosY.setMaximum(+100 * iScale);
-        m_kSliderPosY.setValue(Math.round(kPosition.Y * 100));
-        m_kSliderPosY.setLabelTable(labelsPos);
-        m_kSliderPosY.addChangeListener(this);
-        m_kTextPosY.setText(makeString(kPosition.Y, 2));
-
-        m_kSliderPosZ.removeChangeListener(this);
-        m_kSliderPosZ.setMinimum(-100 * iScale);
-        m_kSliderPosZ.setMaximum(+100 * iScale);
-        m_kSliderPosZ.setValue(Math.round(kPosition.Z * 100));
-        m_kSliderPosZ.setLabelTable(labelsPos);
-        m_kSliderPosZ.addChangeListener(this);
-        m_kTextPosZ.setText(makeString(kPosition.Z, 2));
-
-        // update light target
-        m_kSliderTrgX.removeChangeListener(this);
-        m_kSliderTrgX.setMinimum(-100 * iScale);
-        m_kSliderTrgX.setMaximum(+100 * iScale);
-        m_kSliderTrgX.setValue(Math.round((kTarget.X + kPosition.X) * 100));
-        m_kSliderTrgX.setLabelTable(labelsTrg);
-        m_kSliderTrgX.addChangeListener(this);
-        m_kTextTrgX.setText(makeString((kTarget.X + kPosition.X), 2));
-
-        m_kSliderTrgY.removeChangeListener(this);
-        m_kSliderTrgY.setMinimum(-100 * iScale);
-        m_kSliderTrgY.setMaximum(+100 * iScale);
-        m_kSliderTrgY.setValue(Math.round((kTarget.Y + kPosition.Y) * 100));
-        m_kSliderTrgY.setLabelTable(labelsTrg);
-        m_kSliderTrgY.addChangeListener(this);
-        m_kTextTrgY.setText(makeString((kTarget.Y + kPosition.Y), 2));
-
-        m_kSliderTrgZ.removeChangeListener(this);
-        m_kSliderTrgZ.setMinimum(-100 * iScale);
-        m_kSliderTrgZ.setMaximum(+100 * iScale);
-        m_kSliderTrgZ.setValue(Math.round(-(kTarget.Z + kPosition.Z) * 100));
-        m_kSliderTrgZ.setLabelTable(labelsTrg);
-        m_kSliderTrgZ.addChangeListener(this);
-        m_kTextTrgZ.setText(makeString(-(kTarget.Z + kPosition.Z), 2));
-
-        // Enable slider and value controls
-        m_kSliderPosX.setEnabled(bEnablePosition);
-        m_kSliderPosY.setEnabled(bEnablePosition);
-        m_kSliderPosZ.setEnabled(bEnablePosition);
-        m_kLabelPosX.setEnabled(bEnablePosition);
-        m_kLabelPosY.setEnabled(bEnablePosition);
-        m_kLabelPosZ.setEnabled(bEnablePosition);
-        m_kTextPosX.setEnabled(bEnablePosition);
-        m_kTextPosY.setEnabled(bEnablePosition);
-        m_kTextPosZ.setEnabled(bEnablePosition);
-        m_kSliderTrgX.setEnabled(bEnableDirectional);
-        m_kSliderTrgY.setEnabled(bEnableDirectional);
-        m_kSliderTrgZ.setEnabled(bEnableDirectional);
-        m_kLabelTrgX.setEnabled(bEnableDirectional);
-        m_kLabelTrgY.setEnabled(bEnableDirectional);
-        m_kLabelTrgZ.setEnabled(bEnableDirectional);
-        m_kTextTrgX.setEnabled(bEnableDirectional);
-        m_kTextTrgY.setEnabled(bEnableDirectional);
-        m_kTextTrgZ.setEnabled(bEnableDirectional);
-
-        // Enable radio buttons only for types allowed for this light.
-        ambientRadio.setEnabled(bEnable);
-        spotRadio.setEnabled(bEnable & (iSelect != LIGHT_INDEX_AMBIENT));
-        directionalRadio.setEnabled(bEnable & (iSelect != LIGHT_INDEX_AMBIENT));
-        pointRadio.setEnabled(bEnable & (iSelect != LIGHT_INDEX_AMBIENT));
-
-        // Set the radio button corresponding to the current light type.
-        if (light.Type == Light.LightType.LT_AMBIENT) {
-            ambientRadio.setSelected(true);
-        } else if (light.Type == Light.LightType.LT_SPOT) {
-            spotRadio.setSelected(true);
-        } else if (light.Type == Light.LightType.LT_DIRECTIONAL) {
-            directionalRadio.setSelected(true);
-        } else if (light.Type == Light.LightType.LT_POINT) {
-            pointRadio.setSelected(true);
-        }
-    }
-
-    public void enableLight( int iSelect, boolean bOn )
-    {
-        onOffCheckBox.setSelected(bOn);
-        m_akLights[iSelect].On = bOn;
-        refreshControlPanel();
-        refreshLighting();
-    }
-    
-
-
-    /**
-     * Makes a string of a floating point number with a specific number of decimal points.
-     *
-     * @param   number  Number to be converted to a string.
-     * @param   decPts  The number of decimal points.
-     *
-     * @return  String representation of the number.
-     */
-    public String makeString(float number, int decPts) {
-
-        int index = String.valueOf(number).indexOf(".");
-        int length = String.valueOf(number).length();
-
-        if ((index + decPts) < length) {
-            return (String.valueOf(number).substring(0, index + decPts + 1));
-        } 
-        return (String.valueOf(number));
-    }
-   
-    
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    /**
-     * Cancel the color dialog, change nothing.
-     */
-    class CancelListener implements ActionListener {
-
-        /**
-         * Unchanged.
-         *
-         * @param  e  action event handler.
-         */
-        public void actionPerformed(ActionEvent e) { }
-    }
-
-    /**
-     * Pick up the selected color and call method to change the surface color.
-     */
-    class OkColorListener implements ActionListener {
-
-        /**
-         * Sets the button color to the chosen color and changes the color of the surface.
-         *
-         * @param  e  Event that triggered this method.
-         */
-        public void actionPerformed(ActionEvent e) {
-            Object source = e.getSource();
-
-            if (colorChooser != source) {
-                Color colorA = colorChooser.getColor();
-
-                m_akLights[iSelect].Ambient.Set(colorA.getRed()/255.0f, colorA.getGreen()/255.0f, colorA.getBlue()/255.0f);
-                m_akLights[iSelect].Diffuse.Set(colorA.getRed()/255.0f, colorA.getGreen()/255.0f, colorA.getBlue()/255.0f);
-                refreshControlPanel();
-                refreshLighting();
-            }
-        }
     }
 }

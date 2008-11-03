@@ -95,7 +95,7 @@ public class PlugInAlgorithmDTIParRecSortingProcess extends AlgorithmBase {
     /** Path File name **/
     private String pathFileName;
     
-    /** vol paramters **/
+    /** vol parameters **/
     private HashMap volParameters;
 
 	

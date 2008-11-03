@@ -76,11 +76,11 @@ public class WindowLevel
      * fX and fY must be in normalized screen space (0-1).
      *
      *
-     * @param fX, the normalized window parameter (0-1)
-     * @param fY, the normalized level parameter (0-1)
-     * @param bFirstUpdate, when true initialize the WindowLevel function
-     * @param kLookupTable, either the ModelLUT or the ModelRGB being modified
-     * @param kImage, the ModelImage the lookup table describes. 
+     * @param fX the normalized window parameter (0-1)
+     * @param fY the normalized level parameter (0-1)
+     * @param bFirstUpdate when true initialize the WindowLevel function
+     * @param kLookupTable either the ModelLUT or the ModelRGB being modified
+     * @param kImage the ModelImage the lookup table describes. 
      * @return true when the lookup table changes, false when no change
      */
     public boolean updateWinLevel( float fX, float fY, boolean bFirstUpdate,
@@ -177,7 +177,7 @@ public class WindowLevel
     }
     
     /** Sets alpha for the notifyWindowDisplayListeners call
-     * @param fAlpha, the alpha value for blending between images. Needed to
+     * @param fAlpha the alpha value for blending between images. Needed to
      * pass to the notifyWindowDisplayListeners function.
      */
     public void setAlpha( float fAlpha )
@@ -189,8 +189,8 @@ public class WindowLevel
      * initWinLevelRGB, initializes the ModelRGB for window-level changes. The
      * transfer function is set to have four control points, and is reset to
      * the default linear.
-     * @param kRGBT, the ModelRGB to be initialized
-     * @param kImage, the ModelImage that the min/max values are derived from
+     * @param kRGBT the ModelRGB to be initialized
+     * @param kImage the ModelImage that the min/max values are derived from
      * for initializing the ModelRGB.
      */
     private void initWinLevelRGB( ModelRGB kRGBT,
@@ -223,8 +223,8 @@ public class WindowLevel
      * initWinLevelGray, initializes the ModelLUT for gray-scale images before
      * window-level operations. The transfer function is set to have four
      * control points, and is reset to the default linear.
-     * @param kLUT, the ModelLUT to be initialized.
-     * @param kImage, the ModelImage attached to kLUT
+     * @param kLUT the ModelLUT to be initialized.
+     * @param kImage the ModelImage attached to kLUT
      */
     private void initWinLevelGray( ModelLUT kLUT,
                                    ModelImage kImage )
@@ -260,10 +260,10 @@ public class WindowLevel
      * functions. Updates depend on the activation of the different rgb
      * functions, so if the getROn returns false the red function is not
      * updated.
-     * @param kRGBT, the ModelRGB being updated
-     * @param kImage, the ModelImage that the ModelRGB describes
-     * @param afXWin, the x-transfer function
-     * @param afYWin, the y-transfer function
+     * @param kRGBT the ModelRGB being updated
+     * @param kImage the ModelImage that the ModelRGB describes
+     * @param afXWin the x-transfer function
+     * @param afYWin the y-transfer function
      */
     private void updateWinLevelRGB( ModelRGB kRGBT, ModelImage kImage,
                                     float[] afXWin, float[] afYWin )
@@ -291,10 +291,10 @@ public class WindowLevel
     /**
      * updateWinLevelGray, updates the ModelLUT with the new transfer
      * function. 
-     * @param kLUT, the ModelLUT being updated
-     * @param kImage, the ModelImage that the ModelLUT describes
-     * @param afXWin, the x-transfer function
-     * @param afYWin, the y-transfer function
+     * @param kLUT the ModelLUT being updated
+     * @param kImage the ModelImage that the ModelLUT describes
+     * @param afXWin the x-transfer function
+     * @param afYWin the y-transfer function
      */
     private void updateWinLevelGray( ModelLUT kLUT, ModelImage kImage,
                                      float[] afXWin, float[] afYWin )

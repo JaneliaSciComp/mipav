@@ -1,16 +1,35 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJColorChooser;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-import javax.swing.*;
-import javax.swing.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
+import java.util.Hashtable;
 
-import gov.nih.mipav.view.renderer.WildMagic.*;
-import WildMagic.LibFoundation.Mathematics.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
 
 
 /**
@@ -18,12 +37,8 @@ import WildMagic.LibFoundation.Mathematics.*;
 public class JPanelClip_WM extends JInterfaceBase
         implements ChangeListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -3342110506544352170L;
-
-    //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Enable flags for the 6 ( X, Y, Z and inverse ) clipping planes. */
     boolean[] enables = { false, false, false, false, false, false };
@@ -73,19 +88,16 @@ public class JPanelClip_WM extends JInterfaceBase
     /** Color button for Z clipping plane frame. */
     private JButton colorButtonZ, colorButtonZInv;
 
-    /** Color chooser dialog. */
-    private ViewJColorChooser colorChooser;
-
-    /** Extract arbitrary cliping plane button. */
+    /** Extract arbitrary clipping plane button. */
     private JButton extractButtonA;
 
-    /** Extract static eye cliping plane button. */
+    /** Extract static eye clipping plane button. */
     private JButton extractButtonS;
 
     /** Arbitrary clipping slider labels. */
     private JLabel labelAStart, labelAMid, labelAEnd;
 
-    /** Static cliiping slider labels. */
+    /** Static clipping slider labels. */
     private JLabel labelStatic, labelStaticInv, labelA;
 
     /** Static inverse clipping plane labels. */
@@ -150,21 +162,20 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /** Which slice is currently displayed in the ZY plane. */
     private int xSlice, xSliceInv;
+    
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /** Which slice is currently displayed in the XZ plane. */
     private int ySlice, ySliceInv;
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /** Which slice is currently displayed in the XY plane. */
     private int zSlice, zSliceInv;
-    
-    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * 3D texture surface renderer clipping dialog control.
-     *
-     * @param  xBox    float unit box x length
-     * @param  yBox    float unit box y length
-     * @param  zBox    float unit box z length
+     * 3D clipping dialog control.
+     * @param kVolumeViewer parent frame.
      */
     public JPanelClip_WM(VolumeTriPlanarInterface kVolumeViewer) {
         super(kVolumeViewer);
@@ -178,8 +189,6 @@ public class JPanelClip_WM extends JInterfaceBase
         // Build dialog.
         init();
     }
-
-    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Changes color of slices box frame and button if color button was pressed; turns bounding box on and off if
@@ -490,8 +499,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
             if (!boxStatic.isSelected()) {
                 setStaticSliderEnabled(false);
-                //colorButtonStatic.setEnabled(false);
-                //boundingCheckStatic.setSelected(false);
             } else {
                 disableClipPlanes();
                 disableClipPlanesArbi();
@@ -510,8 +517,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
             if (!boxStaticInv.isSelected()) {
                 setStaticInvSliderEnabled(false);
-                //colorButtonStaticInv.setEnabled(false);
-                //boundingCheckStaticInv.setSelected(false);
             } else {
                 disableClipPlanes();
                 disableClipPlanesArbi();
@@ -1543,80 +1548,12 @@ public class JPanelClip_WM extends JInterfaceBase
         panelS = null;
         panelSInv = null;
     }
-
     /**
      * Return check box arbitrary selection value.
-     *
-     * @return  boxA.isSelected() box arbitrary slection value.
+     * @return  boxA.isSelected() box arbitrary selection value.
      */
     public boolean getAVisible() {
         return boxA.isSelected();
-    }
-
-    /**
-     * Get the location of the negative X slice bound.
-     *
-     * @return  float Value in normalized range of [0,1].
-     */
-    public float getBoundXInv() {
-        float value = (xSliceInv - 1) / (float) (xDim - 1);
-
-        return Math.max(0.0f, Math.min(value, 1.0f));
-    }
-
-    /**
-     * Get the location of the positive X slice bound.
-     *
-     * @return  float Value in normalized range of [0,1].
-     */
-    public float getBoundXPos() {
-        float value = (xSlice - 1) / (float) (xDim - 1);
-
-        return Math.max(0.0f, Math.min(value, 1.0f));
-    }
-
-    /**
-     * Get the location of the negative Y slice bound.
-     *
-     * @return  float Value in normalized range of [0,1].
-     */
-    public float getBoundYInv() {
-        float value = (ySliceInv - 1) / (float) (yDim - 1);
-
-        return Math.max(0.0f, Math.min(value, 1.0f));
-    }
-
-    /**
-     * Get the location of the positive Y slice bound.
-     *
-     * @return  float Value in normalized range of [0,1].
-     */
-    public float getBoundYPos() {
-        float value = (ySlice - 1) / (float) (yDim - 1);
-
-        return Math.max(0.0f, Math.min(value, 1.0f));
-    }
-
-    /**
-     * Get the location of the negative Z slice bound.
-     *
-     * @return  float Value in normalized range of [0,1].
-     */
-    public float getBoundZInv() {
-        float value = (zSliceInv - 1) / (float) (zDim - 1);
-
-        return Math.max(0.0f, Math.min(value, 1.0f));
-    }
-
-    /**
-     * Get the location of the positive Z slice bound.
-     *
-     * @return  float Value in normalized range of [0,1].
-     */
-    public float getBoundZPos() {
-        float value = (zSlice - 1) / (float) (zDim - 1);
-
-        return Math.max(0.0f, Math.min(value, 1.0f));
     }
 
     /**
@@ -1655,7 +1592,8 @@ public class JPanelClip_WM extends JInterfaceBase
         mainPanel = new JPanel();
         mainPanel.add(scroller);
     }
-    /**
+
+     /**
      * Invokes all the 6 clipping when 6 clipping checkbox is checked.
      */
     public void invokeClippingPlanes() {
@@ -1753,10 +1691,9 @@ public class JPanelClip_WM extends JInterfaceBase
         scroller.setSize(new Dimension(panelWidth, frameHeight));
         scroller.revalidate();
     }
-
-     /**
-     * Sets the arbitray clip slider and the labels. state given by <code>flag</code>.
-     *
+    
+    /**
+     * Sets the arbitrary clip slider and the labels. state given by <code>flag</code>.
      * @param  flag  if <code>true</code> enable, otherwise disable.
      */
     public void setASliderEnabled(boolean flag) {
@@ -1768,86 +1705,9 @@ public class JPanelClip_WM extends JInterfaceBase
     }
 
     /**
-     * Set the slider arbitrary checkBox with the passed in value.
-     *
-     * @param  isSelected  if <code>true</code> selected, otherwise not selected.
+     * Set the color of the Arbitrary clip plane.
+     * @param color new color.
      */
-    public void setCheckBoxA(boolean isSelected) {
-        boxA.setSelected(isSelected);
-    }
-
-    /**
-     * Set the slider Static checkBox with the passed in value.
-     *
-     * @param  isSelected  if <code>true</code> selected, otherwise not selected.
-     */
-    public void setCheckBoxStatic(boolean isSelected) {
-        boxStatic.setSelected(isSelected);
-    }
-
-    /**
-     * Set the slider Static inverse checkBox with the passed in value.
-     *
-     * @param  isSelected  if <code>true</code> selected, otherwise not selected.
-     */
-    public void setCheckBoxStaticInv(boolean isSelected) {
-        boxStaticInv.setSelected(isSelected);
-    }
-
-    /**
-     * Set the slider X checkBox with the passed in value.
-     *
-     * @param  isSelected  if <code>true</code> selected, otherwise not selected.
-     */
-    public void setCheckBoxX(boolean isSelected) {
-        boxX.setSelected(isSelected);
-    }
-
-    /**
-     * Set the slider X inverse checkBox with the passed in value.
-     *
-     * @param  isSelected  if <code>true</code> selected, otherwise not selected.
-     */
-    public void setCheckBoxXInv(boolean isSelected) {
-        boxXInv.setSelected(isSelected);
-    }
-
-    /**
-     * Set the slider Y checkBox with the passed in value.
-     *
-     * @param  isSelected  if <code>true</code> selected, otherwise not selected.
-     */
-    public void setCheckBoxY(boolean isSelected) {
-        boxY.setSelected(isSelected);
-    }
-
-    /**
-     * Set the slider Y inverse checkBox with the passed in value.
-     *
-     * @param  isSelected  if <code>true</code> selected, otherwise not selected.
-     */
-    public void setCheckBoxYInv(boolean isSelected) {
-        boxYInv.setSelected(isSelected);
-    }
-
-    /**
-     * Set the slider Z checkBox with the passed in value.
-     *
-     * @param  isSelected  if <code>true</code> selected, otherwise not selected.
-     */
-    public void setCheckBoxZ(boolean isSelected) {
-        boxZ.setSelected(isSelected);
-    }
-
-    /**
-     * Set the slider Z inverse checkBox with the passed in value.
-     *
-     * @param  isSelected  if <code>true</code> selected, otherwise not selected.
-     */
-    public void setCheckBoxZInv(boolean isSelected) {
-        boxZInv.setSelected(isSelected);
-    }
-
     public void setClipSliceAColor(Color color) {
         if ( rayBasedRenderWM != null )
         {
@@ -1856,10 +1716,9 @@ public class JPanelClip_WM extends JInterfaceBase
                     color.getBlue() ) );
         }
    }
-    
+
     /**
      * Sets the color of the static clipping plane slice frame.
-     *
      * @param  color  Color to set to.
      */
     public void setClipSliceSColor(Color color) {
@@ -1873,7 +1732,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Sets the color of the static inverse clipping plane slice frame.
-     *
      * @param  color  Color to set to.
      */
     public void setClipSliceSInvColor(Color color) {
@@ -1887,7 +1745,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Sets the color of the x clipping plane slice frame.
-     *
      * @param  color  Color to set to.
      */
     public void setClipSliceXColor(Color color) {
@@ -1902,7 +1759,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Sets the color of the -x clipping plane slice frame.
-     *
      * @param  color  Color to set to.
      */
     public void setClipSliceXInvColor(Color color) {
@@ -1916,8 +1772,7 @@ public class JPanelClip_WM extends JInterfaceBase
     }
 
     /**
-     * Sets the color of the y cliping plane slice frame.
-     *
+     * Sets the color of the y clipping plane slice frame.
      * @param  color  Color to set to.
      */
     public void setClipSliceYColor(Color color) {
@@ -1931,8 +1786,7 @@ public class JPanelClip_WM extends JInterfaceBase
     }
 
     /**
-     * Sets the color of the -y cliping plane slice frame.
-     *
+     * Sets the color of the -y clipping plane slice frame.
      * @param  color  Color to set to.
      */
     public void setClipSliceYInvColor(Color color) {
@@ -1947,7 +1801,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Sets the color of the z clipping plane slice frame.
-     *
      * @param  color  Color to set to.
      */
     public void setClipSliceZColor(Color color) {
@@ -1962,7 +1815,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Sets the color of the -z clipping plane slice frame.
-     *
      * @param  color  Color to set to.
      */
     public void setClipSliceZInvColor(Color color) {
@@ -1977,7 +1829,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Sets the static inverse slider and the labels beside and beneath it to the state given by <code>flag</code>.
-     *
      * @param  flag  if <code>true</code> enable, otherwise disable.
      */
     public void setStaticInvSliderEnabled(boolean flag) {
@@ -1990,7 +1841,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Sets the static slider and the labels beside and beneath it to the state given by <code>flag</code>.
-     *
      * @param  flag  if <code>true</code> enable, otherwise disable.
      */
     public void setStaticSliderEnabled(boolean flag) {
@@ -2003,7 +1853,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Sets the x slider and the labels beside and beneath it to the state given by <code>flag</code>.
-     *
      * @param  flag  if <code>true</code> enable, otherwise disable.
      */
     public void setXSliderEnabled(boolean flag) {
@@ -2016,7 +1865,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Sets the x slider and the labels beside and beneath it to the state given by <code>flag</code>.
-     *
      * @param  flag  if <code>true</code> enable, otherwise disable.
      */
     public void setXSliderInvEnabled(boolean flag) {
@@ -2029,7 +1877,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Sets the y slider and the labels beside and beneath it to the state given by <code>flag</code>.
-     *
      * @param  flag  if <code>true</code> enable, otherwise disable.
      */
     public void setYSliderEnabled(boolean flag) {
@@ -2042,7 +1889,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Sets the y slider and the labels beside and beneath it to the state given by <code>flag</code>.
-     *
      * @param  flag  if <code>true</code> enable, otherwise disable.
      */
     public void setYSliderInvEnabled(boolean flag) {
@@ -2055,7 +1901,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Sets the z slider and the labels beside and beneath it to the state given by <code>flag</code>.
-     *
      * @param  flag  if <code>true</code> enable, otherwise disable.
      */
     public void setZSliderEnabled(boolean flag) {
@@ -2068,7 +1913,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Sets the z slider and the labels beside and beneath it to the state given by <code>flag</code>.
-     *
      * @param  flag  if <code>true</code> enable, otherwise disable.
      */
     public void setZSliderInvEnabled(boolean flag) {
@@ -2081,7 +1925,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Sets how the image plane should be displayed depending on value of slider.
-     *
      * @param  e  Event that triggered this function.
      */
     public void stateChanged(ChangeEvent e) {
@@ -2209,7 +2052,6 @@ public class JPanelClip_WM extends JInterfaceBase
 
     /**
      * Closing the mouse recorder window frame.
-     *
      * @param  e  Window event.
      */
     public void windowClosing(@SuppressWarnings("unused")
@@ -2218,34 +2060,33 @@ public class JPanelClip_WM extends JInterfaceBase
         disableClipPlanesArbi();
     }
 
-    /**
-     * Calls the appropriate method in the parent frame.
-     *
-     * @param  button  color button.
-     * @param  color   color reference.
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase#setButtonColor(javax.swing.JButton, java.awt.Color)
      */
-    protected void setBoxColor(JButton button, Color color) {
+    public void setButtonColor(JButton _button, Color _color) {
 
-        if (button == colorButtonX) {
-            setClipSliceXColor(color);
-        } else if (button == colorButtonY) {
-            setClipSliceYColor(color);
-        } else if (button == colorButtonZ) {
-            setClipSliceZColor(color);
-        } else if (button == colorButtonXInv) {
-            setClipSliceXInvColor(color);
-        } else if (button == colorButtonYInv) {
-            setClipSliceYInvColor(color);
-        } else if (button == colorButtonZInv) {
-            setClipSliceZInvColor(color);
-        } else if (button == colorButtonA) {
-            setClipSliceAColor(color);
-        } else if (button == colorButtonStatic) {
-            setClipSliceSColor(color);
-        } else if (button == colorButtonStaticInv) {
-            setClipSliceSInvColor(color);
+        super.setButtonColor(_button, _color);
+        if (_button == colorButtonX) {
+            setClipSliceXColor(_color);
+        } else if (_button == colorButtonY) {
+            setClipSliceYColor(_color);
+        } else if (_button == colorButtonZ) {
+            setClipSliceZColor(_color);
+        } else if (_button == colorButtonXInv) {
+            setClipSliceXInvColor(_color);
+        } else if (_button == colorButtonYInv) {
+            setClipSliceYInvColor(_color);
+        } else if (_button == colorButtonZInv) {
+            setClipSliceZInvColor(_color);
+        } else if (_button == colorButtonA) {
+            setClipSliceAColor(_color);
+        } else if (_button == colorButtonStatic) {
+            setClipSliceSColor(_color);
+        } else if (_button == colorButtonStaticInv) {
+            setClipSliceSInvColor(_color);
         }
     }
+
 
     /**
      * Helper method that adds components to the control panel for the grid bag layout.
@@ -2264,53 +2105,6 @@ public class JPanelClip_WM extends JInterfaceBase
         gbc.gridwidth = w;
         gbc.gridheight = h;
         panel.add(c, gbc);
-    }
-
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    /**
-     * Does nothing.
-     */
-    class CancelListener implements ActionListener {
-
-        /**
-         * Does nothing.
-         *
-         * @param  e  event handler
-         */
-        public void actionPerformed(ActionEvent e) { }
-    }
-
-
-    /**
-     * Pick up the selected color and call method to change the VOI color.
-     */
-    class OkColorListener implements ActionListener {
-
-        /** Button reference. */
-        JButton button;
-
-        /**
-         * Creates a new OkColorListener object.
-         *
-         * @param  _button  button reference.
-         */
-        OkColorListener(JButton _button) {
-            super();
-            button = _button;
-        }
-
-        /**
-         * Get color from chooser and set button and VOI color.
-         *
-         * @param  e  Event that triggered function.
-         */
-        public void actionPerformed(ActionEvent e) {
-            Color color = colorChooser.getColor();
-
-            button.setBackground(color);
-            setBoxColor(button, color);
-        }
     }
 
 }

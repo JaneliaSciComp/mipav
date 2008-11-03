@@ -318,7 +318,7 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
 
     private ColorRGB m_kDiffuseColor;
 
-    /** Window with the shader paramter interface: */
+    /** Window with the shader parameter interface: */
     private ApplicationGUI m_kShaderParamsWindow = null;
 
     private String getExternalDirs() {
