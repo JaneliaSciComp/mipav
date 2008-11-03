@@ -3529,7 +3529,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             varY = (sumY2 / (count - 1)) - ((sumY * sumY) / countSqr);
 
             if ((varX > 0.0) && (varY > 0.0)) {
-                correlation = varXY / Math.sqrt(varX * varY);
+                correlation = Math.abs(varXY) / Math.sqrt(varX * varY);
             }
         }
 
@@ -3669,7 +3669,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             varY = (sumY2 / (count - 1)) - ((sumY * sumY) / countSqr);
 
             if ((varX > 0.0) && (varY > 0.0)) {
-                correlation = varXY / Math.sqrt(varX * varY);
+                correlation = Math.abs(varXY) / Math.sqrt(varX * varY);
             }
         }
 
@@ -3885,7 +3885,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             varY = sumY2 * countFactor;
 
             if ((varX > 0.0) && (varY > 0.0)) {
-                correlation = varXY / Math.sqrt(varX * varY);
+                correlation = Math.abs(varXY) / Math.sqrt(varX * varY);
             }
         }
 
@@ -4110,7 +4110,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             varY = sumY2 * countFactor;
 
             if ((varX > 0.0) && (varY > 0.0)) {
-                correlation = varXY / Math.sqrt(varX * varY);
+                correlation = Math.abs(varXY) / Math.sqrt(varX * varY);
             }
         }
 
