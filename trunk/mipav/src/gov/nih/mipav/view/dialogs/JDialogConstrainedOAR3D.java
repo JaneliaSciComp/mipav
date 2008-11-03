@@ -1811,7 +1811,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
 
         JLabel labelCoarseX = new JLabel("Number of angles to sample in coarse grid: ");
         labelCoarseX.setFont(serif12);
-        numberCoarseTextX = new JTextField("6", 3);
+        numberCoarseTextX = new JTextField("3", 3);
         coarsePanelX.add(labelCoarseX);
         coarsePanelX.add(numberCoarseTextX);
 
@@ -1863,7 +1863,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         labelCoarseY.setForeground(Color.black);
         labelCoarseY.setFont(serif12);
         labelCoarseY.setAlignmentX(Component.LEFT_ALIGNMENT);
-        numberCoarseTextY = new JTextField("6", 3);
+        numberCoarseTextY = new JTextField("3", 3);
         coarsePanelY.add(labelCoarseY);
         coarsePanelY.add(numberCoarseTextY);
 
@@ -1913,7 +1913,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         labelCoarseZ.setForeground(Color.black);
         labelCoarseZ.setFont(serif12);
         labelCoarseZ.setAlignmentX(Component.LEFT_ALIGNMENT);
-        numberCoarseTextZ = new JTextField("6", 3);
+        numberCoarseTextZ = new JTextField("3", 3);
 
         coarsePanelZ.add(labelCoarseZ);
         coarsePanelZ.add(numberCoarseTextZ);
