@@ -96,7 +96,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("NINDS Anonymization Tool " + " v1.2");
+        setTitle("NINDS Anonymization Tool " + " v1.3");
         
         mainPanelGridBagLayout = new GridBagLayout();
         mainPanelConstraints = new GridBagConstraints();
@@ -293,7 +293,8 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 			outputMessageLabel.setText(" ");
 			errorMessageLabel.setText(" ");
 			if(inputDirectoryTextField.getText().trim().equals("") || outputDirectoryTextField.getText().trim().equals("")) {
-				MipavUtil.displayError("Input Directory and Output Directory are required");
+				//MipavUtil.displayError("Input Directory and Output Directory are required");
+				errorMessageLabel.setText("Input Directory and Output Directory are required");
 				return;
 			}
 			boolean success = validateFilePaths();
@@ -338,7 +339,8 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 			// Start the thread as a low priority because we wish to still
 			// have user interface work fast.
 			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
-				MipavUtil.displayError("A thread is already running on this object");
+				//MipavUtil.displayError("A thread is already running on this object");
+				errorMessageLabel.setText("A thread is already running on this object");
 			}
 		} else {
 			alg.start();
@@ -355,16 +357,19 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogScriptableBase im
 	public boolean validateFilePaths() {
 		File test = new File(inputDirectoryTextField.getText().trim());
 		if(!test.exists()) {
-			MipavUtil.displayError("Input Directory is not valid");
+			//MipavUtil.displayError("Input Directory is not valid");
+			errorMessageLabel.setText("Input Directory is not valid");
 			return false;
 		}
 		File test2 = new File(outputDirectoryTextField.getText().trim());
 		if(!test2.exists()) {
-			MipavUtil.displayError("Output Directory is not valid");
+			//MipavUtil.displayError("Output Directory is not valid");
+			errorMessageLabel.setText("Output Directory is not valid");
 			return false;
 		}
 		if(test.getAbsolutePath().equalsIgnoreCase(test2.getAbsolutePath())) {
-			MipavUtil.displayError("Input and Ouput Directories need to be different directories");
+			//MipavUtil.displayError("Input and Ouput Directories need to be different directories");
+			errorMessageLabel.setText("Input and Ouput Directories need to be different directories");
 			return false;
 		}
 		

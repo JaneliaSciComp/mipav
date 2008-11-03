@@ -424,7 +424,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 			}
 			outputDir = outputDir.replace(grandParentFile.getName(), newUID);
 		}
-		
+	
 		FileWriteOptions opts = new FileWriteOptions(true);
         opts.setFileType(FileUtility.DICOM);
         opts.setFileDirectory(outputDir + File.separator);
