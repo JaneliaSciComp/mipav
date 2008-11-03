@@ -215,104 +215,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         
         initNext();
         
-        //Automatic segmentation here
-        setVisible(false);
-        progressBar.setMessage("Creating algorithms...");
-        progressBar.setSeparateThread(true);
-        long time = System.currentTimeMillis();
-        progressBar.updateValue(10);
-        autoSegmentation();
-        progressBar.updateValue(20);
-    	progressBar.setMessage("Segmenting...");
-        System.err.println("Time spent creating algs: "+(System.currentTimeMillis() - time));
-        time = System.currentTimeMillis();
-        waitAlg(progressBar);
-        System.err.println("Total time spent waiting for threads: "+(System.currentTimeMillis() - time));
-        progressBar.updateValue(90);
-    	progressBar.setMessage("Displaying results...");
-        for(int i=voiList.length; i>0; i--) {
-        	getActiveImage().unregisterAllVOIs();
-        	initMuscleImage(i-1);
-        }
-        progressBar.setVisible(false);
-        progressBar.dispose();
-        setVisible(true);
-        
-        Iterator<String> itr = voiBuffer.keySet().iterator();
-        
-        while(itr.hasNext()) {
-        	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
-        	if(voi.getCalcEligible() && !voi.isEmpty()) {
-        		long timeVOI = System.currentTimeMillis();
-		        voi.setLastModified(timeVOI);
-        	}
-        }
-        
-        itr = voiBuffer.keySet().iterator();
-        //always perform new calculation here, no need to check
-        while(itr.hasNext()) {
-        	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
-        	if(voi.getCalcEligible() && !voi.isEmpty()) {
-		        MuscleCalculation muscleCalc = new MuscleCalculation(voi, voi.getName());
-		        Thread calc = new Thread(calcGroup, muscleCalc, voi.getName());
-		        calc.start();
-        	}
-        }
-    }
-    
-    private void commonConstructor(ModelImage image, String[] titles,
-            PlugInSelectableVOI[][] voiList,  
-            ImageType imageType, Symmetry symmetry, boolean standAlone, boolean multipleSlices) {
-    	this.setImageA(image); 
-        this.titles = titles; 
-        this.mirrorArr = new String[voiList.length][]; 
-        this.noMirrorArr = new String[voiList.length][]; 
-        this.calcTree = new TreeMap<String, Boolean>(); 
-        this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>()); 
-        this.standAlone = standAlone;
-        this.imageType = imageType; 
-        this.symmetry = symmetry; 
-        this.multipleSlices = multipleSlices; 
-        this.currentSlice = getViewableSlice();
-        this.colorChoice = 0;
-      //left as zero to ensure VOIs across image stay same color (helps for image batches)
-
-        for(int i=0; i<voiList.length; i++) {
-        	ArrayList<Comparable> mirrorArrList = new ArrayList<Comparable>(), noMirrorArrList = new ArrayList<Comparable>(), 
-        				mirrorZList = new ArrayList<Comparable>(), noMirrorZList = new ArrayList<Comparable>();
-        	for(int j=0; j<voiList[i].length; j++) {
-        		voiBuffer.put(voiList[i][j].getName(), voiList[i][j]);
-        		if(voiList[i][j].getName().contains("Left")) {
-        			mirrorArrList.add(voiList[i][j].getName().substring(new String("Left ").length()));
-        			mirrorZList.add(voiList[i][j].getFillEligible());
-        			calcTree.put(voiList[i][j].getName().substring(new String("Left ").length()), voiList[i][j].getCalcEligible());
-        		} else if(voiList[i][j].getName().contains("Right")) {
-        			//do nothing
-        		} else {
-        			noMirrorArrList.add(voiList[i][j].getName());
-        			noMirrorZList.add(voiList[i][j].getFillEligible());
-        			calcTree.put(voiList[i][j].getName(), voiList[i][j].getCalcEligible());
-        		}
-        	}
-        	mirrorArr[i] = new String[mirrorArrList.size()];
-        	for(int j=0; j<mirrorArr[i].length; j++) 
-        		mirrorArr[i][j] = (String)mirrorArrList.get(j);
-        	noMirrorArr[i] = new String[noMirrorArrList.size()];
-        	for(int j=0; j<noMirrorArr[i].length; j++) 
-        		noMirrorArr[i][j] = (String)noMirrorArrList.get(j);
-        }
-        
-        Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
-        
-        progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
-        if (imageA == null) {
-            return;
-        }
-        progressBar.updateValue(5);
-        imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
-        
-        //Propagate children relationship backwards
-        setDependents();
+        commonInitializer(voiList);
     }
     
     /**
@@ -361,56 +264,113 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         System.out.println("Exists? "+f.exists());
         createVOIBuffer();
         
-        //Automatic segmentation here
-        
-        progressBar.setMessage("Creating algorithms...");
-        progressBar.setSeparateThread(true);
-        long time = System.currentTimeMillis();
-        progressBar.updateValue(10);
-        autoSegmentation();
-        progressBar.setVisible(true);
-        progressBar.updateValue(20);
-    	progressBar.setMessage("Segmenting...");
-        System.err.println("Time spent creating algs: "+(System.currentTimeMillis() - time));
-        time = System.currentTimeMillis();
-        waitAlg(progressBar);
-        System.err.println("Total time spent waiting for threads: "+(System.currentTimeMillis() - time));
-        progressBar.updateValue(90);
-    	progressBar.setMessage("Displaying results...");
-    	for(int i=voiList.length; i>0; i--) {
-    		getActiveImage().unregisterAllVOIs();
-    		initMuscleImage(i-1);
-        }
-        progressBar.setVisible(false);
-        progressBar.dispose();
-        setVisible(true);
-        
-        //end automatic segmentation, prepare buffer for automatic calculations
-        Iterator<String> itr = voiBuffer.keySet().iterator();
-        
-        while(itr.hasNext()) {
-        	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
-        	if(voi.getCalcEligible() && !voi.isEmpty()) {
-        		long timeVOI = System.currentTimeMillis();
+        commonInitializer(voiList);
+    }
+    
+    private void commonConstructor(ModelImage image, String[] titles,
+	        PlugInSelectableVOI[][] voiList,  
+	        ImageType imageType, Symmetry symmetry, boolean standAlone, boolean multipleSlices) {
+		this.setImageA(image); 
+	    this.titles = titles; 
+	    this.mirrorArr = new String[voiList.length][]; 
+	    this.noMirrorArr = new String[voiList.length][]; 
+	    this.calcTree = new TreeMap<String, Boolean>(); 
+	    this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>()); 
+	    this.standAlone = standAlone;
+	    this.imageType = imageType; 
+	    this.symmetry = symmetry; 
+	    this.multipleSlices = multipleSlices; 
+	    this.currentSlice = getViewableSlice();
+	    this.colorChoice = 0;
+	  //left as zero to ensure VOIs across image stay same color (helps for image batches)
+	
+	    for(int i=0; i<voiList.length; i++) {
+	    	ArrayList<Comparable> mirrorArrList = new ArrayList<Comparable>(), noMirrorArrList = new ArrayList<Comparable>(), 
+	    				mirrorZList = new ArrayList<Comparable>(), noMirrorZList = new ArrayList<Comparable>();
+	    	for(int j=0; j<voiList[i].length; j++) {
+	    		voiBuffer.put(voiList[i][j].getName(), voiList[i][j]);
+	    		if(voiList[i][j].getName().contains("Left")) {
+	    			mirrorArrList.add(voiList[i][j].getName().substring(new String("Left ").length()));
+	    			mirrorZList.add(voiList[i][j].getFillEligible());
+	    			calcTree.put(voiList[i][j].getName().substring(new String("Left ").length()), voiList[i][j].getCalcEligible());
+	    		} else if(voiList[i][j].getName().contains("Right")) {
+	    			//do nothing
+	    		} else {
+	    			noMirrorArrList.add(voiList[i][j].getName());
+	    			noMirrorZList.add(voiList[i][j].getFillEligible());
+	    			calcTree.put(voiList[i][j].getName(), voiList[i][j].getCalcEligible());
+	    		}
+	    	}
+	    	mirrorArr[i] = new String[mirrorArrList.size()];
+	    	for(int j=0; j<mirrorArr[i].length; j++) 
+	    		mirrorArr[i][j] = (String)mirrorArrList.get(j);
+	    	noMirrorArr[i] = new String[noMirrorArrList.size()];
+	    	for(int j=0; j<noMirrorArr[i].length; j++) 
+	    		noMirrorArr[i][j] = (String)noMirrorArrList.get(j);
+	    }
+	    
+	    Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
+	    
+	    progressBar = new ViewJProgressBar("Automatic Seg", "Initializing...", 0, 100, true);
+	    if (imageA == null) {
+	        return;
+	    }
+	    progressBar.updateValue(5);
+	    imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
+	    
+	    //Propagate children relationship backwards
+	    setDependents();
+	}
+
+	private void commonInitializer(PlugInSelectableVOI[][] voiList) {
+		//Automatic segmentation here
+	    
+	    progressBar.setMessage("Creating algorithms...");
+	    progressBar.setSeparateThread(true);
+	    long time = System.currentTimeMillis();
+	    progressBar.updateValue(10);
+	    autoSegmentation();
+	    progressBar.setVisible(true);
+	    progressBar.updateValue(20);
+		progressBar.setMessage("Segmenting...");
+	    System.err.println("Time spent creating algs: "+(System.currentTimeMillis() - time));
+	    time = System.currentTimeMillis();
+	    waitAlg(progressBar);
+	    System.err.println("Total time spent waiting for threads: "+(System.currentTimeMillis() - time));
+	    progressBar.updateValue(90);
+		progressBar.setMessage("Displaying results...");
+		for(int i=voiList.length; i>0; i--) {
+			getActiveImage().unregisterAllVOIs();
+			initMuscleImage(i-1);
+	    }
+	    progressBar.setVisible(false);
+	    progressBar.dispose();
+	    setVisible(true);
+	    
+	    //end automatic segmentation, prepare buffer for automatic calculations
+	    Iterator<String> itr = voiBuffer.keySet().iterator();
+	    
+	    while(itr.hasNext()) {
+	    	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
+	    	if(voi.getCalcEligible() && !voi.isEmpty()) {
+	    		long timeVOI = System.currentTimeMillis();
 		        voi.setLastModified(timeVOI);
-        	}
-        }
-        
-        //always perform new calculation here, no need to check
-        itr = voiBuffer.keySet().iterator();
-        while(itr.hasNext()) {
-        	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
-        	if(voi.getCalcEligible() && !voi.isEmpty()) {
+	    	}
+	    }
+	    
+	    //always perform new calculation here, no need to check
+	    itr = voiBuffer.keySet().iterator();
+	    while(itr.hasNext()) {
+	    	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
+	    	if(voi.getCalcEligible() && !voi.isEmpty()) {
 		        MuscleCalculation muscleCalc = new MuscleCalculation(voi, voi.getName());
 		        Thread calc = new Thread(calcGroup, muscleCalc, voi.getName());
 		        calc.start();
-        	}
-        }
-    	
-    	
-    }
-    
-    @Override
+	    	}
+	    }
+	}
+
+	@Override
     public void actionPerformed(ActionEvent e) {
     	System.out.println("An action: "+e);
     	String command = e.getActionCommand();
@@ -5043,11 +5003,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	
 	private class PlugInVOIStats extends JDialogVOIStats {
 		
-	
 	    public PlugInVOIStats(Frame theParentFrame, ModelImage img, VOI _voi) {
 	        super(theParentFrame, img, _voi);
 	    }
-	    
 
 	    protected void init() {
 
