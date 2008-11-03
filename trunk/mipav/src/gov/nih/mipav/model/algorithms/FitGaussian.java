@@ -345,7 +345,7 @@ public class FitGaussian extends NLEngine {
     	messageGraph.append(" ******* FitGaussian ********* \n\n");
     	messageGraph.append("Number of iterations: " + kk + "\n");
         messageGraph.append("Chi-squared: " + chisq + "\n");
-        messageGraph.append("R-squared: "+ rSquared +"\n\n");
+        //messageGraph.append("R-squared: "+ rSquared +"\n\n");
 
         messageGraph.append("Valid for data from "+xDataOrg[dataStart]+" to "+xDataOrg[dataEnd]+" in "+(dataEnd-dataStart)+" parts\n\n");
         
