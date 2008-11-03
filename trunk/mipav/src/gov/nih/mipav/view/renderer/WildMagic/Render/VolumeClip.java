@@ -1,10 +1,19 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.VertexColor3Effect;
+import WildMagic.LibGraphics.Rendering.AlphaState;
+import WildMagic.LibGraphics.Rendering.Camera;
+import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.Renderer;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Culler;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 /** Displays the Clipping frames in the VolumeViewer.
  * @see VolumeObject.java
@@ -12,6 +21,42 @@ import WildMagic.LibGraphics.SceneGraph.*;
  */
 public class VolumeClip extends VolumeObject
 {
+    /** ShaderEffect for displaying the clip planes. */
+    private VertexColor3Effect m_kVertexColor3Shader;
+
+    /** axis-aligned clip plane polylines: */
+    private Polyline[] m_akPolyline;
+
+    /** arbitrary clip plane polyline: */
+    private Polyline m_kClipArb;
+
+    /** eye clip plane polyline: */
+    private Polyline m_kClipEye;
+
+    /** inverse-eye clip plane polyline: */
+    private Polyline m_kClipEyeInv;
+
+    /** enables/disables displaying clip planes*/
+    private boolean[] m_abDisplayPolyline = new boolean[]{false,false,false,false,false,false};
+
+    /** Screen camera for displaying the eye clip planes in screen-coordinates: */
+    private Camera m_spkEyeCamera;
+
+    /** Node for rotating the arbitrary clip plane with the mouse trackball: */
+    private Node m_kArbRotate = new Node();
+
+    /** Enables/Disables displaying the arbitrary clip plane: */
+    private boolean m_bDisplayClipArb = false;
+
+    /** Enables/Disables displaying the eye clip plane: */
+    private boolean m_bDisplayClipEye = false;
+
+    /** Enables/Disables displaying the inverse-eye clip plane: */
+    private boolean m_bDisplayClipEyeInv = false;
+
+    /** Maximum dimension. */
+    private float m_fMax;
+
     /** Creates a new VolumeClip object.
      * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
@@ -31,61 +76,85 @@ public class VolumeClip extends VolumeObject
     }
 
     /**
-     * PreRender the object, for embedding in the ray-cast volume.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
+     * Scene-graph node for rotating the arbitrary clipping plane.
+     * @return Scene-graph node for rotating the arbitrary clipping plane.
      */
-    public void PreRender( Renderer kRenderer, Culler kCuller )
+    public Node ArbRotate()
     {
-        if ( !m_bDisplay  && ! m_bDisplayClipArb )
+        return m_kArbRotate;
+    }
+
+
+    /**
+     * Return true if the arbitrary clip plane is current being displayed.
+     * @return true if the arbitrary clip plane is current being displayed.
+     */
+    public boolean DisplayArb()
+    {
+        return m_bDisplayClipArb;
+    }
+
+    /** Turns displaying the arbitrary clip plane on/off.
+     * @param bDisplay when true display the arbitrary clip plane.
+     */
+    public void DisplayArb(boolean bDisplay)
+    {
+        m_bDisplayClipArb = bDisplay;
+        if ( bDisplay )
         {
-            return;
+            m_kScene.AttachChild(m_kArbRotate);
+        }
+        else
+        {
+            m_kScene.DetachChild(m_kArbRotate);
         }
         m_kScene.UpdateGS();
-        kCuller.ComputeVisibleSet(m_kScene);
-        kRenderer.DrawScene(kCuller.GetVisibleSet());
+        m_kScene.UpdateRS();
     }
 
     /**
-     * Render the object.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
+     * Called from JPanelClip. Sets the axis-aligned clip plane display on/off.
+     * @param iWhich the clip plane to set.
+     * @param bDisplay on/off.
      */
-    public void Render( Renderer kRenderer, Culler kCuller )
+    public void displayClipPlane( int iWhich, boolean bDisplay )
     {
-        if ( !m_bDisplay  && ! m_bDisplayClipArb )
+        if ( bDisplay != m_abDisplayPolyline[iWhich] )
         {
-            return;
+            
+            m_abDisplayPolyline[iWhich] = bDisplay;
+            if ( bDisplay )
+            {
+                m_kScene.AttachChild(m_akPolyline[iWhich]);
+            }
+            else
+            {
+                m_kScene.DetachChild(m_akPolyline[iWhich]);
+            }
         }
         m_kScene.UpdateGS();
-        kCuller.ComputeVisibleSet(m_kScene);
-        kRenderer.DrawScene(kCuller.GetVisibleSet());
+        m_kScene.UpdateRS();
+        m_bDisplay = false;
+        for ( int i = 0; i < m_abDisplayPolyline.length; i++ )
+        {
+            m_bDisplay |= m_abDisplayPolyline[i];
+        }
     }
 
-    /** 
-     * Render the object after all other objects have been rendererd. Useful
-     * for screen-space objects such as the eye-clip plane.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
+    /** Turns displaying the eye clip plane on/off.
+     * @param bDisplay when true display the eye clip plane.
      */
-    public void PostRender( Renderer kRenderer, Culler kCuller )
+    public void DisplayEye(boolean bDisplay)
     {
-        if ( m_bDisplayClipEye || m_bDisplayClipEyeInv )
-        {
-            Camera kCamera = kRenderer.GetCamera();
+        m_bDisplayClipEye = bDisplay;
+    }
 
-            m_spkEyeCamera.SetLocation(kCamera.GetLocation());
-            kRenderer.SetCamera(m_spkEyeCamera);
-            if ( m_bDisplayClipEye )
-            {
-                kRenderer.Draw(m_kClipEye);
-            }
-            if ( m_bDisplayClipEyeInv )
-            {
-                kRenderer.Draw(m_kClipEyeInv);
-            }
-            kRenderer.SetCamera(kCamera);
-        }
+    /** Turns displaying the inverse-eye clip plane on/off.
+     * @param bDisplay when true display the inverse-eye clip plane.
+     */
+    public void DisplayEyeInv(boolean bDisplay)
+    {
+        m_bDisplayClipEyeInv = bDisplay;
     }
 
     /** Delete local memory. */
@@ -132,75 +201,113 @@ public class VolumeClip extends VolumeObject
         m_akPolyline = null;
     }
 
-    /**
-     * Called from JPanelClip. Sets the axis-aligned clip plane display on/off.
-     * @param iWhich the clip plane to set.
-     * @param bDisplay on/off.
+    /** Returns the value of the specified axis-aligend clip plane.
+     * @param iWhich one of the 6 clip planes
+     * @return the value of the specified axis-aligend clip plane.
      */
-    public void displayClipPlane( int iWhich, boolean bDisplay )
+    public float GetValue(int iWhich)
     {
-        if ( bDisplay != m_abDisplayPolyline[iWhich] )
+        float fValue = 0;
+        if ( iWhich < 2 )
         {
-            
-            m_abDisplayPolyline[iWhich] = bDisplay;
-            if ( bDisplay )
+            fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fX( 0 );
+            fValue /= m_fX;
+        }
+        else if ( iWhich < 4 )
+        {
+            fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fY( 0 );
+            fValue /= m_fY;
+        }
+        else
+        {
+            fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fZ( 0 );
+            fValue /= m_fZ;
+        }
+        return fValue;
+    }
+
+    /** 
+     * Render the object after all other objects have been rendererd. Useful
+     * for screen-space objects such as the eye-clip plane.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
+     */
+    public void PostRender( Renderer kRenderer, Culler kCuller )
+    {
+        if ( m_bDisplayClipEye || m_bDisplayClipEyeInv )
+        {
+            Camera kCamera = kRenderer.GetCamera();
+
+            m_spkEyeCamera.SetLocation(kCamera.GetLocation());
+            kRenderer.SetCamera(m_spkEyeCamera);
+            if ( m_bDisplayClipEye )
             {
-                m_kScene.AttachChild(m_akPolyline[iWhich]);
+                kRenderer.Draw(m_kClipEye);
             }
-            else
+            if ( m_bDisplayClipEyeInv )
             {
-                m_kScene.DetachChild(m_akPolyline[iWhich]);
+                kRenderer.Draw(m_kClipEyeInv);
             }
+            kRenderer.SetCamera(kCamera);
+        }
+    }
+
+    /**
+     * PreRender the object, for embedding in the ray-cast volume.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
+     */
+    public void PreRender( Renderer kRenderer, Culler kCuller )
+    {
+        if ( !m_bDisplay  && ! m_bDisplayClipArb )
+        {
+            return;
         }
         m_kScene.UpdateGS();
-        m_kScene.UpdateRS();
-        m_bDisplay = false;
-        for ( int i = 0; i < m_abDisplayPolyline.length; i++ )
-        {
-            m_bDisplay |= m_abDisplayPolyline[i];
-        }
+        kCuller.ComputeVisibleSet(m_kScene);
+        kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
-
     /**
-     * Sets the axis-aligned clip plane color.
-     * @param iWhich one of the 6 clip planes
+     * Render the object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
+     */
+    public void Render( Renderer kRenderer, Culler kCuller )
+    {
+        if ( !m_bDisplay  && ! m_bDisplayClipArb )
+        {
+            return;
+        }
+        m_kScene.UpdateGS();
+        kCuller.ComputeVisibleSet(m_kScene);
+        kRenderer.DrawScene(kCuller.GetVisibleSet());
+    }
+    /**
+     * Sets the arbitrary clip plane color.
      * @param kColor the new color.
      */
-    public void setClipPlaneColor( int iWhich, ColorRGB kColor )
+    public void setArbColor( ColorRGB kColor )
     {
         for ( int i = 0; i < 4; i++ )
         {
-            m_akPolyline[iWhich].VBuffer.SetColor3( 0, i, kColor );
+            m_kClipArb.VBuffer.SetColor3( 0, i, kColor );
         }
-        m_akPolyline[iWhich].VBuffer.Release();
+        m_kClipArb.VBuffer.Release();
     }
-
+    
     /**
-     * Sets the eye clip plane color.
-     * @param kColor the new color.
+     * Set the position of the arbitrary clipping plane, before rotation.
+     * @param fX the position of the arbitrary clipping plane, before rotation.
      */
-    public void setEyeColor( ColorRGB kColor )
+    public void SetArbPlane( float fX )
     {
-        for ( int i = 0; i < 4; i++ )
-        {
-            m_kClipEye.VBuffer.SetColor3( 0, i, kColor );
-        }
-        m_kClipEye.VBuffer.Release();
+        m_kClipArb.VBuffer.SetPosition3( 0, fX, 0, 0 ) ;
+        m_kClipArb.VBuffer.SetPosition3( 1, fX, 0, m_fMax ) ;
+        m_kClipArb.VBuffer.SetPosition3( 2, fX, m_fMax, m_fMax ) ;
+        m_kClipArb.VBuffer.SetPosition3( 3, fX, m_fMax, 0 ) ;
+        m_kClipArb.VBuffer.Release();
+        m_kScene.UpdateGS();
     }
-
-    /**
-     * Sets the eye clip plane color.
-     * @param kColor the new color.
-     */
-    public void setEyeInvColor( ColorRGB kColor )
-    {
-        for ( int i = 0; i < 4; i++ )
-        {
-            m_kClipEyeInv.VBuffer.SetColor3( 0, i, kColor );
-        }
-        m_kClipEyeInv.VBuffer.Release();
-    }
-
     /**
      * Sets the axis-aligned clip plane clipping position.
      * @param iWhich one of the 6 clip planes
@@ -240,7 +347,19 @@ public class VolumeClip extends VolumeObject
 
     }
 
-
+    /**
+     * Sets the axis-aligned clip plane color.
+     * @param iWhich one of the 6 clip planes
+     * @param kColor the new color.
+     */
+    public void setClipPlaneColor( int iWhich, ColorRGB kColor )
+    {
+        for ( int i = 0; i < 4; i++ )
+        {
+            m_akPolyline[iWhich].VBuffer.SetColor3( 0, i, kColor );
+        }
+        m_akPolyline[iWhich].VBuffer.Release();
+    }
     /**
      * Sets the eye clip plane position.
      * @param f4 clip position (same value as sSlice in JPanelClip)
@@ -259,6 +378,18 @@ public class VolumeClip extends VolumeObject
     }
 
     /**
+     * Sets the eye clip plane color.
+     * @param kColor the new color.
+     */
+    public void setEyeColor( ColorRGB kColor )
+    {
+        for ( int i = 0; i < 4; i++ )
+        {
+            m_kClipEye.VBuffer.SetColor3( 0, i, kColor );
+        }
+        m_kClipEye.VBuffer.Release();
+    }
+    /**
      * Sets the eye clip plane position.
      * @param f4 clip position (same value as sSlice in JPanelClip)
      * @param bDisplay on/off.
@@ -274,100 +405,19 @@ public class VolumeClip extends VolumeObject
         m_kClipEyeInv.UpdateGS();
         m_kClipEyeInv.UpdateRS();
     }
-
-    /** Turns displaying the eye clip plane on/off.
-     * @param bDisplay when true display the eye clip plane.
-     */
-    public void DisplayEye(boolean bDisplay)
-    {
-        m_bDisplayClipEye = bDisplay;
-    }
-
-    /** Turns displaying the inverse-eye clip plane on/off.
-     * @param bDisplay when true display the inverse-eye clip plane.
-     */
-    public void DisplayEyeInv(boolean bDisplay)
-    {
-        m_bDisplayClipEyeInv = bDisplay;
-    }
-
-
-    /** Turns displaying the aribtrary clip plane on/off.
-     * @param bDisplay when true display the arbitrary clip plane.
-     */
-    public void DisplayArb(boolean bDisplay)
-    {
-        m_bDisplayClipArb = bDisplay;
-        if ( bDisplay )
-        {
-            m_kScene.AttachChild(m_kArbRotate);
-        }
-        else
-        {
-            m_kScene.DetachChild(m_kArbRotate);
-        }
-        m_kScene.UpdateGS();
-        m_kScene.UpdateRS();
-    }
-
-    public boolean DisplayArb()
-    {
-        return m_bDisplayClipArb;
-    }
-
-    public Node ArbRotate()
-    {
-        return m_kArbRotate;
-    }
-
     /**
-     * Sets the arbitrary clip plane color.
+     * Sets the eye clip plane color.
      * @param kColor the new color.
      */
-    public void setArbColor( ColorRGB kColor )
+    public void setEyeInvColor( ColorRGB kColor )
     {
         for ( int i = 0; i < 4; i++ )
         {
-            m_kClipArb.VBuffer.SetColor3( 0, i, kColor );
+            m_kClipEyeInv.VBuffer.SetColor3( 0, i, kColor );
         }
-        m_kClipArb.VBuffer.Release();
+        m_kClipEyeInv.VBuffer.Release();
     }
-
-    public void SetArbPlane( float fX )
-    {
-        m_kClipArb.VBuffer.SetPosition3( 0, fX, 0, 0 ) ;
-        m_kClipArb.VBuffer.SetPosition3( 1, fX, 0, m_fMax ) ;
-        m_kClipArb.VBuffer.SetPosition3( 2, fX, m_fMax, m_fMax ) ;
-        m_kClipArb.VBuffer.SetPosition3( 3, fX, m_fMax, 0 ) ;
-        m_kClipArb.VBuffer.Release();
-        m_kScene.UpdateGS();
-    }
-
-    /** Returns the value of the specified axis-aligend clip plane.
-     * @param iWhich one of the 6 clip planes
-     * @return the value of the specified axis-aligend clip plane.
-     */
-    public float GetValue(int iWhich)
-    {
-        float fValue = 0;
-        if ( iWhich < 2 )
-        {
-            fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fX( 0 );
-            fValue /= m_fX;
-        }
-        else if ( iWhich < 4 )
-        {
-            fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fY( 0 );
-            fValue /= m_fY;
-        }
-        else
-        {
-            fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fZ( 0 );
-            fValue /= m_fZ;
-        }
-        return fValue;
-    }
-
+    
     /** Creates the clipping planes. */
     private void CreateClipPlanes()
     {
@@ -504,33 +554,5 @@ public class VolumeClip extends VolumeObject
         m_kClipEyeInv.UpdateGS();
         m_kClipEyeInv.UpdateRS();
     }
-
-    /** ShaderEffect for displaying the clip planes. */
-    private VertexColor3Effect m_kVertexColor3Shader;
-
-    /** axis-aligned clip plane polylines: */
-    private Polyline[] m_akPolyline;
-    /** arbitrary clip plane polyline: */
-    private Polyline m_kClipArb;
-    /** eye clip plane polyline: */
-    private Polyline m_kClipEye;
-    /** inverse-eye clip plane polyline: */
-    private Polyline m_kClipEyeInv;
-    /** enables/disables displaying clip planes*/
-    private boolean[] m_abDisplayPolyline = new boolean[]{false,false,false,false,false,false};
-
-    /** Screen camera for displaying the eye clip planes in screen-coordinates: */
-    private Camera m_spkEyeCamera;
-    /** Node for rotating the arbitrary clip plane with the mouse trackball: */
-    private Node m_kArbRotate = new Node();
-
-    /** Enables/Disables displaying the arbitrary clip plane: */
-    private boolean m_bDisplayClipArb = false;
-    /** Enables/Disables displaying the eye clip plane: */
-    private boolean m_bDisplayClipEye = false;
-    /** Enables/Disables displaying the inverse-eye clip plane: */
-    private boolean m_bDisplayClipEyeInv = false;
-    
-    private float m_fMax;
 
 }

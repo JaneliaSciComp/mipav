@@ -25,9 +25,7 @@ import WildMagic.LibFoundation.Mathematics.Vector4f;
 /**
  * Volume Sculpturing allows the user to draw a region on the screen in the volume render view, and to remove the parts
  * of the volume covered by that region. The user outlines a region by holding the left mouse button down and drawing
- * directly on the screen. Volume Sculpturing works in both the Raycast and Shearwarp volume render views through the
- * VolumeSculptor.java implementation and on the VolumeTexture render views through the TextureSculptor.java
- * implemetation.
+ * directly on the screen. 
  *
  * <p>The user draws an outline on the screen, and defines the cut-away or sculpture region. If the user chooses to
  * apply the sculpture region to the volume, the voxels defined by an extruded volume of the cut-away region are

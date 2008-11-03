@@ -1,11 +1,29 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import javax.media.opengl.*;
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibRenderers.OpenGLRenderer.*;
+import javax.media.opengl.GLAutoDrawable;
+
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.ShaderEffect;
+import WildMagic.LibGraphics.Effects.TextureEffect;
+import WildMagic.LibGraphics.Effects.VertexColor3Effect;
+import WildMagic.LibGraphics.Rendering.AlphaState;
+import WildMagic.LibGraphics.Rendering.Camera;
+import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.FrameBuffer;
+import WildMagic.LibGraphics.Rendering.GlobalState;
+import WildMagic.LibGraphics.Rendering.GraphicsImage;
+import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.Rendering.Renderer;
+import WildMagic.LibGraphics.Rendering.Texture;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Culler;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 
 /**
  * 
@@ -43,167 +61,64 @@ import WildMagic.LibRenderers.OpenGLRenderer.*;
 public class VolumeRayCast extends VolumeObject
 {
 
+    /** VolumeShaderEffect applied to proxy-geometry: */
+    private VolumeShaderEffect_WM m_kVolumeShaderEffect = null;
+
+    /** Vertex-color shader effect used for the polylines and the first-pass
+     * rendering of the proxy-geometry:*/
+    private ShaderEffect m_spkVertexColor3Shader;
+
+    /** Normalized volume extents: */
+    private float m_fMax;
+
+    /** Material properties for Volume Surface (and Composite Surface) mode*/
+    private MaterialState m_kMaterial;
+
+    /** Volume proxy-geometry (cube) */
+    private TriMesh m_kMesh;
+
+    /** Screen camera for displaying the screen polygon: */
+    private Camera m_spkScreenCamera;
+    
+    
+    /** Scene polygon displaying the first-pass rendering of the proxy-geometry: */
+    private TriMesh m_spkScenePolygon;
+
+    /** GraphicsImage with the first-pass rendering of the proxy-geometry: */
+    private GraphicsImage m_spkSceneImage;
+
+    /** Texture for the first-pass rendering of the proxy-geometry: */
+    private Texture m_pkSceneTarget;
+
+    /** Off-screen buffer the first-pass rendering is drawn into: */
+    private OpenGLFrameBuffer m_pkPBuffer;
+
+    /** For debugging, setting this to false causes only the proxy-geometry to be displayed. */
+    private boolean m_bDisplaySecond = true;
+
+    /** Store size between pre-render and post-pre-render. */
+    private int m_iWidthSave, m_iHeightSave;
+
     /**
      * Creates a new VolumeRayCast object.
      * @param kImageA the VolumeImage containing the data and textures for
      * rendering.
+     * @param kVolumeImageB second VolumeImage.
      */
     public VolumeRayCast( VolumeImage kImageA, VolumeImage kImageB )
     {
         super(kImageA,kImageB);
     }
 
-    /** 
-     * PreRender renders the proxy geometry into the PBuffer texture.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
-     */
-    public void PreRender( Renderer kRenderer, Culler kCuller )
-    {
-        if ( !m_bDisplay )
-        {
-            return;
-        }
-        m_iWidthSave = kRenderer.GetWidth();
-        m_iHeightSave = kRenderer.GetHeight();
-        kRenderer.Resize( m_spkSceneImage.GetBound(0), m_spkSceneImage.GetBound(1));
-        m_kScene.UpdateGS();
-        if ( !m_bDisplaySecond )
-        {
-            // First rendering pass:
-            // Draw the proxy geometry to a color buffer, to generate the
-            // back-facing texture-coordinates:
-            m_kMesh.DetachAllEffects();
-            m_kMesh.AttachEffect( m_spkVertexColor3Shader );
-            kCuller.ComputeVisibleSet(m_kScene);
-            // Enable rendering to the PBuffer:
-            kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
-            kRenderer.ClearBuffers();
-            // Cull front-facing polygons:
-            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
-            kRenderer.DrawScene(kCuller.GetVisibleSet());
-            // Undo culling:
-            m_kCull.CullFace = CullState.CullMode.CT_BACK;
-        }
-        else
-        {
-            // First rendering pass:
-            // Draw the proxy geometry to a color buffer, to generate the
-            // back-facing texture-coordinates:
-            m_kMesh.DetachAllEffects();
-            m_kMesh.AttachEffect( m_spkVertexColor3Shader );
-            kCuller.ComputeVisibleSet(m_kScene);
-            // Enable rendering to the PBuffer:
-            m_pkPBuffer.Enable();
-            kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
-            kRenderer.ClearBuffers();
-            
-            kCuller.ComputeVisibleSet(m_kScene);
-            
-            // Cull front-facing polygons:
-            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
-            kRenderer.DrawScene(kCuller.GetVisibleSet());
-            // Undo culling:
-            m_kCull.CullFace = CullState.CullMode.CT_BACK;
-        }
-        
-    }
-
-    /** Turns off rendering to the PBuffer. Called after all objects displayed
-     * with the ray-cast volume have been pre-rendered. */
-    public void PostPreRender( Renderer kRenderer )
-    {
-        kRenderer.Resize(m_iWidthSave,m_iHeightSave);
-        // Disable the PBuffer
-        m_pkPBuffer.Disable();
-    }
-
     /**
-     * Render the object.
+     * Display the volume in Composite mode.
      * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
      */
-    public void Render( Renderer kRenderer, Culler kCuller )
+    public void CMPMode(Renderer kRenderer)
     {
-        if ( !m_bDisplay )
-        {
-            return;
-        }
-        // Second rendering pass:
-        // Draw the proxy geometry with the volume ray-tracing shader:
-        m_kMesh.DetachAllEffects();
-        m_kMesh.AttachEffect( m_kVolumeShaderEffect );
-        kCuller.ComputeVisibleSet(m_kScene);
-        kRenderer.DrawScene(kCuller.GetVisibleSet());
-
-         // Draw scene polygon:
-         //kRenderer.SetCamera(m_spkScreenCamera);
-         //kRenderer.Draw(m_spkScenePolygon);
+        m_kVolumeShaderEffect.CMPMode(kRenderer);
     }
 
-    /** Sets displaying the second pass. For debugging. Rendering the first
-     * pass obly displays the proxy-geometry bounding box.
-     * @param bDisplay when true display both passes (the default). When
-     * false display only the proxy-geometry.
-     */
-    public void SetDisplaySecond( boolean bDisplay )
-    {
-        m_bDisplaySecond = bDisplay;
-    }
-
-    /** delete local memory. */
-    public void dispose()
-    {
-        if ( m_spkScenePolygon != null )
-        {
-            m_spkScenePolygon.dispose();
-            m_spkScenePolygon = null;
-        }
-
-        if ( m_spkSceneImage != null )
-        {
-            m_spkSceneImage.dispose();
-            m_spkSceneImage = null;
-        }
-        if ( m_pkSceneTarget != null )
-        {
-            m_pkSceneTarget.dispose();
-            m_pkSceneTarget = null;
-        }
-        if ( m_pkPBuffer != null )
-        {
-            m_pkPBuffer.dispose();
-            m_pkPBuffer = null;
-        }
-        if ( m_kMaterial != null )
-        {
-            m_kMaterial.dispose();
-            m_kMaterial = null;
-        }
-        if ( m_kMesh != null )
-        {
-            m_kMesh.dispose();
-            m_kMesh = null;
-        }
-        if ( m_kVolumeShaderEffect != null )
-        {
-            m_kVolumeShaderEffect.dispose();
-            m_kVolumeShaderEffect = null;
-        }
-        if ( m_spkScreenCamera != null )
-        {
-            m_spkScreenCamera.dispose();
-            m_spkScreenCamera = null;
-        }
-        if ( m_spkVertexColor3Shader != null )
-        {
-            m_spkVertexColor3Shader.dispose();
-            m_spkVertexColor3Shader = null;
-        }
-        super.dispose();
-    }
-    
-    
     /**
      * Called by the init() function. Creates and initialized the scene-graph.
      * @param eFormat FrameBuffer.FormatType 
@@ -320,6 +235,95 @@ public class VolumeRayCast extends VolumeObject
         m_kScene.UpdateRS();
     }
 
+    /**
+     * Display the volume in DDR mode.
+     * @param kRenderer the OpenGLRenderer object.
+     */
+    public void DDRMode(Renderer kRenderer)
+    {
+        m_kVolumeShaderEffect.DDRMode(kRenderer);
+    }
+
+    /** delete local memory. */
+    public void dispose()
+    {
+        if ( m_spkScenePolygon != null )
+        {
+            m_spkScenePolygon.dispose();
+            m_spkScenePolygon = null;
+        }
+
+        if ( m_spkSceneImage != null )
+        {
+            m_spkSceneImage.dispose();
+            m_spkSceneImage = null;
+        }
+        if ( m_pkSceneTarget != null )
+        {
+            m_pkSceneTarget.dispose();
+            m_pkSceneTarget = null;
+        }
+        if ( m_pkPBuffer != null )
+        {
+            m_pkPBuffer.dispose();
+            m_pkPBuffer = null;
+        }
+        if ( m_kMaterial != null )
+        {
+            m_kMaterial.dispose();
+            m_kMaterial = null;
+        }
+        if ( m_kMesh != null )
+        {
+            m_kMesh.dispose();
+            m_kMesh = null;
+        }
+        if ( m_kVolumeShaderEffect != null )
+        {
+            m_kVolumeShaderEffect.dispose();
+            m_kVolumeShaderEffect = null;
+        }
+        if ( m_spkScreenCamera != null )
+        {
+            m_spkScreenCamera.dispose();
+            m_spkScreenCamera = null;
+        }
+        if ( m_spkVertexColor3Shader != null )
+        {
+            m_spkVertexColor3Shader.dispose();
+            m_spkVertexColor3Shader = null;
+        }
+        super.dispose();
+    }
+
+    /**
+     * Return current clipping state.
+     * @return current clipping state.
+     */
+    public VolumeClipEffect GetClipEffect()
+    {
+        return m_kVolumeShaderEffect;
+    }
+
+    /**
+     * Called from the JPanelDisplay dialog. Gets the material properties for
+     * the VolumeShaderSUR (Surface and Composite Surface volume shaders.)
+     * @return material properties for the surface mode.
+     */
+    public MaterialState GetMaterialState( )
+    {
+        return m_kMaterial;
+    }
+
+    /** Returns the VolumeShaderEffect.
+     * @return the VolumeShaderEffect.
+     */
+    public VolumeShaderEffect_WM GetShaderEffect()
+    {
+        return m_kVolumeShaderEffect;
+        
+    }
+
     /** Returns the translation vector.
      * @return the translation vector.
      */
@@ -329,18 +333,245 @@ public class VolumeRayCast extends VolumeObject
     }
 
     /**
-     * Called by CreateScene. Creates the bounding-box proxy geometry scene
-     * node.
+     * Display the volume in MIP mode.
+     * @param kRenderer the OpenGLRenderer object.
      */
-    private void CreateBox ()
+    public void MIPMode( Renderer kRenderer )
     {
-        int iXBound = m_kVolumeImageA.GetImage().getExtents()[0];
-        int iYBound = m_kVolumeImageA.GetImage().getExtents()[1];
-        int iZBound = m_kVolumeImageA.GetImage().getExtents()[2];
-        Box(iXBound,iYBound,iZBound);
-        m_spkVertexColor3Shader = new VertexColor3Effect();
+        m_kVolumeShaderEffect.MIPMode(kRenderer);
     }
 
+    /** Turns off rendering to the PBuffer. Called after all objects displayed
+     * with the ray-cast volume have been pre-rendered. */
+    public void PostPreRender( Renderer kRenderer )
+    {
+        kRenderer.Resize(m_iWidthSave,m_iHeightSave);
+        // Disable the PBuffer
+        m_pkPBuffer.Disable();
+    }
+
+    /** 
+     * PreRender renders the proxy geometry into the PBuffer texture.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
+     */
+    public void PreRender( Renderer kRenderer, Culler kCuller )
+    {
+        if ( !m_bDisplay )
+        {
+            return;
+        }
+        m_iWidthSave = kRenderer.GetWidth();
+        m_iHeightSave = kRenderer.GetHeight();
+        kRenderer.Resize( m_spkSceneImage.GetBound(0), m_spkSceneImage.GetBound(1));
+        m_kScene.UpdateGS();
+        if ( !m_bDisplaySecond )
+        {
+            // First rendering pass:
+            // Draw the proxy geometry to a color buffer, to generate the
+            // back-facing texture-coordinates:
+            m_kMesh.DetachAllEffects();
+            m_kMesh.AttachEffect( m_spkVertexColor3Shader );
+            kCuller.ComputeVisibleSet(m_kScene);
+            // Enable rendering to the PBuffer:
+            kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
+            kRenderer.ClearBuffers();
+            // Cull front-facing polygons:
+            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
+            kRenderer.DrawScene(kCuller.GetVisibleSet());
+            // Undo culling:
+            m_kCull.CullFace = CullState.CullMode.CT_BACK;
+        }
+        else
+        {
+            // First rendering pass:
+            // Draw the proxy geometry to a color buffer, to generate the
+            // back-facing texture-coordinates:
+            m_kMesh.DetachAllEffects();
+            m_kMesh.AttachEffect( m_spkVertexColor3Shader );
+            kCuller.ComputeVisibleSet(m_kScene);
+            // Enable rendering to the PBuffer:
+            m_pkPBuffer.Enable();
+            kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
+            kRenderer.ClearBuffers();
+            
+            kCuller.ComputeVisibleSet(m_kScene);
+            
+            // Cull front-facing polygons:
+            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
+            kRenderer.DrawScene(kCuller.GetVisibleSet());
+            // Undo culling:
+            m_kCull.CullFace = CullState.CullMode.CT_BACK;
+        }
+        
+    }
+
+    /** Reloads the VolumeShaderEffect current shader program.
+     * @param kRenderer the OpenGLRenderer object.
+     */
+    public void ReloadVolumeShader( Renderer kRenderer )
+    {
+        m_kVolumeShaderEffect.Reload( kRenderer );
+    }
+
+    /**
+     * Render the object.
+     * @param kRenderer the OpenGLRenderer object.
+     * @param kCuller the Culler object.
+     */
+    public void Render( Renderer kRenderer, Culler kCuller )
+    {
+        if ( !m_bDisplay )
+        {
+            return;
+        }
+        // Second rendering pass:
+        // Draw the proxy geometry with the volume ray-tracing shader:
+        m_kMesh.DetachAllEffects();
+        m_kMesh.AttachEffect( m_kVolumeShaderEffect );
+        kCuller.ComputeVisibleSet(m_kScene);
+        kRenderer.DrawScene(kCuller.GetVisibleSet());
+
+         // Draw scene polygon:
+         //kRenderer.SetCamera(m_spkScreenCamera);
+         //kRenderer.Draw(m_spkScenePolygon);
+    }
+
+    /**
+     * Enables/Disables self-shadowing in the Surface mode.
+     * @param bShadow shadow on/off.
+     */
+    public void SelfShadow(boolean bShadow)
+    {
+        m_kVolumeShaderEffect.SelfShadow(bShadow);
+    }
+
+    /**
+     * Sets blending between imageA and imageB.
+     * @param fValue the blend value (0-1)
+     */
+    public void setABBlend( float fValue )
+    {
+        m_kVolumeShaderEffect.setABBlend(fValue);
+    }
+
+    /**
+     * Sets the background color.
+     * @param kColor new background color.
+     */
+    public void SetBackgroundColor( ColorRGBA kColor )
+    {
+        m_kVolumeShaderEffect.SetBackgroundColor( kColor );
+    }
+
+    /** Sets axis-aligned clipping for the VolumeShaderEffect.
+     * @param afClip the clipping parameters for axis-aligned clipping.
+     */
+    public void SetClip( int iWhich, float data, boolean bEnable)
+    {
+        m_kVolumeShaderEffect.SetClip(iWhich, data, bEnable);
+    }
+
+    /** Sets arbitrary clipping for the VolumeShaderEffect.
+     * @param afEquation the arbitrary-clip plane equation.
+     */
+    public void SetClipArb( float[] afEquation, boolean bEnable )
+    {
+        m_kVolumeShaderEffect.SetClipArb(afEquation, bEnable);
+    }
+    
+    /** Sets eye clipping for the VolumeShaderEffect.
+     * @param afEquation the eye clipping equation.
+     */
+    public void SetClipEye( float[] afEquation, boolean bEnable )
+    {
+        m_kVolumeShaderEffect.SetClipEye(afEquation, bEnable);
+    }
+
+    /** Sets inverse-eye clipping for the VolumeShaderEffect.
+     * @param afEquation the inverse-eye clipping equation.
+     */
+    public void SetClipEyeInv( float[] afEquation, boolean bEnable )
+    {
+        m_kVolumeShaderEffect.SetClipEyeInv(afEquation, bEnable);
+    }
+    
+    /** Sets displaying the second pass. For debugging. Rendering the first
+     * pass obly displays the proxy-geometry bounding box.
+     * @param bDisplay when true display both passes (the default). When
+     * false display only the proxy-geometry.
+     */
+    public void SetDisplaySecond( boolean bDisplay )
+    {
+        m_bDisplaySecond = bDisplay;
+    }
+
+    /**
+     * Enables/Disables Gradient Magnitude filter.
+     * @param bShow gradient magnitude filter on/off
+     */
+    public void SetGradientMagnitude(boolean bShow)
+    {
+        m_kVolumeShaderEffect.SetGradientMagnitude(bShow);
+    }
+    /** Sets lighting in the VolumeShaderEffect.
+     * @param kLightType name of the light to set.
+     * @param afType the type of light to set.
+     */
+    public void SetLight( String kLightType, float[] afType )
+    {
+        m_kVolumeShaderEffect.SetLight(kLightType, afType);
+    }
+
+
+    /**
+     * Called from the AdvancedMaterialProperties dialog. Sets the material
+     * properties for the VolumeShaderSUR (Surface and Composite Surface
+     * volume shaders.)
+     * @param kMaterial new material properties for the surface mode.
+     */
+    public void SetMaterialState( MaterialState kMaterial )
+    {
+        m_kMesh.DetachGlobalState(GlobalState.StateType.MATERIAL);
+        m_kMaterial = kMaterial;
+        m_kMesh.AttachGlobalState(m_kMaterial);
+        m_kMesh.UpdateMS(true);
+        m_kMesh.UpdateRS();
+    }
+    /** Sets the blend factor for displaying the ray-cast volume with other objects in the scene.
+     * @param fBlend the blend factor for the ray-cast volume.
+     */
+    public void setVolumeBlend( float fBlend )
+    {
+        if ( m_kVolumeShaderEffect != null )
+        {
+            m_kVolumeShaderEffect.Blend(fBlend);
+        }
+    }
+    /**
+     * Sets the raytracing steps size.
+     * @param fValue the steps value (0-450)
+     */
+    public void StepsSize( float fValue )
+    {
+        m_kVolumeShaderEffect.setSteps(fValue);
+    }
+    /**
+     * Display the volume in Surface mode.
+     * @param kRenderer the OpenGLRenderer object.
+     */
+    public void SURFASTMode(Renderer kRenderer)
+    {
+        m_kVolumeShaderEffect.SURFASTMode(kRenderer);
+    }
+    /**
+     * Display the volume in Composite Surface mode.
+     * @param kRenderer the OpenGLRenderer object.
+     */
+    public void SURMode(Renderer kRenderer)
+    {
+        m_kVolumeShaderEffect.SURMode(kRenderer);
+    }
     /**
      * Called by CreateBox. Creates the bounding-box proxy geometry (VertexBuffer, IndexBuffer).
      * @param iXBound image x-extent.
@@ -504,223 +735,16 @@ public class VolumeRayCast extends VolumeObject
         m_kMesh.UpdateMS(true);
         return m_kMesh;
     }
-
-    /** Sets axis-aligned clipping for the VolumeShaderEffect.
-     * @param afClip the clipping parameters for axis-aligned clipping.
-     */
-    public void SetClip( int iWhich, float data, boolean bEnable)
-    {
-        m_kVolumeShaderEffect.SetClip(iWhich, data, bEnable);
-    }
-
-    /** Sets eye clipping for the VolumeShaderEffect.
-     * @param afEquation the eye clipping equation.
-     */
-    public void SetClipEye( float[] afEquation, boolean bEnable )
-    {
-        m_kVolumeShaderEffect.SetClipEye(afEquation, bEnable);
-    }
-
-    /** Sets inverse-eye clipping for the VolumeShaderEffect.
-     * @param afEquation the inverse-eye clipping equation.
-     */
-    public void SetClipEyeInv( float[] afEquation, boolean bEnable )
-    {
-        m_kVolumeShaderEffect.SetClipEyeInv(afEquation, bEnable);
-    }
-
-    /** Sets arbitrary clipping for the VolumeShaderEffect.
-     * @param afEquation the arbitrary-clip plane equation.
-     */
-    public void SetClipArb( float[] afEquation, boolean bEnable )
-    {
-        m_kVolumeShaderEffect.SetClipArb(afEquation, bEnable);
-    }
-
-    /** Reloads the VolumeShaderEffect current shader program.
-     * @param kRenderer the OpenGLRenderer object.
-     */
-    public void ReloadVolumeShader( Renderer kRenderer )
-    {
-        m_kVolumeShaderEffect.Reload( kRenderer );
-    }
-
-    /** Sets lighting in the VolumeShaderEffect.
-     * @param kLightType name of the light to set.
-     * @param afType the type of light to set.
-     */
-    public void SetLight( String kLightType, float[] afType )
-    {
-        m_kVolumeShaderEffect.SetLight(kLightType, afType);
-    }
-
     /**
-     * Display the volume in MIP mode.
-     * @param kRenderer the OpenGLRenderer object.
+     * Called by CreateScene. Creates the bounding-box proxy geometry scene
+     * node.
      */
-    public void MIPMode( Renderer kRenderer )
+    private void CreateBox ()
     {
-        m_kVolumeShaderEffect.MIPMode(kRenderer);
+        int iXBound = m_kVolumeImageA.GetImage().getExtents()[0];
+        int iYBound = m_kVolumeImageA.GetImage().getExtents()[1];
+        int iZBound = m_kVolumeImageA.GetImage().getExtents()[2];
+        Box(iXBound,iYBound,iZBound);
+        m_spkVertexColor3Shader = new VertexColor3Effect();
     }
-
-    /**
-     * Display the volume in DDR mode.
-     * @param kRenderer the OpenGLRenderer object.
-     */
-    public void DDRMode(Renderer kRenderer)
-    {
-        m_kVolumeShaderEffect.DDRMode(kRenderer);
-    }
-
-    /**
-     * Display the volume in Composite mode.
-     * @param kRenderer the OpenGLRenderer object.
-     */
-    public void CMPMode(Renderer kRenderer)
-    {
-        m_kVolumeShaderEffect.CMPMode(kRenderer);
-    }
-
-    /**
-     * Display the volume in Composite Surface mode.
-     * @param kRenderer the OpenGLRenderer object.
-     */
-    public void SURMode(Renderer kRenderer)
-    {
-        m_kVolumeShaderEffect.SURMode(kRenderer);
-    }
-
-    /**
-     * Display the volume in Surface mode.
-     * @param kRenderer the OpenGLRenderer object.
-     */
-    public void SURFASTMode(Renderer kRenderer)
-    {
-        m_kVolumeShaderEffect.SURFASTMode(kRenderer);
-    }
-
-    /**
-     * Sets blending between imageA and imageB.
-     * @param fValue the blend value (0-1)
-     */
-    public void setABBlend( float fValue )
-    {
-        m_kVolumeShaderEffect.setABBlend(fValue);
-    }
-
-    /**
-     * Sets the raytracing steps size.
-     * @param fValue the steps value (0-450)
-     */
-    public void StepsSize( float fValue )
-    {
-        m_kVolumeShaderEffect.setSteps(fValue);
-    }
-
-    /**
-     * Sets the background color.
-     * @param kColor new background color.
-     */
-    public void SetBackgroundColor( ColorRGBA kColor )
-    {
-        m_kVolumeShaderEffect.SetBackgroundColor( kColor );
-    }
-
-    /**
-     * Enables/Disables Gradient Magnitude filter.
-     * @param bShow gradient magnitude filter on/off
-     */
-    public void SetGradientMagnitude(boolean bShow)
-    {
-        m_kVolumeShaderEffect.SetGradientMagnitude(bShow);
-    }
-
-    /**
-     * Enables/Disables self-shadowing in the Surface mode.
-     * @param bShadow shadow on/off.
-     */
-    public void SelfShadow(boolean bShadow)
-    {
-        m_kVolumeShaderEffect.SelfShadow(bShadow);
-    }
-
-    /** Returns the VolumeShaderEffect.
-     * @return the VolumeShaderEffect.
-     */
-    public VolumeShaderEffect_WM GetShaderEffect()
-    {
-        return m_kVolumeShaderEffect;
-        
-    }
-
-    /** Sets the blend factor for displaying the ray-cast volume with other objects in the scene.
-     * @param fBlend the blend factor for the ray-cast volume.
-     */
-    public void setVolumeBlend( float fBlend )
-    {
-        if ( m_kVolumeShaderEffect != null )
-        {
-            m_kVolumeShaderEffect.Blend(fBlend);
-        }
-    }
-
-    /**
-     * Called from the AdvancedMaterialProperties dialog. Sets the material
-     * properties for the VolumeShaderSUR (Surface and Composite Surface
-     * volume shaders.)
-     * @param kMaterial new material properties for the surface mode.
-     */
-    public void SetMaterialState( MaterialState kMaterial )
-    {
-        m_kMesh.DetachGlobalState(GlobalState.StateType.MATERIAL);
-        m_kMaterial = kMaterial;
-        m_kMesh.AttachGlobalState(m_kMaterial);
-        m_kMesh.UpdateMS(true);
-        m_kMesh.UpdateRS();
-    }
-
-    /**
-     * Called from the JPanelDisplay dialog. Gets the material properties for
-     * the VolumeShaderSUR (Surface and Composite Surface volume shaders.)
-     * @return material properties for the surface mode.
-     */
-    public MaterialState GetMaterialState( )
-    {
-        return m_kMaterial;
-    }
-
-    public VolumeClipEffect GetClipEffect()
-    {
-        return m_kVolumeShaderEffect;
-    }
-    
-    /** VolumeShaderEffect applied to proxy-geometry: */
-    private VolumeShaderEffect_WM m_kVolumeShaderEffect = null;
-
-    /** Vertex-color shader effect used for the polylines and the first-pass
-     * rendering of the proxy-geometry:*/
-    private ShaderEffect m_spkVertexColor3Shader;
-    
-    /** Normalized volume extents: */
-    private float m_fMax;
-
-    /** Material properties for Volume Surface (and Composite Surface) mode*/
-    private MaterialState m_kMaterial;
-    /** Volume proxy-geometry (cube) */
-    private TriMesh m_kMesh;
-
-
-    /** Screen camera for displaying the screen polygon: */
-    private Camera m_spkScreenCamera;
-    /** Scene polygon displaying the first-pass rendering of the proxy-geometry: */
-    private TriMesh m_spkScenePolygon;
-    /** GraphicsImage with the first-pass rendering of the proxy-geometry: */
-    private GraphicsImage m_spkSceneImage;
-    /** Texture for the first-pass rendering of the proxy-geometry: */
-    private Texture m_pkSceneTarget;
-    /** Off-screen buffer the first-pass rendering is drawn into: */
-    private OpenGLFrameBuffer m_pkPBuffer;
-    /** For debugging, setting this to false causes only the proxy-geometry to be displayed. */
-    private boolean m_bDisplaySecond = true;
-    private int m_iWidthSave, m_iHeightSave;
 }

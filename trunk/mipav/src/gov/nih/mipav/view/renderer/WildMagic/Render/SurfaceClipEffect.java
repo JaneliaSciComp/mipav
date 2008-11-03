@@ -1,19 +1,33 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import WildMagic.LibGraphics.Shaders.*;
+import WildMagic.LibGraphics.Shaders.PixelShader;
+import WildMagic.LibGraphics.Shaders.Program;
+import WildMagic.LibGraphics.Shaders.VertexShader;
 
+/**
+ * Surface clipping.
+ */
 public class SurfaceClipEffect extends VolumeClipEffect
 {
+    /** Scale the surface to fit the mask texture. */
+    private float[] m_afSurfaceScale = new float[]{0f,0,0,0};
+    
+    /**
+     * Create a surface clip effect. Used to generate the surface mask texture.
+     */
     public SurfaceClipEffect ()
     {
         SetPassQuantity(1);
         m_kVShader.set(0, new VertexShader("SurfaceClip", true) );
         m_kPShader.set(0, new PixelShader("SurfaceClip") );
     }
-    
-
-    /** turns surface display on/off */
-    private float[] m_afSurfaceScale = new float[]{0f,0,0,0};
+    /**
+     * Scale the surface to fit the mask texture. Scaling is done inside the SurfaceClip vertex shader.
+     * @param fSX x-scale factor.
+     * @param fSY y-scale factor.
+     * @param fSZ z-scale factor.
+     * @param bOn turn scale on/off.
+     */
     public void Scale( float fSX, float fSY, float fSZ, boolean bOn )
     {
         m_afSurfaceScale[0] = fSX;

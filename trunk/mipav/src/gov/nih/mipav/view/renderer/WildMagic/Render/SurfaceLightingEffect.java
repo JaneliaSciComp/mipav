@@ -5,10 +5,15 @@ import WildMagic.LibFoundation.Mathematics.*;
 import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.Shaders.*;
 
+/**
+ * Surface lighting uses the lights defined in the Volume/Surface/Tri-Planar view in the vertex and pixel shaders.
+ */
 public class SurfaceLightingEffect extends VolumeClipEffect
 {
 
-    /** Creates a LightingEffect */
+    /** Creates a LightingEffect
+     * @param kImageA VolumeImage containing data and textures for the effect.
+     */
     public SurfaceLightingEffect (VolumeImage kImageA)
     {
         SetPassQuantity(1);
@@ -36,10 +41,8 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         m_kVolumeImage = kImageA;
     }
 
-    /** This function is called in LoadPrograms once the shader programs are
-     * created.  It gives the ShaderEffect-derived classes a chance to do
-     * any additional work to hook up the effect with the low-level objects.
-     * @param iPass the ith rendering pass
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClipEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)
      */
     public void OnLoadPrograms (int iPass, Program pkVProgram,
                                 Program pkPProgram)
@@ -74,6 +77,10 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         
     }
     
+    /**
+     * Sets surface blend/transparency value for alph-blending in the shader.
+     * @param fValue surface blend/transparency value for alph-blending in the shader.
+     */
     public void Blend( float fValue )
     {    
         Program pkProgram = null;
@@ -97,6 +104,10 @@ public class SurfaceLightingEffect extends VolumeClipEffect
     }
 
     
+    /**
+     * Flag to reverse the direction of the triangle faces inside the vertex shader. Useful for rendering from inside a mesh.
+     * @param iReverse 1 reverses the triangle face direction, 0 does nothing.
+     */
     public void SetReverseFace( int iReverse )
     {    
         Program pkProgram = GetVProgram(0);
@@ -111,6 +122,11 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         m_iReverseFace = iReverse;
     }
     
+    /**
+     * Sets the lighting shader to be per-pixel or per-vertex.
+     * @param kRenderer OpenGL renderer.
+     * @param bOn turns per-pixel lighting on/off.
+     */
     public void SetPerPixelLighting( Renderer kRenderer, boolean bOn )
     {
         if ( m_bPerPixelLighting != bOn)
@@ -136,6 +152,10 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         }
     }
     
+    /**
+     * Enables/disables surface clipping for the per-pixel shader.
+     * @param bClip surface clipping on/off.
+     */
     public void SetClipping( boolean bClip )
     {
         Program pkProgram = null;
@@ -164,6 +184,12 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         }
     }
     
+    /**
+     * Sets the surface texture on/off.
+     * @param bTextureOn texture on/off
+     * @param bUseNewImage indicates which volume to use as the texture.
+     * @param bUseNewLUT indicates which LUT to use.
+     */
     public void SetSurfaceTexture( boolean bTextureOn, boolean bUseNewImage, boolean bUseNewLUT )
     {
         m_bUseNewLUT = bUseNewLUT;
@@ -208,6 +234,11 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         }
     }
     
+    /**
+     * Sets the alternate LUT for surface texture mapping.
+     * @param kLUT LUT for grayscale images.
+     * @param kRGBT LUT for color images.
+     */
     public void SetLUTNew( ModelLUT kLUT, ModelRGB kRGBT )
     {
         if ( m_kColorMapNew == null  )
@@ -227,6 +258,10 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         m_kLUTNew = kLUT;
     }
     
+    /**
+     * Sets alternate volume data for texture mapping.
+     * @param kImage  alternate volume data for texture mapping.
+     */
     public void SetImageNew( ModelImage kImage )
     {
         m_kImageNew = kImage;
@@ -242,6 +277,11 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         }
     }
 
+    /**
+     * Reads the surface color from the texture map at the given location.
+     * @param kTexCoord texture location.
+     * @param rkDropperColor returned color.
+     */
     public void Dropper( Vector3f kTexCoord, ColorRGBA rkDropperColor )
     {
         ModelImage kImage = m_kVolumeImage.GetImage();
@@ -278,6 +318,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         m_kImageNew = null;
         super.dispose();
     }
+    
     private VolumeImage m_kVolumeImage = null;
     private float m_fBlend = 1.0f;
     private int m_iReverseFace = 0;

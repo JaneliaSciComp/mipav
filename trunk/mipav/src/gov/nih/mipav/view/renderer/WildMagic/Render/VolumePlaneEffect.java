@@ -1,10 +1,14 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Shaders.*;
-import WildMagic.LibGraphics.ObjectSystem.*;
-import WildMagic.LibGraphics.Effects.*;
+import gov.nih.mipav.view.renderer.J3D.PlaneRender;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibGraphics.Effects.ShaderEffect;
+import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
+import WildMagic.LibGraphics.ObjectSystem.StringTree;
+import WildMagic.LibGraphics.Shaders.PixelShader;
+import WildMagic.LibGraphics.Shaders.Program;
+import WildMagic.LibGraphics.Shaders.VertexShader;
 
 /** The VolumePlaneEffect ShaderEffect creates shaders for mapping the volume
  * data onto the planes for the 3-orthogonal planes displayed in the
@@ -16,10 +20,38 @@ import WildMagic.LibGraphics.Effects.*;
 public class VolumePlaneEffect extends ShaderEffect
     implements StreamInterface
 {
+    /** Shared volume data and textures. */
+    private VolumeImage m_kVolumeImageA;
+    
+    /** Shared volume data and textures. */
+    private VolumeImage m_kVolumeImageB;
+    
+    /** stores the blend function */
+    private float[] m_afBlend = new float[]{1f,0,0,0};
+
+    /** turns surface display on/off */
+    private float[] m_afShowSurface = new float[]{0f,0,0,0};
+
+    /** stores the background color */
+    private float[] m_afBackgroundColor = new float[4];
+ 
+    /** 
+     * Creates a new VolumeShaderEffect object.
+     * @param kVolumeImageA the VolumeImage containing shared data and textures for rendering.
+     * @param kVolumeImageB second VolumeImage.
+     */
+    public VolumePlaneEffect ( VolumeImage kVolumeImageA, VolumeImage kVolumeImageB )
+    {
+        m_kVolumeImageA = kVolumeImageA;
+        m_kVolumeImageB = kVolumeImageB;
+        Init( false );
+    }
+    
     /** 
      * Creates a new VolumeShaderEffect object.
      * @param kVolumeImageA the VolumeImage containing shared data and
      * textures for rendering.
+     * @param kVolumeImageB second VolumeImage.
      * @param bUnique when true the shader program must be unique.
      */
     public VolumePlaneEffect ( VolumeImage kVolumeImageA, VolumeImage kVolumeImageB, boolean bUnique )
@@ -29,18 +61,20 @@ public class VolumePlaneEffect extends ShaderEffect
         Init( bUnique );
     }
     
-    /** 
-     * Creates a new VolumeShaderEffect object.
-     * @param kVolumeImageA the VolumeImage containing shared data and
-     * textures for rendering.
+    /**
+     * Sets the blend factor shader parameter between imageA and imageB.
+     * @param fBlend blend factor (range = 0-1).
      */
-    public VolumePlaneEffect ( VolumeImage kVolumeImageA, VolumeImage kVolumeImageB )
+    public void Blend(float fBlend)
     {
-        m_kVolumeImageA = kVolumeImageA;
-        m_kVolumeImageB = kVolumeImageB;
-        Init( false );
+        m_afBlend[0] = fBlend;
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram != null && pkProgram.GetUC("blend") != null ) 
+        {
+            pkProgram.GetUC("blend").SetDataSource(m_afBlend);
+        }
     }
-    
+
     /**
      * memory cleanup.
      */
@@ -51,38 +85,17 @@ public class VolumePlaneEffect extends ShaderEffect
         super.dispose();
     }
 
-    /** Initializes the ShaderEffect vertex and pixel shader programs. */
-    private void Init ( boolean bUnique )
+    /**
+     * Sets the blend factor shader parameter between imageA and imageB.
+     * @param fBlend blend factor (range = 0-1).
+     */
+    public float GetBlend()
     {
-        /* Set single-pass rendering: */
-        SetPassQuantity(1);
-
-        SetVShader(0,new VertexShader("Color_Opacity_Texture"));
-        SetPShader(0,new PixelShader("Color_Opacity_Texture", bUnique));
-
-        //GetPShader(0).SetTextureQuantity(3);
-        GetPShader(0).SetTextureQuantity(5);
-        GetPShader(0).SetImageName(0,"VolumeImageA");
-        GetPShader(0).SetTexture(0, m_kVolumeImageA.GetVolumeTarget() );
-        GetPShader(0).SetImageName(1, "ColorMapA");
-        GetPShader(0).SetTexture(1, m_kVolumeImageA.GetColorMapTarget() );
-
-        if ( m_kVolumeImageB != null )
-        {
-            GetPShader(0).SetImageName(2,"VolumeImageB");
-            GetPShader(0).SetTexture(2, m_kVolumeImageB.GetVolumeTarget() );
-            GetPShader(0).SetImageName(3, "ColorMapB");
-            GetPShader(0).SetTexture(3, m_kVolumeImageB.GetColorMapTarget() );
-        }
-
-        GetPShader(0).SetImageName(4, "SurfaceImage");
-        GetPShader(0).SetTexture(4, m_kVolumeImageA.GetSurfaceTarget() );
+        return m_afBlend[0];
     }
 
-    /** This function is called in LoadPrograms once the shader programs are
-     * created.  It gives the ShaderEffect-derived classes a chance to do
-     * any additional work to hook up the effect with the low-level objects.
-     * @param iPass the ith rendering pass
+    /* (non-Javadoc)
+     * @see WildMagic.LibGraphics.Effects.ShaderEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)
      */
     public void OnLoadPrograms (int iPass, Program pkVProgram,
                                 Program pkPProgram)
@@ -119,38 +132,16 @@ public class VolumePlaneEffect extends ShaderEffect
             }               
         }
     }
- 
-    /**
-     * Sets the blend factor shader parameter between imageA and imageB.
-     * @param fBlend blend factor (range = 0-1).
+    /* (non-Javadoc)
+     * @see WildMagic.LibGraphics.Effects.ShaderEffect#SaveStrings(java.lang.String)
      */
-    public float GetBlend()
+    public StringTree SaveStrings (final String acTitle)
     {
-        return m_afBlend[0];
-    }
-    
-    /**
-     * Sets the blend factor shader parameter between imageA and imageB.
-     * @param fBlend blend factor (range = 0-1).
-     */
-    public void Blend(float fBlend)
-    {
-        m_afBlend[0] = fBlend;
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram != null && pkProgram.GetUC("blend") != null ) 
-        {
-            pkProgram.GetUC("blend").SetDataSource(m_afBlend);
-        }
-    }
-    
-    public void ShowSurface( boolean bOn )
-    {
-        m_afShowSurface[0] = bOn ? 1 : 0;
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram != null && pkProgram.GetUC("ShowSurface") != null ) 
-        {
-            pkProgram.GetUC("ShowSurface").SetDataSource(m_afShowSurface);
-        } 
+        StringTree pkTree = new StringTree();
+        pkTree.Append(StringTree.Format("VolumePlaneEffect",GetName()));
+        pkTree.Append(super.SaveStrings(null));
+
+        return pkTree;
     }
 
     /**
@@ -169,89 +160,44 @@ public class VolumePlaneEffect extends ShaderEffect
             pkProgram.GetUC("BackgroundColor").SetDataSource(m_afBackgroundColor);
         }
     }
-
-
     /**
-     * Registers this object with the input Stream parameter. All objects
-     * streamed to disk are registered with the Stream so that a unique list
-     * of objects is maintained.
-     * @param rkStream the Stream where the child objects are stored.
-     * @return true if this object is registered, false if the object has
-     * already been registered.
+     * Turns rendering the planes with the surface mask on/off.
+     * @param bOn on/off.
      */
-    public boolean Register (Stream rkStream)
+    public void ShowSurface( boolean bOn )
     {
-        if (!super.Register(rkStream))
+        m_afShowSurface[0] = bOn ? 1 : 0;
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram != null && pkProgram.GetUC("ShowSurface") != null ) 
         {
-            return false;
+            pkProgram.GetUC("ShowSurface").SetDataSource(m_afShowSurface);
+        } 
+    }
+    /** Initializes the ShaderEffect vertex and pixel shader programs. */
+    private void Init ( boolean bUnique )
+    {
+        /* Set single-pass rendering: */
+        SetPassQuantity(1);
+
+        SetVShader(0,new VertexShader("Color_Opacity_Texture"));
+        SetPShader(0,new PixelShader("Color_Opacity_Texture", bUnique));
+
+        //GetPShader(0).SetTextureQuantity(3);
+        GetPShader(0).SetTextureQuantity(5);
+        GetPShader(0).SetImageName(0,"VolumeImageA");
+        GetPShader(0).SetTexture(0, m_kVolumeImageA.GetVolumeTarget() );
+        GetPShader(0).SetImageName(1, "ColorMapA");
+        GetPShader(0).SetTexture(1, m_kVolumeImageA.GetColorMapTarget() );
+
+        if ( m_kVolumeImageB != null )
+        {
+            GetPShader(0).SetImageName(2,"VolumeImageB");
+            GetPShader(0).SetTexture(2, m_kVolumeImageB.GetVolumeTarget() );
+            GetPShader(0).SetImageName(3, "ColorMapB");
+            GetPShader(0).SetTexture(3, m_kVolumeImageB.GetColorMapTarget() );
         }
-        return true;
+
+        GetPShader(0).SetImageName(4, "SurfaceImage");
+        GetPShader(0).SetTexture(4, m_kVolumeImageA.GetSurfaceTarget() );
     }
-
-    /**
-     * Write this object and all it's children to the Stream.
-     * @param rkStream the Stream where the child objects are stored.
-     */
-    public void Save (Stream rkStream)
-    {
-        super.Save(rkStream);
-
-        // native data
-        //rkStream.Write(m_iPassQuantity);
-
-        // link data
-//         for (int iPass = 0; iPass < m_iPassQuantity; iPass++)
-//         {
-//             rkStream.Write(m_kVShader.get(iPass).GetID());
-//             rkStream.Write(m_kPShader.get(iPass).GetID());
-//         }
-//         int iQuantity = m_kAlphaState.size();
-//         rkStream.Write(iQuantity);
-//         for (int i = 0; i < iQuantity; i++)
-//         {
-//             rkStream.Write(m_kAlphaState.get(i).GetID());
-//         }
-
-    }
-
-    /**
-     * Returns the size of this object and it's children on disk for the
-     * current StreamVersion parameter.
-     * @param rkVersion the current version of the Stream file being created.
-     * @return the size of this object on disk.
-     */
-    public int GetDiskUsed (StreamVersion rkVersion)
-    {
-        int iSize = super.GetDiskUsed(rkVersion);
-
-        return iSize;
-    }
-
-    /**
-     * Write this object into a StringTree for the scene-graph visualization.
-     * @param acTitle the header for this object in the StringTree.
-     * @return StringTree containing a String-based representation of this
-     * object and it's children.
-     */
-    public StringTree SaveStrings (final String acTitle)
-    {
-        StringTree pkTree = new StringTree();
-        // strings
-        pkTree.Append(StringTree.Format("VolumePlaneEffect",GetName()));
-        pkTree.Append(super.SaveStrings(null));
-
-        return pkTree;
-    }
-
-    /** Shared volume data and textures. */
-    private VolumeImage m_kVolumeImageA;
-    /** Shared volume data and textures. */
-    private VolumeImage m_kVolumeImageB;
-
-    /** stores the blend function */
-    private float[] m_afBlend = new float[]{1f,0,0,0};
-    /** turns surface display on/off */
-    private float[] m_afShowSurface = new float[]{0f,0,0,0};
-    /** stores the background color */
-    private float[] m_afBackgroundColor = new float[4];
 }

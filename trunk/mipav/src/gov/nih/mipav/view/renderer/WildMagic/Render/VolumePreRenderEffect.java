@@ -17,14 +17,20 @@
 //
 
 package gov.nih.mipav.view.renderer.WildMagic.Render;
-import WildMagic.LibGraphics.ObjectSystem.*;
-import WildMagic.LibGraphics.Shaders.*;
-import WildMagic.LibGraphics.Effects.*;
+import WildMagic.LibGraphics.Effects.ShaderEffect;
+import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
+import WildMagic.LibGraphics.ObjectSystem.StringTree;
+import WildMagic.LibGraphics.Shaders.PixelShader;
+import WildMagic.LibGraphics.Shaders.Program;
+import WildMagic.LibGraphics.Shaders.VertexShader;
 
 public class VolumePreRenderEffect extends ShaderEffect
     implements StreamInterface
 {
-    /** Creates an new VolumePreRenderEffect */
+    /** Creates an new VolumePreRenderEffect 
+     * @param bUseTextureCoords when true use texture coordinates as the colors in the pre-render.
+     * @param bUnique when true create unique shader programs, when false share shader programs.
+     */
     public VolumePreRenderEffect (boolean bUseTextureCoords, boolean bUnique)
     {
         super(1);
@@ -39,6 +45,10 @@ public class VolumePreRenderEffect extends ShaderEffect
         m_kPShader.set(0, new PixelShader("PassThrough4", bUnique));
     }
     
+    /**
+     * Set the blend value.
+     * @param fValue blend value.
+     */
     public void Blend( float fValue )
     {    
         Program pkProgram = GetVProgram(0);
@@ -51,11 +61,9 @@ public class VolumePreRenderEffect extends ShaderEffect
             pkProgram.GetUC("Blend").SetDataSource(new float[]{fValue,0,0,0});
         }
     }
-    
-    /** This function is called in LoadPrograms once the shader programs are
-     * created.  It gives the ShaderEffect-derived classes a chance to do
-     * any additional work to hook up the effect with the low-level objects.
-     * @param iPass the ith rendering pass
+
+    /* (non-Javadoc)
+     * @see WildMagic.LibGraphics.Effects.ShaderEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)
      */
     public void OnLoadPrograms (int iPass, Program pkVProgram,
                                 Program pkPProgram)
@@ -63,70 +71,8 @@ public class VolumePreRenderEffect extends ShaderEffect
         Blend(1);
     }
 
-    
-
-    /**
-     * Loads this object from the input parameter rkStream, using the input
-     * Stream.Link to store the IDs of children objects of this object
-     * for linking after all objects are loaded from the Stream.
-     * @param rkStream the Stream from which this object is being read.
-     * @param pkLink the Link class for storing the IDs of this object's
-     * children objects.
-     */
-    public void Load (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Load(rkStream,pkLink);
-    } 
-
-    /**
-     * Copies this objects children objects from the input Stream's HashTable,
-     * based on the LinkID of the child stored in the pkLink parameter.
-     * @param rkStream the Stream where the child objects are stored.
-     * @param pkLink the Link class from which the child object IDs are read.
-     */
-    public void Link (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Link(rkStream,pkLink);
-    }
-
-    /**
-     * Registers this object with the input Stream parameter. All objects
-     * streamed to disk are registered with the Stream so that a unique list
-     * of objects is maintained.
-     * @param rkStream the Stream where the child objects are stored.
-     * @return true if this object is registered, false if the object has
-     * already been registered.
-     */
-    public boolean Register (Stream rkStream)
-    {
-        return super.Register(rkStream);
-    }
-
-    /**
-     * Write this object and all it's children to the Stream.
-     * @param rkStream the Stream where the child objects are stored.
-     */
-    public void Save (Stream rkStream)
-    {
-        super.Save(rkStream);
-    }
-
-    /**
-     * Returns the size of this object and it's children on disk for the
-     * current StreamVersion parameter.
-     * @param rkVersion the current version of the Stream file being created.
-     * @return the size of this object on disk.
-     */
-    public int GetDiskUsed (StreamVersion rkVersion)
-    {
-        return super.GetDiskUsed(rkVersion);
-    }
-
-    /**
-     * Write this object into a StringTree for the scene-graph visualization.
-     * @param acTitle the header for this object in the StringTree.
-     * @return StringTree containing a String-based representation of this
-     * object and it's children.
+    /* (non-Javadoc)
+     * @see WildMagic.LibGraphics.Effects.ShaderEffect#SaveStrings(java.lang.String)
      */
     public StringTree SaveStrings (final String acTitle)
     {

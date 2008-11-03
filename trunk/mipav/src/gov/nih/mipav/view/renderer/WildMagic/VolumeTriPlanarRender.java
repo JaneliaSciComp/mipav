@@ -169,7 +169,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void addNode(Node kNode)
     {
-        m_kDisplayList.add( new VolumeNode( m_pkRenderer, m_kVolumeImageA,
+        m_kDisplayList.add( new VolumeNode( m_kVolumeImageA,
                 m_kTranslate,
                 m_fX, m_fY, m_fZ, kNode) );
         UpdateSceneRotation();

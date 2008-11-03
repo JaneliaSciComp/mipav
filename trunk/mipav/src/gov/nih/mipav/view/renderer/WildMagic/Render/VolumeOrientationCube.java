@@ -1,11 +1,16 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import gov.nih.mipav.*;
-import gov.nih.mipav.model.file.*;
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Effects.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibGraphics.SceneGraph.*;
+import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.model.file.FileInfoBase;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.TextureEffect;
+import WildMagic.LibGraphics.Rendering.Renderer;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Culler;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 /** Displays the Orientation Cube in the VolumeViewer.
  * @see VolumeObject.java
@@ -13,6 +18,15 @@ import WildMagic.LibGraphics.SceneGraph.*;
  */
 public class VolumeOrientationCube extends VolumeObject
 {
+    /** Orientation cube geometry: */
+    private TriMesh[] m_akOrientationCube;
+
+    /** Orientation cube texture names: */
+    private String[] m_aakAxisFiles = new String[]{ "u", "u", "u", "u", "u", "u"};
+
+    /** Orientation cube translation offset: */
+    private Vector3f m_kCubeTranslate = Vector3f.ZERO;
+
     /** Creates a new VolumeOrientationCube object.
      * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
@@ -29,18 +43,23 @@ public class VolumeOrientationCube extends VolumeObject
         m_kScene.UpdateGS();
         m_kScene.UpdateRS();
     }
+    
+    /** Delete local memory. */
+    public void dispose()
+    {
+        m_akOrientationCube = null;
 
-    /**
-     * PreRender the object, for embedding in the ray-cast volume.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
+        m_aakAxisFiles = null;
+        m_kCubeTranslate = null;
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#PreRender(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */
     public void PreRender( Renderer kRenderer, Culler kCuller ) {}
 
-    /**
-     * Render the object.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */
     public void Render( Renderer kRenderer, Culler kCuller )
     {
@@ -56,16 +75,6 @@ public class VolumeOrientationCube extends VolumeObject
             kRenderer.Draw(m_akOrientationCube[i]);
         }
     }
-
-    /** Delete local memory. */
-    public void dispose()
-    {
-        m_akOrientationCube = null;
-
-        m_aakAxisFiles = null;
-        m_kCubeTranslate = null;
-    }
-    
     /** Creates the orientation cube. */
     private void CreateCube()
     {
@@ -159,7 +168,6 @@ public class VolumeOrientationCube extends VolumeObject
         }
         kPos = null;
     }
-
     /**
      * Create the rotation control cubic box. A cube representing the image
      * orientation, with labels painted on the cube faces showing which axis
@@ -183,12 +191,5 @@ public class VolumeOrientationCube extends VolumeObject
             }
         }
     }
-
-    /** Orientation cube grometry: */
-    private TriMesh[] m_akOrientationCube;
-    /** Orientation cube texture names: */
-    private String[] m_aakAxisFiles = new String[]{ "u", "u", "u", "u", "u", "u"};
-    /** Orientation cube translation offset: */
-    private Vector3f m_kCubeTranslate = Vector3f.ZERO;
 
 }
