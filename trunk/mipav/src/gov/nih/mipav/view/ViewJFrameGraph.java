@@ -54,6 +54,9 @@ public class ViewJFrameGraph extends JFrame
     
     /** Mode indicates Laplace fitting in progress*/
     private static final int fitLaplaceMode = 5;
+    
+    /** Mode indicates Lorentz fitting in progress //TODO: implement listener*/
+    private static final int fitLorentzMode = 6;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -267,6 +270,9 @@ public class ViewJFrameGraph extends JFrame
 
     /** Radio button for fitting graph data to linear function */
     private JRadioButton radioFitLinear;
+    
+    /**Radio button for fitting graph data to lorentz distribution*/
+    private JRadioButton radioFitLorentz;
 
     /** Radio button to remove any existing function fitting from graph*/
     private JRadioButton radioFitNone;
@@ -3468,6 +3474,7 @@ public class ViewJFrameGraph extends JFrame
             radioFitExponential = new JRadioButton("Fit exponential (a0+a1*exp(a2*x))");
             radioFitGaussian = new JRadioButton("Fit Gaussian (A*exp(-(X-Xo)^2/(2sigma^2)))");
             radioFitLaplace = new JRadioButton("Fit Laplace (A*exp(-|x-mu|/beta))");
+            radioFitLorentz = new JRadioButton("Fit Lorentz Distribution");
             radioFitNone = new JRadioButton("None");
             fitFunctVisibleCheckbox = new JCheckBox[5];
             name = new String[5];
@@ -3519,7 +3526,14 @@ public class ViewJFrameGraph extends JFrame
         groupFitFunctType.add(radioFitLaplace);
         fitFunctTypePanel.add(radioFitLaplace);
         
-        radioFitNone.setBounds(10, 130, 180, 30);
+        radioFitLorentz.setBounds(10, 130, 260, 30);
+        radioFitLorentz.addActionListener(this);
+        radioFitLorentz.setActionCommand("FitLorentz");
+        radioFitLorentz.setFont(font12);
+        groupFitFunctType.add(radioFitLorentz);
+        fitFunctTypePanel.add(radioFitLorentz);
+        
+        radioFitNone.setBounds(10, 160, 180, 30);
         radioFitNone.addActionListener(this);
         radioFitNone.setActionCommand("FitNone");
         radioFitNone.setFont(font12);
@@ -3534,6 +3548,8 @@ public class ViewJFrameGraph extends JFrame
         	radioFitGaussian.setSelected(true);
         } else if(fitMode == fitLaplaceMode) {
         	radioFitLaplace.setSelected(true);
+        } else if(fitMode == fitLorentzMode) {
+        	radioFitLorentz.setSelected(true);
         } else {
             radioFitNone.setSelected(true);
         }
@@ -4634,30 +4650,42 @@ public class ViewJFrameGraph extends JFrame
             radioFitExponential.setSelected(false);
             radioFitGaussian.setSelected(false);
             radioFitLaplace.setSelected(false);
+            radioFitLorentz.setSelected(false);
         } else if (fitMode == fitExpMode) {
             radioFitLinear.setSelected(false);
             radioFitNone.setSelected(false);
             radioFitExponential.setSelected(true);
             radioFitGaussian.setSelected(false);
             radioFitLaplace.setSelected(false);
+            radioFitLorentz.setSelected(false);
         } else if(fitMode == fitGaussianMode) { 
         	radioFitLinear.setSelected(false);
         	radioFitNone.setSelected(false);
         	radioFitExponential.setSelected(false);
         	radioFitGaussian.setSelected(true);
         	radioFitLaplace.setSelected(false);
+        	radioFitLorentz.setSelected(false);
         } else if(fitMode == fitLaplaceMode) {
         	radioFitLinear.setSelected(false);
-            radioFitNone.setSelected(true);
+            radioFitNone.setSelected(false);
             radioFitExponential.setSelected(false);
             radioFitGaussian.setSelected(false);
             radioFitLaplace.setSelected(true);
+            radioFitLorentz.setSelected(false);
+        } else if(fitMode == fitLorentzMode) {
+        	radioFitLinear.setSelected(false);
+            radioFitNone.setSelected(false);
+            radioFitExponential.setSelected(false);
+            radioFitGaussian.setSelected(false);
+            radioFitLaplace.setSelected(false);
+            radioFitLorentz.setSelected(true);
         } else {
             radioFitLinear.setSelected(false);
             radioFitNone.setSelected(true);
             radioFitExponential.setSelected(false);
             radioFitGaussian.setSelected(false);
             radioFitLaplace.setSelected(false);
+            radioFitLorentz.setSelected(false);
         }
 
     }
