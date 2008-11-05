@@ -1572,6 +1572,61 @@ public class ViewJFrameGraph extends JFrame
 
             update(getGraphics());
         	
+    	} else if (command.equals("FitLorentz")) { 
+        	
+        	double[] params;
+            int nPoints;
+            FitLorentz fe = null;
+
+            ViewJComponentFunct[] functions = graph.getFuncts();
+            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
+            float[] x;
+            float[] y;
+
+            try {
+
+                for (int i = 0; i < functions.length; i++) {
+                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
+                    fe = new FitLorentz(nPoints, graph.getFuncts()[i].getOriginalXs(),
+                                            graph.getFuncts()[i].getOriginalYs());
+                    fe.driver();
+                    fe.dumpResults();
+                    params = fe.getParameters();
+
+                    x = new float[functions[i].getXs().length];
+                    y = new float[x.length];
+
+                    for (int j = 0; j < x.length; j++) {
+                        x[j] = (functions[i].getXs()[j]);
+                        double exp = -Math.pow(x[j]-params[1], 2) / (2 * Math.pow(params[2], 2));
+                    	y[j] = (float) (params[0]*Math.exp(exp));
+                    }
+
+                    fittedFunctions[i].setXs(x);
+                    fittedFunctions[i].setOriginalXs(x);
+                    fittedFunctions[i].setYs(y);
+                    fittedFunctions[i].setOriginalYs(y);
+                }
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Graph :  Out of memory ");
+
+            }
+
+            fitMode = fitLorentzMode;
+
+            for (int index = 0; index < 5; index++) {
+
+                if (index >= graph.getFuncts().length) {
+                    fitFunctVisibleCheckbox[index].setEnabled(false);
+                    fitFunctVisibleCheckbox[index].setSelected(false);
+                } else {
+                    fitFunctVisibleCheckbox[index].setEnabled(true);
+                    fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
+                }
+            }
+
+            update(getGraphics());
+        	
     	} else if (command.equals("SaveGraph")) { // saves the graph to a file
 
             try {
@@ -3396,6 +3451,60 @@ public class ViewJFrameGraph extends JFrame
             }
 
             update(getGraphics());
+        } else if(fitMode == fitLorentzMode) {
+        	//TODO: Customize to Gaussian here
+        	double[] params;
+            int nPoints;
+            FitLorentz fe = null;
+
+            ViewJComponentFunct[] functions = graph.getFuncts();
+            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
+            float[] x;
+            float[] y;
+
+            try {
+
+                for (int i = 0; i < functions.length; i++) {
+                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
+                    fe = new FitLorentz(nPoints, graph.getFuncts()[i].getOriginalXs(),
+                                            graph.getFuncts()[i].getOriginalYs());
+                    fe.driver();
+                    fe.dumpResults();
+                    params = fe.getParameters();
+
+                    x = new float[functions[i].getXs().length];
+                    y = new float[x.length];
+
+                    for (int j = 0; j < x.length; j++) {
+                        x[j] = (functions[i].getXs()[j]);
+                        y[j] = (float) (params[0] + (params[1] * Math.exp(params[2] * x[j])));
+                    }
+
+                    fittedFunctions[i].setXs(x);
+                    fittedFunctions[i].setOriginalXs(x);
+                    fittedFunctions[i].setYs(y);
+                    fittedFunctions[i].setOriginalYs(y);
+                }
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Graph :  Out of memory ");
+
+            }
+
+            if (modifyDialog != null) {
+
+                for (int index = 0; index < 5; index++) {
+
+                    if (index >= graph.getFuncts().length) {
+                        fitFunctVisibleCheckbox[index].setEnabled(false);
+                        fitFunctVisibleCheckbox[index].setSelected(false);
+                    } else {
+                        fitFunctVisibleCheckbox[index].setEnabled(true);
+                        fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
+                    }
+                }
+            }
+
+            update(getGraphics());
         }
 
     }
@@ -3484,16 +3593,16 @@ public class ViewJFrameGraph extends JFrame
             return;
         }
 
-        fitFunctPanel.setBounds(10, 10, 480, 300);
+        fitFunctPanel.setBounds(10, 10, 480, 290);
         fitFunctPanel.setLayout(null);
         fitFunctPanel.setBorder(new EtchedBorder());
 
-        fitFunctTypePanel.setBounds(10, 10, 280, 180);
+        fitFunctTypePanel.setBounds(10, 10, 280, 200);
         fitFunctTypePanel.setLayout(null);
         fitFunctTypePanel.setBorder(new EtchedBorder());
         fitFunctPanel.add(fitFunctTypePanel);
 
-        fitFunctVisiblePanel.setBounds(10, 200, 420, 110);
+        fitFunctVisiblePanel.setBounds(10, 215, 420, 110);
         fitFunctVisiblePanel.setLayout(null);
         fitFunctVisiblePanel.setBorder(new EtchedBorder());
         fitFunctPanel.add(fitFunctVisiblePanel);
@@ -4215,7 +4324,7 @@ public class ViewJFrameGraph extends JFrame
 
         tabbedPane.setFont(font12B);
 
-        modifyDialog.setSize(503, 425);
+        modifyDialog.setSize(503, 440);
         modifyDialog.getContentPane().setLayout(null);
         modifyDialog.setResizable(false);
 
@@ -4228,7 +4337,7 @@ public class ViewJFrameGraph extends JFrame
         modifyDialog.getContentPane().add(tabbedPane, "Center");
         tabbedPane.validate();
         tabbedPane.addChangeListener(this);
-        tabbedPane.setSize(490, 345);
+        tabbedPane.setSize(490, 360);
 
         applyButton.setFont(font12B);
         applyButton.addActionListener(this);
