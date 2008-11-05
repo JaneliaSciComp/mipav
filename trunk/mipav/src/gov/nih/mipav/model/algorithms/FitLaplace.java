@@ -203,6 +203,8 @@ public class FitLaplace extends NLEngine {
     	boolean converged = false;
     	kk = 0;
     	
+    	System.out.println("Initial guess\tAmp: "+amp+"\tmu: "+mu+"\tBeta: "+beta);
+    	
     	while(!converged && kk < MAX_ITR) {
     		double oldAmp = amp;
         	double oldMu = mu;
@@ -219,6 +221,9 @@ public class FitLaplace extends NLEngine {
 	    	amp = amp + dLambda.get(0, 0);
 	    	mu = mu + dLambda.get(1, 0);
 	    	beta = beta + dLambda.get(2, 0);
+	    	
+	    	System.out.println("Iteration "+kk+"\tAmp: "+amp+"\tmu: "+mu+"\tBeta: "+beta);
+	    	
 	    	if(Math.abs(Math.abs(oldAmp - amp) / ((oldAmp + amp) / 2)) < EPSILON && 
 	    			Math.abs(Math.abs(oldMu - mu) / ((oldMu + mu) / 2)) < EPSILON && 
 	    			Math.abs(Math.abs(oldBeta - beta) / ((oldBeta + beta) / 2)) < EPSILON && kk > MIN_ITR) {

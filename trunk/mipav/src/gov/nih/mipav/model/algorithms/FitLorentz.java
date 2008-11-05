@@ -270,6 +270,8 @@ public class FitLorentz extends NLEngine {
     	boolean converged = false;
     	kk = 0;
     	
+    	System.out.println("Initial guess\tAmp: "+amp+"\txInit: "+xInit+"\tGamma: "+gamma);
+    	
     	while(!converged && kk < MAX_ITR) {
     		double oldAmp = amp;
         	double oldXInit = xInit;
@@ -286,6 +288,9 @@ public class FitLorentz extends NLEngine {
 	    	amp = amp + dLambda.get(0, 0);
 	    	xInit = xInit + dLambda.get(1, 0);
 	    	gamma = gamma + dLambda.get(2, 0);
+	    	
+	    	System.out.println("Iteration "+kk+"\tAmp: "+amp+"\txInit: "+xInit+"\tGamma: "+gamma);
+	    	
 	    	if(Math.abs(Math.abs(oldAmp - amp) / ((oldAmp + amp) / 2)) < EPSILON && 
 	    			Math.abs(Math.abs(oldXInit - xInit) / ((oldXInit + xInit) / 2)) < EPSILON && 
 	    			Math.abs(Math.abs(oldSigma - gamma) / ((oldSigma + gamma) / 2)) < EPSILON && kk > MIN_ITR) {
