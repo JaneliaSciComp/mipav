@@ -329,7 +329,10 @@ public class FitGaussian extends NLEngine {
     	for(int i=dataStart; i<dataEnd; i++) {
     		double resTemp = residuals.get(i-dataStart, 0);
     		resSum += Math.abs(resTemp);
-    		residuals.set(i-dataStart, 0, Math.pow(resTemp, 2)/gauss(xDataOrg[i]));
+    		if(gauss(xDataOrg[i]) > .01)
+    			residuals.set(i-dataStart, 0, Math.pow(resTemp, 2)/gauss(xDataOrg[i]));
+    		else
+    			residuals.set(i-dataStart, 0, 0);
     		System.out.println("xValue: "+xDataOrg[i]+"\tActual: "+yDataOrg[i]+"\tExpected: "+gauss(xDataOrg[i])+"\tResidual: "+resTemp+"\tChi squared value: "+residuals.get(i-dataStart, 0));
     		sum += Math.pow(resTemp, 2)/gauss(xDataOrg[i]);
     	}
@@ -355,8 +358,8 @@ public class FitGaussian extends NLEngine {
         messageGraph.append("Valid for data from "+xDataOrg[dataStart]+" to "+xDataOrg[dataEnd]+" in "+(dataEnd-dataStart)+" parts\n\n");
         
         messageGraph.append("Fitting of gaussian function\n");
-        messageGraph.append(" y = " + amp + " * exp((x-" + xInit +
-                            ")^2/(2*" + sigma + "))\n");
+        messageGraph.append(" y = " + amp + " * exp(-(x-" + xInit +
+                            ")^2/(2*" + sigma + "^2))\n");
         messageGraph.append("\n");
         
         messageGraph.append("amp: " + amp + "\n"); 
