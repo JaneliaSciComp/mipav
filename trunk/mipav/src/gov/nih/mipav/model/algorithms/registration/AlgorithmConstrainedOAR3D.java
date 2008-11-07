@@ -2366,7 +2366,9 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
                 for (int k = 0; (k < coarseNumZ) && !threadStopped; k++) {
                     initial[2] = rotateBeginZ + (k * coarseRateZ);
-                    initial[3] = initial[4] = initial[5] = 0.0;
+                    initial[3] = diffX;
+                    initial[4] = diffY;
+                    initial[5] = diffZ;
 
                     if (testBounds3D(initial, initialMessage)) {
                         Preferences.debug("Initial point no good.\n");
