@@ -198,6 +198,8 @@ public class FileJP2 extends FileBase implements ActionListener{
     	
 //    	int[] dimExtents = {256,256,124};
     	int[] dimExtents = {256,256,124,1};
+    	int[] dimExtents_2d = new int[2];
+    	int[] dimExtents_3d = new int[3];
     	// Get input file
         String infile = fileDir + fileName;
 //        System.out.println("Hello, world!");
@@ -220,19 +222,45 @@ public class FileJP2 extends FileBase implements ActionListener{
         }
         int nslice = rawhd.getNumOfSlices();
 
+        boolean is2D = rawhd.getIs2D();
+        
+        
         dimExtents = rawhd.getImgExtents();
+        
+        if(is2D) {
+        	dimExtents_2d[0] = rawhd.getImgExtents()[0];
+        	dimExtents_2d[1] = rawhd.getImgExtents()[1];
+        }
+        if(rawhd.getImgExtents()[3] == 1) {
+        	dimExtents_3d[0] = rawhd.getImgExtents()[0];
+        	dimExtents_3d[1] = rawhd.getImgExtents()[1];
+        	dimExtents_3d[2] = rawhd.getImgExtents()[2];
+        }
+
         int imgType = rawhd.getImgType();
         int imgModality = rawhd.getImgModality();
         int imgOrientation= rawhd.getImgOrientation();
-        float[] imgRes = rawhd.getImgResolution(); 
+        float[] imgRes = rawhd.getImgResolution();
+        float[] imgRes_2d = new float[2];
+        
+        if(is2D) {
+        	imgRes_2d[0] = rawhd.getImgResolution()[0];
+        	imgRes_2d[1] = rawhd.getImgResolution()[1];
+        }
+        
+        
         
         
         
 //        dimExtents[2] = nslice;
 
         nStartFrameDec = 0;
-        nEndFrameDec = dimExtents[2]-1;
-        System.out.println(String.valueOf(nslice));        
+        if(is2D) {
+        	nEndFrameDec = 0;
+        }else {
+        	nEndFrameDec = dimExtents[2]-1;
+        }
+    
 //---        
         createDecGui();
         advDecOptDialog.setVisible(true);
@@ -244,10 +272,18 @@ public class FileJP2 extends FileBase implements ActionListener{
 //---
         fileInfo = new FileInfoJP2(fileName, fileDir, FileUtility.JP2);
         fileInfo.setEndianess(endianess);
-        fileInfo.setExtents(dimExtents);
+        if(is2D) {
+        	fileInfo.setExtents(dimExtents_2d);
+        }else {
+        	if(rawhd.getImgExtents()[3] == 1) {
+        		fileInfo.setExtents(dimExtents_3d); 
+        	}else {
+        		fileInfo.setExtents(dimExtents);
+        	}
+        }
 //        fileInfo.s
 
-        System.out.println("Num of slices:" + Integer.toString(nslice)); 
+
         DecoderRAW dec;
         ParameterList defpl = new ParameterList();
         
@@ -266,11 +302,27 @@ public class FileJP2 extends FileBase implements ActionListener{
 	    pl.put("verbose","off");
 	    
 	    dec = new DecoderRAW(pl);
-
-	    image= new ModelImage(ModelStorageBase.INTEGER, dimExtents,infile);
+	    if(is2D) {
+	    	image= new ModelImage(imgType, dimExtents_2d,infile);
+	    }else {
+	    	if(rawhd.getImgExtents()[3] == 1) {
+	    		image= new ModelImage(imgType, dimExtents_3d,infile);
+	    	}else {
+	    		image= new ModelImage(imgType, dimExtents,infile);
+	    	}
+	    }
+	    
 	    
 	    image.setType(imgType);
-	    image.setExtents(dimExtents);
+	    if(is2D) {
+	    	image.setExtents(dimExtents_2d);
+	    }else {
+	    	if(rawhd.getImgExtents()[3] == 1) {
+	    		image.setExtents(dimExtents_3d);
+	    	}else{
+	    		image.setExtents(dimExtents);
+	    	}
+	    }
 //	    image.setResolutions(0, imgRes);
 	    image.setImageModality(imgModality);
 	    image.setImageOrientation(imgOrientation);
@@ -289,11 +341,9 @@ public class FileJP2 extends FileBase implements ActionListener{
         	}
         	f.skip(nBytesToSkip);
             for (si=nStartFrameDec;si<=nEndFrameDec;si++){
-
             	b=new byte[rawhd.getSize(si)];
             	f.read(b);
             	inStream = new BEByteArrayInputStream(b);
-            	System.out.println("Size of slice:" + Integer.toString(inStream.length()));
 //            	JOptionPane.showMessageDialog(null, "Size of slice:" + Integer.toString(inStream.length()), "Debug", JOptionPane.INFORMATION_MESSAGE);
             	slc = dec.run1Slice(inStream);
 
@@ -399,7 +449,6 @@ public class FileJP2 extends FileBase implements ActionListener{
        
        // Compress image from BeginSlice to EndSlice
        encRAW.runAllSlices(options.getBeginSlice(), options.getEndSlice(),true);
-       JOptionPane.showMessageDialog(null, "Done.", "Results", JOptionPane.INFORMATION_MESSAGE);       
     }
 
     /**

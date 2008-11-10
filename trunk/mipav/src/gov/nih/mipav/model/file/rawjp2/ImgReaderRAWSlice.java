@@ -122,6 +122,9 @@ public class ImgReaderRAWSlice extends ImgReader {
 		
 		this.w = imgExtents[0];
 		this.h = imgExtents[1];
+		if(image.isColorImage()) {
+			this.w = this.w * 4;
+		}
 //		this.numlice = imgExtents[2];
 		this.nc=1;
         this.rb=16;
@@ -245,6 +248,7 @@ public class ImgReaderRAWSlice extends ImgReader {
         
 	// Check type of block provided as an argument
 	if(blk.getDataType()!=DataBlk.TYPE_INT){
+
 	    if(intBlk==null)
 		intBlk = new DataBlkInt(blk.ulx,blk.uly,blk.w,blk.h);
 	    else{
@@ -255,9 +259,10 @@ public class ImgReaderRAWSlice extends ImgReader {
 	    }
 	    blk = intBlk;
 	}
-	
+
 	// Get data array
 	barr = (int[]) blk.getData();
+
 	if (barr == null || barr.length < blk.w*blk.h) {
 	    barr = new int[blk.w*blk.h];
 	    blk.setData(barr); 

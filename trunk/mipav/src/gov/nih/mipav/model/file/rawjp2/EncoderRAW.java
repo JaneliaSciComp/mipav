@@ -1188,6 +1188,7 @@ public class EncoderRAW implements Runnable {
             }
 	    int ntiles = imgtiler.getNumTiles();
 
+
     
 	    // **** EncoderRAW specifications ****
             encSpec = new EncoderSpecs(ntiles, ncomp, imgsrc, pl);
@@ -1482,7 +1483,10 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage) {
 	
 //	ImgReaderRAWSlice slice;
 	ByteArrayOutputStream buff;
-	
+	boolean is2D = false;
+	if(image.getNDims() == 2) {
+		is2D = true;
+	}
 	try {
 		 RAWJP2Header rawhd = new RAWJP2Header();	 
 //	 slice = new ImgReaderRAWSlice(pl.getParameter("i"),startSlice);
@@ -1493,29 +1497,47 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage) {
 		 int imgType = image.getType();
 		 int imgModality = image.getImageModality();
 		 int imgOrientation = image.getImageOrientation();
-		 
-		 imgExtents[2] = endSlice-startSlice +1;
+		 if(!is2D) {
+			 imgExtents[2] = endSlice-startSlice +1;
+		 }
 		 rawhd.setImgExtents(imgExtents);
 		 rawhd.setImgType(imgType);
 		 rawhd.setImgResolution(imgRes);
 		 rawhd.setImgModality(imgModality);
 		 rawhd.setImgOrientation(imgOrientation);
-		
-		 rawhd.setSizeArray(new int[endSlice-startSlice +1]);
-		 
-		 BEBufferedRandomAccessFile f = new BEBufferedRandomAccessFile(pl.getParameter("o"),
+		 if(is2D) {
+			 rawhd.setSizeArray(new int[1]);
+		 }else {
+			 rawhd.setSizeArray(new int[endSlice-startSlice +1]);
+		 }
+		 BEBufferedRandomAccessFile f;
+		 if(is2D) {
+			 f = new BEBufferedRandomAccessFile(pl.getParameter("o"),
+                     "rw",(int) (1 * 50 * 1024));
+		 }else {
+			 f = new BEBufferedRandomAccessFile(pl.getParameter("o"),
 				                                "rw",(int) ((endSlice-startSlice +1)* 50 * 1024));
+		 }
 
 
 		 ImgReaderRAWSlice slice = new ImgReaderRAWSlice(image,startSlice);
-		 for(int sliceIdx=startSlice;sliceIdx<=endSlice;sliceIdx++) {
-			 slice.setSliceIndex(sliceIdx,true);
+		 if(is2D) {
 			 buff = run1Slice(slice);
-			 rawhd.setSize(buff.size(),sliceIdx-startSlice);		 
+			 rawhd.setIs2D(is2D);
+			 rawhd.setSize(buff.size(),0);		 
 			 rawhd.writeRawJP2Header(f);
-//			 String s = Integer.toString(f.getPos());
-//			 JOptionPane.showMessageDialog(null, s, "File pointer position", JOptionPane.INFORMATION_MESSAGE);			 
 			 f.write(buff.toByteArray(),0,buff.size());
+			 
+		 }else {
+			 for(int sliceIdx=startSlice;sliceIdx<=endSlice;sliceIdx++) {
+				 slice.setSliceIndex(sliceIdx,true);
+				 buff = run1Slice(slice);
+				 rawhd.setSize(buff.size(),sliceIdx-startSlice);		 
+				 rawhd.writeRawJP2Header(f);
+	//			 String s = Integer.toString(f.getPos());
+	//			 JOptionPane.showMessageDialog(null, s, "File pointer position", JOptionPane.INFORMATION_MESSAGE);			 
+				 f.write(buff.toByteArray(),0,buff.size());
+			 }
 		 }
 		 f.flush();
 		 f.close();
