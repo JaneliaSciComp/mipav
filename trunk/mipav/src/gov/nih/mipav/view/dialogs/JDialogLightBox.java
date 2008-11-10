@@ -57,6 +57,14 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
 
     /** DOCUMENT ME! */
     private JTextField bordersizeText;
+    
+    private JTextField incrementText;
+    
+    private JLabel incrementLabel;
+    
+    private int increment;
+    
+    private int lastIncrement;
 
     /** DOCUMENT ME! */
     private int col;
@@ -234,6 +242,11 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
             if (bsStatus == INVALID_INPUT) {
                 return;
             }
+            
+            int incrementStatus = checkIncrementTextField();
+            if (incrementStatus == INVALID_INPUT) {
+                return;
+            }
 
             // everything is valid, now update frame
             if (rcStatus == VALID_INPUT) {
@@ -246,6 +259,10 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
 
             if (bsStatus == VALID_INPUT) {
                 frame.updateBorderSize(borderSize);
+            }
+            
+            if (incrementStatus == VALID_INPUT) {
+                frame.updateIncrement(increment);
             }
         } else if (command.equalsIgnoreCase("reset")) {
             resetValues();
@@ -376,6 +393,7 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
 
         gridsizeText.setText(Integer.toString(frame.getGridSpacing()));
         bordersizeText.setText(Integer.toString(frame.getBorderSize()));
+        incrementText.setText(Integer.toString(frame.getIncrement()));
         backgroundB.setBackground(frame.getGridColor());
         borderB.setBackground(frame.getBorderColor());
 
@@ -601,10 +619,13 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
     private void buildRowColPanel() {
         ButtonGroup g1;
         String label;
-        JPanel rcPanel, gridPanel, borderPanel;
+        JPanel rcPanel, gridPanel, borderPanel, incrementPanel;
 
         panelRowColumn = new JPanel();
-        panelRowColumn.setLayout(new BorderLayout());
+        panelRowColumn.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.BOTH;
         panelRowColumn.setForeground(Color.black);
         panelRowColumn.setBorder(buildTitledBorder("Lightbox layout settings"));
 
@@ -673,7 +694,9 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
         colPanel.add(colText);
         rcPanel.add(colPanel);
 
-        panelRowColumn.add(rcPanel, "North");
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panelRowColumn.add(rcPanel, gbc);
 
         // Grid Size
         gridPanel = new JPanel();
@@ -694,7 +717,8 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
         gridsizeL.setForeground(Color.black);
 
         gridPanel.add(gridsizeL);
-        panelRowColumn.add(gridPanel, "Center");
+        gbc.gridy = 4;
+        panelRowColumn.add(gridPanel, gbc);
 
         // Border Size
         borderPanel = new JPanel();
@@ -715,8 +739,28 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
         bordersizeL.setForeground(Color.black);
 
         borderPanel.add(bordersizeL);
-        panelRowColumn.add(borderPanel, "South");
-
+        gbc.gridy = 5;
+        panelRowColumn.add(borderPanel, gbc);
+        
+        // Show every n slices
+        incrementPanel = new JPanel();
+        incrementPanel.setLayout(new GridLayout(1, 2, 5, 1));
+        incrementPanel.setForeground(Color.black);
+        incrementPanel.setBorder(buildTitledBorder("Show every nth slice"));
+        
+        label = "1";
+        incrementText = new JTextField(label, 5);
+        incrementPanel.add(incrementText);
+        
+        label = "Every 1 slice";
+        incrementLabel = new JLabel(label);
+        incrementLabel.setFont(font12);
+        incrementLabel.setForeground(Color.black);
+        incrementPanel.add(incrementLabel);
+        
+        gbc.gridy = 6;
+        panelRowColumn.add(incrementPanel, gbc);
+        
         // make sure that row/col radio buttons are intialized right
         radioRow.setSelected(rowBFlag);
         radioColumn.setSelected(!rowBFlag);
@@ -832,6 +876,65 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
 
         s = "Border Size = " + borderSize;
         bordersizeL.setText(s);
+
+        return VALID_INPUT;
+
+    }
+    
+    /**
+     * check border size of the frame, range (0,10).
+     *
+     * @return  DOCUMENT ME!
+     */
+    private int checkIncrementTextField() {
+        String s;
+
+        // set the 'last' increment
+        lastIncrement = increment;
+
+        try {
+           increment = Integer.parseInt(incrementText.getText());
+
+            // if values haven't changed, return same input
+            if (increment == lastIncrement) {
+                return SAME_INPUT;
+            }
+
+            if (increment < 0) {
+                MipavUtil.displayError("Invalid every nth slice setting");
+                increment = lastIncrement;
+                if (increment == 1) {
+                    s = "Every " + increment + " slice";
+                }
+                else {
+                    s = "Every " + increment + " slices";
+                }
+                incrementLabel.setText(s);
+
+                return INVALID_INPUT;
+            } 
+
+        } catch (NumberFormatException error) {
+            MipavUtil.displayError("Must enter an integer for every nth slice");
+            increment = lastIncrement;
+            if (increment == 1) {
+                s = "Every " + increment + " slice";
+            }
+            else {
+                s = "Every " + increment + " slices";
+            }
+            incrementLabel.setText(s);
+
+            return INVALID_INPUT;
+        }
+
+        if (increment == 1) {
+            s = "Every " + increment + " slice";
+        }
+        else {
+            s = "Every " + increment + " slices";
+        }
+        incrementLabel.setText(s);
 
         return VALID_INPUT;
 
