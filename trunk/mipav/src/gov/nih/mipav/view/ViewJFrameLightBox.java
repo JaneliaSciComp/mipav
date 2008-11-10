@@ -156,6 +156,9 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
     /** Spacing between images in the light-box. */
     private int gridSpacing;
+    
+    /* Increment between displayed slices in the light-box */
+    private int increment;
 
     /** DOCUMENT ME! */
     private ButtonGroup group = new ButtonGroup();
@@ -381,6 +384,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         setGridRow(Integer.parseInt(Preferences.getProperty(Preferences.PREF_LB_GRID_ROW)));
         setGridColumn(Integer.parseInt(Preferences.getProperty(Preferences.PREF_LB_GRID_COL)));
         setGridSpacing(Integer.parseInt(Preferences.getProperty(Preferences.PREF_LB_GRID_SIZE)));
+        setIncrement(Integer.parseInt(Preferences.getProperty(Preferences.PREF_LB_INCREMENT)));
         setGridColor(extractColor(Preferences.getProperty(Preferences.PREF_LB_GRID_COLOR)));
         setBorderSize(Integer.parseInt(Preferences.getProperty(Preferences.PREF_LB_BORDER_SIZE)));
         setBorderColor(extractColor(Preferences.getProperty(Preferences.PREF_LB_BORDER_COLOR)));
@@ -1157,6 +1161,14 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
     public int getGridSpacing() {
         return gridSpacing;
     }
+    
+    /**
+     * Returns the increment between displayed slices
+     * @return increment between displayed slices
+     */
+    public int getIncrement() {
+        return increment;
+    }
 
     /**
      * Returns the reference to imageA.
@@ -1558,6 +1570,22 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         }
 
         gridSpacing = width;
+    }
+    
+    /**
+     * Sets the increment between displayed slices
+     * @param _increment increment between displayed slices
+     */
+    public void setIncrement(int _increment) {
+        if (_increment < 0) {
+            return;
+        }
+        
+        if (_increment == increment) {
+            return;
+        }
+        
+        increment = _increment;
     }
 
     /**
@@ -1965,6 +1993,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         Preferences.setProperty(Preferences.PREF_LB_GRID_ROW, new Integer(gridRow).toString());
         Preferences.setProperty(Preferences.PREF_LB_GRID_COL, new Integer(gridColumn).toString());
         Preferences.setProperty(Preferences.PREF_LB_GRID_SIZE, new Integer(gridSpacing).toString());
+        Preferences.setProperty(Preferences.PREF_LB_INCREMENT, new Integer(increment).toString());
         Preferences.setProperty(Preferences.PREF_LB_GRID_COLOR, this.makeColorString(gridColor));
         Preferences.setProperty(Preferences.PREF_LB_BORDER_SIZE, new Integer(borderSize).toString());
         Preferences.setProperty(Preferences.PREF_LB_BORDER_COLOR, this.makeColorString(borderColor));
@@ -2122,6 +2151,16 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
         setGridSpacing(width);
         updateLayout();
+    }
+    
+    /**
+     * Sets the increment between displayed slices and updates the light box.
+     * @param increment between displayed slices
+     */
+    public void updateIncrement(int increment) {
+        setIncrement(increment);
+        updateLayout();
+        
     }
 
     /**
