@@ -412,6 +412,9 @@ public class Preferences {
 
     /** Constant that indicates the LightBox grid size variable. */
     public static final String PREF_LB_GRID_SIZE = "LightBoxGridSize";
+    
+    /** Constant that indicates the increment between displayed lightbox slices */
+    public static final String PREF_LB_INCREMENT = "LightBoxIncrement";
 
     /** Constant that indicates the LightBox grid color variable. */
     public static final String PREF_LB_GRID_COLOR = "LightBoxGridColor";
@@ -576,6 +579,7 @@ public class Preferences {
         defaultProps.setProperty(Preferences.PREF_LB_GRID_ROW, "0"); // compute 'best fit' num rows
         defaultProps.setProperty(Preferences.PREF_LB_GRID_COL, "2"); // use 2 columns
         defaultProps.setProperty(Preferences.PREF_LB_GRID_SIZE, "5");
+        defaultProps.setProperty(Preferences.PREF_LB_INCREMENT, "1"); // Display every light box frame
         defaultProps.setProperty(Preferences.PREF_LB_GRID_COLOR, "000000");
         defaultProps.setProperty(Preferences.PREF_LB_BORDER_SIZE, "3");
         defaultProps.setProperty(Preferences.PREF_LB_BORDER_COLOR, "960000");
