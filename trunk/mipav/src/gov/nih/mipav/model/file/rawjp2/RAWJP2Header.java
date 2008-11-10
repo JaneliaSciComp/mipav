@@ -23,10 +23,15 @@ public class RAWJP2Header {
 	protected int[] sizeArray;
 	private int[] ptArray;
 	private int arrayPos;
+	protected boolean is2D = false;
 
 	protected void calPtArr(){
 //		ptArray = null;
-		numOfSlices = imgExtents[2];
+		if(is2D) {
+			numOfSlices = 1;
+		}else {
+			numOfSlices = imgExtents[2];
+		}
 		ptArray = new int[numOfSlices];
 //		JOptionPane.showMessageDialog(null, "calPtArr 1", "Info", JOptionPane.INFORMATION_MESSAGE);
 		ptArray[0] = arrayPos + numOfSlices * 4;
@@ -37,7 +42,11 @@ public class RAWJP2Header {
 	}
 
 	public RAWJP2Header() {
-		numOfSlices = imgExtents[2];		
+		if(is2D) {
+			numOfSlices = 1;
+		}else {
+			numOfSlices = imgExtents[2];
+		}
 //		imgExtents = new int[4];
 //		imgExtents = ;
 //		imgExtents = {256,256,124,0};
@@ -79,7 +88,9 @@ public class RAWJP2Header {
 	}
 
 	public int setSize(int p, int idx) {
-		if (idx>=numOfSlices || idx<0) return -1;
+		if(!is2D) {
+			if (idx>=numOfSlices || idx<0) return -1;
+		}
 		this.sizeArray[idx] = p;
 		return 0;
 	}
@@ -99,11 +110,20 @@ public class RAWJP2Header {
 		f.writeByte(imgType);
 		f.writeInt(imgExtents[0]);
 		f.writeInt(imgExtents[1]);
-		f.writeInt(imgExtents[2]);
-		f.writeInt(imgExtents[3]);
+		if(is2D) {
+			f.writeInt(0);
+			f.writeInt(0);
+		}else {
+			f.writeInt(imgExtents[2]);
+			f.writeInt(imgExtents[3]);
+		}
 		f.writeFloat(imgResolution[0]);
 		f.writeFloat(imgResolution[1]);
-		f.writeFloat(imgResolution[2]);
+		if(is2D) {
+			f.writeFloat(0);
+		}else {
+			f.writeFloat(imgResolution[2]);
+		}
 		f.writeByte(imgOrientation);
 		f.writeByte(imgModality);
 
@@ -139,14 +159,26 @@ public class RAWJP2Header {
 			imgResolution[0] = Float.intBitsToFloat((f.read()<<24) | (f.read()<<16) | (f.read()<<8) | f.read());
 			imgResolution[1] = Float.intBitsToFloat((f.read()<<24) | (f.read()<<16) | (f.read()<<8) | f.read());
 			imgResolution[2] = Float.intBitsToFloat((f.read()<<24) | (f.read()<<16) | (f.read()<<8) | f.read());
+			if(imgExtents[2] == 0 && imgExtents[3] == 0 && imgResolution[2] == 0) {
+				is2D = true;
+				numOfSlices = 1;
+			}else {
+				is2D = false;
+				numOfSlices =imgExtents[2];
+			}
 			imgOrientation = (int)f.read();
 			imgModality = (int)f.read();
-			numOfSlices =imgExtents[2];
+			
 //			numOfSlices = (f.read()<<24) | (f.read()<<16) | (f.read()<<8) | f.read();//f.readInt();
 			sizeArray = null;
-			sizeArray = new int[numOfSlices];
-			for (int i=0;i<numOfSlices;i++){
-				sizeArray[i] = (f.read()<<24) | (f.read()<<16) | (f.read()<<8) | f.read();//f.readInt();
+			if(is2D) {
+				sizeArray = new int[1];
+				sizeArray[0] = (f.read()<<24) | (f.read()<<16) | (f.read()<<8) | f.read();//f.readInt();
+			}else {
+				sizeArray = new int[numOfSlices];
+				for (int i=0;i<numOfSlices;i++){
+					sizeArray[i] = (f.read()<<24) | (f.read()<<16) | (f.read()<<8) | f.read();//f.readInt();
+				}
 			}
 //			JOptionPane.showMessageDialog(null, "Reading size arr OK!", "Debug", JOptionPane.INFORMATION_MESSAGE);		
 			calPtArr();
@@ -191,5 +223,13 @@ public class RAWJP2Header {
 
 	public void setImgOrientation(int imgOrientation) {
 		this.imgOrientation = imgOrientation;
+	}
+	
+	public void setIs2D(boolean is2D) {
+		this.is2D = is2D;
+	}
+	
+	public boolean getIs2D() {
+		return is2D;
 	}
 }
