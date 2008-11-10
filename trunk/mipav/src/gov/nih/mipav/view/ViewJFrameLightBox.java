@@ -460,7 +460,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
             lightBoxOptions.setValues(row_dependent, gridRow, gridColumn);
 
             setupLightBox(_LUTa, _LUTb);
-
+            
             // add listeners to pick up changes in images
             imageA.addImageDisplayListener(this);
 
@@ -3529,6 +3529,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
             throw (e);
         }
 
+        pack();
         boolean lastState = updatePaint.getState();
         updatePaint.setState(true);
         updateImages(true);
