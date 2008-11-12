@@ -1725,13 +1725,13 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
     public void setPageToSlice(int slice) {
 
         // make sure slice is a legitimate number
-        if ((slice < 0) || (slice >= numTotalSlices)) {
+        if ((slice < 0) || (slice/increment >= numTotalSlices)) {
             MipavUtil.displayError("Selected slice must be in the range 1 to " + numTotalSlices);
 
             return;
         }
 
-        int newPage = slice / numVisibleSlices;
+        int newPage = slice / (increment * numVisibleSlices);
 
         // if (newPage == currentPage)
         // return;
