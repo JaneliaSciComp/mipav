@@ -402,7 +402,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         try {
 
             // get the number of slices and numTSlices from imageA
-            numTotalSlices = imageA.getExtents()[2];
+            numTotalSlices =  1 + (imageA.getExtents()[2] - 1)/increment;
 
             if ((gridRow * gridColumn) > numTotalSlices) {
 
@@ -1383,7 +1383,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
             int slice = i + (page * numVisibleSlices);
 
             if (slice < numTotalSlices) {
-                componentImage[i].setSlice(slice);
+                componentImage[i].setSlice(slice*increment);
             } else {
                 componentImage[i].showBlank();
             }
@@ -1586,6 +1586,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         }
         
         increment = _increment;
+        numTotalSlices = 1 + (imageA.getExtents()[2] - 1)/increment;
     }
 
     /**
@@ -1629,9 +1630,9 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         if (imageA.getNDims() == 4) {
             currentTSlice = 0;
             numTSlices = imageA.getExtents()[3];
-            numTotalSlices = imageA.getExtents()[2];
+            numTotalSlices =  1 + (imageA.getExtents()[2] - 1)/increment;
         } else if (imageA.getNDims() == 3) {
-            numTotalSlices = imageA.getExtents()[2];
+            numTotalSlices = 1 + (imageA.getExtents()[2] - 1)/increment;
         }
 
         imageA.addImageDisplayListener(this);
@@ -1867,7 +1868,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
                 if (slice < numTotalSlices) {
 
-                    if (componentImage[i].show(currentTSlice, slice, null, null, true, -1) == false) {
+                    if (componentImage[i].show(currentTSlice, (slice*increment), null, null, true, -1) == false) {
                         return;
                     }
                 } else {
@@ -2029,14 +2030,14 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
             if (!singleTSlice) {
 
-                if (selectedImages.contains(Integer.toString(slice))) {
+                if (selectedImages.contains(Integer.toString(slice*increment))) {
                     innerBorder = new LineBorder(selectedBorderColor, selectedBorderSize);
                 } else {
                     innerBorder = new LineBorder(unselectedBorderColor, selectedBorderSize);
                 }
             } else {
 
-                if (selectedTimeSlices.contains(Integer.toString(slice) + "." + Integer.toString(this.currentTSlice))) {
+                if (selectedTimeSlices.contains(Integer.toString(slice*increment) + "." + Integer.toString(this.currentTSlice))) {
                     innerBorder = new LineBorder(selectedBorderColor, selectedBorderSize);
                 } else {
                     innerBorder = new LineBorder(unselectedBorderColor, selectedBorderSize);
@@ -2076,14 +2077,14 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
             if (!singleTSlice) {
 
-                if (selectedImages.contains(Integer.toString(slice))) {
+                if (selectedImages.contains(Integer.toString(slice*increment))) {
                     innerBorder = new LineBorder(selectedBorderColor, selectedBorderSize);
                 } else {
                     innerBorder = new LineBorder(unselectedBorderColor, selectedBorderSize);
                 }
             } else {
 
-                if (selectedTimeSlices.contains(Integer.toString(slice) + "." + Integer.toString(this.currentTSlice))) {
+                if (selectedTimeSlices.contains(Integer.toString(slice*increment) + "." + Integer.toString(this.currentTSlice))) {
                     innerBorder = new LineBorder(selectedBorderColor, selectedBorderSize);
                 } else {
                     innerBorder = new LineBorder(unselectedBorderColor, selectedBorderSize);
@@ -2168,7 +2169,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
      * highlight when the repaint is issued. Use setSlice() to update a single frames highlight, as this will not set
      * the current slice.
      *
-     * @param   slice          the slice of the image to update -- NOT the index into the visibile slices.
+     * @param   slice          the slice of the image to update -- NOT the index into the visible slices.
      * @param   highlightFlag  requests to paint the highlight around the component image
      *
      * @return  boolean confirming successful update see setSlice
@@ -2212,7 +2213,6 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
             return;
         }
 
-
         int slice = i + (currentPage * numVisibleSlices);
 
         try {
@@ -2221,14 +2221,14 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
             if (!singleTSlice) {
 
-                if (selectedImages.contains(Integer.toString(slice))) {
+                if (selectedImages.contains(Integer.toString(slice*increment))) {
                     innerBorder = new LineBorder(selectedBorderColor, selectedBorderSize);
                 } else {
                     innerBorder = new LineBorder(unselectedBorderColor, selectedBorderSize);
                 }
             } else {
 
-                if (selectedTimeSlices.contains(Integer.toString(slice) + "." + Integer.toString(this.currentTSlice))) {
+                if (selectedTimeSlices.contains(Integer.toString(slice*increment) + "." + Integer.toString(this.currentTSlice))) {
                     innerBorder = new LineBorder(selectedBorderColor, selectedBorderSize);
                 } else {
                     innerBorder = new LineBorder(unselectedBorderColor, selectedBorderSize);
@@ -2330,7 +2330,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
             if (slice < numTotalSlices) {
 
-                if (componentImage[i].show(currentTSlice, slice, null, null, true, -1) == false) {
+                if (componentImage[i].show(currentTSlice, (slice*increment), null, null, true, -1) == false) {
                     return false;
                 }
 
@@ -2379,7 +2379,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
             if (slice < numTotalSlices) {
 
-                if (componentImage[i].show(currentTSlice, slice, LUTa, LUTb, true, interpMode) == false) {
+                if (componentImage[i].show(currentTSlice, (slice*increment), LUTa, LUTb, true, interpMode) == false) {
                     return false;
                 }
 
@@ -2406,7 +2406,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
      */
     public void updateImageSelection(int plane, boolean applyToRange) {
 
-        // System.err.println("Updating image selection. plane: " + plane + " apply to range: " + applyToRange);
+        //System.err.println("Updating image selection. plane: " + plane + " apply to range: " + applyToRange);
 
         // keep track of this slice and the last one selected
         // this is needed for ranges of selections
@@ -2426,19 +2426,19 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
                 if (!singleTSlice) {
 
-                    if (!selectedImages.contains(Integer.toString(slice)) && (slice < numTotalSlices)) {
+                    if (!selectedImages.contains(Integer.toString(slice)) && (slice/increment < numTotalSlices)) {
                         selectedImages.addElement(Integer.toString(slice));
                     }
                 } else {
 
                     if (!selectedTimeSlices.contains(Integer.toString(slice) + "." + Integer.toString(currentTSlice)) &&
-                            (slice < numTotalSlices)) {
+                            (slice/increment < numTotalSlices)) {
                         selectedTimeSlices.addElement(Integer.toString(slice) + "." + Integer.toString(currentTSlice));
                     }
                 }
 
                 // only update the borders of visible slices
-                int pageIndex = slice - (currentPage * numVisibleSlices);
+                int pageIndex = slice/increment - (currentPage * numVisibleSlices);
 
                 if ((pageIndex >= 0) && (pageIndex < numVisibleSlices)) {
 
@@ -2454,25 +2454,26 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
             if (!singleTSlice) {
 
-                if (selectedImages.contains(Integer.toString(plane)) && (plane < numTotalSlices)) {
+                if (selectedImages.contains(Integer.toString(plane)) && (plane/increment < numTotalSlices)) {
                     selectedImages.removeElement(Integer.toString(plane));
-                } else if (plane < numTotalSlices) {
+                } else if (plane/increment < numTotalSlices) {
                     selectedImages.addElement(Integer.toString(plane));
                 }
             } else {
 
                 if (selectedTimeSlices.contains(Integer.toString(plane) + "." + Integer.toString(currentTSlice)) &&
-                        (plane < numTotalSlices)) {
+                        (plane/increment < numTotalSlices)) {
                     selectedTimeSlices.removeElement(Integer.toString(plane) + "." + Integer.toString(currentTSlice));
-                } else if (plane < numTotalSlices) {
+                } else if (plane/increment < numTotalSlices) {
                     selectedTimeSlices.addElement(Integer.toString(plane) + "." + Integer.toString(currentTSlice));
                 }
             }
 
             // only update the borders of visible slices
-            int pageIndex = plane - (currentPage * numVisibleSlices);
+            int pageIndex = plane/increment - (currentPage * numVisibleSlices);
 
             if ((pageIndex >= 0) && (pageIndex < numVisibleSlices)) {
+                
                 updateImageBorder(pageIndex);
             }
 
@@ -2493,7 +2494,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
     public void updateImageSlice(int plane, int timeVolume) {
         imageFrame.getImageA().setSlice(plane);
         imageFrame.getImageA().setTimeSlice(timeVolume);
-        setSlice(plane);
+        setSlice(plane/increment);
     }
 
     /**
@@ -2702,20 +2703,20 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
             if (!singleTSlice) {
 
-                if (selectedImages.contains(Integer.toString(i))) {
-                    selectedImages.removeElement(Integer.toString(i));
+                if (selectedImages.contains(Integer.toString(i*increment))) {
+                    selectedImages.removeElement(Integer.toString(i*increment));
                 } else {
-                    selectedImages.addElement(Integer.toString(i));
+                    selectedImages.addElement(Integer.toString(i*increment));
                 }
             } else {
                 int numTSlice = imageA.getExtents()[3];
 
                 for (int t = 0; t < numTSlice; t++) {
 
-                    if (selectedTimeSlices.contains(Integer.toString(i) + "." + Integer.toString(t))) {
-                        selectedTimeSlices.removeElement(Integer.toString(i) + "." + Integer.toString(t));
+                    if (selectedTimeSlices.contains(Integer.toString(i*increment) + "." + Integer.toString(t))) {
+                        selectedTimeSlices.removeElement(Integer.toString(i*increment) + "." + Integer.toString(t));
                     } else {
-                        selectedTimeSlices.addElement(Integer.toString(i) + "." + Integer.toString(t));
+                        selectedTimeSlices.addElement(Integer.toString(i*increment) + "." + Integer.toString(t));
                     }
                 }
 
@@ -2750,12 +2751,12 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         for (int i = 0; i < numTotalSlices; i++) {
 
             if (!singleTSlice) {
-                selectedImages.addElement(Integer.toString(i));
+                selectedImages.addElement(Integer.toString(i*increment));
             } else {
                 int numTSlices = imageA.getExtents()[3];
 
                 for (int t = 0; t < numTSlices; t++) {
-                    selectedTimeSlices.addElement(Integer.toString(i) + "." + Integer.toString(t));
+                    selectedTimeSlices.addElement(Integer.toString(i*increment) + "." + Integer.toString(t));
                 }
             }
 
