@@ -260,6 +260,95 @@ public class VOIContour extends VOIBase {
 
         return perimeter;
     }
+    
+    /**
+     * Calculate the distance of the largest line segment contained entirely within the slice of the VOI
+     * @param xRes
+     * @param yRes
+     * @return largestDistance
+     */
+    public double calcLargestSliceDistance(float xRes, float yRes) {
+        double largestDistanceSq = 0.0f;
+        double distanceSq;
+        int i;
+        int j;
+        double startX;
+        double endX;
+        double startY;
+        double endY;
+        double delX;
+        double delY;
+        double distX;
+        double distY;
+        double x;
+        double y;
+        double slope;
+        int xRound;
+        int yRound;
+        for (i = 0; i < xPts.length; i++) {
+            startX = xPts[i];
+            startY = yPts[i];
+            forj:
+            for (j = i+1; j < xPts.length; j++) {
+                endX = xPts[j];
+                endY = yPts[j];
+                delX = endX - startX;
+                delY = endY - startY;
+                distX = xRes * delX;
+                distY = yRes * delY;
+                distanceSq = distX*distX + distY*distY;
+                if (distanceSq > largestDistanceSq) {
+                    if (delX >= delY) {
+                        slope = delY/delX;
+                        if (endX >= startX) {
+                            for (x = startX + 0.5, y = startY + 0.5 * slope; x < endX; x += 0.5, y += 0.5 * slope) {
+                                xRound = (int)Math.round(x);
+                                yRound = (int)Math.round(y);
+                                if (!contains(xRound, yRound, false)) {
+                                    continue forj;         
+                                }
+                            } // for (x = startX + 0.5, y = startY + 0.5 * slope; x < endX; x += 0.5, y += 0.5 * slope)
+                            largestDistanceSq = distanceSq;
+                        } // if (endX >= startX)
+                        else { // endX < startX
+                            for (x = startX - 0.5, y = startY - 0.5 * slope; x > endX; x -= 0.5, y -= 0.5 * slope) {
+                                xRound = (int)Math.round(x);
+                                yRound = (int)Math.round(y);
+                                if (!contains(xRound, yRound, false)) {
+                                    continue forj;         
+                                }    
+                            } // for (x = startX - 0.5, y = startY - 0.5 * slope; x > endX; x -= 0.5, y -= 0.5 * slope)
+                            largestDistanceSq = distanceSq;
+                        } // else endX < startX
+                    } // if (delX >= delY)
+                    else { // delX < delY
+                        slope = delX/delY;
+                        if (endY >= startY) {
+                            for (y = startY + 0.5, x = startX + 0.5 * slope; y < endY; y += 0.5, x += 0.5 * slope) {
+                                xRound = (int)Math.round(x);
+                                yRound = (int)Math.round(y);
+                                if (!contains(xRound, yRound, false)) {
+                                    continue forj;         
+                                }
+                            } // for (y = startY + 0.5, x = startX + 0.5 * slope; y < endY; y += 0.5, x += 0.5 * slope)
+                            largestDistanceSq = distanceSq;
+                        } // if (endX >= startX)
+                        else { // endX < startX
+                            for (y = startY - 0.5, x = startX - 0.5 * slope; y > endY; y -= 0.5, x -= 0.5 * slope) {
+                                xRound = (int)Math.round(x);
+                                yRound = (int)Math.round(y);
+                                if (!contains(xRound, yRound, false)) {
+                                    continue forj;         
+                                }    
+                            } // for (y = startY - 0.5, x = startX - 0.5 * slope; y > endY; y -= 0.5, x -= 0.5 * slope)
+                            largestDistanceSq = distanceSq;
+                        } // else endX < startX    
+                    } // else delX < delY
+                } // if (distanceSq > largsestDistanceSq)
+            } // for (j = i+1; j < xPts.length; j++)
+        } // for (i = 0; i < xPts.length; i++)
+        return Math.sqrt(largestDistanceSq);
+    }
 
     /**
      * Calculates the average or total intensity of the VOIContour region.
