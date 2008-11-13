@@ -285,6 +285,8 @@ public class VOIContour extends VOIBase {
         double slope;
         int xRound;
         int yRound;
+        
+        contains(0, 0, true);
         for (i = 0; i < xPts.length; i++) {
             startX = xPts[i];
             startY = yPts[i];
