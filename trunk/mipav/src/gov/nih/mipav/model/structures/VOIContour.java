@@ -310,7 +310,6 @@ public class VOIContour extends VOIBase {
                                     continue forj;         
                                 }
                             } // for (x = startX + 0.5, y = startY + 0.5 * slope; x < endX; x += 0.5, y += 0.5 * slope)
-                            largestDistanceSq = distanceSq;
                         } // if (endX >= startX)
                         else { // endX < startX
                             for (x = startX - 0.5, y = startY - 0.5 * slope; x > endX; x -= 0.5, y -= 0.5 * slope) {
@@ -320,7 +319,6 @@ public class VOIContour extends VOIBase {
                                     continue forj;         
                                 }    
                             } // for (x = startX - 0.5, y = startY - 0.5 * slope; x > endX; x -= 0.5, y -= 0.5 * slope)
-                            largestDistanceSq = distanceSq;
                         } // else endX < startX
                     } // if (Math.abs(delX) >= Math.abs(delY))
                     else { // Math.abs(delX) < Math.abs(delY)
@@ -333,7 +331,6 @@ public class VOIContour extends VOIBase {
                                     continue forj;         
                                 }
                             } // for (y = startY + 0.5, x = startX + 0.5 * slope; y < endY; y += 0.5, x += 0.5 * slope)
-                            largestDistanceSq = distanceSq;
                         } // if (endX >= startX)
                         else { // endX < startX
                             for (y = startY - 0.5, x = startX - 0.5 * slope; y > endY; y -= 0.5, x -= 0.5 * slope) {
@@ -343,9 +340,9 @@ public class VOIContour extends VOIBase {
                                     continue forj;         
                                 }    
                             } // for (y = startY - 0.5, x = startX - 0.5 * slope; y > endY; y -= 0.5, x -= 0.5 * slope)
-                            largestDistanceSq = distanceSq;
                         } // else endX < startX    
                     } // else Math.abs(delX) < Math.abs(delY)
+                    largestDistanceSq = distanceSq;
                 } // if (distanceSq > largsestDistanceSq)
             } // for (j = i+1; j < xPts.length; j++)
         } // for (i = 0; i < xPts.length; i++)
