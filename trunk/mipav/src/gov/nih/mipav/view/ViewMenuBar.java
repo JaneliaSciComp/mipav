@@ -456,8 +456,7 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("Image registry monitor", "ImageRegistryMonitor", 0, null, true),
                 menuBuilder.buildMenuItem("MIPAV data provenance", "DataProvenance", 0, null, true), separator,
                 menuBuilder.buildMenuItem("MIPAV options", "Options", 0, null, true),
-                menuBuilder.buildMenuItem("Shortcut editor", Preferences.PREF_SHORTCUTS, 0, null, true),
-                menuBuilder.buildMenuItem("MIPAV downloads stats", "DownloadStats", 0, null, true),});
+                menuBuilder.buildMenuItem("Shortcut editor", Preferences.PREF_SHORTCUTS, 0, null, true),});
     }
 
     /**

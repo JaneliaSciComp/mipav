@@ -267,15 +267,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             return;
         }
-
-        if (command.equals("DownloadStats")) {
-            ViewDirectoryChooser dirChooser = new ViewDirectoryChooser();
-            String dir = dirChooser.getImageDirectory();
-            if (dir != null) {
-                // AlgorithmParseMIPAVDownloads pd = new AlgorithmParseMIPAVDownloads(dir);
-                // pd.runAlgorithm();
-            }
-        } else if (command.equals("ScrollLink")) {
+        else if (command.equals("ScrollLink")) {
             linkedScrolling = !linkedScrolling;
         } else if (command.equals("QuantifyMasks")) {
             new JDialogQuantifyMask(this, this.getActiveImage());
