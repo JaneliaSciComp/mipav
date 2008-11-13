@@ -33,6 +33,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelDisplay_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelGeodesic_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelRenderMode_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSlices_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM;
@@ -99,8 +100,7 @@ import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 
 import com.sun.opengl.util.Animator;
 
-public class VolumeTriPlanarInterface extends ViewJFrameBase 
-    implements ItemListener, ChangeListener {
+public class VolumeTriPlanarInterface extends ViewJFrameBase {
 
     /**
      * Item to hold tab name and corresponding panel.
@@ -183,6 +183,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     protected JPanelSculptor_WM sculptGUI;
     /** Surface Texture user-interface panel: */
     protected JPanelSurfaceTexture_WM surfaceTextureGUI;
+    /** Renderer mode user-interface panel */
+    protected JPanelRenderMode_WM rendererGUI;
     /** Clip user-interface container:  */
     protected JPanel clipPanel;
     /** 3D Slice panel container. */
@@ -190,17 +192,10 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
     /** Surface texture panel container */
     protected JPanel surfaceTexturePanel;
+    /** Render mode panel container */
+    protected JPanel renderModePanel;
     /** Surface user-interface panel container */
     protected JPanel surfacePanel;
-    /** Turn display volume on/off */
-    protected JCheckBox m_kDisplayVolumeCheck;
-    /** Turn display 3D Slices on/off */
-    protected JCheckBox m_kDisplaySlicesCheck;
-
-    /** Turn display 3D TriMesh Surface on/off */
-    protected JCheckBox m_kDisplaySurfaceCheck;
-    /** Turn display 3D Stereo on/off */
-    protected JCheckBox m_kStereoCheck;
     /** Button to invoke all the six clipping planes. */
     protected JButton clipButton;
     /** Button to disable all the six clipping planes. */
@@ -268,26 +263,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     /** RGB control panel of the color image. */
     protected JPanelHistoRGB panelHistoRGB;
 
-    /** Radio button of the COMPOSITE mode option. */
-    protected JRadioButton radioCOMPOSITE;
-
-    /** Radio button of the MIP mode option. */
-    protected JRadioButton radioMIP;
-
-    /** Radio button of the SURFACE mode option. */
-    protected JRadioButton radioSURFACE;
-
-    /** Radio button of the SURFACE mode option. */
-    protected JRadioButton radioSURFACEFAST;
-
-    /** Radio button of the surface render composite mode. */
-    protected JRadioButton radioSurrenderCOMPOSITE;
-
     /** Radio button of the surface render lighting mode. */
     protected JRadioButton radioSurrenderLIGHT;
-
-    /** Radio button of the XRAY mode option. */
-    protected JRadioButton radioXRAY;
 
     /** Panel Border view. */
     protected Border raisedbevel, loweredbevel, compound, redBorder, etchedBorder, pressedBorder;
@@ -321,14 +298,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     /** The top one render view switch toolbar. */
     protected JToolBar viewToolBar;
 
-    /** Surface Render toolbar. */
-    protected JToolBar surfaceToolBar;
-
     /** Opacity panel. */
     protected JPanelVolOpacityBase m_kVolOpacityPanel;
-
-    /** Volume alpha-blending slider. */
-    protected JSlider m_kVolumeBlendSlider;
 
     /** Stereo view IPD control. */
     protected JDialogStereoControls m_kStereoIPD = null;
@@ -345,8 +316,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
     /** Panel containing the position labels:. */
     private JPanel panelLabels = new JPanel();
     
-    //** Check box to enable/disable surface self-shadowing */
-    private JCheckBox kSelfShadow;
 
     /**
      * Specific constructor call from the VolumeViewerDTI.   
@@ -504,7 +473,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
             insertTab("Opacity", opacityPanel);
             updateRayTracingSteps();
-            raycastRenderWM.displayVolumeRaycast( m_kDisplayVolumeCheck.isSelected() );
+            raycastRenderWM.displayVolumeRaycast( rendererGUI.getVolumeCheck().isSelected() );
         } else if ( command.equals( "VolumeRayCast") ) {
             clipBox.getMainPanel().setVisible(true);
             clipButton.setEnabled(true);
@@ -516,18 +485,18 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
 
             insertTab("Opacity", opacityPanel);
             updateRayTracingSteps();
-            raycastRenderWM.displayVolumeRaycast( m_kDisplayVolumeCheck.isSelected() );
+            raycastRenderWM.displayVolumeRaycast( rendererGUI.getVolumeCheck().isSelected() );
         } else if (command.equals("Stereo")) {
-            if ( (m_kStereoIPD == null) && m_kStereoCheck.isSelected() )
+            if ( (m_kStereoIPD == null) && rendererGUI.getStereoCheck().isSelected() )
             {
                 m_kStereoIPD = new JDialogStereoControls( this, .02f );
             }
-            else if ( (m_kStereoIPD != null) && !m_kStereoCheck.isSelected() )
+            else if ( (m_kStereoIPD != null) && ! rendererGUI.getStereoCheck().isSelected() )
             {
                 m_kStereoIPD.close();
                 m_kStereoIPD = null;
             }
-            raycastRenderWM.setStereo( m_kStereoCheck.isSelected() );
+            raycastRenderWM.setStereo( rendererGUI.getStereoCheck().isSelected() );
         } else if (command.equals("ChangeLight")) {
             insertTab("Light", lightPanel);
         } else if (command.equals("Box")) {
@@ -556,12 +525,12 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         } else if (command.equals("Slices")) {
             sliceGUI.getMainPanel().setVisible(true);
             insertTab("Slices", slicePanel);
-            raycastRenderWM.displayVolumeSlices( m_kDisplaySlicesCheck.isSelected() );
+            raycastRenderWM.displayVolumeSlices( rendererGUI.getSlicesCheck().isSelected() );
         } else if (command.equals("VolumeSlices")) {
             sliceGUI.getMainPanel().setVisible(true);
-            raycastRenderWM.displayVolumeSlices( m_kDisplaySlicesCheck.isSelected() );
+            raycastRenderWM.displayVolumeSlices( rendererGUI.getSlicesCheck().isSelected() );
         } else if (command.equals("Surface")) {
-            raycastRenderWM.displaySurface( m_kDisplaySurfaceCheck.isSelected() );
+            raycastRenderWM.displaySurface( rendererGUI.getSurfaceCheck().isSelected() );
         } else if (command.equals("SurfaceDialog")) {
             insertTab("Surface", surfacePanel);
             surfaceGUI.getMainPanel().setVisible(true);
@@ -621,6 +590,9 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
             insertTab("FlyThroughMove", flythruMovePanel);
             insertTab("FlyThrough", m_kFlyThroughPanel );
             resizePanel();
+        } else if (command.equals("Renderer")) {
+        	insertTab("Renderer", renderModePanel );
+        	resizePanel();
         } else if (command.equals("ResetX")) {
             resetAxisY();
         } else if (command.equals("ResetY")) {
@@ -708,8 +680,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         insertTab("Light", lightPanel);
         m_kLightsPanel.enableLight(0, true);
         insertTab("Surface", surfacePanel);
-        m_kDisplaySurfaceCheck.setSelected(true);
-        m_kDisplaySurfaceCheck.setEnabled(true);
+        rendererGUI.setDisplaySurfaceCheck(true);
         raycastRenderWM.displaySurface(true);
         
         menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", true);  
@@ -951,6 +922,18 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         maxPanelWidth = Math.max(surfacePanel.getPreferredSize().width, maxPanelWidth);
     }
 
+    /**
+     * Builds the render mode control  panel.
+     */
+    public void buildRenderModePanel()
+    {
+    	renderModePanel = new JPanel();
+        rendererGUI = new JPanelRenderMode_WM(this);
+        renderModePanel.add(rendererGUI.getMainPanel());
+        maxPanelWidth = Math.max(renderModePanel.getPreferredSize().width, maxPanelWidth);
+    }
+    
+    
     /**
      * Builds the Surface texture panel.
      */
@@ -1606,38 +1589,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
     }
 
-    /* (non-Javadoc)
-     * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
-     */
-    public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
-
-        if (radioMIP.isSelected() && (source == radioMIP)) {
-            raycastRenderWM.MIPMode();
-            updateRayTracingSteps();
-        } else if (radioXRAY.isSelected() && (source == radioXRAY)) {
-            raycastRenderWM.DDRMode();
-            updateRayTracingSteps();
-        } else if (radioCOMPOSITE.isSelected() && (source == radioCOMPOSITE)) {
-            raycastRenderWM.CMPMode();
-            updateRayTracingSteps();
-        } else if (radioSURFACE.isSelected() && (source == radioSURFACE)) {
-            raycastRenderWM.SURMode();
-            updateRayTracingSteps();
-            m_kLightsPanel.refreshLighting();
-        } else if (radioSURFACEFAST.isSelected() && (source == radioSURFACEFAST)) {
-            raycastRenderWM.SURFASTMode();
-            updateRayTracingSteps();
-            m_kLightsPanel.refreshLighting();
-        } else if (radioSURFACEFAST.isSelected() && (source == kSelfShadow) )
-            raycastRenderWM.selfShadow( kSelfShadow.isSelected() );
-        updateRayTracingSteps();
-        if ( (imageB == null) )
-        {
-            kSelfShadow.setEnabled(radioSURFACEFAST.isSelected());
-        }
-    }
-
     /**
      * Enables picking correspondence points between the surface renderer and
      * the BrainSurfaceFlattener renderer.
@@ -2257,18 +2208,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
                                   fStiffness, volumeLimit, volumePercent);
     }
     
-    
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.ViewJFrameBase#stateChanged(javax.swing.event.ChangeEvent)
-     */
-    public void stateChanged(ChangeEvent event) {
-        Object source = event.getSource();
-        if ( source == m_kVolumeBlendSlider )
-        {
-            raycastRenderWM.setVolumeBlend( m_kVolumeBlendSlider.getValue()/100.0f );
-        }
-    }
-    
     /**
      * Switches between different ways of displaying the geodesic path
      * (Euclidean, Geodesic, or Mesh).
@@ -2464,15 +2403,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         etchedBorder = BorderFactory.createEtchedBorder();
         toolbarBuilder = new ViewToolBarBuilder(this);
         buildViewToolbar();
-
-        buildSurRenderToolbar();
-
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        panelToolbar.add(surfaceToolBar, gbc);
     }
     
     /**
@@ -2511,75 +2441,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         return menuBar;
     }
 
-    /**
-     * Build the surface render toolbar.
-     */
-    protected void buildSurRenderToolbar() {
-        surfaceToolBar = new JToolBar();
-        surfaceToolBar.setBorder(etchedBorder);
-        surfaceToolBar.setBorderPainted(true);
-        surfaceToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
-        surfaceToolBar.setFloatable(false);
-        surfaceToolBar.add(toolbarBuilder.buildButton("SurfaceDialog", "Add surface to viewer", "isosurface"));
-        surfaceToolBar.add(toolbarBuilder.buildButton("Geodesic", "Draw geodesic curves on the surface", "geodesic"));
-        surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
-        surfaceToolBar.add(toolbarBuilder.buildButton("Box", "Display options", "perspective"));
-        surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
-
-        ButtonGroup group1 = new ButtonGroup();
-
-        radioMIP = new JRadioButton("MIP", false);
-        radioMIP.setFont(serif12);
-        group1.add(radioMIP);
-        radioXRAY = new JRadioButton("DRR", false);
-        radioXRAY.setFont(serif12);
-        group1.add(radioXRAY);
-        radioCOMPOSITE = new JRadioButton("Composite", true);
-        radioCOMPOSITE.setFont(serif12);
-        group1.add(radioCOMPOSITE);
-        radioSURFACEFAST = new JRadioButton("Surface", false);
-        radioSURFACEFAST.setFont(serif12);
-        group1.add(radioSURFACEFAST);
-        radioSURFACE = new JRadioButton("Composite Surface", false);
-        radioSURFACE.setFont(serif12);
-        group1.add(radioSURFACE);
-
-        radioMIP.addItemListener(this);
-        radioXRAY.addItemListener(this);
-        radioCOMPOSITE.addItemListener(this);
-        radioSURFACE.addItemListener(this);
-        radioSURFACEFAST.addItemListener(this);
-        surfaceToolBar.add(radioMIP);
-        surfaceToolBar.add(radioXRAY);
-        surfaceToolBar.add(radioCOMPOSITE);
-        surfaceToolBar.add(radioSURFACEFAST);
-        surfaceToolBar.add(radioSURFACE);
-
-        kSelfShadow = new JCheckBox("Self Shadow", false);
-        kSelfShadow.setFont(MipavUtil.font12);
-        kSelfShadow.addItemListener(this);
-        kSelfShadow.setEnabled(false);
-        if ( (imageB == null) )
-        {
-            surfaceToolBar.add(kSelfShadow);
-        }
-        surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
-        JButton kShaderButton = new JButton( "Shader Parameters" );
-        kShaderButton.addActionListener(this);
-        kShaderButton.setActionCommand("ShaderParameters");
-        kShaderButton.setToolTipText("Open Shader Dialig");
-        kShaderButton.setBorderPainted(false);
-        kShaderButton.setFocusPainted(true);
-        kShaderButton.setMargin(new Insets(0, 0, 0, 0));
-        surfaceToolBar.add(kShaderButton);
-
-        surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
-        JLabel kBlendLabel = new JLabel("Volume Blend" );
-        surfaceToolBar.add(kBlendLabel);
-        m_kVolumeBlendSlider = new JSlider( 0, 100, 75 );
-        m_kVolumeBlendSlider.addChangeListener(this);
-        surfaceToolBar.add(m_kVolumeBlendSlider);
-    }
     
     /**
      * Builds the toolbars for the tri-planar view.
@@ -2610,35 +2471,16 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         viewToolBar.add(ViewToolBarBuilder.makeSeparator());
         viewToolBar.add(toolbarBuilder.buildButton("Slices", "Slice render", "triplanar"));
         viewToolBar.add(toolbarBuilder.buildButton("Opacity", "Surface volume renderer", "renderer"));
-
-        m_kDisplayVolumeCheck = new JCheckBox( "Display RayCast Volume" );
-        m_kDisplayVolumeCheck.setSelected(false);
-        m_kDisplayVolumeCheck.setActionCommand( "VolumeRayCast");
-        m_kDisplayVolumeCheck.addActionListener(this);
-        viewToolBar.add(m_kDisplayVolumeCheck);
-
-        m_kDisplaySlicesCheck = new JCheckBox( "Display Slices" );
-        m_kDisplaySlicesCheck.setSelected(true);
-        m_kDisplaySlicesCheck.setActionCommand( "VolumeSlices");
-        m_kDisplaySlicesCheck.addActionListener(this);
-        viewToolBar.add(m_kDisplaySlicesCheck);
-        
-        m_kDisplaySurfaceCheck = new JCheckBox( "Display Surface" );
-        m_kDisplaySurfaceCheck.setSelected(false);
-        m_kDisplaySurfaceCheck.setEnabled(false);
-        m_kDisplaySurfaceCheck.setActionCommand( "Surface");
-        m_kDisplaySurfaceCheck.addActionListener(this);
-        viewToolBar.add(m_kDisplaySurfaceCheck);
-        
-        
-        m_kStereoCheck = new JCheckBox( "Stereo" );
-        m_kStereoCheck.setSelected(false);
-        m_kStereoCheck.setEnabled(true);
-        m_kStereoCheck.setActionCommand( "Stereo");
-        m_kStereoCheck.addActionListener(this);
-        viewToolBar.add(m_kStereoCheck);
+        viewToolBar.add(toolbarBuilder.buildButton("Renderer", "Renderer mode control", "control"));
         
         viewToolBar.add(ViewToolBarBuilder.makeSeparator());
+        
+        viewToolBar.add(toolbarBuilder.buildButton("SurfaceDialog", "Add surface to viewer", "isosurface"));
+        viewToolBar.add(toolbarBuilder.buildButton("Geodesic", "Draw geodesic curves on the surface", "geodesic"));
+        viewToolBar.add(ViewToolBarBuilder.makeSeparator());
+        viewToolBar.add(toolbarBuilder.buildButton("Box", "Display options", "perspective"));
+        viewToolBar.add(ViewToolBarBuilder.makeSeparator());
+        
         viewToolBar.add(toolbarBuilder.buildButton("Sculpt", "Sculpt and Remove Volume Region", "sculpt"));
         viewToolBar.add(ViewToolBarBuilder.makeSeparator());
         clipPlaneButton = toolbarBuilder.buildButton("Clipping", "Clipping Plane", "clip");
@@ -2667,7 +2509,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         viewToolBar.add(rfaButton);
         rfaSeparator = ViewToolBarBuilder.makeSeparator();
         viewToolBar.add(rfaSeparator);
-        viewToolBar.add(toolbarBuilder.buildButton("Extract", "Extract rotated image", "imageextract"));
+        viewToolBar.add(toolbarBuilder.buildButton("Extract", "Extract rotated image", "extract"));
         rfaButton.setVisible(false);
         rfaSeparator.setVisible(false);
         
@@ -2689,6 +2531,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         gbc.weightx = 1;
         gbc.weighty = 1;
         panelToolbar.add(viewToolBar, gbc);
+        
+       
 
     }
     
@@ -2745,6 +2589,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         buildClipPanel();
         buildSlicePanel();
         buildSurfacePanel();
+        buildRenderModePanel();
         buildSurfaceTexturePanel();
         buildGeodesic();
         buildSculpt();
@@ -2890,6 +2735,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         sliceGUI.resizePanel(maxPanelWidth, height);
         surfaceGUI.resizePanel(maxPanelWidth, height);
         displayGUI.resizePanel(maxPanelWidth, height);
+        rendererGUI.resizePanel(maxPanelWidth, height);
         geodesicGUI.resizePanel(maxPanelWidth, height);
         m_kLightsPanel.resizePanel(maxPanelWidth, height);
         clipBox.resizePanel(maxPanelWidth, height);
@@ -2965,6 +2811,10 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase
         rfaSeparator.setVisible(flag);
         viewToolBar.validate();
         viewToolBar.repaint();
+    }
+    
+    public void refreshLighting() {
+    	m_kLightsPanel.refreshLighting();
     }
     
 }
