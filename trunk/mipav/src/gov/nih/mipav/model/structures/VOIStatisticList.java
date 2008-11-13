@@ -126,6 +126,9 @@ public interface VOIStatisticList {
     String skewnessDescription = "Coefficient of skewness";
     
     String kurtosisDescription = "Coefficient of kurtosis";
+    
+    /** Largest line segment contained entirely within a slice of a VOI */
+    String largestSliceDistanceDescription = "Largest slice distance";
 
     /**
      * strings to test for when checking on statistics to calculate.
@@ -136,7 +139,7 @@ public interface VOIStatisticList {
         quantityDescription, volumeDescription, areaDescription, perimeterDescription, minIntensity, maxIntensity,
         avgIntensity, deviationDescription, sumIntensities, geometricCenterDescription, massCenterDescription,
         axisDescription, eccentricityDescription, majorAxisDescription, minorAxisDescription, skewnessDescription,
-        kurtosisDescription
+        kurtosisDescription, largestSliceDistanceDescription
     };
 
     /** number of statistics in the list. */
