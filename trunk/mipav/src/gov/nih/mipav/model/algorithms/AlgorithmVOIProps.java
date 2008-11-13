@@ -365,6 +365,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     public String getPerimeter() {
         return ((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.perimeterDescription);
     } // {return perimeter;}
+    
+    /**
+     * Gets the largest line segment totally contained within a VOI slice (in terms of res).
+     *
+     * @return  String largest slice distance string
+     */
+    public String getLargestSliceDistance() {
+        return ((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.largestSliceDistanceDescription);
+    } // {return largestSliceDistance;}
 
     /**
      * Gets the principle axis of VOI (only valid for 2D object); return pricipal axis angle of the VOI.
@@ -744,6 +753,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         float[] tmpMajorAxis = null;
         float[] tmpMinorAxis = null;
         double totalPerimeter = 0;
+        double largestSliceDistance = 0;
         Vector3f gCenter;
         String comStr;
         int x;
@@ -794,6 +804,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         float ignoreMin = selectedVOI.getMinimumIgnore();
         float ignoreMax = selectedVOI.getMaximumIgnore();
         float perimeter = 0f;
+        double largestContourDistance = 0;
 
         contours = selectedVOI.getCurves();
 
@@ -847,6 +858,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     perimeter = ((VOIContour) (contours[q].elementAt(r))).calcPerimeter(srcImage.getFileInfo(0).getResolutions()[0],
                                                                                         srcImage.getFileInfo(0).getResolutions()[1]);
                     totalPerimeter += perimeter;
+                    largestContourDistance = ((VOIContour)(contours[q].elementAt(r))).calcLargestSliceDistance(srcImage.getFileInfo(0).getResolutions()[0],
+                                                                                                      srcImage.getFileInfo(0).getResolutions()[1]);
+                    largestSliceDistance = Math.max(largestContourDistance, largestSliceDistance);
 
                     totalC = selectedVOI.getGeometricCenter();
 
@@ -1006,6 +1020,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                     // add perimeter
                     statProperty.setProperty(VOIStatisticList.perimeterDescription + "0;" + r, nf.format(perimeter));
+                    statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription + "0;" + r,
+                                             nf.format(largestContourDistance));
 
                     totalArea += area;
 
@@ -1216,6 +1232,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.volumeDescription + "Total", nf.format(totalArea));
                 statProperty.setProperty(VOIStatisticList.quantityDescription + "Total", nf.format(totalNVox));
                 statProperty.setProperty(VOIStatisticList.perimeterDescription + "Total", nf.format(totalPerimeter));
+                statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription + "Total", nf.format(largestSliceDistance));
 
                 if (srcImage.isColorImage()) {
                     statProperty.setProperty(VOIStatisticList.deviationDescription + "Red" + "Total",
@@ -1365,6 +1382,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             // calc the perimeter
             totalPerimeter = 0f;
+            largestSliceDistance = 0;
 
             for (int q = 0; q < contours.length; q++) {
 
@@ -1372,11 +1390,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 for (int r = 0; r < contours[q].size(); r++) {
                     totalPerimeter += ((VOIContour) (contours[q].elementAt(r))).calcPerimeter(srcImage.getFileInfo(0).getResolutions()[0],
                                                                                               srcImage.getFileInfo(0).getResolutions()[1]);
+                    largestSliceDistance = Math.max(largestSliceDistance,
+                                      ((VOIContour)(contours[q].elementAt(r))).calcLargestSliceDistance(srcImage.getFileInfo(0).getResolutions()[0],
+                                                                                              srcImage.getFileInfo(0).getResolutions()[1]));
                 }
             }
 
             statProperty.setProperty(VOIStatisticList.perimeterDescription, nf.format(totalPerimeter));
             statProperty.setProperty(VOIStatisticList.perimeterDescription + "0;", nf.format(totalPerimeter));
+            statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription, nf.format(largestSliceDistance));
+            statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription + "0;", nf.format(largestSliceDistance));
 
             if (srcImage.isColorImage()) {
 
@@ -1692,6 +1715,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         int length;
         double perimeter = 0;
         double totalPerimeter = 0;
+        double largestContourDistance = 0;
+        double largestAllSlicesDistance = 0;
         int x;
         int y;
         int z;
@@ -1819,6 +1844,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     perimeter = ((VOIContour) (contours[q].elementAt(r))).calcPerimeter(srcImage.getFileInfo(0).getResolutions()[0],
                                                                                         srcImage.getFileInfo(0).getResolutions()[1]);
                     totalPerimeter += perimeter;
+                    
+                    largestContourDistance = ((VOIContour) (contours[q].elementAt(r))).calcLargestSliceDistance(
+                            srcImage.getFileInfo(0).getResolutions()[0], srcImage.getFileInfo(0).getResolutions()[1]);
+                    largestAllSlicesDistance = Math.max(largestAllSlicesDistance, largestContourDistance);
 
 
                     mask.clear(); // only works for Java1.4
@@ -2009,6 +2038,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                     // add perimeter
                     statProperty.setProperty(VOIStatisticList.perimeterDescription + end, nf.format(perimeter));
+                    statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription + end, nf.format(largestContourDistance));
 
                     // calculate standard deviation, coefficient of skewness, and coefficient of kurtosis
                     sum2 = sumR2 = sumG2 = sumB2 = sum3 = sumR3 = sumG3 = sumB3 = sum4 = sumR4 = sumG4 = sumB4 = 0;
@@ -2224,6 +2254,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.volumeDescription + "Total", nf.format(totalVolume));
                 statProperty.setProperty(VOIStatisticList.quantityDescription + "Total", nf.format(totalNVox));
                 statProperty.setProperty(VOIStatisticList.perimeterDescription + "Total", nf.format(totalPerimeter));
+                statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription + "Total", nf.format(largestAllSlicesDistance));
 
                 if (srcImage.isColorImage()) {
                     statProperty.setProperty(VOIStatisticList.deviationDescription + "Red" + "Total",
@@ -2467,6 +2498,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             // calc the perimeter
             totalPerimeter = 0f;
+            largestAllSlicesDistance = 0;
 
             for (int q = 0; q < contours.length; q++) {
 
@@ -2474,11 +2506,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 for (int r = 0; r < contours[q].size(); r++) {
                     totalPerimeter += ((VOIContour) (contours[q].elementAt(r))).calcPerimeter(srcImage.getFileInfo(0).getResolutions()[0],
                                                                                               srcImage.getFileInfo(0).getResolutions()[1]);
+                    largestAllSlicesDistance = Math.max(largestAllSlicesDistance, 
+                           ((VOIContour)(contours[q].elementAt(r))).calcLargestSliceDistance(
+                                   srcImage.getFileInfo(0).getResolutions()[0], srcImage.getFileInfo(0).getResolutions()[1]));
                 }
             }
 
             statProperty.setProperty(VOIStatisticList.perimeterDescription, nf.format(totalPerimeter));
             statProperty.setProperty(VOIStatisticList.perimeterDescription + "0;", nf.format(totalPerimeter));
+            statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription, nf.format(largestAllSlicesDistance));
+            statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription + "0;", nf.format(largestAllSlicesDistance));
 
 
             area = nVox *
