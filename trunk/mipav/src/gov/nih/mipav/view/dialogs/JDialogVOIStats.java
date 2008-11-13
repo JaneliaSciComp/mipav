@@ -718,7 +718,27 @@ public class JDialogVOIStats extends JDialogBase
                                 fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
                                 fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
                                 fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-                        }
+                        } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[17])) {
+                            
+                            if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                                str = FileInfoBase.getUnitsOfMeasureAbbrevStr(image.getFileInfo(0).getUnitsOfMeasure(0));
+                                name = statsList[j].getString();
+                                value = algoVOI.getLargestSliceDistance() + " " + str;
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("string");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                            } else {
+                                name = statsList[j].getString();
+                                value = algoVOI.getLargestSliceDistance();
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("string");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                            }
+                        } 
             		}
                 }
             	FileInfoBase.copyCoreInfo(image.getFileInfo(), fInfoBase);
@@ -883,7 +903,16 @@ public class JDialogVOIStats extends JDialogBase
                         } else {
                             UI.setDataText("  Kurtosis of voxel intensity \t= " + algoVOI.getKurtosis() + "\n");
                         }
-                    }
+                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[17])) {
+
+                        if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(image.getFileInfo(0).getUnitsOfMeasure(0));
+                            UI.setDataText("  Largest slice distance      \t= " + algoVOI.getLargestSliceDistance() + "   " +
+                                           str + "\n");
+                        } else {
+                            UI.setDataText("  Largest slice distance      \t= " + algoVOI.getLargestSliceDistance() + "\n");
+                        }
+                    } 
                 }
             }
         } else if (source == checkboxExclude) {
