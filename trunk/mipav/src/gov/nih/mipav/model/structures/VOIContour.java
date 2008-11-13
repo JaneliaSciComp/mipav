@@ -298,7 +298,7 @@ public class VOIContour extends VOIBase {
                 distY = yRes * delY;
                 distanceSq = distX*distX + distY*distY;
                 if (distanceSq > largestDistanceSq) {
-                    if (delX >= delY) {
+                    if (Math.abs(delX) >= Math.abs(delY)) {
                         slope = delY/delX;
                         if (endX >= startX) {
                             for (x = startX + 0.5, y = startY + 0.5 * slope; x < endX; x += 0.5, y += 0.5 * slope) {
@@ -320,8 +320,8 @@ public class VOIContour extends VOIBase {
                             } // for (x = startX - 0.5, y = startY - 0.5 * slope; x > endX; x -= 0.5, y -= 0.5 * slope)
                             largestDistanceSq = distanceSq;
                         } // else endX < startX
-                    } // if (delX >= delY)
-                    else { // delX < delY
+                    } // if (Math.abs(delX) >= Math.abs(delY))
+                    else { // Math.abs(delX) < Math.abs(delY)
                         slope = delX/delY;
                         if (endY >= startY) {
                             for (y = startY + 0.5, x = startX + 0.5 * slope; y < endY; y += 0.5, x += 0.5 * slope) {
@@ -343,7 +343,7 @@ public class VOIContour extends VOIBase {
                             } // for (y = startY - 0.5, x = startX - 0.5 * slope; y > endY; y -= 0.5, x -= 0.5 * slope)
                             largestDistanceSq = distanceSq;
                         } // else endX < startX    
-                    } // else delX < delY
+                    } // else Math.abs(delX) < Math.abs(delY)
                 } // if (distanceSq > largsestDistanceSq)
             } // for (j = i+1; j < xPts.length; j++)
         } // for (i = 0; i < xPts.length; i++)
