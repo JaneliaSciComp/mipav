@@ -631,6 +631,9 @@ public class VOI extends ModelSerialCloneable {
                                 xRound = (int)Math.round(x);
                                 yRound = (int)Math.round(y);
                                 zRound = (int)Math.round(z);
+                                if ((zRound < 0) || (zRound >= zDim) || (curves[zRound].size() == 0)) {
+                                    continue forj;
+                                }
                                 if (!((VOIContour) (curves[zRound].elementAt(contourNum[i]))).contains(xRound, yRound, true)) { 
                                     continue forj;         
                                 }
@@ -642,6 +645,9 @@ public class VOI extends ModelSerialCloneable {
                                 xRound = (int)Math.round(x);
                                 yRound = (int)Math.round(y);
                                 zRound = (int)Math.round(z);
+                                if ((zRound < 0) || (zRound >= zDim) || (curves[zRound].size() == 0)) {
+                                    continue forj;
+                                }
                                 if (!((VOIContour) (curves[zRound].elementAt(contourNum[i]))).contains(xRound, yRound, true)) { 
                                     continue forj;         
                                 }  
@@ -657,6 +663,9 @@ public class VOI extends ModelSerialCloneable {
                                 xRound = (int)Math.round(x);
                                 yRound = (int)Math.round(y);
                                 zRound = (int)Math.round(z);
+                                if ((zRound < 0) || (zRound >= zDim) || (curves[zRound].size() == 0)) {
+                                    continue forj;
+                                }
                                 if (!((VOIContour) (curves[zRound].elementAt(contourNum[i]))).contains(xRound, yRound, true)) { 
                                     continue forj;         
                                 } 
@@ -668,6 +677,9 @@ public class VOI extends ModelSerialCloneable {
                                 xRound = (int)Math.round(x);
                                 yRound = (int)Math.round(y);
                                 zRound = (int)Math.round(z);
+                                if ((zRound < 0) || (zRound >= zDim) || (curves[zRound].size() == 0)) {
+                                    continue forj;
+                                }
                                 if (!((VOIContour) (curves[zRound].elementAt(contourNum[i]))).contains(xRound, yRound, true)) { 
                                     continue forj;         
                                 } 
@@ -684,6 +696,9 @@ public class VOI extends ModelSerialCloneable {
                                 xRound = (int)Math.round(x);
                                 yRound = (int)Math.round(y);
                                 zRound = (int)Math.round(z);
+                                if ((zRound < 0) || (zRound >= zDim) || (curves[zRound].size() == 0)) {
+                                    continue forj;
+                                }
                                 if (!((VOIContour) (curves[zRound].elementAt(contourNum[i]))).contains(xRound, yRound, true)) { 
                                     continue forj;         
                                 } 
@@ -695,6 +710,9 @@ public class VOI extends ModelSerialCloneable {
                                 xRound = (int)Math.round(x);
                                 yRound = (int)Math.round(y);
                                 zRound = (int)Math.round(z);
+                                if ((zRound < 0) || (zRound >= zDim) || (curves[zRound].size() == 0)) {
+                                    continue forj;
+                                }
                                 if (!((VOIContour) (curves[zRound].elementAt(contourNum[i]))).contains(xRound, yRound, true)) { 
                                     continue forj;         
                                 } 
