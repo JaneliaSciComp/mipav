@@ -936,10 +936,10 @@ public class JDialogVOIStats extends JDialogBase
 
                         if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
                             str = FileInfoBase.getUnitsOfMeasureAbbrevStr(image.getFileInfo(0).getUnitsOfMeasure(0));
-                            UI.setDataText("  Largest distance (only 3D)     \t= " + algoVOI.getLargestDistance() + "   " +
+                            UI.setDataText("  Largest distance (only 3D)  \t= " + algoVOI.getLargestDistance() + "   " +
                                            str + "\n");
                         } else {
-                            UI.setDataText("  Largest distance (only 3D)    \t= " + algoVOI.getLargestDistance() + "\n");
+                            UI.setDataText("  Largest distance (only 3D)  \t= " + algoVOI.getLargestDistance() + "\n");
                         }
                     }  
                 }
