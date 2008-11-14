@@ -939,6 +939,14 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
                                (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
                     str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
                     kl += checklistLabels[i] + " (" + str + ")" + "\t";
+                } else if ((checklistLabels[i].equals("Largest slice distance")) && (xUnits == yUnits) &&
+                        (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+                    kl += checklistLabels[i] + " (" + str + ")" + "\t";
+                } else if ((checklistLabels[i].equals("Largest distance")) && (xUnits == yUnits) && (xUnits == zUnits) &&
+                        (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+                    kl += checklistLabels[i] + " (" + str + ")" + "\t";
                 } else {
                     kl += checklistLabels[i] + "\t";
                 }
@@ -1375,6 +1383,14 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
                                        (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
                             str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
                             logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Largest slice distance") != -1) &&
+                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")"); 
+                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Largest distance") != -1) &&
+                                (xUnits == zUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+                                    logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                         } else {
                             logModel.addColumn(VOIStatisticList.statisticDescription[i]);
                         }
