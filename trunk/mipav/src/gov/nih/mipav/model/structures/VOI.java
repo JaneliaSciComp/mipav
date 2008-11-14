@@ -545,6 +545,7 @@ public class VOI extends ModelSerialCloneable {
         double distanceSq;
         int i;
         int j;
+        int k;
         double startX;
         double endX;
         double startY;
@@ -569,11 +570,11 @@ public class VOI extends ModelSerialCloneable {
         float xPts[];
         float yPts[];
         int zPts[];
-        int contourNum[];
         int nGons;
         int nPts = 0;
         int index = 0;
         int len;
+        boolean okay;
         
         if (curveType != CONTOUR) {
             MipavUtil.displayError("curveType is not the required CONTOUR for calcLargestDistance");
@@ -590,7 +591,6 @@ public class VOI extends ModelSerialCloneable {
         xPts = new float[nPts];
         yPts = new float[nPts];
         zPts = new int[nPts];
-        contourNum = new int[nPts];
         
         for (slice = 0; slice < zDim; slice++) {
             nGons = curves[slice].size();
@@ -599,8 +599,7 @@ public class VOI extends ModelSerialCloneable {
                 for (j = 0; j < len; j++) {
                    xPts[index] = ((Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j)).X;
                    yPts[index] = ((Vector3f) ((VOIContour) (curves[slice].elementAt(i))).elementAt(j)).Y;
-                   zPts[index] = slice;
-                   contourNum[index++] = i;
+                   zPts[index++] = slice;
                 }
             }
         }
@@ -610,7 +609,7 @@ public class VOI extends ModelSerialCloneable {
             startY = yPts[i];
             startZ = zPts[i];
             forj:
-            for (j = i+1; j < xPts.length && (contourNum[i] == contourNum[j]); j++) {
+            for (j = i+1; j < xPts.length; j++) {
                 endX = xPts[j];
                 endY = yPts[j];
                 endZ = zPts[j];
@@ -631,11 +630,17 @@ public class VOI extends ModelSerialCloneable {
                                 xRound = (int)Math.round(x);
                                 yRound = (int)Math.round(y);
                                 zRound = (int)Math.round(z);
-                                if ((zRound < 0) || (zRound >= zDim) || (curves[zRound].size() == 0)) {
+                                if ((zRound < 0) || (zRound >= zDim)) {
                                     continue forj;
                                 }
-                                if (!((VOIContour) (curves[zRound].elementAt(contourNum[i]))).contains(xRound, yRound, true)) { 
-                                    continue forj;         
+                                okay = false;
+                                for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
+                                    if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, true)) { 
+                                        okay = true;  
+                                    }
+                                }
+                                if (!okay) {
+                                    continue forj;
                                 }
                             } // for (x = startX + 0.5, y = startY + 0.5 * slope, z = startZ + 0.5 * slope2; x < endX; x += 0.5, y += 0.5 * slope,
                         } // if (endX >= startX)
@@ -645,12 +650,18 @@ public class VOI extends ModelSerialCloneable {
                                 xRound = (int)Math.round(x);
                                 yRound = (int)Math.round(y);
                                 zRound = (int)Math.round(z);
-                                if ((zRound < 0) || (zRound >= zDim) || (curves[zRound].size() == 0)) {
+                                if ((zRound < 0) || (zRound >= zDim)) {
                                     continue forj;
                                 }
-                                if (!((VOIContour) (curves[zRound].elementAt(contourNum[i]))).contains(xRound, yRound, true)) { 
-                                    continue forj;         
-                                }  
+                                okay = false;
+                                for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
+                                    if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, true)) { 
+                                        okay = true; 
+                                    }
+                                }
+                                if (!okay) {
+                                    continue forj;
+                                }
                             } // for (x = startX - 0.5, y = startY - 0.5 * slope, z = startZ - 0.5 * slope2; x > endX; x -= 0.5, y -= 0.5 * slope,
                         } // else endX < startX
                     } // if ((Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ)))
@@ -663,12 +674,18 @@ public class VOI extends ModelSerialCloneable {
                                 xRound = (int)Math.round(x);
                                 yRound = (int)Math.round(y);
                                 zRound = (int)Math.round(z);
-                                if ((zRound < 0) || (zRound >= zDim) || (curves[zRound].size() == 0)) {
+                                if ((zRound < 0) || (zRound >= zDim)) {
                                     continue forj;
                                 }
-                                if (!((VOIContour) (curves[zRound].elementAt(contourNum[i]))).contains(xRound, yRound, true)) { 
-                                    continue forj;         
-                                } 
+                                okay = false;
+                                for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
+                                    if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, true)) { 
+                                        okay = true;         
+                                    }
+                                }
+                                if (!okay) {
+                                    continue forj;
+                                }
                             } // for (y = startY + 0.5, x = startX + 0.5 * slope, z = startX + 0.5 * slope2; y < endY; y += 0.5, x += 0.5 * slope,
                         } // if (endX >= startX)
                         else { // endX < startX
@@ -677,13 +694,18 @@ public class VOI extends ModelSerialCloneable {
                                 xRound = (int)Math.round(x);
                                 yRound = (int)Math.round(y);
                                 zRound = (int)Math.round(z);
-                                if ((zRound < 0) || (zRound >= zDim) || (curves[zRound].size() == 0)) {
+                                if ((zRound < 0) || (zRound >= zDim)) {
                                     continue forj;
                                 }
-                                if (!((VOIContour) (curves[zRound].elementAt(contourNum[i]))).contains(xRound, yRound, true)) { 
-                                    continue forj;         
-                                } 
-                                
+                                okay = false;
+                                for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
+                                    if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, true)) { 
+                                        okay = true;         
+                                    }
+                                }
+                                if (!okay) {
+                                    continue forj;
+                                }
                             } // for (y = startY - 0.5, x = startX - 0.5 * slope, z = startZ - 0.5 * slope2; y > endY; y -= 0.5, x -= 0.5 * slope,
                         } // else endX < startX    
                     } // else if ((Math.abs(delY) >= Math.abs(delX)) && (Math.abs(delY) >= Math.abs(delZ)))
@@ -696,12 +718,18 @@ public class VOI extends ModelSerialCloneable {
                                 xRound = (int)Math.round(x);
                                 yRound = (int)Math.round(y);
                                 zRound = (int)Math.round(z);
-                                if ((zRound < 0) || (zRound >= zDim) || (curves[zRound].size() == 0)) {
+                                if ((zRound < 0) || (zRound >= zDim)) {
                                     continue forj;
                                 }
-                                if (!((VOIContour) (curves[zRound].elementAt(contourNum[i]))).contains(xRound, yRound, true)) { 
-                                    continue forj;         
-                                } 
+                                okay = false;
+                                for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
+                                    if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, true)) { 
+                                        okay = true;         
+                                    }
+                                }
+                                if (!okay) {
+                                    continue forj;
+                                }
                             } // for (z = startZ + 0.5, x = startX + 0.5 * slope, y = startY + 0.5 * slope2; z < endZ; z += 0.5, x += 0.5 * slope,   
                         } // if (endZ >= startZ)
                         else { // endZ < startZ
@@ -710,12 +738,18 @@ public class VOI extends ModelSerialCloneable {
                                 xRound = (int)Math.round(x);
                                 yRound = (int)Math.round(y);
                                 zRound = (int)Math.round(z);
-                                if ((zRound < 0) || (zRound >= zDim) || (curves[zRound].size() == 0)) {
+                                if ((zRound < 0) || (zRound >= zDim)) {
                                     continue forj;
                                 }
-                                if (!((VOIContour) (curves[zRound].elementAt(contourNum[i]))).contains(xRound, yRound, true)) { 
-                                    continue forj;         
-                                } 
+                                okay = false;
+                                for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
+                                    if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, true)) { 
+                                        okay = true;         
+                                    }
+                                }
+                                if (!okay) {
+                                    continue forj;
+                                }
                             } // for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z -= 0.5, x -= 0.5 * slope,
                         } // else (endZ < startZ)
                     } // else ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY))) 
