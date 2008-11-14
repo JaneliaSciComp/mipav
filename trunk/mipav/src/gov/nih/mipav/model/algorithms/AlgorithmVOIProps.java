@@ -374,6 +374,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     public String getLargestSliceDistance() {
         return ((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.largestSliceDistanceDescription);
     } // {return largestSliceDistance;}
+    
+    /**
+     * Gets the largest line segment totally contained within a 3D VOI (in terms of res).
+     *
+     * @return  String largest distance string
+     */
+    public String getLargestDistance() {
+        return ((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.largestDistanceDescription);
+    } // {return largestDistance;}
 
     /**
      * Gets the principle axis of VOI (only valid for 2D object); return pricipal axis angle of the VOI.
@@ -1717,6 +1726,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         double totalPerimeter = 0;
         double largestContourDistance = 0;
         double largestAllSlicesDistance = 0;
+        double largestDistance = 0;
         int x;
         int y;
         int z;
@@ -1778,6 +1788,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         float ignoreMax = selectedVOI.getMaximumIgnore();
 
         contours = selectedVOI.getCurves();
+        largestDistance = selectedVOI.calcLargestDistance(srcImage.getExtents()[0],
+                srcImage.getExtents()[1],
+                srcImage.getFileInfo(0).getResolutions()[0],
+                srcImage.getFileInfo(0).getResolutions()[1],
+                srcImage.getFileInfo(0).getResolutions()[2]);
 
         if ((processType == PROCESS_PER_SLICE) || (processType == PROCESS_PER_SLICE_AND_CONTOUR)) {
 
@@ -2255,6 +2270,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.quantityDescription + "Total", nf.format(totalNVox));
                 statProperty.setProperty(VOIStatisticList.perimeterDescription + "Total", nf.format(totalPerimeter));
                 statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription + "Total", nf.format(largestAllSlicesDistance));
+                statProperty.setProperty(VOIStatisticList.largestDistanceDescription + "Total", nf.format(largestDistance));
 
                 if (srcImage.isColorImage()) {
                     statProperty.setProperty(VOIStatisticList.deviationDescription + "Red" + "Total",
@@ -2516,6 +2532,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             statProperty.setProperty(VOIStatisticList.perimeterDescription + "0;", nf.format(totalPerimeter));
             statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription, nf.format(largestAllSlicesDistance));
             statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription + "0;", nf.format(largestAllSlicesDistance));
+            statProperty.setProperty(VOIStatisticList.largestDistanceDescription, nf.format(largestDistance));
+            statProperty.setProperty(VOIStatisticList.largestDistanceDescription + "0;", nf.format(largestDistance));
 
 
             area = nVox *
