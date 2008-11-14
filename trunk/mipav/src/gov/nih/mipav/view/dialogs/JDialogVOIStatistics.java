@@ -1301,10 +1301,12 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
                                         logTotalData[count] = temp;
                                     }
                                 } else {
-
-                                    rowData[count] = properties.getProperty(statisticDescription[k] + end).replaceAll("\t",
+                                    if (k != 18) {
+                                        // Exclude largest distance
+                                        rowData[count] = properties.getProperty(statisticDescription[k] + end).replaceAll("\t",
                                                                                                                       ", ");
-                                    logRowData[count] = properties.getProperty(statisticDescription[k] + end);
+                                        logRowData[count] = properties.getProperty(statisticDescription[k] + end);
+                                    }
 
                                     if (showTotals) {
                                         totalData[count] = properties.getProperty(statisticDescription[k] + "Total").replaceAll("\t",
