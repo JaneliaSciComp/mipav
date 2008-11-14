@@ -129,6 +129,9 @@ public interface VOIStatisticList {
     
     /** Largest line segment contained entirely within a slice of a VOI */
     String largestSliceDistanceDescription = "Largest slice distance";
+    
+    /** Largest line segment contained entirely within a 3D VOI */
+    String largestDistanceDescription = "Largest distance";
 
     /**
      * strings to test for when checking on statistics to calculate.
@@ -139,7 +142,7 @@ public interface VOIStatisticList {
         quantityDescription, volumeDescription, areaDescription, perimeterDescription, minIntensity, maxIntensity,
         avgIntensity, deviationDescription, sumIntensities, geometricCenterDescription, massCenterDescription,
         axisDescription, eccentricityDescription, majorAxisDescription, minorAxisDescription, skewnessDescription,
-        kurtosisDescription, largestSliceDistanceDescription
+        kurtosisDescription, largestSliceDistanceDescription, largestDistanceDescription
     };
 
     /** number of statistics in the list. */
