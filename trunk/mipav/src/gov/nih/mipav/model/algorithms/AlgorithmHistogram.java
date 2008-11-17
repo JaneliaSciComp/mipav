@@ -9,6 +9,7 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 
 import java.util.*;
+import java.text.DecimalFormat;
 
 
 /**
@@ -531,6 +532,19 @@ public class AlgorithmHistogram extends AlgorithmBase {
      * @param  bins  number of bins in the histogram
      */
     public void runData(int bins) {
+        double sum = 0.0;
+        double sumSq = 0.0;
+        int cnt = 0;
+        double mean;
+        double stdDev;
+        float sort[];
+        int index = 0;
+        double median;
+        int countInMaximumPeak = 0;
+        float mode;
+        int numberMaximumPeaks = 0;
+        int runLength;
+        DecimalFormat df;
         double imageMax, imageMin;
         float[] imgBuffer;
         int z, zStop;
@@ -553,6 +567,10 @@ public class AlgorithmHistogram extends AlgorithmBase {
         
 
         UI = ViewUserInterface.getReference();
+        
+        df = new DecimalFormat();
+        df.setMinimumFractionDigits(4);
+        df.setMaximumFractionDigits(4);
 
         switch (image.getType()) {
 
@@ -657,6 +675,9 @@ public class AlgorithmHistogram extends AlgorithmBase {
 
                 if (((entireImage == false) && mask.get(i + (length * z))) || (entireImage == true)) {
                     if ((imgBuffer[i] >= imageMin) && (imgBuffer[i] <= imageMax)) {
+                        sum += imgBuffer[i];
+                        sumSq += imgBuffer[i]*imgBuffer[i];
+                        cnt++;
                         value = (int) (((imgBuffer[i] - imageMin) * factor) + 0.5f);
                         histoBuffer[value]++;
                         if (displayGraph) {
@@ -681,11 +702,120 @@ public class AlgorithmHistogram extends AlgorithmBase {
             
             fireProgressStateChanged(Math.round((float) (z + 1) / zStop * 100));
         }
+        
+        sort = new float[cnt];
+        for (z = 0; z < zStop; z++) {
+
+            try {
+
+                if (image.getType() == ModelStorageBase.COMPLEX) {
+                    image.exportMagData(2 * z * length, length, imgBuffer);
+                } else if (image.isColorImage()) {
+                    image.exportRGBDataNoLock(RGBOffset, 4 * z * length, length, imgBuffer);
+                } else {
+                    image.exportDataNoLock(z * length, length, imgBuffer);
+                }
+            } catch (IOException error) {
+                errorCleanUp("Algorithm Histogram: image bounds exceeded", false);
+                image.releaseLock();
+
+                return;
+            }
+
+            if ((image.getType() == ModelStorageBase.COMPLEX) && (image.getLogMagDisplay() == true)) {
+
+                for (i = 0; i < length; i++) {
+                    imgBuffer[i] = (float) (0.4342944819 * java.lang.Math.log(1 + imgBuffer[i]));
+                }
+            }
+
+            
+            for (i = 0; i < length; i++) {
+
+                if (((entireImage == false) && mask.get(i + (length * z))) || (entireImage == true)) {
+                    if ((imgBuffer[i] >= imageMin) && (imgBuffer[i] <= imageMax)) {
+                        sort[index++] = imgBuffer[i];
+                        
+                    }
+                }
+            }
+        }
 
         image.releaseLock();
         
         if (displayGraph) {
             new ViewJFrameGraph(intensity, count, "Histogram", "Intensity", "Count");
+        }
+        
+        if (image.isColorImage()) {
+            if (RGBOffset == 1) {
+                UI.setDataText(image.getImageName() + " red\n");
+            }
+            else if (RGBOffset == 2) {
+                UI.setDataText(image.getImageName() + " green\n");
+            }
+            else {
+                UI.setDataText(image.getImageName() + " blue\n");
+            }
+        }
+        else {
+            UI.setDataText(image.getImageName() + "\n");
+        }
+        mean = sum/cnt;
+        UI.setDataText("Mean = " + df.format(mean) + "\n");
+        stdDev = Math.sqrt((sumSq - (sum*mean))/(cnt - 1));
+        UI.setDataText("Standard deviation = " + df.format(stdDev) + "\n");
+        shellSort(sort);
+        if (cnt%2 == 1) {
+            median = sort[cnt/2] ;   
+        }
+        else {
+            median = (sort[cnt/2] + sort[(cnt/2) - 1])/2.0;
+        }
+        UI.setDataText("Median = " + median + "\n");
+        mode = sort[0];
+        runLength = 1;
+        countInMaximumPeak = 1;
+        numberMaximumPeaks = 1;
+        for (i = 1; i < cnt; i++) {
+            if (sort[i] == sort[i-1]) {
+                runLength++;
+                if (runLength == countInMaximumPeak) {
+                    numberMaximumPeaks++;
+                }
+                else if (runLength > countInMaximumPeak) {
+                    mode = sort[i];
+                    countInMaximumPeak = runLength;
+                    numberMaximumPeaks = 1;
+                }
+            } // if (sort[i] == sort[i-1]
+            else {
+                runLength = 1;
+                if (countInMaximumPeak == 1) {
+                    numberMaximumPeaks++;
+                }
+            }
+        }
+        if (numberMaximumPeaks == 1) {
+            if (image.getNDims() == 2) {
+                if (countInMaximumPeak == 1) {
+                    UI.setDataText("Mode = " + mode + " with a count of " + countInMaximumPeak + " pixel\n");
+                }
+                else {
+                    UI.setDataText("Mode = " + mode + " with a count of " + countInMaximumPeak + " pixels\n");    
+                }
+            }
+            else {
+                if (countInMaximumPeak == 1) {
+                    UI.setDataText("Mode = " + mode + " with a count of " + countInMaximumPeak + " voxel\n");
+                }
+                else {
+                    UI.setDataText("Mode = " + mode + " with a count of " + countInMaximumPeak + " voxels\n");    
+                }    
+            }
+        }
+        else {
+            UI.setDataText("No obvious mode. " + numberMaximumPeaks + " values have counts = " + countInMaximumPeak + "\n");
         }
 
         if (image.getNDims() == 2) {
@@ -1043,6 +1173,47 @@ public class AlgorithmHistogram extends AlgorithmBase {
         setCompleted(true);
         imgBuffer = null;
         System.gc();
+    }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  buffer  float [] input buffer to be sorted Sort an array into ascending numerical order by Shell's method
+     *                 Reference: Numerical Recipes in C The Art of Scientific Computing Second Edition by William H.
+     *                 Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery, pp. 331- 332.
+     */
+    private void shellSort(float[] buffer) {
+        int i, j, inc;
+        float v;
+        inc = 1;
+
+        int end = buffer.length;
+
+        do {
+            inc *= 3;
+            inc++;
+        } while (inc <= end);
+
+        do {
+            inc /= 3;
+
+            for (i = inc + 1; i <= end; i++) {
+                v = buffer[i - 1];
+                j = i;
+
+                while (buffer[j - inc - 1] > v) {
+                    buffer[j - 1] = buffer[j - inc - 1];
+                    j -= inc;
+
+                    if (j <= inc) {
+                        break;
+                    }
+                }
+
+                buffer[j - 1] = v;
+            }
+        } while (inc > 1);
+
     }
 
     /**
