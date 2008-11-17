@@ -900,6 +900,20 @@ public abstract class JDialogBase extends JDialog
 
         return buttonPanel;
     }
+    
+    /**
+     * Builds button panel consisting of OK, Cancel and Help buttons.
+     *
+     * @return  JPanel that has ok, cancel, and help buttons
+     */
+    protected JPanel buildOKCancelButtons() {
+        JPanel buttonPanel = new JPanel();
+
+        buttonPanel.add(buildOKButton());
+        buttonPanel.add(buildCancelButton());
+
+        return buttonPanel;
+    }
 
     /**
      * Builds the cancel button. Sets it internally as well return the just-built button.
