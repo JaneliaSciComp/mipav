@@ -1525,6 +1525,9 @@ public class FileFits extends FileBase {
 
         file = new File(fileDir + fileName);
         raFile = new RandomAccessFile(file, "rw");
+        // Necessary so that if this is an overwritten file there isn't any
+        // junk at the end
+        raFile.setLength(0);
 
         endianess = FileBase.BIG_ENDIAN; // true
 
