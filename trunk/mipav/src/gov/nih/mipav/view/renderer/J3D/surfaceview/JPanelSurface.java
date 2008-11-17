@@ -1969,6 +1969,10 @@ public class JPanelSurface extends JPanelRendererJ3D
                 surfaceBackFaceCB.setSelected(root.getCollidable());
 
                 Shape3D[] shapes = surfaces[i].getShape();
+                if ( shapes == null )
+                {
+                    return;
+                }
                 surfaceTransparencyCB.setSelected(shapes[0].getAppearance().getTransparencyAttributes().getTransparencyMode() ==
                                                       TransparencyAttributes.BLENDED);
 

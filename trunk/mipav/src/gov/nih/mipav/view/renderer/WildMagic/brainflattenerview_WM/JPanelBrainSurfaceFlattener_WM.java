@@ -30,6 +30,7 @@ import javax.swing.JTextField;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
@@ -254,9 +255,9 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
      * @param kMesh
      * @return Scene-graph node containing the TriMesh lat/lon lines.
      */
-    public Node displayCorticalAnalysis( TriMesh kMesh ) {
+    public Node displayCorticalAnalysis( TriMesh kMesh, Vector3f kCenter ) {
         m_kTriangleMesh = kMesh;
-        if ( !m_kView.setup(m_kTriangleMesh) )
+        if ( !m_kView.setup(m_kTriangleMesh, kCenter) )
         {
         	return null;
         }

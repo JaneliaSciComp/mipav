@@ -571,11 +571,11 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
      *
      * @param  kMesh, TriMesh.
      */
-    public boolean setup(TriMesh kMesh ) {
+    public boolean setup(TriMesh kMesh, Vector3f kCenter ) {
 
         /* reset inflation initialization: */
         m_bInflationInitialized = false;
-        m_kCortical = new MjCorticalMesh_WM(kMesh);
+        m_kCortical = new MjCorticalMesh_WM(kMesh, kCenter);
         if ( m_kCortical.CheckManifold() )
         {
         	/* cortical mesh initializations */

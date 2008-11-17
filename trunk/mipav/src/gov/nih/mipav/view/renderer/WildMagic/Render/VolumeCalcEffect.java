@@ -35,17 +35,20 @@ public class VolumeCalcEffect extends VolumeClipEffect
 
     /** When true the volume data is color. */
     private boolean m_bIsColor = false;
+
+    /** stores the gradient magnitude filter on/off value: */
+    private float[] m_afGradientMagnitude = new float[]{0,0,0,0};
     
     /** Create a new VolumeCalcEffect shader with the VolumeImage data. This
      * fn creates the second-pass shader.
      * @param kTextureName the name of the output texture from the first pass.
      * @param kTexture the output texture from the first pass.
      */
-    public VolumeCalcEffect ( String kTextureName, Texture kTexture )
+    public VolumeCalcEffect ( String kTextureName, Texture kTexture, String kShaderName )
     {
         SetPassQuantity(1);
-        SetVShader(0,new VertexShader("CalcNormalsPerSlice_Pass2"));
-        SetPShader(0,new PixelShader("CalcNormalsPerSlice_Pass2", false));
+        SetVShader(0,new VertexShader(kShaderName));
+        SetPShader(0,new PixelShader(kShaderName, false));
         GetPShader(0).SetTextureQuantity(1);
         GetPShader(0).SetImageName(0,kTextureName);
         GetPShader(0).SetTexture(0, kTexture );
@@ -91,6 +94,39 @@ public class VolumeCalcEffect extends VolumeClipEffect
         this.m_afClipArbData  = kClip.m_afClipArbData;
     }
 
+    
+    /**
+     * For creating the surface mask texture.
+     * @param kVolumeImage Volume data
+     * @param kClip current clipping state.
+     */
+    public VolumeCalcEffect ( VolumeImage kVolumeImage, VolumeClipEffect kClip, boolean bGM )
+    {
+        /* Set single-pass rendering: */
+        SetPassQuantity(1);
+        SetVShader(0,new VertexShader("SurfaceExtract"));
+        SetPShader(0,new PixelShader("SurfaceExtract", false));
+        GetPShader(0).SetTextureQuantity(4);
+        GetPShader(0).SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
+        GetPShader(0).SetTexture(0, kVolumeImage.GetVolumeTarget() );
+        GetPShader(0).SetImageName(1,kVolumeImage.GetOpacityMapTarget().GetImage().GetName());
+        GetPShader(0).SetTexture(1, kVolumeImage.GetOpacityMapTarget() );
+        GetPShader(0).SetImageName(2,kVolumeImage.GetVolumeGMTarget().GetImage().GetName());
+        GetPShader(0).SetTexture(2, kVolumeImage.GetVolumeGMTarget() );
+        GetPShader(0).SetImageName(3,kVolumeImage.GetOpacityMapGMTarget().GetImage().GetName());
+        GetPShader(0).SetTexture(3, kVolumeImage.GetOpacityMapGMTarget() );
+        SetGradientMagnitude( bGM );
+        m_bIsColor = kVolumeImage.GetImage().isColorImage();
+        this.m_afClipAll = kClip.m_afClipAll;
+        this.m_afDoClip = kClip.m_afDoClip;
+        this.m_aafClipData  = kClip.m_aafClipData;
+        this.m_afClipEyeData  = kClip.m_afClipEyeData;
+        this.m_afClipEyeInvData  = kClip.m_afClipEyeInvData;
+        this.m_afClipArbData  = kClip.m_afClipArbData;
+    }
+
+
+    
     /**
      * memory cleanup.
      */
@@ -119,7 +155,36 @@ public class VolumeCalcEffect extends VolumeClipEffect
                 pkProgram.GetUC("IsColor").SetDataSource(new float[]{0,0,0,0});
             }
         }  
+
+        SetGradientMagnitude();
     }
+    
+    /** 
+     * Enables/Disables gradient magnitude filter.
+     * @param bShow gradient magnitude filter on/off.
+     */
+    public void SetGradientMagnitude(boolean bShow)
+    {
+        m_afGradientMagnitude[0] = 0;
+        if ( bShow )
+        {
+            m_afGradientMagnitude[0] = 1;
+        }
+        SetGradientMagnitude();
+    }
+    
+    /**
+     * Sets the GradientMagnitude shader parameter.
+     */
+    private void SetGradientMagnitude()
+    {
+        Program pkProgram = GetPProgram(0);
+        if ( (pkProgram != null) && (pkProgram.GetUC("GradientMagnitude") != null) ) 
+        {
+            pkProgram.GetUC("GradientMagnitude").SetDataSource(m_afGradientMagnitude);
+        }
+    }
+    
     /** Sets the step size shader parameter.
      * @param kVolumeImage the shared volume data and textures.
      */

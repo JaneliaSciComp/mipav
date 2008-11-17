@@ -77,6 +77,9 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     /** Blend value for alpha-blending volume with other objects in the scene. */
     private float[] m_afBlend = new float[]{1,0,0,0};
 
+    /** Blend value for alpha-blending two volumes. */
+    private float[] m_afABBlend = new float[]{1,0,0,0};
+
     /** 
      * Creates a new VolumeShaderEffect object.
      * @param kImageA the VolumeImage containing the data and textures for
@@ -287,10 +290,11 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
      */
     public void setABBlend(float fBlend)
     {
+        m_afABBlend[0] = fBlend;
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("ABBlend") != null ) 
         {
-            pkProgram.GetUC("ABBlend").SetDataSource(new float[]{fBlend,0,0,0});
+            pkProgram.GetUC("ABBlend").SetDataSource(m_afABBlend);
         }
     }
 
@@ -632,6 +636,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
         ResetClip();
         SetBackgroundColor( m_kBackgroundColor );
         Blend(m_afBlend[0]);
+        setABBlend(m_afABBlend[0]);
         SetColorImage();
         SetGradientMagnitude();
         SetSelfShadow();

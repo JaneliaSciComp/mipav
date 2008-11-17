@@ -1,23 +1,65 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import java.awt.*;
-import java.awt.event.*;
+import gov.nih.mipav.model.algorithms.AlgorithmExtractSurfaceCubes;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
+
+import java.awt.Frame;
+import java.awt.event.KeyListener;
+import java.io.File;
 import java.util.Vector;
 
-import javax.media.opengl.*;
-import com.sun.opengl.util.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLCanvas;
+import javax.media.opengl.GLEventListener;
 
-import WildMagic.LibApplications.OpenGLApplication.*;
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibRenderers.OpenGLRenderer.*;
-import gov.nih.mipav.model.structures.*;
+import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Rendering.GraphicsImage;
+import WildMagic.LibGraphics.Rendering.Texture;
+import WildMagic.LibGraphics.Rendering.WireframeState;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Culler;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
+
+import com.sun.opengl.util.Animator;
 
 public class VolumeImageViewer extends JavaApplication3D
     implements GLEventListener, KeyListener
 {
-    public VolumeImageViewer( VolumeImage kVolumeImage, VolumeClipEffect kClip, Vector<VolumeObject> kDisplayList )
+    private Node m_spkScene;
+    private Culler m_kCuller = new Culler(0,0,null);    
+    private VolumeImage m_kVolumeImage;
+    private VolumeCalcEffect m_spkEffect;
+    private VolumeCalcEffect m_spkEffect2;
+    private VolumeCalcEffect m_spkEffect3;
+    private TriMesh m_pkPlane;
+    private int m_iSlice = 0;
+    private GraphicsImage m_kCalcImage;
+    private Texture m_pkVolumeCalcTarget;
+    private Texture m_pkVolumeResultTarget;    
+    private boolean m_bDisplayFirst = true;
+    private boolean m_bDisplaySecond = true;
+    private Animator m_kAnimator;
+    private Frame m_kFrame;
+    private boolean m_bCrop = false;
+    private VolumeClipEffect m_kClipEffect = null;
+    private Vector<VolumeObject> m_kDisplayList = null;
+    private SurfaceClipEffect m_kSurfaceClip = null;
+    private boolean m_bSurfaceAdded = false;
+
+    private boolean m_bExtract = false;
+    private VolumeTriPlanarInterface m_kParent;
+    
+    public VolumeImageViewer( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip, Vector<VolumeObject> kDisplayList, boolean bExtract )
     {
         super( new String("VolumeImageViewer" + kVolumeImage.GetPostfix() ), 0, 0,
                kVolumeImage.GetImage().getExtents()[0],
@@ -26,10 +68,12 @@ public class VolumeImageViewer extends JavaApplication3D
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                                           m_eBuffering, m_eMultisampling,
                                            m_iWidth, m_iHeight );
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );     
+        m_kParent = kParentFrame;
         m_kVolumeImage = kVolumeImage;
         m_kClipEffect = kClip;
-        if ( kClip != null )
+        m_bExtract = bExtract;
+        if ( (kClip != null) && !m_bExtract )
         {
             m_bCrop = true;
         }
@@ -40,24 +84,12 @@ public class VolumeImageViewer extends JavaApplication3D
             m_bSurfaceAdded = true;
         }
     }
-
-    public void SetAnimator( Animator kAnimator )
-    {
-        m_kAnimator = kAnimator;
-    }
-    
-    public void SetFrame( Frame kFrame )
-    {
-        m_kFrame = kFrame;
-    }
-
-
     /**
      * @param args
      */
-    public static void main( VolumeImage kVolumeImage, VolumeClipEffect kClip, Vector<VolumeObject> kDisplayList )
+    public static void main( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip, Vector<VolumeObject> kDisplayList, boolean bExtract )
     {
-        VolumeImageViewer kWorld = new VolumeImageViewer(kVolumeImage, kClip, kDisplayList);
+        VolumeImageViewer kWorld = new VolumeImageViewer(kParentFrame, kVolumeImage, kClip, kDisplayList, bExtract);
         Frame frame = new Frame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
          final Animator animator = new Animator( kWorld.GetCanvas() );
@@ -73,51 +105,124 @@ public class VolumeImageViewer extends JavaApplication3D
          kWorld.SetFrame(frame);
          animator.start();
     }
-
     public void display(GLAutoDrawable arg0) {
-        while ( m_bDisplayFirst )
+        if ( !m_bExtract )
         {
-            UpdateSlice(m_iSlice);
-            m_pkPlane.DetachAllEffects();
-            m_pkPlane.AttachEffect(m_spkEffect);
-            m_kCuller.ComputeVisibleSet(m_spkScene);
-            m_pkRenderer.ClearBuffers();
-            if (m_pkRenderer.BeginScene())
-            {          
-                m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-                m_pkRenderer.EndScene();
-            }
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_pkVolumeNormalTarget, m_iSlice, false );
-            m_pkRenderer.DisplayBackBuffer();
-            m_iSlice++; 
-            if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
+            while ( m_bDisplayFirst )
             {
-                m_iSlice = 0;
-                m_bDisplayFirst = false;
-                //System.err.println("Done first pass");
+                UpdateSlice(m_iSlice);
+                m_pkPlane.DetachAllEffects();
+                m_pkPlane.AttachEffect(m_spkEffect);
+                m_kCuller.ComputeVisibleSet(m_spkScene);
+                m_pkRenderer.ClearBuffers();
+                if (m_pkRenderer.BeginScene())
+                {          
+                    m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+                    m_pkRenderer.EndScene();
+                }
+                m_pkRenderer.FrameBufferToTexSubImage3D( m_pkVolumeCalcTarget, m_iSlice, false );
+                m_pkRenderer.DisplayBackBuffer();
+                m_iSlice++; 
+                if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
+                {
+                    m_iSlice = 0;
+                    m_bDisplayFirst = false;
+                    //System.err.println("Done first pass");
+                }
+            }
+            while ( m_bDisplaySecond )
+            {
+                UpdateSlice(m_iSlice);
+                m_pkPlane.DetachAllEffects();
+                m_pkPlane.AttachEffect(m_spkEffect2);
+                m_kCuller.ComputeVisibleSet(m_spkScene);
+                m_pkRenderer.ClearBuffers();
+                if (m_pkRenderer.BeginScene())
+                {          
+                    m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+                    m_pkRenderer.EndScene();
+                }
+                m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetNormalMapTarget(), m_iSlice, false );
+                m_pkRenderer.DisplayBackBuffer();
+                m_iSlice++; 
+                if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
+                {
+                    m_bDisplaySecond = false;
+                    m_iSlice = 0;
+                    //System.err.println("Done second pass");
+                    m_pkVolumeCalcTarget.dispose();
+                    m_pkVolumeCalcTarget = null;
+                }
             }
         }
-        while ( m_bDisplaySecond )
+        else
         {
-            UpdateSlice(m_iSlice);
-            m_pkPlane.DetachAllEffects();
-            m_pkPlane.AttachEffect(m_spkEffect2);
-            m_kCuller.ComputeVisibleSet(m_spkScene);
-            m_pkRenderer.ClearBuffers();
-            if (m_pkRenderer.BeginScene())
-            {          
-                m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-                m_pkRenderer.EndScene();
-            }
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetNormalMapTarget(), m_iSlice, false );
-            m_pkRenderer.DisplayBackBuffer();
-            m_iSlice++; 
-            if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
+            while ( m_bDisplayFirst )
             {
-                m_bDisplaySecond = false;
-                m_iSlice = 0;
-                //System.err.println("Done second pass");
+                UpdateSlice(m_iSlice);
+                m_pkPlane.DetachAllEffects();
+                m_pkPlane.AttachEffect(m_spkEffect);
+                m_kCuller.ComputeVisibleSet(m_spkScene);
+                m_pkRenderer.ClearBuffers();
+                if (m_pkRenderer.BeginScene())
+                {          
+                    m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+                    m_pkRenderer.EndScene();
+                }
+                m_pkRenderer.FrameBufferToTexSubImage3D( m_pkVolumeCalcTarget, m_iSlice, true );
+                m_pkRenderer.DisplayBackBuffer();
+                m_iSlice++; 
+                if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
+                {
+                    m_iSlice = 0;
+                    m_bDisplayFirst = false;
+                    System.err.println("Done Extract first pass");
+                    ModelImage kImage = m_kVolumeImage.CreateBinaryImageFromTexture(m_pkVolumeCalcTarget.GetImage());
+                    //new ViewJFrameImage(kImage, null, new Dimension(610, 200), false);
+                    String kSurfaceName = JDialogBase.makeImageName(kImage.getImageName(), "_extract.sur");
+                    AlgorithmExtractSurfaceCubes extractSurAlgo = 
+                        new AlgorithmExtractSurfaceCubes(kImage, 0, AlgorithmExtractSurfaceCubes.MASK_MODE,
+                                false, false, 0, kSurfaceName );
+                    extractSurAlgo.run();  
+                    kSurfaceName = ViewUserInterface.getReference().getDefaultDirectory() + File.separator + kSurfaceName;
+                    File kFile = new File( kSurfaceName );
+                    TriMesh[] kMeshes = new TriMesh[1];
+                    kMeshes[0] = FileSurface_WM.readSurface( kImage, kFile, null );
+                    if ( kMeshes[0] != null )
+                    {
+                        System.err.println("uploading surface");
+                        kMeshes[0].SetName( kSurfaceName );
+                        m_kParent.getSurfacePanel().addSurfaces(kMeshes);
+                        m_kParent.smoothMesh(kSurfaceName, 50, .05f, false, 0);
+                    }
+                    kImage.disposeLocal();
+                    kImage = null;
+                }
             }
+            /*
+            while ( m_bDisplaySecond )
+            {
+                UpdateSlice(m_iSlice);
+                m_pkPlane.DetachAllEffects();
+                m_pkPlane.AttachEffect(m_spkEffect2);
+                m_kCuller.ComputeVisibleSet(m_spkScene);
+                m_pkRenderer.ClearBuffers();
+                if (m_pkRenderer.BeginScene())
+                {          
+                    m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+                    m_pkRenderer.EndScene();
+                }
+                m_pkRenderer.FrameBufferToTexSubImage3D( m_pkVolumeResultTarget, m_iSlice, true );
+                m_pkRenderer.DisplayBackBuffer();
+                m_iSlice++; 
+                if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
+                {
+                    m_bDisplaySecond = false;
+                    m_iSlice = 0;
+                    //System.err.println("Done second pass");
+                }
+            }
+            */
         }
         while ( m_bCrop )
         {
@@ -199,10 +304,11 @@ public class VolumeImageViewer extends JavaApplication3D
         m_kAnimator.stop();
         m_kFrame.setVisible(false);
     }
-
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) { }
-
-
+    public GLCanvas GetCanvas()
+    {
+        return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
+    }
     public void init(GLAutoDrawable arg0) {
         arg0.setAutoSwapBufferMode( false );
 
@@ -238,7 +344,6 @@ public class VolumeImageViewer extends JavaApplication3D
 
         //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
-
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight)
     {
         if ( (iWidth != m_kVolumeImage.GetImage().getExtents()[0]) || 
@@ -261,12 +366,14 @@ public class VolumeImageViewer extends JavaApplication3D
             arg0.setSize(iWidth,iHeight);
         }
     }
-
-    public GLCanvas GetCanvas()
+    public void SetAnimator( Animator kAnimator )
     {
-        return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
+        m_kAnimator = kAnimator;
     }
-
+    public void SetFrame( Frame kFrame )
+    {
+        m_kFrame = kFrame;
+    }
     private void CreateScene ()
     {
         m_spkScene = new Node();
@@ -293,7 +400,36 @@ public class VolumeImageViewer extends JavaApplication3D
         m_pkPlane.VBuffer.SetPosition3(3, fX1, fY1, 0);
         m_pkPlane.VBuffer.SetTCoord3(0, 3, 1,1,0.5f);
 
-        if ( !m_bCrop && !m_bSurfaceAdded )
+        if ( m_bExtract )
+        {
+            m_spkEffect = new VolumeCalcEffect( m_kVolumeImage, m_kClipEffect, false );
+            m_pkPlane.AttachEffect(m_spkEffect);
+            m_pkRenderer.LoadResources(m_pkPlane);
+            m_spkEffect.SetStepSize(m_kVolumeImage);
+            m_pkPlane.DetachAllEffects();
+
+            m_kCalcImage = new GraphicsImage(GraphicsImage.FormatMode.IT_L8,
+                    m_iWidth,m_iHeight,
+                    m_kVolumeImage.GetImage().getExtents()[2], 
+                    new byte[m_iWidth*m_iHeight*m_kVolumeImage.GetImage().getExtents()[2]],
+                    "VolumeExtract" );
+            m_pkVolumeCalcTarget = new Texture();
+            m_pkVolumeCalcTarget.SetImage(m_kCalcImage);
+            m_spkEffect2 = new VolumeCalcEffect( "VolumeExtract", m_pkVolumeCalcTarget, "SurfaceExtract_P2" );
+            m_pkPlane.AttachEffect(m_spkEffect2);
+            m_pkRenderer.LoadResources(m_pkPlane);
+            m_spkEffect2.SetStepSize(m_kVolumeImage);
+            m_pkPlane.DetachAllEffects();
+            /*
+            kImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,m_iWidth,m_iHeight,
+                    m_kVolumeImage.GetImage().getExtents()[2],(byte[])null,
+                    "VolumeResult" );
+            m_pkVolumeResultTarget = new Texture();
+            m_pkVolumeResultTarget.SetImage(kImage);
+            */
+            
+        }
+        else if ( !m_bCrop && !m_bSurfaceAdded )
         {
             m_spkEffect = new VolumeCalcEffect( m_kVolumeImage );
             m_pkPlane.AttachEffect(m_spkEffect);
@@ -303,10 +439,10 @@ public class VolumeImageViewer extends JavaApplication3D
 
             GraphicsImage kImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,m_iWidth,m_iHeight,
                     m_kVolumeImage.GetImage().getExtents()[2],(byte[])null,
-                    "VolumeNormals" );
-            m_pkVolumeNormalTarget = new Texture();
-            m_pkVolumeNormalTarget.SetImage(kImage);
-            m_spkEffect2 = new VolumeCalcEffect( "VolumeNormals", m_pkVolumeNormalTarget );
+                    "VolumeCalc" );
+            m_pkVolumeCalcTarget = new Texture();
+            m_pkVolumeCalcTarget.SetImage(kImage);
+            m_spkEffect2 = new VolumeCalcEffect( "VolumeCalc", m_pkVolumeCalcTarget, "CalcNormalsPerSlice_Pass2" );
             m_pkPlane.AttachEffect(m_spkEffect2);
             m_pkRenderer.LoadResources(m_pkPlane);
             m_spkEffect2.SetStepSize(m_kVolumeImage);
@@ -332,7 +468,6 @@ public class VolumeImageViewer extends JavaApplication3D
         }
         m_spkScene.AttachChild(m_pkPlane);
     }
-    
     private void UpdateSlice( int iZ )
     {
         float fZ = ((float)iZ)/(m_kVolumeImage.GetImage().getExtents()[2] -1);
@@ -342,25 +477,4 @@ public class VolumeImageViewer extends JavaApplication3D
         m_pkPlane.VBuffer.SetTCoord3(0, 3, 1,1, fZ);    
         m_pkPlane.VBuffer.Release();
     }
-
-    private Node m_spkScene;
-    private Culler m_kCuller = new Culler(0,0,null);
-    private VolumeImage m_kVolumeImage;
-    private VolumeCalcEffect m_spkEffect;
-    private VolumeCalcEffect m_spkEffect2;
-    private VolumeCalcEffect m_spkEffect3;
-    private TriMesh m_pkPlane;
-    private int m_iSlice = 0;
-
-    /** Texture for the first-pass rendering of the proxy-geometry: */
-    private Texture m_pkVolumeNormalTarget;
-    private boolean m_bDisplayFirst = true;
-    private boolean m_bDisplaySecond = true;
-    private Animator m_kAnimator;
-    private Frame m_kFrame;
-    private boolean m_bCrop = false;
-    private VolumeClipEffect m_kClipEffect = null;
-    private Vector<VolumeObject> m_kDisplayList = null;
-    private SurfaceClipEffect m_kSurfaceClip = null;
-    private boolean m_bSurfaceAdded = false;
 }

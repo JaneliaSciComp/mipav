@@ -119,7 +119,7 @@ public class MjCorticalMesh_WM {
     /**
      * Creates a new MjCorticalMesh object.
      */
-    public MjCorticalMesh_WM( TriMesh kMesh)
+    public MjCorticalMesh_WM( TriMesh kMesh, Vector3f kCenter)
     {
         m_kMesh = kMesh;
         int iVQuantity = kMesh.VBuffer.GetVertexQuantity();
@@ -180,7 +180,18 @@ public class MjCorticalMesh_WM {
 
         return true;
     }
-
+    /*
+    public boolean CheckManifold()
+    {
+        for (int i = 0; i < m_akEdge.length; i++) {
+            if ( m_akEdge[i].T[1] == -1 )
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+*/
     public boolean CheckManifold()
     {
         return m_kBasicMesh.IsValid();
@@ -501,7 +512,6 @@ public class MjCorticalMesh_WM {
         Circle2f kLatitude = new Circle2f();
         kLatitude.Center.Copy(Vector2f.ZERO);
         kLatitude.Radius = (float) Math.sqrt((1.0f + fZNormal) / (1.0f - fZNormal)) * getStereographicRadius();
-
         /* sorted t-values for intersections of circle */
         /* with triangle mesh edges */
         TreeMap<Float, Vector3f> kIntrMesh = new TreeMap<Float, Vector3f>(); /* map<float,Point3f> */
@@ -534,27 +544,22 @@ public class MjCorticalMesh_WM {
             if (iCount > 0) {
 
                 /* get normal for sharing triangle */
-                int iTriangle = m_akEdge[i].T[0];
-                Vector3f kU0 = m_kMesh.VBuffer.GetPosition3(aiConnect[(3 * iTriangle) + 0]);
-                Vector3f kU1 = m_kMesh.VBuffer.GetPosition3(aiConnect[(3 * iTriangle) + 1]);
-                Vector3f kU2 = m_kMesh.VBuffer.GetPosition3(aiConnect[(3 * iTriangle) + 2]);
-                kU1mU0.Sub( kU1, kU0 );
-                kU2mU0.Sub( kU2, kU0 );
-                kN0.UnitCross( kU1mU0, kU2mU0 );
-
+                int iTriangle = m_akEdge[i].T[0];               
+                kN0 = m_kMesh.VBuffer.GetNormal3(aiConnect[(3 * iTriangle) + 0]);
+                kN0.Add(m_kMesh.VBuffer.GetNormal3(aiConnect[(3 * iTriangle) + 1]));
+                kN0.Add(m_kMesh.VBuffer.GetNormal3(aiConnect[(3 * iTriangle) + 2]));
+                kN0.Normalize();
+                
                 /* get normal for sharing triangle */
                 iTriangle = m_akEdge[i].T[1];
-                kU0 = m_kMesh.VBuffer.GetPosition3(aiConnect[(3 * iTriangle) + 0]);
-                kU1 = m_kMesh.VBuffer.GetPosition3(aiConnect[(3 * iTriangle) + 1]);
-                kU2 = m_kMesh.VBuffer.GetPosition3(aiConnect[(3 * iTriangle) + 2]);
-                kU1mU0.Sub( kU1, kU0 );
-                kU2mU0.Sub( kU2, kU0 );
-                kN1.UnitCross( kU1mU0, kU2mU0 );
-
+                kN1 = m_kMesh.VBuffer.GetNormal3(aiConnect[(3 * iTriangle) + 0]);
+                kN1.Add(m_kMesh.VBuffer.GetNormal3(aiConnect[(3 * iTriangle) + 1]));
+                kN1.Add(m_kMesh.VBuffer.GetNormal3(aiConnect[(3 * iTriangle) + 2]));
+                kN1.Normalize();
+                
                 /* average normal */
                 kNAvr.Add( kN0, kN1 );
                 kNAvr.Normalize();
-
 
                 Vector3f kPos0 = new Vector3f();
                 Vector3f kPos1 = new Vector3f();
@@ -579,17 +584,17 @@ public class MjCorticalMesh_WM {
                     kQ.Sub( kPos1, kPos0 );
                     kQ.Scale(fS);
                     kQ.Add(kPos0);
-
+                    
                     /* To avoid z-buffer biasing problems, lift the point in the */
                     /* direction of the average of the normals for the triangles */
                     /* sharing the edge. */
-                    kNAvr.Scale(fMBias);
-                    kQ.Add(kNAvr);
+                    kQ.ScaleAdd(fMBias, kNAvr, kQ);
 
                     /* save the point in an ordered map */
-                    kIntrMesh.put(new Float(fAngle), kQ);
-
+                    kIntrMesh.put(new Float(fAngle), kQ);    
+                    
                     /* construct the edge point on the sphere */
+                    kQ = new Vector3f();
                     kQ.Sub( m_akSphere[iV1], m_akSphere[iV0] );
                     kQ.Scale(fS);
                     kQ.Add(m_akSphere[iV0]);
@@ -598,9 +603,8 @@ public class MjCorticalMesh_WM {
                     /* direction of sphere normal. */
                     kNormal.Copy(kQ);
                     kNormal.Normalize();
-                    kQ.Scale(fSBias, kNormal );
-                    kQ.Add(kNormal);
-
+                    kQ.ScaleAdd(fSBias, kNormal, kNormal);
+                    
                     /* save the point in an ordered map */
                     kIntrSphere.put(new Float(fAngle), kQ);
                 }
@@ -811,6 +815,7 @@ public class MjCorticalMesh_WM {
                     m_kMesh.VBuffer.GetPosition3( iV1, kPos1 );
 
                     /* construct the edge point on the original mesh */
+                    kQ = new Vector3f();
                     kQ.Copy( Vector3f.ZERO );
                     kQ.Sub( kPos1, kPos0 );
                     kQ.Scale(fS);
@@ -825,6 +830,7 @@ public class MjCorticalMesh_WM {
                     kIntrMesh.put(new Float(afT[j]), kQ);
 
                     /* repeat the construction for sphere */
+                    kQ = new Vector3f();
                     kQ.Copy( Vector3f.ZERO );
                     kQ.Sub( m_akSphere[iV1], m_akSphere[iV0] );
                     kQ.Scale(fS);
@@ -899,7 +905,6 @@ public class MjCorticalMesh_WM {
     public float getMinMeanCurvature() {
         return m_fMinMeanCurvature;
     }
-
 
     /**
      * DOCUMENT ME!
@@ -1257,6 +1262,7 @@ public class MjCorticalMesh_WM {
         int iMin = -1;
 
         for (int i = 0; i < iCount; i++) {
+            float fTest = kDPoly.Eval(afRoot[i]);
             float fValue = kPoly.Eval(afRoot[i]);
             assert (fValue >= 0.0f);
 
