@@ -2120,7 +2120,7 @@ public class FileSurface_WM {
      * @param   kMaterial The Material for the surface.
      * @return  TriMesh
      */
-    private static TriMesh readSurface(ModelImage kImage, File file, MaterialState kMaterial )
+    public static TriMesh readSurface(ModelImage kImage, File file, MaterialState kMaterial )
     {
         int iType = 0, iQuantity = 0;
         boolean isSur = true;

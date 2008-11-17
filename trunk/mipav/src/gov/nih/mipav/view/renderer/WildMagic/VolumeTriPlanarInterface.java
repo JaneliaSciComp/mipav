@@ -555,7 +555,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
                     new gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender(this, 
                                                                                                            m_kAnimator, m_kVolumeImageA, m_kVolumeImageB);
                 TriMesh kSurface = raycastRenderWM.getSurface( surfaceGUI.getSelectedSurface() );
-                Node kMeshLines = brainsurfaceFlattenerRender.getPanel().displayCorticalAnalysis(kSurface);       
+                Node kMeshLines = brainsurfaceFlattenerRender.getPanel().displayCorticalAnalysis(kSurface, raycastRenderWM.getSurfaceCenter( surfaceGUI.getSelectedSurface()));       
                 if ( kMeshLines != null )
                 {
                     m_kBrainsurfaceFlattenerPanel = new JPanel();
@@ -581,7 +581,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
                                                             m_kAnimator, m_kVolumeImageA,
                                                             m_kVolumeImageB);
                 TriMesh kSurface = raycastRenderWM.getSurface( surfaceGUI.getSelectedSurface() );
-                m_kFlyThroughRender.addSurface(kSurface);
+                m_kFlyThroughRender.addSurface(kSurface, raycastRenderWM.getSurfaceCenter( surfaceGUI.getSelectedSurface()) );
                 bf_flyPanel.add( m_kFlyThroughRender.GetCanvas(), BorderLayout.CENTER );
                 dualPane.setDividerLocation( 0.5f );            
                 m_kLightsPanel.enableLight(0, true);
@@ -693,6 +693,15 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         }
     }
 
+    /**
+     * Return the surface panel.
+     * @returnthe surface panel.
+     */
+    public JPanelSurface_WM getSurfacePanel()
+    {
+        return surfaceGUI;
+    }
+    
     /**
      * Build the clipping control panel for the surface render.
      */
@@ -1556,7 +1565,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
      */
     public float getVolume(String kSurfaceName)
     {
-        return raycastRenderWM.getVolume(kSurfaceName);
+        return raycastRenderWM.getSurfaceVolume(kSurfaceName);
     }
 
     /**

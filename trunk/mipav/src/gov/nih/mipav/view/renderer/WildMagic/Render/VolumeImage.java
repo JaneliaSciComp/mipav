@@ -690,7 +690,7 @@ public class VolumeImage
      * Read the current Volume Texture from the GPU and return a new ModelImage of that data.
      * @return new ModelImage from Volume Texture on GPU.
      */
-    public ModelImage CreateImageFromTexture()
+    public ModelImage CreateImageFromTexture( GraphicsImage kImage )
     {
         int iXBound = m_kImage.getExtents()[0];
         int iYBound = m_kImage.getExtents()[1];
@@ -705,10 +705,10 @@ public class VolumeImage
             byte[] aucData = new byte[4*iXBound*iYBound*iZBound];
             for ( int i = 0; i < m_kImage.getSize(); i += 4)
             {
-                aucData[i] = m_kVolume.GetData()[i+3];
-                aucData[i+1] = m_kVolume.GetData()[i+1];
-                aucData[i+2] = m_kVolume.GetData()[i+2];
-                aucData[i+3] = m_kVolume.GetData()[i];
+                aucData[i] = kImage.GetData()[i+3];
+                aucData[i+1] = kImage.GetData()[i+1];
+                aucData[i+2] = kImage.GetData()[i+2];
+                aucData[i+3] = kImage.GetData()[i];
             }
             try {
                 kResult = new ModelImage( m_kImage.getType(), m_kImage.getExtents(), JDialogBase.makeImageName(m_kImage.getImageName(), "_Crop") );
@@ -720,7 +720,7 @@ public class VolumeImage
         else
         {
             float[] afData = new float[iXBound*iYBound*iZBound];
-
+            byte[] aiImageData = kImage.GetData();
             if ( m_bByte )
             {
                 int i = 0;
@@ -731,7 +731,7 @@ public class VolumeImage
                         for (int iX = 0; iX < iXBound; iX++)
                         {
 
-                            byte bValue = m_kVolume.GetData()[i];
+                            byte bValue = aiImageData[i];
                             //afData[i++]  = (float)((fImageMax - fImageMin) * ( bValue / 255.0 )) + fImageMin;
                             afData[i++]  = (float)( bValue / 255.0 );
                         }
@@ -747,7 +747,7 @@ public class VolumeImage
                     {
                         for (int iX = 0; iX < iXBound; iX++)
                         {
-                            float fValue = m_kVolume.GetFloatData()[i];
+                            float fValue = kImage.GetFloatData()[i];
                             afData[i++] = (fValue*(fImageMax - fImageMin) + fImageMin);
                         }
                     }
@@ -760,9 +760,40 @@ public class VolumeImage
                 e.printStackTrace();
             }
         }
+        kResult.copyFileTypeInfo(m_kImage);
+        kResult.calcMinMax();
         return kResult;
     }
 
+    
+    /**
+     * Read the current Volume Texture from the GPU and return a new ModelImage of that data.
+     * @return new ModelImage from Volume Texture on GPU.
+     */
+    public ModelImage CreateBinaryImageFromTexture( GraphicsImage kImage )
+    {
+        int iXBound = m_kImage.getExtents()[0];
+        int iYBound = m_kImage.getExtents()[1];
+        int iZBound = m_kImage.getExtents()[2];
+        
+        ModelImage kResult = new ModelImage( ModelStorageBase.BOOLEAN, m_kImage.getExtents(), JDialogBase.makeImageName(m_kImage.getImageName(), "_temp") );
+        int i = 0;
+        for (int iZ = 0; iZ < iZBound; iZ++)
+        {
+            for (int iY = 0; iY < iYBound; iY++)
+            {
+                for (int iX = 0; iX < iXBound; iX++)
+                {
+                    if ( kImage.GetData()[i++] > 0 )
+                    {
+                        kResult.set( iX, iY, iZ, true);
+                    }
+                }
+            }
+        }
+        JDialogBase.updateFileInfo(m_kImage, kResult);
+        return kResult;
+    }
 
     /**
      * Initialize the scale factors. Based on the ModelImage Volume.

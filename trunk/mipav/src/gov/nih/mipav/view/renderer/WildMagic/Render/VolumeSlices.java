@@ -390,8 +390,8 @@ public class VolumeSlices extends VolumeObject
             m_akBoundingBox[i].AttachEffect( m_kVolumePreShader[i] );
             m_akBoundingBox[i].Local.SetTranslate(m_kTranslate);
             m_kScene.AttachChild(m_akBoundingBox[i]);
-            //m_akBoundingBox[i].VBuffer.SetShared(true);
-            //m_akBoundingBox[i].IBuffer.SetShared(true);
+            m_akBoundingBox[i].VBuffer.SetShared(true);
+            m_akBoundingBox[i].IBuffer.SetShared(true);
         }
     }
 
@@ -420,8 +420,8 @@ public class VolumeSlices extends VolumeObject
             m_akPlanes[i] = kSM.Rectangle(2,2,1.0f,1.0f);
             m_akPlanes[i].Local.SetTranslate(m_kTranslate);
             m_kScene.AttachChild(m_akPlanes[i]);
-            //m_akPlanes[i].VBuffer.SetShared(true);
-            //m_akPlanes[i].IBuffer.SetShared(true);
+            m_akPlanes[i].VBuffer.SetShared(true);
+            m_akPlanes[i].IBuffer.SetShared(true);
         }
     }
 }

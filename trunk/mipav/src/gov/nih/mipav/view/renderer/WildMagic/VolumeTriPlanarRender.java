@@ -393,10 +393,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kVolumeRayCast.SetDisplay(false);   
             m_kSlices.SetDisplay(true);   
             m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-            VolumeImageViewer.main(m_kVolumeImageA, null, null);
+            VolumeImageViewer.main(m_kParent, m_kVolumeImageA, null, null, false);
             if ( m_kVolumeImageB != null )
             {
-                VolumeImageViewer.main(m_kVolumeImageB, null, null);
+                VolumeImageViewer.main(m_kParent, m_kVolumeImageB, null, null, false);
             }
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             CMPMode();
@@ -405,14 +405,21 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_bSurfaceUpdate = false;
             updateLighting( m_akLights );
-            VolumeImageViewer.main(m_kVolumeImageA, null, m_kDisplayList);
+            VolumeImageViewer.main(m_kParent, m_kVolumeImageA, null, m_kDisplayList, false);
         }
         if ( m_bCrop )
         {
             m_bCrop = false;
             m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-            VolumeImageViewer.main(m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect(), null);
+            VolumeImageViewer.main(m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect(), null, false);
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+        }
+        if ( m_bExtract )
+        {
+            m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+            VolumeImageViewer.main(m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect(), null, true);
+            m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+            m_bExtract = false;
         }
     }
     
@@ -816,13 +823,33 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         return 0;
     }
+    
+    /**
+     * Return the center of the TriMesh surface.
+     * @param kSurfaceName the surface name.
+     * @return the calculated center.
+     */
+    public Vector3f getSurfaceCenter( String kSurfaceName )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    return ((VolumeSurface)(m_kDisplayList.get(i))).GetCenter();
+                }
+            }
+        }
+      return null;
+    }
 
     /**
      * Return the volume of the TriMesh surface.
      * @param kSurfaceName the surface name.
      * @return the calculated volume.
      */
-    public float getVolume( String kSurfaceName )
+    public float getSurfaceVolume( String kSurfaceName )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
@@ -917,6 +944,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             {
                 m_kVolumeRayCast.SetDisplaySecond( m_bDisplaySecond );
             }
+            return;
+        case 'e':
+            m_bExtract = true;
             return;
         case 'p':
             displayBoundingBox( !m_kVolumeBox.GetDisplay() );
@@ -1241,7 +1271,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void saveImageFromTexture()
     {
-        ModelImage kImage = m_kVolumeImageA.CreateImageFromTexture();
+        ModelImage kImage = m_kVolumeImageA.CreateImageFromTexture(m_kVolumeImageA.GetVolumeTarget().GetImage());
         kImage.saveImage(m_kVolumeImageA.GetImage().getImageDirectory(), kImage.getImageName(), kImage.getType(), true);
     }
 

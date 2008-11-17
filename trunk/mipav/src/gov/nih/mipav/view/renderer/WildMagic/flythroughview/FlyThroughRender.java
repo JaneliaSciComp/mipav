@@ -110,6 +110,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     private Node m_kRotation = new Node();
     /** Calculating the mesh curvatures. */
     private MjCorticalMesh_WM m_kCortical = null;
+    /** Center of Mesh */
+    private Vector3f m_kCenter = new Vector3f();
     /** kMean curvature LUT. Pseudo color look up table. */
     private ModelLUT m_kMeanCurvaturesLUT = null;
     /** Lighting effect. */
@@ -119,6 +121,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
 
     /** Set to true when taking a snapshot of the fly path. */
     private boolean m_bSnapshot = false;
+   
 
     /**
      * Construct the FlyThroughRenderer.
@@ -166,8 +169,9 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
      * Add the fly-through surface.
      * @param kSurface the TriMesh surface to fly through.
      */
-    public void addSurface(TriMesh kSurface)
+    public void addSurface(TriMesh kSurface, Vector3f kCenter)
     {
+        m_kCenter.Copy(kCenter);
         m_kSurface = new TriMesh(kSurface);
         m_kSurface.AttachGlobalState(kSurface.GetGlobalState( GlobalState.StateType.MATERIAL ));
         SurfaceLightingEffect kLightShader = new SurfaceLightingEffect( m_kVolumeImageA );
@@ -233,7 +237,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         {
             if ( m_kCortical == null )
             {
-                m_kCortical = new MjCorticalMesh_WM(m_kSurface);
+                m_kCortical = new MjCorticalMesh_WM(m_kSurface, m_kCenter);
                 m_kCortical.computeMeanCurvature();
             }
 
