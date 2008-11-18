@@ -435,6 +435,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
         }
         printStream.println("Saving " + file.getName() + " to " + outputDir);
         printStream.println();
+        fileIO.setDisplayRangeOfSlicesDialog(false);
         fileIO.writeImage(inputImage, opts);
         
 
