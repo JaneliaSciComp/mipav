@@ -58,6 +58,7 @@ public class VolumeImageViewer extends JavaApplication3D
 
     private boolean m_bExtract = false;
     private VolumeTriPlanarInterface m_kParent;
+    private static int ms_iSurface = 0;
     
     public VolumeImageViewer( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip, Vector<VolumeObject> kDisplayList, boolean bExtract )
     {
@@ -190,10 +191,15 @@ public class VolumeImageViewer extends JavaApplication3D
                     kMeshes[0] = FileSurface_WM.readSurface( kImage, kFile, null );
                     if ( kMeshes[0] != null )
                     {
+                        m_kParent.getVolumeGPU().displayVolumeRaycast(false);
                         System.err.println("uploading surface");
+                        kSurfaceName = JDialogBase.makeImageName(kImage.getImageName(), ms_iSurface + "_extract.sur");
                         kMeshes[0].SetName( kSurfaceName );
                         m_kParent.getSurfacePanel().addSurfaces(kMeshes);
                         m_kParent.smoothMesh(kSurfaceName, 50, .05f, false, 0);
+                        m_kParent.getRendererGUI().setDisplaySurfaceCheck( true );
+                        m_kParent.getRendererGUI().setDisplayVolumeCheck( false );
+                        ms_iSurface++;
                     }
                     kImage.disposeLocal();
                     kImage = null;

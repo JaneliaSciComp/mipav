@@ -737,6 +737,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
+    /** Extract a TriMesh surface from the Volume Rendering. */
+    public void extractMeshFromVolume()
+    {
+        m_bExtract = true;
+    }
+    
     /**
      * Return the material properties of the given surface.
      * @param kSurfaceName the surface to query.
@@ -1587,7 +1593,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDTIDisplay.setEllipseMod( iMod );
         }
     }
-
+    
     /**
      * Sets the eye clip plane position.
      * @param f4 clip position (same value as sSlice in JPanelClip)
