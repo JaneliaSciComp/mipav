@@ -111,6 +111,9 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     /** Volume alpha-blending slider. */
     protected JSlider m_kVolumeBlendSlider;
     
+    /** Button for extracting a TriMesh surface based on the ray-cast volume rendered in Surface mode */
+    protected JButton m_kExtractTriMesh;
+    
 	/**
      * Constructor.
      * @param kVolumeViewer parent frame.
@@ -243,12 +246,27 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridy = 0;
          buttonPanel.add(kShaderButton, gbc);
          
+         m_kExtractTriMesh = new JButton( "Extract Mesh from Volume" );
+         m_kExtractTriMesh.addActionListener(this);
+         m_kExtractTriMesh.setActionCommand("ExtractMeshFromVolume");
+         m_kExtractTriMesh.setToolTipText("Extract and load a Triangle Mesh based on the Volume in Surface Mode");
+         m_kExtractTriMesh.setBorderPainted(true);
+         m_kExtractTriMesh.setFocusPainted(true);
+         m_kExtractTriMesh.setMargin(new Insets(0, 0, 0, 0));
+         m_kExtractTriMesh.setEnabled(false);
+         
+         JPanel extractPanel = new JPanel(new GridBagLayout());
+         extractPanel.setBorder(buildTitledBorder("Surface Extraction"));
+         gbc.gridy = 0;
+         extractPanel.add(m_kExtractTriMesh, gbc);
+         
          Box contentBox = new Box(BoxLayout.Y_AXIS);
 
          contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
          contentBox.add(componentsPanel);
          contentBox.add(renderModePanel);
          contentBox.add(blendPanel);
+         contentBox.add(extractPanel);
          contentBox.add(buttonPanel);
   
          mainScrollPanel.add(contentBox, BorderLayout.NORTH);
@@ -263,6 +281,15 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     public void setDisplaySurfaceCheck(boolean flag ) {
     	m_kDisplaySurfaceCheck.setSelected(flag);
     	m_kDisplaySurfaceCheck.setEnabled(flag);
+    }
+    
+    
+    /**
+     * Set the volume check box to true of false
+     * @param flag  true or false
+     */
+    public void setDisplayVolumeCheck(boolean flag ) {
+        m_kDisplayVolumeCheck.setSelected(flag);
     }
     
     /**
@@ -346,6 +373,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         {
             kSelfShadow.setEnabled(radioSURFACEFAST.isSelected());
         }
+        m_kExtractTriMesh.setEnabled(radioSURFACEFAST.isSelected());
     }
     
     /**

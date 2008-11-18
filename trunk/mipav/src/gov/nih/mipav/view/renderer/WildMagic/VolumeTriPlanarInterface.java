@@ -440,9 +440,11 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-
+        
         if (command.equals("Extract")) {
             raycastRenderWM.updateImageFromRotation();
+        } else if (command.equals("ExtractMeshFromVolume")) {
+            raycastRenderWM.extractMeshFromVolume();
         } else if (command.equals("HistoLUT")) {
             insertTab("LUT", histoLUTPanel);
         } else if (command.equals("VolRender")) {
@@ -1529,6 +1531,15 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     	return raycastRenderWM.getObjectRotation();
     }
 
+    /** 
+     * Get the render mode interface panel.
+     * @return render mode interface panel.
+     */
+    public JPanelRenderMode_WM getRendererGUI()
+    {
+        return rendererGUI;
+    }
+    
     /**
      * Get the RGB panel (only should be used with color images).
      *
