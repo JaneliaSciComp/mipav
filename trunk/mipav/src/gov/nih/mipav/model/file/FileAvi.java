@@ -27,6 +27,7 @@ import javax.swing.*;
  *           by running the folowing 2 files in mipav/apps: jmf_2_1_1e-windows-i586.exe DivX412Codec.exe
  *           CVID decoder was ported from the codec written by Dr. Tim Ferguson at 
  *           http://www.csse.monash.edu.au/~timf/.
+ *           A good source of sample avi files is http://samples.mplayerhq.hu.
  */
 
 public class FileAvi extends FileBase {
