@@ -113,6 +113,15 @@ public class JDialogSaveSlices extends JDialogBase {
 
     /** DOCUMENT ME! */
     private JPanel timePanel;
+    
+    private JPanel encapJP2Panel;
+    
+    private JCheckBox encapJP2Checkbox;
+    
+    private boolean saveAsEncapJP2 = false;
+    
+    private boolean isDicom;
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -171,7 +180,9 @@ public class JDialogSaveSlices extends JDialogBase {
                               (options.getFileType() == FileUtility.NRRD)); 
         enablePackBitWrite = options.isPackBitEnabled();
         this.options = options;
+        this.isDicom = isDicom;
         init();
+       
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -309,7 +320,7 @@ public class JDialogSaveSlices extends JDialogBase {
             } else {
                 options.setMultiFile(false);
             }
-
+            saveAsEncapJP2 = encapJP2Checkbox.isSelected();
             options.setWritePackBit(packBitCheckbox.isSelected());
 
             dispose();
@@ -354,8 +365,14 @@ public class JDialogSaveSlices extends JDialogBase {
     public FileWriteOptions getWriteOptions() {
         return options;
     }
+    
+    
 
-    /**
+    public boolean getSaveAsEncapJP2() {
+		return saveAsEncapJP2;
+	}
+
+	/**
      * Sets up GUI and displays the dialog.
      */
     private void init() {
@@ -387,6 +404,9 @@ public class JDialogSaveSlices extends JDialogBase {
         labelFirstSlice = new JLabel("First Slice");
         labelFirstSlice.setFont(serif12);
         labelFirstSlice.setForeground(Color.black);
+        if(maxValue == 0) {
+        	labelFirstSlice.setEnabled(false);
+        }
         slicePanel.add(labelFirstSlice);
 
         JPanel textFirstPanel = new JPanel();
@@ -394,6 +414,9 @@ public class JDialogSaveSlices extends JDialogBase {
         textFirstSlice.setText(String.valueOf(minValue));
         textFirstSlice.setFont(serif12);
         textFirstSlice.addFocusListener(this);
+        if(maxValue == 0) {
+        	textFirstSlice.setEnabled(false);
+        }
         gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.EAST;
         textFirstPanel.add(textFirstSlice);
@@ -405,6 +428,9 @@ public class JDialogSaveSlices extends JDialogBase {
         gbc.anchor = GridBagConstraints.WEST;
         labelLastSlice.setFont(serif12);
         labelLastSlice.setForeground(Color.black);
+        if(maxValue == 0) {
+        	labelLastSlice.setEnabled(false);
+        }
         slicePanel.add(labelLastSlice);
 
         JPanel textLastPanel = new JPanel();
@@ -414,6 +440,9 @@ public class JDialogSaveSlices extends JDialogBase {
         textLastSlice.setText(String.valueOf(maxValue));
         textLastSlice.setFont(serif12);
         textLastSlice.addFocusListener(this);
+        if(maxValue == 0) {
+        	textLastSlice.setEnabled(false);
+        }
         textLastPanel.add(textLastSlice);
         slicePanel.add(textLastPanel);
 
@@ -472,6 +501,19 @@ public class JDialogSaveSlices extends JDialogBase {
         packBitCheckbox.setEnabled(enablePackBitWrite);
         packBitCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
         tiffPanel.add(packBitCheckbox);
+        
+        //encapsulated jpeg2000 dicom panel
+        JPanel encapJP2Panel2 = new JPanel();
+        encapJP2Panel = new JPanel();
+        encapJP2Panel.setLayout(new BorderLayout());
+        encapJP2Panel.setForeground(Color.black);
+        encapJP2Panel.setBorder(buildTitledBorder("DICOM Options"));
+        
+        encapJP2Checkbox = new JCheckBox("Save as Encapsulated JPEG2000");
+        encapJP2Checkbox.setFont(serif12);
+        encapJP2Checkbox.setSelected(false);
+        encapJP2Checkbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        encapJP2Panel.add(encapJP2Checkbox);
 
         JPanel generalPanel = new JPanel();
         generalPanel.setBorder(buildTitledBorder("General Options"));
@@ -556,11 +598,17 @@ public class JDialogSaveSlices extends JDialogBase {
 
         tiff2Panel.setLayout(new BorderLayout());
         tiff2Panel.add(tiffPanel, BorderLayout.CENTER);
+        
+        encapJP2Panel2.setLayout(new BorderLayout());
+        encapJP2Panel2.add(encapJP2Panel, BorderLayout.CENTER);
 
         mainPanel.add(generalPanel);
         mainPanel.add(slicePanel);
         mainPanel.add(timePanel);
         mainPanel.add(tiff2Panel);
+        if(options.getFileType() == FileUtility.DICOM) {
+        	mainPanel.add(encapJP2Panel2);
+        }
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(buildOKButton());

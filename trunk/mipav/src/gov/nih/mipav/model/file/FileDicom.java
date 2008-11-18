@@ -3,6 +3,8 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.MipavMath;
 
+import gov.nih.mipav.model.file.rawjp2.EncoderRAW;
+import gov.nih.mipav.model.file.rawjp2.ImgReaderRAWSlice;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -12,6 +14,9 @@ import java.io.*;
 import java.util.*;
 
 import javax.imageio.ImageIO;
+
+import jj2000.j2k.encoder.Encoder;
+import jj2000.j2k.util.ParameterList;
 
 
 /**
@@ -1611,7 +1616,7 @@ public class FileDicom extends FileDicomBase {
      * 
      * @see FileRawChunk
      */
-    public void writeImage(ModelImage image, int start, int end, int index) throws IOException {
+    public void writeImage(ModelImage image, int start, int end, int index, boolean saveAsEncapJP2) throws IOException {
         float[] data = null;
         short[] dataRGB = null;
 
@@ -1641,86 +1646,141 @@ public class FileDicom extends FileDicomBase {
             double intercept = image.getFileInfo(index).getRescaleIntercept();
             FileRawChunk rawChunkFile;
             rawChunkFile = new FileRawChunk(raFile, fileInfo);
+            
+            
+            if(saveAsEncapJP2) {
+            	System.out.println("here");
+            	EncoderRAW encRAW;
+            	ByteArrayOutputStream buff;
+            	String outfile = fileDir + fileName;
 
-            switch (fileInfo.getDataType()) {
+                
+                ParameterList defpl = new ParameterList();
+            	String[][] param = Encoder.getAllParameters();
+            	for (int i=param.length-1; i>=0; i--) {
+            	    if(param[i][3]!=null) {
+            	    	defpl.put(param[i][0],param[i][3]);
+            	    }
+                }
 
-                case ModelStorageBase.BYTE:
+            	// Create parameter list using defaults
+                    ParameterList pl = new ParameterList(defpl);           
+                    pl.put("i", "something.raw"); // to make the EncoderRAW happy
+                    pl.put("o", outfile);
+                    pl.put("lossless","on");
+                    pl.put("verbose","off");
+                    pl.put("Mct","off");
+                    pl.put("file_format", "on");
+                    pl.put("disable_jp2_extension", "on");
 
-                    byte[] data2 = new byte[length];
-                    image.exportData(index * length, length, data);
-                    for (int i = 0; i < data.length; i++) {
-                        data2[i] = (byte) MipavMath.round( (data[i] - intercept) / invSlope);
-                    }
+                
+               encRAW = new EncoderRAW(pl,image);
+               ModelImage clonedImage = (ModelImage)image.clone();
+               byte[] data2 = new byte[length];
+               image.exportData(index * length, length, data);
+               for (int i = 0; i < data.length; i++) {
+                   data2[i] = (byte) MipavMath.round( (data[i] - intercept) / invSlope);
+               }
+               clonedImage.importData(0, data2, true);
+               
+               
+               
+               ImgReaderRAWSlice slice = new ImgReaderRAWSlice(clonedImage,0);
+               slice.setSliceIndex(index,true);
+               buff = encRAW.run1Slice(slice);
+               System.out.println(buff.size());
+               byte[] theData = buff.toByteArray();
+               if(theData == null) {
+            	   System.out.println("data6 is null");
+               }
+               System.out.println("aaaaaaaa" +  theData.length);
+               raFile.write(theData);
+               clonedImage.disposeLocal();
+               clonedImage = null;
 
-                    rawChunkFile.writeBufferByte(data2, 0, length);
-                    data2 = null;
-                    break;
 
-                case ModelStorageBase.UBYTE:
+            }else {
 
-                    short[] data3 = new short[length];
-                    image.exportData(index * length, length, data);
-                    for (int i = 0; i < data.length; i++) {
-                        data3[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
-                    }
-
-                    rawChunkFile.writeBufferUByte(data3, 0, length);
-                    data3 = null;
-                    break;
-
-                case ModelStorageBase.SHORT:
-
-                    short[] data4 = new short[end - start];
-                    image.exportData(index * length, length, data);
-                    for (int i = 0; i < data.length; i++) {
-                        data4[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
-                    }
-
-                    rawChunkFile.writeBufferShort(data4, 0, length, image.getFileInfo(0).getEndianess());
-                    data4 = null;
-                    break;
-
-                case ModelStorageBase.USHORT:
-
-                    int[] data5 = new int[length];
-
-                    // int tmpInt;
-                    image.exportData(index * length, length, data);
-
-                    // System.out.println(" Intercept = " + intercept + " invSlope = " + invSlope);
-                    for (int i = 0; i < data.length; i++) {
-                        data5[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
-                    }
-
-                    rawChunkFile.writeBufferUShort(data5, 0, length, image.getFileInfo(0).getEndianess());
-                    data5 = null;
-                    break;
-
-                case ModelStorageBase.ARGB:
-
-                    short[] dRGB = new short[3 * length];
-                    image.exportData(index * (4 * length), (4 * length), dataRGB);
-
-                    for (int i = 1, iRGB = 0; i < dataRGB.length;) {
-
-                        // Not sure slope intercept is needed here for color images
-                        dRGB[iRGB++] = (short) MipavMath.round( (dataRGB[i++] - intercept) / invSlope);
-                        dRGB[iRGB++] = (short) MipavMath.round( (dataRGB[i++] - intercept) / invSlope);
-                        dRGB[iRGB++] = (short) MipavMath.round( (dataRGB[i++] - intercept) / invSlope);
-                        i++;
-                    }
-
-                    rawChunkFile.writeBufferUByte(dRGB, 0, 3 * length);
-                    dRGB = null;
-                    break;
-
-                default:
-
-                    // Mod this to output to debug.
-                    System.out.println("Unsupported data type: " + fileInfo.getDataType());
-
-                    // left system.out, but added debug; dp, 2003-5-7:
-                    Preferences.debug("Unsupported data type: " + fileInfo.getDataType() + "\n");
+	            switch (fileInfo.getDataType()) {
+	
+	                case ModelStorageBase.BYTE:
+	
+	                    byte[] data2 = new byte[length];
+	                    image.exportData(index * length, length, data);
+	                    for (int i = 0; i < data.length; i++) {
+	                        data2[i] = (byte) MipavMath.round( (data[i] - intercept) / invSlope);
+	                    }
+	
+	                    rawChunkFile.writeBufferByte(data2, 0, length);
+	                    data2 = null;
+	                    break;
+	
+	                case ModelStorageBase.UBYTE:
+	
+	                    short[] data3 = new short[length];
+	                    image.exportData(index * length, length, data);
+	                    for (int i = 0; i < data.length; i++) {
+	                        data3[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
+	                    }
+	
+	                    rawChunkFile.writeBufferUByte(data3, 0, length);
+	                    data3 = null;
+	                    break;
+	
+	                case ModelStorageBase.SHORT:
+	
+	                    short[] data4 = new short[end - start];
+	                    image.exportData(index * length, length, data);
+	                    for (int i = 0; i < data.length; i++) {
+	                        data4[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
+	                    }
+	
+	                    rawChunkFile.writeBufferShort(data4, 0, length, image.getFileInfo(0).getEndianess());
+	                    data4 = null;
+	                    break;
+	
+	                case ModelStorageBase.USHORT:
+	
+	                    int[] data5 = new int[length];
+	
+	                    // int tmpInt;
+	                    image.exportData(index * length, length, data);
+	
+	                    // System.out.println(" Intercept = " + intercept + " invSlope = " + invSlope);
+	                    for (int i = 0; i < data.length; i++) {
+	                        data5[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
+	                    }
+	
+	                    rawChunkFile.writeBufferUShort(data5, 0, length, image.getFileInfo(0).getEndianess());
+	                    data5 = null;
+	                    break;
+	
+	                case ModelStorageBase.ARGB:
+	
+	                    short[] dRGB = new short[3 * length];
+	                    image.exportData(index * (4 * length), (4 * length), dataRGB);
+	
+	                    for (int i = 1, iRGB = 0; i < dataRGB.length;) {
+	
+	                        // Not sure slope intercept is needed here for color images
+	                        dRGB[iRGB++] = (short) MipavMath.round( (dataRGB[i++] - intercept) / invSlope);
+	                        dRGB[iRGB++] = (short) MipavMath.round( (dataRGB[i++] - intercept) / invSlope);
+	                        dRGB[iRGB++] = (short) MipavMath.round( (dataRGB[i++] - intercept) / invSlope);
+	                        i++;
+	                    }
+	
+	                    rawChunkFile.writeBufferUByte(dRGB, 0, 3 * length);
+	                    dRGB = null;
+	                    break;
+	
+	                default:
+	
+	                    // Mod this to output to debug.
+	                    System.out.println("Unsupported data type: " + fileInfo.getDataType());
+	
+	                    // left system.out, but added debug; dp, 2003-5-7:
+	                    Preferences.debug("Unsupported data type: " + fileInfo.getDataType() + "\n");
+	            }
             }
 
             rawChunkFile.close();
@@ -1883,7 +1943,7 @@ public class FileDicom extends FileDicomBase {
         inSQ = true;
         getNextElement(endianess);
         name = convertGroupElement(groupWord, elementWord);
-
+System.out.println("aa name is " + name);
         int[] tableOffsets;
 
         if (elementLength > 0) {
@@ -1897,10 +1957,11 @@ public class FileDicom extends FileDicomBase {
 
         getNextElement(endianess);
         name = convertGroupElement(groupWord, elementWord);
-
+        System.out.println("bb  name is " + name);
         Vector<byte[]> v = new Vector<byte[]>();
 
         while (name.equals(SEQ_ITEM_BEGIN)) {
+        	System.out.println("cc name is " + name);
             byte[] imageFrag = new byte[elementLength]; // temp buffer
 
             for (int i = 0; i < imageFrag.length; i++) {
@@ -1911,9 +1972,9 @@ public class FileDicom extends FileDicomBase {
             getNextElement(endianess);
             name = convertGroupElement(groupWord, elementWord);
         }
-
+        System.out.println("dd name is " + name);
         if ( !name.equals(SEQ_ITEM_END) && !name.equals(SEQ_ITEM_UNDEF_END)) {
-
+        	System.out.println("ee name is  " + name);
             if ( !isQuiet()) {
                 MipavUtil.displayWarning("End tag not present.  Image may have been corrupted.");
             }

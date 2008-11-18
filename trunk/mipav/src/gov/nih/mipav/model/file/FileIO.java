@@ -83,6 +83,11 @@ public class FileIO {
      * identify the image type so the correct reader can be used
      */
     private JDialogUnknownIO unknownIODialog;
+    
+    //here for now....11/13/2008
+    private boolean saveAsEncapJP2 = false;
+    
+    private boolean displayRangeOfSlicesDialog = true;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -2328,6 +2333,8 @@ public class FileIO {
                 return;
             }
         }
+        
+        System.out.println("Save as Enc JPEG2000 is " + saveAsEncapJP2);
 
         boolean success = false;
 
@@ -2365,6 +2372,12 @@ public class FileIO {
                 // not handling 4d or greater images
                 if (image.getNDims() > 3) {
                     MipavUtil.displayInfo("Saving of 4D or greater datsets as DICOM is not currently supported");
+                    break;
+                }
+                
+                //if we save off dicom as encapsulated jpeg2000, call the writeDicom method
+                if(saveAsEncapJP2) {
+                	success = writeDicom(image, options);
                     break;
                 }
 
@@ -3133,6 +3146,7 @@ public class FileIO {
      * @return DOCUMENT ME!
      */
     private boolean callDialog(int[] extents, boolean isTiff, FileWriteOptions options) {
+    	
         JDialogSaveSlices dialogSave = null;
 
         if ( (extents.length == 2) && isTiff && options.isPackBitEnabled()) {
@@ -3145,18 +3159,25 @@ public class FileIO {
             } else {
                 options.setWritePackBit(false);
             }
-        } else if (extents.length > 2) {
-
-            if (extents.length == 3) {
+        }else if (extents.length >= 2) {
+        	if((extents.length == 2) &&  (options.getFileType() == FileUtility.DICOM) && displayRangeOfSlicesDialog) {
+            	//we want the saveslices to pop up in this case so the user can select if they want
+            	//to save as encapsulated jpeg2000..unless ofcourse flag has been set to false
+            	dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, 0, options);
+        	}
+        	else if (extents.length == 3) {
                 dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, extents[2] - 1, options);
             } else if (extents.length == 4) {
                 dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, extents[2] - 1, 0, extents[3] - 1, options);
+            }else {
+            	return true;
             }
 
             if (dialogSave.isCancelled()) {
                 return false;
             }
 
+            saveAsEncapJP2 = dialogSave.getSaveAsEncapJP2();
             options = dialogSave.getWriteOptions();
 
             if (extents.length == 3) {
@@ -8978,7 +8999,7 @@ public class FileIO {
 
                 dicomFile = new FileDicom(name, fileDir);
                 int sliceSize = image.getSliceSize();
-                dicomFile.writeImage(image, 0, sliceSize, 0);
+                dicomFile.writeImage(image, 0, sliceSize, 0, false);
                 // }
             } else { // its a multi frame image to be saved!!!
 
@@ -9114,7 +9135,12 @@ public class FileIO {
                 myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 3), 2); // samples per pixel
                 myFileInfo.getTagTable().setValue("0028,0004", new String("RGB")); // photometric
                 myFileInfo.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
-                myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
+                if(saveAsEncapJP2) {
+                	myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferJPEG2000LOSSLESS);
+                	myFileInfo.getTagTable().setValue("0028,2110","00");
+                }else {
+                	myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
+                }
             }
 
         } else { // Non DICOM images
@@ -9130,7 +9156,12 @@ public class FileIO {
             myFileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
             myFileInfo.setRescaleIntercept(0);
             myFileInfo.setRescaleSlope(1);
-            myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
+            if(saveAsEncapJP2) {
+                myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferJPEG2000LOSSLESS);
+            	myFileInfo.getTagTable().setValue("0028,2110","00");
+            }else {
+            	myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
+            }
             myFileInfo.vr_type = FileInfoDicom.EXPLICIT;
 
             // necessary to save (non-pet) floating point minc files to dicom
@@ -9429,8 +9460,7 @@ public class FileIO {
         }
 
         try {
-            String name;
-
+            String name = "";
             if ( ! ((FileInfoDicom) (myFileInfo)).isMultiFrame()) {
 
                 for (i = options.getBeginSlice(); i <= options.getEndSlice(); i++) {
@@ -9462,9 +9492,10 @@ public class FileIO {
                     }
 
                     dicomFile = new FileDicom(name, fileDir);
-                    dicomFile.writeImage(image, i * sliceSize, (i * sliceSize) + sliceSize, i);
+                    dicomFile.writeImage(image, i * sliceSize, (i * sliceSize) + sliceSize, i, saveAsEncapJP2);
 
                 }
+
             } else { // its a multi frame image to be saved!!!
 
                 // progressBar.updateValue( Math.round((float)i/(endSlice) * 100));
@@ -10442,6 +10473,11 @@ public class FileIO {
 
         return true;
     }
+    
+    public void setDisplayRangeOfSlicesDialog(boolean displayRangeOfSlicesDialog) {
+		this.displayRangeOfSlicesDialog = displayRangeOfSlicesDialog;
+	}
+    
 
     // ~ Inner Classes
     // --------------------------------------------------------------------------------------------------
@@ -10507,4 +10543,8 @@ public class FileIO {
             return location;
         }
     }
+
+
+
+	
 }
