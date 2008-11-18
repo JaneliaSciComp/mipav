@@ -1,0 +1,61 @@
+//----------------------------------------------------------------------------
+void v_SurfaceExtract_P2
+(
+    in float4        kModelPosition  : POSITION,
+    in float3        kInBaseTCoord : TEXCOORD0,
+    out float4       kClipPosition : POSITION,
+    out float3       kOutBaseTCoord : TEXCOORD0,
+    uniform float4x4 WVPMatrix)
+{
+    // Transform the position from model space to clip space.
+    kClipPosition = mul(kModelPosition,WVPMatrix);
+
+    // Pass through the texture coordinate.
+    kOutBaseTCoord = kInBaseTCoord;
+}
+//----------------------------------------------------------------------------
+void p_SurfaceExtract_P2
+(
+    in float3         kBaseTCoord : TEXCOORD0,
+    out float3        kPixelColor : COLOR,
+    uniform float4    StepSize,
+    uniform sampler3D VolumeExtract
+    )
+{
+    kPixelColor.rgb = tex3D( VolumeExtract, kBaseTCoord ).xyz;
+
+//     float3 index; 
+//     float3 color;
+//     index = kBaseTCoord;
+//     color = tex3D( VolumeNormals, index ).xyz;
+//     index.x -= StepSize.x;    index.y -= StepSize.y;    index.z -= StepSize.z;
+//     index.x -= StepSize.x;    index.y -= StepSize.y;    index.z  = StepSize.z;
+//     index.x -= StepSize.x;    index.y -= StepSize.y;    index.z += StepSize.z;
+//     index.x -= StepSize.x;    index.y  = StepSize.y;    index.z -= StepSize.z;
+//     index.x -= StepSize.x;    index.y  = StepSize.y;    index.z  = StepSize.z;
+//     index.x -= StepSize.x;    index.y  = StepSize.y;    index.z += StepSize.z;
+//     index.x -= StepSize.x;    index.y += StepSize.y;    index.z -= StepSize.z;
+//     index.x -= StepSize.x;    index.y += StepSize.y;    index.z  = StepSize.z;
+//     index.x -= StepSize.x;    index.y += StepSize.y;    index.z += StepSize.z;
+
+//     index.x  = StepSize.x;    index.y -= StepSize.y;    index.z -= StepSize.z;
+//     index.x  = StepSize.x;    index.y -= StepSize.y;    index.z  = StepSize.z;
+//     index.x  = StepSize.x;    index.y -= StepSize.y;    index.z += StepSize.z;
+//     index.x  = StepSize.x;    index.y  = StepSize.y;    index.z -= StepSize.z;
+//     //index.x  = StepSize.x;    index.y  = StepSize.y;    index.z  = StepSize.z;
+//     index.x  = StepSize.x;    index.y  = StepSize.y;    index.z += StepSize.z;
+//     index.x  = StepSize.x;    index.y += StepSize.y;    index.z -= StepSize.z;
+//     index.x  = StepSize.x;    index.y += StepSize.y;    index.z  = StepSize.z;
+//     index.x  = StepSize.x;    index.y += StepSize.y;    index.z += StepSize.z;
+
+//     index.x += StepSize.x;    index.y -= StepSize.y;    index.z -= StepSize.z;
+//     index.x += StepSize.x;    index.y -= StepSize.y;    index.z  = StepSize.z;
+//     index.x += StepSize.x;    index.y -= StepSize.y;    index.z += StepSize.z;
+//     index.x += StepSize.x;    index.y  = StepSize.y;    index.z -= StepSize.z;
+//     index.x += StepSize.x;    index.y  = StepSize.y;    index.z  = StepSize.z;
+//     index.x += StepSize.x;    index.y  = StepSize.y;    index.z += StepSize.z;
+//     index.x += StepSize.x;    index.y += StepSize.y;    index.z -= StepSize.z;
+//     index.x += StepSize.x;    index.y += StepSize.y;    index.z  = StepSize.z;
+//     index.x += StepSize.x;    index.y += StepSize.y;    index.z += StepSize.z;
+}
+//----------------------------------------------------------------------------
