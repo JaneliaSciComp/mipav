@@ -679,12 +679,21 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
 
                     if (correlation) {
 
-                        for (i = 0; i < matrixSize; i++) {
-
-                            for (j = 0; j < matrixSize; j++) {
-                                resultBuffer[currentResult][pos] += glcm[i][j] * (i - glcmMean) * (j - glcmMean) /
-                                                                        glcmVariance;
+                        if (glcmVariance != 0) {
+                            for (i = 0; i < matrixSize; i++) {
+    
+                                for (j = 0; j < matrixSize; j++) {
+                                    resultBuffer[currentResult][pos] += glcm[i][j] * (i - glcmMean) * (j - glcmMean) /
+                                                                            glcmVariance;
+                                }
                             }
+                        } // if (glcmVariance != 0)
+                        else {
+                            // When an image area is completely uniform, the GLCM variance is zero, just as the first-order
+                            // image variance is zero.  As a result, the denominator of the correlation equation becomes 0,
+                            // and the correlation becomes undefined.  The undefined value is set to 1, as the correlation
+                            // among the original pixel values is perfect
+                            resultBuffer[currentResult][pos] = 1.0f;
                         }
 
                         currentResult++;
