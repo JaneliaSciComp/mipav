@@ -381,7 +381,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
 
             return;
-        }else if (command.equals("gc")) {
+        } else if (command.equals("gc")) {
             System.gc();
             ProvenanceRecorder.getReference().addLine(new ActionCollectGarbage());
             ScriptRecorder.getReference().addLine(new ActionCollectGarbage());
@@ -2415,6 +2415,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         thePlugIn = Class.forName(plugInName).newInstance();
 
                         if (thePlugIn instanceof PlugInGeneric) {
+                            // don't exit on an error (instead show the error dialog)
+                            setPlugInFrameVisible(true);
+                            setExitCmdLineOnError(false);
+
                             ((PlugInGeneric) thePlugIn).run();
                         } else {
                             MipavUtil.displayError("Plug-in " + plugInName
