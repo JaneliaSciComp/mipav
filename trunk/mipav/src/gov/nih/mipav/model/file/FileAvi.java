@@ -74,6 +74,9 @@ public class FileAvi extends FileBase {
     
     /** Cinepak (CVID) */
     private boolean doCVID = false;
+    
+    /** Creative YUV (CYUV) */
+    private boolean doCYUV = false;
 
     /** true for big-endian and false for little-endian. */
     private boolean endianess;
@@ -3080,7 +3083,273 @@ public class FileAvi extends FileBase {
                 } // while ((totalBytesRead < (totalDataArea-8)) && chunkRead)
                 
                 
-            } // else if (doCVID && (bitCount == 24))    
+            } // else if (doCVID && (bitCount == 24)) 
+            else if (doCYUV && (bitCount == 16)) {
+                bufferSize = 4 * imgExtents[0] * imgExtents[1];
+                imgBuffer = new byte[bufferSize];
+                dataSignature = new byte[4];
+                totalDataArea = LIST2Size - 4; // Subtract out 4 'movi' bytes
+                totalBytesRead = 0;
+
+                // Check for LIST rec<sp> subchunks
+                if (!AVIF_MUSTUSEINDEX) {
+                    signature = getInt(endianess);
+
+                    if (signature == 0x5453494C) {
+
+                        // have read LIST
+                        LIST2subchunkSize = getInt(endianess);
+                        moviSubchunkPosition = raFile.getFilePointer();
+                        CHUNKtype = getInt(endianess);
+
+                        if (CHUNKtype == 0x20636572) {
+
+                            // have read rec<sp>
+                            haveMoviSubchunk = true;
+                            subchunkDataArea = LIST2subchunkSize - 4;
+                            subchunkBytesRead = 0;
+                            subchunkBlocksRead = 0;
+                        } else {
+                            raFile.close();
+                            throw new IOException("CHUNK type in second LIST sub CHUNK is an illegal = " + CHUNKtype);
+                        }
+                    } else {
+                        raFile.seek(startPosition);
+                    }
+                } // if (!AVIF_MUSTUSEINDEX)
+
+                x = 0;
+                y = imgExtents[1] - 1;
+                z = 0;
+
+                int pixelIndex = 0;
+                boolean bufferFinished = false;
+                byte[] delta_y_tbl = new byte[16];
+                byte[] delta_c_tbl = new byte[16];
+                int cur_Y = 0;
+                int cur_U = 0;
+                int cur_V = 0;
+                int Y[] = new int[4];
+                int i;
+                int r;
+                int g;
+                int b;
+                
+
+                chunkRead = true;
+
+                loopCYUV:
+                while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
+                           (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
+                    if (AVIF_MUSTUSEINDEX) {
+                        raFile.seek(indexPointer);
+                        dataFound = false;
+
+                        while (!dataFound) {
+                            raFile.read(dataSignature);
+
+                            if ((dataSignature[2] != 0x64 /*d */) || (dataSignature[3] < 0x62 /* b */) ||
+                                    (dataSignature[3] > 0x63 /* c */)) {
+                                indexPointer = indexPointer + 16;
+                                indexBytesRead += 16;
+                                if (indexBytesRead >= indexSize) {
+                                    break loopCYUV;
+                                }
+                                raFile.seek(indexPointer);
+                            } else {
+                                dataFound = true;
+                            }
+                        } // while (!dataFound)
+
+                        indexPointer = indexPointer + 8;
+                        raFile.seek(indexPointer);
+                        moviOffset = getInt(endianess);
+                        indexPointer = indexPointer + 8;
+                        indexBytesRead += 16;
+                        raFile.seek(moviPosition + (long) moviOffset);
+                    } // if (AVIFMUSTINDEX)
+
+                    raFile.read(dataSignature);
+                    totalBytesRead = totalBytesRead + 4;
+                    subchunkBytesRead += 4;
+
+                    if ((dataSignature[2] == 0x64 /* d */) &&
+                            ((dataSignature[3] == 0x63 /* c */) || (dataSignature[3] == 0x62 /* b */))) {
+                        dataLength = getInt(endianess);
+
+                        if ((dataLength % 2) == 1) {
+                            dataLength++;
+                        }
+
+                        totalBytesRead = totalBytesRead + 4;
+                        subchunkBytesRead += 4;
+
+                        if (one && (z != middleSlice)) {
+                            long ptr = raFile.getFilePointer();
+                            raFile.seek(ptr + dataLength);
+                            totalBytesRead = totalBytesRead + dataLength;
+                            subchunkBytesRead += dataLength;
+                            z++;
+                        } else {
+                            fileBuffer = new byte[dataLength];
+                            raFile.read(fileBuffer);
+                            totalBytesRead = totalBytesRead + dataLength;
+                            subchunkBytesRead += dataLength;
+                            bufferFinished = false;
+                            pixelIndex = 0;
+
+                            for (int j = 0; (j < dataLength) && (!bufferFinished);) {
+                                // 16 byte prediction table 1 is unused
+                                j += 16;
+                                for (k = 0; k < 16; k++) {
+                                    delta_y_tbl[k] = fileBuffer[j++];
+                                }
+                                for (k = 0; k < 16; k++) {
+                                    delta_c_tbl[k] = fileBuffer[j++];
+                                }
+                                
+                                for (y = 0; y < imgExtents[1]; y++) {
+                                    for (x = 0; x < imgExtents[0]; x += 4) {
+                                        if (x == 0) { /* first pixels in scanline */
+                                           cur_U = fileBuffer[j++];
+                                           cur_Y = (cur_U & 0x0f) << 4;
+                                           cur_U = cur_U & 0xf0;
+                                           Y[0] = cur_Y;
+                                           
+                                           cur_V = fileBuffer[j++];
+                                           cur_Y = (cur_Y + delta_y_tbl[cur_V & 0x0f]) & 0xff;
+                                           cur_V = cur_V & 0xf0;
+                                           Y[1] = cur_Y;
+                                        } // if (x == 0)
+                                        else { /** subsequent pixels in scanline */
+                                           i = fileBuffer[j++] & 0xff; 
+                                           cur_U = (cur_U + delta_c_tbl[i >>> 4]) & 0xff;
+                                           cur_Y = (cur_Y + delta_y_tbl[i & 0x0f]) & 0xff;
+                                           Y[0] = cur_Y;
+                                           
+                                           i = fileBuffer[j++] & 0xff;
+                                           cur_V = (cur_V + delta_c_tbl[i >>> 4]) & 0xff;
+                                           cur_Y = (cur_Y + delta_y_tbl[i & 0x0f]) & 0xff;
+                                           Y[1] = cur_Y;
+                                        } // else x != 0
+                                        
+                                        i = fileBuffer[j++] & 0xff;
+                                        cur_Y = (cur_Y + delta_y_tbl[i & 0x0f]) & 0xff;
+                                        Y[2] = cur_Y;
+                                        
+                                        cur_Y = (cur_Y + delta_y_tbl[i >>> 4]) & 0xff;
+                                        Y[3] = cur_Y;
+                                        
+                                        for (k = 0; k < 4; k++) {
+                                            // ITU-R 610 conversion formula for SDTV:
+                                           r = (int)Math.round(1.164 * (Y[k] - 16) + 1.596 * (cur_V - 128));
+                                           if (r < 0) {
+                                               r = 0;
+                                           }
+                                           else if (r > 255) {
+                                               r = 255;
+                                           }
+                                           imgBuffer[4 * pixelIndex + 1] = (byte)r;
+                                           g = (int)Math.round(1.164 * (Y[k] - 16) - 0.813 * (cur_V - 128) - 0.391 * (cur_U - 128));
+                                           if (g < 0) {
+                                               g = 0;
+                                           }
+                                           else if (g > 255) {
+                                               g = 255;
+                                           }
+                                           imgBuffer[4 * pixelIndex + 2] = (byte)g;
+                                           b = (int)Math.round(1.164 * (Y[k] - 16) + 2.018 * (cur_U - 128));
+                                           if (b < 0) {
+                                               b = 0;
+                                           }
+                                           else if (b > 255) {
+                                               b = 255;
+                                           }
+                                           imgBuffer[4 * pixelIndex + 3] = (byte)b;
+                                           pixelIndex++;
+                                           /**
+                                            * ITU-R 709 for HDTV
+                                            * R = 1.164 * (Y - 16) + 2.115 * (V - 128)
+                                            * G = 1.164 * (Y - 16) - 0.534 * (V - 128) - 0.213 * (U - 128)
+                                            * B = 1.164 * (Y - 16) + 1.793 * (U - 128)
+                                            */
+                                        } // for (k = 0; k < 4; k++)
+                                           
+                                       // Check if decode is finished
+                                       if ((pixelIndex == imgExtents[0]*imgExtents[1]) || (j == dataLength)) {
+
+                                           bufferFinished = true;
+
+                                           if (one) {
+                                               imageA.importData(0, imgBuffer, false);
+                                           } else {
+                                               imageA.importData(z * bufferSize, imgBuffer, false);
+                                           }
+
+                                           if (actualFrames > 1) {
+                                               fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
+                                           }
+                                           z++;
+                                       }
+                                    }
+                                        
+                                    } // for (x = 0; x < imgExtents[0]; x += 4)
+                                } // for (y = imgExtents[1] - 1; y >= 0; y--)
+
+                                
+                            } // for (int j = 0; (j < dataLength) && (!bufferFinished); )
+                    } // else if ((dataSignature[2] == 0x64 /* d */) && (dataSignature[3] == 0x63 /* c */))
+                    else {
+                        dataLength = getInt(endianess);
+
+                        if ((dataLength % 2) == 1) {
+                            dataLength++;
+                        }
+
+                        totalBytesRead = totalBytesRead + 4;
+                        subchunkBytesRead += 4;
+
+                        long ptr = raFile.getFilePointer();
+                        raFile.seek(ptr + dataLength);
+                        totalBytesRead = totalBytesRead + dataLength;
+                        subchunkBytesRead += dataLength;
+                    } // else
+
+                    subchunkBlocksRead++;
+
+                    if (haveMoviSubchunk && (subchunkBlocksRead == streams) && (totalBytesRead < totalDataArea)) {
+                        totalBytesRead += moviSubchunkPosition + LIST2subchunkSize - raFile.getFilePointer();
+                        raFile.seek(moviSubchunkPosition + LIST2subchunkSize);
+
+                        // Check for LIST rec<sp> subchunks
+                        signature = getInt(endianess);
+                        totalBytesRead += 4;
+
+                        if (signature == 0x5453494C) {
+
+                            // have read LIST
+                            LIST2subchunkSize = getInt(endianess);
+                            totalBytesRead += 4;
+                            moviSubchunkPosition = raFile.getFilePointer();
+                            CHUNKtype = getInt(endianess);
+
+                            if (CHUNKtype == 0x20636572) {
+
+                                // have read rec<sp>
+                                totalBytesRead += 4;
+                                subchunkDataArea = LIST2subchunkSize - 4;
+                                subchunkBytesRead = 0;
+                                subchunkBlocksRead = 0;
+                            } else {
+                                raFile.close();
+                                throw new IOException("CHunktype for LIST2sbuchunk is an illegal = " + CHUNKtype);
+                            }
+                        } else {
+                            chunkRead = false;
+                        }
+                    } // if (haveMoviSubchunk && (subchunkBlocksRead == streams))
+                } // while ((totalBytesRead < totalDataArea) && chunkRead)    
+            } // else if (doCYUV && (bitCount == 16))
 
             raFile.close();
 
@@ -5161,6 +5430,9 @@ public class FileAvi extends FileBase {
                 } else if (handlerString.toUpperCase().startsWith("CVID")) {
                     Preferences.debug("Cinepak (CVID) encoding\n", Preferences.DEBUG_FILEIO);
                     doCVID = true;
+                } else if (handlerString.toUpperCase().startsWith("CYUV")) {
+                    Preferences.debug("Creative YUV (CYUV) encoding\n", Preferences.DEBUG_FILEIO);
+                    doCYUV = true;
                 } else if (handlerString.toUpperCase().startsWith("MP42")) {
                     return AlgorithmTranscode.TRANSCODE_MP42;
                 } else if (handlerString.toUpperCase().startsWith("MJPG")) {
@@ -5344,6 +5616,9 @@ public class FileAvi extends FileBase {
                 } else if (compression == 1684633187) {
                     Preferences.debug("compression is Cinepak (CVID)\n", Preferences.DEBUG_FILEIO);
                     doCVID = true;
+                } else if (compression == 1987410275) {
+                    Preferences.debug("compression is Creative YUV (CYUV)\n", Preferences.DEBUG_FILEIO);
+                    doCYUV = true;
                 } else {
                     raFile.close();
                     throw new IOException("Unknown compression with value = " + compression);
@@ -5355,7 +5630,7 @@ public class FileAvi extends FileBase {
                          ((bitCount == 4) || (bitCount == 8) || (bitCount == 16) || (bitCount == 24) || (bitCount == 32))) ||
                         ((compression == 1) && (bitCount == 8)) || (doMSVC && (bitCount == 8)) ||
                         (doMSVC && (bitCount == 16)) || (doCVID && (bitCount == 8)) || (doCVID && (bitCount == 24)) || 
-                        (doCVID && (bitCount == 40))) {
+                        (doCVID && (bitCount == 40)) || (doCYUV && (bitCount == 16))) {
                     // OK
                 } else {
                     raFile.close();
