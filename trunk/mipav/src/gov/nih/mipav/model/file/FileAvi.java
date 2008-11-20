@@ -25,7 +25,7 @@ import javax.swing.*;
  *           Melanson's Open Source Video 1 decoder found at
  *           http://zebra.fh-weingarten.de/~maxi/html/mplayer-dev-eng/2001-11/txt00008.txt Installing codecs may be done
  *           by running the folowing 2 files in mipav/apps: jmf_2_1_1e-windows-i586.exe DivX412Codec.exe
- *           CVID decoder was ported from the codec written by Dr. Tim Ferguson at 
+ *           CVID and CYUV decoders were ported from the codecs written by Dr. Tim Ferguson at 
  *           http://www.csse.monash.edu.au/~timf/.
  *           A good source of sample avi files is http://samples.mplayerhq.hu.
  */
