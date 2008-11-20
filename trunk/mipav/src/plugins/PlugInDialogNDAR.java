@@ -1,9 +1,10 @@
+import gov.nih.mipav.plugins.JDialogStandalonePlugin;
+
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.WidgetFactory;
-import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.srb.JDialogLoginSRB;
 
 import java.awt.*;
@@ -18,7 +19,7 @@ import javax.swing.event.*;
 import javax.swing.table.*;
 
 
-public class PlugInDialogNDAR extends JDialogBase implements ActionListener, ChangeListener, ItemListener {
+public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionListener, ChangeListener, ItemListener {
 
     /** Scrolling text area for log output */
     private WidgetFactory.ScrollTextArea logOutputArea;
@@ -132,7 +133,7 @@ public class PlugInDialogNDAR extends JDialogBase implements ActionListener, Cha
 
                 worker.start();
             } else if (index == TAB_LOG) {
-                dispose();
+                windowClosing(null);
             } else if (tabbedPane.getTabCount() > index + 1) {
                 tabbedPane.setSelectedIndex(index + 1);
             }
