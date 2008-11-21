@@ -556,6 +556,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         ViewUserInterface UI;
         float[] intensity = null;
         float[] count = null;
+        boolean sameLowHigh;
 
         if (image == null) {
             displayError("Source Image is null");
@@ -817,6 +818,13 @@ public class AlgorithmHistogram extends AlgorithmBase {
         else {
             UI.setDataText("No obvious mode. " + numberMaximumPeaks + " values have counts = " + countInMaximumPeak + "\n");
         }
+        
+        sameLowHigh = true;
+        for (i = 0; i < bins & sameLowHigh; i++) {
+            if (lowValue[i] != highValue[i]) {
+                sameLowHigh = false;
+            }
+        }
 
         if (image.getNDims() == 2) {
             int[] units = image.getFileInfo()[0].getUnitsOfMeasure();
@@ -826,162 +834,53 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 float pixelSize = res[0] * res[1];
                 String unitsStr = FileInfoBase.getUnitsOfMeasureStr(units[0]);
 
+                if (sameLowHigh) {
+                    UI.setDataText("intensity\tcount \tarea in square "+ unitsStr + "\n");
+                }
+                else {
+                    UI.setDataText("low intensity \thigh intensity \tcount \tarea in square " + unitsStr + "\n");
+                }
+            
 
-                if (image.isColorImage()) {
+                for (i = 0; i < bins; i++) {
 
-                    if (RGBOffset == 1) {
+                    if (histoBuffer[i] >= 1) {
 
-                        for (i = 0; i < bins; i++) {
-
-                            if (histoBuffer[i] >= 1) {
-
-                                if (lowValue[i] == highValue[i]) {
-                                    UI.setDataText(image.getImageName() + " red intensity = " + lowValue[i] +
-                                                   "\t\t count = " + histoBuffer[i] + "\t area = " +
-                                                   (pixelSize * histoBuffer[i]) + " square " + unitsStr + "\n");
-                                } // if (lowValue[i] == highValue[i])
-                                else { // lowValue[i] != highValue[i]
-                                    UI.setDataText(image.getImageName() + " red intensities = " + lowValue[i] + " to " +
-                                                   highValue[i] + "\t count = " + histoBuffer[i] + "\t area = " +
-                                                   (pixelSize * histoBuffer[i]) + " square " + unitsStr + "\n");
-                                } // lowValue[i] != highValue[i]
-                            } // if (histoBuffer[i] >= 1)
-                        } // for (i = 0; i < bins; i++)
-                    } // if (RGBOffset == 1)
-                    else if (RGBOffset == 2) {
-
-                        for (i = 0; i < bins; i++) {
-
-                            if (histoBuffer[i] >= 1) {
-
-                                if (lowValue[i] == highValue[i]) {
-                                    UI.setDataText(image.getImageName() + " green intensity = " + lowValue[i] +
-                                                   "\t\t count = " + histoBuffer[i] + "\t area = " +
-                                                   (pixelSize * histoBuffer[i]) + " square " + unitsStr + "\n");
-                                } // if (lowValue[i] == highValue[i])
-                                else { // lowValue[i] != highValue[i]
-                                    UI.setDataText(image.getImageName() + " green intensities = " + lowValue[i] +
-                                                   " to " + highValue[i] + "\t count = " + histoBuffer[i] +
-                                                   "\t area = " + (pixelSize * histoBuffer[i]) + " square " + unitsStr +
-                                                   "\n");
-                                } // lowValue[i] != highValue[i]
-                            } // if (histoBuffer[i] >= 1)
-                        } // for (i = 0; i < bins; i++)
-                    } // else if (RGBOffset == 2)
-                    else { // RGBOffset == 3
-
-                        for (i = 0; i < bins; i++) {
-
-                            if (histoBuffer[i] >= 1) {
-
-                                if (lowValue[i] == highValue[i]) {
-                                    UI.setDataText(image.getImageName() + " blue intensity = " + lowValue[i] +
-                                                   "\t\t count = " + histoBuffer[i] + "\t area = " +
-                                                   (pixelSize * histoBuffer[i]) + " square " + unitsStr + "\n");
-                                } // if (lowValue[i] == highValue[i])
-                                else { // lowValue[i] != highValue[i]
-                                    UI.setDataText(image.getImageName() + " blue intensities = " + lowValue[i] +
-                                                   " to " + highValue[i] + "\t count = " + histoBuffer[i] +
-                                                   "\t area = " + (pixelSize * histoBuffer[i]) + " square " + unitsStr +
-                                                   "\n");
-                                } // lowValue[i] != highValue[i]
-                            } // if (histoBuffer[i] >= 1)
-                        } // for (i = 0; i < bins; i++)
-                    } // else RGBOffset == 3
-                } // color image
-                else { // other image type
-
-                    for (i = 0; i < bins; i++) {
-
-                        if (histoBuffer[i] >= 1) {
-
-                            if (lowValue[i] == highValue[i]) {
-                                UI.setDataText(image.getImageName() + " intensity = " + lowValue[i] + "\t\t count = " +
-                                               histoBuffer[i] + "\t area = " + (pixelSize * histoBuffer[i]) +
-                                               " square " + unitsStr + "\n");
-                            } // if (lowValue[i] == highValue[i])
-                            else { // lowValue[i] != highValue[i]
-                                UI.setDataText(image.getImageName() + " intensities = " + lowValue[i] + " to " +
-                                               highValue[i] + "\t count = " + histoBuffer[i] + "\t area = " +
-                                               (pixelSize * histoBuffer[i]) + " square " + unitsStr + "\n");
-                            } // lowValue[i] != highValue[i]
-                        } // if (histoBuffer[i] >= 1)
-                    } // for (i = 0; i < bins; i++)
-                } // other image type
+                        if (sameLowHigh) {
+                            UI.setDataText(lowValue[i] + "\t" + histoBuffer[i] + "\t" +
+                                           (pixelSize * histoBuffer[i])+ "\n");
+                        } // if (sameLowHigh)
+                        else { // !sameLowHigh
+                            UI.setDataText(lowValue[i] + "\t" +
+                                           highValue[i] + "\t" + histoBuffer[i] + "\t" +
+                                           (pixelSize * histoBuffer[i]) + "\n");
+                        } // !sameLowHigh
+                    } // if (histoBuffer[i] >= 1)
+                } // for (i = 0; i < bins; i++)
             } // specify area units
             else { // no area units
+                if (sameLowHigh) {
+                    UI.setDataText("intensity\tcount\n");
+                }
+                else {
+                    UI.setDataText("low intensity \thigh intensity \tcount\n");
+                }
+            
 
-                if (image.isColorImage()) {
+                for (i = 0; i < bins; i++) {
 
-                    if (RGBOffset == 1) {
+                    if (histoBuffer[i] >= 1) {
 
-                        for (i = 0; i < bins; i++) {
-
-                            if (histoBuffer[i] >= 1) {
-
-                                if (lowValue[i] == highValue[i]) {
-                                    UI.setDataText(image.getImageName() + " red intensity = " + lowValue[i] +
-                                                   "\t\t count = " + histoBuffer[i] + "\n");
-                                } // if (lowValue[i] == highValue[i])
-                                else { // lowValue[i] != highValue[i]
-                                    UI.setDataText(image.getImageName() + " red intensities = " + lowValue[i] + " to " +
-                                                   highValue[i] + "\t count = " + histoBuffer[i] + "\n");
-                                } // lowValue[i] != highValue[i]
-                            } // if (histoBuffer[i] >= 1)
-                        } // for (i = 0; i < bins; i++)
-                    } // if (RGBOffset == 1)
-                    else if (RGBOffset == 2) {
-
-                        for (i = 0; i < bins; i++) {
-
-                            if (histoBuffer[i] >= 1) {
-
-                                if (lowValue[i] == highValue[i]) {
-                                    UI.setDataText(image.getImageName() + " green intensity = " + lowValue[i] +
-                                                   "\t\t count = " + histoBuffer[i] + "\n");
-                                } // if (lowValue[i] == highValue[i])
-                                else { // lowValue[i] != highValue[i]
-                                    UI.setDataText(image.getImageName() + " green intensities = " + lowValue[i] +
-                                                   " to " + highValue[i] + "\t count = " + histoBuffer[i] + "\n");
-                                } // lowValue[i] != highValue[i]
-                            } // if (histoBuffer[i] >= 1)
-                        } // for (i = 0; i < bins; i++)
-                    } // else if (RGBOffset == 2)
-                    else { // RGBOffset == 3
-
-                        for (i = 0; i < bins; i++) {
-
-                            if (histoBuffer[i] >= 1) {
-
-                                if (lowValue[i] == highValue[i]) {
-                                    UI.setDataText(image.getImageName() + " blue intensity = " + lowValue[i] +
-                                                   "\t\t count = " + histoBuffer[i] + "\n");
-                                } // if (lowValue[i] == highValue[i])
-                                else { // lowValue[i] != highValue[i]
-                                    UI.setDataText(image.getImageName() + " blue intensities = " + lowValue[i] +
-                                                   " to " + highValue[i] + "\t count = " + histoBuffer[i] + "\n");
-                                } // lowValue[i] != highValue[i]
-                            } // if (histoBuffer[i] >= 1)
-                        } // for (i = 0; i < bins; i++)
-                    } // else RGBOffset == 3
-                } // color image
-                else { // other image type
-
-                    for (i = 0; i < bins; i++) {
-
-                        if (histoBuffer[i] >= 1) {
-
-                            if (lowValue[i] == highValue[i]) {
-                                UI.setDataText(image.getImageName() + " intensity = " + lowValue[i] + "\t\t count = " +
-                                               histoBuffer[i] + "\n");
-                            } // if (lowValue[i] == highValue[i])
-                            else { // lowValue[i] != highValue[i]
-                                UI.setDataText(image.getImageName() + " intensities = " + lowValue[i] + " to " +
-                                               highValue[i] + "\t count = " + histoBuffer[i] + "\n");
-                            } // lowValue[i] != highValue[i]
-                        } // if (histoBuffer[i] >= 1)
-                    } // for (i = 0; i < bins; i++)
-                } // other image type
+                        if (sameLowHigh) {
+                            UI.setDataText(lowValue[i] + "\t" + histoBuffer[i] + "\n");
+                        } // if (sameLowHigh)
+                        else { // !sameLowHigh
+                            UI.setDataText(lowValue[i] + "\t" +
+                                           highValue[i] + "\t" + histoBuffer[i] + "\n");
+                        } // !sameLowHigh
+                    } // if (histoBuffer[i] >= 1)
+                } // for (i = 0; i < bins; i++)
+                
             } // no area units
         } // if (image.getNDims() == 2)
         else if (image.getNDims() == 3) {
@@ -991,163 +890,55 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 float[] res = image.getFileInfo()[0].getResolutions();
                 float pixelSize = res[0] * res[1] * res[2];
                 String unitsStr = FileInfoBase.getUnitsOfMeasureStr(units[0]);
+                if (sameLowHigh) {
+                    UI.setDataText("intensity\tcount \tvolume in cubic "+ unitsStr + "\n");
+                }
+                else {
+                    UI.setDataText("low intensity \thigh intensity \tcount \tvolume in cubic " + unitsStr + "\n");
+                }
+            
 
-                if (image.isColorImage()) {
+                for (i = 0; i < bins; i++) {
 
-                    if (RGBOffset == 1) {
+                    if (histoBuffer[i] >= 1) {
 
-                        for (i = 0; i < bins; i++) {
+                        if (sameLowHigh) {
+                            UI.setDataText(lowValue[i] + "\t" + histoBuffer[i] + "\t" +
+                                           (pixelSize * histoBuffer[i])+ "\n");
+                        } // if (sameLowHigh)
+                        else { // !sameLowHigh
+                            UI.setDataText(lowValue[i] + "\t" +
+                                           highValue[i] + "\t" + histoBuffer[i] + "\t" +
+                                           (pixelSize * histoBuffer[i]) + "\n");
+                        } // !sameLowHigh
+                    } // if (histoBuffer[i] >= 1)
+                } // for (i = 0; i < bins; i++)
+                
+            } // specify volume units
+            else { // no volume units
+                if (sameLowHigh) {
+                    UI.setDataText("intensity\tcount\n");
+                }
+                else {
+                    UI.setDataText("low intensity \thigh intensity \tcount\n");
+                }
+            
 
-                            if (histoBuffer[i] >= 1) {
+                for (i = 0; i < bins; i++) {
 
-                                if (lowValue[i] == highValue[i]) {
-                                    UI.setDataText(image.getImageName() + " red intensity = " + lowValue[i] +
-                                                   "\t\t count = " + histoBuffer[i] + "\t volume = " +
-                                                   (pixelSize * histoBuffer[i]) + " cubic " + unitsStr + "\n");
-                                } // if (lowValue[i] == highValue[i])
-                                else { // lowValue[i] != highValue[i]
-                                    UI.setDataText(image.getImageName() + " red intensities = " + lowValue[i] + " to " +
-                                                   highValue[i] + "\t count = " + histoBuffer[i] + "\t volume = " +
-                                                   (pixelSize * histoBuffer[i]) + " cubic " + unitsStr + "\n");
-                                } // lowValue[i] != highValue[i]
-                            } // if (histoBuffer[i] >= 1)
-                        } // for (i = 0; i < bins; i++)
-                    } // if (RGBOffset == 1)
-                    else if (RGBOffset == 2) {
+                    if (histoBuffer[i] >= 1) {
 
-                        for (i = 0; i < bins; i++) {
-
-                            if (histoBuffer[i] >= 1) {
-
-                                if (lowValue[i] == highValue[i]) {
-                                    UI.setDataText(image.getImageName() + " green intensity = " + lowValue[i] +
-                                                   "\t\t count = " + histoBuffer[i] + "\t volume = " +
-                                                   (pixelSize * histoBuffer[i]) + " cubic " + unitsStr + "\n");
-                                } // if (lowValue[i] == highValue[i])
-                                else { // lowValue[i] != highValue[i]
-                                    UI.setDataText(image.getImageName() + " green intensities = " + lowValue[i] +
-                                                   " to " + highValue[i] + "\t count = " + histoBuffer[i] +
-                                                   "\t volume = " + (pixelSize * histoBuffer[i]) + " cubic " +
-                                                   unitsStr + "\n");
-                                } // lowValue[i] != highValue[i]
-                            } // if (histoBuffer[i] >= 1)
-                        } // for (i = 0; i < bins; i++)
-                    } // else if (RGBOffset == 2)
-                    else { // RGBOffset == 3
-
-                        for (i = 0; i < bins; i++) {
-
-                            if (histoBuffer[i] >= 1) {
-
-                                if (lowValue[i] == highValue[i]) {
-                                    UI.setDataText(image.getImageName() + " blue intensity = " + lowValue[i] +
-                                                   "\t\t count = " + histoBuffer[i] + "\t volume = " +
-                                                   (pixelSize * histoBuffer[i]) + " cubic " + unitsStr + "\n");
-                                } // if (lowValue[i] == highValue[i])
-                                else { // lowValue[i] != highValue[i]
-                                    UI.setDataText(image.getImageName() + " blue intensities = " + lowValue[i] +
-                                                   " to " + highValue[i] + "\t count = " + histoBuffer[i] +
-                                                   "\t volume = " + (pixelSize * histoBuffer[i]) + " cubic " +
-                                                   unitsStr + "\n");
-                                } // lowValue[i] != highValue[i]
-                            } // if (histoBuffer[i] >= 1)
-                        } // for (i = 0; i < bins; i++)
-                    } // else RGBOffset == 3
-                } // color image
-                else { // other image type
-
-                    for (i = 0; i < bins; i++) {
-
-                        if (histoBuffer[i] >= 1) {
-
-                            if (lowValue[i] == highValue[i]) {
-                                UI.setDataText(image.getImageName() + " intensity = " + lowValue[i] + "\t\t count = " +
-                                               histoBuffer[i] + "\t volume = " + (pixelSize * histoBuffer[i]) +
-                                               " cubic " + unitsStr + "\n");
-                            } // if (lowValue[i] == highValue[i])
-                            else { // lowValue[i] != highValue[i]
-                                UI.setDataText(image.getImageName() + " intensities = " + lowValue[i] + " to " +
-                                               highValue[i] + "\t count = " + histoBuffer[i] + "\t volume = " +
-                                               (pixelSize * histoBuffer[i]) + " cubic " + unitsStr + "\n");
-                            } // lowValue[i] != highValue[i]
-                        } // if (histoBuffer[i] >= 1)
-                    } // for (i = 0; i < bins; i++)
-                } // other image type
-            } // specify area units
-            else { // no area units
-
-                if (image.isColorImage()) {
-
-                    if (RGBOffset == 1) {
-
-                        for (i = 0; i < bins; i++) {
-
-                            if (histoBuffer[i] >= 1) {
-
-                                if (lowValue[i] == highValue[i]) {
-                                    UI.setDataText(image.getImageName() + " red intensity = " + lowValue[i] +
-                                                   "\t\t count = " + histoBuffer[i] + "\n");
-                                } // if (lowValue[i] == highValue[i])
-                                else { // lowValue[i] != highValue[i]
-                                    UI.setDataText(image.getImageName() + " red intensities = " + lowValue[i] + " to " +
-                                                   highValue[i] + "\t count = " + histoBuffer[i] + "\n");
-                                } // lowValue[i] != highValue[i]
-                            } // if (histoBuffer[i] >= 1)
-                        } // for (i = 0; i < bins; i++)
-                    } // if (RGBOffset == 1)
-                    else if (RGBOffset == 2) {
-
-                        for (i = 0; i < bins; i++) {
-
-                            if (histoBuffer[i] >= 1) {
-
-                                if (lowValue[i] == highValue[i]) {
-                                    UI.setDataText(image.getImageName() + " green intensity = " + lowValue[i] +
-                                                   "\t\t count = " + histoBuffer[i] + "\n");
-                                } // if (lowValue[i] == highValue[i])
-                                else { // lowValue[i] != highValue[i]
-                                    UI.setDataText(image.getImageName() + " green intensities = " + lowValue[i] +
-                                                   " to " + highValue[i] + "\t count = " + histoBuffer[i] + "\n");
-                                } // lowValue[i] != highValue[i]
-                            } // if (histoBuffer[i] >= 1)
-                        } // for (i = 0; i < bins; i++)
-                    } // else if (RGBOffset == 2)
-                    else { // RGBOffset == 3
-
-                        for (i = 0; i < bins; i++) {
-
-                            if (histoBuffer[i] >= 1) {
-
-                                if (lowValue[i] == highValue[i]) {
-                                    UI.setDataText(image.getImageName() + " blue intensity = " + lowValue[i] +
-                                                   "\t\t count = " + histoBuffer[i] + "\n");
-                                } // if (lowValue[i] == highValue[i])
-                                else { // lowValue[i] != highValue[i]
-                                    UI.setDataText(image.getImageName() + " blue intensities = " + lowValue[i] +
-                                                   " to " + highValue[i] + "\t count = " + histoBuffer[i] + "\n");
-                                } // lowValue[i] != highValue[i]
-                            } // if (histoBuffer[i] >= 1)
-                        } // for (i = 0; i < bins; i++)
-                    } // else RGBOffset == 3
-                } // color image
-                else { // other image type
-
-                    for (i = 0; i < bins; i++) {
-
-                        if (histoBuffer[i] >= 1) {
-
-                            if (lowValue[i] == highValue[i]) {
-                                UI.setDataText(image.getImageName() + " intensity = " + lowValue[i] + "\t\t count = " +
-                                               histoBuffer[i] + "\n");
-                            } // if (lowValue[i] == highValue[i])
-                            else { // lowValue[i] != highValue[i]
-                                UI.setDataText(image.getImageName() + " intensities = " + lowValue[i] + " to " +
-                                               highValue[i] + "\t count = " + histoBuffer[i] + "\n");
-                            } // lowValue[i] != highValue[i]
-                        } // if (histoBuffer[i] >= 1)
-                    } // for (i = 0; i < bins; i++)
-                } // other image type
-            } // no area units
+                        if (sameLowHigh) {
+                            UI.setDataText(lowValue[i] + "\t" + histoBuffer[i] + "\n");
+                        } // if (sameLowHigh)
+                        else { // !sameLowHigh
+                            UI.setDataText(lowValue[i] + "\t" +
+                                           highValue[i] + "\t" + histoBuffer[i] + "\n");
+                        } // !sameLowHigh
+                    } // if (histoBuffer[i] >= 1)
+                } // for (i = 0; i < bins; i++)
+                
+            } // no volume units
         } // else if (image.geteNDims() = 3)
 
         // in this algorithm, we must clear the paint mask, since it was generated during generateVOIMask in the
