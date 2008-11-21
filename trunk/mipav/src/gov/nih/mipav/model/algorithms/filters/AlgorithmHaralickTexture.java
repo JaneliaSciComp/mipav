@@ -37,7 +37,7 @@ import java.io.*;
  *           
  *           Data should be rescaled so that the Grey-Level Co-occurrence Matrix is of the appropriate size.  Eight bit data
  *           has 256 possible values, so the GLCM would be a 256 x 256 matrix, with 65,536 cells.  16 bit data would give a
- *           matrix of size 65536 x 65536 = 4,294,967,296 cells, so 8 bit data is too much to handle.</p>
+ *           matrix of size 65536 x 65536 = 4,294,967,296 cells, so 16 bit data is too much to handle.</p>
  *           
  *           There is another reason for compressing the data.  If all 256 x 256 (or more) cells were used, there would be many
  *           cells filled with zeros (because that combination of grey levels simply does not occur).  The GLCM approximates
