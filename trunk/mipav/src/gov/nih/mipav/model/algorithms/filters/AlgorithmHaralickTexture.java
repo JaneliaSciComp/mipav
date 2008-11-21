@@ -12,7 +12,7 @@ import java.io.*;
 /**
  * DOCUMENT ME!
  *
- * @version  0.1 November 3, 2005
+ * @version  0.2 November 21, 2008
  * @author   William Gandler This code is based on the material in the GLCM Texture Tutorial by Myrka Hall-Beyer at
  *           http://www.fp.ucalgary.ca/mhallbey/tutorial.html.
  *
@@ -34,6 +34,21 @@ import java.io.*;
  *           <p>The calculations start with the creation of a gray level co-occurrence matrix for each pixel position
  *           interior to the outer band for each direction. This matrix gives the probability for each pair of 2 pixels
  *           within the square window.</p>
+ *           
+ *           Data should be rescaled so that the Grey-Level Co-occurrence Matrix is of the appropriate size.  Eight bit data
+ *           has 256 possible values, so the GLCM would be a 256 x 256 matrix, with 65,536 cells.  16 bit data would give a
+ *           matrix of size 65536 x 65536 = 4,294,967,296 cells, so 8 bit data is too much to handle.</p>
+ *           
+ *           There is another reason for compressing the data.  If all 256 x 256 (or more) cells were used, there would be many
+ *           cells filled with zeros (because that combination of grey levels simply does not occur).  The GLCM approximates
+ *           the joint probability distribution of the two pixels.  Having many zeros in cells makes this a very bad
+ *           approximation.  If the number of grey levels is reduced, the number of zeros is reduced, and the statistical
+ *           validity is greatly improved.
+ *           
+ *          In "An analysis of co-occurrence texture statistics as a function of grey level quantization" David A. Clausi
+ *          concludes: "... any value of G greater than 24 is advocated.  However, large values of G (greater than 64) are
+ *          deemed unnecessary since they do not improve the classification accuracy and are computationally costly.
+ *          Setting G to a value under twenty-four can produce unreliable results."
  */
 public class AlgorithmHaralickTexture extends AlgorithmBase {
 
@@ -116,6 +131,9 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
 
     /** Size of square window used in calculating each glcm matrix - must be an odd number. */
     private int windowSize = 7;
+    
+    /** Number of grey levels used if rescaling performed. */
+    private int greyLevels = 32;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -126,6 +144,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
      * @param              srcImg             source image model
      * @param              windowSize         the size of the square window
      * @param              offsetDistance     distance between 2 pixels of pair
+     * @param              greyLevels         Number of grey levels used if rescaling performed
      * @param              ns                 true if north south offset direction calculated
      * @param              nesw               true if northeast-southwest offset direction calculated
      * @param              ew                 true if east west offset direction calculated
@@ -148,7 +167,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
      * @standardDeviation  true if gray level coordinate matrix standard deviation calculated
      * @coorelation        true if gray level coordinate matrix correlation calculated
      */
-    public AlgorithmHaralickTexture(ModelImage[] destImg, ModelImage srcImg, int windowSize, int offsetDistance,
+    public AlgorithmHaralickTexture(ModelImage[] destImg, ModelImage srcImg, int windowSize, int offsetDistance, int greyLevels,
                                     boolean ns, boolean nesw, boolean ew, boolean senw, boolean invariantDir,
                                     boolean contrast, boolean dissimilarity, boolean homogeneity, boolean inverseOrder1,
                                     boolean asm, boolean energy, boolean maxProbability, boolean entropy, boolean mean,
@@ -157,6 +176,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         destImage = destImg;
         this.windowSize = windowSize;
         this.offsetDistance = offsetDistance;
+        this.greyLevels = greyLevels;
         this.ns = ns;
         this.nesw = nesw;
         this.ew = ew;
@@ -220,19 +240,22 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
         int sliceSize = xDim * yDim;
-        int sourceMax;
         boolean doneNS = false;
         boolean doneNESW = false;
         boolean doneEW = false;
         boolean doneSENW = false;
         boolean doneInvariant = false;
         int iDir;
+        double imageMin;
+        double imageMax;
         srcImage.calcMinMax();
-        sourceMax = (int) Math.round(srcImage.getMax());
+        imageMin = srcImage.getMin();
+        imageMax = srcImage.getMax();
 
         int numDirections = 0;
         int numOperators = 0;
-        short[] sourceBuffer = new short[sliceSize];
+        double[] sourceBuffer = new double[sliceSize];
+        byte[]  byteBuffer = new byte[sliceSize];
         int[][] nsBuffer = null;
         int[][] neswBuffer = null;
         int[][] ewBuffer = null;
@@ -259,7 +282,15 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         float glcmVariance = 0.0f;
         float glcmASM = 0.0f;
         boolean skip;
-
+        boolean rescale = false;
+        double range = imageMax - imageMin;
+        double factor = (greyLevels - 1)/range;
+        
+        if ((srcImage.getType() == ModelStorageBase.FLOAT) || (srcImage.getType() == ModelStorageBase.DOUBLE)) {
+            rescale = true;
+        } else if (range >= 64) {
+            rescale = true;
+        }
 
         try {
             srcImage.exportData(0, sliceSize, sourceBuffer);
@@ -268,6 +299,21 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
             setCompleted(false);
 
             return;
+        }
+        
+        for (i = 0; i < sliceSize; i++) {
+            sourceBuffer[i] -= imageMin;
+        }
+        
+        if (rescale) {
+            for (i = 0; i < sliceSize; i++) {
+                byteBuffer[i] = (byte) ((sourceBuffer[i] * factor) + 0.5f);       
+            }
+        }
+        else {
+            for (i = 0; i < sliceSize; i++) {
+                byteBuffer[i] = (byte)Math.round(sourceBuffer[i]);
+            }
         }
 
         if (ns) {
@@ -340,7 +386,12 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
 
         resultNumber = numDirections * numOperators;
 
-        matrixSize = sourceMax + 1;
+        if (rescale) {
+            matrixSize = greyLevels;
+        }
+        else {
+            matrixSize = (int)Math.round(range) + 1;
+        }
 
         if (ns || invariantDir) {
             nsBuffer = new int[matrixSize][matrixSize];
@@ -395,8 +446,8 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
 
                             for (i = x - halfWin; i <= (x + halfWin); i++) {
                                 index = i + (j * xDim);
-                                nsBuffer[sourceBuffer[index]][sourceBuffer[index + xDim]]++;
-                                nsBuffer[sourceBuffer[index + xDim]][sourceBuffer[index]]++;
+                                nsBuffer[byteBuffer[index]][byteBuffer[index + xDim]]++;
+                                nsBuffer[byteBuffer[index + xDim]][byteBuffer[index]]++;
                             }
                         }
 
@@ -428,8 +479,8 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
 
                             for (i = x - halfWin + offsetDistance; i <= (x + halfWin); i++) {
                                 index = i + (j * xDim);
-                                neswBuffer[sourceBuffer[index]][sourceBuffer[index + xDim - 1]]++;
-                                neswBuffer[sourceBuffer[index + xDim - 1]][sourceBuffer[index]]++;
+                                neswBuffer[byteBuffer[index]][byteBuffer[index + xDim - 1]]++;
+                                neswBuffer[byteBuffer[index + xDim - 1]][byteBuffer[index]]++;
                             }
                         }
 
@@ -461,8 +512,8 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
 
                             for (i = x - halfWin; i <= (x + halfWin - offsetDistance); i++) {
                                 index = i + (j * xDim);
-                                ewBuffer[sourceBuffer[index]][sourceBuffer[index + 1]]++;
-                                ewBuffer[sourceBuffer[index + 1]][sourceBuffer[index]]++;
+                                ewBuffer[byteBuffer[index]][byteBuffer[index + 1]]++;
+                                ewBuffer[byteBuffer[index + 1]][byteBuffer[index]]++;
                             }
                         }
 
@@ -494,8 +545,8 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
 
                             for (i = x - halfWin; i <= (x + halfWin - offsetDistance); i++) {
                                 index = i + (j * xDim);
-                                senwBuffer[sourceBuffer[index]][sourceBuffer[index + xDim + 1]]++;
-                                senwBuffer[sourceBuffer[index + xDim + 1]][sourceBuffer[index]]++;
+                                senwBuffer[byteBuffer[index]][byteBuffer[index + xDim + 1]]++;
+                                senwBuffer[byteBuffer[index + xDim + 1]][byteBuffer[index]]++;
                             }
                         }
 
