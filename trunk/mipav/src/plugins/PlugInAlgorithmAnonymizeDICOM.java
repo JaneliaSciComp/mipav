@@ -343,20 +343,27 @@ public class PlugInAlgorithmAnonymizeDICOM extends AlgorithmBase{
     	
     	if (tagType == "typeString") {
     		if (strValue != null) {
-    			anonymizeString(strValue, length);
+    			anonymizeString("x", length);
     		}
-    	} else if (tagType == "otherByteString") {
-    		anonymizeOtherByteString(tagData, length, vm);
-    	} else if (tagType == "otherWordString") {
-    		anonymizeOtherWordString(tagData, length, vm);
+    	} else if (tagType == "otherByteString" || tagType == "otherWordString") {
+    		anonymizeOtherByteString("x", length);
+    	} else if (tagType == "typeShort") {
+    		anonymizeTypeShort((short) 0, length);
+    	} else if (tagType == "typeInt") {
+    		anonymizeTypeInt(0, length);
+    	} else if (tagType == "typeFloat") {
+    		anonymizeTypeFloat(0.0f, length);
+    	} else if (tagType == "typeDouble") {
+    		anonymizeTypeDouble(0.0, length);
     	}
+    	
     	
     	
     }
     
-    private void anonymizeString(String value, int len) {
+    private void anonymizeString(String strValue, int len) {
     	
-    	String str = "x";
+    	String str = strValue;
     	
     	for (int i = 0; i < (len-1); i++) {
     		str = str + "x";
@@ -371,28 +378,121 @@ public class PlugInAlgorithmAnonymizeDICOM extends AlgorithmBase{
      	
     }
     
-    private void anonymizeOtherByteString(Object data, int len, int vm) {
+    private void anonymizeOtherByteString(String strValue, int len) {
     	
-    	String str = "x";
+    	String str = strValue;
     	byte[] b = str.getBytes();
     	
     	setFilePointer(getFilePointer() - len);
     	
-    	for (int i = 0; i < vm; i++) {
+    	for (int i = 0; i < len; i++) {
     		System.arraycopy(b, 0, tagBuffer, bPtr, b.length);
         	bPtr += b.length;
     	}
        	
     }
     
-    private void anonymizeOtherWordString(Object data, int len, int vm) {
+    private void anonymizeTypeShort (short shValue, int len) {
     	
+    	short sh = shValue;
+    	byte[] byteBuffer2 = new byte[2];
+    	
+    	setFilePointer(getFilePointer() - len);
+    	
+    	for (int i = 0; i < (len/2); i++) {
+    		if (bigEndian) {
+        		byteBuffer2[0] = (byte) (sh >>> 8);
+        		byteBuffer2[1] = (byte) (sh & 0xff);
+        		System.arraycopy(byteBuffer2, 0, tagBuffer, bPtr, byteBuffer2.length);
+        		bPtr += byteBuffer2.length;
+        	} else {
+        		byteBuffer2[0] = (byte) (sh & 0xff);
+                byteBuffer2[1] = (byte) (sh >>> 8);
+                System.arraycopy(byteBuffer2, 0, tagBuffer, bPtr, byteBuffer2.length);
+        		bPtr += byteBuffer2.length;
+        	}
+    	}
+    }
+    
+    private void anonymizeTypeInt (int value, int len) {
+    	
+    	int intValue = value;
+    	byte[] byteBuffer4 = new byte[4];
+    	
+    	setFilePointer(getFilePointer() - len);
+    	
+    	for (int i = 0; i < (len/4); i++) {
+    		if (bigEndian) {
+        		byteBuffer4[0] = (byte) (intValue >>> 24);
+        		byteBuffer4[1] = (byte) (intValue >>> 16);
+        		byteBuffer4[2] = (byte) (intValue >>> 8);
+        		byteBuffer4[3] = (byte) (intValue & 0xff);
+        		System.arraycopy(byteBuffer4, 0, tagBuffer, bPtr, byteBuffer4.length);
+        		bPtr += byteBuffer4.length;
+        	} else {
+        		byteBuffer4[0] = (byte) (intValue & 0xff24);
+        		byteBuffer4[1] = (byte) (intValue >>> 8);
+        		byteBuffer4[2] = (byte) (intValue >>> 16);
+        		byteBuffer4[3] = (byte) (intValue >>> 24);
+        		System.arraycopy(byteBuffer4, 0, tagBuffer, bPtr, byteBuffer4.length);
+        		bPtr += byteBuffer4.length;
+        	}
+    	}
+    }
+    
+    private void anonymizeTypeLong (long lValue, int len) {
+    	
+    	long longValue = lValue;
+    	byte[] byteBuffer8 = new byte[8];
+    	
+    	setFilePointer(getFilePointer() - len);
+    	
+    	for (int i = 0; i < (len/8); i++) {
+    		if (bigEndian) {
+                byteBuffer8[0] = (byte) (longValue >>> 56);
+                byteBuffer8[1] = (byte) (longValue >>> 48);
+                byteBuffer8[2] = (byte) (longValue >>> 40);
+                byteBuffer8[3] = (byte) (longValue >>> 32);
+                byteBuffer8[4] = (byte) (longValue >>> 24);
+                byteBuffer8[5] = (byte) (longValue >>> 16);
+                byteBuffer8[6] = (byte) (longValue >>> 8);
+                byteBuffer8[7] = (byte) (longValue & 0xff);
+                System.arraycopy(byteBuffer8, 0, tagBuffer, bPtr, byteBuffer8.length);
+                bPtr += byteBuffer8.length;
+            } else {
+                byteBuffer8[0] = (byte) (longValue & 0xff);
+                byteBuffer8[1] = (byte) (longValue >>> 8);
+                byteBuffer8[2] = (byte) (longValue >>> 16);
+                byteBuffer8[3] = (byte) (longValue >>> 24);
+                byteBuffer8[4] = (byte) (longValue >>> 32);
+                byteBuffer8[5] = (byte) (longValue >>> 40);
+                byteBuffer8[6] = (byte) (longValue >>> 48);
+                byteBuffer8[7] = (byte) (longValue >>> 56);
+                System.arraycopy(byteBuffer8, 0, tagBuffer, bPtr, byteBuffer8.length);
+                bPtr += byteBuffer8.length;
+            }
+    	}
+    	
+    	
+    }
+    
+    private void anonymizeTypeFloat (float value, int len) {
+    	int tmpInt;
+    	float floatValue = value;
+    	tmpInt = Float.floatToIntBits(floatValue);
+    	anonymizeTypeInt(tmpInt, len);
+    }
+    
+    private void anonymizeTypeDouble(double dValue, int len) {
+    	long tmpLong;
+    	double doubleValue = dValue;
+    	tmpLong = Double.doubleToLongBits(doubleValue);
+    	anonymizeTypeLong(tmpLong, len);
     }
     
     
     
-    
-    
+       
     
     /**
      * Increments the location, then reads the elementWord, groupWord, and elementLength. It also tests for an end of
