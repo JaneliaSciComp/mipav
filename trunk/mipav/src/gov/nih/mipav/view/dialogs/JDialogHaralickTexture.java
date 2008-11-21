@@ -20,7 +20,7 @@ import javax.swing.*;
 /**
  * Dialog to get user input, then call the algorithm.
  *
- * @version  0.1 Nov 3, 2005
+ * @version  0.2 Nov 21, 2008
  * @author   William Gandler
  * @see      AlgorithmHaralickTexture
  */
@@ -167,9 +167,6 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
     private JTextField textWindowSize;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
     private boolean variance = false;
 
     /** DOCUMENT ME! */
@@ -177,6 +174,13 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private int windowSize;
+    
+    private JLabel labelRescaling;
+    
+    private JTextField textRescaling;
+    
+    /** Number of grey levels used if data must be rescaled */
+    private int greyLevels;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -195,7 +199,6 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
     public JDialogHaralickTexture(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
         setVisible(true);
@@ -299,6 +302,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         String str = new String();
         str += windowSize + delim;
         str += offsetDistance + delim;
+        str += greyLevels + delim;
         str += ns + delim;
         str += nesw + delim;
         str += ew + delim;
@@ -341,6 +345,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
                 textWindowSize.setText("" + MipavUtil.getInt(st));
                 textOffsetDistance.setText("" + MipavUtil.getInt(st));
+                textRescaling.setText("" + MipavUtil.getInt(st));
                 nsCheckBox.setSelected(MipavUtil.getBoolean(st));
                 neswCheckBox.setSelected(MipavUtil.getBoolean(st));
                 ewCheckBox.setSelected(MipavUtil.getBoolean(st));
@@ -545,6 +550,14 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
     public void setWindowSize(int windowSize) {
         this.windowSize = windowSize;
     }
+    
+    /**
+     * Accessor that sets the number of grey levels if rescaling used
+     * @param greyLevels
+     */
+    public void setGreyLevels(int greyLevels) {
+        this.greyLevels = greyLevels;
+    }
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
@@ -658,7 +671,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                 } // for (j = 0; j < numOperators; j++)
             } // for (i = 0; i < numDirections; i++)
 
-            textureAlgo = new AlgorithmHaralickTexture(resultImage, image, windowSize, offsetDistance, ns, nesw, ew,
+            textureAlgo = new AlgorithmHaralickTexture(resultImage, image, windowSize, offsetDistance, greyLevels, ns, nesw, ew,
                                                        senw, invariantDir, contrast, dissimilarity, homogeneity,
                                                        inverseOrder1, asm, energy, maxProbability, entropy, mean,
                                                        variance, standardDeviation, correlation);
@@ -719,11 +732,11 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         setWindowSize(scriptParameters.getParams().getInt("window_size"));
         setOffsetDistance(scriptParameters.getParams().getInt("offset_distance"));
+        setGreyLevels(scriptParameters.getParams().getInt("grey_levels"));
         setNS(scriptParameters.getParams().getBoolean("do_calc_north_south_dir"));
         setNESW(scriptParameters.getParams().getBoolean("do_calc_NE_SW_dir"));
         setEW(scriptParameters.getParams().getBoolean("do_calc_east_west_dir"));
@@ -772,6 +785,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("window_size", windowSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("offset_distance", offsetDistance));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("grey_levels", greyLevels));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_north_south_dir", ns));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_NE_SW_dir", nesw));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_east_west_dir", ew));
@@ -907,7 +921,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        scalePanel = new JPanel(new GridLayout(2, 2));
+        scalePanel = new JPanel(new GridLayout(3, 2));
         scalePanel.setForeground(Color.black);
         scalePanel.setBorder(buildTitledBorder("Sizes"));
         mainPanel.add(scalePanel, gbc);
@@ -931,6 +945,16 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         textOffsetDistance.setFont(serif12);
         textOffsetDistance.setForeground(Color.black);
         scalePanel.add(textOffsetDistance);
+        
+        labelRescaling = new JLabel("Grey levels if rescaled (8-64)");
+        labelRescaling.setForeground(Color.black);
+        labelRescaling.setFont(serif12);
+        scalePanel.add(labelRescaling);
+        textRescaling = new JTextField(10);
+        textRescaling.setText("32");
+        textRescaling.setFont(serif12);
+        textRescaling.setForeground(Color.black);
+        scalePanel.add(textRescaling);
 
         JPanel directionPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc2 = new GridBagConstraints();
@@ -1147,6 +1171,17 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
             textOffsetDistance.requestFocus();
             textOffsetDistance.selectAll();
 
+            return false;
+        }
+        
+        tmpStr = textRescaling.getText();
+        
+        if (testParameter(tmpStr, 8, 64)) {
+            greyLevels = Integer.valueOf(tmpStr).intValue();
+        } else {
+            textRescaling.requestFocus();
+            textRescaling.selectAll();
+            
             return false;
         }
 
