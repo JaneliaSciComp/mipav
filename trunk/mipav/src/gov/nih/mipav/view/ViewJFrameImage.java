@@ -1736,12 +1736,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("ReplaceValue")) {
             new JDialogReplaceValue(this, getActiveImage());
         } else if (command.equals("Haralick")) {
-
-            if (getActiveImage().getType() == ModelStorageBase.UBYTE) {
-                new JDialogHaralickTexture(this, getActiveImage());
-            } else {
-                MipavUtil.displayError("Image must be converted to UBYTE for Haralick texture");
-            }
+            new JDialogHaralickTexture(this, getActiveImage());
         } else if (command.equals("SubVOI")) {
             new JDialogSubtractVOI(this, getActiveImage());
         } else if (command.equals("doFRAP")) {
