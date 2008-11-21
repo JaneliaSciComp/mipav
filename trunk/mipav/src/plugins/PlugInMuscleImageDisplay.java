@@ -35,7 +35,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-public class PlugInMuscleImageDisplay extends ViewJFrameImage implements AlgorithmInterface {
+public class PlugInMuscleImageDisplay extends ViewJFrameImage implements AlgorithmInterface, WindowListener {
     
     //~ Static fields --------------------------------------------------------------------------------------------------
     
@@ -134,12 +134,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
      
     /**User specified preference for whether to ask on closing. */
     private boolean oldPrefCloseFrameCheckValue = Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK);
-    
-    /**Frame of original image, hidden until plugin is exited.*/
-    //private Frame hiddenFrame;
-    
+
+	private boolean cancelFlag;
+	
     /** Whether the algorithm is being run in standAlone mode.*/
-    private boolean standAlone;
+    private static boolean standAlone;
     
     public enum ImageType{
         
@@ -236,7 +235,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             ImageType imageType, Symmetry symmetry, 
             boolean standAlone, boolean multipleSlices) {
     	// calls the super that will not call ViewJFrameImage's init() function
-    	super(image, null, null, false, false);
+    	super(image);
+    	
+    	Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, "No");
     	
     	commonConstructor(image, titles, voiList,  imageType, symmetry, standAlone, multipleSlices);
 
@@ -276,14 +277,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    this.noMirrorArr = new String[voiList.length][]; 
 	    this.calcTree = new TreeMap<String, Boolean>(); 
 	    this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>()); 
-	    this.standAlone = standAlone;
 	    this.imageType = imageType; 
 	    this.symmetry = symmetry; 
 	    this.multipleSlices = multipleSlices; 
 	    this.currentSlice = getViewableSlice();
 	    this.colorChoice = 0;
-	  //left as zero to ensure VOIs across image stay same color (helps for image batches)
+
+	    PlugInMuscleImageDisplay.standAlone = standAlone;
 	
+	    setWindowSettings();
+	    
 	    for(int i=0; i<voiList.length; i++) {
 	    	ArrayList<Comparable> mirrorArrList = new ArrayList<Comparable>(), noMirrorArrList = new ArrayList<Comparable>(), 
 	    				mirrorZList = new ArrayList<Comparable>(), noMirrorZList = new ArrayList<Comparable>();
@@ -544,8 +547,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    if(standAlone)
 	    	initControls();
 	}
-
-	/**
+    
+    /**
      * Closes window and disposes of the PlugInMuscleImageDisplay frame.  From ViewJFrameImage since the super method was
      * throwing the program into a loop since the original image and the PlugInMuscleImageDisplay are tethered but only one should be closed.
      */
@@ -564,8 +567,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 
         ScriptRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
         ProvenanceRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
-
-        setVisible(false);
+		if(standAlone)
+        	setVisible(false);
+        else
+        	super.close();
         try {
             this.finalize();
         } catch (Throwable t) {
@@ -1078,6 +1083,83 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    dialogTabs.setSelectedIndex(activeTab);
 	    voiChangeState = false;
 	}
+	
+	/**
+     * Confirms if the user really wants to exit, then closes the application (if running without the rest of the MIPAV
+     * GUI).
+     * 
+     * @param event Event that triggered this function.
+     */
+    public void windowClosing(WindowEvent event) {
+        cancelFlag = true;
+         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, new Boolean(oldPrefCloseFrameCheckValue).toString());
+        
+        if (isExitRequired()) {
+            ViewUserInterface.getReference().windowClosing(event);
+        }
+    }
+
+    /**
+     * Sets the necessary plug-in window setting to get it to close correctly and have the correct icon.
+     * 
+     * @param window The window to set up.
+     */
+    public void setWindowSettings() {
+        if (isExitRequired()) {
+        	setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        } else {
+        	setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        }
+
+        try {
+            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+        } catch (FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
+        }
+    }
+
+    /**
+     * Do nothing.
+     * 
+     * @param event the window event.
+     */
+    public void windowActivated(WindowEvent event) {}
+
+    /**
+     * Do nothing.
+     * 
+     * @param event the window event.
+     */
+    public void windowDeactivated(WindowEvent event) {}
+
+    /**
+     * Do nothing.
+     * 
+     * @param event the window event.
+     */
+    public void windowOpened(WindowEvent event) {}
+
+    /**
+     * Do nothing.
+     * 
+     * @param event the window event.
+     */
+    public void windowClosed(WindowEvent event) {}
+
+    /**
+     * Do nothing.
+     * 
+     * @param event the window event.
+     */
+    public void windowIconified(WindowEvent event) {}
+
+    /**
+     * Do nothing.
+     * 
+     * @param event the window event.
+     */
+    public void windowDeiconified(WindowEvent event) {}
 
 	/**
 	 * private void computeIdealWindowSize() This method will enlarge or shrink the window size in response to the
@@ -1199,6 +1281,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    } // end if image is an RGB type
 	
 	} // end initComponentImage()
+
+	/**
+	 * Returns whether the way that the plug-in is being run requires us to exit MIPAV when the window closes.
+	 * 
+	 * @return True if we should exit the program when the window is closed.
+	 */
+	protected static final boolean isExitRequired() {
+	    return standAlone;
+	}
 
 	/**
 	 * Adds the table of voi information to the pdf, adds the images (edge and QA), and closes the document
@@ -1821,22 +1912,21 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			getContentPane().add(mainSplit, BorderLayout.CENTER);
 		}
 	    
-		//removes extra scrollPane from the mipav-loaded plugin
-		if (ViewUserInterface.getReference().isAppFrameVisible()) {
-	    	getContentPane().remove(0);
-	    } 
+		//removes extra scrollPane from the plugin
+	    getContentPane().remove(0);
 	
-	    pack();
 	    ctMode(getImageA(), -175, 275);
 	    initMuscleImage(2);
 	    getActiveImage().unregisterAllVOIs();
 	    initMuscleImage(1);
 	    getActiveImage().unregisterAllVOIs();
 	    initMuscleImage(0);
-	    if (ViewUserInterface.getReference().isAppFrameVisible()) {
-	    	this.setMinimumSize(new Dimension(380, 550));
+	    if (!standAlone) {
+	    	this.setMinimumSize(new Dimension(910, 480));
+	    	this.setPreferredSize(new Dimension(910, 480));
 	    } else {
-	    	this.setMinimumSize(new Dimension(380, 640));
+	    	this.setMinimumSize(new Dimension(900, 800));
+	    	this.setPreferredSize(new Dimension(900, 800));
 	    }
 	    this.setResizable(true);
 	    System.out.println("Done2: "+(System.currentTimeMillis()-time));
@@ -1854,7 +1944,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	
 	    initComponentImage(extents);
 	    initExtentsVariables(imageA);
-	
 	    initControls();
 	            
 	    // MUST register frame to image models
@@ -4264,7 +4353,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		        } catch (OutOfMemoryError x) {
 		            MipavUtil.displayError("Dialog Smooth: unable to allocate enough memory");
 		    
-		            return;
+		            return;                                            
 		        }
 		    }
 		}

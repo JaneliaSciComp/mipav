@@ -3,6 +3,7 @@ import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
@@ -23,7 +24,7 @@ import javax.swing.*;
  * @see      AlgorithmInterface
  *
  */
-public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogMuscleSegmentation extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
@@ -71,8 +72,8 @@ public class PlugInDialogMuscleSegmentation extends JDialogScriptableBase implem
      * @param  im              Source image.
      */
     public PlugInDialogMuscleSegmentation(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, false);
-
+        super(false);
+        
         image = im;
         imageType = detectImageType(im);
         if(image.getNDims() < 3) {
