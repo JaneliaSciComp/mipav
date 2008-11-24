@@ -359,7 +359,8 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         double range = imageMax - imageMin;
         double factor = (greyLevels - 1)/range;
         
-        if ((srcImage.getType() == ModelStorageBase.FLOAT) || (srcImage.getType() == ModelStorageBase.DOUBLE)) {
+        if ((srcImage.getType() == ModelStorageBase.FLOAT) || (srcImage.getType() == ModelStorageBase.DOUBLE) ||
+            (srcImage.getType() == ModelStorageBase.ARGB_FLOAT)) {
             rescale = true;
         } else if (range >= 64) {
             rescale = true;
