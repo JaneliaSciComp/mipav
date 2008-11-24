@@ -107,7 +107,11 @@ public abstract class JDialogStandaloneScriptablePlugin extends JDialogScriptabl
         }
 
         try {
-            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+            // for 1.5 compatibility
+            ((Frame) getOwner()).setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+
+            // no setIconImage() for JDialog in Java 1.5 API
+            // setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
         } catch (FileNotFoundException error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage()
                     + ">.  Check that this file is available.\n");
