@@ -83,10 +83,10 @@ public class FileIO {
      * identify the image type so the correct reader can be used
      */
     private JDialogUnknownIO unknownIODialog;
-    
-    //here for now....11/13/2008
+
+    // here for now....11/13/2008
     private boolean saveAsEncapJP2 = false;
-    
+
     private boolean displayRangeOfSlicesDialog = true;
 
     // ~ Constructors
@@ -1293,7 +1293,7 @@ public class FileIO {
         imageFile.finalize();
         imageFile = null;
         matrix = null;
-        //refFileInfo = null;
+        // refFileInfo = null;
         bufferShort = null;
         bufferFloat = null;
 
@@ -1697,11 +1697,10 @@ public class FileIO {
                 case FileUtility.PARREC:
                     image = readPARREC(fileName, fileDir, one);
                     break;
-                    
+
                 case FileUtility.JP2:
                     image = readJpeg2000(fileName, fileDir, one);
                     break;
-
 
                 default:
                     return null;
@@ -2333,7 +2332,7 @@ public class FileIO {
                 return;
             }
         }
-        
+
         System.out.println("Save as Enc JPEG2000 is " + saveAsEncapJP2);
 
         boolean success = false;
@@ -2371,13 +2370,13 @@ public class FileIO {
             case FileUtility.DICOM:
                 // not handling 4d or greater images
                 if (image.getNDims() > 3) {
-                    MipavUtil.displayInfo("Saving of 4D or greater datsets as DICOM is not currently supported");
+                    MipavUtil.displayInfo("Saving of 4D or greater datasets as DICOM is not currently supported");
                     break;
                 }
-                
-                //if we save off dicom as encapsulated jpeg2000, call the writeDicom method
-                if(saveAsEncapJP2) {
-                	success = writeDicom(image, options);
+
+                // if we save off dicom as encapsulated jpeg2000, call the writeDicom method
+                if (saveAsEncapJP2) {
+                    success = writeDicom(image, options);
                     break;
                 }
 
@@ -2548,11 +2547,10 @@ public class FileIO {
             case FileUtility.NRRD:
                 success = writeNRRD(image, options);
                 break;
-                
+
             case FileUtility.JP2:
                 success = writeJpeg2000(image, options);
                 break;
-
 
             default:
                 if ( !quiet) {
@@ -3146,7 +3144,7 @@ public class FileIO {
      * @return DOCUMENT ME!
      */
     private boolean callDialog(int[] extents, boolean isTiff, FileWriteOptions options) {
-    	
+
         JDialogSaveSlices dialogSave = null;
 
         if ( (extents.length == 2) && isTiff && options.isPackBitEnabled()) {
@@ -3159,18 +3157,17 @@ public class FileIO {
             } else {
                 options.setWritePackBit(false);
             }
-        }else if (extents.length >= 2) {
-        	if((extents.length == 2) &&  (options.getFileType() == FileUtility.DICOM) && displayRangeOfSlicesDialog) {
-            	//we want the saveslices to pop up in this case so the user can select if they want
-            	//to save as encapsulated jpeg2000..unless ofcourse flag has been set to false
-            	dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, 0, options);
-        	}
-        	else if (extents.length == 3) {
+        } else if (extents.length >= 2) {
+            if ( (extents.length == 2) && (options.getFileType() == FileUtility.DICOM) && displayRangeOfSlicesDialog) {
+                // we want the saveslices to pop up in this case so the user can select if they want
+                // to save as encapsulated jpeg2000..unless ofcourse flag has been set to false
+                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, 0, options);
+            } else if (extents.length == 3) {
                 dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, extents[2] - 1, options);
             } else if (extents.length == 4) {
                 dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, extents[2] - 1, 0, extents[3] - 1, options);
-            }else {
-            	return true;
+            } else {
+                return true;
             }
 
             if (dialogSave.isCancelled()) {
@@ -8699,11 +8696,16 @@ public class FileIO {
             fileDicom.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
             fileDicom.vr_type = FileInfoDicom.EXPLICIT;
 
-            // necessary to save (non-pet) floating point minc files to dicom
-            if ( ( (originalFileInfo.getFileFormat() == FileUtility.MINC)
-                    && (originalImageDataType == ModelImage.FLOAT) && (fileDicom.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY))
-                    || ( (originalFileInfo.getFileFormat() == FileUtility.ANALYZE) && (originalImageDataType == ModelImage.FLOAT))
-                    && (fileDicom.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
+            boolean isMincFloatNotPet = originalFileInfo.getFileFormat() == FileUtility.MINC
+                    && originalImageDataType == ModelImage.FLOAT;
+            boolean isAnalyzeFloat = originalFileInfo.getFileFormat() == FileUtility.ANALYZE
+                    && originalImageDataType == ModelImage.FLOAT;
+            boolean isCheshireFloat = originalFileInfo.getFileFormat() == FileUtility.CHESHIRE
+                    && originalImageDataType == ModelImage.FLOAT;
+            boolean isNotPet = fileDicom.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY;
+
+            // necessary to save (non-pet) floating point minc/analyze/cheshire files to dicom
+            if ( (isMincFloatNotPet || isAnalyzeFloat || isCheshireFloat) && isNotPet) {
 
                 clonedImage = (ModelImage) image.clone();
                 didClone = true;
@@ -8759,9 +8761,9 @@ public class FileIO {
                 fileDicom.getTagTable().setValue("0028,0004", new String("RGB")); // photometric
                 fileDicom.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
             } else if ( ( (image.getType() == ModelImage.FLOAT) || (originalFileInfo.getDataType() == ModelImage.FLOAT)) // this
-                                                                                                                            // is
-                                                                                                                            // new
-                                                                                                                            // 7/8/2008
+                    // is
+                    // new
+                    // 7/8/2008
                     && (originalFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
                 fileDicom.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
                 fileDicom.getTagTable().setValue("0028,0101", new Short((short) 16), 2);
@@ -9135,11 +9137,11 @@ public class FileIO {
                 myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 3), 2); // samples per pixel
                 myFileInfo.getTagTable().setValue("0028,0004", new String("RGB")); // photometric
                 myFileInfo.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
-                if(saveAsEncapJP2) {
-                	myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferJPEG2000LOSSLESS);
-                	myFileInfo.getTagTable().setValue("0028,2110","00");
-                }else {
-                	myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
+                if (saveAsEncapJP2) {
+                    myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferJPEG2000LOSSLESS);
+                    myFileInfo.getTagTable().setValue("0028,2110", "00");
+                } else {
+                    myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
                 }
             }
 
@@ -9156,19 +9158,24 @@ public class FileIO {
             myFileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
             myFileInfo.setRescaleIntercept(0);
             myFileInfo.setRescaleSlope(1);
-            if(saveAsEncapJP2) {
+            if (saveAsEncapJP2) {
                 myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferJPEG2000LOSSLESS);
-            	myFileInfo.getTagTable().setValue("0028,2110","00");
-            }else {
-            	myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
+                myFileInfo.getTagTable().setValue("0028,2110", "00");
+            } else {
+                myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
             }
             myFileInfo.vr_type = FileInfoDicom.EXPLICIT;
 
-            // necessary to save (non-pet) floating point minc files to dicom
-            if ( ( (image.getFileInfo(0).getFileFormat() == FileUtility.MINC) && (image.getType() == ModelImage.FLOAT) && (myFileInfo
-                    .getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY))
-                    || ( (image.getFileInfo(0).getFileFormat() == FileUtility.ANALYZE) && (image.getType() == ModelImage.FLOAT))
-                    && (myFileInfo.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
+            boolean isMincFloatNotPet = image.getFileInfo(0).getFileFormat() == FileUtility.MINC
+                    && image.getType() == ModelImage.FLOAT;
+            boolean isAnalyzeFloat = image.getFileInfo(0).getFileFormat() == FileUtility.ANALYZE
+                    && image.getType() == ModelImage.FLOAT;
+            boolean isCheshireFloat = image.getFileInfo(0).getFileFormat() == FileUtility.CHESHIRE
+                    && image.getType() == ModelImage.FLOAT;
+            boolean isNotPet = myFileInfo.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY;
+
+            // necessary to save (non-pet) floating point minc/analyze/cheshire files to dicom
+            if ( (isMincFloatNotPet || isAnalyzeFloat || isCheshireFloat) && isNotPet) {
                 clonedImage = (ModelImage) image.clone();
                 didClone = true;
                 int newType;
@@ -9555,10 +9562,7 @@ public class FileIO {
             originalImage.setFileInfo(originalFileInfos);
         }
         /*
-        if(dicomFile != null) {
-        	dicomFile.finalize();
-        	dicomFile = null;
-        }
+         * if(dicomFile != null) { dicomFile.finalize(); dicomFile = null; }
          */
         return true;
     }
@@ -10376,24 +10380,22 @@ public class FileIO {
 
         return true;
     }
-    
-    
-    
+
     /**
      * Reads a JPEG2000 file by calling the read method of the file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
      */
     private ModelImage readJpeg2000(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
         FileJP2 imageFile;
-//        System.out.println("Hello, world!");
+        // System.out.println("Hello, world!");
         try {
             imageFile = new FileJP2(fileName, fileDir);
             image = imageFile.readImage(false, one);
@@ -10408,7 +10410,7 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
@@ -10422,7 +10424,7 @@ public class FileIO {
 
             System.gc();
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
@@ -10431,13 +10433,14 @@ public class FileIO {
 
         return image;
     }
+
     /**
      * Writes a JPEG2000 file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
      */
     private boolean writeJpeg2000(ModelImage image, FileWriteOptions options) {
         FileJP2 imageFile;
@@ -10457,14 +10460,14 @@ public class FileIO {
             }
         } catch (IOException error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
             return false;
         } catch (OutOfMemoryError error) {
 
-            if (!quiet) {
+            if ( !quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
@@ -10473,11 +10476,10 @@ public class FileIO {
 
         return true;
     }
-    
+
     public void setDisplayRangeOfSlicesDialog(boolean displayRangeOfSlicesDialog) {
-		this.displayRangeOfSlicesDialog = displayRangeOfSlicesDialog;
-	}
-    
+        this.displayRangeOfSlicesDialog = displayRangeOfSlicesDialog;
+    }
 
     // ~ Inner Classes
     // --------------------------------------------------------------------------------------------------
@@ -10544,7 +10546,4 @@ public class FileIO {
         }
     }
 
-
-
-	
 }
