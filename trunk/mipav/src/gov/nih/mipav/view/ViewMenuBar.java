@@ -991,7 +991,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
             menuBuilder.setMenuItemEnabled("Correct image spacing", false);
             menuBuilder.setMenuItemEnabled("Surface plotter", false);
-            menuBuilder.setMenuItemEnabled("Haralick texture", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
             menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
             menuBuilder.setMenuItemEnabled("Skeletonize", false);
