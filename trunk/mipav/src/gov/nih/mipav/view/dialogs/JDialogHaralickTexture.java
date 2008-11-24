@@ -20,7 +20,7 @@ import javax.swing.*;
 /**
  * Dialog to get user input, then call the algorithm.
  *
- * @version  0.2 Nov 21, 2008
+ * @version  0.3 Nov 24, 2008
  * @author   William Gandler
  * @see      AlgorithmHaralickTexture
  */
@@ -31,8 +31,35 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 2408406330754526954L;
+    
+    /** Red channel. */
+    private static final int RED_OFFSET = 1;
+
+    /** Green channel. */
+    private static final int GREEN_OFFSET = 2;
+
+    /** Blue channel. */
+    private static final int BLUE_OFFSET = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+    
+    /** DOCUMENT ME! */
+    private JPanel colorPanel;
+    
+    /** DOCUMENT ME! */
+    private ButtonGroup colorGroup;
+    
+    /** DOCUMENT ME! */
+    private JRadioButton redButton;
+    
+    /** DOCUMENT ME! */
+    private JRadioButton greenButton;
+    
+    /** DOCUMENT ME! */
+    private JRadioButton blueButton;
+    
+    /** DOCUMENT ME! */
+    private int RGBOffset = RED_OFFSET;
 
     /** DOCUMENT ME! */
     private boolean asm = false;
@@ -300,6 +327,9 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         }
 
         String str = new String();
+        if (image.isColorImage()) {
+            str += RGBOffset + delim;
+        }
         str += windowSize + delim;
         str += offsetDistance + delim;
         str += greyLevels + delim;
@@ -558,6 +588,15 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
     public void setGreyLevels(int greyLevels) {
         this.greyLevels = greyLevels;
     }
+    
+    /**
+     * Accessor that sets the RGBOffset.
+     *
+     * @param  RGBoffset  DOCUMENT ME!
+     */
+    public void setRGBOffset(int RGBoffset) {
+        this.RGBOffset = RGBoffset;
+    }
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
@@ -671,10 +710,19 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                 } // for (j = 0; j < numOperators; j++)
             } // for (i = 0; i < numDirections; i++)
 
-            textureAlgo = new AlgorithmHaralickTexture(resultImage, image, windowSize, offsetDistance, greyLevels, ns, nesw, ew,
-                                                       senw, invariantDir, contrast, dissimilarity, homogeneity,
-                                                       inverseOrder1, asm, energy, maxProbability, entropy, mean,
-                                                       variance, standardDeviation, correlation);
+            if (image.isColorImage()) {
+                textureAlgo = new AlgorithmHaralickTexture(resultImage, image, RGBOffset, windowSize, offsetDistance,
+                        greyLevels, ns, nesw, ew,
+                        senw, invariantDir, contrast, dissimilarity, homogeneity,
+                        inverseOrder1, asm, energy, maxProbability, entropy, mean,
+                        variance, standardDeviation, correlation);    
+            }
+            else {
+                textureAlgo = new AlgorithmHaralickTexture(resultImage, image, windowSize, offsetDistance, greyLevels, ns, nesw, ew,
+                                                           senw, invariantDir, contrast, dissimilarity, homogeneity,
+                                                           inverseOrder1, asm, energy, maxProbability, entropy, mean,
+                                                           variance, standardDeviation, correlation);
+            }
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -734,6 +782,12 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         image = scriptParameters.retrieveInputImage();
         parentFrame = image.getParentFrame();
 
+        if (image.isColorImage() && scriptParameters.getParams().containsParameter("RGB_offset")) {
+            RGBOffset = scriptParameters.getParams().getInt("RGB_offset");
+        } else if (image.isColorImage()) {
+            throw new ParameterException("RGB_offset",
+                                         "This parameter (RGB_offset) is required for the processing of color images.  Please re-record this script using a color image.");
+        }
         setWindowSize(scriptParameters.getParams().getInt("window_size"));
         setOffsetDistance(scriptParameters.getParams().getInt("offset_distance"));
         setGreyLevels(scriptParameters.getParams().getInt("grey_levels"));
@@ -783,6 +837,9 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
             scriptParameters.storeImageInRecorder(getResultImage()[i]);
         }
 
+        if (image.isColorImage()) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("RGB_offset", RGBOffset));
+        }
         scriptParameters.getParams().put(ParameterFactory.newParameter("window_size", windowSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("offset_distance", offsetDistance));
         scriptParameters.getParams().put(ParameterFactory.newParameter("grey_levels", greyLevels));
@@ -900,6 +957,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
+        int ypos = 0;
         setForeground(Color.black);
 
         setTitle("Haralick Texture");
@@ -917,13 +975,44 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        
+        if (image.isColorImage()) {
+            colorPanel = new JPanel(new GridLayout(3, 1));
+            colorPanel.setForeground(Color.black);
+            colorPanel.setBorder(buildTitledBorder("Colors"));
+
+            colorGroup = new ButtonGroup();
+            redButton = new JRadioButton("Red", true);
+            redButton.setFont(serif12);
+            redButton.setForeground(Color.black);
+            redButton.addActionListener(this);
+            colorGroup.add(redButton);
+            colorPanel.add(redButton);
+
+            greenButton = new JRadioButton("Green", false);
+            greenButton.setFont(serif12);
+            greenButton.setForeground(Color.black);
+            greenButton.addActionListener(this);
+            colorGroup.add(greenButton);
+            colorPanel.add(greenButton);
+
+            blueButton = new JRadioButton("Blue", false);
+            blueButton.setFont(serif12);
+            blueButton.setForeground(Color.black);
+            blueButton.addActionListener(this);
+            colorGroup.add(blueButton);
+            colorPanel.add(blueButton);
+            gbc.gridx = 0;
+            gbc.gridy = ypos++;
+            mainPanel.add(colorPanel, gbc);
+        } // if (image.isColorImage())
 
         scalePanel = new JPanel(new GridLayout(3, 2));
         scalePanel.setForeground(Color.black);
         scalePanel.setBorder(buildTitledBorder("Sizes"));
+        gbc.gridx = 0;
+        gbc.gridy = ypos++;
         mainPanel.add(scalePanel, gbc);
 
         labelWindowSize = new JLabel("Window size - odd");
@@ -1002,7 +1091,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         invariantCheckBox.setSelected(false);
 
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = ypos++;
         mainPanel.add(directionPanel, gbc);
 
         JPanel operatorPanel = new JPanel(new GridBagLayout());
@@ -1100,7 +1189,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         correlationCheckBox.setSelected(false);
 
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = ypos++;
         mainPanel.add(operatorPanel, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
@@ -1127,6 +1216,17 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         String tmpStr;
         numDirections = 0;
         numOperators = 0;
+        
+        if (image.isColorImage()) {
+
+            if (redButton.isSelected()) {
+                RGBOffset = RED_OFFSET;
+            } else if (greenButton.isSelected()) {
+                RGBOffset = GREEN_OFFSET;
+            } else {
+                RGBOffset = BLUE_OFFSET;
+            }
+        } // if (image.isColorImage())
 
         tmpStr = textWindowSize.getText();
 
