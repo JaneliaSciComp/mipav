@@ -12,7 +12,7 @@ import java.io.*;
 /**
  * DOCUMENT ME!
  *
- * @version  0.2 November 21, 2008
+ * @version  0.3 November 24, 2008
  * @author   William Gandler This code is based on the material in the GLCM Texture Tutorial by Myrka Hall-Beyer at
  *           http://www.fp.ucalgary.ca/mhallbey/tutorial.html.
  *
@@ -51,6 +51,15 @@ import java.io.*;
  *          Setting G to a value under twenty-four can produce unreliable results."
  */
 public class AlgorithmHaralickTexture extends AlgorithmBase {
+    
+    /** Red channel. */
+    private static final int RED_OFFSET = 1;
+
+    /** Green channel. */
+    private static final int GREEN_OFFSET = 2;
+
+    /** Blue channel. */
+    private static final int BLUE_OFFSET = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -134,11 +143,13 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
     
     /** Number of grey levels used if rescaling performed. */
     private int greyLevels = 32;
+    
+    private int RGBOffset = RED_OFFSET;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates a new AlgorithmHaralickTexture object.
+     * Creates a new AlgorithmHaralickTexture object for black and white image.
      *
      * @param              destImg            image model where result image is to stored
      * @param              srcImg             source image model
@@ -174,6 +185,67 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
                                     boolean variance, boolean standardDeviation, boolean correlation) {
         super(null, srcImg);
         destImage = destImg;
+        this.windowSize = windowSize;
+        this.offsetDistance = offsetDistance;
+        this.greyLevels = greyLevels;
+        this.ns = ns;
+        this.nesw = nesw;
+        this.ew = ew;
+        this.senw = senw;
+        this.invariantDir = invariantDir;
+        this.contrast = contrast;
+        this.dissimilarity = dissimilarity;
+        this.homogeneity = homogeneity;
+        this.inverseOrder1 = inverseOrder1;
+        this.asm = asm;
+        this.energy = energy;
+        this.maxProbability = maxProbability;
+        this.entropy = entropy;
+        this.mean = mean;
+        this.variance = variance;
+        this.standardDeviation = standardDeviation;
+        this.correlation = correlation;
+    }
+    
+    /**
+     * Creates a new AlgorithmHaralickTexture object for color image.
+     *
+     * @param              destImg            image model where result image is to stored
+     * @param              srcImg             source image model
+     * @param              RGBOffset          selects red, green, or blue channel
+     * @param              windowSize         the size of the square window
+     * @param              offsetDistance     distance between 2 pixels of pair
+     * @param              greyLevels         Number of grey levels used if rescaling performed
+     * @param              ns                 true if north south offset direction calculated
+     * @param              nesw               true if northeast-southwest offset direction calculated
+     * @param              ew                 true if east west offset direction calculated
+     * @param              senw               true if southeast-northwest offset direction calculated
+     * @param              invariantDir       true if spatially invariant calculated
+     * @param              contrast           true if contrast calculated
+     * @param              dissimilarity      true if dissimilarity calculated
+     * @param              homogeneity        true if homogeneity calculated
+     * @param              inverseOrder1      true if inverse difference moment of order 1 calculated
+     * @param              asm                true if angular second moment calculated
+     * @param              energy             true if energy calculated
+     * @param              maxProbability     true if maximum probability calculated
+     * @param              entropy            true if entropy calculated
+     * @param              mean               true if gray level coordinate matrix mean calculated
+     * @param              variance           DOCUMENT ME!
+     * @param              standardDeviation  DOCUMENT ME!
+     * @param              correlation        DOCUMENT ME!
+     *
+     * @variance           true if gray level coordinate matrix variance calculated
+     * @standardDeviation  true if gray level coordinate matrix standard deviation calculated
+     * @coorelation        true if gray level coordinate matrix correlation calculated
+     */
+    public AlgorithmHaralickTexture(ModelImage[] destImg, ModelImage srcImg, int RGBOffset, int windowSize, int offsetDistance, int greyLevels,
+                                    boolean ns, boolean nesw, boolean ew, boolean senw, boolean invariantDir,
+                                    boolean contrast, boolean dissimilarity, boolean homogeneity, boolean inverseOrder1,
+                                    boolean asm, boolean energy, boolean maxProbability, boolean entropy, boolean mean,
+                                    boolean variance, boolean standardDeviation, boolean correlation) {
+        super(null, srcImg);
+        destImage = destImg;
+        this.RGBOffset = RGBOffset;
         this.windowSize = windowSize;
         this.offsetDistance = offsetDistance;
         this.greyLevels = greyLevels;
@@ -256,6 +328,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         int numOperators = 0;
         double[] sourceBuffer = new double[sliceSize];
         byte[]  byteBuffer = new byte[sliceSize];
+        float[] floatBuffer;
         int[][] nsBuffer = null;
         int[][] neswBuffer = null;
         int[][] ewBuffer = null;
@@ -293,7 +366,17 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         }
 
         try {
-            srcImage.exportData(0, sliceSize, sourceBuffer);
+            if (srcImage.isColorImage()) {
+                floatBuffer = new float[sliceSize];
+                srcImage.exportRGBData(RGBOffset, 0, sliceSize, floatBuffer);  
+                for (i = 0; i < sliceSize; i++) {
+                    sourceBuffer[i] = (double)floatBuffer[i];
+                }
+                floatBuffer = null;
+            }
+            else {
+                srcImage.exportData(0, sliceSize, sourceBuffer);
+            }
         } catch (IOException error) {
             MipavUtil.displayError("AlgorithmHaralickTexture: IOException on srcImage.exportData(0,sliceSize,sourceBuffer)");
             setCompleted(false);
@@ -315,6 +398,8 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
                 byteBuffer[i] = (byte)Math.round(sourceBuffer[i]);
             }
         }
+        
+        sourceBuffer = null;
 
         if (ns) {
             numDirections++;
