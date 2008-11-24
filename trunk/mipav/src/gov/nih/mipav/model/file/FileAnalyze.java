@@ -393,7 +393,7 @@ public class FileAnalyze extends FileBase {
         /** Check whether the value of extents field equals to 16384 */
         raFile.seek(32);
         raFile.readFully(buffer);
-
+        
         int extents = FileBase.bytesToInt(bigEndian, 0, buffer);
 
         if (extents != EXTENTS) {
@@ -404,15 +404,13 @@ public class FileAnalyze extends FileBase {
         raFile.seek(38);
 
         byte regular = raFile.readByte();
-
-        if (regular == 'r') {
-            raFile.close();
-            return true;
+        if (regular != 'r') {
+            Preferences.debug("regular = " + regular + " instead of the expected 'r'\n");
         }
 
         raFile.close();
 
-        return false;
+        return true;
 
     }
 
