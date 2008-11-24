@@ -339,7 +339,7 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
         scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_bins", bins));
 
         if (image.isColorImage()) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("RGB_offset", bins));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("RGB_offset", RGBOffset));
         }
 
         scriptParameters.storeProcessWholeImage(radWholeImage.isSelected());
