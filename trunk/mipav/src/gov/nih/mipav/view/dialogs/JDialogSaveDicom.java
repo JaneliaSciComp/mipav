@@ -6,10 +6,8 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-import java.awt.event.*;
-
+import java.awt.event.ActionEvent;
 import java.io.*;
-
 import java.util.*;
 
 import javax.swing.*;
@@ -17,19 +15,21 @@ import javax.swing.*;
 
 /**
  * Simple dialog to tell the program important information necessary for saving the DICOM file.
- *
- * @version  1.0 Aug 1, 2000
- * @author   Neva Cherniavsky
- * @see      FileDicom
+ * 
+ * @version 1.0 Aug 1, 2000
+ * @author Neva Cherniavsky
+ * @see FileDicom
  */
 public class JDialogSaveDicom extends JDialogBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 7303665224054251504L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private JButton autofillButton;
@@ -47,7 +47,7 @@ public class JDialogSaveDicom extends JDialogBase {
     private GridBagConstraints gbc;
 
     /** DOCUMENT ME! */
-    private String[] lateralities = { "Unknown", "Left", "Right" };
+    private String[] lateralities = {"Unknown", "Left", "Right"};
 
     /** DOCUMENT ME! */
     private JComboBox laterality;
@@ -56,21 +56,18 @@ public class JDialogSaveDicom extends JDialogBase {
     private GridBagLayout layout;
 
     /** DOCUMENT ME! */
-    private String[] modalities = {
-        "Biomagnetic Imaging", "Color Flow Doppler", "Computed Radiography", "Computed Tomography", "Duplex Doppler",
-        "Diaphanography", "Digital Radiography", "Endoscopy", "General Microscopy", "Hardcody", "Intraoral Radiography",
-        "Laser Surface Scan", "MR Angiography", "Mammography", "Magnetic Resonance", "MR Spectroscopy",
-        "Nuclear Medicine", "Other", "PET", "Panoramic XRay", "Radio Fluoroscopy", "Radiographic Imaging",
-        "Radiotherapy Dose", "Radiotherapy Image", "Radiotherapy Plan", "Radiotherapy Record", "Radiotherapy Structure",
-        "Slide Microscopy", "SPECT", "Thermography", "Ultrasound", "XRay Angiography", "External Photography"
-    };
+    private String[] modalities = {"Biomagnetic Imaging", "Color Flow Doppler", "Computed Radiography",
+            "Computed Tomography", "Duplex Doppler", "Diaphanography", "Digital Radiography", "Endoscopy",
+            "General Microscopy", "Hardcody", "Intraoral Radiography", "Laser Surface Scan", "MR Angiography",
+            "Mammography", "Magnetic Resonance", "MR Spectroscopy", "Nuclear Medicine", "Other", "PET",
+            "Panoramic XRay", "Radio Fluoroscopy", "Radiographic Imaging", "Radiotherapy Dose", "Radiotherapy Image",
+            "Radiotherapy Plan", "Radiotherapy Record", "Radiotherapy Structure", "Slide Microscopy", "SPECT",
+            "Thermography", "Ultrasound", "XRay Angiography", "External Photography"};
 
     /** DOCUMENT ME! */
-    private String[] parts = {
-        "Unknown", "Skull", "CSpine", "TSpine", "LSpine", "SSpine", "Coccyx", "Chest", "Clavicle", "Breast", "Abdomen",
-        "Pelvis", "Hip", "Shoulder", "Elbow", "Knee", "Ankle", "Hand", "Foot", "Extremity", "Head", "Heart", "Neck",
-        "Leg", "Arm", "Jaw"
-    };
+    private String[] parts = {"Unknown", "Skull", "CSpine", "TSpine", "LSpine", "SSpine", "Coccyx", "Chest",
+            "Clavicle", "Breast", "Abdomen", "Pelvis", "Hip", "Shoulder", "Elbow", "Knee", "Ankle", "Hand", "Foot",
+            "Extremity", "Head", "Heart", "Neck", "Leg", "Arm", "Jaw"};
 
     /** DOCUMENT ME! */
     private JTextField patientBirthDate;
@@ -106,10 +103,8 @@ public class JDialogSaveDicom extends JDialogBase {
     private JComboBox patientSex;
 
     /** DOCUMENT ME! */
-    private String[] positions = {
-        "Unknown", "Head-First Prone", "Head-First Supine", "Feet First-Prone", "Feet First-Supine",
-        "HF-Decubitus Right", "HF-Decubitus Left", "FF-Decubitus Right", "FF-Decubitus Left"
-    };
+    private String[] positions = {"Unknown", "Head-First Prone", "Head-First Supine", "Feet First-Prone",
+            "Feet First-Supine", "HF-Decubitus Right", "HF-Decubitus Left", "FF-Decubitus Right", "FF-Decubitus Left"};
 
     /** DOCUMENT ME! */
     private JPanel requiredPanel;
@@ -169,7 +164,7 @@ public class JDialogSaveDicom extends JDialogBase {
     private JTextField seriesUID;
 
     /** DOCUMENT ME! */
-    private String[] sexes = { "Unknown", "Male", "Female", "Other" };
+    private String[] sexes = {"Unknown", "Male", "Female", "Other"};
 
     /** DOCUMENT ME! */
     private JTextField studyAccNumber;
@@ -222,11 +217,10 @@ public class JDialogSaveDicom extends JDialogBase {
     /** DOCUMENT ME! */
     private JTabbedPane tabPane;
 
-
     /**
      * DICOM tags extracted from the image we want to save. Example: dicom_0xNNNN el_0xNNNN tags stored in MINC headers.
      */
-    private Hashtable<String,String> tagsImportedFromNonDicomImage;
+    private Hashtable<String, String> tagsImportedFromNonDicomImage;
 
     /** The additional tags list is a list of tags the DTI group has requested. */
     private Hashtable tagsList, additionalTagsList;
@@ -234,18 +228,19 @@ public class JDialogSaveDicom extends JDialogBase {
     /** DOCUMENT ME! */
     private ViewUserInterface UI;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates dialog for setting tag information for DICOM image.
-     *
-     * @param  theParentFrame   Parent frame.
-     * @param  _fileInfo        File info object to get initialization info from.
-     * @param  dicomInfo        Dicom file info object.
-     * @param  isScriptRunning  Whether this dialog is being instantiated as part of the running of a script.
+     * 
+     * @param theParentFrame Parent frame.
+     * @param _fileInfo File info object to get initialization info from.
+     * @param dicomInfo Dicom file info object.
+     * @param isScriptRunning Whether this dialog is being instantiated as part of the running of a script.
      */
     public JDialogSaveDicom(Frame theParentFrame, FileInfoBase _fileInfo, FileInfoDicom dicomInfo,
-                            boolean isScriptRunning) {
+            boolean isScriptRunning) {
         super(theParentFrame, true);
 
         UI = ViewUserInterface.getReference();
@@ -298,7 +293,7 @@ public class JDialogSaveDicom extends JDialogBase {
             tagsImportedFromNonDicomImage = ((FileInfoMinc) fileInfo).convertTagsToTable();
             fillDataFromTable(tagsImportedFromNonDicomImage);
 
-            // remove tags which were used to fill the GUI in fillDataFromTable().  the rest will be blindly imported
+            // remove tags which were used to fill the GUI in fillDataFromTable(). the rest will be blindly imported
             // into the dicom fileinfo later..
             Enumeration<String> keys = tagsImportedFromNonDicomImage.keys();
             String tag;
@@ -307,8 +302,8 @@ public class JDialogSaveDicom extends JDialogBase {
                 tag = keys.nextElement();
 
                 // handle chooser fields differently
-                if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)") ||
-                        tag.equals("(0018,5100)")) {
+                if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)")
+                        || tag.equals("(0018,5100)")) {
 
                     // don't blindly import tags which are in the GUI
                     tagsImportedFromNonDicomImage.remove(tag);
@@ -322,7 +317,7 @@ public class JDialogSaveDicom extends JDialogBase {
             tagsImportedFromNonDicomImage = ((FileInfoMincHDF) fileInfo).convertTagsToTable();
             fillDataFromTable(tagsImportedFromNonDicomImage);
 
-            // remove tags which were used to fill the GUI in fillDataFromTable().  the rest will be blindly imported
+            // remove tags which were used to fill the GUI in fillDataFromTable(). the rest will be blindly imported
             // into the dicom fileinfo later..
             Enumeration<String> keys = tagsImportedFromNonDicomImage.keys();
             String tag;
@@ -331,8 +326,8 @@ public class JDialogSaveDicom extends JDialogBase {
                 tag = keys.nextElement();
 
                 // handle chooser fields differently
-                if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)") ||
-                        tag.equals("(0018,5100)")) {
+                if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)")
+                        || tag.equals("(0018,5100)")) {
 
                     // don't blindly import tags which are in the GUI
                     tagsImportedFromNonDicomImage.remove(tag);
@@ -354,36 +349,37 @@ public class JDialogSaveDicom extends JDialogBase {
         }
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Closes dialog box when the OK button is pressed and sets the information, doing error checking for every tag.
-     *
-     * @param  event  Event that triggers this function.
+     * 
+     * @param event Event that triggers this function.
      */
     public void actionPerformed(ActionEvent event) {
 
         if (event.getActionCommand().equals("OK")) {
 
-            if (checkTag(studyUID.getText(), "UI") && checkTag(seriesUID.getText(), "UI") &&
-                    checkTag(patientName.getText(), "PN") && checkTag(patientID.getText(), "LO") &&
-                    checkTag(patientBirthDate.getText(), "DA") && checkTag(patientBirthDate.getText(), "TM") &&
-                    checkTag(patientOtherIDs.getText(), "LO") && checkTag(patientOtherNames.getText(), "PN") &&
-                    checkTag(patientEthnicGroup.getText(), "SH") && checkTag(patientComments.getText(), "LT") &&
-                    checkTag(patientOrientation.getText(), "Orient") && checkTag(studyDate.getText(), "DA") &&
-                    checkTag(studyTime.getText(), "TM") && checkTag(studyRefPhy.getText(), "PN") &&
-                    checkTag(studyID.getText(), "SH") && checkTag(studyAccNumber.getText(), "SH") &&
-                    checkTag(studyDescrip.getText(), "LO") && checkTag(studyPhyRec.getText(), "PN") &&
-                    checkTag(studyPhyRead.getText(), "PN") && checkTag(studyDiag.getText(), "LO") &&
-                    checkTag(studyAge.getText(), "AS") && checkTag(studyWeight.getText(), "DS") &&
-                    checkTag(studySize.getText(), "DS") && checkTag(studyOcc.getText(), "SH") &&
-                    checkTag(studyHist.getText(), "LT") && checkTag(seriesNo.getText(), "IS") &&
-                    checkTag(seriesDate.getText(), "DA") && checkTag(seriesTime.getText(), "TM") &&
-                    checkTag(seriesPerfPhy.getText(), "PN") && checkTag(seriesProtocol.getText(), "LO") &&
-                    checkTag(seriesDescrip.getText(), "LO") && checkTag(seriesOp.getText(), "PN") &&
-                    checkTag(seriesSmall.getText(), "USorSS") && checkTag(seriesLarge.getText(), "USorSS") &&
-                    checkTag(seriesStepID.getText(), "SH") && checkTag(seriesStepDate.getText(), "DA") &&
-                    checkTag(seriesStepTime.getText(), "TM") && checkTag(seriesStepDescrip.getText(), "LO")) {
+            if (checkTag(studyUID.getText(), "UI") && checkTag(seriesUID.getText(), "UI")
+                    && checkTag(patientName.getText(), "PN") && checkTag(patientID.getText(), "LO")
+                    && checkTag(patientBirthDate.getText(), "DA") && checkTag(patientBirthDate.getText(), "TM")
+                    && checkTag(patientOtherIDs.getText(), "LO") && checkTag(patientOtherNames.getText(), "PN")
+                    && checkTag(patientEthnicGroup.getText(), "SH") && checkTag(patientComments.getText(), "LT")
+                    && checkTag(patientOrientation.getText(), "Orient") && checkTag(studyDate.getText(), "DA")
+                    && checkTag(studyTime.getText(), "TM") && checkTag(studyRefPhy.getText(), "PN")
+                    && checkTag(studyID.getText(), "SH") && checkTag(studyAccNumber.getText(), "SH")
+                    && checkTag(studyDescrip.getText(), "LO") && checkTag(studyPhyRec.getText(), "PN")
+                    && checkTag(studyPhyRead.getText(), "PN") && checkTag(studyDiag.getText(), "LO")
+                    && checkTag(studyAge.getText(), "AS") && checkTag(studyWeight.getText(), "DS")
+                    && checkTag(studySize.getText(), "DS") && checkTag(studyOcc.getText(), "SH")
+                    && checkTag(studyHist.getText(), "LT") && checkTag(seriesNo.getText(), "IS")
+                    && checkTag(seriesDate.getText(), "DA") && checkTag(seriesTime.getText(), "TM")
+                    && checkTag(seriesPerfPhy.getText(), "PN") && checkTag(seriesProtocol.getText(), "LO")
+                    && checkTag(seriesDescrip.getText(), "LO") && checkTag(seriesOp.getText(), "PN")
+                    && checkTag(seriesSmall.getText(), "USorSS") && checkTag(seriesLarge.getText(), "USorSS")
+                    && checkTag(seriesStepID.getText(), "SH") && checkTag(seriesStepDate.getText(), "DA")
+                    && checkTag(seriesStepTime.getText(), "TM") && checkTag(seriesStepDescrip.getText(), "LO")) {
 
                 // blindly import any tags which were exported from the image we want to save (shouldn't be any gui
                 // tags, though)
@@ -408,19 +404,21 @@ public class JDialogSaveDicom extends JDialogBase {
                             try {
                                 valueArray[0] = Short.decode(vals[0]);
                             } catch (NumberFormatException nfe) {
-                                MipavUtil.displayError("Error parsing short values from minc-stored dicom tag (0018,1310): " +
-                                                       vals[0]);
+                                MipavUtil
+                                        .displayError("Error parsing short values from minc-stored dicom tag (0018,1310): "
+                                                + vals[0]);
                             }
 
                             for (int i = 1; i < vals.length; i++) {
 
-                                if ((i % 2) == 0) {
+                                if ( (i % 2) == 0) {
 
                                     try {
                                         valueArray[i / 2] = Short.decode(vals[i]);
                                     } catch (NumberFormatException nfe) {
-                                        MipavUtil.displayError("Error parsing short values from minc-stored dicom tag (0018,1310): " +
-                                                               vals[i]);
+                                        MipavUtil
+                                                .displayError("Error parsing short values from minc-stored dicom tag (0018,1310): "
+                                                        + vals[i]);
 
                                         break;
                                     }
@@ -433,7 +431,7 @@ public class JDialogSaveDicom extends JDialogBase {
                                 dicomFileInfo.getTagTable().removeTag(tag);
 
                                 Preferences.debug("Error tranferring tag from non-dicom image to dicom: \n",
-                                                  Preferences.DEBUG_FILEIO);
+                                        Preferences.DEBUG_FILEIO);
                                 Preferences.debug("\t" + tag + " = " + value + "\n", Preferences.DEBUG_FILEIO);
                                 Preferences.debug("\terror: " + e.getMessage() + "\n", Preferences.DEBUG_FILEIO);
                             }
@@ -445,7 +443,7 @@ public class JDialogSaveDicom extends JDialogBase {
                                 dicomFileInfo.getTagTable().removeTag(tag);
 
                                 Preferences.debug("Error tranferring tag from non-dicom image to dicom: \n",
-                                                  Preferences.DEBUG_FILEIO);
+                                        Preferences.DEBUG_FILEIO);
                                 Preferences.debug("\t" + tag + " = " + value + "\n", Preferences.DEBUG_FILEIO);
                                 Preferences.debug("\terror: " + e.getMessage() + "\n", Preferences.DEBUG_FILEIO);
                             }
@@ -460,54 +458,60 @@ public class JDialogSaveDicom extends JDialogBase {
                 version[0] = new Byte((byte) 1);
                 version[1] = new Byte((byte) 0);
                 dicomFileInfo.getTagTable().setValue("0002,0001", version, 2);
-                dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID
-                dicomFileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2 ", 18); // Little Endian transfer
-                                                                                             // syntax
+                dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary
+                // Capture SOP
+                // UID
+                dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.999999999999999999", 26); // bogus SOP
+                // Instance UID
+                dicomFileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2 ", 18); // Little Endian
+                // transfer
+                // syntax
                 dicomFileInfo.getTagTable().setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID
-                                                                                           // made up by Matt
+                // made up by Matt
                 dicomFileInfo.getTagTable().setValue("0002,0013", "MIPAV--NIH", 10); //
 
-                dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture UID
-                dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID
+                dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary
+                // Capture UID
+                dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.999999999999999999", 26); // bogus SOP
+                // Instance UID
 
                 // all secondary capture info is installed by FileDicom.writeImage(), under the assumption that all
                 // saves must have been modified (and need that stuff)
-                dicomFileInfo.getTagTable().setValue("0010,0010", patientName.getText(),
-                                                     patientName.getText().length());
+                dicomFileInfo.getTagTable()
+                        .setValue("0010,0010", patientName.getText(), patientName.getText().length());
                 dicomFileInfo.getTagTable().setValue("0010,0020", patientID.getText(), patientID.getText().length());
                 dicomFileInfo.getTagTable().setValue("0010,0030", patientBirthDate.getText(),
-                                                     patientBirthDate.getText().length());
+                        patientBirthDate.getText().length());
                 dicomFileInfo.getTagTable().setValue("0010,0032", patientBirthTime.getText(),
-                                                     patientBirthTime.getText().length());
+                        patientBirthTime.getText().length());
                 dicomFileInfo.getTagTable().setValue("0010,1000", patientOtherIDs.getText(),
-                                                     patientOtherIDs.getText().length());
+                        patientOtherIDs.getText().length());
                 dicomFileInfo.getTagTable().setValue("0010,1001", patientOtherNames.getText(),
-                                                     patientOtherNames.getText().length());
+                        patientOtherNames.getText().length());
                 dicomFileInfo.getTagTable().setValue("0010,2160", patientEthnicGroup.getText(),
-                                                     patientEthnicGroup.getText().length());
+                        patientEthnicGroup.getText().length());
                 dicomFileInfo.getTagTable().setValue("0010,4000", patientComments.getText(),
-                                                     patientComments.getText().length());
+                        patientComments.getText().length());
                 dicomFileInfo.getTagTable().setValue("0020,0020", patientOrientation.getText(),
-                                                     patientOrientation.getText().length());
+                        patientOrientation.getText().length());
                 dicomFileInfo.getTagTable().setValue("0020,000D", studyUID.getText(), studyUID.getText().length());
                 dicomFileInfo.getTagTable().setValue("0020,0010", studyID.getText(), studyID.getText().length());
                 dicomFileInfo.getTagTable().setValue("0008,0020", studyDate.getText(), studyDate.getText().length());
                 dicomFileInfo.getTagTable().setValue("0008,0030", studyTime.getText(), studyTime.getText().length());
                 dicomFileInfo.getTagTable().setValue("0008,0050", studyAccNumber.getText(),
-                                                     studyAccNumber.getText().length());
+                        studyAccNumber.getText().length());
                 dicomFileInfo.getTagTable().setValue("0008,1030", studyDescrip.getText(),
-                                                     studyDescrip.getText().length());
-                dicomFileInfo.getTagTable().setValue("0008,0090", studyRefPhy.getText(),
-                                                     studyRefPhy.getText().length());
-                dicomFileInfo.getTagTable().setValue("0008,1048", studyPhyRec.getText(),
-                                                     studyPhyRec.getText().length());
+                        studyDescrip.getText().length());
+                dicomFileInfo.getTagTable()
+                        .setValue("0008,0090", studyRefPhy.getText(), studyRefPhy.getText().length());
+                dicomFileInfo.getTagTable()
+                        .setValue("0008,1048", studyPhyRec.getText(), studyPhyRec.getText().length());
                 dicomFileInfo.getTagTable().setValue("0008,1060", studyPhyRead.getText(),
-                                                     studyPhyRead.getText().length());
+                        studyPhyRead.getText().length());
                 dicomFileInfo.getTagTable().setValue("0008,1080", studyDiag.getText(), studyDiag.getText().length());
                 dicomFileInfo.getTagTable().setValue("0010,1010", studyAge.getText(), studyAge.getText().length());
-                dicomFileInfo.getTagTable().setValue("0010,1030", studyWeight.getText(),
-                                                     studyWeight.getText().length());
+                dicomFileInfo.getTagTable()
+                        .setValue("0010,1030", studyWeight.getText(), studyWeight.getText().length());
                 dicomFileInfo.getTagTable().setValue("0010,1020", studySize.getText(), studySize.getText().length());
                 dicomFileInfo.getTagTable().setValue("0010,2180", studyOcc.getText(), studyOcc.getText().length());
                 dicomFileInfo.getTagTable().setValue("0010,21B0", studyHist.getText(), studyHist.getText().length());
@@ -516,11 +520,11 @@ public class JDialogSaveDicom extends JDialogBase {
                 dicomFileInfo.getTagTable().setValue("0008,0021", seriesDate.getText(), seriesDate.getText().length());
                 dicomFileInfo.getTagTable().setValue("0008,0031", seriesTime.getText(), seriesTime.getText().length());
                 dicomFileInfo.getTagTable().setValue("0008,1050", seriesPerfPhy.getText(),
-                                                     seriesPerfPhy.getText().length());
+                        seriesPerfPhy.getText().length());
                 dicomFileInfo.getTagTable().setValue("0018,1030", seriesProtocol.getText(),
-                                                     seriesProtocol.getText().length());
+                        seriesProtocol.getText().length());
                 dicomFileInfo.getTagTable().setValue("0008,103E", seriesDescrip.getText(),
-                                                     seriesDescrip.getText().length());
+                        seriesDescrip.getText().length());
                 dicomFileInfo.getTagTable().setValue("0008,1070", seriesOp.getText(), seriesOp.getText().length());
 
                 // additional tags that DTI folk requested...importing from another DICOM
@@ -584,8 +588,8 @@ public class JDialogSaveDicom extends JDialogBase {
                                 valueArray[i] = Short.decode(vals[i]);
                             } catch (NumberFormatException nfe) {
                                 test = false;
-                                MipavUtil.displayError("Error parsing short values from dicom tag (0018,1310): " +
-                                                       vals[i]);
+                                MipavUtil.displayError("Error parsing short values from dicom tag (0018,1310): "
+                                        + vals[i]);
 
                                 break;
                             }
@@ -608,7 +612,6 @@ public class JDialogSaveDicom extends JDialogBase {
                     }
                 }
 
-
                 if (seriesSmall.getText().length() > 0) {
                     dicomFileInfo.getTagTable().setValue("0028,0108", Short.valueOf(seriesSmall.getText()), 2);
                 }
@@ -618,13 +621,13 @@ public class JDialogSaveDicom extends JDialogBase {
                 }
 
                 dicomFileInfo.getTagTable().setValue("0040,0253", seriesStepID.getText(),
-                                                     seriesStepID.getText().length());
+                        seriesStepID.getText().length());
                 dicomFileInfo.getTagTable().setValue("0040,0244", seriesStepDate.getText(),
-                                                     seriesStepDate.getText().length());
+                        seriesStepDate.getText().length());
                 dicomFileInfo.getTagTable().setValue("0040,0245", seriesStepTime.getText(),
-                                                     seriesStepTime.getText().length());
+                        seriesStepTime.getText().length());
                 dicomFileInfo.getTagTable().setValue("0040,0254", seriesStepDescrip.getText(),
-                                                     seriesStepDescrip.getText().length());
+                        seriesStepDescrip.getText().length());
 
                 switch (patientSex.getSelectedIndex()) {
 
@@ -936,7 +939,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
                 Short samples = new Short((short) 1);
 
-                // These next two tags may  change with RGB DICOM images !!!!
+                // These next two tags may change with RGB DICOM images !!!!
                 dicomFileInfo.getTagTable().setValue("0028,0002", samples, 2);
                 dicomFileInfo.getTagTable().setValue("0028,0004", "MONOCHROME2 ", 12);
 
@@ -945,8 +948,8 @@ public class JDialogSaveDicom extends JDialogBase {
                 dicomFileInfo.getTagTable().setValue("0028,0010", new Short((short) fileInfo.getExtents()[1]), 2);
 
                 // Pixel spacing
-                String s = String.valueOf(fileInfo.getResolutions()[0]) + "\\" +
-                           String.valueOf(fileInfo.getResolutions()[1]);
+                String s = String.valueOf(fileInfo.getResolutions()[0]) + "\\"
+                        + String.valueOf(fileInfo.getResolutions()[1]);
                 dicomFileInfo.getTagTable().setValue("0028,0030", s, s.length());
 
                 // Slice thickness and spacing
@@ -982,13 +985,13 @@ public class JDialogSaveDicom extends JDialogBase {
         String seriesPostfix = "1";
 
         String version = MipavUtil.getVersion();
-        version = version.replaceAll("\\.", "");
+        version = version.replaceAll("[\\.-]", "");
 
         long datetime = System.currentTimeMillis();
         String uidPrefix = "1.2.840.99999.9." + version + "." + datetime;
 
         // (0020,000D) study instance uid
-        if (((JTextField) (tagsList.get("(0020,000D)"))).getText().equals("")) {
+        if ( ((JTextField) (tagsList.get("(0020,000D)"))).getText().equals("")) {
             ((JTextField) (tagsList.get("(0020,000D)"))).setText(uidPrefix + "." + studyPostfix);
             resetSize((JTextField) (tagsList.get("(0020,000D)")));
         }
@@ -999,7 +1002,7 @@ public class JDialogSaveDicom extends JDialogBase {
         }
 
         // (0020,000E) series instance uid
-        if (((JTextField) (tagsList.get("(0020,000E)"))).getText().equals("")) {
+        if ( ((JTextField) (tagsList.get("(0020,000E)"))).getText().equals("")) {
             ((JTextField) (tagsList.get("(0020,000E)"))).setText(uidPrefix + "." + seriesPostfix);
             resetSize((JTextField) (tagsList.get("(0020,000E)")));
         }
@@ -1008,11 +1011,11 @@ public class JDialogSaveDicom extends JDialogBase {
     /**
      * Checks the text field data for the proper format. For example, UIDs must be strings of numbers and periods,
      * person's names must be in the format Doe^John, etc.
-     *
-     * @param   value  The text we are checking.
-     * @param   type   Types we can expect - UI, PN, LO, DA, TM, etc.
-     *
-     * @return  Boolean confirming if the tag checked through or not.
+     * 
+     * @param value The text we are checking.
+     * @param type Types we can expect - UI, PN, LO, DA, TM, etc.
+     * 
+     * @return Boolean confirming if the tag checked through or not.
      */
     private boolean checkTag(String value, String type) {
         StringTokenizer tok;
@@ -1031,7 +1034,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
                 for (int i = 0; i < value.length(); i++) {
 
-                    if (!Character.isDigit(value.charAt(i)) && (value.charAt(i) != '.')) {
+                    if ( !Character.isDigit(value.charAt(i)) && (value.charAt(i) != '.')) {
                         MipavUtil.displayError("UIDs must only contain numbers and periods:\n" + value);
 
                         return false;
@@ -1054,7 +1057,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
                 while (tok.hasMoreTokens()) {
 
-                    if (!isDefaultCharacter(tok.nextToken(), false)) {
+                    if ( !isDefaultCharacter(tok.nextToken(), false)) {
                         MipavUtil.displayError("Person's name must be of the form 'Doe^John'.");
 
                         return false;
@@ -1075,7 +1078,7 @@ public class JDialogSaveDicom extends JDialogBase {
                     return false;
                 }
 
-                if (!isDefaultCharacter(value, false)) {
+                if ( !isDefaultCharacter(value, false)) {
                     MipavUtil.displayError(value + "contains invalid characters.");
 
                     return false;
@@ -1087,20 +1090,18 @@ public class JDialogSaveDicom extends JDialogBase {
             }
         } else if (type.equals("DA")) {
 
-            if ((value.length() != 0) && (value.length() != 8)) {
-                MipavUtil.displayError("Date must be of the form yyyymmdd where yyyy contains the year,\n" +
-                                       "mm contains the month and dd contains the day.\n" +
-                                       "All characters should be numbers.");
+            if ( (value.length() != 0) && (value.length() != 8)) {
+                MipavUtil.displayError("Date must be of the form yyyymmdd where yyyy contains the year,\n"
+                        + "mm contains the month and dd contains the day.\n" + "All characters should be numbers.");
 
                 return false;
             }
 
             for (int i = 0; i < value.length(); i++) {
 
-                if (!Character.isDigit(value.charAt(i))) {
-                    MipavUtil.displayError("Date must be of the form yyyymmdd where yyyy contains the year,\n" +
-                                           "mm contains the month and dd contains the day.\n" +
-                                           "All characters should be numbers.");
+                if ( !Character.isDigit(value.charAt(i))) {
+                    MipavUtil.displayError("Date must be of the form yyyymmdd where yyyy contains the year,\n"
+                            + "mm contains the month and dd contains the day.\n" + "All characters should be numbers.");
 
                     return false;
                 }
@@ -1108,29 +1109,29 @@ public class JDialogSaveDicom extends JDialogBase {
 
             if (value.length() != 0) {
 
-                if ((Integer.valueOf(value.substring(0, 4)).intValue() < 0) ||
-                        (Integer.valueOf(value.substring(0, 4)).intValue() > 2500)) {
-                    MipavUtil.displayError("Date must be of the form yyyymmdd where yyyy contains the year,\n" +
-                                           "mm contains the month and dd contains the day.\n" + "Year " +
-                                           value.substring(0, 4) + " is invalid.");
+                if ( (Integer.valueOf(value.substring(0, 4)).intValue() < 0)
+                        || (Integer.valueOf(value.substring(0, 4)).intValue() > 2500)) {
+                    MipavUtil.displayError("Date must be of the form yyyymmdd where yyyy contains the year,\n"
+                            + "mm contains the month and dd contains the day.\n" + "Year " + value.substring(0, 4)
+                            + " is invalid.");
 
                     return false;
                 }
 
-                if ((Integer.valueOf(value.substring(4, 6)).intValue() < 1) ||
-                        (Integer.valueOf(value.substring(4, 6)).intValue() > 12)) {
-                    MipavUtil.displayError("Date must be of the form yyyymmdd where yyyy contains the year,\n" +
-                                           "mm contains the month and dd contains the day.\n" + "Month " +
-                                           value.substring(4, 6) + " is invalid.");
+                if ( (Integer.valueOf(value.substring(4, 6)).intValue() < 1)
+                        || (Integer.valueOf(value.substring(4, 6)).intValue() > 12)) {
+                    MipavUtil.displayError("Date must be of the form yyyymmdd where yyyy contains the year,\n"
+                            + "mm contains the month and dd contains the day.\n" + "Month " + value.substring(4, 6)
+                            + " is invalid.");
 
                     return false;
                 }
 
-                if ((Integer.valueOf(value.substring(6, 8)).intValue() < 1) ||
-                        (Integer.valueOf(value.substring(6, 8)).intValue() > 31)) {
-                    MipavUtil.displayError("Date must be of the form yyyymmdd where yyyy contains the year,\n" +
-                                           "mm contains the month and dd contains the day.\n" + "Day " +
-                                           value.substring(6, 8) + " is invalid.");
+                if ( (Integer.valueOf(value.substring(6, 8)).intValue() < 1)
+                        || (Integer.valueOf(value.substring(6, 8)).intValue() > 31)) {
+                    MipavUtil.displayError("Date must be of the form yyyymmdd where yyyy contains the year,\n"
+                            + "mm contains the month and dd contains the day.\n" + "Day " + value.substring(6, 8)
+                            + " is invalid.");
 
                     return false;
                 }
@@ -1140,7 +1141,7 @@ public class JDialogSaveDicom extends JDialogBase {
         } else if (type.equals("TM")) {
             char[] array = value.toCharArray();
 
-            if ((array.length != 0) && (array.length > 16)) {
+            if ( (array.length != 0) && (array.length > 16)) {
                 MipavUtil.displayError("Time cannot be more than 16 characters long.");
 
                 return false;
@@ -1148,9 +1149,9 @@ public class JDialogSaveDicom extends JDialogBase {
 
             for (int i = 0; i < array.length; i++) {
 
-                if (!Character.isDigit(array[i]) && (array[i] != '.')) {
-                    MipavUtil.displayError("Time must be of form hhmmss.frac where hh is hours, mm is minutes,\n" +
-                                           "ss is seconds, and frac is a fractional part of a second.");
+                if ( !Character.isDigit(array[i]) && (array[i] != '.')) {
+                    MipavUtil.displayError("Time must be of form hhmmss.frac where hh is hours, mm is minutes,\n"
+                            + "ss is seconds, and frac is a fractional part of a second.");
 
                     return false;
                 }
@@ -1159,13 +1160,13 @@ public class JDialogSaveDicom extends JDialogBase {
             return true;
         } else if (type.equals("SH")) {
 
-            if ((value.length() > 0) && (value.length() > 16)) {
+            if ( (value.length() > 0) && (value.length() > 16)) {
                 MipavUtil.displayError(value + " is too long.  It must be under 16 characters.");
 
                 return false;
             }
 
-            if (!isDefaultCharacter(value, false)) {
+            if ( !isDefaultCharacter(value, false)) {
                 MipavUtil.displayError(value + "contains invalid characters.");
 
                 return false;
@@ -1174,13 +1175,13 @@ public class JDialogSaveDicom extends JDialogBase {
             }
         } else if (type.equals("LT")) {
 
-            if ((value.length() > 0) && (value.length() > 10240)) {
+            if ( (value.length() > 0) && (value.length() > 10240)) {
                 MipavUtil.displayError(value + " is too long.  It must be under 10240 characters.");
 
                 return false;
             }
 
-            if (!isDefaultCharacter(value, true)) {
+            if ( !isDefaultCharacter(value, true)) {
                 MipavUtil.displayError(value + "contains invalid characters.");
 
                 return false;
@@ -1194,18 +1195,17 @@ public class JDialogSaveDicom extends JDialogBase {
                 if (value.length() != 4) {
 
                     // try to detect when leading zeros have been stripped from the value
-                    if ((value.length() < 4) &&
-                            ((value.charAt(value.length() - 1) == 'D') || (value.charAt(value.length() - 1) == 'W') ||
-                                 (value.charAt(value.length() - 1) == 'M') ||
-                                 (value.charAt(value.length() - 1) == 'Y'))) {
+                    if ( (value.length() < 4)
+                            && ( (value.charAt(value.length() - 1) == 'D') || (value.charAt(value.length() - 1) == 'W')
+                                    || (value.charAt(value.length() - 1) == 'M') || (value.charAt(value.length() - 1) == 'Y'))) {
 
                         for (int i = value.length() - 2; i >= 0; i--) {
 
-                            if (!Character.isDigit(value.charAt(i))) {
-                                MipavUtil.displayError("Dicom tag value: " + value + " does not start with a digit.\n" +
-                                                       "Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n" +
-                                                       "the number of days for D, the number of weeks for W, the number\n" +
-                                                       "of months for M, or the number of years for Y (4 characters).");
+                            if ( !Character.isDigit(value.charAt(i))) {
+                                MipavUtil.displayError("Dicom tag value: " + value + " does not start with a digit.\n"
+                                        + "Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n"
+                                        + "the number of days for D, the number of weeks for W, the number\n"
+                                        + "of months for M, or the number of years for Y (4 characters).");
                             }
                         }
 
@@ -1220,31 +1220,31 @@ public class JDialogSaveDicom extends JDialogBase {
                         return true;
                     }
 
-                    MipavUtil.displayError("Dicom tag value: " + value + " is not four characters long.\n" +
-                                           "Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n" +
-                                           "the number of days for D, the number of weeks for W, the number\n" +
-                                           "of months for M, or the number of years for Y (4 characters).");
+                    MipavUtil.displayError("Dicom tag value: " + value + " is not four characters long.\n"
+                            + "Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n"
+                            + "the number of days for D, the number of weeks for W, the number\n"
+                            + "of months for M, or the number of years for Y (4 characters).");
 
                     return false;
                 }
 
-                if ((value.charAt(3) != 'D') && (value.charAt(3) != 'W') && (value.charAt(3) != 'M') &&
-                        (value.charAt(3) != 'Y')) {
-                    MipavUtil.displayError("Dicom tag value: " + value +
-                                           " does not have a time indicator (D, W, M or Y).\n" +
-                                           "Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n" +
-                                           "the number of days for D, the number of weeks for W, the number\n" +
-                                           "of months for M, or the number of years for Y (4 characters).");
+                if ( (value.charAt(3) != 'D') && (value.charAt(3) != 'W') && (value.charAt(3) != 'M')
+                        && (value.charAt(3) != 'Y')) {
+                    MipavUtil.displayError("Dicom tag value: " + value
+                            + " does not have a time indicator (D, W, M or Y).\n"
+                            + "Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n"
+                            + "the number of days for D, the number of weeks for W, the number\n"
+                            + "of months for M, or the number of years for Y (4 characters).");
 
                     return false;
                 }
 
-                if (!Character.isDigit(value.charAt(0)) || !Character.isDigit(value.charAt(1)) ||
-                        !Character.isDigit(value.charAt(2))) {
-                    MipavUtil.displayError("Dicom tag value: " + value + " does not start with a digit.\n" +
-                                           "Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n" +
-                                           "the number of days for D, the number of weeks for W, the number\n" +
-                                           "of months for M, or the number of years for Y (4 characters).");
+                if ( !Character.isDigit(value.charAt(0)) || !Character.isDigit(value.charAt(1))
+                        || !Character.isDigit(value.charAt(2))) {
+                    MipavUtil.displayError("Dicom tag value: " + value + " does not start with a digit.\n"
+                            + "Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n"
+                            + "the number of days for D, the number of weeks for W, the number\n"
+                            + "of months for M, or the number of years for Y (4 characters).");
 
                     return false;
                 }
@@ -1266,10 +1266,10 @@ public class JDialogSaveDicom extends JDialogBase {
 
                 for (int i = 0; i < array.length; i++) {
 
-                    if (!Character.isDigit(array[i]) && (array[i] != '.') && (array[i] != '+') && (array[i] != '-') &&
-                            (array[i] != 'E') && (array[i] != 'e')) {
-                        MipavUtil.displayError(value + " contains invalid characters.  Decimal strings may\n" +
-                                               "only contain digits, '.', '+', '-', 'e', and 'E'.");
+                    if ( !Character.isDigit(array[i]) && (array[i] != '.') && (array[i] != '+') && (array[i] != '-')
+                            && (array[i] != 'E') && (array[i] != 'e')) {
+                        MipavUtil.displayError(value + " contains invalid characters.  Decimal strings may\n"
+                                + "only contain digits, '.', '+', '-', 'e', and 'E'.");
 
                         return false;
                     }
@@ -1289,7 +1289,7 @@ public class JDialogSaveDicom extends JDialogBase {
                     return false;
                 }
 
-                if (!isDefaultCharacter(value, true)) {
+                if ( !isDefaultCharacter(value, true)) {
                     MipavUtil.displayError(value + " contains invalid characters.");
 
                     return false;
@@ -1313,9 +1313,9 @@ public class JDialogSaveDicom extends JDialogBase {
 
                 for (int i = 0; i < array.length; i++) {
 
-                    if (!Character.isDigit(array[i]) && (array[i] != '+') && (array[i] != '-')) {
-                        MipavUtil.displayError(value + " contains invalid characters.  Integer strings may\n" +
-                                               "only contain digits, '+', and '-'.");
+                    if ( !Character.isDigit(array[i]) && (array[i] != '+') && (array[i] != '-')) {
+                        MipavUtil.displayError(value + " contains invalid characters.  Integer strings may\n"
+                                + "only contain digits, '+', and '-'.");
 
                         return false;
                     }
@@ -1334,8 +1334,8 @@ public class JDialogSaveDicom extends JDialogBase {
 
                     return true;
                 } catch (NumberFormatException error) {
-                    MipavUtil.displayError(value + " is not a signed short.  It must be in the range " +
-                                           Short.MIN_VALUE + " to " + Short.MAX_VALUE + ".");
+                    MipavUtil.displayError(value + " is not a signed short.  It must be in the range "
+                            + Short.MIN_VALUE + " to " + Short.MAX_VALUE + ".");
 
                     return false;
                 }
@@ -1369,8 +1369,8 @@ public class JDialogSaveDicom extends JDialogBase {
 
                         return false;
                     } catch (NumberFormatException error2) {
-                        MipavUtil.displayError(value +
-                                               " is not an unsigned short.  It must be in the range 0 to 65536.");
+                        MipavUtil.displayError(value
+                                + " is not an unsigned short.  It must be in the range 0 to 65536.");
 
                         return false;
                     }
@@ -1395,14 +1395,14 @@ public class JDialogSaveDicom extends JDialogBase {
                             return true;
                         }
 
-                        MipavUtil.displayError(value + " must either be in the range 0 to 65536\n" +
-                                               "or in the range " + Short.MIN_VALUE + " to " + Short.MAX_VALUE + ".");
+                        MipavUtil.displayError(value + " must either be in the range 0 to 65536\n" + "or in the range "
+                                + Short.MIN_VALUE + " to " + Short.MAX_VALUE + ".");
 
                         return false;
                     } catch (NumberFormatException error2) {
-                        MipavUtil.displayError(value +
-                                               " is not an unsigned or signed short.  It must either be in the range 0 to 65536\n" +
-                                               "or in the range " + Short.MIN_VALUE + " to " + Short.MAX_VALUE + ".");
+                        MipavUtil.displayError(value
+                                + " is not an unsigned or signed short.  It must either be in the range 0 to 65536\n"
+                                + "or in the range " + Short.MIN_VALUE + " to " + Short.MAX_VALUE + ".");
 
                         return false;
                     }
@@ -1422,18 +1422,19 @@ public class JDialogSaveDicom extends JDialogBase {
 
                     for (int i = 0; i < array1.length; i++) {
 
-                        if ((array1[i] != 'A') && (array1[i] != 'P') && (array1[i] != 'R') && (array1[i] != 'L') &&
-                                (array1[i] != 'H') && (array1[i] != 'F')) {
-                            MipavUtil.displayError("The Patient Orientation (0020,0020) relative to the image plane shall be specified by two values that\n" +
-                                                   "designate the anatomical direction of the positive row axis (left to right) and the positive column axis\n" +
-                                                   "(top to bottom). The first entry is the direction of the rows, given by the direction of the last pixel in\n" +
-                                                   "the first row from the first pixel in that row. The second entry is the direction of the columns, given\n" +
-                                                   "by the direction of the last pixel in the first column from the first pixel in that column.\n\n" +
-                                                   "Anatomical direction shall be designated by the capital letters: A (anterior), P (posterior), R (right),\n" +
-                                                   "L (left), H (head), F (foot). Each value of the orientation attribute shall contain at least one of these\n" +
-                                                   "characters. If refinements in the orientation descriptions are to be specified, then they shall be\n" +
-                                                   "designated by one or two additional letters in each value. Within each value, the letters shall be\n" +
-                                                   "ordered with the principal orientation designated in the first character.");
+                        if ( (array1[i] != 'A') && (array1[i] != 'P') && (array1[i] != 'R') && (array1[i] != 'L')
+                                && (array1[i] != 'H') && (array1[i] != 'F')) {
+                            MipavUtil
+                                    .displayError("The Patient Orientation (0020,0020) relative to the image plane shall be specified by two values that\n"
+                                            + "designate the anatomical direction of the positive row axis (left to right) and the positive column axis\n"
+                                            + "(top to bottom). The first entry is the direction of the rows, given by the direction of the last pixel in\n"
+                                            + "the first row from the first pixel in that row. The second entry is the direction of the columns, given\n"
+                                            + "by the direction of the last pixel in the first column from the first pixel in that column.\n\n"
+                                            + "Anatomical direction shall be designated by the capital letters: A (anterior), P (posterior), R (right),\n"
+                                            + "L (left), H (head), F (foot). Each value of the orientation attribute shall contain at least one of these\n"
+                                            + "characters. If refinements in the orientation descriptions are to be specified, then they shall be\n"
+                                            + "designated by one or two additional letters in each value. Within each value, the letters shall be\n"
+                                            + "ordered with the principal orientation designated in the first character.");
 
                             return false;
                         }
@@ -1458,11 +1459,11 @@ public class JDialogSaveDicom extends JDialogBase {
 
     /**
      * Makes a button.
-     *
-     * @param   title   The value of the button.
-     * @param   button  Button to create.
-     *
-     * @return  The button.
+     * 
+     * @param title The value of the button.
+     * @param button Button to create.
+     * 
+     * @return The button.
      */
     private JButton createButton(String title, JButton button) {
         button = new JButton(title);
@@ -1476,15 +1477,15 @@ public class JDialogSaveDicom extends JDialogBase {
 
     /**
      * Creates a combo box and adds it to the panel.
-     *
-     * @param   panel    the panel to add the combo box to
-     * @param   choices  the layout to add the constraints to
-     * @param   x        the constraints for this combo box
-     * @param   y        DOCUMENT ME!
-     * @param   w        DOCUMENT ME!
-     * @param   h        DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param panel the panel to add the combo box to
+     * @param choices the layout to add the constraints to
+     * @param x the constraints for this combo box
+     * @param y DOCUMENT ME!
+     * @param w DOCUMENT ME!
+     * @param h DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     private JComboBox createComboBox(Container panel, String[] choices, int x, int y, int w, int h) {
         JComboBox combo = new JComboBox(choices);
@@ -1553,13 +1554,13 @@ public class JDialogSaveDicom extends JDialogBase {
 
     /**
      * Makes a label and adds it to the panel.
-     *
-     * @param  title  the value of the label
-     * @param  panel  the panel to add the label to
-     * @param  x      the layout to add the constraints to
-     * @param  y      the constraints for this label
-     * @param  w      DOCUMENT ME!
-     * @param  h      DOCUMENT ME!
+     * 
+     * @param title the value of the label
+     * @param panel the panel to add the label to
+     * @param x the layout to add the constraints to
+     * @param y the constraints for this label
+     * @param w DOCUMENT ME!
+     * @param h DOCUMENT ME!
      */
     private void createLabel(String title, Container panel, int x, int y, int w, int h) {
         JLabel label = new JLabel(title);
@@ -1575,8 +1576,8 @@ public class JDialogSaveDicom extends JDialogBase {
 
     /**
      * Makes a panel with a grid layout with the parameters specified.
-     *
-     * @return  the panel created
+     * 
+     * @return the panel created
      */
     private JPanel createPanel() {
         JPanel panel = new JPanel();
@@ -1708,7 +1709,6 @@ public class JDialogSaveDicom extends JDialogBase {
         createLabel("Additional Patient's History (0010,21B0):", studyPanel, 2, 6, 1, 1);
         studyHist = setTextField("", studyPanel, 3, 6, 1, 1);
 
-
     }
 
     /**
@@ -1771,7 +1771,7 @@ public class JDialogSaveDicom extends JDialogBase {
                 StringTokenizer strTok = new StringTokenizer(tempString, "\t");
 
                 // This file should be tab delimited and look like
-                // (0002,0000) tab  Meta Element Group Length tab tab   190
+                // (0002,0000) tab Meta Element Group Length tab tab 190
                 if (strTok == null) {
                     return;
                 }
@@ -1787,19 +1787,18 @@ public class JDialogSaveDicom extends JDialogBase {
                     }
                 }
 
-
                 if (value != null) {
                     value = value.trim();
                     // put data into dialogs
                 }
 
-                if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)") ||
-                        tag.equals("(0018,5100)")) {
+                if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)")
+                        || tag.equals("(0018,5100)")) {
                     setChooserFromTag(tag, value);
                 }
                 // Times, special format
-                else if (tag.equals("(0010,0032)") || tag.equals("(0008,0030)") || tag.equals("(0008,0031)") ||
-                             tag.equals("(0040,0245)")) {
+                else if (tag.equals("(0010,0032)") || tag.equals("(0008,0030)") || tag.equals("(0008,0031)")
+                        || tag.equals("(0040,0245)")) {
 
                     if (value.length() > 0) {
                         String s = "";
@@ -1814,8 +1813,8 @@ public class JDialogSaveDicom extends JDialogBase {
                     }
                 }
                 // Dates, special format
-                else if (tag.equals("(0008,0020)") || tag.equals("(0040,0024)") || tag.equals("(0008,0021)") ||
-                             tag.equals("(0010,0030)")) {
+                else if (tag.equals("(0008,0020)") || tag.equals("(0040,0024)") || tag.equals("(0008,0021)")
+                        || tag.equals("(0010,0030)")) {
 
                     if (value.length() == 10) {
                         String month = value.substring(0, 2);
@@ -1833,7 +1832,7 @@ public class JDialogSaveDicom extends JDialogBase {
                         boolean done = false;
                         int i = 0;
 
-                        while (!done && (i < value.length())) {
+                        while ( !done && (i < value.length())) {
 
                             if (value.charAt(i) != ' ') {
                                 s += value.charAt(i);
@@ -1915,8 +1914,8 @@ public class JDialogSaveDicom extends JDialogBase {
 
     /**
      * Fill the values in the dialog from tag-value pairs in a hashtable.
-     *
-     * @param  table  the table of tag-value pairs
+     * 
+     * @param table the table of tag-value pairs
      */
     private void fillDataFromTable(Hashtable table) {
         Enumeration keys = table.keys();
@@ -1929,8 +1928,8 @@ public class JDialogSaveDicom extends JDialogBase {
             value = (String) table.get(tag);
 
             // handle chooser fields differently
-            if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)") ||
-                    tag.equals("(0018,5100)")) {
+            if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)")
+                    || tag.equals("(0018,5100)")) {
                 setChooserFromTag(tag, value);
             } else if (tagsList.get(tag) != null) {
                 ((JTextField) (tagsList.get(tag))).setText(value);
@@ -1941,11 +1940,11 @@ public class JDialogSaveDicom extends JDialogBase {
 
     /**
      * Checks that all the characters of the string are in the default character repertoire.
-     *
-     * @param   word     Word to check.
-     * @param   control  Indicates if control characters should be included or not.
-     *
-     * @return  <code>true</code> if the string is in the default character repertoire.
+     * 
+     * @param word Word to check.
+     * @param control Indicates if control characters should be included or not.
+     * 
+     * @return <code>true</code> if the string is in the default character repertoire.
      */
     private boolean isDefaultCharacter(String word, boolean control) {
         char[] array = word.toCharArray();
@@ -1954,13 +1953,14 @@ public class JDialogSaveDicom extends JDialogBase {
 
             if (control) {
 
-                if ((((int) (array[i]) < 32) && ((int) (array[i]) != 10) && ((int) (array[i]) != 12) &&
-                         ((int) (array[i]) != 13) && ((int) (array[i]) != 27)) || ((int) (array[i]) > 126)) {
+                if ( ( ((int) (array[i]) < 32) && ((int) (array[i]) != 10) && ((int) (array[i]) != 12)
+                        && ((int) (array[i]) != 13) && ((int) (array[i]) != 27))
+                        || ((int) (array[i]) > 126)) {
                     return false;
                 }
             } else {
 
-                if ((((int) (array[i]) < 32) && ((int) (array[i]) != 27)) || ((int) (array[i]) > 126)) {
+                if ( ( ((int) (array[i]) < 32) && ((int) (array[i]) != 27)) || ((int) (array[i]) > 126)) {
                     return false;
                 }
             }
@@ -1971,19 +1971,19 @@ public class JDialogSaveDicom extends JDialogBase {
 
     /**
      * Resizes the text field so that all characters are displayed.
-     *
-     * @param  field  Text field to change.
+     * 
+     * @param field Text field to change.
      */
     private void resetSize(JTextField field) {
         field.setPreferredSize(new Dimension(field.getHorizontalVisibility().getMaximum() + 5,
-                                             field.getPreferredSize().height));
+                field.getPreferredSize().height));
     }
 
     /**
      * Sets the value for one of the choosers based on a dicom tag and value.
-     *
-     * @param  tag    the tag (which determines which chooser to set)
-     * @param  value  the value (which determines which index in the chooser is selected)
+     * 
+     * @param tag the tag (which determines which chooser to set)
+     * @param value the value (which determines which index in the chooser is selected)
      */
     private void setChooserFromTag(String tag, String value) {
 
@@ -2155,13 +2155,13 @@ public class JDialogSaveDicom extends JDialogBase {
     /**
      * A helper method for adding a component using GridBagLayout, so we don't have to set up the x, y, width, and
      * height over and over again.
-     *
-     * @param  x  GridBagConstraints.gridx
-     * @param  y  GridBagConstraints.gridy
-     * @param  w  GridBagContraints.gridwidth
-     * @param  h  GridBagConstraints.gridheight
-     *
-     * @see    GridBagConstraints
+     * 
+     * @param x GridBagConstraints.gridx
+     * @param y GridBagConstraints.gridy
+     * @param w GridBagContraints.gridwidth
+     * @param h GridBagConstraints.gridheight
+     * 
+     * @see GridBagConstraints
      */
     private void setGBC(int x, int y, int w, int h) {
         gbc.gridx = x;
@@ -2173,28 +2173,28 @@ public class JDialogSaveDicom extends JDialogBase {
     /**
      * Sets the modality chooser box based on the file info modality (the modality indexes should match up with the
      * ordering of the chooser).
-     *
-     * @param  modality  The image modality.
+     * 
+     * @param modality The image modality.
      */
     private void setModalityChooser(int modality) {
 
         // avoid unknown modalities and modalities not supported by the chooser
-        if ((modality > 0) && ((modality - 1) < seriesMod.getItemCount())) {
+        if ( (modality > 0) && ( (modality - 1) < seriesMod.getItemCount())) {
             seriesMod.setSelectedIndex(modality - 1);
         }
     }
 
     /**
      * Makes a text field and adds it to the panel.
-     *
-     * @param   initial  the initial string in the text field
-     * @param   panel    the panel to add the text field to
-     * @param   x        the layout to add the constraints to
-     * @param   y        the constraints for this text field
-     * @param   w        DOCUMENT ME!
-     * @param   h        DOCUMENT ME!
-     *
-     * @return  the text field created
+     * 
+     * @param initial the initial string in the text field
+     * @param panel the panel to add the text field to
+     * @param x the layout to add the constraints to
+     * @param y the constraints for this text field
+     * @param w DOCUMENT ME!
+     * @param h DOCUMENT ME!
+     * 
+     * @return the text field created
      */
     private JTextField setTextField(String initial, Container panel, int x, int y, int w, int h) {
         JTextField field = new JTextField();
