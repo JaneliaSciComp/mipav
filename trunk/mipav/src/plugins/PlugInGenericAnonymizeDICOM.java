@@ -23,6 +23,12 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
 	/** File selected by the user */
 	private File selectedFile;
 	
+	/** File name of selected file */
+	private String selectedFileName;
+	
+	/** Directory of the selected file */
+	private String selectedFileDir;
+	
 	/** Destination file */
 	private File destFile;
 	
@@ -103,6 +109,8 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
 	public PlugInGenericAnonymizeDICOM(File inputFile) {
 		
 		selectedFile = inputFile;
+		selectedFileName = selectedFile.getName();
+		selectedFileDir = selectedFile.getParent() + File.separator;
 	}
 	
 	//  ~ Methods ----------------------------------------------------------------------------------------------
@@ -127,10 +135,10 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     	} else {
     		
     		try {
-    			if (FileUtility.isDicom(selectedFile.getName(), selectedFile.getPath(), false) == FileUtility.DICOM) {
+    			if (FileUtility.isDicom(selectedFileName, selectedFileDir, false) == FileUtility.DICOM) {
     				containsDICM = true;
     				anonymizeDicom();
-    			} else if (FileUtility.isDicom_ver2(selectedFile.getName(), selectedFile.getPath(), false) == FileUtility.DICOM) {
+    			} else if (FileUtility.isDicom_ver2(selectedFileName, selectedFileDir, false) == FileUtility.DICOM) {
     				containsDICM = false;
     				anonymizeDicom(); 
     			} else {
@@ -181,7 +189,7 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     	int progressCount = 0;
     	   	
     	String destFName = "Anonymize" + selectedFile.getName();
-    	String destFDir = selectedFile.getPath();
+    	String destFDir = selectedFileDir;
     	
     	metaGroupLength = 0;
     	elementLength = 0;
@@ -204,7 +212,7 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     		try {
     			getNextElement();
     			name = convertGroupElement(groupWord, elementWord);
-    			
+    			    			
     			FileDicomKey key = new FileDicomKey(name);
     			    			
     			if (isImplicit || (groupWord == 2)) {
@@ -301,10 +309,12 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     	
     	try {
     		
-    		destFile = new File(destFDir + File.separator + destFName);
+    		destFile = new File(destFDir + destFName);
     		raFile = new RandomAccessFile(destFile, "rw");
     		raFile.seek(0);
     		raFile.write(tagBuffer);
+    		raFile.close();
+    		fireProgressStateChanged(100, null, "Reading DICOM header and anonymizing tags...");
     	} catch (NullPointerException npe) {
     		MipavUtil.displayError("Pathname argument is null while creating a new file.");
     	} catch (IOException ioe) {
@@ -337,6 +347,9 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     }
     
     private void anonymizeTag(String tagName, int length, String tagType, Object tagData, String strValue, int vm ) {
+    	
+    	System.out.print(tagName + ";");
+    	System.out.println(tagType);
     	
     	if (tagType == "typeString") {
     		if (strValue != null) {
