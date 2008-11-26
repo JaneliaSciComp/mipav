@@ -21,7 +21,10 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
 	
 	// ~ Instance fields ---------------------------------------------------------------------------------------
 	/** File selected by the user */
-	private File selectedFile;
+	private File[] selectedFiles;
+	
+	/** Additional tag list provided in the dialog */
+	private String[] tagListFromDialog;
 	
 	/** File name of selected file */
 	private String selectedFileName;
@@ -106,11 +109,14 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     
 	
 	//	~ Constructors -----------------------------------------------------------------------------------------
-	public PlugInGenericAnonymizeDICOM(File inputFile) {
+	public PlugInGenericAnonymizeDICOM(File[] inputFiles, String[] tagList) {
 		
-		selectedFile = inputFile;
-		selectedFileName = selectedFile.getName();
-		selectedFileDir = selectedFile.getParent() + File.separator;
+		selectedFiles = inputFiles;
+		
+		//selectedFileName = selectedFile.getName();
+		//selectedFileDir = selectedFile.getParent() + File.separator;
+		tagListFromDialog = tagList;
+		
 	}
 	
 	//  ~ Methods ----------------------------------------------------------------------------------------------
@@ -120,7 +126,7 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
      */
     public void finalize() {
         
-    	selectedFile = null;
+    	selectedFiles = null;
                
     }
     
@@ -129,34 +135,43 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
      */ 
     public void runAlgorithm() {
     	
-    	if (selectedFile == null) {
+    	if (selectedFiles == null) {
     		displayError("Selected file is null.");
     		return;
     	} else {
     		
-    		try {
-    			if (FileUtility.isDicom(selectedFileName, selectedFileDir, false) == FileUtility.DICOM) {
-    				containsDICM = true;
-    				anonymizeDicom();
-    			} else if (FileUtility.isDicom_ver2(selectedFileName, selectedFileDir, false) == FileUtility.DICOM) {
-    				containsDICM = false;
-    				anonymizeDicom(); 
-    			} else {
-    				displayError("Selected file is not a valid DICOM image.");
-    				return;
-    			}
-    		} catch (IOException ioe) {} 
+    		int numOfFiles = selectedFiles.length;
+    		
+    		for (int i = 0; i < numOfFiles; i++) {
+    			selectedFileName = selectedFiles[i].getName();
+    			selectedFileDir = selectedFiles[i].getParent() + File.separator;
+    			
+    			try {
+        			if (FileUtility.isDicom(selectedFileName, selectedFileDir, false) == FileUtility.DICOM) {
+        				containsDICM = true;
+        				loadTagBuffer(selectedFiles[i]);
+        				anonymizeDicom();
+        			} else if (FileUtility.isDicom_ver2(selectedFileName, selectedFileDir, false) == FileUtility.DICOM) {
+        				containsDICM = false;
+        				loadTagBuffer(selectedFiles[i]);
+        				anonymizeDicom(); 
+        			} else {
+        				displayError("Selected file is not a valid DICOM image.");
+        				return;
+        			}
+        		} catch (IOException ioe) {}
+    		}
     	}
     }
      
     /**
      * Setups the allocation of memory for the byte buffer to load the entire image.
      */
-    public void loadTagBuffer() {
+    public void loadTagBuffer(File file) {
     	
     	fireProgressStateChanged(0, null, "Loading tag buffer...");
         try {
-            raFile = new RandomAccessFile(selectedFile, "r");
+            raFile = new RandomAccessFile(file, "r");
             if (raFile != null) {
                 fLength = raFile.length();
             } else {
@@ -188,7 +203,7 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     	int tagVM = 0;
     	int progressCount = 0;
     	   	
-    	String destFName = "Anonymize" + selectedFile.getName();
+    	String destFName = "Anonymize" + selectedFileName;
     	String destFDir = selectedFileDir;
     	
     	metaGroupLength = 0;
@@ -200,7 +215,6 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     	} else {
     		bPtr = 0;
     	}
-    	loadTagBuffer();
     	
     	while (flag == true) {
     		
@@ -314,6 +328,7 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     		raFile.seek(0);
     		raFile.write(tagBuffer);
     		raFile.close();
+    		tagBuffer = null;
     		fireProgressStateChanged(100, null, "Reading DICOM header and anonymizing tags...");
     	} catch (NullPointerException npe) {
     		MipavUtil.displayError("Pathname argument is null while creating a new file.");
@@ -323,7 +338,8 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     	return true;
     }
     
-    /** Search the tag name for its existence in the lookup table of tags to be anonymized. 
+    /** Search the tag name for its existence in the lookup table of tags to be anonymized and the user provided
+     * tag list from dialog. 
      * See FileInfoDicom for the detailed list of tags. 
      * @param tagName Name of the tag to search e.g "0002,0000"
      * @return true if name exists, false if the name does not exist. 
@@ -331,6 +347,17 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     
     private boolean tagExistInAnonymizeTagIDs(String tagName) {
     	int len = FileInfoDicom.anonymizeTagIDs.length;
+    	
+    	if (tagListFromDialog != null) {
+    		int lenTagList = tagListFromDialog.length;
+    		
+    		for (int j = 0; j < lenTagList; j++) {
+        		
+        		if (tagListFromDialog[j].equals(tagName)) {
+        			return true;
+        		}
+        	}
+    	}
     	
     	if (len == 0) {
     		return false;
@@ -340,7 +367,8 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     		
     		if (FileInfoDicom.anonymizeTagIDs[i].equals(tagName)) {
     			return true;
-    		} 
+    		}
+    		
     	}
     	
     	return false;
@@ -349,7 +377,17 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     private void anonymizeTag(String tagName, int length, String tagType, Object tagData, String strValue, int vm ) {
     	
     	System.out.print(tagName + ";");
-    	System.out.println(tagType);
+    	System.out.print(tagType + ";");
+    	if (strValue != null) {
+    		System.out.println(strValue);
+    	} else {
+    		for (int i = 0; i < vm; i++) {
+    			System.out.println(tagData);
+    		}
+    	}
+    	
+    	System.out.println(strValue);
+    	
     	
     	if (tagType == "typeString") {
     		if (strValue != null) {
