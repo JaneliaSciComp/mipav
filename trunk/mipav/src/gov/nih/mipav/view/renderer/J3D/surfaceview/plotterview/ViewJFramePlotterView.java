@@ -572,7 +572,7 @@ public class ViewJFramePlotterView extends ViewJFrameBase {
         screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
         screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
 
-        int tabbedPaneWidth = (int) (screenWidth * 0.2f);
+        int tabbedPaneWidth = (int) (screenWidth * 0.22f);
         int tabbedPaneHeight = (int) (screenHeight * 0.5f);
 
         tabbedPane.setPreferredSize(new Dimension(tabbedPaneWidth, tabbedPaneHeight));
