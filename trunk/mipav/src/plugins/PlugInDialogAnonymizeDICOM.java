@@ -45,7 +45,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
 	private JFileChooser fileChooser;
 	
 	/** File selected by the user */
-	private File selectedFile;
+	private File[] selectedFile;
 	
 	/** Additional tags to anonymize */
 	private String[] tagArray;
@@ -170,14 +170,14 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
     		System.gc();
     		
     		//Make algorithm.
-    		algoAnonymizeDicom = new PlugInGenericAnonymizeDICOM(selectedFile);
+    		algoAnonymizeDicom = new PlugInGenericAnonymizeDICOM(selectedFile, tagArray);
     		
     		// This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             algoAnonymizeDicom.addListener(this);
             
-            createProgressBar(selectedFile.getName(), algoAnonymizeDicom);
+            createProgressBar("DICOM Anonymization Tool", algoAnonymizeDicom);
             
             setVisible(false);
             
@@ -212,21 +212,22 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
     		
     		fileChooser = new JFileChooser("null");
         	fileChooser.setFont(MipavUtil.defaultMenuFont);
-        	fileChooser.setMultiSelectionEnabled(false);
+        	fileChooser.setMultiSelectionEnabled(true);
         	
         	Dimension d = new Dimension(700, 400);
             fileChooser.setMinimumSize(d);
             fileChooser.setPreferredSize(d);
             
             int returnVal = fileChooser.showOpenDialog(null);
-            
+                        
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-            	selectedFile = fileChooser.getSelectedFile();
+            	selectedFile = fileChooser.getSelectedFiles();
             	inputFileTextField.setText(fileChooser.getSelectedFile().getAbsolutePath());
             }
         } else if (command.equalsIgnoreCase("Cancel")) {
         	dispose();
         } else if (command.equalsIgnoreCase("OK")) {
+        	createTagArray();
         	callAlgorithm();
         }
     	
