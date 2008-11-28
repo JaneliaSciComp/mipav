@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.file;
 
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.Preferences;
@@ -62,7 +63,12 @@ public class FilePARREC extends FileBase {
     /** sliecs **/
     private Vector Slices;
     
-   
+    /** floating point value = raw value/scaleSlope + rescaleIntercept/(rescaleSlope*scaleSlope) **/
+    private float rescaleIntercept[];
+    private float rescaleSlope[];
+    private float scaleSlope[];
+    /** True if the 3 values are the same for all slices **/
+    private boolean sameSliceScalings = true;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -582,6 +588,14 @@ public class FilePARREC extends FileBase {
 			bpp=Integer.valueOf(s).intValue();
 
         int idx =0;
+        rescaleIntercept = new float[Slices.size()];
+        rescaleSlope = new float[Slices.size()];
+        scaleSlope = new float[Slices.size()];
+        for (int j = 0; j < Slices.size(); j++) {
+            rescaleIntercept[j] = 0.0f;
+            rescaleSlope[j] = 1.0f;
+            scaleSlope[j] = 1.0f;
+        }
         for(int j=0;j<SliceParameters.size();j++) {
             String tag = (String)SliceParameters.get(j);
             if(tag.compareToIgnoreCase("#  slice thickness (in mm )                 (float)")==0) {
@@ -595,14 +609,63 @@ public class FilePARREC extends FileBase {
                 dim2 =Integer.valueOf(values[idx]);
             } else if(tag.compareToIgnoreCase("#  image pixel size (in bits)               (integer)")==0) {
                 bpp = Integer.valueOf(values[idx]);
+            } else if(tag.compareToIgnoreCase("#  rescale intercept                        (float)")== 0) {
+                rescaleIntercept[0] = Float.valueOf(values[idx]);
+            } else if(tag.compareToIgnoreCase("#  rescale slope                            (float)")==0) {
+                rescaleSlope[0] = Float.valueOf(values[idx]);
+            } else if(tag.compareToIgnoreCase("#  scale slope                              (float)")==0) {
+                scaleSlope[0] = Float.valueOf(values[idx]);
             }
-
+            
             Integer I = (Integer)SliceMap.get(tag);
             if(I==null) {
                 Preferences.debug("FilePARREC:readHeader. Bad slice tag;"+tag + "\n");
                 return false;
             }
             idx += I.intValue();
+        }
+        
+        // Let's parse the other slices for rescaleIntercept, rescaleSlope, and scaleSlope:
+        for (int i = 1; i < Slices.size(); i++) {
+            sl = (String)Slices.get(i);
+            values = sl.split("\\s+");
+            idx =0;
+            for(int j=0;j<SliceParameters.size();j++) {
+                String tag = (String)SliceParameters.get(j);
+                if(tag.compareToIgnoreCase("#  rescale intercept                        (float)")== 0) {
+                    rescaleIntercept[i] = Float.valueOf(values[idx]);
+                } else if(tag.compareToIgnoreCase("#  rescale slope                            (float)")==0) {
+                    rescaleSlope[i] = Float.valueOf(values[idx]);
+                } else if(tag.compareToIgnoreCase("#  scale slope                              (float)")==0) {
+                    scaleSlope[i] = Float.valueOf(values[idx]);
+                }
+                
+                Integer I = (Integer)SliceMap.get(tag);
+                if(I==null) {
+                    Preferences.debug("FilePARREC:readHeader. Bad slice tag;"+tag + "\n");
+                    return false;
+                }
+                idx += I.intValue();
+            }
+        }
+        sameSliceScalings = true;
+        for (int j = 1; j < Slices.size(); j++) {
+            if ((rescaleIntercept[j] != rescaleIntercept[0]) || (rescaleSlope[j] != rescaleSlope[0]) ||
+                (scaleSlope[j] != scaleSlope[0])) {
+                sameSliceScalings = false;
+            }
+        }
+        if (sameSliceScalings) {
+            Preferences.debug("FilePARREC:readHeader rescaleIntercept = " + rescaleIntercept[0] + "\n");
+            Preferences.debug("FilePARREC:readHeader rescaleSlope = " + rescaleSlope[0] + "\n");
+            Preferences.debug("FilePARREC:readHeader scaleSlope = " + scaleSlope[0] + "\n");
+        }
+        else {
+            for (int j = 0; j < Slices.size(); j++) {
+                Preferences.debug("FilePARREC:readHeader rescaleIntercept[" + j + "] = " + rescaleIntercept[j] + "\n");
+                Preferences.debug("FilePARREC:readHeader rescaleSlope[" + j + "] = " + rescaleSlope[j] + "\n");
+                Preferences.debug("FilePARREC:readHeader scaleSlope[" + j + "] = " + scaleSlope[j] + "\n");    
+            }
         }
 
 
@@ -617,10 +680,21 @@ public class FilePARREC extends FileBase {
         } else {
             if(Integer.valueOf(bpp)==16) {
                 fileInfo.setDataType(ModelStorageBase.USHORT);
-                Preferences.debug("FilePARREC:readHeader. Unsigned Short" + "\n");
+                if ((scaleSlope[0] == 1.0f) && (rescaleIntercept[0] == 0.0f) && sameSliceScalings) {
+                    Preferences.debug("FilePARREC:readHeader. Unsigned Short" + "\n");
+                }
+                else {
+                    Preferences.debug("FilePARREC: readHeader. Raw data USHORT will scale to Float\n");
+                }
             } else if(Integer.valueOf(bpp)==8) {
                 fileInfo.setDataType(ModelStorageBase.UBYTE);
-                Preferences.debug("FilePARREC:readHeader. Unsigned BYTE" + "\n");
+                if ((scaleSlope[0] == 1.0f) && (rescaleIntercept[0] == 0.0f) && sameSliceScalings) {
+                    Preferences.debug("FilePARREC:readHeader. Unsigned BYTE" + "\n");
+                }
+                else {
+                    Preferences.debug("FilePARREC: readHeader. Raw data UBYTE will scale to Float\n");
+                }
+                
             } else {
                 Preferences.debug("FilePARREC:readHeader. Unknown bpp" + bpp + "\n");;
                 return false;
@@ -727,6 +801,15 @@ public class FilePARREC extends FileBase {
         boolean haveHeader = false;
         int k;
         int index;
+        AlgorithmChangeType changeTypeAlgo;
+        double originalMin;
+        double originalMax;
+        double newMin;
+        double newMax;
+        double offsetAdjustment;
+        float offsetAdjustmentFloat;
+        int sliceSize;
+        float floatBuffer[];
         for(k=0;k<hdrEXTENSIONS.length;k++)
         {
             if (FileUtility.getExtension(fileName).equals(FilePARREC.hdrEXTENSIONS[k])) {
@@ -803,6 +886,63 @@ public class FilePARREC extends FileBase {
         if (image != null) {
             image.calcMinMax();
         }
+        if (((scaleSlope[0] != 1.0f) || (rescaleIntercept[0] != 0.0f)) && sameSliceScalings) {
+            originalMin = image.getMin();
+            originalMax = image.getMax();
+            offsetAdjustment = rescaleIntercept[0]/(scaleSlope[0] * rescaleSlope[0]);
+            newMin = originalMin/scaleSlope[0] + offsetAdjustment;
+            newMax = originalMax/scaleSlope[0] + offsetAdjustment;
+            changeTypeAlgo = new AlgorithmChangeType(image, ModelStorageBase.FLOAT, originalMin, originalMax, 
+                    newMin, newMax, false);
+            changeTypeAlgo.run();
+            
+            if (!changeTypeAlgo.isCompleted()) { // if the change algo was halted,
+                // halt the rest of this processing.
+                throw (new IOException(" PAR/REC AlgorithmChangeType failed to complete"));    
+            }
+            changeTypeAlgo.finalize();
+            changeTypeAlgo = null;
+            fileInfo.setDataType(ModelStorageBase.FLOAT);
+            image.calcMinMax();
+        }
+        else if (!sameSliceScalings) {
+            originalMin = image.getMin();
+            originalMax = image.getMax();
+            changeTypeAlgo = new AlgorithmChangeType(image, ModelStorageBase.FLOAT, originalMin, originalMax, 
+                    originalMin, originalMax, false);
+            changeTypeAlgo.run();
+            
+            if (!changeTypeAlgo.isCompleted()) { // if the change algo was halted,
+                // halt the rest of this processing.
+                throw (new IOException(" PAR/REC AlgorithmChangeType failed to complete"));    
+            }
+            changeTypeAlgo.finalize();
+            changeTypeAlgo = null;
+            fileInfo.setDataType(ModelStorageBase.FLOAT);
+            sliceSize = fileInfo.getExtents()[0] * fileInfo.getExtents()[1];
+            floatBuffer = new float[sliceSize];
+            for (int i = 0; i < Slices.size(); i++) {
+                try {
+                    image.exportData(i*sliceSize, sliceSize, floatBuffer);
+                }
+                catch(IOException e) {
+                    throw (new IOException(" PAR/REC image.exportData IOException"));
+                }
+                offsetAdjustmentFloat = rescaleIntercept[i]/(scaleSlope[i] * rescaleSlope[i]);
+                for (int j = 0; j < sliceSize; j++) {
+                    floatBuffer[j] = floatBuffer[j]/scaleSlope[i] + offsetAdjustmentFloat;
+                }
+                try {
+                    image.importData(i*sliceSize, floatBuffer, false);
+                }
+                catch(IOException e) {
+                    throw (new IOException(" PAR/REC image.importData IOException"));
+                }
+            }
+            floatBuffer = null;
+            image.calcMinMax();
+        }
+        
 
         return image;
     }
