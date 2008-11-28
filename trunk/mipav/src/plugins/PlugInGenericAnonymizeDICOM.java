@@ -1,5 +1,5 @@
 import java.io.IOException;
-import java.io.File;
+import java.io.*;
 import java.io.RandomAccessFile;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.DicomDictionary;
@@ -57,8 +57,17 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     /** File pointer to the source file. */
     private RandomAccessFile raFile = null;
     
-    /** File pointer to the destination file. */
-	private RandomAccessFile destRaFile = null;
+    /** File pointer to the text file to log the results. */
+	private RandomAccessFile logRaFile = null;
+	
+	/** File output stream */
+	private FileOutputStream logFile;
+	
+	/** Print stream */
+	private PrintStream printToLogFile;
+	
+	/** File to log results */
+	//private File logFile;
 	
 	/** Total length of image file */
 	private long fLength;
@@ -134,13 +143,25 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
      * Starts the algorithm
      */ 
     public void runAlgorithm() {
-    	
+    	    	 
     	if (selectedFiles == null) {
     		displayError("Selected file is null.");
     		return;
     	} else {
     		
+    		
     		int numOfFiles = selectedFiles.length;
+    		try {
+    			logFile = new FileOutputStream(selectedFiles[0].getParent() + File.separator + "AnonymizationResults.txt");
+    			printToLogFile = new PrintStream(logFile);
+    			//logFile = new File(selectedFiles[0].getParent() + File.separator + "AnonymizationResults.txt");
+        		//logRaFile = new RandomAccessFile(logFile, "rw");
+        		//logRaFile.writeChars("Note: The tags listed below were anonymized by the DICOM Anonymization Tool.\n");
+        		//logRaFile.writeChars("Private tags and sequence tags are not anonymized but are listed so that the user can anonymize them manually.\n");
+    			printToLogFile.println("Note: The tags listed below were anonymized by the DICOM Anonymization Tool.");
+    			printToLogFile.println("Private tags and sequence tags are not anonymized but are listed so that the user can anonymize them manually.");
+    			printToLogFile.println();
+    		} catch (IOException ioe) {}
     		
     		for (int i = 0; i < numOfFiles; i++) {
     			selectedFileName = selectedFiles[i].getName();
@@ -150,10 +171,20 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
         			if (FileUtility.isDicom(selectedFileName, selectedFileDir, false) == FileUtility.DICOM) {
         				containsDICM = true;
         				loadTagBuffer(selectedFiles[i]);
+        				printToLogFile.println();
+        				printToLogFile.println("Filename: " + selectedFileName);
+        				printToLogFile.println();
+        				printToLogFile.println("Tag Name \t \t \t Value");
+        				printToLogFile.println();
         				anonymizeDicom();
         			} else if (FileUtility.isDicom_ver2(selectedFileName, selectedFileDir, false) == FileUtility.DICOM) {
         				containsDICM = false;
         				loadTagBuffer(selectedFiles[i]);
+        				printToLogFile.println();
+        				printToLogFile.println("Filename: " + selectedFileName);
+        				printToLogFile.println();
+        				printToLogFile.println("Tag Name \t \t \t Value");
+        				printToLogFile.println();
         				anonymizeDicom(); 
         			} else {
         				displayError("Selected file is not a valid DICOM image.");
@@ -255,7 +286,7 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     			} else if (type.equals("otherByteString")) {
     				
     				if (!name.equals(IMAGE_TAG)) {
-    					data = getByte(tagVM, elementLength);
+    					strValue = getByte(tagVM, elementLength);
     				}
     			} else if (type.equals("otherWordString") && !name.equals("0028,1201") && !name.equals("0028,1202")
                         && !name.equals("0028,1203")) {
@@ -378,13 +409,20 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     	
     	System.out.print(tagName + ";");
     	System.out.print(tagType + ";");
-    	if (strValue != null) {
+    	if (tagType.equals("typeString")) {
     		System.out.println(strValue);
-    	} else {
+    	} 
+    	
+    	if (tagType.equals("otherByteString")) {
+    		System.out.println(strValue);
+    	} 
+    	/*else {
+    		
     		for (int i = 0; i < vm; i++) {
-    			System.out.println(tagData);
+    			System.out.println(tagData.toString());
     		}
-    	}
+    		   		
+    	}*/
     	
     	System.out.println(strValue);
     	
@@ -404,6 +442,22 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     	} else if (tagType == "typeDouble") {
     		anonymizeTypeDouble(0.0, length);
     	}
+    	
+    	try {
+    		printToLogFile.print(tagName + "\t \t \t");
+    		if (tagType.equals("typeString")) {
+        		printToLogFile.println(strValue);
+    		} 
+    		/*else {
+        		for (int i = 0; i < vm; i++) {
+        			if ((vm > 1) && (i != (vm - 1))) {
+        				printToLogFile.print(tagData.toString() + ",");
+        			} else if ((vm > 1) && (i == (vm - 1))) {
+        				printToLogFile.println(tagData.toString());
+        			}      			
+        		}
+        	} */
+    	} catch (Exception ioe) {}
     	
     	
     	
@@ -851,7 +905,7 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
         int len = (elementLength == UNDEFINED_LENGTH) ? 0 : elementLength;
         int i = 0;
         Object readObject = null; // the Object we read in
-
+        
         if (vm > 1) {
             Byte[] array = new Byte[length];
 
@@ -862,6 +916,7 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
             }
 
             readObject = array;
+           
         } else if ( (vm < 1) && (length > 2)) {
 
             // not a valid VM, but we don't initialise the VM to 1,
@@ -889,6 +944,7 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
         }
 
         return readObject;
+        
     }
     
     /**
