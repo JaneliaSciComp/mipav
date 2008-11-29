@@ -286,7 +286,7 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     			} else if (type.equals("otherByteString")) {
     				
     				if (!name.equals(IMAGE_TAG)) {
-    					strValue = getByte(tagVM, elementLength);
+    					data = getByte(tagVM, elementLength);
     				}
     			} else if (type.equals("otherWordString") && !name.equals("0028,1201") && !name.equals("0028,1202")
                         && !name.equals("0028,1203")) {
