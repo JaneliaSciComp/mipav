@@ -1,6 +1,5 @@
-import java.io.IOException;
 import java.io.*;
-import java.io.RandomAccessFile;
+import java.lang.*;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.DicomDictionary;
 import gov.nih.mipav.model.file.FileBase;
@@ -286,18 +285,18 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     			} else if (type.equals("otherByteString")) {
     				
     				if (!name.equals(IMAGE_TAG)) {
-    					data = getByte(tagVM, elementLength);
+    					strValue = getByte(tagVM, elementLength);
     				}
     			} else if (type.equals("otherWordString") && !name.equals("0028,1201") && !name.equals("0028,1202")
                         && !name.equals("0028,1203")) {
 
                     if ( !name.equals(IMAGE_TAG)) {
-                        data = getByte(tagVM, elementLength);
+                        strValue = getByte(tagVM, elementLength);
                     }
                 } else if (type.equals("typeShort")) {
-                    data = getShort(tagVM, elementLength);
+                    strValue = getShort(tagVM, elementLength);
                 } else if (type.equals("typeInt")) {
-                    data = getInteger(tagVM, elementLength);
+                    strValue = getInteger(tagVM, elementLength);
                 } else if (type.equals("typeFloat")) {
                     data = getFloat(tagVM, elementLength);
                 } else if (type.equals("typeDouble")) {
@@ -409,23 +408,7 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     	
     	System.out.print(tagName + ";");
     	System.out.print(tagType + ";");
-    	if (tagType.equals("typeString")) {
-    		System.out.println(strValue);
-    	} 
-    	
-    	if (tagType.equals("otherByteString")) {
-    		System.out.println(strValue);
-    	} 
-    	/*else {
-    		
-    		for (int i = 0; i < vm; i++) {
-    			System.out.println(tagData.toString());
-    		}
-    		   		
-    	}*/
-    	
     	System.out.println(strValue);
-    	
     	
     	if (tagType == "typeString") {
     		if (strValue != null) {
@@ -445,18 +428,7 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     	
     	try {
     		printToLogFile.print(tagName + "\t \t \t");
-    		if (tagType.equals("typeString")) {
-        		printToLogFile.println(strValue);
-    		} 
-    		/*else {
-        		for (int i = 0; i < vm; i++) {
-        			if ((vm > 1) && (i != (vm - 1))) {
-        				printToLogFile.print(tagData.toString() + ",");
-        			} else if ((vm > 1) && (i == (vm - 1))) {
-        				printToLogFile.println(tagData.toString());
-        			}      			
-        		}
-        	} */
+    		printToLogFile.println(strValue);
     	} catch (Exception ioe) {}
     	
     	
@@ -668,55 +640,65 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
      * @param vm value multiplicity of the DICOM tag data. VM does not represent how many to find.
      * @param length number of bytes to read out of data stream; the length is not used.
      */
-    private Object getShort(int vm, int length) throws IOException {
+    private String getShort(int vm, int length) throws IOException {
         int len = (elementLength == UNDEFINED_LENGTH) ? 0 : elementLength;
         int i = 0;
-        Object readObject = null; // the Object we read in
-
+        String str;
+        short[] array = new short[length/2];
         if (vm > 1) {
-            Short[] array = new Short[length / 2];
-
             while (len > 0) { // we should validate with VM here too
-                array[i] = new Short((short) getUnsignedShort());
+                array[i] = (short) getUnsignedShort();
                 len -= 2;
                 i++;
             }
-
-            readObject = array;
+            
         } else if ( ( (vm < 1) && (length > 2))) {
 
             // not a valid VM, but we don't initialise the VM to 1,
             // so we will use this fact to guess at valid data.
             // we actually do it as above.
-            Short[] array = new Short[length / 2];
-
             while (len > 0) { // we should validate with VM here too
-                array[i] = new Short((short) getUnsignedShort());
+                array[i] = (short) getUnsignedShort();
                 len -= 2;
                 i++;
             }
 
-            readObject = array;
         } else if ( ( (vm == 1) && (length > 2))) {
 
             // not a valid VM, but we don't initialise the VM to 1,
             // so we will use this fact to guess at valid data.
             // we actually do it as above.
-            readObject = new Short((short) getUnsignedShort());
+            array[0] = (short) getUnsignedShort();
             len -= 2;
 
             while (len > 0) { // we should validate with VM here too
-                getUnsignedShort();
+                array[i] = (short) getUnsignedShort();
                 len -= 2;
                 i++;
             }
         } else if (length == 2) {
-            readObject = new Short((short) getUnsignedShort());
+            array[0] = (short) getUnsignedShort();
         }
-
-        return readObject;
+        
+        str = shortArrayToString(array);
+        return str;
     }
     
+    
+    
+    private String shortArrayToString(short[] shArray) {
+    	byte[] b = new byte[(shArray.length * 2)];
+    	String str;
+    	for (int i = 0; i < shArray.length; i++) {
+    		b[i] = (byte) (shArray[i] >> 8);
+    		b[i+1] = (byte) (shArray[i] & 0xff);
+    	}
+    	
+    	str = new String(b);
+    	
+    	return str;
+    	
+    }
     
     
     /**
@@ -792,53 +774,64 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
      * @param vm value multiplicity of the DICOM tag data. VM does not represent how many to find.
      * @param length number of bytes to read out of data stream; the length is not used.
      */
-    private Object getInteger(int vm, int length) throws IOException {
+    private String getInteger(int vm, int length) throws IOException {
         int len = (elementLength == UNDEFINED_LENGTH) ? 0 : elementLength;
         int i = 0;
-        Object readObject = null;
-
+        String str;
+        int[] array = new int[length/4];
+        
         if (vm > 1) {
-            Integer[] array = new Integer[length / 4];
-
+            
             while (len > 0) { // we should validate with VM here too
-                array[i] = new Integer(getInt());
+                array[i] = getInt();
                 len -= 4;
                 i++;
             }
 
-            readObject = array;
         } else if ( (vm < 1) && (length > 4)) {
 
             // not a valid VM, but we don't initialise the VM to 1,
             // so we will use this fact to guess at valid data.
             // we actually do it as above.
-            Integer[] array = new Integer[length / 4];
-
+            
             while (len > 0) {
-                array[i] = new Integer(getInt());
+                array[i] = getInt();
                 len -= 4;
                 i++;
             }
 
-            readObject = array;
         } else if ( ( (vm == 1) && (length > 4))) {
 
             // not a valid VM, but we don't initialise the VM to 1,
             // so we will use this fact to guess at valid data.
             // we actually do it as above.
-            readObject = new Integer(getInt());
             len -= 4;
 
             while (len > 0) { // we should validate with VM here too
-                getInt();
+                array[i] = getInt();
                 len -= 4;
                 i++;
             }
         } else if (length == 4) {
-            readObject = new Integer(getInt());
+            array[0] = getInt();
         }
-
-        return readObject;
+        str = intArrayToString(array);
+        return str;
+    }
+    
+    private String intArrayToString(int[] intArray) {
+    	byte[] b = new byte[(intArray.length * 4)];
+    	String str;
+    	for (int i = 0; i < intArray.length; i++) {
+    		b[i] = (byte) (intArray[i] >> 24);
+    		b[i+1] = (byte) (intArray[i] >> 16 & 0xff);
+    		b[i+2] = (byte) (intArray[i] >> 8 & 0xff);
+    		b[i+3] = (byte) (intArray[i] & 0xff);
+    	}
+    	
+    	str = new String(b);
+    	
+    	return str;
     }
     
     /**
@@ -901,50 +894,44 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
      * @param vm value multiplicity of the DICOM tag data. VM does not represent how many to find.
      * @param length number of bytes to read out of data stream; the length is not used.
      */
-    private Object getByte(int vm, int length) throws IOException {
+    private String getByte(int vm, int length) throws IOException {
         int len = (elementLength == UNDEFINED_LENGTH) ? 0 : elementLength;
         int i = 0;
-        Object readObject = null; // the Object we read in
+        String str;
+        byte[] array = new byte[length];
         
         if (vm > 1) {
-            Byte[] array = new Byte[length];
-
+                       
             while (len > 0) { // we should validate with VM here too
-                array[i] = new Byte((byte) getByte());
+                //array[i] = new Byte((byte) getByte());
+                array[i] = (byte) getByte();
                 len -= 1;
                 i++;
             }
 
-            readObject = array;
-           
         } else if ( (vm < 1) && (length > 2)) {
 
             // not a valid VM, but we don't initialise the VM to 1,
             // so we will use this fact to guess at valid data.
             // we actually do it as above.
-            Byte[] array = new Byte[length];
-
             while (len > 0) { // we should validate with VM here too
-                array[i] = new Byte((byte) getByte());
+                array[i] = (byte) getByte();
                 len -= 1;
                 i++;
             }
 
-            readObject = array;
         } else if (length > 0) {
-            Byte[] array = new Byte[length];
-
+            
             while (len > 0) { // we should validate with VM here too
-                array[i] = new Byte((byte) getByte());
+                array[i] = (byte) getByte();
                 len -= 1;
                 i++;
             }
-
-            readObject = array;
         }
 
-        return readObject;
-        
+ 
+        str = new String(array);
+        return str;
     }
     
     /**
