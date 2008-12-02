@@ -33,13 +33,7 @@ public class ViewJFrameGraph extends JFrame
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 5127841803361813975L;
-
-    /** DOCUMENT ME! */
-    private static final int MINIMUM_WIDTH = 460;
-
-    /** DOCUMENT ME! */
-    private static final int MINIMUM_HEIGHT = 335;
-
+    
     /** Mode indicates no curve fitting is taking place */
     private static final int fitNoneMode = 0;
 
@@ -57,6 +51,19 @@ public class ViewJFrameGraph extends JFrame
     
     /** Mode indicates Lorentz fitting in progress //TODO: implement listener*/
     private static final int fitLorentzMode = 6;
+    
+    //~ GUI Constants --------------------------------------------------------------------------------------------------
+    
+    /** Minimum width of the graph panel */
+    private static final int MINIMUM_WIDTH = 460;
+
+    /** Minimum height of the graph panel */
+    private static final int MINIMUM_HEIGHT = 335;
+    
+    /** Minimum distance between frame and subpanels */
+    private static final int PANEL_OFFSET = 10;
+    
+    
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -117,32 +124,17 @@ public class ViewJFrameGraph extends JFrame
     /** DOCUMENT ME! */
     private JPanel fitFunctVisiblePanel;
 
-    /** DOCUMENT ME! */
+    /** Current mode for fitting functions */
     private int fitMode = fitNoneMode;
-
-    /** DOCUMENT ME! */
-    private Font font12, font12B;
 
     /** DOCUMENT ME! */
     private VOI frameGraphVOI = null;
 
     /** DOCUMENT ME! */
-    private JPanel functionColorPanel;
-
-    /** DOCUMENT ME! */
     private int functionIndex;
 
     /** DOCUMENT ME! */
-    private JPanel functionPanel;
-
-    /** DOCUMENT ME! */
-    private JPanel functionVisiblePanel;
-
-    /** DOCUMENT ME! */
     private JButton[] functLineColorButton;
-
-    /** DOCUMENT ME! */
-    private JLabel[] functLineColorLabel;
 
     /** the slope changes. */
     private JCheckBox[] functVisibleCheckbox;
@@ -203,13 +195,10 @@ public class ViewJFrameGraph extends JFrame
     private JCheckBox legendCheckbox; // check-box for displaying the legend
 
     /** DOCUMENT ME! */
-    private JDialog legendDialog; // Dialog to change the function names
+    private JTextField[] nameField; // array of text fields for changing function names in legendDialog
 
     /** DOCUMENT ME! */
-    private JTextField[] legendField; // array of text fields for changing function names in legendDialog
-
-    /** DOCUMENT ME! */
-    private JLabel[] legendLabel; // array of labels for changing corresponding functions in legendDialog
+    private JLabel[] functionLabel; // array of labels for changing corresponding functions in legendDialog
 
     /** DOCUMENT ME! */
     private JPanel legendPanel;
@@ -248,7 +237,7 @@ public class ViewJFrameGraph extends JFrame
     private JTabbedPane modifyTabbedPane;
 
     /** DOCUMENT ME! */
-    private JPanel namePanel;
+    private JPanel functionPropPanel;
 
     /** DOCUMENT ME! */
     private JMenuBar openingMenuBar;
@@ -364,8 +353,6 @@ public class ViewJFrameGraph extends JFrame
 
         // basic setup for frame
         try {
-            font12 = MipavUtil.font12;
-            font12B = MipavUtil.font12B;
             mainPanel = new JPanel();
             mainPanel.setBounds(0, 0, getSize().width, getSize().height);
             graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
@@ -470,8 +457,6 @@ public class ViewJFrameGraph extends JFrame
         }
 
         try {
-            font12 = MipavUtil.font12;
-            font12B = MipavUtil.font12B;
             mainPanel = new JPanel();
             mainPanel.setBounds(0, 0, getSize().width, getSize().height);
             graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
@@ -569,8 +554,6 @@ public class ViewJFrameGraph extends JFrame
         }
 
         try {
-            font12 = MipavUtil.font12;
-            font12B = MipavUtil.font12B;
             mainPanel = new JPanel();
             mainPanel.setBounds(0, 0, getSize().width, getSize().height);
             graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
@@ -706,8 +689,6 @@ public class ViewJFrameGraph extends JFrame
         }
 
         try {
-            font12 = MipavUtil.font12;
-            font12B = MipavUtil.font12B;
             mainPanel = new JPanel();
             mainPanel.setBounds(0, 0, getSize().width, getSize().height);
             graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
@@ -807,8 +788,6 @@ public class ViewJFrameGraph extends JFrame
         setBounds(0, 0, 500, 400);
 
         try {
-            font12 = MipavUtil.font12;
-            font12B = MipavUtil.font12B;
             mainPanel = new JPanel();
             mainPanel.setBounds(0, 0, getSize().width, getSize().height);
             graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
@@ -920,8 +899,6 @@ public class ViewJFrameGraph extends JFrame
         setVisible(false);
 
         try {
-            font12 = MipavUtil.font12;
-            font12B = MipavUtil.font12B;
             mainPanel = new JPanel();
             mainPanel.setBounds(0, 0, getSize().width, getSize().height);
             graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
@@ -1021,8 +998,6 @@ public class ViewJFrameGraph extends JFrame
         setVisible(false);
 
         try {
-            font12 = MipavUtil.font12;
-            font12B = MipavUtil.font12B;
             mainPanel = new JPanel();
             mainPanel.setBounds(0, 0, getSize().width, getSize().height);
             graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
@@ -1131,8 +1106,6 @@ public class ViewJFrameGraph extends JFrame
         }
 
         try {
-            font12 = MipavUtil.font12;
-            font12B = MipavUtil.font12B;
             mainPanel = new JPanel();
             mainPanel.setBounds(0, 0, getSize().width, getSize().height);
             graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
@@ -1234,8 +1207,6 @@ public class ViewJFrameGraph extends JFrame
         }
 
         try {
-            font12 = MipavUtil.font12;
-            font12B = MipavUtil.font12B;
             mainPanel = new JPanel();
             mainPanel.setBounds(0, 0, getSize().width, getSize().height);
             graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
@@ -1658,11 +1629,11 @@ public class ViewJFrameGraph extends JFrame
             int len = graph.getFuncts().length;
 
             vectorCopyFunct.add(new JMenuItem(graph.getFuncts()[len - 1].getFunctName()));
-            ((JMenuItem) vectorCopyFunct.elementAt(len - 1)).setFont(font12B);
+            ((JMenuItem) vectorCopyFunct.elementAt(len - 1)).setFont(MipavUtil.font12B);
             copyMenu.add((JMenuItem) vectorCopyFunct.elementAt(len - 1));
 
             vectorDeleteFunct.add(new JMenuItem(graph.getFuncts()[len - 1].getFunctName()));
-            ((JMenuItem) vectorDeleteFunct.elementAt(len - 1)).setFont(font12B);
+            ((JMenuItem) vectorDeleteFunct.elementAt(len - 1)).setFont(MipavUtil.font12B);
             deleteMenu.add((JMenuItem) vectorDeleteFunct.elementAt(len - 1));
 
             ((JMenuItem) vectorCopyFunct.elementAt(len - 1)).addActionListener(new ActionListener() {
@@ -1913,9 +1884,9 @@ public class ViewJFrameGraph extends JFrame
             }
 
             for (int i = 0; i < graph.getFuncts().length; i++) {
-                graph.getFuncts()[i].setFunctName(legendField[i].getText()); // changes the appropriate functions
-                ((JMenuItem) vectorCopyFunct.elementAt(i)).setText(legendField[i].getText());
-                ((JMenuItem) vectorDeleteFunct.elementAt(i)).setText(legendField[i].getText());
+                graph.getFuncts()[i].setFunctName(nameField[i].getText()); // changes the appropriate functions
+                ((JMenuItem) vectorCopyFunct.elementAt(i)).setText(nameField[i].getText());
+                ((JMenuItem) vectorDeleteFunct.elementAt(i)).setText(nameField[i].getText());
             }
 
             update(getGraphics()); // repaints the graph
@@ -2693,7 +2664,7 @@ public class ViewJFrameGraph extends JFrame
 
         if (index == (len - 1)) {
             vectorCopyFunct.add(new JMenuItem(graph.getFuncts()[len - 1].getFunctName()));
-            ((JMenuItem) vectorCopyFunct.elementAt(len - 1)).setFont(font12B);
+            ((JMenuItem) vectorCopyFunct.elementAt(len - 1)).setFont(MipavUtil.font12B);
             copyMenu.add((JMenuItem) vectorCopyFunct.elementAt(len - 1));
 
             ((JMenuItem) vectorCopyFunct.elementAt(len - 1)).addActionListener(new ActionListener() {
@@ -2713,7 +2684,7 @@ public class ViewJFrameGraph extends JFrame
                 });
 
             vectorDeleteFunct.add(new JMenuItem(graph.getFuncts()[len - 1].getFunctName()));
-            ((JMenuItem) vectorDeleteFunct.elementAt(len - 1)).setFont(font12B);
+            ((JMenuItem) vectorDeleteFunct.elementAt(len - 1)).setFont(MipavUtil.font12B);
             deleteMenu.add((JMenuItem) vectorDeleteFunct.elementAt(len - 1));
 
             if (graph.getFuncts()[len - 1].getVOI() == null) {
@@ -2827,8 +2798,8 @@ public class ViewJFrameGraph extends JFrame
                     ((JMenuItem) vectorDeleteFunct.elementAt(i)).setEnabled(false);
                 }
 
-                ((JMenuItem) vectorCopyFunct.elementAt(i)).setFont(font12B);
-                ((JMenuItem) vectorDeleteFunct.elementAt(i)).setFont(font12B);
+                ((JMenuItem) vectorCopyFunct.elementAt(i)).setFont(MipavUtil.font12B);
+                ((JMenuItem) vectorDeleteFunct.elementAt(i)).setFont(MipavUtil.font12B);
                 copyMenu.add((JMenuItem) vectorCopyFunct.elementAt(i));
                 deleteMenu.add((JMenuItem) vectorDeleteFunct.elementAt(i));
 
@@ -3613,42 +3584,42 @@ public class ViewJFrameGraph extends JFrame
         radioFitLinear.setBounds(10, 10, 180, 30);
         radioFitLinear.addActionListener(this);
         radioFitLinear.setActionCommand("FitLinear");
-        radioFitLinear.setFont(font12);
+        radioFitLinear.setFont(MipavUtil.font12);
         groupFitFunctType.add(radioFitLinear);
         fitFunctTypePanel.add(radioFitLinear);
 
         radioFitExponential.setBounds(10, 40, 210, 30);
         radioFitExponential.addActionListener(this);
         radioFitExponential.setActionCommand("FitExponential");
-        radioFitExponential.setFont(font12);
+        radioFitExponential.setFont(MipavUtil.font12);
         groupFitFunctType.add(radioFitExponential);
         fitFunctTypePanel.add(radioFitExponential);
 
         radioFitGaussian.setBounds(10, 70, 260, 30);
         radioFitGaussian.addActionListener(this);
         radioFitGaussian.setActionCommand("FitGaussian");
-        radioFitGaussian.setFont(font12);
+        radioFitGaussian.setFont(MipavUtil.font12);
         groupFitFunctType.add(radioFitGaussian);
         fitFunctTypePanel.add(radioFitGaussian);
         
         radioFitLaplace.setBounds(10, 100, 260, 30);
         radioFitLaplace.addActionListener(this);
         radioFitLaplace.setActionCommand("FitLaplace");
-        radioFitLaplace.setFont(font12);
+        radioFitLaplace.setFont(MipavUtil.font12);
         groupFitFunctType.add(radioFitLaplace);
         fitFunctTypePanel.add(radioFitLaplace);
         
         radioFitLorentz.setBounds(10, 130, 260, 30);
         radioFitLorentz.addActionListener(this);
         radioFitLorentz.setActionCommand("FitLorentz");
-        radioFitLorentz.setFont(font12);
+        radioFitLorentz.setFont(MipavUtil.font12);
         groupFitFunctType.add(radioFitLorentz);
         fitFunctTypePanel.add(radioFitLorentz);
         
         radioFitNone.setBounds(10, 160, 180, 30);
         radioFitNone.addActionListener(this);
         radioFitNone.setActionCommand("FitNone");
-        radioFitNone.setFont(font12);
+        radioFitNone.setFont(MipavUtil.font12);
         groupFitFunctType.add(radioFitNone);
         fitFunctTypePanel.add(radioFitNone);
 
@@ -3719,7 +3690,7 @@ public class ViewJFrameGraph extends JFrame
                 fitFunctVisibleCheckbox[index].setBounds(230, 12 + (30 * (index - 3)), 150, 30);
             }
 
-            fitFunctVisibleCheckbox[index].setFont(font12);
+            fitFunctVisibleCheckbox[index].setFont(MipavUtil.font12);
             fitFunctVisiblePanel.add(fitFunctVisibleCheckbox[index]);
         }
 
@@ -3727,86 +3698,144 @@ public class ViewJFrameGraph extends JFrame
     }
 
     /**
-     * Creates a panel where various function fetaures such as visibility, color, and points can be toggled. This panel
-     * is used in the tabbed pane of the Modify Graph Dialog box.
+     * Creates a panel where various features of the functions can be edited, such as showing the legend, and changing
+     * function names. This panel is used by the tabbed pane in Modify Graph Dialog Box.
      */
     private void buildFunctionPanel() {
 
-        String[] name;
+    	JLabel nameTop, colorTop, visibleTop;
+    	String[] name;
         boolean show;
-
+    	
         try {
-            functionPanel = new JPanel();
+            legendPanel = new JPanel();
+            showPanel = new JPanel();
+            functionPropPanel = new JPanel();
+            legendCheckbox = new JCheckBox("Show Legend", graph.getLegendVisible());
+            nameField = new JTextField[5]; // an array of text fields for inputting the new name for each function
+            functionLabel = new JLabel[5]; // an array of labels for the corresponding function text fields
+        
             pointsVisiblePanel = new JPanel();
-            functionVisiblePanel = new JPanel();
-            functionColorPanel = new JPanel();
-            pointsCheckbox = new JCheckBox("Points Visible", graph.getPointsVisible());
+            pointsCheckbox = new JCheckBox("Show Points", graph.getPointsVisible());
             functVisibleCheckbox = new JCheckBox[5];
             functLineColorButton = new JButton[5];
-            functLineColorLabel = new JLabel[5];
             name = new String[5];
+            
+            nameTop = new JLabel("Function name");
+            colorTop = new JLabel("Color");
+            visibleTop = new JLabel("Visible");
+        
         } catch (OutOfMemoryError error) {
-            MipavUtil.displayError("Out of memory: ViewJComponentGraph.buildFunctionPanel");
+            MipavUtil.displayError("Out of memory: ViewJComponentGraph.buildLegendPanel");
 
             return;
         }
 
-        functionPanel.setLayout(null);
-        functionPanel.setBorder(new EtchedBorder());
+        legendPanel.setLayout(null);
+        legendPanel.setBorder(new EtchedBorder());
 
-        pointsVisiblePanel.setBounds(20, 10, 200, 30);
+        showPanel.setBounds(PANEL_OFFSET, PANEL_OFFSET, 228, 35);
+        showPanel.setBorder(new EtchedBorder());
+        showPanel.setLayout(null);
+        legendPanel.add(showPanel);
+
+        functionPropPanel.setBounds(PANEL_OFFSET, 55, 465, 260);
+        functionPropPanel.setBorder(MipavUtil.buildTitledBorder("Functions"));
+        functionPropPanel.setLayout(new GridBagLayout());
+        legendPanel.add(functionPropPanel);
+
+        legendCheckbox.setBounds(5, 5, 90, 22);
+        legendCheckbox.addActionListener(this);
+        legendCheckbox.setActionCommand("Legend");
+        legendCheckbox.setFont(MipavUtil.font12);
+        showPanel.add(legendCheckbox);
+        
+        pointsVisiblePanel.setBounds(250, PANEL_OFFSET, 222, 35);
         pointsVisiblePanel.setBorder(new EtchedBorder());
         pointsVisiblePanel.setLayout(null);
-        functionPanel.add(pointsVisiblePanel);
-
-        functionVisiblePanel.setBounds(20, 50, 200, 190);
-        functionVisiblePanel.setBorder(new EtchedBorder());
-        functionVisiblePanel.setLayout(null);
-        functionPanel.add(functionVisiblePanel);
-
-        functionColorPanel.setBounds(240, 50, 200, 190);
-        functionColorPanel.setBorder(new EtchedBorder());
-        functionColorPanel.setLayout(null);
-        functionPanel.add(functionColorPanel);
+        legendPanel.add(pointsVisiblePanel);
 
         pointsCheckbox.addActionListener(this);
         pointsCheckbox.setActionCommand("Points");
-        pointsCheckbox.setBounds(20, 5, 150, 22);
-        pointsCheckbox.setFont(font12);
+        pointsCheckbox.setBounds(5, 5, 150, 22);
+        pointsCheckbox.setFont(MipavUtil.font12);
         pointsVisiblePanel.add(pointsCheckbox);
 
-        for (int index = 0; index < 5; index++) {
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.BOTH;
+        c.gridx = 1;
+        c.gridy = 0;
+        c.insets = new Insets(5, 20, 5, 20);
+        functionPropPanel.add(nameTop, c);
+        c.gridx = 2;
+        c.insets = new Insets(5, 10, 5, 10);
+        functionPropPanel.add(colorTop, c);
+        c.gridx = 3;
+        functionPropPanel.add(visibleTop, c);   
+       
+        for (int i = 0; i < 5; i++) { // sets the bounds for each of the text fields and label for
 
-            if (index < graph.getFuncts().length) {
-                name[index] = graph.getFuncts()[index].getFunctName();
-                show = graph.getFuncts()[index].getFunctionVisible();
+            // inputting the function names
+            try {
+
+                if (i < graph.getFuncts().length) {
+                    nameField[i] = new JTextField(graph.getFuncts()[i].getFunctName()); // sets the default string in
+                                                                                          // the text field to
+                } else {
+                    nameField[i] = new JTextField();
+                }
+
+                functionLabel[i] = new JLabel("Function " + (i + 1)); // sets the label to the corresponding
+                                                                              // function
+
+                // index number
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Out of memory: ViewJComponentGraph.buildLegendPanel");
+
+                return;
+            }
+
+            nameField[i].setFont(MipavUtil.font12);
+            functionLabel[i].setFont(MipavUtil.font12B);
+
+            nameField[i].setMinimumSize(new Dimension(100, 28));
+            nameField[i].setPreferredSize(new Dimension(100, 28));
+            functionLabel[i].setForeground(Color.black);
+
+            if (i >= graph.getFuncts().length) {
+                nameField[i].setEnabled(false);
+                functionLabel[i].setEnabled(false);
+            }
+            
+            if (i < graph.getFuncts().length) {
+                name[i] = graph.getFuncts()[i].getFunctName();
+                show = graph.getFuncts()[i].getFunctionVisible();
             } else {
-                name[index] = "Function " + (index + 1);
+                name[i] = "Function " + (i + 1);
                 show = false;
             }
 
             try {
-                functVisibleCheckbox[index] = new JCheckBox(name[index] + " Visible", show);
-                functLineColorButton[index] = new JButton();
-                functLineColorLabel[index] = new JLabel("Change " + name[index] + " Color");
+                functVisibleCheckbox[i] = new JCheckBox();
+                functLineColorButton[i] = new JButton();
             } catch (OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: ViewJComponentGraph.buildFunctionPanel");
 
                 return;
             }
 
-            if (index >= graph.getFuncts().length) {
-                functVisibleCheckbox[index].setEnabled(false);
-                functVisibleCheckbox[index].setSelected(false);
-                functLineColorButton[index].setEnabled(false);
-                functLineColorLabel[index].setEnabled(false);
+            if (i >= graph.getFuncts().length) {
+                functVisibleCheckbox[i].setEnabled(false);
+                functVisibleCheckbox[i].setSelected(false);
+                functLineColorButton[i].setEnabled(false);
             } else {
-                functLineColorButton[index].setBackground(graph.getFuncts()[index].getColor());
+            	functVisibleCheckbox[i].setSelected(show);
+                functLineColorButton[i].setBackground(graph.getFuncts()[i].getColor());
             }
 
-            functLineColorButton[index].setActionCommand("ColorChange");
-            functLineColorButton[index].addActionListener(this);
-            functVisibleCheckbox[index].addActionListener(new ActionListener() {
+            functLineColorButton[i].setActionCommand("ColorChange");
+            functLineColorButton[i].addActionListener(this);
+            functVisibleCheckbox[i].addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent event) {
                         JCheckBox c = (JCheckBox) (event.getSource());
 
@@ -3848,102 +3877,32 @@ public class ViewJFrameGraph extends JFrame
                     }
                 });
 
-            functVisibleCheckbox[index].setBounds(25, 12 + (35 * index), 150, 30);
-            functLineColorButton[index].setBounds(15, 14 + (35 * index), 20, 20);
-            functLineColorLabel[index].setBounds(45, 10 + (35 * index), 180, 30);
 
-            functVisibleCheckbox[index].setFont(font12);
-            functLineColorLabel[index].setFont(font12);
-
-            functionVisiblePanel.add(functVisibleCheckbox[index]);
-            functionColorPanel.add(functLineColorButton[index]);
-            functionColorPanel.add(functLineColorLabel[index]);
-        }
-
-        tabbedPane.addTab("Functions", null, functionPanel);
-
-    }
-
-    /**
-     * Creates a panel where various features of the legend can be edited, such as showing the legend, and changing
-     * function names. This panel is used by the tabbed pane in Modify Graph Dialog Box.
-     */
-    private void buildLegendPanel() {
-
-        try {
-            legendPanel = new JPanel();
-            showPanel = new JPanel();
-            namePanel = new JPanel();
-            legendCheckbox = new JCheckBox("Show Legend", graph.getLegendVisible());
-            legendField = new JTextField[5]; // an array of text fields for inputting the new name for each function
-            legendLabel = new JLabel[5]; // an array of labels for the corresponding function text fields
-        } catch (OutOfMemoryError error) {
-            MipavUtil.displayError("Out of memory: ViewJComponentGraph.buildLegendPanel");
-
-            return;
-        }
-
-        legendPanel.setLayout(null);
-        legendPanel.setBorder(new EtchedBorder());
-
-        showPanel.setBounds(20, 10, 160, 30);
-        showPanel.setBorder(new EtchedBorder());
-        showPanel.setLayout(null);
-        legendPanel.add(showPanel);
-
-        namePanel.setBounds(20, 50, 395, 210);
-        namePanel.setBorder(new EtchedBorder());
-        namePanel.setLayout(null);
-        legendPanel.add(namePanel);
-
-        legendCheckbox.setBounds(20, 5, 90, 22);
-        legendCheckbox.addActionListener(this);
-        legendCheckbox.setActionCommand("Legend");
-        legendCheckbox.setFont(font12);
-        showPanel.add(legendCheckbox);
-
-        for (int i = 0; i < 5; i++) { // sets the bounds for each of the text fields and label for
-
-            // inputting the function names
-            try {
-
-                if (i < graph.getFuncts().length) {
-                    legendField[i] = new JTextField(graph.getFuncts()[i].getFunctName()); // sets the default string in
-                                                                                          // the text field to
-                } else {
-                    legendField[i] = new JTextField();
-                }
-
-                legendLabel[i] = new JLabel("Function " + (i + 1) + " Name"); // sets the label to the corresponding
-                                                                              // function
-
-                // index number
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Out of memory: ViewJComponentGraph.buildLegendPanel");
-
-                return;
-            }
-
-            legendField[i].setFont(font12);
-            legendLabel[i].setFont(font12);
-
-            legendField[i].setBounds(55, 10 + (40 * i), 150, 28);
-            legendLabel[i].setBounds(220, 10 + (40 * i), 100, 28);
-            legendLabel[i].setForeground(Color.black);
-
-            if (i >= graph.getFuncts().length) {
-                legendField[i].setEnabled(false);
-                legendLabel[i].setEnabled(false);
-            }
-
-            namePanel.add(legendLabel[i]); // adds all of the text fields and labels
-
-            // to the dialog box
-            namePanel.add(legendField[i]);
+            c.gridy = i+1;
+            c.gridx = 0;
+            c.anchor = GridBagConstraints.CENTER;
+            c.insets = new Insets(5, 15, 5, 15);
+            functionPropPanel.add(functionLabel[i], c);
+            c.gridx = 1;
+            c.insets = new Insets(5, 20, 5, 20);
+            functionPropPanel.add(nameField[i], c); // adds all of the text fields and labels
+            c.gridx = 2;
+            c.fill = GridBagConstraints.BOTH;
+            c.ipadx = 10;
+            c.ipady = 10;
+            c.anchor = GridBagConstraints.CENTER;
+            c.insets = new Insets(5, 10, 5, 10);
+            functionPropPanel.add(functLineColorButton[i], c);
+            c.gridx = 3;
+            c.fill = GridBagConstraints.BOTH;
+            c.ipadx = 0;
+            c.ipady = 0;
+            functionPropPanel.add(functVisibleCheckbox[i], c);
+            
 
         }
 
-        tabbedPane.addTab("Legend", null, legendPanel);
+        tabbedPane.addTab("Functions", null, legendPanel);
 
     }
 
@@ -4176,16 +4135,16 @@ public class ViewJFrameGraph extends JFrame
             return;
         }
 
-        modifyGraphPanel.setBounds(10, 10, 480, 253);
+        modifyGraphPanel.setBounds(PANEL_OFFSET, PANEL_OFFSET, 480, 253);
         modifyGraphPanel.setLayout(null);
         modifyGraphPanel.setBorder(new EtchedBorder());
 
-        gridPanel.setBounds(10, 10, 465, 78);
+        gridPanel.setBounds(PANEL_OFFSET, PANEL_OFFSET, 465, 78);
         gridPanel.setBorder(new EtchedBorder());
         gridPanel.setLayout(null);
         modifyGraphPanel.add(gridPanel);
 
-        axisPanel.setBounds(10, 92, 250, 193);
+        axisPanel.setBounds(PANEL_OFFSET, 92, 250, 200);
         axisPanel.setBorder(new EtchedBorder());
         axisPanel.setLayout(null);
         modifyGraphPanel.add(axisPanel);
@@ -4195,69 +4154,69 @@ public class ViewJFrameGraph extends JFrame
         backgroundPanel.setLayout(null);
         modifyGraphPanel.add(backgroundPanel);
 
-        rangePanel.setBounds(270, 147, 205, 138);
+        rangePanel.setBounds(270, 147, 205, 145);
         rangePanel.setBorder(new EtchedBorder());
         rangePanel.setLayout(null);
         modifyGraphPanel.add(rangePanel);
 
-        gridlinesCheckbox.setBounds(10, 10, 150, 20);
+        gridlinesCheckbox.setBounds(PANEL_OFFSET, PANEL_OFFSET, 150, 20);
         gridlinesCheckbox.addActionListener(this);
         gridlinesCheckbox.setActionCommand("Gridlines");
-        gridlinesCheckbox.setFont(font12);
+        gridlinesCheckbox.setFont(MipavUtil.font12);
         gridPanel.add(gridlinesCheckbox);
 
-        minorTickMarksCheckbox.setBounds(10, 40, 200, 20);
+        minorTickMarksCheckbox.setBounds(PANEL_OFFSET, 40, 200, 20);
         minorTickMarksCheckbox.addActionListener(this);
         minorTickMarksCheckbox.setActionCommand("MinorTickMarks");
-        minorTickMarksCheckbox.setFont(font12);
+        minorTickMarksCheckbox.setFont(MipavUtil.font12);
         gridPanel.add(minorTickMarksCheckbox);
 
-        xGridLineField.setFont(font12);
-        xGridLineField.setBounds(250, 10, 30, 25);
+        xGridLineField.setFont(MipavUtil.font12);
+        xGridLineField.setBounds(250, PANEL_OFFSET, 30, 25);
         gridPanel.add(xGridLineField);
 
-        xGridLineLabel.setFont(font12);
-        xGridLineLabel.setBounds(290, 10, 150, 25);
+        xGridLineLabel.setFont(MipavUtil.font12);
+        xGridLineLabel.setBounds(290, PANEL_OFFSET, 150, 25);
         xGridLineLabel.setForeground(Color.black);
         gridPanel.add(xGridLineLabel);
 
-        yGridLineField.setFont(font12);
+        yGridLineField.setFont(MipavUtil.font12);
         yGridLineField.setBounds(250, 45, 30, 25);
         gridPanel.add(yGridLineField);
 
-        yGridLineLabel.setFont(font12);
+        yGridLineLabel.setFont(MipavUtil.font12);
         yGridLineLabel.setBounds(290, 43, 150, 30);
         yGridLineLabel.setForeground(Color.black);
         gridPanel.add(yGridLineLabel);
 
-        titleField.setFont(font12);
-        titleField.setBounds(10, 25, 150, 30);
+        titleField.setFont(MipavUtil.font12);
+        titleField.setBounds(PANEL_OFFSET, 25, 150, 30);
         axisPanel.add(titleField);
 
-        titleLabel.setFont(font12);
+        titleLabel.setFont(MipavUtil.font12);
         titleLabel.setBounds(170, 25, 100, 30);
         titleLabel.setForeground(Color.black);
         axisPanel.add(titleLabel);
 
-        xAxisLabelField.setFont(font12);
-        xAxisLabelField.setBounds(10, 75, 150, 30);
+        xAxisLabelField.setFont(MipavUtil.font12);
+        xAxisLabelField.setBounds(PANEL_OFFSET, 75, 150, 30);
         axisPanel.add(xAxisLabelField);
 
-        xAxisLabel.setFont(font12);
+        xAxisLabel.setFont(MipavUtil.font12);
         xAxisLabel.setBounds(170, 75, 100, 30);
         xAxisLabel.setForeground(Color.black);
         axisPanel.add(xAxisLabel);
 
-        yAxisLabelField.setFont(font12);
-        yAxisLabelField.setBounds(10, 122, 150, 30);
+        yAxisLabelField.setFont(MipavUtil.font12);
+        yAxisLabelField.setBounds(PANEL_OFFSET, 122, 150, 30);
         axisPanel.add(yAxisLabelField);
 
-        yAxisLabel.setFont(font12);
+        yAxisLabel.setFont(MipavUtil.font12);
         yAxisLabel.setBounds(170, 122, 100, 30);
         yAxisLabel.setForeground(Color.black);
         axisPanel.add(yAxisLabel);
 
-        backgroundButton.setFont(font12);
+        backgroundButton.setFont(MipavUtil.font12);
         backgroundButton.setBounds(15, 12, 20, 20);
         backgroundButton.setBackground(graph.getBackgroundColor());
         backgroundButton.addActionListener(this);
@@ -4265,37 +4224,37 @@ public class ViewJFrameGraph extends JFrame
         backgroundButton.setMargin(new Insets(0, 0, 0, 0));
         backgroundPanel.add(backgroundButton);
 
-        backgroundLabel.setFont(font12);
+        backgroundLabel.setFont(MipavUtil.font12);
         backgroundLabel.setBounds(45, 9, 180, 30);
         backgroundLabel.setForeground(Color.black);
         backgroundPanel.add(backgroundLabel);
 
-        autoShrinkRangeCheckbox.setBounds(10, 10, 175, 20);
+        autoShrinkRangeCheckbox.setBounds(PANEL_OFFSET, PANEL_OFFSET, 175, 20);
         autoShrinkRangeCheckbox.addActionListener(this);
         autoShrinkRangeCheckbox.setActionCommand("AutoShrinkRange");
-        autoShrinkRangeCheckbox.setFont(font12);
+        autoShrinkRangeCheckbox.setFont(MipavUtil.font12);
         rangePanel.add(autoShrinkRangeCheckbox);
 
-        minRangeField.setFont(font12);
-        minRangeField.setBounds(10, 37, 60, 25);
+        minRangeField.setFont(MipavUtil.font12);
+        minRangeField.setBounds(PANEL_OFFSET, 37, 60, 25);
         rangePanel.add(minRangeField);
 
-        minRangeLabel.setFont(font12);
+        minRangeLabel.setFont(MipavUtil.font12);
         minRangeLabel.setBounds(75, 35, 165, 30);
         minRangeLabel.setForeground(Color.black);
         rangePanel.add(minRangeLabel);
 
-        maxRangeField.setFont(font12);
-        maxRangeField.setBounds(10, 72, 60, 25);
+        maxRangeField.setFont(MipavUtil.font12);
+        maxRangeField.setBounds(PANEL_OFFSET, 72, 60, 25);
         rangePanel.add(maxRangeField);
 
-        maxRangeLabel.setFont(font12);
+        maxRangeLabel.setFont(MipavUtil.font12);
         maxRangeLabel.setBounds(75, 72, 165, 30);
         maxRangeLabel.setForeground(Color.black);
         rangePanel.add(maxRangeLabel);
 
-        resetRangeButton.setFont(font12B);
-        resetRangeButton.setBounds(10, 105, 150, 30);
+        resetRangeButton.setFont(MipavUtil.font12B);
+        resetRangeButton.setBounds(PANEL_OFFSET, 105, 150, 30);
         resetRangeButton.addActionListener(this);
         resetRangeButton.setActionCommand("ResetRangeButton");
         rangePanel.add(resetRangeButton);
@@ -4325,14 +4284,13 @@ public class ViewJFrameGraph extends JFrame
             return;
         }
 
-        tabbedPane.setFont(font12B);
+        tabbedPane.setFont(MipavUtil.font12B);
 
         modifyDialog.setSize(503, 440);
         modifyDialog.getContentPane().setLayout(null);
         modifyDialog.setResizable(false);
 
         buildModifyGraphPanel();
-        buildLegendPanel();
         buildFunctionPanel();
         buildFitFunctPanel();
 
@@ -4342,17 +4300,17 @@ public class ViewJFrameGraph extends JFrame
         tabbedPane.addChangeListener(this);
         tabbedPane.setSize(490, 360);
 
-        applyButton.setFont(font12B);
+        applyButton.setFont(MipavUtil.font12B);
         applyButton.addActionListener(this);
         applyButton.setActionCommand("ApplyModifyGraph");
         applyButton.setBounds((modifyDialog.getBounds().width / 2) - 130, modifyDialog.getBounds().height - 70, 90, 30);
 
-        cancelButton.setFont(font12B);
+        cancelButton.setFont(MipavUtil.font12B);
         cancelButton.addActionListener(this);
         cancelButton.setActionCommand("CancelModifyGraph");
         cancelButton.setBounds(modifyDialog.getBounds().width / 2 - 30, modifyDialog.getBounds().height - 70, 90, 30);
         
-        helpButton.setFont(font12B);
+        helpButton.setFont(MipavUtil.font12B);
         helpButton.addActionListener(this);
         helpButton.setActionCommand("Help");
         helpButton.setBounds(modifyDialog.getBounds().width / 2 + 70, modifyDialog.getBounds().height - 70, 90, 30);
@@ -4679,8 +4637,7 @@ public class ViewJFrameGraph extends JFrame
         if (modifyDialog == null) {
             return;
         }
-
-        String[] name = new String[5];
+        
         graph.calculateDefaultRangeDomain();
 
         if (autoShrinkRange) {
@@ -4697,29 +4654,19 @@ public class ViewJFrameGraph extends JFrame
         for (int i = 0; i < 5; i++) {
 
             if (i < graph.getFuncts().length) {
-                name[i] = graph.getFuncts()[i].getFunctName();
 
                 // enables the change name field if needed
-                if (!legendField[i].isEnabled()) {
-                    legendField[i].setText(graph.getFuncts()[i].getFunctName());
-                    legendField[i].setEnabled(true);
-                    legendLabel[i].setEnabled(true);
+                if (!nameField[i].isEnabled()) {
+                    nameField[i].setText(graph.getFuncts()[i].getFunctName());
+                    nameField[i].setEnabled(true);
+                    functionLabel[i].setEnabled(true);
                 }
-
-                // changes all the function visible checkboxes and line color label
-                // names according to the functions
-                functVisibleCheckbox[i].setText(name[i] + " Visible");
-                functLineColorLabel[i].setText("Change " + name[i] + " Color");
 
                 // changes the function linecolor displayed according to the graph
                 functLineColorButton[i].setBackground(graph.getFuncts()[i].getColor());
                 functVisibleCheckbox[i].setEnabled(true);
                 functVisibleCheckbox[i].setSelected(graph.getFuncts()[i].getFunctionVisible());
                 functLineColorButton[i].setEnabled(true);
-                functLineColorLabel[i].setEnabled(true);
-
-                name[i] = "Fitted " + graph.getFuncts()[i].getFunctName() + " Visible";
-                fitFunctVisibleCheckbox[i].setText(name[i]);
 
                 // sets which fit functions are allowed to be visible
                 if (fitMode == fitNoneMode) {
@@ -4732,24 +4679,17 @@ public class ViewJFrameGraph extends JFrame
                 }
 
             } else {
-                name[i] = "Function " + (i + 1);
 
                 // changes the change name fields for functions that do not exist
-                legendField[i].setText("");
-                legendField[i].setEnabled(false);
-                legendLabel[i].setEnabled(false);
+                nameField[i].setText("");
+                nameField[i].setEnabled(false);
+                functionLabel[i].setEnabled(false);
 
                 // changes the checkbox names for functions that do not exist
-                functVisibleCheckbox[i].setText(name[i] + " Visible");
-                functLineColorLabel[i].setText("Change " + name[i] + " Color");
                 functVisibleCheckbox[i].setEnabled(false);
                 functVisibleCheckbox[i].setSelected(false);
                 functLineColorButton[i].setEnabled(false);
                 functLineColorButton[i].setBackground(Color.lightGray);
-                functLineColorLabel[i].setEnabled(false);
-
-                name[i] = "Fitted Function " + (i + 1) + " Visible";
-                fitFunctVisibleCheckbox[i].setText(name[i]);
                 fitFunctVisibleCheckbox[i].setEnabled(false);
                 fitFunctVisibleCheckbox[i].setSelected(false);
             }
