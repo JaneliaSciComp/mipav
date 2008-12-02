@@ -3191,6 +3191,10 @@ public class ViewJFrameGraph extends JFrame
     }
 
     /**
+     * @deprecated If data were changed, this could be useful to refit data without pressing a new button,
+     * but this function is not currently utilized.  Will be removed in future version of MIPAV unless a
+     * use can be found
+     * 
      * Updates Fitted Functions to accurately estimate the functions in the graph (Function data may have chaned due to
      * realtime updating, and therefore the fitted functions must be updated).
      */
@@ -3264,7 +3268,6 @@ public class ViewJFrameGraph extends JFrame
                         x[j] = (functions[i].getXs()[j]);
                         y[j] = (float) (params[0] + (params[1] * x[j]));
                     }
-
                     fittedFunctions[i].setXs(x);
                     fittedFunctions[i].setOriginalXs(x);
                     fittedFunctions[i].setYs(y);
@@ -4657,10 +4660,10 @@ public class ViewJFrameGraph extends JFrame
             tmp = Double.valueOf(str).doubleValue();
 
             if ((tmp > maxValue) || (tmp < minValue)) {
-                // MipavUtil.displayError("Value must be between " + minValue + " and " + maxValue);
+                Preferences.debug("Value must be between " + minValue + " and " + maxValue+". Current value is "+tmp);
                 return false;
             } 
-            return false;
+            return true;
         } catch (NumberFormatException error) {
             MipavUtil.displayError("Must enter numeric value");
 
