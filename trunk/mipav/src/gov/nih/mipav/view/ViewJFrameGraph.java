@@ -34,23 +34,35 @@ public class ViewJFrameGraph extends JFrame
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 5127841803361813975L;
     
-    /** Mode indicates no curve fitting is taking place */
-    private static final int fitNoneMode = 0;
-
-    /** Mode indicates linear fitting in progress */
-    private static final int fitLinearMode = 2;
-
-    /** Mode indicates exponential fitting in progress */
-    private static final int fitExpMode = 3;
-    
-    /** Mode indicates Gaussian fitting in progress*/
-    private static final int fitGaussianMode = 4;
-    
-    /** Mode indicates Laplace fitting in progress*/
-    private static final int fitLaplaceMode = 5;
-    
-    /** Mode indicates Lorentz fitting in progress //TODO: implement listener*/
-    private static final int fitLorentzMode = 6;
+    public enum FitMode {
+    	/** Mode indicates no curve fitting is taking place */
+    	fitNone("None"),
+    	
+    	/** Mode indicates linear fitting in progress */
+    	fitLinear("Fit linear (a1*x + a0)"),
+    	
+    	/** Mode indicates exponential fitting in progress */
+    	fitExp("Fit exponential (a0+a1*exp(a2*x))"),
+    	
+    	/** Mode indicates Gaussian fitting in progress*/
+    	fitGaussian("Fit Gaussian (A*exp(-(X-Xo)^2/(2sigma^2)))"),
+    	
+    	/** Mode indicates Laplace fitting in progress*/
+    	fitLaplace("Fit Laplace (A*exp(-|x-mu|/beta))"),
+    	
+    	/** Mode indicates Lorentz fitting in progress //TODO: Finish imp.*/
+    	fitLorentz("Fit Lorentz Distribution");
+    	
+    	private String listEntry;
+    	
+    	FitMode(String listEntry) {
+    		this.listEntry = listEntry;
+    	}
+    	
+    	public String toString() {
+    		return listEntry;
+    	}
+    }
     
     //~ GUI Constants --------------------------------------------------------------------------------------------------
     
@@ -125,7 +137,7 @@ public class ViewJFrameGraph extends JFrame
     private JPanel fitFunctVisiblePanel;
 
     /** Current mode for fitting functions */
-    private int fitMode = fitNoneMode;
+    private FitMode fitMode = FitMode.fitNone;
 
     /** DOCUMENT ME! */
     private VOI frameGraphVOI = null;
@@ -1419,7 +1431,7 @@ public class ViewJFrameGraph extends JFrame
                 }
             }
 
-            fitMode = fitExpMode;
+            fitMode = FitMode.fitExp;
 
             for (int index = 0; index < 5; index++) {
 
@@ -1473,7 +1485,7 @@ public class ViewJFrameGraph extends JFrame
 
             }
 
-            fitMode = fitGaussianMode;
+            fitMode = FitMode.fitGaussian;
 
             for (int index = 0; index < 5; index++) {
 
@@ -1528,7 +1540,7 @@ public class ViewJFrameGraph extends JFrame
 
             }
 
-            fitMode = fitLaplaceMode;
+            fitMode = FitMode.fitLaplace;
 
             for (int index = 0; index < 5; index++) {
 
@@ -1583,7 +1595,7 @@ public class ViewJFrameGraph extends JFrame
 
             }
 
-            fitMode = fitLorentzMode;
+            fitMode = FitMode.fitLorentz;
 
             for (int index = 0; index < 5; index++) {
 
@@ -1722,7 +1734,7 @@ public class ViewJFrameGraph extends JFrame
 
             }
 
-            fitMode = fitNoneMode;
+            fitMode = FitMode.fitNone;
 
             for (int index = 0; index < 5; index++) {
                 fitFunctVisibleCheckbox[index].setEnabled(false);
@@ -1791,7 +1803,7 @@ public class ViewJFrameGraph extends JFrame
                 }
             }
 
-            fitMode = fitLinearMode;
+            fitMode = FitMode.fitLinear;
 
             for (int index = 0; index < 5; index++) {
 
@@ -3171,7 +3183,7 @@ public class ViewJFrameGraph extends JFrame
      */
     public void updateFittedFunctions() {
 
-        if (fitMode == fitNoneMode) {
+        if (fitMode == FitMode.fitNone) {
 
             ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
             ViewJComponentFunct[] functions = graph.getFuncts();
@@ -3213,7 +3225,7 @@ public class ViewJFrameGraph extends JFrame
 
                 update(getGraphics());
             }
-        } else if (fitMode == fitLinearMode) {
+        } else if (fitMode == FitMode.fitLinear) {
             double[] params;
             int nPoints;
             FitLine fl = null;
@@ -3264,7 +3276,7 @@ public class ViewJFrameGraph extends JFrame
             }
 
             update(getGraphics());
-        } else if (fitMode == fitExpMode) {
+        } else if (fitMode == FitMode.fitExp) {
             double[] params;
             int nPoints;
             FitExponential fe = null;
@@ -3317,7 +3329,7 @@ public class ViewJFrameGraph extends JFrame
             }
 
             update(getGraphics());
-        } else if(fitMode == fitGaussianMode) {
+        } else if(fitMode == FitMode.fitGaussian) {
         	//TODO: Customize to Gaussian here
         	double[] params;
             int nPoints;
@@ -3371,7 +3383,7 @@ public class ViewJFrameGraph extends JFrame
             }
 
             update(getGraphics());
-        } else if(fitMode == fitLaplaceMode) {
+        } else if(fitMode == FitMode.fitLaplace) {
         	//TODO: Customize to Gaussian here
         	double[] params;
             int nPoints;
@@ -3425,7 +3437,7 @@ public class ViewJFrameGraph extends JFrame
             }
 
             update(getGraphics());
-        } else if(fitMode == fitLorentzMode) {
+        } else if(fitMode == FitMode.fitLorentz) {
         	//TODO: Customize to Gaussian here
         	double[] params;
             int nPoints;
@@ -3623,15 +3635,15 @@ public class ViewJFrameGraph extends JFrame
         groupFitFunctType.add(radioFitNone);
         fitFunctTypePanel.add(radioFitNone);
 
-        if (fitMode == fitLinearMode) {
+        if (fitMode == FitMode.fitLinear) {
             radioFitLinear.setSelected(true);
-        } else if (fitMode == fitExpMode) {
+        } else if (fitMode == FitMode.fitExp) {
             radioFitExponential.setSelected(true);
-        } else if (fitMode == fitGaussianMode) { 
+        } else if (fitMode == FitMode.fitGaussian) { 
         	radioFitGaussian.setSelected(true);
-        } else if(fitMode == fitLaplaceMode) {
+        } else if(fitMode == FitMode.fitLaplace) {
         	radioFitLaplace.setSelected(true);
-        } else if(fitMode == fitLorentzMode) {
+        } else if(fitMode == FitMode.fitLorentz) {
         	radioFitLorentz.setSelected(true);
         } else {
             radioFitNone.setSelected(true);
@@ -3653,7 +3665,7 @@ public class ViewJFrameGraph extends JFrame
                 return;
             }
 
-            if ((fitMode == fitNoneMode) && (index < graph.getFuncts().length)) {
+            if ((fitMode == FitMode.fitNone) && (index < graph.getFuncts().length)) {
                 fitFunctVisibleCheckbox[index].setEnabled(false);
                 fitFunctVisibleCheckbox[index].setSelected(false);
                 graph.getFuncts()[index].setFitFunctionVisible(false);
@@ -4669,7 +4681,7 @@ public class ViewJFrameGraph extends JFrame
                 functLineColorButton[i].setEnabled(true);
 
                 // sets which fit functions are allowed to be visible
-                if (fitMode == fitNoneMode) {
+                if (fitMode == FitMode.fitNone) {
                     fitFunctVisibleCheckbox[i].setEnabled(false);
                     fitFunctVisibleCheckbox[i].setSelected(false);
                     graph.getFuncts()[i].setFitFunctionVisible(false);
@@ -4696,35 +4708,35 @@ public class ViewJFrameGraph extends JFrame
         }
 
         // makes sure that only one item is selected in the fit radio box
-        if (fitMode == fitLinearMode) {
+        if (fitMode == FitMode.fitLinear) {
             radioFitLinear.setSelected(true);
             radioFitNone.setSelected(false);
             radioFitExponential.setSelected(false);
             radioFitGaussian.setSelected(false);
             radioFitLaplace.setSelected(false);
             radioFitLorentz.setSelected(false);
-        } else if (fitMode == fitExpMode) {
+        } else if (fitMode == FitMode.fitExp) {
             radioFitLinear.setSelected(false);
             radioFitNone.setSelected(false);
             radioFitExponential.setSelected(true);
             radioFitGaussian.setSelected(false);
             radioFitLaplace.setSelected(false);
             radioFitLorentz.setSelected(false);
-        } else if(fitMode == fitGaussianMode) { 
+        } else if(fitMode == FitMode.fitGaussian) { 
         	radioFitLinear.setSelected(false);
         	radioFitNone.setSelected(false);
         	radioFitExponential.setSelected(false);
         	radioFitGaussian.setSelected(true);
         	radioFitLaplace.setSelected(false);
         	radioFitLorentz.setSelected(false);
-        } else if(fitMode == fitLaplaceMode) {
+        } else if(fitMode == FitMode.fitLaplace) {
         	radioFitLinear.setSelected(false);
             radioFitNone.setSelected(false);
             radioFitExponential.setSelected(false);
             radioFitGaussian.setSelected(false);
             radioFitLaplace.setSelected(true);
             radioFitLorentz.setSelected(false);
-        } else if(fitMode == fitLorentzMode) {
+        } else if(fitMode == FitMode.fitLorentz) {
         	radioFitLinear.setSelected(false);
             radioFitNone.setSelected(false);
             radioFitExponential.setSelected(false);
