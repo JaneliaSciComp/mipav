@@ -55,6 +55,8 @@ public class FileFits extends FileBase {
 
     /** DOCUMENT ME! */
     private FileInfoFits fileInfo;
+    
+    private FileInfoFits fileInfoCopy;
 
     /** DOCUMENT ME! */
     private String fileName;
@@ -101,6 +103,7 @@ public class FileFits extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        fileInfoCopy = null;
         file = null;
         image = null;
         imgExtents = null;
@@ -1429,20 +1432,61 @@ public class FileFits extends FileBase {
                 }
                 imgBuffer = new float[bufferSize];
 
-                for (i = 0; i < numberSlices; i++) {
-                    image.setFileInfo(fileInfo, i);
-                    readBuffer(i, imgBuffer, (float) BSCALE, (float) BZERO);
-                    image.importData(i * bufferSize, imgBuffer, false);
+                image.setFileInfo(fileInfo,0);
+                readBuffer(0, imgBuffer, (float) BSCALE, (float) BZERO);
+                image.importData(0, imgBuffer, false);
+                if (image.getNDims() == 3) {
+                    for (i = 1; i < numberSlices; i++) {
+                        fileInfoCopy = (FileInfoFits)fileInfo.clone();
+                        fileInfoCopy.setOrigin((float)(origin[2] + i * imgResols[2]), 2);
+                        image.setFileInfo(fileInfoCopy, i);  
+                        readBuffer(i, imgBuffer, (float) BSCALE, (float) BZERO);
+                        image.importData(i * bufferSize, imgBuffer, false);
+                    }
+                }
+                else if (image.getNDims() > 3) {
+                    for (i = 0; i < imgExtents[3]; i++) {
+                        for (j = 0; j < imgExtents[2]; j++) {
+                            if ((i != 0) || (j != 0)) {
+                                fileInfoCopy = (FileInfoFits)fileInfo.clone();
+                                fileInfoCopy.setOrigin((float)(origin[2] + j * imgResols[2]), 2);
+                                fileInfoCopy.setOrigin((float)(origin[3] + i * imgResols[3]), 3);
+                                image.setFileInfo(fileInfoCopy, j + i * imgExtents[2]);  
+                                readBuffer(j + i * imgExtents[2], imgBuffer, (float) BSCALE, (float) BZERO);
+                                image.importData((j + i * imgExtents[2]) * bufferSize, imgBuffer, false);  
+                            }
+                        }
+                    }
                 }
             } // if (sourceType != ModelStorageBase.DOUBLE)
             else { // sourceType == ModelStorageBase.DOUBLE
                 bufferSize = imgExtents[0] * imgExtents[1];
                 imgDBuffer = new double[bufferSize];
-
-                for (i = 0; i < numberSlices; i++) {
-                    image.setFileInfo(fileInfo, i);
-                    readDBuffer(i, imgDBuffer, BSCALE, BZERO);
-                    image.importData(i * bufferSize, imgDBuffer, false);
+                image.setFileInfo(fileInfo,0);
+                readDBuffer(0, imgDBuffer, (float) BSCALE, (float) BZERO);
+                image.importData(0, imgDBuffer, false);
+                if (image.getNDims() == 3) {
+                    for (i = 1; i < numberSlices; i++) {
+                        fileInfoCopy = (FileInfoFits)fileInfo.clone();
+                        fileInfoCopy.setOrigin((float)(origin[2] + i * imgResols[2]), 2);
+                        image.setFileInfo(fileInfoCopy, i);  
+                        readDBuffer(i, imgDBuffer, (float) BSCALE, (float) BZERO);
+                        image.importData(i * bufferSize, imgDBuffer, false);
+                    }
+                }
+                else if (image.getNDims() > 3) {
+                    for (i = 0; i < imgExtents[3]; i++) {
+                        for (j = 0; j < imgExtents[2]; j++) {
+                            if ((i != 0) || (j != 0)) {
+                                fileInfoCopy = (FileInfoFits)fileInfo.clone();
+                                fileInfoCopy.setOrigin((float)(origin[2] + j * imgResols[2]), 2);
+                                fileInfoCopy.setOrigin((float)(origin[3] + i * imgResols[3]), 3);
+                                image.setFileInfo(fileInfoCopy, j + i * imgExtents[2]);  
+                                readDBuffer(j + i * imgExtents[2], imgDBuffer, (float) BSCALE, (float) BZERO);
+                                image.importData((j + i * imgExtents[2]) * bufferSize, imgDBuffer, false);
+                            }
+                        }
+                    }
                 }
             } // else sourceType == ModelStorageBase.DOUBLE
 
