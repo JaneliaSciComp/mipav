@@ -96,6 +96,8 @@ public class FileDM3 extends FileBase {
 
     /** DOCUMENT ME! */
     private FileInfoDM3 fileInfo;
+    
+    private FileInfoDM3 fileInfoCopy;
 
     /** DOCUMENT ME! */
     private String fileName;
@@ -240,6 +242,7 @@ public class FileDM3 extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        fileInfoCopy = null;
         file = null;
         image = null;
         try {
@@ -555,7 +558,8 @@ public class FileDM3 extends FileBase {
                 case ModelStorageBase.ARGB:
                     imgBuffer = new float[bufferSize];
                     for (i = 0; i < numberSlices; i++) {
-                        image.setFileInfo(fileInfo, i);
+                        fileInfoCopy = (FileInfoDM3)fileInfo.clone();
+                        image.setFileInfo(fileInfoCopy, i);
                         readBuffer(i, imgBuffer);
                         image.importData(i * bufferSize, imgBuffer, false);
                     }
@@ -566,7 +570,8 @@ public class FileDM3 extends FileBase {
                 case ModelStorageBase.LONG:
                     imgLBuffer = new long[bufferSize];
                     for (i = 0; i < numberSlices; i++) {
-                        image.setFileInfo(fileInfo, i);
+                        fileInfoCopy = (FileInfoDM3)fileInfo.clone();
+                        image.setFileInfo(fileInfoCopy, i);
                         readLBuffer(i, imgLBuffer);
                         image.importData(i * bufferSize, imgLBuffer, false);
                     }
@@ -576,7 +581,8 @@ public class FileDM3 extends FileBase {
                 case ModelStorageBase.DOUBLE:
                     imgDBuffer = new double[bufferSize];
                     for (i = 0; i < numberSlices; i++) {
-                        image.setFileInfo(fileInfo, i);
+                        fileInfoCopy = (FileInfoDM3)fileInfo.clone();
+                        image.setFileInfo(fileInfoCopy, i);
                         readDBuffer(i, imgDBuffer);
                         image.importData(i * bufferSize, imgDBuffer, false);
                     }
@@ -587,7 +593,8 @@ public class FileDM3 extends FileBase {
                     imgBuffer = new float[bufferSize];
                     imgBufferI = new float[bufferSize];
                     for (i = 0; i < numberSlices; i++) {
-                        image.setFileInfo(fileInfo, i);
+                        fileInfoCopy = (FileInfoDM3)fileInfo.clone();
+                        image.setFileInfo(fileInfoCopy, i);
                         readComplexBuffer(i, imgBuffer, imgBufferI);
                         image.importComplexData(2 * i * bufferSize, imgBuffer, imgBufferI, false, true);
                     }
@@ -598,7 +605,8 @@ public class FileDM3 extends FileBase {
                     imgDBuffer = new double[bufferSize];
                     imgDBufferI = new double[bufferSize];
                     for (i = 0; i < numberSlices; i++) {
-                        image.setFileInfo(fileInfo, i);
+                        fileInfoCopy = (FileInfoDM3)fileInfo.clone();
+                        image.setFileInfo(fileInfoCopy, i);
                         readDComplexBuffer(i, imgDBuffer, imgDBufferI);
                         image.importDComplexData(2 * i * bufferSize, imgDBuffer, imgDBufferI, false, true);
                     }
