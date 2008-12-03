@@ -72,6 +72,8 @@ public class FileInterfile extends FileBase {
 
     /** DOCUMENT ME! */
     private FileInfoInterfile fileInfo;
+    
+    private FileInfoInterfile fileInfoCopy;
 
     /** DOCUMENT ME! */
     private long fileLength;
@@ -271,6 +273,7 @@ public class FileInterfile extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        fileInfoCopy = null;
         image = null;
         dataFile = null;
         dataFileName = null;
@@ -1364,9 +1367,10 @@ public class FileInterfile extends FileBase {
             fileInfo.setMin(image.getMin());
             fileInfo.setMax(image.getMax());
 
-
-            for (i = 0; i < numberSlices; i++) {
-                image.setFileInfo(fileInfo, i);
+            image.setFileInfo(fileInfo, 0);
+            for (i = 1; i < numberSlices; i++) {
+                fileInfoCopy = (FileInfoInterfile)fileInfo.clone();
+                image.setFileInfo(fileInfoCopy, i);
             }
 
 
