@@ -1,25 +1,70 @@
 package gov.nih.mipav.view.dialogs;
 
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
+import gov.nih.mipav.model.file.FileBase;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileInfoImageXML;
+import gov.nih.mipav.model.file.FileInfoXML;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
+import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.ActionChangeEndianess;
+import gov.nih.mipav.model.scripting.actions.ActionChangeModality;
+import gov.nih.mipav.model.scripting.actions.ActionChangeOrientations;
+import gov.nih.mipav.model.scripting.actions.ActionChangeOrigin;
+import gov.nih.mipav.model.scripting.actions.ActionChangeResolutions;
+import gov.nih.mipav.model.scripting.actions.ActionChangeTalairachInfo;
+import gov.nih.mipav.model.scripting.actions.ActionChangeTransformInfo;
+import gov.nih.mipav.model.scripting.actions.ActionChangeUnits;
+import gov.nih.mipav.model.structures.MatrixHolder;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.TalairachTransformInfo;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewImageFileFilter;
+import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.Vector;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JToolBar;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.actions.*;
-import gov.nih.mipav.model.provenance.*;
-import gov.nih.mipav.model.structures.*;
-
-import gov.nih.mipav.view.*;
-
-import java.awt.*;
-import java.awt.event.*;
-
-import java.io.*;
-
-import java.util.*;
-
-import javax.swing.*;
 
 
 /**
@@ -3150,8 +3195,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             for (int i = 0; i < image.getExtents()[3]; i++) {
 
                 for (int j = 0; j < image.getExtents()[2]; j++) {
-                    fileInfo[(i * image.getExtents()[2]) + j].setOrigin(origin);
-                    axisOrient = fileInfo[i].getAxisOrientation(2);
+                    int sliceIndex = (i * image.getExtents()[2]) + j;
+                    fileInfo[sliceIndex].setOrigin(origin);
+                    axisOrient = fileInfo[sliceIndex].getAxisOrientation(2);
 
                     if ((axisOrient == FileInfoBase.ORI_R2L_TYPE) || (axisOrient == FileInfoBase.ORI_P2A_TYPE) ||
                             (axisOrient == FileInfoBase.ORI_I2S_TYPE) || (axisOrient == FileInfoBase.ORI_UNKNOWN_TYPE)) {
