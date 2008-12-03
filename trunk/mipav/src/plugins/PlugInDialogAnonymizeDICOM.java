@@ -10,6 +10,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 import javax.swing.*;
 
@@ -210,7 +211,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
     	String command = event.getActionCommand();
     	if (command.equalsIgnoreCase("inputFileBrowse")) {
     		
-    		fileChooser = new JFileChooser("null");
+    		fileChooser = new JFileChooser(Preferences.getImageDirectory());
         	fileChooser.setFont(MipavUtil.defaultMenuFont);
         	fileChooser.setMultiSelectionEnabled(true);
         	

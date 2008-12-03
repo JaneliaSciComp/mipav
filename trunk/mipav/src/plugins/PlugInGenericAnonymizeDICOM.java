@@ -146,52 +146,51 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     	if (selectedFiles == null) {
     		displayError("Selected file is null.");
     		return;
-    	} else {
-    		
-    		
-    		int numOfFiles = selectedFiles.length;
-    		try {
-    			logFile = new FileOutputStream(selectedFiles[0].getParent() + File.separator + "AnonymizationResults.txt");
-    			printToLogFile = new PrintStream(logFile);
-    			//logFile = new File(selectedFiles[0].getParent() + File.separator + "AnonymizationResults.txt");
-        		//logRaFile = new RandomAccessFile(logFile, "rw");
-        		//logRaFile.writeChars("Note: The tags listed below were anonymized by the DICOM Anonymization Tool.\n");
-        		//logRaFile.writeChars("Private tags and sequence tags are not anonymized but are listed so that the user can anonymize them manually.\n");
-    			printToLogFile.println("Note: The tags listed below were anonymized by the DICOM Anonymization Tool.");
-    			printToLogFile.println("Private tags and sequence tags are not anonymized but are listed so that the user can anonymize them manually.");
-    			printToLogFile.println();
-    		} catch (IOException ioe) {}
-    		
-    		for (int i = 0; i < numOfFiles; i++) {
-    			selectedFileName = selectedFiles[i].getName();
-    			selectedFileDir = selectedFiles[i].getParent() + File.separator;
-    			
-    			try {
-        			if (FileUtility.isDicom(selectedFileName, selectedFileDir, false) == FileUtility.DICOM) {
-        				containsDICM = true;
-        				loadTagBuffer(selectedFiles[i]);
-        				printToLogFile.println();
-        				printToLogFile.println("Filename: " + selectedFileName);
-        				printToLogFile.println();
-        				printToLogFile.println("Tag Name \t \t \t Value");
-        				printToLogFile.println();
-        				anonymizeDicom();
-        			} else if (FileUtility.isDicom_ver2(selectedFileName, selectedFileDir, false) == FileUtility.DICOM) {
-        				containsDICM = false;
-        				loadTagBuffer(selectedFiles[i]);
-        				printToLogFile.println();
-        				printToLogFile.println("Filename: " + selectedFileName);
-        				printToLogFile.println();
-        				printToLogFile.println("Tag Name \t \t \t Value");
-        				printToLogFile.println();
-        				anonymizeDicom(); 
-        			} else {
-        				displayError("Selected file is not a valid DICOM image.");
-        				return;
-        			}
-        		} catch (IOException ioe) {}
-    		}
     	}
+		int numOfFiles = selectedFiles.length;
+		try {
+			logFile = new FileOutputStream(selectedFiles[0].getParent() + File.separator + "AnonymizationResults.txt");
+			printToLogFile = new PrintStream(logFile);
+			//logFile = new File(selectedFiles[0].getParent() + File.separator + "AnonymizationResults.txt");
+			//logRaFile = new RandomAccessFile(logFile, "rw");
+			//logRaFile.writeChars("Note: The tags listed below were anonymized by the DICOM Anonymization Tool.\n");
+			//logRaFile.writeChars("Private tags and sequence tags are not anonymized but are listed so that the user can anonymize them manually.\n");
+			printToLogFile.println("Note: The tags listed below were anonymized by the DICOM Anonymization Tool.");
+			printToLogFile.println("Private tags and sequence tags are not anonymized but are listed so that the user can anonymize them manually.");
+			printToLogFile.println();
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
+		
+		for (int i = 0; i < numOfFiles; i++) {
+			selectedFileName = selectedFiles[i].getName();
+			selectedFileDir = selectedFiles[i].getParent() + File.separator;
+			
+			try {
+				if (FileUtility.isDicom(selectedFileName, selectedFileDir, false) == FileUtility.DICOM) {
+					containsDICM = true;
+					loadTagBuffer(selectedFiles[i]);
+					printToLogFile.println();
+					printToLogFile.println("Filename: " + selectedFileName);
+					printToLogFile.println();
+					printToLogFile.println("Tag Name \t \t \t Value");
+					printToLogFile.println();
+					anonymizeDicom();
+				} else if (FileUtility.isDicom_ver2(selectedFileName, selectedFileDir, false) == FileUtility.DICOM) {
+					containsDICM = false;
+					loadTagBuffer(selectedFiles[i]);
+					printToLogFile.println();
+					printToLogFile.println("Filename: " + selectedFileName);
+					printToLogFile.println();
+					printToLogFile.println("Tag Name \t \t \t Value");
+					printToLogFile.println();
+					anonymizeDicom(); 
+				} else {
+					displayError("Selected file is not a valid DICOM image.");
+					return;
+				}
+			} catch (IOException ioe) {}
+		}
     }
      
     /**
@@ -275,7 +274,7 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
     				if ( !DicomDictionary.containsTag(key)) {
     					tagVM = 0;
     				} else {
-    					FileDicomTagInfo info = (FileDicomTagInfo) DicomDictionary.getInfo(key);
+    					FileDicomTagInfo info = DicomDictionary.getInfo(key);
     					tagVM = info.getValueMultiplicity();
     				}
     			}
@@ -337,6 +336,7 @@ public class PlugInGenericAnonymizeDICOM extends AlgorithmBase{
                 	return false;
                 }
     			
+    			//added bPtr current loc to keep from resetting
     			setFilePointer(ID_OFFSET + metaGroupLength);
     		}
     		
