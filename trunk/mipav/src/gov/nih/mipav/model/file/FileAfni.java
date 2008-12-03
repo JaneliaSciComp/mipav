@@ -477,6 +477,8 @@ public class FileAfni extends FileBase {
 
     /** DOCUMENT ME! */
     private FileInfoAfni fileInfo;
+    
+    private FileInfoAfni fileInfoCopy;
 
     /** DOCUMENT ME! */
     private long fileLength;
@@ -1702,8 +1704,10 @@ public class FileAfni extends FileBase {
             fileInfo.setHighZmm(dicomHighestZ);
             fileInfo.setOrigin(origin);
 
-            for (i = 0; i < dicomZDim; i++) {
-                image.setFileInfo(fileInfo, i);
+            image.setFileInfo(fileInfo, 0);
+            for (i = 1; i < dicomZDim; i++) {
+                fileInfoCopy = (FileInfoAfni)fileInfo.clone();
+                image.setFileInfo(fileInfoCopy, i);
             }
 
 
@@ -2115,8 +2119,10 @@ public class FileAfni extends FileBase {
             image = new ModelImage(type, imgExtents, originalFileName);
             fileInfo.setImageOrientation(FileInfoBase.AXIAL);
 
-            for (i = 0; i < dicomZDim; i++) {
-                image.setFileInfo(fileInfo, i);
+            image.setFileInfo(fileInfo, 0);
+            for (i = 1; i < dicomZDim; i++) {
+                fileInfoCopy = (FileInfoAfni)fileInfo.clone();
+                image.setFileInfo(fileInfoCopy, i);
             }
 
             // Note that the 12 BLTs only have 2 distinct sets of svec.  If botY  <
@@ -2280,8 +2286,10 @@ public class FileAfni extends FileBase {
             fileInfo.setHighZmm(dicomHighestZ);
             fileInfo.setOrigin(origin);
 
-            for (i = 0; i < dicomZDim; i++) {
-                image.setFileInfo(fileInfo, i);
+            image.setFileInfo(fileInfo, 0);
+            for (i = 1; i < dicomZDim; i++) {
+                fileInfoCopy = (FileInfoAfni)fileInfo.clone();
+                image.setFileInfo(fileInfoCopy, i);
             }
 
 
@@ -7434,8 +7442,10 @@ public class FileAfni extends FileBase {
 
             if ((!readACPC) && (!readTLRC)) {
 
-                for (i = 0; i < numberDicomSlices; i++) {
-                    image.setFileInfo(fileInfo, i);
+                image.setFileInfo(fileInfo, 0);
+                for (i = 1; i < numberDicomSlices; i++) {
+                    fileInfoCopy = (FileInfoAfni)fileInfo.clone();
+                    image.setFileInfo(fileInfoCopy, i);
                 }
             } // if ((!readACPC) && (!readTLRC))
         } // if (doDicom)
@@ -7508,7 +7518,8 @@ public class FileAfni extends FileBase {
                     index = j + (i * zDim);
 
                     if ((!readACPC) && (!readTLRC)) {
-                        image.setFileInfo(fileInfo, index);
+                        fileInfoCopy = (FileInfoAfni)fileInfo.clone();
+                        image.setFileInfo(fileInfoCopy, index);
                     }
 
                     if (havePosFloatFacs) {
