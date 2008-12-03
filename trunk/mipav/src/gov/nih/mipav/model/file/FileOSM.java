@@ -32,6 +32,8 @@ public class FileOSM extends FileBase {
 
     /** DOCUMENT ME! */
     private FileInfoOSM fileInfo;
+    
+    private FileInfoOSM fileInfoCopy;
 
     /**
      * Based on 1996 files washu.h, write_dataset.c, and read_dataset.c from the Biomedical Computer Laboratory of
@@ -98,6 +100,7 @@ public class FileOSM extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        fileInfoCopy = null;
         file = null;
         image = null;
         imgExtents = null;
@@ -351,7 +354,8 @@ public class FileOSM extends FileBase {
             imgBuffer = new float[bufferSize];
 
             for (i = 0; i < imgExtents[2]; i++) {
-                image.setFileInfo(fileInfo, i);
+                fileInfoCopy = (FileInfoOSM)fileInfo.clone();
+                image.setFileInfo(fileInfoCopy, i);
                 readBuffer(i, imgBuffer);
                 image.importData(i * bufferSize, imgBuffer, false);
             }
