@@ -75,7 +75,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private static boolean updateOrigin = false;
 
     /** DOCUMENT ME! */
-    private static float[] imgOrigin = new float[3];
+    private static float[] imgOrigin = new float[4];
 
     /** DOCUMENT ME! */
     private static int imgOrient;
@@ -91,6 +91,8 @@ public class AlgorithmTransform extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private static float startPos;
+    
+    private static float startTime;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -303,6 +305,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             iTdim = srcImage.getExtents()[3];
             oTdim = iTdim;
             startPos = imgOrigin[2]; // temporarily set origin for all slices as origin of first slice
+            startTime = imgOrigin[3];
             extents = new int[] { oXdim, oYdim, oZdim, oTdim };
             destResolutions = new float[] {
                                   oXres, oYres, srcImage.getFileInfo(0).getResolutions()[2],
@@ -469,6 +472,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             iTdim = srcImage.getExtents()[3];
             oTdim = iTdim;
             startPos = imgOrigin[2]; // temporarily set origin for all slices as origin of first slice
+            startTime = imgOrigin[3];
             extents = new int[] { oXdim, oYdim, oZdim, oTdim };
             destResolutions = new float[] {
                                   oXres, oYres, srcImage.getFileInfo(0).getResolutions()[2],
@@ -626,6 +630,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 oZres = iZres;
             }
         } else { // DIM ==4
+            startTime = imgOrigin[3];
             do25D = false;
             destResolutions = new float[4];
             extents = new int[4];
@@ -790,6 +795,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 oZres = iZres;
             }
         } else { // DIM ==4
+            startTime = imgOrigin[3];
             do25D = false;
             destResolutions = new float[4];
             extents = new int[4];
@@ -4174,8 +4180,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fileInfo[i].setAxisOrientation(axisOrient);
                 fileInfo[i].setUnitsOfMeasure(units);
 
-                // not sure why this was here, setting the origin per slice...should be the same
-                // imgOrigin[2] = startPos + (direct[2] * i * resolutions[2]);
+                imgOrigin[2] = startPos + (direct[2] * i * resolutions[2]);
                 fileInfo[i].setOrigin(imgOrigin);
 
                 if (fileInfo[i].getFileFormat() == FileUtility.DICOM) {
@@ -4225,7 +4230,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fileInfo[i].setMin(resultImage.getMin());
                 fileInfo[i].setImageOrientation(imgOrient);
                 fileInfo[i].setAxisOrientation(axisOrient);
-                imgOrigin[2] = startPos + (direct[2] * i * resolutions[2]);
+                imgOrigin[2] = startPos + (direct[2] * (i % resultImage.getExtents()[2]) * resolutions[2]);
+                imgOrigin[3] = startTime + (i / resultImage.getExtents()[2]) * resolutions[3]; 
                 fileInfo[i].setOrigin(imgOrigin);
                 fileInfo[i].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
                 fileInfo[i].setPhotometric(image.getFileInfo()[0].getPhotometric());
