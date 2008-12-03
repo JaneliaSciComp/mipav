@@ -34,6 +34,8 @@ public class FileBFLOAT extends FileBase {
 
     /** DOCUMENT ME! */
     private FileInfoBFLOAT fileInfo;
+    
+    private FileInfoBFLOAT fileInfoCopy;
 
     /** DOCUMENT ME! */
     private long fileLength;
@@ -115,6 +117,7 @@ public class FileBFLOAT extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        fileInfoCopy = null;
         file = null;
         image = null;
         imgBuffer = null;
@@ -280,9 +283,10 @@ public class FileBFLOAT extends FileBase {
             fileInfo.setMin(image.getMin());
             fileInfo.setMax(image.getMax());
 
-
-            for (i = 0; i < zDim; i++) {
-                image.setFileInfo(fileInfo, i);
+            image.setFileInfo(fileInfo, 0);
+            for (i = 1; i < zDim; i++) {
+                fileInfoCopy = (FileInfoBFLOAT)fileInfo.clone();
+                image.setFileInfo(fileInfoCopy, i);
             }
 
 
