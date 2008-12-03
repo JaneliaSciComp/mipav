@@ -40,6 +40,8 @@ public class FileMRC extends FileBase {
 
     /** DOCUMENT ME! */
     private FileInfoMRC fileInfo;
+    
+    private FileInfoMRC fileInfoCopy;
 
     /** DOCUMENT ME! */
     private String fileName;
@@ -99,6 +101,7 @@ public class FileMRC extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        fileInfoCopy = null;
         file = null;
         image = null;
         imgExtents = null;
@@ -399,7 +402,8 @@ public class FileMRC extends FileBase {
                 imgBuffer = new float[bufferSize];
 
                 for (i = 0; i < imgExtents[2]; i++) {
-                    image.setFileInfo(fileInfo, i);
+                    fileInfoCopy = (FileInfoMRC)fileInfo.clone();
+                    image.setFileInfo(fileInfoCopy, i);
                     readBuffer(i, imgBuffer);
                     image.importData(i * bufferSize, imgBuffer, false);
                 }
@@ -409,7 +413,8 @@ public class FileMRC extends FileBase {
                 imgBuffer2 = new float[bufferSize];
 
                 for (i = 0; i < imgExtents[2]; i++) {
-                    image.setFileInfo(fileInfo, i);
+                    fileInfoCopy = (FileInfoMRC)fileInfo.clone();
+                    image.setFileInfo(fileInfoCopy, i);
                     readComplexBuffer(i, imgBuffer, imgBuffer2);
                     image.importComplexData(2 * i * bufferSize, imgBuffer, imgBuffer2, false, false);
                 }
@@ -418,7 +423,8 @@ public class FileMRC extends FileBase {
                 imgBuffer = new float[bufferSize];
 
                 for (i = 0; i < imgExtents[2]; i++) {
-                    image.setFileInfo(fileInfo, i);
+                    fileInfoCopy = (FileInfoMRC)fileInfo.clone();
+                    image.setFileInfo(fileInfoCopy, i);
                     readBuffer(i, imgBuffer);
                     image.importData(i * bufferSize, imgBuffer, false);
                 }
