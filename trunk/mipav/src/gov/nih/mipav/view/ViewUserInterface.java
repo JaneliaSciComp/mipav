@@ -950,9 +950,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 try {
                     name = name.substring(0, name.indexOf(".class"));
 
-                    Object plugIn = Class.forName(name).newInstance();
-
-                    if ( (plugIn instanceof PlugInAlgorithm) && ! (al instanceof ViewUserInterface)) {
+                    Class[] interfaceAr = Class.forName(name).getInterfaces();
+                    Class toCompare = null;
+                    for(int j=0; j<interfaceAr.length; j++) {
+                    	//extended interfaces are found by getIInterfaces
+                    	if(interfaceAr[j].getInterfaces()[0].equals(PlugIn.class)) {
+                    		toCompare = interfaceAr[j];
+                    	}
+                    }
+                    
+                    if ( (PlugInAlgorithm.class.equals(toCompare)) && ! (al instanceof ViewUserInterface)) {
 
                         // System.err.println("adding " + name + " as PlugInAlgorithm");
                         menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name
@@ -960,8 +967,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                 + name.substring(name.indexOf("PlugIn") + 6, name.length()), 0, al, null, false);
                         algorithmMenu.add(menuItem);
                         menuItem.setName(name);
-                    } else if (plugIn instanceof PlugInFile) {
-
+                    } else if (PlugInFile.class.equals(toCompare)) {
+                    	Object plugIn = Class.forName(name).newInstance();
                         if ( ((PlugInFile) plugIn).canReadImages()) {
                             menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name
                                     .length())
@@ -983,21 +990,21 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                             menuItem.setName(name);
                         }
                         // System.err.println("adding " + name + " as PlugInFile");
-                    } else if (plugIn instanceof PlugInFileTransfer) {
+                    } else if (PlugInFileTransfer.class.equals(toCompare)) {
                         menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name
                                 .length())
                                 + " - transfer files", "PlugInFileTransfer"
                                 + name.substring(name.indexOf("PlugIn") + 6, name.length()), 0, al, null, false);
                         fileTransferMenu.add(menuItem);
                         menuItem.setName(name);
-                    } else if (plugIn instanceof PlugInGeneric) {
+                    } else if (PlugInGeneric.class.equals(toCompare)) {
                         menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name
                                 .length()),
                                 "PlugInGeneric" + name.substring(name.indexOf("PlugIn") + 6, name.length()), 0, al,
                                 null, false);
                         genericMenu.add(menuItem);
                         menuItem.setName(name);
-                    } else if ( (plugIn instanceof PlugInView) && ! (al instanceof ViewUserInterface)) {
+                    } else if ( (PlugInView.class.equals(toCompare)) && ! (al instanceof ViewUserInterface)) {
 
                         // System.err.println("adding " + name + " as PlugInView");
                         menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name
@@ -1007,6 +1014,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         viewMenu.add(menuItem);
                         menuItem.setName(name);
                     }
+                    
                 } catch (UnsupportedClassVersionError ucve) {
                     Preferences
                             .debug(
