@@ -99,6 +99,8 @@ public class FileICS extends FileBase {
 
     /** DOCUMENT ME! */
     private FileInfoICS fileInfo;
+    
+    private FileInfoICS fileInfoCopy;
 
     /** DOCUMENT ME! */
     private String fileName;
@@ -321,6 +323,7 @@ public class FileICS extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        fileInfoCopy = null;
         file = null;
         image = null;
         actualHistory = null;
@@ -593,7 +596,8 @@ public class FileICS extends FileBase {
             }
 
             for (i = 0; i < numberSlices; i++) {
-                image.setFileInfo(fileInfo, i);
+                fileInfoCopy = (FileInfoICS)fileInfo.clone();
+                image.setFileInfo(fileInfoCopy, i);
                 readBuffer(i, imgBuffer);
 
                 if (exchangeXY) {
@@ -643,7 +647,8 @@ public class FileICS extends FileBase {
             }
 
             for (i = 0; i < numberSlices; i++) {
-                image.setFileInfo(fileInfo, i);
+                fileInfoCopy = (FileInfoICS)fileInfo.clone();
+                image.setFileInfo(fileInfoCopy, i);
                 readLBuffer(i, imgLBuffer);
 
                 if (exchangeXY) {
@@ -692,7 +697,8 @@ public class FileICS extends FileBase {
             }
 
             for (i = 0; i < numberSlices; i++) {
-                image.setFileInfo(fileInfo, i);
+                fileInfoCopy = (FileInfoICS)fileInfo.clone();
+                image.setFileInfo(fileInfoCopy, i);
                 readComplexBuffer(i, imgBuffer, imgBufferI);
 
                 if (exchangeXY) {
@@ -744,7 +750,8 @@ public class FileICS extends FileBase {
             }
 
             for (i = 0; i < numberSlices; i++) {
-                image.setFileInfo(fileInfo, i);
+                fileInfoCopy = (FileInfoICS)fileInfo.clone();
+                image.setFileInfo(fileInfoCopy, i);
                 readDComplexBuffer(i, imgDBuffer, imgDBufferI);
 
                 if (exchangeXY) {
@@ -795,7 +802,8 @@ public class FileICS extends FileBase {
             }
 
             for (i = 0; i < numberSlices; i++) {
-                image.setFileInfo(fileInfo, i);
+                fileInfoCopy = (FileInfoICS)fileInfo.clone();
+                image.setFileInfo(fileInfoCopy, i);
                 readDBuffer(i, imgDBuffer);
 
                 if (exchangeXY) {
