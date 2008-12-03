@@ -52,6 +52,8 @@ public class FileBioRad extends FileBase {
 
     /** DOCUMENT ME! */
     private FileInfoBioRad fileInfo;
+    
+    private FileInfoBioRad fileInfoCopy;
 
     /** DOCUMENT ME! */
     private String fileName;
@@ -133,6 +135,7 @@ public class FileBioRad extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        fileInfoCopy = null;
         file = null;
         fName = null;
         image = null;
@@ -324,7 +327,8 @@ public class FileBioRad extends FileBase {
                         readBuffer(i, imgBuffer); // Slice a time;
                     }
 
-                    image.setFileInfo(fileInfo, i);
+                    fileInfoCopy = (FileInfoBioRad)fileInfo.clone();
+                    image.setFileInfo(fileInfoCopy, i);
                 } catch (IOException error) {
                     throw new IOException("FileTiff: read: " + error);
                 }
