@@ -1351,7 +1351,7 @@ public class FileInfoAnalyze extends FileInfoBase {
         } else if (axis == 2) { // z-axis
             setFunused3(fun);
         } else if (axis == 3) {
-            // do nothing
+            super.setOrigin(fun, 3);
         }
     }
 
