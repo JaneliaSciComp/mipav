@@ -27,6 +27,8 @@ public class FileCheshire extends FileBase {
 
     /** DOCUMENT ME! */
     private FileInfoCheshire fileInfo = null;
+    
+    private FileInfoCheshire fileInfoCopy = null;
 
     /** DOCUMENT ME! */
     private String fileName;
@@ -82,6 +84,7 @@ public class FileCheshire extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        fileInfoCopy = null;
         image = null;
         scaleFactor = null;
         try {
@@ -293,8 +296,10 @@ public class FileCheshire extends FileBase {
             fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
             fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
 
-            for (i = 0; i < image.getExtents()[2]; i++) {
-                image.setFileInfo(fileInfo, i); // Set the array of fileInfos in ModelImage
+            image.setFileInfo(fileInfo, 0);
+            for (i = 1; i < image.getExtents()[2]; i++) {
+                fileInfoCopy = (FileInfoCheshire)fileInfo.clone();
+                image.setFileInfo(fileInfoCopy, i); // Set the array of fileInfos in ModelImage
             }
         } else if (image.getNDims() == 4) { // If there is more than one image
             fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
@@ -302,8 +307,10 @@ public class FileCheshire extends FileBase {
             fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
             fileInfo.setUnitsOfMeasure(FileInfoBase.SECONDS, 3);
 
-            for (i = 0; i < (image.getExtents()[2] * image.getExtents()[3]); i++) {
-                image.setFileInfo(fileInfo, i); // Set the array of fileInfos in ModelImage
+            image.setFileInfo(fileInfo, 0);
+            for (i = 1; i < (image.getExtents()[2] * image.getExtents()[3]); i++) {
+                fileInfoCopy = (FileInfoCheshire)fileInfo.clone();
+                image.setFileInfo(fileInfoCopy, i); // Set the array of fileInfos in ModelImage
             }
         }
 
