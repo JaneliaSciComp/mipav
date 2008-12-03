@@ -24,6 +24,8 @@ public class FileBRUKER extends FileBase {
 
     /** DOCUMENT ME! */
     private FileInfoBRUKER fileInfo;
+    
+    private FileInfoBRUKER fileInfoCopy;
 
     /** DOCUMENT ME! */
     private String fileName;
@@ -69,6 +71,7 @@ public class FileBRUKER extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        fileInfoCopy = null;
         file = null;
         image = null;
         imgResols = null;
@@ -334,7 +337,8 @@ public class FileBRUKER extends FileBase {
                         readBuffer(i, imgBuffer); // Slice a time
                     }
 
-                    image.setFileInfo(fileInfo, i);
+                    fileInfoCopy = (FileInfoBRUKER)fileInfo.clone();
+                    image.setFileInfo(fileInfoCopy, i);
                 } catch (IOException error) {
                     throw new IOException("File BRUKER: read: " + error);
                 }
