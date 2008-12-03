@@ -1192,6 +1192,7 @@ public class FileAfni extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        fileInfoCopy = null;
         firstPtDicom = null;
         historyNoteString = null;
         idcodeAnatParentString = null;
