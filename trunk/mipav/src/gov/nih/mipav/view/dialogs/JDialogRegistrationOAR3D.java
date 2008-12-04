@@ -233,13 +233,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     /** DOCUMENT ME! */
     private JRadioButton zRadio;
 
-    /** DOCUMENT ME! */
-    private boolean zSelected = false;
-    
-    private AlgorithmCenterOfMass comAlgo;
-    
-    private float threshold[] = new float[2];
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -449,13 +442,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         float resZ;
         float [] refOrigin;
         FileInfoBase[] fileInfo;
-        MatrixHolder refHolder = null;
-        MatrixHolder resultHolder = null;
-        TransMatrix[] matrixArray = null;
-        TransMatrix matrixQ = null;
-        TransMatrix matrixS = null;
-        int transformIDQ = TransMatrix.TRANSFORM_UNKNOWN;
-        int transformIDS = TransMatrix.TRANSFORM_UNKNOWN;
         int axisOrient;
         String comStr;
         DecimalFormat nf;
@@ -678,7 +664,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     rotatePanel.remove(rotateRangePanelZ);
                     rotatePanel.remove(coarsePanelZ);
                     rotatePanel.remove(finePanelZ);
-                    zSelected = false;
                 } // else if zSelected
 
                 xSelected = true;
@@ -718,7 +703,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     rotatePanel.remove(rotateRangePanelZ);
                     rotatePanel.remove(coarsePanelZ);
                     rotatePanel.remove(finePanelZ);
-                    zSelected = false;
                 } // else if zSelected
 
                 xSelected = true;
@@ -752,7 +736,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     rotatePanel.remove(rotateRangePanelZ);
                     rotatePanel.remove(coarsePanelZ);
                     rotatePanel.remove(finePanelZ);
-                    zSelected = false;
                 } // else zSelected
 
                 ySelected = true;
@@ -790,7 +773,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     return;
                 } // else zSelected
 
-                zSelected = true;
                 gbc.gridx = 0;
                 gbc.gridy = 2;
                 gbc.gridwidth = 1;
@@ -2597,7 +2579,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             rotatePanel.remove(rotateRangePanelZ);
             rotatePanel.remove(coarsePanelZ);
             rotatePanel.remove(finePanelZ);
-            zSelected = false;
         } // else if zSelected
 
         xSelected = true;
@@ -2644,7 +2625,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             rotatePanel.remove(rotateRangePanelZ);
             rotatePanel.remove(coarsePanelZ);
             rotatePanel.remove(finePanelZ);
-            zSelected = false;
         } // else zSelected
 
         ySelected = true;
@@ -2695,7 +2675,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             return;
         } // else zSelected
 
-        zSelected = true;
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
