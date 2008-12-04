@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -316,6 +317,20 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
+                
+                if (!isRefImageSourceSlice()) {
+                    m_kImageReg.getMatrixHolder().replaceMatrices(m_kImageTrg.getMatrixHolder().getMatrices());
+                    
+                    if (m_kImageReg.getNDims() == 3) {
+                        for (int i = 0; i < m_kImageReg.getExtents()[2]; i++) {
+                            m_kImageReg.getFileInfo(i).setOrigin(m_kImageTrg.getFileInfo(i).getOrigin());
+                        }
+                    }
+                    else {
+                        m_kImageReg.getFileInfo(0).setOrigin(m_kImageTrg.getFileInfo(0).getOrigin());
+                    }
+                }
+                
             }
             // algorithm failed but result image(s) still has garbage
             else {
