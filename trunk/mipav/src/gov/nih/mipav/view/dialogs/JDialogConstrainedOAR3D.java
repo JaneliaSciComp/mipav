@@ -517,9 +517,6 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                     float xresA = refImage.getFileInfo(0).getResolutions()[0];
                     float yresA = refImage.getFileInfo(0).getResolutions()[1];
                     float zresA = refImage.getFileInfo(0).getResolutions()[2];
-                    float [] refOrigin;
-                    FileInfoBase[] fileInfo;
-                    int axisOrient;
 
                     String name = makeImageName(matchImage.getImageName(), "_register");
                     transform = new AlgorithmTransform(matchImage, reg3.getTransform(), interp2, xresA, yresA, zresA,
@@ -552,20 +549,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                     
                     resultImage.getMatrixHolder().replaceMatrices(refImage.getMatrixHolder().getMatrices());
                     
-                    refOrigin = refImage.getFileInfo(0).getOrigin().clone();
-                    fileInfo = resultImage.getFileInfo();
-    
                     for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                        fileInfo[i].setOrigin(refOrigin);
-                        
-                        axisOrient = fileInfo[i].getAxisOrientation(2);
-    
-                        if ((axisOrient == FileInfoBase.ORI_R2L_TYPE) || (axisOrient == FileInfoBase.ORI_P2A_TYPE) ||
-                                (axisOrient == FileInfoBase.ORI_I2S_TYPE) || (axisOrient == FileInfoBase.ORI_UNKNOWN_TYPE)) {
-                            refOrigin[2] += refImage.getFileInfo(0).getResolution(2);
-                        } else { // ORI_L2R_TYPE, ORI_A2P_TYPE, ORI_S2I_TYPE
-                            refOrigin[2] -= refImage.getFileInfo(0).getResolution(2);
-                        }
+                        resultImage.getFileInfo(i).setOrigin(refImage.getFileInfo(i).getOrigin());
                     }
                 }
 
