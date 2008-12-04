@@ -227,6 +227,8 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                     } catch (OutOfMemoryError error) {
                         MipavUtil.displayError("Out of memory: unable to open new frame");
                     }
+                    
+                    resultImage.getMatrixHolder().replaceMatrices(baseImage.getMatrixHolder().getMatrices());
 
                 } else {
                     MipavUtil.displayError("Result Image is null");
