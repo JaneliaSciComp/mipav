@@ -447,6 +447,16 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         float resX;
         float resY;
         float resZ;
+        float [] refOrigin;
+        FileInfoBase[] fileInfo;
+        MatrixHolder refHolder = null;
+        MatrixHolder resultHolder = null;
+        TransMatrix[] matrixArray = null;
+        TransMatrix matrixQ = null;
+        TransMatrix matrixS = null;
+        int transformIDQ = TransMatrix.TRANSFORM_UNKNOWN;
+        int transformIDS = TransMatrix.TRANSFORM_UNKNOWN;
+        int axisOrient;
         String comStr;
         DecimalFormat nf;
         ViewUserInterface UI = ViewUserInterface.getReference();
@@ -511,45 +521,49 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     }
                 }
                 
-                if (!refImage.isColorImage()) {
-                    threshold[0] = -Float.MAX_VALUE;
-                    threshold[1] = Float.MAX_VALUE;
-                    comAlgo = new AlgorithmCenterOfMass(refImage, threshold, true);
-                    comAlgo.setAllowDataWindow(false);
-                    comAlgo.run();
-                    comAlgo = new AlgorithmCenterOfMass(matchImage, threshold, true);
-                    comAlgo.setAllowDataWindow(false);
-                    comAlgo.run();
-                    if (resultImage != null) {
-                        comAlgo = new AlgorithmCenterOfMass(resultImage, threshold, true);
-                        comAlgo.setAllowDataWindow(false);
-                        comAlgo.run();
+                xOrig = (matchImage.getExtents()[0] - 1.0)/2.0;
+                yOrig = (matchImage.getExtents()[1] - 1.0)/2.0;
+                zOrig = (matchImage.getExtents()[2] - 1.0)/2.0;
+                resX = matchImage.getFileInfo()[0].getResolutions()[0];
+                resY = matchImage.getFileInfo()[0].getResolutions()[1];
+                resZ = matchImage.getFileInfo()[0].getResolutions()[2];
+                xCen = xOrig * resX;
+                yCen = yOrig * resY;
+                zCen = zOrig * resZ;
+                finalMatrix.Inverse();
+                xCenNew = xCen*finalMatrix.Get(0, 0) + yCen*finalMatrix.Get(0, 1) + zCen*finalMatrix.Get(0, 2) + finalMatrix.Get(0, 3);
+                yCenNew = xCen*finalMatrix.Get(1, 0) + yCen*finalMatrix.Get(1, 1) + zCen*finalMatrix.Get(1, 2) + finalMatrix.Get(1, 3);
+                zCenNew = xCen*finalMatrix.Get(2, 0) + yCen*finalMatrix.Get(2, 1) + zCen*finalMatrix.Get(2, 2) + finalMatrix.Get(2, 3);
+                Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
+                                   + xCen + ", " + yCen + ", " + zCen + ")\n");
+                if (resultImage != null) {
+                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + 
+                                 ", " + nf.format(zCenNew) + ") in " + resultImage.getImageName() + ".\n";
+                }
+                else {
+                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + 
+                    ", " + nf.format(zCenNew) + ").\n";    
+                }
+                Preferences.debug(comStr);
+                
+                if (resultImage != null) {
+                    resultImage.getMatrixHolder().replaceMatrices(refImage.getMatrixHolder().getMatrices());
+                    
+                    refOrigin = refImage.getFileInfo(0).getOrigin().clone();
+                    fileInfo = resultImage.getFileInfo();
+    
+                    for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+                        fileInfo[i].setOrigin(refOrigin);
+                        
+                        axisOrient = fileInfo[i].getAxisOrientation(2);
+    
+                        if ((axisOrient == FileInfoBase.ORI_R2L_TYPE) || (axisOrient == FileInfoBase.ORI_P2A_TYPE) ||
+                                (axisOrient == FileInfoBase.ORI_I2S_TYPE) || (axisOrient == FileInfoBase.ORI_UNKNOWN_TYPE)) {
+                            refOrigin[2] += refImage.getFileInfo(0).getResolution(2);
+                        } else { // ORI_L2R_TYPE, ORI_A2P_TYPE, ORI_S2I_TYPE
+                            refOrigin[2] -= refImage.getFileInfo(0).getResolution(2);
+                        }
                     }
-                    comAlgo.finalize();
-                    xOrig = (matchImage.getExtents()[0] - 1.0)/2.0;
-                    yOrig = (matchImage.getExtents()[1] - 1.0)/2.0;
-                    zOrig = (matchImage.getExtents()[2] - 1.0)/2.0;
-                    resX = matchImage.getFileInfo()[0].getResolutions()[0];
-                    resY = matchImage.getFileInfo()[0].getResolutions()[1];
-                    resZ = matchImage.getFileInfo()[0].getResolutions()[2];
-                    xCen = xOrig * resX;
-                    yCen = yOrig * resY;
-                    zCen = zOrig * resZ;
-                    finalMatrix.Inverse();
-                    xCenNew = xCen*finalMatrix.Get(0, 0) + yCen*finalMatrix.Get(0, 1) + zCen*finalMatrix.Get(0, 2) + finalMatrix.Get(0, 3);
-                    yCenNew = xCen*finalMatrix.Get(1, 0) + yCen*finalMatrix.Get(1, 1) + zCen*finalMatrix.Get(1, 2) + finalMatrix.Get(1, 3);
-                    zCenNew = xCen*finalMatrix.Get(2, 0) + yCen*finalMatrix.Get(2, 1) + zCen*finalMatrix.Get(2, 2) + finalMatrix.Get(2, 3);
-                    Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
-                                       + xCen + ", " + yCen + ", " + zCen + ")\n");
-                    if (resultImage != null) {
-                        comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + 
-                                     ", " + nf.format(zCenNew) + ") in " + resultImage.getImageName() + ".\n";
-                    }
-                    else {
-                        comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + 
-                        ", " + nf.format(zCenNew) + ").\n";    
-                    }
-                    Preferences.debug(comStr);
                 }
 
                 finalMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
