@@ -628,40 +628,30 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                     xfrm = reg2.getTransform();
                 }
                 
-                if (!refImage.isColorImage()) {
-                    threshold[0] = -Float.MAX_VALUE;
-                    threshold[1] = Float.MAX_VALUE;
-                    comAlgo = new AlgorithmCenterOfMass(refImage, threshold, true);
-                    comAlgo.setAllowDataWindow(false);
-                    comAlgo.run();
-                    comAlgo = new AlgorithmCenterOfMass(matchImage, threshold, true);
-                    comAlgo.setAllowDataWindow(false);
-                    comAlgo.run();
-                    if (resultImage != null) {
-                        comAlgo = new AlgorithmCenterOfMass(resultImage, threshold, true);
-                        comAlgo.setAllowDataWindow(false);
-                        comAlgo.run();
-                    }
-                    comAlgo.finalize();
-                    xOrig = (matchImage.getExtents()[0] - 1.0)/2.0;
-                    yOrig = (matchImage.getExtents()[1] - 1.0)/2.0;
-                    resX = matchImage.getFileInfo()[0].getResolutions()[0];
-                    resY = matchImage.getFileInfo()[0].getResolutions()[1];
-                    xCen = xOrig * resX;
-                    yCen = yOrig * resY;
-                    xfrm.Inverse();
-                    xCenNew = xCen*xfrm.Get(0, 0) + yCen*xfrm.Get(0, 1) + xfrm.Get(0, 2);
-                    yCenNew = xCen*xfrm.Get(1, 0) + yCen*xfrm.Get(1, 1) + xfrm.Get(1, 2);
-                    Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
-                                       + xCen + ", " + yCen + ")\n");
-                    if (resultImage != null) {
-                        comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ") in " +
-                                         resultImage.getImageName() + ".\n";
-                    }
-                    else {
-                        comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ").\n";    
-                    }
-                    Preferences.debug(comStr);
+                xOrig = (matchImage.getExtents()[0] - 1.0)/2.0;
+                yOrig = (matchImage.getExtents()[1] - 1.0)/2.0;
+                resX = matchImage.getFileInfo()[0].getResolutions()[0];
+                resY = matchImage.getFileInfo()[0].getResolutions()[1];
+                xCen = xOrig * resX;
+                yCen = yOrig * resY;
+                xfrm.Inverse();
+                xCenNew = xCen*xfrm.Get(0, 0) + yCen*xfrm.Get(0, 1) + xfrm.Get(0, 2);
+                yCenNew = xCen*xfrm.Get(1, 0) + yCen*xfrm.Get(1, 1) + xfrm.Get(1, 2);
+                Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
+                                   + xCen + ", " + yCen + ")\n");
+                if (resultImage != null) {
+                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ") in " +
+                                     resultImage.getImageName() + ".\n";
+                }
+                else {
+                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ").\n";    
+                }
+                Preferences.debug(comStr);
+                
+                if (resultImage != null) {
+                    resultImage.getMatrixHolder().replaceMatrices(refImage.getMatrixHolder().getMatrices());
+    
+                    resultImage.getFileInfo(0).setOrigin(refImage.getFileInfo(0).getOrigin());
                 }
 
                 TransMatrix resultMatrix = reg2.getTransform();
