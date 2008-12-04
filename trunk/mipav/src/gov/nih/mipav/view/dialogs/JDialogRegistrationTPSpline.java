@@ -187,6 +187,19 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
                     } catch (OutOfMemoryError error) {
                         MipavUtil.displayError("Out of memory: unable to open new frame");
                     }
+                    
+                    if (resultImage != null) {
+                        resultImage.getMatrixHolder().replaceMatrices(baseImage.getMatrixHolder().getMatrices());
+        
+                        if (DIM == 3) {
+                            for (i = 0; i < resultImage.getExtents()[2]; i++) {
+                                resultImage.getFileInfo(i).setOrigin(baseImage.getFileInfo(i).getOrigin());
+                            }
+                        }
+                        else {
+                            resultImage.getFileInfo(0).setOrigin(baseImage.getFileInfo(0).getOrigin());    
+                        }
+                    }
                 } else {
                     MipavUtil.displayError("result Image is null");
                 }
