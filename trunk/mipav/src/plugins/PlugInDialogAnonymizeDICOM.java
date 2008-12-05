@@ -261,6 +261,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
                         
             if (returnVal == JFileChooser.APPROVE_OPTION) {
             	selectedFiles = fileChooser.getSelectedFiles();
+            	Preferences.setImageDirectory(fileChooser.getCurrentDirectory());
             	String totalText = inputFileTextArea.getText();
             	String[] fileLine = totalText.split("\n");
             	for(int i=0; i<selectedFiles.length; i++) {
