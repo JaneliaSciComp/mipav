@@ -369,6 +369,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /** Indicates gzip compression of an image. */
     public static final int COMPRESSION_GZIP = 2;
+    
+    /** Indicates bzip2 compression of an image. */
+    public static final int COMPRESSION_BZIP2 = 3;
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
