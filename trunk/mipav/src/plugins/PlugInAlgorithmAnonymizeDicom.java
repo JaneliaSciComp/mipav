@@ -141,6 +141,36 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		private HashMap<FileDicomKey, Object> privateTags;
 		
 		private HashMap<FileDicomKey, Object> anonymizeTags;
+
+		private String fileName;
+
+		private String fileDir;
+
+		private File fileHeader;
+
+		private RandomAccessFile raFile;
+
+		private FileInfoDicom fileInfo;
+
+		private FileRaw rawFile;
+
+		private int metaGroupLength;
+
+		private int elementLength;
+
+		private int bPtr;
+
+		private int groupWord;
+
+		private int elementWord;
+
+		private boolean encapsulated;
+
+		private boolean lossy;
+
+		private long fLength;
+
+		private boolean hasHeaderBeenRead;
 		
 		public ReadDicom(String fName, String fDir) throws IOException {
 			fileName = fName;
