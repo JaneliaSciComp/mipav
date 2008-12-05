@@ -1409,9 +1409,11 @@ public class FileIO {
             int secondAddress, boolean loadB, boolean one) {
         int index;
         boolean gunzip;
+        boolean bz2unzip;
         File file;
         FileInputStream fis;
         GZIPInputStream gzin;
+        CBZip2InputStream bz2in;
         FileOutputStream out;
         int bytesRead;
         ModelImage image = null;
@@ -1431,6 +1433,12 @@ public class FileIO {
             gunzip = true;
         } else {
             gunzip = false;
+        }
+        
+        if (fileName.substring(index + 1).equalsIgnoreCase("bz2")) {
+            bz2unzip = true;
+        } else {
+            bz2unzip = false;
         }
 
         file = new File(fileDir + fileName);
@@ -1490,6 +1498,77 @@ public class FileIO {
                 return null;
             }
         } // if (gunzip)
+        else if (bz2unzip) {
+            int totalBytesRead = 0;
+
+            try {
+                fis = new FileInputStream(file);
+            } catch (FileNotFoundException e) {
+                MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + fileName);
+                return null;
+            }
+            
+            try {
+            fis.read();
+            }
+            catch (IOException e) {
+                MipavUtil.displayError("IOException on fis.read() trying to read byte B");
+                return null;
+            }
+            
+            try {
+                fis.read();
+                }
+                catch (IOException e) {
+                    MipavUtil.displayError("IOException on fis.read() trying to read byte Z");
+                    return null;
+                }
+
+            try {
+                bz2in = new CBZip2InputStream(new BufferedInputStream(fis));
+            } catch (Exception e) {
+                MipavUtil.displayError("Exception on CBZip2InputStream for " + fileName);
+                return null;
+            }
+
+            fileName = fileName.substring(0, index);
+            String uncompressedName = fileDir + fileName;
+            try {
+                out = new FileOutputStream(uncompressedName);
+            } catch (IOException e) {
+                MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
+                return null;
+            }
+            byte[] buffer = new byte[256];
+
+            while (true) {
+                try {
+                    bytesRead = bz2in.read(buffer);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException on bz2in.read(buffer) for " + uncompressedName);
+                    return null;
+                }
+
+                if (bytesRead == -1) {
+                    break;
+                }
+
+                totalBytesRead += bytesRead;
+                try {
+                    out.write(buffer, 0, bytesRead);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException on out.write for " + uncompressedName);
+                    return null;
+                }
+            }
+
+            try {
+                out.close();
+            } catch (IOException e) {
+                MipavUtil.displayError("IOException on out.close for " + uncompressedName);
+                return null;
+            } 
+        } // else if (bz2unzip)
         fileType = FileUtility.getFileType(fileName, fileDir, false, quiet); // set the fileType
 
         if (fileType == FileUtility.ERROR) {
