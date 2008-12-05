@@ -413,6 +413,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         		MipavUtil.displayWarning("This tab calculates VOIs that depend on the following being created.\n"+
         				"Note that only muscle calculations will be correct.\n"+createStr);
         	}
+
         	((AnalysisDialogPrompt)tabs[resultTabLoc]).setSlice(getViewableSlice());
         	((AnalysisDialogPrompt)tabs[resultTabLoc]).setUpDialog();
         	((AnalysisDialogPrompt)tabs[resultTabLoc]).enableCalcOutput();
@@ -1106,9 +1107,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
      */
     public void setWindowSettings() {
         if (isExitRequired()) {
-        	setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        	setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         } else {
-        	setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        	setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         }
 
         try {
@@ -1194,6 +1195,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	            (componentImage.getSize().width > getSize().width)) {
 	        addInsets = false;
 	        newWidth = getSize().width;
+	        short s = (short)0;
 	    }
 	
 	    // if the window is already taller than IMAGE_SCREEN_RATIO, do not
@@ -1914,7 +1916,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    
 		//removes extra scrollPane from the plugin
 	    getContentPane().remove(0);
-	
 	    ctMode(getImageA(), -175, 275);
 	    initMuscleImage(2);
 	    getActiveImage().unregisterAllVOIs();
@@ -1922,8 +1923,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    getActiveImage().unregisterAllVOIs();
 	    initMuscleImage(0);
 	    if (!standAlone) {
-	    	this.setMinimumSize(new Dimension(910, 480));
-	    	this.setPreferredSize(new Dimension(910, 480));
+	    	this.setMinimumSize(new Dimension(900, 480));
+	    	this.setPreferredSize(new Dimension(900, 480));
 	    } else {
 	    	this.setMinimumSize(new Dimension(900, 800));
 	    	this.setPreferredSize(new Dimension(900, 800));
