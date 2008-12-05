@@ -9,6 +9,8 @@ import java.awt.event.ActionEvent;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
@@ -39,8 +41,12 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
     /** Buttons **/
     private JButton inputFileBrowseButton;
     
-    /** Textfields **/
-    private JTextField inputFileTextField, tagListTextField; 
+    private JButton removeFileButton;
+    
+    private JTextArea inputFileTextArea;
+
+	/** Textfields **/
+    private JTextField tagListTextField; 
    	
 	/** File chooser object */
 	private JFileChooser fileChooser;
@@ -83,46 +89,70 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
         
         mainPanelGridBagLayout = new GridBagLayout();
         mainPanelConstraints = new GridBagConstraints();
-        mainPanelConstraints.anchor = GridBagConstraints.WEST;
+        mainPanelConstraints.anchor = GridBagConstraints.NORTH;
 
         mainPanel = new JPanel(mainPanelGridBagLayout);
         
         // Input file
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 0;
+        mainPanelConstraints.gridheight = 2;
         mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
-        inputFileLabel = new JLabel(" Input file : ");
+        inputFileLabel = new JLabel(" Input files : ");
         mainPanel.add(inputFileLabel, mainPanelConstraints);
 
         mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 0;
+        mainPanelConstraints.gridheight = 2;
         mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
-        inputFileTextField = new JTextField(45);
-        mainPanel.add(inputFileTextField, mainPanelConstraints);
+        mainPanelConstraints.fill = GridBagConstraints.BOTH;
+        inputFileTextArea = new JTextArea();
+        inputFileTextArea.setEditable(false);
+        inputFileTextArea.setRows(4);
+        inputFileTextArea.setMinimumSize(new Dimension(300, 75));
+        //inputFileTextArea.setPreferredSize(new Dimension(300, 75));
+        inputFileTextArea.setMaximumSize(new Dimension(300, 500));
+        JScrollPane scrollPane = new JScrollPane(inputFileTextArea);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);    
+        scrollPane.setMinimumSize(new Dimension(300, 75));
+        scrollPane.setPreferredSize(new Dimension(300, 75));
+        mainPanel.add(scrollPane, mainPanelConstraints);
 
         mainPanelConstraints.gridx = 2;
         mainPanelConstraints.gridy = 0;
+        mainPanelConstraints.gridheight = 1;
         mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        mainPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
         inputFileBrowseButton = new JButton("Browse");
         inputFileBrowseButton.addActionListener(this);
         inputFileBrowseButton.setActionCommand("inputFileBrowse");
         mainPanel.add(inputFileBrowseButton, mainPanelConstraints);
         
+        mainPanelConstraints.gridx = 2;
+        mainPanelConstraints.gridy = 1;
+        mainPanelConstraints.fill = GridBagConstraints.NONE;
+        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        removeFileButton = new JButton("Remove All");
+        removeFileButton.addActionListener(this);
+        removeFileButton.setActionCommand("Remove All");
+        mainPanel.add(removeFileButton, mainPanelConstraints);
+        
         // Tag list
         mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 1;
+        mainPanelConstraints.gridy = 2;
         mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
         tagListLabel = new JLabel(" Anonymize additional tags : ");
         mainPanel.add(tagListLabel, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 1;
+        mainPanelConstraints.gridy = 2;
         mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
         tagListTextField = new JTextField(45);
         mainPanel.add(tagListTextField, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 2;
+        mainPanelConstraints.gridy = 3;
         mainPanelConstraints.insets = new Insets(1, 5, 15, 5);
         tagListSampleLabel = new JLabel(" Format: group,element;group,element e.g. 0002,0000;0002,0001  ");
         mainPanel.add(tagListSampleLabel, mainPanelConstraints);
@@ -169,6 +199,14 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
     
     	try{
     		System.gc();
+    		
+    		String selectedFilesText = inputFileTextArea.getText();
+    		String[] allFiles = selectedFilesText.split("\n");
+    		selectedFiles = new File[allFiles.length];
+    		for(int i=0; i<allFiles.length; i++) {
+    			System.out.println("Working with file "+allFiles[i]);
+    			selectedFiles[i] = new File(allFiles[i]);
+    		}
     		
     		//Make algorithm.
     		algoAnonymizeDicom = new PlugInAlgorithmAnonymizeDicom(selectedFiles, tagArray);
@@ -223,16 +261,30 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
                         
             if (returnVal == JFileChooser.APPROVE_OPTION) {
             	selectedFiles = fileChooser.getSelectedFiles();
-            	inputFileTextField.setText(fileChooser.getSelectedFile().getAbsolutePath());
+            	String totalText = inputFileTextArea.getText();
+            	String[] fileLine = totalText.split("\n");
             	for(int i=0; i<selectedFiles.length; i++) {
-            		System.out.println("Going to read "+selectedFiles[i].getAbsolutePath());
+            		boolean fileExists = false;
+            		for(int j=0; j<fileLine.length; j++) {
+            			if(selectedFiles[i].getAbsolutePath().equals(fileLine[j])) {
+            				fileExists = true;
+            			}
+            		}
+            		if(!fileExists) {
+            			totalText = totalText + selectedFiles[i].getAbsolutePath()+"\n";
+            		}
             	}
+            	inputFileTextArea.setText(totalText);
+            	System.out.println(inputFileTextArea.getText());
+            	inputFileTextArea.validate();
             }
         } else if (command.equalsIgnoreCase("Cancel")) {
         	dispose();
         } else if (command.equalsIgnoreCase("OK")) {
         	createTagArray();
         	callAlgorithm();
+        } else if(command.equalsIgnoreCase("Remove All")) {
+        	inputFileTextArea.setText("");
         }
     	
     	
@@ -246,7 +298,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-    	
+    	progressBar.dispose();
     	algoAnonymizeDicom.finalize();
     	algoAnonymizeDicom = null;
     	
