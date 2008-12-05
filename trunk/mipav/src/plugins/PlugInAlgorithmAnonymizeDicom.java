@@ -89,7 +89,8 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		
 		for(int i=0; i<numOfFiles; i++) {
 			// use the selectedFileName as the reference slice for the file info tag tables
-            try {
+            fireProgressStateChanged((int)(100*(((double)i)/((double)numOfFiles))), null, "Reading file "+i);
+			try {
 				printToLogFile.println("Reading next file "+selectedFiles[i].getName()+" with path "+selectedFiles[i].getParent()+File.separator);
             	ReadDicom imageFile = new ReadDicom(selectedFiles[i].getName(), selectedFiles[i].getParent()+File.separator);
 	            imageFile.setQuiet(true); // if we want quiet, we tell the reader, too.
