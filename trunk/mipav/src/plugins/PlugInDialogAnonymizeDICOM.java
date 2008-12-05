@@ -46,13 +46,13 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
 	private JFileChooser fileChooser;
 	
 	/** File selected by the user */
-	private File[] selectedFile;
+	private File[] selectedFiles;
 	
 	/** Additional tags to anonymize */
 	private String[] tagArray;
 	
 	/** Algorithm instance */
-    private PlugInGenericAnonymizeDICOM algoAnonymizeDicom;
+    private PlugInAlgorithmAnonymizeDicom algoAnonymizeDicom;
 	
 	
 	
@@ -171,7 +171,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
     		System.gc();
     		
     		//Make algorithm.
-    		algoAnonymizeDicom = new PlugInGenericAnonymizeDICOM(selectedFile, tagArray);
+    		algoAnonymizeDicom = new PlugInAlgorithmAnonymizeDicom(selectedFiles, tagArray);
     		
     		// This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -222,8 +222,11 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
             int returnVal = fileChooser.showOpenDialog(null);
                         
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-            	selectedFile = fileChooser.getSelectedFiles();
+            	selectedFiles = fileChooser.getSelectedFiles();
             	inputFileTextField.setText(fileChooser.getSelectedFile().getAbsolutePath());
+            	for(int i=0; i<selectedFiles.length; i++) {
+            		System.out.println("Going to read "+selectedFiles[i].getAbsolutePath());
+            	}
             }
         } else if (command.equalsIgnoreCase("Cancel")) {
         	dispose();
