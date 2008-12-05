@@ -42,7 +42,7 @@ public abstract class FileBase {
     protected boolean pBarVisible = true;
 
     /** Pointer to file to read or write from. */
-    protected RandomAccessFile raFile;
+    public RandomAccessFile raFile;
 
     /** DOCUMENT ME! */
     private boolean bigEndian;
@@ -573,7 +573,11 @@ public abstract class FileBase {
         }
     }
 
-    /**
+    public RandomAccessFile getRaFile() {
+		return raFile;
+	}
+
+	/**
      * Reads two byte signed short from file.
      *
      * @param      bigEndian  <code>true</code> indicates big endian byte order, <code>false</code> indicates little
