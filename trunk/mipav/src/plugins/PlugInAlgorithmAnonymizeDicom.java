@@ -1,41 +1,22 @@
-import java.awt.image.BufferedImage;
-import java.awt.image.ImageObserver;
-import java.awt.image.PixelGrabber;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.TreeMap;
 import java.util.Vector;
 
-import javax.imageio.ImageIO;
-
-import jj2000.j2k.encoder.Encoder;
-import jj2000.j2k.util.ParameterList;
-
-import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.DicomDictionary;
 import gov.nih.mipav.model.file.FileBase;
-import gov.nih.mipav.model.file.FileDicom;
-import gov.nih.mipav.model.file.FileDicomBase;
 import gov.nih.mipav.model.file.FileDicomItem;
-import gov.nih.mipav.model.file.FileDicomJPEG;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomSQ;
 import gov.nih.mipav.model.file.FileDicomTag;
@@ -46,8 +27,6 @@ import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileRaw;
 import gov.nih.mipav.model.file.FileRawChunk;
 import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.file.rawjp2.EncoderRAW;
-import gov.nih.mipav.model.file.rawjp2.ImgReaderRAWSlice;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -465,8 +444,13 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                	if(type.equals("typeString")) {
 	                		System.out.println(strValue);
 		                	anonymizeTags.put(key, strValue);
+		                	String anonStr = "";
+		                	for(int i=0; i<strValue.length(); i++) {
+		                		anonStr = anonStr+"X";
+		                	}
+		                	
 		                	raFile.seek(bPtrOld);
-		                	raFile.writeBytes(strValue);
+		                	raFile.writeBytes(anonStr); //non-anon would be strValue
 		                	raFile.seek(raPtrOld);
 		                	System.out.println("Writing "+strValue+" to "+bPtrOld+". Returned raPtr to "+raPtrOld);
 		                } else if (type.equals("otherByteString")) {
@@ -477,7 +461,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                    
 		                    	byte[] b = new byte[((Byte[])data).length];
 		                    	for(int i=0; i<b.length; i++) {
-		                    		b[i] = ((Byte[])data)[i];
+		                    		b[i] = 0;
 		                    	}
 		                    	raFile.seek(bPtrOld);
 			                	raFile.write(b);
@@ -492,7 +476,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                    	
 		                    	byte[] b = new byte[((Byte[])data).length];
 		                    	for(int i=0; i<b.length; i++) {
-		                    		b[i] = ((Byte[])data)[i];
+		                    		b[i] = 0;
 		                    	}
 		                    	raFile.seek(bPtrOld);
 			                	raFile.write(b);
@@ -504,10 +488,10 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	
 		                	raFile.seek(bPtrOld);
 		                	if(data instanceof Short) {
-		                		writeShort(((Short) data).shortValue(), endianess);
+		                		writeShort((short)0, endianess);
 		                	} else if(data instanceof Short[]) {
 		                		for(int i=0; i<((Short[])data).length; i++) {
-		                			writeShort(((Short[])data)[i], endianess);
+		                			writeShort((short)0, endianess);
 		                		}
 		                	} else {
 		                		System.err.println("Data corruption");
@@ -519,10 +503,10 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	
 		                	raFile.seek(bPtrOld);
 		                	if(data instanceof Integer) {
-		                		writeInt(((Integer) data).intValue(), endianess);
+		                		writeInt(0, endianess);
 		                	} else if(data instanceof Integer[]) {
 		                		for(int i=0; i<((Integer[])data).length; i++) {
-		                			writeInt(((Integer[])data)[i], endianess);
+		                			writeInt(0, endianess);
 		                		}
 		                	} else {
 		                		System.err.println("Data corruption");
@@ -534,10 +518,10 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	
 		                	raFile.seek(bPtrOld);
 		                	if(data instanceof Float) {
-		                		writeFloat(((Float) data).floatValue(), endianess);
+		                		writeFloat(0, endianess);
 		                	} else if(data instanceof Integer[]) {
 		                		for(int i=0; i<((Float[])data).length; i++) {
-		                			writeFloat(((Float[])data)[i], endianess);
+		                			writeFloat(0, endianess);
 		                		}
 		                	} else {
 		                		System.err.println("Data corruption");
@@ -549,10 +533,10 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	
 		                	raFile.seek(bPtrOld);
 		                	if(data instanceof Double) {
-		                		writeDouble(((Double) data).doubleValue(), endianess);
+		                		writeDouble(0, endianess);
 		                	} else if(data instanceof Integer[]) {
 		                		for(int i=0; i<((Double[])data).length; i++) {
-		                			writeDouble(((Double[])data)[i], endianess);
+		                			writeDouble(0, endianess);
 		                		}
 		                	} else {
 		                		System.err.println("Data corruption");
@@ -995,7 +979,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	 * @see FileRaw
 	 * @see FileRawChunk
 	 */
-	public class FileDicomInner extends FileDicomBaseInner {
+	private class FileDicomInner extends FileDicomBaseInner {
 
 	    // ~ Static fields/initializers
 	    // -------------------------------------------------------------------------------------
@@ -2292,7 +2276,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	 *
 	 * @version  1.0 June 30, 2005
 	 */
-	public class FileDicomBaseInner {
+	private class FileDicomBaseInner {
 
 	    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
