@@ -83,7 +83,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
      */
     public void init() {
         setForeground(Color.black);
-        setTitle("NINDS Anonymization Tool " + " v1.4");
+        setTitle("NINDS Anonymization Tool " + " v1.5");
 
         mainPanelGridBagLayout = new GridBagLayout();
         mainPanelConstraints = new GridBagConstraints();

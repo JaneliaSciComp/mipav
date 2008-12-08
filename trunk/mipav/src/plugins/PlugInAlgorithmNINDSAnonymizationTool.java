@@ -92,6 +92,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     private static FileDicomKey patientIDKey;
     private static FileDicomKey patientDOBKey;
     private static FileDicomKey patientAgeKey;  
+    private static FileDicomKey studyDateKey;
     
     
     static {
@@ -194,7 +195,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     	patientIDKey = new FileDicomKey("0010,0020");
     	patientDOBKey = new FileDicomKey("0010,0030");
     	patientAgeKey = new FileDicomKey("0010,1010");
-    	
+    	studyDateKey = new FileDicomKey("0008,0020");
     	
     	
     	
@@ -461,6 +462,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     	String patientID = "";
     	String dob = "";
     	newUID = "";
+    	boolean containsDOB = false;
     	int patientIDInt = 0;
     	if(tagTable.containsTag(patientIDKey)) {
     		patientID = ((String)tagTable.getValue(patientIDKey)).trim();
@@ -476,25 +478,51 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 			e.printStackTrace();
 			return false;
 		}
+		
+		
 		if(tagTable.containsTag(patientDOBKey)) {
 			dob = ((String)tagTable.getValue(patientDOBKey)).trim();
 		}
-		if(dob.contains("/")) {
-			dob = dob.replaceAll("\\/", "");
-		}
-		int dobInt = 0;
-		try {
-			dobInt = new Integer(dob).intValue();
-		}catch(NumberFormatException e) {
-			if(enableTextArea) {
-				outputTextArea.append("! Patient DOB(0010,0030) value is not a valid entry \n");
+		
+		//if dob is there, create newUID using this field....otherwise use studydate
+		if(!dob.equals("")) {
+			if(dob.contains("/")) {
+				dob = dob.replaceAll("\\/", "");
 			}
-			printStream.println("! Patient DOB(0010,0030) value is not a valid entry");
-			e.printStackTrace();
-			return false;
+			int dobInt = 0;
+			try {
+				dobInt = new Integer(dob).intValue();
+			}catch(NumberFormatException e) {
+				if(enableTextArea) {
+					outputTextArea.append("! Patient DOB(0010,0030) value is not a valid entry \n");
+				}
+				printStream.println("! Patient DOB(0010,0030) value is not a valid entry");
+				e.printStackTrace();
+				return false;
+			}
+			int newUIDInt = patientIDInt + dobInt;
+			newUID = String.valueOf(newUIDInt);
+		}else {
+
+			String sDate = ((String)tagTable.getValue(studyDateKey)).trim();
+			
+			if(sDate.contains("/")) {
+				sDate = sDate.replaceAll("\\/", "");
+			}
+			int sDateInt = 0;
+			try {
+				sDateInt = new Integer(sDate).intValue();
+			}catch(NumberFormatException e) {
+				if(enableTextArea) {
+					outputTextArea.append("! Study Date(0008,0020) value is not a valid entry \n");
+				}
+				printStream.println("! Study Date(0008,0020) value is not a valid entry");
+				e.printStackTrace();
+				return false;
+			}
+			int newUIDInt = patientIDInt + sDateInt;
+			newUID = String.valueOf(newUIDInt);
 		}
-		int newUIDInt = patientIDInt + dobInt;
-		newUID = String.valueOf(newUIDInt);
 
 
     	//one will get replaced with current date...so get current date
