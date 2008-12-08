@@ -1700,7 +1700,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param  gbl  the layout used in the globablChangesPanel
      */
     protected void makeSaveXMLOnHDRSaveOptions(GridBagConstraints gbc, GridBagLayout gbl) {
-        saveXMLOnHDRSaveCheckBox = new JCheckBox("Save XML header with Analyze images");
+        saveXMLOnHDRSaveCheckBox = new JCheckBox("Save MIPAV XML header with Analyze images");
         saveXMLOnHDRSaveCheckBox.setFont(MipavUtil.font12);
         saveXMLOnHDRSaveCheckBox.setForeground(Color.black);
         saveXMLOnHDRSaveCheckBox.addActionListener(this);
@@ -1721,7 +1721,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param  gbl  the layout used in the globablChangesPanel
      */
     protected void makeSaveXMLThumbnailOptions(GridBagConstraints gbc, GridBagLayout gbl) {
-        saveThumbnailCheckBox = new JCheckBox("Save thumbnails for XML files");
+        saveThumbnailCheckBox = new JCheckBox("Save thumbnails for MIPAV XML files");
         saveThumbnailCheckBox.setFont(MipavUtil.font12);
         saveThumbnailCheckBox.setForeground(Color.black);
         saveThumbnailCheckBox.addActionListener(this);
@@ -1742,7 +1742,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param  gbl  the layout used in the globablChangesPanel
      */
     protected void makeSaveXMLZipOptions(GridBagConstraints gbc, GridBagLayout gbl) {
-        saveZipCheckBox = new JCheckBox("Compress image in zip format when saved as XML");
+        saveZipCheckBox = new JCheckBox("Compress image in zip format when saved as MIPAV XML");
         saveZipCheckBox.setFont(MipavUtil.font12);
         saveZipCheckBox.setForeground(Color.black);
         saveZipCheckBox.addActionListener(this);
