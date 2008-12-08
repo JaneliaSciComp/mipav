@@ -30,6 +30,7 @@ import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ProgressBarInterface;
@@ -123,9 +124,8 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 			if(o1 instanceof FileDicomKey && o2 instanceof FileDicomKey) {
 				if(((FileDicomKey) o2).getGroupNumber() == ((FileDicomKey) o1).getGroupNumber()) {
 					return ((FileDicomKey) o1).getElementNumber() - ((FileDicomKey)o2).getElementNumber();
-				} else {
-					return ((FileDicomKey) o1).getGroupNumber() - ((FileDicomKey)o2).getGroupNumber();
 				}
+				return ((FileDicomKey) o1).getGroupNumber() - ((FileDicomKey)o2).getGroupNumber();
 			} 
 			return o1.hashCode() - o2.hashCode();
 			
@@ -2979,13 +2979,17 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 
 	
 	
+	
+	
 	/**
 	 * Validator to test accuracy
 	 * @param args
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
+		
 		File[] f = new File[1];
+		
 		f[0] = new File(args[0]);
 		String[] s = new String[1];
 		s[0] = "";

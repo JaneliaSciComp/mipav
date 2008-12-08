@@ -5,12 +5,13 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
@@ -22,7 +23,7 @@ import java.io.File;
  * @author joshim2
  *
  */
-public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements AlgorithmInterface, MouseListener, KeyListener {
 
 	// ~ Instance fields ------------------------------------------------------------------------
 	
@@ -43,6 +44,8 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
     
     private JButton removeFileButton;
     
+    private JButton removeAllButton;
+    
     private JTextArea inputFileTextArea;
 
 	/** Textfields **/
@@ -59,7 +62,18 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
 	
 	/** Algorithm instance */
     private PlugInAlgorithmAnonymizeDicom algoAnonymizeDicom;
+    
+    private SelectMode currentMode = SelectMode.NONE;
+    
+    private int selectedRow = -1;
 	
+    public enum SelectMode {
+    	CTRL_MODE,
+    	
+    	SHIFT_MODE,
+    	
+    	NONE
+    }
 	
 	
 	//	~ Constructors --------------------------------------------------------------------------
@@ -67,7 +81,10 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
-    public PlugInDialogAnonymizeDICOM() { }
+    public PlugInDialogAnonymizeDICOM() { 
+    	
+    	currentMode = SelectMode.NONE;
+    }
     
     /**
      * Sets up variables but does not show dialog.
@@ -78,6 +95,8 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
     public PlugInDialogAnonymizeDICOM(boolean modal) {
         super(modal); 
     	init();
+    	
+    	currentMode = SelectMode.NONE;
     	//setSeparateThread(false);
     }
     
@@ -96,33 +115,33 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
         // Input file
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 0;
-        mainPanelConstraints.gridheight = 2;
+        mainPanelConstraints.gridheight = 3;
         mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
         inputFileLabel = new JLabel(" Input files : ");
         mainPanel.add(inputFileLabel, mainPanelConstraints);
 
         mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 0;
-        mainPanelConstraints.gridheight = 2;
+        mainPanelConstraints.gridheight = 3;
         mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
         mainPanelConstraints.fill = GridBagConstraints.BOTH;
         inputFileTextArea = new JTextArea();
         inputFileTextArea.setEditable(false);
         inputFileTextArea.setRows(4);
-        inputFileTextArea.setMinimumSize(new Dimension(300, 75));
-        //inputFileTextArea.setPreferredSize(new Dimension(300, 75));
+        inputFileTextArea.setMinimumSize(new Dimension(300, 92));
+        inputFileTextArea.addMouseListener(this);
         inputFileTextArea.setMaximumSize(new Dimension(300, 500));
         JScrollPane scrollPane = new JScrollPane(inputFileTextArea);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);    
-        scrollPane.setMinimumSize(new Dimension(300, 75));
-        scrollPane.setPreferredSize(new Dimension(300, 75));
+        scrollPane.setMinimumSize(new Dimension(300, 92));
+        scrollPane.setPreferredSize(new Dimension(300, 92));
         mainPanel.add(scrollPane, mainPanelConstraints);
 
         mainPanelConstraints.gridx = 2;
         mainPanelConstraints.gridy = 0;
         mainPanelConstraints.gridheight = 1;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        mainPanelConstraints.insets = new Insets(15, 5, 5, 5);
         mainPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
         inputFileBrowseButton = new JButton("Browse");
         inputFileBrowseButton.addActionListener(this);
@@ -131,28 +150,37 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
         
         mainPanelConstraints.gridx = 2;
         mainPanelConstraints.gridy = 1;
-        mainPanelConstraints.fill = GridBagConstraints.NONE;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
-        removeFileButton = new JButton("Remove All");
+        mainPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
+        mainPanelConstraints.insets = new Insets(5, 5, 5, 5);
+        removeFileButton = new JButton("Remove");
         removeFileButton.addActionListener(this);
-        removeFileButton.setActionCommand("Remove All");
+        removeFileButton.setActionCommand("Remove");
         mainPanel.add(removeFileButton, mainPanelConstraints);
+        
+        mainPanelConstraints.gridx = 2;
+        mainPanelConstraints.gridy = 2;
+        mainPanelConstraints.fill = GridBagConstraints.NONE;
+        mainPanelConstraints.insets = new Insets(5, 5, 15, 5);
+        removeAllButton = new JButton("Remove All");
+        removeAllButton.addActionListener(this);
+        removeAllButton.setActionCommand("Remove All");
+        mainPanel.add(removeAllButton, mainPanelConstraints);
         
         // Tag list
         mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 2;
+        mainPanelConstraints.gridy = 3;
         mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
         tagListLabel = new JLabel(" Anonymize additional tags : ");
         mainPanel.add(tagListLabel, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 2;
+        mainPanelConstraints.gridy = 3;
         mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
         tagListTextField = new JTextField(45);
         mainPanel.add(tagListTextField, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 3;
+        mainPanelConstraints.gridy = 4;
         mainPanelConstraints.insets = new Insets(1, 5, 15, 5);
         tagListSampleLabel = new JLabel(" Format: group,element;group,element e.g. 0002,0000;0002,0001  ");
         mainPanel.add(tagListSampleLabel, mainPanelConstraints);
@@ -172,6 +200,8 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
         pack();
         setResizable(false);
         setVisible(true);
+        addKeyListener(this);
+        requestFocus();
 
     }
     
@@ -278,6 +308,8 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
             	inputFileTextArea.setText(totalText);
             	System.out.println(inputFileTextArea.getText());
             	inputFileTextArea.validate();
+            	requestFocus();
+            	requestFocusInWindow();
             }
         } else if (command.equalsIgnoreCase("Cancel")) {
         	dispose();
@@ -286,13 +318,92 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
         	callAlgorithm();
         } else if(command.equalsIgnoreCase("Remove All")) {
         	inputFileTextArea.setText("");
+        } else if(command.equals("Remove")) {
+        	if(selectedRow != -1) {
+        		String replaceText = "";
+        		String[] totalText = inputFileTextArea.getText().split("\n");
+        		for(int i=0; i<totalText.length; i++) {
+        			if(i != selectedRow) {
+        				replaceText = replaceText + totalText[i]+"\n";
+        			}
+        		}
+        		inputFileTextArea.setText(replaceText);
+        	}
         }
-    	
-    	
-    	
     }
     
-    /**
+    public void keyPressed(KeyEvent e) {
+		System.out.println("Looking at key codes");
+    	switch(e.getKeyCode()) {
+		
+		case KeyEvent.VK_CONTROL:
+			currentMode = SelectMode.CTRL_MODE;
+			break;
+			
+		case KeyEvent.VK_SHIFT:
+			currentMode = SelectMode.SHIFT_MODE;
+			break;
+			
+			default:
+				currentMode = SelectMode.NONE;
+		}
+		
+	}
+
+	public void keyReleased(KeyEvent e) {
+		currentMode = SelectMode.NONE;
+	}
+
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void mouseClicked(MouseEvent e) {
+		switch(currentMode) {
+		
+		case CTRL_MODE:
+			System.out.println("In control mode");
+			break;
+			
+		case SHIFT_MODE:
+			System.out.println("In shift mode");
+			break;
+			
+		case NONE:
+			System.out.println("Not in a mode");
+			break;
+		
+		}
+		
+		selectedRow = e.getY()/16;
+		int selectStart;
+		System.out.println("Selected Row "+selectedRow);
+		String[] ar = inputFileTextArea.getText().split("\n");
+		inputFileTextArea.setSelectionStart(selectStart = inputFileTextArea.getText().indexOf(ar[selectedRow]));
+		inputFileTextArea.setSelectionEnd(selectStart+ar[selectedRow].length());
+		
+	}
+
+	public void mouseEntered(MouseEvent e) {
+		
+	}
+
+	public void mouseExited(MouseEvent e) {
+		
+	}
+
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
      * it has completed or failed to complete, so that the dialog can display the result image and/or clean up.
      *
