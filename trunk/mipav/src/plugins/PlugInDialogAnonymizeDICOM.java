@@ -128,14 +128,14 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
         inputFileTextArea = new JTextArea();
         inputFileTextArea.setEditable(false);
         inputFileTextArea.setRows(4);
-        inputFileTextArea.setMinimumSize(new Dimension(300, 92));
+        inputFileTextArea.setMinimumSize(new Dimension(300, 94));
         inputFileTextArea.addMouseListener(this);
         inputFileTextArea.setMaximumSize(new Dimension(300, 500));
         JScrollPane scrollPane = new JScrollPane(inputFileTextArea);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);    
-        scrollPane.setMinimumSize(new Dimension(300, 92));
-        scrollPane.setPreferredSize(new Dimension(300, 92));
+        scrollPane.setMinimumSize(new Dimension(300, 94));
+        scrollPane.setPreferredSize(new Dimension(300, 94));
         mainPanel.add(scrollPane, mainPanelConstraints);
 
         mainPanelConstraints.gridx = 2;
@@ -380,9 +380,10 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
 		int selectStart;
 		System.out.println("Selected Row "+selectedRow);
 		String[] ar = inputFileTextArea.getText().split("\n");
-		inputFileTextArea.setSelectionStart(selectStart = inputFileTextArea.getText().indexOf(ar[selectedRow]));
-		inputFileTextArea.setSelectionEnd(selectStart+ar[selectedRow].length());
-		
+		if(selectedRow < ar.length) {
+			inputFileTextArea.setSelectionStart(selectStart = inputFileTextArea.getText().indexOf(ar[selectedRow]));
+			inputFileTextArea.setSelectionEnd(selectStart+ar[selectedRow].length());
+		} 
 	}
 
 	public void mouseEntered(MouseEvent e) {
