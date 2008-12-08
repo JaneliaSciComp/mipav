@@ -18,6 +18,7 @@ import java.awt.image.*;
 import java.io.*;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
@@ -2320,11 +2321,37 @@ public class FileIO {
     public void writeImage(ModelImage image, FileWriteOptions options) {
         int fileType;
         String suffix;
+        int index;
+        String ext;
+        boolean singleFileNIFTI = false;
+        boolean gzip = false;
+        GZIPOutputStream gzout;
+        boolean bz2zip = false;
+        CBZip2OutputStream bz2out;
+        FileInputStream in;
+        byte buf[];
+        int len;
+        File inputFile;
+        FileOutputStream out;
 
         // set it to quiet mode (no prompting) if the options were
         // created during a script
         if (options.isScript() == true) {
             quiet = true;
+        }
+        
+        index = options.getFileName().lastIndexOf(".");
+
+        if (index >= 0) {
+            ext = options.getFileName().substring(index+1);
+            if (ext.equalsIgnoreCase("gz")) {
+                options.setFileName(options.getFileName().substring(0,index));
+                gzip = true;
+            }
+            else if (ext.equalsIgnoreCase("bz2")) {
+                options.setFileName(options.getFileName().substring(0,index));
+                bz2zip = true;    
+            }
         }
 
         if (options.isSaveAs()) { // if we're doing a save-as op, then try to get the filetype from the name
@@ -2366,7 +2393,7 @@ public class FileIO {
             }
 
             boolean append = true;
-            int index = (options.getFileName()).lastIndexOf('.');
+            index = (options.getFileName()).lastIndexOf('.');
             if (index > 0) {
                 String firstSuffix = (options.getFileName()).substring(index);
                 if (firstSuffix.toUpperCase().equals(suffix.toUpperCase())) {
@@ -2639,6 +2666,143 @@ public class FileIO {
 
                 return;
         }
+        
+        if (gzip || bz2zip) {
+            index = options.getFileName().lastIndexOf(".");
+
+            if (index >= 0) {
+                ext = options.getFileName().substring(index+1);
+                if (ext.equalsIgnoreCase("nii")) {
+                    singleFileNIFTI = true;
+                }
+            }
+            if (singleFileNIFTI || (fileType == FileUtility.MINC) || (fileType == FileUtility.MINC_HDF)) {
+                if (gzip) {
+                    try {
+                       // Create the GZIP output stream
+                       gzout = new GZIPOutputStream(new FileOutputStream(
+                               options.getFileDirectory() + options.getFileName() + ".gz")); 
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on new GZIPOutputStream");
+                        return;
+                    }
+                    // Open the input file
+                    try {
+                        in = new FileInputStream(options.getFileDirectory() + options.getFileName());
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on new FileInputStream");
+                        return;
+                    }
+                    
+                    // Tranfer the bytes from the input file to the GZIP output stream
+                    buf = new byte[1024];
+                    try {
+                        while ((len = in.read(buf)) > 0) {
+                            gzout.write(buf, 0, len);
+                        }
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on byte transfer to gzip file");
+                        return;
+                    }
+                    try {
+                        in.close();
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on in.close()");
+                        return;
+                    }
+                    inputFile = new File(options.getFileDirectory() + options.getFileName());
+                    // Delete the input file
+                    try {
+                        inputFile.delete();
+                    } catch (SecurityException sc) {
+                        MipavUtil.displayError("Security error occurs while trying to delete " +
+                                               inputFile.getName());
+                    }
+                    
+                    // complete the gzip file
+                    try {
+                        gzout.finish();
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on gzout.finish()");
+                        return;
+                    }
+                    try {
+                        gzout.close();
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on gzout.close()");
+                        return;
+                    }
+                } // if (gzip)
+                else { // bz2zip
+                    try {
+                        out = new FileOutputStream(
+                                options.getFileDirectory() + options.getFileName() + ".bz2");
+                        out.write('B');
+                        out.write('Z');
+                        // Create the BZIP2 output stream
+                        bz2out = new CBZip2OutputStream(out); 
+                     }
+                     catch (IOException e) {
+                         MipavUtil.displayError("IOException on new CBZip2OutputStream");
+                         return;
+                     }
+                     // Open the input file
+                     try {
+                         in = new FileInputStream(options.getFileDirectory() + options.getFileName());
+                     }
+                     catch (IOException e) {
+                         MipavUtil.displayError("IOException on new FileInputStream");
+                         return;
+                     }
+                     
+                     // Tranfer the bytes from the input file to the BZIP2 output stream
+                     buf = new byte[1024];
+                     try {
+                         while ((len = in.read(buf)) > 0) {
+                             bz2out.write(buf, 0, len);
+                         }
+                     }
+                     catch (IOException e) {
+                         MipavUtil.displayError("IOException on byte transfer to bz2zip file");
+                         return;
+                     }
+                     try {
+                         in.close();
+                     }
+                     catch (IOException e) {
+                         MipavUtil.displayError("IOException on in.close()");
+                         return;
+                     }
+                     inputFile = new File(options.getFileDirectory() + options.getFileName());
+                     // Delete the input file
+                     try {
+                         inputFile.delete();
+                     } catch (SecurityException sc) {
+                         MipavUtil.displayError("Security error occurs while trying to delete " +
+                                                inputFile.getName());
+                     }
+                     
+                     // complete the bz2zip file
+                     try {
+                         bz2out.close();
+                     }
+                     catch (IOException e) {
+                         MipavUtil.displayError("IOException on bz2out.close()");
+                         return;
+                     }    
+                } // else bz2zip
+            } // if (singleFileNIFTI || (fileType == FileUtility.MINC) || (fileType == FileUtility.MINC_HDF))
+            else {
+                MipavUtil.displayError("Compression only on single file nifti or minc");
+            }
+        } // if (gzip || bz2zip)
+        
 
         if (progressBar != null) {
             progressBar.dispose();
