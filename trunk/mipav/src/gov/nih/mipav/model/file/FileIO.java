@@ -17,8 +17,7 @@ import java.awt.*;
 import java.awt.image.*;
 import java.io.*;
 import java.util.*;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
+import java.util.zip.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
@@ -1409,10 +1408,12 @@ public class FileIO {
     public ModelImage readImage(String fileName, String fileDir, boolean multiFile, FileInfoBase fileInfo,
             int secondAddress, boolean loadB, boolean one) {
         int index;
+        boolean unzip;
         boolean gunzip;
         boolean bz2unzip;
         File file;
         FileInputStream fis;
+        ZipInputStream zin;
         GZIPInputStream gzin;
         CBZip2InputStream bz2in;
         FileOutputStream out;
@@ -1429,6 +1430,12 @@ public class FileIO {
         fileName.trim();
 
         index = fileName.lastIndexOf(".");
+        
+        if (fileName.substring(index + 1).equalsIgnoreCase("zip")) {
+            unzip = true;
+        } else {
+            unzip = false;
+        }
 
         if (fileName.substring(index + 1).equalsIgnoreCase("gz")) {
             gunzip = true;
@@ -1444,7 +1451,62 @@ public class FileIO {
 
         file = new File(fileDir + fileName);
 
-        if (gunzip) {
+        if (unzip) {
+            int totalBytesRead = 0;
+
+            try {
+                fis = new FileInputStream(file);
+            } catch (FileNotFoundException e) {
+                MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + fileName);
+                return null;
+            }
+
+            try {
+                zin = new ZipInputStream(new BufferedInputStream(fis));
+            } catch (Exception e) {
+                MipavUtil.displayError("Exception on ZipInputStream for " + fileName);
+                return null;
+            }
+
+            fileName = fileName.substring(0, index);
+            String uncompressedName = fileDir + fileName;
+            try {
+                out = new FileOutputStream(uncompressedName);
+            } catch (IOException e) {
+                MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
+                return null;
+            }
+            byte[] buffer = new byte[256];
+
+            try {
+                while (zin.getNextEntry() != null) {
+                    while (true) {
+                        
+                        bytesRead = zin.read(buffer);
+                        
+                        if (bytesRead == -1) {
+                            break;
+                        }
+        
+                        totalBytesRead += bytesRead;
+                            out.write(buffer, 0, bytesRead);
+                        
+                    }
+                } // while (zin.getNextEntry() != null)
+            }
+            catch (IOException e) {
+                MipavUtil.displayError("IOException in loop reading entries");
+                return null;
+            }
+
+            try {
+                out.close();
+            } catch (IOException e) {
+                MipavUtil.displayError("IOException on out.close for " + uncompressedName);
+                return null;
+            }
+        } // if (unzip)
+        else if (gunzip) {
             int totalBytesRead = 0;
 
             try {
@@ -2324,6 +2386,8 @@ public class FileIO {
         int index;
         String ext;
         boolean singleFileNIFTI = false;
+        boolean zip = false;
+        ZipOutputStream zout;
         boolean gzip = false;
         GZIPOutputStream gzout;
         boolean bz2zip = false;
@@ -2333,6 +2397,10 @@ public class FileIO {
         int len;
         File inputFile;
         FileOutputStream out;
+        String inputFileName;
+        String outputFileName;
+        String compressionExt = null;
+        int i;
 
         // set it to quiet mode (no prompting) if the options were
         // created during a script
@@ -2344,7 +2412,11 @@ public class FileIO {
 
         if (index >= 0) {
             ext = options.getFileName().substring(index+1);
-            if (ext.equalsIgnoreCase("gz")) {
+            if (ext.equalsIgnoreCase("zip")) {
+                options.setFileName(options.getFileName().substring(0,index));
+                zip = true;
+            }
+            else if (ext.equalsIgnoreCase("gz")) {
                 options.setFileName(options.getFileName().substring(0,index));
                 gzip = true;
             }
@@ -2551,7 +2623,7 @@ public class FileIO {
                     ModelImage newImage;
 
                     // extract 2D slice from volume and write out
-                    for (int i = beginSlice; i <= endSlice; i++) {
+                    for (i = beginSlice; i <= endSlice; i++) {
                         try {
                             // extract 2D data to buffer
                             if (image.isColorImage()) {
@@ -2667,7 +2739,7 @@ public class FileIO {
                 return;
         }
         
-        if (gzip || bz2zip) {
+        if (zip || gzip || bz2zip) {
             index = options.getFileName().lastIndexOf(".");
 
             if (index >= 0) {
@@ -2676,12 +2748,100 @@ public class FileIO {
                     singleFileNIFTI = true;
                 }
             }
-            if (singleFileNIFTI || (fileType == FileUtility.MINC) || (fileType == FileUtility.MINC_HDF)) {
-                if (gzip) {
+            if (singleFileNIFTI || (fileType == FileUtility.MINC) || (fileType == FileUtility.MINC_HDF) ||
+                (fileType == FileUtility.XML)) {
+                if (zip) {
+                    compressionExt = ".zip";
+                }
+                else if (gzip) {
+                    compressionExt = ".gz";
+                }
+                else if (bz2zip) {
+                    compressionExt = ".bz2";
+                }
+                
+                inputFileName = options.getFileDirectory() + options.getFileName();
+                if (fileType == FileUtility.XML) {
+                    // For XML the user enters fileName.xml.gz or fileName.xml.bz2, but the xml header file is
+                    // not compressed while the raw data file is compressed.
+                    index = inputFileName.lastIndexOf(".");
+                    inputFileName = inputFileName.substring(0,index) + ".raw";
+                }
+                outputFileName = inputFileName + compressionExt;
+           
+                if (zip) {
+                    try {
+                       // Create the ZIP output stream
+                       zout = new ZipOutputStream(new FileOutputStream(outputFileName)); 
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on new ZipOutputStream");
+                        return;
+                    }
+                    
+                    try {
+                        zout.putNextEntry(new ZipEntry("data"));
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on zout.putNextEntry");
+                        return;
+                    }
+                    // Open the input file
+                    try {
+                        in = new FileInputStream(inputFileName);
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on new FileInputStream");
+                        return;
+                    }
+                    
+                    // Tranfer the bytes from the input file to the Zip output stream
+                    buf = new byte[1024];
+                    try {
+                        while ((len = in.read(buf)) > 0) {
+                            zout.write(buf, 0, len);
+                        }
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on byte transfer to zip file");
+                        return;
+                    }
+                    try {
+                        in.close();
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on in.close()");
+                        return;
+                    }
+                    inputFile = new File(inputFileName);
+                    // Delete the input file
+                    try {
+                        inputFile.delete();
+                    } catch (SecurityException sc) {
+                        MipavUtil.displayError("Security error occurs while trying to delete " +
+                                               inputFileName);
+                    }
+                    
+                    // complete the zip file
+                    try {
+                        zout.finish();
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on zout.finish()");
+                        return;
+                    }
+                    try {
+                        zout.close();
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on zout.close()");
+                        return;
+                    }
+                } // if (zip)
+                else if (gzip) {
                     try {
                        // Create the GZIP output stream
-                       gzout = new GZIPOutputStream(new FileOutputStream(
-                               options.getFileDirectory() + options.getFileName() + ".gz")); 
+                       gzout = new GZIPOutputStream(new FileOutputStream(outputFileName)); 
                     }
                     catch (IOException e) {
                         MipavUtil.displayError("IOException on new GZIPOutputStream");
@@ -2689,7 +2849,7 @@ public class FileIO {
                     }
                     // Open the input file
                     try {
-                        in = new FileInputStream(options.getFileDirectory() + options.getFileName());
+                        in = new FileInputStream(inputFileName);
                     }
                     catch (IOException e) {
                         MipavUtil.displayError("IOException on new FileInputStream");
@@ -2714,13 +2874,13 @@ public class FileIO {
                         MipavUtil.displayError("IOException on in.close()");
                         return;
                     }
-                    inputFile = new File(options.getFileDirectory() + options.getFileName());
+                    inputFile = new File(inputFileName);
                     // Delete the input file
                     try {
                         inputFile.delete();
                     } catch (SecurityException sc) {
                         MipavUtil.displayError("Security error occurs while trying to delete " +
-                                               inputFile.getName());
+                                               inputFileName);
                     }
                     
                     // complete the gzip file
@@ -2741,8 +2901,7 @@ public class FileIO {
                 } // if (gzip)
                 else { // bz2zip
                     try {
-                        out = new FileOutputStream(
-                                options.getFileDirectory() + options.getFileName() + ".bz2");
+                        out = new FileOutputStream(outputFileName);
                         out.write('B');
                         out.write('Z');
                         // Create the BZIP2 output stream
@@ -2754,7 +2913,7 @@ public class FileIO {
                      }
                      // Open the input file
                      try {
-                         in = new FileInputStream(options.getFileDirectory() + options.getFileName());
+                         in = new FileInputStream(inputFileName);
                      }
                      catch (IOException e) {
                          MipavUtil.displayError("IOException on new FileInputStream");
@@ -2779,13 +2938,13 @@ public class FileIO {
                          MipavUtil.displayError("IOException on in.close()");
                          return;
                      }
-                     inputFile = new File(options.getFileDirectory() + options.getFileName());
+                     inputFile = new File(inputFileName);
                      // Delete the input file
                      try {
                          inputFile.delete();
                      } catch (SecurityException sc) {
                          MipavUtil.displayError("Security error occurs while trying to delete " +
-                                                inputFile.getName());
+                                                inputFileName);
                      }
                      
                      // complete the bz2zip file
@@ -2796,12 +2955,14 @@ public class FileIO {
                          MipavUtil.displayError("IOException on bz2out.close()");
                          return;
                      }    
-                } // else bz2zip
-            } // if (singleFileNIFTI || (fileType == FileUtility.MINC) || (fileType == FileUtility.MINC_HDF))
-            else {
-                MipavUtil.displayError("Compression only on single file nifti or minc");
-            }
-        } // if (gzip || bz2zip)
+                    } // else bz2zip
+                   
+                } // if (singleFileNIFTI || (fileType == FileUtility.MINC) || (fileType == FileUtility.MINC_HDF) ||
+                else {
+                    MipavUtil.displayError("Compression only on single file nifti or minc or xml");
+                }
+            } // if (zip || gzip || bz2zip)
+        
         
 
         if (progressBar != null) {
@@ -2846,7 +3007,7 @@ public class FileIO {
                 String start = Integer.toString(options.getStartNumber());
                 int numDig = options.getDigitNumber();
 
-                for (int i = 1; i < numDig; i++) {
+                for (i = 1; i < numDig; i++) {
                     start = "0" + start;
                 }
 
@@ -2882,7 +3043,7 @@ public class FileIO {
             } else {
                 UI.buildMenu();
 
-                for (int i = 0; i < imageFrames.size(); i++) {
+                for (i = 0; i < imageFrames.size(); i++) {
 
                     if (imageFrames.elementAt(i) instanceof ViewJFrameImage) {
                         ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
