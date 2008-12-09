@@ -1117,10 +1117,20 @@ public class FileImageXML extends FileXML {
             closedTag(datasetAttributesStr[9], FileInfoBase.getUnitsOfMeasureStr(units[i]));
         }
 
-        if ( !Preferences.is(Preferences.PREF_SAVE_XML_ZIP)) {
-            closedTag("Compression", "none");
-        } else {
+        
+            
+        int compression = myFileInfo.getCompressionType();
+        if (compression == FileInfoBase.COMPRESSION_ZIP) {
             closedTag("Compression", "zipped");
+        }
+        else if (compression == FileInfoBase.COMPRESSION_GZIP) {
+            closedTag("Compression", "gzipped");
+        }
+        else if (compression == FileInfoBase.COMPRESSION_BZIP2) {
+            closedTag("Compression", "bz2zipped");
+        }
+        else {
+            closedTag("Compression", "none");    
         }
 
         int orient = myFileInfo.getImageOrientation();
@@ -1511,8 +1521,8 @@ public class FileImageXML extends FileXML {
             }
         }
 
-        /** Save off the thumbnail data if the option is set in Preferences */
-        if (Preferences.is(Preferences.PREF_SAVE_XML_ZIP)) {
+        /** Save off the thumbnail data if data is compressed */
+        if (compression != FileInfoBase.COMPRESSION_NONE) {
             ModelImage tempImage = img;
             int colorFactor = 1;
 
@@ -1778,13 +1788,6 @@ public class FileImageXML extends FileXML {
         // if the image is to be saved as multiple files, call the correct file and header-saving functions
         if (options.isMultiFile()) {
 
-            // System.err.println("here 2");
-            if (Preferences.is(Preferences.PREF_SAVE_XML_ZIP)) {
-                img.getFileInfo()[0].setCompressionType(FileInfoBase.COMPRESSION_ZIP);
-            } else {
-                img.getFileInfo()[0].setCompressionType(FileInfoBase.COMPRESSION_NONE);
-            }
-
             FileRaw rawFile;
 
             rawFile = new FileRaw(img.getFileInfo(0));
@@ -1803,14 +1806,6 @@ public class FileImageXML extends FileXML {
         } else {
 
             try {
-
-                if (Preferences.is(Preferences.PREF_SAVE_XML_ZIP)) {
-
-                    // System.err.println("Setting compressionType to 1");
-                    img.getFileInfo()[0].setCompressionType(FileInfoBase.COMPRESSION_ZIP);
-                } else {
-                    img.getFileInfo()[0].setCompressionType(FileInfoBase.COMPRESSION_NONE);
-                }
 
                 if ( !options.writeHeaderOnly()) {
                     FileRaw rawFile;
