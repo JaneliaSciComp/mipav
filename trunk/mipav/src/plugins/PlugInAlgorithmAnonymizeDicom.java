@@ -44,8 +44,13 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	
 	/** Additional tag list provided in the dialog */
 	private String[] tagListFromDialog;
-
+	
+	/** Stream for writing out anonymized/private/sequence tags. */
 	private PrintStream printToLogFile;
+	
+	/**Location of the anonymized data, wouldn't mind making this a static directory in MIPAV preferences that
+	 * as a log file*/
+	private String anonLoc;
 	
 	
 
@@ -55,8 +60,10 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		
 		selectedFiles = inputFiles;
 		tagListFromDialog = tagList;
-		
-		
+		if(selectedFiles.length > 0)
+			anonLoc = selectedFiles[0].getParent() + File.separator + "AnonymizationResults.txt";
+		else
+			anonLoc ="";
 		
 	}
 	
@@ -67,7 +74,11 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
      * Prepares this class for destruction.
      */
     public void finalize() {
-        
+        if(printToLogFile != null) {
+        	MipavUtil.displayInfo("The anonymization results were written to: "+anonLoc);
+        }
+    	
+    	
     	selectedFiles = null;
                
     }
@@ -80,13 +91,15 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
     	}
 		int numOfFiles = selectedFiles.length;
 		try {
-			printToLogFile = new PrintStream(new FileOutputStream(selectedFiles[0].getParent() + File.separator + "AnonymizationResults.txt"));
+			printToLogFile = new PrintStream(new FileOutputStream(anonLoc));
 			printToLogFile.println("Note: The tags listed below were anonymized by the DICOM Anonymization Tool.");
 			printToLogFile.println("Private tags and sequence tags are not anonymized but are listed so that the user can anonymize them manually.");
 			printToLogFile.println();
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
 		}
+		
+		ArrayList<Integer> filesNotRead = new ArrayList<Integer>();
 		
 		for(int i=0; i<numOfFiles; i++) {
 			// use the selectedFileName as the reference slice for the file info tag tables
@@ -102,9 +115,18 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	            imageFile.storePrivateTags();
 	            printToLogFile.println();
 	            imageFile.storeSequenceTags();
-            } catch(IOException ioe) {
-            	ioe.printStackTrace();
-            }
+            } catch(Exception e) {
+            	e.printStackTrace();
+            	filesNotRead.add(i);
+            } 
+		}
+		
+		String stringExp = "";
+		for(int i=0; i<filesNotRead.size(); i++) {
+			stringExp = stringExp + selectedFiles[filesNotRead.get(i)].getAbsolutePath()+"\n";
+		}
+		if(stringExp.length() > 0) {
+			MipavUtil.displayError("The following files could not be anonymized:\n"+stringExp);
 		}
 		
 		System.out.println("Finished reading files");
