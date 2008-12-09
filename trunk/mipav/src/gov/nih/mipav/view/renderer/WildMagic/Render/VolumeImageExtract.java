@@ -38,7 +38,8 @@ public class VolumeImageExtract extends VolumeImageViewer
     private boolean m_bDisplayFirst = true;
     private boolean m_bDisplaySecond = true;
     private VolumeClipEffect m_kClipEffect = null;
-    private int m_iSize = 0;
+    private int[] m_aiNewExtents = new int[3];
+    private float[] m_afNewResolutions = new float[3];
     public VolumeImageExtract( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip )
     {
         super(kParentFrame, kVolumeImage );
@@ -74,7 +75,7 @@ public class VolumeImageExtract extends VolumeImageViewer
         }
         while ( m_bDisplayFirst )
         {
-            float fZ = ((float)m_iSlice)/(m_iSize -1);
+            float fZ = ((float)m_iSlice)/(m_aiNewExtents[2] -1);
             UpdateSlice(fZ);
             m_pkPlane.DetachAllEffects();
             m_pkPlane.AttachEffect(m_spkEffect);
@@ -88,7 +89,7 @@ public class VolumeImageExtract extends VolumeImageViewer
             m_pkRenderer.FrameBufferToTexSubImage3D( m_pkVolumeCalcTarget, m_iSlice, false );
             //m_pkRenderer.DisplayBackBuffer();
             m_iSlice++; 
-            if ( m_iSlice >= m_iSize)
+            if ( m_iSlice >= m_aiNewExtents[2])
             {
                 m_iSlice = 0;
                 m_bDisplayFirst = false;
@@ -97,7 +98,7 @@ public class VolumeImageExtract extends VolumeImageViewer
 
           while ( m_bDisplaySecond )
           {
-              float fZ = ((float)m_iSlice)/(m_iSize -1);
+              float fZ = ((float)m_iSlice)/(m_aiNewExtents[2] -1);
               UpdateSlice(fZ);
               m_pkPlane.DetachAllEffects();
               m_pkPlane.AttachEffect(m_spkEffect2);
@@ -112,21 +113,23 @@ public class VolumeImageExtract extends VolumeImageViewer
               m_pkRenderer.FrameBufferToTexSubImage3D( m_pkVolumeCalcTarget2, m_iSlice, true );
               //m_pkRenderer.DisplayBackBuffer();
               m_iSlice++; 
-              if ( m_iSlice >= m_iSize)
+              if ( m_iSlice >= m_aiNewExtents[2])
               {
                   m_bDisplaySecond = false;
                   m_iSlice = 0;
-                  System.err.println( m_kCalcImage2.Min + " " + m_kCalcImage2.Max + " " + m_kCalcImage2.TriTable.size() );
+                  //System.err.println( m_kCalcImage2.Min + " " + m_kCalcImage2.Max + " " + m_kCalcImage2.TriTable.size() );
                   
                   int[] direction = MipavCoordinateSystems.getModelDirections(m_kVolumeImage.GetImage());
                   float[] startLocation = m_kVolumeImage.GetImage().getFileInfo(0).getOrigin();
                   SurfaceExtractorCubes kExtractor = 
-                      new SurfaceExtractorCubes(m_kVolumeImage.GetImage().getExtents()[0], 
-                              m_kVolumeImage.GetImage().getExtents()[1], 
-                              m_iSize, m_kCalcImage2.Data,
-                          1, 1, 1, direction,
+                      new SurfaceExtractorCubes(m_aiNewExtents[0], 
+                              m_aiNewExtents[1], 
+                              m_aiNewExtents[2], m_kCalcImage2.Data,
+                              m_afNewResolutions[0], 
+                              m_afNewResolutions[1], 
+                              m_afNewResolutions[2], direction,
                           startLocation, null);
-                  TriMesh kMesh = kExtractor.getLevelSurface(50, m_kCalcImage2.TriTable);
+                  TriMesh kMesh = kExtractor.getLevelSurface(20, m_kCalcImage2.TriTable);
 //                Get the adjacent triangles:
                   VETMesh kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
                           2 * kMesh.IBuffer.GetIndexQuantity(), .9f,
@@ -193,10 +196,19 @@ public class VolumeImageExtract extends VolumeImageViewer
     protected void CreateScene ()
     {
         CreatePlaneNode();
-        m_iSize = Math.max( Math.max(m_kVolumeImage.GetImage().getExtents()[0], m_kVolumeImage.GetImage().getExtents()[1]),
-                m_kVolumeImage.GetImage().getExtents()[2]);
-        float fStep = 1.0f/(float)(m_iSize-1);
-        
+        m_aiNewExtents[0] = m_kVolumeImage.GetImage().getExtents()[0];
+        m_aiNewExtents[1] = m_kVolumeImage.GetImage().getExtents()[1];
+        m_aiNewExtents[2] = m_kVolumeImage.GetImage().getExtents()[2];
+        m_aiNewExtents[2] = Math.max( Math.max(m_aiNewExtents[0], m_aiNewExtents[1]),
+                m_aiNewExtents[2]);
+        float fStep = 1.0f/(float)(m_aiNewExtents[2]-1);
+
+        float[] res = m_kVolumeImage.GetImage().getResolutions(0);
+        int[] extents = m_kVolumeImage.GetImage().getExtents();
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_afNewResolutions[i] = (extents[i] * res[i]) / m_aiNewExtents[i];
+        }
         
         m_spkEffect = new VolumeCalcEffect( m_kVolumeImage, m_kClipEffect, false );
         m_pkPlane.AttachEffect(m_spkEffect);
@@ -208,8 +220,8 @@ public class VolumeImageExtract extends VolumeImageViewer
 
         m_kCalcImage2 = new SurfaceExtractImage(GraphicsImage.FormatMode.IT_RGBA8888,
                                          m_iWidth,m_iHeight,
-                                         m_iSize, 
-                                         new byte[m_iWidth*m_iHeight*m_iSize*4],
+                                         m_aiNewExtents[2], 
+                                         new byte[m_iWidth*m_iHeight*m_aiNewExtents[2]*4],
                                          "VolumeExtract2" );
         m_pkVolumeCalcTarget2 = new Texture();
         m_pkVolumeCalcTarget2.SetImage(m_kCalcImage2);
@@ -222,8 +234,8 @@ public class VolumeImageExtract extends VolumeImageViewer
         
         m_kCalcImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,
                                          m_iWidth,m_iHeight,
-                                         m_iSize, 
-                                         new byte[m_iWidth*m_iHeight*m_iSize*4],
+                                         m_aiNewExtents[2], 
+                                         new byte[m_iWidth*m_iHeight*m_aiNewExtents[2]*4],
                                          "VolumeExtract" );
         m_pkVolumeCalcTarget = new Texture();
         m_pkVolumeCalcTarget.SetImage(m_kCalcImage);
