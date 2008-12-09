@@ -479,8 +479,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             clipMaskButton.setEnabled(true);
             clipMaskUndoButton.setEnabled(true);
             clipSaveButton.setEnabled(true);
-
-            insertTab("Opacity", opacityPanel);
             updateRayTracingSteps();
             raycastRenderWM.displayVolumeRaycast( rendererGUI.getVolumeCheck().isSelected() );
         } else if (command.equals("Stereo")) {
