@@ -11,6 +11,7 @@ import java.awt.*;
 import java.awt.image.*;
 import java.io.*;
 import java.util.*;
+import java.util.zip.*;
 
 import javax.swing.JComponent;
 
@@ -382,6 +383,14 @@ public class FileImageXML extends FileXML {
      * @see FileRaw
      */
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
+        File file;
+        FileInputStream fis;
+        ZipInputStream zin;
+        GZIPInputStream gzin;
+        CBZip2InputStream bz2in;
+        FileOutputStream out;
+        int bytesRead;
+        String uncompressedName;
 
         float[][] resolutions = null;
 
@@ -418,12 +427,188 @@ public class FileImageXML extends FileXML {
             imageFileName = FileUtility.stripExtension(fileName) + ".raw";
         }
 
-        // TODO: I don't know that this should ever happen... -- evan
-        // check to see if the file now exists
         if ( !new File(fileDir + File.separator + imageFileName).exists()) {
-            MipavUtil.displayWarning("Raw file not found: " + imageFileName + ".  Aborting XML readImage()!");
+            uncompressedName = fileDir + File.separator + imageFileName;
+            if (new File(uncompressedName + ".zip").exists()) {
+                file = new File(uncompressedName + ".zip"); 
+                int totalBytesRead = 0;
 
-            return null;
+                try {
+                    fis = new FileInputStream(file);
+                } catch (FileNotFoundException e) {
+                    MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + (uncompressedName + ".zip"));
+                    return null;
+                }
+
+                try {
+                    zin = new ZipInputStream(new BufferedInputStream(fis));
+                } catch (Exception e) {
+                    MipavUtil.displayError("Exception on ZipInputStream for " + fileName);
+                    return null;
+                }
+                try {
+                    out = new FileOutputStream(uncompressedName);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
+                    return null;
+                }
+                byte[] buffer = new byte[256];
+                
+                try {
+                    while (zin.getNextEntry() != null) {
+                        while (true) {
+                            
+                            bytesRead = zin.read(buffer);
+                            
+                            if (bytesRead == -1) {
+                                break;
+                            }
+            
+                            totalBytesRead += bytesRead;
+                                out.write(buffer, 0, bytesRead);
+                            
+                        }
+                    } // while (zin.getNextEntry() != null)
+                }
+                catch (IOException e) {
+                    MipavUtil.displayError("IOException in loop reading entries");
+                    return null;
+                }
+
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException on out.close for " + uncompressedName);
+                    return null;
+                }
+            }
+            else if (new File(uncompressedName + ".gz").exists()) {
+                file = new File(uncompressedName + ".gz"); 
+                int totalBytesRead = 0;
+
+                try {
+                    fis = new FileInputStream(file);
+                } catch (FileNotFoundException e) {
+                    MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + (uncompressedName + ".gz"));
+                    return null;
+                }
+
+                try {
+                    gzin = new GZIPInputStream(new BufferedInputStream(fis));
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException on GZIPInputStream for " + fileName);
+                    return null;
+                }
+                try {
+                    out = new FileOutputStream(uncompressedName);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
+                    return null;
+                }
+                byte[] buffer = new byte[256];
+
+                while (true) {
+                    try {
+                        bytesRead = gzin.read(buffer);
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException on gzin.read(buffer) for " + uncompressedName);
+                        return null;
+                    }
+
+                    if (bytesRead == -1) {
+                        break;
+                    }
+
+                    totalBytesRead += bytesRead;
+                    try {
+                        out.write(buffer, 0, bytesRead);
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException on out.write for " + uncompressedName);
+                        return null;
+                    }
+                }
+
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException on out.close for " + uncompressedName);
+                    return null;
+                }
+            }
+            else if (new File(uncompressedName + ".bz2").exists()) {
+                int totalBytesRead = 0;
+                file = new File(uncompressedName + ".bz2"); 
+                try {
+                    fis = new FileInputStream(file);
+                } catch (FileNotFoundException e) {
+                    MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + (uncompressedName + ".bz2"));
+                    return null;
+                }
+                
+                try {
+                fis.read();
+                }
+                catch (IOException e) {
+                    MipavUtil.displayError("IOException on fis.read() trying to read byte B");
+                    return null;
+                }
+                
+                try {
+                    fis.read();
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on fis.read() trying to read byte Z");
+                        return null;
+                    }
+
+                try {
+                    bz2in = new CBZip2InputStream(new BufferedInputStream(fis));
+                } catch (Exception e) {
+                    MipavUtil.displayError("Exception on CBZip2InputStream for " + fileName);
+                    return null;
+                }
+
+                try {
+                    out = new FileOutputStream(uncompressedName);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
+                    return null;
+                }
+                byte[] buffer = new byte[256];
+
+                while (true) {
+                    try {
+                        bytesRead = bz2in.read(buffer);
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException on bz2in.read(buffer) for " + uncompressedName);
+                        return null;
+                    }
+
+                    if (bytesRead == -1) {
+                        break;
+                    }
+
+                    totalBytesRead += bytesRead;
+                    try {
+                        out.write(buffer, 0, bytesRead);
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException on out.write for " + uncompressedName);
+                        return null;
+                    }
+                }
+
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException on out.close for " + uncompressedName);
+                    return null;
+                }     
+            }
+            else {
+                MipavUtil.displayWarning("Raw file not found: " + imageFileName + ".  Aborting XML readImage()!");
+        
+                return null;
+            }
         }
 
         for (int i = 0; i < ((FileInfoImageXML) fileInfo).getExtents().length; i++) {
