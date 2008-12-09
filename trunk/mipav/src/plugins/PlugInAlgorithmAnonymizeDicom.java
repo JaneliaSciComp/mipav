@@ -301,6 +301,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	        
 	        while (flag == true) {
 
+	        	
 	        	int bPtrOld = bPtr;
 	        	boolean isPrivate = false;
 	            if (fileInfo.containsDICM) {
@@ -321,13 +322,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	            // ******* Gets the next element
 	            getNextElement(endianess); // gets group, element, length
 	            name = convertGroupElement(groupWord, elementWord);
-
-	            System.out.println(name);
-	            if(name.equals("0008,0018")) {
-	            	System.out.println("Stop");
-	            }
-	            	
-	            
+    
 	            FileDicomKey key = new FileDicomKey(name);
 	            int tagVM;
 
