@@ -262,7 +262,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
 
             fireProgressStateChanged("Starting surface extraction");
 
-            TriMesh kMesh = kExtractor.getLevelSurface(level);
+            TriMesh kMesh = kExtractor.getLevelSurface(level, true);
             // Get the adjacent triangles:
             VETMesh kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
                     2 * kMesh.IBuffer.GetIndexQuantity(), .9f,
