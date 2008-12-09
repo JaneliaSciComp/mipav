@@ -1422,6 +1422,7 @@ public class FileIO {
         int fileType = FileUtility.UNDEFINED;
         int userDefinedFileType = 0;
         String userDefinedSuffix = null;
+        String uncompressedName = null;
         if ( (fileName == null) || (fileDir == null)) {
             return null;
         }
@@ -1469,7 +1470,7 @@ public class FileIO {
             }
 
             fileName = fileName.substring(0, index);
-            String uncompressedName = fileDir + fileName;
+            uncompressedName = fileDir + fileName;
             try {
                 out = new FileOutputStream(uncompressedName);
             } catch (IOException e) {
@@ -1524,7 +1525,7 @@ public class FileIO {
             }
 
             fileName = fileName.substring(0, index);
-            String uncompressedName = fileDir + fileName;
+            uncompressedName = fileDir + fileName;
             try {
                 out = new FileOutputStream(uncompressedName);
             } catch (IOException e) {
@@ -1595,7 +1596,7 @@ public class FileIO {
             }
 
             fileName = fileName.substring(0, index);
-            String uncompressedName = fileDir + fileName;
+            uncompressedName = fileDir + fileName;
             try {
                 out = new FileOutputStream(uncompressedName);
             } catch (IOException e) {
@@ -1632,6 +1633,7 @@ public class FileIO {
                 return null;
             } 
         } // else if (bz2unzip)
+     
         fileType = FileUtility.getFileType(fileName, fileDir, false, quiet); // set the fileType
 
         if (fileType == FileUtility.ERROR) {
@@ -1846,6 +1848,18 @@ public class FileIO {
 
                 default:
                     return null;
+            }
+            
+            if (unzip || gunzip || bz2unzip) {
+                // Delete the input uncompressed file
+                File uncompressedFile;
+                uncompressedFile = new File(uncompressedName);
+                try {
+                    uncompressedFile.delete();
+                } catch (SecurityException sc) {
+                    MipavUtil.displayError("Security error occurs while trying to delete " +
+                                           uncompressedName);
+                }    
             }
 
             if (image != null) {
