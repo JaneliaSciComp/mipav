@@ -26,9 +26,9 @@ void p_Color_Opacity_Texture
     uniform float     ABBlend,
     uniform sampler3D VolumeImageA : TEXUNIT1, 
     uniform sampler1D ColorMapA : TEXUNIT2,
-    uniform sampler3D VolumeImageB : TEXUNIT7, 
-    uniform sampler1D ColorMapB : TEXUNIT8,
-    uniform sampler3D SurfaceImage : TEXUNIT13
+    uniform sampler3D VolumeImageB : TEXUNIT6, 
+    uniform sampler1D ColorMapB : TEXUNIT7,
+    uniform sampler3D SurfaceImage : TEXUNIT11
 )
 {
     float4 color = tex3D(VolumeImageA,kBaseTCoord);

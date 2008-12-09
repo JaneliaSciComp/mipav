@@ -38,6 +38,9 @@ public class VolumeCalcEffect extends VolumeClipEffect
 
     /** stores the gradient magnitude filter on/off value: */
     private float[] m_afGradientMagnitude = new float[]{0,0,0,0};
+
+    /** stores the gradient magnitude filter on/off value: */
+    private float[] m_afMinMax = new float[]{0,0,0,0};
     
     /** Create a new VolumeCalcEffect shader with the VolumeImage data. This
      * fn creates the second-pass shader.
@@ -68,6 +71,8 @@ public class VolumeCalcEffect extends VolumeClipEffect
         GetPShader(0).SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
         GetPShader(0).SetTexture(0, kVolumeImage.GetVolumeTarget() );
         m_bIsColor = kVolumeImage.GetImage().isColorImage();
+        m_afMinMax[0] = (float)kVolumeImage.GetImage().getMin();
+        m_afMinMax[1] = (float)kVolumeImage.GetImage().getMax();
     }
 
     
@@ -92,6 +97,8 @@ public class VolumeCalcEffect extends VolumeClipEffect
         this.m_afClipEyeData  = kClip.m_afClipEyeData;
         this.m_afClipEyeInvData  = kClip.m_afClipEyeInvData;
         this.m_afClipArbData  = kClip.m_afClipArbData;
+        m_afMinMax[0] = (float)kVolumeImage.GetImage().getMin();
+        m_afMinMax[1] = (float)kVolumeImage.GetImage().getMax();
     }
 
     
@@ -111,8 +118,8 @@ public class VolumeCalcEffect extends VolumeClipEffect
         GetPShader(0).SetTexture(0, kVolumeImage.GetVolumeTarget() );
         GetPShader(0).SetImageName(1,kVolumeImage.GetOpacityMapTarget().GetImage().GetName());
         GetPShader(0).SetTexture(1, kVolumeImage.GetOpacityMapTarget() );
-        GetPShader(0).SetImageName(2,kVolumeImage.GetVolumeGMTarget().GetImage().GetName());
-        GetPShader(0).SetTexture(2, kVolumeImage.GetVolumeGMTarget() );
+        GetPShader(0).SetImageName(2,kVolumeImage.GetNormalMapTarget().GetImage().GetName());
+        GetPShader(0).SetTexture(2, kVolumeImage.GetNormalMapTarget() );
         GetPShader(0).SetImageName(3,kVolumeImage.GetOpacityMapGMTarget().GetImage().GetName());
         GetPShader(0).SetTexture(3, kVolumeImage.GetOpacityMapGMTarget() );
         SetGradientMagnitude( bGM );
@@ -123,6 +130,8 @@ public class VolumeCalcEffect extends VolumeClipEffect
         this.m_afClipEyeData  = kClip.m_afClipEyeData;
         this.m_afClipEyeInvData  = kClip.m_afClipEyeInvData;
         this.m_afClipArbData  = kClip.m_afClipArbData;
+        m_afMinMax[0] = (float)kVolumeImage.GetImage().getMin();
+        m_afMinMax[1] = (float)kVolumeImage.GetImage().getMax();
     }
 
 
@@ -154,6 +163,10 @@ public class VolumeCalcEffect extends VolumeClipEffect
             {
                 pkProgram.GetUC("IsColor").SetDataSource(new float[]{0,0,0,0});
             }
+        }  
+        if ( pkProgram.GetUC("MinMax") != null ) 
+        {
+            pkProgram.GetUC("MinMax").SetDataSource(m_afMinMax);
         }  
 
         SetGradientMagnitude();
@@ -193,6 +206,22 @@ public class VolumeCalcEffect extends VolumeClipEffect
         m_afExtents[0] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[0])-1);
         m_afExtents[1] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[1])-1);
         m_afExtents[2] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[2])-1);
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("StepSize") != null ) 
+        {
+            pkProgram.GetUC("StepSize").SetDataSource(m_afExtents);
+            //System.err.println( m_afExtents[0] + " " + m_afExtents[1] + " " + m_afExtents[2] );
+        }
+    }
+    
+    /** Sets the step size shader parameter.
+     * @param kVolumeImage the shared volume data and textures.
+     */
+    public void SetStepSize(float fX, float fY, float fZ)
+    {
+        m_afExtents[0] = fX;
+        m_afExtents[1] = fY;
+        m_afExtents[2] = fZ;
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("StepSize") != null ) 
         {

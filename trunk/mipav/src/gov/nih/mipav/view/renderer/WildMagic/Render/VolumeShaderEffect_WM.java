@@ -428,147 +428,27 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
          * is implemented in the VolumeShaderVertex.cg file: */        
         VertexShader pkVShader = new VertexShader("VolumeShaderVertex");
 
-        /* The following code block creates the MIP pixel shader, implemented
-         * in VolumeShaderMIP.cg. It also sets up and stores references to the
-         * texture images used by the pixel shader. The MIP pixel-shader uses
-         * 6 textures. The SceneImage texture, storing the texture-coordinates
-         * of the back-facing polygons. VolumeImageA texture stores the
-         * ModelImage data. ColorMapA stores the color
-         * lookup-table. OpacityMapA stores the opacity transfer
-         * function. VolumeImageA_GM has the gradient magnitude data for the
-         * ModelImage. OpacityMapA_GM has the gradient magnitude opacity
-         * transfer function.  The references m_kVolumeTargetA,
-         * m_kColorMapTargetA, m_kOpacityMapTargetA, m_kVolumeTargetA_GM, and
-         * m_kOpacityTargetA_GM are stored so the images can be re-used by the
-         * other pixel shaders. */
+        /* The following creates the pixel shaders, implemented in
+         * VolumeShader***.cg. It also sets up and stores references to the
+         * texture images used by the pixel shader. The pixel-shader uses 11
+         * textures. The SceneImage texture, storing the texture-coordinates
+         * of the back-facing polygons. VolumeImage* texture stores the
+         * ModelImage data. ColorMap* stores the color
+         * lookup-table. OpacityMap* stores the opacity transfer
+         * function. OpacityMap*_GM has the gradient magnitude opacity
+         * transfer function.  NormalMap* stores the normal vector and
+         * gradient magnitude. */
         m_kPShaderMIP = new PixelShader("VolumeShaderMIP");
-        m_kPShaderMIP.SetTextureQuantity(11);
-        m_kPShaderMIP.SetImageName(0,"SceneImage");
-        m_kPShaderMIP.SetTexture(0,m_kSceneTarget);
-        m_kPShaderMIP.SetImageName(1,"VolumeImageA");
-        m_kPShaderMIP.SetTexture(1, m_kVolumeImageA.GetVolumeTarget() );
-        m_kPShaderMIP.SetImageName(2, "ColorMapA");
-        m_kPShaderMIP.SetTexture(2, m_kVolumeImageA.GetColorMapTarget() );
-        m_kPShaderMIP.SetImageName(3, "OpacityMapA");
-        m_kPShaderMIP.SetTexture(3, m_kVolumeImageA.GetOpacityMapTarget() );
-        m_kPShaderMIP.SetImageName(4,"VolumeImageA_GM");
-        m_kPShaderMIP.SetTexture(4, m_kVolumeImageA.GetVolumeGMTarget());
-        m_kPShaderMIP.SetImageName(5, "OpacityMapA_GM");
-        m_kPShaderMIP.SetTexture(5, m_kVolumeImageA.GetOpacityMapGMTarget() );
-        if ( m_kVolumeImageB != null )
-        {
-            m_kPShaderMIP.SetImageName(6,"VolumeImageB");
-            m_kPShaderMIP.SetTexture(6,m_kVolumeImageB.GetVolumeTarget());
-            m_kPShaderMIP.SetImageName(7, "ColorMapB");
-            m_kPShaderMIP.SetTexture(7,m_kVolumeImageB.GetColorMapTarget());
-            m_kPShaderMIP.SetImageName(8, "OpacityMapB");
-            m_kPShaderMIP.SetTexture(8,m_kVolumeImageB.GetOpacityMapTarget());
-            m_kPShaderMIP.SetImageName(9,"VolumeImageB_GM");
-            m_kPShaderMIP.SetTexture(9,m_kVolumeImageB.GetVolumeGMTarget());
-            m_kPShaderMIP.SetImageName(10, "OpacityMapB_GM");
-            m_kPShaderMIP.SetTexture(10, m_kVolumeImageB.GetOpacityMapGMTarget());
-        }
+        initTextures(m_kPShaderMIP);
 
-        /* The following block creates the DDR volume shader, implemented in
-         * VolumShaderDDR.cg. The DDR shader uses the same texture images and
-         * data as the MIP shader. The textures are not duplicated in CPU or
-         * GPU memory. */
         m_kPShaderDDR = new PixelShader("VolumeShaderDDR");
-        m_kPShaderDDR.SetTextureQuantity(11);
-        m_kPShaderDDR.SetImageName(0,"SceneImage");
-        m_kPShaderDDR.SetTexture(0,m_kSceneTarget);
-        m_kPShaderDDR.SetImageName(1,"VolumeImageA");
-        m_kPShaderDDR.SetTexture(1,m_kVolumeImageA.GetVolumeTarget());
-        m_kPShaderDDR.SetImageName(2, "ColorMapA");
-        m_kPShaderDDR.SetTexture(2,m_kVolumeImageA.GetColorMapTarget());
-        m_kPShaderDDR.SetImageName(3, "OpacityMapA");
-        m_kPShaderDDR.SetTexture(3,m_kVolumeImageA.GetOpacityMapTarget());
-        m_kPShaderDDR.SetImageName(4,"VolumeImageA_GM");
-        m_kPShaderDDR.SetTexture(4,m_kVolumeImageA.GetVolumeGMTarget());
-        m_kPShaderDDR.SetImageName(5, "OpacityMapA_GM");
-        m_kPShaderDDR.SetTexture(5, m_kVolumeImageA.GetOpacityMapGMTarget());
-        if ( m_kVolumeImageB != null )
-        {
-            m_kPShaderDDR.SetImageName(6,"VolumeImageB");
-            m_kPShaderDDR.SetTexture(6,m_kVolumeImageB.GetVolumeTarget());
-            m_kPShaderDDR.SetImageName(7, "ColorMapB");
-            m_kPShaderDDR.SetTexture(7,m_kVolumeImageB.GetColorMapTarget());
-            m_kPShaderDDR.SetImageName(8, "OpacityMapB");
-            m_kPShaderDDR.SetTexture(8,m_kVolumeImageB.GetOpacityMapTarget());
-            m_kPShaderDDR.SetImageName(9,"VolumeImageB_GM");
-            m_kPShaderDDR.SetTexture(9,m_kVolumeImageB.GetVolumeGMTarget());
-            m_kPShaderDDR.SetImageName(10, "OpacityMapB_GM");
-            m_kPShaderDDR.SetTexture(10, m_kVolumeImageB.GetOpacityMapGMTarget());
-        }
+        initTextures(m_kPShaderDDR);
 
-        /* The following block creates the Composite volume shader,
-         * implemented in VolumShaderCMP.cg. The Composite shader uses the
-         * same texture images and data as the MIP shader. The textures are
-         * not duplicated in CPU or GPU memory. */
         m_kPShaderCMP = new PixelShader("VolumeShaderCMP");
-        m_kPShaderCMP.SetTextureQuantity(11);
-        m_kPShaderCMP.SetImageName(0,"SceneImage");
-        m_kPShaderCMP.SetTexture(0,m_kSceneTarget);
-        m_kPShaderCMP.SetImageName(1,"VolumeImageA");
-        m_kPShaderCMP.SetTexture(1,m_kVolumeImageA.GetVolumeTarget());
-        m_kPShaderCMP.SetImageName(2, "ColorMapA");
-        m_kPShaderCMP.SetTexture(2,m_kVolumeImageA.GetColorMapTarget());
-        m_kPShaderCMP.SetImageName(3, "OpacityMapA");
-        m_kPShaderCMP.SetTexture(3,m_kVolumeImageA.GetOpacityMapTarget());
-        m_kPShaderCMP.SetImageName(4,"VolumeImageA_GM");
-        m_kPShaderCMP.SetTexture(4,m_kVolumeImageA.GetVolumeGMTarget());
-        m_kPShaderCMP.SetImageName(5, "OpacityMapA_GM");
-        m_kPShaderCMP.SetTexture(5, m_kVolumeImageA.GetOpacityMapGMTarget());
-        if ( m_kVolumeImageB != null )
-        {
-            m_kPShaderCMP.SetImageName(6,"VolumeImageB");
-            m_kPShaderCMP.SetTexture(6,m_kVolumeImageB.GetVolumeTarget());
-            m_kPShaderCMP.SetImageName(7, "ColorMapB");
-            m_kPShaderCMP.SetTexture(7,m_kVolumeImageB.GetColorMapTarget());
-            m_kPShaderCMP.SetImageName(8, "OpacityMapB");
-            m_kPShaderCMP.SetTexture(8,m_kVolumeImageB.GetOpacityMapTarget());
-            m_kPShaderCMP.SetImageName(9,"VolumeImageB_GM");
-            m_kPShaderCMP.SetTexture(9,m_kVolumeImageB.GetVolumeGMTarget());
-            m_kPShaderCMP.SetImageName(10, "OpacityMapB_GM");
-            m_kPShaderCMP.SetTexture(10, m_kVolumeImageB.GetOpacityMapGMTarget());
-        }
+        initTextures(m_kPShaderCMP);
 
-        /* The following block creates the Surface and Composite Surface
-         * volume shader, both are implemented in a single pixel program in
-         * VolumShaderSUR.cg. The shader uses the same texture images and data
-         * as the MIP shader, with the addition of another 3D volume texture
-         * storing the normal data. */
         m_kPShaderSUR = new PixelShader("VolumeShaderSUR");
-        m_kPShaderSUR.SetTextureQuantity(13);
-        m_kPShaderSUR.SetImageName(0,"SceneImage");
-        m_kPShaderSUR.SetTexture(0,m_kSceneTarget);
-        m_kPShaderSUR.SetImageName(1,"VolumeImageA");
-        m_kPShaderSUR.SetTexture(1,m_kVolumeImageA.GetVolumeTarget());
-        m_kPShaderSUR.SetImageName(2, "ColorMapA");
-        m_kPShaderSUR.SetTexture(2,m_kVolumeImageA.GetColorMapTarget());
-        m_kPShaderSUR.SetImageName(3, "OpacityMapA");
-        m_kPShaderSUR.SetTexture(3,m_kVolumeImageA.GetOpacityMapTarget());
-        m_kPShaderSUR.SetImageName(4,"VolumeImageA_GM");
-        m_kPShaderSUR.SetTexture(4,m_kVolumeImageA.GetVolumeGMTarget());
-        m_kPShaderSUR.SetImageName(5, "OpacityMapA_GM");
-        m_kPShaderSUR.SetTexture(5, m_kVolumeImageA.GetOpacityMapGMTarget());
-        m_kPShaderSUR.SetImageName(6, "NormalMapA" );
-        m_kPShaderSUR.SetTexture(6, m_kVolumeImageA.GetNormalMapTarget());
-        if ( m_kVolumeImageB != null )
-        {
-            m_kPShaderSUR.SetImageName(7,"VolumeImageB");
-            m_kPShaderSUR.SetTexture(7,m_kVolumeImageB.GetVolumeTarget());
-            m_kPShaderSUR.SetImageName(8, "ColorMapB");
-            m_kPShaderSUR.SetTexture(8,m_kVolumeImageB.GetColorMapTarget());
-            m_kPShaderSUR.SetImageName(9, "OpacityMapB");
-            m_kPShaderSUR.SetTexture(9,m_kVolumeImageB.GetOpacityMapTarget());
-            m_kPShaderSUR.SetImageName(10,"VolumeImageB_GM");
-            m_kPShaderSUR.SetTexture(10,m_kVolumeImageB.GetVolumeGMTarget());
-            m_kPShaderSUR.SetImageName(11, "OpacityMapB_GM");
-            m_kPShaderSUR.SetTexture(11, m_kVolumeImageB.GetOpacityMapGMTarget());
-            m_kPShaderSUR.SetImageName(12, "NormalMapB");
-            m_kPShaderSUR.SetTexture(12, m_kVolumeImageB.GetNormalMapTarget());
-        }
+        initTextures(m_kPShaderSUR);
          
         /* The vertex shader is set, it never changes. The first parameter is
          * the pass number used when applying different shaders during
@@ -661,4 +541,36 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
             pkProgram.GetUC("SelfShadow").SetDataSource(m_afSelfShadow);
         }
     }
+
+    private void initTextures( PixelShader kPShader )
+    {
+        int iTex = 0;
+        kPShader.SetTextureQuantity(11);
+        kPShader.SetImageName(iTex,"SceneImage");
+        kPShader.SetTexture(iTex++,m_kSceneTarget);
+        kPShader.SetImageName(iTex,"VolumeImageA");
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
+        kPShader.SetImageName(iTex, "ColorMapA");
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget() );
+        kPShader.SetImageName(iTex, "OpacityMapA");
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapTarget() );
+        kPShader.SetImageName(iTex, "OpacityMapA_GM");
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapGMTarget() );
+        kPShader.SetImageName(iTex, "NormalMapA" );
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget());
+        if ( m_kVolumeImageB != null )
+        {
+            kPShader.SetImageName(iTex,"VolumeImageB");
+            kPShader.SetTexture(iTex++,m_kVolumeImageB.GetVolumeTarget());
+            kPShader.SetImageName(iTex, "ColorMapB");
+            kPShader.SetTexture(iTex++,m_kVolumeImageB.GetColorMapTarget());
+            kPShader.SetImageName(iTex, "OpacityMapB");
+            kPShader.SetTexture(iTex++,m_kVolumeImageB.GetOpacityMapTarget());
+            kPShader.SetImageName(iTex, "OpacityMapB_GM");
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapGMTarget());
+            kPShader.SetImageName(iTex, "NormalMapB");
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetNormalMapTarget());
+        }
+    }
+
 }

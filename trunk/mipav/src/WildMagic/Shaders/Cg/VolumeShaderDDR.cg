@@ -45,13 +45,13 @@ void p_VolumeShaderDDR(  in float3 inTexCoord1    : TEXCOORD0,
                          uniform sampler3D VolumeImageA : TEXUNIT1, 
                          uniform sampler1D ColorMapA : TEXUNIT2, 
                          uniform sampler1D OpacityMapA : TEXUNIT3, 
-                         uniform sampler3D VolumeImageA_GM : TEXUNIT4, 
-                         uniform sampler1D OpacityMapA_GM : TEXUNIT5, 
-                         uniform sampler3D VolumeImageB : TEXUNIT7, 
-                         uniform sampler1D ColorMapB : TEXUNIT8, 
-                         uniform sampler1D OpacityMapB : TEXUNIT9, 
-                         uniform sampler3D VolumeImageB_GM : TEXUNIT10, 
-                         uniform sampler1D OpacityMapB_GM : TEXUNIT11, 
+                         uniform sampler1D OpacityMapA_GM : TEXUNIT4, 
+                         uniform sampler3D NormalMapA: TEXUNIT5, 
+                         uniform sampler3D VolumeImageB : TEXUNIT6, 
+                         uniform sampler1D ColorMapB : TEXUNIT7, 
+                         uniform sampler1D OpacityMapB : TEXUNIT8, 
+                         uniform sampler1D OpacityMapB_GM : TEXUNIT9, 
+                         uniform sampler3D NormalMapB: TEXUNIT10, 
                          uniform float ShowB,
                          uniform float ABBlend,
                          uniform float blend,
@@ -123,9 +123,9 @@ void p_VolumeShaderDDR(  in float3 inTexCoord1    : TEXCOORD0,
     float opacityB = 0;
 
     // Gradient magnitude values along the ray:
-    float4 colorGM = (0,0,0,0);
+    float colorGM = 0;
     float opacityGM = 0;
-    float4 colorGM_B = (0,0,0,0);
+    float colorGM_B = 0;
     float opacityGM_B = 0;
 
     float alpha_sample = stepsize;
@@ -172,8 +172,8 @@ void p_VolumeShaderDDR(  in float3 inTexCoord1    : TEXCOORD0,
                 opacity = tex1D(OpacityMapA,color.r).r;
                 if ( GradientMagnitude != 0 )
                 {
-                    colorGM = tex3D(VolumeImageA_GM,position);
-                    opacityGM = tex1D(OpacityMapA_GM,colorGM.r).r;
+                    colorGM = tex3D(NormalMapA,position).a;
+                    opacityGM = tex1D(OpacityMapA_GM,colorGM).r;
                     opacity = opacity * opacityGM;
                 }
 
@@ -193,8 +193,8 @@ void p_VolumeShaderDDR(  in float3 inTexCoord1    : TEXCOORD0,
                     opacityB = tex1D(OpacityMapB,color.r).r;
                     if ( GradientMagnitudeB != 0 )
                     {
-                        colorGM_B = tex3D(VolumeImageB_GM,position);
-                        opacityGM_B = tex1D(OpacityMapB_GM,colorGM_B.r).r;
+                        colorGM_B = tex3D(NormalMapB,position).a;
+                        opacityGM_B = tex1D(OpacityMapB_GM,colorGM_B).r;
                         opacityB = opacityB * opacityGM_B;
                     }
                     if ( IsColorB != 0 )

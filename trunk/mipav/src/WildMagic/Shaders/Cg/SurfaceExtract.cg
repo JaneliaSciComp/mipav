@@ -13,121 +13,64 @@ void v_SurfaceExtract
     kOutBaseTCoord = kInBaseTCoord;
 }
 
-/**
- * Clip the volume based on the x,y,z axes.
- * returns 1 when the volume is clipped, 0 when not clipped.
- */
-bool myClip(float3 vec,
-            float clipX,
-            float clipXInv,
-            float clipY,
-            float clipYInv,
-            float clipZ,
-            float clipZInv )
+void p_SurfaceExtract(  
+                      in float3         kBaseTCoord : TEXCOORD0,
+                      out float4        kPixelColor : COLOR,
+                      uniform float4    StepSize,
+                      uniform sampler3D VolumeImageA : TEXUNIT1, 
+                      uniform sampler1D OpacityMapA : TEXUNIT3, 
+                      uniform float4x4 WVPMatrix)
 {
-    if ( vec.x > clipX )
-    {
-        return 1;
-    }
-    if ( vec.x < clipXInv )
-    {
-        return 1;
-    }
-    if ( vec.y > clipY )
-    {
-        return 1;
-    }
-    if ( vec.y < clipYInv )
-    {
-        return 1;
-    }
-    if ( vec.z > clipZ )
-    {
-        return 1;
-    }
-    if ( vec.z < clipZInv )
-    {
-        return 1;
-    }
-    return 0;
-}
+    float3 index3;
+    float stepX[3];    stepX[0] = -StepSize.x;    stepX[1] = 0;    stepX[2] = StepSize.x;
+    float stepY[3];    stepY[0] = -StepSize.y;    stepY[1] = 0;    stepY[2] = StepSize.y;
+    float stepZ[3];    stepZ[0] = -StepSize.z;    stepZ[1] = 0;    stepZ[2] = StepSize.z;
 
-void p_SurfaceExtract(  in float3 inTexCoord1    : TEXCOORD0,
-                     out float4 kColor	    : COLOR0,
-                     uniform sampler3D VolumeImageA : TEXUNIT1, 
-                     uniform sampler1D OpacityMapA : TEXUNIT3, 
-                        uniform sampler3D VolumeImageA_GM : TEXUNIT4, 
-                        uniform sampler1D OpacityMapA_GM : TEXUNIT5, 
-                        uniform float GradientMagnitude,
-                     uniform float DoClip,
-                     uniform float clipX,
-                     uniform float clipXInv,
-                     uniform float clipY,
-                     uniform float clipYInv,
-                     uniform float clipZ,
-                     uniform float clipZInv,
-                     uniform float4 clipArb,
-                     uniform float4 clipEye,
-                     uniform float4 clipEyeInv,
-                     uniform float4x4 WVPMatrix)
-{
-    // current position along the ray: 
-    float3 position = inTexCoord1;
+    int i000 = 0;
+    int i100 = 1;
+    int i010 = 2;
+    int i110 = 3;
+    int i001 = 4;
+    int i101 = 5;
+    int i011 = 6;
+    int i111 = 7;
 
-    bool bClipped = false;
-    float4 color = (0,0,0,0);
-    float4 colorGM = (0,0,0,0);
+    float3 cube[8];
+    cube[ i000 ] = kBaseTCoord; // x,y,z
+    cube[ i100 ] = kBaseTCoord; cube[i100].x += StepSize.x; // x+1,y,z
+    cube[ i010 ] = kBaseTCoord; cube[i010].y += StepSize.y; // x,y+1,z
+    cube[ i110 ] = kBaseTCoord; cube[i110].x += StepSize.x; cube[i110].y += StepSize.y; //x+1,y+1,z
+    cube[ i001 ] = kBaseTCoord; cube[i001].z += StepSize.z; //x,y,z+1
+    cube[ i101 ] = kBaseTCoord; cube[i101].x += StepSize.x; cube[i101].z += StepSize.z; //x+1,y,z+1
+    cube[ i011 ] = kBaseTCoord; cube[i011].y += StepSize.y; cube[i011].z += StepSize.z; //x,y+1,z+1 
+    cube[ i111 ] = kBaseTCoord; cube[i111].x += StepSize.x; cube[i111].y += StepSize.y; cube[i111].z += StepSize.z; //x+1,y+1,z+1
+
+
+    float3 color[8];
     float opacity = 0;
-    float opacityGM = 0;
 
-    // axis-aligned clipping:
-    if ( (DoClip != 0) && myClip( position, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
+    int iShow = 8;
+    for ( int i = 0; i < 8; i++ )
     {
-        bClipped = true;
-    }
-    else
-    {
-        bClipped = false;
-        if ( DoClip != 0 )
-        {
-            // eye clipping and arbitrary clipping:
-            float4 aPosition = float4(0,0,0,0);
-            aPosition.xyz = position.xyz - (.5,.5,.5);
-            aPosition = mul( aPosition, WVPMatrix );
-            aPosition.xyz = aPosition.xyz + (.5,.5,.5);
-            float fDot = dot( aPosition.xyz, clipEye.xyz );
-            float fDotInv = dot( aPosition.xyz, clipEyeInv.xyz );
-            float fDotArb = dot( position.xyz, clipArb.xyz );
-            if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w) )
-            {
-                bClipped = true;
-            }
-        }
-    }
-    kColor.a = 1;
-    if ( bClipped )
-    {
-        kColor.r = 0;
-        kColor.g = 0;
-        kColor.b = 0;
-    }
-    // The value is not clipped, compute the color:
-    else if ( !bClipped )
-    {
-        color = tex3D(VolumeImageA,position);
-        opacity = tex1D(OpacityMapA,color.r).r;
-        if ( GradientMagnitude != 0 )
-        {
-            colorGM = tex3D(VolumeImageA_GM,position);
-            opacityGM = tex1D(OpacityMapA_GM,colorGM.r).r;
-            opacity = opacity * opacityGM;
-        }
+        color[i] = tex3D(VolumeImageA,cube[i]);
+        opacity = tex1D(OpacityMapA,color[i].r).r;
         // If the opacity is not zero:
-        if ( opacity > 0 )
+        if ( opacity <= 0 )
         {
-            kColor.r = 1;
-            kColor.g = 1;
-            kColor.b = 1;
+            color[i].r = 0;
+            color[i].g = 0;
+            color[i].b = 0;
+            iShow--;
         }
+    }
+
+    kPixelColor.r = color[i000].r;
+    kPixelColor.g = color[i000].g;
+    kPixelColor.b = color[i000].b;
+    //if ( (iShow > 0) && (iShow < 8 ) )
+    if ( iShow != 0 )
+    {
+        kPixelColor.a = 1;
     }
 }
+

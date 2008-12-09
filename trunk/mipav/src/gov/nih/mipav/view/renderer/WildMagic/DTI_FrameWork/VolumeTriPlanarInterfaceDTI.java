@@ -384,11 +384,11 @@ implements ChangeListener {
             triImagePanel.setMinimumSize(new Dimension(150, 50));
             
             TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
-            m_kVolumeImageA.UpdateImages(kTransfer, 0);          
+            m_kVolumeImageA.UpdateImages(kTransfer, 0, null);          
             if ( imageB != null )
             {
                 kTransfer = m_kVolOpacityPanel.getCompB().getOpacityTransferFunction();
-                m_kVolumeImageB.UpdateImages(kTransfer, 0);
+                m_kVolumeImageB.UpdateImages(kTransfer, 0, null);
             }
         } finally {
             progressBar.dispose();

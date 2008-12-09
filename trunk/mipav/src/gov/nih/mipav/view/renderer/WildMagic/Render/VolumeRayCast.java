@@ -201,7 +201,7 @@ public class VolumeRayCast extends VolumeObject
         m_pkSceneTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
         m_pkSceneTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
 
-        m_pkSceneTarget.SetOffscreenTexture(true);
+        //m_pkSceneTarget.SetOffscreenTexture(true);
         //m_pkSceneTarget.SetDepthCompare (DepthCompare.DC_LESS);
 
         
@@ -214,7 +214,7 @@ public class VolumeRayCast extends VolumeObject
 
         // Create the RGBA frame-buffer object to be bound to the scene polygon.
         m_pkPBuffer = new OpenGLFrameBuffer(eFormat,eDepth,eStencil,
-                eBuffering,eMultisampling,kRenderer,m_pkSceneTarget,arg0);
+                eBuffering,eMultisampling,kRenderer,m_pkSceneTarget,arg0,0);
         assert(m_pkPBuffer != null);
 
         m_kScene.UpdateGS();

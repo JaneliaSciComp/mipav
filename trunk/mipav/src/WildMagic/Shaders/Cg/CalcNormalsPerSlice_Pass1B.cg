@@ -23,6 +23,88 @@ void p_CalcNormalsPerSlice_Pass1B
     uniform sampler3D VolumeImageB : TEXUNIT7
     )
 {
+    float3 gaussian[3][3][3];
+    // -z
+    gaussian[0][0][0].rgb = (0.0025181598, -0.0025181598, -0.0025181598);
+    gaussian[0][0][1].rgb = (-0.0, -0.018606825, -0.018606825);
+    gaussian[0][0][2].rgb = (-0.0025181598, -0.0025181598, -0.0025181598);
+
+    gaussian[0][1][0].rgb = (0.018606825, 0.0, -0.018606825);
+    gaussian[0][1][1].rgb = (-0.0, 0.0, -0.13748686);
+    gaussian[0][1][2].rgb = (-0.018606825, 0.0, -0.018606825);
+
+    gaussian[0][2][0].rgb = (0.0025181598, 0.0025181598, -0.0025181598);
+    gaussian[0][2][1].rgb = (-0.0, 0.018606825, -0.018606825);
+    gaussian[0][2][2].rgb = (-0.0025181598, 0.0025181598, -0.0025181598);
+
+
+    // z
+    gaussian[1][0][0].rgb = (0.018606825, -0.018606825, 0.0);
+    gaussian[1][0][1].rgb = (-0.0, -0.13748686, 0.0);
+    gaussian[1][0][2].rgb = (-0.018606825, -0.018606825, 0.0);
+
+    gaussian[1][1][0].rgb = (0.13748686, 0.0, 0.0);
+    gaussian[1][1][1].rgb = (-0.0, 0.0, 0.0);
+    gaussian[1][1][2].rgb = (-0.13748686, 0.0, 0.0);
+
+    gaussian[1][2][0].rgb = (0.018606825, 0.018606825, 0.0);
+    gaussian[1][2][1].rgb = (-0.0, 0.13748686, 0.0);
+    gaussian[1][2][2].rgb = (-0.018606825, 0.018606825, 0.0);
+
+
+    // +z
+    gaussian[2][0][0].rgb = (0.0025181598, -0.0025181598, 0.0025181598);
+    gaussian[2][0][1].rgb = (-0.0, -0.018606825, 0.018606825);
+    gaussian[2][0][2].rgb = (-0.0025181598, -0.0025181598, 0.0025181598);
+
+    gaussian[2][1][0].rgb = (0.018606825, 0.0, 0.018606825);
+    gaussian[2][1][1].rgb = (-0.0, 0.0, 0.13748686);
+    gaussian[2][1][2].rgb = (-0.018606825, 0.0, 0.018606825);
+
+    gaussian[2][2][0].rgb = (0.0025181598, 0.0025181598, 0.0025181598);
+    gaussian[2][2][1].rgb = (-0.0, 0.018606825, 0.018606825);
+    gaussian[2][2][2].rgb = (-0.0025181598, 0.0025181598, 0.0025181598);
+
+    float3 index3;
+    float stepX[3];    stepX[0] = -StepSize.x;    stepX[1] = 0;    stepX[2] = StepSize.x;
+    float stepY[3];    stepY[0] = -StepSize.y;    stepY[1] = 0;    stepY[2] = StepSize.y;
+    float stepZ[3];    stepZ[0] = -StepSize.z;    stepZ[1] = 0;    stepZ[2] = StepSize.z;
+
+    float3 color3;
+    float3 colorOut3 = (0,0,0);
+    float3 norm3 = (0,0,0);
+    for ( int z = 0; z < 3; z++ )
+    {
+        for ( int y = 0; y < 3; y++ )
+        {
+            for ( int x = 0; x < 3; x++ )
+            {
+                index3 = kBaseTCoord;
+                index3.x += stepX[x];
+                index3.y += stepY[y];
+                index3.z += stepZ[z];
+                color3 = tex3D( VolumeImageB, index3 ).xyz;
+                colorOut3.x += (color3.x * gaussian[z][y][x].x);
+                colorOut3.y += (color3.y * gaussian[z][y][x].y);
+                colorOut3.z += (color3.z * gaussian[z][y][x].z);
+                norm3.x += abs(gaussian[z][y][x].x);
+                norm3.y += abs(gaussian[z][y][x].y);
+                norm3.z += abs(gaussian[z][y][x].z);
+            }
+        }
+    }
+
+    colorOut3.x /= norm3.x;
+    colorOut3.y /= norm3.y;
+    colorOut3.z /= norm3.z;
+    float val = dot(colorOut3,colorOut3);
+    val = sqrt(val);
+    kPixelColor.r = val;
+    kPixelColor.g = val;
+    kPixelColor.b = val;
+    kPixelColor.a = val;
+
+
     float3 indexX1 = kBaseTCoord; indexX1.y -= StepSize.y; indexX1.x -= StepSize.x;
     float3 indexX2 = kBaseTCoord; indexX2.y -= StepSize.y; indexX2.x += StepSize.x;
     float3 indexX3 = kBaseTCoord;                          indexX3.x -= StepSize.x;

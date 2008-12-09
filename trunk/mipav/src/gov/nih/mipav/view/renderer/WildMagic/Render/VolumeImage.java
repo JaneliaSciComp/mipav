@@ -1,18 +1,18 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.*;
-
-import WildMagic.LibGraphics.Rendering.*;
-
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransferFunction;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.algorithms.utilities.*;
+import java.io.IOException;
+import java.nio.Buffer;
+
+import WildMagic.LibGraphics.Rendering.GraphicsImage;
+import WildMagic.LibGraphics.Rendering.Texture;
 
 
 public class VolumeImage
@@ -20,18 +20,11 @@ public class VolumeImage
     /** Reference to ModelImage image */
     private ModelImage m_kImage;
 
-    /** Gradient magnitude for m_kImage */
-    private ModelImage m_kImage_GM = null;
     /** GraphicsImage contains GM opacity transfer function data: */
     private GraphicsImage m_kOpacityMap_GM = null;
     /** Texture contains texture filter modes and GraphicsImage for opacity
      * transfer function: */
     private Texture m_kOpacityMapTarget_GM = null;
-    /** GraphicsImage contains volume data for gradient magnitude */
-    private GraphicsImage m_kVolume_GM = null;
-    /** Texture contains the texture filter modes and GraphicsImage for
-     * gradient magnitude */
-    private Texture m_kVolumeTarget_GM = null;
 
     /** Data storage for volume: */
     private GraphicsImage m_kVolume;
@@ -81,7 +74,8 @@ public class VolumeImage
         /* Map the ModelImage volume data to a texture image, including for
          * the ModelImage gradient magnitude data: */
         m_kVolume = UpdateData(m_kImage, null, m_kVolumeTarget, m_bByte, kPostfix );
-
+        //new ViewJFrameImage(CreateImageFromTexture(m_kVolume), null, new java.awt.Dimension(610, 200), false);
+        
         m_kVolumeTarget = new Texture();
         m_kVolumeTarget.SetImage(m_kVolume);
         m_kVolumeTarget.SetShared(true);
@@ -90,10 +84,6 @@ public class VolumeImage
         m_kVolumeTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
         
-        
-        m_kImage_GM = CalcHistogramsGM( m_kImage );
-        m_kVolume_GM = UpdateData(m_kImage_GM, null, m_kVolumeTarget_GM, m_bByte, new String(kPostfix + "_GM") );
-
         m_kColorMapTarget = new Texture();
         m_kColorMapTarget.SetShared(true);
 
@@ -103,7 +93,7 @@ public class VolumeImage
         int iXBound = m_kImage.getExtents()[0];
         int iYBound = m_kImage.getExtents()[1];
         int iZBound = m_kImage.getExtents()[2];
-        m_kNormal = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,
+        m_kNormal = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,
                                        iXBound,iYBound,iZBound,(byte[])null,
                                        new String("NormalMap"+kPostfix));
         m_kNormalMapTarget = new Texture();
@@ -113,13 +103,6 @@ public class VolumeImage
         m_kNormalMapTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
         m_kNormalMapTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         m_kNormalMapTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
-
-        m_kVolumeTarget_GM = new Texture();
-        m_kVolumeTarget_GM.SetShared(true);
-        m_kVolumeTarget_GM.SetFilterType(Texture.FilterType.LINEAR);
-        m_kVolumeTarget_GM.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
-        m_kVolumeTarget_GM.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
-        m_kVolumeTarget_GM.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
 
         m_kOpacityMapTarget_GM = new Texture();
         m_kOpacityMapTarget_GM.SetShared(true);
@@ -139,6 +122,46 @@ public class VolumeImage
         InitScale();
         
         m_kPostfix = new String(kPostfix);
+        /*
+        float[] afGaussX = new float[3*3*3];
+        int[] aiExtents = new int[]{3,3,3};
+        float[] afSigmas = new float[]{.5f, .5f, .5f};
+        int[] aiOrder = new int[]{1,0,0};
+        GenerateGaussian Gx = new GenerateGaussian(afGaussX, aiExtents, afSigmas, aiOrder);
+        Gx.calc(false);
+
+        float[] afGaussY = new float[3*3*3];
+        aiOrder[0] = 0;
+        aiOrder[1] = 1;
+        GenerateGaussian Gy = new GenerateGaussian(afGaussY, aiExtents, afSigmas, aiOrder);
+        Gy.calc(true);       
+
+        float[] afGaussZ = new float[3*3*3];
+        aiOrder[0] = 0;
+        aiOrder[1] = 0;
+        aiOrder[2] = 1;
+        GenerateGaussian Gz = new GenerateGaussian(afGaussZ, aiExtents, afSigmas, aiOrder);
+        Gz.calc(true);
+
+        for ( int i = 0; i < aiExtents[0]; i++ )
+        {
+            for ( int j = 0; j < aiExtents[1]; j++ )
+            {
+                for ( int k = 0; k < aiExtents[2]; k++ )
+                {
+                    System.err.println( "gaussian[" + i + "][" + j + "][" + k + "].rgb = (" +
+                            afGaussX[i*aiExtents[1]*aiExtents[2] + j*aiExtents[2] + k] + ", " + 
+                            afGaussY[i*aiExtents[1]*aiExtents[2] + j*aiExtents[2] + k] + ", " + 
+                            afGaussZ[i*aiExtents[1]*aiExtents[2] + j*aiExtents[2] + k] + ");" ); 
+                    		
+                   
+                }
+                System.err.println( );
+            }
+            System.err.println( );
+            System.err.println( );
+        }
+        */
     }
 
     /**
@@ -166,37 +189,28 @@ public class VolumeImage
     }
 
     /**
-     * Initialize the textures for the opacity lookup table.
-     * @param kImage the ModelImage the opacity transfer function applies to.
-     * @param kPostfix the string postfix to concatenate to the "OpacityMap" image name.
-     * @return GraphicsImage, the new GraphicsImage storing the colormap lookup table.
+     * Sets the Texture object containing the color lookup table based on the ModelRGB.
+     * @param kTexture the Texture object containing the colormap GraphicsImage.
+     * @param kImage the GraphicsImage containing the colormap data.
+     * @param kRGBT the new ModelRGB.
      */
-    public GraphicsImage InitOpacityMap (ModelImage kImage, String kPostFix )
+    public static void SetRGBT( Texture kTexture, GraphicsImage kImage, ModelRGB kRGBT )
     {
-        int iLutHeight = 256;
-        float[] afData = new float[iLutHeight];
-        float fRange = (float)(kImage.getMax() - kImage.getMin());
-        float fStep = fRange / iLutHeight;
-        float fDataValue = (float)kImage.getMin();
-        for (int i = 0; i < iLutHeight; i++) {
-            afData[i] = (float)( iLutHeight * (kImage.getMax() - fDataValue) / fRange);
-            fDataValue += fStep;
+        if ( kRGBT == null )
+        {
+            return;
         }
-
-        return new GraphicsImage(
-                                 GraphicsImage.FormatMode.IT_L8,iLutHeight,afData,
-                                 new String( "OpacityMap" + kPostFix ));
-    }
-
-    /**
-     * Update the image data.
-     * @param kImage the modified ModelImage
-     * @param kPostfix which image (imageA, imageB)
-     */
-    public void UpdateData( ModelImage kImage, String kPostfix )
-    {
-        m_kImage = kImage;
-        VolumeImage.UpdateData( m_kImage, m_kVolume, m_kVolumeTarget, m_bByte, kPostfix );
+        byte[] oldData = kImage.GetData();
+        byte[] aucData = ModelLUT.exportIndexedLUTMin( kRGBT );
+        kImage.SetData(aucData, aucData.length/4);
+        if ( oldData.length != aucData.length )
+        {
+            kTexture.Release();
+        }
+        else
+        {
+            kTexture.Reload(true);
+        }
     }
 
     /**
@@ -271,6 +285,7 @@ public class VolumeImage
                     new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
                                        iXBound,iYBound,iZBound, abData,
                                        new String( "VolumeImage" + kPostFix));
+                
             }
             else
             {
@@ -311,74 +326,107 @@ public class VolumeImage
         return kVolumeImage;
     }
 
-
-
     /**
-     * Calculates histogram for the gradient magnitude ModelImage
-     * @param kImage the image to calculate the gradient magnitude.
-     * @return  ModelImage containing GM image, null when no image calculated.
+     * Update the LUT texture sent to the GPU.
+     * @param kColorTexture the color-map Texture object.
+     * @param kColorMap the color-map GraphicsImage object (stores data).
+     * @param kLUT the new LUT.
      */
-    private ModelImage CalcHistogramsGM( ModelImage kImage )
+    public static void UpdateImages(Texture kColorTexture, GraphicsImage kColorMap, ModelLUT kLUT)
     {
-        ModelImage kImage_GM = null;
-        if (kImage != null) {
-            kImage_GM = loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(),
-                                           kImage.getImageName() + "_gm_rescale" + ".xml");
-
-            if ( kImage_GM == null )
-            {
-                kImage_GM = new ModelImage(kImage.getType(), kImage.getExtents(),
-                                                  kImage.getImageName() + "_gm_rescale");
-
-                float[] sigma = new float[] { 0.5f, 0.5f, 0.5f };
-                AlgorithmGradientMagnitude gradMagAlgo_A =
-                    new AlgorithmGradientMagnitude(kImage_GM, kImage, sigma,true, false);
-
-                gradMagAlgo_A.setRunningInSeparateThread(false);
-                gradMagAlgo_A.run();
-
-                if (gradMagAlgo_A.isCompleted()) {
-                    gradMagAlgo_A.finalize();
-                    gradMagAlgo_A = null;
-                }
-                kImage_GM.calcMinMax();
-                /** Scale the intensity range to 1024. */
-                AlgorithmChangeType changeTypeAlgo_A =
-                    new AlgorithmChangeType(kImage_GM, kImage_GM.getType(),
-                                            kImage_GM.getMin(), kImage_GM.getMax(),
-                                            0, 1023, false);
-
-                changeTypeAlgo_A.setRunningInSeparateThread(false);
-                changeTypeAlgo_A.run();
-                kImage_GM.calcMinMax();
-
-                if (changeTypeAlgo_A.isCompleted()) {
-                    ModelImage.saveImage(kImage_GM);
-                    changeTypeAlgo_A.finalize();
-                    changeTypeAlgo_A = null;
-                }
-            }
+        if ( kLUT == null )
+        {
+            return;
         }
-        return kImage_GM;
+        byte[] oldData = kColorMap.GetData();
+        byte[] aucData = ModelLUT.exportIndexedLUTMin( kLUT );
+
+        kColorMap.SetData(aucData, aucData.length/4);
+        if ( oldData.length != aucData.length )
+        {
+            kColorTexture.Release();
+        }
+        else
+        {
+            kColorTexture.Reload(true);
+        }
     }
 
     /**
-     * Loads the gradient magnitude image instead of recalculating the image.
-     *
-     * @param   dName     String User specified directory name.
-     * @param   fName     String GM image file name.
-     * @return  ModelImage containing GM image, null when no image loaded.
+     * Read the current Volume Texture from the GPU and return a new ModelImage of that data.
+     * @return new ModelImage from Volume Texture on GPU.
      */
-    private ModelImage loadGMImage(String dName, String fName)
+    public ModelImage CreateBinaryImageFromTexture( GraphicsImage kImage )
     {
-        FileIO fileIO = new FileIO();
-        fileIO.setQuiet(true);
-
-        if (new File(dName + File.separator + fName).exists()) {
-
-            return fileIO.readImage(fName, dName, false, null, false);
+        int iXBound = kImage.GetBound(0);
+        int iYBound = kImage.GetBound(1);
+        int iZBound = kImage.GetBound(2);
+        int[] extents = new int[]{iXBound, iYBound, iZBound};
+        
+        ModelImage kResult = new ModelImage( ModelStorageBase.BOOLEAN, extents, JDialogBase.makeImageName(m_kImage.getImageName(), "_temp") );
+        int i = 0;
+        for (int iZ = 0; iZ < iZBound; iZ++)
+        {
+            for (int iY = 0; iY < iYBound; iY++)
+            {
+                for (int iX = 0; iX < iXBound; iX++)
+                {
+                    if ( kImage.GetData()[i++] > 0 )
+                    {
+                        kResult.set( iX, iY, iZ, true);
+                    }
+                }
+            }
         }
-        return null;
+        JDialogBase.updateFileInfo(m_kImage, kResult);
+        return kResult;
+    }
+
+    /**
+     * Read the current Volume Texture from the GPU and return a new ModelImage of that data.
+     * @return new ModelImage from Volume Texture on GPU.
+     */
+    public ModelImage CreateImageFromTexture( GraphicsImage kImage )
+    {
+        int iXBound = kImage.GetBound(0);
+        int iYBound = kImage.GetBound(1);
+        int iZBound = kImage.GetBound(2);
+        int[] extents = new int[]{iXBound, iYBound, iZBound};
+        m_kImage.calcMinMax();
+        float fImageMax = (float)m_kImage.getMax();
+        float fImageMin = (float)m_kImage.getMin();
+        
+        ModelImage kResult = null;
+        if ( m_kImage.isColorImage() )
+        {
+            byte[] aucData = new byte[4*iXBound*iYBound*iZBound];
+            for ( int i = 0; i < m_kImage.getSize(); i += 4)
+            {
+                aucData[i] = kImage.GetData()[i+3];
+                aucData[i+1] = kImage.GetData()[i+1];
+                aucData[i+2] = kImage.GetData()[i+2];
+                aucData[i+3] = kImage.GetData()[i];
+            }
+            try {
+                kResult = new ModelImage( m_kImage.getType(), extents, JDialogBase.makeImageName(m_kImage.getImageName(), "_Crop") );
+                kResult.importData( 0, aucData, true );
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        else
+        {
+            byte[] aiImageData = kImage.GetData();
+            try {
+                kResult = new ModelImage( ModelStorageBase.UBYTE, extents, JDialogBase.makeImageName(m_kImage.getImageName(), "_Crop") );
+                kResult.importData( 0, aiImageData, true );
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        kResult.copyFileTypeInfo(m_kImage);
+        kResult.calcMinMax();
+        return kResult;
     }
 
     /**
@@ -387,12 +435,6 @@ public class VolumeImage
     public void dispose()
     {
         m_kImage = null;
-
-        if ( m_kImage_GM != null )
-        {
-            m_kImage_GM.disposeLocal();
-            m_kImage_GM = null;
-        }
         if ( m_kOpacityMap_GM != null )
         {
             m_kOpacityMap_GM.dispose();
@@ -402,16 +444,6 @@ public class VolumeImage
         {
             m_kOpacityMapTarget_GM.dispose();
             m_kOpacityMapTarget_GM = null;
-        }
-        if ( m_kVolume_GM != null )
-        {
-            m_kVolume_GM.dispose();
-            m_kVolume_GM = null;
-        }
-        if ( m_kVolumeTarget_GM != null )
-        {
-            m_kVolumeTarget_GM.dispose();
-            m_kVolumeTarget_GM = null;
         }
         if ( m_kVolume != null )
         {
@@ -456,99 +488,42 @@ public class VolumeImage
     }
 
     /**
-     * Update the transfer function for the image iImage.
-     * @param kTransfer the new opacity transfer function
-     * @param iImage the image to modify (0 = volume image, 2 = gradient mag)
-     * @return boolean true when updated, false otherwise.
+     * Return the Volume color map Texture.
+     * @return Volume color map Texture.
      */
-    public boolean UpdateImages(TransferFunction kTransfer, int iImage)
+    public Texture GetColorMapTarget()
     {
-        if ( iImage == 0 )
-        {
-            return UpdateImages( m_kImage, m_kOpacityMapTarget, m_kOpacityMap, kTransfer );
-        }
-       else if ( (iImage == 2) &&
-                  (m_kImage_GM != null) &&
-                  (m_kOpacityMapTarget_GM != null) &&
-                  (m_kOpacityMap_GM != null)  )
-        {
-            return UpdateImages( m_kImage_GM, m_kOpacityMapTarget_GM, m_kOpacityMap_GM, kTransfer );
-        }
-        return false;
+        return m_kColorMapTarget;
     }
 
     /**
-     * Update the opacity transfer function.
-     * @param kImage the ModelImage the transfer function applies to.
-     * @param kOpacityTexture the opacity Texture passed to the GPU
-     * @param kOpacityMap the opacity data stored in the GraphicsImage
-     * @param kTransfer the new transfer function.
+     * Return the ModelImage volume data.
+     * @return ModelImage volume data.
      */
-    private boolean UpdateImages(ModelImage kImage, Texture kOpacityTexture,
-                                 GraphicsImage kOpacityMap, TransferFunction kTransfer)
+    public ModelImage GetImage()
     {
-         int iLutHeight = 256;
-         float[] afData = kOpacityMap.GetFloatData();
-
-         float fRange = (float)(kImage.getMax() - kImage.getMin());
-         float fStep = fRange / iLutHeight;
-         float fDataValue = (float)kImage.getMin();
-         for (int i = 0; i < iLutHeight; i++) {
-             afData[i] = (kTransfer.getRemappedValue( fDataValue, iLutHeight )/255.0f);
-             fDataValue += fStep;
-         }
-         kOpacityTexture.Reload(true);
-         return true;
+        return m_kImage;
     }
 
     /**
-     * Update the LUT for the ModelImage.
-     * @param kLUT new LUT for ModelImage.
+     * Return the Volume LUT.
+     * @return Volume LUT.
      */
-    public void UpdateImages(ModelLUT kLUT)
+    public ModelLUT GetLUT()
     {
-        if ( kLUT != null )
-        {
-            this.UpdateImages( m_kColorMapTarget, m_kColorMap, kLUT );
-        }
-        m_kLUT = kLUT;
-    }
-
-    /**
-     * Update the LUT texture sent to the GPU.
-     * @param kColorTexture the color-map Texture object.
-     * @param kColorMap the color-map GraphicsImage object (stores data).
-     * @param kLUT the new LUT.
-     */
-    public static void UpdateImages(Texture kColorTexture, GraphicsImage kColorMap, ModelLUT kLUT)
-    {
-        if ( kLUT == null )
-        {
-            return;
-        }
-        byte[] oldData = kColorMap.GetData();
-        byte[] aucData = ModelLUT.exportIndexedLUTMin( kLUT );
-
-        kColorMap.SetData(aucData, aucData.length/4);
-        if ( oldData.length != aucData.length )
-        {
-            kColorTexture.Release();
-        }
-        else
-        {
-            kColorTexture.Reload(true);
-        }
-    }
-
-    /**
-     * Return the gradient magnitude Texture.
-     * @return gradient magnitude Texture.
-     */
-    public Texture GetVolumeGMTarget()
-    {
-        return m_kVolumeTarget_GM;
+        return m_kLUT;
     }
     
+
+    /**
+     * Return the Volume normal Texture.
+     * @return Volume normal Texture.
+     */
+    public Texture GetNormalMapTarget()
+    {
+        return m_kNormalMapTarget;
+    }
+
     /**
      * Return the gradient magnitude opacity transfer function Texture.
      * @return gradient magnitude opacity transfer function Texture.
@@ -557,7 +532,62 @@ public class VolumeImage
     {
         return m_kOpacityMapTarget_GM;
     }
+
+    /**
+     * Return the Volume opacity transfer function Texture.
+     * @return Volume opacity transfer function Texture.
+     */
+    public Texture GetOpacityMapTarget()
+    {
+        return m_kOpacityMapTarget;
+    }
+
+    /**
+     * Return the postfix for this VolumeImage.
+     * @return postfix for this VolumeImage.
+     */
+    public String GetPostfix()
+    {
+        return m_kPostfix;
+    }
+
+    /**
+     * The ModelImage Volume x-scale factor.
+     * @return Volume x-scale factor.
+     */
+    public float GetScaleX()
+    {
+        return m_fX;
+    }
+
+    /**
+     * The ModelImage Volume y-scale factor.
+     * @return Volume y-scale factor.
+     */
+    public float GetScaleY()
+    {
+        return m_fY;
+    }
     
+    /**
+     * The ModelImage Volume z-scale factor.
+     * @return Volume z-scale factor.
+     */
+    public float GetScaleZ()
+    {
+        return m_fZ;
+    }
+
+
+    /**
+     * Return the surface mask Texture.
+     * @return surface mask Texture.
+     */
+    public Texture GetSurfaceTarget()
+    {
+        return m_kSurfaceTarget;
+    }
+
 
     /**
      * Return the Texture containing the volume data.
@@ -576,43 +606,39 @@ public class VolumeImage
     {
         return m_kVolumeTarget.GetImage().GetDataBuffer();
     }
-
+    
     /**
-     * Return the Volume color map Texture.
-     * @return Volume color map Texture.
+     * Initialize the textures for the opacity lookup table.
+     * @param kImage the ModelImage the opacity transfer function applies to.
+     * @param kPostfix the string postfix to concatenate to the "OpacityMap" image name.
+     * @return GraphicsImage, the new GraphicsImage storing the colormap lookup table.
      */
-    public Texture GetColorMapTarget()
+    public GraphicsImage InitOpacityMap (ModelImage kImage, String kPostFix )
     {
-        return m_kColorMapTarget;
-    }
+        int iLutHeight = 256;
+        float[] afData = new float[iLutHeight];
+        float fRange = (float)(kImage.getMax() - kImage.getMin());
+        float fStep = fRange / iLutHeight;
+        float fDataValue = (float)kImage.getMin();
+        for (int i = 0; i < iLutHeight; i++) {
+            afData[i] = (float)( iLutHeight * (kImage.getMax() - fDataValue) / fRange);
+            fDataValue += fStep;
+        }
 
-    /**
-     * Return the Volume opacity transfer function Texture.
-     * @return Volume opacity transfer function Texture.
-     */
-    public Texture GetOpacityMapTarget()
-    {
-        return m_kOpacityMapTarget;
-    }
-
-    /**
-     * Return the Volume normal Texture.
-     * @return Volume normal Texture.
-     */
-    public Texture GetNormalMapTarget()
-    {
-        return m_kNormalMapTarget;
-    }
-
-    /**
-     * Return the surface mask Texture.
-     * @return surface mask Texture.
-     */
-    public Texture GetSurfaceTarget()
-    {
-        return m_kSurfaceTarget;
+        return new GraphicsImage(
+                                 GraphicsImage.FormatMode.IT_L8,iLutHeight,afData,
+                                 new String( "OpacityMap" + kPostFix ));
     }
     
+    /**
+     * Return true if the Volume image is a color image.
+     * @return true if the Volume image is a color image.
+     */
+    public boolean IsColorImage()
+    {
+        return m_kImage.isColorImage();
+    }
+
     /**
      * Release the Textures containing the volume data. Once
      * Textures are released, they will be re-loaded onto the GPU during the
@@ -623,7 +649,7 @@ public class VolumeImage
         m_kVolumeTarget.Release();
     }
 
-
+    
     /**
      * Sets the ModelRGB for the iImage.
      * @param kRGBT new ModelRGB
@@ -633,168 +659,50 @@ public class VolumeImage
         SetRGBT( m_kColorMapTarget, m_kColorMap, kRGBT );
     }
 
-
     /**
-     * Sets the Texture object containing the color lookup table based on the ModelRGB.
-     * @param kTexture the Texture object containing the colormap GraphicsImage.
-     * @param kImage the GraphicsImage containing the colormap data.
-     * @param kRGBT the new ModelRGB.
+     * Update the image data.
+     * @param kImage the modified ModelImage
+     * @param kPostfix which image (imageA, imageB)
      */
-    public static void SetRGBT( Texture kTexture, GraphicsImage kImage, ModelRGB kRGBT )
+    public void UpdateData( ModelImage kImage, String kPostfix )
     {
-        if ( kRGBT == null )
-        {
-            return;
-        }
-        byte[] oldData = kImage.GetData();
-        byte[] aucData = ModelLUT.exportIndexedLUTMin( kRGBT );
-        kImage.SetData(aucData, aucData.length/4);
-        if ( oldData.length != aucData.length )
-        {
-            kTexture.Release();
-        }
-        else
-        {
-            kTexture.Reload(true);
-        }
-    }
-
-    /**
-     * Return true if the Volume image is a color image.
-     * @return true if the Volume image is a color image.
-     */
-    public boolean IsColorImage()
-    {
-        return m_kImage.isColorImage();
+        m_kImage = kImage;
+        VolumeImage.UpdateData( m_kImage, m_kVolume, m_kVolumeTarget, m_bByte, kPostfix );
     }
     
     /**
-     * Return the ModelImage volume data.
-     * @return ModelImage volume data.
+     * Update the LUT for the ModelImage.
+     * @param kLUT new LUT for ModelImage.
      */
-    public ModelImage GetImage()
+    public void UpdateImages(ModelLUT kLUT)
     {
-        return m_kImage;
-    }
-    
-    /**
-     * Return the Volume LUT.
-     * @return Volume LUT.
-     */
-    public ModelLUT GetLUT()
-    {
-        return m_kLUT;
-    }
-
-    /**
-     * Read the current Volume Texture from the GPU and return a new ModelImage of that data.
-     * @return new ModelImage from Volume Texture on GPU.
-     */
-    public ModelImage CreateImageFromTexture( GraphicsImage kImage )
-    {
-        int iXBound = m_kImage.getExtents()[0];
-        int iYBound = m_kImage.getExtents()[1];
-        int iZBound = m_kImage.getExtents()[2];
-        m_kImage.calcMinMax();
-        float fImageMax = (float)m_kImage.getMax();
-        float fImageMin = (float)m_kImage.getMin();
-        
-        ModelImage kResult = null;
-        if ( m_kImage.isColorImage() )
+        if ( kLUT != null )
         {
-            byte[] aucData = new byte[4*iXBound*iYBound*iZBound];
-            for ( int i = 0; i < m_kImage.getSize(); i += 4)
-            {
-                aucData[i] = kImage.GetData()[i+3];
-                aucData[i+1] = kImage.GetData()[i+1];
-                aucData[i+2] = kImage.GetData()[i+2];
-                aucData[i+3] = kImage.GetData()[i];
-            }
-            try {
-                kResult = new ModelImage( m_kImage.getType(), m_kImage.getExtents(), JDialogBase.makeImageName(m_kImage.getImageName(), "_Crop") );
-                kResult.importData( 0, aucData, true );
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            this.UpdateImages( m_kColorMapTarget, m_kColorMap, kLUT );
         }
-        else
-        {
-            float[] afData = new float[iXBound*iYBound*iZBound];
-            byte[] aiImageData = kImage.GetData();
-            if ( m_bByte )
-            {
-                int i = 0;
-                for (int iZ = 0; iZ < iZBound; iZ++)
-                {
-                    for (int iY = 0; iY < iYBound; iY++)
-                    {
-                        for (int iX = 0; iX < iXBound; iX++)
-                        {
-
-                            byte bValue = aiImageData[i];
-                            //afData[i++]  = (float)((fImageMax - fImageMin) * ( bValue / 255.0 )) + fImageMin;
-                            afData[i++]  = (float)( bValue / 255.0 );
-                        }
-                    }
-                }
-            }
-            else
-            {
-                int i = 0;
-                for (int iZ = 0; iZ < iZBound; iZ++)
-                {
-                    for (int iY = 0; iY < iYBound; iY++)
-                    {
-                        for (int iX = 0; iX < iXBound; iX++)
-                        {
-                            float fValue = kImage.GetFloatData()[i];
-                            afData[i++] = (fValue*(fImageMax - fImageMin) + fImageMin);
-                        }
-                    }
-                }
-            }
-            try {
-                kResult = new ModelImage( ModelStorageBase.FLOAT, m_kImage.getExtents(), JDialogBase.makeImageName(m_kImage.getImageName(), "_Crop") );
-                kResult.importData( 0, afData, true );
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        kResult.copyFileTypeInfo(m_kImage);
-        kResult.calcMinMax();
-        return kResult;
-    }
-
-    
+        m_kLUT = kLUT;
+    }   
     /**
-     * Read the current Volume Texture from the GPU and return a new ModelImage of that data.
-     * @return new ModelImage from Volume Texture on GPU.
+     * Update the transfer function for the image iImage.
+     * @param kTransfer the new opacity transfer function
+     * @param iImage the image to modify (0 = volume image, 2 = gradient mag)
+     * @return boolean true when updated, false otherwise.
      */
-    public ModelImage CreateBinaryImageFromTexture( GraphicsImage kImage )
+    public boolean UpdateImages(TransferFunction kTransfer, int iImage, ModelImage kImage)
     {
-        int iXBound = m_kImage.getExtents()[0];
-        int iYBound = m_kImage.getExtents()[1];
-        int iZBound = m_kImage.getExtents()[2];
-        
-        ModelImage kResult = new ModelImage( ModelStorageBase.BOOLEAN, m_kImage.getExtents(), JDialogBase.makeImageName(m_kImage.getImageName(), "_temp") );
-        int i = 0;
-        for (int iZ = 0; iZ < iZBound; iZ++)
+        if ( iImage == 0 )
         {
-            for (int iY = 0; iY < iYBound; iY++)
-            {
-                for (int iX = 0; iX < iXBound; iX++)
-                {
-                    if ( kImage.GetData()[i++] > 0 )
-                    {
-                        kResult.set( iX, iY, iZ, true);
-                    }
-                }
-            }
+            return UpdateImages( m_kImage, m_kOpacityMapTarget, m_kOpacityMap, kTransfer );
         }
-        JDialogBase.updateFileInfo(m_kImage, kResult);
-        return kResult;
-    }
-
+        else if ( (iImage == 2) &&
+                   (kImage != null) &&
+                   (m_kOpacityMapTarget_GM != null) &&
+                   (m_kOpacityMap_GM != null)  )
+         {
+             return UpdateImages( kImage, m_kOpacityMapTarget_GM, m_kOpacityMap_GM, kTransfer );
+         }
+        return false;
+    }    
     /**
      * Initialize the scale factors. Based on the ModelImage Volume.
      */
@@ -817,37 +725,27 @@ public class VolumeImage
     }
     
     /**
-     * The ModelImage Volume x-scale factor.
-     * @return Volume x-scale factor.
+     * Update the opacity transfer function.
+     * @param kImage the ModelImage the transfer function applies to.
+     * @param kOpacityTexture the opacity Texture passed to the GPU
+     * @param kOpacityMap the opacity data stored in the GraphicsImage
+     * @param kTransfer the new transfer function.
      */
-    public float GetScaleX()
+    private boolean UpdateImages(ModelImage kImage, Texture kOpacityTexture,
+                                 GraphicsImage kOpacityMap, TransferFunction kTransfer)
     {
-        return m_fX;
-    }   
-    /**
-     * The ModelImage Volume y-scale factor.
-     * @return Volume y-scale factor.
-     */
-    public float GetScaleY()
-    {
-        return m_fY;
-    }    
-    /**
-     * The ModelImage Volume z-scale factor.
-     * @return Volume z-scale factor.
-     */
-    public float GetScaleZ()
-    {
-        return m_fZ;
-    }
-    
-    /**
-     * Return the postfix for this VolumeImage.
-     * @return postfix for this VolumeImage.
-     */
-    public String GetPostfix()
-    {
-        return m_kPostfix;
+         int iLutHeight = 256;
+         float[] afData = kOpacityMap.GetFloatData();
+
+         float fRange = (float)(kImage.getMax() - kImage.getMin());
+         float fStep = fRange / iLutHeight;
+         float fDataValue = (float)kImage.getMin();
+         for (int i = 0; i < iLutHeight; i++) {
+             afData[i] = (kTransfer.getRemappedValue( fDataValue, iLutHeight )/255.0f);
+             fDataValue += fStep;
+         }
+         kOpacityTexture.Reload(true);
+         return true;
     }
     
     
