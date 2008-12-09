@@ -133,9 +133,6 @@ public class Preferences {
     /** Constant that indicates if a prompt should be shown before an image file is overwritten. */
     public static final String PREF_SAVE_PROMPT_OVERWRITE = "SavePromptOverwrite";
 
-    /** Constant that indicates if images saved as XML files should have their RAW data ZIPped. */
-    public static final String PREF_SAVE_XML_ZIP = "SaveXMLZip";
-
     /** Constant that indicates if the DICOM overlay should be shown. */
     public static final String PREF_SHOW_DICOM_OVERLAYS = "ShowDICOMOverlays";
 
@@ -564,7 +561,6 @@ public class Preferences {
         /** Medical Formats(*.dcm; *.ima; *.img; *.mnc; *.sig; *.xml; *.head) */
         defaultProps.setProperty(Preferences.PREF_FILENAME_FILTER, "8"); // 8 = ViewImageFileFilter.TECH
         defaultProps.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, "false");
-        defaultProps.setProperty(Preferences.PREF_SAVE_XML_ZIP, "false");
         defaultProps.setProperty(Preferences.PREF_SAVE_ALL_ON_SAVE, "false");
         defaultProps.setProperty(Preferences.PREF_OVERWRITE_STATISTICS, "false");
         defaultProps.setProperty(Preferences.PREF_LAST_X_IMAGES, "");
