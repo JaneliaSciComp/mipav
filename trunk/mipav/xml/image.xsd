@@ -80,6 +80,8 @@
 									<xs:restriction base="xs:string">
 										<xs:enumeration value="none"/>
 										<xs:enumeration value="zipped"/>
+										<xs:enumeration value="gzipped"/>
+										<xs:enumeration value="bz2zipped"/>
 									</xs:restriction>
 								</xs:simpleType>
 							</xs:element>
