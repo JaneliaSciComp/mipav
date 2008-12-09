@@ -328,6 +328,9 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
         			}
         		}
         		inputFileTextArea.setText(replaceText);
+        		selectedRow = -1;
+        	} else {
+        		MipavUtil.displayInfo("Please select the row to remove.");
         	}
         }
     }
