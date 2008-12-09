@@ -74,6 +74,7 @@ public class FileRaw extends FileBase {
 
         // check to see if compression handling is to be used
         // compression performed in FileIO.readImage, FileIO.writeImage, and FileImageXML.readImage.
+        // Note that bzip2 cannot decompress into InflaterInputStream in FileRawChunk.
         //compressionType = fInfo.getCompressionType();
     }
 
@@ -89,6 +90,7 @@ public class FileRaw extends FileBase {
     public FileRaw(String fileName, FileInfoBase fInfo, int rwFlag) throws IOException {
         fileInfo = fInfo;
         // compression performed in FileIO.readImage, FileIO.writeImage, and FileImageXML.readImage.
+        // Note that bzip2 cannot decompress into InflaterInputStream in FileRawChunk.
         //compressionType = fInfo.getCompressionType();
 
         // check to see if compression handling is to be used
