@@ -17,7 +17,7 @@ void v_CalcNormalsPerSlice_Pass2
 void p_CalcNormalsPerSlice_Pass2
 (
     in float3         kBaseTCoord : TEXCOORD0,
-    out float3        kPixelColor : COLOR,
+    out float4        kPixelColor : COLOR,
     uniform float4    StepSize,
     uniform sampler3D VolumeCalc
     )
@@ -28,17 +28,19 @@ void p_CalcNormalsPerSlice_Pass2
     float3 index4 = kBaseTCoord; index4.y += StepSize.y;
     float3 index5 = kBaseTCoord; index5.z -= StepSize.z;
     float3 index6 = kBaseTCoord; index6.z += StepSize.z;
+    float4 color = tex3D( VolumeCalc, kBaseTCoord );
+    kPixelColor.a = color.a;
 
-    float3 color = (tex3D( VolumeCalc, kBaseTCoord ).xyz - (0.5, 0.5, 0.5));
-    color += (tex3D( VolumeCalc, index1 ).xyz - (0.5, 0.5, 0.5));
-    color += (tex3D( VolumeCalc, index2 ).xyz - (0.5, 0.5, 0.5));
-    color += (tex3D( VolumeCalc, index3 ).xyz - (0.5, 0.5, 0.5));
-    color += (tex3D( VolumeCalc, index4 ).xyz - (0.5, 0.5, 0.5));
-    color += (tex3D( VolumeCalc, index5 ).xyz - (0.5, 0.5, 0.5));
-    color += (tex3D( VolumeCalc, index6 ).xyz - (0.5, 0.5, 0.5));
-    color = normalize(color);
-    color += 1.0;
-    color /= 2.0;
+    color.xyz = color.xyz - (0.5, 0.5, 0.5);
+    color.xyz += (tex3D( VolumeCalc, index1 ).xyz - (0.5, 0.5, 0.5));
+    color.xyz += (tex3D( VolumeCalc, index2 ).xyz - (0.5, 0.5, 0.5));
+    color.xyz += (tex3D( VolumeCalc, index3 ).xyz - (0.5, 0.5, 0.5));
+    color.xyz += (tex3D( VolumeCalc, index4 ).xyz - (0.5, 0.5, 0.5));
+    color.xyz += (tex3D( VolumeCalc, index5 ).xyz - (0.5, 0.5, 0.5));
+    color.xyz += (tex3D( VolumeCalc, index6 ).xyz - (0.5, 0.5, 0.5));
+    color.xyz = normalize(color.xyz);
+    color.xyz += 1.0;
+    color.xyz /= 2.0;
     kPixelColor.rgb = color.xyz;
 }
 //----------------------------------------------------------------------------

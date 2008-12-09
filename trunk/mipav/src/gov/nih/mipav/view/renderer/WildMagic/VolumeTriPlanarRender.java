@@ -9,7 +9,10 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeBoundingBox;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClip;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeDTI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageCrop;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageExtract;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageNormalGM;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageSurfaceMask;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeOrientationCube;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeRayCast;
@@ -393,10 +396,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kVolumeRayCast.SetDisplay(false);   
             m_kSlices.SetDisplay(true);   
             m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-            VolumeImageViewer.main(m_kParent, m_kVolumeImageA, null, null, false);
+            VolumeImageNormalGM.main(m_kParent, m_kVolumeImageA);
             if ( m_kVolumeImageB != null )
             {
-                VolumeImageViewer.main(m_kParent, m_kVolumeImageB, null, null, false);
+                VolumeImageNormalGM.main(m_kParent, m_kVolumeImageB);
             }
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             CMPMode();
@@ -405,19 +408,19 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_bSurfaceUpdate = false;
             updateLighting( m_akLights );
-            VolumeImageViewer.main(m_kParent, m_kVolumeImageA, null, m_kDisplayList, false);
+            VolumeImageSurfaceMask.main(m_kParent, m_kVolumeImageA, m_kDisplayList);
         }
         if ( m_bCrop )
         {
             m_bCrop = false;
             m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-            VolumeImageViewer.main(m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect(), null, false);
+            VolumeImageCrop.main(m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect());
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         }
         if ( m_bExtract )
         {
             m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-            VolumeImageViewer.main(m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect(), null, true);
+            VolumeImageExtract.main(m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect());
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             m_bExtract = false;
         }
