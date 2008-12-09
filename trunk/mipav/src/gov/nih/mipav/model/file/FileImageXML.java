@@ -390,7 +390,7 @@ public class FileImageXML extends FileXML {
         CBZip2InputStream bz2in;
         FileOutputStream out;
         int bytesRead;
-        String uncompressedName;
+        String uncompressedName = null;
 
         float[][] resolutions = null;
 
@@ -713,6 +713,18 @@ public class FileImageXML extends FileXML {
                 ((FileInfoImageXML) fileInfo).setResolutions(resolutions[0][0], 0);
                 ((FileInfoImageXML) fileInfo).setResolutions(resolutions[1][0], 1);
                 image.setFileInfo((FileInfoImageXML) fileInfo, 0);
+            }
+            
+            if (uncompressedName != null) {
+                // Delete the input uncompressed file
+                File uncompressedFile;
+                uncompressedFile = new File(uncompressedName);
+                try {
+                    uncompressedFile.delete();
+                } catch (SecurityException sc) {
+                    MipavUtil.displayError("Security error occurs while trying to delete " +
+                                           uncompressedName);
+                }    
             }
 
         } catch (IOException error) {
