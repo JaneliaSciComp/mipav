@@ -2415,14 +2415,17 @@ public class FileIO {
             if (ext.equalsIgnoreCase("zip")) {
                 options.setFileName(options.getFileName().substring(0,index));
                 zip = true;
+                image.getFileInfo()[0].setCompressionType(FileInfoBase.COMPRESSION_ZIP);
             }
             else if (ext.equalsIgnoreCase("gz")) {
                 options.setFileName(options.getFileName().substring(0,index));
                 gzip = true;
+                image.getFileInfo()[0].setCompressionType(FileInfoBase.COMPRESSION_GZIP);
             }
             else if (ext.equalsIgnoreCase("bz2")) {
                 options.setFileName(options.getFileName().substring(0,index));
-                bz2zip = true;    
+                bz2zip = true;   
+                image.getFileInfo()[0].setCompressionType(FileInfoBase.COMPRESSION_BZIP2);
             }
         }
 
