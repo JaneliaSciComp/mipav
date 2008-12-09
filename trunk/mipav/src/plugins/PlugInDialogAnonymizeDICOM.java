@@ -363,7 +363,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
 	}
 
 	public void mouseClicked(MouseEvent e) {
-		switch(currentMode) {
+		/*switch(currentMode) {
 		
 		case CTRL_MODE:
 			System.out.println("In control mode");
@@ -377,11 +377,11 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
 			System.out.println("Not in a mode");
 			break;
 		
-		}
+		}*/
 		
 		selectedRow = e.getY()/16;
 		int selectStart;
-		System.out.println("Selected Row "+selectedRow);
+		//System.out.println("Selected Row "+selectedRow);
 		String[] ar = inputFileTextArea.getText().split("\n");
 		if(selectedRow < ar.length) {
 			inputFileTextArea.setSelectionStart(selectStart = inputFileTextArea.getText().indexOf(ar[selectedRow]));
