@@ -48,6 +48,10 @@ public class VolumeImageNormalGM extends VolumeImageViewer
     }
 
     public void display(GLAutoDrawable arg0) {
+        if ( m_kAnimator == null )
+        {
+            return;
+        }
         while ( m_bDisplayFirst )
         {
             float fZ = ((float)m_iSlice)/(m_kVolumeImage.GetImage().getExtents()[2] -1);
@@ -96,10 +100,12 @@ public class VolumeImageNormalGM extends VolumeImageViewer
                 //System.err.println("Done second pass");
                 m_pkVolumeCalcTarget.dispose();
                 m_pkVolumeCalcTarget = null;
+                m_kAnimator.stop();
+                m_kAnimator.remove(arg0);
+                m_kAnimator = null;
+                m_kFrame.setVisible(false);
             }
         }
-        m_kAnimator.stop();
-        m_kFrame.setVisible(false);
     }
 
     protected void CreateScene ()

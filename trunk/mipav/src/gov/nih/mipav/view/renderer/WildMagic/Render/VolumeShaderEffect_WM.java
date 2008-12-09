@@ -520,6 +520,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
         SetColorImage();
         SetGradientMagnitude();
         SetSelfShadow();
+        setSteps(stepsSize[0]);
         if ( m_kVolumeImageB != null )
         {
             Program pkProgram = GetPProgram(0);

@@ -44,6 +44,10 @@ public class VolumeImageCrop extends VolumeImageViewer
     }
 
     public void display(GLAutoDrawable arg0) {
+        if ( m_kAnimator == null )
+        {
+            return;
+        }
         boolean bCrop = true;
         while ( bCrop )
         {
@@ -74,10 +78,12 @@ public class VolumeImageCrop extends VolumeImageViewer
                 bCrop = false;
                 m_iSlice = 0;
                 //System.err.println("Done CROP");
+                m_kAnimator.stop();
+                m_kAnimator.remove(arg0);
+                m_kAnimator = null;
+                m_kFrame.setVisible(false);
             }
         }
-        m_kAnimator.stop();
-        m_kFrame.setVisible(false);
     }
 
     protected void CreateScene ()
