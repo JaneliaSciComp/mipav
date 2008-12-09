@@ -229,7 +229,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          
          JLabel kBlendLabel = new JLabel("Volume Blend" );
          blendPanel.add(kBlendLabel);
-         m_kVolumeBlendSlider = new JSlider( 0, 100, 75 );
+         m_kVolumeBlendSlider = new JSlider( 0, 100, 100 );
          m_kVolumeBlendSlider.addChangeListener(this);
          blendPanel.add(m_kVolumeBlendSlider);
          
