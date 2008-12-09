@@ -73,7 +73,8 @@ public class FileRaw extends FileBase {
         fileInfo = fInfo;
 
         // check to see if compression handling is to be used
-        compressionType = fInfo.getCompressionType();
+        // compression performed in FileIO.readImage, FileIO.writeImage, and FileImageXML.readImage.
+        //compressionType = fInfo.getCompressionType();
     }
 
     /**
@@ -87,8 +88,8 @@ public class FileRaw extends FileBase {
      */
     public FileRaw(String fileName, FileInfoBase fInfo, int rwFlag) throws IOException {
         fileInfo = fInfo;
-
-        compressionType = fInfo.getCompressionType();
+        // compression performed in FileIO.readImage, FileIO.writeImage, and FileImageXML.readImage.
+        //compressionType = fInfo.getCompressionType();
 
         // check to see if compression handling is to be used
         if (compressionType == FileInfoBase.COMPRESSION_NONE) {
