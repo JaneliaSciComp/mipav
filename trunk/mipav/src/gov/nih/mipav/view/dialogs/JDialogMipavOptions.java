@@ -211,9 +211,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     private JCheckBox saveXMLOnHDRSaveCheckBox;
 
     /** DOCUMENT ME! */
-    private JCheckBox saveZipCheckBox;
-
-    /** DOCUMENT ME! */
     private JCheckBox showLineVOIAngleBox;
 
     private JCheckBox continuousVOIBox;
@@ -324,7 +321,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeSaveMncOptions(gbc, gbl);
         makeSaveXMLOnHDRSaveOptions(gbc, gbl);
         makeSaveXMLThumbnailOptions(gbc, gbl);
-        makeSaveXMLZipOptions(gbc, gbl);
         makeFrameRateOptions(gbc, gbl);
 
         fileMiscPanel.setLayout(gbl);
@@ -541,7 +537,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty(Preferences.PREF_SAVE_DEFAULTS, String.valueOf(saveDefaultsCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_PROMPT_OVERWRITE, String.valueOf(savePromptOverwriteBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, String.valueOf(saveThumbnailCheckBox.isSelected()));
-            Preferences.setProperty(Preferences.PREF_SAVE_XML_ZIP, String.valueOf(saveZipCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_FILENAME_FILTER, String.valueOf(fileFilter));
             Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(checkOnFrameClose.isSelected()));
             Preferences.setProperty(Preferences.PREF_LAX_CHECK, String.valueOf(performLaxCheck.isSelected()));
@@ -1735,26 +1730,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         saveThumbnailCheckBox.setSelected(Preferences.is(Preferences.PREF_SAVE_XML_THUMBNAIL));
     }
 
-    /**
-     * Makes the "Save Thumbnail for XML Files" option line in the globalChangesPanel.
-     *
-     * @param  gbc  the constraints used in the globalChangesPanel
-     * @param  gbl  the layout used in the globablChangesPanel
-     */
-    protected void makeSaveXMLZipOptions(GridBagConstraints gbc, GridBagLayout gbl) {
-        saveZipCheckBox = new JCheckBox("Compress image in zip format when saved as MIPAV XML");
-        saveZipCheckBox.setFont(MipavUtil.font12);
-        saveZipCheckBox.setForeground(Color.black);
-        saveZipCheckBox.addActionListener(this);
-        gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbl.setConstraints(saveZipCheckBox, gbc);
-        fileSavePanel.add(saveZipCheckBox);
-
-        // preset the choices.
-        saveZipCheckBox.setSelected(Preferences.is(Preferences.PREF_SAVE_XML_ZIP));
-    }
+    
 
     /**
      * makes the splash-screen option line in the otherPanel.
