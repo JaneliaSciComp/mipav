@@ -50,6 +50,10 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
     }
 
     public void display(GLAutoDrawable arg0) {
+        if ( m_kAnimator == null )
+        {
+            return;
+        }
         boolean bSurfaceAdded = true;
         while ( bSurfaceAdded )
         {
@@ -103,10 +107,12 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
                 bSurfaceAdded = false;
                 m_iSlice = 0;
                 //System.err.println("Done SurfaceAdded");
+                m_kAnimator.stop();
+                m_kAnimator.remove(arg0);
+                m_kAnimator = null;
+                m_kFrame.setVisible(false);
             }
         }
-        m_kAnimator.stop();
-        m_kFrame.setVisible(false);
     }
 
     protected void CreateScene ()

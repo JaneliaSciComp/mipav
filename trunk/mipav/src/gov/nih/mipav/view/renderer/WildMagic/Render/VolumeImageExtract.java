@@ -68,6 +68,10 @@ public class VolumeImageExtract extends VolumeImageViewer
     }
 
     public void display(GLAutoDrawable arg0) {
+        if ( m_kAnimator == null )
+        {
+            return;
+        }
         while ( m_bDisplayFirst )
         {
             float fZ = ((float)m_iSlice)/(m_iSize -1);
@@ -112,11 +116,14 @@ public class VolumeImageExtract extends VolumeImageViewer
               {
                   m_bDisplaySecond = false;
                   m_iSlice = 0;
-                  //System.err.println( m_kCalcImage2.Min + " " + m_kCalcImage2.Max + " " + m_kCalcImage2.TriTable.size() );
+                  System.err.println( m_kCalcImage2.Min + " " + m_kCalcImage2.Max + " " + m_kCalcImage2.TriTable.size() );
                   
                   int[] direction = MipavCoordinateSystems.getModelDirections(m_kVolumeImage.GetImage());
                   float[] startLocation = m_kVolumeImage.GetImage().getFileInfo(0).getOrigin();
-                  SurfaceExtractorCubes kExtractor = new SurfaceExtractorCubes(256, 256, 256, m_kCalcImage2.Data,
+                  SurfaceExtractorCubes kExtractor = 
+                      new SurfaceExtractorCubes(m_kVolumeImage.GetImage().getExtents()[0], 
+                              m_kVolumeImage.GetImage().getExtents()[1], 
+                              m_iSize, m_kCalcImage2.Data,
                           1, 1, 1, direction,
                           startLocation, null);
                   TriMesh kMesh = kExtractor.getLevelSurface(50, m_kCalcImage2.TriTable);
@@ -144,6 +151,10 @@ public class VolumeImageExtract extends VolumeImageViewer
                   m_pkVolumeCalcTarget2.dispose();
                   m_kCalcImage2.dispose();
                   m_spkEffect2.dispose();
+                  m_kAnimator.stop();
+                  m_kAnimator.remove(arg0);
+                  m_kAnimator = null;
+                  m_kFrame.setVisible(false);
                   
                   /*
                   //System.err.println("Done second pass");
@@ -177,10 +188,6 @@ public class VolumeImageExtract extends VolumeImageViewer
 */
               }
           }
-
-        m_kAnimator.stop();
-        m_kFrame.setVisible(false);
-
     }
 
     protected void CreateScene ()

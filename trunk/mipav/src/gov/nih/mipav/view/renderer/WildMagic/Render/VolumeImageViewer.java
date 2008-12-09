@@ -92,6 +92,10 @@ public class VolumeImageViewer extends JavaApplication3D
         animator.start();
     }
     public void display(GLAutoDrawable arg0) {
+        if ( m_kAnimator == null )
+        {
+            return;
+        }
         m_pkPlane.DetachAllEffects();
         m_pkPlane.AttachEffect(m_spkEffect);
         m_kCuller.ComputeVisibleSet(m_spkScene);
