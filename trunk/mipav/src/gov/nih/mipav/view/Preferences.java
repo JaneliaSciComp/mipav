@@ -84,6 +84,9 @@ public class Preferences {
 
     /** Constant that indicates the saving of the xml thumbnail during a save. */
     public static final String PREF_SAVE_XML_THUMBNAIL = "SaveXMLThumbnail";
+    
+    /** Constant that indicates the file temp directory. */
+    public static final String PREF_FILE_TEMP_DIR = "fileTempDir";
 
     /** Constant that indicates if lax file should be checked on mipav start. */
     public static final String PREF_LAX_CHECK = "PerformLaxCheck";
@@ -1098,6 +1101,21 @@ public class Preferences {
         }
 
         return Integer.parseInt(getProperty(Preferences.PREF_FILENAME_FILTER));
+    }
+    
+    /**
+     * Returns the temporary directory which is used to store files to be deleted.
+     * 
+     * @return the temporary directory which is used to store files to be deleted.
+     */
+    public static String getFileTempDir() {
+
+        if (mipavProps == null) {
+            read();
+        }
+
+        return getProperty(PREF_FILE_TEMP_DIR);
+
     }
 
     /**
@@ -2677,6 +2695,20 @@ public class Preferences {
      */
     public static void setFileFilter(int fileFilterIndex) {
         setProperty(Preferences.PREF_FILENAME_FILTER, new Integer(fileFilterIndex));
+    }
+    
+    /**
+     * Sets the temporary directory which is used for files which will be deleted.
+     * 
+     * @param tempDir the temporary directory.
+     */
+    public static void setFileTempDir(String tempDir) {
+
+        if (tempDir == null) {
+            return;
+        }
+
+        setProperty(PREF_FILE_TEMP_DIR, tempDir);
     }
 
     /**
