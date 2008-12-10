@@ -391,6 +391,7 @@ public class FileImageXML extends FileXML {
         FileOutputStream out;
         int bytesRead;
         String uncompressedName = null;
+        String tempDir = null;
 
         float[][] resolutions = null;
 
@@ -428,15 +429,21 @@ public class FileImageXML extends FileXML {
         }
 
         if ( !new File(fileDir + File.separator + imageFileName).exists()) {
-            uncompressedName = fileDir + File.separator + imageFileName;
-            if (new File(uncompressedName + ".zip").exists()) {
-                file = new File(uncompressedName + ".zip"); 
+            tempDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "tempDir" + File.separator;
+            file = new File(tempDir);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+            uncompressedName = tempDir + imageFileName;
+            if (new File(fileDir + File.separator + imageFileName + ".zip").exists()) {
+                file = new File(fileDir + File.separator + imageFileName + ".zip"); 
                 int totalBytesRead = 0;
 
                 try {
                     fis = new FileInputStream(file);
                 } catch (FileNotFoundException e) {
-                    MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + (uncompressedName + ".zip"));
+                    MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " +
+                            (fileDir + File.separator + imageFileName  + ".zip"));
                     return null;
                 }
 
@@ -446,6 +453,7 @@ public class FileImageXML extends FileXML {
                     MipavUtil.displayError("Exception on ZipInputStream for " + fileName);
                     return null;
                 }
+                fileDir = tempDir;
                 try {
                     out = new FileOutputStream(uncompressedName);
                 } catch (IOException e) {
@@ -482,14 +490,15 @@ public class FileImageXML extends FileXML {
                     return null;
                 }
             }
-            else if (new File(uncompressedName + ".gz").exists()) {
-                file = new File(uncompressedName + ".gz"); 
+            else if (new File(fileDir + File.separator + imageFileName + ".gz").exists()) {
+                file = new File(fileDir + File.separator + imageFileName + ".gz"); 
                 int totalBytesRead = 0;
 
                 try {
                     fis = new FileInputStream(file);
                 } catch (FileNotFoundException e) {
-                    MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + (uncompressedName + ".gz"));
+                    MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " +
+                            (fileDir + File.separator + imageFileName  + ".gz"));
                     return null;
                 }
 
@@ -499,6 +508,7 @@ public class FileImageXML extends FileXML {
                     MipavUtil.displayError("IOException on GZIPInputStream for " + fileName);
                     return null;
                 }
+                fileDir = tempDir;
                 try {
                     out = new FileOutputStream(uncompressedName);
                 } catch (IOException e) {
@@ -535,13 +545,14 @@ public class FileImageXML extends FileXML {
                     return null;
                 }
             }
-            else if (new File(uncompressedName + ".bz2").exists()) {
+            else if (new File(fileDir + File.separator + imageFileName + ".bz2").exists()) {
                 int totalBytesRead = 0;
-                file = new File(uncompressedName + ".bz2"); 
+                file = new File(fileDir + File.separator + imageFileName + ".bz2"); 
                 try {
                     fis = new FileInputStream(file);
                 } catch (FileNotFoundException e) {
-                    MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + (uncompressedName + ".bz2"));
+                    MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + 
+                            (fileDir + File.separator + imageFileName  + ".bz2"));
                     return null;
                 }
                 
@@ -567,7 +578,7 @@ public class FileImageXML extends FileXML {
                     MipavUtil.displayError("Exception on CBZip2InputStream for " + fileName);
                     return null;
                 }
-
+                fileDir = tempDir;
                 try {
                     out = new FileOutputStream(uncompressedName);
                 } catch (IOException e) {
