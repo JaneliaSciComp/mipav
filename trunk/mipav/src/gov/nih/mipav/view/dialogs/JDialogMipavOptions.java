@@ -209,6 +209,10 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     /** DOCUMENT ME! */
     private JCheckBox saveXMLOnHDRSaveCheckBox;
+    
+    private JTextField fileTempDirField;
+    
+    private JButton fileTempDirBrowseButton;
 
     /** DOCUMENT ME! */
     private JCheckBox showLineVOIAngleBox;
@@ -327,6 +331,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         fileMiscPanel.setBorder(buildTitledBorder("Misc"));
         makeQuickListOptions(gbc, gbl);
         makeFileFilterOptions(gbc, gbl);
+        makeFileTemporaryDirectory(gbc, gbl);
 
         filePanel.setLayout(new BoxLayout(filePanel, BoxLayout.Y_AXIS));
         filePanel.add(fileSavePanel);
@@ -538,6 +543,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty(Preferences.PREF_SAVE_PROMPT_OVERWRITE, String.valueOf(savePromptOverwriteBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, String.valueOf(saveThumbnailCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_FILENAME_FILTER, String.valueOf(fileFilter));
+            if(fileTempDirField.getText().length() > 0){
+                Preferences.setFileTempDir(fileTempDirField.getText());
+            }
             Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(checkOnFrameClose.isSelected()));
             Preferences.setProperty(Preferences.PREF_LAX_CHECK, String.valueOf(performLaxCheck.isSelected()));
             Preferences.setProperty(Preferences.PREF_VOI_START_COLOR, String.valueOf(voiColorChoices.getSelectedIndex()));
@@ -795,6 +803,18 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             if(retValue == JFileChooser.APPROVE_OPTION){
                 File file = chooser.getSelectedFile();
                 srbBaseTempDirField.setText(file.getAbsolutePath());
+            }
+        } else if(command.equals("fileTempDirBrowse")){
+            JFileChooser chooser = new JFileChooser();
+            if(Preferences.getFileTempDir() != null){
+                chooser.setCurrentDirectory(new File(Preferences.getFileTempDir()));
+            }
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            chooser.setMultiSelectionEnabled(false);
+            int retValue = chooser.showOpenDialog(fileMiscPanel);
+            if(retValue == JFileChooser.APPROVE_OPTION){
+                File file = chooser.getSelectedFile();
+                fileTempDirField.setText(file.getAbsolutePath());
             }
         } else if (command.equals("editUserDef")) {
         	JDialogEditUserDefinedFileTypes editUserDefDialog = new JDialogEditUserDefinedFileTypes();
@@ -1170,12 +1190,45 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         	editUserDefButton.setEnabled(false);
         }
         gbc.insets = new Insets(0, 25, 0, 0);
-        //gbc.gridwidth = GridBagConstraints.REMAINDER;
-        //gbc.anchor = GridBagConstraints.LAST_LINE_END;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbl.setConstraints(editUserDefButton, gbc);
         fileMiscPanel.add(editUserDefButton);
 
     } // end makeFileFilterOptions
+    
+    /**
+     * Makes the temporary file directory fields in fileMiscPanel.
+     *
+     * @param  gbc  the constraints used in the globalChangesPanel
+     * @param  gbl  the layout used in the globablChangesPanel
+     */
+    protected void makeFileTemporaryDirectory(GridBagConstraints gbc, GridBagLayout gbl) {
+        JLabel tempDirLabel = new JLabel("Temporary Directory : ");
+        gbc.insets = new Insets(0, 0, 0, 5);
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(tempDirLabel, gbc);
+        fileMiscPanel.add(tempDirLabel);
+
+        fileTempDirField = new JTextField("");
+        if(Preferences.getFileTempDir() != null){
+            fileTempDirField.setText(Preferences.getFileTempDir());
+        }
+        fileTempDirField.setColumns(16);
+        fileTempDirField.setEditable(false);
+        gbc.gridwidth = 1;
+        gbl.setConstraints(fileTempDirField, gbc);
+        fileMiscPanel.add(fileTempDirField);
+
+        fileTempDirBrowseButton = new JButton("Browse");
+        fileTempDirBrowseButton.addActionListener(this);
+        fileTempDirBrowseButton.setActionCommand("fileTempDirBrowse");
+        gbc.insets = new Insets(0, 25, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(fileTempDirBrowseButton, gbc);
+        fileMiscPanel.add(fileTempDirBrowseButton);    
+    }
 
     /**
      * DOCUMENT ME!
