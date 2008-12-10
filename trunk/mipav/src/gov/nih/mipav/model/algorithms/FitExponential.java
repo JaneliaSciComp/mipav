@@ -15,7 +15,7 @@ public class FitExponential extends NLEngine {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+	/** DOCUMENT ME! */
     private double[] xDataOrg;
 
     /** DOCUMENT ME! */
@@ -164,7 +164,7 @@ public class FitExponential extends NLEngine {
     /**
      * Display results of displaying exponential fitting parameters.
      */
-    public void dumpResults() {
+    public void displayResults() {
         Preferences.debug(" ******* FitExponential ********* \n\n");
         Preferences.debug("Number of iterations: " + String.valueOf(kk) + "\n");
         Preferences.debug("Chi-squared: " + String.valueOf(chisq) + "\n");

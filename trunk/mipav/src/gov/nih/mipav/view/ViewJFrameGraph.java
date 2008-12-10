@@ -1630,7 +1630,7 @@ public class ViewJFrameGraph extends JFrame
                     fe = new FitExponential(nPoints, graph.getFuncts()[i].getOriginalXs(),
                                             graph.getFuncts()[i].getOriginalYs());
                     fe.driver();
-                    fe.dumpResults();
+                    fe.displayResults();
                     params = fe.getParameters();
 
                     x = new float[functions[i].getXs().length];
@@ -1700,7 +1700,7 @@ public class ViewJFrameGraph extends JFrame
                     fe = new FitGaussian(nPoints, graph.getFuncts()[i].getOriginalXs(),
                                             graph.getFuncts()[i].getOriginalYs());
                     fe.driver();
-                    fe.dumpResults();
+                    fe.displayResults();
                     params = fe.getParameters();
 
                     x = new float[functions[i].getXs().length];
@@ -1755,7 +1755,7 @@ public class ViewJFrameGraph extends JFrame
                     fe = new FitLaplace(nPoints, graph.getFuncts()[i].getOriginalXs(),
                                             graph.getFuncts()[i].getOriginalYs());
                     fe.driver();
-                    fe.dumpResults();
+                    fe.displayResults();
                     params = fe.getParameters();
 
                     x = new float[functions[i].getXs().length];
@@ -1764,7 +1764,7 @@ public class ViewJFrameGraph extends JFrame
                     for (int j = 0; j < x.length; j++) {
                         x[j] = (functions[i].getXs()[j]);
                         double exp = -Math.pow(x[j]-params[1], 2) / (2 * Math.pow(params[2], 2));
-                    	y[j] = (float) (params[0]*Math.exp(exp));
+                    	y[j] = 0;//(float) (params[0]*Math.exp(exp));
                     }
 
                     fittedFunctions[i].setXs(x);
@@ -1810,7 +1810,7 @@ public class ViewJFrameGraph extends JFrame
                     fe = new FitLorentz(nPoints, graph.getFuncts()[i].getOriginalXs(),
                                             graph.getFuncts()[i].getOriginalYs());
                     fe.driver();
-                    fe.dumpResults();
+                    fe.displayResults();
                     params = fe.getParameters();
 
                     x = new float[functions[i].getXs().length];
@@ -1871,7 +1871,7 @@ public class ViewJFrameGraph extends JFrame
                     fl = new FitLine(nPoints, graph.getFuncts()[i].getOriginalXs(),
                                      graph.getFuncts()[i].getOriginalYs());
                     fl.driver();
-                    fl.dumpResults();
+                    fl.displayResults();
                     params = fl.getParameters();
                     x = new float[functions[i].getXs().length];
                     y = new float[x.length];
@@ -3241,7 +3241,7 @@ public class ViewJFrameGraph extends JFrame
                     fl = new FitLine(nPoints, graph.getFuncts()[i].getOriginalXs(),
                                      graph.getFuncts()[i].getOriginalYs());
                     fl.driver();
-                    fl.dumpResults();
+                    fl.displayResults();
                     params = fl.getParameters();
                     x = new float[functions[i].getXs().length];
                     y = new float[x.length];
@@ -3292,7 +3292,7 @@ public class ViewJFrameGraph extends JFrame
                     fe = new FitExponential(nPoints, graph.getFuncts()[i].getOriginalXs(),
                                             graph.getFuncts()[i].getOriginalYs());
                     fe.driver();
-                    fe.dumpResults();
+                    fe.displayResults();
                     params = fe.getParameters();
 
                     x = new float[functions[i].getXs().length];
@@ -3346,7 +3346,7 @@ public class ViewJFrameGraph extends JFrame
                     fe = new FitGaussian(nPoints, graph.getFuncts()[i].getOriginalXs(),
                                             graph.getFuncts()[i].getOriginalYs());
                     fe.driver();
-                    fe.dumpResults();
+                    fe.displayResults();
                     params = fe.getParameters();
 
                     x = new float[functions[i].getXs().length];
@@ -3400,7 +3400,7 @@ public class ViewJFrameGraph extends JFrame
                     fe = new FitLaplace(nPoints, graph.getFuncts()[i].getOriginalXs(),
                                             graph.getFuncts()[i].getOriginalYs());
                     fe.driver();
-                    fe.dumpResults();
+                    fe.displayResults();
                     params = fe.getParameters();
 
                     x = new float[functions[i].getXs().length];
@@ -3454,7 +3454,7 @@ public class ViewJFrameGraph extends JFrame
                     fe = new FitLorentz(nPoints, graph.getFuncts()[i].getOriginalXs(),
                                             graph.getFuncts()[i].getOriginalYs());
                     fe.driver();
-                    fe.dumpResults();
+                    fe.displayResults();
                     params = fe.getParameters();
 
                     x = new float[functions[i].getXs().length];
@@ -3584,7 +3584,6 @@ public class ViewJFrameGraph extends JFrame
         fitFunctPanel.add(fitFunctTypePanel);
 
         fitFunctVisiblePanel.setBounds(10, 70, 465, 245);
-        fitFunctVisiblePanel.setLayout(null);
         fitFunctVisiblePanel.setBorder(MipavUtil.buildTitledBorder("Fitted Functions"));
         fitFunctPanel.add(fitFunctVisiblePanel);
 

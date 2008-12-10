@@ -56,6 +56,8 @@ public abstract class NLEngine {
 
     /** DOCUMENT ME! */
     protected double ymod, flamda;
+    
+
 
     /** pq variables. */
     private double gamser, gammcf, gln;
@@ -184,7 +186,6 @@ public abstract class NLEngine {
     public double[] getParameters() {
         return a;
     }
-
 
     /*
      *   fitLine -  @param x1    the x value of the data point  @param atry  the best guess parameter values  @param

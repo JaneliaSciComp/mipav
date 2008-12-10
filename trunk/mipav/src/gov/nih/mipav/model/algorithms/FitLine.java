@@ -11,7 +11,7 @@ public class FitLine extends NLEngine {
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
-    /**
+	/**
      * Creates a new FitLine object.
      */
     public FitLine() {
@@ -62,7 +62,7 @@ public class FitLine extends NLEngine {
     /**
      * Display results of displaying linear fitting parameters.
      */
-    public void dumpResults() {
+    public void displayResults() {
         Preferences.debug(" ******* Dump FitLine ********* \n");
 
         Preferences.debug("Number of iterations: " + String.valueOf(kk) + "\n");
