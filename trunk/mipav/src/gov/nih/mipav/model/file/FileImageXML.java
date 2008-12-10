@@ -429,7 +429,13 @@ public class FileImageXML extends FileXML {
         }
 
         if ( !new File(fileDir + File.separator + imageFileName).exists()) {
-            tempDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "tempDir" + File.separator;
+            tempDir = Preferences.getFileTempDir();
+            if (tempDir == null) {
+                tempDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "tempDir" + File.separator;
+            }
+            else {
+                tempDir = tempDir + File.separator;
+            }
             file = new File(tempDir);
             if (!file.exists()) {
                 file.mkdirs();
