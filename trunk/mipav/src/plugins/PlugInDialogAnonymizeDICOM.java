@@ -18,12 +18,14 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 import javax.swing.*;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Vector;
 
 /**
  * @author joshim2
  *
  */
-public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements AlgorithmInterface, MouseListener, KeyListener {
+public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements AlgorithmInterface {
 
 	// ~ Instance fields ------------------------------------------------------------------------
 	
@@ -46,7 +48,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
     
     private JButton removeAllButton;
     
-    private JTextArea inputFileTextArea;
+    private JList inputFileList;
 
 	/** Textfields **/
     private JTextField tagListTextField; 
@@ -59,6 +61,9 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
 	
 	/** Additional tags to anonymize */
 	private String[] tagArray;
+	
+	/** List of current files to work with */
+	private Vector<String> fileList;
 	
 	/** Algorithm instance */
     private PlugInAlgorithmAnonymizeDicom algoAnonymizeDicom;
@@ -94,10 +99,10 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
      */
     public PlugInDialogAnonymizeDICOM(boolean modal) {
         super(modal); 
-    	init();
-    	
+        fileList = new Vector<String>();
     	currentMode = SelectMode.NONE;
-    	//setSeparateThread(false);
+       
+    	init();
     }
     
     // ~ Methods ----------------------------------------------------------------------------------
@@ -125,13 +130,12 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
         mainPanelConstraints.gridheight = 3;
         mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
         mainPanelConstraints.fill = GridBagConstraints.BOTH;
-        inputFileTextArea = new JTextArea();
-        inputFileTextArea.setEditable(false);
-        inputFileTextArea.setRows(4);
-        inputFileTextArea.setMinimumSize(new Dimension(300, 94));
-        inputFileTextArea.addMouseListener(this);
-        inputFileTextArea.setMaximumSize(new Dimension(300, 500));
-        JScrollPane scrollPane = new JScrollPane(inputFileTextArea);
+        inputFileList = new JList(fileList);
+        inputFileList.setVisibleRowCount(4);
+        inputFileList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        inputFileList.setMinimumSize(new Dimension(300, 94));
+        inputFileList.setMaximumSize(new Dimension(300, 500));
+        JScrollPane scrollPane = new JScrollPane(inputFileList);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);    
         scrollPane.setMinimumSize(new Dimension(300, 94));
@@ -200,7 +204,6 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
         pack();
         setResizable(false);
         setVisible(true);
-        addKeyListener(this);
         requestFocus();
 
     }
@@ -230,12 +233,12 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
     	try{
     		System.gc();
     		
-    		String selectedFilesText = inputFileTextArea.getText();
-    		String[] allFiles = selectedFilesText.split("\n");
-    		selectedFiles = new File[allFiles.length];
-    		for(int i=0; i<allFiles.length; i++) {
-    			System.out.println("Working with file "+allFiles[i]);
-    			selectedFiles[i] = new File(allFiles[i]);
+    		int[] selectedIndex = inputFileList.getSelectedIndices();
+    		selectedFiles = new File[selectedIndex.length];
+    		int index = 0;
+    		for(int i : selectedIndex) {
+    			System.out.println("Working with file "+inputFileList.getModel().getElementAt(i));
+    			selectedFiles[index++] = new File((String)inputFileList.getModel().getElementAt(i));
     		}
     		
     		//Make algorithm.
@@ -292,24 +295,20 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
             if (returnVal == JFileChooser.APPROVE_OPTION) {
             	selectedFiles = fileChooser.getSelectedFiles();
             	Preferences.setImageDirectory(fileChooser.getCurrentDirectory());
-            	String totalText = inputFileTextArea.getText();
-            	String[] fileLine = totalText.split("\n");
             	for(int i=0; i<selectedFiles.length; i++) {
             		boolean fileExists = false;
-            		for(int j=0; j<fileLine.length; j++) {
-            			if(selectedFiles[i].getAbsolutePath().equals(fileLine[j])) {
+            		for(int j=0; j<fileList.size(); j++) {
+            			if(selectedFiles[i].getAbsolutePath().equals(fileList.get(j))) {
             				fileExists = true;
             			}
             		}
             		if(!fileExists) {
-            			totalText = totalText + selectedFiles[i].getAbsolutePath()+"\n";
+            			fileList.add(selectedFiles[i].getAbsolutePath());
             		}
             	}
-            	inputFileTextArea.setText(totalText);
-            	System.out.println(inputFileTextArea.getText());
-            	inputFileTextArea.validate();
-            	requestFocus();
-            	requestFocusInWindow();
+            	inputFileList.updateUI();
+            	
+            	
             }
         } else if (command.equalsIgnoreCase("Cancel")) {
         	dispose();
@@ -317,95 +316,16 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
         	createTagArray();
         	callAlgorithm();
         } else if(command.equalsIgnoreCase("Remove All")) {
-        	inputFileTextArea.setText("");
+        	fileList.removeAllElements();
+        	inputFileList.updateUI();
         } else if(command.equals("Remove")) {
-        	if(selectedRow != -1) {
-        		String replaceText = "";
-        		String[] totalText = inputFileTextArea.getText().split("\n");
-        		for(int i=0; i<totalText.length; i++) {
-        			if(i != selectedRow) {
-        				replaceText = replaceText + totalText[i]+"\n";
-        			}
-        		}
-        		inputFileTextArea.setText(replaceText);
-        		selectedRow = -1;
-        	} else {
-        		MipavUtil.displayInfo("Please select the row to remove.");
+        	Object[] objAr = inputFileList.getSelectedValues();
+        	for(Object obj : objAr) {
+        		fileList.remove(obj);
         	}
+        	inputFileList.updateUI();
         }
     }
-    
-    public void keyPressed(KeyEvent e) {
-		System.out.println("Looking at key codes");
-    	switch(e.getKeyCode()) {
-		
-		case KeyEvent.VK_CONTROL:
-			currentMode = SelectMode.CTRL_MODE;
-			break;
-			
-		case KeyEvent.VK_SHIFT:
-			currentMode = SelectMode.SHIFT_MODE;
-			break;
-			
-			default:
-				currentMode = SelectMode.NONE;
-		}
-		
-	}
-
-	public void keyReleased(KeyEvent e) {
-		currentMode = SelectMode.NONE;
-	}
-
-	public void keyTyped(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void mouseClicked(MouseEvent e) {
-		/*switch(currentMode) {
-		
-		case CTRL_MODE:
-			System.out.println("In control mode");
-			break;
-			
-		case SHIFT_MODE:
-			System.out.println("In shift mode");
-			break;
-			
-		case NONE:
-			System.out.println("Not in a mode");
-			break;
-		
-		}*/
-		
-		selectedRow = e.getY()/16;
-		int selectStart;
-		//System.out.println("Selected Row "+selectedRow);
-		String[] ar = inputFileTextArea.getText().split("\n");
-		if(selectedRow < ar.length) {
-			inputFileTextArea.setSelectionStart(selectStart = inputFileTextArea.getText().indexOf(ar[selectedRow]));
-			inputFileTextArea.setSelectionEnd(selectStart+ar[selectedRow].length());
-		} 
-	}
-
-	public void mouseEntered(MouseEvent e) {
-		
-	}
-
-	public void mouseExited(MouseEvent e) {
-		
-	}
-
-	public void mousePressed(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void mouseReleased(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
 
 	/**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
