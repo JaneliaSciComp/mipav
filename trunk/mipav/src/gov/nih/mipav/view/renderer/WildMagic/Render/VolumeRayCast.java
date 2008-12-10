@@ -723,8 +723,6 @@ public class VolumeRayCast extends VolumeObject
             }
         }
         m_kMesh = new TriMesh(pkVB,pkIB);
-
-        // polished gold
         m_kMaterial = new MaterialState();
         m_kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
         m_kMaterial.Ambient = new ColorRGB(0.1f,0.1f,0.1f);
