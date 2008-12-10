@@ -52,23 +52,32 @@ public class ViewJFrameGraph extends JFrame
     	/** Mode indicates Laplace fitting in progress*/
     	fitLaplace("Fit Laplace (A*exp(-|x-mu|/beta))", FitLaplace.class),
     	
-    	/** Mode indicates Lorentz fitting in progress //TODO: Finish imp.*/
+    	/** Mode indicates Lorentz fitting in progress */
     	fitLorentz("Fit Lorentz Distribution", FitLorentz.class);
     	
     	private String listEntry;
-    	private Class cl;
+    	private Constructor cl;
     	
     	FitMode(String listEntry, Class cl) {
     		this.listEntry = listEntry;
-    		this.cl = cl;
+    		if(cl != null) {
+	    		try {
+					this.cl = cl.getConstructor(int.class, float[].class, float[].class);
+				} catch (SecurityException e) {
+					e.printStackTrace();
+				} catch (NoSuchMethodException e) {
+					e.printStackTrace();
+				}
+    		} else
+    			this.cl = null;
     	}
     	
     	public String toString() {
     		return listEntry;
     	}
     	
-    	public Constructor getImpl() throws SecurityException, NoSuchMethodException {
-    		return cl.getConstructor(int.class, float[].class, float[].class);
+    	public Constructor getImpl() {
+    		return cl;
     	}
     }
     
@@ -1548,7 +1557,7 @@ public class ViewJFrameGraph extends JFrame
         } else if (command.equals("CancelModifyGraph")) {
             modifyDialog.dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10620");
+            MipavUtil.showHelp("19050");
         } else if (command.equals("Normalize")) {
             // System.err.println("running median, then gaussian on function1");
 
