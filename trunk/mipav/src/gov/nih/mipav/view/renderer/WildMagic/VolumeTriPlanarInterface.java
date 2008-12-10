@@ -467,7 +467,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             clipMaskButton.setEnabled(true);
             clipMaskUndoButton.setEnabled(true);
             clipSaveButton.setEnabled(true);
-
             insertTab("Opacity", opacityPanel);
             updateRayTracingSteps();
             raycastRenderWM.displayVolumeRaycast( rendererGUI.getVolumeCheck().isSelected() );
@@ -481,6 +480,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             clipSaveButton.setEnabled(true);
             updateRayTracingSteps();
             raycastRenderWM.displayVolumeRaycast( rendererGUI.getVolumeCheck().isSelected() );
+            raycastRenderWM.setVolumeBlend( rendererGUI.getBlendSliderValue()/100.0f );
         } else if (command.equals("Stereo")) {
             if ( (m_kStereoIPD == null) && rendererGUI.getStereoCheck().isSelected() )
             {
