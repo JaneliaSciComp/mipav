@@ -220,12 +220,17 @@ public class FitLaplace extends NLFittedFunction {
 	    		oldBeta = beta;
 	    		kk++;
 	    	}
+	    	
+	    	//always calculate fitted y first, to be used in chisq
+	    	calculateFittedY();
+	    	calculateChiSq();
     	}
     	
     	if(!converged) {
     		Preferences.debug("Did not converge after "+kk+" iterations.");
     		System.out.println("Did not converge after "+kk+" iterations.");
     	} else {
+    		calculateFittedY();
     		calculateChiSq();
     	}
     	
@@ -236,7 +241,7 @@ public class FitLaplace extends NLFittedFunction {
     	
     }
     
-    private void calculateChiSq() {
+    protected void calculateChiSq() {
     	Matrix residuals = generateResiduals();
     	double sum = 0;
     	for(int i=dataStart; i<dataEnd; i++) {
@@ -349,7 +354,7 @@ public class FitLaplace extends NLFittedFunction {
     /**
      * Jacobian used for non-linear least squares fitting.
      */
-    private Matrix generateJacobian() {
+    protected Matrix generateJacobian() {
     	Matrix jacobian = new Matrix(dataEnd - dataStart, 3);
     	for(int i=dataStart; i<dataEnd; i++) {
     		jacobian.set(i-dataStart, 0, dLdA(xDataOrg[i]));
@@ -360,7 +365,7 @@ public class FitLaplace extends NLFittedFunction {
     	return jacobian;
     }
     
-    private Matrix generateResiduals() {
+    protected Matrix generateResiduals() {
     	Matrix residuals = new Matrix(dataEnd - dataStart, 1);
     	for(int i=dataStart; i<dataEnd; i++) {
     		double r = yDataOrg[i] - laplace(xDataOrg[i]);

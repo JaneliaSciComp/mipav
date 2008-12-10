@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import Jama.Matrix;
 import gov.nih.mipav.view.*;
 
 
@@ -11,15 +12,9 @@ import gov.nih.mipav.view.*;
  * @see      NLEngine
  * @version  0.9
  */
-public class FitExponential extends NLEngine {
+public class FitExponential extends NLFittedFunction {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-	/** DOCUMENT ME! */
-    private double[] xDataOrg;
-
-    /** DOCUMENT ME! */
-    private double[] yDataOrg;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -248,4 +243,22 @@ public class FitExponential extends NLEngine {
             sig[i] = stdv;
         }
     }
+
+	@Override
+	protected void calculateFittedY() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected Matrix generateResiduals() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected void calculateChiSq() {
+		// TODO Auto-generated method stub
+		
+	}
 }

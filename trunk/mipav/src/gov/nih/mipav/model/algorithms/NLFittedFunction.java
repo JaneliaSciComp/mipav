@@ -1,5 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
+import java.util.Arrays;
+
+import Jama.Matrix;
+
 public abstract class NLFittedFunction extends NLEngine {
 
 	//~ Static fields -------------------------------------------------------------------------------------------
@@ -43,6 +47,11 @@ public abstract class NLFittedFunction extends NLEngine {
     }
     
     /**
+     * Calculates chi squared
+     */
+    protected abstract void calculateChiSq();
+    
+    /**
      * Calculates yDataFitted
      */
     protected abstract void calculateFittedY();
@@ -51,5 +60,23 @@ public abstract class NLFittedFunction extends NLEngine {
      * Displays results in a panel with relevant parameters.
      */
     public abstract void displayResults();
+
+	/**
+	 * get median of given array
+	 */
+	protected double getMedian(double[] toSort) {
+	    int length = toSort.length;
+	
+	    Arrays.sort(toSort);
+	
+	    return toSort[(length / 2)];
+	}
+	
+	/**
+	 * Calculates the residuals for a given function, not implemented since some functions might prefer to only use
+	 * a subset of data points, or not use yDataFitted if working during an iteration
+	 * @return
+	 */
+	protected abstract Matrix generateResiduals();
 
 }
