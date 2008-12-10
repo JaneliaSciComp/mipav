@@ -15,26 +15,8 @@ import gov.nih.mipav.view.*;
  * @see      NLEngine
  * @version  0.1
  */
-public class FitGaussian extends NLEngine {
+public class FitGaussian extends NLFittedFunction {
 
-	//~ Static fields -------------------------------------------------------------------------------------------
-	
-	/**Max number of iterations to perform. */
-	public static final int MAX_ITR = 50;
-	
-	/**Min number of iterations to perform. */
-	public static final int MIN_ITR = 5;
-	
-	/**Minimum allowable distance between iterations of a coefficient before considered converged. */
-	public static final double EPSILON = .005;
-	
-	//~ Instance fields ------------------------------------------------------------------------------------------------
-    /** Original x-data */
-    private double[] xDataOrg;
-
-    /** Original y-data */
-    private double[] yDataOrg;
-    
     /**Location in xDataOrg where Gaussian data starts */
     private int dataStart;
     
@@ -344,10 +326,18 @@ public class FitGaussian extends NLEngine {
     	
     }
 
-    /**
+    @Override
+	protected void calculateFittedY() {
+		 yDataFitted = new double[xDataOrg.length];
+		 for(int i=0; i<xDataOrg.length; i++) {
+			 yDataFitted[i] = gauss(xDataOrg[i]);
+		 }
+	}
+
+	/**
      * Display results of displaying exponential fitting parameters.
      */
-    public void dumpResults() {
+    public void displayResults() {
     	ViewJFrameMessageGraph messageGraph = new ViewJFrameMessageGraph("Fitting Data");
     	
     	messageGraph.append(" ******* FitGaussian ********* \n\n");

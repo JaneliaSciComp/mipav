@@ -15,25 +15,9 @@ import gov.nih.mipav.view.*;
  * @see      NLEngine
  * @version  0.1
  */
-public class FitLorentz extends NLEngine {
-
-	//~ Static fields -------------------------------------------------------------------------------------------
-	
-	/**Max number of iterations to perform. */
-	public static final int MAX_ITR = 10;
-	
-	/**Min number of iterations to perform. */
-	public static final int MIN_ITR = 5;
-	
-	/**Minimum allowable distance between iterations of a coefficient before considered converged. */
-	public static final double EPSILON = .005;
+public class FitLorentz extends NLFittedFunction {
 	
 	//~ Instance fields ------------------------------------------------------------------------------------------------
-    /** Original x-data */
-    private double[] xDataOrg;
-
-    /** Original y-data */
-    private double[] yDataOrg;
     
     /**Location in xDataOrg where Gaussian data starts */
     private int dataStart;
@@ -332,10 +316,18 @@ public class FitLorentz extends NLEngine {
     	chisq = residuals.norm1();
     }
 
-    /**
+    @Override
+	protected void calculateFittedY() {
+		yDataFitted = new double[xDataOrg.length];
+		for(int i=0; i<xDataOrg.length; i++) {
+			yDataFitted[i] = lorentz(xDataOrg[i]);
+		}
+	}
+
+	/**
      * Display results of displaying exponential fitting parameters.
      */
-    public void dumpResults() {
+    public void displayResults() {
     	ViewJFrameMessageGraph messageGraph = new ViewJFrameMessageGraph("Fitting Data");
     	
     	messageGraph.append(" ******* FitLorentz ********* \n\n");
