@@ -1452,7 +1452,13 @@ public class FileIO {
         }
         
         if (unzip || gunzip || bz2unzip) {
-            tempDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "tempDir" + File.separator;
+            tempDir = Preferences.getFileTempDir();
+            if (tempDir == null) {
+                tempDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "tempDir" + File.separator;
+            }
+            else {
+                tempDir = tempDir + File.separator;
+            }
             file = new File(tempDir);
             if (!file.exists()) {
                 file.mkdirs();
