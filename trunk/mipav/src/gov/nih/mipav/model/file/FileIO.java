@@ -1423,6 +1423,7 @@ public class FileIO {
         int userDefinedFileType = 0;
         String userDefinedSuffix = null;
         String uncompressedName = null;
+        String tempDir = null;
         if ( (fileName == null) || (fileDir == null)) {
             return null;
         }
@@ -1449,6 +1450,14 @@ public class FileIO {
         } else {
             bz2unzip = false;
         }
+        
+        if (unzip || gunzip || bz2unzip) {
+            tempDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "tempDir" + File.separator;
+            file = new File(tempDir);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+        }
 
         file = new File(fileDir + fileName);
 
@@ -1470,6 +1479,7 @@ public class FileIO {
             }
 
             fileName = fileName.substring(0, index);
+            fileDir = tempDir;
             uncompressedName = fileDir + fileName;
             try {
                 out = new FileOutputStream(uncompressedName);
@@ -1525,6 +1535,7 @@ public class FileIO {
             }
 
             fileName = fileName.substring(0, index);
+            fileDir = tempDir;
             uncompressedName = fileDir + fileName;
             try {
                 out = new FileOutputStream(uncompressedName);
@@ -1596,6 +1607,7 @@ public class FileIO {
             }
 
             fileName = fileName.substring(0, index);
+            fileDir = tempDir;
             uncompressedName = fileDir + fileName;
             try {
                 out = new FileOutputStream(uncompressedName);
