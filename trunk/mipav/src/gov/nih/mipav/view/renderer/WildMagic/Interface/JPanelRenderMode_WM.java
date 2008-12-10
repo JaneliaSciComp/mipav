@@ -332,6 +332,14 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     	
     }
     
+    /**
+     * Get the blender slider value
+     * @return   slider value.
+     */
+    public int getBlendSliderValue() {
+    	return m_kVolumeBlendSlider.getValue();
+    }
+    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#stateChanged(javax.swing.event.ChangeEvent)
      */
