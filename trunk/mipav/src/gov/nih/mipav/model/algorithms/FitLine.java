@@ -1,13 +1,14 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import Jama.Matrix;
 import gov.nih.mipav.view.*;
 
 
 /**
  * y = mx + b;.
  */
-public class FitLine extends NLEngine {
+public class FitLine extends NLFittedFunction {
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -153,4 +154,22 @@ public class FitLine extends NLEngine {
         }
 
     }
+
+	@Override
+	protected void calculateFittedY() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected Matrix generateResiduals() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected void calculateChiSq() {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -1,7 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import java.util.Arrays;
 
 import Jama.Matrix;
 import gov.nih.mipav.view.*;
@@ -143,17 +142,6 @@ public class FitLorentz extends NLFittedFunction {
         return gaussY;
     }
     
-    /**
-     * get median of given array
-     */
-    private double getMedian(double[] toSort) {
-        int length = toSort.length;
-
-        Arrays.sort(toSort);
-
-        return toSort[(length / 2)];
-    }
-    
     private void estimateInitial() {
     	int offset = 15;
     	
@@ -293,6 +281,7 @@ public class FitLorentz extends NLFittedFunction {
     		Preferences.debug("Did not converge after "+kk+" iterations.");
     		System.out.println("Did not converge after "+kk+" iterations.");
     	} else {
+    		calculateFittedY();
     		calculateChiSq();
     	}
     	
@@ -303,7 +292,7 @@ public class FitLorentz extends NLFittedFunction {
     	
     }
     
-    private void calculateChiSq() {
+    protected void calculateChiSq() {
     	Matrix residuals = generateResiduals();
     	double sum = 0;
     	for(int i=dataStart; i<dataEnd; i++) {
@@ -416,7 +405,7 @@ public class FitLorentz extends NLFittedFunction {
     /**
      * Jacobian used for non-linear least squares fitting.
      */
-    private Matrix generateJacobian() {
+    protected Matrix generateJacobian() {
     	Matrix jacobian = new Matrix(dataEnd - dataStart, 3);
     	for(int i=dataStart; i<dataEnd; i++) {
     		jacobian.set(i-dataStart, 0, dLdA(xDataOrg[i]));
@@ -427,7 +416,7 @@ public class FitLorentz extends NLFittedFunction {
     	return jacobian;
     }
     
-    private Matrix generateResiduals() {
+    protected Matrix generateResiduals() {
     	Matrix residuals = new Matrix(dataEnd - dataStart, 1);
     	for(int i=dataStart; i<dataEnd; i++) {
     		double r = yDataOrg[i] - lorentz(xDataOrg[i]);
