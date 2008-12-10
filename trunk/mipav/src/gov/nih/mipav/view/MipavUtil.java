@@ -1136,7 +1136,12 @@ public class MipavUtil extends JComponent {
             Preferences.debug("HelpSet error = " + error);
         } catch (BadIDException error) {
             MipavUtil.displayError("HelpSet ID error = " + error);
-            showHelp("10000");
+            if(ID != null) {
+	            //show default help dialogue
+	            showHelp(null);
+            } else {
+            	MipavUtil.displayError("MIPAV cannot display help.  View help at:\nhttp://mipav.cit.nih.gov/documentation.php");
+            }
         }
     }
 
