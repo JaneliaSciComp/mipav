@@ -8,6 +8,8 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
 import java.util.*;
 
@@ -36,31 +38,37 @@ public class ViewJFrameGraph extends JFrame
     
     public enum FitMode {
     	/** Mode indicates no curve fitting is taking place */
-    	fitNone("None"),
+    	fitNone("None", null),
     	
     	/** Mode indicates linear fitting in progress */
-    	fitLinear("Fit linear (a1*x + a0)"),
+    	fitLinear("Fit linear (a1*x + a0)", FitLine.class),
     	
     	/** Mode indicates exponential fitting in progress */
-    	fitExp("Fit exponential (a0+a1*exp(a2*x))"),
+    	fitExp("Fit exponential (a0+a1*exp(a2*x))", FitExponential.class),
     	
     	/** Mode indicates Gaussian fitting in progress*/
-    	fitGaussian("Fit Gaussian (A*exp(-(X-Xo)^2/(2sigma^2)))"),
+    	fitGaussian("Fit Gaussian (A*exp(-(X-Xo)^2/(2sigma^2)))", FitGaussian.class),
     	
     	/** Mode indicates Laplace fitting in progress*/
-    	fitLaplace("Fit Laplace (A*exp(-|x-mu|/beta))"),
+    	fitLaplace("Fit Laplace (A*exp(-|x-mu|/beta))", FitLaplace.class),
     	
     	/** Mode indicates Lorentz fitting in progress //TODO: Finish imp.*/
-    	fitLorentz("Fit Lorentz Distribution");
+    	fitLorentz("Fit Lorentz Distribution", FitLorentz.class);
     	
     	private String listEntry;
+    	private Class cl;
     	
-    	FitMode(String listEntry) {
+    	FitMode(String listEntry, Class cl) {
     		this.listEntry = listEntry;
+    		this.cl = cl;
     	}
     	
     	public String toString() {
     		return listEntry;
+    	}
+    	
+    	public Constructor getImpl() throws SecurityException, NoSuchMethodException {
+    		return cl.getConstructor(int.class, float[].class, float[].class);
     	}
     }
     
@@ -1607,367 +1615,60 @@ public class ViewJFrameGraph extends JFrame
     }
     
     private void fitFunctions(FitMode mode) {
-    	switch(mode) {
-    	
-    	case fitExp: {
-    		double[] params;
-            int nPoints;
-            FitExponential fe = null;
+        int nPoints;
+        NLFittedFunction fe = null;
 
-            ViewJComponentFunct[] functions = graph.getFuncts();
-            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
-            float[] x;
-            float[] y;
+        ViewJComponentFunct[] functions = graph.getFuncts();
+        ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
+        float[] x;
+        float[] y;
 
-            try {
+        try {
 
-                if (messageGraph == null) {
-                    messageGraph = new ViewJFrameMessageGraph("Fitting Data");
+            for (int i = 0; i < functions.length; i++) {
+                nPoints = graph.getFuncts()[i].getOriginalXs().length;
+                fe = (NLFittedFunction)mode.getImpl().newInstance(nPoints, graph.getFuncts()[i].getOriginalXs(),
+                                        graph.getFuncts()[i].getOriginalYs());
+                fe.driver();
+                fe.displayResults();
+
+                x = new float[functions[i].getXs().length];
+                y = new float[x.length];
+
+                double[] yTemp = fe.getFittedY();
+                
+                for (int j = 0; j < x.length; j++) {
+                    x[j] = (functions[i].getXs()[j]);
+                	y[j] = (float)yTemp[j];
                 }
 
-                for (int i = 0; i < functions.length; i++) {
-                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
-                    fe = new FitExponential(nPoints, graph.getFuncts()[i].getOriginalXs(),
-                                            graph.getFuncts()[i].getOriginalYs());
-                    fe.driver();
-                    fe.displayResults();
-                    params = fe.getParameters();
-
-                    x = new float[functions[i].getXs().length];
-                    y = new float[x.length];
-
-                    for (int j = 0; j < x.length; j++) {
-                        x[j] = (functions[i].getXs()[j]);
-                        y[j] = (float) (params[0] + (params[1] * Math.exp(params[2] * x[j])));
-                    }
-
-                    fittedFunctions[i].setXs(x);
-                    fittedFunctions[i].setOriginalXs(x);
-                    fittedFunctions[i].setYs(y);
-                    fittedFunctions[i].setOriginalYs(y);
-
-                    messageGraph.append("*********************\n");
-                    messageGraph.append("Fitting of exponential function " + i + "\n");
-                    messageGraph.append("Chi-squared = " + fe.getChiSquared() + "\n");
-                    messageGraph.append(" y = " + String.valueOf(params[0]) + " + " + String.valueOf(params[1]) +
-                                        " * exp(" + String.valueOf(params[2]) + " * x)\n");
-                    messageGraph.append("\n");
-                }
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Graph :  Out of memory ");
-
+                fittedFunctions[i].setXs(x);
+                fittedFunctions[i].setOriginalXs(x);
+                fittedFunctions[i].setYs(y);
+                fittedFunctions[i].setOriginalYs(y);
             }
+        } catch (OutOfMemoryError error) {
+            MipavUtil.displayError("Graph :  Out of memory ");
 
-            if (messageGraph != null) {
+        } catch (Exception e) {
+        	MipavUtil.displayError("Fitting functions failed.");
+			e.printStackTrace();
+		} 
 
-                if (messageGraph.isVisible() == false) {
-                    messageGraph.setLocation(100, 50);
-                    messageGraph.setSize(500, 300);
-                    messageGraph.setVisible(true);
-                }
-            }
+        fitMode = mode;
 
-            fitMode = FitMode.fitExp;
+        for (int index = 0; index < 5; index++) {
 
-            for (int index = 0; index < 5; index++) {
-
-                if (index >= graph.getFuncts().length) {
-                    fitFunctVisibleCheckbox[index].setEnabled(false);
-                    fitFunctVisibleCheckbox[index].setSelected(false);
-                } else {
-                    fitFunctVisibleCheckbox[index].setEnabled(true);
-                    fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
-                }
-            }
-			//comment
-            update(getGraphics()); }
-    		break;
-    		
-    	case fitGaussian: {
-    		double[] params;
-            int nPoints;
-            FitGaussian fe = null;
-
-            ViewJComponentFunct[] functions = graph.getFuncts();
-            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
-            float[] x;
-            float[] y;
-
-            try {
-
-                for (int i = 0; i < functions.length; i++) {
-                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
-                    fe = new FitGaussian(nPoints, graph.getFuncts()[i].getOriginalXs(),
-                                            graph.getFuncts()[i].getOriginalYs());
-                    fe.driver();
-                    fe.displayResults();
-                    params = fe.getParameters();
-
-                    x = new float[functions[i].getXs().length];
-                    y = new float[x.length];
-
-                    for (int j = 0; j < x.length; j++) {
-                        x[j] = (functions[i].getXs()[j]);
-                        double exp = -Math.pow(x[j]-params[1], 2) / (2 * Math.pow(params[2], 2));
-                    	y[j] = (float) (params[0]*Math.exp(exp));
-                    }
-
-                    fittedFunctions[i].setXs(x);
-                    fittedFunctions[i].setOriginalXs(x);
-                    fittedFunctions[i].setYs(y);
-                    fittedFunctions[i].setOriginalYs(y);
-                }
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Graph :  Out of memory ");
-
-            }
-
-            fitMode = FitMode.fitGaussian;
-
-            for (int index = 0; index < 5; index++) {
-
-                if (index >= graph.getFuncts().length) {
-                    fitFunctVisibleCheckbox[index].setEnabled(false);
-                    fitFunctVisibleCheckbox[index].setSelected(false);
-                } else {
-                    fitFunctVisibleCheckbox[index].setEnabled(true);
-                    fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
-                }
-            }
-
-            update(getGraphics()); }
-    		break;
-    		
-    	case fitLaplace: {
-    		double[] params;
-            int nPoints;
-            FitLaplace fe = null;
-
-            ViewJComponentFunct[] functions = graph.getFuncts();
-            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
-            float[] x;
-            float[] y;
-
-            try {
-
-                for (int i = 0; i < functions.length; i++) {
-                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
-                    fe = new FitLaplace(nPoints, graph.getFuncts()[i].getOriginalXs(),
-                                            graph.getFuncts()[i].getOriginalYs());
-                    fe.driver();
-                    fe.displayResults();
-                    params = fe.getParameters();
-
-                    x = new float[functions[i].getXs().length];
-                    y = new float[x.length];
-
-                    for (int j = 0; j < x.length; j++) {
-                        x[j] = (functions[i].getXs()[j]);
-                        double exp = -Math.pow(x[j]-params[1], 2) / (2 * Math.pow(params[2], 2));
-                    	y[j] = 0;//(float) (params[0]*Math.exp(exp));
-                    }
-
-                    fittedFunctions[i].setXs(x);
-                    fittedFunctions[i].setOriginalXs(x);
-                    fittedFunctions[i].setYs(y);
-                    fittedFunctions[i].setOriginalYs(y);
-                }
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Graph :  Out of memory ");
-
-            }
-
-            fitMode = FitMode.fitLaplace;
-
-            for (int index = 0; index < 5; index++) {
-
-                if (index >= graph.getFuncts().length) {
-                    fitFunctVisibleCheckbox[index].setEnabled(false);
-                    fitFunctVisibleCheckbox[index].setSelected(false);
-                } else {
-                    fitFunctVisibleCheckbox[index].setEnabled(true);
-                    fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
-                }
-            }
-
-            update(getGraphics()); }
-            break;
-            
-    	case fitLorentz: {
-    		double[] params;
-            int nPoints;
-            FitLorentz fe = null;
-
-            ViewJComponentFunct[] functions = graph.getFuncts();
-            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
-            float[] x;
-            float[] y;
-
-            try {
-
-                for (int i = 0; i < functions.length; i++) {
-                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
-                    fe = new FitLorentz(nPoints, graph.getFuncts()[i].getOriginalXs(),
-                                            graph.getFuncts()[i].getOriginalYs());
-                    fe.driver();
-                    fe.displayResults();
-                    params = fe.getParameters();
-
-                    x = new float[functions[i].getXs().length];
-                    y = new float[x.length];
-
-                    for (int j = 0; j < x.length; j++) {
-                        x[j] = (functions[i].getXs()[j]);
-                        double exp = -Math.pow(x[j]-params[1], 2) / (2 * Math.pow(params[2], 2));
-                    	y[j] = (float) (params[0]*Math.exp(exp));
-                    }
-
-                    fittedFunctions[i].setXs(x);
-                    fittedFunctions[i].setOriginalXs(x);
-                    fittedFunctions[i].setYs(y);
-                    fittedFunctions[i].setOriginalYs(y);
-                }
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Graph :  Out of memory ");
-
-            }
-
-            fitMode = FitMode.fitLorentz;
-
-            for (int index = 0; index < 5; index++) {
-
-                if (index >= graph.getFuncts().length) {
-                    fitFunctVisibleCheckbox[index].setEnabled(false);
-                    fitFunctVisibleCheckbox[index].setSelected(false);
-                } else {
-                    fitFunctVisibleCheckbox[index].setEnabled(true);
-                    fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
-                }
-            }
-
-            update(getGraphics());
-    	
-    	}
-    	break;
-    	
-    	case fitLinear: {
-    		double[] params;
-            int nPoints;
-            FitLine fl = null;
-
-            ViewJComponentFunct[] functions = graph.getFuncts();
-            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
-            float[] x;
-            float[] y;
-
-            try {
-
-                if (messageGraph == null) {
-                    messageGraph = new ViewJFrameMessageGraph("Fitting Data");
-                }
-
-                for (int i = 0; i < functions.length; i++) {
-                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
-                    fl = new FitLine(nPoints, graph.getFuncts()[i].getOriginalXs(),
-                                     graph.getFuncts()[i].getOriginalYs());
-                    fl.driver();
-                    fl.displayResults();
-                    params = fl.getParameters();
-                    x = new float[functions[i].getXs().length];
-                    y = new float[x.length];
-
-                    for (int j = 0; j < x.length; j++) {
-                        x[j] = (functions[i].getXs()[j]);
-                        y[j] = (float) (params[0] + (params[1] * x[j]));
-                    }
-
-                    fittedFunctions[i].setXs(x);
-                    fittedFunctions[i].setOriginalXs(x);
-                    fittedFunctions[i].setYs(y);
-                    fittedFunctions[i].setOriginalYs(y);
-
-                    messageGraph.append("*********************\n");
-                    messageGraph.append("Fitting of linear function " + i + "\n");
-                    messageGraph.append("Chi-squared = " + fl.getChiSquared() + "\n");
-                    messageGraph.append(" y = " + String.valueOf(params[0]) + " + " + String.valueOf(params[1]) +
-                                        " * x\n");
-                    messageGraph.append("\n");
-                }
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Graph :  Out of memory ");
-
-            }
-
-            if (messageGraph != null) {
-
-                if (messageGraph.isVisible() == false) {
-                    messageGraph.setLocation(100, 50);
-                    messageGraph.setSize(500, 300);
-                    messageGraph.setVisible(true);
-                }
-            }
-
-            fitMode = FitMode.fitLinear;
-
-            for (int index = 0; index < 5; index++) {
-
-                if (index >= graph.getFuncts().length) {
-                    fitFunctVisibleCheckbox[index].setEnabled(false);
-                    fitFunctVisibleCheckbox[index].setSelected(false);
-                } else {
-                    fitFunctVisibleCheckbox[index].setEnabled(true);
-                    fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
-                }
-            }
-
-            update(getGraphics());
-    	}
-    	break;
-    	
-    	case fitNone: {
-    		ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
-            ViewJComponentFunct[] functions = graph.getFuncts();
-            float[] x;
-            float[] y;
-
-            try {
-
-                for (int i = 0; i < fittedFunctions.length; i++) {
-                    x = new float[functions[i].getXs().length];
-                    y = new float[x.length];
-
-                    for (int j = 0; j < x.length; j++) {
-                        x[j] = (functions[i].getXs()[j]);
-                        y[j] = (functions[i].getYs()[j]);
-                    }
-
-                    fittedFunctions[i].setXs(x);
-                    fittedFunctions[i].setOriginalXs(x);
-                    fittedFunctions[i].setYs(y);
-                    fittedFunctions[i].setOriginalYs(y);
-
-                }
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Graph :  Out of memory ");
-
-            }
-
-            fitMode = FitMode.fitNone;
-
-            for (int index = 0; index < 5; index++) {
+            if (index >= graph.getFuncts().length) {
                 fitFunctVisibleCheckbox[index].setEnabled(false);
                 fitFunctVisibleCheckbox[index].setSelected(false);
-
-                if (index < graph.getFuncts().length) {
-                    graph.getFuncts()[index].setFitFunctionVisible(false);
-                }
+            } else {
+                fitFunctVisibleCheckbox[index].setEnabled(true);
+                fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
             }
+        }
 
-            update(getGraphics());
-    	}
-    	break;
-    		
-    	}
+        update(getGraphics()); 
     }
 
     /**
@@ -3182,315 +2883,58 @@ public class ViewJFrameGraph extends JFrame
      */
     public void updateFittedFunctions() {
 
-        if (fitMode == FitMode.fitNone) {
+    	int nPoints;
+        NLFittedFunction fe = null;
 
-            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
-            ViewJComponentFunct[] functions = graph.getFuncts();
-            float[] x;
-            float[] y;
+        ViewJComponentFunct[] functions = graph.getFuncts();
+        ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
+        float[] x;
+        float[] y;
 
-            try {
+        try {
 
-                for (int i = 0; i < fittedFunctions.length; i++) {
-                    x = new float[functions[i].getXs().length];
-                    y = new float[x.length];
+            for (int i = 0; i < functions.length; i++) {
+                nPoints = graph.getFuncts()[i].getOriginalXs().length;
+                fe = (NLFittedFunction)fitMode.getImpl().newInstance(nPoints, graph.getFuncts()[i].getOriginalXs(),
+                                        graph.getFuncts()[i].getOriginalYs());
+                fe.driver();
+                fe.displayResults();
 
-                    for (int j = 0; j < x.length; j++) {
-                        x[j] = (functions[i].getXs()[j]);
-                        y[j] = (functions[i].getYs()[j]);
-                    }
+                x = new float[functions[i].getXs().length];
+                y = new float[x.length];
 
-                    fittedFunctions[i].setXs(x);
-                    fittedFunctions[i].setOriginalXs(x);
-                    fittedFunctions[i].setYs(y);
-                    fittedFunctions[i].setOriginalYs(y);
-
-                }
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Graph :  Out of memory ");
-
-            }
-
-            if (modifyDialog != null) {
-
-                for (int index = 0; index < 5; index++) {
-                    fitFunctVisibleCheckbox[index].setEnabled(false);
-                    fitFunctVisibleCheckbox[index].setSelected(false);
-
-                    if (index < graph.getFuncts().length) {
-                        graph.getFuncts()[index].setFitFunctionVisible(false);
-                    }
+                double[] yTemp = fe.getFittedY();
+                
+                for (int j = 0; j < x.length; j++) {
+                    x[j] = (functions[i].getXs()[j]);
+                	y[j] = (float)yTemp[j];
                 }
 
-                update(getGraphics());
+                fittedFunctions[i].setXs(x);
+                fittedFunctions[i].setOriginalXs(x);
+                fittedFunctions[i].setYs(y);
+                fittedFunctions[i].setOriginalYs(y);
             }
-        } else if (fitMode == FitMode.fitLinear) {
-            double[] params;
-            int nPoints;
-            FitLine fl = null;
+        } catch (OutOfMemoryError error) {
+            MipavUtil.displayError("Graph :  Out of memory ");
 
-            ViewJComponentFunct[] functions = graph.getFuncts();
-            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
-            float[] x;
-            float[] y;
+        } catch (Exception e) {
+        	MipavUtil.displayError("Fitting functions failed.");
+			e.printStackTrace();
+		} 
 
-            try {
+        for (int index = 0; index < 5; index++) {
 
-                for (int i = 0; i < functions.length; i++) {
-                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
-                    fl = new FitLine(nPoints, graph.getFuncts()[i].getOriginalXs(),
-                                     graph.getFuncts()[i].getOriginalYs());
-                    fl.driver();
-                    fl.displayResults();
-                    params = fl.getParameters();
-                    x = new float[functions[i].getXs().length];
-                    y = new float[x.length];
-
-                    for (int j = 0; j < x.length; j++) {
-                        x[j] = (functions[i].getXs()[j]);
-                        y[j] = (float) (params[0] + (params[1] * x[j]));
-                    }
-                    fittedFunctions[i].setXs(x);
-                    fittedFunctions[i].setOriginalXs(x);
-                    fittedFunctions[i].setYs(y);
-                    fittedFunctions[i].setOriginalYs(y);
-                }
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Graph :  Out of memory ");
-
+            if (index >= graph.getFuncts().length) {
+                fitFunctVisibleCheckbox[index].setEnabled(false);
+                fitFunctVisibleCheckbox[index].setSelected(false);
+            } else {
+                fitFunctVisibleCheckbox[index].setEnabled(true);
+                fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
             }
-
-            if (modifyDialog != null) {
-
-                for (int index = 0; index < 5; index++) {
-
-                    if (index >= graph.getFuncts().length) {
-                        fitFunctVisibleCheckbox[index].setEnabled(false);
-                        fitFunctVisibleCheckbox[index].setSelected(false);
-                    } else {
-                        fitFunctVisibleCheckbox[index].setEnabled(true);
-                        fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
-                    }
-                }
-            }
-
-            update(getGraphics());
-        } else if (fitMode == FitMode.fitExp) {
-            double[] params;
-            int nPoints;
-            FitExponential fe = null;
-
-            ViewJComponentFunct[] functions = graph.getFuncts();
-            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
-            float[] x;
-            float[] y;
-
-            try {
-
-                for (int i = 0; i < functions.length; i++) {
-                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
-                    fe = new FitExponential(nPoints, graph.getFuncts()[i].getOriginalXs(),
-                                            graph.getFuncts()[i].getOriginalYs());
-                    fe.driver();
-                    fe.displayResults();
-                    params = fe.getParameters();
-
-                    x = new float[functions[i].getXs().length];
-                    y = new float[x.length];
-
-                    for (int j = 0; j < x.length; j++) {
-                        x[j] = (functions[i].getXs()[j]);
-                        y[j] = (float) (params[0] + (params[1] * Math.exp(params[2] * x[j])));
-                    }
-
-                    fittedFunctions[i].setXs(x);
-                    fittedFunctions[i].setOriginalXs(x);
-                    fittedFunctions[i].setYs(y);
-                    fittedFunctions[i].setOriginalYs(y);
-                }
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Graph :  Out of memory ");
-
-            }
-
-            if (modifyDialog != null) {
-
-                for (int index = 0; index < 5; index++) {
-
-                    if (index >= graph.getFuncts().length) {
-                        fitFunctVisibleCheckbox[index].setEnabled(false);
-                        fitFunctVisibleCheckbox[index].setSelected(false);
-                    } else {
-                        fitFunctVisibleCheckbox[index].setEnabled(true);
-                        fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
-                    }
-                }
-            }
-
-            update(getGraphics());
-        } else if(fitMode == FitMode.fitGaussian) {
-        	//TODO: Customize to Gaussian here
-        	double[] params;
-            int nPoints;
-            FitGaussian fe = null;
-
-            ViewJComponentFunct[] functions = graph.getFuncts();
-            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
-            float[] x;
-            float[] y;
-
-            try {
-
-                for (int i = 0; i < functions.length; i++) {
-                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
-                    fe = new FitGaussian(nPoints, graph.getFuncts()[i].getOriginalXs(),
-                                            graph.getFuncts()[i].getOriginalYs());
-                    fe.driver();
-                    fe.displayResults();
-                    params = fe.getParameters();
-
-                    x = new float[functions[i].getXs().length];
-                    y = new float[x.length];
-
-                    for (int j = 0; j < x.length; j++) {
-                        x[j] = (functions[i].getXs()[j]);
-                        y[j] = (float) (params[0] + (params[1] * Math.exp(params[2] * x[j])));
-                    }
-
-                    fittedFunctions[i].setXs(x);
-                    fittedFunctions[i].setOriginalXs(x);
-                    fittedFunctions[i].setYs(y);
-                    fittedFunctions[i].setOriginalYs(y);
-                }
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Graph :  Out of memory ");
-
-            }
-
-            if (modifyDialog != null) {
-
-                for (int index = 0; index < 5; index++) {
-
-                    if (index >= graph.getFuncts().length) {
-                        fitFunctVisibleCheckbox[index].setEnabled(false);
-                        fitFunctVisibleCheckbox[index].setSelected(false);
-                    } else {
-                        fitFunctVisibleCheckbox[index].setEnabled(true);
-                        fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
-                    }
-                }
-            }
-
-            update(getGraphics());
-        } else if(fitMode == FitMode.fitLaplace) {
-        	//TODO: Customize to Gaussian here
-        	double[] params;
-            int nPoints;
-            FitLaplace fe = null;
-
-            ViewJComponentFunct[] functions = graph.getFuncts();
-            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
-            float[] x;
-            float[] y;
-
-            try {
-
-                for (int i = 0; i < functions.length; i++) {
-                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
-                    fe = new FitLaplace(nPoints, graph.getFuncts()[i].getOriginalXs(),
-                                            graph.getFuncts()[i].getOriginalYs());
-                    fe.driver();
-                    fe.displayResults();
-                    params = fe.getParameters();
-
-                    x = new float[functions[i].getXs().length];
-                    y = new float[x.length];
-
-                    for (int j = 0; j < x.length; j++) {
-                        x[j] = (functions[i].getXs()[j]);
-                        y[j] = (float) (params[0] + (params[1] * Math.exp(params[2] * x[j])));
-                    }
-
-                    fittedFunctions[i].setXs(x);
-                    fittedFunctions[i].setOriginalXs(x);
-                    fittedFunctions[i].setYs(y);
-                    fittedFunctions[i].setOriginalYs(y);
-                }
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Graph :  Out of memory ");
-
-            }
-
-            if (modifyDialog != null) {
-
-                for (int index = 0; index < 5; index++) {
-
-                    if (index >= graph.getFuncts().length) {
-                        fitFunctVisibleCheckbox[index].setEnabled(false);
-                        fitFunctVisibleCheckbox[index].setSelected(false);
-                    } else {
-                        fitFunctVisibleCheckbox[index].setEnabled(true);
-                        fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
-                    }
-                }
-            }
-
-            update(getGraphics());
-        } else if(fitMode == FitMode.fitLorentz) {
-        	//TODO: Customize to Gaussian here
-        	double[] params;
-            int nPoints;
-            FitLorentz fe = null;
-
-            ViewJComponentFunct[] functions = graph.getFuncts();
-            ViewJComponentFunct[] fittedFunctions = graph.getFittedFuncts();
-            float[] x;
-            float[] y;
-
-            try {
-
-                for (int i = 0; i < functions.length; i++) {
-                    nPoints = graph.getFuncts()[i].getOriginalXs().length;
-                    fe = new FitLorentz(nPoints, graph.getFuncts()[i].getOriginalXs(),
-                                            graph.getFuncts()[i].getOriginalYs());
-                    fe.driver();
-                    fe.displayResults();
-                    params = fe.getParameters();
-
-                    x = new float[functions[i].getXs().length];
-                    y = new float[x.length];
-
-                    for (int j = 0; j < x.length; j++) {
-                        x[j] = (functions[i].getXs()[j]);
-                        y[j] = (float) (params[0] + (params[1] * Math.exp(params[2] * x[j])));
-                    }
-
-                    fittedFunctions[i].setXs(x);
-                    fittedFunctions[i].setOriginalXs(x);
-                    fittedFunctions[i].setYs(y);
-                    fittedFunctions[i].setOriginalYs(y);
-                }
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Graph :  Out of memory ");
-
-            }
-
-            if (modifyDialog != null) {
-
-                for (int index = 0; index < 5; index++) {
-
-                    if (index >= graph.getFuncts().length) {
-                        fitFunctVisibleCheckbox[index].setEnabled(false);
-                        fitFunctVisibleCheckbox[index].setSelected(false);
-                    } else {
-                        fitFunctVisibleCheckbox[index].setEnabled(true);
-                        fitFunctVisibleCheckbox[index].setSelected(graph.getFuncts()[index].getFitFunctionVisible());
-                    }
-                }
-            }
-
-            update(getGraphics());
         }
+
+        update(getGraphics()); 
 
     }
 

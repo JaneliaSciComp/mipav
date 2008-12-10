@@ -169,6 +169,7 @@ public class FitExponential extends NLFittedFunction {
         Preferences.debug("a1 " + String.valueOf(a[1]) + "\n"); // + " +/- " + String.valueOf(Math.sqrt(covar[1][1])));
         Preferences.debug("a2 " + String.valueOf(a[2]) + "\n\n"); // + " +/- " +
                                                                   // String.valueOf(Math.sqrt(covar[2][2])));
+        
     }
 
     /**
