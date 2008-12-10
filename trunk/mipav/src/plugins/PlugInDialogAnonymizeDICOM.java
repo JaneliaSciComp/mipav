@@ -232,13 +232,10 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
     
     	try{
     		System.gc();
-    		
-    		int[] selectedIndex = inputFileList.getSelectedIndices();
-    		selectedFiles = new File[selectedIndex.length];
-    		int index = 0;
-    		for(int i : selectedIndex) {
-    			System.out.println("Working with file "+inputFileList.getModel().getElementAt(i));
-    			selectedFiles[index++] = new File((String)inputFileList.getModel().getElementAt(i));
+    		selectedFiles = new File[fileList.size()];
+    		for(int i=0; i<fileList.size(); i++) {
+    			System.out.println("Working with file "+fileList.get(i));
+    			selectedFiles[i] = new File(fileList.get(i));
     		}
     		
     		//Make algorithm.
