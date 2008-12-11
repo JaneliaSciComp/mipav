@@ -88,6 +88,9 @@ public class FileIO {
     private boolean saveAsEncapJP2 = false;
 
     private boolean displayRangeOfSlicesDialog = true;
+    
+    /** For multi file formats where data is saved in a set of files */
+    private String[] dataFileName = null;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -2429,10 +2432,11 @@ public class FileIO {
         int len;
         File inputFile;
         FileOutputStream out;
-        String inputFileName;
-        String outputFileName;
+        String inputFileName[] = null;
+        String outputFileName[] = null;
         String compressionExt = null;
         int i;
+        int numFiles;
 
         // set it to quiet mode (no prompting) if the options were
         // created during a script
@@ -2795,202 +2799,217 @@ public class FileIO {
                     compressionExt = ".bz2";
                 }
                 
-                inputFileName = options.getFileDirectory() + options.getFileName();
+                inputFileName = new String[1];
+                outputFileName = new String[1];
+                inputFileName[0] = options.getFileDirectory() + options.getFileName();
+                numFiles = 1;
                 if (fileType == FileUtility.XML) {
                     // For XML the user enters fileName.xml.gz or fileName.xml.bz2, but the xml header file is
                     // not compressed while the raw data file is compressed.
-                    index = inputFileName.lastIndexOf(".");
-                    inputFileName = inputFileName.substring(0,index) + ".raw";
+                    if (options.isMultiFile()) {
+                        numFiles = dataFileName.length;
+                        inputFileName = new String[numFiles];
+                        outputFileName = new String[numFiles];
+                        for (i = 0; i < numFiles; i++) {
+                            inputFileName[i] = options.getFileDirectory() + dataFileName[i];
+                        }
+                    }
+                    else {
+                        index = inputFileName[0].lastIndexOf(".");
+                        inputFileName[0] = inputFileName[0].substring(0,index) + ".raw";
+                    }
                 }
-                outputFileName = inputFileName + compressionExt;
-           
-                if (zip) {
-                    try {
-                       // Create the ZIP output stream
-                       zout = new ZipOutputStream(new FileOutputStream(outputFileName)); 
-                    }
-                    catch (IOException e) {
-                        MipavUtil.displayError("IOException on new ZipOutputStream");
-                        return;
-                    }
-                    
-                    try {
-                        zout.putNextEntry(new ZipEntry("data"));
-                    }
-                    catch (IOException e) {
-                        MipavUtil.displayError("IOException on zout.putNextEntry");
-                        return;
-                    }
-                    // Open the input file
-                    try {
-                        in = new FileInputStream(inputFileName);
-                    }
-                    catch (IOException e) {
-                        MipavUtil.displayError("IOException on new FileInputStream");
-                        return;
-                    }
-                    
-                    // Tranfer the bytes from the input file to the Zip output stream
-                    buf = new byte[1024];
-                    try {
-                        while ((len = in.read(buf)) > 0) {
-                            zout.write(buf, 0, len);
+                for (i = 0; i < numFiles; i++) {
+                    outputFileName[i] = inputFileName[i] + compressionExt;
+               
+                    if (zip) {
+                        try {
+                           // Create the ZIP output stream
+                           zout = new ZipOutputStream(new FileOutputStream(outputFileName[i])); 
                         }
-                    }
-                    catch (IOException e) {
-                        MipavUtil.displayError("IOException on byte transfer to zip file");
-                        return;
-                    }
-                    try {
-                        in.close();
-                    }
-                    catch (IOException e) {
-                        MipavUtil.displayError("IOException on in.close()");
-                        return;
-                    }
-                    inputFile = new File(inputFileName);
-                    // Delete the input file
-                    try {
-                        inputFile.delete();
-                    } catch (SecurityException sc) {
-                        MipavUtil.displayError("Security error occurs while trying to delete " +
-                                               inputFileName);
-                    }
-                    
-                    // complete the zip file
-                    try {
-                        zout.finish();
-                    }
-                    catch (IOException e) {
-                        MipavUtil.displayError("IOException on zout.finish()");
-                        return;
-                    }
-                    try {
-                        zout.close();
-                    }
-                    catch (IOException e) {
-                        MipavUtil.displayError("IOException on zout.close()");
-                        return;
-                    }
-                } // if (zip)
-                else if (gzip) {
-                    try {
-                       // Create the GZIP output stream
-                       gzout = new GZIPOutputStream(new FileOutputStream(outputFileName)); 
-                    }
-                    catch (IOException e) {
-                        MipavUtil.displayError("IOException on new GZIPOutputStream");
-                        return;
-                    }
-                    // Open the input file
-                    try {
-                        in = new FileInputStream(inputFileName);
-                    }
-                    catch (IOException e) {
-                        MipavUtil.displayError("IOException on new FileInputStream");
-                        return;
-                    }
-                    
-                    // Tranfer the bytes from the input file to the GZIP output stream
-                    buf = new byte[1024];
-                    try {
-                        while ((len = in.read(buf)) > 0) {
-                            gzout.write(buf, 0, len);
+                        catch (IOException e) {
+                            MipavUtil.displayError("IOException on new ZipOutputStream");
+                            return;
                         }
-                    }
-                    catch (IOException e) {
-                        MipavUtil.displayError("IOException on byte transfer to gzip file");
-                        return;
-                    }
-                    try {
-                        in.close();
-                    }
-                    catch (IOException e) {
-                        MipavUtil.displayError("IOException on in.close()");
-                        return;
-                    }
-                    inputFile = new File(inputFileName);
-                    // Delete the input file
-                    try {
-                        inputFile.delete();
-                    } catch (SecurityException sc) {
-                        MipavUtil.displayError("Security error occurs while trying to delete " +
-                                               inputFileName);
-                    }
-                    
-                    // complete the gzip file
-                    try {
-                        gzout.finish();
-                    }
-                    catch (IOException e) {
-                        MipavUtil.displayError("IOException on gzout.finish()");
-                        return;
-                    }
-                    try {
-                        gzout.close();
-                    }
-                    catch (IOException e) {
-                        MipavUtil.displayError("IOException on gzout.close()");
-                        return;
-                    }
-                } // if (gzip)
-                else { // bz2zip
-                    try {
-                        out = new FileOutputStream(outputFileName);
-                        out.write('B');
-                        out.write('Z');
-                        // Create the BZIP2 output stream
-                        bz2out = new CBZip2OutputStream(out); 
-                     }
-                     catch (IOException e) {
-                         MipavUtil.displayError("IOException on new CBZip2OutputStream");
-                         return;
-                     }
-                     // Open the input file
-                     try {
-                         in = new FileInputStream(inputFileName);
-                     }
-                     catch (IOException e) {
-                         MipavUtil.displayError("IOException on new FileInputStream");
-                         return;
-                     }
-                     
-                     // Tranfer the bytes from the input file to the BZIP2 output stream
-                     buf = new byte[1024];
-                     try {
-                         while ((len = in.read(buf)) > 0) {
-                             bz2out.write(buf, 0, len);
+                        
+                        try {
+                            zout.putNextEntry(new ZipEntry("data"));
+                        }
+                        catch (IOException e) {
+                            MipavUtil.displayError("IOException on zout.putNextEntry");
+                            return;
+                        }
+                        // Open the input file
+                        try {
+                            in = new FileInputStream(inputFileName[i]);
+                        }
+                        catch (IOException e) {
+                            MipavUtil.displayError("IOException on new FileInputStream for " + inputFileName[i]);
+                            return;
+                        }
+                        
+                        // Tranfer the bytes from the input file to the Zip output stream
+                        buf = new byte[1024];
+                        try {
+                            while ((len = in.read(buf)) > 0) {
+                                zout.write(buf, 0, len);
+                            }
+                        }
+                        catch (IOException e) {
+                            MipavUtil.displayError("IOException on byte transfer to zip file");
+                            return;
+                        }
+                        try {
+                            in.close();
+                        }
+                        catch (IOException e) {
+                            MipavUtil.displayError("IOException on in.close()");
+                            return;
+                        }
+                        inputFile = new File(inputFileName[i]);
+                        // Delete the input file
+                        try {
+                            inputFile.delete();
+                        } catch (SecurityException sc) {
+                            MipavUtil.displayError("Security error occurs while trying to delete " +
+                                                   inputFileName[i]);
+                        }
+                        
+                        // complete the zip file
+                        try {
+                            zout.finish();
+                        }
+                        catch (IOException e) {
+                            MipavUtil.displayError("IOException on zout.finish()");
+                            return;
+                        }
+                        try {
+                            zout.close();
+                        }
+                        catch (IOException e) {
+                            MipavUtil.displayError("IOException on zout.close()");
+                            return;
+                        }
+                    } // if (zip)
+                    else if (gzip) {
+                        try {
+                           // Create the GZIP output stream
+                           gzout = new GZIPOutputStream(new FileOutputStream(outputFileName[i])); 
+                        }
+                        catch (IOException e) {
+                            MipavUtil.displayError("IOException on new GZIPOutputStream");
+                            return;
+                        }
+                        // Open the input file
+                        try {
+                            in = new FileInputStream(inputFileName[i]);
+                        }
+                        catch (IOException e) {
+                            MipavUtil.displayError("IOException on new FileInputStream for " + inputFileName[i]);
+                            return;
+                        }
+                        
+                        // Tranfer the bytes from the input file to the GZIP output stream
+                        buf = new byte[1024];
+                        try {
+                            while ((len = in.read(buf)) > 0) {
+                                gzout.write(buf, 0, len);
+                            }
+                        }
+                        catch (IOException e) {
+                            MipavUtil.displayError("IOException on byte transfer to gzip file");
+                            return;
+                        }
+                        try {
+                            in.close();
+                        }
+                        catch (IOException e) {
+                            MipavUtil.displayError("IOException on in.close()");
+                            return;
+                        }
+                        inputFile = new File(inputFileName[i]);
+                        // Delete the input file
+                        try {
+                            inputFile.delete();
+                        } catch (SecurityException sc) {
+                            MipavUtil.displayError("Security error occurs while trying to delete " +
+                                                   inputFileName[i]);
+                        }
+                        
+                        // complete the gzip file
+                        try {
+                            gzout.finish();
+                        }
+                        catch (IOException e) {
+                            MipavUtil.displayError("IOException on gzout.finish()");
+                            return;
+                        }
+                        try {
+                            gzout.close();
+                        }
+                        catch (IOException e) {
+                            MipavUtil.displayError("IOException on gzout.close()");
+                            return;
+                        }
+                    } // if (gzip)
+                    else { // bz2zip
+                        try {
+                            out = new FileOutputStream(outputFileName[i]);
+                            out.write('B');
+                            out.write('Z');
+                            // Create the BZIP2 output stream
+                            bz2out = new CBZip2OutputStream(out); 
                          }
-                     }
-                     catch (IOException e) {
-                         MipavUtil.displayError("IOException on byte transfer to bz2zip file");
-                         return;
-                     }
-                     try {
-                         in.close();
-                     }
-                     catch (IOException e) {
-                         MipavUtil.displayError("IOException on in.close()");
-                         return;
-                     }
-                     inputFile = new File(inputFileName);
-                     // Delete the input file
-                     try {
-                         inputFile.delete();
-                     } catch (SecurityException sc) {
-                         MipavUtil.displayError("Security error occurs while trying to delete " +
-                                                inputFileName);
-                     }
-                     
-                     // complete the bz2zip file
-                     try {
-                         bz2out.close();
-                     }
-                     catch (IOException e) {
-                         MipavUtil.displayError("IOException on bz2out.close()");
-                         return;
-                     }    
-                    } // else bz2zip
+                         catch (IOException e) {
+                             MipavUtil.displayError("IOException on new CBZip2OutputStream");
+                             return;
+                         }
+                         // Open the input file
+                         try {
+                             in = new FileInputStream(inputFileName[i]);
+                         }
+                         catch (IOException e) {
+                             MipavUtil.displayError("IOException on new FileInputStream for " + inputFileName[i]);
+                             return;
+                         }
+                         
+                         // Tranfer the bytes from the input file to the BZIP2 output stream
+                         buf = new byte[1024];
+                         try {
+                             while ((len = in.read(buf)) > 0) {
+                                 bz2out.write(buf, 0, len);
+                             }
+                         }
+                         catch (IOException e) {
+                             MipavUtil.displayError("IOException on byte transfer to bz2zip file");
+                             return;
+                         }
+                         try {
+                             in.close();
+                         }
+                         catch (IOException e) {
+                             MipavUtil.displayError("IOException on in.close()");
+                             return;
+                         }
+                         inputFile = new File(inputFileName[i]);
+                         // Delete the input file
+                         try {
+                             inputFile.delete();
+                         } catch (SecurityException sc) {
+                             MipavUtil.displayError("Security error occurs while trying to delete " +
+                                                    inputFileName[i]);
+                         }
+                         
+                         // complete the bz2zip file
+                         try {
+                             bz2out.close();
+                         }
+                         catch (IOException e) {
+                             MipavUtil.displayError("IOException on bz2out.close()");
+                             return;
+                         }    
+                        } // else bz2zip
+                    } // for (i = 0; i < numFiles; i++)
                    
                 } // if (singleFileNIFTI || (fileType == FileUtility.MINC) || (fileType == FileUtility.MINC_HDF) ||
                 else {
@@ -10691,6 +10710,9 @@ public class FileIO {
             }
 
             xmlFile.writeImage(image, options);
+            if (options.isMultiFile()) {
+                dataFileName = xmlFile.getDataFileName().clone();    
+            }
             xmlFile.finalize();
             xmlFile = null;
         } catch (IOException error) {
