@@ -60,6 +60,8 @@ public class FileRaw extends FileBase {
     
     /** flag that indicates if raFile should first be set to length of 0 **/
     private boolean zeroLengthFlag = true;
+    
+    private String dataFileName[] = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -174,6 +176,12 @@ public class FileRaw extends FileBase {
         }
 
         fileRW = null;
+        if (dataFileName != null) {
+            for (int i = 0; i < dataFileName.length; i++) {
+                dataFileName[i] = null;
+            }
+            dataFileName = null;
+        }
 
         try {
             super.finalize();
@@ -196,6 +204,14 @@ public class FileRaw extends FileBase {
      */
     public int getNTimePeriods() {
         return nTimePeriods;
+    }
+    
+    /**
+     * Accessor that returns the array of data file names
+     * @return
+     */
+    public String[] getDataFileName() {
+            return dataFileName;
     }
 
     /**
@@ -1583,6 +1599,7 @@ public class FileRaw extends FileBase {
         bufferSize = extents[0] * extents[1];
 
         nImages = endSlice - beginSlice + 1;
+        dataFileName = new String[nImages];
         nTimePeriods = 1;
 
 
@@ -1640,6 +1657,7 @@ public class FileRaw extends FileBase {
             fireProgressStateChanged(MipavMath.round((prog / (endSlice - beginSlice + 1)) * 100));
             if (compressionType == FileInfoBase.COMPRESSION_NONE) {
                 file = new File(fileDir + fileString);
+                dataFileName[k - beginSlice] = fileString;
                 raFile = new RandomAccessFile(file, "rw");
                 if(zeroLengthFlag) {
             		raFile.setLength(0);
@@ -1695,6 +1713,7 @@ public class FileRaw extends FileBase {
         this.nTimePeriods = endTimePeriod - beginTimePeriod + 1;
 
         this.nImages = extents[2];
+        dataFileName = new String[extents[2]];
 
 
         String fileName = options.getFileName();
@@ -1752,6 +1771,7 @@ public class FileRaw extends FileBase {
             fireProgressStateChanged(MipavMath.round((prog / (endTimePeriod - beginTimePeriod + 1)) * 100));
             if (compressionType == FileInfoBase.COMPRESSION_NONE) {
                 file = new File(fileDir + fileString);
+                dataFileName[t - beginTimePeriod] = fileString;
                 raFile = new RandomAccessFile(file, "rw");
                 if(zeroLengthFlag) {
             		raFile.setLength(0);
