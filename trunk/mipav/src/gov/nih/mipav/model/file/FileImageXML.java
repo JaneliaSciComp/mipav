@@ -106,6 +106,8 @@ public class FileImageXML extends FileXML {
 
     /** Thumbnail data and AWT Image. */
     private Thumbnail thumbnail = null;
+    
+    private String[] dataFileName;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -295,6 +297,13 @@ public class FileImageXML extends FileXML {
             lutVector.removeAllElements();
             lutVector = null;
         }
+        
+        if (dataFileName != null) {
+            for (int i = 0; i < dataFileName.length; i++) {
+                dataFileName[i] = null;
+            }
+            dataFileName = null;
+        }
 
         super.finalize();
     }
@@ -342,6 +351,14 @@ public class FileImageXML extends FileXML {
      */
     public Thumbnail getThumbnail() {
         return this.thumbnail;
+    }
+    
+    /**
+     * Accessor that returns the array of data file names
+     * @return
+     */
+    public String[] getDataFileName() {
+        return dataFileName;
     }
 
     /**
@@ -791,6 +808,15 @@ public class FileImageXML extends FileXML {
      * @see FileRaw
      */
     public void readImage(float[] buffer) throws IOException, OutOfMemoryError {
+        String tempDir;
+        File file;
+        String uncompressedName = null;
+        FileInputStream fis;
+        ZipInputStream zin;
+        FileOutputStream out;
+        int bytesRead;
+        GZIPInputStream gzin;
+        CBZip2InputStream bz2in;
 
         TalairachTransformInfo talairach = new TalairachTransformInfo();
 
@@ -813,8 +839,209 @@ public class FileImageXML extends FileXML {
             if (imageFileName == null) {
                 imageFileName = FileUtility.stripExtension(fileName) + ".raw";
             }
+             
+            fileDir = fileInfo.getFileDirectory();
+            if ( !new File(fileDir + File.separator + imageFileName).exists()) {
+                tempDir = Preferences.getFileTempDir();
+                if (tempDir == null) {
+                    tempDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "tempDir" + File.separator;
+                }
+                else {
+                    tempDir = tempDir + File.separator;
+                }
+                file = new File(tempDir);
+                if (!file.exists()) {
+                    file.mkdirs();
+                }
+                uncompressedName = tempDir + imageFileName;
+                if (new File(fileDir + File.separator + imageFileName + ".zip").exists()) {
+                    file = new File(fileDir + File.separator + imageFileName + ".zip"); 
+                    int totalBytesRead = 0;
 
-            rawFile = new FileRaw(imageFileName, fileInfo.getFileDirectory(), (FileInfoImageXML) fileInfo,
+                    try {
+                        fis = new FileInputStream(file);
+                    } catch (FileNotFoundException e) {
+                        MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " +
+                                (fileDir + File.separator + imageFileName  + ".zip"));
+                        return;
+                    }
+
+                    try {
+                        zin = new ZipInputStream(new BufferedInputStream(fis));
+                    } catch (Exception e) {
+                        MipavUtil.displayError("Exception on ZipInputStream for " + fileName);
+                        return;
+                    }
+                    fileDir = tempDir;
+                    try {
+                        out = new FileOutputStream(uncompressedName);
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
+                        return;
+                    }
+                    byte[] buf = new byte[256];
+                    
+                    try {
+                        while (zin.getNextEntry() != null) {
+                            while (true) {
+                                
+                                bytesRead = zin.read(buf);
+                                
+                                if (bytesRead == -1) {
+                                    break;
+                                }
+                
+                                totalBytesRead += bytesRead;
+                                    out.write(buf, 0, bytesRead);
+                                
+                            }
+                        } // while (zin.getNextEntry() != null)
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException in loop reading entries");
+                        return;
+                    }
+
+                    try {
+                        out.close();
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException on out.close for " + uncompressedName);
+                        return;
+                    }
+                }
+                else if (new File(fileDir + File.separator + imageFileName + ".gz").exists()) {
+                    file = new File(fileDir + File.separator + imageFileName + ".gz"); 
+                    int totalBytesRead = 0;
+
+                    try {
+                        fis = new FileInputStream(file);
+                    } catch (FileNotFoundException e) {
+                        MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " +
+                                (fileDir + File.separator + imageFileName  + ".gz"));
+                        return;
+                    }
+
+                    try {
+                        gzin = new GZIPInputStream(new BufferedInputStream(fis));
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException on GZIPInputStream for " + fileName);
+                        return;
+                    }
+                    fileDir = tempDir;
+                    try {
+                        out = new FileOutputStream(uncompressedName);
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
+                        return;
+                    }
+                    byte[] buf = new byte[256];
+
+                    while (true) {
+                        try {
+                            bytesRead = gzin.read(buf);
+                        } catch (IOException e) {
+                            MipavUtil.displayError("IOException on gzin.read(buf) for " + uncompressedName);
+                            return;
+                        }
+
+                        if (bytesRead == -1) {
+                            break;
+                        }
+
+                        totalBytesRead += bytesRead;
+                        try {
+                            out.write(buf, 0, bytesRead);
+                        } catch (IOException e) {
+                            MipavUtil.displayError("IOException on out.write for " + uncompressedName);
+                            return;
+                        }
+                    }
+
+                    try {
+                        out.close();
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException on out.close for " + uncompressedName);
+                        return;
+                    }
+                }
+                else if (new File(fileDir + File.separator + imageFileName + ".bz2").exists()) {
+                    int totalBytesRead = 0;
+                    file = new File(fileDir + File.separator + imageFileName + ".bz2"); 
+                    try {
+                        fis = new FileInputStream(file);
+                    } catch (FileNotFoundException e) {
+                        MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + 
+                                (fileDir + File.separator + imageFileName  + ".bz2"));
+                        return;
+                    }
+                    
+                    try {
+                    fis.read();
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on fis.read() trying to read byte B");
+                        return;
+                    }
+                    
+                    try {
+                        fis.read();
+                        }
+                        catch (IOException e) {
+                            MipavUtil.displayError("IOException on fis.read() trying to read byte Z");
+                            return;
+                        }
+
+                    try {
+                        bz2in = new CBZip2InputStream(new BufferedInputStream(fis));
+                    } catch (Exception e) {
+                        MipavUtil.displayError("Exception on CBZip2InputStream for " + fileName);
+                        return;
+                    }
+                    fileDir = tempDir;
+                    try {
+                        out = new FileOutputStream(uncompressedName);
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
+                        return;
+                    }
+                    byte[] buf = new byte[256];
+
+                    while (true) {
+                        try {
+                            bytesRead = bz2in.read(buf);
+                        } catch (IOException e) {
+                            MipavUtil.displayError("IOException on bz2in.read(buf) for " + uncompressedName);
+                            return;
+                        }
+
+                        if (bytesRead == -1) {
+                            break;
+                        }
+
+                        totalBytesRead += bytesRead;
+                        try {
+                            out.write(buf, 0, bytesRead);
+                        } catch (IOException e) {
+                            MipavUtil.displayError("IOException on out.write for " + uncompressedName);
+                            return;
+                        }
+                    }
+
+                    try {
+                        out.close();
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException on out.close for " + uncompressedName);
+                        return;
+                    }     
+                }
+                else {
+                    MipavUtil.displayWarning("Raw file not found: " + imageFileName + ".  Aborting XML readImage(float[] buffer)!");
+            
+                    return;
+                }
+            }
+
+            rawFile = new FileRaw(imageFileName, fileDir, (FileInfoImageXML) fileInfo,
                     FileBase.READ);
             rawFile.readImage(buffer, 0, ((FileInfoImageXML) fileInfo).getDataType());
 
@@ -823,6 +1050,18 @@ public class FileImageXML extends FileXML {
             }
 
             rawFile.finalize();
+            
+            if (uncompressedName != null) {
+                // Delete the input uncompressed file
+                File uncompressedFile;
+                uncompressedFile = new File(uncompressedName);
+                try {
+                    uncompressedFile.delete();
+                } catch (SecurityException sc) {
+                    MipavUtil.displayError("Security error occurs while trying to delete " +
+                                           uncompressedName);
+                }    
+            }
         } catch (IOException error) {
             Preferences.debug("IOException in FileImageXML:readImage(float [])", Preferences.DEBUG_FILEIO);
             throw new IOException("FileXML: " + error);
@@ -1830,6 +2069,7 @@ public class FileImageXML extends FileXML {
                 writeHeader4DTo3D(img, fhName, fileDir, options);
             }
 
+            dataFileName = rawFile.getDataFileName().clone();
             rawFile.finalize();
             img.setFileInfo(infoClone, 0);
         } else {
