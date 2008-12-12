@@ -263,6 +263,22 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
 
     /** DOCUMENT ME! */
     private boolean zRSelected = false;
+    
+    private JLabel outOfBoundsLabel;
+    
+    private JComboBox outOfBoundsComboBox;
+    
+    private JLabel valueLabel;
+    
+    private JTextField valueText;
+    
+    private double imageMin;
+    
+    private double imageMax;
+    
+    private int dataType;
+    
+    private float fillValue = 0.0f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -505,6 +521,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
         AlgorithmTransform transform = null;
+        boolean pad = false;
 
         if (algorithm instanceof AlgorithmConstrainedOAR3D) {
 
@@ -520,9 +537,10 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
 
                     String name = makeImageName(matchImage.getImageName(), "_register");
                     transform = new AlgorithmTransform(matchImage, reg3.getTransform(), interp2, xresA, yresA, zresA,
-                                                       xdimA, ydimA, zdimA, true, false, false);
+                                                       xdimA, ydimA, zdimA, true, false, pad);
 
                     transform.setUpdateOriginFlag(true);
+                    transform.setFillValue(fillValue);
 
                     transform.run();
                     resultImage = transform.getTransformedImage();
@@ -549,8 +567,26 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                     
                     resultImage.getMatrixHolder().replaceMatrices(refImage.getMatrixHolder().getMatrices());
                     
+                    float scale = (refImage.getExtents()[2] - 1)/(resultImage.getExtents()[2] - 1);
                     for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                        resultImage.getFileInfo(i).setOrigin(refImage.getFileInfo(i).getOrigin());
+                        float interp = i * scale;
+                        int lowerLimit = (int)interp;
+                        int upperLimit;
+                        float origin[] = new float[3];;
+                        if (lowerLimit < refImage.getExtents()[2] - 1) {
+                             upperLimit = lowerLimit + 1; 
+                             for (int j = 0; j < 3; j++) {
+                             origin[j] = (upperLimit - interp) * refImage.getFileInfo(lowerLimit).getOrigin()[j] +
+                                      (interp - lowerLimit) * refImage.getFileInfo(upperLimit).getOrigin()[j];
+                             }
+                        }
+                        else {
+                            for (int j = 0; j < 3; j++) {
+                                origin[j] = refImage.getFileInfo(lowerLimit).getOrigin()[j];
+                                }    
+                        }
+                        
+                        resultImage.getFileInfo(i).setOrigin(origin);
                     }
                 }
 
@@ -839,7 +875,31 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                 oneTransLimit = false;
                 enableTranslationsYZ(true);
             }
-        }
+        } else if (event.getSource() == outOfBoundsComboBox) {
+            switch (outOfBoundsComboBox.getSelectedIndex()) {
+                case 0: // image minimum
+                    valueText.setText(String.valueOf(imageMin));
+                    valueText.setEnabled(false);
+                    break;
+                case 1: // If float NaN, else 0
+                    if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE) ||
+                        (dataType == ModelStorageBase.ARGB_FLOAT)) {
+                        valueText.setText(String.valueOf(Float.NaN)); 
+                    }
+                    else {
+                        valueText.setText(String.valueOf(0));
+                    }
+                    valueText.setEnabled(false);
+                    break;
+                case 2: // User defined;
+                    valueText.setEnabled(true);
+                    break;
+                case 3: // Image maximum
+                    valueText.setText(String.valueOf(imageMax));
+                    valueText.setEnabled(false);
+                    break;
+            } // switch (outOfBoundsComboBox.getSelectedIndex())
+        } // else if (event.getSource() == outOfBoundsComboBox)
     }
 
     /**
@@ -1569,6 +1629,10 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         maxLimits = new float[2][3];
         extents = matchImage.getExtents();
         resolution = matchImage.getFileInfo(0).getResolutions();
+        matchImage.calcMinMax();
+        imageMin = matchImage.getMin();
+        imageMax = matchImage.getMax();
+        dataType = matchImage.getFileInfo()[0].getDataType();
 
         for (int i = 0; i < 3; i++) {
             halfFov[i] = extents[i] * resolution[i] / 2.0f;
@@ -2053,6 +2117,32 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         comboBoxInterp2.addItem("Heptic Lagrangian");
         comboBoxInterp2.addItem("Windowed sinc");
         comboBoxInterp2.addItem("Nearest Neighbor");
+        
+        outOfBoundsLabel = new JLabel("Out of bounds data:");
+        outOfBoundsLabel.setForeground(Color.black);
+        outOfBoundsLabel.setFont(serif12);
+        outOfBoundsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        outOfBoundsComboBox = new JComboBox();
+        outOfBoundsComboBox.setFont(serif12);
+        outOfBoundsComboBox.setBackground(Color.white);
+        outOfBoundsComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        outOfBoundsComboBox.addItem("Image minimum");
+        outOfBoundsComboBox.addItem("If float NaN, else 0");
+        outOfBoundsComboBox.addItem("User defined");
+        outOfBoundsComboBox.addItem("Image maximum");
+        outOfBoundsComboBox.setSelectedIndex(0);
+        outOfBoundsComboBox.addItemListener(this);
+        
+        valueLabel = new JLabel("Out of bounds value:");
+        valueLabel.setForeground(Color.black);
+        valueLabel.setFont(serif12);
+        valueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        valueText = new JTextField(String.valueOf(imageMin));
+        valueText.setFont(serif12);
+        valueText.setEnabled(false);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -2069,6 +2159,27 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(comboBoxInterp2, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        outPanel.add(outOfBoundsLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        outPanel.add(outOfBoundsComboBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        outPanel.add(valueLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        gbc.weightx = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        outPanel.add(valueText, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -2567,8 +2678,128 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         } // if (voisOnly)
 
         doSubsample = sampleCheckbox.isSelected();
+        
+        fillValue = Float.valueOf(valueText.getText()).floatValue();
+        if (outOfBoundsComboBox.getSelectedIndex() == 2) {
+            // user defined value
+            boolean success = testType(dataType, fillValue);
+            if (!success) {
+                MipavUtil.displayError("User defined value is out of the data type range");
+                valueText.requestFocus();
+                valueText.selectAll();
+                return false;
+            }
+        }
 
         return true;
+    }
+    
+    /**
+     * Determine if the value is in the image type range and
+     * within the float range since AlgorithmTransform does
+     * not use double buffers.
+     *
+     * @param   type    image type
+     * @param   value   value tested
+     *
+     * @return  true if value is within acceptable range
+     */
+    private boolean testType(int type, float value) {
+
+        if (type == ModelStorageBase.BOOLEAN) {
+
+            if ((value < 0) || (value > 1)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.BYTE) {
+
+            if ((value < -128) || (value > 127)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.UBYTE) {
+
+            if ((value < 0) || (value > 255)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.SHORT) {
+
+            if ((value < -32768) || (value > 32767)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.USHORT) {
+
+            if ((value < 0) || (value > 65535)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.INTEGER) {
+
+            if ((value < Integer.MIN_VALUE) || (value > Integer.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.UINTEGER) {
+
+            if ((value < 0) || (value > 4294967295L)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.LONG) {
+
+            if ((value < Long.MIN_VALUE) || (value > Long.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.FLOAT) {
+
+            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.DOUBLE) {
+            // Float buffers are used in the AlgorithmTransform routines
+            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.ARGB) {
+
+            if ((value < 0) || (value > 255)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.ARGB_USHORT) {
+
+            if ((value < 0) || (value > 65535)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.ARGB_FLOAT) {
+
+            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
     }
 
     /**
