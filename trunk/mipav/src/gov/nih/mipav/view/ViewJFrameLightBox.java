@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.algorithms.AlgorithmVOIShapeInterpolation;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -120,6 +121,9 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
     /** DOCUMENT ME! */
     private JMenuItem extractSelection;
+    
+    /** DOCUMENT ME! */
+    private JButton interpolateShapesButton;
 
     /** DOCUMENT ME! */
     private JButton firstPageButton;
@@ -346,9 +350,8 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
     public ViewJFrameLightBox(ViewJFrameImage imgFrame, String _frameTitle, ModelImage _imageA, ModelLUT _LUTa,
                               ModelImage _imageB, ModelLUT _LUTb, float resX, float resY, Dimension loc,
                               ViewControlsImage _controls) {
-
+    	
         super(_imageA, _imageB);
-
         try {
             setIconImage(MipavUtil.getIconImage("lightbox_16x16.gif"));
         } catch (Exception e) {
@@ -626,7 +629,11 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
              *
              * // update the toolbar and menu items updatePagingToolbar();
              */
-        }
+        }else if (event.getActionCommand().equals("interpolateShapes")) {
+        	//dialog that is not visible...calls the algorithm immediately
+        	JDialogVOIShapeInterpolation dialogVOIShapeInterp = new JDialogVOIShapeInterpolation(imageA);
+
+        } 
 
     }
 
@@ -2343,6 +2350,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
             } else {
                 componentImage[i].showBlank();
             }
+     
         }
 
         // menuBar.repaint();
@@ -2892,6 +2900,9 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         extractSelection.setFont(font12B);
         extractSelection.setEnabled(false);
         editMenu.add(extractSelection);
+        
+       
+        
 
         // add menu items to view menu
         firstPageMenuItem = new JMenuItem("First Page", MipavUtil.getIcon("firstarrow.gif"));
@@ -3062,6 +3073,17 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         extractButton.setFocusPainted(false);
         extractButton.setEnabled(false);
         tBar.add(extractButton);
+        
+        interpolateShapesButton = new JButton(MipavUtil.getIcon("voiShapeInterp.gif"));
+        interpolateShapesButton.addActionListener(this);
+        interpolateShapesButton.setRolloverIcon(MipavUtil.getIcon("voiShapeInterpRoll.gif"));
+        interpolateShapesButton.setBorderPainted(false);
+        interpolateShapesButton.setToolTipText("Interpolate VOIs");
+        interpolateShapesButton.setActionCommand("interpolateShapes");
+        tBar.add(interpolateShapesButton);
+        
+        
+        
 
         // add tBar to toolbarPanel
         toolbarPanel.add(tBar);

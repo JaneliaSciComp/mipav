@@ -773,6 +773,7 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem("Horizontal", "VOIFlipY", 0, "fliphoriz.gif", true),
                                         menuBuilder.buildMenuItem("Vertical", "VOIFlipX", 0, "flipvert.gif", true),
                                         menuBuilder.buildMenuItem("Depth", "VOIFlipZ", 0, "flipvert.gif", true)}),
+                                menuBuilder.buildMenuItem("Interpolate VOIs", "interpolateVOIs", 0, null, true),
                                 separator,
                                 menuBuilder.buildMenuItem("Smooth VOI", "SmoothVOI", 0, null, true),
                                 menuBuilder.buildMenuItem("Trim parameter", "Trim", 0, null, true),

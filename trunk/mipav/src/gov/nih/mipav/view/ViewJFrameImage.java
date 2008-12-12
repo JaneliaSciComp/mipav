@@ -1404,6 +1404,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.VOI_TYPE);
 
             flip.callAlgorithm();
+        } else if(command.equals("interpolateVOIs")) {
+        	//dialog that is not visible...calls the algorithm immediately
+        	JDialogVOIShapeInterpolation dialogVOIShapeInterp = new JDialogVOIShapeInterpolation(getActiveImage());
         } else if (command.equals("RotateX180")) {
             JDialogRotate rotate = new JDialogRotate(this, getActiveImage(), AlgorithmRotate.X_AXIS_180);
 

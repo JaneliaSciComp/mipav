@@ -84,6 +84,9 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     public static final int FILL_HOLES = 13;
+    
+    /** DOCUMENT ME! */
+    public static final int DISTANCE_MAP_FOR_SHAPE_INTERPOLATION = 14;
 
     /** DOCUMENT ME! */
     public static final int SIZED_CIRCLE = 0;
@@ -1602,6 +1605,10 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             case BG_DISTANCE_MAP:
                 backgroundDistanceMap(false);
                 break;
+                
+            case DISTANCE_MAP_FOR_SHAPE_INTERPOLATION:
+                distanceMapForShapeInterpolation(false);
+                break;
 
             case ULTIMATE_ERODE:
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
@@ -1845,6 +1852,171 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
 
+
+            return;
+        }
+
+        setCompleted(true);
+    }
+    
+    
+    
+    private void distanceMapForShapeInterpolation(boolean returnFlag) {
+        // if thread has already been stopped, dump out
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+
+        int pix, i;
+        int xDim = srcImage.getExtents()[0];
+        int yDim = srcImage.getExtents()[1];
+        int sliceSize = xDim * yDim;
+        int x1, x2, y1, y2;
+        float distance;
+        float dist;
+
+        float[] distBuffer;
+        int[] pointArray;
+        int pointIndex = 0;
+
+
+        fireProgressStateChanged("Distance image ...");
+
+        fireProgressStateChanged(0);
+
+
+        try {
+            pointArray = new int[sliceSize / 2];
+            distBuffer = new float[sliceSize];
+        } catch (OutOfMemoryError e) {
+            displayError("Algorithm Morphology2D.distanceMap: Out of memory");
+            setCompleted(false);
+
+            return;
+        }
+
+        // Save original in processBuffer and invert image in imgBuffer
+        for (pix = 0; pix < sliceSize; pix++) {
+            processBuffer[pix] = imgBuffer[pix];
+            if (imgBuffer[pix] > 0) {
+                imgBuffer[pix] = 0;
+            } else {
+                imgBuffer[pix] = 1;
+            }
+        }
+
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+
+        // Find all edge pixels.
+        int end = sliceSize - xDim - 1;
+
+        for (pix = xDim; pix < end; pix++) {
+
+            if ((imgBuffer[pix] == 0) &&
+                    ((imgBuffer[pix - xDim] != 0) || (imgBuffer[pix + 1] != 0) || (imgBuffer[pix + xDim] != 0) ||
+                         (imgBuffer[pix - 1] != 0))) {
+                pointArray[pointIndex] = pix;
+                pointIndex++;
+            }
+        }
+
+        int mod = sliceSize / 50; // mod is 2 percent of length
+
+        float xRes = srcImage.getFileInfo(0).getResolutions()[0];
+        float xResSquared = xRes * xRes;
+        float yRes = srcImage.getFileInfo(0).getResolutions()[1];
+        float yResSquared = yRes * yRes;
+
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+
+        for (pix = 0; (pix < sliceSize) && !threadStopped; pix++) {
+
+            try {
+
+                if (((pix % mod) == 0)) {
+                    fireProgressStateChanged(Math.round((pix + 1) / ((float) sliceSize) * 100));
+                }
+            } catch (NullPointerException npe) {
+
+                if (threadStopped) {
+                    Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                      Preferences.DEBUG_ALGORITHM);
+                }
+            }
+
+            if (entireImage || mask.get(pix)) {
+
+                if (imgBuffer[pix] > 0) {
+                    distance = 100000;
+                    x1 = pix % xDim;
+                    y1 = pix / xDim;
+
+                    for (i = 0; i < pointIndex; i++) {
+                        x2 = pointArray[i] % xDim;
+                        y2 = pointArray[i] / xDim;
+                        dist = ((x2 - x1) * (x2 - x1) * xResSquared) + ((y2 - y1) * (y2 - y1) * yResSquared);
+
+                        if (dist < distance) {
+                            distance = dist;
+                        }
+                    }
+
+                    distBuffer[pix] = -(float) Math.sqrt(distance);
+                }else {
+                    //distBuffer[pix] = processBuffer[pix];
+                	distance = 100000;
+                    x1 = pix % xDim;
+                    y1 = pix / xDim;
+
+                    for (i = 0; i < pointIndex; i++) {
+                        x2 = pointArray[i] % xDim;
+                        y2 = pointArray[i] / xDim;
+                        dist = ((x2 - x1) * (x2 - x1) * xResSquared) + ((y2 - y1) * (y2 - y1) * yResSquared);
+
+                        if (dist < distance) {
+                            distance = dist;
+                        }
+                    }
+
+                    distBuffer[pix] = (float) Math.sqrt(distance);
+                }
+            }
+            
+        }
+
+        if (returnFlag == true) {
+            distanceMap = distBuffer;
+
+            return;
+        }
+
+        try {
+
+            if (threadStopped) {
+                finalize();
+
+                return;
+            }
+            srcImage.reallocate(ModelStorageBase.FLOAT);
+            srcImage.importData(0, distBuffer, true);
+        } catch (IOException error) {
+            displayError("Algorithm Morphology2D: Image(s) locked");
+            setCompleted(false);
+
+            return;
+        } catch (OutOfMemoryError e) {
+            displayError("Algorithm Morphology2D: Out of memory");
+            setCompleted(false);
 
             return;
         }

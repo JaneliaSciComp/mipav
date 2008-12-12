@@ -2522,7 +2522,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     public void mouseExited(MouseEvent mouseEvent) {
         lastMouseX = OUT_OF_BOUNDS;
         lastMouseY = OUT_OF_BOUNDS;
-
         if ( (cursorMode == MAG_REGION) || (cursorMode == PAINT_VOI) || (cursorMode == ERASER_PAINT)
                 || (cursorMode == WIN_REGION)) {
 
