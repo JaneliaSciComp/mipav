@@ -155,6 +155,11 @@ public class AlgorithmTransform extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private float padVal = 0.0f;
+    
+    /** Used for out of bounds values in the transformation routines.  
+     * Set to (float)srcImage.getMin() in the constructors.
+     */
+    private float fillValue = 0.0f;
 
     /** DOCUMENT ME! */
     private ModelImage srcImage, destImage, maskImage;
@@ -211,6 +216,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         this.srcImage = srcImage;
         this.clip = clip;
         this.pad = pad;
+        fillValue = (float)srcImage.getMin();
 
         int[] extents;
         String name = JDialogBase.makeImageName(srcImage.getImageName(), "_transform");
@@ -365,6 +371,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         this.srcImage = srcImage;
         this.clip = clip;
         this.pad = pad;
+        fillValue = (float)srcImage.getMin();
         this.doCenter = doCenter;
         this.center = center;
 
@@ -562,6 +569,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         transformVOI = tVOI;
         this.clip = clip;
         this.pad = pad;
+        fillValue = (float)srcImage.getMin();
 
 
         this.oXres = _oXres;
@@ -716,6 +724,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         transformVOI = tVOI;
         this.clip = clip;
         this.pad = pad;
+        fillValue = (float)srcImage.getMin();
         this.doCenter = doCenter;
         this.center = center;
 
@@ -4056,6 +4065,14 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     public void setPadValue(float pad) {
         padVal = pad;
+    }
+    
+    /**
+     * Set value for out of bounds transformation values.  Set in constructors to a default of srcImage.getMin().
+     * @param fillValue
+     */
+    public void setFillValue(float fillValue) {
+        this.fillValue = fillValue;
     }
 
     /**
