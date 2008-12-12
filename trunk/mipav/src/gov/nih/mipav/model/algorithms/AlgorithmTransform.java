@@ -154,7 +154,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private boolean pad = true;
 
     /** DOCUMENT ME! */
-    private int padVal = 0;
+    private float padVal = 0.0f;
 
     /** DOCUMENT ME! */
     private ModelImage srcImage, destImage, maskImage;
@@ -4054,7 +4054,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * @param  pad  DOCUMENT ME!
      */
-    public void setPadValue(int pad) {
+    public void setPadValue(float pad) {
         padVal = pad;
     }
 
@@ -5198,7 +5198,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 // transform i,j,k
                 if (pad) {
-                    value = (float) padVal;
+                    value = padVal;
                     iAdj = i - margins[0];
                 } else {
                     value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
@@ -5302,7 +5302,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     // transform i,j
                     if (pad) {
                         jAdj = j - margins[1];
-                        value = (float)padVal;
+                        value = padVal;
                     } 
                     else {
                         jAdj = j;
@@ -5560,7 +5560,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // transform i,j
                         if (pad) {
-                            value = (float)padVal;
+                            value = padVal;
                             jAdj = j - margins[1];
                         }
                         else {
@@ -5673,10 +5673,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         // transform i,j
                         temp3 = 4 * (i + (j * oXdim));
                         if (pad) {
-                            imgBuf2[temp3] = (float)padVal; // remains zero if voxel is transformed out of bounds
-                            imgBuf2[temp3 + 1] = (float)padVal;
-                            imgBuf2[temp3 + 2] = (float)padVal;
-                            imgBuf2[temp3 + 3] = (float)padVal;
+                            imgBuf2[temp3] = padVal; // remains zero if voxel is transformed out of bounds
+                            imgBuf2[temp3 + 1] = padVal;
+                            imgBuf2[temp3 + 2] = padVal;
+                            imgBuf2[temp3 + 3] = padVal;
                             jAdj = j - margins[1];
                         }
                         else {
@@ -5819,10 +5819,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 temp3 = 4 * (i + (j * oXdim));
 
                 if (pad) {
-                    imgBuf2[temp3] = (float) padVal;
-                    imgBuf2[temp3 + 1] = (float) padVal;
-                    imgBuf2[temp3 + 2] = (float) padVal;
-                    imgBuf2[temp3 + 3] = (float) padVal;
+                    imgBuf2[temp3] = padVal;
+                    imgBuf2[temp3 + 1] = padVal;
+                    imgBuf2[temp3 + 2] = padVal;
+                    imgBuf2[temp3 + 3] = padVal;
                     jAdj = j - margins[1];
                 } else {
                     imgBuf2[temp3] = 0; // remains zero if voxel is transformed out of bounds
@@ -11039,7 +11039,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     // transform i,j,k
                     if (pad) {
-                        value = (float) padVal; // Either set by user in dialog or else set to 0 by JDialogTransform.
+                        value = padVal; // Either set by user in dialog or else set to 0 by JDialogTransform.
                         iAdj = i - margins[0];
                     } else {
                         value = (float) srcImage.getMin(); // Will remain zero if voxel is transformed out of bounds
@@ -11213,7 +11213,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // transform i,j,k
                         if (pad) {
-                            value = (float)padVal;
+                            value = padVal;
                             iAdj = i - margins[0];
                         }
                         else {
@@ -11396,10 +11396,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         // transform i,j,k
                         temp = 4 * (i + (j * oXdim) + (k * oSliceSize));
                         if (pad) {
-                            imgBuffer2[temp] = (float)padVal;
-                            imgBuffer2[temp + 1] = (float)padVal;
-                            imgBuffer2[temp + 2] = (float)padVal;
-                            imgBuffer2[temp + 3] = (float)padVal; 
+                            imgBuffer2[temp] = padVal;
+                            imgBuffer2[temp + 1] = padVal;
+                            imgBuffer2[temp + 2] = padVal;
+                            imgBuffer2[temp + 3] = padVal; 
                             iAdj = i - margins[0];
                         }
                         else {
@@ -11621,10 +11621,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     temp8 = 4 * (i + (j * oXdim) + (k * osliceSize));
 
                     if (pad) {
-                        imgBuffer2[temp8] = (float) padVal;
-                        imgBuffer2[temp8 + 1] = (float) padVal;
-                        imgBuffer2[temp8 + 2] = (float) padVal;
-                        imgBuffer2[temp8 + 3] = (float) padVal;
+                        imgBuffer2[temp8] = padVal;
+                        imgBuffer2[temp8 + 1] = padVal;
+                        imgBuffer2[temp8 + 2] = padVal;
+                        imgBuffer2[temp8 + 3] = padVal;
                         kAdj = k - margins[2];
                     } else {
                         imgBuffer2[temp8] = 0; // remains zero if voxel is transformed out of bounds
