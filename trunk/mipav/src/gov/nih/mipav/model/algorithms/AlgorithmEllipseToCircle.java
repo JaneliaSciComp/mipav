@@ -648,7 +648,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         boolean doRotateCenter;
         Vector3f center;
         boolean useSACenter = false;
-        int padValue = 0;
+        float padValue = 0.0f;
         boolean doUpdateOrigin = false;
         ModelImage resultImage;
         for (ys = 155; ys <= 355; ys++) {
