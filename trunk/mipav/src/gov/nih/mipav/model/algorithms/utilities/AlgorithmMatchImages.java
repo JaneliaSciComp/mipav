@@ -2595,7 +2595,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             }
 
             algoTransform.setRunningInSeparateThread(runningInSeparateThread);
-            algoTransform.setPadValue((int) padValue);
+            algoTransform.setPadValue((float) padValue);
             algoTransform.run();
 
             if (algoTransform.isCompleted() == false) {
@@ -2663,7 +2663,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             } // else nDims == 2
 
             algoTransform.setRunningInSeparateThread(runningInSeparateThread);
-            algoTransform.setPadValue((int) padValue);
+            algoTransform.setPadValue((float) padValue);
             algoTransform.run();
 
             if (algoTransform.isCompleted() == false) {
