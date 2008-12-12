@@ -127,7 +127,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
-    private int interp = 0, padValue = 0;
+    private int interp = 0;
+    
+    private float padValue = 0.0f;
 
     /** DOCUMENT ME! */
     private JLabel labelOrigin, padLabel;
@@ -1117,7 +1119,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
      *
      * @param  padValue  DOCUMENT ME!
      */
-    public void setPadValue(int padValue) {
+    public void setPadValue(float padValue) {
         this.padValue = padValue;
     }
 
@@ -1326,7 +1328,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             do25D = scriptParameters.doProcess3DAs25D();
             doUpdateOrigin = scriptParameters.getParams().getBoolean("do_update_origin");
             doPad = scriptParameters.getParams().getBoolean("do_pad");
-            padValue = scriptParameters.getParams().getInt("pad_value");
+            padValue = scriptParameters.getParams().getFloat("pad_value");
 
             boolean useImageMatrix = scriptParameters.getParams().getBoolean("use_image_matrix");
             
@@ -1945,7 +1947,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         padLabel.setFont(serif12);
         padLabel.setEnabled(false);
         padValuePanel.add(padLabel);
-        padValTxt = new JTextField(String.valueOf(padValue), 4);
+        padValTxt = new JTextField(String.valueOf(padValue), 10);
         padValTxt.setFont(serif12);
         padValTxt.addFocusListener(this);
         padValTxt.setEnabled(false);
@@ -3115,7 +3117,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         if (doPad) {
             tmpStr = padValTxt.getText();
             if (testParameter(tmpStr, ModelStorageBase.getTypeMin(image.getType()), ModelStorageBase.getTypeMax(image.getType()))) {
-                padValue = Integer.valueOf(tmpStr).intValue();
+                padValue = Float.valueOf(tmpStr).floatValue();
             } else {
                 return false;
             }
