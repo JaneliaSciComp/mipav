@@ -64,6 +64,7 @@ public class JDialogVOIShapeInterpolation extends JDialogBase implements Algorit
          int sliceIndex1 = 0;
          VOIContour VOI2 = null;
          int sliceIndex2 = 0;
+         VOI VOIHandle = null;
          
          if(nVOI == 0) {
          	 MipavUtil.displayError("Please select 2 closed VOI contours in non-contiguous slices");
@@ -86,10 +87,14 @@ public class JDialogVOIShapeInterpolation extends JDialogBase implements Algorit
                          	nActiveContour = nActiveContour + 1;
                          	if(VOI1 == null) {
                          		VOI1 = (VOIContour)(VOIContour)contours[j].elementAt(k);
-                         
+                         		VOIHandle = (VOI)(VOIs.VOIAt(i));
                          		sliceIndex1 = j;
 
                          	}else {
+                         		if((VOI)(VOIs.VOIAt(i)) != VOIHandle) {
+                         			MipavUtil.displayError("Contours must be from the same VOI");
+                                    return;
+                         		}
                          		VOI2 = (VOIContour)(VOIContour)contours[j].elementAt(k);
                          		sliceIndex2 = j;
 
@@ -118,7 +123,7 @@ public class JDialogVOIShapeInterpolation extends JDialogBase implements Algorit
         }
         
         //ok now we have 2 selected closed VOI contours in non-contiguous slices
-        alg = new AlgorithmVOIShapeInterpolation(imageA,sliceIndex1,VOI1,sliceIndex2,VOI2); 
+        alg = new AlgorithmVOIShapeInterpolation(imageA,sliceIndex1,VOI1,sliceIndex2,VOI2,VOIHandle); 
 
         createProgressBar(imageA.getImageName(), alg);
         

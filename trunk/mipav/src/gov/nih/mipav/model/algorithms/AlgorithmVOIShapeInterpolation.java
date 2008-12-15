@@ -90,6 +90,9 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 	/** image center **/
 	private Vector3f imageCenter;
 	
+	/** handle to src image's VOI **/
+	private VOI VOIHandle;
+	
 	/** 
 	 * constructor
 	 */
@@ -105,7 +108,7 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 	 * @param sliceIndex2
 	 * @param VOI2
 	 */
-	public AlgorithmVOIShapeInterpolation(ModelImage srcImage,int sliceIndex1,VOIContour VOI1, int sliceIndex2,VOIContour VOI2) {
+	public AlgorithmVOIShapeInterpolation(ModelImage srcImage,int sliceIndex1,VOIContour VOI1, int sliceIndex2,VOIContour VOI2, VOI VOIHandle) {
 		this.srcImage = srcImage;
 		if(sliceIndex1 < sliceIndex2) {
 			this.sliceIndex1 = sliceIndex1;
@@ -118,6 +121,7 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 			this.VOI1 = VOI2;
 			this.VOI2 = VOI1;
 		}
+		this.VOIHandle = VOIHandle;
 		numSlicesInBetween = sliceIndex2 - sliceIndex1 - 1;
 		
 		averageDistanceMaps = new ModelImage[numSlicesInBetween];
@@ -189,12 +193,10 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
         AlgorithmMorphology2D distanceMapAlgo2 = new AlgorithmMorphology2D(distanceMap2, 0, 0, AlgorithmMorphology2D.DISTANCE_MAP_FOR_SHAPE_INTERPOLATION, 0, 0, 0, 0, true);
         distanceMapAlgo2.run();
 
-        VOI newVOI = new VOI((short)0,"voi1",srcImage.getExtents()[2]);
         
         fireProgressStateChanged(30);
         //now depending on #of image slices in between imageSlice 1 and imageSlice2, we average accordingly
         //if numSlicesInBetween is 1...just call MIPAV's average function
-        
         if(numSlicesInBetween == 1) {
         	averageDistanceMaps[0] = new ModelImage(distanceMap1.getType(), distanceMap1.getExtents(), "average_0");
         	fireProgressStateChanged(40);
@@ -239,15 +241,15 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
             finalContours[0] = (VOIContour)(VOIContour)contours[0].elementAt(0);
             
             boolean isLineVertical = false;
-            int diffX = (int)Math.abs(geomCenter1.X - geomCenter2.X);
-            int stepX = (int)(diffX/2);
+            float diffX = Math.abs(geomCenter1.X - geomCenter2.X);
+            float stepX = (diffX/2);
 
-            int newX = 0;
-            int newY = 0;
+            float newX = 0;
+            float newY = 0;
             if(geomCenter1.X < geomCenter2.X) {
-            	newX = (int)geomCenter1.X + stepX;
+            	newX = geomCenter1.X + stepX;
             }else if(geomCenter1.X > geomCenter2.X) {
-            	newX = (int)geomCenter2.X + stepX;
+            	newX = geomCenter2.X + stepX;
             }else {
             	isLineVertical = true;
             }
@@ -257,15 +259,15 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
             	newY = linearInterpGetY(newX);
             }
             if(isLineVertical) {
-            	newX = (int)geomCenter1.X;
-            	int diffY = (int)Math.abs(geomCenter1.Y - geomCenter2.Y);
-                int stepY = (int)(diffY/2);
+            	newX = geomCenter1.X;
+            	float diffY = Math.abs(geomCenter1.Y - geomCenter2.Y);
+                float stepY = (diffY/2);
                 if(geomCenter1.Y < geomCenter2.Y) {
-                	newY = (int)geomCenter1.Y + stepY;
+                	newY = geomCenter1.Y + stepY;
                 }else if(geomCenter1.Y > geomCenter2.Y) {
-                	newY = (int)geomCenter2.Y + stepY;
+                	newY = geomCenter2.Y + stepY;
                 }else {
-                	newY = (int)geomCenter1.Y;
+                	newY = geomCenter1.Y;
                 }
             }
             
@@ -275,9 +277,9 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
     		finalContours[0].translate(transX, transY);
             
             int index = sliceIndex1 + 1;
-    		newVOI.importCurve(finalContours[0], index);
+            VOIHandle.importCurve(finalContours[0], index);
     		fireProgressStateChanged(100);
-    		srcImage.registerVOI(newVOI);
+
             
         	
         }else { 
@@ -309,12 +311,15 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
         		averageDistanceMaps[index] = new ModelImage(distanceMap1.getType(), distanceMap1.getExtents(), "average_" + index);
         		
         		AlgorithmImageMath mathAlgoA = new AlgorithmImageMath(tempA, distanceMap1, AlgorithmImageMath.MULTIPLY, factor_A, 0, 0, AlgorithmImageMath.CLIP, true);
+        		linkProgressToAlgorithm(mathAlgoA);
         		mathAlgoA.run();
 
         		AlgorithmImageMath mathAlgoB = new AlgorithmImageMath(tempB, distanceMap2, AlgorithmImageMath.MULTIPLY, factor_B, 0, 0, AlgorithmImageMath.CLIP, true);
+        		linkProgressToAlgorithm(mathAlgoB);
         		mathAlgoB.run();
 
             	AlgorithmImageCalculator mathAlgoAdd = new AlgorithmImageCalculator(averageDistanceMaps[index], tempA, tempB, AlgorithmImageCalculator.ADD, AlgorithmImageMath.CLIP, true, null);
+            	linkProgressToAlgorithm(mathAlgoAdd);
             	mathAlgoAdd.run();
 
             	inBetweenBooleanShapes[index] = new ModelImage(ModelStorageBase.BOOLEAN, distanceMap1.getExtents(), "booleanShape_" + index);
@@ -354,11 +359,10 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
                 finalContours[index] = (VOIContour)(VOIContour)contours[0].elementAt(0);
                 
                 boolean isLineVertical = false;
-                int diffX = (int)Math.abs(geomCenter1.X - geomCenter2.X);
-                int stepX = (int)(diffX/denominator);
-
-                int newX = 0;
-                int newY = 0;
+                float diffX = Math.abs(geomCenter1.X - geomCenter2.X);
+                float stepX = diffX/(denominator);
+                float newX = 0;
+                float newY = 0;
                 if(geomCenter1.X < geomCenter2.X) {
                 	newX = (int)geomCenter1.X + (stepX * i);
                 }else if(geomCenter1.X > geomCenter2.X) {
@@ -373,15 +377,15 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
                 	newY = linearInterpGetY(newX);
                 }
                 if(isLineVertical) {
-                	newX = (int)geomCenter1.X;
-                	int diffY = (int)Math.abs(geomCenter1.Y - geomCenter2.Y);
-                    int stepY = (int)(diffY/denominator);
+                	newX = geomCenter1.X;
+                	float diffY = Math.abs(geomCenter1.Y - geomCenter2.Y);
+                    float stepY = (diffY/denominator);
                     if(geomCenter1.Y < geomCenter2.Y) {
-                    	newY = (int)geomCenter1.Y + (stepY * i);
+                    	newY = geomCenter1.Y + (stepY * i);
                     }else if(geomCenter1.Y > geomCenter2.Y) {
-                    	newY = (int)geomCenter2.Y + (stepY * i);
+                    	newY = geomCenter2.Y + (stepY * i);
                     }else {
-                    	newY = (int)geomCenter1.Y;
+                    	newY = geomCenter1.Y;
                     }
                 }
                 
@@ -391,9 +395,18 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
         		finalContours[index].translate(transX, transY);
                 
                 int ind = sliceIndex1 + i;
-        		newVOI.importCurve(finalContours[index], ind);
+                VOIHandle.importCurve(finalContours[index], ind);
+                if(tempA != null) {
+                	tempA.disposeLocal();
+                	tempA = null;
+                }
+                if(tempB != null) {
+                	tempB.disposeLocal();
+                	tempB = null;
+                }
+                
+                
         	}
-        	srcImage.registerVOI(newVOI);
         	srcImage.notifyImageDisplayListeners();
         }
         setCompleted(true);
@@ -407,9 +420,9 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 	}
 	
 	/** get y based on equation of linear interpolation **/
-	public int linearInterpGetY(int x) {
-		int y = 0;
-		y = (int)((geomCenter1.Y) + (x - geomCenter1.X)*(geomCenter2.Y - geomCenter1.Y)/(geomCenter2.X - geomCenter1.X));
+	public float linearInterpGetY(float x) {
+		float y = 0;
+		y = ((geomCenter1.Y) + (x - geomCenter1.X)*(geomCenter2.Y - geomCenter1.Y)/(geomCenter2.X - geomCenter1.X));
 		return y;
 	}
 	
