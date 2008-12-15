@@ -278,6 +278,15 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
     
     private int dataType;
     
+    /**
+     * Tells how to select fill value for out of bounds data
+     * 0 for image minimum
+     * 1 for NaN for float, zero otherwise.
+     * 2 for user defined
+     * 3 for image maximum
+     */
+    private int outOfBoundsIndex = 0;
+    
     private float fillValue = 0.0f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -1175,6 +1184,26 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
     public void setWeighted(boolean flag) {
         weighted = flag;
     }
+    
+    /**
+     * tells how to select fill value for out of bounds data
+     * 0 for image minimum
+     * 1 for NaN for float, zero otherwise.
+     * 2 for user defined
+     * 3 for image max 
+     * @param outOfBoundsIndex
+     */
+    public void setOutOfBoundsIndex(int outOfBoundsIndex) {
+        this.outOfBoundsIndex = outOfBoundsIndex;
+    }
+    
+    /**
+     * Accessor to set intensity value for out of bounds data
+     * @param fillValue
+     */
+    public void setFillValue(float fillValue) {
+        this.fillValue = fillValue;
+    }
 
     /**
      * Calls the algorithm with the set-up parameters.
@@ -1278,6 +1307,10 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
      */
     protected void setGUIFromParams() {
         matchImage = scriptParameters.retrieveInputImage();
+        matchImage.calcMinMax();
+        imageMin = matchImage.getMin();
+        imageMax = matchImage.getMax();
+        dataType = matchImage.getFileInfo()[0].getDataType();
         UI = ViewUserInterface.getReference();
         parentFrame = matchImage.getParentFrame();
 
@@ -1323,6 +1356,27 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
         setFastMode(scriptParameters.getParams().getBoolean("do_use_fast_mode"));
         setCalcCOG(scriptParameters.getParams().getBoolean("do_calc_COG"));
+        setOutOfBoundsIndex(scriptParameters.getParams().getInt("out_of_bounds_index"));
+        switch(outOfBoundsIndex) {
+            case 0: 
+                setFillValue((float)imageMin);
+                break;
+            case 1: 
+                if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE) ||
+                        (dataType == ModelStorageBase.ARGB_FLOAT)) {
+                    setFillValue(Float.NaN);
+                }
+                else {
+                    setFillValue(0.0f);
+                }
+                break;
+            case 2:
+                setFillValue(scriptParameters.getParams().getFloat("fill_value"));
+                break;
+            case 3:
+                setFillValue((float)imageMax);
+                break;
+        }
 
         setAdvancedSettings(scriptParameters.getParams().getInt("bracket_bound"),
                             scriptParameters.getParams().getInt("max_iterations"),
@@ -1366,6 +1420,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_fast_mode", fastMode));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_COG", calcCOG));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("out_of_bounds_index", outOfBoundsIndex));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value", fillValue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("bracket_bound", bracketBound));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIterations));
         scriptParameters.getParams().put(ParameterFactory.newParameter("num_minima", numMinima));
@@ -2680,7 +2736,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         doSubsample = sampleCheckbox.isSelected();
         
         fillValue = Float.valueOf(valueText.getText()).floatValue();
-        if (outOfBoundsComboBox.getSelectedIndex() == 2) {
+        outOfBoundsIndex = outOfBoundsComboBox.getSelectedIndex();
+        if (outOfBoundsIndex == 2) {
             // user defined value
             boolean success = testType(dataType, fillValue);
             if (!success) {
