@@ -499,6 +499,7 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
+        gbc.weightx = 1;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(5, 5, 5, 5);
         mainPanel.add(outputPanel, gbc);

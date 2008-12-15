@@ -215,11 +215,17 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem("Maximum likelihood iterative blind deconvolution",
                                                 null, 0, null, false)}),}),
                 menuBuilder.makeMenu("Morphological", false, new JMenuItem[] {
-                        menuBuilder.buildMenuItem("Bg. distance map", null, 0, null, false),
+                		
+                		 menuBuilder.makeMenu("Distance Maps", false, new JMenuItem[] {
+                				 menuBuilder.buildMenuItem("Bg. distance map", null, 0, null, false), 
+                				 menuBuilder.buildMenuItem("Distance map", null, 0, null, false)
+                		 }),
+                		
+                        
                         menuBuilder.buildMenuItem("Close", null, 0, null, false),
                         menuBuilder.buildMenuItem("Delete objects", null, 0, null, false),
                         menuBuilder.buildMenuItem("Dilate", null, 0, null, false),
-                        menuBuilder.buildMenuItem("Distance map", null, 0, null, false),
+                        
                         menuBuilder.buildMenuItem("Erode", null, 0, null, false),
                         menuBuilder.buildMenuItem("Evaluate segmentation", "evalSegMask", 0, null, false),
                         menuBuilder.buildMenuItem("Fill holes", null, 0, null, false),
