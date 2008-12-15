@@ -311,15 +311,12 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
         		averageDistanceMaps[index] = new ModelImage(distanceMap1.getType(), distanceMap1.getExtents(), "average_" + index);
         		
         		AlgorithmImageMath mathAlgoA = new AlgorithmImageMath(tempA, distanceMap1, AlgorithmImageMath.MULTIPLY, factor_A, 0, 0, AlgorithmImageMath.CLIP, true);
-        		linkProgressToAlgorithm(mathAlgoA);
         		mathAlgoA.run();
 
         		AlgorithmImageMath mathAlgoB = new AlgorithmImageMath(tempB, distanceMap2, AlgorithmImageMath.MULTIPLY, factor_B, 0, 0, AlgorithmImageMath.CLIP, true);
-        		linkProgressToAlgorithm(mathAlgoB);
         		mathAlgoB.run();
 
             	AlgorithmImageCalculator mathAlgoAdd = new AlgorithmImageCalculator(averageDistanceMaps[index], tempA, tempB, AlgorithmImageCalculator.ADD, AlgorithmImageMath.CLIP, true, null);
-            	linkProgressToAlgorithm(mathAlgoAdd);
             	mathAlgoAdd.run();
 
             	inBetweenBooleanShapes[index] = new ModelImage(ModelStorageBase.BOOLEAN, distanceMap1.getExtents(), "booleanShape_" + index);
