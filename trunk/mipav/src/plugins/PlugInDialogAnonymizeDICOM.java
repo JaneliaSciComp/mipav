@@ -12,6 +12,7 @@ import java.awt.event.MouseListener;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
@@ -25,7 +26,7 @@ import java.util.Vector;
  * @author joshim2
  *
  */
-public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface {
 
 	// ~ Instance fields ------------------------------------------------------------------------
 	
