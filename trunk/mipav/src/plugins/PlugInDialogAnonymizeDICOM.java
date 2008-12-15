@@ -67,18 +67,6 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
 	
 	/** Algorithm instance */
     private PlugInAlgorithmAnonymizeDicom algoAnonymizeDicom;
-    
-    private SelectMode currentMode = SelectMode.NONE;
-    
-    private int selectedRow = -1;
-	
-    public enum SelectMode {
-    	CTRL_MODE,
-    	
-    	SHIFT_MODE,
-    	
-    	NONE
-    }
 	
 	
 	//	~ Constructors --------------------------------------------------------------------------
@@ -86,10 +74,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
-    public PlugInDialogAnonymizeDICOM() { 
-    	
-    	currentMode = SelectMode.NONE;
-    }
+    public PlugInDialogAnonymizeDICOM() { }
     
     /**
      * Sets up variables but does not show dialog.
@@ -100,7 +85,6 @@ public class PlugInDialogAnonymizeDICOM extends JDialogScriptableBase implements
     public PlugInDialogAnonymizeDICOM(boolean modal) {
         super(modal); 
         fileList = new Vector<String>();
-    	currentMode = SelectMode.NONE;
        
     	init();
     }
