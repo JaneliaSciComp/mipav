@@ -240,6 +240,58 @@ public class FileUtility {
     public static final int BFLOAT = 66;
     
     public static final int JP2 = 100;
+    
+    private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi", "biorad", "bmp", "bruker", "cheshire",
+    	"cheshire overlay", "cor", "cur", "dib", "dicom", "dm3", "fits", "GE genesis", "GE genisis multifile", "GE signa4x",
+    	"GE Signa4x multifile", "gif", "ico", "ics", "interfile", "jimi", "jpeg", "lsm", "lsm multifile", "magnetom vision",
+    	"Megnatom vision multifile", "map", "medivision", "mgh", "micro cat", "minc", "mipav", "mrc", "nifti", "nifti multifile",
+    	"nrrd", "osm", "pcx", "pic", "pict", "png", "project", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml", "tga",
+    	"tiff", "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "surfaceref xml", "minc hdf", 
+    	"liff", "bfloat", "jp2"};
+    
+    /**
+     * Returns the file type associated with a string.
+     * 
+     * @param s String to test
+     * 
+     * @return axis orientation
+     */
+    public static int getFileTypeFromStr(String s) {
+
+        // look through the array of strings to see if there's a match.
+        try {
+
+            for (int i = 0; i < fileTypeStr.length; i++) {
+
+                if (FileUtility.getFileTypeStr(i).regionMatches(true, 0, s, 0,
+                		FileUtility.getFileTypeStr(i).length())) {
+                    return i;
+                }
+            }
+        } catch (ArrayIndexOutOfBoundsException aie) {
+            return FileUtility.ERROR;
+        }
+
+        return FileUtility.ERROR;
+
+    } // end getFileTypeFromStr()
+
+    /**
+     * Return the string associated with a file type.
+     * 
+     * @param m int representing the file type (see the above static definitions)
+     * 
+     * @return String representing the string associated with the file type.
+     */
+    public static String getFileTypeStr(int m) {
+
+        try {
+            return FileUtility.fileTypeStr[m];
+        } catch (ArrayIndexOutOfBoundsException aie) {}
+
+        return "";
+
+    } // end getFileTypeStr()
 
     /**
      * Only for FreeSurfer COR volume files Looks in the image directory and returns all images with the same root up to
