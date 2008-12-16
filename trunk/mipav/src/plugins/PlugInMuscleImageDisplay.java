@@ -55,7 +55,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     
     //~ Instance fields ------------------------------------------------------------------------------------------------    
     
-
     /**For writing PDF docs below. */
     private Document pdfDocument = null;
 	private PdfWriter pdfWriter = null;
@@ -156,7 +155,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         
         /** 
          * ImageType is defined at run time, note that maintaing this distinction allows for
-         * dependencies to be integrated, will see if this funcionality is needed.
+         * dependencies to be integrated, will see if this functionality is needed.
          */
         RunTimeDefined
     }
