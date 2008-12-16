@@ -265,7 +265,8 @@ public class FileUtility {
 
                 if (FileUtility.getFileTypeStr(i).regionMatches(true, 0, s, 0,
                 		FileUtility.getFileTypeStr(i).length())) {
-                    return i;
+                	//because fileType indicies start at -1, must decrement
+                	return i-1;
                 }
             }
         } catch (ArrayIndexOutOfBoundsException aie) {
@@ -286,7 +287,8 @@ public class FileUtility {
     public static String getFileTypeStr(int m) {
 
         try {
-            return FileUtility.fileTypeStr[m];
+        	//because fileType indicies start at -1, must increment
+            return FileUtility.fileTypeStr[m+1];
         } catch (ArrayIndexOutOfBoundsException aie) {}
 
         return "";
