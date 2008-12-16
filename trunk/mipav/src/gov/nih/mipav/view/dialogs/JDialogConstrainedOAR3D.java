@@ -2191,7 +2191,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         outOfBoundsComboBox.setSelectedIndex(0);
         outOfBoundsComboBox.addItemListener(this);
         
-        valueLabel = new JLabel("Out of bounds value:");
+        valueLabel = new JLabel("Out of bounds intensity value:");
         valueLabel.setForeground(Color.black);
         valueLabel.setFont(serif12);
         valueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
