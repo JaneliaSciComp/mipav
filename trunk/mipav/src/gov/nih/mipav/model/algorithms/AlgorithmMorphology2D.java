@@ -1955,7 +1955,6 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             }
 
             if (entireImage || mask.get(pix)) {
-
                 if (imgBuffer[pix] > 0) {
                     distance = 100000;
                     x1 = pix % xDim;
@@ -1990,6 +1989,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
                     distBuffer[pix] = (float) Math.sqrt(distance);
                 }
+            }else {
+                distBuffer[pix] = imgBuffer[pix];
             }
             
         }
