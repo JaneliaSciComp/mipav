@@ -15,6 +15,7 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 import javax.swing.*;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Vector;
 
 /**
@@ -275,7 +276,7 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     			System.out.println("Working with file "+fileList.get(i));
     			selectedFiles[i] = new File(fileList.get(i));
     		}
-    		for(int i=fileList.size()-1; i<fileList.size() + folderList.size(); i++) {
+    		for(int i=fileList.size(); i<fileList.size() + folderList.size(); i++) {
     			System.out.println("Working with folder "+folderList.get(i-fileList.size()));
     			selectedFiles[i] = new File(folderList.get(i-fileList.size()));
     		}
@@ -398,7 +399,7 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
         		fileList.remove(obj);
         	}
         	inputFileList.updateUI();
-        } else if(command.equals(REMOVE_FILE)) {
+        } else if(command.equals(REMOVE_FOLDER)) {
         	Object[] objAr = inputFolderList.getSelectedValues();
         	for(Object obj : objAr) {
         		folderList.remove(obj);
@@ -414,6 +415,17 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+    	ArrayList<String> xmlList = algoCreateXML.getXmlList();
+    	String totalStr = new String();
+    	for(int i=0; i<xmlList.size(); i++) {
+    		totalStr += xmlList.get(i) + "\n";
+    	}
+    	if(totalStr.length() > 0) {
+    		MipavUtil.displayInfo("The following XML files have been written:\n"+totalStr);
+    	} else {
+    		MipavUtil.displayError("No XML files have been written.");
+    	}
+    	
     	progressBar.dispose();
     	algoCreateXML.finalize();
     	algoCreateXML = null;
@@ -425,6 +437,10 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     }
     protected void storeParamsFromGUI() {
     	
+    }
+    
+    public static void main(String[] args) {
+    	new PlugInDialogCreateXML(true);
     }
     
 }

@@ -129,7 +129,7 @@ public class FitGaussian extends NLFittedFunction {
 
         // System.err.println("gaussY length: " + gaussY.length + " end: " + end);
         end = gaussY.length - 3;
-
+ 
         gaussY[end] = newY[end];
         gaussY[end + 1] = newY[end + 1];
         gaussY[end + 2] = newY[end + 2];
