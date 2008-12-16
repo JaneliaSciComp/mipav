@@ -232,6 +232,31 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private JRadioButton zRadio;
+    
+    private JLabel outOfBoundsLabel;
+    
+    private JComboBox outOfBoundsComboBox;
+    
+    private JLabel valueLabel;
+    
+    private JTextField valueText;
+    
+    private double imageMin;
+    
+    private double imageMax;
+    
+    private int dataType;
+    
+    /**
+     * Tells how to select fill value for out of bounds data
+     * 0 for image minimum
+     * 1 for NaN for float, zero otherwise.
+     * 2 for user defined
+     * 3 for image maximum
+     */
+    private int outOfBoundsIndex = 0;
+    
+    private float fillValue = 0.0f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -428,6 +453,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
         AlgorithmTransform transform = null;
+        boolean pad = false;
         double xOrig;
         double yOrig;
         double zOrig;
@@ -477,9 +503,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     String name = makeImageName(matchImage.getImageName(), "_register");
 
                     transform = new AlgorithmTransform(matchImage, finalMatrix, interp2, xresA, yresA, zresA, xdimA,
-                                                       ydimA, zdimA, true, false, false);
+                                                       ydimA, zdimA, true, false, pad);
 
                     transform.setUpdateOriginFlag(true);
+                    transform.setFillValue(fillValue);
                     transform.run();
                     resultImage = transform.getTransformedImage();
                     transform.finalize();
@@ -777,7 +804,31 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
             rotatePanel.validate();
             repaint();
-        } // else if xRadio, yRadio, or zRadio
+        } else if (event.getSource() == outOfBoundsComboBox) {
+            switch (outOfBoundsComboBox.getSelectedIndex()) {
+                case 0: // image minimum
+                    valueText.setText(String.valueOf(imageMin));
+                    valueText.setEnabled(false);
+                    break;
+                case 1: // If float NaN, else 0
+                    if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE) ||
+                        (dataType == ModelStorageBase.ARGB_FLOAT)) {
+                        valueText.setText(String.valueOf(Float.NaN)); 
+                    }
+                    else {
+                        valueText.setText(String.valueOf(0));
+                    }
+                    valueText.setEnabled(false);
+                    break;
+                case 2: // User defined;
+                    valueText.setEnabled(true);
+                    break;
+                case 3: // Image maximum
+                    valueText.setText(String.valueOf(imageMax));
+                    valueText.setEnabled(false);
+                    break;
+            } // switch (outOfBoundsComboBox.getSelectedIndex())
+        } // else if (event.getSource() == outOfBoundsComboBox)
     }
 
     /**
@@ -1026,6 +1077,26 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     public void setWeighted(boolean flag) {
         weighted = flag;
     }
+    
+    /**
+     * tells how to select fill value for out of bounds data
+     * 0 for image minimum
+     * 1 for NaN for float, zero otherwise.
+     * 2 for user defined
+     * 3 for image max 
+     * @param outOfBoundsIndex
+     */
+    public void setOutOfBoundsIndex(int outOfBoundsIndex) {
+        this.outOfBoundsIndex = outOfBoundsIndex;
+    }
+    
+    /**
+     * Accessor to set intensity value for out of bounds data
+     * @param fillValue
+     */
+    public void setFillValue(float fillValue) {
+        this.fillValue = fillValue;
+    }
 
     /**
      * Calls the algorithm with the set-up parameters.
@@ -1164,6 +1235,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
      */
     protected void setGUIFromParams() {
         matchImage = scriptParameters.retrieveInputImage();
+        matchImage.calcMinMax();
+        imageMin = matchImage.getMin();
+        imageMax = matchImage.getMax();
+        dataType = matchImage.getFileInfo()[0].getDataType();
         UI = ViewUserInterface.getReference();
         parentFrame = matchImage.getParentFrame();
 
@@ -1213,6 +1288,27 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
         setFastMode(scriptParameters.getParams().getBoolean("do_use_fast_mode"));
         setCalcCOG(scriptParameters.getParams().getBoolean("do_calc_COG"));
+        setOutOfBoundsIndex(scriptParameters.getParams().getInt("out_of_bounds_index"));
+        switch(outOfBoundsIndex) {
+            case 0: 
+                setFillValue((float)imageMin);
+                break;
+            case 1: 
+                if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE) ||
+                        (dataType == ModelStorageBase.ARGB_FLOAT)) {
+                    setFillValue(Float.NaN);
+                }
+                else {
+                    setFillValue(0.0f);
+                }
+                break;
+            case 2:
+                setFillValue(scriptParameters.getParams().getFloat("fill_value"));
+                break;
+            case 3:
+                setFillValue((float)imageMax);
+                break;
+        }
 
         setAdvancedSettings(scriptParameters.getParams().getInt("bracket_bound"),
                             scriptParameters.getParams().getInt("max_iterations"),
@@ -1260,6 +1356,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_fast_mode", fastMode));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_COG", calcCOG));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("out_of_bounds_index", outOfBoundsIndex));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value", fillValue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("bracket_bound", bracketBound));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIterations));
         scriptParameters.getParams().put(ParameterFactory.newParameter("num_minima", numMinima));
@@ -1415,6 +1513,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
      * Initializes the GUI components and displays the dialog.
      */
     private void init() {
+        matchImage.calcMinMax();
+        imageMin = matchImage.getMin();
+        imageMax = matchImage.getMax();
+        dataType = matchImage.getFileInfo()[0].getDataType();
         setForeground(Color.black);
         setTitle("Optimized Automatic Image Registration 3D");
 
@@ -1956,6 +2058,32 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         comboBoxInterp2.addItem("Heptic Lagrangian");
         comboBoxInterp2.addItem("Windowed sinc");
         comboBoxInterp2.addItem("Nearest Neighbor");
+        
+        outOfBoundsLabel = new JLabel("Out of bounds data:");
+        outOfBoundsLabel.setForeground(Color.black);
+        outOfBoundsLabel.setFont(serif12);
+        outOfBoundsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        outOfBoundsComboBox = new JComboBox();
+        outOfBoundsComboBox.setFont(serif12);
+        outOfBoundsComboBox.setBackground(Color.white);
+        outOfBoundsComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        outOfBoundsComboBox.addItem("Image minimum");
+        outOfBoundsComboBox.addItem("If float NaN, else 0");
+        outOfBoundsComboBox.addItem("User defined");
+        outOfBoundsComboBox.addItem("Image maximum");
+        outOfBoundsComboBox.setSelectedIndex(0);
+        outOfBoundsComboBox.addItemListener(this);
+        
+        valueLabel = new JLabel("Out of bounds intensity value:");
+        valueLabel.setForeground(Color.black);
+        valueLabel.setFont(serif12);
+        valueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        valueText = new JTextField(String.valueOf(imageMin));
+        valueText.setFont(serif12);
+        valueText.setEnabled(false);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -1972,6 +2100,27 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(comboBoxInterp2, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        outPanel.add(outOfBoundsLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        outPanel.add(outOfBoundsComboBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        outPanel.add(valueLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        gbc.weightx = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        outPanel.add(valueText, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -2544,8 +2693,129 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         } // if (voisOnly)
 
         doSubsample = sampleCheckbox.isSelected();
+        
+        fillValue = Float.valueOf(valueText.getText()).floatValue();
+        outOfBoundsIndex = outOfBoundsComboBox.getSelectedIndex();
+        if (outOfBoundsIndex == 2) {
+            // user defined value
+            boolean success = testType(dataType, fillValue);
+            if (!success) {
+                MipavUtil.displayError("User defined value is out of the data type range");
+                valueText.requestFocus();
+                valueText.selectAll();
+                return false;
+            }
+        }
 
         return true;
+    }
+    
+    /**
+     * Determine if the value is in the image type range and
+     * within the float range since AlgorithmTransform does
+     * not use double buffers.
+     *
+     * @param   type    image type
+     * @param   value   value tested
+     *
+     * @return  true if value is within acceptable range
+     */
+    private boolean testType(int type, float value) {
+
+        if (type == ModelStorageBase.BOOLEAN) {
+
+            if ((value < 0) || (value > 1)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.BYTE) {
+
+            if ((value < -128) || (value > 127)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.UBYTE) {
+
+            if ((value < 0) || (value > 255)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.SHORT) {
+
+            if ((value < -32768) || (value > 32767)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.USHORT) {
+
+            if ((value < 0) || (value > 65535)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.INTEGER) {
+
+            if ((value < Integer.MIN_VALUE) || (value > Integer.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.UINTEGER) {
+
+            if ((value < 0) || (value > 4294967295L)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.LONG) {
+
+            if ((value < Long.MIN_VALUE) || (value > Long.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.FLOAT) {
+
+            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.DOUBLE) {
+            // Float buffers are used in the AlgorithmTransform routines
+            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.ARGB) {
+
+            if ((value < 0) || (value > 255)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.ARGB_USHORT) {
+
+            if ((value < 0) || (value > 65535)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.ARGB_FLOAT) {
+
+            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
     }
 
     /**
