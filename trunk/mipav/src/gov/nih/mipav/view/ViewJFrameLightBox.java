@@ -2007,6 +2007,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         Preferences.setProperty(Preferences.PREF_LB_BORDER_COLOR, this.makeColorString(borderColor));
         Preferences.setProperty(Preferences.PREF_LB_SELECTED_BORDER_COLOR, this.makeColorString(selectedBorderColor));
         Preferences.setProperty(Preferences.PREF_LB_MAG, new Float(magnification).toString());
+        Preferences.setProperty(Preferences.PREF_LB_CUPDATE, new Boolean(updatePaint.getState()).toString());
 
         // location: a bad location will be trapped when loading the preferences, so store it anyway:
         Preferences.setProperty(Preferences.PREF_LB_LOCATION, this.getLocation().x + "," + this.getLocation().y);
@@ -2967,7 +2968,8 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         updatePaint.setActionCommand("update");
         updatePaint.addItemListener(this);
         updatePaint.setFont(font12B);
-        updatePaint.setState(false);
+        updatePaint.setState(Boolean.valueOf(Preferences.getProperty(Preferences.PREF_LB_CUPDATE)).booleanValue());
+        
         optionMenu.add(updatePaint);
 
         if (imageA.getNDims() > 3) {
@@ -3039,6 +3041,9 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         repaintButton.setBorderPainted(false);
         repaintButton.setToolTipText("Repaints images");
         repaintButton.setActionCommand("Repaint");
+        if(updatePaint.getState()) {
+        	repaintButton.setEnabled(false);
+        }
         tBar.add(repaintButton);
 
         JButton separator = new JButton(MipavUtil.getIcon("separator.gif"));
@@ -3500,8 +3505,8 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         updateLightBoxLocation(Preferences.getProperty(Preferences.PREF_LB_LOCATION));
         updatePaint.setState(true);
         updateImages(true);
-        updatePaint.setState(false);
-
+        //updatePaint.setState(false);
+        updatePaint.setState(Boolean.valueOf(Preferences.getProperty(Preferences.PREF_LB_CUPDATE)).booleanValue());
         setTitle();
 
     } // end setupLightBox()

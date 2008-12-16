@@ -439,6 +439,9 @@ public class Preferences {
 
     /** Constant that indicates the LightBox individual t-slice variable. */
     public static final String PREF_LB_TSLICE = "LightBoxIndividualTSlice";
+    
+    /** Constant that indicates continuous update of LightBox */
+    public static final String PREF_LB_CUPDATE = "LightBoxContinuousUpdate";
 
     /** Constant that indicates the application title. */
     public static final String PREF_APP_TITLE = "ApplicationTitle";

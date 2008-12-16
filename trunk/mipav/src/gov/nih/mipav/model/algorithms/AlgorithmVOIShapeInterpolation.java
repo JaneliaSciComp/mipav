@@ -290,10 +290,10 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
         	 * 2nd one is (2/4)A + (2/4)B
         	 * and 3rd one is (1/4)A + ((3/4)B
         	 */
-        	int progVal = 50;
+        	int progVal = 45;
         	for(int i=1,k=numSlicesInBetween;i<=numSlicesInBetween;i++,k--) {
-        		if(progVal > 100) {
-        			progVal = 100;
+        		if(progVal > 90) {
+        			progVal = 90;
         		}
         		fireProgressStateChanged(progVal);
         		progVal = progVal + (progVal/numSlicesInBetween);
@@ -404,10 +404,15 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
                 
                 
         	}
-        	srcImage.notifyImageDisplayListeners();
+        	
         }
-        setCompleted(true);
+        fireProgressStateChanged(95);
         finalize();
+        fireProgressStateChanged(100);
+        srcImage.notifyImageDisplayListeners();
+        setCompleted(true);
+        
+        
 	}
 
 	/** alg performed **/
@@ -428,7 +433,7 @@ public class AlgorithmVOIShapeInterpolation extends AlgorithmBase implements Alg
 	/** 
 	 * finalize
 	 */
-	public void finalize() {
+	public void finalize() {		
 		if(imageSlice1 != null) {
 			imageSlice1.disposeLocal();
 			imageSlice1 = null;
