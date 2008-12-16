@@ -99,7 +99,7 @@ public class JDialogBGAndFGDistanceMap extends JDialogScriptableBase implements 
 	        setVisible(true);
 	}
 	
-	@Override
+
 	protected void callAlgorithm() {
 		String name = makeImageName(image.getImageName(), "_BGAndFGDistance");
 		
@@ -197,19 +197,16 @@ public class JDialogBGAndFGDistanceMap extends JDialogScriptableBase implements 
 
 	}
 
-	@Override
 	protected void setGUIFromParams() {
 		// TODO Auto-generated method stub
 
 	}
 
-	@Override
 	protected void storeParamsFromGUI() throws ParserException {
 		// TODO Auto-generated method stub
 
 	}
 
-	@Override
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		 if (algorithm instanceof AlgorithmMorphology2D) {
 			 image.clearMask();
@@ -256,7 +253,6 @@ public class JDialogBGAndFGDistanceMap extends JDialogScriptableBase implements 
 
 	}
 
-	@Override
 	public void actionPerformed(ActionEvent event) {
 		String command = event.getActionCommand();
 
