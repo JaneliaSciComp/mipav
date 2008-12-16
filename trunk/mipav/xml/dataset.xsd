@@ -135,6 +135,7 @@
 						<xs:sequence>
 							<xs:element name="anonymized-by" type="xs:string"/>
 							<xs:element name="date-added" type="xs:date"/>
+							<xs:element name="source-name" type="xs:string"/>
 							<xs:element name="source-org" type="xs:string"/>
 							<xs:element name="source-project" type="xs:string"/>
 						</xs:sequence>
