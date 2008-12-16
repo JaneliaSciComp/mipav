@@ -5,6 +5,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -71,6 +72,31 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
 
     /** Resolutions of match image and base image. */
     private float xresA, yresA, zresA, xresB, yresB, zresB;
+    
+    private JLabel outOfBoundsLabel;
+    
+    private JComboBox outOfBoundsComboBox;
+    
+    private JLabel valueLabel;
+    
+    private JTextField valueText;
+    
+    private double imageMin;
+    
+    private double imageMax;
+    
+    private int dataType;
+    
+    /**
+     * Tells how to select fill value for out of bounds data
+     * 0 for image minimum
+     * 1 for NaN for float, zero otherwise.
+     * 2 for user defined
+     * 3 for image maximum
+     */
+    private int outOfBoundsIndex = 0;
+    
+    private float fillValue = 0.0f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -164,10 +190,11 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                     resultImage.getFileInfo(0).setResolutions(resolutions);
 
                     if (matchImage.isColorImage() == false) {
-                        AlgorithmTransform.transformBilinear(matchImage, resultImage, LSMatch.getTransformBtoA(), null);
+                        AlgorithmTransform.transformBilinear(matchImage, resultImage, LSMatch.getTransformBtoA(), null, true,
+                                                             fillValue);
                     } else {
                         AlgorithmTransform.transformBilinearC(matchImage, resultImage, LSMatch.getTransformBtoA(),
-                                                              xdimA, ydimA, xresA, yresA);
+                                                              xdimA, ydimA, xresA, yresA, fillValue);
                     }
 
                 } else if (DIM == 3) {
@@ -188,10 +215,10 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
 
                     if (matchImage.isColorImage() == false) {
                         AlgorithmTransform.transformTrilinear(matchImage, resultImage, LSMatch.getTransformBtoA(),
-                                                              null);
+                                                              null, true, fillValue);
                     } else {
                         AlgorithmTransform.transformTrilinearC(matchImage, resultImage, LSMatch.getTransformBtoA(),
-                                                               xdimA, ydimA, zdimA, xresA, yresA, zresA);
+                                                               xdimA, ydimA, zdimA, xresA, yresA, zresA, fillValue);
                     }
                 }
 
@@ -467,12 +494,36 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
     protected void doPostAlgorithmActions() {
         AlgorithmParameters.storeImageInRunner(getResultImage());
     }
+    
+    /**
+     * tells how to select fill value for out of bounds data
+     * 0 for image minimum
+     * 1 for NaN for float, zero otherwise.
+     * 2 for user defined
+     * 3 for image max 
+     * @param outOfBoundsIndex
+     */
+    public void setOutOfBoundsIndex(int outOfBoundsIndex) {
+        this.outOfBoundsIndex = outOfBoundsIndex;
+    }
+    
+    /**
+     * Accessor to set intensity value for out of bounds data
+     * @param fillValue
+     */
+    public void setFillValue(float fillValue) {
+        this.fillValue = fillValue;
+    }
 
     /**
      * {@inheritDoc}
      */
     protected void setGUIFromParams() {
         matchImage = scriptParameters.retrieveInputImage();
+        matchImage.calcMinMax();
+        imageMin = matchImage.getMin();
+        imageMax = matchImage.getMax();
+        dataType = matchImage.getFileInfo()[0].getDataType();
         baseImage = scriptParameters.retrieveImage("reference_image");
 
         if (matchImage.getNDims() == 2) {
@@ -483,6 +534,27 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
 
         userInterface = ViewUserInterface.getReference();
         parentFrame = matchImage.getParentFrame();
+        setOutOfBoundsIndex(scriptParameters.getParams().getInt("out_of_bounds_index"));
+        switch(outOfBoundsIndex) {
+            case 0: 
+                setFillValue((float)imageMin);
+                break;
+            case 1: 
+                if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE) ||
+                        (dataType == ModelStorageBase.ARGB_FLOAT)) {
+                    setFillValue(Float.NaN);
+                }
+                else {
+                    setFillValue(0.0f);
+                }
+                break;
+            case 2:
+                setFillValue(scriptParameters.getParams().getFloat("fill_value"));
+                break;
+            case 3:
+                setFillValue((float)imageMax);
+                break;
+        }
     }
 
     /**
@@ -493,12 +565,18 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
         scriptParameters.storeImage(baseImage, "reference_image");
 
         scriptParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.getParams().put(ParameterFactory.newParameter("out_of_bounds_index", outOfBoundsIndex));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value", fillValue));
     }
 
     /**
      * Initializes GuserInterface components and displays dialog.
      */
     private void init() {
+        matchImage.calcMinMax();
+        imageMin = matchImage.getMin();
+        imageMax = matchImage.getMax();
+        dataType = matchImage.getFileInfo()[0].getDataType();
         setForeground(Color.black);
         setTitle("Least Squares Registration");
 
@@ -512,13 +590,101 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
         JPanel imagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         imagePanel.add(labelImage);
         imagePanel.add(comboBoxImage);
+        
+        JPanel outPanel = new JPanel(new GridBagLayout());
+        outOfBoundsLabel = new JLabel("Out of bounds data:");
+        outOfBoundsLabel.setForeground(Color.black);
+        outOfBoundsLabel.setFont(serif12);
+        outOfBoundsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        outOfBoundsComboBox = new JComboBox();
+        outOfBoundsComboBox.setFont(serif12);
+        outOfBoundsComboBox.setBackground(Color.white);
+        outOfBoundsComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        outOfBoundsComboBox.addItem("Image minimum");
+        outOfBoundsComboBox.addItem("If float NaN, else 0");
+        outOfBoundsComboBox.addItem("User defined");
+        outOfBoundsComboBox.addItem("Image maximum");
+        outOfBoundsComboBox.setSelectedIndex(0);
+        outOfBoundsComboBox.addItemListener(this);
+        
+        valueLabel = new JLabel("Out of bounds intensity value:");
+        valueLabel.setForeground(Color.black);
+        valueLabel.setFont(serif12);
+        valueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        valueText = new JTextField(String.valueOf(imageMin));
+        valueText.setFont(serif12);
+        valueText.setEnabled(false);
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        Insets insets = new Insets(2, 5, 2, 5);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = insets;
+        outPanel.add(outOfBoundsLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        outPanel.add(outOfBoundsComboBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        outPanel.add(valueLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.weightx = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        outPanel.add(valueText, gbc);
 
-        getContentPane().add(imagePanel);
+        getContentPane().add(imagePanel, BorderLayout.NORTH);
+        getContentPane().add(outPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
         pack();
         setVisible(true);
     }
+    
+    /**
+     * Changes the interpolation box to enabled or disabled depending on if the transform box is checked or not.
+     *
+     * @param  event  Event that triggered this function.
+     */
+    public void itemStateChanged(ItemEvent event) {
+        if (event.getSource() == outOfBoundsComboBox) {
+            switch (outOfBoundsComboBox.getSelectedIndex()) {
+                case 0: // image minimum
+                    valueText.setText(String.valueOf(imageMin));
+                    valueText.setEnabled(false);
+                    break;
+                case 1: // If float NaN, else 0
+                    if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE) ||
+                        (dataType == ModelStorageBase.ARGB_FLOAT)) {
+                        valueText.setText(String.valueOf(Float.NaN)); 
+                    }
+                    else {
+                        valueText.setText(String.valueOf(0));
+                    }
+                    valueText.setEnabled(false);
+                    break;
+                case 2: // User defined;
+                    valueText.setEnabled(true);
+                    break;
+                case 3: // Image maximum
+                    valueText.setText(String.valueOf(imageMax));
+                    valueText.setEnabled(false);
+                    break;
+            } // switch (outOfBoundsComboBox.getSelectedIndex())
+        } // if (event.getSource() == outOfBoundsComboBox)
+    }
+
 
     /**
      * Sets the variables needed for calling the algorithm.
@@ -538,8 +704,129 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
             DIM = 3;
             
         }
+        
+        fillValue = Float.valueOf(valueText.getText()).floatValue();
+        outOfBoundsIndex = outOfBoundsComboBox.getSelectedIndex();
+        if (outOfBoundsIndex == 2) {
+            // user defined value
+            boolean success = testType(dataType, fillValue);
+            if (!success) {
+                MipavUtil.displayError("User defined value is out of the data type range");
+                valueText.requestFocus();
+                valueText.selectAll();
+                return false;
+            }
+        }
 
         return true;
+    }
+    
+    /**
+     * Determine if the value is in the image type range and
+     * within the float range since AlgorithmTransform does
+     * not use double buffers.
+     *
+     * @param   type    image type
+     * @param   value   value tested
+     *
+     * @return  true if value is within acceptable range
+     */
+    private boolean testType(int type, float value) {
+
+        if (type == ModelStorageBase.BOOLEAN) {
+
+            if ((value < 0) || (value > 1)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.BYTE) {
+
+            if ((value < -128) || (value > 127)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.UBYTE) {
+
+            if ((value < 0) || (value > 255)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.SHORT) {
+
+            if ((value < -32768) || (value > 32767)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.USHORT) {
+
+            if ((value < 0) || (value > 65535)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.INTEGER) {
+
+            if ((value < Integer.MIN_VALUE) || (value > Integer.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.UINTEGER) {
+
+            if ((value < 0) || (value > 4294967295L)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.LONG) {
+
+            if ((value < Long.MIN_VALUE) || (value > Long.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.FLOAT) {
+
+            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.DOUBLE) {
+            // Float buffers are used in the AlgorithmTransform routines
+            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.ARGB) {
+
+            if ((value < 0) || (value > 255)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.ARGB_USHORT) {
+
+            if ((value < 0) || (value > 65535)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.ARGB_FLOAT) {
+
+            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
     }
 
 }
