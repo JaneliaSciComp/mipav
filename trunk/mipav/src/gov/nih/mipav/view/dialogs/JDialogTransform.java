@@ -129,7 +129,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private int interp = 0;
     
-    private float padValue = 0.0f;
+    private float fillValue = 0.0f;
 
     /** DOCUMENT ME! */
     private JLabel labelOrigin, padLabel;
@@ -233,6 +233,29 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     private boolean isSATransform = false;
     
     private boolean enableSATransform = false;
+    
+private JLabel outOfBoundsLabel;
+    
+    private JComboBox outOfBoundsComboBox;
+    
+    private JLabel valueLabel;
+    
+    private JTextField valueText;
+    
+    private double imageMin;
+    
+    private double imageMax;
+    
+    private int dataType;
+    
+    /**
+     * Tells how to select fill value for out of bounds data
+     * 0 for image minimum
+     * 1 for NaN for float, zero otherwise.
+     * 2 for user defined
+     * 3 for image maximum
+     */
+    private int outOfBoundsIndex = 0;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -887,7 +910,31 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         	useSACenterBox.setEnabled(rotCenter.isSelected() && enableSATransform);
         } else if (source == rotOrigin) {
         	useSACenterBox.setEnabled(rotCenter.isSelected() && enableSATransform);
-        }
+        } else if (source == outOfBoundsComboBox) {
+            switch (outOfBoundsComboBox.getSelectedIndex()) {
+                case 0: // image minimum
+                    valueText.setText(String.valueOf(imageMin));
+                    valueText.setEnabled(false);
+                    break;
+                case 1: // If float NaN, else 0
+                    if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE) ||
+                        (dataType == ModelStorageBase.ARGB_FLOAT)) {
+                        valueText.setText(String.valueOf(Float.NaN)); 
+                    }
+                    else {
+                        valueText.setText(String.valueOf(0));
+                    }
+                    valueText.setEnabled(false);
+                    break;
+                case 2: // User defined;
+                    valueText.setEnabled(true);
+                    break;
+                case 3: // Image maximum
+                    valueText.setText(String.valueOf(imageMax));
+                    valueText.setEnabled(false);
+                    break;
+            } // switch (outOfBoundsComboBox.getSelectedIndex())
+        } // else if (event.getSource() == outOfBoundsComboBox)
     }
 
     /**
@@ -1115,12 +1162,12 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     }
 
     /**
-     * Accessor that sets the padValue.
+     * Accessor that sets the fillValue.
      *
-     * @param  padValue  DOCUMENT ME!
+     * @param  fillValue  DOCUMENT ME!
      */
-    public void setPadValue(float padValue) {
-        this.padValue = padValue;
+    public void setFillValue(float fillValue) {
+        this.fillValue = fillValue;
     }
 
     /**
@@ -1216,14 +1263,14 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n");
             System.out.println(xfrm);
             algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip, doPad, doRotateCenter, center);
-            algoTrans.setPadValue(padValue);
+            algoTrans.setFillValue(fillValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
         } else { // ((image.getNDims() >= 3) && (!do25D))
             Preferences.debug("oXres, oYres, oZres = " + oXres + ", " + oYres + ", " + oZres);
             Preferences.debug(" oXdim, oYdim, oZdim = " + oXdim + ", " + oYdim + ", " + oZdim + "\n");
             algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, 
             	units, doVOI, doClip, doPad, doRotateCenter, center);
-            algoTrans.setPadValue(padValue);
+            algoTrans.setFillValue(fillValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
             algoTrans.setUseScannerAnatomical(isSATransform);
         }
@@ -1328,7 +1375,27 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             do25D = scriptParameters.doProcess3DAs25D();
             doUpdateOrigin = scriptParameters.getParams().getBoolean("do_update_origin");
             doPad = scriptParameters.getParams().getBoolean("do_pad");
-            padValue = scriptParameters.getParams().getFloat("pad_value");
+            outOfBoundsIndex = scriptParameters.getParams().getInt("out_of_bounds_index");
+            switch(outOfBoundsIndex) {
+                case 0: 
+                    fillValue = (float)imageMin;
+                    break;
+                case 1: 
+                    if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE) ||
+                            (dataType == ModelStorageBase.ARGB_FLOAT)) {
+                        fillValue = Float.NaN;
+                    }
+                    else {
+                        fillValue = 0.0f;
+                    }
+                    break;
+                case 2:
+                    fillValue = scriptParameters.getParams().getFloat("fill_value");
+                    break;
+                case 3:
+                    fillValue = (float)imageMax;
+                    break;
+            }
 
             boolean useImageMatrix = scriptParameters.getParams().getBoolean("use_image_matrix");
             
@@ -1450,7 +1517,8 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             scriptParameters.storeProcess3DAs25D(do25D);
             scriptParameters.getParams().put(ParameterFactory.newParameter("do_update_origin", doUpdateOrigin));
             scriptParameters.getParams().put(ParameterFactory.newParameter("do_pad", doPad));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("pad_value", padValue));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("out_of_bounds_index", outOfBoundsIndex));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value", fillValue));
 
             if ((image.getNDims() == 2) || do25D) {
                 scriptParameters.getParams().put(ParameterFactory.newParameter("output_res",
@@ -1940,18 +2008,32 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         cropOrPad.add(padRadio);
         padRadio.addItemListener(this);
         padRadio.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JPanel padValuePanel = new JPanel();
-        padLabel = new JLabel("Intensity value for padding ");
-        padLabel.setForeground(Color.black);
-        padLabel.setFont(serif12);
-        padLabel.setEnabled(false);
-        padValuePanel.add(padLabel);
-        padValTxt = new JTextField(String.valueOf(padValue), 10);
-        padValTxt.setFont(serif12);
-        padValTxt.addFocusListener(this);
-        padValTxt.setEnabled(false);
-        padValuePanel.add(padValTxt);
+        
+        outOfBoundsLabel = new JLabel("Out of bounds data:");
+        outOfBoundsLabel.setForeground(Color.black);
+        outOfBoundsLabel.setFont(serif12);
+        outOfBoundsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        outOfBoundsComboBox = new JComboBox();
+        outOfBoundsComboBox.setFont(serif12);
+        outOfBoundsComboBox.setBackground(Color.white);
+        outOfBoundsComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        outOfBoundsComboBox.addItem("Image minimum");
+        outOfBoundsComboBox.addItem("If float NaN, else 0");
+        outOfBoundsComboBox.addItem("User defined");
+        outOfBoundsComboBox.addItem("Image maximum");
+        outOfBoundsComboBox.setSelectedIndex(0);
+        outOfBoundsComboBox.addItemListener(this);
+        
+        valueLabel = new JLabel("Out of bounds intensity value:");
+        valueLabel.setForeground(Color.black);
+        valueLabel.setFont(serif12);
+        valueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        valueText = new JTextField(String.valueOf(imageMin));
+        valueText.setFont(serif12);
+        valueText.setEnabled(false);
 
         clipCheckbox = new JCheckBox("Clip output values to input range");
         clipCheckbox.setFont(serif12);
@@ -2066,23 +2148,40 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         optionPanel.add(cropRadio, gbc);
         gbc.gridx = 3;
         optionPanel.add(padRadio, gbc);
-
+        
+        gbc.gridx = 0;
         gbc.gridy = 3;
-        gbc.gridx = 3;
-        optionPanel.add(padValuePanel, gbc);
-
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        optionPanel.add(outOfBoundsLabel, gbc);
+        gbc.gridx = 2;
+        gbc.gridy = 3;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        optionPanel.add(outOfBoundsComboBox, gbc);
         gbc.gridx = 0;
         gbc.gridy = 4;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        optionPanel.add(valueLabel, gbc);
+        gbc.gridx = 2;
+        gbc.gridy = 4;
+        gbc.weightx = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        optionPanel.add(valueText, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 5;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
         optionPanel.add(clipCheckbox, gbc);
-        gbc.gridy = 5;
-        optionPanel.add(image25DCheckbox, gbc);
         gbc.gridy = 6;
-        optionPanel.add(updateOriginCheckbox, gbc);
+        optionPanel.add(image25DCheckbox, gbc);
         gbc.gridy = 7;
-        optionPanel.add(voiCheckbox, gbc);
+        optionPanel.add(updateOriginCheckbox, gbc);
         gbc.gridy = 8;
+        optionPanel.add(voiCheckbox, gbc);
+        gbc.gridy = 9;
         optionPanel.add(invertCheckbox, gbc);
 
         return optionPanel;
@@ -2977,6 +3076,10 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
      * Initializes the dialog box to a certain size and adds the components.
      */
     private void init() {
+        image.calcMinMax();
+        imageMin = image.getMin();
+        imageMax = image.getMax();
+        dataType = image.getFileInfo()[0].getDataType();
         setForeground(Color.black);
         setTitle("Transform/Resample Image");
 
@@ -3113,15 +3216,6 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
         doPad = padRadio.isSelected();
         doUpdateOrigin = updateOriginCheckbox.isSelected();
-
-        if (doPad) {
-            tmpStr = padValTxt.getText();
-            if (testParameter(tmpStr, ModelStorageBase.getTypeMin(image.getType()), ModelStorageBase.getTypeMax(image.getType()))) {
-                padValue = Float.valueOf(tmpStr).floatValue();
-            } else {
-                return false;
-            }
-        }
 
         if ((do25D) || (image.getNDims() == 2)) {
             xfrm = new TransMatrix(3);
@@ -3534,6 +3628,127 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         	useSACenter = useSACenterBox.isSelected();
         }
         
+        fillValue = Float.valueOf(valueText.getText()).floatValue();
+        outOfBoundsIndex = outOfBoundsComboBox.getSelectedIndex();
+        if (outOfBoundsIndex == 2) {
+            // user defined value
+            boolean success = testType(dataType, fillValue);
+            if (!success) {
+                MipavUtil.displayError("User defined value is out of the data type range");
+                valueText.requestFocus();
+                valueText.selectAll();
+                return false;
+            }
+        }
+        
         return true;
+    }
+    
+    /**
+     * Determine if the value is in the image type range and
+     * within the float range since AlgorithmTransform does
+     * not use double buffers.
+     *
+     * @param   type    image type
+     * @param   value   value tested
+     *
+     * @return  true if value is within acceptable range
+     */
+    private boolean testType(int type, float value) {
+
+        if (type == ModelStorageBase.BOOLEAN) {
+
+            if ((value < 0) || (value > 1)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.BYTE) {
+
+            if ((value < -128) || (value > 127)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.UBYTE) {
+
+            if ((value < 0) || (value > 255)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.SHORT) {
+
+            if ((value < -32768) || (value > 32767)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.USHORT) {
+
+            if ((value < 0) || (value > 65535)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.INTEGER) {
+
+            if ((value < Integer.MIN_VALUE) || (value > Integer.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.UINTEGER) {
+
+            if ((value < 0) || (value > 4294967295L)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.LONG) {
+
+            if ((value < Long.MIN_VALUE) || (value > Long.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.FLOAT) {
+
+            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.DOUBLE) {
+            // Float buffers are used in the AlgorithmTransform routines
+            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.ARGB) {
+
+            if ((value < 0) || (value > 255)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.ARGB_USHORT) {
+
+            if ((value < 0) || (value > 65535)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (type == ModelStorageBase.ARGB_FLOAT) {
+
+            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
     }
 }
