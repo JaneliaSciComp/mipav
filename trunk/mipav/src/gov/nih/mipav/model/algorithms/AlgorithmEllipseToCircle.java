@@ -648,7 +648,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         boolean doRotateCenter;
         Vector3f center;
         boolean useSACenter = false;
-        float padValue = 0.0f;
+        float fillValue = 0.0f;
         boolean doUpdateOrigin = false;
         ModelImage resultImage;
         for (ys = 155; ys <= 355; ys++) {
@@ -712,7 +712,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
             center = srcImage.getImageCentermm(useSACenter);
             algoTrans = new AlgorithmTransform(srcImage, xfrm, interp, oXres, oYres, oXdim, oYdim,
                                                units, doVOI, doClip, doPad, doRotateCenter, center);
-            algoTrans.setPadValue(padValue);
+            algoTrans.setFillValue(fillValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
             algoTrans.run();
             resultImage = algoTrans.getTransformedImage();
