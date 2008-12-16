@@ -286,6 +286,39 @@ public abstract class FileXML extends FileBase {
 		
 		attr.clear();
     }
+	
+	/**
+	 * Writes a closed tag where no value is specified, only attributes.
+	 */
+	public final void closedTag(String tag, Vector<XMLAttributes> attr) {
+    	
+		try {
+
+            for (int i = 0; i < tabLevel; i++) {
+                bw.write(TAB);
+            }
+
+            bw.write("<" + tag);
+            
+            String attrStr;
+            for (int i = 0; i < attr.size(); i++) {
+            	
+            	attrStr = attr.elementAt(i).getValue().trim().replaceAll("&", "&amp;");
+            	attrStr = attrStr.trim().replaceAll("\"", "&quot;");
+            	attrStr = attrStr.trim().replaceAll("<", "&lt;");
+            	attrStr = attrStr.trim().replaceAll(">", "&gt;");
+            	attrStr = new String(attrStr.getBytes(XML_ENCODING));
+            	
+            	bw.write(" " + attr.elementAt(i).getName() + "=\"" + attrStr + "\"");
+            }
+            
+            bw.write("/>");
+
+            bw.newLine();
+        } catch (IOException ex) { }
+		
+		attr.clear();
+    }
     
 	 /**
      * Class used to store an xml tag's attribute (name and value)
