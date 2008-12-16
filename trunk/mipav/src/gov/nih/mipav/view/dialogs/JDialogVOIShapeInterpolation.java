@@ -124,8 +124,9 @@ public class JDialogVOIShapeInterpolation extends JDialogBase implements Algorit
         
         //ok now we have 2 selected closed VOI contours in non-contiguous slices
         alg = new AlgorithmVOIShapeInterpolation(imageA,sliceIndex1,VOI1,sliceIndex2,VOI2,VOIHandle); 
-
+        alg.addListener(this);
         createProgressBar(imageA.getImageName(), alg);
+        progressBar.setMessage("Interpolating VOIs...");
         
         if (isRunInSeparateThread()) {
 

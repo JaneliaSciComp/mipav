@@ -346,6 +346,8 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
                     // Make algorithm
                     mathAlgo = new AlgorithmImageCalculator(resultImage, imageA, imageB, opType, clipMode, true,
                                                             adOpString);
+                    
+                    createProgressBar(imageA.getImageName(), mathAlgo);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.

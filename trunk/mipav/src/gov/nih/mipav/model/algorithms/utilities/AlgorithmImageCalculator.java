@@ -512,10 +512,10 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 	        }
 	        
 	        //create progress bar
-	        progressBar = new ViewJProgressBar(srcImageA.getImageName(), "...", 0, 100, true);
-	        progressBar.setSeparateThread(true);
-	        this.addProgressChangeListener(progressBar);
-	        this.setProgressValues(0, 100);
+	        //progressBar = new ViewJProgressBar(srcImageA.getImageName(), "...", 0, 100, true);
+	        //progressBar.setSeparateThread(true);
+	        //this.addProgressChangeListener(progressBar);
+	        //this.setProgressValues(0, 100);
 	
 	        if (destImage != null) {
 	            calcStoreInDest();
