@@ -1723,6 +1723,157 @@ public class AlgorithmTransform extends AlgorithmBase {
             } // end for i
         } // end for j
     }
+    
+    /**
+     * Transforms using bilinear interpolation.
+     *
+     * @param  image           Image to be transformed
+     * @param  transformedImg  Transformed image
+     * @param  trans           Transformation matrix to be applied
+     * @param  progressBar     Progress bar to update. Can be null. Should NOT have cancel button.
+     * @param  activeImage     true if the algorithm is being run in a separate thread, false otherwise, to control
+     *                         progress bar repainting
+     * @param  fillValue       value used for out of bounds pixels
+     */
+    public static final void transformBilinear(ModelImage image, ModelImage transformedImg, TransMatrix trans,
+                                               ViewJProgressBar progressBar, boolean activeImage,
+                                               float fillValue) {
+        int i, j;
+        float X, Y;
+        int x0, y0;
+        float j1, j2;
+        float imm, jmm;
+        float value;
+
+        imgOrigin = (float[]) image.getFileInfo(0).getOrigin().clone();
+
+        if (updateOrigin) {
+            updateOrigin(trans);
+        }
+
+        
+
+        int iXdim, iYdim;
+        float iXres, iYres;
+        int oXdim, oYdim;
+        float oXres, oYres;
+
+        iXdim = image.getExtents()[0];
+        iYdim = image.getExtents()[1];
+        iXres = image.getFileInfo(0).getResolutions()[0];
+        iYres = image.getFileInfo(0).getResolutions()[1];
+
+        oXdim = transformedImg.getExtents()[0];
+        oYdim = transformedImg.getExtents()[1];
+        oXres = transformedImg.getFileInfo(0).getResolutions()[0];
+        oYres = transformedImg.getFileInfo(0).getResolutions()[1];
+
+        updateFileInfo(image, transformedImg, transformedImg.getFileInfo(0).getResolutions(),
+                       image.getFileInfo()[0].getUnitsOfMeasure(), trans, false);
+
+        int mod = Math.max(1, oYdim / 50);
+        int imgLength = iXdim * iYdim;
+        float[] imgBuf;
+
+        try {
+            imgBuf = new float[imgLength];
+            image.exportData(0, imgLength, imgBuf);
+        } catch (IOException error) {
+            imgBuf = null;
+            MipavUtil.displayError("Algorithm Transform: Image(s) locked");
+
+            return;
+        } catch (OutOfMemoryError error) {
+            imgBuf = null;
+            System.gc();
+            MipavUtil.displayError("Algorithm Transform: Out of memory");
+
+            return;
+        }
+
+        float T00, T01, T02, T10, T11, T12;
+
+        TransMatrix kTM = matrixtoInverseArray(trans);
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+
+        int position;
+        float dx, dy, dx1, dy1;
+
+        float invXRes = 1 / iXres;
+        float invYRes = 1 / iYres;
+
+        int index = 0;
+        int deltaX, deltaY;
+
+        for (j = 0; j < oYdim; j++) {
+
+            if ((progressBar != null) && ((j % mod) == 0)) {
+                progressBar.updateValue((int) (((float) j / oYdim * 100) + 0.5f), activeImage);
+            }
+
+            jmm = j * oYres;
+            j1 = (jmm * T01) + T02;
+            j2 = (jmm * T11) + T12;
+
+            for (i = 0; i < oXdim; i++) {
+
+                // transform i,j,k
+                value = fillValue; // if voxel is transformed out of bounds
+                imm = i * oXres;
+                X = (j1 + (imm * T00)) * invXRes;
+
+                if ((X > -0.5f) && (X < iXdim)) {
+                    Y = (j2 + (imm * T10)) * invYRes;
+
+                    if ((Y > -0.5f) && (Y < iYdim)) {
+
+                        if (X <= 0) {
+                            x0 = 0;
+                            dx = 0;
+                            deltaX = 0;
+                        } else if (X >= (iXdim - 1)) {
+                            x0 = iXdim - 1;
+                            dx = 0;
+                            deltaX = 0;
+                        } else {
+                            x0 = (int) X;
+                            dx = X - x0;
+                            deltaX = 1;
+                        }
+
+                        if (Y <= 0) {
+                            y0 = 0;
+                            dy = 0;
+                            deltaY = 0;
+                        } else if (Y >= (iYdim - 1)) {
+                            y0 = iYdim - 1;
+                            dy = 0;
+                            deltaY = 0;
+                        } else {
+                            y0 = (int) Y;
+                            dy = Y - y0;
+                            deltaY = iXdim;
+                        }
+
+                        dx1 = 1 - dx;
+                        dy1 = 1 - dy;
+
+                        position = (y0 * iXdim) + x0;
+
+                        value = (dy1 * ((dx1 * imgBuf[position]) + (dx * imgBuf[position + deltaX]))) +
+                                (dy * ((dx1 * imgBuf[position + deltaY]) + (dx * imgBuf[position + deltaY + deltaX])));
+                    } // end if Y in bounds
+                } // end if X in bounds
+
+                transformedImg.set(index++, value);
+            } // end for i
+        } // end for j
+    }
 
     /**
      * Transforms using bilinear interpolation.
@@ -2156,6 +2307,144 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         return;
     }
+    
+    /**
+     * Used on color images. USE THIS IF OUTPUT IMAGE HAS DIFFERENT DIM/RES THAN INPUT IMAGE
+     *
+     * @param  image           Input image to be transformed
+     * @param  transformedImg  Transformed image
+     * @param  trans           Transformation matrix to be applied
+     * @param  oXdim           Dimensions of output image
+     * @param  oYdim           Dimensions of output image
+     * @param  oXres           Resolutions of output image
+     * @param  oYres           Resolutions of output image
+     * @param  fillValue       value used for out of bounds pixel transformations
+     */
+    public static final void transformBilinearC(ModelImage image, ModelImage transformedImg, TransMatrix trans,
+                                                int oXdim, int oYdim, float oXres, float oYres, float fillValue) {
+        int i, j;
+        int X0pos, Y0pos;
+        int X1pos, Y1pos;
+        float X, Y;
+        float x0, y0;
+        float x1, y1;
+        float imm, jmm;
+
+        imgOrigin = (float[]) image.getFileInfo(0).getOrigin().clone();
+
+        if (updateOrigin) {
+            updateOrigin(trans);
+        }
+
+        int iXdim, iYdim;
+        float iXres, iYres;
+
+        iXdim = image.getExtents()[0];
+        iYdim = image.getExtents()[1];
+        iXres = image.getFileInfo(0).getResolutions()[0];
+        iYres = image.getFileInfo(0).getResolutions()[1];
+
+        int imgLength = 4 * iXdim * iYdim;
+        float[] imgBuf = new float[imgLength];
+        float[] imgBuf2 = new float[imgLength];
+        int index, indexDest;
+        int index00, index01, index10, index11;
+
+        try {
+            image.exportData(0, imgLength, imgBuf);
+        } catch (IOException error) {
+            MipavUtil.displayError("Algorithm Transform: Image(s) locked");
+
+            return;
+        }
+
+        float[] resolutions = new float[] { oXres, oYres };
+
+        updateFileInfo(image, transformedImg, resolutions, image.getFileInfo()[0].getUnitsOfMeasure(), trans, false);
+
+        int roundX, roundY;
+        float temp1, temp2;
+        float T00, T01, T02, T10, T11, T12;
+
+        TransMatrix kTM = matrixtoInverseArray(trans);
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+
+        for (i = 0; i < oXdim; i++) {
+            imm = (float) i * oXres;
+            temp1 = (imm * T00) + T02;
+            temp2 = (imm * T10) + T12;
+
+            for (j = 0; j < oYdim; j++) {
+
+                // transform i,j
+                indexDest = 4 * (i + (j * oXdim));
+                imgBuf2[indexDest] = 255;
+                imgBuf2[indexDest + 1] = fillValue; // if pixel is transformed out of bounds
+                imgBuf2[indexDest + 2] = fillValue;
+                imgBuf2[indexDest + 3] = fillValue;
+                jmm = (float) j * oYres;
+                X = (temp1 + (jmm * T01)) / iXres;
+
+                if ((X >= 0) && (X < iXdim)) {
+                    Y = (temp2 + (jmm * T11)) / iYres;
+
+                    if ((Y >= 0) && (Y < iYdim)) {
+
+                        if ((X >= (iXdim - 1)) || (Y >= (iYdim - 1))) { // cannot interpolate on last X or Y
+                            X0pos = Math.min((int)(X + 0.5f),(iXdim - 1));
+                            Y0pos = Math.min((int)(Y + 0.5f),(iYdim - 1)) * iXdim;
+                            index = 4 * (Y0pos + X0pos);
+
+                            // imgBuf2[indexDest] = imgBuf[index];
+                            imgBuf2[indexDest + 1] = imgBuf[index + 1];
+                            imgBuf2[indexDest + 2] = imgBuf[index + 2];
+                            imgBuf2[indexDest + 3] = imgBuf[index + 3];
+                        } else {
+
+                            // set intensity of i,j,k to new transformed coordinate if
+                            // x,y,z is w/in dimensions of image
+                            x0 = X - (int) X;
+                            y0 = Y - (int) Y;
+                            x1 = 1 - x0;
+                            y1 = 1 - y0;
+                            X0pos = (int) X;
+                            Y0pos = (int) Y * iXdim;
+                            X1pos = X0pos + 1;
+                            Y1pos = Y0pos + iXdim;
+                            index00 = 4 * (Y0pos + X0pos);
+                            index01 = 4 * (Y0pos + X1pos);
+                            index10 = 4 * (Y1pos + X0pos);
+                            index11 = 4 * (Y1pos + X1pos);
+
+                            // imgBuf2[indexDest] = x1*y1*imgBuf[index00] +
+                            // x0*y1*imgBuf[index01] +
+                            // x1*y0*imgBuf[index10] +
+                            // x0*y0*imgBuf[index11];
+                            imgBuf2[indexDest + 1] = (x1 * y1 * imgBuf[index00 + 1]) + (x0 * y1 * imgBuf[index01 + 1]) +
+                                                     (x1 * y0 * imgBuf[index10 + 1]) + (x0 * y0 * imgBuf[index11 + 1]);
+                            imgBuf2[indexDest + 2] = (x1 * y1 * imgBuf[index00 + 2]) + (x0 * y1 * imgBuf[index01 + 2]) +
+                                                     (x1 * y0 * imgBuf[index10 + 2]) + (x0 * y0 * imgBuf[index11 + 2]);
+                            imgBuf2[indexDest + 3] = (x1 * y1 * imgBuf[index00 + 3]) + (x0 * y1 * imgBuf[index01 + 3]) +
+                                                     (x1 * y0 * imgBuf[index10 + 3]) + (x0 * y0 * imgBuf[index11 + 3]);
+                        } // end else
+                    } // end if y in bounds
+                } // end if x in bounds
+            } // end for j
+        } // end for i
+
+        try {
+            transformedImg.importData(0, imgBuf2, true);
+        } catch (IOException error) {
+            MipavUtil.displayError("AlgorithmTransform: IOException Error on importData");
+        }
+
+        return;
+    }
 
     /**
      * Transforms using Nearest neighbor interpolation.
@@ -2527,6 +2816,196 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     // transform i,j,k
                     value = min; // remains zero if voxel is transformed out of bounds
+                    imm = i * oXres;
+                    X = (j1 + (imm * T00)) * invXRes;
+
+                    if ((X > -0.5f) && (X < iXdim)) {
+                        Y = (j2 + (imm * T10)) * invYRes;
+
+                        if ((Y > -0.5f) && (Y < iYdim)) {
+                            Z = (j3 + (imm * T20)) * invZRes;
+
+                            if ((Z > -0.5f) && (Z < iZdim)) {
+
+                                if (X <= 0) {
+                                    x0 = 0;
+                                    dx = 0;
+                                    deltaX = 0;
+                                } else if (X >= (iXdim - 1)) {
+                                    x0 = iXdim - 1;
+                                    dx = 0;
+                                    deltaX = 0;
+                                } else {
+                                    x0 = (int) X;
+                                    dx = X - x0;
+                                    deltaX = 1;
+                                }
+
+                                if (Y <= 0) {
+                                    y0 = 0;
+                                    dy = 0;
+                                    deltaY = 0;
+                                } else if (Y >= (iYdim - 1)) {
+                                    y0 = iYdim - 1;
+                                    dy = 0;
+                                    deltaY = 0;
+                                } else {
+                                    y0 = (int) Y;
+                                    dy = Y - y0;
+                                    deltaY = iXdim;
+                                }
+
+                                if (Z <= 0) {
+                                    z0 = 0;
+                                    dz = 0;
+                                    deltaZ = 0;
+                                } else if (Z >= (iZdim - 1)) {
+                                    z0 = iZdim - 1;
+                                    dz = 0;
+                                    deltaZ = 0;
+                                } else {
+                                    z0 = (int) Z;
+                                    dz = Z - z0;
+                                    deltaZ = sliceSize;
+                                }
+
+                                dx1 = 1 - dx;
+                                dy1 = 1 - dy;
+
+                                position1 = (z0 * sliceSize) + (y0 * iXdim) + x0;
+                                position2 = position1 + deltaZ;
+
+                                b1 = (dy1 * ((dx1 * imgBuffer[position1]) + (dx * imgBuffer[position1 + deltaX]))) +
+                                     (dy *
+                                          ((dx1 * imgBuffer[position1 + deltaY]) +
+                                               (dx * imgBuffer[position1 + deltaY + deltaX])));
+
+                                b2 = (dy1 * ((dx1 * imgBuffer[position2]) + (dx * imgBuffer[position2 + deltaX]))) +
+                                     (dy *
+                                          ((dx1 * imgBuffer[position2 + deltaY]) +
+                                               (dx * imgBuffer[position2 + deltaY + deltaX])));
+
+                                value = ((1 - dz) * b1) + (dz * b2);
+
+                            } // end if Z in bounds
+                        } // end if Y in bounds
+                    } // end if X in bounds
+
+                    transformedImg.set(index++, value);
+                } // end for i
+            } // end for j
+        } // end for k
+
+        transformedImg.calcMinMax();
+    }
+    
+    /**
+     * Transforms and resamples volume using trilinear interpolation.
+     *
+     * @param  image           Image to transform
+     * @param  transformedImg  Transformed image.
+     * @param  trans           Transformation matrix to be applied
+     * @param  progressBar     The progress bar. Can be null. Should NOT have a cancel button.
+     * @param  activeImage     true if the algorithm is being run in a separate thread, false otherwise, to control
+     *                         progress bar repainting
+     * @param  fillValue       value used if transformed pixel is out of bounds
+     */
+    public static final void transformTrilinear(ModelImage image, ModelImage transformedImg, TransMatrix trans,
+                                                ViewJProgressBar progressBar, boolean activeImage, float fillValue) {
+        int i, j, k;
+        float X, Y, Z;
+        int x0, y0, z0;
+        float value;
+        int sliceSize;
+        float imm, jmm, kmm;
+        float k1, k2, k3, j1, j2, j3;
+        int position1, position2;
+        float b1, b2;
+        float dx, dy, dz, dx1, dy1;
+        int iXdim, iYdim, iZdim;
+        float iXres, iYres, iZres;
+        int oXdim, oYdim, oZdim;
+        float oXres, oYres, oZres;
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        int mod;
+        int deltaX, deltaY, deltaZ;
+
+        iXdim = image.getExtents()[0];
+        iYdim = image.getExtents()[1];
+        iZdim = image.getExtents()[2];
+        iXres = image.getFileInfo(0).getResolutions()[0];
+        iYres = image.getFileInfo(0).getResolutions()[1];
+        iZres = image.getFileInfo(0).getResolutions()[2];
+
+        oXdim = transformedImg.getExtents()[0];
+        oYdim = transformedImg.getExtents()[1];
+        oZdim = transformedImg.getExtents()[2];
+        oXres = transformedImg.getFileInfo(0).getResolutions()[0];
+        oYres = transformedImg.getFileInfo(0).getResolutions()[1];
+        oZres = transformedImg.getFileInfo(0).getResolutions()[2];
+
+        sliceSize = iXdim * iYdim;
+
+        imgOrigin = (float[]) image.getFileInfo(0).getOrigin().clone();
+
+        if (updateOrigin) {
+            updateOrigin(trans);
+        }
+
+        TransMatrix kTM = matrixtoInverseArray(trans);
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
+
+        int imgLength = iXdim * iYdim * iZdim;
+        float[] imgBuffer = new float[imgLength];
+
+        try {
+            image.exportData(0, imgLength, imgBuffer);
+        } catch (IOException error) {
+            MipavUtil.displayError("Algorithm Transform: Image(s) locked");
+
+            return;
+        }
+
+        mod = Math.max(1, oZdim / 50);
+
+        float invXRes = 1 / iXres;
+        float invYRes = 1 / iYres;
+        float invZRes = 1 / iZres;
+
+        int index = 0;
+
+        for (k = 0; k < oZdim; k++) {
+
+            if ((progressBar != null) && ((k % mod) == 0)) {
+                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5f), activeImage);
+            }
+
+            kmm = k * oZres;
+            k1 = (kmm * T02) + T03;
+            k2 = (kmm * T12) + T13;
+            k3 = (kmm * T22) + T23;
+
+            for (j = 0; j < oYdim; j++) {
+                jmm = j * oYres;
+                j1 = (jmm * T01) + k1;
+                j2 = (jmm * T11) + k2;
+                j3 = (jmm * T21) + k3;
+
+                for (i = 0; i < oXdim; i++) {
+
+                    // transform i,j,k
+                    value = fillValue; // if voxel is transformed out of bounds
                     imm = i * oXres;
                     X = (j1 + (imm * T00)) * invXRes;
 
@@ -3476,6 +3955,208 @@ public class AlgorithmTransform extends AlgorithmBase {
                     imgBuffer2[indexDest + 1] = 0; // R, G, and B remain zero if voxel is transformed out of bounds
                     imgBuffer2[indexDest + 2] = 0;
                     imgBuffer2[indexDest + 3] = 0;
+                    kmm = (float) k * oZres;
+                    X = (temp3 + (kmm * T02)) / iXres;
+                    roundX = (int) (X + 0.5f);
+
+                    if ((X >= 0) && (X < iXdim)) {
+                        Y = temp2 + (kmm * T12);
+                        Y = Y / iYres;
+                        roundY = (int) (Y + 0.5f);
+
+                        if ((Y >= 0) && (Y < iYdim)) {
+                            Z = temp1 + (kmm * T22);
+                            Z = Z / iZres;
+                            roundZ = (int) (Z + 0.5f);
+
+                            if ((Z >= 0) && (Z < iZdim)) {
+
+                                if ((X >= (iXdim - 1)) || (Y >= (iYdim - 1)) || (Z >= (iZdim - 1))) { // cannot interpolate on last X, Y, or Z
+                                    X0pos = Math.min(roundX, iXdim - 1);
+                                    Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
+                                    Z0pos = Math.min(roundZ, iZdim - 1) * sliceSize;
+                                    index = 4 * (Z0pos + Y0pos + X0pos);
+
+                                    // imgBuffer2[indexDest] = imgBuffer[index];
+                                    imgBuffer2[indexDest + 1] = imgBuffer[index + 1];
+                                    imgBuffer2[indexDest + 2] = imgBuffer[index + 2];
+                                    imgBuffer2[indexDest + 3] = imgBuffer[index + 3];
+                                } else {
+
+                                    // set intensity of i,j,k to new transformed coordinate if
+                                    // x,y,z is w/in dimensions of image
+                                    x0 = X - (int) (X);
+                                    y0 = Y - (int) (Y);
+                                    z0 = Z - (int) (Z);
+                                    x1 = 1 - x0;
+                                    y1 = 1 - y0;
+                                    z1 = 1 - z0;
+                                    X0pos = (int) (X);
+                                    Y0pos = (int) (Y) * iXdim;
+                                    Z0pos = (int) (Z) * sliceSize;
+                                    X1pos = X0pos + 1;
+                                    Y1pos = Y0pos + iXdim;
+                                    Z1pos = Z0pos + sliceSize;
+                                    temp4 = y1 * z1;
+                                    temp5 = y0 * z1;
+                                    temp6 = y1 * z0;
+                                    temp7 = y0 * z0;
+                                    index000 = 4 * (Z0pos + Y0pos + X0pos);
+                                    index001 = 4 * (Z0pos + Y0pos + X1pos);
+                                    index010 = 4 * (Z0pos + Y1pos + X0pos);
+                                    index011 = 4 * (Z0pos + Y1pos + X1pos);
+                                    index100 = 4 * (Z1pos + Y0pos + X0pos);
+                                    index101 = 4 * (Z1pos + Y0pos + X1pos);
+                                    index110 = 4 * (Z1pos + Y1pos + X0pos);
+                                    index111 = 4 * (Z1pos + Y1pos + X1pos);
+
+                                    imgBuffer2[indexDest + 1] = (x1 * temp4 * imgBuffer[index000 + 1]) +
+                                                                (x0 * temp4 * imgBuffer[index001 + 1]) +
+                                                                (x1 * temp5 * imgBuffer[index010 + 1]) +
+                                                                (x0 * temp5 * imgBuffer[index011 + 1]) +
+                                                                (x1 * temp6 * imgBuffer[index100 + 1]) +
+                                                                (x0 * temp6 * imgBuffer[index101 + 1]) +
+                                                                (x1 * temp7 * imgBuffer[index110 + 1]) +
+                                                                (x0 * temp7 * imgBuffer[index111 + 1]);
+                                    imgBuffer2[indexDest + 2] = (x1 * temp4 * imgBuffer[index000 + 2]) +
+                                                                (x0 * temp4 * imgBuffer[index001 + 2]) +
+                                                                (x1 * temp5 * imgBuffer[index010 + 2]) +
+                                                                (x0 * temp5 * imgBuffer[index011 + 2]) +
+                                                                (x1 * temp6 * imgBuffer[index100 + 2]) +
+                                                                (x0 * temp6 * imgBuffer[index101 + 2]) +
+                                                                (x1 * temp7 * imgBuffer[index110 + 2]) +
+                                                                (x0 * temp7 * imgBuffer[index111 + 2]);
+                                    imgBuffer2[indexDest + 3] = (x1 * temp4 * imgBuffer[index000 + 3]) +
+                                                                (x0 * temp4 * imgBuffer[index001 + 3]) +
+                                                                (x1 * temp5 * imgBuffer[index010 + 3]) +
+                                                                (x0 * temp5 * imgBuffer[index011 + 3]) +
+                                                                (x1 * temp6 * imgBuffer[index100 + 3]) +
+                                                                (x0 * temp6 * imgBuffer[index101 + 3]) +
+                                                                (x1 * temp7 * imgBuffer[index110 + 3]) +
+                                                                (x0 * temp7 * imgBuffer[index111 + 3]);
+
+                                }
+                            } // end if Z in bounds
+                        } // end if Y in bounds
+                    } // end if X in bounds
+                } // end for k
+            } // end for j
+        } // end for i
+
+        try {
+            transformedImg.importData(0, imgBuffer2, true);
+        } catch (IOException error) {
+            MipavUtil.displayError("AlgorithmTransform: IOException Error on importData");
+        }
+    }
+    
+    /**
+     * Transforms and resamples volume using trilinear interpolation Use on color images USE THIS IF OUTPUT IMAGE HAS
+     * DIFFERENT DIM/RES THAN INPUT IMAGE.
+     *
+     * @param  image           Image to transform
+     * @param  transformedImg  Result image.
+     * @param  trans           Transformation matrix to be applied
+     * @param  oXdim           DOCUMENT ME!
+     * @param  oYdim           DOCUMENT ME!
+     * @param  oZdim           DOCUMENT ME!
+     * @param  oXres           DOCUMENT ME!
+     * @param  oYres           DOCUMENT ME!
+     * @param  oZres           DOCUMENT ME!
+     * @param  fillValue       value if transformed pixel is out of bounds
+     */
+    public static final void transformTrilinearC(ModelImage image, ModelImage transformedImg, TransMatrix trans,
+                                                 int oXdim, int oYdim, int oZdim, float oXres, float oYres,
+                                                 float oZres, float fillValue) {
+        int i, j, k;
+        int X0pos, Y0pos, Z0pos;
+        int X1pos, Y1pos, Z1pos;
+        float X, Y, Z;
+        float x0, y0, z0;
+        float x1, y1, z1;
+        int sliceSize;
+        float imm, jmm, kmm;
+        int roundX, roundY, roundZ;
+        float temp1, temp2, temp3, temp4, temp5, temp6, temp7;
+
+        int iXdim, iYdim, iZdim;
+        float iXres, iYres, iZres;
+
+        iXdim = image.getExtents()[0];
+        iYdim = image.getExtents()[1];
+        iZdim = image.getExtents()[2];
+        iXres = image.getFileInfo(0).getResolutions()[0];
+        iYres = image.getFileInfo(0).getResolutions()[1];
+        iZres = image.getFileInfo(0).getResolutions()[2];
+
+        sliceSize = iXdim * iYdim;
+        imgOrigin = (float[]) image.getFileInfo(0).getOrigin().clone();
+
+        if (updateOrigin) {
+            updateOrigin(trans);
+        }
+
+        TransMatrix kTM = matrixtoInverseArray(trans);
+
+        float i1, i2, i3, j1, j2, j3;
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
+
+        int imgLength = 4 * iXdim * iYdim * iZdim;
+        float[] imgBuffer = new float[imgLength];
+        float[] imgBuffer2 = new float[imgLength];
+        int indexDest;
+        int index;
+        int index000, index001, index010, index011, index100, index101, index110, index111;
+
+        try {
+            image.exportData(0, imgLength, imgBuffer);
+        } catch (IOException error) {
+            MipavUtil.displayError("Algorithm Transform: Image(s) locked");
+
+            return;
+        }
+
+        // int   [] extents      = new int   [] {oXdim, oYdim, oZdim};
+        float[] resolutions = new float[] { oXres, oYres, oZres };
+
+        updateFileInfo(image, transformedImg, resolutions, image.getFileInfo()[0].getUnitsOfMeasure(), trans, false);
+
+        for (i = 0; i < oXdim; i++) {
+            imm = (float) i * oXres;
+            i1 = (imm * T00) + T03;
+            i2 = (imm * T10) + T13;
+            i3 = (imm * T20) + T23;
+
+            for (j = 0; j < oYdim; j++) {
+                jmm = (float) j * oYres;
+                j1 = jmm * T01;
+                j2 = jmm * T11;
+                j3 = jmm * T21;
+                temp1 = i3 + j3;
+                temp2 = i2 + j2;
+                temp3 = i1 + j1;
+
+                for (k = 0; k < oZdim; k++) {
+
+                    // transform i,j,k
+                    indexDest = 4 * (i + (j * oXdim) + (k * oXdim * oYdim));
+                    imgBuffer2[indexDest] = 255; // alpha default
+                    imgBuffer2[indexDest + 1] = fillValue; // if voxel is transformed out of bounds
+                    imgBuffer2[indexDest + 2] = fillValue;
+                    imgBuffer2[indexDest + 3] = fillValue;
                     kmm = (float) k * oZres;
                     X = (temp3 + (kmm * T02)) / iXres;
                     roundX = (int) (X + 0.5f);
