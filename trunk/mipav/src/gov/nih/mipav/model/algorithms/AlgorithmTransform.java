@@ -152,9 +152,6 @@ public class AlgorithmTransform extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private boolean pad = true;
-
-    /** DOCUMENT ME! */
-    private float padVal = 0.0f;
     
     /** Used for out of bounds values in the transformation routines.  
      * Set to (float)srcImage.getMin() in the constructors.
@@ -4056,16 +4053,6 @@ public class AlgorithmTransform extends AlgorithmBase {
     public void setDoCenter(boolean doCenter) {
         this.doCenter = doCenter;
     }
-
-    /**
-     * Set value for image padding during transformation. Not set in constructor because for most applications it will
-     * be 0.
-     *
-     * @param  pad  DOCUMENT ME!
-     */
-    public void setPadValue(float pad) {
-        padVal = pad;
-    }
     
     /**
      * Set value for out of bounds transformation values.  Set in constructors to a default of srcImage.getMin().
@@ -4860,7 +4847,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 jmm = jAdj * oYres;
-                value = 0.0f; // remains zero if voxel is transformed out of bounds
+                value = fillValue; // if transformed out of bounds.
                 X = (temp1 + (jmm * T01)) / iXres;
                 roundX = (int) (X + 0.5f);
 
@@ -4971,7 +4958,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
     
                     jmm = jAdj * oYres;
-                    value = 0.0f; // remains zero if voxel is transformed out of bounds
+                    value = fillValue; // if transformed out of bounds.
                     X = (temp1 + (jmm * T01)) / iXres;
                     roundX = (int) (X + 0.5f);
     
@@ -5106,7 +5093,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     imm = iAdj * oXres;
-                    value = 0.0f; // remains zero if voxel is transformed out of bounds
+                    value = fillValue; // if voxel is transformed out of bounds
                     X = (j1 + (imm * T00)) * invXRes;
 
                     if ((X >= -0.5) && (X < iXdim)) {
@@ -5214,11 +5201,10 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
                 // transform i,j,k
+                value = fillValue; // if voxel is transformed out of bounds
                 if (pad) {
-                    value = padVal;
                     iAdj = i - margins[0];
-                } else {
-                    value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
+                } else {   
                     iAdj = i;
                 }
 
@@ -5317,13 +5303,12 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // transform i,j
+                    value = fillValue; // if voxel is transformed out of bounds
                     if (pad) {
                         jAdj = j - margins[1];
-                        value = padVal;
                     } 
                     else {
                         jAdj = j;
-                        value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
                     }
                     jmm = (float) jAdj * oYres;
                     X = (temp1 + (jmm * T01)) / iXres;
@@ -5433,23 +5418,17 @@ public class AlgorithmTransform extends AlgorithmBase {
                 temp2 = (imm * T10) + T12;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-
+                    temp3 = 4 * (i + (j * oXdim));
+                    imgBuf2[temp3] = fillValue; // if voxel is transformed out of bounds
+                    imgBuf2[temp3 + 1] = fillValue;
+                    imgBuf2[temp3 + 2] = fillValue;
+                    imgBuf2[temp3 + 3] = fillValue;
                     // transform i,j
                     if (pad) {
                         jAdj = j - margins[1];
-                        temp3 = 4 * (i + (j * oXdim));
-                        imgBuf2[temp3] = padVal; // remains padVal if voxel is transformed out of bounds
-                        imgBuf2[temp3 + 1] = padVal;
-                        imgBuf2[temp3 + 2] = padVal;
-                        imgBuf2[temp3 + 3] = padVal;
                     }
                     else {
                         jAdj = j;
-                        temp3 = 4 * (i + (j * oXdim));
-                        imgBuf2[temp3] = 0; // remains zero if voxel is transformed out of bounds
-                        imgBuf2[temp3 + 1] = 0;
-                        imgBuf2[temp3 + 2] = 0;
-                        imgBuf2[temp3 + 3] = 0;
                     }
                     
 
@@ -5576,12 +5555,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                         // transform i,j
+                        value = fillValue; // if voxel is transformed out of bounds
                         if (pad) {
-                            value = padVal;
                             jAdj = j - margins[1];
                         }
                         else {
-                            value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
                             jAdj = j;
                         }
                         jmm = (float) jAdj * oYres;
@@ -5689,18 +5667,14 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // transform i,j
                         temp3 = 4 * (i + (j * oXdim));
+                        imgBuf2[temp3] = fillValue; // if voxel is transformed out of bounds
+                        imgBuf2[temp3 + 1] = fillValue;
+                        imgBuf2[temp3 + 2] = fillValue;
+                        imgBuf2[temp3 + 3] = fillValue;
                         if (pad) {
-                            imgBuf2[temp3] = padVal; // remains zero if voxel is transformed out of bounds
-                            imgBuf2[temp3 + 1] = padVal;
-                            imgBuf2[temp3 + 2] = padVal;
-                            imgBuf2[temp3 + 3] = padVal;
                             jAdj = j - margins[1];
                         }
                         else {
-                            imgBuf2[temp3] = 0; // remains zero if voxel is transformed out of bounds
-                            imgBuf2[temp3 + 1] = 0;
-                            imgBuf2[temp3 + 2] = 0;
-                            imgBuf2[temp3 + 3] = 0;
                             jAdj = j;
                         }
 
@@ -5834,18 +5808,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 // transform i,j
                 temp3 = 4 * (i + (j * oXdim));
-
+                imgBuf2[temp3] = fillValue; // if voxel is transformed out of bounds
+                imgBuf2[temp3 + 1] = fillValue;
+                imgBuf2[temp3 + 2] = fillValue;
+                imgBuf2[temp3 + 3] = fillValue;
                 if (pad) {
-                    imgBuf2[temp3] = padVal;
-                    imgBuf2[temp3 + 1] = padVal;
-                    imgBuf2[temp3 + 2] = padVal;
-                    imgBuf2[temp3 + 3] = padVal;
                     jAdj = j - margins[1];
                 } else {
-                    imgBuf2[temp3] = 0; // remains zero if voxel is transformed out of bounds
-                    imgBuf2[temp3 + 1] = 0;
-                    imgBuf2[temp3 + 2] = 0;
-                    imgBuf2[temp3 + 3] = 0;
                     jAdj = j;
                 }
 
@@ -6011,7 +5980,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
                     // transform i,j,z
-                    value = sliceMin; // remains zero if voxel is transformed out of bounds
+                    value = fillValue; // if voxel is transformed out of bounds
                     imm = i * oXres;
                     X = (j1 + (imm * T00)) * invXRes;
 
@@ -6140,7 +6109,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
                         // transform i,j,z
-                        value = sliceMin; // remains zero if voxel is transformed out of bounds
+                        value = fillValue; // if voxel is transformed out of bounds
                         imm = i * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
@@ -6250,7 +6219,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
                     // transform i,j,k
-                    value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
+                    value = fillValue; // if voxel is transformed out of bounds
                     imm = i * oXres;
                     X = (j1 + (imm * T00)) * invXRes;
 
@@ -6378,7 +6347,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
                         // transform i,j,k
-                        value = imageMin[c]; // if voxel is transformed out of bounds
+                        value = fillValue; // if voxel is transformed out of bounds
                         imm = i * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
@@ -6513,7 +6482,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
                         // transform i,j,k
-                        value = volMin; // if voxel is transformed out of bounds
+                        value = fillValue; // if voxel is transformed out of bounds
                         imm = i * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
@@ -6652,7 +6621,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                         for (i = 0; (i < oXdim) && !threadStopped; i++) {
     
                             // transform i,j,k
-                            value = volMin[c]; // if voxel is transformed out of bounds
+                            value = fillValue; // if voxel is transformed out of bounds
                             imm = i * oXres;
                             X = (j1 + (imm * T00)) * invXRes;
     
@@ -7209,7 +7178,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                 // convert to mm
-                value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                value = fillValue; // if voxel is transformed out of bounds
 
                 jmm = (float) j * oYres;
 
@@ -7284,10 +7253,10 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                 // convert to mm
-                value[0] = 0; // will remain zero if boundary conditions not met
-                value[1] = 0;
-                value[2] = 0;
-                value[3] = 0;
+                value[0] = fillValue; // if voxel is transformed out of bounds
+                value[1] = fillValue;
+                value[2] = fillValue;
+                value[3] = fillValue;
 
                 jmm = (float) j * oYres;
 
@@ -7389,7 +7358,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
                     // transform i,j,k
-                    value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
+                    value = fillValue; // if voxel is transformed out of bounds
                     imm = i * oXres;
                     X = (j1 + (imm * T00)) * invXRes;
 
@@ -7487,10 +7456,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                     // convert to mm
-                    value[0] = 0; // will remain zero if boundary conditions not met
-                    value[1] = 0;
-                    value[2] = 0;
-                    value[3] = 0;
+                    value[0] = fillValue; // if voxel is tranformed out of bounds
+                    value[1] = fillValue;
+                    value[2] = fillValue;
+                    value[3] = fillValue;
                     kmm = (float) k * oZres;
 
                     // transform i,j,k
@@ -7582,7 +7551,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // convert to mm
-                    value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                    value = fillValue; // if voxel is transformed out of bounds
                     jmm = (float) j * oYres;
 
                     // transform i,j
@@ -7677,10 +7646,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // convert to mm
-                    value[0] = 0; // will remain zero if boundary conditions not met
-                    value[1] = 0;
-                    value[2] = 0;
-                    value[3] = 0;
+                    value[0] = fillValue; // if voxel is transformed out of bounds
+                    value[1] = fillValue;
+                    value[2] = fillValue;
+                    value[3] = fillValue;
 
                     jmm = (float) j * oYres;
 
@@ -7790,7 +7759,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                         // convert to mm
-                        value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                        value = fillValue; // if voxel is transformed out of bounds
                         kmm = (float) k * oZres;
 
                         // transform i,j,k
@@ -7909,10 +7878,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                         // convert to mm
-                        value[0] = 0; // will remain zero if boundary conditions not met
-                        value[1] = 0;
-                        value[2] = 0;
-                        value[3] = 0;
+                        value[0] = fillValue; // if voxel is transformed out of bounds
+                        value[1] = fillValue;
+                        value[2] = fillValue;
+                        value[3] = fillValue;
                         kmm = (float) k * oZres;
 
                         // transform i,j,k
@@ -8013,7 +7982,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                         // convert to mm
-                        value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                        value = fillValue; // if voxel is transformed out of bounds
                         jmm = (float) j * oYres;
 
                         // transform i,j
@@ -8103,10 +8072,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                         // convert to mm
-                        value[0] = 0; // will remain zero if boundary conditions not met
-                        value[1] = 0;
-                        value[2] = 0;
-                        value[3] = 0;
+                        value[0] = fillValue; // if voxel is transformed out of bounds
+                        value[1] = fillValue;
+                        value[2] = fillValue;
+                        value[3] = fillValue;
 
                         jmm = (float) j * oYres;
 
@@ -8197,7 +8166,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                 // convert to mm
-                value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                value = fillValue; // if voxel is tranformed out of bounds
 
                 jmm = (float) j * oYres;
 
@@ -8272,10 +8241,10 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                 // convert to mm
-                value[0] = 0; // will remain zero if boundary conditions not met
-                value[1] = 0;
-                value[2] = 0;
-                value[3] = 0;
+                value[0] = fillValue; // if voxel is transformed out of bounds
+                value[1] = fillValue;
+                value[2] = fillValue;
+                value[3] = fillValue;
 
                 jmm = (float) j * oYres;
 
@@ -8373,7 +8342,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                     // convert to mm
-                    value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                    value = fillValue; // if voxel is transformed out of bounds
                     kmm = (float) k * oZres;
 
                     // transform i,j,k
@@ -8474,10 +8443,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                     // convert to mm
-                    value[0] = 0; // will remain zero if boundary conditions not met
-                    value[1] = 0;
-                    value[2] = 0;
-                    value[3] = 0;
+                    value[0] = fillValue; // if voxel is transformed out of bounds
+                    value[1] = fillValue;
+                    value[2] = fillValue;
+                    value[3] = fillValue;
                     kmm = (float) k * oZres;
 
                     // transform i,j,k
@@ -8569,7 +8538,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // convert to mm
-                    value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                    value = fillValue; // if voxel is transformed out of bounds
                     jmm = (float) j * oYres;
 
                     // transform i,j
@@ -8663,10 +8632,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // convert to mm
-                    value[0] = 0; // will remain zero if boundary conditions not met
-                    value[1] = 0;
-                    value[2] = 0;
-                    value[3] = 0;
+                    value[0] = fillValue; // if voxel is transformed out of bounds
+                    value[1] = fillValue;
+                    value[2] = fillValue;
+                    value[3] = fillValue;
 
                     jmm = (float) j * oYres;
 
@@ -8775,7 +8744,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                         // convert to mm
-                        value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                        value = fillValue; // if voxel transformed out of bounds
                         kmm = (float) k * oZres;
 
                         // transform i,j,k
@@ -8894,10 +8863,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                         // convert to mm
-                        value[0] = 0; // will remain zero if boundary conditions not met
-                        value[1] = 0;
-                        value[2] = 0;
-                        value[3] = 0;
+                        value[0] = fillValue; // if voxel transformed out of bounds
+                        value[1] = fillValue;
+                        value[2] = fillValue;
+                        value[3] = fillValue;
                         kmm = (float) k * oZres;
 
                         // transform i,j,k
@@ -8997,7 +8966,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                         // convert to mm
-                        value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                        value = fillValue; // if voxel transformed out of bounds
                         jmm = (float) j * oYres;
 
                         // transform i,j
@@ -9087,10 +9056,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                         // convert to mm
-                        value[0] = 0; // will remain zero if boundary conditions not met
-                        value[1] = 0;
-                        value[2] = 0;
-                        value[3] = 0;
+                        value[0] = fillValue; // if voxel transformed out of bounds
+                        value[1] = fillValue;
+                        value[2] = fillValue;
+                        value[3] = fillValue;
 
                         jmm = (float) j * oYres;
 
@@ -9186,7 +9155,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 roundY = (int) (Y + 0.5f);
 
                 if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
-                    value = (float) srcImage.getMin();
+                    value = fillValue; // if voxel transformed out of bounds
                 } else {
                     xOffset = Math.min(roundX, iXdim -1);
                     yOffset = Math.min(roundY, iYdim - 1) * iXdim;
@@ -9246,10 +9215,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 roundY = (int) (Y + 0.5f);
 
                 if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
-                    imgBuf2[4 * (i + (oXdim * j))] = 0;
-                    imgBuf2[(4 * (i + (oXdim * j))) + 1] = 0;
-                    imgBuf2[(4 * (i + (oXdim * j))) + 2] = 0;
-                    imgBuf2[(4 * (i + (oXdim * j))) + 3] = 0;
+                    imgBuf2[4 * (i + (oXdim * j))] = fillValue; // if voxel transformed out of bounds
+                    imgBuf2[(4 * (i + (oXdim * j))) + 1] = fillValue;
+                    imgBuf2[(4 * (i + (oXdim * j))) + 2] = fillValue;
+                    imgBuf2[(4 * (i + (oXdim * j))) + 3] = fillValue;
                 } else {
                     xOffset = Math.min(roundX, iXdim - 1);
                     yOffset = Math.min(roundY, iYdim - 1) * iXdim;
@@ -9341,7 +9310,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) ||
                             (Z < -0.5) || (Z >= iZdim)) {
-                        value = (float) srcImage.getMin();
+                        value = fillValue; // if voxel transformed out of bounds
                     } else {
                         xOffset = Math.min(roundX, iXdim - 1);
                         yOffset = Math.min(roundY, iYdim - 1) * iXdim;
@@ -9421,10 +9390,10 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) ||
                             (Z < -0.5) || (Z >= iZdim)) {
-                        imgBuf2[4 * (i + (oXdim * j) + (oXdim * oYdim * k))] = 0;
-                        imgBuf2[(4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 1] = 0;
-                        imgBuf2[(4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 2] = 0;
-                        imgBuf2[(4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 3] = 0;
+                        imgBuf2[4 * (i + (oXdim * j) + (oXdim * oYdim * k))] = fillValue; // if voxel transformed out of bounds
+                        imgBuf2[(4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 1] = fillValue;
+                        imgBuf2[(4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 2] = fillValue;
+                        imgBuf2[(4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 3] = fillValue;
                     } else {
                         xOffset = Math.min(roundX, iXdim - 1);
                         yOffset = Math.min(roundY, iYdim - 1) * iXdim;
@@ -9502,7 +9471,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     roundY = (int) (Y + 0.5f);
 
                     if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
-                        value = (float) srcImage.getMin();
+                        value = fillValue; // if voxel transformed out of bounds
                     } else {
                         xOffset = Math.min(roundX, iXdim - 1);
                         yOffset = Math.min(roundY, iYdim - 1) * iXdim;
@@ -9576,10 +9545,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     roundY = (int) (Y + 0.5f);
 
                     if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
-                        imgBuf2[4 * (i + (oXdim * j))] = 0;
-                        imgBuf2[(4 * (i + (oXdim * j))) + 1] = 0;
-                        imgBuf2[(4 * (i + (oXdim * j))) + 2] = 0;
-                        imgBuf2[(4 * (i + (oXdim * j))) + 3] = 0;
+                        imgBuf2[4 * (i + (oXdim * j))] = fillValue; // if voxel transformed out of bounds
+                        imgBuf2[(4 * (i + (oXdim * j))) + 1] = fillValue;
+                        imgBuf2[(4 * (i + (oXdim * j))) + 2] = fillValue;
+                        imgBuf2[(4 * (i + (oXdim * j))) + 3] = fillValue;
                     } else {
                         xOffset = Math.min(roundX, iXdim - 1);
                         yOffset = Math.min(roundY, iYdim - 1) * iXdim;
@@ -9680,7 +9649,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) ||
                                 (Z < -0.5) || (Z >= iZdim)) {
-                            value = (float) srcImage.getMin();
+                            value = fillValue; // if voxel transformed out of bounds
                         } else {
                             xOffset = Math.min(roundX, iXdim - 1);
                             yOffset = Math.min(roundY, iYdim - 1) * iXdim;
@@ -9781,10 +9750,10 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) ||
                                 (Z < -0.5) || (Z >= iZdim)) {
-                            imgBuffer2[temp] = 0; // if voxel is transformed out of bounds
-                            imgBuffer2[temp + 1] = 0;
-                            imgBuffer2[temp + 2] = 0;
-                            imgBuffer2[temp + 3] = 0;
+                            imgBuffer2[temp] = fillValue; // if voxel is transformed out of bounds
+                            imgBuffer2[temp + 1] = fillValue;
+                            imgBuffer2[temp + 2] = fillValue;
+                            imgBuffer2[temp + 3] = fillValue;
                         } else {
                             xOffset = Math.min(roundX, iXdim - 1);
                             yOffset = Math.min(roundY, iYdim - 1) * iXdim;
@@ -9869,7 +9838,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                         roundY = (int) (Y + 0.5f);
 
                         if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
-                            value = (float) srcImage.getMin();
+                            value = fillValue; // if voxel is transformed out of bounds
                         } else {
                             xOffset = Math.min(roundX, iXdim - 1);
                             yOffset = Math.min(roundY, iYdim - 1) * iXdim;
@@ -9943,10 +9912,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         roundY = (int) (Y + 0.5f);
 
                         if ((X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
-                            imgBuf2[4 * (i + (oXdim * j))] = 0;
-                            imgBuf2[(4 * (i + (oXdim * j))) + 1] = 0;
-                            imgBuf2[(4 * (i + (oXdim * j))) + 2] = 0;
-                            imgBuf2[(4 * (i + (oXdim * j))) + 3] = 0;
+                            imgBuf2[4 * (i + (oXdim * j))] = fillValue; // if voxel is transformed out of bounds
+                            imgBuf2[(4 * (i + (oXdim * j))) + 1] = fillValue;
+                            imgBuf2[(4 * (i + (oXdim * j))) + 2] = fillValue;
+                            imgBuf2[(4 * (i + (oXdim * j))) + 3] = fillValue;
                         } else {
                             xOffset = Math.min(roundX, iXdim - 1);
                             yOffset = Math.min(roundY, iYdim - 1) * iXdim;
@@ -10022,7 +9991,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                 // convert to mm
-                value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                value = fillValue; // if voxel transformed out of bounds
 
                 jmm = (float) j * oYres;
 
@@ -10097,10 +10066,10 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                 // convert to mm
-                value[0] = 0; // will remain zero if boundary conditions not met
-                value[1] = 0;
-                value[2] = 0;
-                value[3] = 0;
+                value[0] = fillValue; // if voxel transforms out of bounds
+                value[1] = fillValue;
+                value[2] = fillValue;
+                value[3] = fillValue;
 
                 jmm = (float) j * oYres;
 
@@ -10198,7 +10167,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                     // convert to mm
-                    value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                    value = fillValue; // if voxel transforms out of bounds
                     kmm = (float) k * oZres;
 
                     // transform i,j,k
@@ -10299,10 +10268,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                     // convert to mm
-                    value[0] = 0; // will remain zero if boundary conditions not met
-                    value[1] = 0;
-                    value[2] = 0;
-                    value[3] = 0;
+                    value[0] = fillValue; // if voxel transforms out of bounds
+                    value[1] = fillValue;
+                    value[2] = fillValue;
+                    value[3] = fillValue;
                     kmm = (float) k * oZres;
 
                     // transform i,j,k
@@ -10394,7 +10363,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // convert to mm
-                    value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                    value = fillValue; // if voxel transforms out of bounds
                     jmm = (float) j * oYres;
 
                     // transform i,j
@@ -10488,10 +10457,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // convert to mm
-                    value[0] = 0; // will remain zero if boundary conditions not met
-                    value[1] = 0;
-                    value[2] = 0;
-                    value[3] = 0;
+                    value[0] = fillValue; // if voxel transforms out of bounds
+                    value[1] = fillValue;
+                    value[2] = fillValue;
+                    value[3] = fillValue;
 
                     jmm = (float) j * oYres;
 
@@ -10619,10 +10588,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                         // convert to mm
-                        value[0] = 0; // will remain zero if boundary conditions not met
-                        value[1] = 0;
-                        value[2] = 0;
-                        value[3] = 0;
+                        value[0] = fillValue; // if voxel transforms out of bounds
+                        value[1] = fillValue;
+                        value[2] = fillValue;
+                        value[3] = fillValue;
                         kmm = (float) k * oZres;
 
                         // transform i,j,k
@@ -10738,7 +10707,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                         // convert to mm
-                        value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                        value = fillValue; // if voxel transforms out of bounds
                         kmm = (float) k * oZres;
 
                         // transform i,j,k
@@ -10827,7 +10796,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                         // convert to mm
-                        value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                        value = fillValue; // if voxel transforms out of bounds
                         jmm = (float) j * oYres;
 
                         // transform i,j
@@ -10918,10 +10887,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                         // convert to mm
-                        value[0] = 0; // will remain zero if boundary conditions not met
-                        value[1] = 0;
-                        value[2] = 0;
-                        value[3] = 0;
+                        value[0] = fillValue; // if voxel transforms out of bounds
+                        value[1] = fillValue;
+                        value[2] = fillValue;
+                        value[3] = fillValue;
 
                         jmm = (float) j * oYres;
 
@@ -11055,11 +11024,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
                     // transform i,j,k
+                    value = fillValue; // if voxel transforms out of bounds
                     if (pad) {
-                        value = padVal; // Either set by user in dialog or else set to 0 by JDialogTransform.
                         iAdj = i - margins[0];
                     } else {
-                        value = (float) srcImage.getMin(); // Will remain zero if voxel is transformed out of bounds
                         iAdj = i;
                     }
 
@@ -11229,12 +11197,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
                         // transform i,j,k
+                        value = fillValue; // if voxel is transformed out of bounds
                         if (pad) {
-                            value = padVal;
                             iAdj = i - margins[0];
                         }
-                        else {
-                            value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
+                        else { 
                             iAdj = i;
                         }
                         imm = iAdj * oXres;
@@ -11412,18 +11379,14 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // transform i,j,k
                         temp = 4 * (i + (j * oXdim) + (k * oSliceSize));
+                        imgBuffer2[temp] = fillValue; // if voxel is transformed out of bounds
+                        imgBuffer2[temp + 1] = fillValue;
+                        imgBuffer2[temp + 2] = fillValue;
+                        imgBuffer2[temp + 3] = fillValue;
                         if (pad) {
-                            imgBuffer2[temp] = padVal;
-                            imgBuffer2[temp + 1] = padVal;
-                            imgBuffer2[temp + 2] = padVal;
-                            imgBuffer2[temp + 3] = padVal; 
                             iAdj = i - margins[0];
                         }
                         else {
-                            imgBuffer2[temp] = 0; // remains zero if voxel is transformed out of bounds
-                            imgBuffer2[temp + 1] = 0;
-                            imgBuffer2[temp + 2] = 0;
-                            imgBuffer2[temp + 3] = 0;
                             iAdj = i;
                         }
                         imm = iAdj * oXres;
@@ -11636,18 +11599,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     
                     // transform i,j,k
                     temp8 = 4 * (i + (j * oXdim) + (k * osliceSize));
-
+                    imgBuffer2[temp8] = fillValue; // if voxel is transformed out of bounds
+                    imgBuffer2[temp8 + 1] = fillValue;
+                    imgBuffer2[temp8 + 2] = fillValue;
+                    imgBuffer2[temp8 + 3] = fillValue;
                     if (pad) {
-                        imgBuffer2[temp8] = padVal;
-                        imgBuffer2[temp8 + 1] = padVal;
-                        imgBuffer2[temp8 + 2] = padVal;
-                        imgBuffer2[temp8 + 3] = padVal;
                         kAdj = k - margins[2];
                     } else {
-                        imgBuffer2[temp8] = 0; // remains zero if voxel is transformed out of bounds
-                        imgBuffer2[temp8 + 1] = 0;
-                        imgBuffer2[temp8 + 2] = 0;
-                        imgBuffer2[temp8 + 3] = 0;
                         kAdj = k;
                     }
 
@@ -11816,7 +11774,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                 // convert to mm
-                value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                value = fillValue; // if voxel transformed out of bounds
 
                 jmm = (float) j * oYres;
 
@@ -11891,10 +11849,10 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                 // convert to mm
-                value[0] = 0; // will remain zero if boundary conditions not met
-                value[1] = 0;
-                value[2] = 0;
-                value[3] = 0;
+                value[0] = fillValue; // if voxel transformed out of bounds
+                value[1] = fillValue;
+                value[2] = fillValue;
+                value[3] = fillValue;
 
                 jmm = (float) j * oYres;
 
@@ -11991,7 +11949,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                     // convert to mm
-                    value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                    value = fillValue; // if voxel transformed out of bounds
                     kmm = (float) k * oZres;
 
                     // transform i,j,k
@@ -12092,10 +12050,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                     // convert to mm
-                    value[0] = 0; // will remain zero if boundary conditions not met
-                    value[1] = 0;
-                    value[2] = 0;
-                    value[3] = 0;
+                    value[0] = fillValue; // if voxel transformed out of bounds
+                    value[1] = fillValue;
+                    value[2] = fillValue;
+                    value[3] = fillValue;
                     kmm = (float) k * oZres;
 
                     // transform i,j,k
@@ -12186,7 +12144,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // convert to mm
-                    value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                    value = fillValue; // if voxel transformed out of bounds
                     jmm = (float) j * oYres;
 
                     // transform i,j
@@ -12280,10 +12238,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // convert to mm
-                    value[0] = 0; // will remain zero if boundary conditions not met
-                    value[1] = 0;
-                    value[2] = 0;
-                    value[3] = 0;
+                    value[0] = fillValue; // if voxel transformed out of bounds
+                    value[1] = fillValue;
+                    value[2] = fillValue;
+                    value[3] = fillValue;
 
                     jmm = (float) j * oYres;
 
@@ -12392,7 +12350,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                         // convert to mm
-                        value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                        value = fillValue; // if voxel transformed out of bounds
                         kmm = (float) k * oZres;
 
                         // transform i,j,k
@@ -12511,10 +12469,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                         // convert to mm
-                        value[0] = 0; // will remain zero if boundary conditions not met
-                        value[1] = 0;
-                        value[2] = 0;
-                        value[3] = 0;
+                        value[0] = fillValue; // if voxel transformed out of bounds
+                        value[1] = fillValue;
+                        value[2] = fillValue;
+                        value[3] = fillValue;
                         kmm = (float) k * oZres;
 
                         // transform i,j,k
@@ -12614,7 +12572,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                         // convert to mm
-                        value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
+                        value = fillValue; // if voxel transformed out of bounds
                         jmm = (float) j * oYres;
 
                         // transform i,j
@@ -12704,10 +12662,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                         // convert to mm
-                        value[0] = 0; // will remain zero if boundary conditions not met
-                        value[1] = 0;
-                        value[2] = 0;
-                        value[3] = 0;
+                        value[0] = fillValue; // if voxel transformed out of bounds
+                        value[1] = fillValue;
+                        value[2] = fillValue;
+                        value[3] = fillValue;
 
                         jmm = (float) j * oYres;
 
