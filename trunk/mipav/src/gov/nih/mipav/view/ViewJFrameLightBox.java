@@ -2866,20 +2866,20 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
         // add menu items to edit menu
         JMenuItem selectAll = new JMenuItem("Select All", 'A');
-        selectAll.addActionListener((ActionListener) this);
+        selectAll.addActionListener(this);
         selectAll.setActionCommand("SelectAll");
         selectAll.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, java.awt.Event.CTRL_MASK));
         selectAll.setFont(font12B);
         editMenu.add(selectAll);
 
         JMenuItem selectNone = new JMenuItem("Select None");
-        selectNone.addActionListener((ActionListener) this);
+        selectNone.addActionListener(this);
         selectNone.setActionCommand("SelectNone");
         selectNone.setFont(font12B);
         editMenu.add(selectNone);
 
         JMenuItem selectInvert = new JMenuItem("Invert Selections");
-        selectInvert.addActionListener((ActionListener) this);
+        selectInvert.addActionListener(this);
         selectInvert.setActionCommand("SelectInvert");
         selectInvert.setFont(font12B);
         editMenu.add(selectInvert);
@@ -2888,7 +2888,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
         deleteSelection = new JMenuItem("Delete", MipavUtil.getIcon("delete.gif"));
         deleteSelection.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
-        deleteSelection.addActionListener((ActionListener) this);
+        deleteSelection.addActionListener(this);
         deleteSelection.setActionCommand("DeleteSelection");
         deleteSelection.setFont(font12B);
         deleteSelection.setEnabled(false);
@@ -2896,7 +2896,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
         extractSelection = new JMenuItem("Extract", MipavUtil.getIcon("extract.gif"));
         extractSelection.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, java.awt.Event.CTRL_MASK));
-        extractSelection.addActionListener((ActionListener) this);
+        extractSelection.addActionListener(this);
         extractSelection.setActionCommand("ExtractSelection");
         extractSelection.setFont(font12B);
         extractSelection.setEnabled(false);
@@ -2908,7 +2908,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         // add menu items to view menu
         firstPageMenuItem = new JMenuItem("First Page", MipavUtil.getIcon("firstarrow.gif"));
         firstPageMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, java.awt.Event.CTRL_MASK));
-        firstPageMenuItem.addActionListener((ActionListener) this);
+        firstPageMenuItem.addActionListener(this);
         firstPageMenuItem.setActionCommand("FirstPage");
         firstPageMenuItem.setFont(font12B);
         firstPageMenuItem.setEnabled(false);
@@ -2916,7 +2916,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
         prevPageMenuItem = new JMenuItem("Previous Page", MipavUtil.getIcon("leftarrow.gif"));
         prevPageMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0));
-        prevPageMenuItem.addActionListener((ActionListener) this);
+        prevPageMenuItem.addActionListener(this);
         prevPageMenuItem.setActionCommand("PreviousPage");
         prevPageMenuItem.setFont(font12B);
         prevPageMenuItem.setEnabled(false);
@@ -2926,7 +2926,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
         nextPageMenuItem = new JMenuItem("Next Page", MipavUtil.getIcon("rightarrow.gif"));
         nextPageMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0));
-        nextPageMenuItem.addActionListener((ActionListener) this);
+        nextPageMenuItem.addActionListener(this);
         nextPageMenuItem.setActionCommand("NextPage");
         nextPageMenuItem.setFont(font12B);
         nextPageMenuItem.setEnabled(true);
@@ -2934,7 +2934,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
         lastPageMenuItem = new JMenuItem("Last Page", MipavUtil.getIcon("lastarrow.gif"));
         lastPageMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, java.awt.Event.CTRL_MASK));
-        lastPageMenuItem.addActionListener((ActionListener) this);
+        lastPageMenuItem.addActionListener(this);
         lastPageMenuItem.setActionCommand("LastPage");
         lastPageMenuItem.setFont(font12B);
         lastPageMenuItem.setEnabled(true);
@@ -2942,22 +2942,23 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
         // add menu items to options menu
         JMenuItem itemSettings = new JMenuItem("Settings");
-        itemSettings.addActionListener((ActionListener) this);
+        itemSettings.addActionListener(this);
         itemSettings.setActionCommand("Settings");
         itemSettings.setFont(font12B);
         optionMenu.add(itemSettings);
 
         // this is here for now.  Is there a better place to put Save Settings...?
         JMenuItem saveSettings = new JMenuItem("Save Settings");
-        saveSettings.addActionListener((ActionListener) this);
+        saveSettings.addActionListener(this);
         saveSettings.setActionCommand("SaveSettings");
         saveSettings.setFont(font12B);
         optionMenu.add(saveSettings);
 
-        optionMenu.addSeparator();
+        
 
         /*  the print method cannot be used with the lightbox until a new version of
          *  the PrintJob class is released JMenuItem itemPrint = new JMenuItem("Print");
+         * optionMenu.addSeparator();
          * itemPrint.addActionListener((ActionListener)this); itemPrint.setActionCommand("Print");
          * itemPrint.setFont(font12B); optionMenu.add(itemPrint);
          */
@@ -3054,7 +3055,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
         // add new buttons for deleting and extracting selections
         deleteButton = new JButton(MipavUtil.getIcon("delete.gif"));
-        deleteButton.addActionListener((ActionListener) this);
+        deleteButton.addActionListener(this);
         deleteButton.setActionCommand("DeleteSelection");
         deleteButton.setFont(MipavUtil.font12B);
         deleteButton.setToolTipText("Delete Selected Slices");
@@ -3067,7 +3068,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         tBar.add(deleteButton);
 
         extractButton = new JButton(MipavUtil.getIcon("extract.gif"));
-        extractButton.addActionListener((ActionListener) this);
+        extractButton.addActionListener(this);
         extractButton.setActionCommand("ExtractSelection");
         extractButton.setFont(MipavUtil.font12B);
         extractButton.setToolTipText("Extract Selected Slices to a New Image");
@@ -3101,7 +3102,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
         // add buttons for paging
         firstPageButton = new JButton(MipavUtil.getIcon("firstarrow.gif"));
-        firstPageButton.addActionListener((ActionListener) this);
+        firstPageButton.addActionListener(this);
         firstPageButton.setActionCommand("FirstPage");
         firstPageButton.setFont(MipavUtil.font12B);
         firstPageButton.setToolTipText("First Page");
@@ -3114,7 +3115,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         pagingTBar.add(firstPageButton);
 
         prevPageButton = new JButton(MipavUtil.getIcon("leftarrow.gif"));
-        prevPageButton.addActionListener((ActionListener) this);
+        prevPageButton.addActionListener(this);
         prevPageButton.setActionCommand("PreviousPage");
         prevPageButton.setFont(MipavUtil.font12B);
         prevPageButton.setToolTipText("Previous Page");
@@ -3127,7 +3128,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         pagingTBar.add(prevPageButton);
 
         nextPageButton = new JButton(MipavUtil.getIcon("rightarrow.gif"));
-        nextPageButton.addActionListener((ActionListener) this);
+        nextPageButton.addActionListener(this);
         nextPageButton.setActionCommand("NextPage");
         nextPageButton.setFont(MipavUtil.font12B);
         nextPageButton.setToolTipText("Next Page");
@@ -3140,7 +3141,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         pagingTBar.add(nextPageButton);
 
         lastPageButton = new JButton(MipavUtil.getIcon("lastarrow.gif"));
-        lastPageButton.addActionListener((ActionListener) this);
+        lastPageButton.addActionListener(this);
         lastPageButton.setActionCommand("LastPage");
         lastPageButton.setFont(MipavUtil.font12B);
         lastPageButton.setToolTipText("Last Page");
@@ -3153,7 +3154,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         pagingTBar.add(lastPageButton);
 
         activeSliceButton = new JButton(MipavUtil.getIcon("activelightbox.gif"));
-        activeSliceButton.addActionListener((ActionListener) this);
+        activeSliceButton.addActionListener(this);
         activeSliceButton.setActionCommand("ActiveSlice");
         activeSliceButton.setFont(MipavUtil.font12B);
         activeSliceButton.setToolTipText("Go to active slice");
