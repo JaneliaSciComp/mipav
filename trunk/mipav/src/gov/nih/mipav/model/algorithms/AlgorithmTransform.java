@@ -100,9 +100,6 @@ public class AlgorithmTransform extends AlgorithmBase {
     private int bufferFactor;
 
     /** DOCUMENT ME! */
-    private boolean canPad = true;
-
-    /** DOCUMENT ME! */
     private Vector3f center = null;
 
     /** DOCUMENT ME! */
@@ -235,10 +232,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         DIM = srcImage.getNDims();
 
         if (pad) {
-
-            if (interp != BILINEAR) {
-                canPad = false;
-            }
 
             margins = getImageMargins(srcImage, xfrm, oXres, oYres);
             Preferences.debug("Padding is " + margins[0] + ", " + margins[1] + ".\n");
@@ -373,7 +366,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         this.center = center;
 
         int[] extents;
-        TransMatrix trans;
         TransMatrix xfrmC;
         String name = JDialogBase.makeImageName(srcImage.getImageName(), "_transform");
 
@@ -394,10 +386,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         DIM = srcImage.getNDims();
 
         if (pad) {
-
-            if (interp != BILINEAR) {
-                canPad = false;
-            }
             
             if (doCenter) {
                 xfrmC = new TransMatrix(3);
@@ -600,10 +588,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         // System.out.println("Directions are " +direct[0] +", " +direct[1] +" and " +direct[2]);
         if (pad) {
 
-            if ((interp != TRILINEAR) || (DIM < 3)) {
-                canPad = false;
-            }
-
             margins = getImageMargins(srcImage, xfrm, oXres, oYres, oZres);
             Preferences.debug("Padding is " + margins[0] + ", " + margins[1] + " and " + margins[2] + ".\n");
             updateOriginMargins();
@@ -756,10 +740,6 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         // System.out.println("Directions are " +direct[0] +", " +direct[1] +" and " +direct[2]);
         if (pad) {
-
-            if ((interp != TRILINEAR) || (DIM < 3)) {
-                canPad = false;
-            }
             
             if (doCenter) {
                 xfrmC = new TransMatrix(4);
@@ -1431,7 +1411,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         int nx = srcImage.getExtents()[0];
         int ny = srcImage.getExtents()[1];
         int nz = srcImage.getExtents()[2];
-        int[] destExtents = new int[3];
         float xf = 0.f, yf = 0.f, zf = 0.f;
         float minx, miny, maxx, maxy, minz, maxz;
         int leftPad = 0, rightPad = 0, topPad = 0, bottomPad = 0, front = 0, back = 0;
@@ -2224,7 +2203,6 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         updateFileInfo(image, transformedImg, resolutions, image.getFileInfo()[0].getUnitsOfMeasure(), trans, false);
 
-        int roundX, roundY;
         float temp1, temp2;
         float T00, T01, T02, T10, T11, T12;
 
@@ -2362,7 +2340,6 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         updateFileInfo(image, transformedImg, resolutions, image.getFileInfo()[0].getUnitsOfMeasure(), trans, false);
 
-        int roundX, roundY;
         float temp1, temp2;
         float T00, T01, T02, T10, T11, T12;
 
@@ -4527,7 +4504,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         float dy = srcImage.getFileInfo(0).getResolutions()[1];
         int nx = srcImage.getExtents()[0];
         int ny = srcImage.getExtents()[1];
-        int[] destExtents = new int[2];
         float xf = 0.f, yf = 0.f;
         float minx, miny, maxx, maxy;
         int leftPad = 0, rightPad = 0, topPad = 0, bottomPad = 0;
@@ -4634,83 +4610,76 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         // BEN: fix this so the origin is updated correctly
         updateFileInfo(srcImage, destImage, destResolutions, oUnits, this.transMatrix, isSATransform);
-
-        if (pad && !canPad) {
-            MipavUtil.displayError("For padding: interpolation linear and no resampling.");
-            disposeLocal();
-            setCompleted(false);
-        } else {
             
-            transform();
+        transform();
 
-            // copy the src image's matrices into the destination image
-            destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
+        // copy the src image's matrices into the destination image
+        destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
-            // add the new transform matrix to the destination image
-            transMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
-            destImage.getMatrixHolder().addMatrix(transMatrix);
+        // add the new transform matrix to the destination image
+        transMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+        destImage.getMatrixHolder().addMatrix(transMatrix);
 
-            if (transMatrix.isIdentity()) {
-                // BEN: change
-                // destImage.setMatrix(transMatrix);
-                // destImage.getFileInfo(0).setTransformID(srcImage.getFileInfo(0).getTransformID());
-            } else {
+        if (transMatrix.isIdentity()) {
+            // BEN: change
+            // destImage.setMatrix(transMatrix);
+            // destImage.getFileInfo(0).setTransformID(srcImage.getFileInfo(0).getTransformID());
+        } else {
 
-                // srcImage Matrix * transMatrix invert * [x y z]transpose
-                // since (transMatrix invert * [x y z]transpose) takes the
-                // destination image to the source image and srcImage Matrix
-                // takes the source image to the axial image.
-                // The translation to the center and away from the center are
-                // not present since these translations are multiplied into
-                // the transformation matrix in AlgorithmTransform.transform()
-                // when rotation around the center is specified in JDialogTransform.
-                transMatrix.Inverse();
+            // srcImage Matrix * transMatrix invert * [x y z]transpose
+            // since (transMatrix invert * [x y z]transpose) takes the
+            // destination image to the source image and srcImage Matrix
+            // takes the source image to the axial image.
+            // The translation to the center and away from the center are
+            // not present since these translations are multiplied into
+            // the transformation matrix in AlgorithmTransform.transform()
+            // when rotation around the center is specified in JDialogTransform.
+            transMatrix.Inverse();
 
-                if (srcImage.getNDims() > 2) {
+            if (srcImage.getNDims() > 2) {
 
-                    if (transMatrix.getDim() == 4) {
-                        newMatrix = new TransMatrix(srcImage.getMatrix());
-                        newMatrix.Mult(transMatrix);
-                    } else { // 2.5D processing
-                    	newMatrix = new TransMatrix(srcImage.getMatrix());
-                        
-                        TransMatrix mat3D = new TransMatrix(4);
-                        mat3D.set(0, 0, transMatrix.M00);
-                        mat3D.set(0, 1, transMatrix.M01);
-                        mat3D.set(0, 2, 0.0);
-                        mat3D.set(0, 3, transMatrix.M02);
-                        mat3D.set(1, 0, transMatrix.M10);
-                        mat3D.set(1, 1, transMatrix.M11);
-                        mat3D.set(1, 2, 0.0);
-                        mat3D.set(1, 3, transMatrix.M12);
-                        mat3D.set(2, 0, transMatrix.M20);
-                        mat3D.set(2, 1, transMatrix.M21);
-                        mat3D.set(2, 2, transMatrix.M22);
-                        mat3D.set(3, 3, 1.0);
-                        newMatrix.Mult(mat3D);
-                    }
-
-                } else { // srcImage.getNDims() == 2
-                    newMatrix = new TransMatrix(3);
-
-                    // There is the posibility the for 2D DICOM that the matrix might  be 4x4
-                    // If 3 x3 OK to load else the newMatrix is identity
-                    if (srcImage.getMatrix().getDim() == 3) {
-                        newMatrix.Copy(srcImage.getMatrix());
-                    }
-
+                if (transMatrix.getDim() == 4) {
+                    newMatrix = new TransMatrix(srcImage.getMatrix());
                     newMatrix.Mult(transMatrix);
+                } else { // 2.5D processing
+                	newMatrix = new TransMatrix(srcImage.getMatrix());
+                    
+                    TransMatrix mat3D = new TransMatrix(4);
+                    mat3D.set(0, 0, transMatrix.M00);
+                    mat3D.set(0, 1, transMatrix.M01);
+                    mat3D.set(0, 2, 0.0);
+                    mat3D.set(0, 3, transMatrix.M02);
+                    mat3D.set(1, 0, transMatrix.M10);
+                    mat3D.set(1, 1, transMatrix.M11);
+                    mat3D.set(1, 2, 0.0);
+                    mat3D.set(1, 3, transMatrix.M12);
+                    mat3D.set(2, 0, transMatrix.M20);
+                    mat3D.set(2, 1, transMatrix.M21);
+                    mat3D.set(2, 2, transMatrix.M22);
+                    mat3D.set(3, 3, 1.0);
+                    newMatrix.Mult(mat3D);
                 }
 
+            } else { // srcImage.getNDims() == 2
+                newMatrix = new TransMatrix(3);
 
-                // System.err.println("NEW MATRIX: " + newTMatrix);
+                // There is the posibility the for 2D DICOM that the matrix might  be 4x4
+                // If 3 x3 OK to load else the newMatrix is identity
+                if (srcImage.getMatrix().getDim() == 3) {
+                    newMatrix.Copy(srcImage.getMatrix());
+                }
 
-
-                // replace the destination image's default (composite) matrix
-                // newTMatrix.setTransformID(TransMatrix.TRANSFORM_COMPOSITE);
-                // destImage.setMatrix(newTMatrix);
-
+                newMatrix.Mult(transMatrix);
             }
+
+
+            // System.err.println("NEW MATRIX: " + newTMatrix);
+
+
+            // replace the destination image's default (composite) matrix
+            // newTMatrix.setTransformID(TransMatrix.TRANSFORM_COMPOSITE);
+            // destImage.setMatrix(newTMatrix);
+
         }
     }
 
@@ -6574,6 +6543,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformBspline2D(float[] imgBuf, TransMatrix kTM, int degree) {
         int i, j;
+        int iAdj, jAdj;
         float X, Y;
         float value;
         float imm, jmm;
@@ -6653,8 +6623,15 @@ public class AlgorithmTransform extends AlgorithmBase {
                     fireProgressStateChanged((int) ((((float) z / nz * 100) + ((float) j / (oYdim * nz) * 100)) +
                                                     0.5f));
                 }
+                
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
 
-                jmm = j * oYres;
+                jmm = jAdj * oYres;
                 j1 = (jmm * T01) + T02;
                 j2 = (jmm * T11) + T12;
 
@@ -6662,7 +6639,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     // transform i,j,z
                     value = fillValue; // if voxel is transformed out of bounds
-                    imm = i * oXres;
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = iAdj * oXres;
                     X = (j1 + (imm * T00)) * invXRes;
 
                     if ((X > -0.5f) && (X < iXdim)) {
@@ -6697,11 +6680,11 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformBspline2DC(float[] imgBuf, TransMatrix kTM, int degree) {
         int i, j;
+        int iAdj, jAdj;
         float X, Y;
         float value;
         float imm, jmm;
         int mod = Math.max(1, oYdim / 50);
-        ;
 
         float j1, j2;
         float T00, T01, T02, T10, T11, T12;
@@ -6782,8 +6765,15 @@ public class AlgorithmTransform extends AlgorithmBase {
                         fireProgressStateChanged((int) ((((float) z / nz * 100) + ((float) c / (4 * nz) * 100) +
                                                          ((float) j / (4 * oYdim * nz) * 100)) + 0.5f));
                     }
+                    
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
 
-                    jmm = j * oYres;
+                    jmm = jAdj * oYres;
                     j1 = (jmm * T01) + T02;
                     j2 = (jmm * T11) + T12;
 
@@ -6791,7 +6781,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // transform i,j,z
                         value = fillValue; // if voxel is transformed out of bounds
-                        imm = i * oXres;
+                        if (pad) {
+                            iAdj = i - margins[0];
+                        }
+                        else {
+                            iAdj = i;
+                        }
+                        imm = iAdj * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
                         if ((X > -0.5f) && (X < iXdim)) {
@@ -6828,6 +6824,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformBspline3D(float[] imgBuf, TransMatrix kTM, int degree) {
         int i, j, k;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value;
         float imm, jmm, kmm;
@@ -6885,14 +6882,27 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));
             }
+            
+            if (pad) {
+                kAdj = k - margins[2];
+            }
+            else {
+                kAdj = k;
+            }
 
-            kmm = k * oZres;
+            kmm = kAdj * oZres;
             k1 = (kmm * T02) + T03;
             k2 = (kmm * T12) + T13;
             k3 = (kmm * T22) + T23;
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                jmm = j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = jAdj * oYres;
                 j1 = (jmm * T01) + k1;
                 j2 = (jmm * T11) + k2;
                 j3 = (jmm * T21) + k3;
@@ -6901,7 +6911,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     // transform i,j,k
                     value = fillValue; // if voxel is transformed out of bounds
-                    imm = i * oXres;
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = iAdj * oXres;
                     X = (j1 + (imm * T00)) * invXRes;
 
                     if ((X > -0.5f) && (X < iXdim)) {
@@ -6941,6 +6957,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformBspline3DC(float[] imgBuf, TransMatrix kTM, int degree) {
         int i, j, k;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value;
         float imm, jmm, kmm;
@@ -7013,14 +7030,27 @@ public class AlgorithmTransform extends AlgorithmBase {
                 if (((k % mod) == 0)) {
                     fireProgressStateChanged((int) (((float) k / (4 * oZdim) * 100) + ((float) c / 4 * 100) + 0.5f));
                 }
+                
+                if (pad) {
+                    kAdj = k - margins[2];
+                }
+                else {
+                    kAdj = k;
+                }
 
-                kmm = k * oZres;
+                kmm = kAdj * oZres;
                 k1 = (kmm * T02) + T03;
                 k2 = (kmm * T12) + T13;
                 k3 = (kmm * T22) + T23;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                    jmm = j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = jAdj * oYres;
                     j1 = (jmm * T01) + k1;
                     j2 = (jmm * T11) + k2;
                     j3 = (jmm * T21) + k3;
@@ -7029,7 +7059,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // transform i,j,k
                         value = fillValue; // if voxel is transformed out of bounds
-                        imm = i * oXres;
+                        if (pad) {
+                            iAdj = i - margins[0];
+                        }
+                        else {
+                            iAdj = i;
+                        }
+                        imm = iAdj * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
                         if ((X > -0.5f) && (X < iXdim)) {
@@ -7071,6 +7107,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformBspline4D(float[] imgBuf, TransMatrix kTM, int degree) {
         int i, j, k;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value;
         float imm, jmm, kmm;
@@ -7148,14 +7185,25 @@ public class AlgorithmTransform extends AlgorithmBase {
             splineAlg.samplesToCoefficients(image, iXdim, iYdim, iZdim, degree);
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
-
-                kmm = k * oZres;
+                if (pad) {
+                    kAdj = k - margins[2];
+                }
+                else {
+                    kAdj = k;
+                }
+                kmm = kAdj * oZres;
                 k1 = (kmm * T02) + T03;
                 k2 = (kmm * T12) + T13;
                 k3 = (kmm * T22) + T23;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                    jmm = j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = jAdj * oYres;
                     j1 = (jmm * T01) + k1;
                     j2 = (jmm * T11) + k2;
                     j3 = (jmm * T21) + k3;
@@ -7164,7 +7212,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // transform i,j,k
                         value = fillValue; // if voxel is transformed out of bounds
-                        imm = i * oXres;
+                        if (pad) {
+                            iAdj = i - margins[0];
+                        }
+                        else {
+                            iAdj = i;
+                        }
+                        imm = iAdj * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
                         if ((X > -0.5f) && (X < iXdim)) {
@@ -7205,6 +7259,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformBspline4DC(float[] imgBuf, TransMatrix kTM, int degree) {
         int i, j, k;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value;
         float imm, jmm, kmm;
@@ -7287,14 +7342,25 @@ public class AlgorithmTransform extends AlgorithmBase {
                 splineAlg.samplesToCoefficients(image, iXdim, iYdim, iZdim, degree);
     
                 for (k = 0; (k < oZdim) && !threadStopped; k++) {
-    
-                    kmm = k * oZres;
+                    if (pad) {
+                        kAdj = k - margins[2];
+                    }
+                    else {
+                        kAdj = k;
+                    }
+                    kmm = kAdj * oZres;
                     k1 = (kmm * T02) + T03;
                     k2 = (kmm * T12) + T13;
                     k3 = (kmm * T22) + T23;
     
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                        jmm = j * oYres;
+                        if (pad) {
+                            jAdj = j - margins[1];
+                        }
+                        else {
+                            jAdj = j;
+                        }
+                        jmm = jAdj * oYres;
                         j1 = (jmm * T01) + k1;
                         j2 = (jmm * T11) + k2;
                         j3 = (jmm * T21) + k3;
@@ -7303,7 +7369,13 @@ public class AlgorithmTransform extends AlgorithmBase {
     
                             // transform i,j,k
                             value = fillValue; // if voxel is transformed out of bounds
-                            imm = i * oXres;
+                            if (pad) {
+                                iAdj = i - margins[0];
+                            }
+                            else {
+                                iAdj = i;
+                            }
+                            imm = iAdj * oXres;
                             X = (j1 + (imm * T00)) * invXRes;
     
                             if ((X > -0.5f) && (X < iXdim)) {
@@ -7828,6 +7900,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformCubicLagrangian2D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j;
+        int iAdj, jAdj;
         float X, Y;
         float value;
         float imm, jmm;
@@ -7851,8 +7924,15 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
+            
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
 
-            imm = (float) i * oXres;
+            imm = (float) iAdj * oXres;
             temp1 = (imm * T00) + T02;
             temp2 = (imm * T10) + T12;
 
@@ -7860,8 +7940,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 // convert to mm
                 value = fillValue; // if voxel is transformed out of bounds
-
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
 
                 // transform i,j
                 X = (temp1 + (jmm * T01)) / iXres;
@@ -7895,6 +7980,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformCubicLagrangian2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j;
+        int iAdj, jAdj;
         float X, Y;
         float[] value = new float[4];
         float imm, jmm;
@@ -7926,8 +8012,15 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
+            
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
 
-            imm = (float) i * oXres;
+            imm = (float) iAdj * oXres;
             temp1 = (imm * T00) + T02;
             temp2 = (imm * T10) + T12;
 
@@ -7938,8 +8031,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 value[1] = fillValue;
                 value[2] = fillValue;
                 value[3] = fillValue;
-
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
 
                 // transform i,j
                 X = (temp1 + (jmm * T01)) / iXres;
@@ -7986,14 +8084,12 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformCubicLagrangian3D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value;
-        int sliceSize;
         float imm, jmm, kmm;
         int[] inVolExtents = { iXdim, iYdim, iZdim };
         int mod = Math.max(1, oXdim / 50);
-
-        sliceSize = iXdim * iYdim;
 
         float k1, k2, k3, j1, j2, j3;
         float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
@@ -8024,14 +8120,27 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));
             }
+            
+            if (pad) {
+                kAdj = k - margins[2];
+            }
+            else {
+                kAdj = k;
+            }
 
-            kmm = k * oZres;
+            kmm = kAdj * oZres;
             k1 = (kmm * T02) + T03;
             k2 = (kmm * T12) + T13;
             k3 = (kmm * T22) + T23;
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                jmm = j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = jAdj * oYres;
                 j1 = (jmm * T01) + k1;
                 j2 = (jmm * T11) + k2;
                 j3 = (jmm * T21) + k3;
@@ -8040,7 +8149,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     // transform i,j,k
                     value = fillValue; // if voxel is transformed out of bounds
-                    imm = i * oXres;
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = iAdj * oXres;
                     X = (j1 + (imm * T00)) * invXRes;
 
                     if ((X >= 0) && (X < iXdim)) {
@@ -8076,15 +8191,13 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformCubicLagrangian3DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float[] value = new float[4];
-        int sliceSize;
         float imm, jmm, kmm;
         int[] inVolExtents = { iXdim, iYdim, iZdim };
         int mod = Math.max(1, oXdim / 50);
         int counter = 0; // used for progress bar
-
-        sliceSize = iXdim * iYdim;
 
         int osliceSize = oXdim * oYdim;
         float i1, i2, i3, j1, j2, j3;
@@ -8120,13 +8233,25 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
-            imm = (float) i * oXres;
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
             i1 = (imm * T00) + T03;
             i2 = (imm * T10) + T13;
             i3 = (imm * T20) + T23;
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
                 j1 = jmm * T01;
                 j2 = jmm * T11;
                 j3 = jmm * T21;
@@ -8141,7 +8266,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     value[1] = fillValue;
                     value[2] = fillValue;
                     value[3] = fillValue;
-                    kmm = (float) k * oZres;
+                    if (pad) {
+                        kAdj = k - margins[2];
+                    }
+                    else {
+                        kAdj = k;
+                    }
+                    kmm = (float) kAdj * oZres;
 
                     // transform i,j,k
                     X = (temp3 + (kmm * T02)) / iXres;
@@ -8196,13 +8327,11 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformCubicLagrangian3Dim2D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k;
+        int iAdj, jAdj;
         float X, Y;
         float value;
-        int sliceSize;
         float imm, jmm;
         int[] inVolExtents = { iXdim, iYdim };
-
-        sliceSize = iXdim * iYdim;
 
         int mod = Math.max(1, oZdim / 50);
         int counter = 0; // used for progress bar
@@ -8225,7 +8354,13 @@ public class AlgorithmTransform extends AlgorithmBase {
             CLag.setup2DCubicLagrangian(imgBuf, inVolExtents, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 temp1 = (imm * T00) + T02;
                 temp2 = (imm * T10) + T12;
 
@@ -8233,7 +8368,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     // convert to mm
                     value = fillValue; // if voxel is transformed out of bounds
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
 
                     // transform i,j
                     X = (temp1 + (jmm * T01)) / iXres;
@@ -8283,13 +8424,11 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformCubicLagrangian3Dim2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k;
+        int iAdj, jAdj;
         float X, Y;
         float[] value = new float[4];
-        int sliceSize;
         float imm, jmm;
         int[] inVolExtents = { iXdim, iYdim };
-
-        sliceSize = iXdim * iYdim;
 
         int mod = Math.max(1, oZdim / 50);
         int counter = 0; // used for progress bar
@@ -8320,7 +8459,13 @@ public class AlgorithmTransform extends AlgorithmBase {
             CLag.setup2DCubicLagrangianC(imgBuf, inVolExtents, argbMax, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 temp1 = (imm * T00) + T02;
                 temp2 = (imm * T10) + T12;
 
@@ -8331,8 +8476,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     value[1] = fillValue;
                     value[2] = fillValue;
                     value[3] = fillValue;
-
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
 
                     // transform i,j
                     X = (temp1 + (jmm * T01)) / iXres;
@@ -8390,6 +8540,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformCubicLagrangian4D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k, l;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value;
         float imm, jmm, kmm;
@@ -8423,13 +8574,25 @@ public class AlgorithmTransform extends AlgorithmBase {
             CLag.setup3DCubicLagrangian(imgBuf, inVolExtents, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 i1 = (imm * T00) + T03;
                 i2 = (imm * T10) + T13;
                 i3 = (imm * T20) + T23;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
                     j1 = jmm * T01;
                     j2 = jmm * T11;
                     j3 = jmm * T21;
@@ -8441,7 +8604,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // convert to mm
                         value = fillValue; // if voxel is transformed out of bounds
-                        kmm = (float) k * oZres;
+                        if (pad) {
+                            kAdj = k - margins[2];
+                        }
+                        else {
+                            kAdj = k;
+                        }
+                        kmm = (float) kAdj * oZres;
 
                         // transform i,j,k
                         X = (temp3 + (kmm * T02)) / iXres;
@@ -8495,6 +8664,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformCubicLagrangian4DC(float[] imgBuf, float imgBuffer2[], TransMatrix kTM, boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k, l;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value[] = new float[4];
         int temp4;
@@ -8542,13 +8712,25 @@ public class AlgorithmTransform extends AlgorithmBase {
             CLag.setup3DCubicLagrangianC(imgBuf, inVolExtents, argbMax, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 i1 = (imm * T00) + T03;
                 i2 = (imm * T10) + T13;
                 i3 = (imm * T20) + T23;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
                     j1 = jmm * T01;
                     j2 = jmm * T11;
                     j3 = jmm * T21;
@@ -8563,7 +8745,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         value[1] = fillValue;
                         value[2] = fillValue;
                         value[3] = fillValue;
-                        kmm = (float) k * oZres;
+                        if (pad) {
+                            kAdj = k - margins[2];
+                        }
+                        else {
+                            kAdj = k;
+                        }
+                        kmm = (float) kAdj * oZres;
 
                         // transform i,j,k
                         X = (temp3 + (kmm * T02)) / iXres;
@@ -8629,15 +8817,12 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformCubicLagrangian4Dim2D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k, l;
+        int iAdj, jAdj;
         float X, Y;
         float value;
-        int sliceSize;
         float imm, jmm;
         int[] inVolExtents = { iXdim, iYdim };
 
-        sliceSize = iXdim * iYdim;
-
-        int volSize = sliceSize * iZdim;
         int counter = 0; // used for progress bar
         float temp1, temp2;
         float T00, T01, T02, T10, T11, T12;
@@ -8656,7 +8841,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 CLag.setup2DCubicLagrangian(imgBuf, inVolExtents, clip);
 
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                    imm = (float) i * oXres;
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = (float) iAdj * oXres;
                     temp1 = (imm * T00) + T02;
                     temp2 = (imm * T10) + T12;
 
@@ -8664,7 +8855,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // convert to mm
                         value = fillValue; // if voxel is transformed out of bounds
-                        jmm = (float) j * oYres;
+                        if (pad) {
+                            jAdj = j - margins[1];
+                        }
+                        else {
+                            jAdj = j;
+                        }
+                        jmm = (float) jAdj * oYres;
 
                         // transform i,j
                         X = (temp1 + (jmm * T01)) / iXres;
@@ -8714,6 +8911,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformCubicLagrangian4Dim2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k, l;
+        int iAdj, jAdj;
         float X, Y;
         float[] value = new float[4];
         float imm, jmm;
@@ -8746,7 +8944,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 CLag.setup2DCubicLagrangianC(imgBuf, inVolExtents, argbMax, clip);
 
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                    imm = (float) i * oXres;
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = (float) iAdj * oXres;
                     temp1 = (imm * T00) + T02;
                     temp2 = (imm * T10) + T12;
 
@@ -8757,8 +8961,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         value[1] = fillValue;
                         value[2] = fillValue;
                         value[3] = fillValue;
-
-                        jmm = (float) j * oYres;
+                        if (pad) {
+                            jAdj = j - margins[1];
+                        }
+                        else {
+                            jAdj = j;
+                        }
+                        jmm = (float) jAdj * oYres;
 
                         // transform i,j
                         X = (temp1 + (jmm * T01)) / iXres;
@@ -8816,6 +9025,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformHepticLagrangian2D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j;
+        int iAdj, jAdj;
         float X, Y;
         float value;
         float imm, jmm;
@@ -8839,8 +9049,15 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
+            
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
 
-            imm = (float) i * oXres;
+            imm = (float) iAdj * oXres;
             temp1 = (imm * T00) + T02;
             temp2 = (imm * T10) + T12;
 
@@ -8848,8 +9065,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 // convert to mm
                 value = fillValue; // if voxel is tranformed out of bounds
-
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
 
                 // transform i,j
                 X = (temp1 + (jmm * T01)) / iXres;
@@ -8883,6 +9105,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformHepticLagrangian2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j;
+        int iAdj, jAdj;
         float X, Y;
         float[] value = new float[4];
         float imm, jmm;
@@ -8914,8 +9137,15 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
+            
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
 
-            imm = (float) i * oXres;
+            imm = (float) iAdj * oXres;
             temp1 = (imm * T00) + T02;
             temp2 = (imm * T10) + T12;
 
@@ -8926,8 +9156,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 value[1] = fillValue;
                 value[2] = fillValue;
                 value[3] = fillValue;
-
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
 
                 // transform i,j
                 X = (temp1 + (jmm * T01)) / iXres;
@@ -8975,15 +9210,13 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformHepticLagrangian3D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value;
-        int sliceSize;
         float imm, jmm, kmm;
         int[] inVolExtents = { iXdim, iYdim, iZdim };
         int mod = Math.max(1, oXdim / 50);
         int counter = 0; // used for progress bar
-
-        sliceSize = iXdim * iYdim;
 
         float i1, i2, i3, j1, j2, j3;
         float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
@@ -9009,13 +9242,25 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
-            imm = (float) i * oXres;
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
             i1 = (imm * T00) + T03;
             i2 = (imm * T10) + T13;
             i3 = (imm * T20) + T23;
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
                 j1 = (jmm * T01) + i1;
                 j2 = (jmm * T11) + i2;
                 j3 = (jmm * T21) + i3;
@@ -9024,7 +9269,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     // convert to mm
                     value = fillValue; // if voxel is transformed out of bounds
-                    kmm = (float) k * oZres;
+                    if (pad) {
+                        kAdj = k - margins[2];
+                    }
+                    else {
+                        kAdj = k;
+                    }
+                    kmm = (float) kAdj * oZres;
 
                     // transform i,j,k
                     X = (j1 + (kmm * T02)) / iXres;
@@ -9063,15 +9314,13 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformHepticLagrangian3DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float[] value = new float[4];
-        int sliceSize;
         float imm, jmm, kmm;
         int[] inVolExtents = { iXdim, iYdim, iZdim };
         int mod = Math.max(1, oXdim / 50);
         int counter = 0; // used for progress bar
-
-        sliceSize = iXdim * iYdim;
 
         int osliceSize = oXdim * oYdim;
         float i1, i2, i3, j1, j2, j3;
@@ -9107,13 +9356,25 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
-            imm = (float) i * oXres;
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
             i1 = (imm * T00) + T03;
             i2 = (imm * T10) + T13;
             i3 = (imm * T20) + T23;
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
                 j1 = jmm * T01;
                 j2 = jmm * T11;
                 j3 = jmm * T21;
@@ -9128,7 +9389,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     value[1] = fillValue;
                     value[2] = fillValue;
                     value[3] = fillValue;
-                    kmm = (float) k * oZres;
+                    if (pad) {
+                        kAdj = k - margins[2];
+                    }
+                    else {
+                        kAdj = k;
+                    }
+                    kmm = (float) kAdj * oZres;
 
                     // transform i,j,k
                     X = (temp3 + (kmm * T02)) / iXres;
@@ -9183,13 +9450,11 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformHepticLagrangian3Dim2D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k;
+        int iAdj, jAdj;
         float X, Y;
         float value;
-        int sliceSize;
         float imm, jmm;
         int[] inVolExtents = { iXdim, iYdim };
-
-        sliceSize = iXdim * iYdim;
 
         int mod = Math.max(1, oZdim / 50);
         int counter = 0; // used for progress bar
@@ -9212,7 +9477,13 @@ public class AlgorithmTransform extends AlgorithmBase {
             HLag.setup2DHepticLagrangian(imgBuf, inVolExtents, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 temp1 = (imm * T00) + T02;
                 temp2 = (imm * T10) + T12;
 
@@ -9220,7 +9491,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     // convert to mm
                     value = fillValue; // if voxel is transformed out of bounds
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
 
                     // transform i,j
                     X = (temp1 + (jmm * T01)) / iXres;
@@ -9269,13 +9546,11 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformHepticLagrangian3Dim2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k;
+        int iAdj, jAdj;
         float X, Y;
         float[] value = new float[4];
-        int sliceSize;
         float imm, jmm;
         int[] inVolExtents = { iXdim, iYdim };
-
-        sliceSize = iXdim * iYdim;
 
         int mod = Math.max(1, oZdim / 50);
         int counter = 0; // used for progress bar
@@ -9306,7 +9581,13 @@ public class AlgorithmTransform extends AlgorithmBase {
             HLag.setup2DHepticLagrangianC(imgBuf, inVolExtents, argbMax, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 temp1 = (imm * T00) + T02;
                 temp2 = (imm * T10) + T12;
 
@@ -9317,8 +9598,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     value[1] = fillValue;
                     value[2] = fillValue;
                     value[3] = fillValue;
-
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
 
                     // transform i,j
                     X = (temp1 + (jmm * T01)) / iXres;
@@ -9375,6 +9661,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformHepticLagrangian4D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k, l;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value;
         float imm, jmm, kmm;
@@ -9408,13 +9695,25 @@ public class AlgorithmTransform extends AlgorithmBase {
             HLag.setup3DHepticLagrangian(imgBuf, inVolExtents, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 i1 = (imm * T00) + T03;
                 i2 = (imm * T10) + T13;
                 i3 = (imm * T20) + T23;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
                     j1 = jmm * T01;
                     j2 = jmm * T11;
                     j3 = jmm * T21;
@@ -9426,7 +9725,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // convert to mm
                         value = fillValue; // if voxel transformed out of bounds
-                        kmm = (float) k * oZres;
+                        if (pad) {
+                            kAdj = k - margins[2];
+                        }
+                        else {
+                            kAdj = k;
+                        }
+                        kmm = (float) kAdj * oZres;
 
                         // transform i,j,k
                         X = (temp3 + (kmm * T02)) / iXres;
@@ -9479,6 +9784,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformHepticLagrangian4DC(float[] imgBuf, float imgBuffer2[], TransMatrix kTM, boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k, l;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value[] = new float[4];
         int temp4;
@@ -9527,13 +9833,25 @@ public class AlgorithmTransform extends AlgorithmBase {
             HLag.setup3DHepticLagrangianC(imgBuf, inVolExtents, argbMax, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 i1 = (imm * T00) + T03;
                 i2 = (imm * T10) + T13;
                 i3 = (imm * T20) + T23;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
                     j1 = jmm * T01;
                     j2 = jmm * T11;
                     j3 = jmm * T21;
@@ -9548,7 +9866,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         value[1] = fillValue;
                         value[2] = fillValue;
                         value[3] = fillValue;
-                        kmm = (float) k * oZres;
+                        if (pad) {
+                            kAdj = k - margins[2];
+                        }
+                        else {
+                            kAdj = k;
+                        }
+                        kmm = (float) kAdj * oZres;
 
                         // transform i,j,k
                         X = (temp3 + (kmm * T02)) / iXres;
@@ -9613,15 +9937,12 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformHepticLagrangian4Dim2D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k, l;
+        int iAdj, jAdj;
         float X, Y;
         float value;
-        int sliceSize;
         float imm, jmm;
         int[] inVolExtents = { iXdim, iYdim };
 
-        sliceSize = iXdim * iYdim;
-
-        int volSize = sliceSize * iZdim;
         int counter = 0; // used for progress bar
         float temp1, temp2;
         float T00, T01, T02, T10, T11, T12;
@@ -9640,7 +9961,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 HLag.setup2DHepticLagrangian(imgBuf, inVolExtents, clip);
 
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                    imm = (float) i * oXres;
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = (float) iAdj * oXres;
                     temp1 = (imm * T00) + T02;
                     temp2 = (imm * T10) + T12;
 
@@ -9648,7 +9975,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // convert to mm
                         value = fillValue; // if voxel transformed out of bounds
-                        jmm = (float) j * oYres;
+                        if (pad) {
+                            jAdj = j - margins[1];
+                        }
+                        else {
+                            jAdj = j;
+                        }
+                        jmm = (float) jAdj * oYres;
 
                         // transform i,j
                         X = (temp1 + (jmm * T01)) / iXres;
@@ -9698,6 +10031,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformHepticLagrangian4Dim2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k, l;
+        int iAdj, jAdj;
         float X, Y;
         float[] value = new float[4];
         float imm, jmm;
@@ -9730,7 +10064,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 HLag.setup2DHepticLagrangianC(imgBuf, inVolExtents, argbMax, clip);
 
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                    imm = (float) i * oXres;
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = (float) iAdj * oXres;
                     temp1 = (imm * T00) + T02;
                     temp2 = (imm * T10) + T12;
 
@@ -9741,8 +10081,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         value[1] = fillValue;
                         value[2] = fillValue;
                         value[3] = fillValue;
-
-                        jmm = (float) j * oYres;
+                        if (pad) {
+                            jAdj = j - margins[1];
+                        }
+                        else {
+                            jAdj = j;
+                        }
+                        jmm = (float) jAdj * oYres;
 
                         // transform i,j
                         X = (temp1 + (jmm * T01)) / iXres;
@@ -9798,6 +10143,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformNearestNeighbor2D(float[] imgBuf, TransMatrix kTM) {
         int i, j;
+        int iAdj, jAdj;
         float X, Y;
         int roundX, roundY;
         int xOffset, yOffset;
@@ -9818,12 +10164,25 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
-
+     
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                 // transform i,j
-                imm = (float) i * oXres;
-                jmm = (float) j * oYres;
+                
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
                 X = (imm * T00) + (jmm * T01) + T02;
                 Y = (imm * T10) + (jmm * T11) + T12;
 
@@ -9858,6 +10217,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformNearestNeighbor2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM) {
         int i, j;
+        int iAdj, jAdj;
         float X, Y;
         int roundX, roundY;
         int xOffset, yOffset;
@@ -9879,11 +10239,23 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                 // transform i,j
-                imm = (float) i * oXres;
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
                 X = (imm * T00) + (jmm * T01) + T02;
                 Y = (imm * T10) + (jmm * T11) + T12;
 
@@ -9933,6 +10305,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformNearestNeighbor3D(float[] imgBuf, TransMatrix kTM) {
         int i, j, k;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         int xOffset, yOffset, zOffset;
         float value;
@@ -9965,15 +10338,33 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
-            imm = (float) i * oXres;
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
 
                 for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                     // transform i,j,k
-                    kmm = (float) k * oZres;
+                    if (pad) {
+                        kAdj = k - margins[2];
+                    }
+                    else {
+                        kAdj = k;
+                    }
+                    kmm = (float) kAdj * oZres;
 
                     X = (imm * T00) + (jmm * T01) + (kmm * T02) + T03;
                     Y = (imm * T10) + (jmm * T11) + (kmm * T12) + T13;
@@ -10015,6 +10406,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformNearestNeighbor3DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM) {
         int i, j, k;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         int roundX, roundY, roundZ;
         int xOffset, yOffset, zOffset;
@@ -10045,15 +10437,31 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
-
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
-
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
                 for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                     // transform i,j,k
-                    imm = (float) i * oXres;
-                    jmm = (float) j * oYres;
-                    kmm = (float) k * oZres;
+                    if (pad) {
+                        kAdj = k - margins[2];
+                    }
+                    else {
+                        kAdj = k;
+                    }
+                    kmm = (float) kAdj * oZres;
 
                     X = (imm * T00) + (jmm * T01) + (kmm * T02) + T03;
                     Y = (imm * T10) + (jmm * T11) + (kmm * T12) + T13;
@@ -10116,6 +10524,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformNearestNeighbor3Dim2D(float[] imgBuf, TransMatrix kTM) {
         int i, j, k;
+        int iAdj, jAdj;
         float X, Y;
         int roundX, roundY;
         int xOffset, yOffset;
@@ -10134,12 +10543,23 @@ public class AlgorithmTransform extends AlgorithmBase {
             fireProgressStateChanged(Math.round((float) k / oZdim * 100));
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // transform i,j
-                    imm = (float) i * oXres;
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
                     X = (imm * T00) + (jmm * T01) + T02;
                     Y = (imm * T10) + (jmm * T11) + T12;
 
@@ -10191,6 +10611,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformNearestNeighbor3Dim2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM) {
         int i, j, k;
+        int iAdj, jAdj;
         float X, Y;
         int roundX, roundY;
         int xOffset, yOffset;
@@ -10208,12 +10629,23 @@ public class AlgorithmTransform extends AlgorithmBase {
             fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // transform i,j
-                    imm = (float) i * oXres;
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
                     X = (imm * T00) + (jmm * T01) + T02;
                     Y = (imm * T10) + (jmm * T11) + T12;
 
@@ -10275,6 +10707,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformNearestNeighbor4D(float[] imgBuf, TransMatrix kTM) {
         int i, j, k, l;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         int xOffset, yOffset, zOffset;
         float value;
@@ -10304,15 +10737,31 @@ public class AlgorithmTransform extends AlgorithmBase {
             fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
                     for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                         // transform i,j,k
-                        imm = (float) i * oXres;
-                        jmm = (float) j * oYres;
-                        kmm = (float) k * oZres;
+                        if (pad) {
+                            kAdj = k - margins[2];
+                        }
+                        else {
+                            kAdj = k;
+                        }
+                        kmm = (float) kAdj * oZres;
 
                         X = (imm * T00) + (jmm * T01) + (kmm * T02) + T03;
                         Y = (imm * T10) + (jmm * T11) + (kmm * T12) + T13;
@@ -10369,10 +10818,10 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformNearestNeighbor4DC(float[] imgBuf, float imgBuffer2[], TransMatrix kTM) {
         int i, j, k, l;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         int xOffset, yOffset, zOffset;
         int temp;
-        float value;
         int sliceSize;
         int oSliceSize;
         int oVolSize;
@@ -10404,16 +10853,32 @@ public class AlgorithmTransform extends AlgorithmBase {
             fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
                     for (k = 0; (k < oZdim) && !threadStopped; k++) {
                         temp = 4 * (i + (j * oXdim) + (k * oSliceSize));
 
                         // transform i,j,k
-                        imm = (float) i * oXres;
-                        jmm = (float) j * oYres;
-                        kmm = (float) k * oZres;
+                        if (pad) {
+                            kAdj = k - margins[2];
+                        }
+                        else {
+                            kAdj = k;
+                        }
+                        kmm = (float) kAdj * oZres;
 
                         X = (imm * T00) + (jmm * T01) + (kmm * T02) + T03;
                         Y = (imm * T10) + (jmm * T11) + (kmm * T12) + T13;
@@ -10481,6 +10946,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformNearestNeighbor4Dim2D(float[] imgBuf, TransMatrix kTM) {
         int i, j, k, l;
+        int iAdj, jAdj;
         float X, Y;
         int roundX, roundY;
         int xOffset, yOffset;
@@ -10501,12 +10967,23 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
-
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = (float) iAdj * oXres;
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                         // transform i,j
-                        imm = (float) i * oXres;
-                        jmm = (float) j * oYres;
+                        if (pad) {
+                            jAdj = j - margins[1];
+                        }
+                        else {
+                            jAdj = j;
+                        }
+                        jmm = (float) jAdj * oYres;
                         X = (imm * T00) + (jmm * T01) + T02;
                         Y = (imm * T10) + (jmm * T11) + T12;
 
@@ -10556,6 +11033,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformNearestNeighbor4Dim2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM) {
         int i, j, k, l;
+        int iAdj, jAdj;
         float X, Y;
         int roundX, roundY;
         int xOffset, yOffset;
@@ -10575,12 +11053,23 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
-
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = (float) iAdj * oXres;
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                         // transform i,j
-                        imm = (float) i * oXres;
-                        jmm = (float) j * oYres;
+                        if (pad) {
+                            jAdj = j - margins[1];
+                        }
+                        else {
+                            jAdj = j;
+                        }
+                        jmm = (float) jAdj * oYres;
                         X = (imm * T00) + (jmm * T01) + T02;
                         Y = (imm * T10) + (jmm * T11) + T12;
 
@@ -10641,6 +11130,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformQuinticLagrangian2D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j;
+        int iAdj, jAdj;
         float X, Y;
         float value;
         float imm, jmm;
@@ -10665,7 +11155,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
-            imm = (float) i * oXres;
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
             temp1 = (imm * T00) + T02;
             temp2 = (imm * T10) + T12;
 
@@ -10673,8 +11169,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 // convert to mm
                 value = fillValue; // if voxel transformed out of bounds
-
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
 
                 // transform i,j
                 X = (temp1 + (jmm * T01)) / iXres;
@@ -10708,6 +11209,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformQuinticLagrangian2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j;
+        int iAdj, jAdj;
         float X, Y;
         float[] value = new float[4];
         float imm, jmm;
@@ -10740,7 +11242,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
-            imm = (float) i * oXres;
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
             temp1 = (imm * T00) + T02;
             temp2 = (imm * T10) + T12;
 
@@ -10751,8 +11259,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 value[1] = fillValue;
                 value[2] = fillValue;
                 value[3] = fillValue;
-
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
 
                 // transform i,j
                 X = (temp1 + (jmm * T01)) / iXres;
@@ -10800,15 +11313,13 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformQuinticLagrangian3D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value;
-        int sliceSize;
         float imm, jmm, kmm;
         int[] inVolExtents = { iXdim, iYdim, iZdim };
         int mod = Math.max(1, oXdim / 50);
         int counter = 0; // used for progress bar
-
-        sliceSize = iXdim * iYdim;
 
         float i1, i2, i3, j1, j2, j3;
         float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
@@ -10834,13 +11345,25 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
-            imm = (float) i * oXres;
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
             i1 = (imm * T00) + T03;
             i2 = (imm * T10) + T13;
             i3 = (imm * T20) + T23;
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
                 j1 = (jmm * T01) + i1;
                 j2 = (jmm * T11) + i2;
                 j3 = (jmm * T21) + i3;
@@ -10849,7 +11372,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     // convert to mm
                     value = fillValue; // if voxel transforms out of bounds
-                    kmm = (float) k * oZres;
+                    if (pad) {
+                        kAdj = k - margins[2];
+                    }
+                    else {
+                        kAdj = k;
+                    }
+                    kmm = (float) kAdj * oZres;
 
                     // transform i,j,k
                     X = (j1 + (kmm * T02)) / iXres;
@@ -10888,15 +11417,13 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformQuinticLagrangian3DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float[] value = new float[4];
-        int sliceSize;
         float imm, jmm, kmm;
         int[] inVolExtents = { iXdim, iYdim, iZdim };
         int mod = Math.max(1, oXdim / 50);
         int counter = 0; // used for progress bar
-
-        sliceSize = iXdim * iYdim;
 
         int osliceSize = oXdim * oYdim;
         float i1, i2, i3, j1, j2, j3;
@@ -10932,13 +11459,25 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
-            imm = (float) i * oXres;
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
             i1 = (imm * T00) + T03;
             i2 = (imm * T10) + T13;
             i3 = (imm * T20) + T23;
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
                 j1 = jmm * T01;
                 j2 = jmm * T11;
                 j3 = jmm * T21;
@@ -10953,7 +11492,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     value[1] = fillValue;
                     value[2] = fillValue;
                     value[3] = fillValue;
-                    kmm = (float) k * oZres;
+                    if (pad) {
+                        kAdj = k - margins[2];
+                    }
+                    else {
+                        kAdj = k;
+                    }
+                    kmm = (float) kAdj * oZres;
 
                     // transform i,j,k
                     X = (temp3 + (kmm * T02)) / iXres;
@@ -11008,13 +11553,11 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformQuinticLagrangian3Dim2D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k;
+        int iAdj, jAdj;
         float X, Y;
         float value;
-        int sliceSize;
         float imm, jmm;
         int[] inVolExtents = { iXdim, iYdim };
-
-        sliceSize = iXdim * iYdim;
 
         int mod = Math.max(1, oZdim / 50);
         int counter = 0; // used for progress bar
@@ -11037,7 +11580,13 @@ public class AlgorithmTransform extends AlgorithmBase {
             QLag.setup2DQuinticLagrangian(imgBuf, inVolExtents, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 temp1 = (imm * T00) + T02;
                 temp2 = (imm * T10) + T12;
 
@@ -11045,7 +11594,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     // convert to mm
                     value = fillValue; // if voxel transforms out of bounds
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
 
                     // transform i,j
                     X = (temp1 + (jmm * T01)) / iXres;
@@ -11094,13 +11649,11 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformQuinticLagrangian3Dim2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k;
+        int iAdj, jAdj;
         float X, Y;
         float[] value = new float[4];
-        int sliceSize;
         float imm, jmm;
         int[] inVolExtents = { iXdim, iYdim };
-
-        sliceSize = iXdim * iYdim;
 
         int mod = Math.max(1, oZdim / 50);
         int counter = 0; // used for progress bar
@@ -11131,7 +11684,13 @@ public class AlgorithmTransform extends AlgorithmBase {
             QLag.setup2DQuinticLagrangianC(imgBuf, inVolExtents, argbMax, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 temp1 = (imm * T00) + T02;
                 temp2 = (imm * T10) + T12;
 
@@ -11142,8 +11701,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     value[1] = fillValue;
                     value[2] = fillValue;
                     value[3] = fillValue;
-
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
 
                     // transform i,j
                     X = (temp1 + (jmm * T01)) / iXres;
@@ -11205,6 +11769,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformQuinticLagrangian4DC(float[] imgBuf, float[] imgBuffer2, TransMatrix kTM, boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k, l;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value[] = new float[4];
         int temp4;
@@ -11252,13 +11817,25 @@ public class AlgorithmTransform extends AlgorithmBase {
             QLag.setup3DQuinticLagrangianC(imgBuf, inVolExtents, argbMax, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 i1 = (imm * T00) + T03;
                 i2 = (imm * T10) + T13;
                 i3 = (imm * T20) + T23;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
                     j1 = jmm * T01;
                     j2 = jmm * T11;
                     j3 = jmm * T21;
@@ -11273,7 +11850,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         value[1] = fillValue;
                         value[2] = fillValue;
                         value[3] = fillValue;
-                        kmm = (float) k * oZres;
+                        if (pad) {
+                            kAdj = k - margins[2];
+                        }
+                        else {
+                            kAdj = k;
+                        }
+                        kmm = (float) kAdj * oZres;
 
                         // transform i,j,k
                         X = (temp3 + (kmm * T02)) / iXres;
@@ -11338,6 +11921,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformQuinticLagrangian4D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k, l;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value;
         float imm, jmm, kmm;
@@ -11371,13 +11955,25 @@ public class AlgorithmTransform extends AlgorithmBase {
             QLag.setup3DQuinticLagrangian(imgBuf, inVolExtents, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 i1 = (imm * T00) + T03;
                 i2 = (imm * T10) + T13;
                 i3 = (imm * T20) + T23;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
                     j1 = jmm * T01;
                     j2 = jmm * T11;
                     j3 = jmm * T21;
@@ -11389,7 +11985,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // convert to mm
                         value = fillValue; // if voxel transforms out of bounds
-                        kmm = (float) k * oZres;
+                        if (pad) {
+                            kAdj = k - margins[2];
+                        }
+                        else {
+                            kAdj = k;
+                        }
+                        kmm = (float) kAdj * oZres;
 
                         // transform i,j,k
                         X = (temp3 + (kmm * T02)) / iXres;
@@ -11443,15 +12045,12 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformQuinticLagrangian4Dim2D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k, l;
+        int iAdj, jAdj;
         float X, Y;
         float value;
-        int sliceSize;
         float imm, jmm;
         int[] inVolExtents = { iXdim, iYdim };
 
-        sliceSize = iXdim * iYdim;
-
-        int volSize = sliceSize * iZdim;
         int counter = 0; // used for progress bar
         float temp1, temp2;
         float T00, T01, T02, T10, T11, T12;
@@ -11470,7 +12069,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 QLag.setup2DQuinticLagrangian(imgBuf, inVolExtents, clip);
 
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                    imm = (float) i * oXres;
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = (float) iAdj * oXres;
                     temp1 = (imm * T00) + T02;
                     temp2 = (imm * T10) + T12;
 
@@ -11478,7 +12083,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // convert to mm
                         value = fillValue; // if voxel transforms out of bounds
-                        jmm = (float) j * oYres;
+                        if (pad) {
+                            jAdj = j - margins[1];
+                        }
+                        else {
+                            jAdj = j;
+                        }
+                        jmm = (float) jAdj * oYres;
 
                         // transform i,j
                         X = (temp1 + (jmm * T01)) / iXres;
@@ -11529,6 +12140,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformQuinticLagrangian4Dim2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k, l;
+        int iAdj, jAdj;
         float X, Y;
         float[] value = new float[4];
         float imm, jmm;
@@ -11561,7 +12173,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 QLag.setup2DQuinticLagrangianC(imgBuf, inVolExtents, argbMax, clip);
 
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                    imm = (float) i * oXres;
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = (float) iAdj * oXres;
                     temp1 = (imm * T00) + T02;
                     temp2 = (imm * T10) + T12;
 
@@ -11572,8 +12190,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         value[1] = fillValue;
                         value[2] = fillValue;
                         value[3] = fillValue;
-
-                        jmm = (float) j * oYres;
+                        if (pad) {
+                            jAdj = j - margins[1];
+                        }
+                        else {
+                            jAdj = j;
+                        }
+                        jmm = (float) jAdj * oYres;
 
                         // transform i,j
                         X = (temp1 + (jmm * T01)) / iXres;
@@ -11992,7 +12615,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         float X, Y, Z;
         int x0, y0, z0;
         int temp;
-        float value;
         int sliceSize;
         int oSliceSize;
         int oVolSize;
@@ -12026,8 +12648,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         float invXRes = 1 / iXres;
         float invYRes = 1 / iYres;
         float invZRes = 1 / iZres;
-
-        int index = 0;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged(Math.round((float) l / oTdim * 100));
@@ -12424,6 +13044,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformWSinc2D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j;
+        int iAdj, jAdj;
         float X, Y;
         float value;
         float imm, jmm;
@@ -12448,7 +13069,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
-            imm = (float) i * oXres;
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
             temp1 = (imm * T00) + T02;
             temp2 = (imm * T10) + T12;
 
@@ -12456,8 +13083,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 // convert to mm
                 value = fillValue; // if voxel transformed out of bounds
-
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
 
                 // transform i,j
                 X = (temp1 + (jmm * T01)) / iXres;
@@ -12491,6 +13123,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformWSinc2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j;
+        int iAdj, jAdj;
         float X, Y;
         float[] value = new float[4];
         float imm, jmm;
@@ -12523,7 +13156,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
-            imm = (float) i * oXres;
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
             temp1 = (imm * T00) + T02;
             temp2 = (imm * T10) + T12;
 
@@ -12534,8 +13173,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 value[1] = fillValue;
                 value[2] = fillValue;
                 value[3] = fillValue;
-
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
 
                 // transform i,j
                 X = (temp1 + (jmm * T01)) / iXres;
@@ -12582,15 +13226,13 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformWSinc3D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value;
-        int sliceSize;
         float imm, jmm, kmm;
         int[] inVolExtents = { iXdim, iYdim, iZdim };
         int mod = Math.max(1, oXdim / 50);
         int counter = 0; // used for progress bar
-
-        sliceSize = iXdim * iYdim;
 
         float i1, i2, i3, j1, j2, j3;
         float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
@@ -12616,13 +13258,25 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
-            imm = (float) i * oXres;
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
             i1 = (imm * T00) + T03;
             i2 = (imm * T10) + T13;
             i3 = (imm * T20) + T23;
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
                 j1 = (jmm * T01) + i1;
                 j2 = (jmm * T11) + i2;
                 j3 = (jmm * T21) + i3;
@@ -12631,7 +13285,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     // convert to mm
                     value = fillValue; // if voxel transformed out of bounds
-                    kmm = (float) k * oZres;
+                    if (pad) {
+                        kAdj = k - margins[2];
+                    }
+                    else {
+                        kAdj = k;
+                    }
+                    kmm = (float) kAdj * oZres;
 
                     // transform i,j,k
                     X = (j1 + (kmm * T02)) / iXres;
@@ -12670,15 +13330,13 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformWSinc3DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float[] value = new float[4];
-        int sliceSize;
         float imm, jmm, kmm;
         int[] inVolExtents = { iXdim, iYdim, iZdim };
         int mod = Math.max(1, oXdim / 50);
         int counter = 0; // used for progress bar
-
-        sliceSize = iXdim * iYdim;
 
         int osliceSize = oXdim * oYdim;
         float i1, i2, i3, j1, j2, j3;
@@ -12714,13 +13372,25 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
-            imm = (float) i * oXres;
+            if (pad) {
+                iAdj = i - margins[0];
+            }
+            else {
+                iAdj = i;
+            }
+            imm = (float) iAdj * oXres;
             i1 = (imm * T00) + T03;
             i2 = (imm * T10) + T13;
             i3 = (imm * T20) + T23;
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                jmm = (float) j * oYres;
+                if (pad) {
+                    jAdj = j - margins[1];
+                }
+                else {
+                    jAdj = j;
+                }
+                jmm = (float) jAdj * oYres;
                 j1 = jmm * T01;
                 j2 = jmm * T11;
                 j3 = jmm * T21;
@@ -12735,7 +13405,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     value[1] = fillValue;
                     value[2] = fillValue;
                     value[3] = fillValue;
-                    kmm = (float) k * oZres;
+                    if (pad) {
+                        kAdj = k - margins[2];
+                    }
+                    else {
+                        kAdj = k;
+                    }
+                    kmm = (float) kAdj * oZres;
 
                     // transform i,j,k
                     X = (temp3 + (kmm * T02)) / iXres;
@@ -12789,13 +13465,11 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformWSinc3Dim2D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k;
+        int iAdj, jAdj;
         float X, Y;
         float value;
-        int sliceSize;
         float imm, jmm;
         int[] inVolExtents = { iXdim, iYdim };
-
-        sliceSize = iXdim * iYdim;
 
         int mod = Math.max(1, oZdim / 50);
         int counter = 0; // used for progress bar
@@ -12818,7 +13492,13 @@ public class AlgorithmTransform extends AlgorithmBase {
             WSinc.setup2DWSinc(imgBuf, inVolExtents, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 temp1 = (imm * T00) + T02;
                 temp2 = (imm * T10) + T12;
 
@@ -12826,7 +13506,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     // convert to mm
                     value = fillValue; // if voxel transformed out of bounds
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
 
                     // transform i,j
                     X = (temp1 + (jmm * T01)) / iXres;
@@ -12875,13 +13561,11 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformWSinc3Dim2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k;
+        int iAdj, jAdj;
         float X, Y;
         float[] value = new float[4];
-        int sliceSize;
         float imm, jmm;
         int[] inVolExtents = { iXdim, iYdim };
-
-        sliceSize = iXdim * iYdim;
 
         int mod = Math.max(1, oZdim / 50);
         int counter = 0; // used for progress bar
@@ -12912,7 +13596,13 @@ public class AlgorithmTransform extends AlgorithmBase {
             WSinc.setup2DWSincC(imgBuf, inVolExtents, argbMax, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 temp1 = (imm * T00) + T02;
                 temp2 = (imm * T10) + T12;
 
@@ -12924,7 +13614,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     value[2] = fillValue;
                     value[3] = fillValue;
 
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
 
                     // transform i,j
                     X = (temp1 + (jmm * T01)) / iXres;
@@ -12981,6 +13677,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformWSinc4D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k, l;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value;
         float imm, jmm, kmm;
@@ -13014,13 +13711,25 @@ public class AlgorithmTransform extends AlgorithmBase {
             WSinc.setup3DWSinc(imgBuf, inVolExtents, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 i1 = (imm * T00) + T03;
                 i2 = (imm * T10) + T13;
                 i3 = (imm * T20) + T23;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
                     j1 = jmm * T01;
                     j2 = jmm * T11;
                     j3 = jmm * T21;
@@ -13032,7 +13741,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // convert to mm
                         value = fillValue; // if voxel transformed out of bounds
-                        kmm = (float) k * oZres;
+                        if (pad) {
+                            kAdj = k - margins[2];
+                        }
+                        else {
+                            kAdj = k;
+                        }
+                        kmm = (float) kAdj * oZres;
 
                         // transform i,j,k
                         X = (temp3 + (kmm * T02)) / iXres;
@@ -13085,6 +13800,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformWSinc4DC(float[] imgBuf, float [] imgBuffer2, TransMatrix kTM, boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k, l;
+        int iAdj, jAdj, kAdj;
         float X, Y, Z;
         float value[] = new float[4];
         int temp4;
@@ -13133,13 +13849,25 @@ public class AlgorithmTransform extends AlgorithmBase {
             WSinc.setup3DWSincC(imgBuf, inVolExtents, argbMax, clip);
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 i1 = (imm * T00) + T03;
                 i2 = (imm * T10) + T13;
                 i3 = (imm * T20) + T23;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = (float) jAdj * oYres;
                     j1 = jmm * T01;
                     j2 = jmm * T11;
                     j3 = jmm * T21;
@@ -13154,7 +13882,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         value[1] = fillValue;
                         value[2] = fillValue;
                         value[3] = fillValue;
-                        kmm = (float) k * oZres;
+                        if (pad) {
+                            kAdj = k - margins[2];
+                        }
+                        else {
+                            kAdj = k;
+                        }
+                        kmm = (float) kAdj * oZres;
 
                         // transform i,j,k
                         X = (temp3 + (kmm * T02)) / iXres;
@@ -13219,15 +13953,12 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformWSinc4Dim2D(float[] imgBuf, TransMatrix kTM, boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k, l;
+        int iAdj, jAdj;
         float X, Y;
         float value;
-        int sliceSize;
         float imm, jmm;
         int[] inVolExtents = { iXdim, iYdim };
 
-        sliceSize = iXdim * iYdim;
-
-        int volSize = sliceSize * iZdim;
         int counter = 0; // used for progress bar
         float temp1, temp2;
         float T00, T01, T02, T10, T11, T12;
@@ -13246,7 +13977,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 WSinc.setup2DWSinc(imgBuf, inVolExtents, clip);
 
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                    imm = (float) i * oXres;
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = (float) iAdj * oXres;
                     temp1 = (imm * T00) + T02;
                     temp2 = (imm * T10) + T12;
 
@@ -13254,7 +13991,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         // convert to mm
                         value = fillValue; // if voxel transformed out of bounds
-                        jmm = (float) j * oYres;
+                        if (pad) {
+                            jAdj = j - margins[1];
+                        }
+                        else {
+                            jAdj = j;
+                        }
+                        jmm = (float) jAdj * oYres;
 
                         // transform i,j
                         X = (temp1 + (jmm * T01)) / iXres;
@@ -13304,6 +14047,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformWSinc4Dim2DC(float[] imgBuf, float[] imgBuf2, TransMatrix kTM, boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k, l;
+        int iAdj, jAdj;
         float X, Y;
         float[] value = new float[4];
         float imm, jmm;
@@ -13336,7 +14080,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 WSinc.setup2DWSincC(imgBuf, inVolExtents, argbMax, clip);
 
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                    imm = (float) i * oXres;
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    }
+                    else {
+                        iAdj = i;
+                    }
+                    imm = (float) iAdj * oXres;
                     temp1 = (imm * T00) + T02;
                     temp2 = (imm * T10) + T12;
 
@@ -13347,8 +14097,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         value[1] = fillValue;
                         value[2] = fillValue;
                         value[3] = fillValue;
-
-                        jmm = (float) j * oYres;
+                        if (pad) {
+                            jAdj = j - margins[1];
+                        }
+                        else {
+                            jAdj = j;
+                        }
+                        jmm = (float) jAdj * oYres;
 
                         // transform i,j
                         X = (temp1 + (jmm * T01)) / iXres;
