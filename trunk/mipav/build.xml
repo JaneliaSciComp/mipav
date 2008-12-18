@@ -259,7 +259,9 @@
             <fileset file="${dir.source}/help/mipav_help.jar"/>
         </copy>
 
-
+        <copy todir="${dir.dest}/lib">
+            <fileset dir="${dir.source}/lib" excludes=".svn"/>
+        </copy>
     </target>
 
     <!-- Reports the properties that will be used by ant. -->
