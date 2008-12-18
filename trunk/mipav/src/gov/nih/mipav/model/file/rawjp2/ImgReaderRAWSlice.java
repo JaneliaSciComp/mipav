@@ -29,16 +29,16 @@ public class ImgReaderRAWSlice extends ImgReader {
     public static int DC_OFFSET = 0;
 
     /** Where to read the data from */
-    private RandomAccessFile in;
+    protected RandomAccessFile in;
     
     /** The offset of the raw pixel data in the RAW file */
     private int offset;
     
     /** image store*/
-	private ModelImage image;    
+	protected ModelImage image;    
 
     /** The number of bits that determine the nominal dynamic range */
-    private int rb;
+    protected int rb;
     
     /** The line buffer. */
     // This makes the class not thrad safe
@@ -47,11 +47,15 @@ public class ImgReaderRAWSlice extends ImgReader {
 
     /** Temporary DataBlkInt object (needed when encoder uses floating-point
         filters). This avoid allocating new DataBlk at each time */
-    private DataBlkInt intBlk;
+    protected DataBlkInt intBlk;
     
-    private boolean useModImg = false;
+    protected boolean useModImg = false;
     
     protected String fName;
+    
+    private boolean savingAsEncJP2 = false;
+    
+    private int blah = 0;
 
     /**
      * Creates a new PGM file reader from the specified file.
@@ -114,20 +118,24 @@ public class ImgReaderRAWSlice extends ImgReader {
         this.useModImg = false;        
     }
                 
-    public ImgReaderRAWSlice(ModelImage image, int si){
+    public ImgReaderRAWSlice(ModelImage image, int si, boolean savingAsEncJP2){
     	int[] imgExtents;
 		
 		this.image = image;
 		imgExtents = image.getExtents();
+		this.savingAsEncJP2 = savingAsEncJP2;
 		
 		this.w = imgExtents[0];
 		this.h = imgExtents[1];
-		if(image.isColorImage()) {
-			this.w = this.w * 4;
-		}
+		//if(image.isColorImage()) {
+		//		this.w = this.w * 4;
+		//}
 //		this.numlice = imgExtents[2];
 		this.nc=1;
         this.rb=16;
+        
+		//this.nc=3;//testing for color
+        //this.rb=8;//testing for color
         
         //this.offset = si * (rb>>3)* w * h;
         this.offset = si * w * h;
@@ -236,7 +244,8 @@ public class ImgReaderRAWSlice extends ImgReader {
      *
      * @see JJ2KExceptionHandler
      * */
-    public final DataBlk getInternCompData(DataBlk blk, int c) {
+    public DataBlk getInternCompData(DataBlk blk, int c) {
+    	blah++;
         int k,j,i,mi;
         int barr[];
 
@@ -264,7 +273,13 @@ public class ImgReaderRAWSlice extends ImgReader {
 	barr = (int[]) blk.getData();
 
 	if (barr == null || barr.length < blk.w*blk.h) {
-	    barr = new int[blk.w*blk.h];
+
+		//if(image.isColorImage()) { //color test...added if by NISH
+		//	barr = new int[blk.w*blk.h*3];
+		//}else {
+		//	barr = new int[blk.w*blk.h];
+		//}
+		barr = new int[blk.w*blk.h];
 	    blk.setData(barr); 
 	}
        
@@ -272,14 +287,35 @@ public class ImgReaderRAWSlice extends ImgReader {
         if (buf == null || buf.length < blk.w) {
             buf = new byte[2*blk.w];
         }
-
+        int[] linebuf = new int[blk.w];
+        int lineOffset=0;
         if (useModImg) {
             try{
             	// Read line by line
             	mi = blk.uly + blk.h;
                 for (i = blk.uly; i < mi; i++) {
-                	image.exportData(offset + i*w + blk.ulx, blk.w*blk.h, barr);
+     //           	image.exportData(offset + i*w + blk.ulx, blk.w*blk.h, barr);
+                	image.exportData(offset + i*w + blk.ulx, blk.w, linebuf);
+                	lineOffset = (i-blk.uly)*w;
+                	for(j=0;j<blk.w;j++) barr[lineOffset + j]=linebuf[j]; 
                 }
+                //color testing---added by NiSH
+                //if(image.isColorImage()) {
+
+                	//int rgbSize = (barr.length/4)*3;
+                	//int[] barrRGB = new int[rgbSize];
+                	//int v=0;
+                	//for(int z=0;z<barr.length;z=z+4) {
+                	//	barrRGB[v] = barr[z+1];
+                	//	barrRGB[v+1] = barr[z+2];
+                	//	barrRGB[v+2] = barr[z+3];
+                	//	v = v+3;
+                	//}
+                	//barr = null;
+                	//barr = barrRGB;
+ 
+                	//barrRGB = null;
+                //}
             } catch (IOException e) {
                 JJ2KExceptionHandler.handleException(e);
             }

@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file.rawjp2;
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.ViewJProgressBar;
 
 
 import java.util.*;
@@ -111,6 +112,10 @@ public class EncoderRAW implements Runnable {
 	PostCompRateAllocator.OPT_PREFIX, // Rate allocator
 	PktEncoder.OPT_PREFIX, // Packet encoder
     };
+    
+    private int ncomp = 1;
+    
+    //private int ncomp = 3; //testing for color
 
     /** The parameter information for this class */
     private final static String[][] pinfo = {
@@ -227,6 +232,7 @@ public class EncoderRAW implements Runnable {
 	     * @see #getExitCode
 	     * */
 	    public void run() {
+	    	System.out.println("IN  RUN()");
 	        boolean verbose;
 	        boolean useFileFormat = false;
 	        boolean pphTile = false;
@@ -730,6 +736,8 @@ public class EncoderRAW implements Runnable {
 	                } else {
 	                    error("Use '-debug' option for more details",2);
 	                }
+	                System.out.println("HERE");
+	                e.printStackTrace();
 	                return;
 	            }
 	
@@ -908,7 +916,7 @@ public class EncoderRAW implements Runnable {
 //        String inext,infile;
         StreamTokenizer stok;
         StringTokenizer sgtok;
-        int ncomp;
+
  //       boolean ppminput;
  //       Vector imreadervec;
         boolean imsigned[];
@@ -1106,13 +1114,16 @@ public class EncoderRAW implements Runnable {
                 return null;
             }
 
-            ncomp = 1;
+            
             imsigned = new boolean[ncomp];
             imreader = new ImgReader[1];
             imreader[0] = img;
             
 //--- Only 1 RAW slice
             imgsrc = imreader[0];
+            //for (i=0; i<ncomp; i++) {
+               // imsigned[i] = imreader[0].isOrigSigned(i);
+            //}
             imsigned[0] = imreader[0].isOrigSigned(0);
 
 //---            
@@ -1322,6 +1333,8 @@ public class EncoderRAW implements Runnable {
                 } else {
                     error("Use '-debug' option for more details",2);
                 }
+                System.out.println("HERE 2");
+                e.printStackTrace();
                 return null;
             }
 
@@ -1479,8 +1492,8 @@ public class EncoderRAW implements Runnable {
  * Now see what happens.
  *
  */
-public void runAllSlices(int startSlice, int endSlice, boolean useModImage) {
-	
+public void runAllSlices(int startSlice, int endSlice, boolean useModImage, ViewJProgressBar progressBar) {
+	progressBar.updateValueImmed(10);
 //	ImgReaderRAWSlice slice;
 	ByteArrayOutputStream buff;
 	boolean is2D = false;
@@ -1490,7 +1503,7 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage) {
 	try {
 		 RAWJP2Header rawhd = new RAWJP2Header();	 
 //	 slice = new ImgReaderRAWSlice(pl.getParameter("i"),startSlice);
-	 	 
+		 progressBar.updateValueImmed(20);
 	 if (useModImage) { 
 		 float[] imgRes = image.getResolutions(0);
 		 int[] imgExtents = image.getExtents();
@@ -1519,17 +1532,20 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage) {
 				                                "rw",(int) ((endSlice-startSlice +1)* 50 * 1024));
 		 }
 
-
-		 ImgReaderRAWSlice slice = new ImgReaderRAWSlice(image,startSlice);
+		 progressBar.updateValueImmed(30);
+		 ImgReaderRAWSlice slice = new ImgReaderRAWSlice(image,startSlice,false);
 		 if(is2D) {
+			 progressBar.updateValueImmed(40);
 			 buff = run1Slice(slice);
 			 rawhd.setIs2D(is2D);
 			 rawhd.setSize(buff.size(),0);		 
 			 rawhd.writeRawJP2Header(f);
+			 progressBar.updateValueImmed(60);
 			 f.write(buff.toByteArray(),0,buff.size());
-			 
+			 progressBar.updateValueImmed(80);
 		 }else {
 			 for(int sliceIdx=startSlice;sliceIdx<=endSlice;sliceIdx++) {
+				 progressBar.updateValueImmed(30 + Math.round((float) sliceIdx / endSlice * 50));
 				 slice.setSliceIndex(sliceIdx,true);
 				 buff = run1Slice(slice);
 				 rawhd.setSize(buff.size(),sliceIdx-startSlice);		 
@@ -1669,6 +1685,7 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage) {
      * */
     private void error(String msg, int code) {
         exitCode = code;
+        System.out.println(msg);
         FacilityManager.getMsgLogger().printmsg(MsgLogger.ERROR,msg);
     }
 
@@ -1774,4 +1791,11 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage) {
             }
         }
     }
+
+	public void setNcomp(int ncomp) {
+		this.ncomp = ncomp;
+	}
+    
+    
+    
 }

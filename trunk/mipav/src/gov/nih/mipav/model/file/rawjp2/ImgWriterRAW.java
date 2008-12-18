@@ -47,32 +47,32 @@ public class ImgWriterRAW extends ImgWriter {
     boolean isSigned;
 
     /** The bit-depth of the input file (must be between 1 and 31)*/
-    private int bitDepth;
+    protected int bitDepth;
 
     /** Where to write the data */
     private RandomAccessFile out;
     
     /** The current offset of the raw pixel data in the RAW file */
-    private int offset;
+    protected int offset;
 
     /** The current offset of the raw pixel data in the RAW file */
-    private int modImgOffset;
+    protected int modImgOffset;
 
     /** A DataBlk, just used to avoid allocating a new one each time it is
         needed */
-    private DataBlkInt db = new DataBlkInt();
+    protected DataBlkInt db = new DataBlkInt();
 
     /** The number of fractional bits in the source data */
     private int fb;
 
     /** The index of the component from where to get the data */
-    private int c;
+    protected int c;
     /** The number of layers/components */
-    private int nc;
+    protected int nc;
 
     /** The pack length of one sample (in bytes, according to the output
         bit-depth */
-    private int packBytes;
+    protected int packBytes;
 
     /** The line buffer. */
     // This makes the class not thrad safe
@@ -82,7 +82,9 @@ public class ImgWriterRAW extends ImgWriter {
     private int intBuf[] = null;
     
     /** Model image pointer*/
-    private ModelImage modImg = null;
+    protected ModelImage modImg = null;
+    
+    protected int imgType;
     /**
      * Creates a new writer to the specified File object, to write data from
      * the specified component.
@@ -143,11 +145,11 @@ public class ImgWriterRAW extends ImgWriter {
             
         levShift = (this.isSigned) ? 0 : 1<<(src.getNomRangeBits(c)-1);
     }
-    public ImgWriterRAW(ModelImage mi, BlkImgDataSrc imgSrc, int c, boolean isSigned) throws IOException{
+    public ImgWriterRAW(ModelImage mi, BlkImgDataSrc imgSrc, boolean isSigned) throws IOException{
     	this.nc = 1;
     	this.modImg = mi;
     	
-    	this.c = c;
+    	this.c = 0;
    
         this.isSigned = isSigned;
         src = imgSrc;
@@ -483,5 +485,12 @@ public class ImgWriterRAW extends ImgWriter {
             } // End loop on horizontal tiles            
         } // End loop on vertical tiles
 		
+	}
+	public int getImgType() {
+		return imgType;
+	}
+
+	public void setImgType(int imgType) {
+		this.imgType = imgType;
 	}
 }
