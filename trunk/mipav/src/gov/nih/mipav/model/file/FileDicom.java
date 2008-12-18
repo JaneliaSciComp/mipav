@@ -3,8 +3,14 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.MipavMath;
 
+import gov.nih.mipav.model.dicomcomm.DICOM_Constants;
+import gov.nih.mipav.model.file.rawjp2.BEByteArrayInputStream;
+import gov.nih.mipav.model.file.rawjp2.DecoderRAW;
 import gov.nih.mipav.model.file.rawjp2.EncoderRAW;
+import gov.nih.mipav.model.file.rawjp2.EncoderRAWColor;
+import gov.nih.mipav.model.file.rawjp2.ImgReaderRAWColorSlice;
 import gov.nih.mipav.model.file.rawjp2.ImgReaderRAWSlice;
+import gov.nih.mipav.model.file.rawjp2.ImgWriterRAW;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -16,6 +22,8 @@ import java.util.*;
 import javax.imageio.ImageIO;
 
 import jj2000.j2k.encoder.Encoder;
+import jj2000.j2k.image.BlkImgDataSrc;
+import jj2000.j2k.image.DataBlkInt;
 import jj2000.j2k.util.ParameterList;
 
 
@@ -75,6 +83,8 @@ public class FileDicom extends FileDicomBase {
      * should be kept together. If in fragments, the image data may span several slices, called a 'frame.'
      */
     private boolean encapsulated = false;
+    
+    private boolean encapsulatedJP2 = false;
 
     /** Directory of the image file. */
     private String fileDir;
@@ -817,12 +827,17 @@ public class FileDicom extends FileDicomBase {
                     fileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
                     fileInfo.vr_type = FileInfoDicom.EXPLICIT;
                     encapsulated = true;
+                    if(strValue.trim().equals(DICOM_Constants.UID_TransferJPEG2000LOSSLESS)) {
+                    	encapsulatedJP2 = true;
+                    }
 
                     if (strValue.trim().equals("1.2.840.10008.1.2.4.57")
                             || strValue.trim().equals("1.2.840.10008.1.2.4.58")
                             || strValue.trim().equals("1.2.840.10008.1.2.4.65")
                             || strValue.trim().equals("1.2.840.10008.1.2.4.66")
-                            || strValue.trim().equals("1.2.840.10008.1.2.4.70")) {
+                            || strValue.trim().equals("1.2.840.10008.1.2.4.70")
+                            || strValue.trim().equals("1.2.840.10008.1.2.4.90"))
+                    {
                         lossy = false;
                     } else {
                         lossy = true;
@@ -1174,7 +1189,7 @@ public class FileDicom extends FileDicomBase {
      * @see FileRaw
      */
     public void readImage(float[] buffer, int imageType, int imageNo) throws IOException {
-
+System.out.println("in read image float");
         // Read in header info, if something goes wrong, print out error
         if (hasHeaderBeenRead == false) {
 
@@ -1223,6 +1238,7 @@ public class FileDicom extends FileDicomBase {
                 throw (error);
             }
         } else { // encapsulated
+        	System.out.println("IMAGE IS ENCAPSULATED");
 
             if (jpegData == null) {
                 jpegData = encapsulatedImageData();
@@ -1347,7 +1363,7 @@ public class FileDicom extends FileDicomBase {
      * @see FileRaw
      */
     public void readImage(short[] buffer, int imageType, int imageNo) throws IOException {
-
+    	System.out.println("in read image short");
         // Read in header info, if something goes wrong, print out error
         if (hasHeaderBeenRead == false) {
 
@@ -1395,7 +1411,14 @@ public class FileDicom extends FileDicomBase {
         } else { // encapsulated
 
             if (jpegData == null) {
-                jpegData = encapsulatedImageData();
+            	if(encapsulatedJP2) {
+            		System.out.println("calling encapsulatedJP2ImageData");
+            		jpegData = encapsulatedJP2ImageData(imageType);
+
+            	}else {
+            		System.out.println("Calling encapsulatedImageData");
+            		jpegData = encapsulatedImageData();
+            	}
             }
 
             if (jpegData != null) {
@@ -1631,7 +1654,7 @@ public class FileDicom extends FileDicomBase {
 
         try {
             raFile.setLength(0);
-            writeHeader(raFile, fileInfo);
+            writeHeader(raFile, fileInfo,saveAsEncapJP2);
 
             // changed this to happen for ALL files, because it's necessary for CT
             // images, or else the min-max gets messed up.
@@ -1650,7 +1673,8 @@ public class FileDicom extends FileDicomBase {
             
             if(saveAsEncapJP2) {
             	System.out.println("here");
-            	EncoderRAW encRAW;
+            	
+
             	ByteArrayOutputStream buff;
             	String outfile = fileDir + fileName;
 
@@ -1663,7 +1687,7 @@ public class FileDicom extends FileDicomBase {
             	    }
                 }
 
-            	// Create parameter list using defaults
+            	//Create parameter list using defaults
                     ParameterList pl = new ParameterList(defpl);           
                     pl.put("i", "something.raw"); // to make the EncoderRAW happy
                     pl.put("o", outfile);
@@ -1672,32 +1696,42 @@ public class FileDicom extends FileDicomBase {
                     pl.put("Mct","off");
                     pl.put("file_format", "on");
                     pl.put("disable_jp2_extension", "on");
-
-                
-               encRAW = new EncoderRAW(pl,image);
-               ModelImage clonedImage = (ModelImage)image.clone();
-               byte[] data2 = new byte[length];
-               image.exportData(index * length, length, data);
-               for (int i = 0; i < data.length; i++) {
-                   data2[i] = (byte) MipavMath.round( (data[i] - intercept) / invSlope);
-               }
-               clonedImage.importData(0, data2, true);
+                    int imgType = image.getType();
+                    if (imgType==ModelStorageBase.ARGB){
+                    	pl.put("Mct","on");
+                    } else {
+                    	pl.put("Mct","off");	
+                    }
+                    if (imgType==ModelStorageBase.ARGB){        
+                    	EncoderRAWColor encRAW = new EncoderRAWColor(pl,image);
+                    	ImgReaderRAWColorSlice slice = new ImgReaderRAWColorSlice(image,0,saveAsEncapJP2);
+                        slice.setSliceIndex(index,true);
+                        buff = encRAW.run1Slice(slice);
+                    }else {
+                    	EncoderRAW encRAW = new EncoderRAW(pl,image);
+                    	ImgReaderRAWSlice slice = new ImgReaderRAWSlice(image,0,saveAsEncapJP2);
+                        slice.setSliceIndex(index,true);
+                        buff = encRAW.run1Slice(slice);
+                    }
                
                
-               
-               ImgReaderRAWSlice slice = new ImgReaderRAWSlice(clonedImage,0);
-               slice.setSliceIndex(index,true);
-               buff = encRAW.run1Slice(slice);
-               System.out.println(buff.size());
+               System.out.println("aaaaaaaaaaaaaaaaaaaaa " + buff.size());
                byte[] theData = buff.toByteArray();
-               if(theData == null) {
-            	   System.out.println("data6 is null");
-               }
-               System.out.println("aaaaaaaa" +  theData.length);
-               raFile.write(theData);
-               clonedImage.disposeLocal();
-               clonedImage = null;
+               int size = theData.length;
+               
+               boolean endianess = fileInfo.getEndianess();
 
+               writeShort((short) 0xFFFE, endianess);
+               writeShort((short) 0xE000, endianess);
+               writeInt(0x00000000, endianess);
+               
+               writeShort((short) 0xFFFE, endianess);
+               writeShort((short) 0xE000, endianess);
+               writeInt(size,endianess);
+               raFile.write(theData);
+               writeShort((short) 0xFFFE, endianess);
+               writeShort((short) 0xE0DD, endianess);
+               writeInt(0x00000000, endianess);
 
             }else {
 
@@ -1824,7 +1858,7 @@ public class FileDicom extends FileDicomBase {
         int imageSize = image.getSliceSize();
 
         try {
-            writeHeader(raFile, fileInfo);
+            writeHeader(raFile, fileInfo,false);
 
             if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
                 float[] data = new float[imageSize];
@@ -1893,6 +1927,99 @@ public class FileDicom extends FileDicomBase {
 
         return (first + "," + second); // name is the hex string of the tag
     }
+    
+    
+    
+    
+    
+    private int[] encapsulatedJP2ImageData(int imageType) throws IOException{
+    	 // System.out.println("FileDicom.encapsulatedImageData");
+
+        try {
+
+            if (raFile != null) {
+
+                try {
+                    raFile.close();
+                } catch (IOException ex) {}
+            }
+
+            fileHeader = new File(fileDir + fileName);
+            raFile = new RandomAccessFile(fileHeader, "r");
+        } catch (IOException e) {
+
+            try {
+                raFile = new RandomAccessFile(fileHeader, "r");
+            } catch (IOException error) {}
+        }
+
+        initializeFullRead();
+        seek(fileInfo.getOffset());
+
+        boolean endianess = fileInfo.getEndianess();
+        getNextElement(endianess); // gets group, element, length
+
+        String name = convertGroupElement(groupWord, elementWord);
+
+        if ( !name.equals(IMAGE_TAG)) {
+
+            if ( !isQuiet()) {
+                MipavUtil.displayError("FileDicom: Image Data tag not found.  Cannot extract encapsulated image data.");
+            }
+
+            throw new IOException("Image Data tag not found.  Cannot extract encapsulated image data.");
+        }
+
+        inSQ = true;
+        getNextElement(endianess);
+        name = convertGroupElement(groupWord, elementWord);
+        System.out.println("aa name is " + name);
+        int[] tableOffsets;
+
+        if (elementLength > 0) {
+            int numberInts = elementLength / 4;
+            tableOffsets = new int[numberInts];
+
+            for (int i = 0; i < numberInts; i++) {
+                tableOffsets[i] = getInt(endianess);
+            }
+        }
+
+        getNextElement(endianess);
+        name = convertGroupElement(groupWord, elementWord);
+        System.out.println("bb  name is " + name);
+        Vector<byte[]> v = new Vector<byte[]>();
+        byte[] imageFrag = null;
+        while (name.equals(SEQ_ITEM_BEGIN)) {
+        	System.out.println("cc name is " + name);
+            imageFrag = new byte[elementLength]; // temp buffer
+
+            for (int i = 0; i < imageFrag.length; i++) {
+                imageFrag[i] = (byte) getByte(); // move into temp buffer
+            }
+
+            v.add(imageFrag);
+            getNextElement(endianess);
+            name = convertGroupElement(groupWord, elementWord);
+        }
+        System.out.println("dd name is " + name);
+        if ( !name.equals(SEQ_ITEM_END) && !name.equals(SEQ_ITEM_UNDEF_END)) {
+        	System.out.println("ee name is  " + name);
+            if ( !isQuiet()) {
+                MipavUtil.displayWarning("End tag not present.  Image may have been corrupted.");
+            }
+        }
+
+        raFile.close();
+        System.out.println("imageFrag size is " + imageFrag.length);
+        
+        FileJP2 fileJP2 = new FileJP2();
+        
+        
+	    
+        
+        return fileJP2.decodeImageData(imageFrag, imageType);
+    }
 
     /**
      * Starts with image tag. goes with OB/OW. image file must be open, file ptr: raFile.
@@ -1943,7 +2070,7 @@ public class FileDicom extends FileDicomBase {
         inSQ = true;
         getNextElement(endianess);
         name = convertGroupElement(groupWord, elementWord);
-System.out.println("aa name is " + name);
+        System.out.println("aa name is " + name);
         int[] tableOffsets;
 
         if (elementLength > 0) {
@@ -1981,6 +2108,11 @@ System.out.println("aa name is " + name);
         }
 
         raFile.close();
+        
+        if(encapsulatedJP2) {
+        	
+        	
+        }
 
         if (v.size() > 1) {
             Vector<int[]> v2 = new Vector<int[]>();
@@ -3080,7 +3212,7 @@ System.out.println("aa name is " + name);
      * 
      * @see FileInfoDicom
      */
-    private void writeHeader(RandomAccessFile outputFile, FileInfoDicom fileInfo) throws IOException {
+    private void writeHeader(RandomAccessFile outputFile, FileInfoDicom fileInfo, boolean saveAsEncapJP2) throws IOException {
 
         // all DICOM files start out as little endian
         boolean endianess = FileBase.LITTLE_ENDIAN;
@@ -3307,6 +3439,22 @@ System.out.println("aa name is " + name);
 
         writeShort((short) 0x7FE0, endianess); // the image
         writeShort((short) 0x10, endianess);
+        
+        if(saveAsEncapJP2) {
+        	writeShort((short) 0x424F, endianess);
+        	//writeShort((short) 0x574F, endianess);
+            writeShort((short) 0x0000, endianess);
+        	writeInt(0xFFFFFFFF, endianess);
+        	if(dicomTags != null) {
+    	        for (int i = 0; i < dicomTags.length; i++) {
+    	        	if(dicomTags[i] != null) {
+    	        		dicomTags[i] = null;
+    	        	}
+    	        }
+    	        dicomTags = null;
+            }
+        	return;
+        }
 
         if (fileInfo.vr_type == FileInfoDicom.EXPLICIT) {
             String imageTagVR;

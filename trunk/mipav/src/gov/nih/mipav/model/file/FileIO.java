@@ -2550,7 +2550,6 @@ public class FileIO {
             }
         }
 
-        System.out.println("Save as Enc JPEG2000 is " + saveAsEncapJP2);
 
         boolean success = false;
 
@@ -10858,7 +10857,8 @@ public class FileIO {
         FileJP2 imageFile;
         // System.out.println("Hello, world!");
         try {
-            imageFile = new FileJP2(fileName, fileDir);
+        	progressBar = new ViewJProgressBar(fileName, FILE_READ + fileName + " ...", 0, 100, true, null, null, !quiet);
+            imageFile = new FileJP2(fileName, fileDir, progressBar);
             image = imageFile.readImage(false, one);
             LUT = imageFile.getModelLUT();
 
@@ -10908,17 +10908,11 @@ public class FileIO {
         int[] extents;
 
         try { // Construct a new file object
-            imageFile = new FileJP2(options.getFileName(), options.getFileDirectory());
-            createProgressBar(imageFile, options.getFileName(), FILE_WRITE);
+        	progressBar = new ViewJProgressBar(options.getFileName(), FILE_WRITE + options.getFileName() + " ...", 0, 100, true, null, null, !quiet);
+            imageFile = new FileJP2(options.getFileName(), options.getFileDirectory(), progressBar);
+            
 
-            if (LUT == null) {
-                extents = new int[2];
-                extents[0] = 4;
-                extents[1] = 256;
-                ((FileJP2) imageFile).writeImage(image, new ModelLUT(1, 256, extents), options);
-            } else {
-                ((FileJP2) imageFile).writeImage(image, LUT, options);
-            }
+            ((FileJP2) imageFile).writeImage(image);
         } catch (IOException error) {
 
             if ( !quiet) {
@@ -10934,7 +10928,8 @@ public class FileIO {
 
             return false;
         }
-
+        progressBar.dispose();
+        progressBar = null;
         return true;
     }
 

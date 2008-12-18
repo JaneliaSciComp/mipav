@@ -130,6 +130,8 @@ public class FileJP2 extends FileBase implements ActionListener{
     private DecimalFormat f = new DecimalFormat("##0.000");
     int nStartFrameDec , nEndFrameDec; 
     private JTextField decFrameStart = null,decFrameEnd = null ;    
+    
+    private ViewJProgressBar progressBar;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -141,10 +143,24 @@ public class FileJP2 extends FileBase implements ActionListener{
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileJP2(String fileName, String fileDir) throws IOException {
+    public FileJP2(String fileName, String fileDir, ViewJProgressBar progressBar) throws IOException {
         UI = ViewUserInterface.getReference();
         this.fileName = fileName;
         this.fileDir = fileDir;
+        this.progressBar = progressBar;
+    }
+    
+    
+    /**
+     * Tiff reader/writer constructor.
+     *
+     * @param      fileName  file name
+     * @param      fileDir   file directory
+     *
+     * @exception  IOException  if there is an error making the file
+     */
+    public FileJP2() throws IOException {
+
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -180,6 +196,169 @@ public class FileJP2 extends FileBase implements ActionListener{
     public int[] getImageBuffer() {
         return intBuffer;
     }
+    
+    
+    
+    public int[] decodeImageData(byte[] imageData, int imageType) {
+    	System.out.println("decoding compressed data");
+    	BEByteArrayInputStream inStream;
+        BlkImgDataSrc slc;
+        //DecoderRAW dec;
+        ParameterList defpl = new ParameterList();
+        ImgWriterRAW wr = null;
+        
+        //createDecGui();
+        //advDecOptDialog.setVisible(true);
+        //if (advDecOptDialog==null) {
+        //	return null;
+        //}
+        
+	  	String[][] param = DecoderRAW.getAllParameters();
+	    for (int i=param.length-1; i>=0; i--) {
+	  	    if(param[i][3]!=null){
+	  		defpl.put(param[i][0],param[i][3]);
+	  		}
+	  	}
+	    ParameterList pl = new ParameterList(defpl);
+	    //pl.put("nocolorspace","on");
+	    pl.put("verbose","off");
+	    //dec = new DecoderRAW(pl);
+	    DecoderRAWColor dec = new DecoderRAWColor(pl);
+	    inStream = new BEByteArrayInputStream(imageData);
+	    slc = dec.run1Slice(inStream);
+	    Coord nT = slc.getNumTiles(null);
+	    DataBlkInt db = new DataBlkInt();
+	    int w = slc.getImgWidth();
+        int h = slc.getImgHeight();
+	 // Loop on vertical tiles
+        DataBlkInt db0= null;
+        DataBlkInt db1= null;
+        DataBlkInt db2= null;
+        int[] levShift = null;
+        int fb[] = null;
+        int cFactor=4;
+        if(imageType == ModelStorageBase.ARGB) {
+        	db0 = new DataBlkInt();
+        	db1 = new DataBlkInt();
+        	db2 = new DataBlkInt();
+        	levShift = new int[3];
+        	fb = new int[3];
+        	fb[0] = slc.getFixedPoint(0);
+            fb[1] = slc.getFixedPoint(1);
+            fb[2] = slc.getFixedPoint(2);
+        	levShift[0] = 1<< (slc.getNomRangeBits(0)-1);
+            levShift[1] = 1<< (slc.getNomRangeBits(1)-1);
+            levShift[2] = 1<< (slc.getNomRangeBits(2)-1);
+        }
+        int[] barr = null;
+        for(int y=0; y<nT.y; y++){
+            // Loop on horizontal tiles
+            for(int x=0; x<nT.x; x++){
+            	slc.setTile(x,y);
+            	if(imageType == ModelStorageBase.ARGB) {
+            		db.ulx = 0;
+            		db.uly = 0;
+            		db.w = w;
+            		db.h = h;
+            		if(db.data!=null && db.data.length<w*h) {
+            			// A new one will be allocated by getInternCompData()
+            			db.data = null;
+            		}
+            		// Request the data and make sure it is not
+            		// progressive
+//            		do {
+//            			db = (DataBlkInt) src.getInternCompData(db,0);
+//            		} while (db.progressive);
+            		
+            		if(db0.data!=null && db0.data.length<w*h) {
+            			// A new one will be allocated by getInternCompData()
+            			db0.data = null;
+            		}
+            		if(db1.data!=null && db1.data.length<w*h) {
+            			// A new one will be allocated by getInternCompData()
+            			db1.data = null;
+            		}		
+            		if(db2.data!=null && db2.data.length<w*h) {
+            			// A new one will be allocated by getInternCompData()
+            			db2.data = null;
+            		}		
+            		int dataLength;
+
+            		
+            		db0 = (DataBlkInt) slc.getInternCompData(db,0);
+            		dataLength = db0.data.length;
+            		barr = new int[cFactor * dataLength];
+            		
+            		if (fb[0]==0) {
+            			for(int i=0;i<dataLength;i++){
+            				barr[cFactor*i+1]=db0.data[i]+ levShift[0];	
+            				db0.data[i] = db0.data[i] + levShift[0];
+            			
+            			}
+            		}else{
+            			for(int i=0;i<dataLength;i++){
+            				barr[cFactor*i+1] = db0.data[i]>>>fb[0] + levShift[0];
+            			}
+            		}
+            		
+            		db1 = (DataBlkInt) slc.getInternCompData(db,1);
+            		if (fb[1]==0) {
+            			for(int i=0;i<dataLength;i++){
+            				barr[cFactor*i+2]=db1.data[i]+ levShift[1];				
+            				db1.data[i] = db1.data[i] + levShift[1];
+            			}
+            		}else{
+            			for(int i=0;i<dataLength;i++){
+            				barr[cFactor*i+2] = db1.data[i]>>>fb[1] + levShift[1];
+            			}
+            		}
+            	
+            		db2 = (DataBlkInt) slc.getInternCompData(db,2);
+            		if (fb[2]==0) {
+            			for(int i=0;i<dataLength;i++){
+            				barr[cFactor*i+3]=db2.data[i]+ levShift[2];				
+            				db2.data[i] = db2.data[i] + levShift[2];
+            			}
+            		}else{
+            			for(int i=0;i<dataLength;i++){
+            				barr[cFactor*i+3] = db2.data[i]>>>fb[2] + levShift[2];
+            			}
+            		}		
+            	}else {
+	            	db.ulx = 0;
+	                db.uly = 0;
+	                db.w = w;
+	                db.h = h;
+	            
+	                if(db.data!=null && db.data.length<w*h) {
+	                    // A new one will be allocated by getInternCompData()
+	                    db.data = null;
+	                }
+	                // Request the data and make sure it is not
+	                // progressive
+	                do {
+	                    db = (DataBlkInt) slc.getInternCompData(db,0);
+	                } while (db.progressive);
+            	}
+	
+            } // End loop on horizontal tiles            
+        } // End loop on vertical tiles
+	    
+	    
+	    
+	    
+	    
+	    
+	    //db = (DataBlkInt) slc.getInternCompData(db,0);
+        int[] vals = null;
+        if(imageType == ModelStorageBase.ARGB) {
+        	vals = barr;
+        }else {
+        	vals = db.data;
+        }
+	
+	    return vals;
+    }
 
     /**
      * Reads the JP2 header which indicates the number of slices and each slice's size.
@@ -210,7 +389,7 @@ public class FileJP2 extends FileBase implements ActionListener{
         FileInputStream f = rawhd.readRawJP2Header(infile);
 
         BEByteArrayInputStream inStream;
-        BlkImgDataSrc slc;
+ //       BlkImgDataSrc slc;
 //        DataBlkInt blk = new DataBlkInt();
         
         
@@ -262,13 +441,13 @@ public class FileJP2 extends FileBase implements ActionListener{
         }
     
 //---        
-        createDecGui();
-        advDecOptDialog.setVisible(true);
-        if (advDecOptDialog==null) {
-        	return null;
-        }
-        nStartFrameDec = Integer.parseInt(decFrameStart.getText());
-        nEndFrameDec = Integer.parseInt(decFrameEnd.getText());
+    //    createDecGui();
+   //     advDecOptDialog.setVisible(true);
+    //    if (advDecOptDialog==null) {
+     //   	return null;
+     //   }
+    //    nStartFrameDec = Integer.parseInt(decFrameStart.getText());
+    //    nEndFrameDec = Integer.parseInt(decFrameEnd.getText());
 //---
         fileInfo = new FileInfoJP2(fileName, fileDir, FileUtility.JP2);
         fileInfo.setEndianess(endianess);
@@ -284,7 +463,7 @@ public class FileJP2 extends FileBase implements ActionListener{
 //        fileInfo.s
 
 
-        DecoderRAW dec;
+        //DecoderRAW dec;
         ParameterList defpl = new ParameterList();
         
 	  	String[][] param = DecoderRAW.getAllParameters();
@@ -298,10 +477,12 @@ public class FileJP2 extends FileBase implements ActionListener{
         pl.put("i", infile);
         pl.put("o", "outfile.raw");
 
-	    pl.put("nocolorspace","on");
+	    //pl.put("nocolorspace","off");
+        //pl.put("colorspace","on");  //color test
 	    pl.put("verbose","off");
 	    
-	    dec = new DecoderRAW(pl);
+	    //dec = new DecoderRAW(pl);
+	    DecoderRAWColor dec = new DecoderRAWColor(pl);
 	    if(is2D) {
 	    	image= new ModelImage(imgType, dimExtents_2d,infile);
 	    }else {
@@ -337,24 +518,33 @@ public class FileJP2 extends FileBase implements ActionListener{
         	long nBytesToSkip = 0;
         	
         	for (si = 0; si<nStartFrameDec;si++){
+
         		nBytesToSkip += rawhd.getSize(si);
         	}
         	f.skip(nBytesToSkip);
+        	BlkImgDataSrc slc;
             for (si=nStartFrameDec;si<=nEndFrameDec;si++){
             	b=new byte[rawhd.getSize(si)];
+
             	f.read(b);
             	inStream = new BEByteArrayInputStream(b);
 //            	JOptionPane.showMessageDialog(null, "Size of slice:" + Integer.toString(inStream.length()), "Debug", JOptionPane.INFORMATION_MESSAGE);
             	slc = dec.run1Slice(inStream);
 
             	if (si==nStartFrameDec){
-            		wr = new ImgWriterRAW(image,slc ,0,true);
+            		if (imgType==ModelStorageBase.ARGB){  
+            			wr = new ImgWriterRAWColor(image,slc,false);
+            		}else{
+            			wr = new ImgWriterRAW(image,slc,true);            			
+            		}
+            		wr.setImgType(imgType);
             	}else {
             		wr.setOffset(si-nStartFrameDec);
             		wr.setSrc(slc);
             	}
         		wr.writeSlice();
             }
+            f.close();
         } catch(IOException e) {
         }
 	    
@@ -383,7 +573,7 @@ public class FileJP2 extends FileBase implements ActionListener{
 */
  //   	image.importData(0, buf, /*mmFlag*/ false);
         image.calcMinMax();
-		image.setType(imgType);
+//		image.setType(imgType);
     	
     	return image;
     }
@@ -406,50 +596,69 @@ public class FileJP2 extends FileBase implements ActionListener{
         fileName = fName;
     }
 
-    /**
-     * This method writes a tiff image file.
-     *
-     * @param      image    image model where the data is stored.
-     * @param      LUT      LUT to be saved with image if not null.
-     * @param      options  options to be used to write out the image
-     *
-     * @exception  IOException  if there is an error writing the file.
-     */
-    public void writeImage(ModelImage image, ModelLUT LUT, FileWriteOptions options) throws IOException {
-          //raFile.close();
-    	EncoderRAW encRAW;        
+    
+    public void writeImage(ModelImage image){
+		
     	int[] imgExtents;
-    	String outfile = fileDir + fileName;
-        this.image = image;
-        
-        ParameterList defpl = new ParameterList();
-    	String[][] param = Encoder.getAllParameters();
-    	for (int i=param.length-1; i>=0; i--) {
-    	    if(param[i][3]!=null)
-    		defpl.put(param[i][0],param[i][3]);
-            }
+    	int imgType;
 
-    	// Create parameter list using defaults
-            ParameterList pl = new ParameterList(defpl);           
-            pl.put("i", "something.raw"); // to make the EncoderRAW happy
-            pl.put("o", outfile);
-            pl.put("lossless","on");
-            pl.put("verbose","off");
-            pl.put("Mct","off");
-            pl.put("file_format", "on");            
+    	String outfile = fileDir + fileName;
+
+        ParameterList defpl = new ParameterList();
+        String[][] param = Encoder.getAllParameters();
+        for (int i=param.length-1; i>=0; i--) {
+        	if(param[i][3]!=null)
+        		defpl.put(param[i][0],param[i][3]);
+        }
+
+        imgType = image.getType();
+        
+        // Create parameter list using defaults
+        ParameterList pl = new ParameterList(defpl);           
+        pl.put("i", "something.raw"); // to make the ncoder happy
+        pl.put("o", outfile);
+        pl.put("lossless","on");
+        pl.put("verbose","off");
+        
+        if (imgType==ModelStorageBase.ARGB){
+        	pl.put("Mct","on");
+        } else {
+        	pl.put("Mct","off");	
+        }
+
+        pl.put("file_format", "on");            
         // Get the dimension of image and number of slice
         imgExtents = image.getExtents();    
-        //this.w = imgExtents[0];
-        //this.h = imgExtents[1];
-        //this.imageSlice = imgExtents[2];
-        
-        //img = new ImgReaderRAW(image);
-        
-       encRAW = new EncoderRAW(pl,image);     
-       
-       // Compress image from BeginSlice to EndSlice
-       encRAW.runAllSlices(options.getBeginSlice(), options.getEndSlice(),true);
-    }
+
+        if (imgType==ModelStorageBase.ARGB){        
+        	EncoderRAWColor encRAW = new EncoderRAWColor(pl,image);
+        	if(image.getNDims() == 2) {
+        		encRAW.runAllSlices(0, 0,true, progressBar);//full mode: 0 -> imgExtents[2]-1  
+        	}else {
+        		encRAW.runAllSlices(0, imgExtents[2]-1,true, progressBar);//full mode: 0 -> imgExtents[2]-1  
+        	}
+        } else {       	
+        	EncoderRAW encRAW = new EncoderRAW(pl,image);
+        	if(image.getNDims() == 2) {
+        		encRAW.runAllSlices(0, 0,true, progressBar);
+        	}else {
+        		encRAW.runAllSlices(0, imgExtents[2]-1,true, progressBar);
+        	}
+        }
+	}
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     /**
      * This function is not used. Instead, use the RAWJP2Header class.
