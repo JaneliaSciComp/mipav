@@ -582,7 +582,7 @@ public class FileSPM extends FileBase {
         fileInfo.setCalUnits(new String(bufferByte, 60, 8));
 
         // fileInfo.cal_units.concat("\n");
-        fileInfo.setOrientation((byte) bufferByte[252]);
+        fileInfo.setOrientation(bufferByte[252]);
         fileInfo.setDataType(getBufferShort(bufferByte, 70, endianess));
         Preferences.debug("FileSPM:readHeader. Data type = " + fileInfo.getDataTypeCode() + "\n", 2);
 
@@ -829,27 +829,8 @@ public class FileSPM extends FileBase {
     public void reOrgInfo(ModelImage image, FileInfoSPM fileInfo) {
         int i;
 
-        switch (fileInfo.getOrientation()) {
-
-            case FileInfoSPM.TRANSVERSE_FLIPPED:
-            case FileInfoSPM.TRANSVERSE_UNFLIPPED:
-                fileInfo.setImageOrientation(FileInfoBase.AXIAL);
-                break;
-
-            case FileInfoSPM.CORONAL_FLIPPED:
-            case FileInfoSPM.CORONAL_UNFLIPPED:
-                fileInfo.setImageOrientation(FileInfoBase.CORONAL);
-                break;
-
-            case FileInfoSPM.SAGITTAL_FLIPPED:
-            case FileInfoSPM.SAGITTAL_UNFLIPPED:
-                fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
-                break;
-
-            default:
-                fileInfo.setImageOrientation(FileInfoBase.UNKNOWN_ORIENT);
-                break;
-        }
+        fileInfo.setOrientation(fileInfo.getOrientation());
+        
 
         if (image.getNDims() == 2) {
             fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
@@ -1518,24 +1499,47 @@ public class FileSPM extends FileBase {
             setBufferString(bufferByte, FileInfoBase.getModalityStr(modality), 148);
 
             setBufferString(bufferByte, " ", 228);
-
+            
             byte tmpByte;
-
-            switch (myFileInfo.getImageOrientation()) {
-
-                case FileInfoBase.SAGITTAL:
-                    tmpByte = 2;
-                    break;
-
-                case FileInfoBase.CORONAL:
-                    tmpByte = 1;
-                    break;
-
-                case FileInfoBase.AXIAL:
-                default:
-                    tmpByte = 0;
-                    break;
+            int axis[] = myFileInfo.getAxisOrientation();
+            int imageOrientation = myFileInfo.getImageOrientation();
+            if ((axis[0] == FileInfoBase.ORI_R2L_TYPE) && (axis[1] == FileInfoBase.ORI_P2A_TYPE) &&
+                (axis[2] == FileInfoBase.ORI_I2S_TYPE)) {
+                tmpByte = 0; // transverse unflipped
             }
+            else if ((axis[0] == FileInfoBase.ORI_R2L_TYPE) && (axis[1] == FileInfoBase.ORI_I2S_TYPE) &&
+                     (axis[2] == FileInfoBase.ORI_P2A_TYPE)) {
+                tmpByte = 1; // coronal unflipped
+            }
+            else if ((axis[0] == FileInfoBase.ORI_P2A_TYPE) && (axis[1] == FileInfoBase.ORI_I2S_TYPE) &&
+                     (axis[2] == FileInfoBase.ORI_R2L_TYPE)) {
+                tmpByte = 2; // sagittal unflipped
+            }
+            else if ((axis[0] == FileInfoBase.ORI_R2L_TYPE) && (axis[1] == FileInfoBase.ORI_A2P_TYPE) &&
+                     (axis[2] == FileInfoBase.ORI_I2S_TYPE)) {
+                tmpByte = 3; // transverse flipped
+            }
+            else if ((axis[0] == FileInfoBase.ORI_R2L_TYPE) && (axis[1] == FileInfoBase.ORI_S2I_TYPE) &&
+                     (axis[2] == FileInfoBase.ORI_P2A_TYPE)) {
+                tmpByte = 4; // coronal flipped
+            }
+            else if ((axis[0] == FileInfoBase.ORI_P2A_TYPE) && (axis[1] == FileInfoBase.ORI_S2I_TYPE) &&
+                     (axis[2] == FileInfoBase.ORI_R2L_TYPE)) {
+                tmpByte = 5; // sagittal flipped
+            }
+            else if (imageOrientation == FileInfoBase.AXIAL) {
+                tmpByte = 3; // transverse flipped
+            }
+            else if (imageOrientation == FileInfoBase.CORONAL) {
+                tmpByte = 1; // coronal unflipped
+            }
+            else if (imageOrientation == FileInfoBase.SAGITTAL) {
+                tmpByte = 2; // sagittal unflipped
+            } 
+            else {
+                tmpByte = 3; // transverse flipped
+            }
+            
 
             bufferByte[252] = tmpByte;
             origin = new short[] { 0, 0, 0, 0, 0 };
