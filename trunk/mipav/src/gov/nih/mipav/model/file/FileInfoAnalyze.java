@@ -78,25 +78,25 @@ public class FileInfoAnalyze extends FileInfoBase {
      * movie sequence. 0 - transverse unflipped 1 - coronal unflipped 2 - sagitttal unflipped 3 - transverse flipped 4 -
      * coronal flipped 5 - sagitttal flipped
      */
-    public static final int UNKNOWN_ORIENT = -1;
+    public static final byte UNKNOWN_ORIENT = -1;
 
     /** DOCUMENT ME! */
-    public static final int TRANSVERSE_UNFLIPPED = 0;
+    public static final byte TRANSVERSE_UNFLIPPED = 0;
 
     /** DOCUMENT ME! */
-    public static final int CORONAL_UNFLIPPED = 1;
+    public static final byte CORONAL_UNFLIPPED = 1;
 
     /** DOCUMENT ME! */
-    public static final int SAGITTAL_UNFLIPPED = 2;
+    public static final byte SAGITTAL_UNFLIPPED = 2;
 
     /** DOCUMENT ME! */
-    public static final int TRANSVERSE_FLIPPED = 3;
+    public static final byte TRANSVERSE_FLIPPED = 3;
 
     /** DOCUMENT ME! */
-    public static final int CORONAL_FLIPPED = 4;
+    public static final byte CORONAL_FLIPPED = 4;
 
     /** DOCUMENT ME! */
-    public static final int SAGITTAL_FLIPPED = 5;
+    public static final byte SAGITTAL_FLIPPED = 5;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -900,36 +900,6 @@ public class FileInfoAnalyze extends FileInfoBase {
     }
 
     /**
-     * Sets the axis orientation based on the image orientation.
-     *
-     * @param  imageOrient  the image's orienation (Axial, Sagittal, Coronal)
-     */
-    public void setAxisOrientation(int imageOrient) {
-
-        if (imageOrient == FileInfoBase.AXIAL) {
-            unused1 = (short) FileInfoBase.ORI_R2L_TYPE;
-            unused2 = (short) FileInfoBase.ORI_A2P_TYPE;
-            unused3 = (short) FileInfoBase.ORI_I2S_TYPE;
-        } else if (imageOrient == FileInfoBase.SAGITTAL) {
-            unused1 = (short) FileInfoBase.ORI_P2A_TYPE;
-            unused2 = (short) FileInfoBase.ORI_S2I_TYPE;
-            unused3 = (short) FileInfoBase.ORI_R2L_TYPE;
-        } else if (imageOrient == FileInfoBase.CORONAL) {
-            unused1 = (short) FileInfoBase.ORI_R2L_TYPE;
-            unused2 = (short) FileInfoBase.ORI_S2I_TYPE;
-            unused3 = (short) FileInfoBase.ORI_P2A_TYPE;
-        } else {
-            unused1 = (short) FileInfoBase.ORI_UNKNOWN_TYPE;
-            unused2 = (short) FileInfoBase.ORI_UNKNOWN_TYPE;
-            unused3 = (short) FileInfoBase.ORI_UNKNOWN_TYPE;
-        }
-
-        super.setAxisOrientation(unused1, 0);
-        super.setAxisOrientation(unused2, 1);
-        super.setAxisOrientation(unused3, 2);
-    }
-
-    /**
      * Sets orientation of each axis.
      *
      * @param  axOrient  axis orientation array
@@ -1216,28 +1186,6 @@ public class FileInfoAnalyze extends FileInfoBase {
         hkey_un0 = hk;
     }
 
-    /**
-     * Sets the orientation using MIPAV specific orientation. (AXIAL, SAGITTAL, CORONAL, UNKNOWN)
-     *
-     * @param  orientation  1 these options (AXIAL, SAGITTAL, CORONAL, UNKNOWN)
-     *
-     * @see    FileInfoBase
-     */
-    public void setImageOrientation(int orientation) {
-
-        if (orientation == FileInfoBase.AXIAL) {
-            orient = (byte) FileInfoAnalyze.TRANSVERSE_UNFLIPPED;
-        } else if (orientation == FileInfoBase.CORONAL) {
-            orient = (byte) FileInfoAnalyze.CORONAL_UNFLIPPED;
-        } else if (orientation == FileInfoBase.SAGITTAL) {
-            orient = (byte) FileInfoAnalyze.SAGITTAL_UNFLIPPED;
-        } else {
-            orient = FileInfoAnalyze.UNKNOWN_ORIENT;
-        }
-
-        super.setImageOrientation(orientation);
-        setAxisOrientation(orientation);
-    }
 
     /**
      * Sets omax. If supplied value is less than omin, the omin gets reset to the supplied value as well, so that omin
@@ -1277,36 +1225,47 @@ public class FileInfoAnalyze extends FileInfoBase {
      * @see  FileInfoBase#setImageOrientation(int)
      */
     public void setOrientation(byte orientation) {
-
-        if ((orientation == (byte) FileInfoAnalyze.TRANSVERSE_UNFLIPPED) ||
-                (orientation == (byte) FileInfoAnalyze.CORONAL_UNFLIPPED) ||
-                (orientation == (byte) FileInfoAnalyze.SAGITTAL_UNFLIPPED) ||
-                (orientation == (byte) FileInfoAnalyze.TRANSVERSE_FLIPPED) ||
-                (orientation == (byte) FileInfoAnalyze.CORONAL_FLIPPED) ||
-                (orientation == (byte) FileInfoAnalyze.SAGITTAL_FLIPPED)) {
-
-            orient = orientation;
-
-            if ((orientation == (byte) FileInfoAnalyze.TRANSVERSE_UNFLIPPED) ||
-                    (orientation == (byte) FileInfoAnalyze.TRANSVERSE_FLIPPED)) {
-                super.setImageOrientation(FileInfoBase.AXIAL);
-                setAxisOrientation(FileInfoBase.AXIAL);
-            } else if ((orientation == (byte) FileInfoAnalyze.CORONAL_UNFLIPPED) ||
-                           (orientation == (byte) FileInfoAnalyze.CORONAL_FLIPPED)) {
-                super.setImageOrientation(FileInfoBase.CORONAL);
-                setAxisOrientation(FileInfoBase.CORONAL);
-            } else if ((orientation == (byte) FileInfoAnalyze.SAGITTAL_UNFLIPPED) ||
-                           (orientation == (byte) FileInfoAnalyze.SAGITTAL_FLIPPED)) {
-                super.setImageOrientation(FileInfoBase.SAGITTAL);
-                setAxisOrientation(FileInfoBase.SAGITTAL);
-            } else {
-                super.setImageOrientation(FileInfoBase.UNKNOWN_ORIENT);
-            }
+        int axisX, axisY, axisZ;
+        orient = orientation;
+        if (orientation == FileInfoSPM.TRANSVERSE_UNFLIPPED) {
+            super.setImageOrientation(FileInfoBase.AXIAL);
+            axisX = FileInfoBase.ORI_R2L_TYPE;
+            axisY = FileInfoBase.ORI_P2A_TYPE;
+            axisZ = FileInfoBase.ORI_I2S_TYPE;
+        } else if (orientation == FileInfoSPM.TRANSVERSE_FLIPPED) {
+            super.setImageOrientation(FileInfoBase.AXIAL);
+            axisX = FileInfoBase.ORI_R2L_TYPE;
+            axisY = FileInfoBase.ORI_A2P_TYPE;
+            axisZ = FileInfoBase.ORI_I2S_TYPE;
+        } else if (orientation == FileInfoSPM.CORONAL_UNFLIPPED) {
+            super.setImageOrientation(FileInfoBase.CORONAL);
+            axisX = FileInfoBase.ORI_R2L_TYPE;
+            axisY = FileInfoBase.ORI_I2S_TYPE;
+            axisZ = FileInfoBase.ORI_P2A_TYPE; 
+        } else if (orientation == FileInfoSPM.CORONAL_FLIPPED) {
+            super.setImageOrientation(FileInfoBase.CORONAL);
+            axisX = FileInfoBase.ORI_R2L_TYPE;
+            axisY = FileInfoBase.ORI_S2I_TYPE;
+            axisZ = FileInfoBase.ORI_P2A_TYPE; 
+        } else if (orientation == FileInfoSPM.SAGITTAL_UNFLIPPED) {
+            super.setImageOrientation(FileInfoBase.SAGITTAL); 
+            axisX = FileInfoBase.ORI_P2A_TYPE;
+            axisY = FileInfoBase.ORI_I2S_TYPE;
+            axisZ = FileInfoBase.ORI_R2L_TYPE;
+        } else if (orientation == FileInfoSPM.SAGITTAL_FLIPPED) {
+            super.setImageOrientation(FileInfoBase.SAGITTAL);
+            axisX = FileInfoBase.ORI_P2A_TYPE;
+            axisY = FileInfoBase.ORI_S2I_TYPE;
+            axisZ = FileInfoBase.ORI_R2L_TYPE;
         } else {
             super.setImageOrientation(FileInfoBase.UNKNOWN_ORIENT);
-            orient = FileInfoAnalyze.UNKNOWN_ORIENT;
-            setAxisOrientation(orient);
+            axisX = FileInfoBase.ORI_UNKNOWN_TYPE;
+            axisY = FileInfoBase.ORI_UNKNOWN_TYPE;
+            axisZ = FileInfoBase.ORI_UNKNOWN_TYPE;
         }
+        super.setAxisOrientation(axisX, 0);
+        super.setAxisOrientation(axisY, 1);
+        super.setAxisOrientation(axisZ, 2);
 
     }
 
