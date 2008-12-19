@@ -818,7 +818,7 @@ public class FileAnalyze extends FileBase {
         fileInfo.setCalUnits(new String(bufferImageHeader, 60, 4));
 
 
-        fileInfo.setOrientation((byte) bufferImageHeader[252]);
+        fileInfo.setOrientation(bufferImageHeader[252]);
 
         // MIPAV is hacking the analyze format to use the unused
         // variables to store axis orientation.
@@ -1097,27 +1097,7 @@ public class FileAnalyze extends FileBase {
     public void reOrgInfo(ModelImage image, FileInfoAnalyze fileInfo) {
         int i;
 
-        switch (fileInfo.getOrientation()) {
-
-            case FileInfoAnalyze.TRANSVERSE_FLIPPED:
-            case FileInfoAnalyze.TRANSVERSE_UNFLIPPED:
-                fileInfo.setImageOrientation(FileInfoBase.AXIAL);
-                break;
-
-            case FileInfoAnalyze.CORONAL_FLIPPED:
-            case FileInfoAnalyze.CORONAL_UNFLIPPED:
-                fileInfo.setImageOrientation(FileInfoBase.CORONAL);
-                break;
-
-            case FileInfoAnalyze.SAGITTAL_FLIPPED:
-            case FileInfoAnalyze.SAGITTAL_UNFLIPPED:
-                fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
-                break;
-
-            default:
-                fileInfo.setImageOrientation(FileInfoBase.UNKNOWN_ORIENT);
-                break;
-        }
+        fileInfo.setOrientation(fileInfo.getOrientation());
 
         if (image.getNDims() == 2) {
             fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
@@ -1734,21 +1714,43 @@ public class FileAnalyze extends FileBase {
             setBufferString(bufferImageHeader, " ", 228);
 
             byte tmpByte;
-
-            switch (myFileInfo.getImageOrientation()) {
-
-                case FileInfoBase.SAGITTAL:
-                    tmpByte = 2;
-                    break;
-
-                case FileInfoBase.CORONAL:
-                    tmpByte = 1;
-                    break;
-
-                case FileInfoBase.AXIAL:
-                default:
-                    tmpByte = 0;
-                    break;
+            int axis[] = myFileInfo.getAxisOrientation();
+            int imageOrientation = myFileInfo.getImageOrientation();
+            if ((axis[0] == FileInfoBase.ORI_R2L_TYPE) && (axis[1] == FileInfoBase.ORI_P2A_TYPE) &&
+                (axis[2] == FileInfoBase.ORI_I2S_TYPE)) {
+                tmpByte = 0; // transverse unflipped
+            }
+            else if ((axis[0] == FileInfoBase.ORI_R2L_TYPE) && (axis[1] == FileInfoBase.ORI_I2S_TYPE) &&
+                     (axis[2] == FileInfoBase.ORI_P2A_TYPE)) {
+                tmpByte = 1; // coronal unflipped
+            }
+            else if ((axis[0] == FileInfoBase.ORI_P2A_TYPE) && (axis[1] == FileInfoBase.ORI_I2S_TYPE) &&
+                     (axis[2] == FileInfoBase.ORI_R2L_TYPE)) {
+                tmpByte = 2; // sagittal unflipped
+            }
+            else if ((axis[0] == FileInfoBase.ORI_R2L_TYPE) && (axis[1] == FileInfoBase.ORI_A2P_TYPE) &&
+                     (axis[2] == FileInfoBase.ORI_I2S_TYPE)) {
+                tmpByte = 3; // transverse flipped
+            }
+            else if ((axis[0] == FileInfoBase.ORI_R2L_TYPE) && (axis[1] == FileInfoBase.ORI_S2I_TYPE) &&
+                     (axis[2] == FileInfoBase.ORI_P2A_TYPE)) {
+                tmpByte = 4; // coronal flipped
+            }
+            else if ((axis[0] == FileInfoBase.ORI_P2A_TYPE) && (axis[1] == FileInfoBase.ORI_S2I_TYPE) &&
+                     (axis[2] == FileInfoBase.ORI_R2L_TYPE)) {
+                tmpByte = 5; // sagittal flipped
+            }
+            else if (imageOrientation == FileInfoBase.AXIAL) {
+                tmpByte = 3; // transverse flipped
+            }
+            else if (imageOrientation == FileInfoBase.CORONAL) {
+                tmpByte = 1; // coronal unflipped
+            }
+            else if (imageOrientation == FileInfoBase.SAGITTAL) {
+                tmpByte = 2; // sagittal unflipped
+            } 
+            else {
+                tmpByte = 3; // transverse flipped
             }
 
             bufferImageHeader[252] = tmpByte;
