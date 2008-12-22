@@ -644,7 +644,7 @@ public class FileDicom extends FileDicomBase {
                     tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, "PrivateTag",
                             "Private Tag"));
                 } else {
-                    FileDicomTagInfo info = (FileDicomTagInfo) DicomDictionary.getInfo(key);
+                    FileDicomTagInfo info = DicomDictionary.getInfo(key);
                     tagTable.putPrivateTagValue(info);
                     tagVM = info.getValueMultiplicity();
                     tagTable.get(key).setValueRepresentation(new String(vr));
@@ -928,12 +928,12 @@ public class FileDicom extends FileDicomBase {
                     }
 
                     if ( (imageLength + getFilePointer()) <= fileEnd) {
-                        fileInfo.setOffset((int) getFilePointer()); // Mark where the image is
+                        fileInfo.setOffset(getFilePointer()); // Mark where the image is
                     }
                     // I think the extra 4 bytes is for explicit tags!!
                     // see Part 5 page 27 1998
                     else if ( (imageLength + getFilePointer() + 4) <= fileEnd) {
-                        fileInfo.setOffset((int) getFilePointer() + 4);
+                        fileInfo.setOffset(getFilePointer() + 4);
                     } else {
 
                         // Preferences.debug( "File Dicom: readHeader: xDim = " + extents[0] + " yDim = " + extents[1] +
@@ -945,7 +945,7 @@ public class FileDicom extends FileDicomBase {
                         throw new IOException("Error while reading header");
                     }
                 } else { // encapsulated
-                    fileInfo.setOffset((int) (getFilePointer() - 12));
+                    fileInfo.setOffset(getFilePointer() - 12);
                 }
 
                 fileInfo.setExtents(extents);
