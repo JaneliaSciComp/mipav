@@ -11,6 +11,16 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -19,19 +29,25 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 
 /**
  * @author pandyan
  *
  */
-public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
+public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase implements ActionListener, WindowListener {
 	
 	/** input directory path **/
 	private String inputDirectoryPath;
@@ -57,11 +73,14 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     /** output File **/
     private File outputFile;
     
+    /** csv file **/
+    private File csvFile;
+    
     /** output stream **/
-    private FileOutputStream outputStream;
+    private FileOutputStream outputStream, outputStreamCSV;
     
     /** print stream **/
-    private PrintStream printStream;
+    private PrintStream printStream, printStreamCSV;
     
     /** outputText filename **/
     private String outputTextFileName;
@@ -84,6 +103,43 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     /** newUID String **/
     private String newUID;
     
+    /** handle to plugin dialog **/
+    private JDialog parentDialog;
+    
+    /** pop-up dialog in the case of when DOB is empty **/
+    private JDialog dobDialog;
+    
+    /** dob cancel button **/
+    private JButton dobCancelButton;
+    
+    /** dob ok button */
+    private JButton dobOKButton;
+    
+    /** boolean if user hits ok or cancel */
+    private boolean pressedOK = false;
+    
+    /** boolean if user cancels pop up dob dialog */
+    private boolean cancel = false;
+    
+    /** calculated age if dob is to be supplied **/
+    private int calculatedAge = -1;
+    
+    /** dob textfields **/
+    private JTextField dobMMTextField, dobDDTextField, dobYYYYTextField;
+    
+    /** hashmap of studyID and dobs **/
+    private HashMap studyIdAndDOBHashMap = new HashMap();
+    
+    /** dates **/
+    private Calendar dobCalendar, studyCalendar;
+    
+    /** todays date **/
+    private String todaysDateString;
+    
+    /** patientIDs that have been written out **/
+    private Vector donePatientIDs = new Vector();
+    
+    
     private static Vector<FileDicomKey> removeTagsVector;
     private static Vector<FileDicomKey> replaceTagsVector;
     private static Vector<FileDicomKey> encryptTagsVector;
@@ -93,6 +149,8 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     private static FileDicomKey patientDOBKey;
     private static FileDicomKey patientAgeKey;  
     private static FileDicomKey studyDateKey;
+    private static FileDicomKey studyIDKey;
+    private static FileDicomKey seriesNoKey;
     
     
     static {
@@ -196,11 +254,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     	patientDOBKey = new FileDicomKey("0010,0030");
     	patientAgeKey = new FileDicomKey("0010,1010");
     	studyDateKey = new FileDicomKey("0008,0020");
-    	
-    	
-    	
-    	
-    	
+    	studyIDKey = new FileDicomKey("0020,0010");
+    	seriesNoKey = new FileDicomKey("0020,0011");
+
     }
     
     
@@ -208,13 +264,14 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 	/**
 	 * constructor
 	 */
-	public PlugInAlgorithmNINDSAnonymizationTool(String inputDirectoryPath, String outputDirectoryPath, JTextArea outputTextArea, JLabel errorMessageLabel, boolean enableTextArea, boolean renameGrandParentDir) {
+	public PlugInAlgorithmNINDSAnonymizationTool(String inputDirectoryPath, String outputDirectoryPath, JTextArea outputTextArea, JLabel errorMessageLabel, boolean enableTextArea, boolean renameGrandParentDir, JDialog parentDialog) {
 		this.inputDirectoryPath = inputDirectoryPath;
 		this.outputDirectoryPath = outputDirectoryPath;
 		this.outputTextArea = outputTextArea;
 		this.errorMessageLabel = errorMessageLabel;
 		this.enableTextArea = enableTextArea;
 		this.renameGrandParentDir = renameGrandParentDir;
+		this.parentDialog = parentDialog;
 
 		fileIO = new FileIO();
 		fileIO.setQuiet(true);
@@ -243,6 +300,13 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 			outputFile = new File(inputDirectoryPath + File.separator + outputTextFileName);
         	outputStream = new FileOutputStream(outputFile);
         	printStream = new PrintStream(outputStream);
+        	String csvFileName = inputDirectoryPath.substring(inputDirectoryPath.lastIndexOf(File.separator) + 1, inputDirectoryPath.length()) + ".csv";
+        	csvFile = new File(inputDirectoryPath + File.separator + csvFileName);
+        	outputStreamCSV = new FileOutputStream(csvFile,true);
+        	printStreamCSV = new PrintStream(outputStreamCSV);
+        	Calendar t = Calendar.getInstance();
+    		SimpleDateFormat sdf = new SimpleDateFormat("MMddyyyy");
+    		todaysDateString = sdf.format(t.getTime());
         }catch(Exception e) {
         	
         }
@@ -276,7 +340,6 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
         
         // first create a File object based upon the study path
         File inputDirectoryRoot = new File(inputDirectoryPath);
-        
 
         success = parse(inputDirectoryRoot);
 
@@ -342,8 +405,16 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 	                		if((FileUtility.isDicom(children[i].getName(), children[i].getParent() + File.separator, true) == FileUtility.DICOM) || (FileUtility.isDicom_ver2(children[i].getName(), children[i].getParent() + File.separator, true) == FileUtility.DICOM)) {
 
 	                			success = anonymizeDICOM(children[i]);
-
 	                	        if (success == false) {
+	                	        	if(cancel == true) {
+	                	        		//if user hits cancel from the DOB dialog...cancel the algorithm
+	                	        		if(enableTextArea) {
+	                	            		outputTextArea.append("! Algorithm Canceled \n");
+	                	            	}
+	                	            	errorMessageLabel.setText("! Algorithm Canceled");
+	                	            	printStream.println("! Algorithm Canceled");
+	                	        		return false;
+	                	        	}
 	                				if(enableTextArea) {
 	                					outputTextArea.append("!!!!!!!!!!!!!!!!!!!! ERROR IN ANONYMIZING " + children[i].getName() + " \n\n");
 	                				}
@@ -455,6 +526,16 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 	 */
     public boolean anonymizeDICOMTags() {
     	tagTable = fileInfoDicom.getTagTable();
+    	String studyID = ((String)tagTable.getValue(studyIDKey)).trim();
+    	String seriesNo = ((String)tagTable.getValue(seriesNoKey)).trim();
+    	if(enableTextArea) {
+			outputTextArea.append("Study ID is " + studyID + " \n");
+		}
+		printStream.println("Study ID is " + studyID);
+    	
+    	
+    	boolean validDOB = true;
+    	String studyDate = "";
     	int size;
 
     	//couple of the tags (patient name (0010,0010)and patient id(0010,0020) will be replaced with a new UID which is Suject ID + DOB
@@ -479,51 +560,97 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 			return false;
 		}
 		
+		studyDate = ((String)tagTable.getValue(studyDateKey)).trim();
+		if(studyDate.contains("/")) {
+			studyDate = studyDate.replaceAll("\\/", "");
+		}
+		if(studyDate.length() != 8) {
+			if(enableTextArea) {
+				outputTextArea.append("! Study Date(0008,0020) value is not a valid entry \n");
+			}
+			printStream.println("! Study Date(0008,0020) value is not a valid entry");
+			return false;
+		}
+		String sdmmString = studyDate.substring(0, 2);
+		String sdddString = studyDate.substring(2, 4);
+		String sdyyyyString = studyDate.substring(4, 8);
+		int sdmm = Integer.valueOf(sdmmString);
+		int sddd = Integer.valueOf(sdddString);
+		int sdyyyy = Integer.valueOf(sdyyyyString);
 		
 		if(tagTable.containsTag(patientDOBKey)) {
 			dob = ((String)tagTable.getValue(patientDOBKey)).trim();
-		}
-		
-		//if dob is there, create newUID using this field....otherwise use studydate
-		if(!dob.equals("")) {
 			if(dob.contains("/")) {
 				dob = dob.replaceAll("\\/", "");
 			}
-			int dobInt = 0;
-			try {
-				dobInt = new Integer(dob).intValue();
-			}catch(NumberFormatException e) {
-				if(enableTextArea) {
-					outputTextArea.append("! Patient DOB(0010,0030) value is not a valid entry \n");
+		}
+		//dob length is 8  MMYYDDDD
+		//dob might be written in "years"...but it also might have its length as 8...so test for that
+		int dobInt = 0;
+		if(dob.equals("")) {
+			validDOB = false;
+		}else {
+			if(dob.length() == 8) {
+				try{
+					dobInt = Integer.valueOf(dob);
+					validDOB = true;
+				}catch(NumberFormatException e) {
+					validDOB = false;
 				}
-				printStream.println("! Patient DOB(0010,0030) value is not a valid entry");
-				e.printStackTrace();
-				return false;
+			}else {
+				validDOB = false;
 			}
-			int newUIDInt = patientIDInt + dobInt;
+		}
+		
+		int newUIDInt = 0;
+		String userEnteredDOB = "";
+		//if dob is there and in right format , create newUID using this field....otherwise if dob is not there
+		if(validDOB) {
+			newUIDInt = patientIDInt + dobInt;
 			newUID = String.valueOf(newUIDInt);
 		}else {
+			//we need to get DOB as a user entry...but first see if user already supplied it
+			boolean success = studyIdAndDOBHashMap.containsKey(studyID);
 
-			String sDate = ((String)tagTable.getValue(studyDateKey)).trim();
-			
-			if(sDate.contains("/")) {
-				sDate = sDate.replaceAll("\\/", "");
-			}
-			int sDateInt = 0;
-			try {
-				sDateInt = new Integer(sDate).intValue();
-			}catch(NumberFormatException e) {
-				if(enableTextArea) {
-					outputTextArea.append("! Study Date(0008,0020) value is not a valid entry \n");
+			if(!success) {
+				createDOBDialog(this, studyID);
+				while (!pressedOK) {
+	                try {
+	                    sleep(5L);
+	                } catch (InterruptedException error) { }
+	            }
+				if (cancel) {
+					return false;
 				}
-				printStream.println("! Study Date(0008,0020) value is not a valid entry");
-				e.printStackTrace();
-				return false;
-			}
-			int newUIDInt = patientIDInt + sDateInt;
-			newUID = String.valueOf(newUIDInt);
-		}
+				
+				String mmString = dobMMTextField.getText();
+				String ddString = dobDDTextField.getText();
+				String yyyyString = dobYYYYTextField.getText();
+				int mm = Integer.valueOf(mmString);
+				int dd = Integer.valueOf(ddString);
+				int yyyy = Integer.valueOf(yyyyString);
+				userEnteredDOB = mmString + ddString + yyyyString;
+				studyIdAndDOBHashMap.put(studyID, userEnteredDOB);
+				dobInt = Integer.valueOf(userEnteredDOB);
+				newUIDInt = patientIDInt + dobInt;
+				newUID = String.valueOf(newUIDInt);
+				dobCalendar = Calendar.getInstance();
+				dobCalendar.set(yyyy, mm, dd);
+				studyCalendar = Calendar.getInstance();
+				studyCalendar.set(sdyyyy, sdmm, sddd);
+				calculatedAge = calculateAge(dobCalendar,studyCalendar);
 
+				
+			}else {
+				//get dob from the hashmap since they already entered it
+				userEnteredDOB = (String)studyIdAndDOBHashMap.get(studyID);
+				dobInt = Integer.valueOf(userEnteredDOB);
+				newUIDInt = patientIDInt + dobInt;
+				newUID = String.valueOf(newUIDInt);
+				
+			}
+
+		}
 
     	//one will get replaced with current date...so get current date
     	DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
@@ -557,7 +684,11 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
         //patient's birthdate (0010,0030) will be replaced with patients age...so get patients age
         String patientsAge = "";
         if(tagTable.containsTag(patientAgeKey)) {
-        	patientsAge = (String)tagTable.getValue(patientAgeKey);
+        	if(calculatedAge != -1) {
+        		patientsAge = String.valueOf(calculatedAge);
+        	}else {
+        		patientsAge = (String)tagTable.getValue(patientAgeKey);
+        	}
         }
         
         //Study Instance UID (0020,000D) and Series Instance UID (0002,000E) need MIPAV version and time in milliseconds
@@ -570,10 +701,12 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
     	seriesInstanceUID = "1.2.840.9999.9." + mipavVersion + "." + time + ".1";
     	
     	
-    	
-    	
-    	
-    	
+    	//write out csvFile
+    	if(!donePatientIDs.contains(patientID)) {
+    		printStreamCSV.println(patientID + "," + dobInt + "," + patientsAge + "," + studyDate + "," + studyID + "," + seriesNo + "," + todaysDateString);
+    		donePatientIDs.add(patientID);
+    	}
+
     	//replace specific defined tags
     	size = replaceTagsVector.size();
     	String s;
@@ -583,6 +716,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
         		String keyString = key.getKey();
         		if(keyString.equals("0002,0003")) {
         			s = (String)tagTable.getValue(key);
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			if(enableTextArea) {
             			outputTextArea.append("- Replacing (0002,0003) value of " + s + " to " + bogusSOPID  + " \n");
             		}
@@ -590,6 +726,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
             		tagTable.setValue(key, bogusSOPID);
         		}else if(keyString.equals("0002,0012")) {
         			s = (String)tagTable.getValue(key);
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			if(enableTextArea) {
             			outputTextArea.append("- Replacing (0002,0012) value of " + s + " to " + bogusImplementationID  + " \n");
             		}
@@ -597,6 +736,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
             		tagTable.setValue(key, bogusImplementationID);
         		}else if(keyString.equals("0008,0012")) {
         			s = (String)tagTable.getValue(key);
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			if(enableTextArea) {
             			outputTextArea.append("- Replacing (0008,0012) value of " + s + " to " + currentDate  + " \n");
             		}
@@ -604,6 +746,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
             		tagTable.setValue(key, currentDate);
         		}else if(keyString.equals("0008,0013")) {
         			s = (String)tagTable.getValue(key);
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			if(enableTextArea) {
             			outputTextArea.append("- Replacing (0008,0013) value of " + s + " to " + currentTime  + " \n");
             		}
@@ -612,6 +757,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
         			
         		}else if(keyString.equals("0008,0014")) {
         			s = (String)tagTable.getValue(key);
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			if(enableTextArea) {
             			outputTextArea.append("- Replacing (0008,0014) value of " + s + " to " + bogusImplementationID  + " \n");
             		}
@@ -619,6 +767,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
             		tagTable.setValue(key, bogusImplementationID);
         		}else if(keyString.equals("0008,0018")) {
         			s = (String)tagTable.getValue(key);
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			if(enableTextArea) {
             			outputTextArea.append("- Replacing (0008,0018) value of " + s + " to " + bogusSOPID  + " \n");
             		}
@@ -626,6 +777,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
             		tagTable.setValue(key, bogusSOPID);
         		}else if(keyString.equals("0008,0020")) {
         			s = (String)tagTable.getValue(key);
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			String k = s.substring(0, s.lastIndexOf("/")+1) + "1000";
             		if(enableTextArea) {
             			outputTextArea.append("- Replacing (0008,0020) value of " + s + " to " + k  + " \n");
@@ -634,6 +788,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
             		tagTable.setValue(key, k);
         		}else if(keyString.equals("0010,0010")) {
         			s = (String)tagTable.getValue(key);
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			if(enableTextArea) {
             			outputTextArea.append("- Replacing (0010,0010) value of " + s + " to " + newUID  + " \n");
             		}
@@ -641,20 +798,32 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
             		tagTable.setValue(key, newUID);
         		}else if(keyString.equals("0010,0020")) {
         			s = (String)tagTable.getValue(key);
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			if(enableTextArea) {
             			outputTextArea.append("- Replacing (0010,0020) value of " + s + " to " + newUID  + " \n");
             		}
             		printStream.println("- Replacing (0010,0020) value of " + s + " to " + newUID);
             		tagTable.setValue(key, newUID);
         		}else if(keyString.equals("0010,0030")) {
-        			s = (String)tagTable.getValue(key);
-        			if(enableTextArea) {
-            			outputTextArea.append("- Replacing (0010,0030) value of " + s + " to " + patientsAge  + " \n");
-            		}
-            		printStream.println("- Replacing (0010,0030) value of " + s + " to " + patientsAge);
-            		tagTable.setValue(key, patientsAge);
+        			//dont need to do anything id dob was entered as age
+        			if(validDOB || (!validDOB && dob.equals(""))) {
+	        			s = (String)tagTable.getValue(key);
+	        			if(s.trim().equals("")) {
+	        				s = "EMPTY VALUE";
+	        			}
+	        			if(enableTextArea) {
+	            			outputTextArea.append("- Replacing (0010,0030) value of " + s + " to " + patientsAge  + " \n");
+	            		}
+	            		printStream.println("- Replacing (0010,0030) value of " + s + " to " + patientsAge);
+	            		tagTable.setValue(key, patientsAge);
+        			}
         		}else if(keyString.equals("0020,000D")) {
         			s = (String)tagTable.getValue(key);
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			if(enableTextArea) {
             			outputTextArea.append("- Replacing (0020,000D) value of " + s + " to " + studyInstanceUID  + " \n");
             		}
@@ -662,6 +831,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
             		tagTable.setValue(key, studyInstanceUID);
         		}else if(keyString.equals("0020,000E")) {
         			s = (String)tagTable.getValue(key);
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			if(enableTextArea) {
             			outputTextArea.append("- Replacing (0020,000E) value of " + s + " to " + seriesInstanceUID  + " \n");
             		}
@@ -669,103 +841,127 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
             		tagTable.setValue(key, seriesInstanceUID);
         		}else if(keyString.equals("0020,0052")) {
         			s = ((String)tagTable.getValue(key)).trim();
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			int x = s.lastIndexOf(".");
+        			String n = "";
             		if(x != -1) {
             			String k = s.substring(0, x);
-            			s = k + ".99999";
+            			n = k + ".99999";
             		}else {
             			//need to figure out what to do here
             			//for now...just seet it to 99999
-            			s = "99999";
+            			n = "99999";
             		}
             		if(enableTextArea) {
-            			outputTextArea.append("- Replacing (0020,0052) value of " + s + " to " + s  + " \n");
+            			outputTextArea.append("- Replacing (0020,0052) value of " + s + " to " + n  + " \n");
             		}
-            		printStream.println("- Replacing (0020,0052) value of " + s + " to " + s);
-            		tagTable.setValue(key, s);
+            		printStream.println("- Replacing (0020,0052) value of " + s + " to " + n);
+            		tagTable.setValue(key, n);
         			
         		}else if(keyString.equals("0020,0200")) {
         			s = ((String)tagTable.getValue(key)).trim();
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			int x = s.lastIndexOf(".");
+        			String n = "";
             		if(x != -1) {
             			String k = s.substring(0, x);
-            			s = k + ".99999";
+            			n = k + ".99999";
             		}else {
             			//need to figure out what to do here
             			//for now...just seet it to 99999
-            			s = "99999";
+            			n = "99999";
             		}
             		if(enableTextArea) {
-            			outputTextArea.append("- Replacing (0020,0200) value of " + s + " to " + s  + " \n");
+            			outputTextArea.append("- Replacing (0020,0200) value of " + s + " to " + n  + " \n");
             		}
-            		printStream.println("- Replacing (0020,0200) value of " + s + " to " + s);
-            		tagTable.setValue(key, s);
+            		printStream.println("- Replacing (0020,0200) value of " + s + " to " + n);
+            		tagTable.setValue(key, n);
         			
         		}else if(keyString.equals("0040,A124")) {
         			s = ((String)tagTable.getValue(key)).trim();
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			int x = s.lastIndexOf(".");
+        			String n = "";
             		if(x != -1) {
             			String k = s.substring(0, x);
-            			s = k + ".99999";
+            			n = k + ".99999";
             		}else {
             			//need to figure out what to do here
             			//for now...just seet it to 99999
-            			s = "99999";
+            			n = "99999";
             		}
             		if(enableTextArea) {
-            			outputTextArea.append("- Replacing (0040,A124) value of " + s + " to " + s  + " \n");
+            			outputTextArea.append("- Replacing (0040,A124) value of " + s + " to " + n  + " \n");
             		}
-            		printStream.println("- Replacing (0040,A124) value of " + s + " to " + s);
-            		tagTable.setValue(key, s);
+            		printStream.println("- Replacing (0040,A124) value of " + s + " to " + n);
+            		tagTable.setValue(key, n);
         			
         		}else if(keyString.equals("0088,0140")) {
         			s = ((String)tagTable.getValue(key)).trim();
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			int x = s.lastIndexOf(".");
+        			String n = "";
             		if(x != -1) {
             			String k = s.substring(0, x);
-            			s = k + ".99999";
+            			n = k + ".99999";
             		}else {
             			//need to figure out what to do here
             			//for now...just seet it to 99999
-            			s = "99999";
+            			n = "99999";
             		}
             		if(enableTextArea) {
-            			outputTextArea.append("- Replacing (0088,0140) value of " + s + " to " + s  + " \n");
+            			outputTextArea.append("- Replacing (0088,0140) value of " + s + " to " + n  + " \n");
             		}
-            		printStream.println("- Replacing (0088,0140) value of " + s + " to " + s);
-            		tagTable.setValue(key, s);
+            		printStream.println("- Replacing (0088,0140) value of " + s + " to " + n);
+            		tagTable.setValue(key, n);
         		}else if(keyString.equals("3006,0024")) {
         			s = ((String)tagTable.getValue(key)).trim();
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			int x = s.lastIndexOf(".");
+        			String n = "";
             		if(x != -1) {
             			String k = s.substring(0, x);
-            			s = k + ".99999";
+            			n = k + ".99999";
             		}else {
             			//need to figure out what to do here
             			//for now...just seet it to 99999
-            			s = "99999";
+            			n = "99999";
             		}
             		if(enableTextArea) {
-            			outputTextArea.append("- Replacing (3006,0024) value of " + s + " to " + s  + " \n");
+            			outputTextArea.append("- Replacing (3006,0024) value of " + s + " to " + n  + " \n");
             		}
-            		printStream.println("- Replacing (3006,0024) value of " + s + " to " + s);
-            		tagTable.setValue(key, s);
+            		printStream.println("- Replacing (3006,0024) value of " + s + " to " + n);
+            		tagTable.setValue(key, n);
         		}else if(keyString.equals("3006,00C2")) {
         			s = ((String)tagTable.getValue(key)).trim();
+        			if(s.trim().equals("")) {
+        				s = "EMPTY VALUE";
+        			}
         			int x = s.lastIndexOf(".");
+        			String n = "";
             		if(x != -1) {
             			String k = s.substring(0, x);
-            			s = k + ".99999";
+            			n = k + ".99999";
             		}else {
             			//need to figure out what to do here
             			//for now...just seet it to 99999
-            			s = "99999";
+            			n = "99999";
             		}
             		if(enableTextArea) {
-            			outputTextArea.append("- Replacing (3006,00C2) value of " + s + " to " + s  + " \n");
+            			outputTextArea.append("- Replacing (3006,00C2) value of " + s + " to " + n  + " \n");
             		}
-            		printStream.println("- Replacing (3006,00C2) value of " + s + " to " + s);
-            		tagTable.setValue(key, s);
+            		printStream.println("- Replacing (3006,00C2) value of " + s + " to " + n);
+            		tagTable.setValue(key, n);
         		}
         	}
     	}
@@ -1508,9 +1704,162 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 			if(outputStream != null) {
 				outputStream.close();
 			}
+			if(printStream != null) {
+				printStream.close();
+			}
+			if(outputStreamCSV != null) {
+				outputStreamCSV.close();
+			}
+			if(printStreamCSV != null) {
+				printStreamCSV.close();
+			}
 		}catch(Exception e) {
 			
 		}
+	}
+	
+	 public void actionPerformed(ActionEvent event) {
+
+	        Object source = event.getSource();
+	        
+	        if (source == dobOKButton) {
+	        	//validate that the numbers entered are MM DD YYYY format
+	        	boolean success = validate();
+	        	if(success) {
+	        		pressedOK = true;
+	        		dobDialog.dispose();
+	        	}
+
+	        } else if (source == dobCancelButton) {
+	        	pressedOK = true;
+	        	cancel = true;
+	            dobDialog.dispose();
+	        } 
+	        
+	 }
+	 
+	 
+	 private boolean validate() {
+		 boolean success = true;
+		 String test = "";
+		 int value = 0;
+		 test = dobMMTextField.getText();
+		 if(test.length() != 2) {
+			 MipavUtil.displayError("DOB must be numbers in MM DD YYYY format");
+			 return false;
+		 }
+		 try{
+			 value = Integer.valueOf(test);
+		 }catch(NumberFormatException e) {
+			 MipavUtil.displayError("DOB must be numbers in MM DD YYYY format");
+			 return false;
+		 }
+		 test = dobDDTextField.getText();
+		 if(test.length() != 2) {
+			 MipavUtil.displayError("DOB must be numbers in MM DD YYYY format");
+			 return false;
+		 }
+		 try{
+			 value = Integer.valueOf(test);
+		 }catch(NumberFormatException e) {
+			 MipavUtil.displayError("DOB must be numbers in MM DD YYYY format");
+			 return false;
+		 }
+		 test = dobYYYYTextField.getText();
+		 if(test.length() != 4) {
+			 MipavUtil.displayError("DOB must be numbers in MM DD YYYY format");
+			 return false;
+		 }
+		 try{
+			 value = Integer.valueOf(test);
+		 }catch(NumberFormatException e) {
+			 MipavUtil.displayError("DOB must be numbers in MM DD YYYY format");
+			 return false;
+		 }
+		 
+		 return success;
+		 
+	 }
+	
+	
+	private void createDOBDialog(ActionListener al, String studyId) {
+		JPanel mainPanel;
+		mainPanel = new JPanel(new GridBagLayout());
+
+		dobDialog = new JDialog(parentDialog, "Enter DOB for " + studyId, true);
+		dobDialog.setLocation((Toolkit.getDefaultToolkit().getScreenSize().width / 2) -
+                (dobDialog.getBounds().width / 2),
+                (Toolkit.getDefaultToolkit().getScreenSize().height / 2) -
+                (dobDialog.getBounds().height / 2));
+		dobDialog.addWindowListener(this);
+		
+		GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 3;
+        gbc.insets = new Insets(15, 5, 15, 0);
+        JLabel dobLabel = new JLabel("Enter DOB (MM DD YYYY): ");
+        mainPanel.add(dobLabel, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        dobMMTextField = new JTextField(2);
+        mainPanel.add(dobMMTextField, gbc);
+        
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        dobDDTextField = new JTextField(2);
+        mainPanel.add(dobDDTextField, gbc);
+        
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        dobYYYYTextField = new JTextField(4);
+        mainPanel.add(dobYYYYTextField, gbc);
+       
+        
+        
+        
+        // ok,cancel
+        JPanel OKCancelPanel = new JPanel();
+        dobOKButton = new JButton("OK");
+        dobOKButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        dobOKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        dobOKButton.addActionListener(al);
+        dobOKButton.setActionCommand("ok");
+        OKCancelPanel.add(dobOKButton, gbc);
+        OKCancelPanel.add(dobOKButton, BorderLayout.WEST);
+        
+        dobCancelButton = new JButton("Cancel");
+        dobCancelButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        dobCancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        dobCancelButton.addActionListener(al);
+        dobCancelButton.setActionCommand("cancel");
+        OKCancelPanel.add(dobCancelButton, gbc);
+        OKCancelPanel.add(dobCancelButton, BorderLayout.EAST);
+
+        dobDialog.getContentPane().add(mainPanel, BorderLayout.CENTER);
+        dobDialog.getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
+
+        dobDialog.pack();
+        dobDialog.setResizable(false);
+        dobDialog.setVisible(true);
+
+		
+		
+	}
+	
+	private int calculateAge(Calendar dob, Calendar studyDate) {
+		int age = 0;
+		
+		age = studyDate.get(Calendar.YEAR) - dob.get(Calendar.YEAR);
+		if (studyDate.get(Calendar.DAY_OF_YEAR) <= dob.get(Calendar.DAY_OF_YEAR)) {
+			age--;
+		}
+		return age;
+		
 	}
 
 
@@ -1538,6 +1887,15 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase {
 	 */
 	public void setAlgCanceled(boolean algCanceled) {
 		this.algCanceled = algCanceled;
+	}
+
+
+
+	@Override
+	public void windowClosing(WindowEvent event) {
+		pressedOK = true;
+    	cancel = true;
+        dobDialog.dispose();
 	}
 	
 	
