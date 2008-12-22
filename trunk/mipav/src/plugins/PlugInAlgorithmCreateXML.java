@@ -17,6 +17,7 @@ import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileXML;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 
 public class PlugInAlgorithmCreateXML extends AlgorithmBase {
@@ -339,7 +340,7 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 			closedTag("orientation", FileInfoBase.getImageOrientationStr(image.getImageOrientation()));
 			closedTag("modality", FileInfoBase.getModalityStr(image.getImageModality()));
 			closedTag("file-format", FileUtility.getFileTypeStr(image.getFileInfo()[0].getFileFormat()));
-			closedTag("data-type", image.getTypeString());
+			closedTag("data-type", ModelStorageBase.getBufferTypeStr(image.getFileInfo()[0].getDataType()));
 			closedTag("anatomical-area", "unknown");
 			openTag("image-attr", false);
 		}
