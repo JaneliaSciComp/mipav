@@ -1523,32 +1523,33 @@ public class FileSPM extends FileBase {
             byte tmpByte;
             int axis[] = myFileInfo.getAxisOrientation();
             int imageOrientation = myFileInfo.getImageOrientation();
+            // Remember y axis gets flipped
             if ((axis[0] == FileInfoBase.ORI_R2L_TYPE) && (axis[1] == FileInfoBase.ORI_P2A_TYPE) &&
                 (axis[2] == FileInfoBase.ORI_I2S_TYPE)) {
-                tmpByte = 0; // transverse unflipped
+                tmpByte = 3; // transverse flipped
             }
             else if ((axis[0] == FileInfoBase.ORI_R2L_TYPE) && (axis[1] == FileInfoBase.ORI_I2S_TYPE) &&
                      (axis[2] == FileInfoBase.ORI_P2A_TYPE)) {
-                tmpByte = 1; // coronal unflipped
+                tmpByte = 4; // coronal flipped
             }
             else if ((axis[0] == FileInfoBase.ORI_P2A_TYPE) && (axis[1] == FileInfoBase.ORI_I2S_TYPE) &&
                      (axis[2] == FileInfoBase.ORI_R2L_TYPE)) {
-                tmpByte = 2; // sagittal unflipped
+                tmpByte = 5; // sagittal flipped
             }
             else if ((axis[0] == FileInfoBase.ORI_R2L_TYPE) && (axis[1] == FileInfoBase.ORI_A2P_TYPE) &&
                      (axis[2] == FileInfoBase.ORI_I2S_TYPE)) {
-                tmpByte = 3; // transverse flipped
+                tmpByte = 0; // transverse unflipped
             }
             else if ((axis[0] == FileInfoBase.ORI_R2L_TYPE) && (axis[1] == FileInfoBase.ORI_S2I_TYPE) &&
                      (axis[2] == FileInfoBase.ORI_P2A_TYPE)) {
-                tmpByte = 4; // coronal flipped
+                tmpByte = 1; // coronal unflipped
             }
             else if ((axis[0] == FileInfoBase.ORI_P2A_TYPE) && (axis[1] == FileInfoBase.ORI_S2I_TYPE) &&
                      (axis[2] == FileInfoBase.ORI_R2L_TYPE)) {
-                tmpByte = 5; // sagittal flipped
+                tmpByte = 2; // sagittal unflipped
             }
             else if (imageOrientation == FileInfoBase.AXIAL) {
-                tmpByte = 3; // transverse flipped
+                tmpByte = 0; // transverse unflipped
             }
             else if (imageOrientation == FileInfoBase.CORONAL) {
                 tmpByte = 1; // coronal unflipped
@@ -1557,7 +1558,7 @@ public class FileSPM extends FileBase {
                 tmpByte = 2; // sagittal unflipped
             } 
             else {
-                tmpByte = 3; // transverse flipped
+                tmpByte = 0; // transverse unflipped
             }
             
 
