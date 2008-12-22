@@ -45,7 +45,8 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     private JPanel mainPanel, OKCancelPanel;
     
     /** Labels **/
-    private JLabel inputFileLabel;
+    private JLabel inputFileLabel, anatLabel, sourceNameLabel, sourceOrgLabel, 
+    				sourceProjLabel, testingLabel, detailLabel;
     
     /** Buttons **/
     private JButton inputFileBrowseButton;
@@ -56,8 +57,12 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     private JList inputFileList;
 
 	/** Textfields **/
-    private JTextField anatField; 
+    private JTextField anatField, sourceNameField, sourceOrgField,
+    					sourceProjField; 
    	
+    /** Text areas. */
+    private JTextArea testingArea, detailArea;
+    
 	/** File chooser object */
 	private JFileChooser fileChooser;
 	
@@ -69,31 +74,6 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
 	
 	/** Algorithm instance */
     private PlugInAlgorithmCreateXML algoCreateXML;
-
-	private JLabel anatLabel;
-
-	private JLabel tagListSampleLabel;
-
-	private JLabel sourceNameLabel;
-
-	private JTextField sourceNameField;
-
-	private JLabel sourceOrgLabel;
-
-	private JTextField sourceOrgField;
-
-	private JLabel sourceProjLabel;
-
-	private JTextField sourceProjField;
-
-	private JLabel testingLabel;
-
-	private JTextArea testingArea;
-
-	private JLabel detailLabel;
-
-	private JTextArea detailArea;
-	
 	
 	//	~ Constructors --------------------------------------------------------------------------
 
@@ -385,7 +365,7 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
             // This is made possible by implementing AlgorithmedPerformed interface
             algoCreateXML.addListener(this);
             
-            createProgressBar("DICOM Anonymization Tool", algoCreateXML);
+            createProgressBar("Create Image XML Tool", algoCreateXML);
             
             setVisible(false);
             
