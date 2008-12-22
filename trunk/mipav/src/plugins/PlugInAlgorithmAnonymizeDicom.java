@@ -91,6 +91,10 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
         }
     	selectedFiles = null;        
     }
+    
+    public String getAnonResultsLoc() {
+    	return anonLoc;
+    }
 	
 	@Override
 	public void runAlgorithm() {
