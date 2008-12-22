@@ -705,7 +705,7 @@ public class FileSPM extends FileBase {
             else {
                 direct[i] = -1;
             }
-            mipavOrigin[i] = -direct[i]*origin[i]*resolutions[i];
+            mipavOrigin[i] = -direct[i]*mipavOrigin[i]*resolutions[i];
         }
         fileInfo.setMipavOrigin(mipavOrigin);
         fileInfo.setGenerated(new String(bufferByte, 263, 10));
