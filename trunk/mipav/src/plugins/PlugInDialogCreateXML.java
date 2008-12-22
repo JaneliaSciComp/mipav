@@ -127,150 +127,28 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
 
         mainPanel = new JPanel(mainPanelGridBagLayout);
         
-        // Input file
+        // Image Panel
+        JPanel imagePanel = buildImagePanel();
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 0;
-        mainPanelConstraints.gridheight = 3;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
-        inputFileLabel = new JLabel(" Input files : ");
-        mainPanel.add(inputFileLabel, mainPanelConstraints);
-
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 0;
-        mainPanelConstraints.gridheight = 3;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
-        mainPanelConstraints.fill = GridBagConstraints.BOTH;
-        inputFileList = new JList(fileList);
-        inputFileList.setVisibleRowCount(4);
-        inputFileList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        inputFileList.setMinimumSize(new Dimension(300, 94));
-        inputFileList.setMaximumSize(new Dimension(300, 500));
-        JScrollPane scrollPaneFile = new JScrollPane(inputFileList);
-        scrollPaneFile.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPaneFile.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);    
-        scrollPaneFile.setMinimumSize(new Dimension(300, 94));
-        scrollPaneFile.setPreferredSize(new Dimension(300, 94));
-        mainPanel.add(scrollPaneFile, mainPanelConstraints);
-
-        mainPanelConstraints.gridx = 2;
-        mainPanelConstraints.gridy = 0;
-        mainPanelConstraints.gridheight = 1;
-        mainPanelConstraints.insets = new Insets(15, 5, 5, 5);
-        mainPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
-        inputFileBrowseButton = new JButton("Browse");
-        inputFileBrowseButton.addActionListener(this);
-        inputFileBrowseButton.setActionCommand(BROWSE_FILE);
-        mainPanel.add(inputFileBrowseButton, mainPanelConstraints);
+        mainPanelConstraints.gridwidth = 3;
+        mainPanel.add(imagePanel, mainPanelConstraints);
         
-        mainPanelConstraints.gridx = 2;
+        //Provenance panel
+        JPanel subProv = buildProvPanel();        
+        mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 1;
+        mainPanelConstraints.gridwidth = 3;
         mainPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
-        mainPanelConstraints.insets = new Insets(5, 5, 5, 5);
-        removeFileButton = new JButton("Remove");
-        removeFileButton.addActionListener(this);
-        removeFileButton.setActionCommand(REMOVE);
-        mainPanel.add(removeFileButton, mainPanelConstraints);
+        mainPanel.add(subProv, mainPanelConstraints);
         
-        mainPanelConstraints.gridx = 2;
+        //Testing panel
+        JPanel subPanelDetail = buildTestPanel();
+        mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 2;
-        mainPanelConstraints.fill = GridBagConstraints.NONE;
-        mainPanelConstraints.insets = new Insets(5, 5, 15, 5);
-        removeAllFileButton = new JButton("Remove All");
-        removeAllFileButton.addActionListener(this);
-        removeAllFileButton.setActionCommand(REMOVE_ALL);
-        mainPanel.add(removeAllFileButton, mainPanelConstraints);
-        
-        // Anatomical area
-        mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 3;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
-        anatLabel = new JLabel(" Anatomical Area : ");
-        mainPanel.add(anatLabel, mainPanelConstraints);
-        
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 3;
-        mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
-        anatField = new JTextField(45);
-        mainPanel.add(anatField, mainPanelConstraints);
-        
-        //source name
-        mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 4;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
-        sourceNameLabel = new JLabel(" Source name:  ");
-        mainPanel.add(sourceNameLabel, mainPanelConstraints);
-        
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 4;
-        mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
-        sourceNameField = new JTextField(45);
-        mainPanel.add(sourceNameField, mainPanelConstraints);
-        
-        //source organization
-        mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 5;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
-        sourceOrgLabel = new JLabel(" Source organization:  ");
-        mainPanel.add(sourceOrgLabel, mainPanelConstraints);
-        
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 5;
-        mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
-        sourceOrgField = new JTextField(45);
-        mainPanel.add(sourceOrgField, mainPanelConstraints);
-        
-        //source project
-        mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 6;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
-        sourceProjLabel = new JLabel(" Source project:  ");
-        mainPanel.add(sourceProjLabel, mainPanelConstraints);
-        
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 6;
-        mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
-        sourceProjField = new JTextField(45);
-        mainPanel.add(sourceProjField, mainPanelConstraints);
-        
-        //Testing information
-        mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 7;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
-        testingLabel = new JLabel(" Testing information:  ");
-        mainPanel.add(testingLabel, mainPanelConstraints);
-        
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 7;
-        mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
-        testingArea = new JTextArea();
-        testingArea.setMinimumSize(new Dimension(500, 94));
-        testingArea.setMaximumSize(new Dimension(500, 500));
-        JScrollPane scrollPaneTesting = new JScrollPane(testingArea);
-        scrollPaneTesting.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPaneTesting.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);    
-        scrollPaneTesting.setMinimumSize(new Dimension(500, 94));
-        scrollPaneTesting.setPreferredSize(new Dimension(500, 94));
-        mainPanel.add(scrollPaneTesting, mainPanelConstraints);
-        
-        //Details
-        mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 8;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
-        detailLabel = new JLabel(" Details:  ");
-        mainPanel.add(detailLabel, mainPanelConstraints);
-        
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 8;
-        mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
-        detailArea = new JTextArea();
-        detailArea.setMinimumSize(new Dimension(500, 94));
-        detailArea.setMaximumSize(new Dimension(500, 500));
-        JScrollPane scrollPaneDetail = new JScrollPane(detailArea);
-        scrollPaneDetail.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPaneDetail.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);    
-        scrollPaneDetail.setMinimumSize(new Dimension(500, 94));
-        scrollPaneDetail.setPreferredSize(new Dimension(500, 94));
-        mainPanel.add(scrollPaneDetail, mainPanelConstraints);
+        mainPanelConstraints.gridwidth = 3;
+        mainPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
+        mainPanel.add(subPanelDetail, mainPanelConstraints);
         
         // OK,Cancel 
         OKCancelPanel = new JPanel();
@@ -289,6 +167,191 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
         setVisible(true);
         requestFocus();
         
+    }
+    
+    private JPanel buildImagePanel() {
+    	JPanel imagePanel = new JPanel(new GridBagLayout());
+        imagePanel.setBorder(MipavUtil.buildTitledBorder("Image information"));
+        GridBagConstraints imageConstraints = new GridBagConstraints();
+        imageConstraints.gridx = 0;
+        imageConstraints.gridy = 0;
+        imageConstraints.gridheight = 3;
+        imageConstraints.insets = new Insets(15, 5, 15, 0);
+        inputFileLabel = new JLabel(" Input files : ");
+        imagePanel.add(inputFileLabel, imageConstraints);
+
+        imageConstraints.gridx = 1;
+        imageConstraints.gridy = 0;
+        imageConstraints.gridheight = 3;
+        imageConstraints.insets = new Insets(15, 70, 15, 0);
+        imageConstraints.fill = GridBagConstraints.BOTH;
+        inputFileList = new JList(fileList);
+        inputFileList.setVisibleRowCount(4);
+        inputFileList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        inputFileList.setMinimumSize(new Dimension(300, 94));
+        inputFileList.setMaximumSize(new Dimension(300, 500));
+        JScrollPane scrollPaneFile = new JScrollPane(inputFileList);
+        scrollPaneFile.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPaneFile.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);    
+        scrollPaneFile.setMinimumSize(new Dimension(300, 94));
+        scrollPaneFile.setPreferredSize(new Dimension(300, 94));
+        imagePanel.add(scrollPaneFile, imageConstraints);
+
+        imageConstraints.gridx = 2;
+        imageConstraints.gridy = 0;
+        imageConstraints.gridheight = 1;
+        imageConstraints.insets = new Insets(15, 5, 5, 5);
+        imageConstraints.fill = GridBagConstraints.HORIZONTAL;
+        inputFileBrowseButton = new JButton("Browse");
+        inputFileBrowseButton.addActionListener(this);
+        inputFileBrowseButton.setActionCommand(BROWSE_FILE);
+        imagePanel.add(inputFileBrowseButton, imageConstraints);
+        
+        imageConstraints.gridx = 2;
+        imageConstraints.gridy = 1;
+        imageConstraints.fill = GridBagConstraints.HORIZONTAL;
+        imageConstraints.insets = new Insets(5, 5, 5, 5);
+        removeFileButton = new JButton("Remove");
+        removeFileButton.addActionListener(this);
+        removeFileButton.setActionCommand(REMOVE);
+        imagePanel.add(removeFileButton, imageConstraints);
+        
+        imageConstraints.gridx = 2;
+        imageConstraints.gridy = 2;
+        imageConstraints.fill = GridBagConstraints.NONE;
+        imageConstraints.insets = new Insets(5, 5, 15, 5);
+        removeAllFileButton = new JButton("Remove All");
+        removeAllFileButton.addActionListener(this);
+        removeAllFileButton.setActionCommand(REMOVE_ALL);
+        imagePanel.add(removeAllFileButton, imageConstraints);
+        
+        // Anatomical area
+        imageConstraints.gridx = 0;
+        imageConstraints.gridy = 3;
+        imageConstraints.insets = new Insets(15, 5, 15, 5);
+        anatLabel = new JLabel(" Anatomical Area : ");
+        imagePanel.add(anatLabel, imageConstraints);
+        
+        imageConstraints.gridx = 1;
+        imageConstraints.gridy = 3;
+        imageConstraints.anchor = GridBagConstraints.WEST;
+        imageConstraints.insets = new Insets(15, 70, 5, 5);
+        anatField = new JTextField(45);
+        imagePanel.add(anatField, imageConstraints);
+        
+        return imagePanel;
+    }
+    
+    private JPanel buildProvPanel() {
+    	//source name
+        JPanel subProv = new JPanel(new GridBagLayout());
+        subProv.setBorder(MipavUtil.buildTitledBorder("Data provenance"));
+        GridBagConstraints provConstraints = new GridBagConstraints();
+        provConstraints.gridx = 0;
+        provConstraints.gridy = 0;
+        provConstraints.weightx = 0;
+        provConstraints.insets = new Insets(15, 5, 15, 5);
+        sourceNameLabel = new JLabel(" Source name:  ");
+        subProv.add(sourceNameLabel, provConstraints);
+        
+        provConstraints.gridx = 1;
+        provConstraints.gridy = 0;
+        provConstraints.weightx = 1;
+        provConstraints.anchor = GridBagConstraints.WEST;
+        provConstraints.insets = new Insets(10, 50, 5, 5);
+        sourceNameField = new JTextField(45);
+        subProv.add(sourceNameField, provConstraints);
+        
+        //source organization
+        provConstraints.gridx = 0;
+        provConstraints.gridy = 1;
+        provConstraints.weightx = 0;
+        provConstraints.anchor = GridBagConstraints.CENTER;
+        provConstraints.insets = new Insets(15, 5, 15, 5);
+        sourceOrgLabel = new JLabel(" Source organization:  ");
+        subProv.add(sourceOrgLabel, provConstraints);
+        
+        provConstraints.gridx = 1;
+        provConstraints.gridy = 1;
+        provConstraints.weightx = 1;
+        provConstraints.anchor = GridBagConstraints.WEST;
+        provConstraints.insets = new Insets(10, 50, 5, 5);
+        sourceOrgField = new JTextField(45);
+        subProv.add(sourceOrgField, provConstraints);
+        
+        //source project
+        provConstraints.gridx = 0;
+        provConstraints.gridy = 2;
+        provConstraints.weightx = 0;
+        provConstraints.anchor = GridBagConstraints.CENTER;
+        provConstraints.insets = new Insets(15, 5, 15, 5);
+        sourceProjLabel = new JLabel(" Source project:  ");
+        subProv.add(sourceProjLabel, provConstraints);
+        
+        provConstraints.gridx = 1;
+        provConstraints.gridy = 2;
+        provConstraints.weightx = 1;
+        provConstraints.anchor = GridBagConstraints.WEST;
+        provConstraints.insets = new Insets(10, 50, 5, 5);
+        sourceProjField = new JTextField(45);
+        subProv.add(sourceProjField, provConstraints);
+
+        return subProv;
+    }
+    
+    private JPanel buildTestPanel() {
+    	//Testing information
+        JPanel subPanelDetail = new JPanel(new GridBagLayout());
+        subPanelDetail.setBorder(MipavUtil.buildTitledBorder("Testing and details"));
+        GridBagConstraints subBagConstraints = new GridBagConstraints();
+        subBagConstraints.anchor = GridBagConstraints.NORTH;
+        subBagConstraints.gridx = 0;
+        subBagConstraints.gridy = 0;
+        subBagConstraints.weightx = 0;
+        subBagConstraints.insets = new Insets(15, 5, 15, 5);
+        testingLabel = new JLabel(" Testing information:  ");
+        subPanelDetail.add(testingLabel, subBagConstraints);
+        
+        subBagConstraints.gridx = 1;
+        subBagConstraints.gridy = 0;
+        subBagConstraints.weightx = 1;
+        subBagConstraints.anchor = GridBagConstraints.WEST;
+        subBagConstraints.insets = new Insets(10, 50, 5, 5);
+        testingArea = new JTextArea();
+        testingArea.setMinimumSize(new Dimension(500, 94));
+        testingArea.setMaximumSize(new Dimension(500, 500));
+        JScrollPane scrollPaneTesting = new JScrollPane(testingArea);
+        scrollPaneTesting.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPaneTesting.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);    
+        scrollPaneTesting.setMinimumSize(new Dimension(500, 94));
+        scrollPaneTesting.setPreferredSize(new Dimension(500, 94));
+        subPanelDetail.add(scrollPaneTesting, subBagConstraints);
+        
+        //Details
+        subBagConstraints.gridx = 0;
+        subBagConstraints.gridy = 2;
+        subBagConstraints.weightx = 0;
+        subBagConstraints.anchor = GridBagConstraints.NORTH;
+        subBagConstraints.insets = new Insets(15, 5, 15, 5);
+        detailLabel = new JLabel(" Details:  ");
+        subPanelDetail.add(detailLabel, subBagConstraints);
+        
+        subBagConstraints.gridx = 1;
+        subBagConstraints.gridy = 2;
+        subBagConstraints.weightx = 1;
+        subBagConstraints.anchor = GridBagConstraints.WEST;
+        subBagConstraints.insets = new Insets(10, 50, 5, 5);
+        detailArea = new JTextArea();
+        detailArea.setMinimumSize(new Dimension(500, 94));
+        detailArea.setMaximumSize(new Dimension(500, 500));
+        JScrollPane scrollPaneDetail = new JScrollPane(detailArea);
+        scrollPaneDetail.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPaneDetail.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);    
+        scrollPaneDetail.setMinimumSize(new Dimension(500, 94));
+        scrollPaneDetail.setPreferredSize(new Dimension(500, 94));
+        subPanelDetail.add(scrollPaneDetail, subBagConstraints);
+        
+        return subPanelDetail;
     }
     
     /**
