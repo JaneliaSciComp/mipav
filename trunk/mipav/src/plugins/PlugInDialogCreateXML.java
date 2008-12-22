@@ -28,15 +28,9 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
 	
 	public static final String BROWSE_FILE = "Browse file";
 
-	public static final String REMOVE_FILE = "Remove file";
+	public static final String REMOVE = "Remove file";
 	
-	public static final String REMOVE_ALL_FILE = "Remove all file";
-	
-	public static final String BROWSE_FOLDER = "Browse folder";
-	
-	public static final String REMOVE_FOLDER = "Remove folder";
-	
-	public static final String REMOVE_ALL_FOLDER = "Remove all folder";
+	public static final String REMOVE_ALL = "Remove all file";
 	
 	// ~ Instance fields ------------------------------------------------------------------------
 	
@@ -50,25 +44,18 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     private JPanel mainPanel, OKCancelPanel;
     
     /** Labels **/
-    private JLabel inputFileLabel, inputFolderLabel;
+    private JLabel inputFileLabel;
     
     /** Buttons **/
     private JButton inputFileBrowseButton;
     
     private JButton removeFileButton, removeAllFileButton;
     
-    private JButton inputFolderBrowseButton;
-    
-    private JButton removeFolderButton, removeAllFolderButton;
-    
     /**All files to generate image information for*/
     private JList inputFileList;
-    
-    /**All file sets to generate image information for*/
-    private JList inputFolderList;
 
 	/** Textfields **/
-    private JTextField tagListTextField; 
+    private JTextArea tagListTextField; 
    	
 	/** File chooser object */
 	private JFileChooser fileChooser;
@@ -83,7 +70,7 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
 	private String[] tagArray;
 	
 	/** List of current files and folders to work with */
-	private Vector<String> fileList, folderList;
+	private Vector<String> fileList;
 	
 	/** Algorithm instance */
     private PlugInAlgorithmCreateXML algoCreateXML;
@@ -105,7 +92,6 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     public PlugInDialogCreateXML(boolean modal) {
         super(modal); 
         fileList = new Vector<String>();
-        folderList = new Vector<String>();
         
     	init();
     }
@@ -114,7 +100,7 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     
     public void init() {
     	setForeground(Color.black);
-        setTitle("DICOM Anonymization Tool");
+        setTitle("Image XML Creation Tool");
         
         mainPanelGridBagLayout = new GridBagLayout();
         mainPanelConstraints = new GridBagConstraints();
@@ -163,7 +149,7 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
         mainPanelConstraints.insets = new Insets(5, 5, 5, 5);
         removeFileButton = new JButton("Remove");
         removeFileButton.addActionListener(this);
-        removeFileButton.setActionCommand(REMOVE_FILE);
+        removeFileButton.setActionCommand(REMOVE);
         mainPanel.add(removeFileButton, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 2;
@@ -172,62 +158,28 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
         mainPanelConstraints.insets = new Insets(5, 5, 15, 5);
         removeAllFileButton = new JButton("Remove All");
         removeAllFileButton.addActionListener(this);
-        removeAllFileButton.setActionCommand(REMOVE_ALL_FILE);
+        removeAllFileButton.setActionCommand(REMOVE_ALL);
         mainPanel.add(removeAllFileButton, mainPanelConstraints);
-        
-        // Input folder
+        /*
+        // Tag list
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 3;
-        mainPanelConstraints.gridheight = 3;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
-        inputFolderLabel = new JLabel(" Input folders : ");
-        mainPanel.add(inputFolderLabel, mainPanelConstraints);
-
+        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        tagListLabel = new JLabel(" Anonymize additional tags : ");
+        mainPanel.add(tagListLabel, mainPanelConstraints);
+        
         mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 3;
-        mainPanelConstraints.gridheight = 3;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
-        mainPanelConstraints.fill = GridBagConstraints.BOTH;
-        inputFolderList = new JList(folderList);
-        inputFolderList.setVisibleRowCount(4);
-        inputFolderList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        inputFolderList.setMinimumSize(new Dimension(300, 94));
-        inputFolderList.setMaximumSize(new Dimension(300, 500));
-        JScrollPane scrollPaneFolder = new JScrollPane(inputFolderList);
-        scrollPaneFolder.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPaneFolder.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);    
-        scrollPaneFolder.setMinimumSize(new Dimension(300, 94));
-        scrollPaneFolder.setPreferredSize(new Dimension(300, 94));
-        mainPanel.add(scrollPaneFolder, mainPanelConstraints);
-
-        mainPanelConstraints.gridx = 2;
-        mainPanelConstraints.gridy = 3;
-        mainPanelConstraints.gridheight = 1;
-        mainPanelConstraints.insets = new Insets(15, 5, 5, 5);
-        mainPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
-        inputFolderBrowseButton = new JButton("Browse");
-        inputFolderBrowseButton.addActionListener(this);
-        inputFolderBrowseButton.setActionCommand(BROWSE_FOLDER);
-        mainPanel.add(inputFolderBrowseButton, mainPanelConstraints);
+        mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
+        tagListTextField = new JTextArea();
+        mainPanel.add(tagListTextField, mainPanelConstraints);
         
-        mainPanelConstraints.gridx = 2;
+        mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 4;
-        mainPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
-        mainPanelConstraints.insets = new Insets(5, 5, 5, 5);
-        removeFolderButton = new JButton("Remove");
-        removeFolderButton.addActionListener(this);
-        removeFolderButton.setActionCommand(REMOVE_FOLDER);
-        mainPanel.add(removeFolderButton, mainPanelConstraints);
-        
-        mainPanelConstraints.gridx = 2;
-        mainPanelConstraints.gridy = 5;
-        mainPanelConstraints.fill = GridBagConstraints.NONE;
-        mainPanelConstraints.insets = new Insets(5, 5, 15, 5);
-        removeAllFolderButton = new JButton("Remove All");
-        removeAllFolderButton.addActionListener(this);
-        removeAllFolderButton.setActionCommand(REMOVE_ALL_FOLDER);
-        mainPanel.add(removeAllFolderButton, mainPanelConstraints);
-        
+        mainPanelConstraints.insets = new Insets(1, 5, 15, 5);
+        tagListSampleLabel = new JLabel(" Format: group,element;group,element e.g. 0002,0000;0002,0001  ");
+        mainPanel.add(tagListSampleLabel, mainPanelConstraints);
+        */
         // OK,Cancel 
         OKCancelPanel = new JPanel();
         buildOKButton();
@@ -271,16 +223,11 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     
     	try{
     		System.gc();
-    		selectedFiles = new File[fileList.size() + folderList.size()];
+    		selectedFiles = new File[fileList.size()];
     		for(int i=0; i<fileList.size(); i++) {
     			System.out.println("Working with file "+fileList.get(i));
     			selectedFiles[i] = new File(fileList.get(i));
     		}
-    		for(int i=fileList.size(); i<fileList.size() + folderList.size(); i++) {
-    			System.out.println("Working with folder "+folderList.get(i-fileList.size()));
-    			selectedFiles[i] = new File(folderList.get(i-fileList.size()));
-    		}
-    		
     		//Make algorithm.
     		algoCreateXML = new PlugInAlgorithmCreateXML(selectedFiles);
     		
@@ -325,7 +272,7 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     		fileChooser = new JFileChooser(Preferences.getImageDirectory());
         	fileChooser.setFont(MipavUtil.defaultMenuFont);
         	fileChooser.setMultiSelectionEnabled(true);
-        	fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        	fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         	
         	Dimension d = new Dimension(700, 400);
             fileChooser.setMinimumSize(d);
@@ -344,68 +291,32 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
             			}
             		}
             		if(!fileExists) {
-            			fileList.add(selectedFiles[i].getAbsolutePath());
+            			if(selectedFiles[i].isDirectory()) {
+            				for(File f : selectedFiles[i].listFiles()) {
+            					fileList.add(f.getAbsolutePath());
+            				}
+            			} else {
+            				fileList.add(selectedFiles[i].getAbsolutePath());
+            			}
             		}
             	}
             	inputFileList.updateUI();
-            	
-            	
-            }
-        } if (command.equalsIgnoreCase(BROWSE_FOLDER)) {
-    		
-    		fileChooser = new JFileChooser(Preferences.getImageDirectory());
-        	fileChooser.setFont(MipavUtil.defaultMenuFont);
-        	fileChooser.setMultiSelectionEnabled(true);
-        	fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        	
-        	Dimension d = new Dimension(700, 400);
-            fileChooser.setMinimumSize(d);
-            fileChooser.setPreferredSize(d);
-            
-            int returnVal = fileChooser.showOpenDialog(null);
-                        
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-            	selectedFolders = fileChooser.getSelectedFiles();
-            	Preferences.setImageDirectory(fileChooser.getCurrentDirectory());
-            	for(int i=0; i<selectedFolders.length; i++) {
-            		boolean fileExists = false;
-            		for(int j=0; j<folderList.size(); j++) {
-            			if(selectedFolders[i].getAbsolutePath().equals(folderList.get(j))) {
-            				fileExists = true;
-            			}
-            		}
-            		if(!fileExists) {
-            			folderList.add(selectedFolders[i].getAbsolutePath());
-            		}
-            	}
-            	inputFolderList.updateUI();
-            	
-            	
             }
         } else if (command.equalsIgnoreCase("Cancel")) {
         	dispose();
         } else if (command.equalsIgnoreCase("OK")) {
         	createTagArray();
         	callAlgorithm();
-        } else if(command.equalsIgnoreCase(REMOVE_ALL_FILE)) {
+        } else if(command.equalsIgnoreCase(REMOVE_ALL)) {
         	fileList.removeAllElements();
         	inputFileList.updateUI();
-        } else if(command.equalsIgnoreCase(REMOVE_ALL_FOLDER)) {
-        	folderList.removeAllElements();
-        	inputFolderList.updateUI();
-        } else if(command.equals(REMOVE_FILE)) {
+        } else if(command.equals(REMOVE)) {
         	Object[] objAr = inputFileList.getSelectedValues();
         	for(Object obj : objAr) {
         		fileList.remove(obj);
         	}
         	inputFileList.updateUI();
-        } else if(command.equals(REMOVE_FOLDER)) {
-        	Object[] objAr = inputFolderList.getSelectedValues();
-        	for(Object obj : objAr) {
-        		folderList.remove(obj);
-        	}
-        	inputFolderList.updateUI();
-        }
+        } 
     }
 
 	/**

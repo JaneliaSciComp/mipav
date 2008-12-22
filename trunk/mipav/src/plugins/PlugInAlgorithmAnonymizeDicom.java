@@ -31,6 +31,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.util.FileUtil;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ProgressBarInterface;
@@ -52,11 +53,18 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	 * as a log file*/
 	private String anonLoc;
 	
-	
-
-
 	//	~ Constructors -----------------------------------------------------------------------------------------
 	public PlugInAlgorithmAnonymizeDicom(File[] inputFiles, String[] tagList) {
+		ArrayList<File> selectedFilesList = new ArrayList<File>();
+		for(int i=0; i<inputFiles.length; i++) {
+			if(inputFiles[i].isDirectory()) {
+				for(File f : inputFiles[i].listFiles()) {
+					selectedFilesList.add(f); 
+				}
+			} else {
+				selectedFilesList.add(inputFiles[i]);
+			}
+		}
 		
 		selectedFiles = inputFiles;
 		tagListFromDialog = tagList;
@@ -115,6 +123,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	            imageFile.storePrivateTags();
 	            printToLogFile.println();
 	            imageFile.storeSequenceTags();
+	            printToLogFile.println();
             } catch(Exception e) {
             	e.printStackTrace();
             	filesNotRead.add(i);

@@ -267,6 +267,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
     		fileChooser = new JFileChooser(Preferences.getImageDirectory());
         	fileChooser.setFont(MipavUtil.defaultMenuFont);
         	fileChooser.setMultiSelectionEnabled(true);
+        	fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         	
         	Dimension d = new Dimension(700, 400);
             fileChooser.setMinimumSize(d);
@@ -285,12 +286,16 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
             			}
             		}
             		if(!fileExists) {
-            			fileList.add(selectedFiles[i].getAbsolutePath());
+            			if(selectedFiles[i].isDirectory()) {
+            				for(File f : selectedFiles[i].listFiles()) {
+            					fileList.add(f.getAbsolutePath());
+            				}
+            			} else {
+            				fileList.add(selectedFiles[i].getAbsolutePath());
+            			}
             		}
             	}
             	inputFileList.updateUI();
-            	
-            	
             }
         } else if (command.equalsIgnoreCase("Cancel")) {
         	dispose();
