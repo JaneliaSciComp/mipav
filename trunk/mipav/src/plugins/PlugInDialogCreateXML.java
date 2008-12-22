@@ -16,6 +16,7 @@ import javax.swing.*;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Vector;
 
 /**
@@ -55,7 +56,7 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     private JList inputFileList;
 
 	/** Textfields **/
-    private JTextArea tagListTextField; 
+    private JTextField anatField; 
    	
 	/** File chooser object */
 	private JFileChooser fileChooser;
@@ -68,6 +69,30 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
 	
 	/** Algorithm instance */
     private PlugInAlgorithmCreateXML algoCreateXML;
+
+	private JLabel anatLabel;
+
+	private JLabel tagListSampleLabel;
+
+	private JLabel sourceNameLabel;
+
+	private JTextField sourceNameField;
+
+	private JLabel sourceOrgLabel;
+
+	private JTextField sourceOrgField;
+
+	private JLabel sourceProjLabel;
+
+	private JTextField sourceProjField;
+
+	private JLabel testingLabel;
+
+	private JTextArea testingArea;
+
+	private JLabel detailLabel;
+
+	private JTextArea detailArea;
 	
 	
 	//	~ Constructors --------------------------------------------------------------------------
@@ -154,26 +179,99 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
         removeAllFileButton.addActionListener(this);
         removeAllFileButton.setActionCommand(REMOVE_ALL);
         mainPanel.add(removeAllFileButton, mainPanelConstraints);
-        /*
-        // Tag list
+        
+        // Anatomical area
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 3;
         mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
-        tagListLabel = new JLabel(" Anonymize additional tags : ");
-        mainPanel.add(tagListLabel, mainPanelConstraints);
+        anatLabel = new JLabel(" Anatomical Area : ");
+        mainPanel.add(anatLabel, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 3;
         mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
-        tagListTextField = new JTextArea();
-        mainPanel.add(tagListTextField, mainPanelConstraints);
+        anatField = new JTextField(45);
+        mainPanel.add(anatField, mainPanelConstraints);
+        
+        //source name
+        mainPanelConstraints.gridx = 0;
+        mainPanelConstraints.gridy = 4;
+        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        sourceNameLabel = new JLabel(" Source name:  ");
+        mainPanel.add(sourceNameLabel, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 4;
-        mainPanelConstraints.insets = new Insets(1, 5, 15, 5);
-        tagListSampleLabel = new JLabel(" Format: group,element;group,element e.g. 0002,0000;0002,0001  ");
-        mainPanel.add(tagListSampleLabel, mainPanelConstraints);
-        */
+        mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
+        sourceNameField = new JTextField(45);
+        mainPanel.add(sourceNameField, mainPanelConstraints);
+        
+        //source organization
+        mainPanelConstraints.gridx = 0;
+        mainPanelConstraints.gridy = 5;
+        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        sourceOrgLabel = new JLabel(" Source organization:  ");
+        mainPanel.add(sourceOrgLabel, mainPanelConstraints);
+        
+        mainPanelConstraints.gridx = 1;
+        mainPanelConstraints.gridy = 5;
+        mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
+        sourceOrgField = new JTextField(45);
+        mainPanel.add(sourceOrgField, mainPanelConstraints);
+        
+        //source project
+        mainPanelConstraints.gridx = 0;
+        mainPanelConstraints.gridy = 6;
+        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        sourceProjLabel = new JLabel(" Source project:  ");
+        mainPanel.add(sourceProjLabel, mainPanelConstraints);
+        
+        mainPanelConstraints.gridx = 1;
+        mainPanelConstraints.gridy = 6;
+        mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
+        sourceProjField = new JTextField(45);
+        mainPanel.add(sourceProjField, mainPanelConstraints);
+        
+        //Testing information
+        mainPanelConstraints.gridx = 0;
+        mainPanelConstraints.gridy = 7;
+        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        testingLabel = new JLabel(" Testing information:  ");
+        mainPanel.add(testingLabel, mainPanelConstraints);
+        
+        mainPanelConstraints.gridx = 1;
+        mainPanelConstraints.gridy = 7;
+        mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
+        testingArea = new JTextArea();
+        testingArea.setMinimumSize(new Dimension(500, 94));
+        testingArea.setMaximumSize(new Dimension(500, 500));
+        JScrollPane scrollPaneTesting = new JScrollPane(testingArea);
+        scrollPaneTesting.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPaneTesting.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);    
+        scrollPaneTesting.setMinimumSize(new Dimension(500, 94));
+        scrollPaneTesting.setPreferredSize(new Dimension(500, 94));
+        mainPanel.add(scrollPaneTesting, mainPanelConstraints);
+        
+        //Details
+        mainPanelConstraints.gridx = 0;
+        mainPanelConstraints.gridy = 8;
+        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        detailLabel = new JLabel(" Details:  ");
+        mainPanel.add(detailLabel, mainPanelConstraints);
+        
+        mainPanelConstraints.gridx = 1;
+        mainPanelConstraints.gridy = 8;
+        mainPanelConstraints.insets = new Insets(15, 5, 0, 0);
+        detailArea = new JTextArea();
+        detailArea.setMinimumSize(new Dimension(500, 94));
+        detailArea.setMaximumSize(new Dimension(500, 500));
+        JScrollPane scrollPaneDetail = new JScrollPane(detailArea);
+        scrollPaneDetail.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPaneDetail.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);    
+        scrollPaneDetail.setMinimumSize(new Dimension(500, 94));
+        scrollPaneDetail.setPreferredSize(new Dimension(500, 94));
+        mainPanel.add(scrollPaneDetail, mainPanelConstraints);
+        
         // OK,Cancel 
         OKCancelPanel = new JPanel();
         buildOKButton();
@@ -190,7 +288,7 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
         setResizable(false);
         setVisible(true);
         requestFocus();
-
+        
     }
     
     /**
@@ -206,8 +304,18 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     			System.out.println("Working with file "+fileList.get(i));
     			selectedFiles[i] = new File(fileList.get(i));
     		}
+    		
+    		//map keys exact xml tag to particular text
+    		HashMap<String, String> map = new HashMap();
+    		map.put("anatomical-area", anatField.getText());
+    		map.put("source-name", sourceNameField.getText());
+    		map.put("source-org", sourceOrgField.getText());
+    		map.put("source-project", sourceProjField.getText());
+    		map.put("testing-information", testingArea.getText());
+    		map.put("details", detailArea.getText());
+    		
     		//Make algorithm.
-    		algoCreateXML = new PlugInAlgorithmCreateXML(selectedFiles);
+    		algoCreateXML = new PlugInAlgorithmCreateXML(selectedFiles, map);
     		
     		// This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -246,7 +354,7 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     	
     	String command = event.getActionCommand();
     	if (command.equalsIgnoreCase(BROWSE_FILE)) {
-    		
+
     		fileChooser = new JFileChooser(Preferences.getImageDirectory());
         	fileChooser.setFont(MipavUtil.defaultMenuFont);
         	fileChooser.setMultiSelectionEnabled(true);

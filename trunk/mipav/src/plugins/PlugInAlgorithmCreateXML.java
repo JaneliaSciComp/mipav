@@ -7,7 +7,10 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
@@ -29,10 +32,14 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 	/**All the XML files that have been written by this algorithm. */
 	private ArrayList<String> xmlList;
 
+	/**Map keyed to exact xml tags for easy provenance referencing.*/
+	private HashMap<String, String> textFieldsMap;
+
 	//	~ Constructors -----------------------------------------------------------------------------------------
-	public PlugInAlgorithmCreateXML(File[] inputFiles) {
+	public PlugInAlgorithmCreateXML(File[] inputFiles, HashMap<String, String> textFieldsMap) {
 		this.selectedFiles = inputFiles;
 		this.xmlList = new ArrayList();
+		this.textFieldsMap = textFieldsMap;
 	}
 	
 	//  ~ Methods ----------------------------------------------------------------------------------------------
@@ -255,7 +262,7 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 			closedTag("modality", FileInfoBase.getModalityStr(image.getImageModality()));
 			closedTag("file-format", FileUtility.getFileTypeStr(image.getFileInfo()[0].getFileFormat()));
 			closedTag("data-type", ModelStorageBase.getBufferTypeStr(image.getFileInfo()[0].getDataType()));
-			closedTag("anatomical-area", "unknown");
+			closedTag("anatomical-area", textFieldsMap.get("anatomical-area"));
 			openTag("image-attr", false);
 		}
 		
@@ -278,23 +285,26 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 		}
 		
 		private void writeProvenance() {
+			Calendar cal = Calendar.getInstance();
+			DecimalFormat dec = new DecimalFormat("00");
+			String dateStr = cal.get(Calendar.YEAR)+"-"+dec.format(cal.get(Calendar.MONTH))+"-"+dec.format(cal.get(Calendar.DAY_OF_MONTH));
 			openTag("provenance", true);
-			closedTag("anonymized-by", "Test");
-			closedTag("date-added", "2008-12-31");
-			closedTag("source-name", "Test");
-			closedTag("source-org", "Test");
-			closedTag("source-project", "Test");
+			closedTag("anonymized-by", System.getProperty("user.name"));
+			closedTag("date-added", dateStr);
+			closedTag("source-name", textFieldsMap.get("source-name"));
+			closedTag("source-org", textFieldsMap.get("source-org"));
+			closedTag("source-project", textFieldsMap.get("source-project"));
 			openTag("provenance", false);
 		}
 		
 		private void writeExtInfo() throws IOException {
 			openTag("testing-information", true);
-			bw.write("Detailed info on this dataset and why it is in the image repos.");
+			bw.write(textFieldsMap.get("testing-information"));
 			bw.newLine();
 			openTag("testing-information", false);
 			
 			openTag("details", true);
-			bw.write("Anything else that doesn't fit into the other tags.");
+			bw.write(textFieldsMap.get("details"));
 			bw.newLine();
 			openTag("details", false);
 		}
