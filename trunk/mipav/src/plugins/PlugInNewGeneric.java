@@ -25,7 +25,7 @@ public class PlugInNewGeneric implements PlugInAlgorithm {
         if (parentFrame instanceof ViewJFrameImage) {
             new PlugInDialogNewGeneric(parentFrame, image);
         } else {
-            MipavUtil.displayError("PlugInNewGeneric only runs on an image frame.");
+            MipavUtil.displayError("PlugInNewGeneric2 only runs on an image frame.");
         }
     }
 }

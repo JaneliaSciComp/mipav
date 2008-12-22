@@ -133,8 +133,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
      
     /**User specified preference for whether to ask on closing. */
     private boolean oldPrefCloseFrameCheckValue = Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK);
-
-	private boolean cancelFlag;
 	
     /** Whether the algorithm is being run in standAlone mode.*/
     private static boolean standAlone;
@@ -664,7 +662,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             //checking componentImage size after updateImages (with new zoom)
              
             if ((componentImage.getSize(null).width + 200) > xScreen) {
-                width = xScreen - 200;
+                width = xScreen - 200; 
             } else {
                 width = componentImage.getSize(null).width;
             }
@@ -674,26 +672,26 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             } else {
                 height = componentImage.getSize(null).height;
             }
-           // System.err.println("componentImage size now: " + componentImage.getSize(null));
+            System.err.println("componentImage size now: " + componentImage.getSize(null));
             
         } else if ((imageWidth < componentImage.getSize(null).width) && (imageHeight >= componentImage.getSize(null).height)) {
-        	//System.err.println("Width is less than compImage.width, height is greater than compImage.height");
+        	System.err.println("Width is less than compImage.width, height is greater than compImage.height");
 
             height = componentImage.getSize(null).height + scrollPane.getHorizontalScrollBar().getHeight();
         } else if ((imageWidth >= componentImage.getSize(null).width) && (imageHeight < componentImage.getSize(null).height)) {
             width = componentImage.getSize(null).width + scrollPane.getVerticalScrollBar().getWidth();
 
-            //System.err.println("Height is less than compImage.height, width is greater than compImage.width");
+            System.err.println("Height is less than compImage.height, width is greater than compImage.width");
                         
         } else if ((imageWidth < componentImage.getSize(null).width) || (imageHeight < componentImage.getSize(null).height)) { // width += fudgeFactor;
            
-        	//System.err.println("either width is less than component width or height is less than component height... returning\n\n");
+        	System.err.println("either width is less than component width or height is less than component height... returning\n\n");
         	addComponentListener(this);
 
             return;
         } else if ((imageWidth > componentImage.getSize(null).width) || (imageHeight > componentImage.getSize(null).height)) {
 
-        	//System.err.println("Width or height is greater than compImage width/height, setting to compImage width and height");
+        	System.err.println("Width or height is greater than compImage width/height, setting to compImage width and height");
         	
             if (width > componentImage.getSize(null).width) {
                 width = componentImage.getSize(null).width;
@@ -703,19 +701,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
                 height = componentImage.getSize(null).height;
             }
         } else {
-        	//System.err.println("apparently width and height are set okay (comparing to compeditimage)...returning\n\n");
+        	System.err.println("apparently width and height are set okay (comparing to compeditimage)...returning\n\n");
         	
             addComponentListener(this);
 
             return;
         }
 
-       // System.err.println("Adjusting scrollpane width, height with scrollpane insets: " + scrollPane.getInsets());
+        System.err.println("Adjusting scrollpane width, height with scrollpane insets: " + scrollPane.getInsets());
         //moves only based on zoom
         imageWidth += scrollPane.getInsets().left + scrollPane.getInsets().right;
         imageHeight += scrollPane.getInsets().top + scrollPane.getInsets().bottom;
         
-     //   System.err.println("Old scrollpane width, height: " + scrollPane.getSize());
+        System.err.println("Old scrollpane width, height: " + scrollPane.getSize());
         
         
         
@@ -1091,7 +1089,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
      * @param event Event that triggered this function.
      */
     public void windowClosing(WindowEvent event) {
-        cancelFlag = true;
          Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, new Boolean(oldPrefCloseFrameCheckValue).toString());
         
         if (isExitRequired()) {
@@ -1194,7 +1191,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	            (componentImage.getSize().width > getSize().width)) {
 	        addInsets = false;
 	        newWidth = getSize().width;
-	        short s = (short)0;
 	    }
 	
 	    // if the window is already taller than IMAGE_SCREEN_RATIO, do not
@@ -3414,8 +3410,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    //guaranteed (for now) that mirrorArr.length = noMirrorArr.length
 		    for(int i=0; i<mirrorCalcItemsArr.length; i++) {
 		    	
-		    	JPanel subPanel = initSymmetricalObjects(i);
-		    	initNonSymmetricalObjects(subPanel, i);
+		    	JPanel subPanel = initSymmetricObjects(i);
+		    	initNonSymmetricObjects(subPanel, i);
 		    	
 		    	mirrorPanel[i] = new JScrollPane(subPanel, 
 		    										ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
@@ -3505,7 +3501,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/**
 		 * Initializes the symmetric buttons from a particular pane.
 		 */
-		private JPanel initSymmetricalObjects(int index) {
+		private JPanel initSymmetricObjects(int index) {
 
             mirrorCheckCalcItemsArr[index] = new PlugInMuscleColorButtonPanel[mirrorCalcItemsArr[index].length * 2];
             mirrorButtonCalcItemsArr[index] = new JButton[mirrorCalcItemsArr[index].length * 2];
@@ -3569,7 +3565,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/**
 		 * Initializes the non-symmetric buttons from a particular pane.
 		 */
-	    private JPanel initNonSymmetricalObjects(JPanel subPanel, int index) {
+	    private JPanel initNonSymmetricObjects(JPanel subPanel, int index) {
       
 	    	noMirrorCheckCalcItemsArr[index] = new PlugInMuscleColorButtonPanel[noMirrorCalcItemsArr[index].length];
             noMirrorButtonCalcItemsArr[index] = new JButton[noMirrorCalcItemsArr[index].length];
@@ -3891,6 +3887,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					System.err.println("Error creating, writing or closing ucsd file.");
 					e.printStackTrace();
 					success = false;
+					
 					return;
 				}
 				System.out.println("Time for output: "+(System.currentTimeMillis() - time));
@@ -4051,7 +4048,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				if(children[i].getLastCalculated() == null || children[i].getLastModified() == null || 
 						children[i].getLastCalculated().compareTo(children[i].getLastModified()) < 0) {
 					//since enumerate silently ignores threads greater than array size
-					//worst case scenario is extra calculation performed
+					//worst case scenario is extra calculation performed, for small images not a problem
 					Thread[] activeGroup = new Thread[calcGroup.activeCount()];
 					calcGroup.enumerate(activeGroup);
 					//still check for nulls in case thread has been disposed
@@ -4365,7 +4362,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    private void initThighAxes() {
 	        Vector[][] contours = new Vector[2][]; //either 2 or 3 dimensions
 	        defaultPts = new int[2];
-	        int nVOI;//, nContours;
+	        int nVOI; //, nContours;
 	        float[] xPoints = null;
 	        float[] yPoints = null;
 	    
