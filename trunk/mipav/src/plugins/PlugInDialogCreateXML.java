@@ -63,12 +63,6 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
 	/** Files selected by the user */
 	private File[] selectedFiles;
 	
-	/** Folders selected by the user. */
-	private File[] selectedFolders;
-	
-	/** Additional tags to anonymize */
-	private String[] tagArray;
-	
 	/** List of current files and folders to work with */
 	private Vector<String> fileList;
 	
@@ -199,22 +193,6 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
 
     }
     
-    private boolean createTagArray () {
-    	String tagList;
-    	try {
-    		tagList = tagListTextField.getText();
-    	} catch (NullPointerException npe) {
-    		tagArray = null;
-    		return true;
-    	}
-    	
-    	tagArray = tagList.split(";");
-    	return true;
-       	
-    }
-    
-    
-    
     /**
      * Once all the necessary variables are set, call the DICOM anonymizer algorithm.
      */
@@ -305,7 +283,6 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
         } else if (command.equalsIgnoreCase("Cancel")) {
         	dispose();
         } else if (command.equalsIgnoreCase("OK")) {
-        	createTagArray();
         	callAlgorithm();
         } else if(command.equalsIgnoreCase(REMOVE_ALL)) {
         	fileList.removeAllElements();

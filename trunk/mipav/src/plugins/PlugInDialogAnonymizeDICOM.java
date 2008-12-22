@@ -224,7 +224,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
     		}
     		
     		//Make algorithm.
-    		algoAnonymizeDicom = new PlugInAlgorithmAnonymizeDicom(selectedFiles, tagArray);
+    		algoAnonymizeDicom = new PlugInAlgorithmAnonymizeDicom(selectedFiles, tagArray, selectedFiles[0].getParent());
     		
     		// This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -301,7 +301,10 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
         	dispose();
         } else if (command.equalsIgnoreCase("OK")) {
         	createTagArray();
-        	callAlgorithm();
+        	if(selectedFiles.length > 0)
+        		callAlgorithm();
+        	else
+        		MipavUtil.displayError("No files were selected to process");
         } else if(command.equalsIgnoreCase("Remove All")) {
         	fileList.removeAllElements();
         	inputFileList.updateUI();

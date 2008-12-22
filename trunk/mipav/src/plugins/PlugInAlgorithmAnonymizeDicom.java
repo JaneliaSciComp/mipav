@@ -54,7 +54,11 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	private String anonLoc;
 	
 	//	~ Constructors -----------------------------------------------------------------------------------------
-	public PlugInAlgorithmAnonymizeDicom(File[] inputFiles, String[] tagList) {
+	/**
+	 * Main constructor, notes works best when inputFiles come from one image set, since output is meant to 
+	 * occur in one place.
+	 */
+	public PlugInAlgorithmAnonymizeDicom(File[] inputFiles, String[] tagList, String anonDir) {
 		ArrayList<File> selectedFilesList = new ArrayList<File>();
 		for(int i=0; i<inputFiles.length; i++) {
 			if(inputFiles[i].isDirectory()) {
@@ -69,7 +73,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		selectedFiles = inputFiles;
 		tagListFromDialog = tagList;
 		if(selectedFiles.length > 0)
-			anonLoc = selectedFiles[0].getParent() + File.separator + "AnonymizationResults.txt";
+			anonLoc = anonDir + File.separator + "AnonymizationResults.txt";
 		else
 			anonLoc ="";
 		
@@ -85,10 +89,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
         if(printToLogFile != null) {
         	MipavUtil.displayInfo("The anonymization results were written to: "+anonLoc);
         }
-    	
-    	
-    	selectedFiles = null;
-               
+    	selectedFiles = null;        
     }
 	
 	@Override
@@ -124,6 +125,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	            printToLogFile.println();
 	            imageFile.storeSequenceTags();
 	            printToLogFile.println();
+	            printToLogFile.println();
             } catch(Exception e) {
             	e.printStackTrace();
             	filesNotRead.add(i);
@@ -150,8 +152,6 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 		 */
 		public int compare(Object o1, Object o2) {
-			
-			
 			if(o1 instanceof FileDicomKey && o2 instanceof FileDicomKey) {
 				if(((FileDicomKey) o2).getGroupNumber() == ((FileDicomKey) o1).getGroupNumber()) {
 					return ((FileDicomKey) o1).getElementNumber() - ((FileDicomKey)o2).getElementNumber();
@@ -159,10 +159,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 				return ((FileDicomKey) o1).getGroupNumber() - ((FileDicomKey)o2).getGroupNumber();
 			} 
 			return o1.hashCode() - o2.hashCode();
-			
-			
-		}
-		
+		}		
 	}
 	
 	private class ReadDicom extends FileDicomInner {
@@ -3020,7 +3017,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		String[] s = new String[1];
 		s[0] = "";
 		
-		PlugInAlgorithmAnonymizeDicom p = new PlugInAlgorithmAnonymizeDicom (f, s);
+		PlugInAlgorithmAnonymizeDicom p = new PlugInAlgorithmAnonymizeDicom (f, s, "");
 		p.runAlgorithm();
 		p.finalize();
 		
