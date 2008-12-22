@@ -358,7 +358,7 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     		map.put("details", detailArea.getText());
     		
     		//Make algorithm.
-    		algoCreateXML = new PlugInAlgorithmCreateXML(selectedFiles, map);
+    		algoCreateXML = new PlugInAlgorithmCreateXML(selectedFiles, map, selectedFiles[0].getParent());
     		
     		// This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.

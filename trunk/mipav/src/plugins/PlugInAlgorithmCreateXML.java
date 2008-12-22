@@ -35,11 +35,14 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 	/**Map keyed to exact xml tags for easy provenance referencing.*/
 	private HashMap<String, String> textFieldsMap;
 
+	private String imageCopyDir;
+
 	//	~ Constructors -----------------------------------------------------------------------------------------
-	public PlugInAlgorithmCreateXML(File[] inputFiles, HashMap<String, String> textFieldsMap) {
+	public PlugInAlgorithmCreateXML(File[] inputFiles, HashMap<String, String> textFieldsMap, String imageCopyDir) {
 		this.selectedFiles = inputFiles;
 		this.xmlList = new ArrayList();
 		this.textFieldsMap = textFieldsMap;
+		this.imageCopyDir = imageCopyDir;
 	}
 	
 	//  ~ Methods ----------------------------------------------------------------------------------------------
@@ -203,7 +206,7 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 		
 		public boolean writeXML() {
 			try {
-			bw = new BufferedWriter(new FileWriter(new File(image.getImageDirectory()+XML_NAME)));
+			bw = new BufferedWriter(new FileWriter(new File(imageCopyDir+XML_NAME)));
 			
 			bw.write(XML_HEADER);
 			bw.newLine();
