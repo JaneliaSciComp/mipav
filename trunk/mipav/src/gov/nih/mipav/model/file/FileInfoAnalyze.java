@@ -1227,35 +1227,36 @@ public class FileInfoAnalyze extends FileInfoBase {
     public void setOrientation(byte orientation) {
         int axisX, axisY, axisZ;
         orient = orientation;
+        // Remember the y axis is flipped
         if (orientation == FileInfoSPM.TRANSVERSE_UNFLIPPED) {
-            super.setImageOrientation(FileInfoBase.AXIAL);
-            axisX = FileInfoBase.ORI_R2L_TYPE;
-            axisY = FileInfoBase.ORI_P2A_TYPE;
-            axisZ = FileInfoBase.ORI_I2S_TYPE;
-        } else if (orientation == FileInfoSPM.TRANSVERSE_FLIPPED) {
             super.setImageOrientation(FileInfoBase.AXIAL);
             axisX = FileInfoBase.ORI_R2L_TYPE;
             axisY = FileInfoBase.ORI_A2P_TYPE;
             axisZ = FileInfoBase.ORI_I2S_TYPE;
+        } else if (orientation == FileInfoSPM.TRANSVERSE_FLIPPED) {
+            super.setImageOrientation(FileInfoBase.AXIAL);
+            axisX = FileInfoBase.ORI_R2L_TYPE;
+            axisY = FileInfoBase.ORI_P2A_TYPE;
+            axisZ = FileInfoBase.ORI_I2S_TYPE;
         } else if (orientation == FileInfoSPM.CORONAL_UNFLIPPED) {
             super.setImageOrientation(FileInfoBase.CORONAL);
             axisX = FileInfoBase.ORI_R2L_TYPE;
-            axisY = FileInfoBase.ORI_I2S_TYPE;
+            axisY = FileInfoBase.ORI_S2I_TYPE;
             axisZ = FileInfoBase.ORI_P2A_TYPE; 
         } else if (orientation == FileInfoSPM.CORONAL_FLIPPED) {
             super.setImageOrientation(FileInfoBase.CORONAL);
             axisX = FileInfoBase.ORI_R2L_TYPE;
-            axisY = FileInfoBase.ORI_S2I_TYPE;
+            axisY = FileInfoBase.ORI_I2S_TYPE;
             axisZ = FileInfoBase.ORI_P2A_TYPE; 
         } else if (orientation == FileInfoSPM.SAGITTAL_UNFLIPPED) {
             super.setImageOrientation(FileInfoBase.SAGITTAL); 
             axisX = FileInfoBase.ORI_P2A_TYPE;
-            axisY = FileInfoBase.ORI_I2S_TYPE;
+            axisY = FileInfoBase.ORI_S2I_TYPE;
             axisZ = FileInfoBase.ORI_R2L_TYPE;
         } else if (orientation == FileInfoSPM.SAGITTAL_FLIPPED) {
             super.setImageOrientation(FileInfoBase.SAGITTAL);
             axisX = FileInfoBase.ORI_P2A_TYPE;
-            axisY = FileInfoBase.ORI_S2I_TYPE;
+            axisY = FileInfoBase.ORI_I2S_TYPE;
             axisZ = FileInfoBase.ORI_R2L_TYPE;
         } else {
             super.setImageOrientation(FileInfoBase.UNKNOWN_ORIENT);
