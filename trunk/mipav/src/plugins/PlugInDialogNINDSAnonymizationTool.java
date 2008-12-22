@@ -83,7 +83,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
      */
     public void init() {
         setForeground(Color.black);
-        setTitle("NINDS Anonymization Tool " + " v1.5");
+        setTitle("NINDS Anonymization Tool " + " v1.6");
 
         mainPanelGridBagLayout = new GridBagLayout();
         mainPanelConstraints = new GridBagConstraints();
@@ -311,7 +311,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         String inputDirectoryPath = inputDirectoryTextField.getText().trim();
         String outputDirectoryPath = outputDirectoryTextField.getText().trim();
         alg = new PlugInAlgorithmNINDSAnonymizationTool(inputDirectoryPath, outputDirectoryPath, outputTextArea,
-                errorMessageLabel, enableTextArea, renameGrandParentDir);
+                errorMessageLabel, enableTextArea, renameGrandParentDir, this);
 
         alg.addListener(this);
 
