@@ -1166,6 +1166,7 @@ public class FileInfoSPM extends FileInfoBase {
         super.setAxisOrientation(axisY, 1);
         super.setAxisOrientation(axisZ, 2);
     }
+    
 
     /**
      * DOCUMENT ME!
@@ -1174,6 +1175,14 @@ public class FileInfoSPM extends FileInfoBase {
      */
     public void setOrigin(short[] origin) {
         this.origin = origin;
+    }
+    
+    /**
+     * 
+     * @param mipavOrigin
+     */
+    public void setMipavOrigin(float[] mipavOrigin) {
+        super.setOrigin(mipavOrigin);
     }
 
     /**
