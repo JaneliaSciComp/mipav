@@ -51,30 +51,8 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
     		return;
     	}
 		
-		ArrayList<Integer> filesNotRead = new ArrayList<Integer>();
-		boolean isRead = false;
-		for(int i=0; i<selectedFiles.length; i++) {
-			// use the selectedFileName as the reference slice for the file info tag tables
-            isRead = false;
-			fireProgressStateChanged((int)(100*(((double)i)/((double)selectedFiles.length))), null, "Processing file "+i);
-			if(selectedFiles[i].isDirectory()) {
-				isRead = writeFolderXML(selectedFiles[i]);
-			} else {
-				isRead = writeFileXML(selectedFiles[i]);
-			}
-			
-			if(!isRead) {
-				filesNotRead.add(i);
-			}
-		}
-		
-		String stringExp = "";
-		for(int i=0; i<filesNotRead.size(); i++) {
-			stringExp = stringExp + selectedFiles[filesNotRead.get(i)].getAbsolutePath()+"\n";
-		}
-		if(stringExp.length() > 0) {
-			MipavUtil.displayError("The following files could not be anonymized:\n"+stringExp);
-		}
+		fireProgressStateChanged(70, null, "Processing files");
+		writeXML(selectedFiles);
 		
 		System.out.println("Finished reading files");
 		
@@ -89,80 +67,16 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 	 * @param f is not a directory
 	 * @return
 	 */
-	private boolean writeFileXML(File f) {
+	private boolean writeXML(File[] f) {
 		FileIO io = new FileIO();
-		ModelImage m = io.readImage(f.getAbsolutePath());
-		FileImageXML im = new FileImageXML(m, false, f);
+		ModelImage m = io.readImage(f[0].getName(), f[0].getParentFile().getAbsolutePath()+"\\", f.length > 1, null);
+		FileImageXML im = new FileImageXML(m, f.length > 1, f[0]);
 		try {
 			return im.writeXML();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
-	}
-	
-	/**
-	 * Method for writing folders to XML using dataset schema.
-	 * @param f is a directory
-	 * @return
-	 */
-	private boolean writeFolderXML(File f) {
-		FileIO io = new FileIO();
-		int workingIndex = 0;
-		for(int i=0; i<f.listFiles().length; i++) {
-			if(f.listFiles()[i].isFile()) {
-				workingIndex = i;
-				break;
-			}
-		}
-		ModelImage m = io.readImage(f.list()[workingIndex], f.getAbsolutePath()+"\\", true, null);
-		FileImageXML im = new FileImageXML(m, true, f);
-		try {
-			return im.writeXML();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-	
-	/**
-	 * Validator to test accuracy
-	 * @param args
-	 * @throws IOException
-	 */
-	public static void main(String[] args) throws IOException {
-		
-		File[] f = new File[1];
-		
-		f[0] = new File(args[0]);
-		String[] s = new String[1];
-		s[0] = "";
-		
-		PlugInAlgorithmAnonymizeDicom p = new PlugInAlgorithmAnonymizeDicom (f, s);
-		p.runAlgorithm();
-		p.finalize();
-		
-		//For now inTest and inCopy should be identical, final implementation will have inTest and inCopy identical except for anonymized images
-		System.out.println("Reading in "+args[0]);
-		DataInputStream inTest = new DataInputStream(new FileInputStream(new File(args[0])));
-		System.out.println("Reading in "+args[1]);
-		DataInputStream inCopy = new DataInputStream(new FileInputStream(new File(args[1])));
-		int maxSize = inTest.available();
-		byte[] b = new byte[maxSize], c = new byte[maxSize];
-		inTest.readFully(b);
-		inCopy.readFully(c);
-		System.out.println("Size compare: "+b.length+"\t"+c.length);
-		boolean cons = true;
-		for(int i=0; i<b.length; i++) {
-			if(b[i] != c[i]) {
-				System.out.println("Data corruption at "+i);
-				cons = false;
-			}
-		}
-		if(cons) {
-			System.out.println("Program passed validation.");
-		}
-		
 	}
 	
 	private class FileImageXML extends FileXML {
@@ -197,11 +111,11 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 			this.isDir = isDir;
 			
 			if(isDir)
-				pattern = constructPattern(f);
+				pattern = constructPattern();
 		}
 		
-		private String constructPattern(File f) {
-			File[] fileList = f.listFiles();
+		private String constructPattern() {
+			File[] fileList = selectedFiles;
 			//only consider the files
 			int fileCount = 0;	
 			for(int i=0; i<fileList.length; i++) {
