@@ -688,6 +688,26 @@ public class FileSPM extends FileBase {
         }
 
         fileInfo.setOrigin(origin);
+        float mipavOrigin[] = new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+        //  Voxel 1,1,1 in SPM is voxel 0,0,0 in MIPAV
+        for (i = 0; i < 5; i++) {
+            mipavOrigin[i] = (short)(origin[i] - 1);
+        }
+        // The y axis is flipped so
+        mipavOrigin[1] = extents[1] - 1 - mipavOrigin[1];
+        int axisOrient[] = fileInfo.getAxisOrientation();
+        int direct[] = new int[numDims];
+        for (i = 0; i < numDims; i++) {
+            if ((axisOrient[i] == FileInfoBase.ORI_R2L_TYPE) || (axisOrient[i] == FileInfoBase.ORI_A2P_TYPE) ||
+                (axisOrient[i] == FileInfoBase.ORI_I2S_TYPE) || (axisOrient[1] == FileInfoBase.ORI_UNKNOWN_TYPE)) {
+                direct[i] = 1;
+            }
+            else {
+                direct[i] = -1;
+            }
+            mipavOrigin[i] = -direct[i]*origin[i]*resolutions[i];
+        }
+        fileInfo.setMipavOrigin(mipavOrigin);
         fileInfo.setGenerated(new String(bufferByte, 263, 10));
         fileInfo.setScanNum(new String(bufferByte, 273, 10));
         fileInfo.setPatientID(new String(bufferByte, 283, 10));
@@ -1542,7 +1562,28 @@ public class FileSPM extends FileBase {
             
 
             bufferByte[252] = tmpByte;
+            float mipavOrigin[] = myFileInfo.getOrigin();
             origin = new short[] { 0, 0, 0, 0, 0 };
+            for (int i = 0; i < nDims; i++) {
+                if (mipavOrigin[i] == 0.0f) {
+                    origin[i] = (short)0;
+                }
+                else if (mipavOrigin[i] > 0.0f) {
+                    // mipavOrigin[i] - resolutions[i] * origin[i] = 0;
+                    origin[i] = (short)Math.round(mipavOrigin[i]/resolutions[i]);
+                }
+                else { // mipavOrigin[i] < 0.0f
+                    // mipavOrigin + resolutions[i] * origin[i] = 0;
+                    origin[i] = (short)Math.round(-mipavOrigin[i]/resolutions[i]);
+                }
+            }
+            // The y axis if flipped so 
+            origin[1] = (short)(spmExtents[1] - 1 - origin[1]);
+            // Voxel 0,0,0 in MIPAV is voxel 1,1,1 in SPM
+            for (int i = 0; i < 5; i++) {
+                origin[i] = (short)(origin[i] + 1);
+            }
+            
             setBufferShort(bufferByte, origin[0], 253, endianess);
             setBufferShort(bufferByte, origin[1], 255, endianess);
             setBufferShort(bufferByte, origin[2], 257, endianess);
