@@ -224,7 +224,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
     		}
     		
     		//Make algorithm.
-    		algoAnonymizeDicom = new PlugInAlgorithmAnonymizeDicom(selectedFiles, tagArray, selectedFiles[0].getParent());
+    		algoAnonymizeDicom = new PlugInAlgorithmAnonymizeDicom(selectedFiles, tagArray, selectedFiles[0].getParent(), selectedFiles[0].getParent()+File.separator+"Anon"+File.separator);
     		
     		// This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.

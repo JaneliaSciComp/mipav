@@ -1,3 +1,5 @@
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,13 +54,16 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	/**Location of the anonymized data, wouldn't mind making this a static directory in MIPAV preferences that
 	 * as a log file*/
 	private String anonLoc;
+
+	/**Location for anonymized images to go*/
+	private String submitImageLocation;
 	
 	//	~ Constructors -----------------------------------------------------------------------------------------
 	/**
 	 * Main constructor, notes works best when inputFiles come from one image set, since output is meant to 
 	 * occur in one place.
 	 */
-	public PlugInAlgorithmAnonymizeDicom(File[] inputFiles, String[] tagList, String anonDir) {
+	public PlugInAlgorithmAnonymizeDicom(File[] inputFiles, String[] tagList, String submitImageLocation, String submitPatientLocation) {
 		ArrayList<File> selectedFilesList = new ArrayList<File>();
 		for(int i=0; i<inputFiles.length; i++) {
 			if(inputFiles[i].isDirectory()) {
@@ -70,10 +75,12 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 			}
 		}
 		
-		selectedFiles = inputFiles;
-		tagListFromDialog = tagList;
+		this.submitImageLocation = submitImageLocation;
+		this.selectedFiles = inputFiles;
+		this.tagListFromDialog = tagList;
+
 		if(selectedFiles.length > 0)
-			anonLoc = anonDir + File.separator + "AnonymizationResults.txt";
+			anonLoc = submitPatientLocation + File.separator + "AnonymizationResults.txt";
 		else
 			anonLoc ="";
 		
@@ -81,14 +88,12 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	
 
 	//  ~ Methods ----------------------------------------------------------------------------------------------
-	
+
 	/**
      * Prepares this class for destruction.
      */
     public void finalize() {
-        if(printToLogFile != null) {
-        	MipavUtil.displayInfo("The anonymization results were written to: "+anonLoc);
-        }
+        printToLogFile = null;
     	selectedFiles = null;        
     }
     
@@ -103,6 +108,25 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
     		return;
     	}
 		int numOfFiles = selectedFiles.length;
+		File[] allTempFiles = new File[selectedFiles.length];
+		File toWrite;
+		for(int i=0; i<numOfFiles; i++) {
+			try {
+				BufferedInputStream in = new BufferedInputStream(new FileInputStream(selectedFiles[i]));
+				BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(toWrite = new File(selectedFiles[i].getAbsoluteFile()+".tmp")));
+				int n;
+				while((n = in.read()) != -1) {
+					out.write(n);
+				}
+				out.flush();
+				out.close();
+				in.close();
+				allTempFiles[i] = toWrite;
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
 		try {
 			printToLogFile = new PrintStream(new FileOutputStream(anonLoc));
 			printToLogFile.println("Note: The tags listed below were anonymized by the DICOM Anonymization Tool.");
@@ -110,7 +134,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 			printToLogFile.println();
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
-		}
+		}		
 		
 		ArrayList<Integer> filesNotRead = new ArrayList<Integer>();
 		
@@ -118,8 +142,8 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 			// use the selectedFileName as the reference slice for the file info tag tables
             fireProgressStateChanged((int)(100*(((double)i)/((double)numOfFiles))), null, "Reading file "+i);
 			try {
-				printToLogFile.println("Reading next file "+selectedFiles[i].getName()+" with path "+selectedFiles[i].getParent()+File.separator);
-            	ReadDicom imageFile = new ReadDicom(selectedFiles[i].getName(), selectedFiles[i].getParent()+File.separator);
+				printToLogFile.println("Reading next file "+selectedFiles[i].getName()+" with path "+allTempFiles[i].getParent()+File.separator);
+            	ReadDicom imageFile = new ReadDicom(allTempFiles[i].getName(), allTempFiles[i].getParent()+File.separator);
 	            imageFile.setQuiet(true); // if we want quiet, we tell the reader, too.
 	            imageFile.readHeader(true); // can we read the header?
 	            printToLogFile.println();
@@ -144,9 +168,29 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 			MipavUtil.displayError("The following files could not be anonymized:\n"+stringExp);
 		}
 		
-		System.out.println("Finished reading files");
+		Preferences.debug("Finished reading files");
 		printToLogFile.flush();
 		printToLogFile.close();
+		
+		for(int i=0; i<numOfFiles; i++) {
+			try {		
+				BufferedInputStream in = new BufferedInputStream(new FileInputStream(allTempFiles[i]));
+				BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(submitImageLocation+selectedFiles[i].getName()));
+				Preferences.debug("Writing anonymized file: "+submitImageLocation+selectedFiles[i].getName());
+				int n;
+				while((n = in.read()) != -1) {
+					out.write(n);
+				}
+				out.flush();
+				out.close();
+				in.close();
+				allTempFiles[i].delete();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		Preferences.debug("Finished writing files");
 		
 	}
 	
@@ -3021,7 +3065,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		String[] s = new String[1];
 		s[0] = "";
 		
-		PlugInAlgorithmAnonymizeDicom p = new PlugInAlgorithmAnonymizeDicom (f, s, "");
+		PlugInAlgorithmAnonymizeDicom p = new PlugInAlgorithmAnonymizeDicom (f, s, "", "");
 		p.runAlgorithm();
 		p.finalize();
 		

@@ -228,7 +228,7 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 			bw.flush();
 			bw.close();
 			
-			xmlList.add(image.getImageDirectory()+XML_NAME);
+			xmlList.add(imageCopyDir+XML_NAME);
 			
 			} catch(IOException e) {
 				MipavUtil.displayError("Error writing XML file for "+image.getImageDirectory());
