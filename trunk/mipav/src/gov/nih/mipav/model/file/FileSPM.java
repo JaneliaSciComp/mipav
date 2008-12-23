@@ -108,8 +108,7 @@ public class FileSPM extends FileBase {
     /** DOCUMENT ME! */
     private String fileDir;
 
-    /** DOCUMENT ME! */
-    private File fileHeader;
+    
 
     /** DOCUMENT ME! */
     private FileInfoSPM fileInfo = null;
@@ -124,6 +123,15 @@ public class FileSPM extends FileBase {
     private ModelImage image;
     
     private int extendedHeaderSize = 0;
+    
+    private String headerFileName;
+    
+    /** DOCUMENT ME! */
+    private File headerFile;
+    
+    private String dataFileName;
+    
+    private File dataFile;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -136,6 +144,7 @@ public class FileSPM extends FileBase {
     public FileSPM(String fName, String fDir) {
         fileName = fName;
         fileDir = fDir;
+        
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -449,57 +458,26 @@ public class FileSPM extends FileBase {
     /**
      * DOCUMENT ME!
      *
-     * @param   imageFileName  DOCUMENT ME!
-     * @param   fileDir        DOCUMENT ME!
      *
-     * @return  DOCUMENT ME!
+     * @return  true if read successfully
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    public boolean readHeader(String imageFileName, String fileDir) throws IOException {
+    public boolean readHeader() throws IOException {
         int i;
-        int index;
-        String fileHeaderName;
         boolean endianess;
         int[] spmExtents = new int[5];
         int numDims = 0;
 
         bufferByte = new byte[headerSize];
 
-        // index         = fileName.toLowerCase().indexOf(".img");
-        index = fileName.length();
-
-        for (i = fileName.length() - 1; i >= 0; i--) {
-
-            if (fileName.charAt(i) == '.') {
-                index = i;
-
-                break;
-            }
-        }
-
-        fileHeaderName = fileName.substring(0, index) + ".hdr";
-
-        fileHeader = new File(fileDir + fileHeaderName);
-
-        if (fileHeader.exists() == false) {
-            fileHeaderName = fileName.substring(0, index) + ".HDR";
-            fileHeader = new File(fileDir + fileHeaderName);
-
-            if (fileHeader.exists() == false) {
-                return false;
-            }
-        }
+        
 
         if (fileInfo == null) { // if the file info does not yet exist: make it
-            fileInfo = new FileInfoSPM(imageFileName, fileDir, FileUtility.SPM);
-
-            if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) { // Why 3/20/2001
-                throw (new IOException(" SPM header file error"));
-            }
+            fileInfo = new FileInfoSPM(dataFileName, fileDir, FileUtility.SPM);    
         }
 
-        raFile = new RandomAccessFile(fileHeader, "r");
+        raFile = new RandomAccessFile(headerFile, "r");
         raFile.read(bufferByte);
         raFile.close();
 
@@ -751,9 +729,52 @@ public class FileSPM extends FileBase {
      * @see        FileRaw
      */
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
-        fileInfo = new FileInfoSPM(fileName, fileDir, FileUtility.SPM);
+        int index;
+        String fileBaseName;
+        String ext;
+        index = fileName.lastIndexOf('.');
+        fileBaseName = fileName.substring(0,index);
+        ext = fileName.substring(index+1);
+        headerFileName = fileBaseName + ".hdr";
+        headerFile = new File(fileDir + headerFileName);
 
-        if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
+        if (!headerFile.exists()) {
+            headerFileName = fileName.substring(0, index) + ".HDR";
+            headerFile = new File(fileDir + headerFileName);
+
+            if (!headerFile.exists()) {
+                throw new IOException(headerFileName + " does not exist");
+            }
+        }
+        if (!ext.equalsIgnoreCase("hdr")) {
+            dataFileName = fileName;
+            dataFile = new File(fileDir + dataFileName);
+            if (!dataFile.exists()) {
+                throw new IOException(dataFileName + " does not exist");
+            }
+        }
+        else { // ext == hdr or HDR 
+            dataFileName = fileBaseName + ".spm";
+            dataFile = new File(fileDir + dataFileName);
+            if (!dataFile.exists()) {
+                dataFileName = fileBaseName + ".SPM";
+                dataFile = new File(fileDir + dataFileName);
+                if (!dataFile.exists()) {
+                    dataFileName = fileBaseName + ".img";
+                    dataFile = new File(fileDir + dataFileName);
+                    if (!dataFile.exists()) {
+                        dataFileName = fileBaseName + ".IMG";
+                        dataFile = new File(fileDir + dataFileName);
+                        if (!dataFile.exists()) { 
+                            throw new IOException("dataFile with base name of " + fileBaseName + " does not exist");    
+                        }
+                    }
+                }
+            }
+        }
+        fileInfo = new FileInfoSPM(dataFileName, fileDir, FileUtility.SPM);
+
+        if (!readHeader()) {
             throw (new IOException(" SPM header file error"));
         }
 
@@ -826,7 +847,7 @@ public class FileSPM extends FileBase {
         if (fileInfo == null) { // if no file info yet, make it.
             fileInfo = new FileInfoSPM(fileName, fileDir, FileUtility.SPM);
 
-            if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
+            if (!readHeader()) {
                 throw (new IOException("Cannot read image because of SPM header file error"));
             }
         }
@@ -1224,7 +1245,6 @@ public class FileSPM extends FileBase {
 
         // absolutely neccessary information
         boolean endianess;
-        String fileHeaderName;
         int nDims;
         int[] extents;
         float[] resolutions;
@@ -1244,9 +1264,9 @@ public class FileSPM extends FileBase {
             simple = true; // Write the header without all the SPM info
         }
 
-        fileHeaderName = fileName + ".hdr";
-        fileHeader = new File(fileDir + fileHeaderName);
-        raFile = new RandomAccessFile(fileHeader, "rw");
+        headerFileName = fileName + ".hdr";
+        headerFile = new File(fileDir + headerFileName);
+        raFile = new RandomAccessFile(headerFile, "rw");
         raFile.setLength(0);
         bufferByte = new byte[headerSize];
 
