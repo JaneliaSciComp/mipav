@@ -689,12 +689,6 @@ public class FileSPM extends FileBase {
 
         fileInfo.setOrigin(origin);
         float mipavOrigin[] = new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-        //  Voxel 1,1,1 in SPM is voxel 0,0,0 in MIPAV
-        for (i = 0; i < 5; i++) {
-            mipavOrigin[i] = (short)(origin[i] - 1);
-        }
-        // The y axis is flipped so
-        mipavOrigin[1] = extents[1] - 1 - mipavOrigin[1];
         int axisOrient[] = fileInfo.getAxisOrientation();
         int direct[] = new int[numDims];
         for (i = 0; i < numDims; i++) {
@@ -705,7 +699,24 @@ public class FileSPM extends FileBase {
             else {
                 direct[i] = -1;
             }
-            mipavOrigin[i] = -direct[i]*mipavOrigin[i]*resolutions[i];
+        }
+        if ((origin[0] == (short)0) && (origin[1] == (short)0) && 
+           (origin[2] == (short)0)) {
+            // Place mipav origin in center or image
+            for (i = 0; i < numDims; i++) {
+                mipavOrigin[i] = -direct[i]*((extents[i] - 1.0f)/2.0f)*resolutions[i];
+            }    
+        }
+        else {
+            //  Voxel 1,1,1 in SPM is voxel 0,0,0 in MIPAV
+            for (i = 0; i < 5; i++) {
+                mipavOrigin[i] = (short)(origin[i] - 1);
+            }
+            // The y axis is flipped so
+            mipavOrigin[1] = extents[1] - 1 - mipavOrigin[1];
+            for (i = 0; i < numDims; i++) {
+                mipavOrigin[i] = -direct[i]*mipavOrigin[i]*resolutions[i];
+            }
         }
         fileInfo.setMipavOrigin(mipavOrigin);
         fileInfo.setGenerated(new String(bufferByte, 263, 10));
@@ -741,7 +752,6 @@ public class FileSPM extends FileBase {
      */
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
         fileInfo = new FileInfoSPM(fileName, fileDir, FileUtility.SPM);
-        readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory());
 
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
             throw (new IOException(" SPM header file error"));
@@ -761,6 +771,7 @@ public class FileSPM extends FileBase {
                 image = new ModelImage(fileInfo.getDataType(), new int[] { extents[0], extents[1] },
                                        fileInfo.getFileName());
             } else {
+                //System.out.println("fileInfo.getFileName() = " + fileInfo.getFileName());
                 image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName());
             }
         } catch (OutOfMemoryError error) {
