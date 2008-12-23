@@ -407,7 +407,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * x - left to right y - top to botton z - into the screen
      * </p>
      */
-    protected float[] origin = new float[4]; // { 0, 0, 0, 0};
+    protected float[] origin = new float[5]; // { 0, 0, 0, 0, 0};
 
     /** Used to indicate if the raw data was also compression (0 = no, 1 = zip). */
     private int compressionType = 0;
@@ -2157,8 +2157,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      */
     public void setOrigin(float[] originlocat) {
 
-        if ( (originlocat == null) || (originlocat.length > 4)) {
-            Preferences.debug("Start locations array must be of length less than or equal to 4.\n");
+        if ( (originlocat == null) || (originlocat.length > 5)) {
+            Preferences.debug("Start locations array must be of length less than or equal to 5.\n");
 
             return;
         }
