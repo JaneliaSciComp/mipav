@@ -884,49 +884,57 @@ public class FileUtility {
                     if (bfloatFile.exists()) {
                         fileType = FileUtility.BFLOAT;
                     } else {
-                        String headerFile = FileInterfile.isInterfile(fileName, fileDir);
-                        if (headerFile != null) {
-                            fileType = FileUtility.INTERFILE;
-                        } else {
-                            // Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
-                            // unless a SPM2 with extended header size > 348 is present.
-                            try {
-                                fileType = FileUtility.isAnalyze(fileName, fileDir, quiet);
-                            }
-                            catch (IOException ex) {}
-                            if (fileType != FileUtility.ANALYZE) {
-                                fileType = FileUtility.SPM;
-                            }
-
-                            try {
-                                File file = new File(fileDir + fileName);
-                                RandomAccessFile raFile = new RandomAccessFile(file, "r");
-
-                                raFile.seek(344L);
-
-                                char[] niftiName = new char[4];
-
-                                for (i = 0; i < 4; i++) {
-                                    niftiName[i] = (char) raFile.readUnsignedByte();
-                                }
-
-                                raFile.close();
-
-                                if ( (niftiName[0] == 'n') && ( (niftiName[1] == 'i') || (niftiName[1] == '+'))
-                                        && (niftiName[2] == '1') && (niftiName[3] == '\0')) {
-                                    fileType = FileUtility.NIFTI;
-                                }
-                            } catch (OutOfMemoryError error) {
-                                System.gc();
-                            } catch (FileNotFoundException e) {
-                                System.gc();
-                            } catch (IOException e) {
-                                System.gc();
-                            }
+                        String spmDataName = fileName.substring(0, p + 1) + "spm";
+                        File spmFile = new File(fileDir + spmDataName);
+                        if (spmFile.exists()) {
+                            fileType = FileUtility.SPM;
                         }
-                    }
-                }
-            } else if (suffix.equalsIgnoreCase(".ima")) {
+                        else {
+                            String headerFile = FileInterfile.isInterfile(fileName, fileDir);
+                            if (headerFile != null) {
+                                fileType = FileUtility.INTERFILE;
+                            } else {
+                                // Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
+                                // unless a SPM2 with extended header size > 348 is present.
+                                try {
+                                    fileType = FileUtility.isAnalyze(fileName, fileDir, quiet);
+                                }
+                                catch (IOException ex) {}
+                                if (fileType != FileUtility.ANALYZE) {
+                                    fileType = FileUtility.SPM;
+                                }
+    
+                                try {
+                                    File file = new File(fileDir + fileName);
+                                    RandomAccessFile raFile = new RandomAccessFile(file, "r");
+    
+                                    raFile.seek(344L);
+    
+                                    char[] niftiName = new char[4];
+    
+                                    for (i = 0; i < 4; i++) {
+                                        niftiName[i] = (char) raFile.readUnsignedByte();
+                                    }
+    
+                                    raFile.close();
+    
+                                    if ( (niftiName[0] == 'n') && ( (niftiName[1] == 'i') || (niftiName[1] == '+'))
+                                            && (niftiName[2] == '1') && (niftiName[3] == '\0')) {
+                                        fileType = FileUtility.NIFTI;
+                                    }
+                                } catch (OutOfMemoryError error) {
+                                    System.gc();
+                                } catch (FileNotFoundException e) {
+                                    System.gc();
+                                } catch (IOException e) {
+                                    System.gc();
+                                }
+                            } // else headerFile == null
+                        } // else !spmFile.exists()
+                    } // else !bfloatFile.exists()
+                } // else read
+            } // else if (suffix.equalsIgnoreCase(".hdr")) 
+            else if (suffix.equalsIgnoreCase(".ima")) {
 
                 // Both Dicom and Siemens Magnetom Vision file type have the ima suffix
                 try {
