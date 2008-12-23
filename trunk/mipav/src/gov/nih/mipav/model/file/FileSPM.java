@@ -1576,7 +1576,7 @@ public class FileSPM extends FileBase {
             bufferByte[252] = tmpByte;
             float mipavOrigin[] = myFileInfo.getOrigin();
             origin = new short[] { 0, 0, 0, 0, 0 };
-            for (int i = 0; i < nDims; i++) {
+            for (int i = 0; i < mipavOrigin.length; i++) {
                 if (mipavOrigin[i] == 0.0f) {
                     origin[i] = (short)0;
                 }
