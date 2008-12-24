@@ -349,20 +349,20 @@ public class FileAnalyze extends FileBase {
      *
      * @param   absolutePath  the file name.
      *
-     * @return  true if the file is ANALYZE file.
+     * @return  FileUtility.ANALYZE, FileUtility.SPM, or FileUtility.UNDEFINED
      *
      * @throws  FileNotFoundException  thrown when the file can't be found.
      * @throws  IOException            thrown when the I/O error happens.
      */
-    public static boolean isAnalyze(String absolutePath) throws FileNotFoundException, IOException {
+    public static int isAnalyzeOrSPM(String absolutePath) throws FileNotFoundException, IOException {
         if ((absolutePath == null) || (absolutePath.length() == 0)) {
-            return false;
+            return FileUtility.UNDEFINED;
         }
 
         String[] completeFileNames = getCompleteFileNameList(absolutePath);
 
         if ((completeFileNames == null) || (completeFileNames.length != 2)) {
-            return false;
+            return FileUtility.UNDEFINED;
         }
 
         for (int i = 0; i < completeFileNames.length; i++) {
@@ -370,7 +370,7 @@ public class FileAnalyze extends FileBase {
 
             if (!file.exists()) {
                 Preferences.debug("FileAnalyze: The file can not be found: " + completeFileNames[i] + "!");
-                return false;
+                return FileUtility.UNDEFINED;
             }
         }
 
@@ -386,7 +386,7 @@ public class FileAnalyze extends FileBase {
             bigEndian = false;
             sizeOfHeader = FileBase.bytesToInt(bigEndian, 0, buffer);
             if (sizeOfHeader != HEADER_SIZE) {
-                return false;
+                return FileUtility.UNDEFINED;
             }
         }
 
@@ -407,10 +407,18 @@ public class FileAnalyze extends FileBase {
         if (regular != 'r') {
             Preferences.debug("regular = " + regular + " instead of the expected 'r'\n");
         }
-
+        
+        // 80 byte description field
+        raFile.seek(148);
+        byte description[] = new byte[80];
+        raFile.readFully(description);
         raFile.close();
+        String desc = new String(description);
+        if ((desc.contains("spm")) || (desc.contains("SPM"))) {
+            return FileUtility.SPM;
+        }
 
-        return true;
+        return FileUtility.ANALYZE;
 
     }
 
