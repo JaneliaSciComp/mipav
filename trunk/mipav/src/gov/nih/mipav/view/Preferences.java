@@ -466,6 +466,9 @@ public class Preferences {
     
     /** ? */
     public static final String PREF_NINDS_ANON_PLUGIN_OUTPUTDIR = "NINDSAnonymizationPlugin_outputDir";
+    
+    /** ? */
+    public static final String PREF_NINDS_ANON_PLUGIN_CSVDIR = "NINDSAnonymizationPlugin_CSVDir";
 
     /** The character that separates items (such as in the user file type definitions). */
     public static final String ITEM_SEPARATOR = ";";

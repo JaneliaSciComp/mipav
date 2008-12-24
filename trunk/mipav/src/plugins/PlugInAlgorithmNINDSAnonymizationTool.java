@@ -139,6 +139,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     /** patientIDs that have been written out **/
     private Vector donePatientIDs = new Vector();
     
+    /** csv file path **/
+    private String csvFilePath;
+    
     
     private static Vector<FileDicomKey> removeTagsVector;
     private static Vector<FileDicomKey> replaceTagsVector;
@@ -264,7 +267,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 	/**
 	 * constructor
 	 */
-	public PlugInAlgorithmNINDSAnonymizationTool(String inputDirectoryPath, String outputDirectoryPath, JTextArea outputTextArea, JLabel errorMessageLabel, boolean enableTextArea, boolean renameGrandParentDir, JDialog parentDialog) {
+	public PlugInAlgorithmNINDSAnonymizationTool(String inputDirectoryPath, String outputDirectoryPath, JTextArea outputTextArea, JLabel errorMessageLabel, boolean enableTextArea, boolean renameGrandParentDir, JDialog parentDialog, String csvFilePath) {
 		this.inputDirectoryPath = inputDirectoryPath;
 		this.outputDirectoryPath = outputDirectoryPath;
 		this.outputTextArea = outputTextArea;
@@ -272,6 +275,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 		this.enableTextArea = enableTextArea;
 		this.renameGrandParentDir = renameGrandParentDir;
 		this.parentDialog = parentDialog;
+		this.csvFilePath = csvFilePath;
 
 		fileIO = new FileIO();
 		fileIO.setQuiet(true);
@@ -300,8 +304,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 			outputFile = new File(inputDirectoryPath + File.separator + outputTextFileName);
         	outputStream = new FileOutputStream(outputFile);
         	printStream = new PrintStream(outputStream);
-        	String csvFileName = inputDirectoryPath.substring(inputDirectoryPath.lastIndexOf(File.separator) + 1, inputDirectoryPath.length()) + ".csv";
-        	csvFile = new File(inputDirectoryPath + File.separator + csvFileName);
+        	csvFile = new File(csvFilePath);
         	outputStreamCSV = new FileOutputStream(csvFile,true);
         	printStreamCSV = new PrintStream(outputStreamCSV);
         	Calendar t = Calendar.getInstance();

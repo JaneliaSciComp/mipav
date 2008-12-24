@@ -22,10 +22,16 @@ import javax.swing.border.LineBorder;
 public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface {
 
     /** textfields * */
-    private JTextField inputDirectoryTextField, outputDirectoryTextField;
+    private JTextField inputDirectoryTextField, outputDirectoryTextField, csvFilePathTextField, csvDirTextField, csvNameTextField;
 
     /** buttons * */
-    private JButton inputDirectoryBrowseButton, outputDirectoryBrowseButton;
+    private JButton inputDirectoryBrowseButton, outputDirectoryBrowseButton, selectCSVFileBrowseButton, selectCSVDirBrowseButton;
+    
+    /** radio buttons **/
+    private JRadioButton selectCSVFileRadioButton, createNewCSVFileRadioButton;
+    
+    /** button group for radio buttons **/
+    private ButtonGroup optionsGroup = new ButtonGroup();;
 
     /** text area * */
     private JTextArea outputTextArea;
@@ -41,7 +47,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
 
     /** labels * */
     private JLabel inputDirectoryLabel, outputMessageLabel, outputDirectoryLabel, errorMessageLabel,
-            enableTextAreaLabel, renameGrandParentDirLabel;
+            enableTextAreaLabel, renameGrandParentDirLabel, csvDirLabel, csvNameLabel;
 
     private JCheckBox enableTextAreaCheckBox, renameGrandParentDirCheckBox;
 
@@ -55,10 +61,12 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
     private GridBagConstraints mainPanelConstraints;
 
     /** enable text area * */
-    private boolean enableTextArea;
+    //private boolean enableTextArea;
 
     /** rename grandparent dir name * */
     private boolean renameGrandParentDir;
+    
+    private String csvFilePath;
 
     /**
      * default constructor
@@ -83,7 +91,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
      */
     public void init() {
         setForeground(Color.black);
-        setTitle("NINDS Anonymization Tool " + " v1.6");
+        setTitle("NINDS Anonymization Tool " + " v1.7");
 
         mainPanelGridBagLayout = new GridBagLayout();
         mainPanelConstraints = new GridBagConstraints();
@@ -132,38 +140,111 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         outputDirectoryBrowseButton.addActionListener(this);
         outputDirectoryBrowseButton.setActionCommand("outputDirectoryBrowse");
         mainPanel.add(outputDirectoryBrowseButton, mainPanelConstraints);
-
-        // enable textArea Checkbox
+        
+        //csv file
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 2;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
-        enableTextAreaLabel = new JLabel(" Enable TextArea ");
-        mainPanel.add(enableTextAreaLabel, mainPanelConstraints);
-
-        mainPanelConstraints.gridx = 1;
+        mainPanelConstraints.insets = new Insets(40, 5, 15, 0);
+        selectCSVFileRadioButton = new JRadioButton("Select CSV file: ");
+        selectCSVFileRadioButton.setSelected(true);
+        selectCSVFileRadioButton.addActionListener(this);
+        selectCSVFileRadioButton.setActionCommand("selectCSV");
+		optionsGroup.add(selectCSVFileRadioButton);
+		mainPanel.add(selectCSVFileRadioButton, mainPanelConstraints);
+		
+		mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 2;
+        mainPanelConstraints.insets = new Insets(40, 5, 15, 0);
+        csvFilePathTextField = new JTextField(55);
+        mainPanel.add(csvFilePathTextField, mainPanelConstraints);
+        
+        mainPanelConstraints.gridx = 2;
+        mainPanelConstraints.gridy = 2;
+        mainPanelConstraints.insets = new Insets(40, 5, 15, 5);
+        selectCSVFileBrowseButton = new JButton("Browse");
+        selectCSVFileBrowseButton.addActionListener(this);
+        selectCSVFileBrowseButton.setActionCommand("selectCSVFileBrowse");
+        mainPanel.add(selectCSVFileBrowseButton, mainPanelConstraints);
+        
+        mainPanelConstraints.gridx = 0;
+        mainPanelConstraints.gridy = 3;
+        mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
+        createNewCSVFileRadioButton = new JRadioButton("Create new CSV file: ");
+        createNewCSVFileRadioButton.addActionListener(this);
+        createNewCSVFileRadioButton.setActionCommand("createCSV");
+		optionsGroup.add(createNewCSVFileRadioButton);
+		mainPanel.add(createNewCSVFileRadioButton, mainPanelConstraints);
+		
+		mainPanelConstraints.gridx = 0;
+	    mainPanelConstraints.gridy = 4;
+	    mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
+	    csvDirLabel = new JLabel("             CSV file directory: ");
+	    csvDirLabel.setEnabled(false);
+	    mainPanel.add(csvDirLabel, mainPanelConstraints);
+	    
+	    mainPanelConstraints.gridx = 1;
+        mainPanelConstraints.gridy = 4;
+        mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
+        csvDirTextField = new JTextField(55);
+        csvDirTextField.setEnabled(false);
+        mainPanel.add(csvDirTextField, mainPanelConstraints);
+        
+        mainPanelConstraints.gridx = 2;
+        mainPanelConstraints.gridy = 4;
         mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
-        enableTextAreaCheckBox = new JCheckBox();
-        enableTextAreaCheckBox.setSelected(true);
-        mainPanel.add(enableTextAreaCheckBox, mainPanelConstraints);
+        selectCSVDirBrowseButton = new JButton("Browse");
+        selectCSVDirBrowseButton.addActionListener(this);
+        selectCSVDirBrowseButton.setActionCommand("selectCSVDirBrowse");
+        selectCSVDirBrowseButton.setEnabled(false);
+        mainPanel.add(selectCSVDirBrowseButton, mainPanelConstraints);
+        
+        mainPanelConstraints.gridx = 0;
+	    mainPanelConstraints.gridy = 5;
+	    mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
+	    csvNameLabel = new JLabel("             CSV file name: ");
+	    csvNameLabel.setEnabled(false);
+	    mainPanel.add(csvNameLabel, mainPanelConstraints);
+        
+	    mainPanelConstraints.gridx = 1;
+        mainPanelConstraints.gridy = 5;
+        mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
+        csvNameTextField = new JTextField(55);
+        csvNameTextField.setEnabled(false);
+        mainPanel.add(csvNameTextField, mainPanelConstraints);
+        
+        
+
+        // enable textArea Checkbox
+        //mainPanelConstraints.gridx = 1;
+        //mainPanelConstraints.gridy = 2;
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        //enableTextAreaLabel = new JLabel(" Enable TextArea ");
+        //mainPanel.add(enableTextAreaLabel, mainPanelConstraints);
+
+        //mainPanelConstraints.gridx = 2;
+        //mainPanelConstraints.gridy = 2;
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        //enableTextAreaCheckBox = new JCheckBox();
+        //enableTextAreaCheckBox.setSelected(true);
+        //mainPanel.add(enableTextAreaCheckBox, mainPanelConstraints);
 
         // renameGrandParent Checkbox
         mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 3;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        mainPanelConstraints.gridy = 6;
+        mainPanelConstraints.insets = new Insets(40, 5, 15, 5);
         renameGrandParentDirLabel = new JLabel(" Rename GrandParent Dir name to new UID ");
         mainPanel.add(renameGrandParentDirLabel, mainPanelConstraints);
 
         mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 3;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        mainPanelConstraints.gridy = 6;
+        mainPanelConstraints.insets = new Insets(40, 5, 15, 5);
         renameGrandParentDirCheckBox = new JCheckBox();
         renameGrandParentDirCheckBox.setSelected(true);
         mainPanel.add(renameGrandParentDirCheckBox, mainPanelConstraints);
 
         // error message
         mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 4;
+        mainPanelConstraints.gridy = 7;
         mainPanelConstraints.gridwidth = 3;
         mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
         errorMessageLabel = new JLabel(" ");
@@ -173,7 +254,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
 
         // output message
         mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 5;
+        mainPanelConstraints.gridy = 8;
         mainPanelConstraints.gridwidth = 3;
         mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
         outputMessageLabel = new JLabel(" ");
@@ -183,7 +264,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         // output text area
         mainPanelConstraints.fill = GridBagConstraints.BOTH;
         mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 6;
+        mainPanelConstraints.gridy = 9;
         mainPanelConstraints.gridwidth = 3;
         mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
         outputTextArea = new JTextArea(15, 70);
@@ -262,7 +343,72 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
                 currDir = chooser.getSelectedFile().getAbsolutePath();
                 Preferences.setProperty(Preferences.PREF_NINDS_ANON_PLUGIN_OUTPUTDIR, currDir);
             }
-        } else if (command.equalsIgnoreCase("cancel")) {
+        } else if(command.equalsIgnoreCase("selectCSVFileBrowse")) {
+        	String defaultCSVDirectory = Preferences.getProperty(Preferences.PREF_NINDS_ANON_PLUGIN_CSVDIR);
+            JFileChooser chooser = new JFileChooser();
+            if (defaultCSVDirectory != null) {
+                File file = new File(defaultCSVDirectory);
+
+                if (file != null) {
+                    chooser.setCurrentDirectory(file);
+                } else {
+                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                }
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+            }
+	        chooser.setDialogTitle("Choose CSV file");
+	        int returnValue = chooser.showOpenDialog(this);
+	        if (returnValue == JFileChooser.APPROVE_OPTION) {
+	        	csvFilePathTextField.setText(chooser.getSelectedFile().getAbsolutePath());
+	        	currDir = chooser.getSelectedFile().getAbsolutePath();
+                Preferences.setProperty(Preferences.PREF_NINDS_ANON_PLUGIN_CSVDIR, currDir);
+	        }
+		}else if(command.equalsIgnoreCase("selectCSVDirBrowse")) {
+        	String defaultCSVDirectory = Preferences.getProperty(Preferences.PREF_NINDS_ANON_PLUGIN_CSVDIR);
+            JFileChooser chooser = new JFileChooser();
+            if (defaultCSVDirectory != null) {
+                File file = new File(defaultCSVDirectory);
+
+                if (file != null) {
+                    chooser.setCurrentDirectory(file);
+                } else {
+                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                }
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+            }
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+	        chooser.setDialogTitle("Choose CSV directory");
+	        int returnValue = chooser.showOpenDialog(this);
+	        if (returnValue == JFileChooser.APPROVE_OPTION) {
+	        	csvDirTextField.setText(chooser.getSelectedFile().getAbsolutePath());
+	        	currDir = chooser.getSelectedFile().getAbsolutePath();
+                Preferences.setProperty(Preferences.PREF_NINDS_ANON_PLUGIN_CSVDIR, currDir);
+	        }
+		}else if(command.equalsIgnoreCase("selectCSV")) {
+        	csvDirLabel.setEnabled(false);
+        	csvDirTextField.setText("");
+        	csvDirTextField.setEnabled(false);
+        	selectCSVDirBrowseButton.setEnabled(false);
+        	csvNameLabel.setEnabled(false);
+        	csvNameTextField.setText("");
+        	csvNameTextField.setEnabled(false);
+			selectCSVFileBrowseButton.setEnabled(true);
+			csvFilePathTextField.setEnabled(true);
+
+		
+		}else if(command.equalsIgnoreCase("createCSV")) {
+        	csvDirLabel.setEnabled(true);
+        	csvDirTextField.setEnabled(true);
+        	selectCSVDirBrowseButton.setEnabled(true);
+        	csvNameLabel.setEnabled(true);
+        	csvNameTextField.setEnabled(true);
+			selectCSVFileBrowseButton.setEnabled(false);
+			csvFilePathTextField.setEnabled(false);
+			csvFilePathTextField.setText("");
+		
+		}else if (command.equalsIgnoreCase("cancel")) {
             if (alg != null) {
                 alg.setAlgCanceled(true);
             } else {
@@ -270,9 +416,10 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
                 windowClosing(null);
             }
         } else if (command.equalsIgnoreCase("ok")) {
-            if (enableTextArea) {
-                outputTextArea.setText("");
-            }
+            //if (enableTextArea) {
+                //outputTextArea.setText("");
+            //}
+        	outputTextArea.setText("");
             outputMessageLabel.setText(" ");
             errorMessageLabel.setText(" ");
             if (inputDirectoryTextField.getText().trim().equals("")
@@ -281,15 +428,26 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
                 errorMessageLabel.setText("Input Directory and Output Directory are required");
                 return;
             }
+            if(selectCSVFileRadioButton.isSelected()) {
+            	if(csvFilePathTextField.getText().trim().equals("")) {
+            		errorMessageLabel.setText("CSV File Path is required");
+                    return;
+            	}
+            }else {
+            	if(csvDirTextField.getText().trim().equals("") || csvNameTextField.getText().trim().equals("")){
+            		errorMessageLabel.setText("CSV Dir and Name are required");
+                    return;
+            	}
+            }
             boolean success = validateFilePaths();
             if ( !success) {
                 return;
             }
-            if (enableTextAreaCheckBox.isSelected()) {
-                enableTextArea = true;
-            } else {
-                enableTextArea = false;
-            }
+            //if (enableTextAreaCheckBox.isSelected()) {
+            //    enableTextArea = true;
+            //} else {
+            //    enableTextArea = false;
+            //}
             if (renameGrandParentDirCheckBox.isSelected()) {
                 renameGrandParentDir = true;
             } else {
@@ -311,7 +469,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         String inputDirectoryPath = inputDirectoryTextField.getText().trim();
         String outputDirectoryPath = outputDirectoryTextField.getText().trim();
         alg = new PlugInAlgorithmNINDSAnonymizationTool(inputDirectoryPath, outputDirectoryPath, outputTextArea,
-                errorMessageLabel, enableTextArea, renameGrandParentDir, this);
+                errorMessageLabel, true, renameGrandParentDir, this, csvFilePath);
 
         alg.addListener(this);
 
@@ -352,6 +510,35 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
             errorMessageLabel.setText("Input and Ouput Directories need to be different directories");
             return false;
         }
+        if(selectCSVFileRadioButton.isSelected()) {
+	        File test3 = new File(csvFilePathTextField.getText().trim());
+	        if ( !test3.exists()) {
+	            // MipavUtil.displayError("Input Directory is not valid");
+	            errorMessageLabel.setText("CSV File is not valid");
+	            return false;
+	        }else {
+	        	csvFilePath = csvFilePathTextField.getText().trim();
+	        }
+        }else {
+	        String dir = csvDirTextField.getText().trim();
+	        if(dir.endsWith(File.separator)) {
+				dir = dir.substring(0,dir.length()-1);
+			}
+	        File test4 = new File(dir);
+	        if ( !test4.exists()) {
+	            // MipavUtil.displayError("Input Directory is not valid");
+	            errorMessageLabel.setText("CSV Dir is not valid");
+	            return false;
+	        }
+	        String fileName = csvNameTextField.getText().trim();
+	        if(!(fileName.endsWith(".csv") || fileName.endsWith(".CSV"))) {
+	        	// MipavUtil.displayError("Input Directory is not valid");
+	            errorMessageLabel.setText("CSV FileName is not valid...needs to end in .csv");
+	            return false;
+	        }
+	        csvFilePath = dir + File.separator + fileName;
+        }
+		
 
         return true;
 
