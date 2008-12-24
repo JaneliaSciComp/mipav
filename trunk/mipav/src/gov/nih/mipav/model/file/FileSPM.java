@@ -1595,25 +1595,39 @@ public class FileSPM extends FileBase {
 
             bufferByte[252] = tmpByte;
             float mipavOrigin[] = myFileInfo.getOrigin();
+            float tempOrigin[] = new float[mipavOrigin.length];
             origin = new short[] { 0, 0, 0, 0, 0 };
             for (int i = 0; i < mipavOrigin.length; i++) {
                 if (mipavOrigin[i] == 0.0f) {
-                    origin[i] = (short)0;
+                    tempOrigin[i] = 0.0f;
                 }
                 else if (mipavOrigin[i] > 0.0f) {
                     // mipavOrigin[i] - resolutions[i] * origin[i] = 0;
-                    origin[i] = (short)Math.round(mipavOrigin[i]/resolutions[i]);
+                    tempOrigin[i] = mipavOrigin[i]/resolutions[i];
                 }
                 else { // mipavOrigin[i] < 0.0f
                     // mipavOrigin + resolutions[i] * origin[i] = 0;
-                    origin[i] = (short)Math.round(-mipavOrigin[i]/resolutions[i]);
+                    tempOrigin[i] = -mipavOrigin[i]/resolutions[i];
                 }
             }
-            // The y axis if flipped so 
-            origin[1] = (short)(spmExtents[1] - 1 - origin[1]);
-            // Voxel 0,0,0 in MIPAV is voxel 1,1,1 in SPM
-            for (int i = 0; i < 5; i++) {
-                origin[i] = (short)(origin[i] + 1);
+            if (((image.getNDims() == 2) && (Math.abs(tempOrigin[0] - ((extents[0] - 1.0f)/2.0f)) <= 0.5f) && 
+                    (Math.abs(tempOrigin[1] - ((extents[1] - 1.0f)/2.0f)) <= 0.5f)) ||
+                    ((image.getNDims() == 3) && (Math.abs(tempOrigin[0] - ((extents[0] - 1.0f)/2.0f)) <= 0.5f) && 
+                            (Math.abs(tempOrigin[1] - ((extents[1] - 1.0f)/2.0f)) <= 0.5f) &&
+                            (Math.abs(tempOrigin[2] - ((extents[2] - 1.0f)/2.0f)) <= 0.5f))) {
+                // within 1/2 pixel of image center for every dimension, so assume image center is intended and
+                // leave origin at 0, 0, 0, to designate zero values at image center
+            }
+            else { // not image center
+                for (int i = 0; i < mipavOrigin.length; i++) {
+                    origin[i] = (short)Math.round(tempOrigin[i]);
+                }
+                // The y axis if flipped so 
+                origin[1] = (short)(spmExtents[1] - 1 - origin[1]);
+                // Voxel 0,0,0 in MIPAV is voxel 1,1,1 in SPM
+                for (int i = 0; i < 5; i++) {
+                    origin[i] = (short)(origin[i] + 1);
+                }
             }
             
             setBufferShort(bufferByte, origin[0], 253, endianess);
