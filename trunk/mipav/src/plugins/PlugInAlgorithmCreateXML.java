@@ -290,7 +290,8 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 		private void writeProvenance() {
 			Calendar cal = Calendar.getInstance();
 			DecimalFormat dec = new DecimalFormat("00");
-			String dateStr = cal.get(Calendar.YEAR)+"-"+dec.format(cal.get(Calendar.MONTH))+"-"+dec.format(cal.get(Calendar.DAY_OF_MONTH));
+			//uses 0 for January
+			String dateStr = cal.get(Calendar.YEAR)+"-"+dec.format(cal.get(Calendar.MONTH)+1)+"-"+dec.format(cal.get(Calendar.DAY_OF_MONTH));
 			openTag("provenance", true);
 			closedTag("anonymized-by", System.getProperty("user.name"));
 			closedTag("date-added", dateStr);

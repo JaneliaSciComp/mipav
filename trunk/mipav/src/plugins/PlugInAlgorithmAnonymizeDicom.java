@@ -107,6 +107,32 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
     		displayError("Selected file is null.");
     		return;
     	}
+		
+		
+		File[] allTempFiles = constructTemporaryFiles();
+		
+		try {
+			printToLogFile = new PrintStream(new FileOutputStream(anonLoc));
+			printToLogFile.println("Note: The tags listed below were anonymized by the DICOM Anonymization Tool.");
+			printToLogFile.println("Private tags and sequence tags are not anonymized but are listed so that the user can anonymize them manually.");
+			printToLogFile.println();
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		}		
+		
+		anonymizeTemporaryFiles(allTempFiles);
+		
+		Preferences.debug("Finished reading files");
+		printToLogFile.flush();
+		printToLogFile.close();
+		
+		moveTemporaryFiles(allTempFiles);
+		
+		Preferences.debug("Finished writing files");
+		
+	}
+	
+	private File[] constructTemporaryFiles() {
 		int numOfFiles = selectedFiles.length;
 		File[] allTempFiles = new File[selectedFiles.length];
 		File toWrite;
@@ -127,15 +153,11 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 			}
 		}
 		
-		try {
-			printToLogFile = new PrintStream(new FileOutputStream(anonLoc));
-			printToLogFile.println("Note: The tags listed below were anonymized by the DICOM Anonymization Tool.");
-			printToLogFile.println("Private tags and sequence tags are not anonymized but are listed so that the user can anonymize them manually.");
-			printToLogFile.println();
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}		
-		
+		return allTempFiles;
+	}
+	
+	private void anonymizeTemporaryFiles(File[] allTempFiles) {
+		int numOfFiles = selectedFiles.length;
 		ArrayList<Integer> filesNotRead = new ArrayList<Integer>();
 		
 		for(int i=0; i<numOfFiles; i++) {
@@ -167,11 +189,10 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		if(stringExp.length() > 0) {
 			MipavUtil.displayError("The following files could not be anonymized:\n"+stringExp);
 		}
-		
-		Preferences.debug("Finished reading files");
-		printToLogFile.flush();
-		printToLogFile.close();
-		
+	}
+	
+	private void moveTemporaryFiles(File[] allTempFiles) {
+		int numOfFiles = selectedFiles.length;
 		for(int i=0; i<numOfFiles; i++) {
 			try {		
 				BufferedInputStream in = new BufferedInputStream(new FileInputStream(allTempFiles[i]));
@@ -189,9 +210,6 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 				e.printStackTrace();
 			}
 		}
-		
-		Preferences.debug("Finished writing files");
-		
 	}
 	
 	private class KeyComparator implements Comparator {
