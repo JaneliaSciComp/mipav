@@ -831,10 +831,10 @@ public class FileUtility {
                             //  Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
                             //  unless a SPM2 with extended header size > 348 is present.
                             try {
-                                fileType = FileUtility.isAnalyze(fileHeaderName, fileDir, quiet);
+                                fileType = FileUtility.isAnalyzeOrSPM(fileHeaderName, fileDir, quiet);
                             }
                             catch (IOException ex) {}
-                            if (fileType != FileUtility.ANALYZE) {
+                            if (fileType == FileUtility.UNDEFINED) {
                                 fileType = FileUtility.SPM;
                             }
     
@@ -897,10 +897,10 @@ public class FileUtility {
                                 // Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
                                 // unless a SPM2 with extended header size > 348 is present.
                                 try {
-                                    fileType = FileUtility.isAnalyze(fileName, fileDir, quiet);
+                                    fileType = FileUtility.isAnalyzeOrSPM(fileName, fileDir, quiet);
                                 }
                                 catch (IOException ex) {}
-                                if (fileType != FileUtility.ANALYZE) {
+                                if (fileType == FileUtility.UNDEFINED) {
                                     fileType = FileUtility.SPM;
                                 }
     
@@ -1023,7 +1023,7 @@ public class FileUtility {
                 // SPM2 with regular header size == 348 bytes
                 // Only SPM2 with extended header size > 348 will 
                 // not be classified as analyze.
-                fileType = FileUtility.isAnalyze(fileName, fileDir, quiet);
+                fileType = FileUtility.isAnalyzeOrSPM(fileName, fileDir, quiet);
             }
 
             if (fileType == FileUtility.UNDEFINED) {
@@ -1068,22 +1068,20 @@ public class FileUtility {
      * @param fileDir Directory of the image file to read.
      * @param quiet Whether to avoid any user interaction (ie, from error popups).
      * 
-     * @return <code>FileUtility.ANALYZE</code> if the file is a ANALYZE type, and <code>FileUtility.UNDEFINED</code>
+     * @return <code>FileUtility.ANALYZE</code> if the file is a ANALYZE type, 
+     *         <code>FileUtility.SPM</code> if the file is a SPM type, 
+     *         and <code>FileUtility.UNDEFINED</code>
      *         otherwise
      * 
      * @throws IOException If there is a problem determining the type of the given file.
      */
-    public static final int isAnalyze(String fileName, String fileDir, boolean quiet) throws IOException {
+    public static final int isAnalyzeOrSPM(String fileName, String fileDir, boolean quiet) throws IOException {
 
         try {
 
-            boolean isAnalyze = FileAnalyze.isAnalyze(fileDir + fileName);
+            return FileAnalyze.isAnalyzeOrSPM(fileDir + fileName);
 
-            if (isAnalyze) {
-                return FileUtility.ANALYZE;
-            }
-
-            return FileUtility.UNDEFINED;
+            
         } catch (OutOfMemoryError error) {
 
             if ( !quiet) {
