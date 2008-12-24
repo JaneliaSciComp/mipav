@@ -138,8 +138,11 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		File toWrite;
 		for(int i=0; i<numOfFiles; i++) {
 			try {
+				toWrite = File.createTempFile(selectedFiles[i].getName(), ".tmp");
+				toWrite.deleteOnExit();
+				System.out.println("Created file: "+toWrite.getAbsolutePath());
 				BufferedInputStream in = new BufferedInputStream(new FileInputStream(selectedFiles[i]));
-				BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(toWrite = new File(selectedFiles[i].getAbsoluteFile()+".tmp")));
+				BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(toWrite));
 				int n;
 				while((n = in.read()) != -1) {
 					out.write(n);
@@ -205,7 +208,6 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 				out.flush();
 				out.close();
 				in.close();
-				allTempFiles[i].delete();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
