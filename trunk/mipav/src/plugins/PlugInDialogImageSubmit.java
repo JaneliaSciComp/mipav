@@ -68,7 +68,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	private JFileChooser fileChooser;
 	
 	/** Files selected by the user */
-	private File[] selectedFiles;
+	private File[] selectedFiles = new File[0];
 	
 	/** List of current files and folders to work with */
 	private Vector<String> fileList;
@@ -520,10 +520,14 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
         	dispose();
         } else if (command.equalsIgnoreCase("OK")) {
         	createTagArray();
-        	if(selectedFiles.length > 0)
-        		callAlgorithm();
-        	else
+        	if(!(selectedFiles.length > 0)) {
         		MipavUtil.displayError("No files were selected for submission");
+        	} else if(!(submitField.getText().length() > 0)) {
+        		MipavUtil.displayError("A submission location is required.");
+        	} else {
+        		callAlgorithm();
+        	}
+    	
         } else if(command.equalsIgnoreCase(REMOVE_ALL)) {
         	fileList.removeAllElements();
         	inputFileList.updateUI();
