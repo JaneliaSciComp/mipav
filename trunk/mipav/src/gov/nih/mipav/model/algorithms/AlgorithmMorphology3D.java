@@ -80,6 +80,9 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     public static final int FILL_HOLES = 12;
+    
+    /** DOCUMENT ME! */
+    public static final int DISTANCE_MAP_FOR_SHAPE_INTERPOLATION = 13;
 
     /** DOCUMENT ME! */
     public static final int SIZED_SPHERE = 0;
@@ -911,6 +914,10 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             case FILL_HOLES:
                 fillHoles(false);
                 break;
+                
+            case DISTANCE_MAP_FOR_SHAPE_INTERPOLATION:
+                distanceMapForShapeInterpolation(false);
+                break;
 
             case ID_OBJECTS:
                 identifyObjects(false);
@@ -1136,6 +1143,201 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         setCompleted(true);
     }
+    
+    
+    private void distanceMapForShapeInterpolation(boolean returnFlag) {
+
+        // if thread has already been stopped, dump out
+        if (threadStopped) {
+            setCompleted(false);
+
+            finalize();
+
+            return;
+        }
+
+        int pix, i;
+        int xDim = srcImage.getExtents()[0];
+        int yDim = srcImage.getExtents()[1];
+        int zDim = srcImage.getExtents()[2];
+        int sliceSize = xDim * yDim;
+        int volSize = xDim * yDim * zDim;
+        float distance;
+        float dist;
+        Point3D pt;
+        int diffx, diffy, diffz;
+        int x, y, z;
+
+        float[] minDistanceBuffer;
+        Vector edgePoints = new Vector();
+
+        fireProgressStateChanged("Bg. distance image ...");
+        fireProgressStateChanged(0);
+
+
+        try {
+            minDistanceBuffer = new float[volSize];
+        } catch (OutOfMemoryError e) {
+            displayError("Algorithm Morphology3D.distanceMap: Out of memory");
+            setCompleted(false);
+
+
+            return;
+        }
+
+        // Save original in processBuffer and invert image in imgBuffer
+        for (pix = 0; pix < volSize; pix++) {
+            processBuffer[pix] = imgBuffer[pix];
+            if (imgBuffer[pix] > 0) {
+                imgBuffer[pix] = 0;
+            } else {
+                imgBuffer[pix] = 1;
+            }
+        }
+
+        // Find all edge pixels and put the index of their location in a integer vector
+        int end = volSize - sliceSize - xDim - 1;
+
+        for (pix = sliceSize + xDim + 1; (pix < end) && !threadStopped; pix++) {
+
+            if ((imgBuffer[pix] == 0) &&
+                    ((imgBuffer[pix - xDim] != 0) || (imgBuffer[pix + 1] != 0) || (imgBuffer[pix + xDim] != 0) ||
+                         (imgBuffer[pix - 1] != 0) || (imgBuffer[pix - sliceSize] != 0) ||
+                         (imgBuffer[pix + sliceSize] != 0))) {
+                edgePoints.addElement(new Point3D(pix % xDim, (pix % sliceSize) / xDim, pix / sliceSize));
+            }
+        }
+
+        if (threadStopped) {
+            setCompleted(false);
+
+
+            finalize();
+
+            return;
+        }
+
+        int edgeLength = edgePoints.size();
+
+        int mod = volSize / 50; // mod is 2 percent of length
+
+        float xRes = srcImage.getFileInfo(0).getResolutions()[0];
+        float xResSquared = xRes * xRes;
+        float yRes = srcImage.getFileInfo(0).getResolutions()[1];
+        float yResSquared = yRes * yRes;
+        float zRes = srcImage.getFileInfo(0).getResolutions()[2];
+        float zResSquared = zRes * zRes;
+
+        pix = 0;
+
+        for (z = 0; (z < zDim) && !threadStopped; z++) {
+
+            for (y = 0; (y < yDim) && !threadStopped; y++) {
+
+                for (x = 0; (x < xDim) && !threadStopped; x++) {
+
+                    try {
+
+                        if (((pix % mod) == 0)) {
+                            fireProgressStateChanged(Math.round((pix + 1) / ((float) volSize) * 100));
+                        }
+                    } catch (NullPointerException npe) {
+
+                        if (threadStopped) {
+                            Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                              Preferences.DEBUG_ALGORITHM);
+                        }
+                    }
+
+                    if (entireImage || mask.get(pix)) {
+
+                        if (imgBuffer[pix] > 0) {
+                            distance = 10000000;
+
+                            // Test the distace from point(x1, y1, z1) to all edge points and
+                            // put  the min. distance into the distance buffer
+                            for (i = 0; i < edgeLength; i++) {
+                                pt = (Point3D) (edgePoints.elementAt(i));
+
+                                diffx = pt.x - x;
+                                diffy = pt.y - y;
+                                diffz = pt.z - z;
+
+                                dist = (diffx * diffx * xResSquared) + (diffy * diffy * yResSquared) +
+                                       (diffz * diffz * zResSquared);
+
+                                if (dist < distance) {
+                                    distance = dist;
+                                }
+                            }
+
+                            minDistanceBuffer[pix] = -(float) Math.sqrt(distance);
+                        }
+                    } // if (entireImage || mask.get(pix))
+                    else {
+                    	 distance = 10000000;
+
+                         // Test the distace from point(x1, y1, z1) to all edge points and
+                         // put  the min. distance into the distance buffer
+                         for (i = 0; i < edgeLength; i++) {
+                             pt = (Point3D) (edgePoints.elementAt(i));
+
+                             diffx = pt.x - x;
+                             diffy = pt.y - y;
+                             diffz = pt.z - z;
+
+                             dist = (diffx * diffx * xResSquared) + (diffy * diffy * yResSquared) +
+                                    (diffz * diffz * zResSquared);
+
+                             if (dist < distance) {
+                                 distance = dist;
+                             }
+                         } // for (i = 0; i < edgeLength; i++)
+
+                         minDistanceBuffer[pix] = (float) Math.sqrt(distance);
+                    }
+
+                    pix++;
+                }
+            }
+
+        }
+
+        if (returnFlag == true) {
+            distanceMap = minDistanceBuffer;
+
+            return;
+        }
+
+        try {
+
+            if (threadStopped) {
+                setCompleted(false);
+
+                finalize();
+
+                return;
+            }
+
+            srcImage.reallocate(ModelStorageBase.FLOAT);
+            srcImage.importData(0, minDistanceBuffer, true);
+        } catch (IOException error) {
+            displayError("Algorithm Morphology3D.distanceMap: Image(s) locked");
+            setCompleted(false);
+
+
+            return;
+        } catch (OutOfMemoryError e) {
+            displayError("Algorithm Morphology3D.distanceMap: Out of memory");
+            setCompleted(false);
+
+
+            return;
+        }
+
+        setCompleted(true);
+    }
+    
 
     /**
      * Generates a Euclidian distance map of the background.
