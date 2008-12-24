@@ -477,6 +477,30 @@ public class FileInfoNIFTI extends FileInfoBase {
         vox_offset is 0. * vox_offset should be an integer multiple of 16; otherwise, some programs
         may not work properly (e.g., SPM). This is to allow memory-mapped input to be properly byte-aligned. */
     private float vox_offset = -1;
+    
+    private String extendedHeaderPresence = null;
+    
+    // The number of bytes in the header extension including esize and ecode themselves
+    // esize must be a positive integral multiple of 16
+    private int esize = 0;
+    
+    // ecode is a non-negative integer integer value that indicates the format of the extended header data that
+    // follows.  Different ecode values are assigned to different developer groups.  At present, the
+    // "registered" values for the code are:
+    // 0 = unknown private format (not recommended)
+    // 2 = DICOM format (i.e., attribute tags and values)
+    // 4 = AFNI group (i.e., ASCII XML-ish elements)
+    private int ecode = -1;
+    
+    // The size of the second header extension
+    private int esize2 = 0;
+    
+    private int ecode2 = -1;
+    
+    //  The size of the third header extension
+    private int esize3 = 0;
+    
+    private int ecode3 = -1;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1020,7 +1044,65 @@ public class FileInfoNIFTI extends FileInfoBase {
         if (intentName != null) {
             dialog.appendSecondaryData("Name or meaning of data", intentName);
         }
+        
+        if (extendedHeaderPresence != null) {
+            dialog.appendSecondaryData("Header extension", extendedHeaderPresence);
+        }
+        
+        if (esize > 0) {
+            dialog.appendSecondaryData("Header extension size in bytes", Integer.toString(esize));
+        }
+        if (ecode >= 0) {
+            String ecodeStr = ecodeIntToString(ecode);
+            dialog.appendSecondaryData("Header extension data format", ecodeStr);
+        }
+        
+        if (esize2 > 0) {
+            dialog.appendSecondaryData("Second header extension size in bytes", Integer.toString(esize2));
+        }
+        if (ecode2 >= 0) {
+            String ecodeStr = ecodeIntToString(ecode2);
+            dialog.appendSecondaryData("Second header extension data format", ecodeStr);
+        }
+        
+        if (esize3 > 0) {
+            dialog.appendSecondaryData("Third header extension size in bytes", Integer.toString(esize3));
+        }
+        if (ecode3 >= 0) {
+            String ecodeStr = ecodeIntToString(ecode3);
+            dialog.appendSecondaryData("Third header extension data format", ecodeStr);
+        }
 
+    }
+    
+    private String ecodeIntToString(int ecode) {
+        String ecodeStr;
+        switch(ecode) {
+            case 0:
+                ecodeStr = "Unknown private format";
+                break;
+            case 2:
+                ecodeStr = "DICOM format (attribute tags and values)";
+                break;
+            case 4:
+                ecodeStr = "AFNI group (ASCII XML-ish elements)";
+                break;
+            case 6:
+                ecodeStr = "Comment: arbitrary non-NUL ASCII text";
+                break;
+            case 8:
+                ecodeStr = "XCEDE metadata";
+                break;
+            case 10:
+                ecodeStr = "Dimensional information for the JIM software (XML format)";
+                break;
+            case 12:
+                ecodeStr = "Fiswidget XML pipeline descriptions";
+                break;
+            default:
+                ecodeStr = "Unrecognized ecode value";
+        }
+        return ecodeStr;
     }
 
     /**
@@ -1495,6 +1577,62 @@ public class FileInfoNIFTI extends FileInfoBase {
      */
     public void setVoxOffset(float vox) {
         vox_offset = vox;
+    }
+    
+    /**
+     * Sets the string telling whether or not an extended header is present
+     * @param extendedHeaderPresence
+     */
+    public void setExtendedHeaderPresence(String extendedHeaderPresence) {
+        this.extendedHeaderPresence = extendedHeaderPresence;
+    }
+    
+    /**
+     * Sets esize, the number of bytes in the header extension
+     * @param esize
+     */
+    public void setEsize(int esize) {
+        this.esize = esize;
+    }
+    
+    /**
+     * Sets ecode, the data format of the header extension
+     * @param ecode
+     */
+    public void setEcode(int ecode) {
+        this.ecode = ecode;
+    }
+    
+    /**
+     * Sets esize2, the number of bytes in the second header extension
+     * @param esize2
+     */
+    public void setEsize2(int esize2) {
+        this.esize2 = esize2;
+    }
+    
+    /**
+     * Sets ecode2, the data format of the second header extension
+     * @param ecode2
+     */
+    public void setEcode2(int ecode2) {
+        this.ecode2 = ecode2;
+    }
+    
+    /**
+     * Sets esize3, the number of bytes in the third header extension
+     * @param esize3
+     */
+    public void setEsize3(int esize3) {
+        this.esize3 = esize3;
+    }
+    
+    /**
+     * Sets ecode3, the data format of the third header extension
+     * @param ecode3
+     */
+    public void setEcode3(int ecode3) {
+        this.ecode3 = ecode3;
     }
 
     /**
