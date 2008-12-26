@@ -31,6 +31,54 @@ import javax.swing.*;
  */
 
 public class FileAvi extends FileBase {
+    // JPEG marker codes
+    /* start of frame */
+    private final int SOF0  = 0xc0;       /* baseline */
+    private final int SOF1  = 0xc1;       /* extended sequential, huffman */
+    private final int SOF2  = 0xc2;       /* progressive, huffman */
+    private final int SOF3  = 0xc3;       /* lossless, huffman */
+
+    private final int SOF5  = 0xc5;       /* differential sequential, huffman */
+    private final int SOF6  = 0xc6;       /* differential progressive, huffman */
+    private final int SOF7  = 0xc7;       /* differential lossless, huffman */
+    private final int JPG   = 0xc8;       /* reserved for JPEG extension */
+    private final int SOF9  = 0xc9;       /* extended sequential, arithmetic */
+    private final int SOF10 = 0xca;       /* progressive, arithmetic */
+    private final int SOF11 = 0xcb;       /* lossless, arithmetic */
+
+    private final int SOF13 = 0xcd;       /* differential sequential, arithmetic */
+    private final int SOF14 = 0xce;       /* differential progressive, arithmetic */
+    private final int SOF15 = 0xcf;      /* differential lossless, arithmetic */
+    private final int SOI   = 0xd8;       /* start of image */
+    private final int DQT   = 0xdb;       /* define quantization tables */
+    private final int APP0  = 0xe0;
+    private final int APP1  = 0xe1;
+    private final int APP2  = 0xe2;
+    private final int APP3  = 0xe3;
+    private final int APP4  = 0xe4;
+    private final int APP5  = 0xe5;
+    private final int APP6  = 0xe6;
+    private final int APP7  = 0xe7;
+    private final int APP8  = 0xe8;
+    private final int APP9  = 0xe9;
+    private final int APP10 = 0xea;
+    private final int APP11 = 0xeb;
+    private final int APP12 = 0xec;
+    private final int APP13 = 0xed;
+    private final int APP14 = 0xee;
+    private final int APP15 = 0xef;
+    
+    private final int ff_zigzag_direct[] = new int[]{
+            0,   1,  8, 16,  9,  2,  3, 10,
+            17, 24, 32, 25, 18, 11,  4,  5,
+            12, 19, 26, 33, 40, 48, 41, 34,
+            27, 20, 13,  6,  7, 14, 21, 28,
+            35, 42, 49, 56, 57, 50, 43, 36,
+            29, 22, 15, 23, 30, 37, 44, 51,
+            58, 59, 52, 45, 38, 31, 39, 46,
+            53, 60, 61, 54, 47, 55, 62, 63
+        };
+
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -77,6 +125,8 @@ public class FileAvi extends FileBase {
     
     /** Creative YUV (CYUV) */
     private boolean doCYUV = false;
+    
+    private boolean doMJPEG = false;
 
     /** true for big-endian and false for little-endian. */
     private boolean endianess;
@@ -214,6 +264,16 @@ public class FileAvi extends FileBase {
     private int framesToCapture;
     
     private int framesToSkip;
+    
+    private boolean mjpegDecodeInit = false;
+    
+    //private int idct_permutation[] = null;
+    
+    private int stPermutated[] = null;
+    //private int stInverse[] = null;
+    private int stRasterEnd[] = null;
+    private int quantMatrixes[][] = null;
+    private int qscale[] = null;      ///< quantizer scale calculated from quant_matrixes
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -3294,7 +3354,7 @@ public class FileAvi extends FileBase {
                                     }
                                         
                                     } // for (x = 0; x < imgExtents[0]; x += 4)
-                                } // for (y = imgExtents[1] - 1; y >= 0; y--)
+                                } // for (y = 0; y < imgExtents[1]; y++)
 
                                 
                             } // for (int j = 0; (j < dataLength) && (!bufferFinished); )
@@ -3350,6 +3410,427 @@ public class FileAvi extends FileBase {
                     } // if (haveMoviSubchunk && (subchunkBlocksRead == streams))
                 } // while ((totalBytesRead < totalDataArea) && chunkRead)    
             } // else if (doCYUV && (bitCount == 16))
+            else if (doMJPEG && (bitCount == 24)) {
+                bufferSize = 4 * imgExtents[0] * imgExtents[1];
+                imgBuffer = new byte[bufferSize];
+                dataSignature = new byte[4];
+                totalDataArea = LIST2Size - 4; // Subtract out 4 'movi' bytes
+                totalBytesRead = 0;
+                // M-JPEG Format A
+                // The contents of the app 1 marker is described below.
+                // The app 1 marker appears in each field.
+                
+                // In keeping with the JPEG specification, all values appear in the stream wiht
+                // the most significant byte first (i.e. Motorola byte ordering).  All fields below
+                // are 4 byte long integers.  All sizes and bytes are calculated from the beginning
+                // of the compressed data stream.
+                // For historical (i.e. hardware specific reasons) this field's contents are undefined.
+                // If possible, it should be set to zero.
+                int unused;
+                // This tag is used to identify that the app1 marker is actually the QuickTime M-JPEG
+                // specification.  It should contain 'mjpg'
+                byte tag[] = new byte[4];
+                // Contains the size of the image data for this field.
+                int fieldSize;
+                // The size of the image data including trailing pad bytes.  Because some hardware may
+                // generate trailing pad bytes, or require image sizes to be multiples of a particular
+                // size.
+                int paddedFieldSize;
+                // Offset to the next field of data.  In the second field, this value should be set to
+                // zero.  This value must be a multiple of 16 in size in order to ensure the alignment 
+                // of hardware decompressors.  If the frame only contains a single field, then this 
+                // field is always set to zero.
+                int nextFieldOffset;
+                // Offset to the quantization table marker.  If this field is zero, the image description
+                // should be checked for a default quantization table.
+                int quantizationTableOffset;
+                // Offset to the defualt huffman table marker.  If this field is zero, the imaage
+                // description should be checked for a default huffman table.
+                int huffmanTableOffset;
+                // Offset to the start of the image marker.  This field must be non-zero, i.e.,
+                // there must be start of image data.
+                int imageOffset;
+                // Offset to start of scan marker.  This field must be non-zero, i.e., there
+                // must be start of scan data.
+                int scanOffset;
+                // Offset to the start of the data stream.  Typically this immediately follows
+                // the start of scan data.
+                int dataOffset;
+                int len;
+                byte app0[] = new byte[4];
+                String id;
+                byte polarity;
+                byte bottomField;
+                int fieldSizeLessPadding;
+                int  v;
+                int v2;
+                int startCode;
+                int restartInterval = 0;
+                int restartCount = 0;
+                int index;
+                int i;
+                int js;
+                int lossless = 0;
+                int ls = 0;
+                int progressive = 0;
+                
+                if (!mjpegDecodeInit) {
+                    int end;
+                    mjpegDecodeInit = true;
+                    //idct_permutation = new int[64];
+                    //for (i = 0; i < 64; i++) {
+                        //idct_permutation[i] = i;
+                    //}
+                    stPermutated = new int[64];
+                    //stInverse = new int[64];
+                    stRasterEnd = new int[64];
+                    quantMatrixes = new int[4][64];
+                    qscale = new int[4];
+                    for (i = 0; i < 64; i++) {
+                        int j;
+                        j = ff_zigzag_direct[i];
+                        stPermutated[i] = j;
+                        // stInverse[j] = i;
+                    }
+                    end = -1;
+                    for (i = 0; i < 64; i++) {
+                        int j;
+                        j = stPermutated[i];
+                        if (j > end) {
+                            end = j;
+                        }
+                        stRasterEnd[i] = end;
+                    }
+                } if (!mjpegDecodeInit)
+                // Check for LIST rec<sp> subchunks
+                if (!AVIF_MUSTUSEINDEX) {
+                    signature = getInt(endianess);
+
+                    if (signature == 0x5453494C) {
+
+                        // have read LIST
+                        LIST2subchunkSize = getInt(endianess);
+                        moviSubchunkPosition = raFile.getFilePointer();
+                        CHUNKtype = getInt(endianess);
+
+                        if (CHUNKtype == 0x20636572) {
+
+                            // have read rec<sp>
+                            haveMoviSubchunk = true;
+                            subchunkDataArea = LIST2subchunkSize - 4;
+                            subchunkBytesRead = 0;
+                            subchunkBlocksRead = 0;
+                        } else {
+                            raFile.close();
+                            throw new IOException("CHUNK type in second LIST sub CHUNK is an illegal = " + CHUNKtype);
+                        }
+                    } else {
+                        raFile.seek(startPosition);
+                    }
+                } // if (!AVIF_MUSTUSEINDEX)
+
+                x = 0;
+                y = imgExtents[1] - 1;
+                z = 0;
+
+                int pixelIndex = 0;
+                boolean bufferFinished = false;
+                
+
+                chunkRead = true;
+
+                loopMJPG:
+                while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
+                           (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
+                    if (AVIF_MUSTUSEINDEX) {
+                        raFile.seek(indexPointer);
+                        dataFound = false;
+
+                        while (!dataFound) {
+                            raFile.read(dataSignature);
+
+                            if ((dataSignature[2] != 0x64 /*d */) || (dataSignature[3] < 0x62 /* b */) ||
+                                    (dataSignature[3] > 0x63 /* c */)) {
+                                indexPointer = indexPointer + 16;
+                                indexBytesRead += 16;
+                                if (indexBytesRead >= indexSize) {
+                                    break loopMJPG;
+                                }
+                                raFile.seek(indexPointer);
+                            } else {
+                                dataFound = true;
+                            }
+                        } // while (!dataFound)
+
+                        indexPointer = indexPointer + 8;
+                        raFile.seek(indexPointer);
+                        moviOffset = getInt(endianess);
+                        indexPointer = indexPointer + 8;
+                        indexBytesRead += 16;
+                        raFile.seek(moviPosition + (long) moviOffset);
+                    } // if (AVIFMUSTINDEX)
+
+                    raFile.read(dataSignature);
+                    totalBytesRead = totalBytesRead + 4;
+                    subchunkBytesRead += 4;
+
+                    if ((dataSignature[2] == 0x64 /* d */) &&
+                            ((dataSignature[3] == 0x63 /* c */) || (dataSignature[3] == 0x62 /* b */))) {
+                        dataLength = getInt(endianess);
+
+                        if ((dataLength % 2) == 1) {
+                            dataLength++;
+                        }
+
+                        totalBytesRead = totalBytesRead + 4;
+                        subchunkBytesRead += 4;
+
+                        if (one && (z != middleSlice)) {
+                            long ptr = raFile.getFilePointer();
+                            raFile.seek(ptr + dataLength);
+                            totalBytesRead = totalBytesRead + dataLength;
+                            subchunkBytesRead += dataLength;
+                            z++;
+                        } else {
+                            fileBuffer = new byte[dataLength];
+                            raFile.read(fileBuffer);
+                            totalBytesRead = totalBytesRead + dataLength;
+                            subchunkBytesRead += dataLength;
+                            bufferFinished = false;
+                            pixelIndex = 0;
+                            for (int j = 0; (j < dataLength) && (!bufferFinished);) {
+                                startCode = -1;
+                                while (j < dataLength) {
+                                    v = fileBuffer[j++] & 0xff;
+                                    v2 = fileBuffer[j] & 0xff;
+                                    if ((v == 0xff) && (v2 >= 0xc0) && (v2 <= 0xfe) && (j < dataLength)) {
+                                       startCode = fileBuffer[j++] & 0xff;
+                                       break;
+                                    }
+                                }
+                                System.out.println("startCode = " + startCode);
+                                switch (startCode) {
+                                    case SOF0:
+                                        Preferences.debug("startCode = SOF0\n");
+                                        break;
+                                    case SOI:
+                                        Preferences.debug("startCode = SOI\n");
+                                        break;
+                                    case DQT:
+                                        Preferences.debug("startCode = DQT");
+                                        break;
+                                    case APP0:
+                                        Preferences.debug("startCode = APP0\n");
+                                        break;
+                                    case APP1:
+                                        Preferences.debug("startCode = APP1\n");
+                                        break;
+                                    case APP2:
+                                        Preferences.debug("startCode = APP2\n");
+                                        break;
+                                    case APP3:
+                                        Preferences.debug("startCode = APP3\n");
+                                        break;
+                                    case APP4:
+                                        Preferences.debug("startCode = APP4\n");
+                                        break;
+                                    case APP5:
+                                        Preferences.debug("startCode = APP5\n");
+                                        break;
+                                    case APP6:
+                                        Preferences.debug("startCode = APP6\n");
+                                        break;
+                                    case APP7:
+                                        Preferences.debug("startCode = APP7\n");
+                                        break;
+                                    case APP8:
+                                        Preferences.debug("startCode = APP8\n");
+                                        break;
+                                    case APP9:
+                                        Preferences.debug("startCode = APP9\n");
+                                        break;
+                                    case APP10:
+                                        Preferences.debug("startCode = APP10\n");
+                                        break;
+                                    case APP11:
+                                        Preferences.debug("startCode = APP11\n");
+                                        break;
+                                    case APP12:
+                                        Preferences.debug("startCode = APP12\n");
+                                        break;
+                                    case APP13:
+                                        Preferences.debug("startCode = APP13\n");
+                                        break;
+                                    case APP14:
+                                        Preferences.debug("startCode = APP14\n");
+                                        break;
+                                    case APP15:
+                                        Preferences.debug("startCode = APP15\n");
+                                        break;
+                                }
+                                if (startCode == SOI) {
+                                    restartInterval = 0;
+                                    restartCount = 0;
+                                }
+                                else if (startCode == DQT) {
+                                    len = (fileBuffer[j++] & 0xff) << 8;
+                                    len |= (fileBuffer[j++] & 0xff);
+                                    len -= 2;
+                                    
+                                    while (len >= 65) {
+                                        /* Only 8 bit precision handled */
+                                        index = fileBuffer[j++] & 0xff;
+                                        System.out.println("index = " + index);
+                                        if (index >= 4) {
+                                            // >= 16 would be 16 bits precision
+                                            // also cannot have >= 4
+                                            MipavUtil.displayError("index = " + index + " startCode == DQT");
+                                            return null;
+                                        }
+                                        /* read quant table */
+                                        for (i = 0; i < 64; i++) {
+                                            js = stPermutated[i];  
+                                            quantMatrixes[index][js] = fileBuffer[j++];
+                                        } // for (i = 0; i < 64; i++)
+                                        
+                                        qscale[index] = (Math.max(quantMatrixes[index][stPermutated[1]], 
+                                                                  quantMatrixes[index][stPermutated[8]]) >> 1);
+                                        len -= 65;
+                                    } // while (len >= 65)
+                                } // else if (startCode == DQT)
+                                else if (startCode == SOF0) {
+                                    lossless = 0;
+                                    ls = 0;
+                                    progressive = 0;
+                                } // else if (startCode == SOF0)
+                                else if ((startCode >= APP0) && (startCode <= APP15)) {
+                                    len = (fileBuffer[j++] & 0xff) << 8;
+                                    len |= (fileBuffer[j++] & 0xff);
+                                    Preferences.debug("len = " + len + "\n");
+                                    // 'AVI1' is the APP0 marker which replaces the APP0 'JFIF'
+                                    // Read AVI1
+                                    app0[0] = fileBuffer[j++];
+                                    app0[1] = fileBuffer[j++];
+                                    app0[2] = fileBuffer[j++];
+                                    app0[3] = fileBuffer[j++];
+                                    len -= 6;
+                                    id = new String(app0);
+                                    Preferences.debug("APP0 marker = " + id + "\n");
+                                    System.out.println("APP0 marker = " + id);
+                                    if (id.equalsIgnoreCase("AVI1")) {
+                                        // 4 bytes AVI
+                                        // 1 byte polarity
+                                        // 1 byte always zero
+                                        // 4 bytes fieldSize
+                                        // 4 bytes fieldSizeLessPadding
+                                        polarity = fileBuffer[j++];
+                                        Preferences.debug("polarity = " + polarity + "\n");
+                                        if (polarity == 2) {
+                                            bottomField = 1;
+                                        }
+                                        else if (polarity == 1) {
+                                            bottomField = 0;
+                                        }
+                                        j++; // Skip zero byte
+                                        fieldSize = (fileBuffer[j++] & 0xff) << 24;
+                                        fieldSize |= (fileBuffer[j++] & 0xff) << 16;
+                                        fieldSize |= (fileBuffer[j++] & 0xff) << 8;
+                                        fieldSize |= (fileBuffer[j++] & 0xff);
+                                        Preferences.debug("fieldSize = " + fieldSize + "\n");
+                                        fieldSizeLessPadding = (fileBuffer[j++] & 0xff) << 24;
+                                        fieldSizeLessPadding |= (fileBuffer[j++] & 0xff) << 16;
+                                        fieldSizeLessPadding |= (fileBuffer[j++] & 0xff) << 8;
+                                        fieldSizeLessPadding |= (fileBuffer[j++] & 0xff);
+                                        len -= 10;
+                                        Preferences.debug("fieldSizeLessPadding = " + fieldSizeLessPadding + "\n");
+                                    } // if (id.equalsIgnoreCase("AVI1")
+                                    if (--len > 0) {
+                                        j++;
+                                    }
+                                } // else if ((startCode >= APP0) && (startCode <= APP15))
+                                else {
+                                    
+                                }
+                                
+                                /*for (y = 0; y < imgExtents[1]; y++) {
+                                    for (x = 0; x < imgExtents[0]; x ++) {
+                                        
+                                       pixelIndex++;  
+                                        //Check if decode is finished
+                                       if ((pixelIndex == imgExtents[0]*imgExtents[1]) || (j == dataLength)) {
+
+                                           bufferFinished = true;
+
+                                           if (one) {
+                                               imageA.importData(0, imgBuffer, false);
+                                           } else {
+                                               imageA.importData(z * bufferSize, imgBuffer, false);
+                                           }
+
+                                           if (actualFrames > 1) {
+                                               fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
+                                           }
+                                           z++;
+                                       }
+                                        
+                                    } // for (x = 0; x < imgExtents[0]; x ++)
+                                } // for (y = 0; y < imgExtents[1]; y++)*/
+
+                                
+                            } // for (int j = 0; (j < dataLength) && (!bufferFinished);)
+                    } // else 
+                    } // if ((dataSignature[2] == 0x64 /* d */) && (dataSignature[3] == 0x63 /* c */))
+                    else {
+                        dataLength = getInt(endianess);
+
+                        if ((dataLength % 2) == 1) {
+                            dataLength++;
+                        }
+
+                        totalBytesRead = totalBytesRead + 4;
+                        subchunkBytesRead += 4;
+
+                        long ptr = raFile.getFilePointer();
+                        raFile.seek(ptr + dataLength);
+                        totalBytesRead = totalBytesRead + dataLength;
+                        subchunkBytesRead += dataLength;
+                    } // else
+
+                    subchunkBlocksRead++;
+
+                    if (haveMoviSubchunk && (subchunkBlocksRead == streams) && (totalBytesRead < totalDataArea)) {
+                        totalBytesRead += moviSubchunkPosition + LIST2subchunkSize - raFile.getFilePointer();
+                        raFile.seek(moviSubchunkPosition + LIST2subchunkSize);
+
+                        // Check for LIST rec<sp> subchunks
+                        signature = getInt(endianess);
+                        totalBytesRead += 4;
+
+                        if (signature == 0x5453494C) {
+
+                            // have read LIST
+                            LIST2subchunkSize = getInt(endianess);
+                            totalBytesRead += 4;
+                            moviSubchunkPosition = raFile.getFilePointer();
+                            CHUNKtype = getInt(endianess);
+
+                            if (CHUNKtype == 0x20636572) {
+
+                                // have read rec<sp>
+                                totalBytesRead += 4;
+                                subchunkDataArea = LIST2subchunkSize - 4;
+                                subchunkBytesRead = 0;
+                                subchunkBlocksRead = 0;
+                            } else {
+                                raFile.close();
+                                throw new IOException("CHunktype for LIST2sbuchunk is an illegal = " + CHUNKtype);
+                            }
+                        } else {
+                            chunkRead = false;
+                        }
+                    } // if (haveMoviSubchunk && (subchunkBlocksRead == streams))
+                } // while ((totalBytesRead < totalDataArea) && chunkRead)     
+            } // else if (doMJPEG && (bitCount == 24))
 
             raFile.close();
 
@@ -5436,7 +5917,9 @@ public class FileAvi extends FileBase {
                 } else if (handlerString.toUpperCase().startsWith("MP42")) {
                     return AlgorithmTranscode.TRANSCODE_MP42;
                 } else if (handlerString.toUpperCase().startsWith("MJPG")) {
-                    return AlgorithmTranscode.TRANSCODE_MJPG;
+                    Preferences.debug("MJPEG (MJPG) encoding\n", Preferences.DEBUG_FILEIO);
+                    doMJPEG = true;
+                    //return AlgorithmTranscode.TRANSCODE_MJPG;
                 } else if (handlerString.toUpperCase().startsWith("DIV")) {
                     return AlgorithmTranscode.TRANSCODE_DIVX;
                 } else if (handlerString.toUpperCase().startsWith("MPG4")) {
@@ -5619,6 +6102,9 @@ public class FileAvi extends FileBase {
                 } else if (compression == 1987410275) {
                     Preferences.debug("compression is Creative YUV (CYUV)\n", Preferences.DEBUG_FILEIO);
                     doCYUV = true;
+                } else if (compression == 1196444237) {
+                    Preferences.debug("compression is MJPEG (MJPG)\n", Preferences.DEBUG_FILEIO);
+                    doMJPEG = true;
                 } else {
                     raFile.close();
                     throw new IOException("Unknown compression with value = " + compression);
@@ -5630,7 +6116,8 @@ public class FileAvi extends FileBase {
                          ((bitCount == 4) || (bitCount == 8) || (bitCount == 16) || (bitCount == 24) || (bitCount == 32))) ||
                         ((compression == 1) && (bitCount == 8)) || (doMSVC && (bitCount == 8)) ||
                         (doMSVC && (bitCount == 16)) || (doCVID && (bitCount == 8)) || (doCVID && (bitCount == 24)) || 
-                        (doCVID && (bitCount == 40)) || (doCYUV && (bitCount == 16))) {
+                        (doCVID && (bitCount == 40)) || (doCYUV && (bitCount == 16)) ||
+                        (doMJPEG && (bitCount == 24))) {
                     // OK
                 } else {
                     raFile.close();
@@ -5810,6 +6297,16 @@ public class FileAvi extends FileBase {
                     marker = raFile.getFilePointer();
                     raFile.seek(marker + ISFTlength);
                 } // else if (strnSignature == 0x54465349)
+                else if (strnSignature == 0x54494449) {
+
+                    // have read IDIT
+                    int IDITlength = getInt(endianess);
+                    if ((IDITlength % 2) == 1) {
+                        IDITlength++;
+                    }
+                    marker = raFile.getFilePointer();
+                    raFile.seek(marker + IDITlength);
+                } // else if (strnSignature == 0x54494449)
                 else if (strnSignature == 0x74646576) {
 
                     // have read vedt
@@ -5826,34 +6323,36 @@ public class FileAvi extends FileBase {
             }
 
             raFile.seek(LIST1Marker + LIST1Size);
-            signature = getInt(endianess);
-
-            if (signature == 0x4B4E554A) {
-
-                // have read JUNK for a JUNK padding CHUNK
-                int JUNKlength = getInt(endianess);
-                marker = raFile.getFilePointer();
-                raFile.seek(marker + JUNKlength);
-                CHUNKsignature = getInt(endianess);
-
-                if (CHUNKsignature != 0x5453494C) {
-                    raFile.close();
-                    throw new IOException("After JUNK CHUNK unexpected signature = " + CHUNKsignature);
+            do {
+                signature = getInt(endianess);
+                if (signature == 0x4B4E554A) {
+                    // have read JUNK for a JUNK padding CHUNK
+                    int JUNKlength = getInt(endianess);
+                    marker = raFile.getFilePointer();
+                    raFile.seek(marker + JUNKlength);    
                 }
-            } else if (signature != 0x5453494C) {
-                raFile.close();
-                throw new IOException("After first LIST CHUNK unexpected signature = " + signature);
-            }
-
-            // At this point have read LIST for the second LIST CHUNK which contains the actual data.
-            LIST2Size = getInt(endianess);
-            moviPosition = raFile.getFilePointer();
-            idx1Position = moviPosition + LIST2Size;
-            raFile.seek(idx1Position + 4);
-            indexSize = getInt(endianess);
-            raFile.seek(moviPosition);
-            indexPointer = idx1Position + 8;
-            CHUNKtype = getInt(endianess);
+                else if (signature != 0x5453494C /* LIST */) {
+                    raFile.close();
+                    throw new IOException("After first LIST CHUNK unexpected signature = " + signature);
+                }
+                else {
+                    // At this point have read LIST for the second LIST CHUNK which contains the actual data.
+                    LIST2Size = getInt(endianess);
+                    moviPosition = raFile.getFilePointer(); 
+                    CHUNKtype = getInt(endianess);
+                    if (CHUNKtype == 0x4F464E49) {
+                        raFile.seek(moviPosition + LIST2Size);        
+                    }
+                    else {
+                        idx1Position = moviPosition + LIST2Size;
+                        indexPointer = idx1Position + 8;    
+                        raFile.seek(idx1Position + 4);
+                        indexSize = getInt(endianess);
+                        raFile.seek(moviPosition + 4);
+                    }
+                }
+            } while ((signature == 0x4B4E554A /* JUNK */) || 
+                     ((signature == 0x5453494C /* LIST */) && (CHUNKtype == 0x4F464E49 /* INFO */)));
 
             if (CHUNKtype != 0x69766F6D) {
 
