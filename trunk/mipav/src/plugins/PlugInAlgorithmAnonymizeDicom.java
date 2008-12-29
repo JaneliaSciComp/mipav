@@ -162,10 +162,11 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	private void anonymizeTemporaryFiles(File[] allTempFiles) {
 		int numOfFiles = selectedFiles.length;
 		ArrayList<Integer> filesNotRead = new ArrayList<Integer>();
-		
+		int progressNum = minProgressValue;
 		for(int i=0; i<numOfFiles; i++) {
 			// use the selectedFileName as the reference slice for the file info tag tables
-            fireProgressStateChanged((int)(100*(((double)i)/((double)numOfFiles))), null, "Reading file "+i);
+            progressNum = minProgressValue + (int)((maxProgressValue-minProgressValue)*(((double)i)/((double)numOfFiles)));
+			fireProgressStateChanged(progressNum, null, "Reading file "+i);
 			try {
 				printToLogFile.println("Reading next file "+selectedFiles[i].getName()+" with path "+allTempFiles[i].getParent()+File.separator);
             	ReadDicom imageFile = new ReadDicom(allTempFiles[i].getName(), allTempFiles[i].getParent()+File.separator);
