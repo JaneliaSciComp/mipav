@@ -78,6 +78,136 @@ public class FileAvi extends FileBase {
             58, 59, 52, 45, 38, 31, 39, 46,
             53, 60, 61, 54, 47, 55, 62, 63
         };
+    
+    /* Set up the standard Huffman tables (cf. JPEG standard section K.3) */
+    /* IMPORTANT: these are only valid for 8-bit data precision! */
+    // 17 entries
+    private final int ff_mjpeg_bits_dc_luminance[] = new int[]
+    { /* 0-base */ 0, 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 };
+    // 12 entries
+    private final int ff_mjpeg_val_dc[] = new int[]
+    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+    // 17 entries
+    private final int ff_mjpeg_bits_dc_chrominance[] = new int[]
+    { /* 0-base */ 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 };
+    // 17 entries
+    private final int ff_mjpeg_bits_ac_luminance[] = new int[]
+    { /* 0-base */ 0, 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 0x7d };
+    private final int ff_mjpeg_val_ac_luminance[] = new int[]
+    { 0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,
+      0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
+      0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xa1, 0x08,
+      0x23, 0x42, 0xb1, 0xc1, 0x15, 0x52, 0xd1, 0xf0,
+      0x24, 0x33, 0x62, 0x72, 0x82, 0x09, 0x0a, 0x16,
+      0x17, 0x18, 0x19, 0x1a, 0x25, 0x26, 0x27, 0x28,
+      0x29, 0x2a, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
+      0x3a, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49,
+      0x4a, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59,
+      0x5a, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69,
+      0x6a, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79,
+      0x7a, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89,
+      0x8a, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98,
+      0x99, 0x9a, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7,
+      0xa8, 0xa9, 0xaa, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6,
+      0xb7, 0xb8, 0xb9, 0xba, 0xc2, 0xc3, 0xc4, 0xc5,
+      0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xd2, 0xd3, 0xd4,
+      0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xe1, 0xe2,
+      0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea,
+      0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
+      0xf9, 0xfa
+    };
+
+    // 17 entries
+    private final int ff_mjpeg_bits_ac_chrominance[] = new int[]
+    { /* 0-base */ 0, 0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 0x77 };
+
+    private final int ff_mjpeg_val_ac_chrominance[] = new int[]
+    { 0x00, 0x01, 0x02, 0x03, 0x11, 0x04, 0x05, 0x21,
+      0x31, 0x06, 0x12, 0x41, 0x51, 0x07, 0x61, 0x71,
+      0x13, 0x22, 0x32, 0x81, 0x08, 0x14, 0x42, 0x91,
+      0xa1, 0xb1, 0xc1, 0x09, 0x23, 0x33, 0x52, 0xf0,
+      0x15, 0x62, 0x72, 0xd1, 0x0a, 0x16, 0x24, 0x34,
+      0xe1, 0x25, 0xf1, 0x17, 0x18, 0x19, 0x1a, 0x26,
+      0x27, 0x28, 0x29, 0x2a, 0x35, 0x36, 0x37, 0x38,
+      0x39, 0x3a, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48,
+      0x49, 0x4a, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58,
+      0x59, 0x5a, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68,
+      0x69, 0x6a, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78,
+      0x79, 0x7a, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
+      0x88, 0x89, 0x8a, 0x92, 0x93, 0x94, 0x95, 0x96,
+      0x97, 0x98, 0x99, 0x9a, 0xa2, 0xa3, 0xa4, 0xa5,
+      0xa6, 0xa7, 0xa8, 0xa9, 0xaa, 0xb2, 0xb3, 0xb4,
+      0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xc2, 0xc3,
+      0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xd2,
+      0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda,
+      0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9,
+      0xea, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
+      0xf9, 0xfa
+    };
+    
+    private final int MAX_COMPONENTS = 4;
+    
+    /**
+     * Pixel format. Notes:
+     *
+     * PIX_FMT_RGB32 is handled in an endian-specific manner. A RGBA
+     * color is put together as:
+     *  (A << 24) | (R << 16) | (G << 8) | B
+     * This is stored as BGRA on little endian CPU architectures and ARGB on
+     * big endian CPUs.
+     *
+     * When the pixel format is palettized RGB (PIX_FMT_PAL8), the palettized
+     * image data is stored in AVFrame.data[0]. The palette is transported in
+     * AVFrame.data[1] and, is 1024 bytes long (256 4-byte entries) and is
+     * formatted the same as in PIX_FMT_RGB32 described above (i.e., it is
+     * also endian-specific). Note also that the individual RGB palette
+     * components stored in AVFrame.data[1] should be in the range 0..255.
+     * This is important as many custom PAL8 video codecs that were designed
+     * to run on the IBM VGA graphics adapter use 6-bit palette components.
+     */
+        private final int PIX_FMT_NONE= -1;
+        private final int PIX_FMT_YUV420P = 0;   ///< Planar YUV 4:2:0, 12bpp, (1 Cr & Cb sample per 2x2 Y samples)
+        private final int PIX_FMT_YUYV422 = 1;   ///< Packed YUV 4:2:2, 16bpp, Y0 Cb Y1 Cr
+        private final int PIX_FMT_RGB24 = 2;     ///< Packed RGB 8:8:8, 24bpp, RGBRGB...
+        private final int PIX_FMT_BGR24 = 3;     ///< Packed RGB 8:8:8, 24bpp, BGRBGR...
+        private final int PIX_FMT_YUV422P = 4;   ///< Planar YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
+        private final int PIX_FMT_YUV444P = 5;  ///< Planar YUV 4:4:4, 24bpp, (1 Cr & Cb sample per 1x1 Y samples)
+        private final int PIX_FMT_RGB32 = 6;    ///< Packed RGB 8:8:8, 32bpp, (msb)8A 8R 8G 8B(lsb), in cpu endianness
+        private final int PIX_FMT_YUV410P = 7;   ///< Planar YUV 4:1:0,  9bpp, (1 Cr & Cb sample per 4x4 Y samples)
+        private final int PIX_FMT_YUV411P = 8;   ///< Planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples)
+        private final int PIX_FMT_RGB565 = 9;    ///< Packed RGB 5:6:5, 16bpp, (msb)   5R 6G 5B(lsb), in cpu endianness
+        private final int PIX_FMT_RGB555 = 10;    ///< Packed RGB 5:5:5, 16bpp, (msb)1A 5R 5G 5B(lsb), in cpu endianness most significant bit to 0
+        private final int PIX_FMT_GRAY8 = 11;     ///<        Y        ,  8bpp
+        private final int PIX_FMT_MONOWHITE = 12; ///<        Y        ,  1bpp, 0 is white, 1 is black
+        private final int PIX_FMT_MONOBLACK = 13; ///<        Y        ,  1bpp, 0 is black, 1 is white
+        private final int PIX_FMT_PAL8 = 14;      ///< 8 bit with PIX_FMT_RGB32 palette
+        private final int PIX_FMT_YUVJ420P = 15;  ///< Planar YUV 4:2:0, 12bpp, full scale (jpeg)
+        private final int PIX_FMT_YUVJ422P= 16;  ///< Planar YUV 4:2:2, 16bpp, full scale (jpeg)
+        private final int PIX_FMT_YUVJ444P = 17;  ///< Planar YUV 4:4:4, 24bpp, full scale (jpeg)
+        private final int PIX_FMT_XVMC_MPEG2_MC = 18;///< XVideo Motion Acceleration via common packet passing(xvmc_render.h)
+        private final int PIX_FMT_XVMC_MPEG2_IDCT = 19;
+        private final int PIX_FMT_UYVY422 = 20;   ///< Packed YUV 4:2:2, 16bpp, Cb Y0 Cr Y1
+        private final int PIX_FMT_UYYVYY411 = 21; ///< Packed YUV 4:1:1, 12bpp, Cb Y0 Y1 Cr Y2 Y3
+        private final int PIX_FMT_BGR32 = 22;     ///< Packed RGB 8:8:8, 32bpp, (msb)8A 8B 8G 8R(lsb), in cpu endianness
+        private final int PIX_FMT_BGR565 = 23;    ///< Packed RGB 5:6:5, 16bpp, (msb)   5B 6G 5R(lsb), in cpu endianness
+        private final int PIX_FMT_BGR555 = 24;    ///< Packed RGB 5:5:5, 16bpp, (msb)1A 5B 5G 5R(lsb), in cpu endianness most significant bit to 1
+        private final int PIX_FMT_BGR8 = 25;      ///< Packed RGB 3:3:2,  8bpp, (msb)2B 3G 3R(lsb)
+        private final int PIX_FMT_BGR4 = 26;      ///< Packed RGB 1:2:1,  4bpp, (msb)1B 2G 1R(lsb)
+        private final int PIX_FMT_BGR4_BYTE = 27; ///< Packed RGB 1:2:1,  8bpp, (msb)1B 2G 1R(lsb)
+        private final int PIX_FMT_RGB8 = 28;      ///< Packed RGB 3:3:2,  8bpp, (msb)2R 3G 3B(lsb)
+        private final int PIX_FMT_RGB4 = 29;      ///< Packed RGB 1:2:1,  4bpp, (msb)1R 2G 1B(lsb)
+        private final int PIX_FMT_RGB4_BYTE = 30; ///< Packed RGB 1:2:1,  8bpp, (msb)1R 2G 1B(lsb)
+        private final int PIX_FMT_NV12 = 31;      ///< Planar YUV 4:2:0, 12bpp, 1 plane for Y and 1 for UV
+        private final int PIX_FMT_NV21 = 32;      ///< as above, but U and V bytes are swapped
+
+        private final int PIX_FMT_RGB32_1 = 33;   ///< Packed RGB 8:8:8, 32bpp, (msb)8R 8G 8B 8A(lsb), in cpu endianness
+        private final int PIX_FMT_BGR32_1 = 34;   ///< Packed RGB 8:8:8, 32bpp, (msb)8B 8G 8R 8A(lsb), in cpu endianness
+
+        private final int PIX_FMT_GRAY16BE = 35;  ///<        Y        , 16bpp, big-endian
+        private final int PIX_FMT_GRAY16LE = 36;  ///<        Y        , 16bpp, little-endian
+        private final int PIX_FMT_YUV440P = 37;  ///< Planar YUV 4:4:0 (1 Cr & Cb sample per 1x2 Y samples)
+        private final int PIX_FMT_YUVJ440P = 38;  ///< Planar YUV 4:4:0 full scale (jpeg)
+        private final int PIX_FMT_YUVA420P = 39;  ///< Planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
 
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -274,6 +404,10 @@ public class FileAvi extends FileBase {
     private int stRasterEnd[] = null;
     private int quantMatrixes[][] = null;
     private int qscale[] = null;      ///< quantizer scale calculated from quant_matrixes
+    private int vlcs[][][][] = null;
+    private int vlcs_bits[][] = null;
+    private int vlcs_table_size[][] = null;
+    private int vlcs_table_allocated[][] = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -3410,8 +3544,16 @@ public class FileAvi extends FileBase {
                     } // if (haveMoviSubchunk && (subchunkBlocksRead == streams))
                 } // while ((totalBytesRead < totalDataArea) && chunkRead)    
             } // else if (doCYUV && (bitCount == 16))
-            else if (doMJPEG && (bitCount == 24)) {
-                bufferSize = 4 * imgExtents[0] * imgExtents[1];
+            else if (doMJPEG) {
+                boolean rgb;
+                if (bitCount == 24) {
+                    bufferSize = 4 * imgExtents[0] * imgExtents[1];
+                    rgb = true;
+                }
+                else {
+                    bufferSize = imgExtents[0] * imgExtents[1];
+                    rgb = false;
+                }
                 imgBuffer = new byte[bufferSize];
                 dataSignature = new byte[4];
                 totalDataArea = LIST2Size - 4; // Subtract out 4 'movi' bytes
@@ -3464,15 +3606,57 @@ public class FileAvi extends FileBase {
                 int fieldSizeLessPadding;
                 int  v;
                 int v2;
-                int startCode;
+                int startCode = -1;
                 int restartInterval = 0;
                 int restartCount = 0;
                 int index;
                 int i;
                 int js;
-                int lossless = 0;
-                int ls = 0;
+                boolean lossless = false;
+                boolean ls = false;
                 int progressive = 0;
+                int bits; /* bits per component */
+                boolean pegasus_rct = false; /* pegasus reversible colorspace transform */
+                boolean rct = false; /* standard reversible colorspace transform */
+                int swidth = 0;
+                int sheight = 0;
+                int width;
+                int height;
+                boolean interlaced = false; /* true if interlaced */
+                boolean interlaced_frame = false; /* true if content of the picture is interlaced */
+                int org_height = imgExtents[1]; /* Size at codec init */
+                boolean first_picture = true; /* true if decoding first picture */
+                boolean bottom_field = false; /* true if bottom field */
+                boolean top_field_first = true;
+                int nb_components;
+                int h_max;
+                int v_max;
+                int component_id[] = new int[MAX_COMPONENTS];
+                int h_count[] = new int[MAX_COMPONENTS]; /* horizontal and vertical count for each component */
+                int v_count[] = new int[MAX_COMPONENTS];
+                int quant_index[] = new int[4];   /* quant table index for each component */
+                byte[] qscale_table;
+                boolean interlace_polarity = false; /* true for bottom field first */
+                int coded_width;
+                int coded_height;
+                int pix_fmt_id;
+                /**
+                 * low resolution decoding, 1-> 1/2 size, 2->1/4 size
+                 * - encoding: unused
+                 * - decoding: Set by user.
+                 */
+                 int lowres = 0;
+                 boolean cs_itu601 = false;
+                 int pix_fmt;
+                //VLC vlcs[2][4];
+                //#define VLC_TYPE int16_t
+
+                //typedef struct VLC {
+                    //int bits;
+                    //VLC_TYPE (*table)[2]; ///< code, bits
+                    //int table_size, table_allocated;
+                //} VLC;
+
                 
                 if (!mjpegDecodeInit) {
                     int end;
@@ -3501,6 +3685,11 @@ public class FileAvi extends FileBase {
                         }
                         stRasterEnd[i] = end;
                     }
+                    vlcs = new int[2][4][][];
+                    vlcs_bits = new int[2][4];
+                    vlcs_table_size = new int[2][4];
+                    vlcs_table_allocated = new int[2][4];
+                    build_basic_mjpeg_vlc();
                 } if (!mjpegDecodeInit)
                 // Check for LIST rec<sp> subchunks
                 if (!AVIF_MUSTUSEINDEX) {
@@ -3617,7 +3806,7 @@ public class FileAvi extends FileBase {
                                         Preferences.debug("startCode = SOI\n");
                                         break;
                                     case DQT:
-                                        Preferences.debug("startCode = DQT");
+                                        Preferences.debug("startCode = DQT\n");
                                         break;
                                     case APP0:
                                         Preferences.debug("startCode = APP0\n");
@@ -3699,16 +3888,151 @@ public class FileAvi extends FileBase {
                                     } // while (len >= 65)
                                 } // else if (startCode == DQT)
                                 else if (startCode == SOF0) {
-                                    lossless = 0;
-                                    ls = 0;
+                                    lossless = false;
+                                    ls = false;
                                     progressive = 0;
+                                    len = (fileBuffer[j++] & 0xff) << 8;
+                                    len |= (fileBuffer[j++] & 0xff);
+                                    Preferences.debug("len = " + len + "\n");
+                                    bits = (fileBuffer[j++] & 0xff);
+                                    Preferences.debug("bits = " + bits + "\n");
+                                    
+                                    if (pegasus_rct) {
+                                        bits = 9;
+                                    }
+                                    if ((bits == 9) && (!pegasus_rct)) {
+                                        rct = true;
+                                    }
+                                    
+                                    if ((bits != 8) && (!lossless)) {
+                                        MipavUtil.displayError("Only 8 bits/component accepted");
+                                        return null;
+                                    }
+                                    
+                                    height = (fileBuffer[j++] & 0xff) << 8;
+                                    height |= (fileBuffer[j++] & 0xff);
+                                    Preferences.debug("height = " + height + "\n");
+                                    width = (fileBuffer[j++] & 0xff) << 8;
+                                    width |= (fileBuffer[j++] & 0xff);
+                                    Preferences.debug("width = " + width + "\n");
+                                    
+                                    //HACK for odd_height.mov
+                                    if (interlaced && (swidth == width) && (sheight == (height + 1))) {
+                                        height = sheight;
+                                    }
+                                    
+                                    if((width <= 0) || (height <= 0) || ((width+128)*(height+128) >= Integer.MAX_VALUE/4)) {
+                                        MipavUtil.displayError("Illegal width and/or height value");
+                                        return null;
+                                    }
+                                    
+                                    nb_components = fileBuffer[j++] & 0xff;
+                                    Preferences.debug("nb_components = " + nb_components + "\n");
+                                    if ((nb_components <= 0) || (nb_components > MAX_COMPONENTS)) {
+                                        MipavUtil.displayError("Illegal nb_components = " + nb_components);
+                                        return null;
+                                    }
+                                    
+                                    if (ls && !((bits <= 8) || (nb_components == 1))) {
+                                        MipavUtil.displayError("Only 8 bits/component or 16-bit gray accepted for JPEG-LS");
+                                        return null;
+                                    }
+                                    h_max = 1;
+                                    v_max = 1;
+                                    for (i = 0; i < nb_components; i++) {
+                                        /* component id */ 
+                                        component_id[i] = (fileBuffer[j++] & 0xff) - 1;
+                                        h_count[i] = (fileBuffer[j] & 0xf0) >> 4;
+                                        v_count[i] = (fileBuffer[j++] & 0x0f);
+                                        /* compute hmax and vmax (only used in interleaved case) */
+                                        if (h_count[i] > h_max) {
+                                            h_max = h_count[i];
+                                        }
+                                        if (v_count[i] > v_max) {
+                                            v_max = v_count[i];
+                                        }
+                                        quant_index[i] = (fileBuffer[j++] & 0xff);
+                                        if (quant_index[i] >= 4) {
+                                            MipavUtil.displayError("Illegal quant_index[" + i + "] = " + quant_index[i]);
+                                            return null;
+                                        }
+                                    } // for (i = 0; i < nb_components; i++)
+                                    
+                                    if (ls && ((h_max > 1) || (v_max > 1))) {
+                                        MipavUtil.displayError("Subsampling in JPEG-LS is not supported");
+                                        return null;
+                                    }
+                                    
+                                    if ((v_max == 1) && (h_max == 1) && lossless) {
+                                       rgb = true;    
+                                    }
+                                    
+                                    /* If different size, reallocate/allocate picture */
+                                    if ((width != swidth) || (height != sheight)) {
+                                        qscale_table = null;
+                                        swidth =  width;
+                                        sheight = height;
+                                        interlaced = false;
+                                        
+                                        /* test interlaced mode */
+                                        if (first_picture && (org_height != 0) && 
+                                            (sheight < ((org_height * 3)/4))) {
+                                            interlaced = true;
+                                            bottom_field = interlace_polarity;
+                                            interlaced_frame = true;
+                                            top_field_first = !interlace_polarity;
+                                            height *= 2;
+                                        }
+                                        
+                                        coded_width = width;
+                                        coded_height= height;
+                                        swidth = -((-width )>>lowres);
+                                        sheight= -((-height)>>lowres);
+                                        qscale_table = new byte[(swidth+15)/16];
+                                        first_picture = false;
+                                    } // if ((width != swidth) || (height != sheight))
+                                    
+                                    if (interlaced && (bottom_field == !interlace_polarity)) {
+                                        return null;
+                                    }
+                                    
+                                    pix_fmt_id = (h_count[0] << 28) | (v_count[0] << 24) |
+                                                 (h_count[1] << 20) | (v_count[1] << 16) |
+                                                 (h_count[2] << 12) | (v_count[2] << 8) |
+                                                 (h_count[3] << 4) | v_count[3];
+                                    Preferences.debug("pix fmt id = " + pix_fmt_id + "\n");
+                                    if ((pix_fmt_id & 0x10101010) == 0) {
+                                        pix_fmt_id -= (pix_fmt_id & 0xF0F0F0F0)>>1;
+                                    }
+                                    if ((pix_fmt_id & 0x01010101) == 0) {
+                                        pix_fmt_id -= (pix_fmt_id & 0x0F0F0F0F)>>1;
+                                    }
+                                    
+                                    switch(pix_fmt_id) {
+                                        case 0x11111100:
+                                            if (rgb) {
+                                                pix_fmt = PIX_FMT_RGB32;
+                                            }
+                                            else {
+                                                pix_fmt = cs_itu601 ? PIX_FMT_YUV444P: PIX_FMT_YUVJ444P;
+                                            }
+                                            assert(nb_components == 3);
+                                            break;
+                                        case 0x11000000:
+                                            pix_fmt = PIX_FMT_GRAY8;
+                                            break;
+                                        case 0x12111100:
+                                            pix_fmt = cs_itu601 ? PIX_FMT_YUV440P: PIX_FMT_YUVJ440P;
+                                            break;
+                                        case 0x21111100:
+                                            pix_fmt = cs_itu601 ? PIX_FMT_YUV422P: PIX_FMT_YUVJ422P;
+                                            break;
+                                    }
                                 } // else if (startCode == SOF0)
                                 else if ((startCode >= APP0) && (startCode <= APP15)) {
                                     len = (fileBuffer[j++] & 0xff) << 8;
                                     len |= (fileBuffer[j++] & 0xff);
                                     Preferences.debug("len = " + len + "\n");
-                                    // 'AVI1' is the APP0 marker which replaces the APP0 'JFIF'
-                                    // Read AVI1
                                     app0[0] = fileBuffer[j++];
                                     app0[1] = fileBuffer[j++];
                                     app0[2] = fileBuffer[j++];
@@ -3862,6 +4186,193 @@ public class FileAvi extends FileBase {
 
             throw error;
         }
+    }
+    
+    private void build_basic_mjpeg_vlc() {
+        build_vlc(0, 0, ff_mjpeg_bits_dc_luminance, ff_mjpeg_val_dc, 12, false);
+        build_vlc(0, 1, ff_mjpeg_bits_dc_chrominance, ff_mjpeg_val_dc, 12, false);
+        build_vlc(1, 0, ff_mjpeg_bits_ac_luminance, ff_mjpeg_val_ac_luminance, 251, true);
+        build_vlc(1, 1, ff_mjpeg_bits_ac_chrominance, ff_mjpeg_val_ac_chrominance, 251, true);
+    }
+    
+    private int build_vlc(int index0, int index1, int bits_table[], int val_table[], int nb_codes,
+                           boolean is_ac) {
+        int i;
+        int huff_size[] = new int[256+16];
+        int huff_code[] = new int[256+16];
+        
+        ff_mjpeg_build_huffman_codes(huff_size, huff_code, bits_table, val_table);
+        if (is_ac) {
+            for (i = nb_codes-1; i >= 0; i--) {
+                huff_size[i + 16] = huff_size[i];
+                huff_code[i + 16] = huff_code[i];
+            } // for (i = 0; i < nb_codes; i++)
+            for (i = 0; i < 16; i++) {
+               huff_size[i] = 0;
+               huff_code[i] = 0;
+            } // for (i = 0; i < 16; i++)
+            nb_codes += 16;
+        } // if (is_ac)
+        return init_vlc_sparse(index0, index1, 9, nb_codes, huff_size, 4, 4, huff_code, 4, 4, null, 0, 0);
+    }
+    
+    private void ff_mjpeg_build_huffman_codes(int huff_size[], int huff_code[], int bits_table[], 
+                                              int val_table[]) {
+        int i, j, k, nb, code, sym;
+        
+        code = 0;
+        k = 0;
+        for (i = 1; i <= 16; i++) {
+            nb = bits_table[i];
+            for (j = 0; j < nb; j++) {
+                sym = val_table[k++];
+                huff_size[sym] = i;
+                huff_code[sym] = code;
+                code++;
+            }
+            code <<= 1;
+        }
+    }
+    
+    /**
+     * Build VLC decoding tables suitable for use with get_vlc().
+     * @param index0
+     * @param index1
+     * @param nb_bits set decoding table size (2^nb_bits) entries.  The bigger it is, the faster the decoding.  But 
+     *                it should not be tto big to save memory and L1 cache.  '9' is a good compromise.
+     * @param nb_codes  number of vlcs_codes
+     * @param bits  table which gives the size in bits of each vlc code.
+     * @param bits_wrap  gives the number of bytes between each entry of the bits table  
+     * @param bits_size  gives the number of bytes between each entry of the bits table
+     * @param codes  table which gives the bit_pattern of each vlc code.
+     * @param codes_wrap  gives the number of bytes between each entry of the codes table 
+     * @param codes_size  gives the number of bytes between each entry of the codes table
+     * @param symbols table which gives the values to be returned form get_vlc().
+     * @param symbols_wrap
+     * @param symbols_size
+     */
+    private int init_vlc_sparse(int index0, int index1, int nb_bits, int nb_codes, int bits[], int bits_wrap, int bits_size,
+                                 int codes[], int codes_wrap, int codes_size, int symbols[], int symbols_wrap,
+                                 int symbols_size) {
+ 
+        vlcs_bits[index0][index1] = nb_bits; 
+        vlcs_table_allocated[index0][index1] = 0;
+        vlcs_table_size[index0][index1] = 0;
+        
+        if (build_table(index0, index1, nb_bits, nb_codes, bits, bits_wrap, bits_size, codes, codes_wrap, codes_size, symbols, 
+                    symbols_wrap, symbols_size, 0, 0) < 0) {
+            return -1;
+        }
+        return 0;
+    }
+    
+    private int build_table(int index0, int index1, int table_nb_bits, int nb_codes, int bits[], int bits_wrap, int bits_size,
+            int codes[], int codes_wrap, int codes_size, int symbols[], int symbols_wrap,
+            int symbols_size, int code_prefix, int n_prefix) {
+        int table_size;
+        int table_index;
+        int i;
+        int n;
+        int code;
+        int symbol;
+        int code_prefix2;
+        int j;
+        int nb;
+        int k;
+        int n1;
+        int index;
+        Preferences.debug("Entering build_table with index0 = " + index0 + " index1 = " + index1 + "\n");
+        
+        table_size = 1 << table_nb_bits;
+        table_index = vlcs_table_size[index0][index1];
+        vlcs_table_size[index0][index1] += table_size;
+        if (vlcs_table_size[index0][index1] > vlcs_table_allocated[index0][index1]) {
+            Preferences.debug("New allocation in build_table\n");
+            vlcs_table_allocated[index0][index1] += (1 << vlcs_bits[index0][index1]); 
+            vlcs[index0][index1] = new int[vlcs_table_allocated[index0][index1]][2];
+        }
+        if (table_index < 0) {
+            return -1;
+        }
+        for (i = 0; i < table_size; i++) {
+            vlcs[index0][index1][i+table_index][1] = 0; // bits
+            vlcs[index0][index1][i+table_index][0] = -1; // codes
+        }
+        
+        /* first pass: map codes and compute auxiliary table sizes */
+        for (i = 0; i < nb_codes; i++) {
+            n = bits[i]; 
+            code = codes[i];
+            /* We accept tables with holes */
+            if (n <= 0) {
+                continue;
+            }
+            if (symbols == null) {
+                symbol = i;
+            }
+            else {
+                symbol = symbols[i];    
+            }
+            /* if code matches the prefix, it is in the table */
+            n -= n_prefix;
+            code_prefix2 = code >> n;
+            if ((n > 0) && (code_prefix2 == code_prefix)) {
+                if (n <= table_nb_bits) {
+                    /* no need to add another table */
+                    j = (code << (table_nb_bits - n)) & (table_size - 1);
+                    nb = 1 << (table_nb_bits - n);
+                    for (k = 0; k < nb; k++) {
+                        if (vlcs[index0][index1][j+table_index][1] /* bits */ != 0) {
+                            MipavUtil.displayError("Incorrect codes ");
+                            Preferences.debug("Incorrect codes\n");
+                            Preferences.debug("index0 = " + index0 + "\n");
+                            Preferences.debug("index1 = " + index1 + "\n");
+                            Preferences.debug("j = " + j + "\n");
+                            Preferences.debug("table_index = " + table_index + "\n");
+                            Preferences.debug("vlcs[index0][index1][j+table_index][1] = " +
+                                    vlcs[index0][index1][j+table_index][1] + "\n");
+                            Preferences.debug("k = " + k + "\n");
+                            Preferences.debug("nb = " + nb + "\n");
+                            return -1;
+                        }
+                        vlcs[index0][index1][j+table_index][1] = n; // bits
+                        vlcs[index0][index1][j+table_index][0] = symbol;
+                        j++;
+                    } // for (k = 0; k < nb; k++)
+                } // if (n <= table_nb_bits)
+                else {
+                    n -= table_nb_bits;
+                    j = (code >> n) & ((1 << table_nb_bits) - 1);
+                    /* compute table size */
+                    n1 = -vlcs[index0][index1][j+table_index][1]; // bits
+                    if (n > n1) {
+                        n1 = n;
+                    }
+                    vlcs[index0][index1][j+table_index][1] = -n1; // bits
+                }
+            } // if ((n > 0) && (code_prefix2 == code_prefix))
+        } // for (i = 0; i < nb_codes; i++)
+        
+        /* second pass: fill auxiliary tables recursively */
+        for (i = 0; i < table_size; i++) {
+            n = vlcs[index0][index1][i+table_index][1]; // bits
+            if (n < 0) {
+                n = -n;
+                if (n > table_nb_bits) {
+                    n = table_nb_bits;
+                    vlcs[index0][index1][i+table_index][1] = -n; // bits
+                }
+                Preferences.debug("Recursive entry into build_table\n");
+                index = build_table(index0, index1, n, nb_codes, bits, bits_wrap, bits_size, codes, codes_wrap,
+                                    codes_size, symbols, symbols_wrap, symbols_size, 
+                                    ((code_prefix << table_nb_bits) | i), n_prefix + table_nb_bits);
+                if (index < 0) {
+                    return -1;
+                }
+                vlcs[index0][index1][i + table_index][0] = index; // code
+            } // if (n < 0)
+        } // for (i = 0; i < table_size; i++)
+        return table_index;
     }
 
     /**
