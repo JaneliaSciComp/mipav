@@ -50,6 +50,8 @@ public class FileAvi extends FileBase {
     private final int SOF14 = 0xce;       /* differential progressive, arithmetic */
     private final int SOF15 = 0xcf;      /* differential lossless, arithmetic */
     private final int SOI   = 0xd8;       /* start of image */
+    private final int EOI   = 0xd9;       /* end of image */
+    private final int SOS   = 0xda;       /* start of scan */
     private final int DQT   = 0xdb;       /* define quantization tables */
     private final int APP0  = 0xe0;
     private final int APP1  = 0xe1;
@@ -146,6 +148,15 @@ public class FileAvi extends FileBase {
     };
     
     private final int MAX_COMPONENTS = 4;
+    
+    /**
+     * Required number of additionally allocated bytes at the end of the input bitstream for decoding.
+     * This is mainly needed because some optimized bitstream readers read
+     * 32 or 64 bit at once and could read over the end.<br>
+     * Note: If the first 23 bits of the additional bytes are not 0, then damaged
+     * MPEG bitstreams could cause overread and segfault.
+     */
+    private final int FF_INPUT_BUFFER_PADDING_SIZE = 8;
     
     /**
      * Pixel format. Notes:
@@ -408,6 +419,7 @@ public class FileAvi extends FileBase {
     private int vlcs_bits[][] = null;
     private int vlcs_table_size[][] = null;
     private int vlcs_table_allocated[][] = null;
+    private boolean thpCodec = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -3620,20 +3632,27 @@ public class FileAvi extends FileBase {
                 boolean rct = false; /* standard reversible colorspace transform */
                 int swidth = 0;
                 int sheight = 0;
-                int width;
-                int height;
+                int width = 0;
+                int height = 0;
                 boolean interlaced = false; /* true if interlaced */
                 boolean interlaced_frame = false; /* true if content of the picture is interlaced */
                 int org_height = imgExtents[1]; /* Size at codec init */
                 boolean first_picture = true; /* true if decoding first picture */
                 boolean bottom_field = false; /* true if bottom field */
                 boolean top_field_first = true;
-                int nb_components;
-                int h_max;
-                int v_max;
+                int nb_components = 0;
+                int h_max = 0;
+                int v_max = 0;
                 int component_id[] = new int[MAX_COMPONENTS];
                 int h_count[] = new int[MAX_COMPONENTS]; /* horizontal and vertical count for each component */
                 int v_count[] = new int[MAX_COMPONENTS];
+                int h_scount[] = new int[MAX_COMPONENTS]; /* horizontal and vertical count for each component */
+                int v_scount[] = new int[MAX_COMPONENTS];
+                int comp_index[] = new int[MAX_COMPONENTS];
+                int dc_index[] = new int[MAX_COMPONENTS];
+                int ac_index[] = new int[MAX_COMPONENTS];
+                int nb_blocks[] = new int[MAX_COMPONENTS];
+                int last_dc[] = new int[MAX_COMPONENTS]; /* last DEQUANTIZED dc  */
                 int quant_index[] = new int[4];   /* quant table index for each component */
                 byte[] qscale_table;
                 boolean interlace_polarity = false; /* true for bottom field first */
@@ -3647,7 +3666,23 @@ public class FileAvi extends FileBase {
                  */
                  int lowres = 0;
                  boolean cs_itu601 = false;
-                 int pix_fmt;
+                 int pix_fmt = PIX_FMT_NONE;
+                 byte buffer[] = null;
+                 int bufp;
+                 byte xb;
+                 int block_size;
+                 int vmax;
+                 int hmax;
+                 int idsos;
+                 int predictor;
+                 int ilv;
+                 int prev_shift;
+                 int point_transform;
+                 int mb_width;
+                 int mb_height;
+                 int h;
+                 int mjpb_skiptosod = 0;
+                 int c;
                 //VLC vlcs[2][4];
                 //#define VLC_TYPE int16_t
 
@@ -3787,9 +3822,15 @@ public class FileAvi extends FileBase {
                             subchunkBytesRead += dataLength;
                             bufferFinished = false;
                             pixelIndex = 0;
+                            bigloop:
                             for (int j = 0; (j < dataLength) && (!bufferFinished);) {
                                 startCode = -1;
                                 while (j < dataLength) {
+                                    if (j == dataLength - 1) {
+                                        j++;
+                                        bufferFinished = true;
+                                        break bigloop;
+                                    }
                                     v = fileBuffer[j++] & 0xff;
                                     v2 = fileBuffer[j] & 0xff;
                                     if ((v == 0xff) && (v2 >= 0xc0) && (v2 <= 0xfe) && (j < dataLength)) {
@@ -3797,13 +3838,18 @@ public class FileAvi extends FileBase {
                                        break;
                                     }
                                 }
-                                System.out.println("startCode = " + startCode);
                                 switch (startCode) {
                                     case SOF0:
                                         Preferences.debug("startCode = SOF0\n");
                                         break;
                                     case SOI:
                                         Preferences.debug("startCode = SOI\n");
+                                        break;
+                                    case EOI:
+                                        Preferences.debug("startCode = EOI\n");
+                                        break;
+                                    case SOS:
+                                        Preferences.debug("startCode = SOS\n");
                                         break;
                                     case DQT:
                                         Preferences.debug("startCode = DQT\n");
@@ -3856,6 +3902,8 @@ public class FileAvi extends FileBase {
                                     case APP15:
                                         Preferences.debug("startCode = APP15\n");
                                         break;
+                                    default:
+                                        Preferences.debug("startCode = " + startCode + "\n");
                                 }
                                 if (startCode == SOI) {
                                     restartInterval = 0;
@@ -3869,7 +3917,7 @@ public class FileAvi extends FileBase {
                                     while (len >= 65) {
                                         /* Only 8 bit precision handled */
                                         index = fileBuffer[j++] & 0xff;
-                                        System.out.println("index = " + index);
+                                        Preferences.debug("index = " + index + "\n");
                                         if (index >= 4) {
                                             // >= 16 would be 16 bits precision
                                             // also cannot have >= 4
@@ -3887,6 +3935,113 @@ public class FileAvi extends FileBase {
                                         len -= 65;
                                     } // while (len >= 65)
                                 } // else if (startCode == DQT)
+                                else if (startCode == EOI) {
+                                    
+                                } // else if (startCode == EOI)
+                                else if (startCode == SOS) {
+                                    if (ls) {
+                  
+                                    }
+                                    else { // !ls
+                                        buffer = new byte[dataLength - j + FF_INPUT_BUFFER_PADDING_SIZE];
+                                        bufp = 0;
+                                        while (j < dataLength) {
+                                          xb = fileBuffer[j++]; 
+                                          buffer[bufp++] = xb;
+                                          if (!thpCodec) {
+                                              if (xb == (byte)0xff) {
+                                                  while ((j < dataLength) && (xb == (byte)0xff)) {
+                                                      xb = fileBuffer[j++];
+                                                  } // while ((j < dataLength) && (xb == (byte)0xff))
+                                                  if (((xb & 0xff) >= 0xd0) && ((xb & 0xff) <= 0xd7)) {
+                                                      buffer[bufp++] = xb;
+                                                  }
+                                                  else if (xb != 0) {
+                                                      break;
+                                                  }   
+                                              } // if (xb == (byte)0xff)
+                                          } // if (!thpCodec)
+                                        } // while (j < dataLength)
+                                    } // else !ls
+                                    bufp = 0;
+                                    block_size = lossless ? 1: 8;
+                                    len = (buffer[bufp++] & 0xff) << 8;
+                                    len |= (buffer[bufp++] & 0xff);
+                                    nb_components = buffer[bufp++] & 0xff;
+                                    if (len != 6 + 2*nb_components) {
+                                        MipavUtil.displayError("Error on decode sos invalid len = " + len);
+                                        return null;
+                                    }
+                                    vmax = 0;
+                                    hmax = 0;
+                                    for (i = 0; i < nb_components; i++) {
+                                        idsos = (buffer[bufp++] & 0xff) - 1;
+                                        /* find component index */
+                                        for (index = 0; index < nb_components; index++) {
+                                            if (idsos == component_id[index]) {
+                                                break;
+                                            }
+                                        }
+                                        if (index == nb_components) {
+                                            MipavUtil.displayError("decode_sos: index " + index + " out of components");
+                                            return null;
+                                        }
+                                        comp_index[i] = index;
+                                        nb_blocks[i] = h_count[index] * v_count[index];
+                                        h_scount[i] = h_count[index];
+                                        v_scount[i] = v_count[index];
+                                   
+                                        dc_index[i] = (buffer[bufp] & 0xf0) >> 4;
+                                        ac_index[i] = buffer[bufp++] & 0x0f;
+                                        
+                                        if ((dc_index[i] < 0) || (ac_index[i] < 0) ||
+                                            (dc_index[i] >= 4) || (ac_index[i] >= 4)) {
+                                            MipavUtil.displayError("decode sos ac/dc index out of range");
+                                            return null;
+                                        }
+                                    } // for (i = 0; i < nb_components; i++)
+                                    
+                                    predictor = buffer[bufp++] & 0xff; /* JPEG Ss / lossless JPEG predictor / JPEG-LS NEAR */
+                                    ilv = buffer[bufp++] & 0xff; /* JPEG Se / JPEG-LS ILV */
+                                    prev_shift = (buffer[bufp] & 0xf0) >> 4; /* Ah */
+                                    point_transform = buffer[bufp++] & 0x0f; /* Al */
+                                    
+                                    for (i = 0; i < nb_components; i++) {
+                                        last_dc[i] = 1024;
+                                    }
+                                    
+                                    if (nb_components > 1) {
+                                        /* interleaved stream */
+                                        mb_width = (width + h_max * block_size - 1)/ (h_max * block_size);
+                                        mb_height = (height + v_max * block_size - 1)/ (v_max * block_size);
+                                    }
+                                    else if (!ls) { /* Skip this for JPEG-LS */
+                                        h = h_max /h_scount[0];   
+                                        v = v_max / v_scount[0];
+                                        mb_width = (width + h * block_size - 1) / (h * block_size);
+                                        mb_height = (height + v * block_size - 1) / ( v * block_size);
+                                        nb_blocks[0] = 1;
+                                        h_scount[0] = 1;
+                                        v_scount[0] = 1;
+                                    }
+                                    
+                                    /* mjpeg-b can have padding bytes between sos and image data, skip them */
+                                    for (i = mjpb_skiptosod; i > 0; i--) {
+                                        bufp++;
+                                    }
+                                    
+                                    if (lossless) {
+                                        
+                                    }
+                                    else {
+                                        if (prev_shift == 0) {
+                                            for (i = 0; i < nb_components; i++) {
+                                                c = comp_index[i];    
+                                            } // for (i = 0; i < nb_components; i++)
+                                            
+                                        } // if (prev_shift == 0)
+                                    }
+                                } // else if (startCode == SOS)
                                 else if (startCode == SOF0) {
                                     lossless = false;
                                     ls = false;
@@ -4027,6 +4182,66 @@ public class FileAvi extends FileBase {
                                         case 0x21111100:
                                             pix_fmt = cs_itu601 ? PIX_FMT_YUV422P: PIX_FMT_YUVJ422P;
                                             break;
+                                        case 0x22111100:
+                                            pix_fmt = cs_itu601 ? PIX_FMT_YUV420P: PIX_FMT_YUVJ420P;
+                                            break;
+                                        default:
+                                            MipavUtil.displayError("Unhandled pixel format = " + pix_fmt_id);
+                                    }
+                                    if (ls) {
+                                        if (nb_components > 1) {
+                                            pix_fmt = PIX_FMT_RGB24;
+                                        }
+                                        else if (bits <= 8) {
+                                            pix_fmt = PIX_FMT_GRAY8;
+                                        }
+                                        else if (endianess){
+                                            pix_fmt = PIX_FMT_GRAY16BE;
+                                        }
+                                        else {
+                                            pix_fmt = PIX_FMT_GRAY16LE;
+                                        }
+                                    }
+                                    switch(pix_fmt) {
+                                        case PIX_FMT_RGB32:
+                                            Preferences.debug("pix_fmt = PIX_FMT_RGB32\n");
+                                            break;
+                                        case PIX_FMT_YUV444P:
+                                            Preferences.debug("pix_fmt = PIX_FMT_YUV444P\n");
+                                            break;
+                                        case PIX_FMT_YUVJ444P:
+                                            Preferences.debug("pix_fmt = PIX_FMT_YUVJ444P\n");
+                                            break;
+                                        case PIX_FMT_GRAY8:
+                                            Preferences.debug("pix_fmt = PIX_FMT_GRAY8\n");
+                                            break;
+                                        case PIX_FMT_YUV440P:
+                                            Preferences.debug("pix_fmt = PIX_FMT_YUV440P\n");
+                                            break;
+                                        case PIX_FMT_YUVJ440P:
+                                            Preferences.debug("pix_fmt = PIX_FMT_YUVJ440P\n");
+                                            break;
+                                        case PIX_FMT_YUV422P:
+                                            Preferences.debug("pix_fmt = PIX_FMT_YUV422P\n");
+                                            break;
+                                        case PIX_FMT_YUVJ422P:
+                                            Preferences.debug("pix_fmt = PIX_FMT_YUVJ422P\n");
+                                            break;
+                                        case PIX_FMT_YUV420P:
+                                            Preferences.debug("pix_fmt = PIX_FMT_YUV420P\n");
+                                            break;
+                                        case PIX_FMT_YUVJ420P:
+                                            Preferences.debug("pix_fmt = PIX_FMT_YUVJ420P\n");
+                                            break;
+                                        case PIX_FMT_RGB24:
+                                            Preferences.debug("pix_fmt = PIX_FMT_RGB24\n");
+                                            break;
+                                        case PIX_FMT_GRAY16BE:
+                                            Preferences.debug("pix_fmt = PIX_FMT_GRAY16BE\n");
+                                            break;
+                                        case PIX_FMT_GRAY16LE:
+                                            Preferences.debug("pix_fmt = PIX_FMT_GRAY16LE\n");
+                                            break;
                                     }
                                 } // else if (startCode == SOF0)
                                 else if ((startCode >= APP0) && (startCode <= APP15)) {
@@ -4040,7 +4255,6 @@ public class FileAvi extends FileBase {
                                     len -= 6;
                                     id = new String(app0);
                                     Preferences.debug("APP0 marker = " + id + "\n");
-                                    System.out.println("APP0 marker = " + id);
                                     if (id.equalsIgnoreCase("AVI1")) {
                                         // 4 bytes AVI
                                         // 1 byte polarity
