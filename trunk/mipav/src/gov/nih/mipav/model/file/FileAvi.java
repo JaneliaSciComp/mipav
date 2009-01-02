@@ -219,6 +219,9 @@ public class FileAvi extends FileBase {
         private final int PIX_FMT_YUV440P = 37;  ///< Planar YUV 4:4:0 (1 Cr & Cb sample per 1x2 Y samples)
         private final int PIX_FMT_YUVJ440P = 38;  ///< Planar YUV 4:4:0 full scale (jpeg)
         private final int PIX_FMT_YUVA420P = 39;  ///< Planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
+        
+        // frame type
+        private final int FF_I_TYPE = 1; ///< Intra
 
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -413,13 +416,14 @@ public class FileAvi extends FileBase {
     private int stPermutated[] = null;
     //private int stInverse[] = null;
     private int stRasterEnd[] = null;
-    private int quantMatrixes[][] = null;
+    private short quant_matrixes[][] = null;
     private int qscale[] = null;      ///< quantizer scale calculated from quant_matrixes
     private int vlcs[][][][] = null;
     private int vlcs_bits[][] = null;
     private int vlcs_table_size[][] = null;
     private int vlcs_table_allocated[][] = null;
     private boolean thpCodec = false;
+    private boolean AMVCodec = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -3619,14 +3623,14 @@ public class FileAvi extends FileBase {
                 int  v;
                 int v2;
                 int startCode = -1;
-                int restartInterval = 0;
-                int restartCount = 0;
+                int restart_interval = 0;
+                int restart_count = 0;
                 int index;
                 int i;
                 int js;
                 boolean lossless = false;
                 boolean ls = false;
-                int progressive = 0;
+                boolean progressive = false;
                 int bits; /* bits per component */
                 boolean pegasus_rct = false; /* pegasus reversible colorspace transform */
                 boolean rct = false; /* standard reversible colorspace transform */
@@ -3653,6 +3657,7 @@ public class FileAvi extends FileBase {
                 int ac_index[] = new int[MAX_COMPONENTS];
                 int nb_blocks[] = new int[MAX_COMPONENTS];
                 int last_dc[] = new int[MAX_COMPONENTS]; /* last DEQUANTIZED dc  */
+                int linesize[] = new int[MAX_COMPONENTS];                   ///< linesize << interlaced
                 int quant_index[] = new int[4];   /* quant table index for each component */
                 byte[] qscale_table;
                 boolean interlace_polarity = false; /* true for bottom field first */
@@ -3678,11 +3683,40 @@ public class FileAvi extends FileBase {
                  int ilv;
                  int prev_shift;
                  int point_transform;
-                 int mb_width;
-                 int mb_height;
+                 int mb_width = 0;
+                 int mb_height = 0;
                  int h;
                  int mjpb_skiptosod = 0;
                  int c;
+                 int data[] = new int[4];
+                 int x_chroma_shift;
+                 int y_chroma_shift;
+                 int w2;
+                 byte pBuffer[] = null;
+                 int pBufferSize = 0;
+                 int pBufPtr = 0;
+                 int pSize;
+                 int h2;
+                 int size2;
+                 int pict_type; // picture type of the frame
+                 /* is this picture used as reference\
+                 * The values for this are the same as the MpegEncContext.picture_structure\
+                 * variable, that is 1->top field, 2->bottom field, 3->frame/both fields.\
+                 * - encoding: unused\
+                 * - decoding: Set by libavcodec. (before get_buffer() call)).\
+                 */
+                int reference;
+                /**\
+                 * 1 -> keyframe, 0-> not\
+                 * - encoding: Set by libavcodec.\
+                 * - decoding: Set by libavcodec.\
+                 */
+                int key_frame;
+                int mb_x;
+                int mb_y;
+                int n;
+                short block[] = new short[64];
+                int EOBRUN[] = new int[1];
                 //VLC vlcs[2][4];
                 //#define VLC_TYPE int16_t
 
@@ -3703,7 +3737,7 @@ public class FileAvi extends FileBase {
                     stPermutated = new int[64];
                     //stInverse = new int[64];
                     stRasterEnd = new int[64];
-                    quantMatrixes = new int[4][64];
+                    quant_matrixes = new short[4][64];
                     qscale = new int[4];
                     for (i = 0; i < 64; i++) {
                         int j;
@@ -3906,8 +3940,8 @@ public class FileAvi extends FileBase {
                                         Preferences.debug("startCode = " + startCode + "\n");
                                 }
                                 if (startCode == SOI) {
-                                    restartInterval = 0;
-                                    restartCount = 0;
+                                    restart_interval = 0;
+                                    restart_count = 0;
                                 }
                                 else if (startCode == DQT) {
                                     len = (fileBuffer[j++] & 0xff) << 8;
@@ -3927,11 +3961,11 @@ public class FileAvi extends FileBase {
                                         /* read quant table */
                                         for (i = 0; i < 64; i++) {
                                             js = stPermutated[i];  
-                                            quantMatrixes[index][js] = fileBuffer[j++];
+                                            quant_matrixes[index][js] = (short)(fileBuffer[j++] & 0xff);
                                         } // for (i = 0; i < 64; i++)
                                         
-                                        qscale[index] = (Math.max(quantMatrixes[index][stPermutated[1]], 
-                                                                  quantMatrixes[index][stPermutated[8]]) >> 1);
+                                        qscale[index] = (Math.max(quant_matrixes[index][stPermutated[1]], 
+                                                                  quant_matrixes[index][stPermutated[8]]) >> 1);
                                         len -= 65;
                                     } // while (len >= 65)
                                 } // else if (startCode == DQT)
@@ -4035,17 +4069,81 @@ public class FileAvi extends FileBase {
                                     }
                                     else {
                                         if (prev_shift == 0) {
+                                            EOBRUN[0] = 0;
                                             for (i = 0; i < nb_components; i++) {
-                                                c = comp_index[i];    
+                                                c = comp_index[i];
+                                                if (AMVCodec) {
+                                                    data[c] += (linesize[c] * (v_scount[i] * (8 * mb_height - ((height/v_max) & 7)) - 1));
+                                                    linesize[c] *= -1;
+                                                }
                                             } // for (i = 0; i < nb_components; i++)
                                             
+                                            for (mb_y = 0; mb_y < mb_height; mb_y++) {
+                                                for (mb_x = 0; mb_x < mb_width; mb_x++) {
+                                                    if ((restart_interval != 0) && (restart_count == 0)) {
+                                                        restart_count = restart_interval;
+                                                    }
+                                                    
+                                                    for (i = 0; i < nb_components; i++) {
+                                                        n = nb_blocks[i];
+                                                        c = comp_index[i];
+                                                        h = h_scount[i];
+                                                        v = v_scount[i];
+                                                        x = 0;
+                                                        y = 0;
+                                                        for (js = 0; js < n; js++) {
+                                                             for (k = 0; k < block.length; k++) {
+                                                                 block[k] = 0;
+                                                             }
+                                                             if (!progressive && decode_block(buffer, bufp, block, i, dc_index[i], ac_index[i], 
+                                                                 quant_matrixes[quant_index[c]]) < 0) {
+                                                                 MipavUtil.displayError("decode_block error for mb_x + " + mb_x +
+                                                                                        " mb_y = " + mb_y);
+                                                                 return null;
+                                                             } // if (!progressive && decode_block)
+                                                             if (progressive && decode_block_progressive(block, i, dc_index[i],
+                                                                 ac_index[i], quant_matrixes[quant_index[c]], predictor, ilv,
+                                                                 prev_shift, point_transform, EOBRUN) < 0) {
+                                                                 MipavUtil.displayError("decode_block_progressive error for mb_x = " +
+                                                                         mb_x + " mb_y = " + mb_y);
+                                                                 return null;
+                                                             }
+                                                             
+                                                             pBufPtr = data[c] + (((linesize[c] * (v * mb_y + y) * 8) +
+                                                                       (h * mb_x + x) * 8 ) >> lowres);
+                                                             if (interlaced && bottom_field) {
+                                                                 pBufPtr += linesize[c] >> 1;
+                                                             }
+                                                             if (!progressive) {
+                                                                 ff_simple_idct_put(pBuffer, pBufPtr, linesize[c], block);
+                                                             }
+                                                             else {
+                                                                 ff_simple_idct_add(pBuffer, pBufPtr, linesize[c], block);
+                                                             }
+                                                             if (++x == h) {
+                                                                 x = 0;
+                                                                 y++;
+                                                             }
+                                                        } // for (js = 0; js < n; js++)
+                                                    } // for (i = 0; i < nb_components; i++)
+                                                    
+                                                    /* (< 1350) buggy workaround for Spectralfan.mov, should be fixed */
+                                                    if ((restart_interval != 0) && (restart_interval < 1350) &&
+                                                        ((--restart_count) == 0)) {
+                                                        bufp += 2; /* Skip RSTn */
+                                                        for (i = 0; i < nb_components; i++) { /* reset dc */
+                                                            last_dc[i] = 1024;
+                                                        }
+                                                    }
+                                                } // for (mb_x = 0; mb_x < mb_width; mb_x++)
+                                            } // for (mb_y = 0; mb_y < mb_height; mb_y++)
                                         } // if (prev_shift == 0)
                                     }
                                 } // else if (startCode == SOS)
                                 else if (startCode == SOF0) {
                                     lossless = false;
                                     ls = false;
-                                    progressive = 0;
+                                    progressive = false;
                                     len = (fileBuffer[j++] & 0xff) << 8;
                                     len |= (fileBuffer[j++] & 0xff);
                                     Preferences.debug("len = " + len + "\n");
@@ -4205,43 +4303,230 @@ public class FileAvi extends FileBase {
                                     switch(pix_fmt) {
                                         case PIX_FMT_RGB32:
                                             Preferences.debug("pix_fmt = PIX_FMT_RGB32\n");
+                                            linesize[0] = imgExtents[0] * 4;
+                                            pSize = linesize[0] * imgExtents[1];
+                                            data[1] = -1;
+                                            data[2] = -1;
+                                            data[3] = -1;
+                                            pBufferSize = pSize;
+                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
+                                                pBuffer = new byte[pBufferSize];
+                                            }
                                             break;
                                         case PIX_FMT_YUV444P:
                                             Preferences.debug("pix_fmt = PIX_FMT_YUV444P\n");
+                                            x_chroma_shift = 0;
+                                            y_chroma_shift = 0;
+                                            w2 = (imgExtents[0] + (1 << x_chroma_shift) - 1) >> x_chroma_shift;
+                                            linesize[0] = imgExtents[0];
+                                            linesize[1] = w2;
+                                            linesize[2] = w2;
+                                            pSize = linesize[0] * imgExtents[1];
+                                            h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
+                                            size2 = linesize[1] * h2;
+                                            data[1] = pSize;
+                                            data[2] = pSize + size2;
+                                            data[3] = -1;
+                                            pBufferSize = pSize + 2 * size2;
+                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
+                                                pBuffer = new byte[pBufferSize];
+                                            }
                                             break;
                                         case PIX_FMT_YUVJ444P:
                                             Preferences.debug("pix_fmt = PIX_FMT_YUVJ444P\n");
+                                            x_chroma_shift = 0;
+                                            y_chroma_shift = 0;
+                                            w2 = (imgExtents[0] + (1 << x_chroma_shift) - 1) >> x_chroma_shift;
+                                            linesize[0] = imgExtents[0];
+                                            linesize[1] = w2;
+                                            linesize[2] = w2;
+                                            pSize = linesize[0] * imgExtents[1];
+                                            h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
+                                            size2 = linesize[1] * h2;
+                                            data[1] = pSize;
+                                            data[2] = pSize + size2;
+                                            data[3] = -1;
+                                            pBufferSize = pSize + 2 * size2;
+                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
+                                                pBuffer = new byte[pBufferSize];
+                                            }
                                             break;
                                         case PIX_FMT_GRAY8:
                                             Preferences.debug("pix_fmt = PIX_FMT_GRAY8\n");
+                                            linesize[0] = imgExtents[0];
+                                            pSize = linesize[0] * imgExtents[1];
+                                            data[1] = -1;
+                                            data[2] = -1;
+                                            data[3] = -1;
+                                            pBufferSize = pSize;
+                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
+                                                pBuffer = new byte[pBufferSize];
+                                            }
                                             break;
                                         case PIX_FMT_YUV440P:
                                             Preferences.debug("pix_fmt = PIX_FMT_YUV440P\n");
+                                            x_chroma_shift = 0;
+                                            y_chroma_shift = 1;
+                                            w2 = (imgExtents[0] + (1 << x_chroma_shift) - 1) >> x_chroma_shift;
+                                            linesize[0] = imgExtents[0];
+                                            linesize[1] = w2;
+                                            linesize[2] = w2;
+                                            pSize = linesize[0] * imgExtents[1];
+                                            h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
+                                            size2 = linesize[1] * h2;
+                                            data[1] = pSize;
+                                            data[2] = pSize + size2;
+                                            data[3] = -1;
+                                            pBufferSize = pSize + 2 * size2;
+                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
+                                                pBuffer = new byte[pBufferSize];
+                                            }
                                             break;
                                         case PIX_FMT_YUVJ440P:
                                             Preferences.debug("pix_fmt = PIX_FMT_YUVJ440P\n");
+                                            x_chroma_shift = 0;
+                                            y_chroma_shift = 1;
+                                            w2 = (imgExtents[0] + (1 << x_chroma_shift) - 1) >> x_chroma_shift;
+                                            linesize[0] = imgExtents[0];
+                                            linesize[1] = w2;
+                                            linesize[2] = w2;
+                                            pSize = linesize[0] * imgExtents[1];
+                                            h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
+                                            size2 = linesize[1] * h2;
+                                            data[1] = pSize;
+                                            data[2] = pSize + size2;
+                                            data[3] = -1;
+                                            pBufferSize = pSize + 2 * size2;
+                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
+                                                pBuffer = new byte[pBufferSize];
+                                            }
                                             break;
                                         case PIX_FMT_YUV422P:
                                             Preferences.debug("pix_fmt = PIX_FMT_YUV422P\n");
+                                            x_chroma_shift = 1;
+                                            y_chroma_shift = 0;
+                                            w2 = (imgExtents[0] + (1 << x_chroma_shift) - 1) >> x_chroma_shift;
+                                            linesize[0] = imgExtents[0];
+                                            linesize[1] = w2;
+                                            linesize[2] = w2;
+                                            pSize = linesize[0] * imgExtents[1];
+                                            h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
+                                            size2 = linesize[1] * h2;
+                                            data[1] = pSize;
+                                            data[2] = pSize + size2;
+                                            data[3] = -1;
+                                            pBufferSize = pSize + 2 * size2;
+                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
+                                                pBuffer = new byte[pBufferSize];
+                                            }
                                             break;
                                         case PIX_FMT_YUVJ422P:
                                             Preferences.debug("pix_fmt = PIX_FMT_YUVJ422P\n");
+                                            x_chroma_shift = 1;
+                                            y_chroma_shift = 0;
+                                            w2 = (imgExtents[0] + (1 << x_chroma_shift) - 1) >> x_chroma_shift;
+                                            linesize[0] = imgExtents[0];
+                                            linesize[1] = w2;
+                                            linesize[2] = w2;
+                                            pSize = linesize[0] * imgExtents[1];
+                                            h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
+                                            size2 = linesize[1] * h2;
+                                            data[1] = pSize;
+                                            data[2] = pSize + size2;
+                                            data[3] = -1;
+                                            pBufferSize = pSize + 2 * size2;
+                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
+                                                pBuffer = new byte[pBufferSize];
+                                            }
                                             break;
                                         case PIX_FMT_YUV420P:
                                             Preferences.debug("pix_fmt = PIX_FMT_YUV420P\n");
+                                            x_chroma_shift = 1;
+                                            y_chroma_shift = 1;
+                                            w2 = (imgExtents[0] + (1 << x_chroma_shift) - 1) >> x_chroma_shift;
+                                            linesize[0] = imgExtents[0];
+                                            linesize[1] = w2;
+                                            linesize[2] = w2;
+                                            pSize = linesize[0] * imgExtents[1];
+                                            h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
+                                            size2 = linesize[1] * h2;
+                                            data[1] = pSize;
+                                            data[2] = pSize + size2;
+                                            data[3] = -1;
+                                            pBufferSize = pSize + 2 * size2;
+                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
+                                                pBuffer = new byte[pBufferSize];
+                                            }
                                             break;
                                         case PIX_FMT_YUVJ420P:
                                             Preferences.debug("pix_fmt = PIX_FMT_YUVJ420P\n");
+                                            x_chroma_shift = 1;
+                                            y_chroma_shift = 1;
+                                            w2 = (imgExtents[0] + (1 << x_chroma_shift) - 1) >> x_chroma_shift;
+                                            linesize[0] = imgExtents[0];
+                                            linesize[1] = w2;
+                                            linesize[2] = w2;
+                                            pSize = linesize[0] * imgExtents[1];
+                                            h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
+                                            size2 = linesize[1] * h2;
+                                            data[1] = pSize;
+                                            data[2] = pSize + size2;
+                                            data[3] = -1;
+                                            pBufferSize = pSize + 2 * size2;
+                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
+                                                pBuffer = new byte[pBufferSize];
+                                            }
                                             break;
                                         case PIX_FMT_RGB24:
                                             Preferences.debug("pix_fmt = PIX_FMT_RGB24\n");
+                                            linesize[0] = 3 * imgExtents[0];
+                                            pSize = linesize[0] * imgExtents[1];
+                                            data[1] = -1;
+                                            data[2] = -1;
+                                            data[3] = -1;
+                                            pBufferSize = pSize;
+                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
+                                                pBuffer = new byte[pBufferSize];
+                                            }
                                             break;
                                         case PIX_FMT_GRAY16BE:
                                             Preferences.debug("pix_fmt = PIX_FMT_GRAY16BE\n");
+                                            linesize[0] = 2 * imgExtents[0];
+                                            pSize = linesize[0] * imgExtents[1];
+                                            data[1] = -1;
+                                            data[2] = -1;
+                                            data[3] = -1;
+                                            pBufferSize = pSize;
+                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
+                                                pBuffer = new byte[pBufferSize];
+                                            }
                                             break;
                                         case PIX_FMT_GRAY16LE:
                                             Preferences.debug("pix_fmt = PIX_FMT_GRAY16LE\n");
+                                            linesize[0] = 2 * imgExtents[0];
+                                            pSize = linesize[0] * imgExtents[1];
+                                            data[1] = -1;
+                                            data[2] = -1;
+                                            data[3] = -1;
+                                            pBufferSize = pSize;
+                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
+                                                pBuffer = new byte[pBufferSize];
+                                            }
                                             break;
+                                    }
+                                    reference = 0;
+                                    pict_type = FF_I_TYPE;
+                                    key_frame = 1;
+                                    
+                                    if (interlaced) {
+                                        for (i = 0; i < 3; i++) {
+                                            linesize[i] *= 2;
+                                        }
+                                    } // if (interlaced)
+                                    
+                                    if (len != (8+(3*nb_components))) {
+                                        MipavUtil.displayError("decode_sof0 error, len = " + len);
+                                        return null;
                                     }
                                 } // else if (startCode == SOF0)
                                 else if ((startCode >= APP0) && (startCode <= APP15)) {
@@ -4400,6 +4685,71 @@ public class FileAvi extends FileBase {
 
             throw error;
         }
+    }
+    
+    private void ff_simple_idct_put(byte dest[], int destPtr,  int line_size, short block[]) {
+        
+    }
+    
+    private void ff_simple_idct_add(byte dest[], int destPtr, int line_size, short block[]) {
+        
+    }
+    
+    private int get_vlc2(byte srcBuf[], int srcPtr, int table[][], int bits, int max_depth) {
+        int code = 0;
+        return code;
+    }
+    
+    private int mjpeg_decode_dc(byte srcBuf[], int srcPtr, int dc_index) {
+        int code;
+        code = get_vlc2(srcBuf, srcPtr, vlcs[0][dc_index], 9, 2);
+        if (code < 0) {
+            MipavUtil.displayError("mjpeg_decode_dc: bad vlcs at dc_index = " + dc_index);
+            return 0xffff;
+        }
+        //if (code != 0) {
+          //cache  = (srcBuf[srcPtr++] & 0xff) << 24;
+          //cache |= (srcBuf[src])
+        //}
+        //else {
+            return 0;
+        //}
+    }
+    
+    /**
+     * decode block and dequantize
+     * @param srcBuf
+     * @param int srcPtr
+     * @param block
+     * @param component
+     * @param dc_index
+     * @param ac_index
+     * @param quant_matrix
+     * @return
+     */
+    private int decode_block(byte srcBuf[], int srcPtr, short block[], int component, int dc_index, int ac_index, short quant_matrix[]) {
+        int code, i, j, level, val;
+        val = mjpeg_decode_dc(srcBuf, srcPtr, dc_index);
+        return 0;
+    }
+    
+    /**
+     * decode block and dequantize - progressive JPEG version 
+     * @param block
+     * @param component
+     * @param dc_index
+     * @param ax_index
+     * @param quant_matrix
+     * @param ss
+     * @param se
+     * @param Ah
+     * @param Al
+     * @param EOBRUN
+     * @return
+     */
+    private int decode_block_progressive(short block[], int component, int dc_index, int ax_index, short quant_matrix[],
+                                         int ss, int se, int Ah, int Al, int EOBRUN[]) {
+        return 0;
     }
     
     private void build_basic_mjpeg_vlc() {
