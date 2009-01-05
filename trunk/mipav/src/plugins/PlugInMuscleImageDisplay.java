@@ -35,7 +35,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-public class PlugInMuscleImageDisplay extends ViewJFrameImage implements AlgorithmInterface, WindowListener {
+public class PlugInMuscleImageDisplay extends ViewJFrameImage implements AlgorithmInterface {
     
     //~ Static fields --------------------------------------------------------------------------------------------------
     
@@ -55,6 +55,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     
     //~ Instance fields ------------------------------------------------------------------------------------------------    
     
+
     /**For writing PDF docs below. */
     private Document pdfDocument = null;
 	private PdfWriter pdfWriter = null;
@@ -133,9 +134,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
      
     /**User specified preference for whether to ask on closing. */
     private boolean oldPrefCloseFrameCheckValue = Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK);
-	
+    
+    /**Frame of original image, hidden until plugin is exited.*/
+    //private Frame hiddenFrame;
+    
     /** Whether the algorithm is being run in standAlone mode.*/
-    private static boolean standAlone;
+    private boolean standAlone;
     
     public enum ImageType{
         
@@ -153,7 +157,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         
         /** 
          * ImageType is defined at run time, note that maintaing this distinction allows for
-         * dependencies to be integrated, will see if this functionality is needed.
+         * dependencies to be integrated, will see if this funcionality is needed.
          */
         RunTimeDefined
     }
@@ -232,9 +236,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             ImageType imageType, Symmetry symmetry, 
             boolean standAlone, boolean multipleSlices) {
     	// calls the super that will not call ViewJFrameImage's init() function
-    	super(image);
-    	
-    	Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, "No");
+    	super(image, null, null, false, false);
     	
     	commonConstructor(image, titles, voiList,  imageType, symmetry, standAlone, multipleSlices);
 
@@ -274,16 +276,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    this.noMirrorArr = new String[voiList.length][]; 
 	    this.calcTree = new TreeMap<String, Boolean>(); 
 	    this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>()); 
+	    this.standAlone = standAlone;
 	    this.imageType = imageType; 
 	    this.symmetry = symmetry; 
 	    this.multipleSlices = multipleSlices; 
 	    this.currentSlice = getViewableSlice();
 	    this.colorChoice = 0;
-
-	    PlugInMuscleImageDisplay.standAlone = standAlone;
+	  //left as zero to ensure VOIs across image stay same color (helps for image batches)
 	
-	    setWindowSettings();
-	    
 	    for(int i=0; i<voiList.length; i++) {
 	    	ArrayList<Comparable> mirrorArrList = new ArrayList<Comparable>(), noMirrorArrList = new ArrayList<Comparable>(), 
 	    				mirrorZList = new ArrayList<Comparable>(), noMirrorZList = new ArrayList<Comparable>();
@@ -410,7 +410,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         		MipavUtil.displayWarning("This tab calculates VOIs that depend on the following being created.\n"+
         				"Note that only muscle calculations will be correct.\n"+createStr);
         	}
-
         	((AnalysisDialogPrompt)tabs[resultTabLoc]).setSlice(getViewableSlice());
         	((AnalysisDialogPrompt)tabs[resultTabLoc]).setUpDialog();
         	((AnalysisDialogPrompt)tabs[resultTabLoc]).enableCalcOutput();
@@ -545,8 +544,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    if(standAlone)
 	    	initControls();
 	}
-    
-    /**
+
+	/**
      * Closes window and disposes of the PlugInMuscleImageDisplay frame.  From ViewJFrameImage since the super method was
      * throwing the program into a loop since the original image and the PlugInMuscleImageDisplay are tethered but only one should be closed.
      */
@@ -565,10 +564,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 
         ScriptRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
         ProvenanceRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
-		if(standAlone)
-        	setVisible(false);
-        else
-        	super.close();
+
+        setVisible(false);
         try {
             this.finalize();
         } catch (Throwable t) {
@@ -662,7 +659,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             //checking componentImage size after updateImages (with new zoom)
              
             if ((componentImage.getSize(null).width + 200) > xScreen) {
-                width = xScreen - 200; 
+                width = xScreen - 200;
             } else {
                 width = componentImage.getSize(null).width;
             }
@@ -672,26 +669,26 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             } else {
                 height = componentImage.getSize(null).height;
             }
-            System.err.println("componentImage size now: " + componentImage.getSize(null));
+           // System.err.println("componentImage size now: " + componentImage.getSize(null));
             
         } else if ((imageWidth < componentImage.getSize(null).width) && (imageHeight >= componentImage.getSize(null).height)) {
-        	System.err.println("Width is less than compImage.width, height is greater than compImage.height");
+        	//System.err.println("Width is less than compImage.width, height is greater than compImage.height");
 
             height = componentImage.getSize(null).height + scrollPane.getHorizontalScrollBar().getHeight();
         } else if ((imageWidth >= componentImage.getSize(null).width) && (imageHeight < componentImage.getSize(null).height)) {
             width = componentImage.getSize(null).width + scrollPane.getVerticalScrollBar().getWidth();
 
-            System.err.println("Height is less than compImage.height, width is greater than compImage.width");
+            //System.err.println("Height is less than compImage.height, width is greater than compImage.width");
                         
         } else if ((imageWidth < componentImage.getSize(null).width) || (imageHeight < componentImage.getSize(null).height)) { // width += fudgeFactor;
            
-        	System.err.println("either width is less than component width or height is less than component height... returning\n\n");
+        	//System.err.println("either width is less than component width or height is less than component height... returning\n\n");
         	addComponentListener(this);
 
             return;
         } else if ((imageWidth > componentImage.getSize(null).width) || (imageHeight > componentImage.getSize(null).height)) {
 
-        	System.err.println("Width or height is greater than compImage width/height, setting to compImage width and height");
+        	//System.err.println("Width or height is greater than compImage width/height, setting to compImage width and height");
         	
             if (width > componentImage.getSize(null).width) {
                 width = componentImage.getSize(null).width;
@@ -701,19 +698,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
                 height = componentImage.getSize(null).height;
             }
         } else {
-        	System.err.println("apparently width and height are set okay (comparing to compeditimage)...returning\n\n");
+        	//System.err.println("apparently width and height are set okay (comparing to compeditimage)...returning\n\n");
         	
             addComponentListener(this);
 
             return;
         }
 
-        System.err.println("Adjusting scrollpane width, height with scrollpane insets: " + scrollPane.getInsets());
+       // System.err.println("Adjusting scrollpane width, height with scrollpane insets: " + scrollPane.getInsets());
         //moves only based on zoom
         imageWidth += scrollPane.getInsets().left + scrollPane.getInsets().right;
         imageHeight += scrollPane.getInsets().top + scrollPane.getInsets().bottom;
         
-        System.err.println("Old scrollpane width, height: " + scrollPane.getSize());
+     //   System.err.println("Old scrollpane width, height: " + scrollPane.getSize());
         
         
         
@@ -1081,82 +1078,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    dialogTabs.setSelectedIndex(activeTab);
 	    voiChangeState = false;
 	}
-	
-	/**
-     * Confirms if the user really wants to exit, then closes the application (if running without the rest of the MIPAV
-     * GUI).
-     * 
-     * @param event Event that triggered this function.
-     */
-    public void windowClosing(WindowEvent event) {
-         Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, new Boolean(oldPrefCloseFrameCheckValue).toString());
-        
-        if (isExitRequired()) {
-            ViewUserInterface.getReference().windowClosing(event);
-        }
-    }
-
-    /**
-     * Sets the necessary plug-in window setting to get it to close correctly and have the correct icon.
-     * 
-     * @param window The window to set up.
-     */
-    public void setWindowSettings() {
-        if (isExitRequired()) {
-        	setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        } else {
-        	setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        }
-
-        try {
-            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
-        } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n");
-        }
-    }
-
-    /**
-     * Do nothing.
-     * 
-     * @param event the window event.
-     */
-    public void windowActivated(WindowEvent event) {}
-
-    /**
-     * Do nothing.
-     * 
-     * @param event the window event.
-     */
-    public void windowDeactivated(WindowEvent event) {}
-
-    /**
-     * Do nothing.
-     * 
-     * @param event the window event.
-     */
-    public void windowOpened(WindowEvent event) {}
-
-    /**
-     * Do nothing.
-     * 
-     * @param event the window event.
-     */
-    public void windowClosed(WindowEvent event) {}
-
-    /**
-     * Do nothing.
-     * 
-     * @param event the window event.
-     */
-    public void windowIconified(WindowEvent event) {}
-
-    /**
-     * Do nothing.
-     * 
-     * @param event the window event.
-     */
-    public void windowDeiconified(WindowEvent event) {}
 
 	/**
 	 * private void computeIdealWindowSize() This method will enlarge or shrink the window size in response to the
@@ -1278,15 +1199,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    } // end if image is an RGB type
 	
 	} // end initComponentImage()
-
-	/**
-	 * Returns whether the way that the plug-in is being run requires us to exit MIPAV when the window closes.
-	 * 
-	 * @return True if we should exit the program when the window is closed.
-	 */
-	protected static final boolean isExitRequired() {
-	    return standAlone;
-	}
 
 	/**
 	 * Adds the table of voi information to the pdf, adds the images (edge and QA), and closes the document
@@ -1909,20 +1821,22 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			getContentPane().add(mainSplit, BorderLayout.CENTER);
 		}
 	    
-		//removes extra scrollPane from the plugin
-	    getContentPane().remove(0);
+		//removes extra scrollPane from the mipav-loaded plugin
+		if (ViewUserInterface.getReference().isAppFrameVisible()) {
+	    	getContentPane().remove(0);
+	    } 
+	
+	    pack();
 	    ctMode(getImageA(), -175, 275);
 	    initMuscleImage(2);
 	    getActiveImage().unregisterAllVOIs();
 	    initMuscleImage(1);
 	    getActiveImage().unregisterAllVOIs();
 	    initMuscleImage(0);
-	    if (!standAlone) {
-	    	this.setMinimumSize(new Dimension(900, 480));
-	    	this.setPreferredSize(new Dimension(900, 480));
+	    if (ViewUserInterface.getReference().isAppFrameVisible()) {
+	    	this.setMinimumSize(new Dimension(380, 550));
 	    } else {
-	    	this.setMinimumSize(new Dimension(900, 800));
-	    	this.setPreferredSize(new Dimension(900, 800));
+	    	this.setMinimumSize(new Dimension(380, 640));
 	    }
 	    this.setResizable(true);
 	    System.out.println("Done2: "+(System.currentTimeMillis()-time));
@@ -1940,6 +1854,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	
 	    initComponentImage(extents);
 	    initExtentsVariables(imageA);
+	
 	    initControls();
 	            
 	    // MUST register frame to image models
@@ -3410,8 +3325,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    //guaranteed (for now) that mirrorArr.length = noMirrorArr.length
 		    for(int i=0; i<mirrorCalcItemsArr.length; i++) {
 		    	
-		    	JPanel subPanel = initSymmetricObjects(i);
-		    	initNonSymmetricObjects(subPanel, i);
+		    	JPanel subPanel = initSymmetricalObjects(i);
+		    	initNonSymmetricalObjects(subPanel, i);
 		    	
 		    	mirrorPanel[i] = new JScrollPane(subPanel, 
 		    										ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
@@ -3501,7 +3416,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/**
 		 * Initializes the symmetric buttons from a particular pane.
 		 */
-		private JPanel initSymmetricObjects(int index) {
+		private JPanel initSymmetricalObjects(int index) {
 
             mirrorCheckCalcItemsArr[index] = new PlugInMuscleColorButtonPanel[mirrorCalcItemsArr[index].length * 2];
             mirrorButtonCalcItemsArr[index] = new JButton[mirrorCalcItemsArr[index].length * 2];
@@ -3565,7 +3480,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/**
 		 * Initializes the non-symmetric buttons from a particular pane.
 		 */
-	    private JPanel initNonSymmetricObjects(JPanel subPanel, int index) {
+	    private JPanel initNonSymmetricalObjects(JPanel subPanel, int index) {
       
 	    	noMirrorCheckCalcItemsArr[index] = new PlugInMuscleColorButtonPanel[noMirrorCalcItemsArr[index].length];
             noMirrorButtonCalcItemsArr[index] = new JButton[noMirrorCalcItemsArr[index].length];
@@ -3887,7 +3802,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					System.err.println("Error creating, writing or closing ucsd file.");
 					e.printStackTrace();
 					success = false;
-					
 					return;
 				}
 				System.out.println("Time for output: "+(System.currentTimeMillis() - time));
@@ -4048,7 +3962,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				if(children[i].getLastCalculated() == null || children[i].getLastModified() == null || 
 						children[i].getLastCalculated().compareTo(children[i].getLastModified()) < 0) {
 					//since enumerate silently ignores threads greater than array size
-					//worst case scenario is extra calculation performed, for small images not a problem
+					//worst case scenario is extra calculation performed
 					Thread[] activeGroup = new Thread[calcGroup.activeCount()];
 					calcGroup.enumerate(activeGroup);
 					//still check for nulls in case thread has been disposed
@@ -4350,7 +4264,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		        } catch (OutOfMemoryError x) {
 		            MipavUtil.displayError("Dialog Smooth: unable to allocate enough memory");
 		    
-		            return;                                            
+		            return;
 		        }
 		    }
 		}
@@ -4362,7 +4276,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    private void initThighAxes() {
 	        Vector[][] contours = new Vector[2][]; //either 2 or 3 dimensions
 	        defaultPts = new int[2];
-	        int nVOI; //, nContours;
+	        int nVOI;//, nContours;
 	        float[] xPoints = null;
 	        float[] yPoints = null;
 	    
