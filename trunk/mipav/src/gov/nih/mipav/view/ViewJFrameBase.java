@@ -1513,7 +1513,6 @@ public abstract class ViewJFrameBase extends JFrame
                         if (filterType >= 0) {
                             chooser.addChoosableFileFilter(new ViewImageFileFilter(filterType));
                         } else {
-                            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.ALL));
                             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
                             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
                         }
