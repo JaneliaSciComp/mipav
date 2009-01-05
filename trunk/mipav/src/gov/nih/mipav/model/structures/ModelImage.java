@@ -80,8 +80,9 @@ public class ModelImage extends ModelStorageBase {
     /** Holds all of the images associated matrices. */
     private MatrixHolder matrixHolder;
 
-    /** Holds the data provenance (image history)*/
-    private ProvenanceHolder provenanceHolder;
+    /** Holds the data provenance (image history)  The transient keyword is used to indicate that the provenanceHolder
+     *  should not be cloned when the image is cloned.  The new cloned image creates its own provenanceHolder */
+    private transient ProvenanceHolder provenanceHolder;
     
     /** Reference to talairach transform information. */
     private TalairachTransformInfo talairach;
@@ -486,6 +487,7 @@ public class ModelImage extends ModelStorageBase {
         ModelImage image = (ModelImage) this.clone(null);
 
         image.frameList = new Vector<ViewImageUpdateInterface>();
+        image.provenanceHolder = new ProvenanceHolder();
 
         return ((Object) image);
     }
