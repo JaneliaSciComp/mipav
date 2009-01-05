@@ -326,6 +326,9 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         scrollButton.addActionListener((ActionListener) UI);
         scrollButton.setActionCommand(CustomUIBuilder.PARAM_IMAGE_LINK.getActionCommand());
         scrollButton.setToolTipText(CustomUIBuilder.PARAM_IMAGE_LINK.getToolTip());
+        if (numberOfDimensions == 2) {
+            scrollButton.setEnabled(false);
+        }
         //scrollButton.se
         
         tBar.add(scrollButton);
