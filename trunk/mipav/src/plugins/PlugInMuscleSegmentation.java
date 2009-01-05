@@ -20,7 +20,7 @@ import javax.help.HelpSet;
  * 
  * @author senseneyj
  */
-public class PlugInMuscleSegmentation implements PlugInAlgorithm, PlugInGeneric {
+public class PlugInMuscleSegmentation implements PlugInAlgorithm {
 	
 	/**
      * Displays the Java Help dialog indexed directly to the 
