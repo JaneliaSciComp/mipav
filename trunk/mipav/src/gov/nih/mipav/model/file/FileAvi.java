@@ -84,67 +84,67 @@ public class FileAvi extends FileBase {
     /* Set up the standard Huffman tables (cf. JPEG standard section K.3) */
     /* IMPORTANT: these are only valid for 8-bit data precision! */
     // 17 entries
-    private final int ff_mjpeg_bits_dc_luminance[] = new int[]
+    private final byte ff_mjpeg_bits_dc_luminance[] = new byte[]
     { /* 0-base */ 0, 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 };
     // 12 entries
-    private final int ff_mjpeg_val_dc[] = new int[]
+    private final byte ff_mjpeg_val_dc[] = new byte[]
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     // 17 entries
-    private final int ff_mjpeg_bits_dc_chrominance[] = new int[]
+    private final byte ff_mjpeg_bits_dc_chrominance[] = new byte[]
     { /* 0-base */ 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 };
     // 17 entries
-    private final int ff_mjpeg_bits_ac_luminance[] = new int[]
+    private final byte ff_mjpeg_bits_ac_luminance[] = new byte[]
     { /* 0-base */ 0, 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 0x7d };
-    private final int ff_mjpeg_val_ac_luminance[] = new int[]
+    private final byte ff_mjpeg_val_ac_luminance[] = new byte[]
     { 0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,
       0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
-      0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xa1, 0x08,
-      0x23, 0x42, 0xb1, 0xc1, 0x15, 0x52, 0xd1, 0xf0,
-      0x24, 0x33, 0x62, 0x72, 0x82, 0x09, 0x0a, 0x16,
+      0x22, 0x71, 0x14, 0x32, (byte)0x81, (byte)0x91, (byte)0xa1, 0x08,
+      0x23, 0x42, (byte)0xb1, (byte)0xc1, 0x15, 0x52, (byte)0xd1, (byte)0xf0,
+      0x24, 0x33, 0x62, 0x72, (byte)0x82, 0x09, 0x0a, 0x16,
       0x17, 0x18, 0x19, 0x1a, 0x25, 0x26, 0x27, 0x28,
       0x29, 0x2a, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
       0x3a, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49,
       0x4a, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59,
       0x5a, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69,
       0x6a, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79,
-      0x7a, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89,
-      0x8a, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98,
-      0x99, 0x9a, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7,
-      0xa8, 0xa9, 0xaa, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6,
-      0xb7, 0xb8, 0xb9, 0xba, 0xc2, 0xc3, 0xc4, 0xc5,
-      0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xd2, 0xd3, 0xd4,
-      0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xe1, 0xe2,
-      0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea,
-      0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
-      0xf9, 0xfa
+      0x7a, (byte)0x83, (byte)0x84, (byte)0x85, (byte)0x86, (byte)0x87, (byte)0x88, (byte)0x89,
+      (byte)0x8a, (byte)0x92, (byte)0x93, (byte)0x94, (byte)0x95, (byte)0x96, (byte)0x97, (byte)0x98,
+      (byte)0x99, (byte)0x9a, (byte)0xa2, (byte)0xa3, (byte)0xa4, (byte)0xa5, (byte)0xa6, (byte)0xa7,
+      (byte)0xa8, (byte)0xa9, (byte)0xaa, (byte)0xb2, (byte)0xb3, (byte)0xb4, (byte)0xb5, (byte)0xb6,
+      (byte)0xb7, (byte)0xb8, (byte)0xb9, (byte)0xba, (byte)0xc2, (byte)0xc3, (byte)0xc4, (byte)0xc5,
+      (byte)0xc6, (byte)0xc7, (byte)0xc8, (byte)0xc9, (byte)0xca, (byte)0xd2, (byte)0xd3, (byte)0xd4,
+      (byte)0xd5, (byte)0xd6, (byte)0xd7, (byte)0xd8, (byte)0xd9, (byte)0xda, (byte)0xe1, (byte)0xe2,
+      (byte)0xe3, (byte)0xe4, (byte)0xe5, (byte)0xe6, (byte)0xe7, (byte)0xe8, (byte)0xe9, (byte)0xea,
+      (byte)0xf1, (byte)0xf2, (byte)0xf3, (byte)0xf4, (byte)0xf5, (byte)0xf6, (byte)0xf7, (byte)0xf8,
+      (byte)0xf9, (byte)0xfa
     };
 
     // 17 entries
-    private final int ff_mjpeg_bits_ac_chrominance[] = new int[]
+    private final byte ff_mjpeg_bits_ac_chrominance[] = new byte[]
     { /* 0-base */ 0, 0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 0x77 };
 
-    private final int ff_mjpeg_val_ac_chrominance[] = new int[]
+    private final byte ff_mjpeg_val_ac_chrominance[] = new byte[]
     { 0x00, 0x01, 0x02, 0x03, 0x11, 0x04, 0x05, 0x21,
       0x31, 0x06, 0x12, 0x41, 0x51, 0x07, 0x61, 0x71,
-      0x13, 0x22, 0x32, 0x81, 0x08, 0x14, 0x42, 0x91,
-      0xa1, 0xb1, 0xc1, 0x09, 0x23, 0x33, 0x52, 0xf0,
-      0x15, 0x62, 0x72, 0xd1, 0x0a, 0x16, 0x24, 0x34,
-      0xe1, 0x25, 0xf1, 0x17, 0x18, 0x19, 0x1a, 0x26,
+      0x13, 0x22, 0x32, (byte)0x81, 0x08, 0x14, 0x42, (byte)0x91,
+      (byte)0xa1, (byte)0xb1, (byte)0xc1, 0x09, 0x23, 0x33, 0x52, (byte)0xf0,
+      0x15, 0x62, 0x72, (byte)0xd1, 0x0a, 0x16, 0x24, 0x34,
+      (byte)0xe1, 0x25, (byte)0xf1, 0x17, 0x18, 0x19, 0x1a, 0x26,
       0x27, 0x28, 0x29, 0x2a, 0x35, 0x36, 0x37, 0x38,
       0x39, 0x3a, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48,
       0x49, 0x4a, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58,
       0x59, 0x5a, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68,
       0x69, 0x6a, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78,
-      0x79, 0x7a, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
-      0x88, 0x89, 0x8a, 0x92, 0x93, 0x94, 0x95, 0x96,
-      0x97, 0x98, 0x99, 0x9a, 0xa2, 0xa3, 0xa4, 0xa5,
-      0xa6, 0xa7, 0xa8, 0xa9, 0xaa, 0xb2, 0xb3, 0xb4,
-      0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xc2, 0xc3,
-      0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xd2,
-      0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda,
-      0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9,
-      0xea, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
-      0xf9, 0xfa
+      0x79, 0x7a, (byte)0x82, (byte)0x83, (byte)0x84, (byte)0x85, (byte)0x86, (byte)0x87,
+      (byte)0x88, (byte)0x89, (byte)0x8a, (byte)0x92, (byte)0x93, (byte)0x94, (byte)0x95, (byte)0x96,
+      (byte)0x97, (byte)0x98, (byte)0x99, (byte)0x9a, (byte)0xa2, (byte)0xa3, (byte)0xa4, (byte)0xa5,
+      (byte)0xa6, (byte)0xa7, (byte)0xa8, (byte)0xa9, (byte)0xaa, (byte)0xb2, (byte)0xb3, (byte)0xb4,
+      (byte)0xb5, (byte)0xb6, (byte)0xb7, (byte)0xb8, (byte)0xb9, (byte)0xba, (byte)0xc2, (byte)0xc3,
+      (byte)0xc4, (byte)0xc5, (byte)0xc6, (byte)(byte)0xc7, (byte)0xc8, (byte)0xc9, (byte)0xca, (byte)0xd2,
+      (byte)0xd3, (byte)0xd4, (byte)0xd5, (byte)0xd6, (byte)0xd7, (byte)0xd8, (byte)0xd9, (byte)0xda,
+      (byte)0xe2, (byte)0xe3, (byte)0xe4, (byte)0xe5, (byte)0xe6, (byte)0xe7, (byte)0xe8, (byte)0xe9,
+      (byte)0xea, (byte)0xf2, (byte)0xf3, (byte)0xf4, (byte)0xf5, (byte)0xf6, (byte)0xf7, (byte)0xf8,
+      (byte)0xf9, (byte)0xfa
     };
     
     private final int MAX_COMPONENTS = 4;
@@ -222,6 +222,10 @@ public class FileAvi extends FileBase {
         
         // frame type
         private final int FF_I_TYPE = 1; ///< Intra
+        
+        private final int MIN_CACHE_BITS = 25;
+        
+        private final long ROW0_MASK = 0xffff000000000000L;
 
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -413,17 +417,23 @@ public class FileAvi extends FileBase {
     
     //private int idct_permutation[] = null;
     
-    private int stPermutated[] = null;
+    private int scantable_permutated[] = null;
     //private int stInverse[] = null;
     private int stRasterEnd[] = null;
     private short quant_matrixes[][] = null;
     private int qscale[] = null;      ///< quantizer scale calculated from quant_matrixes
-    private int vlcs[][][][] = null;
+    private short vlcs[][][][] = null;
     private int vlcs_bits[][] = null;
     private int vlcs_table_size[][] = null;
     private int vlcs_table_allocated[][] = null;
     private boolean thpCodec = false;
     private boolean AMVCodec = false;
+    private int last_dc[];
+    // GetBitContext
+    private byte gbc_buffer[];
+    private int gbc_buffer_end;
+    private int gbc_index;
+    private int gbc_size_in_bits;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -3656,7 +3666,7 @@ public class FileAvi extends FileBase {
                 int dc_index[] = new int[MAX_COMPONENTS];
                 int ac_index[] = new int[MAX_COMPONENTS];
                 int nb_blocks[] = new int[MAX_COMPONENTS];
-                int last_dc[] = new int[MAX_COMPONENTS]; /* last DEQUANTIZED dc  */
+                last_dc = new int[MAX_COMPONENTS]; /* last DEQUANTIZED dc  */
                 int linesize[] = new int[MAX_COMPONENTS];                   ///< linesize << interlaced
                 int quant_index[] = new int[4];   /* quant table index for each component */
                 byte[] qscale_table;
@@ -3673,7 +3683,7 @@ public class FileAvi extends FileBase {
                  boolean cs_itu601 = false;
                  int pix_fmt = PIX_FMT_NONE;
                  byte buffer[] = null;
-                 int bufp;
+                 int bufp[] = new int[1];
                  byte xb;
                  int block_size;
                  int vmax;
@@ -3734,7 +3744,7 @@ public class FileAvi extends FileBase {
                     //for (i = 0; i < 64; i++) {
                         //idct_permutation[i] = i;
                     //}
-                    stPermutated = new int[64];
+                    scantable_permutated = new int[64];
                     //stInverse = new int[64];
                     stRasterEnd = new int[64];
                     quant_matrixes = new short[4][64];
@@ -3742,19 +3752,19 @@ public class FileAvi extends FileBase {
                     for (i = 0; i < 64; i++) {
                         int j;
                         j = ff_zigzag_direct[i];
-                        stPermutated[i] = j;
+                        scantable_permutated[i] = j;
                         // stInverse[j] = i;
                     }
                     end = -1;
                     for (i = 0; i < 64; i++) {
                         int j;
-                        j = stPermutated[i];
+                        j = scantable_permutated[i];
                         if (j > end) {
                             end = j;
                         }
                         stRasterEnd[i] = end;
                     }
-                    vlcs = new int[2][4][][];
+                    vlcs = new short[2][4][][];
                     vlcs_bits = new int[2][4];
                     vlcs_table_size = new int[2][4];
                     vlcs_table_allocated = new int[2][4];
@@ -3960,12 +3970,12 @@ public class FileAvi extends FileBase {
                                         }
                                         /* read quant table */
                                         for (i = 0; i < 64; i++) {
-                                            js = stPermutated[i];  
+                                            js = scantable_permutated[i];  
                                             quant_matrixes[index][js] = (short)(fileBuffer[j++] & 0xff);
                                         } // for (i = 0; i < 64; i++)
                                         
-                                        qscale[index] = (Math.max(quant_matrixes[index][stPermutated[1]], 
-                                                                  quant_matrixes[index][stPermutated[8]]) >> 1);
+                                        qscale[index] = (Math.max(quant_matrixes[index][scantable_permutated[1]], 
+                                                                  quant_matrixes[index][scantable_permutated[8]]) >> 1);
                                         len -= 65;
                                     } // while (len >= 65)
                                 } // else if (startCode == DQT)
@@ -3978,17 +3988,17 @@ public class FileAvi extends FileBase {
                                     }
                                     else { // !ls
                                         buffer = new byte[dataLength - j + FF_INPUT_BUFFER_PADDING_SIZE];
-                                        bufp = 0;
+                                        bufp[0] = 0;
                                         while (j < dataLength) {
                                           xb = fileBuffer[j++]; 
-                                          buffer[bufp++] = xb;
+                                          buffer[bufp[0]++] = xb;
                                           if (!thpCodec) {
                                               if (xb == (byte)0xff) {
                                                   while ((j < dataLength) && (xb == (byte)0xff)) {
                                                       xb = fileBuffer[j++];
                                                   } // while ((j < dataLength) && (xb == (byte)0xff))
                                                   if (((xb & 0xff) >= 0xd0) && ((xb & 0xff) <= 0xd7)) {
-                                                      buffer[bufp++] = xb;
+                                                      buffer[bufp[0]++] = xb;
                                                   }
                                                   else if (xb != 0) {
                                                       break;
@@ -3997,11 +4007,11 @@ public class FileAvi extends FileBase {
                                           } // if (!thpCodec)
                                         } // while (j < dataLength)
                                     } // else !ls
-                                    bufp = 0;
+                                    bufp[0] = 0;
                                     block_size = lossless ? 1: 8;
-                                    len = (buffer[bufp++] & 0xff) << 8;
-                                    len |= (buffer[bufp++] & 0xff);
-                                    nb_components = buffer[bufp++] & 0xff;
+                                    len = (buffer[bufp[0]++] & 0xff) << 8;
+                                    len |= (buffer[bufp[0]++] & 0xff);
+                                    nb_components = buffer[bufp[0]++] & 0xff;
                                     if (len != 6 + 2*nb_components) {
                                         MipavUtil.displayError("Error on decode sos invalid len = " + len);
                                         return null;
@@ -4009,7 +4019,7 @@ public class FileAvi extends FileBase {
                                     vmax = 0;
                                     hmax = 0;
                                     for (i = 0; i < nb_components; i++) {
-                                        idsos = (buffer[bufp++] & 0xff) - 1;
+                                        idsos = (buffer[bufp[0]++] & 0xff) - 1;
                                         /* find component index */
                                         for (index = 0; index < nb_components; index++) {
                                             if (idsos == component_id[index]) {
@@ -4025,8 +4035,8 @@ public class FileAvi extends FileBase {
                                         h_scount[i] = h_count[index];
                                         v_scount[i] = v_count[index];
                                    
-                                        dc_index[i] = (buffer[bufp] & 0xf0) >> 4;
-                                        ac_index[i] = buffer[bufp++] & 0x0f;
+                                        dc_index[i] = (buffer[bufp[0]] & 0xf0) >> 4;
+                                        ac_index[i] = buffer[bufp[0]++] & 0x0f;
                                         
                                         if ((dc_index[i] < 0) || (ac_index[i] < 0) ||
                                             (dc_index[i] >= 4) || (ac_index[i] >= 4)) {
@@ -4035,10 +4045,10 @@ public class FileAvi extends FileBase {
                                         }
                                     } // for (i = 0; i < nb_components; i++)
                                     
-                                    predictor = buffer[bufp++] & 0xff; /* JPEG Ss / lossless JPEG predictor / JPEG-LS NEAR */
-                                    ilv = buffer[bufp++] & 0xff; /* JPEG Se / JPEG-LS ILV */
-                                    prev_shift = (buffer[bufp] & 0xf0) >> 4; /* Ah */
-                                    point_transform = buffer[bufp++] & 0x0f; /* Al */
+                                    predictor = buffer[bufp[0]++] & 0xff; /* JPEG Ss / lossless JPEG predictor / JPEG-LS NEAR */
+                                    ilv = buffer[bufp[0]++] & 0xff; /* JPEG Se / JPEG-LS ILV */
+                                    prev_shift = (buffer[bufp[0]] & 0xf0) >> 4; /* Ah */
+                                    point_transform = buffer[bufp[0]++] & 0x0f; /* Al */
                                     
                                     for (i = 0; i < nb_components; i++) {
                                         last_dc[i] = 1024;
@@ -4061,7 +4071,7 @@ public class FileAvi extends FileBase {
                                     
                                     /* mjpeg-b can have padding bytes between sos and image data, skip them */
                                     for (i = mjpb_skiptosod; i > 0; i--) {
-                                        bufp++;
+                                        bufp[0]++;
                                     }
                                     
                                     if (lossless) {
@@ -4097,7 +4107,7 @@ public class FileAvi extends FileBase {
                                                              }
                                                              if (!progressive && decode_block(buffer, bufp, block, i, dc_index[i], ac_index[i], 
                                                                  quant_matrixes[quant_index[c]]) < 0) {
-                                                                 MipavUtil.displayError("decode_block error for mb_x + " + mb_x +
+                                                                 MipavUtil.displayError("decode_block error for mb_x = " + mb_x +
                                                                                         " mb_y = " + mb_y);
                                                                  return null;
                                                              } // if (!progressive && decode_block)
@@ -4130,7 +4140,7 @@ public class FileAvi extends FileBase {
                                                     /* (< 1350) buggy workaround for Spectralfan.mov, should be fixed */
                                                     if ((restart_interval != 0) && (restart_interval < 1350) &&
                                                         ((--restart_count) == 0)) {
-                                                        bufp += 2; /* Skip RSTn */
+                                                        bufp[0] += 2; /* Skip RSTn */
                                                         for (i = 0; i < nb_components; i++) { /* reset dc */
                                                             last_dc[i] = 1024;
                                                         }
@@ -4688,32 +4698,134 @@ public class FileAvi extends FileBase {
     }
     
     private void ff_simple_idct_put(byte dest[], int destPtr,  int line_size, short block[]) {
-        
+        int i;
+        long row0;
+        long row1;
+        long temp;
+        for (i = 0; i < 8; i++) {
+            row0 = (block[i*8] & 0xffffL) << 48;
+            row0 |= (block[i*8+1] & 0xffffL) << 32;
+            row0 |= (block[i*8+2] & 0xffffL) << 16;
+            row0 |= (block[i*8+3] & 0xffffL);
+            row1 = (block[i*8 + 4] & 0xffffL) << 48;
+            row1 |= (block[i*8 + 5] & 0xffffL) << 32;
+            row1 |= (block[i*8 + 6] & 0xffffL) << 16;
+            row1 |= (block[i*8 + 7] & 0xffffL);
+            if (((row0 & (~ROW0_MASK)) | row1) == 0) {
+                temp = (row0 << 3) & 0xffff;
+                temp += temp << 16;
+                temp += temp << 32;
+                block[i*8] = (short)((temp >> 48) & 0xffff);
+                block[i*8+1] = (short)((temp >> 32) & 0xffff);
+                block[i*8+2] = (short)((temp >> 16) & 0xffff);
+                block[i*8+3] = (short)(temp & 0xffff);
+                block[i*8+4] = block[i*8];
+                block[i*8+5] = block[i*8+1];
+                block[i*8+6] = block[i*8+2];
+                block[i*8+7] = block[i*8+3];
+                continue;
+            }
+            
+        } // for (i = 0; i < 8; i++)
     }
     
     private void ff_simple_idct_add(byte dest[], int destPtr, int line_size, short block[]) {
         
     }
     
-    private int get_vlc2(byte srcBuf[], int srcPtr, int table[][], int bits, int max_depth) {
+    private int get_vlc2(short table[][], int bits, int max_depth) {
+        int n, index, nb_bits;
         int code = 0;
+        // OPEN_READER(re, s)
+        int re_index= gbc_index;
+        int re_cache= 0;
+        // UPDATE_CACHE(re, s)
+        re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
+        re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
+        re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
+        re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+        re_cache = re_cache << (re_index & 0x07);
+        // index = SHOW_UBITS(name, gb, bits)
+        index = re_cache >>> (32 - bits);
+        code = table[index][0];
+        n = table[index][1];
+        
+        if ((max_depth > 1) && (n < 0)) {
+            // LAST_SKIP_BITS(name, gb, bits)
+            re_index += bits;
+            // UPDATE_CACHE(name, gb)
+            re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
+            re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
+            re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
+            re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+            re_cache = re_cache << (re_index & 0x07);
+            
+            nb_bits = -n;
+            
+            // index = SHOW_UBITS(name, gb, nb_bits) + code;
+            index = (re_cache >>> (32 - nb_bits)) + code;
+            code = table[index][0];
+            n = table[index][1];
+            if ((max_depth > 2) && (n < 0)) {
+                // LAST_SKIP_BITS(name, gb, nb_bits)
+                re_index += nb_bits;
+                // UPDATE_CACHE(name, gb)
+                re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
+                re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
+                re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
+                re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+                re_cache = re_cache << (re_index & 0x07);
+                
+                nb_bits = -n;
+                // index = SHOW_UBITS(name, gb, nb_bits) + code;
+                index = (re_cache >>> (32 - nb_bits)) + code;
+                code = table[index][0];
+                n = table[index][1];
+            } // if ((max_depth > 2) && (n < 0))
+        } // if ((max_depth > 1) && (n < 0))
+        // SKIP_BITS(name, gb, n)
+        re_cache <<= n;
+        re_index += n;
+        // CLOSE_READER(re, s);
+        gbc_index = re_index;
         return code;
     }
     
-    private int mjpeg_decode_dc(byte srcBuf[], int srcPtr, int dc_index) {
+    private int get_xbits(int n) {
+        int sign;
+        int cache;
+        // OPEN_READER(re, s)
+        int re_index= gbc_index;
+        int re_cache= 0;
+        // UPDATE_CACHE(re, s)
+        re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
+        re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
+        re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
+        re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+        re_cache = re_cache << (re_index & 0x07);
+        // cache = GET_CACHE(re, s)
+        cache = re_cache;
+        sign = (~cache)>>31;
+        // LAST_SKIP_BITS(re, s, n)
+        re_index += n;
+        // CLOSE_READER(re, s);
+        gbc_index = re_index;
+        return (((sign ^ cache) >>> (32 - n)) ^ sign) - sign;
+    }
+    
+    private int mjpeg_decode_dc(int dc_index) {
         int code;
-        code = get_vlc2(srcBuf, srcPtr, vlcs[0][dc_index], 9, 2);
+        code = get_vlc2(vlcs[0][dc_index], 9, 2);
         if (code < 0) {
             MipavUtil.displayError("mjpeg_decode_dc: bad vlcs at dc_index = " + dc_index);
             return 0xffff;
         }
-        //if (code != 0) {
-          //cache  = (srcBuf[srcPtr++] & 0xff) << 24;
-          //cache |= (srcBuf[src])
-        //}
-        //else {
+        if (code != 0) {
+            return get_xbits(code);
+        }
+        else {
             return 0;
-        //}
+        }
     }
     
     /**
@@ -4727,9 +4839,120 @@ public class FileAvi extends FileBase {
      * @param quant_matrix
      * @return
      */
-    private int decode_block(byte srcBuf[], int srcPtr, short block[], int component, int dc_index, int ac_index, short quant_matrix[]) {
+    private int decode_block(byte srcBuf[], int srcPtr[], short block[], int component, int dc_index, int ac_index, short quant_matrix[]) {
         int code, i, j, level, val;
-        val = mjpeg_decode_dc(srcBuf, srcPtr, dc_index);
+        int n, index, nb_bits;
+        int cache, sign;
+        gbc_buffer = srcBuf;
+        gbc_buffer_end = srcBuf.length;
+        gbc_index = 8 * srcPtr[0];
+        gbc_size_in_bits = 8 * srcBuf.length;
+        val = mjpeg_decode_dc(dc_index);
+        if (val == 0xffff) {
+            MipavUtil.displayError("mjpeg_decode_dc error");
+            return -1;
+        }
+        val = val * quant_matrix[0] + last_dc[component];
+        last_dc[component] = val;
+        block[0] = (short)val;
+        /* AC coefs */
+        i = 0;
+        // OPEN_READER(re, &s->gb)
+        int re_index= gbc_index;
+        int re_cache= 0;
+        for (;;) {
+            // UPDATE_CACHE(re, &s->gb)
+            re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
+            re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
+            re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
+            re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+            re_cache = re_cache << (re_index & 0x07);
+            
+            // GET_VLC(code, re, &s->gb, s->vlcs[1][ac_index].table, 9, 2)
+            short table[][] = vlcs[1][ac_index];
+            int bits = 9;
+            int max_depth = 2;
+            // index = SHOW_UBITS(name, gb, bits)
+            index = re_cache >>> (32 - bits);
+            code = table[index][0];
+            n = table[index][1];
+            
+            if ((max_depth > 1) && (n < 0)) {
+                // LAST_SKIP_BITS(name, gb, bits)
+                re_index += bits;
+                // UPDATE_CACHE(name, gb)
+                re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
+                re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
+                re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
+                re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+                re_cache = re_cache << (re_index & 0x07);
+                
+                nb_bits = -n;
+                
+                // index = SHOW_UBITS(name, gb, nb_bits) + code;
+                index = (re_cache >>> (32 - nb_bits)) + code;
+                code = table[index][0];
+                n = table[index][1];
+                if ((max_depth > 2) && (n < 0)) {
+                    // LAST_SKIP_BITS(name, gb, nb_bits)
+                    re_index += nb_bits;
+                    // UPDATE_CACHE(name, gb)
+                    re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
+                    re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
+                    re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
+                    re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+                    re_cache = re_cache << (re_index & 0x07);
+                    
+                    nb_bits = -n;
+                    // index = SHOW_UBITS(name, gb, nb_bits) + code;
+                    index = (re_cache >>> (32 - nb_bits)) + code;
+                    code = table[index][0];
+                    n = table[index][1];
+                } // if ((max_depth > 2) && (n < 0))
+            } // if ((max_depth > 1) && (n < 0))
+            // SKIP_BITS(name, gb, n)
+            re_cache <<= n;
+            re_index += n;
+            
+            /* EOB */
+            if (code == 0x10) {
+                break;
+            }
+            i += code >>> 4;
+            if (code != 0x100) {
+                code &= 0xf; 
+                if (code > MIN_CACHE_BITS - 16) {
+                    // UPDATE_CACHE(re, &s->gb)
+                    re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
+                    re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
+                    re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
+                    re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+                    re_cache = re_cache << (re_index & 0x07);
+                }
+                // cache = GET_CACHE(re, s)
+                cache = re_cache;
+                sign = (~cache)>>31;
+                level = (((sign ^ cache) >>> (32 - code)) ^ sign) - sign;
+                
+                // LAST_SKIP_BITS(re, &s->gb, code)
+                re_index += code;
+                
+                if (i >= 63) {
+                    if (i == 63) {
+                        j = scantable_permutated[63];
+                        block[j] = (short)(level * quant_matrix[j]);
+                        break;
+                    } // if (i == 63)
+                    MipavUtil.displayError("In decode_block error_count = " + i);
+                    return - 1;
+                } // if (i >= 63)
+                j = scantable_permutated[i];
+                block[j] = (short)(level * quant_matrix[j]);
+            } // if (code != 0x100)
+        } // for (;;)
+        // CLOSE_READER(re, &s->gb)
+        gbc_index = re_index;
+        srcPtr[0] = (gbc_index + 7)/8;
         return 0;
     }
     
@@ -4759,11 +4982,11 @@ public class FileAvi extends FileBase {
         build_vlc(1, 1, ff_mjpeg_bits_ac_chrominance, ff_mjpeg_val_ac_chrominance, 251, true);
     }
     
-    private int build_vlc(int index0, int index1, int bits_table[], int val_table[], int nb_codes,
+    private int build_vlc(int index0, int index1, byte bits_table[], byte val_table[], int nb_codes,
                            boolean is_ac) {
         int i;
-        int huff_size[] = new int[256+16];
-        int huff_code[] = new int[256+16];
+        byte huff_size[] = new byte[256+16];
+        short huff_code[] = new short[256+16];
         
         ff_mjpeg_build_huffman_codes(huff_size, huff_code, bits_table, val_table);
         if (is_ac) {
@@ -4780,8 +5003,8 @@ public class FileAvi extends FileBase {
         return init_vlc_sparse(index0, index1, 9, nb_codes, huff_size, 4, 4, huff_code, 4, 4, null, 0, 0);
     }
     
-    private void ff_mjpeg_build_huffman_codes(int huff_size[], int huff_code[], int bits_table[], 
-                                              int val_table[]) {
+    private void ff_mjpeg_build_huffman_codes(byte huff_size[], short huff_code[], byte bits_table[], 
+                                              byte val_table[]) {
         int i, j, k, nb, code, sym;
         
         code = 0;
@@ -4789,9 +5012,9 @@ public class FileAvi extends FileBase {
         for (i = 1; i <= 16; i++) {
             nb = bits_table[i];
             for (j = 0; j < nb; j++) {
-                sym = val_table[k++];
-                huff_size[sym] = i;
-                huff_code[sym] = code;
+                sym = (val_table[k++] & 0xff);
+                huff_size[sym] = (byte)i;
+                huff_code[sym] = (byte)code;
                 code++;
             }
             code <<= 1;
@@ -4815,8 +5038,8 @@ public class FileAvi extends FileBase {
      * @param symbols_wrap
      * @param symbols_size
      */
-    private int init_vlc_sparse(int index0, int index1, int nb_bits, int nb_codes, int bits[], int bits_wrap, int bits_size,
-                                 int codes[], int codes_wrap, int codes_size, int symbols[], int symbols_wrap,
+    private int init_vlc_sparse(int index0, int index1, int nb_bits, int nb_codes, byte bits[], int bits_wrap, int bits_size,
+                                 short codes[], int codes_wrap, int codes_size, int symbols[], int symbols_wrap,
                                  int symbols_size) {
  
         vlcs_bits[index0][index1] = nb_bits; 
@@ -4830,8 +5053,8 @@ public class FileAvi extends FileBase {
         return 0;
     }
     
-    private int build_table(int index0, int index1, int table_nb_bits, int nb_codes, int bits[], int bits_wrap, int bits_size,
-            int codes[], int codes_wrap, int codes_size, int symbols[], int symbols_wrap,
+    private int build_table(int index0, int index1, int table_nb_bits, int nb_codes, byte bits[], int bits_wrap, int bits_size,
+            short codes[], int codes_wrap, int codes_size, int symbols[], int symbols_wrap,
             int symbols_size, int code_prefix, int n_prefix) {
         int table_size;
         int table_index;
@@ -4853,7 +5076,7 @@ public class FileAvi extends FileBase {
         if (vlcs_table_size[index0][index1] > vlcs_table_allocated[index0][index1]) {
             Preferences.debug("New allocation in build_table\n");
             vlcs_table_allocated[index0][index1] += (1 << vlcs_bits[index0][index1]); 
-            vlcs[index0][index1] = new int[vlcs_table_allocated[index0][index1]][2];
+            vlcs[index0][index1] = new short[vlcs_table_allocated[index0][index1]][2];
         }
         if (table_index < 0) {
             return -1;
@@ -4899,8 +5122,8 @@ public class FileAvi extends FileBase {
                             Preferences.debug("nb = " + nb + "\n");
                             return -1;
                         }
-                        vlcs[index0][index1][j+table_index][1] = n; // bits
-                        vlcs[index0][index1][j+table_index][0] = symbol;
+                        vlcs[index0][index1][j+table_index][1] = (short)n; // bits
+                        vlcs[index0][index1][j+table_index][0] = (short)symbol;
                         j++;
                     } // for (k = 0; k < nb; k++)
                 } // if (n <= table_nb_bits)
@@ -4912,7 +5135,7 @@ public class FileAvi extends FileBase {
                     if (n > n1) {
                         n1 = n;
                     }
-                    vlcs[index0][index1][j+table_index][1] = -n1; // bits
+                    vlcs[index0][index1][j+table_index][1] = (short)-n1; // bits
                 }
             } // if ((n > 0) && (code_prefix2 == code_prefix))
         } // for (i = 0; i < nb_codes; i++)
@@ -4924,7 +5147,7 @@ public class FileAvi extends FileBase {
                 n = -n;
                 if (n > table_nb_bits) {
                     n = table_nb_bits;
-                    vlcs[index0][index1][i+table_index][1] = -n; // bits
+                    vlcs[index0][index1][i+table_index][1] = (short)-n; // bits
                 }
                 Preferences.debug("Recursive entry into build_table\n");
                 index = build_table(index0, index1, n, nb_codes, bits, bits_wrap, bits_size, codes, codes_wrap,
@@ -4933,7 +5156,7 @@ public class FileAvi extends FileBase {
                 if (index < 0) {
                     return -1;
                 }
-                vlcs[index0][index1][i + table_index][0] = index; // code
+                vlcs[index0][index1][i + table_index][0] = (short)index; // code
             } // if (n < 0)
         } // for (i = 0; i < table_size; i++)
         return table_index;
