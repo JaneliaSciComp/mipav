@@ -136,11 +136,14 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     /** todays date **/
     private String todaysDateString;
     
-    /** patientIDs that have been written out **/
+    /** patientIDs that have been written out...unique based on patientID, studyID, and seriesNo**/
     private Vector donePatientIDs = new Vector();
     
     /** csv file path **/
     private String csvFilePath;
+    
+    /** boolean indicating if csv file is new **/
+    private boolean newCSVFile;
     
     
     private static Vector<FileDicomKey> removeTagsVector;
@@ -154,6 +157,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     private static FileDicomKey studyDateKey;
     private static FileDicomKey studyIDKey;
     private static FileDicomKey seriesNoKey;
+    private static FileDicomKey sequenceNameKey;
     
     
     static {
@@ -259,6 +263,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     	studyDateKey = new FileDicomKey("0008,0020");
     	studyIDKey = new FileDicomKey("0020,0010");
     	seriesNoKey = new FileDicomKey("0020,0011");
+    	sequenceNameKey = new FileDicomKey("0018,0024");
 
     }
     
@@ -267,7 +272,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 	/**
 	 * constructor
 	 */
-	public PlugInAlgorithmNINDSAnonymizationTool(String inputDirectoryPath, String outputDirectoryPath, JTextArea outputTextArea, JLabel errorMessageLabel, boolean enableTextArea, boolean renameGrandParentDir, JDialog parentDialog, String csvFilePath) {
+	public PlugInAlgorithmNINDSAnonymizationTool(String inputDirectoryPath, String outputDirectoryPath, JTextArea outputTextArea, JLabel errorMessageLabel, boolean enableTextArea, boolean renameGrandParentDir, JDialog parentDialog, String csvFilePath, boolean newCSVFile) {
 		this.inputDirectoryPath = inputDirectoryPath;
 		this.outputDirectoryPath = outputDirectoryPath;
 		this.outputTextArea = outputTextArea;
@@ -276,6 +281,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 		this.renameGrandParentDir = renameGrandParentDir;
 		this.parentDialog = parentDialog;
 		this.csvFilePath = csvFilePath;
+		this.newCSVFile = newCSVFile;
 
 		fileIO = new FileIO();
 		fileIO.setQuiet(true);
@@ -307,6 +313,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
         	csvFile = new File(csvFilePath);
         	outputStreamCSV = new FileOutputStream(csvFile,true);
         	printStreamCSV = new PrintStream(outputStreamCSV);
+        	if(newCSVFile) {
+        		printStreamCSV.println("patientID,dob,patientsAge,studyDate,studyID,seriesNo,todaysDate,sequenceName,blindedPatientID");
+        	}
         	Calendar t = Calendar.getInstance();
     		SimpleDateFormat sdf = new SimpleDateFormat("MMddyyyy");
     		todaysDateString = sdf.format(t.getTime());
@@ -531,6 +540,11 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     	tagTable = fileInfoDicom.getTagTable();
     	String studyID = ((String)tagTable.getValue(studyIDKey)).trim();
     	String seriesNo = ((String)tagTable.getValue(seriesNoKey)).trim();
+    	String sequenceName = "";
+    	if(tagTable.getValue(sequenceNameKey) != null) {
+    		sequenceName = ((String)tagTable.getValue(sequenceNameKey)).trim();
+    	}
+    	
     	if(enableTextArea) {
 			outputTextArea.append("Study ID is " + studyID + " \n");
 		}
@@ -609,6 +623,17 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 		String userEnteredDOB = "";
 		//if dob is there and in right format , create newUID using this field....otherwise if dob is not there
 		if(validDOB) {
+			String mmString = dob.substring(0, 2);
+			String ddString = dob.substring(2,4);
+			String yyyyString = dob.substring(4,dob.length());
+			if(mmString.startsWith("0")) {
+				mmString = mmString.substring(1,2);
+			}
+			if(ddString.startsWith("0")) {
+				ddString = ddString.substring(1,2);
+			}
+			String dobString = mmString + ddString + yyyyString;
+			dobInt = Integer.valueOf(dobString);
 			newUIDInt = patientIDInt + dobInt;
 			newUID = String.valueOf(newUIDInt);
 		}else {
@@ -629,6 +654,12 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 				String mmString = dobMMTextField.getText();
 				String ddString = dobDDTextField.getText();
 				String yyyyString = dobYYYYTextField.getText();
+				if(mmString.startsWith("0")) {
+					mmString = mmString.substring(1,2);
+				}
+				if(ddString.startsWith("0")) {
+					ddString = ddString.substring(1,2);
+				}
 				int mm = Integer.valueOf(mmString);
 				int dd = Integer.valueOf(ddString);
 				int yyyy = Integer.valueOf(yyyyString);
@@ -705,9 +736,10 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     	
     	
     	//write out csvFile
-    	if(!donePatientIDs.contains(patientID)) {
-    		printStreamCSV.println(patientID + "," + dobInt + "," + patientsAge + "," + studyDate + "," + studyID + "," + seriesNo + "," + todaysDateString);
-    		donePatientIDs.add(patientID);
+    	String csvCheck = patientID + studyID + seriesNo;
+    	if(!donePatientIDs.contains(csvCheck)) {
+    		printStreamCSV.println(patientID + "," + dobInt + "," + patientsAge + "," + studyDate + "," + studyID + "," + seriesNo + "," + todaysDateString + "," + sequenceName + "," + newUID);
+    		donePatientIDs.add(csvCheck);
     	}
 
     	//replace specific defined tags
