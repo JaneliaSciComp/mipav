@@ -60,29 +60,15 @@ public class PlugInAlgorithmImageSubmit extends AlgorithmBase implements Algorit
 		
 		File f = new File(submitImageLocation);
 		if(!f.exists()) {
-			createDirStructure(f);
+			f.mkdirs();
 		}
 		
 		f = new File(submitPatientLocation);
 		if(!f.exists()) {
-			createDirStructure(f);
+			f.mkdirs();
 		}
 		
 		createProgressBar("Image Submission", "Initializing...");
-	}
-
-	/**
-	 * Creates the containing folders that don't currently exist for folder f
-	 */
-	private void createDirStructure(File f) {
-		if(f.exists()) {
-			return;
-		}
-		if(f.getParentFile() != null) {
-			createDirStructure(f.getParentFile());
-		} 
-		f.mkdir();
-		
 	}
 	
 	/******************************************************************************
