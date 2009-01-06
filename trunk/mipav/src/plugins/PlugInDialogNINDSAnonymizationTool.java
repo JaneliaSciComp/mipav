@@ -66,8 +66,11 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
     /** rename grandparent dir name * */
     private boolean renameGrandParentDir;
     
+    /** path to csv file **/
     private String csvFilePath;
 
+    /** boolean indicating if csv file is new **/
+    private boolean newCSVFile;
     /**
      * default constructor
      */
@@ -91,7 +94,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
      */
     public void init() {
         setForeground(Color.black);
-        setTitle("NINDS Anonymization Tool " + " v1.7");
+        setTitle("NINDS Anonymization Tool " + " v1.8");
 
         mainPanelGridBagLayout = new GridBagLayout();
         mainPanelConstraints = new GridBagConstraints();
@@ -433,11 +436,13 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
             		errorMessageLabel.setText("CSV File Path is required");
                     return;
             	}
+            	newCSVFile = false;
             }else {
             	if(csvDirTextField.getText().trim().equals("") || csvNameTextField.getText().trim().equals("")){
             		errorMessageLabel.setText("CSV Dir and Name are required");
                     return;
             	}
+            	newCSVFile = true;
             }
             boolean success = validateFilePaths();
             if ( !success) {
@@ -469,7 +474,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         String inputDirectoryPath = inputDirectoryTextField.getText().trim();
         String outputDirectoryPath = outputDirectoryTextField.getText().trim();
         alg = new PlugInAlgorithmNINDSAnonymizationTool(inputDirectoryPath, outputDirectoryPath, outputTextArea,
-                errorMessageLabel, true, renameGrandParentDir, this, csvFilePath);
+                errorMessageLabel, true, renameGrandParentDir, this, csvFilePath,newCSVFile);
 
         alg.addListener(this);
 
