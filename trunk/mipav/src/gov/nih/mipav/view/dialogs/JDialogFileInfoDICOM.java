@@ -1495,10 +1495,10 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
   		  			f = Color.blue;
   		  			break;
   		  		case 0x0010:
-  		  			f = new Color(255, 140, 0); //orange
+  		  			f = new Color(34, 139, 34); //green
   		  			break;
   		  		case 0x0018:
-  		  			f = new Color(153, 50, 204); //magenta
+  		  			f = Color.blue;
   		  			break;
   		  		case 0x0020:
   		  			f = new Color(34, 139, 34); //green
@@ -1507,10 +1507,10 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
   		  			f = Color.blue;
   		  			break;
   		  		case 0x0032:
-  		  			f = new Color(255, 140, 0); //orange
+  		  			f = new Color(34, 139, 34); //green
   		  			break;
   		  		case 0x0040:
-  		  			f = new Color(153, 50, 204); //magenta
+  		  			f = Color.blue;
   		  			break;
   		  		case 0x7fe0:
   		  			f = new Color(34, 139, 34); //green
