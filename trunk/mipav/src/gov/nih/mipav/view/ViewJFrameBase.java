@@ -3333,8 +3333,8 @@ public abstract class ViewJFrameBase extends JFrame
     }
     
     /**
-     * Save intensities in VOI to a text file of format x, y, z, intensity on each line if not color or complex.
-     * If color use format x, y, z, a, r, g, b on each line and if complex use format x, y, z, real, imaginary on each line.
+     * Save intensities in VOI to a text file of format x,y,z,intensity on each line if not color or complex.
+     * If color use format x,y,z,a,r,g,b on each line and if complex use format x,y,z,real,imaginary on each line.
      *
      */
     public void saveVOIIntensities() {
@@ -3472,6 +3472,23 @@ public abstract class ViewJFrameBase extends JFrame
             return;
         }
         
+        if (selectedImage.isColorImage()) {
+            entryBytes = new String("x,y,z,a,red,green,blue\n").getBytes();
+        }
+        else if (selectedImage.isComplexImage()) {
+            entryBytes = new String("x,y,z,real,imaginary\n").getBytes();
+        }
+        else {
+            entryBytes = new String("x,y,z,intensity\n").getBytes();
+        }
+        try {
+            raFile.write(entryBytes);
+        }
+        catch(IOException e) {
+            MipavUtil.displayError("IOException on raFile.write(entryBytes) for header line");
+            return;
+        }
+        
         for (z = 0; z < zDim; z++) {
             k = z * sliceSize;
             for (y = 0; y < yDim; y++) {
@@ -3480,27 +3497,27 @@ public abstract class ViewJFrameBase extends JFrame
                     i = j + x;
                     if (mask.get(i)) {
                         if (selectedImage.isColorImage()) {
-                            entryBytes = new String(Integer.toString(x) + ", " + 
-                                                    Integer.toString(y) + ", " +
-                                                    Integer.toString(z) + ", " +
-                                                    Double.toString(buffer[4*i]) + ", " +
-                                                    Double.toString(buffer[4*i + 1]) + ", " +
-                                                    Double.toString(buffer[4*i + 2]) + ", " +
+                            entryBytes = new String(Integer.toString(x) + "," + 
+                                                    Integer.toString(y) + "," +
+                                                    Integer.toString(z) + "," +
+                                                    Double.toString(buffer[4*i]) + "," +
+                                                    Double.toString(buffer[4*i + 1]) + "," +
+                                                    Double.toString(buffer[4*i + 2]) + "," +
                                                     Double.toString(buffer[4*i + 3]) +
                                                     "\n").getBytes();
                         }
                         else if (selectedImage.isComplexImage()) {
-                            entryBytes = new String(Integer.toString(x) + ", " + 
-                                    Integer.toString(y) + ", " +
-                                    Integer.toString(z) + ", " +
-                                    Double.toString(buffer[2*i]) + ", " +
+                            entryBytes = new String(Integer.toString(x) + "," + 
+                                    Integer.toString(y) + "," +
+                                    Integer.toString(z) + "," +
+                                    Double.toString(buffer[2*i]) + "," +
                                     Double.toString(buffer[2*i + 1]) +
                                     "\n").getBytes();    
                         }
                         else {
-                            entryBytes = new String(Integer.toString(x) + ", " + 
-                                    Integer.toString(y) + ", " +
-                                    Integer.toString(z) + ", " +
+                            entryBytes = new String(Integer.toString(x) + "," + 
+                                    Integer.toString(y) + "," +
+                                    Integer.toString(z) + "," +
                                     Double.toString(buffer[i]) +
                                     "\n").getBytes();        
                         }
