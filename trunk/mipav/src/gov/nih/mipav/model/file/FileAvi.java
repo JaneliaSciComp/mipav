@@ -226,6 +226,18 @@ public class FileAvi extends FileBase {
         private final int MIN_CACHE_BITS = 25;
         
         private final long ROW0_MASK = 0xffff000000000000L;
+        
+        private final int W1 = 22725;  //cos(i*M_PI/16)*sqrt(2)*(1<<14) + 0.5
+        private final int W2 = 21407;  //cos(i*M_PI/16)*sqrt(2)*(1<<14) + 0.5
+        private final int W3 = 19266;  //cos(i*M_PI/16)*sqrt(2)*(1<<14) + 0.5
+        private final int W4 = 16383;  //cos(i*M_PI/16)*sqrt(2)*(1<<14) + 0.5
+        private final int W5 = 12873;  //cos(i*M_PI/16)*sqrt(2)*(1<<14) + 0.5
+        private final int W6 = 8867;   //cos(i*M_PI/16)*sqrt(2)*(1<<14) + 0.5
+        private final int W7 = 4520;   //cos(i*M_PI/16)*sqrt(2)*(1<<14) + 0.5
+        private final int ROW_SHIFT = 11;
+        private final int COL_SHIFT = 20; // 6
+        
+        private final int MAX_NEG_CROP = 1024;
 
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -434,6 +446,7 @@ public class FileAvi extends FileBase {
     private int gbc_buffer_end;
     private int gbc_index;
     private int gbc_size_in_bits;
+    private byte ff_cropTbl[];
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -3704,7 +3717,7 @@ public class FileAvi extends FileBase {
                  int w2;
                  byte pBuffer[] = null;
                  int pBufferSize = 0;
-                 int pBufPtr = 0;
+                 int pBufPtr[] = new int[1];
                  int pSize;
                  int h2;
                  int size2;
@@ -3769,6 +3782,14 @@ public class FileAvi extends FileBase {
                     vlcs_table_size = new int[2][4];
                     vlcs_table_allocated = new int[2][4];
                     build_basic_mjpeg_vlc();
+                    ff_cropTbl = new byte[256 + 2 * MAX_NEG_CROP];
+                    for (i = 0; i < 256; i++) {
+                        ff_cropTbl[i + MAX_NEG_CROP] = (byte)i;
+                    }
+                    for (i = 0; i < MAX_NEG_CROP; i++) {
+                        ff_cropTbl[i] = 0;
+                        ff_cropTbl[i + MAX_NEG_CROP + 256] = (byte)255;
+                    }
                 } if (!mjpegDecodeInit)
                 // Check for LIST rec<sp> subchunks
                 if (!AVIF_MUSTUSEINDEX) {
@@ -4119,10 +4140,10 @@ public class FileAvi extends FileBase {
                                                                  return null;
                                                              }
                                                              
-                                                             pBufPtr = data[c] + (((linesize[c] * (v * mb_y + y) * 8) +
+                                                             pBufPtr[0] = data[c] + (((linesize[c] * (v * mb_y + y) * 8) +
                                                                        (h * mb_x + x) * 8 ) >> lowres);
                                                              if (interlaced && bottom_field) {
-                                                                 pBufPtr += linesize[c] >> 1;
+                                                                 pBufPtr[0] += linesize[c] >> 1;
                                                              }
                                                              if (!progressive) {
                                                                  ff_simple_idct_put(pBuffer, pBufPtr, linesize[c], block);
@@ -4697,11 +4718,12 @@ public class FileAvi extends FileBase {
         }
     }
     
-    private void ff_simple_idct_put(byte dest[], int destPtr,  int line_size, short block[]) {
+    private void ff_simple_idct_put(byte dest[], int destPtr[],  int line_size, short block[]) {
         int i;
         long row0;
         long row1;
         long temp;
+        int a0, a1, a2, a3, b0, b1, b2, b3;
         for (i = 0; i < 8; i++) {
             row0 = (block[i*8] & 0xffffL) << 48;
             row0 |= (block[i*8+1] & 0xffffL) << 32;
@@ -4724,12 +4746,128 @@ public class FileAvi extends FileBase {
                 block[i*8+6] = block[i*8+2];
                 block[i*8+7] = block[i*8+3];
                 continue;
-            }
+            } // if (((row0 & (~ROW0_MASK)) | row1) == 0)
+            a0 = (W4 * block[i*8]) + ( 1 << (ROW_SHIFT - 1));
+            a1 = a0;
+            a2 = a0;
+            a3 = a0;
             
+            a0 += W2 * block[i*8 + 2];
+            a1 += W6 * block[i*8 + 2];
+            a2 -= W6 * block[i*8 + 2];
+            a3 -= W2 * block[i*8 + 2];
+            
+            b0 = W1 * block[i*8 + 1];
+            b0 += W3 * block[i*8 + 3];
+            b1 = W3 * block[i*8 + 1];
+            b1 += -W7 * block[i*8 + 3];
+            b2 = W5 * block[i*8 + 1];
+            b2 += -W1 * block[i*8 + 3];
+            b3 = W7 * block[i*8 + 1];
+            b3 += -W5 * block[i*8 + 3];
+            
+            temp = (block[i*8 + 4] & 0xffffL) << 48;
+            temp |= (block[i*8 + 5] & 0xffffL) << 32;
+            temp |= (block[i*8 + 6] & 0xffffL) << 16;
+            temp |= (block[i*8 + 7] & 0xffffL);
+            
+            if (temp != 0) {
+                a0 += W4 * block[i*8+4]+ W6 * block[i*8+6];
+                a1 += -W4 * block[i*8+4] - W2 * block[i*8+6];
+                a2 += -W4 * block[i*8+4] + W2 * block[i*8+6];
+                a3 += W4 * block[i*8 + 4] - W6 *block[i*8 + 6];
+                
+                b0 += W5 * block[i*8 + 5];
+                b0 += W7 * block[i*8 + 7];
+                
+                b1 += -W1 * block[i*8 + 5];
+                b1 += -W5 * block[i*8 + 7];
+                
+                b2 += W7 * block[i*8 + 5];
+                b2 += W3 * block[i*8 + 7];
+                
+                b3 += W3 * block[i*8 + 5];
+                b3 += -W1 * block[i*8 + 7];
+            } // if (temp != 0)
+            
+            block[i*8] = (short)((a0 + b0) >> ROW_SHIFT);
+            block[i*8 + 7] = (short)((a0 - b0) >> ROW_SHIFT);
+            block[i*8 + 1] = (short)((a1 + b1) >> ROW_SHIFT);
+            block[i*8 + 6] = (short)((a1 - b1) >> ROW_SHIFT);
+            block[i*8 + 2] = (short)((a2 + b2) >> ROW_SHIFT);
+            block[i*8 + 5] = (short)((a2 - b2) >> ROW_SHIFT);
+            block[i*8 + 3] = (short)((a3 + b3) >> ROW_SHIFT);
+            block[i*8 + 4] = (short)((a3 - b3) >> ROW_SHIFT);
+        } // for (i = 0; i < 8; i++)
+        
+        for (i = 0; i < 8; i++) {
+            a0 = W4 * (block[i] + ((1 << (COL_SHIFT-1))/W4));
+            a1 = a0;
+            a2 = a0;
+            a3 = a0;
+            
+            a0 += W2 * block[i + 16];
+            a1 += W6 * block[i + 16];
+            a2 += -W6 * block[i + 16];
+            a3 += -W2 * block[i + 16];
+            
+            b0 = W1 * block[i + 8];
+            b1 = W3 * block[i + 8];
+            b2 = W5 * block[i + 8];
+            b3 = W7 * block[i + 8];
+            
+            b0 += W3 * block[i + 24];
+            b1 += -W7 * block[i + 24];
+            b2 += -W1 * block[i + 24];
+            b3 += -W5 * block[i + 24];
+            
+            if (block[i + 32] != 0) {
+                a0 += W4 * block[i + 32];
+                a1 += -W4 * block[i + 32];
+                a2 += -W4 * block[i + 32];
+                a3 += W4 * block[i + 32];
+            } // if (block[i + 32] != 0)
+            
+            if (block[i + 40] != 0) {
+                b0 += W5 * block[i + 40];
+                b1 += -W1 * block[i + 40];
+                b2 += W7 * block[i + 40];
+                b3 += W3 * block[i + 40];
+            } // if (block[i + 40] != 0)
+            
+            if (block[i + 48] != 0) {
+                a0 += W6 * block[i + 48];
+                a1 += -W2 * block[i + 48];
+                a2 += W2 * block[i + 48];
+                a3 += -W6 * block[i + 48];
+            } // if (block[i + 48] != 0)
+            
+            if (block[i + 56] != 0) {
+                b0 += W7 * block[i + 56];
+                b1 += -W5 * block[i + 56];
+                b2 += W3 * block[i + 56];
+                b3 += -W1 * block[i + 56];
+            } // if (block[i + 56] != 0)
+            
+            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a0 + b0) >> COL_SHIFT)];
+            destPtr[0] += line_size;
+            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a1 + b1) >> COL_SHIFT)];
+            destPtr[0] += line_size;
+            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a2 + b2) >> COL_SHIFT)];
+            destPtr[0] += line_size;
+            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a3 + b3) >> COL_SHIFT)];
+            destPtr[0] += line_size;
+            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a3 - b3) >> COL_SHIFT)];
+            destPtr[0] += line_size;
+            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a2 - b2) >> COL_SHIFT)];
+            destPtr[0] += line_size;
+            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a1 - b1) >> COL_SHIFT)];
+            destPtr[0] += line_size;
+            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a0 - b0) >> COL_SHIFT)];
         } // for (i = 0; i < 8; i++)
     }
     
-    private void ff_simple_idct_add(byte dest[], int destPtr, int line_size, short block[]) {
+    private void ff_simple_idct_add(byte dest[], int destPtr[], int line_size, short block[]) {
         
     }
     
