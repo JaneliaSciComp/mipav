@@ -867,6 +867,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         
         tagsTable.getColumn("Tag").setMinWidth(90);
         tagsTable.getColumn("Tag").setMaxWidth(90);
+        tagsTable.getColumn("Tag").setCellRenderer(new TagCodeRenderer());
         tagsTable.getColumn("Name").setMinWidth(160);
         tagsTable.getColumn("Name").setMaxWidth(500);
         tagsTable.getColumn("Value").setMinWidth(50);
@@ -1470,10 +1471,57 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
   		  		checkBox.setSelected(((Boolean) value).booleanValue());
   		  		checkBox.setHorizontalAlignment(JLabel.CENTER);
   		  		return checkBox;
-  		  	}
+  		  	} 
+
   		  	return null;
   	  }
     }
+	
+	private class TagCodeRenderer extends DefaultTableCellRenderer {
+		
+		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+			if(column == 1 && value instanceof String && ((String)value).length() == 11) {
+  		  		Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+  		  		String name = ((String)value).substring(1, ((String)value).length() - 1);
+  		  		int group = Integer.valueOf(name.substring(0, 4), 16);
+  		  		int element = Integer.valueOf(name.substring(5), 16);
+  		  		Color f;
+  		  		switch(group) {
+  		  		
+  		  		case 0x0002:
+  		  			f = Color.green;
+  		  			break;
+  		  		case 0x0008:
+  		  			f = Color.blue;
+  		  			break;
+  		  		case 0x0010:
+  		  			f = Color.orange;
+  		  			break;
+  		  		case 0x0018:
+  		  			f = Color.magenta;
+  		  			break;
+  		  		case 0x0020:
+  		  			f = Color.green;
+  		  			break;
+  		  		case 0x0028:
+  		  			f = Color.blue;
+  		  			break;
+  		  		case 0x7fe0:
+  		  			f = Color.orange;
+  		  			break;
+  		  		default:
+  		  			f = Color.red;
+  		  			break;  				
+  		  		}
+  		  		
+  		  		cell.setForeground(f);
+
+  		  		return cell;
+  		  	}
+  		  	
+			return null;
+		}
+	}
 
     
     private class CheckBoxEditor implements TableCellEditor {
