@@ -163,21 +163,24 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		int numOfFiles = selectedFiles.length;
 		ArrayList<Integer> filesNotRead = new ArrayList<Integer>();
 		int progressNum = minProgressValue;
+		HashMap<FileDicomKey, FileDicomSQ> prevSliceSequenceTags = new HashMap<FileDicomKey, FileDicomSQ>();
+		HashMap<FileDicomKey, Object> prevSlicePrivateTags = new HashMap<FileDicomKey, Object>();
+		HashMap<FileDicomKey, Object> prevSliceAnonymizeTags = new HashMap<FileDicomKey, Object>();
 		for(int i=0; i<numOfFiles; i++) {
 			// use the selectedFileName as the reference slice for the file info tag tables
             progressNum = minProgressValue + (int)((maxProgressValue-minProgressValue)*(((double)i)/((double)numOfFiles)));
 			fireProgressStateChanged(progressNum, null, "Reading file "+i);
 			try {
-				printToLogFile.println("Reading next file "+selectedFiles[i].getName()+" with path "+allTempFiles[i].getParent()+File.separator);
+				printToLogFile.println("Reading next file "+selectedFiles[i].getName()); //TODO: path fix from temp file
             	ReadDicom imageFile = new ReadDicom(allTempFiles[i].getName(), allTempFiles[i].getParent()+File.separator);
 	            imageFile.setQuiet(true); // if we want quiet, we tell the reader, too.
 	            imageFile.readHeader(true); // can we read the header?
 	            printToLogFile.println();
-	            imageFile.storeAnonymizeTags();
+	            prevSliceAnonymizeTags = imageFile.storeAnonymizeTags(prevSliceAnonymizeTags);
 	            printToLogFile.println();
-	            imageFile.storePrivateTags();
+	            prevSlicePrivateTags = imageFile.storePrivateTags(prevSlicePrivateTags);
 	            printToLogFile.println();
-	            imageFile.storeSequenceTags();
+	            prevSliceSequenceTags = imageFile.storeSequenceTags(prevSliceSequenceTags);
 	            printToLogFile.println();
 	            printToLogFile.println();
             } catch(Exception e) {
@@ -248,25 +251,40 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		
 		}
 		
-		public void storeSequenceTags() {
-			printToLogFile.println("The sequence tags for this file are printed below");
+		public HashMap<FileDicomKey, FileDicomSQ> storeSequenceTags(HashMap<FileDicomKey, FileDicomSQ> prevSliceSequenceTags) {
+			printToLogFile.println("The sequence tags for this file are printed below:");
 			ArrayList<FileDicomKey> ar;
 			Collections.sort(ar = new ArrayList(sequenceTags.keySet()), new KeyComparator());
 			Iterator<FileDicomKey> sqItr = ar.iterator();
 			while(sqItr.hasNext()) {
 				FileDicomKey key = sqItr.next();
 				FileDicomSQ sq = sequenceTags.get(key);
-				printToLogFile.println("("+key+"):\tBeginning sequence");
-            	Vector v = sq.getSequenceDisplay();
-            	for(int i=0; i<v.size(); i++) {
-            		printToLogFile.println("\t"+v.get(i));
-            	}
+				FileDicomSQ sqPrev = prevSliceSequenceTags.get(key);
+				Vector v = sq.getSequenceDisplay();
+				Vector vPrev = null;
+				if(sqPrev != null)
+					vPrev = sqPrev.getSequenceDisplay();
+				boolean allSame = false;
+				if(vPrev != null && v.size() == vPrev.size()) {
+					allSame = true;
+					for(int i=0; i<v.size(); i++) {
+	            		if(!v.get(i).equals(vPrev.get(i))) {
+	            			allSame = false;
+	            		}
+	            	}
+				}
+				if(v.size() > 0 && !allSame) {
+					printToLogFile.println("("+key+"):\tBeginning sequence");
+	            	for(int i=0; i<v.size(); i++) {
+	            		printToLogFile.println("\t"+v.get(i));
+	            	}
+				}
 			}
+			return sequenceTags;
 		}
 		
-		public void storeAnonymizeTags() {
-			printToLogFile.println("The anonymized tags for this file are printed below.");
-			printToLogFile.println("Note that private tags can be anonymized by request.");
+		public HashMap<FileDicomKey, Object> storeAnonymizeTags(HashMap<FileDicomKey, Object> prevSliceAnonymizeTags) {
+			printToLogFile.println("The anonymized tags for this file are printed below:");
 			ArrayList<FileDicomKey> ar;
 			Collections.sort(ar = new ArrayList(anonymizeTags.keySet()), new KeyComparator());
 			Iterator<FileDicomKey> prItr = ar.iterator();
@@ -277,19 +295,42 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 				if(name == null) {
 					name = "Private Tag";
 				}
-				printToLogFile.println("("+key+"):\t"+name+"\t"+obj);
+				if(prevSliceAnonymizeTags.get(key) == null || 
+						(prevSliceAnonymizeTags.get(key) != null && !printObject(prevSliceAnonymizeTags.get(key)).equals(printObject(obj)))) {
+					printToLogFile.println("("+key+"):\t"+name+"\t"+printObject(obj));
+				}
 			}
+			return anonymizeTags;
 		}
 
-		public void storePrivateTags() {
-			printToLogFile.println("The private tags for this file are printed below.");
+		public HashMap<FileDicomKey, Object> storePrivateTags(HashMap<FileDicomKey, Object> prevSlicePrivateTags) {
+			printToLogFile.println("The private tags for this file are printed below:");
 			ArrayList<FileDicomKey> ar;
 			Collections.sort(ar = new ArrayList(privateTags.keySet()), new KeyComparator());
 			Iterator<FileDicomKey> prItr = ar.iterator();
 			while(prItr.hasNext()) {
 				FileDicomKey key = prItr.next();
 				Object obj = privateTags.get(key);
-				printToLogFile.println("("+key+"):\t"+obj);
+				if(prevSlicePrivateTags.get(key) == null || 
+						(prevSlicePrivateTags.get(key) != null && !printObject(prevSlicePrivateTags.get(key)).equals(printObject(obj)))) {
+					if(obj instanceof Object[]) {
+						System.out.println("Is array "+key);
+					}
+					printToLogFile.println("("+key+"):\t"+printObject(obj));
+				}
+			}
+			return privateTags;
+		}
+		
+		private String printObject(Object obj) {
+			if(obj instanceof Object[]) {
+				String s = new String();
+				for(int i=0; i<((Object[])obj).length; i++) {
+					s+= ((Object[])obj)[i].toString()+" ";
+				}
+				return s;
+			} else {
+				return obj.toString();
 			}
 		}
 
@@ -800,10 +841,15 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                    // set the value if the tag is in the dictionary (which means it isn't private..) or has already
 	                    // been put into the tag table without a value (private tag with explicit vr)
 	                    if (DicomDictionary.containsTag(key) || tagTable.containsTag(key)) {
-	                    	printToLogFile.println("Note unknown data ("+key+"):\t"+readUnknownData()+"\t"+elementLength);
+	                    	Object obj = readUnknownData();
+	                    	Preferences.debug("Note unknown data ("+key+"):\t"+obj+"\t"+elementLength);
+	                    	
 	                    	//tagTable.setValue(key, readUnknownData(), elementLength);
 	                    } else {
-	                    	printToLogFile.println("Note private data ("+key+"):\t"+readUnknownData()+"\t"+elementLength);
+	                    	Object obj = readUnknownData();
+	                    	Preferences.debug("Note private data ("+key+"):\t"+obj+"\t"+elementLength);
+	                    	privateTags.put(key, obj);
+	                    	
 	                    	//tagTable
 	                        //        .putPrivateTagValue(new FileDicomTagInfo(key, null, tagVM, "PrivateTag", "Private Tag"));
 
