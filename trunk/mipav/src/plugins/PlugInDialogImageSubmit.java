@@ -491,7 +491,9 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
             		if(!fileExists) {
             			if(selectedFiles[i].isDirectory()) {
             				for(File f : selectedFiles[i].listFiles()) {
-            					fileList.add(f.getAbsolutePath());
+            					if(!f.isDirectory()) {
+            						fileList.add(f.getAbsolutePath());
+            					}
             				}
             			} else {
             				fileList.add(selectedFiles[i].getAbsolutePath());
@@ -499,7 +501,11 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
             		}
             	}
             	inputFileList.updateUI();
-            	submitField.setText(selectedFiles[0].getParent() + File.separator + "submit");
+            	if(selectedFiles[0].isDirectory()) {
+            		submitField.setText(selectedFiles[0] + File.separator + "submit");
+            	} else {
+            		submitField.setText(selectedFiles[0].getParent() + File.separator + "submit");
+            	}
             }
             
             
