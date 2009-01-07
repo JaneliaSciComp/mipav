@@ -704,6 +704,8 @@ public class ViewMenuBar {
                                                 .buildMenuItem("Save all VOIs", "Save all VOIs", 0, "save.gif", true),
                                         menuBuilder.buildMenuItem("Save all VOIs to...", "Save all VOIs to...", 0,
                                                 "save.gif", true),
+                                        menuBuilder.buildMenuItem("Save intensities in VOI to...", "SaveVOIIntensities", 0,
+                                                "save.gif", true),
                                         menuBuilder.buildMenuItem("Save selected label to...",
                                                 "SaveSelectedAnnotation", 0, "save.gif", true),
                                         menuBuilder.buildMenuItem("Save all labels to...", "SaveAllAnnotations", 0,
