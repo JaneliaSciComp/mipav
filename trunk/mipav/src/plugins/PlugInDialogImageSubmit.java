@@ -499,9 +499,19 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
             		}
             	}
             	inputFileList.updateUI();
+            	submitField.setText(selectedFiles[0].getParent() + File.separator + "submit");
             }
+            
+            
         } else if(command.equals(BROWSE_FILE_SUBMIT)) { 
-        	fileChooser = new JFileChooser(Preferences.getImageDirectory());
+        	String startingFile;
+        	if(submitField.getText() != null && submitField.getText().length() > 0) {
+        		startingFile = submitField.getText();
+        	} else {
+        		startingFile = Preferences.getImageDirectory();
+        	}
+        	
+        	fileChooser = new JFileChooser(startingFile);
         	fileChooser.setFont(MipavUtil.defaultMenuFont);
         	fileChooser.setMultiSelectionEnabled(false);
         	fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
