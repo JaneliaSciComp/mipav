@@ -221,6 +221,35 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		}
 	}
 	
+	private boolean tagExistInAnonymizeTagIDs(String tagName) {
+    	int len = FileInfoDicom.anonymizeTagIDs.length;
+    	
+    	if (tagListFromDialog != null) {
+    		int lenTagList = tagListFromDialog.length;
+    		
+    		for (int j = 0; j < lenTagList; j++) {
+        		
+        		if (tagListFromDialog[j].equals(tagName)) {
+        			return true;
+        		}
+        	}
+    	}
+    	
+    	if (len == 0) {
+    		return false;
+    	}
+    	
+    	for (int i = 0; i < len; i++) {
+    		
+    		if (FileInfoDicom.anonymizeTagIDs[i].equals(tagName)) {
+    			return true;
+    		}
+    		
+    	}
+    	
+    	return false;
+    }
+	
 	private class KeyComparator implements Comparator {
 
 		/* (non-Javadoc)
@@ -679,7 +708,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	raFile.seek(raPtrOld);
 		                }
 		                
-		              //Note sequence tags are not eligible for anonymization (could easily be changed)
+		                //Note entire sequence tags are not eligible for anonymization, one can anonymize individual elements of a sequence tag
 		                //else if(type.equals("typeSequence")) {
 		                //	printToLogFile.println("("+key+"):\tBeginning sequence"+elementLength);
 	                    //	Vector v = sq.getSequenceDisplay();
@@ -1056,38 +1085,6 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	        }
 
 	        return true;
-	    }
-	    
-	    
-	    
-	    
-	    private boolean tagExistInAnonymizeTagIDs(String tagName) {
-	    	int len = FileInfoDicom.anonymizeTagIDs.length;
-	    	
-	    	if (tagListFromDialog != null) {
-	    		int lenTagList = tagListFromDialog.length;
-	    		
-	    		for (int j = 0; j < lenTagList; j++) {
-	        		
-	        		if (tagListFromDialog[j].equals(tagName)) {
-	        			return true;
-	        		}
-	        	}
-	    	}
-	    	
-	    	if (len == 0) {
-	    		return false;
-	    	}
-	    	
-	    	for (int i = 0; i < len; i++) {
-	    		
-	    		if (FileInfoDicom.anonymizeTagIDs[i].equals(tagName)) {
-	    			return true;
-	    		}
-	    		
-	    	}
-	    	
-	    	return false;
 	    }
 	}
 	
@@ -1701,7 +1698,9 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	            }
 
 	            try {
-
+	            	long bPtrOld = bPtr;
+	            	String strValue = new String();
+	            	Object data = null;
 	                // (type == "typeUnknown" && elementLength == -1) Implicit sequence tag if not in DICOM dictionary.
 	                if (type.equals("typeUnknown") && (elementLength != -1)) {
 	                    FileDicomTagInfo info = entry.getInfo();
@@ -1716,7 +1715,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                        elementLength = 0;
 	                    }
 
-	                    String strValue = getString(elementLength);
+	                    strValue = getString(elementLength);
 	                    entry.setValue(strValue, elementLength);
 	                    item.putTag(nameSQ, entry);
 	                    item.setLength(nameSQ, elementLength);
@@ -1725,9 +1724,9 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                } else if (type.equals("otherByteString")) {
 
 	                    if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
-	                        entry.setValue(readUnknownData(), elementLength);
+	                        entry.setValue(data = readUnknownData(), elementLength);
 	                    } else if (elementLength >= 2) {
-	                        entry.setValue(readUnknownData(), elementLength);
+	                        entry.setValue(data = readUnknownData(), elementLength);
 	                    }
 
 	                    entry.setValueRepresentation("OB");
@@ -1738,11 +1737,12 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                } else if (type.equals("typeShort")) {
 
 	                    if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
-	                        entry.setValue(readUnknownData(), elementLength);
+	                        entry.setValue(data = readUnknownData(), elementLength);
 	                    } else if (elementLength > 2) {
-	                        entry.setValue(readUnknownData(), elementLength);
+	                        entry.setValue(data = readUnknownData(), elementLength);
 	                    } else {
 	                        iValue = getUnsignedShort(endianess);
+	                        data = iValue;
 	                        entry.setValue(new Short((short) iValue), elementLength);
 	                    }
 
@@ -1753,11 +1753,12 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                } else if (type.equals("typeInt")) {
 
 	                    if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
-	                        entry.setValue(readUnknownData(), elementLength);
+	                        entry.setValue(data = readUnknownData(), elementLength);
 	                    } else if (elementLength > 4) {
-	                        entry.setValue(readUnknownData(), elementLength);
+	                        entry.setValue(data = readUnknownData(), elementLength);
 	                    } else {
 	                        iValue = getInt(endianess);
+	                        data = iValue;
 	                        entry.setValue(new Integer(iValue), elementLength);
 	                    }
 
@@ -1768,11 +1769,12 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                } else if (type.equals("typeFloat")) {
 
 	                    if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
-	                        entry.setValue(readUnknownData(), elementLength);
+	                        entry.setValue(data = readUnknownData(), elementLength);
 	                    } else if (elementLength > 4) {
-	                        entry.setValue(readUnknownData(), elementLength);
+	                        entry.setValue(data = readUnknownData(), elementLength);
 	                    } else {
 	                        fValue = getFloat(endianess);
+	                        data = fValue;
 	                        entry.setValue(new Float(fValue), elementLength);
 	                    }
 
@@ -1783,16 +1785,17 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                } else if (type.equals("typeDouble")) {
 
 	                    if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
-	                        entry.setValue(readUnknownData(), elementLength);
+	                        entry.setValue(data = readUnknownData(), elementLength);
 	                    } else if(elementLength % 8 == 0 && elementLength != 8) {
 	                    	Double[] dArr = new Double[elementLength/8];
 	                    	for(int i=0; i<dArr.length; i++) 
 	                    		dArr[i] = getDouble(endianess);
-	                    	entry.setValue(dArr, elementLength);
+	                    	entry.setValue(data = dArr, elementLength);
 	                    } else if (elementLength > 8) {
-	                        entry.setValue(readUnknownData(), elementLength);
+	                        entry.setValue(data = readUnknownData(), elementLength);
 	                    } else {
 	                        dValue = getDouble(endianess);
+	                        data = dValue;
 	                        entry.setValue(new Double(dValue), elementLength);
 	                    }
 
@@ -1811,6 +1814,109 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                    item.setLength(name, len);
 	                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type +
 	                    // "; element length = "+ elementLength + "\n", 2);
+	                }
+	                
+	                System.out.println("At this sequence name currently: "+nameSQ);
+	                if(tagExistInAnonymizeTagIDs(nameSQ)) {
+	                	System.out.print("Writing "+nameSQ+"\t");
+	                	
+	                	long raPtrOld = raFile.getFilePointer();
+	                	if(type.equals("typeString")) {
+	                		System.out.println(strValue);
+		                	String anonStr = "";
+		                	for(int i=0; i<strValue.length(); i++) {
+		                		anonStr = anonStr+"X";
+		                	}
+		                	
+		                	raFile.seek(bPtrOld);
+		                	raFile.writeBytes(anonStr); //non-anon would be strValue
+		                	raFile.seek(raPtrOld);
+		                	System.out.println("Writing "+strValue+" to "+bPtrOld+". Returned raPtr to "+raPtrOld);
+		                } else if (type.equals("otherByteString")) {
+
+		                    if ( !nameSQ.equals(IMAGE_TAG)) {
+		                    	System.out.println(data);
+		                    
+		                    	byte[] b = new byte[((Byte[])data).length];
+		                    	for(int i=0; i<b.length; i++) {
+		                    		b[i] = 0;
+		                    	}
+		                    	raFile.seek(bPtrOld);
+			                	raFile.write(b);
+			                	raFile.seek(raPtrOld);
+		                    }
+		                } else if (type.equals("otherWordString") && !nameSQ.equals("0028,1201") && !nameSQ.equals("0028,1202")
+		                        && !nameSQ.equals("0028,1203")) {
+
+		                    if ( !nameSQ.equals(IMAGE_TAG)) {
+		                    	System.out.println(data);
+		                    	
+		                    	byte[] b = new byte[((Byte[])data).length];
+		                    	for(int i=0; i<b.length; i++) {
+		                    		b[i] = 0;
+		                    	}
+		                    	raFile.seek(bPtrOld);
+			                	raFile.write(b);
+			                	raFile.seek(raPtrOld);
+		                    }
+		                } else if (type.equals("typeShort")) {
+		                	System.out.println(data);
+		                	
+		                	raFile.seek(bPtrOld);
+		                	if(data instanceof Short) {
+		                		writeShort((short)0, endianess);
+		                	} else if(data instanceof Short[]) {
+		                		for(int i=0; i<((Short[])data).length; i++) {
+		                			writeShort((short)0, endianess);
+		                		}
+		                	} else {
+		                		System.err.println("Data corruption");
+		                	}
+		                	raFile.seek(raPtrOld);
+		                } else if (type.equals("typeInt")) {
+		                	System.out.println(data);
+		                	
+		                	raFile.seek(bPtrOld);
+		                	if(data instanceof Integer) {
+		                		writeInt(0, endianess);
+		                	} else if(data instanceof Integer[]) {
+		                		for(int i=0; i<((Integer[])data).length; i++) {
+		                			writeInt(0, endianess);
+		                		}
+		                	} else {
+		                		System.err.println("Data corruption");
+		                	}
+		                	raFile.seek(raPtrOld);
+		                } else if (type.equals("typeFloat")) {
+		                	System.out.println(data);
+		                	
+		                	raFile.seek(bPtrOld);
+		                	if(data instanceof Float) {
+		                		writeFloat(0, endianess);
+		                	} else if(data instanceof Integer[]) {
+		                		for(int i=0; i<((Float[])data).length; i++) {
+		                			writeFloat(0, endianess);
+		                		}
+		                	} else {
+		                		System.err.println("Data corruption");
+		                	}
+		                	raFile.seek(raPtrOld);
+		                } else if (type.equals("typeDouble")) {
+		                	System.out.println(data);
+		                	
+		                	raFile.seek(bPtrOld);
+		                	if(data instanceof Double) {
+		                		writeDouble(0, endianess);
+		                	} else if(data instanceof Integer[]) {
+		                		for(int i=0; i<((Double[])data).length; i++) {
+		                			writeDouble(0, endianess);
+		                		}
+		                	} else {
+		                		System.err.println("Data corruption");
+		                	}
+		                	raFile.seek(raPtrOld);
+		                }
+	                	
 	                }
 	            } catch (OutOfMemoryError e) {
 
@@ -2208,7 +2314,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	     */
 	    protected Object getSequence(boolean endianess, int seqLength) throws IOException {
 	        FileDicomSQ sq = new FileDicomSQ();
-
+	        
 	        // There is no more of the tag to read if the length of the tag
 	        // is zero. In fact, trying to get the Next element is potentially
 	        // bad, so we'll just shut down the reading here.
@@ -2299,6 +2405,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                        getNextElement(endianess); // skipping the tag-length???
 	                        Preferences.debug("  the length: " + Integer.toString(elementLength, 0x10) + "\n");
 	                        nameSQ = convertGroupElement(groupWord, elementWord);
+	                        
 	                        Preferences.debug("after converting group-element: " + nameSQ + "!!!!\n");
 	                        inSQ = false; // may now add element length to location
 
