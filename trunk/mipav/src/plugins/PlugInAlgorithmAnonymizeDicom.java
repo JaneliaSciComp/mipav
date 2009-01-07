@@ -176,10 +176,13 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	            imageFile.setQuiet(true); // if we want quiet, we tell the reader, too.
 	            imageFile.readHeader(true); // can we read the header?
 	            printToLogFile.println();
+	            printToLogFile.println("The "+(i>0 ? "unique " : "")+"anonymized tags for this file are printed below:");
 	            prevSliceAnonymizeTags = imageFile.storeAnonymizeTags(prevSliceAnonymizeTags);
 	            printToLogFile.println();
+	            printToLogFile.println("The "+(i>0 ? "unique " : "")+"private tags for this file are printed below:");
 	            prevSlicePrivateTags = imageFile.storePrivateTags(prevSlicePrivateTags);
 	            printToLogFile.println();
+	            printToLogFile.println("The "+(i>0 ? "unique " : "")+"sequence tags for this file are printed below:");
 	            prevSliceSequenceTags = imageFile.storeSequenceTags(prevSliceSequenceTags);
 	            printToLogFile.println();
 	            printToLogFile.println();
@@ -252,7 +255,6 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		}
 		
 		public HashMap<FileDicomKey, FileDicomSQ> storeSequenceTags(HashMap<FileDicomKey, FileDicomSQ> prevSliceSequenceTags) {
-			printToLogFile.println("The sequence tags for this file are printed below:");
 			ArrayList<FileDicomKey> ar;
 			Collections.sort(ar = new ArrayList(sequenceTags.keySet()), new KeyComparator());
 			Iterator<FileDicomKey> sqItr = ar.iterator();
@@ -284,7 +286,6 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		}
 		
 		public HashMap<FileDicomKey, Object> storeAnonymizeTags(HashMap<FileDicomKey, Object> prevSliceAnonymizeTags) {
-			printToLogFile.println("The anonymized tags for this file are printed below:");
 			ArrayList<FileDicomKey> ar;
 			Collections.sort(ar = new ArrayList(anonymizeTags.keySet()), new KeyComparator());
 			Iterator<FileDicomKey> prItr = ar.iterator();
@@ -304,7 +305,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		}
 
 		public HashMap<FileDicomKey, Object> storePrivateTags(HashMap<FileDicomKey, Object> prevSlicePrivateTags) {
-			printToLogFile.println("The private tags for this file are printed below:");
+			
 			ArrayList<FileDicomKey> ar;
 			Collections.sort(ar = new ArrayList(privateTags.keySet()), new KeyComparator());
 			Iterator<FileDicomKey> prItr = ar.iterator();
