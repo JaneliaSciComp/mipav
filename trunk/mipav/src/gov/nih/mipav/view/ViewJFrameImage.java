@@ -1255,6 +1255,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 ScriptRecorder.getReference().addLine(new ActionSaveAllVOIs(getActiveImage(), voiDir));
                 ProvenanceRecorder.getReference().addLine(new ActionSaveAllVOIs(getActiveImage(), voiDir));
             }
+        } else if (command.equals("SaveVOIIntensities")) {
+            saveVOIIntensities();
         } else if (command.equals("Snake")) {
             new JDialogSnake(this, getActiveImage());
         } else if (command.equals("AGVF")) {
