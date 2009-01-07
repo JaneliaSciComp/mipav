@@ -17,7 +17,7 @@ void v_CalcNormalsPerSlice_Pass1B
 void p_CalcNormalsPerSlice_Pass1B
 (
     in float3         kBaseTCoord : TEXCOORD0,
-    out float3        kPixelColor : COLOR,
+    out float4        kPixelColor : COLOR,
     uniform float4    StepSize,
     uniform float     IsColor,
     uniform sampler3D VolumeImageB : TEXUNIT7
