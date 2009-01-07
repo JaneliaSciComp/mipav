@@ -3331,6 +3331,14 @@ public abstract class ViewJFrameBase extends JFrame
             MipavUtil.displayError(" Cannot save images when viewing both images.");
         }
     }
+    
+    /**
+     * Save intensities in VOI to a text file of format x, y, z, intensity with user selected delimiter.
+     *
+     */
+    public void saveVOIIntensities() {
+        
+    }
 
     /**
      * Sets whether the close image B option should appear after loading.
