@@ -120,15 +120,5 @@ public class PlugInAlgorithmImageSubmit extends AlgorithmBase implements Algorit
 	    	MipavUtil.displayInfo(totalStr);
 		}
 	}
-	
-	private class SubmitAlgorithm extends AlgorithmBase {
-
-		@Override
-		public void runAlgorithm() {
-			// TODO Auto-generated method stub
-			
-		}
-		
-	}
 
 }
