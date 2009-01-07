@@ -3333,11 +3333,195 @@ public abstract class ViewJFrameBase extends JFrame
     }
     
     /**
-     * Save intensities in VOI to a text file of format x, y, z, intensity with user selected delimiter.
+     * Save intensities in VOI to a text file of format x, y, z, intensity on each line if not color or complex.
+     * If color use format x, y, z, a, r, g, b on each line and if complex use format x, y, z, real, imaginary on each line.
      *
      */
     public void saveVOIIntensities() {
+        String fileName;
+        String directory;
+        JFileChooser chooser;
+        File textFile;
+        RandomAccessFile raFile;
+        ModelImage selectedImage = null;
+        int imageSize;
+        int nDims;
+        BitSet mask;
+        int xDim;
+        int yDim;
+        int zDim;
+        int sliceSize;
+
+        int nVOI;
+        int i, j, k;
+        ViewVOIVector VOIs = null;
+        int x;
+        int y;
+        int z;
+        double buffer[];
+        byte entryBytes[];
+
+        if (displayMode == IMAGE_A) {
+            selectedImage = imageA;
+        }
+        else if (displayMode == IMAGE_B) {
+            selectedImage = imageB;
+        }
+        else {
+            MipavUtil.displayError("Cannot save VOI intensities when viewing both images");
+            return;
+        }
+        VOIs = (ViewVOIVector) selectedImage.getVOIs();
+        nVOI = VOIs.size();
+
+        for (i = 0; i < nVOI; i++) {
+
+            if (VOIs.VOIAt(i).isActive()) {
+                break;
+            }
+        }
+
+        if (i == nVOI) {
+            MipavUtil.displayError("Please select a VOI.");
+
+            return;
+        }
         
+        nDims = selectedImage.getNDims();
+        xDim = selectedImage.getExtents()[0];
+        yDim = selectedImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        imageSize = sliceSize;
+        if (nDims > 2) {
+            zDim = selectedImage.getExtents()[2];
+            imageSize *= zDim;
+        }
+        else {
+            zDim = 1;
+        }
+        mask = new BitSet(imageSize);
+        VOIs.VOIAt(i).createBinaryMask(mask, xDim, yDim, selectedImage.getParentFrame().useXOR(), false);
+        if (selectedImage.isColorImage()) {
+            buffer = new double[4 * imageSize];
+        }
+        else if (selectedImage.isComplexImage()) {
+            buffer = new double[2 * imageSize];
+        }
+        else {
+            buffer = new double[imageSize];
+        }
+        
+        try {
+            selectedImage.exportData(0, buffer.length, buffer);
+        }
+        catch(IOException e) {
+            MipavUtil.displayError("IOException on selectedImage.exportData");
+            return;
+        }
+
+        chooser = new JFileChooser();
+        chooser.setDialogTitle("Save intensities in VOI as");
+
+        if (userInterface.getDefaultDirectory() != null) {
+            File file = new File(userInterface.getDefaultDirectory());
+
+            if (file != null) {
+                chooser.setCurrentDirectory(file);
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+            }
+        } else {
+            chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        }
+
+        chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[]{".txt"}));
+
+        int returnVal = chooser.showSaveDialog(this);
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            fileName = chooser.getSelectedFile().getName();
+            directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+            userInterface.setDefaultDirectory(directory);
+
+            this.voiSavedFileName = directory + fileName;
+
+
+        } else {
+            return;
+        }
+        
+        if(!fileName.endsWith(".txt")) {
+            fileName += ".txt";
+        }
+        
+        textFile = new File(directory + fileName);
+        try {
+            raFile = new RandomAccessFile(textFile, "rw");
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException on raFile = new RandomAccessFile");
+            return;
+        }
+        // Necessary so that if this is an overwritten file there isn't any
+        // junk at the end
+        try {
+            raFile.setLength(0);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException on raFile.setLength(0)");
+            return;
+        }
+        
+        for (z = 0; z < zDim; z++) {
+            k = z * sliceSize;
+            for (y = 0; y < yDim; y++) {
+                j = k + y * xDim;
+                for (x = 0; x < xDim; x++) {
+                    i = j + x;
+                    if (mask.get(i)) {
+                        if (selectedImage.isColorImage()) {
+                            entryBytes = new String(Integer.toString(x) + ", " + 
+                                                    Integer.toString(y) + ", " +
+                                                    Integer.toString(z) + ", " +
+                                                    Double.toString(buffer[4*i]) + ", " +
+                                                    Double.toString(buffer[4*i + 1]) + ", " +
+                                                    Double.toString(buffer[4*i + 2]) + ", " +
+                                                    Double.toString(buffer[4*i + 3]) +
+                                                    "\n").getBytes();
+                        }
+                        else if (selectedImage.isComplexImage()) {
+                            entryBytes = new String(Integer.toString(x) + ", " + 
+                                    Integer.toString(y) + ", " +
+                                    Integer.toString(z) + ", " +
+                                    Double.toString(buffer[2*i]) + ", " +
+                                    Double.toString(buffer[2*i + 1]) +
+                                    "\n").getBytes();    
+                        }
+                        else {
+                            entryBytes = new String(Integer.toString(x) + ", " + 
+                                    Integer.toString(y) + ", " +
+                                    Integer.toString(z) + ", " +
+                                    Double.toString(buffer[i]) +
+                                    "\n").getBytes();        
+                        }
+                        try {
+                            raFile.write(entryBytes);
+                        }
+                        catch(IOException e) {
+                            MipavUtil.displayError("IOException on raFile.write(entryBytes");
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        try {
+            raFile.close();
+        }
+        catch(IOException e) {
+            MipavUtil.displayError("IOException on raFile.close()");
+        }
+    
     }
 
     /**
