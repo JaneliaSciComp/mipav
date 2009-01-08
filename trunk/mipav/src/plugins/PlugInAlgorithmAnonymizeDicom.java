@@ -296,13 +296,18 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 				if(sqPrev != null)
 					vPrev = sqPrev.getSequenceDisplay();
 				boolean allSame = false;
+				Vector differentEntries = new Vector();
 				if(vPrev != null && v.size() == vPrev.size()) {
 					allSame = true;
 					for(int i=0; i<v.size(); i++) {
 	            		if(!v.get(i).equals(vPrev.get(i))) {
 	            			allSame = false;
+	            			differentEntries.add(v.get(i));
 	            		}
 	            	}
+				}
+				if(differentEntries.size() > 0) {
+					v = differentEntries;
 				}
 				if(v.size() > 0 && !allSame) {
 					printToLogFile.println("("+key+"):\tBeginning sequence");
