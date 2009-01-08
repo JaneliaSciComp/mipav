@@ -582,7 +582,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 
 	                    sq = (FileDicomSQ)getSequence(endianess, len);
 	                    sequenceTags.put(key, sq);
-	                    // System.err.print( "SEQUENCE DONE: Sequence Tags: (" + name + "); length = " +
+	                    //System.err.print( "SEQUENCE DONE: Sequence Tags: (" + key + ")"+" "+type);
 	                    // Integer.toString(len, 0x10) + "\n");
 
 	                    try {
@@ -607,11 +607,11 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                //check if should anonymize, note user can specify private tags to anonymize
 	                if(tagExistInAnonymizeTagIDs(key.toString())) {
 	   
-	                	System.out.print("Writing "+key+"\t");
+	                	//System.out.print("Writing "+key+"\t");
 	                	
 	                	long raPtrOld = raFile.getFilePointer();
 	                	if(type.equals("typeString")) {
-	                		System.out.println(strValue);
+	                		//System.out.println(strValue);
 		                	anonymizeTags.put(key, strValue);
 		                	String anonStr = "";
 		                	for(int i=0; i<strValue.length(); i++) {
@@ -625,7 +625,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                } else if (type.equals("otherByteString")) {
 
 		                    if ( !name.equals(IMAGE_TAG)) {
-		                    	System.out.println(data);
+		                    	//System.out.println(data);
 		                    	anonymizeTags.put(key, data);
 		                    
 		                    	byte[] b = new byte[((Byte[])data).length];
@@ -640,7 +640,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                        && !name.equals("0028,1203")) {
 
 		                    if ( !name.equals(IMAGE_TAG)) {
-		                    	System.out.println(data);
+		                    	//System.out.println(data);
 		                    	anonymizeTags.put(key, data);
 		                    	
 		                    	byte[] b = new byte[((Byte[])data).length];
@@ -652,7 +652,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 			                	raFile.seek(raPtrOld);
 		                    }
 		                } else if (type.equals("typeShort")) {
-		                	System.out.println(data);
+		                	//System.out.println(data);
 		                	anonymizeTags.put(key, data);
 		                	
 		                	raFile.seek(bPtrOld);
@@ -667,7 +667,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	}
 		                	raFile.seek(raPtrOld);
 		                } else if (type.equals("typeInt")) {
-		                	System.out.println(data);
+		                	//System.out.println(data);
 		                	anonymizeTags.put(key, data);
 		                	
 		                	raFile.seek(bPtrOld);
@@ -682,7 +682,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	}
 		                	raFile.seek(raPtrOld);
 		                } else if (type.equals("typeFloat")) {
-		                	System.out.println(data);
+		                	//System.out.println(data);
 		                	anonymizeTags.put(key, data);
 		                	
 		                	raFile.seek(bPtrOld);
@@ -697,7 +697,6 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	}
 		                	raFile.seek(raPtrOld);
 		                } else if (type.equals("typeDouble")) {
-		                	System.out.println(data);
 		                	anonymizeTags.put(key, data);
 		                	
 		                	raFile.seek(bPtrOld);
@@ -710,6 +709,11 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	} else {
 		                		System.err.println("Data corruption");
 		                	}
+		                	raFile.seek(raPtrOld);
+		                } else if (type.equals("typeSequence")) {
+		                	//System.out.println(data);
+		                	raFile.seek(bPtrOld);
+		                	writeSequence(raFile, fileInfo.vr_type, sq, endianess);
 		                	raFile.seek(raPtrOld);
 		                }
 		                
@@ -1113,6 +1117,10 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	 * or it may contain junk. There is no way of knowing how to properly read in a private tag without a valid value
 	 * representation (VR). So if the user wishes to know private tag information, he or she should specify the proper VR in
 	 * the dictionary file and be sure that their file conforms to that VR.
+	 * </p>
+	 * 
+	 * <p>
+	 * The methods that need to be ported from FileDicom should be placed here, not in FileDicomBaseInner.
 	 * </p>
 	 * 
 	 * @version 1.0 Aug 1, 1999
@@ -2516,6 +2524,163 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	        }
 
 	        return bytesV;
+	    }
+	    
+	    /**
+	     * Writes out a sequence tag and its data. The routine writes the Sequence as undefined-length and each of the items
+	     * as undefined length. The appropriate write-methods are used to output the various tags to the file.
+	     * 
+	     * @param outputFile File to write to.
+	     * @param vr_type VR type, explicit or implicit
+	     * @param sq Sequence to write out
+	     * @param endianess Big is <code>true</code> or <code>false</code> for little endian byte-order.
+	     * 
+	     * @throws IOException if write fails
+	     */
+	    protected void writeSequence(RandomAccessFile outputFile, boolean vr_type, FileDicomSQ sq, boolean endianess)
+	            throws IOException {
+	        FileDicomItem item;
+
+	        if ( (sq == null) || (sq.getSequenceLength() < 1)) {
+	            return;
+	        }
+
+	        for (int i = 0; i < sq.getSequenceLength(); i++) {
+	            item = sq.getItem(i);
+
+	            if (item.getNumberOfElements() > 0) {
+
+	                // write item-start tag
+	                writeShort((short) 0xFFFE, endianess);
+	                writeShort((short) 0xE000, endianess);
+	                writeInt(0xFFFFFFFF, endianess); // data-length (we'll get it to spit out real length later!)
+	            }
+
+	            FileDicomTag[] dataSet = item.sortDataSet();
+
+	            for (int j = 0; j < dataSet.length; j++) {
+
+	                // System.err.println(" Counter = " + j);
+	                String type = "";
+	                FileDicomTag entry = dataSet[j];
+
+	                String vr = entry.getValueRepresentation();
+	                int length = entry.getLength();
+
+	                // System.out.println("adadadfad length = " + length + " group = " + entry.getGroup() + " element = " +
+	                // entry.getElement());
+	                try {
+
+	                    if ( (vr_type == FileInfoDicom.EXPLICIT) && (vr != null)) {
+	                        type = FileDicomTagInfo.getType(vr);
+	                    } else {
+	                        type = entry.getType();
+	                    }
+	                } catch (NullPointerException error) {
+	                    type = "typeUnknown";
+	                }
+
+	                writeShort((short) entry.getGroup(), endianess);
+	                writeShort((short) entry.getElement(), endianess);
+
+	                if ( (vr_type == FileInfoDicom.EXPLICIT) && (vr != null)) {
+	                    outputFile.writeBytes(vr);
+
+	                    if (vr.equals("SQ") || vr.equals("OB") || vr.equals("OW") || vr.equals("UN")) {
+
+	                        // if (vr.equals("SQ") || vr.equals("UN")) {
+	                        outputFile.writeShort(0);
+	                    } else {
+	                        writeShort((short) length, endianess);
+	                    }
+	                }
+
+	                if (length == UNDEFINED_LENGTH) {
+	                    writeShort((short) 0xFFFF, endianess);
+	                } else if ( ( (vr_type == FileInfoDicom.EXPLICIT) && (vr != null) && (vr.equals("SQ")
+	                        || vr.equals("OB") || vr.equals("OW") || vr.equals("UN")))) {
+
+	                    if ( (length == 0) && vr.equals("SQ")) {
+	                        // Do nothing because we only write ____Dave need help___ sequence tags
+	                    } else {
+	                        writeInt(length, endianess);
+	                    }
+	                } else if ( (vr_type == FileInfoDicom.IMPLICIT) && !type.equals("typeUnknown")
+	                        && !type.equals("typeSequence")) {
+	                    writeInt(length, endianess);
+	                }
+
+	                if (type.equals("typeString") || type.equals("otherWordString")) {
+	                    String str = new String();
+	                    for(int k=0; k<entry.getValue(false).toString().length(); k++) {
+	                    	str += "X";
+	                    }
+	                	
+	                	outputFile.writeBytes(str);
+
+	                    if ( (entry.getValue(false).toString().length() % 2) != 0) {
+	                        outputFile.writeBytes("\0");
+	                    }
+	                } else if (type.equals("typeUnknown")) {
+
+	                    // Unknowns are stored as an array of Bytes.
+	                    // VM does not apply?
+	                    Byte[] bytesV = null;
+	                    bytesV = (Byte[]) entry.getValue(false);
+
+	                    byte[] bytesValue = new byte[bytesV.length];
+
+	                    for (int k = 0; k < bytesV.length; k++) {
+	                        bytesValue[k] = (byte)0;
+	                        // System.err.print(" [" + bytesV[k].toString()+"]");
+	                    }
+
+	                    writeInt(bytesV.length, endianess);
+	                    outputFile.write(bytesValue);
+	                } else if (type.equals("otherByteString")) {
+	                    Byte[] bytesV = null;
+	                    bytesV = (Byte[]) entry.getValue(false);
+
+	                    byte[] bytesValue = new byte[bytesV.length];
+
+	                    for (int k = 0; k < bytesV.length; k++) {
+	                        bytesValue[k] = (byte)0;
+	                        // System.err.print(" [" + bytesV[k].toString()+"]");
+	                    }
+
+	                    // writeInt(bytesV.length, endianess);
+	                    outputFile.write(bytesValue);
+	                } else if (type.equals("typeFloat")) {
+	                    writeFloat( (new Float(0)).floatValue(), endianess);
+	                } else if (type.equals("typeDouble")) {
+	                	if(entry.getValue(false) instanceof Double[]) {
+	                		Double[] dArr = (Double[]) entry.getValue(false);
+	                		for(int k=0; k<dArr.length; k++) {
+	                			writeDouble((double)0, endianess);
+	                		}
+	                	} else
+	                		writeDouble( (double)0, endianess);
+	                } else if (type.equals("typeShort")) {
+	                    writeShort( (short)0, endianess);
+	                } else if (type.equals("typeInt")) {
+	                    writeInt( (int)0, endianess);
+	                } else if (type.equals("typeSequence")) { //sequences within sequences will be anonymized
+	                    FileDicomSQ sq2 = (FileDicomSQ) entry.getValue(false);
+	                    writeInt(0xFFFFFFFF, endianess);
+	                    writeSequence(outputFile, vr_type, sq2, endianess);
+	                }
+	            }
+	          
+	            // write end-item tag:
+	            writeShort((short) 0xFFFE, endianess);
+	            writeShort((short) 0xE00D, endianess);
+	            writeInt((int) 0, endianess);
+	        }
+
+	        writeShort((short) 0xFFFE, endianess);
+	        writeShort((short) 0xE0DD, endianess);
+	        writeInt((int) 0, endianess);
+	        // System.err.println("3333pointer = " + outputFile.getFilePointer());
 	    }
 	}
 
