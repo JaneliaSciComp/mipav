@@ -3711,7 +3711,9 @@ public class FileAvi extends FileBase {
                  int h;
                  int mjpb_skiptosod = 0;
                  int c;
-                 int data[] = new int[4];
+                 int ptr[] = new int[1];
+                 int dataPtr[] = new int[4];
+                 byte data[][] = new byte[4][];
                  int x_chroma_shift;
                  int y_chroma_shift;
                  int w2;
@@ -3875,8 +3877,8 @@ public class FileAvi extends FileBase {
                         subchunkBytesRead += 4;
 
                         if (one && (z != middleSlice)) {
-                            long ptr = raFile.getFilePointer();
-                            raFile.seek(ptr + dataLength);
+                            long lptr = raFile.getFilePointer();
+                            raFile.seek(lptr + dataLength);
                             totalBytesRead = totalBytesRead + dataLength;
                             subchunkBytesRead += dataLength;
                             z++;
@@ -4103,14 +4105,23 @@ public class FileAvi extends FileBase {
                                             EOBRUN[0] = 0;
                                             for (i = 0; i < nb_components; i++) {
                                                 c = comp_index[i];
+                                                dataPtr[c] = 0;
                                                 if (AMVCodec) {
-                                                    data[c] += (linesize[c] * (v_scount[i] * (8 * mb_height - ((height/v_max) & 7)) - 1));
+                                                    dataPtr[c] += (linesize[c] * (v_scount[i] * (8 * mb_height - ((height/v_max) & 7)) - 1));
                                                     linesize[c] *= -1;
                                                 }
                                             } // for (i = 0; i < nb_components; i++)
                                             
+                                            Preferences.debug("mb_width = " + mb_width + "\n");
+                                            Preferences.debug("mb_height = " + mb_height + "\n");
                                             for (mb_y = 0; mb_y < mb_height; mb_y++) {
+                                                Preferences.debug("mb_y = " + mb_y + "\n");
                                                 for (mb_x = 0; mb_x < mb_width; mb_x++) {
+                                                    Preferences.debug("mb_x = " + mb_x + "\n");
+                                                    gbc_buffer = buffer;
+                                                    gbc_buffer_end = buffer.length;
+                                                    gbc_index = 8 * bufp[0];
+                                                    gbc_size_in_bits = 8 * buffer.length;
                                                     if ((restart_interval != 0) && (restart_count == 0)) {
                                                         restart_count = restart_interval;
                                                     }
@@ -4126,7 +4137,7 @@ public class FileAvi extends FileBase {
                                                              for (k = 0; k < block.length; k++) {
                                                                  block[k] = 0;
                                                              }
-                                                             if (!progressive && decode_block(buffer, bufp, block, i, dc_index[i], ac_index[i], 
+                                                             if (!progressive && decode_block(block, i, dc_index[i], ac_index[i], 
                                                                  quant_matrixes[quant_index[c]]) < 0) {
                                                                  MipavUtil.displayError("decode_block error for mb_x = " + mb_x +
                                                                                         " mb_y = " + mb_y);
@@ -4140,16 +4151,16 @@ public class FileAvi extends FileBase {
                                                                  return null;
                                                              }
                                                              
-                                                             pBufPtr[0] = data[c] + (((linesize[c] * (v * mb_y + y) * 8) +
+                                                             ptr[0] = dataPtr[c] + (((linesize[c] * (v * mb_y + y) * 8) +
                                                                        (h * mb_x + x) * 8 ) >> lowres);
                                                              if (interlaced && bottom_field) {
-                                                                 pBufPtr[0] += linesize[c] >> 1;
+                                                                 ptr[0] += linesize[c] >> 1;
                                                              }
                                                              if (!progressive) {
-                                                                 ff_simple_idct_put(pBuffer, pBufPtr, linesize[c], block);
+                                                                 ff_simple_idct_put(data[c], ptr, linesize[c], block);
                                                              }
                                                              else {
-                                                                 ff_simple_idct_add(pBuffer, pBufPtr, linesize[c], block);
+                                                                 ff_simple_idct_add(data[c], ptr, linesize[c], block);
                                                              }
                                                              if (++x == h) {
                                                                  x = 0;
@@ -4161,6 +4172,23 @@ public class FileAvi extends FileBase {
                                                     /* (< 1350) buggy workaround for Spectralfan.mov, should be fixed */
                                                     if ((restart_interval != 0) && (restart_interval < 1350) &&
                                                         ((--restart_count) == 0)) {
+                                                        n = (~gbc_index) & 0x07;
+                                                        if (n != 0) {                                                          
+                                                            // OPEN_READER(re, &s->gb)
+                                                            int re_index= gbc_index;
+                                                            //int re_cache= 0;
+                                                            //  UPDATE_CACHE(name, gb)
+                                                            //re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
+                                                            //re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
+                                                            //re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
+                                                            //re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+                                                            //re_cache = re_cache << (re_index & 0x07);
+                                                            // LAST_SKIP_BITS(name, gb, n)
+                                                            re_index += n;
+//                                                          CLOSE_READER(re, s);
+                                                            gbc_index = re_index;
+                                                        }
+                                                        bufp[0] = gbc_index/8;
                                                         bufp[0] += 2; /* Skip RSTn */
                                                         for (i = 0; i < nb_components; i++) { /* reset dc */
                                                             last_dc[i] = 1024;
@@ -4170,6 +4198,7 @@ public class FileAvi extends FileBase {
                                             } // for (mb_y = 0; mb_y < mb_height; mb_y++)
                                         } // if (prev_shift == 0)
                                     }
+                                    // emms_c();
                                 } // else if (startCode == SOS)
                                 else if (startCode == SOF0) {
                                     lossless = false;
@@ -4336,12 +4365,8 @@ public class FileAvi extends FileBase {
                                             Preferences.debug("pix_fmt = PIX_FMT_RGB32\n");
                                             linesize[0] = imgExtents[0] * 4;
                                             pSize = linesize[0] * imgExtents[1];
-                                            data[1] = -1;
-                                            data[2] = -1;
-                                            data[3] = -1;
-                                            pBufferSize = pSize;
-                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
-                                                pBuffer = new byte[pBufferSize];
+                                            if ((data[0] == null) || (data[0].length != pSize)) {
+                                                data[0] = new byte[pSize];
                                             }
                                             break;
                                         case PIX_FMT_YUV444P:
@@ -4355,12 +4380,14 @@ public class FileAvi extends FileBase {
                                             pSize = linesize[0] * imgExtents[1];
                                             h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
                                             size2 = linesize[1] * h2;
-                                            data[1] = pSize;
-                                            data[2] = pSize + size2;
-                                            data[3] = -1;
-                                            pBufferSize = pSize + 2 * size2;
-                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
-                                                pBuffer = new byte[pBufferSize];
+                                            if ((data[0] == null) || (data[0].length != pSize)) {
+                                                data[0] = new byte[pSize];
+                                            }
+                                            if ((data[1] == null) || (data[1].length != size2)) {
+                                                data[1] = new byte[size2];
+                                            }
+                                            if ((data[2] == null) || (data[2].length != size2)) {
+                                                data[2] = new byte[size2];
                                             }
                                             break;
                                         case PIX_FMT_YUVJ444P:
@@ -4374,24 +4401,22 @@ public class FileAvi extends FileBase {
                                             pSize = linesize[0] * imgExtents[1];
                                             h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
                                             size2 = linesize[1] * h2;
-                                            data[1] = pSize;
-                                            data[2] = pSize + size2;
-                                            data[3] = -1;
-                                            pBufferSize = pSize + 2 * size2;
-                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
-                                                pBuffer = new byte[pBufferSize];
+                                            if ((data[0] == null) || (data[0].length != pSize)) {
+                                                data[0] = new byte[pSize];
+                                            }
+                                            if ((data[1] == null) || (data[1].length != size2)) {
+                                                data[1] = new byte[size2];
+                                            }
+                                            if ((data[2] == null) || (data[2].length != size2)) {
+                                                data[2] = new byte[size2];
                                             }
                                             break;
                                         case PIX_FMT_GRAY8:
                                             Preferences.debug("pix_fmt = PIX_FMT_GRAY8\n");
                                             linesize[0] = imgExtents[0];
                                             pSize = linesize[0] * imgExtents[1];
-                                            data[1] = -1;
-                                            data[2] = -1;
-                                            data[3] = -1;
-                                            pBufferSize = pSize;
-                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
-                                                pBuffer = new byte[pBufferSize];
+                                            if ((data[0] == null) || (data[0].length != pSize)) {
+                                                data[0] = new byte[pSize];
                                             }
                                             break;
                                         case PIX_FMT_YUV440P:
@@ -4405,12 +4430,14 @@ public class FileAvi extends FileBase {
                                             pSize = linesize[0] * imgExtents[1];
                                             h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
                                             size2 = linesize[1] * h2;
-                                            data[1] = pSize;
-                                            data[2] = pSize + size2;
-                                            data[3] = -1;
-                                            pBufferSize = pSize + 2 * size2;
-                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
-                                                pBuffer = new byte[pBufferSize];
+                                            if ((data[0] == null) || (data[0].length != pSize)) {
+                                                data[0] = new byte[pSize];
+                                            }
+                                            if ((data[1] == null) || (data[1].length != size2)) {
+                                                data[1] = new byte[size2];
+                                            }
+                                            if ((data[2] == null) || (data[2].length != size2)) {
+                                                data[2] = new byte[size2];
                                             }
                                             break;
                                         case PIX_FMT_YUVJ440P:
@@ -4424,12 +4451,14 @@ public class FileAvi extends FileBase {
                                             pSize = linesize[0] * imgExtents[1];
                                             h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
                                             size2 = linesize[1] * h2;
-                                            data[1] = pSize;
-                                            data[2] = pSize + size2;
-                                            data[3] = -1;
-                                            pBufferSize = pSize + 2 * size2;
-                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
-                                                pBuffer = new byte[pBufferSize];
+                                            if ((data[0] == null) || (data[0].length != pSize)) {
+                                                data[0] = new byte[pSize];
+                                            }
+                                            if ((data[1] == null) || (data[1].length != size2)) {
+                                                data[1] = new byte[size2];
+                                            }
+                                            if ((data[2] == null) || (data[2].length != size2)) {
+                                                data[2] = new byte[size2];
                                             }
                                             break;
                                         case PIX_FMT_YUV422P:
@@ -4443,12 +4472,14 @@ public class FileAvi extends FileBase {
                                             pSize = linesize[0] * imgExtents[1];
                                             h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
                                             size2 = linesize[1] * h2;
-                                            data[1] = pSize;
-                                            data[2] = pSize + size2;
-                                            data[3] = -1;
-                                            pBufferSize = pSize + 2 * size2;
-                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
-                                                pBuffer = new byte[pBufferSize];
+                                            if ((data[0] == null) || (data[0].length != pSize)) {
+                                                data[0] = new byte[pSize];
+                                            }
+                                            if ((data[1] == null) || (data[1].length != size2)) {
+                                                data[1] = new byte[size2];
+                                            }
+                                            if ((data[2] == null) || (data[2].length != size2)) {
+                                                data[2] = new byte[size2];
                                             }
                                             break;
                                         case PIX_FMT_YUVJ422P:
@@ -4462,12 +4493,14 @@ public class FileAvi extends FileBase {
                                             pSize = linesize[0] * imgExtents[1];
                                             h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
                                             size2 = linesize[1] * h2;
-                                            data[1] = pSize;
-                                            data[2] = pSize + size2;
-                                            data[3] = -1;
-                                            pBufferSize = pSize + 2 * size2;
-                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
-                                                pBuffer = new byte[pBufferSize];
+                                            if ((data[0] == null) || (data[0].length != pSize)) {
+                                                data[0] = new byte[pSize];
+                                            }
+                                            if ((data[1] == null) || (data[1].length != size2)) {
+                                                data[1] = new byte[size2];
+                                            }
+                                            if ((data[2] == null) || (data[2].length != size2)) {
+                                                data[2] = new byte[size2];
                                             }
                                             break;
                                         case PIX_FMT_YUV420P:
@@ -4481,12 +4514,14 @@ public class FileAvi extends FileBase {
                                             pSize = linesize[0] * imgExtents[1];
                                             h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
                                             size2 = linesize[1] * h2;
-                                            data[1] = pSize;
-                                            data[2] = pSize + size2;
-                                            data[3] = -1;
-                                            pBufferSize = pSize + 2 * size2;
-                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
-                                                pBuffer = new byte[pBufferSize];
+                                            if ((data[0] == null) || (data[0].length != pSize)) {
+                                                data[0] = new byte[pSize];
+                                            }
+                                            if ((data[1] == null) || (data[1].length != size2)) {
+                                                data[1] = new byte[size2];
+                                            }
+                                            if ((data[2] == null) || (data[2].length != size2)) {
+                                                data[2] = new byte[size2];
                                             }
                                             break;
                                         case PIX_FMT_YUVJ420P:
@@ -4500,48 +4535,38 @@ public class FileAvi extends FileBase {
                                             pSize = linesize[0] * imgExtents[1];
                                             h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
                                             size2 = linesize[1] * h2;
-                                            data[1] = pSize;
-                                            data[2] = pSize + size2;
-                                            data[3] = -1;
-                                            pBufferSize = pSize + 2 * size2;
-                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
-                                                pBuffer = new byte[pBufferSize];
+                                            if ((data[0] == null) || (data[0].length != pSize)) {
+                                                data[0] = new byte[pSize];
+                                            }
+                                            if ((data[1] == null) || (data[1].length != size2)) {
+                                                data[1] = new byte[size2];
+                                            }
+                                            if ((data[2] == null) || (data[2].length != size2)) {
+                                                data[2] = new byte[size2];
                                             }
                                             break;
                                         case PIX_FMT_RGB24:
                                             Preferences.debug("pix_fmt = PIX_FMT_RGB24\n");
                                             linesize[0] = 3 * imgExtents[0];
                                             pSize = linesize[0] * imgExtents[1];
-                                            data[1] = -1;
-                                            data[2] = -1;
-                                            data[3] = -1;
-                                            pBufferSize = pSize;
-                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
-                                                pBuffer = new byte[pBufferSize];
+                                            if ((data[0] == null) || (data[0].length != pSize)) {
+                                                data[0] = new byte[pSize];
                                             }
                                             break;
                                         case PIX_FMT_GRAY16BE:
                                             Preferences.debug("pix_fmt = PIX_FMT_GRAY16BE\n");
                                             linesize[0] = 2 * imgExtents[0];
                                             pSize = linesize[0] * imgExtents[1];
-                                            data[1] = -1;
-                                            data[2] = -1;
-                                            data[3] = -1;
-                                            pBufferSize = pSize;
-                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
-                                                pBuffer = new byte[pBufferSize];
+                                            if ((data[0] == null) || (data[0].length != pSize)) {
+                                                data[0] = new byte[pSize];
                                             }
                                             break;
                                         case PIX_FMT_GRAY16LE:
                                             Preferences.debug("pix_fmt = PIX_FMT_GRAY16LE\n");
                                             linesize[0] = 2 * imgExtents[0];
                                             pSize = linesize[0] * imgExtents[1];
-                                            data[1] = -1;
-                                            data[2] = -1;
-                                            data[3] = -1;
-                                            pBufferSize = pSize;
-                                            if ((pBuffer == null) || (pBuffer.length != pBufferSize)) {
-                                                pBuffer = new byte[pBufferSize];
+                                            if ((data[0] == null) || (data[0].length != pSize)) {
+                                                data[0] = new byte[pSize];
                                             }
                                             break;
                                     }
@@ -4644,8 +4669,8 @@ public class FileAvi extends FileBase {
                         totalBytesRead = totalBytesRead + 4;
                         subchunkBytesRead += 4;
 
-                        long ptr = raFile.getFilePointer();
-                        raFile.seek(ptr + dataLength);
+                        long lptr = raFile.getFilePointer();
+                        raFile.seek(lptr + dataLength);
                         totalBytesRead = totalBytesRead + dataLength;
                         subchunkBytesRead += dataLength;
                     } // else
@@ -4718,7 +4743,7 @@ public class FileAvi extends FileBase {
         }
     }
     
-    private void ff_simple_idct_put(byte dest[], int destPtr[],  int line_size, short block[]) {
+    private void ff_simple_idct_put(byte dest[], int destPtr[], int line_size, short block[]) {
         int i;
         long row0;
         long row1;
@@ -4734,12 +4759,12 @@ public class FileAvi extends FileBase {
             row1 |= (block[i*8 + 6] & 0xffffL) << 16;
             row1 |= (block[i*8 + 7] & 0xffffL);
             if (((row0 & (~ROW0_MASK)) | row1) == 0) {
-                temp = (row0 << 3) & 0xffff;
-                temp += temp << 16;
-                temp += temp << 32;
-                block[i*8] = (short)((temp >> 48) & 0xffff);
-                block[i*8+1] = (short)((temp >> 32) & 0xffff);
-                block[i*8+2] = (short)((temp >> 16) & 0xffff);
+                temp = (block[i*8] << 3) & 0xffff;
+                temp |= temp << 16;
+                temp |= temp << 32;
+                block[i*8] = (short)((temp >>> 48) & 0xffff);
+                block[i*8+1] = (short)((temp >>> 32) & 0xffff);
+                block[i*8+2] = (short)((temp >>> 16) & 0xffff);
                 block[i*8+3] = (short)(temp & 0xffff);
                 block[i*8+4] = block[i*8];
                 block[i*8+5] = block[i*8+1];
@@ -4813,11 +4838,13 @@ public class FileAvi extends FileBase {
             
             b0 = W1 * block[i + 8];
             b1 = W3 * block[i + 8];
+            System.out.println("1 b1 = " + b1);
             b2 = W5 * block[i + 8];
             b3 = W7 * block[i + 8];
             
             b0 += W3 * block[i + 24];
             b1 += -W7 * block[i + 24];
+            System.out.println("2 b1 = " + b1);
             b2 += -W1 * block[i + 24];
             b3 += -W5 * block[i + 24];
             
@@ -4831,6 +4858,7 @@ public class FileAvi extends FileBase {
             if (block[i + 40] != 0) {
                 b0 += W5 * block[i + 40];
                 b1 += -W1 * block[i + 40];
+                System.out.println("3 b1 = " + b1);
                 b2 += W7 * block[i + 40];
                 b3 += W3 * block[i + 40];
             } // if (block[i + 40] != 0)
@@ -4845,25 +4873,29 @@ public class FileAvi extends FileBase {
             if (block[i + 56] != 0) {
                 b0 += W7 * block[i + 56];
                 b1 += -W5 * block[i + 56];
+                System.out.println("4 b1 = " + b1);
                 b2 += W3 * block[i + 56];
                 b3 += -W1 * block[i + 56];
             } // if (block[i + 56] != 0)
             
-            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a0 + b0) >> COL_SHIFT)];
+            dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a0 + b0) >> COL_SHIFT)];
             destPtr[0] += line_size;
-            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a1 + b1) >> COL_SHIFT)];
+            dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a1 + b1) >> COL_SHIFT)];
             destPtr[0] += line_size;
-            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a2 + b2) >> COL_SHIFT)];
+            dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a2 + b2) >> COL_SHIFT)];
             destPtr[0] += line_size;
-            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a3 + b3) >> COL_SHIFT)];
+            dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a3 + b3) >> COL_SHIFT)];
             destPtr[0] += line_size;
-            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a3 - b3) >> COL_SHIFT)];
+            dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a3 - b3) >> COL_SHIFT)];
             destPtr[0] += line_size;
-            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a2 - b2) >> COL_SHIFT)];
+            dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a2 - b2) >> COL_SHIFT)];
             destPtr[0] += line_size;
-            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a1 - b1) >> COL_SHIFT)];
+            dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a1 - b1) >> COL_SHIFT)];
             destPtr[0] += line_size;
-            dest[destPtr[0]] = ff_cropTbl[MAX_NEG_CROP + (dest[destPtr[0]] & 0xff) + ((a0 - b0) >> COL_SHIFT)];
+            System.out.println("destPtr[0] = " + destPtr[0] + " i = " + i + " a0 = " + a0 + " b0 = " + b0);
+            System.out.println("(a0 - b0) = " + (a0 - b0));
+            System.out.println("((a0 - b0) >> COL_SHIFT = " + ((a0 - b0) >> COL_SHIFT));
+            dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a0 - b0) >> COL_SHIFT)];
         } // for (i = 0; i < 8; i++)
     }
     
@@ -4977,14 +5009,10 @@ public class FileAvi extends FileBase {
      * @param quant_matrix
      * @return
      */
-    private int decode_block(byte srcBuf[], int srcPtr[], short block[], int component, int dc_index, int ac_index, short quant_matrix[]) {
+    private int decode_block(short block[], int component, int dc_index, int ac_index, short quant_matrix[]) {
         int code, i, j, level, val;
         int n, index, nb_bits;
         int cache, sign;
-        gbc_buffer = srcBuf;
-        gbc_buffer_end = srcBuf.length;
-        gbc_index = 8 * srcPtr[0];
-        gbc_size_in_bits = 8 * srcBuf.length;
         val = mjpeg_decode_dc(dc_index);
         if (val == 0xffff) {
             MipavUtil.displayError("mjpeg_decode_dc error");
@@ -5090,7 +5118,6 @@ public class FileAvi extends FileBase {
         } // for (;;)
         // CLOSE_READER(re, &s->gb)
         gbc_index = re_index;
-        srcPtr[0] = (gbc_index + 7)/8;
         return 0;
     }
     
@@ -5138,7 +5165,7 @@ public class FileAvi extends FileBase {
             } // for (i = 0; i < 16; i++)
             nb_codes += 16;
         } // if (is_ac)
-        return init_vlc_sparse(index0, index1, 9, nb_codes, huff_size, 4, 4, huff_code, 4, 4, null, 0, 0);
+        return init_vlc_sparse(index0, index1, 9, nb_codes, huff_size, 1, 1, huff_code, 2, 2, null, 0, 0);
     }
     
     private void ff_mjpeg_build_huffman_codes(byte huff_size[], short huff_code[], byte bits_table[], 
@@ -5148,11 +5175,11 @@ public class FileAvi extends FileBase {
         code = 0;
         k = 0;
         for (i = 1; i <= 16; i++) {
-            nb = bits_table[i];
+            nb = bits_table[i] & 0xff;
             for (j = 0; j < nb; j++) {
                 sym = (val_table[k++] & 0xff);
                 huff_size[sym] = (byte)i;
-                huff_code[sym] = (byte)code;
+                huff_code[sym] = (short)code;
                 code++;
             }
             code <<= 1;
@@ -5206,6 +5233,7 @@ public class FileAvi extends FileBase {
         int k;
         int n1;
         int index;
+        short temp[][];
         Preferences.debug("Entering build_table with index0 = " + index0 + " index1 = " + index1 + "\n");
         
         table_size = 1 << table_nb_bits;
@@ -5214,7 +5242,21 @@ public class FileAvi extends FileBase {
         if (vlcs_table_size[index0][index1] > vlcs_table_allocated[index0][index1]) {
             Preferences.debug("New allocation in build_table\n");
             vlcs_table_allocated[index0][index1] += (1 << vlcs_bits[index0][index1]); 
-            vlcs[index0][index1] = new short[vlcs_table_allocated[index0][index1]][2];
+            if (vlcs[index0][index1] != null) {
+                temp = new short[vlcs[index0][index1].length][2];
+                for (i = 0; i < temp.length; i++) {
+                    temp[i][0] = vlcs[index0][index1][i][0];
+                    temp[i][1] = vlcs[index0][index1][i][1];
+                }
+                vlcs[index0][index1] = new short[vlcs_table_allocated[index0][index1]][2];
+                for (i = 0; i < temp.length; i++) {
+                    vlcs[index0][index1][i][0] = temp[i][0];
+                    vlcs[index0][index1][i][1] = temp[i][1];
+                }
+            }
+            else {
+                vlcs[index0][index1] = new short[vlcs_table_allocated[index0][index1]][2];    
+            }
         }
         if (table_index < 0) {
             return -1;
@@ -5227,7 +5269,7 @@ public class FileAvi extends FileBase {
         /* first pass: map codes and compute auxiliary table sizes */
         for (i = 0; i < nb_codes; i++) {
             n = bits[i]; 
-            code = codes[i];
+            code = codes[i] & 0xffff;
             /* We accept tables with holes */
             if (n <= 0) {
                 continue;
@@ -5240,7 +5282,7 @@ public class FileAvi extends FileBase {
             }
             /* if code matches the prefix, it is in the table */
             n -= n_prefix;
-            code_prefix2 = code >> n;
+            code_prefix2 = code >>> n;
             if ((n > 0) && (code_prefix2 == code_prefix)) {
                 if (n <= table_nb_bits) {
                     /* no need to add another table */
@@ -5267,7 +5309,7 @@ public class FileAvi extends FileBase {
                 } // if (n <= table_nb_bits)
                 else {
                     n -= table_nb_bits;
-                    j = (code >> n) & ((1 << table_nb_bits) - 1);
+                    j = (code >>> n) & ((1 << table_nb_bits) - 1);
                     /* compute table size */
                     n1 = -vlcs[index0][index1][j+table_index][1]; // bits
                     if (n > n1) {
