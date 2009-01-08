@@ -163,6 +163,9 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             		}
             	}
                 rowData[1] = tagName;
+                if(rowData[1].equals("(2005,140F)")) {
+                	System.out.println(rowData[2]);
+                }
                 rowData[2] = ((FileDicomTag) tagsList.get(key)).getName();
                 
                 String vr = ((FileDicomTag) tagsList.get(key)).getValueRepresentation();
@@ -196,7 +199,26 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                                 rowData[3] = convertType(bytesValue, DicomInfo.getEndianess(), vm);
                             }
                         }
-                    } else {
+                    } else if(vr.equals("SQ")) {
+                    	//TODO:sequence printing here
+                    	 // System.err.println("Key  = " + key);
+                        FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
+                        Vector display = sq.getSequenceDisplay();
+
+                        rowData[3] = "";
+
+                        for (Enumeration f = display.elements(); f.hasMoreElements();) {
+                            tagsModel.addRow(rowData);
+
+                            StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+
+                            rowData[2] = st.nextToken();
+
+                            if (st.hasMoreTokens()) {
+                                rowData[3] = st.nextToken();
+                            }
+                        }
+                	} else {
 
                         FileDicomTag t;
                         Object[] tagVals;
