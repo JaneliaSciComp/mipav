@@ -319,6 +319,14 @@ public class FileDicomTag extends ModelSerialCloneable {
         } else {
             returnValue = value;
         }
+        
+        if(returnValue instanceof Object[]) {
+        	String tempReturn = new String();
+        	for(Object obj : ((Object[])returnValue)) {
+        		tempReturn += obj.toString()+" ";
+        	}
+        	returnValue = tempReturn;
+        }
 
         return returnValue;
     }
