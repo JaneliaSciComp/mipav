@@ -1829,9 +1829,9 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                    // "; element length = "+ elementLength + "\n", 2);
 	                }
 	                
-	                System.out.println("At this sequence name currently: "+nameSQ);
+	                //System.out.println("At this sequence name currently: "+nameSQ);
 	                if(tagExistInAnonymizeTagIDs(nameSQ)) {
-	                	System.out.print("Writing "+nameSQ+"\t");
+	                	//System.out.print("Writing "+nameSQ+"\t");
 	                	
 	                	long raPtrOld = raFile.getFilePointer();
 	                	if(type.equals("typeString")) {
@@ -1844,11 +1844,11 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	raFile.seek(bPtrOld);
 		                	raFile.writeBytes(anonStr); //non-anon would be strValue
 		                	raFile.seek(raPtrOld);
-		                	System.out.println("Writing "+strValue+" to "+bPtrOld+". Returned raPtr to "+raPtrOld);
+		                	//System.out.println("Writing "+strValue+" to "+bPtrOld+". Returned raPtr to "+raPtrOld);
 		                } else if (type.equals("otherByteString")) {
 
 		                    if ( !nameSQ.equals(IMAGE_TAG)) {
-		                    	System.out.println(data);
+		                    	//System.out.println(data);
 		                    
 		                    	byte[] b = new byte[((Byte[])data).length];
 		                    	for(int i=0; i<b.length; i++) {
@@ -1862,7 +1862,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                        && !nameSQ.equals("0028,1203")) {
 
 		                    if ( !nameSQ.equals(IMAGE_TAG)) {
-		                    	System.out.println(data);
+		                    	//System.out.println(data);
 		                    	
 		                    	byte[] b = new byte[((Byte[])data).length];
 		                    	for(int i=0; i<b.length; i++) {
@@ -1873,7 +1873,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 			                	raFile.seek(raPtrOld);
 		                    }
 		                } else if (type.equals("typeShort")) {
-		                	System.out.println(data);
+		                	//System.out.println(data);
 		                	
 		                	raFile.seek(bPtrOld);
 		                	if(data instanceof Short) {
@@ -1887,7 +1887,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	}
 		                	raFile.seek(raPtrOld);
 		                } else if (type.equals("typeInt")) {
-		                	System.out.println(data);
+		                	//System.out.println(data);
 		                	
 		                	raFile.seek(bPtrOld);
 		                	if(data instanceof Integer) {
@@ -1901,7 +1901,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	}
 		                	raFile.seek(raPtrOld);
 		                } else if (type.equals("typeFloat")) {
-		                	System.out.println(data);
+		                	//System.out.println(data);
 		                	
 		                	raFile.seek(bPtrOld);
 		                	if(data instanceof Float) {
@@ -1915,7 +1915,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	}
 		                	raFile.seek(raPtrOld);
 		                } else if (type.equals("typeDouble")) {
-		                	System.out.println(data);
+		                	//System.out.println(data);
 		                	
 		                	raFile.seek(bPtrOld);
 		                	if(data instanceof Double) {
