@@ -306,7 +306,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 		long begTime = System.currentTimeMillis();
 
 		try {
+			System.out.println("here ");
 			outputTextFileName = "output_" + System.currentTimeMillis() + ".txt";
+			System.out.println("ccc");
 			outputFile = new File(inputDirectoryPath + File.separator + outputTextFileName);
         	outputStream = new FileOutputStream(outputFile);
         	printStream = new PrintStream(outputStream);
@@ -316,11 +318,14 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
         	if(newCSVFile) {
         		printStreamCSV.println("patientID,dob,patientsAge,studyDate,studyID,seriesNo,todaysDate,sequenceName,blindedPatientID");
         	}
+        	System.out.println("aaa");
         	Calendar t = Calendar.getInstance();
     		SimpleDateFormat sdf = new SimpleDateFormat("MMddyyyy");
     		todaysDateString = sdf.format(t.getTime());
+    		System.out.println(todaysDateString);
+    		System.out.println("bbb");
         }catch(Exception e) {
-        	
+        	System.out.println(e.getMessage());
         }
 		
 		DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
@@ -620,8 +625,8 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 		}
 		
 		int newUIDInt = 0;
-		String userEnteredDOB = "";
 		//if dob is there and in right format , create newUID using this field....otherwise if dob is not there
+		String dobString = "";
 		if(validDOB) {
 			String mmString = dob.substring(0, 2);
 			String ddString = dob.substring(2,4);
@@ -632,8 +637,8 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 			if(ddString.startsWith("0")) {
 				ddString = ddString.substring(1,2);
 			}
-			String dobString = mmString + ddString + yyyyString;
-			dobInt = Integer.valueOf(dobString);
+			dobString = mmString + "/" + ddString + "/" + yyyyString;
+			dobInt = Integer.valueOf(dobString.replaceAll("/", ""));
 			newUIDInt = patientIDInt + dobInt;
 			newUID = String.valueOf(newUIDInt);
 		}else {
@@ -663,9 +668,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 				int mm = Integer.valueOf(mmString);
 				int dd = Integer.valueOf(ddString);
 				int yyyy = Integer.valueOf(yyyyString);
-				userEnteredDOB = mmString + ddString + yyyyString;
-				studyIdAndDOBHashMap.put(studyID, userEnteredDOB);
-				dobInt = Integer.valueOf(userEnteredDOB);
+				dobString = mmString + "/" + ddString + "/" + yyyyString;
+				studyIdAndDOBHashMap.put(studyID, dobString);
+				dobInt = Integer.valueOf(dobString.replaceAll("/", ""));
 				newUIDInt = patientIDInt + dobInt;
 				newUID = String.valueOf(newUIDInt);
 				dobCalendar = Calendar.getInstance();
@@ -677,8 +682,8 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 				
 			}else {
 				//get dob from the hashmap since they already entered it
-				userEnteredDOB = (String)studyIdAndDOBHashMap.get(studyID);
-				dobInt = Integer.valueOf(userEnteredDOB);
+				dobString = (String)studyIdAndDOBHashMap.get(studyID);
+				dobInt = Integer.valueOf(dobString.replaceAll("/", ""));
 				newUIDInt = patientIDInt + dobInt;
 				newUID = String.valueOf(newUIDInt);
 				
@@ -735,10 +740,30 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     	seriesInstanceUID = "1.2.840.9999.9." + mipavVersion + "." + time + ".1";
     	
     	
+    	
     	//write out csvFile
     	String csvCheck = patientID + studyID + seriesNo;
     	if(!donePatientIDs.contains(csvCheck)) {
-    		printStreamCSV.println(patientID + "," + dobInt + "," + patientsAge + "," + studyDate + "," + studyID + "," + seriesNo + "," + todaysDateString + "," + sequenceName + "," + newUID);
+    		//remove beginning zeros for study date and todays date when writing to csv
+        	if(sdmmString.startsWith("0")) {
+    			sdmmString = sdmmString.substring(1,2);
+    		}
+    		if(sdddString.startsWith("0")) {
+    			sdddString = sdddString.substring(1,2);
+    		}
+    		studyDate = sdmmString + "/" + sdddString + "/" + sdyyyyString;
+    		String tdmmString = todaysDateString.substring(0, 2);
+			String tdddString = todaysDateString.substring(2,4);
+			String tdyyyyString = todaysDateString.substring(4,todaysDateString.length());
+			if(tdmmString.startsWith("0")) {
+				tdmmString = tdmmString.substring(1,2);
+			}
+			if(tdddString.startsWith("0")) {
+				tdddString = tdddString.substring(1,2);
+			}
+			todaysDateString = tdmmString + "/" + tdddString + "/" + tdyyyyString;
+    		//write out to csv
+    		printStreamCSV.println(patientID + "," + dobString + "," + patientsAge + "," + studyDate + "," + studyID + "," + seriesNo + "," + todaysDateString + "," + sequenceName + "," + newUID);
     		donePatientIDs.add(csvCheck);
     	}
 
