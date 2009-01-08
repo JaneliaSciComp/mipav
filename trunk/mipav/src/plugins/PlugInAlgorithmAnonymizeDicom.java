@@ -171,7 +171,13 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
             progressNum = minProgressValue + (int)((maxProgressValue-minProgressValue)*(((double)i)/((double)numOfFiles)));
 			fireProgressStateChanged(progressNum, null, "Reading file "+i);
 			try {
-				printToLogFile.println("Reading next file "+selectedFiles[i].getName()); //TODO: path fix from temp file
+				if(i>0) {
+					printToLogFile.println();
+					printToLogFile.println();
+					printToLogFile.println("***********************************NEXT FILE*******************************************");
+					printToLogFile.println();
+				}
+				printToLogFile.println("Reading "+(i>0 ? "next " : "")+ "file "+selectedFiles[i].getName()); //TODO: path fix from temp file
             	ReadDicom imageFile = new ReadDicom(allTempFiles[i].getName(), allTempFiles[i].getParent()+File.separator);
 	            imageFile.setQuiet(true); // if we want quiet, we tell the reader, too.
 	            imageFile.readHeader(true); // can we read the header?
