@@ -163,9 +163,6 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             		}
             	}
                 rowData[1] = tagName;
-                if(rowData[1].equals("(2005,140F)")) {
-                	System.out.println(rowData[2]);
-                }
                 rowData[2] = ((FileDicomTag) tagsList.get(key)).getName();
                 
                 String vr = ((FileDicomTag) tagsList.get(key)).getValueRepresentation();
@@ -200,8 +197,6 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                             }
                         }
                     } else if(vr.equals("SQ")) {
-                    	//TODO:sequence printing here
-                    	 // System.err.println("Key  = " + key);
                         FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
                         Vector display = sq.getSequenceDisplay();
 
