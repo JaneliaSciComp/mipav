@@ -205,6 +205,9 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
                                           resultImage.getImageName() + "\n");
                     } // image.getNDims() == 4
                 } // if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM))
+                
+                resultImage.getMatrixHolder().replaceMatrices(image.getMatrixHolder().getMatrices());
+                resultImage.getFileInfo(0).setOrigin(image.getFileInfo(0).getOrigin());
             } else if (resultImage == null) {
 
                 // These next lines set the titles in all frames where the source image is displayed to
