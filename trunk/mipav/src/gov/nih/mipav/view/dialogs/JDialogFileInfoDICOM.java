@@ -19,6 +19,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 
 
 /**
@@ -887,8 +888,10 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         tagsTable.getColumn("Tag").setCellRenderer(new TagCodeRenderer());
         tagsTable.getColumn("Name").setMinWidth(160);
         tagsTable.getColumn("Name").setMaxWidth(500);
+        tagsTable.getColumn("Name").setCellRenderer(new TagReferenceRenderer());
         tagsTable.getColumn("Value").setMinWidth(50);
         tagsTable.getColumn("Value").setMaxWidth(1000);
+        tagsTable.getColumn("Value").setCellRenderer(new TagReferenceRenderer());
 
         tagsTable.getTableHeader().addMouseListener(new HeaderListener());
 
@@ -1494,11 +1497,29 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
   	  }
     }
 	
+	private class TagReferenceRenderer extends DefaultTableCellRenderer {
+		
+		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+			Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+			TableCellRenderer refRenderer = table.getCellRenderer(row, 1);
+			if(refRenderer instanceof TagCodeRenderer && ((TagCodeRenderer) refRenderer).hasValidTag() && row > 20) {
+				cell.setBackground(((TagCodeRenderer) refRenderer).getBackground());
+			} else {
+				cell.setBackground(Color.white);
+			}
+			return cell;
+		}
+		
+	}
+	
 	private class TagCodeRenderer extends DefaultTableCellRenderer {
+		
+		private boolean hasValidTag = false;
 		
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 			if(column == 1 && value instanceof String && ((String)value).length() == 11) {
-  		  		Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+  		  		hasValidTag = true;
+				Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
   		  		String name = ((String)value).substring(1, ((String)value).length() - 1);
   		  		int group = Integer.valueOf(name.substring(0, 4), 16);
   		  		int element = Integer.valueOf(name.substring(5), 16);
@@ -1506,43 +1527,46 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
   		  		switch(group) {
   		  		
   		  		case 0x0002:
-  		  			f = new Color(34, 139, 34); //green
+  		  			f = new Color(102, 204, 153); // light green
   		  			break;
   		  		case 0x0008:
-  		  			f = Color.blue;
+  		  			f = new Color(153, 204, 255); // light blue 
   		  			break;
   		  		case 0x0010:
-  		  			f = new Color(34, 139, 34); //green
+  		  			f = new Color(102, 204, 153); // light green
   		  			break;
   		  		case 0x0018:
-  		  			f = Color.blue;
+  		  			f = new Color(153, 204, 255); // light blue 
   		  			break;
   		  		case 0x0020:
-  		  			f = new Color(34, 139, 34); //green
+  		  			f = new Color(102, 204, 153); // light green
   		  			break;
   		  		case 0x0028:
-  		  			f = Color.blue;
+  		  			f = new Color(153, 204, 255); // light blue 
   		  			break;
   		  		case 0x0032:
-  		  			f = new Color(34, 139, 34); //green
+  		  			f = new Color(102, 204, 153); // light green
   		  			break;
   		  		case 0x0040:
-  		  			f = Color.blue;
+  		  			f = new Color(153, 204, 255); // light blue 
   		  			break;
   		  		case 0x7fe0:
-  		  			f = new Color(34, 139, 34); //green
+  		  			f = new Color(102, 204, 153); // light green
 		  			break;
   		  		default:
-  		  			f = Color.red;
+  		  			f = new Color(255, 153, 153); // light red
   		  			break;  				
   		  		}
   		  		
-  		  		cell.setForeground(f);
-
+  		  		cell.setBackground(f);
   		  		return cell;
   		  	}
   		  	
 			return null;
+		}
+
+		public boolean hasValidTag() {
+			return hasValidTag;
 		}
 	}
 
