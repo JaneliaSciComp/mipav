@@ -700,8 +700,7 @@ public class ViewMenuBar {
                                                 "SaveSelectedContoursAs", 0, "save.gif", true),
                                         menuBuilder.buildMenuItem("Save VOI", "Save VOI", 0, "save.gif", true),
                                         menuBuilder.buildMenuItem("Save VOI as", "Save VOI as", 0, "save.gif", true),
-                                        menuBuilder
-                                                .buildMenuItem("Save all VOIs", "Save all VOIs", 0, "save.gif", true),
+                                        menuBuilder.buildMenuItem("Save all VOIs", "Save all VOIs", 0, "save.gif", true),
                                         menuBuilder.buildMenuItem("Save all VOIs to...", "Save all VOIs to...", 0,
                                                 "save.gif", true),
                                         menuBuilder.buildMenuItem("Save intensities in VOI to...", "SaveVOIIntensities", 0,
@@ -788,6 +787,8 @@ public class ViewMenuBar {
                                 menuBuilder.buildMenuItem("Trim parameter", "Trim", 0, null, true),
                                 separator,
                                 menuBuilder.buildMenuItem("Cardiology VOI", "Cardio", 0, null, true),
+                                menuBuilder.buildMenuItem("Prostate VOI", "ProstateMergedVOIs", 0, null, true),        
+                                
                                 separator,
                                 menuBuilder.makeMenu("Graph", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem("Open VOI intensity graph", "OpenNewGraph", 0,
