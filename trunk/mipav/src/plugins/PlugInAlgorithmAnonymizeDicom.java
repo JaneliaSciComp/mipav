@@ -227,7 +227,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		}
 	}
 	
-	private boolean tagExistInAnonymizeTagIDs(String tagName) {
+	protected boolean tagExistInAnonymizeTagIDs(String tagName) {
     	int len = FileInfoDicom.anonymizeTagIDs.length;
     	
     	if (tagListFromDialog != null) {
@@ -273,7 +273,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	}
 	
 	private class ReadDicom extends FileDicomInner {
-
+		
 		private HashMap<FileDicomKey, FileDicomSQ> sequenceTags;
 		
 		private HashMap<FileDicomKey, Object> privateTags;
@@ -291,18 +291,19 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		
 		public HashMap<FileDicomKey, FileDicomSQ> storeSequenceTags(HashMap<FileDicomKey, FileDicomSQ> prevSliceSequenceTags) {
 			ArrayList<FileDicomKey> ar;
+			String anonymized = " ANONYMIZED:\t", seqPrefix = "";
 			Collections.sort(ar = new ArrayList(sequenceTags.keySet()), new KeyComparator());
 			Iterator<FileDicomKey> sqItr = ar.iterator();
 			while(sqItr.hasNext()) {
 				FileDicomKey key = sqItr.next();
 				FileDicomSQ sq = sequenceTags.get(key);
 				FileDicomSQ sqPrev = prevSliceSequenceTags.get(key);
-				Vector v = sq.getSequenceDisplay();
-				Vector vPrev = null;
+				Vector<String> v = sq.getSequenceDisplay();
+				Vector<String> vPrev = null;
 				if(sqPrev != null)
 					vPrev = sqPrev.getSequenceDisplay();
 				boolean allSame = false;
-				Vector differentEntries = new Vector();
+				Vector<String> differentEntries = new Vector<String>();
 				if(vPrev != null && v.size() == vPrev.size()) {
 					allSame = true;
 					for(int i=0; i<v.size(); i++) {
@@ -316,9 +317,12 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 					v = differentEntries;
 				}
 				if(v.size() > 0 && !allSame) {
-					printToLogFile.println("("+key+"):\tBeginning sequence");
+					seqPrefix = tagExistInAnonymizeTagIDs(new String(key.getGroup()+","+key.getElement())) ? anonymized : "";
+					printToLogFile.println(seqPrefix+"("+key+"):\tBeginning sequence");
 	            	for(int i=0; i<v.size(); i++) {
-	            		printToLogFile.println("\t"+v.get(i));
+	            		String tagCode = v.get(i).substring(1, 10);
+	            		String prefix = tagExistInAnonymizeTagIDs(tagCode) ? anonymized : seqPrefix;
+	            		printToLogFile.println("\t"+prefix+v.get(i));
 	            	}
 				}
 			}
@@ -349,6 +353,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 			ArrayList<FileDicomKey> ar;
 			Collections.sort(ar = new ArrayList(privateTags.keySet()), new KeyComparator());
 			Iterator<FileDicomKey> prItr = ar.iterator();
+			String anonymized = " ANONYMIZED:\t", prefix = "";
 			while(prItr.hasNext()) {
 				FileDicomKey key = prItr.next();
 				Object obj = privateTags.get(key);
@@ -357,7 +362,9 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 					if(obj instanceof Object[]) {
 						System.out.println("Is array "+key);
 					}
-					printToLogFile.println("("+key+"):\t"+printObject(obj));
+					prefix = tagExistInAnonymizeTagIDs(new String(key.getGroup()+","+key.getElement())) ? anonymized : "";
+
+					printToLogFile.println(prefix+"("+key+"):\t"+printObject(obj));
 				}
 			}
 			return privateTags;
