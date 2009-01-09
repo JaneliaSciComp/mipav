@@ -868,15 +868,15 @@ public class JDialogVOIStats extends JDialogBase
                             UI.setDataText("  Sum Intensities \t= " + algoVOI.getSumIntensities() + "\n");
                         }
                     } else if (statsList[i].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[9])) {
-                        UI.setDataText("  Geometric center               \t= " + algoVOI.getGeometricCenter() + "\n");
+                        UI.setDataText("  Geometric center               \t " + algoVOI.getGeometricCenter() + "\n");
                     } else if (statsList[i].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[10])) {
                         if (image.isColorImage()) {
-                            UI.setDataText("  Center of Mass               \t= " + algoVOI.getCenterOfMassR() + " R, " +
-                                           algoVOI.getCenterOfMassG() + " G, " + algoVOI.getCenterOfMassB() + " B, " +
+                            UI.setDataText("  Center of Mass               \t " + algoVOI.getCenterOfMassR() +
+                                           algoVOI.getCenterOfMassG() + algoVOI.getCenterOfMassB() +
                                            "\n");    
                         }
                         else {
-                            UI.setDataText("  Center of Mass               \t= " + algoVOI.getCenterOfMass() + "\n");
+                            UI.setDataText("  Center of Mass               \t " + algoVOI.getCenterOfMass() + "\n");
                         }
                     } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[11])) {
                         UI.setDataText("  Principal axis (only 2D)     \t= " + algoVOI.getPrincipalAxis() +
