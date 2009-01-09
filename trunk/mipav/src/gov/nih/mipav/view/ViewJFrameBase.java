@@ -2237,6 +2237,16 @@ public abstract class ViewJFrameBase extends JFrame
 
     } // end saveAllVOIs()
 
+    
+    /**
+     * This method merges the 3 axial, sagittal, coronal VOIs and save them into one cloudy points file. 
+     * This function is used by the prostate surface reconstruction analysis.  
+     */
+    public void saveMergedVOIs() {
+    	JDialogBase mergeVOIsDialog = new JDialogSaveMergedVOIs(this);
+    	mergeVOIsDialog.validate();
+    }
+    
     /**
      * This method saves all VOIs for the active image to a given directory.
      *
