@@ -2562,13 +2562,13 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                writeInt(0xFFFFFFFF, endianess); // data-length (we'll get it to spit out real length later!)
 	            }
 
-	            FileDicomTag[] dataSet = item.sortDataSet();
+	            Iterator<FileDicomTag> dataSetItr = item.getDataSet().values().iterator();
 
-	            for (int j = 0; j < dataSet.length; j++) {
+	            while(dataSetItr.hasNext()) {
 
 	                // System.err.println(" Counter = " + j);
 	                String type = "";
-	                FileDicomTag entry = dataSet[j];
+	                FileDicomTag entry = dataSetItr.next();
 
 	                String vr = entry.getValueRepresentation();
 	                int length = entry.getLength();
