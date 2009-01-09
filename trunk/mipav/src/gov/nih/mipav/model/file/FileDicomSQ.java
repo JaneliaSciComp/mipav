@@ -42,7 +42,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Sequences are composed of items (DICOM items) and store in a vector object. */
-    private Vector sequence;
+    private Vector<FileDicomItem> sequence;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
      * Creates a new DicomSQ object with initial length.
      */
     public FileDicomSQ() {
-        sequence = new Vector(10, 5);
+        sequence = new Vector<FileDicomItem>(10, 5);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -97,7 +97,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
 
             // call the item's version of this method for each item:
             for (int j = 0; j < sequence.size(); j++) {
-                datasize += ((FileDicomItem) sequence.get(j)).getLength();
+                datasize += sequence.get(j).getLength();
             }
 
             // item end delimiter: FE FF 0D E0 00 00 00 00 (item end)
@@ -116,7 +116,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
      * @return  The specified item from the sequence.
      */
     public final FileDicomItem getItem(int index) {
-        return (FileDicomItem) sequence.elementAt(index);
+        return sequence.elementAt(index);
     }
 
     /**
@@ -133,16 +133,16 @@ public class FileDicomSQ extends ModelSerialCloneable {
      *
      * @return  A list that contains the human readable form of the sequence data
      */
-    public Vector getSequenceDisplay() {
+    public Vector<String> getSequenceDisplay() {
 
-        Vector display = new Vector();
+        Vector<String> display = new Vector<String>();
 
         for (int i = 0; i < sequence.size(); i++) {
 
             // call the item's version of this method.
-            Vector itemDisplay = getItem(i).getItemDisplay();
+            Vector<String> itemDisplay = getItem(i).getItemDisplay();
 
-            for (Enumeration e = itemDisplay.elements(); e.hasMoreElements();) {
+            for (Enumeration<String> e = itemDisplay.elements(); e.hasMoreElements();) {
                 display.addElement(e.nextElement());
             }
         }
