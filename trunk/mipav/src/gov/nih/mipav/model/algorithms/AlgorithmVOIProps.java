@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.MipavCoordinateSystems;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.file.*;
@@ -774,6 +775,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         double totalXMassR = 0, totalYMassR = 0, totalZMassR = 0;
         double totalXMassG = 0, totalYMassG = 0, totalZMassG = 0;
         double totalXMassB = 0, totalYMassB = 0, totalZMassB = 0;
+        int xUnits, yUnits, zUnits;
+        String xStr, yStr, zStr;
+        String unit2DStr = null;
+        String unit3DStr = null;
+        String unitStr = null;
+        Vector3f centerPt;
 
         int length;
 
@@ -816,6 +823,36 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         double largestContourDistance = 0;
 
         contours = selectedVOI.getCurves();
+        
+        xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
+        if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
+            xStr = "X " + FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);    
+        }
+        else {
+            xStr = "X ";
+        }
+        yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
+        if (yUnits != FileInfoBase.UNKNOWN_MEASURE) {
+            yStr = "Y " + FileInfoBase.getUnitsOfMeasureAbbrevStr(yUnits);    
+        }
+        else {
+            yStr = "Y ";
+        }
+        unit2DStr = xStr + "\t" + yStr;
+        if (srcImage.getNDims() > 2) {
+            zUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[2];
+            if (zUnits != FileInfoBase.UNKNOWN_MEASURE) {
+                zStr = "Z " + FileInfoBase.getUnitsOfMeasureAbbrevStr(zUnits);  
+                if ((srcImage.getFileInfo(0).getOrigin()[0] != 0) || (srcImage.getFileInfo(0).getOrigin()[1] != 0) ||
+                        (srcImage.getFileInfo(0).getOrigin()[2] != 0)) {
+                zStr = zStr + "\tR-L:\tA-P:\tI-S:";
+                }
+            }
+            else {
+                zStr = "Z ";
+            }
+            unit3DStr = unit2DStr + "\t" + zStr;
+        }
 
         if (processType == PROCESS_PER_SLICE_AND_CONTOUR) {
             // since we're in a 2D image, contours.length should = 1
@@ -849,14 +886,17 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     z = (int)Math.round(gCenter.Z);
                     gCenter.X *= srcImage.getFileInfo(0).getResolutions()[0];
                     gCenter.Y *= srcImage.getFileInfo(0).getResolutions()[1];
+                    unitStr = unit2DStr + "\tZ";
 
                     if (srcImage.getNDims() > 2) {
                         gCenter.Z *= srcImage.getFileInfo(0).getResolutions()[2];
+                        unitStr = unit3DStr;
                     }
 
-
-                    comStr = nf.format(gCenter.X) + "\t" + nf.format(gCenter.Y) + "\t" +
+                    
+                    comStr = unitStr + "\n\t\t" + nf.format(gCenter.X) + "\t" + nf.format(gCenter.Y) + "\t" +
                                     nf.format(gCenter.Z);
+                    comStr = addScannerLabels(comStr, gCenter);
                     statProperty.setProperty(VOIStatisticList.geometricCenterDescription + "0;" + r, comStr);
 
 
@@ -1126,12 +1166,19 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         xCOMR = xMassR * srcImage.getFileInfo(0).getResolutions()[0]/sumR;
                         yCOMR = yMassR * srcImage.getFileInfo(0).getResolutions()[1]/sumR;
                         zCOMR = zMassR/sumR;
+                        unitStr = unit2DStr + "\tZ";
                         if (srcImage.getNDims() > 2) {
                             zCOMR *= srcImage.getFileInfo(0).getResolutions()[2];
+                            unitStr = unit3DStr;
                         }
 
-                        comStr = nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
+                        comStr = unitStr + "\n  Red\t\t" + nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
                                         nf.format(zCOMR);
+                        centerPt = new Vector3f();
+                        centerPt.X = (float)xCOMR;
+                        centerPt.Y = (float)yCOMR;
+                        centerPt.Z = (float)zCOMR;
+                        comStr = addScannerLabels(comStr, centerPt);
                         statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red" + "0;" + r, comStr);
                         
                         xCOMG = xMassG * srcImage.getFileInfo(0).getResolutions()[0]/sumG;
@@ -1141,8 +1188,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             zCOMG *= srcImage.getFileInfo(0).getResolutions()[2];
                         }
 
-                        comStr = nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
+                        comStr = "\n  Green\t\t" + nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
                                         nf.format(zCOMG);
+                        centerPt = new Vector3f();
+                        centerPt.X = (float)xCOMG;
+                        centerPt.Y = (float)yCOMG;
+                        centerPt.Z = (float)zCOMG;
+                        comStr = addScannerLabels(comStr, centerPt);
                         statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green" + "0;" + r, comStr);
                         
                         xCOMB = xMassB * srcImage.getFileInfo(0).getResolutions()[0]/sumB;
@@ -1152,8 +1204,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             zCOMB *= srcImage.getFileInfo(0).getResolutions()[2];
                         }
 
-                        comStr = nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
+                        comStr = "\n  Blue\t\t" + nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
                                         nf.format(zCOMB);
+                        centerPt = new Vector3f();
+                        centerPt.X = (float)xCOMB;
+                        centerPt.Y = (float)yCOMB;
+                        centerPt.Z = (float)zCOMB;
+                        comStr = addScannerLabels(comStr, centerPt);
                         statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue" + "0;" + r, comStr);
                         totalSumR2 += sumR2;
                         totalSumG2 += sumG2;
@@ -1207,12 +1264,19 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         xCOM = xMass * srcImage.getFileInfo(0).getResolutions()[0]/sum;
                         yCOM = yMass * srcImage.getFileInfo(0).getResolutions()[1]/sum;
                         zCOM = zMass/sum;
+                        unitStr = unit2DStr + "\tZ";
                         if (srcImage.getNDims() > 2) {
                             zCOM *= srcImage.getFileInfo(0).getResolutions()[2];
+                            unitStr = unit3DStr;
                         }
 
-                        comStr = nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
+                        comStr = unitStr + "\n\t\t" + nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
                                         nf.format(zCOM);
+                        centerPt = new Vector3f();
+                        centerPt.X = (float)xCOM;
+                        centerPt.Y = (float)yCOM;
+                        centerPt.Z = (float)zCOM;
+                        comStr = addScannerLabels(comStr, centerPt);
                         statProperty.setProperty(VOIStatisticList.massCenterDescription + "0;" + r, comStr);
                         totalSum2 += sum2;
                         totalSum3 += sum3;
@@ -1234,7 +1298,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 totalC.X *= srcImage.getFileInfo(0).getResolutions()[0];
                 totalC.Y *= srcImage.getFileInfo(0).getResolutions()[1];
 
-                comStr = nf.format(totalC.X) + "\t" + nf.format(totalC.Y);
+                comStr = unit2DStr + "\n\t\t" + nf.format(totalC.X) + "\t" + nf.format(totalC.Y);
 
                 statProperty.setProperty(VOIStatisticList.geometricCenterDescription + "Total", comStr);
                 statProperty.setProperty(VOIStatisticList.areaDescription + "Total", nf.format(totalArea));
@@ -1296,12 +1360,19 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     xCOMR = totalXMassR * srcImage.getFileInfo(0).getResolutions()[0]/totalSumR;
                     yCOMR = totalYMassR * srcImage.getFileInfo(0).getResolutions()[1]/totalSumR;
                     zCOMR = totalZMassR/totalSumR;
+                    unitStr = unit2DStr + "\tZ";
                     if (srcImage.getNDims() > 2) {
                         zCOMR *= srcImage.getFileInfo(0).getResolutions()[2];
+                        unitStr = unit3DStr;
                     }
 
-                    comStr = nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
+                    comStr = unitStr + "\n  Red\t\t" + nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
                                     nf.format(zCOMR);
+                    centerPt = new Vector3f();
+                    centerPt.X = (float)xCOMR;
+                    centerPt.Y = (float)yCOMR;
+                    centerPt.Z = (float)zCOMR;
+                    comStr = addScannerLabels(comStr, centerPt);
                     statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red" + "Total", comStr);
                     
                     xCOMG = totalXMassG * srcImage.getFileInfo(0).getResolutions()[0]/totalSumG;
@@ -1311,8 +1382,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         zCOMG *= srcImage.getFileInfo(0).getResolutions()[2];
                     }
 
-                    comStr = nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
+                    comStr = "\n  Green\t\t" + nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
                                     nf.format(zCOMG);
+                    centerPt = new Vector3f();
+                    centerPt.X = (float)xCOMG;
+                    centerPt.Y = (float)yCOMG;
+                    centerPt.Z = (float)zCOMG;
+                    comStr = addScannerLabels(comStr, centerPt);
                     statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green" + "Total", comStr);
                     
                     xCOMB = totalXMassB * srcImage.getFileInfo(0).getResolutions()[0]/totalSumB;
@@ -1322,8 +1398,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         zCOMB *= srcImage.getFileInfo(0).getResolutions()[2];
                     }
 
-                    comStr = nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
+                    comStr = "\n  Blue\t\t" + nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
                                     nf.format(zCOMB);
+                    centerPt = new Vector3f();
+                    centerPt.X = (float)xCOMB;
+                    centerPt.Y = (float)yCOMB;
+                    centerPt.Z = (float)zCOMB;
+                    comStr = addScannerLabels(comStr, centerPt);
                     statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue" + "Total", comStr);
                 } else {
                     statProperty.setProperty(VOIStatisticList.minIntensity + "Total", nf.format(totalMinIntensity));
@@ -1343,12 +1424,19 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     xCOM = totalXMass * srcImage.getFileInfo(0).getResolutions()[0]/totalSum;
                     yCOM = totalYMass * srcImage.getFileInfo(0).getResolutions()[1]/totalSum;
                     zCOM = totalZMass/totalSum;
+                    unitStr = unit2DStr + "\tZ";
                     if (srcImage.getNDims() > 2) {
                         zCOM *= srcImage.getFileInfo(0).getResolutions()[2];
+                        unitStr = unit3DStr;
                     }
 
-                    comStr = nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
+                    comStr = unitStr + "\n\t\t" + nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
                                     nf.format(zCOM);
+                    centerPt = new Vector3f();
+                    centerPt.X = (float)xCOM;
+                    centerPt.Y = (float)yCOM;
+                    centerPt.Z = (float)zCOM;
+                    comStr = addScannerLabels(comStr, centerPt);
                     statProperty.setProperty(VOIStatisticList.massCenterDescription + "Total", comStr);
                 }
             }
@@ -1371,7 +1459,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             selectedCOM.X *= srcImage.getFileInfo(0).getResolutions()[0];
             selectedCOM.Y *= srcImage.getFileInfo(0).getResolutions()[1];
 
-            comStr = nf.format(selectedCOM.X) + "\t" + nf.format(selectedCOM.Y);
+            comStr = unit2DStr + "\n\t\t" +  nf.format(selectedCOM.X) + "\t" + nf.format(selectedCOM.Y);
             statProperty.setProperty(VOIStatisticList.geometricCenterDescription + "0;", comStr);
 
             statProperty.setProperty(VOIStatisticList.axisDescription, nf.format(tmpPAxis[0]));
@@ -1609,20 +1697,20 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 xCOMR = xMassR * srcImage.getFileInfo(0).getResolutions()[0]/sumR;
                 yCOMR = yMassR * srcImage.getFileInfo(0).getResolutions()[1]/sumR;
 
-                comStr = nf.format(xCOMR) + "\t" + nf.format(yCOMR);
+                comStr = unit2DStr + "\n  Red\t\t" + nf.format(xCOMR) + "\t" + nf.format(yCOMR);
                 statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red" + "0;", comStr);
                 statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red", comStr);
                 
                 xCOMG = xMassG * srcImage.getFileInfo(0).getResolutions()[0]/sumG;
                 yCOMG = yMassG * srcImage.getFileInfo(0).getResolutions()[1]/sumG;
-                comStr = nf.format(xCOMG) + "\t" + nf.format(yCOMG);
+                comStr = "\n  Green\t\t" + nf.format(xCOMG) + "\t" + nf.format(yCOMG);
                 statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green" + "0;", comStr);
                 statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green", comStr);
                 
                 xCOMB = xMassB * srcImage.getFileInfo(0).getResolutions()[0]/sumB;
                 yCOMB = yMassB * srcImage.getFileInfo(0).getResolutions()[1]/sumB;
 
-                comStr = nf.format(xCOMB) + "\t" + nf.format(yCOMB);
+                comStr = "\n  Blue\t\t" + nf.format(xCOMB) + "\t" + nf.format(yCOMB);
                 statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue" + "0;", comStr);
                 statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue", comStr);
             } else {
@@ -1660,7 +1748,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 // Center of mass
                 xCOM = xMass * srcImage.getFileInfo(0).getResolutions()[0]/sum;
                 yCOM = yMass * srcImage.getFileInfo(0).getResolutions()[1]/sum;
-                comStr = nf.format(xCOM) + "\t" + nf.format(yCOM);
+                comStr = unit2DStr + "\n\t\t" + nf.format(xCOM) + "\t" + nf.format(yCOM);
                 statProperty.setProperty(VOIStatisticList.massCenterDescription + "0;", comStr);
                 statProperty.setProperty(VOIStatisticList.massCenterDescription, comStr);
             }
@@ -1736,6 +1824,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         double totalXMassR = 0, totalYMassR = 0, totalZMassR = 0;
         double totalXMassG = 0, totalYMassG = 0, totalZMassG = 0;
         double totalXMassB = 0, totalYMassB = 0, totalZMassB = 0;
+        int xUnits, yUnits, zUnits;
+        String xStr, yStr, zStr;
+        String unit2DStr = null;
+        String unit3DStr = null;
+        String unitStr = null;
+        Vector3f centerPt;
 
         Vector[] contours;
         BitSet mask;
@@ -1793,6 +1887,36 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 srcImage.getFileInfo(0).getResolutions()[0],
                 srcImage.getFileInfo(0).getResolutions()[1],
                 srcImage.getFileInfo(0).getResolutions()[2]);
+        
+        xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
+        if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
+            xStr = "X " + FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);    
+        }
+        else {
+            xStr = "X ";
+        }
+        yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
+        if (yUnits != FileInfoBase.UNKNOWN_MEASURE) {
+            yStr = "Y " + FileInfoBase.getUnitsOfMeasureAbbrevStr(yUnits);    
+        }
+        else {
+            yStr = "Y ";
+        }
+        unit2DStr = xStr + "\t" + yStr;
+        if (srcImage.getNDims() > 2) {
+            zUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[2];
+            if (zUnits != FileInfoBase.UNKNOWN_MEASURE) {
+                zStr = "Z " + FileInfoBase.getUnitsOfMeasureAbbrevStr(zUnits);
+                if ((srcImage.getFileInfo(0).getOrigin()[0] != 0) || (srcImage.getFileInfo(0).getOrigin()[1] != 0) ||
+                        (srcImage.getFileInfo(0).getOrigin()[2] != 0)) {
+                    zStr = zStr + "\tR-L:\tA-P:\tI-S:";
+                }
+            }
+            else {
+                zStr = "Z ";
+            }
+            unit3DStr = unit2DStr + "\t" + zStr;
+        }
 
         if ((processType == PROCESS_PER_SLICE) || (processType == PROCESS_PER_SLICE_AND_CONTOUR)) {
 
@@ -1839,13 +1963,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     Vector3f gCenter = ((VOIContour) (contours[q].elementAt(r))).getGeometricCenter();
                     gCenter.X *= srcImage.getFileInfo(0).getResolutions()[0];
                     gCenter.Y *= srcImage.getFileInfo(0).getResolutions()[1];
+                    unitStr = unit2DStr + "\tZ";
 
                     if (srcImage.getNDims() > 2) {
                         gCenter.Z *= srcImage.getFileInfo(0).getResolutions()[2];
+                        unitStr = unit3DStr;
                     }
-
-                    String comStr = nf.format(gCenter.X) + "\t" + nf.format(gCenter.Y) + "\t" +
+                    
+                    String comStr = unitStr + "\n\t\t" + nf.format(gCenter.X) + "\t" + nf.format(gCenter.Y) + "\t" +
                                     nf.format(gCenter.Z);
+                    comStr = addScannerLabels(comStr, gCenter);
 
                     statProperty.setProperty(VOIStatisticList.geometricCenterDescription + end, comStr);
 
@@ -2149,12 +2276,19 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         xCOMR = xMassR * srcImage.getFileInfo(0).getResolutions()[0]/sumR;
                         yCOMR = yMassR * srcImage.getFileInfo(0).getResolutions()[1]/sumR;
                         zCOMR = zMassR/sumR;
+                        unitStr = unit2DStr + "\tZ";
                         if (srcImage.getNDims() > 2) {
                             zCOMR *= srcImage.getFileInfo(0).getResolutions()[2];
+                            unitStr = unit3DStr;
                         }
 
-                        comStr = nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
+                        comStr = unitStr + "\n  Red\t\t" + nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
                                         nf.format(zCOMR);
+                        centerPt = new Vector3f();
+                        centerPt.X = (float)xCOMR;
+                        centerPt.Y = (float)yCOMR;
+                        centerPt.Z = (float)zCOMR;
+                        comStr = addScannerLabels(comStr, centerPt);
                         statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red" + end, comStr);
                         
                         xCOMG = xMassG * srcImage.getFileInfo(0).getResolutions()[0]/sumG;
@@ -2164,8 +2298,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             zCOMG *= srcImage.getFileInfo(0).getResolutions()[2];
                         }
 
-                        comStr = nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
+                        comStr = "\n  Green\t\t" + nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
                                         nf.format(zCOMG);
+                        centerPt = new Vector3f();
+                        centerPt.X = (float)xCOMG;
+                        centerPt.Y = (float)yCOMG;
+                        centerPt.Z = (float)zCOMG;
+                        comStr = addScannerLabels(comStr, centerPt);
                         statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green" + end, comStr);
                         
                         xCOMB = xMassB * srcImage.getFileInfo(0).getResolutions()[0]/sumB;
@@ -2175,8 +2314,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             zCOMB *= srcImage.getFileInfo(0).getResolutions()[2];
                         }
 
-                        comStr = nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
+                        comStr = "\n  Blue\t\t" + nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
                                         nf.format(zCOMB);
+                        centerPt = new Vector3f();
+                        centerPt.X = (float)xCOMB;
+                        centerPt.Y = (float)yCOMB;
+                        centerPt.Z = (float)zCOMB;
+                        comStr = addScannerLabels(comStr, centerPt);
                         statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue" + end, comStr);
 
                         totalSumR2 += sumR2;
@@ -2232,12 +2376,19 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         xCOM = xMass * srcImage.getFileInfo(0).getResolutions()[0]/sum;
                         yCOM = yMass * srcImage.getFileInfo(0).getResolutions()[1]/sum;
                         zCOM = zMass/sum;
+                        unitStr = unit2DStr + "\tZ";
                         if (srcImage.getNDims() > 2) {
                             zCOM *= srcImage.getFileInfo(0).getResolutions()[2];
+                            unitStr = unit3DStr;
                         }
 
-                        comStr = nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
+                        comStr = unitStr + "\n\t\t" + nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
                                         nf.format(zCOM);
+                        centerPt = new Vector3f();
+                        centerPt.X = (float)xCOM;
+                        centerPt.Y = (float)yCOM;
+                        centerPt.Z = (float)zCOM;
+                        comStr = addScannerLabels(comStr, centerPt);
                         statProperty.setProperty(VOIStatisticList.massCenterDescription + end, comStr);
                         totalSum2 += sum2;
                         totalSum3 += sum3;
@@ -2253,12 +2404,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                 totalC.X *= srcImage.getFileInfo(0).getResolutions()[0];
                 totalC.Y *= srcImage.getFileInfo(0).getResolutions()[1];
+                unitStr = unit2DStr + "\tZ";
 
                 if (srcImage.getNDims() > 2) {
                     totalC.Z *= srcImage.getFileInfo(0).getResolutions()[2];
+                    unitStr = unit3DStr;
                 }
 
-                String comStr = nf.format(totalC.X) + "\t" + nf.format(totalC.Y) + "\t" + nf.format(totalC.Z);
+                String comStr = unitStr + "\n\t\t" + nf.format(totalC.X) + "\t" + nf.format(totalC.Y) + "\t" + nf.format(totalC.Z);
+                comStr = addScannerLabels(comStr, totalC);
 
                 statProperty.setProperty(VOIStatisticList.axisDescription + "Total", nf.format(totalAxis));
                 statProperty.setProperty(VOIStatisticList.eccentricityDescription + "Total", nf.format(totalEcc));
@@ -2328,12 +2482,19 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     xCOMR = totalXMassR * srcImage.getFileInfo(0).getResolutions()[0]/totalSumR;
                     yCOMR = totalYMassR * srcImage.getFileInfo(0).getResolutions()[1]/totalSumR;
                     zCOMR = totalZMassR/totalSumR;
+                    unitStr = unit2DStr + "\tZ";
                     if (srcImage.getNDims() > 2) {
                         zCOMR *= srcImage.getFileInfo(0).getResolutions()[2];
+                        unitStr = unit3DStr;
                     }
 
-                    comStr = nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
+                    comStr = unitStr + "\n  Red\t\t" + nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
                                     nf.format(zCOMR);
+                    centerPt = new Vector3f();
+                    centerPt.X = (float)xCOMR;
+                    centerPt.Y = (float)yCOMR;
+                    centerPt.Z = (float)zCOMR;
+                    comStr = addScannerLabels(comStr, centerPt);
                     statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red" + "Total", comStr);
                     
                     xCOMG = totalXMassG * srcImage.getFileInfo(0).getResolutions()[0]/totalSumG;
@@ -2343,8 +2504,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         zCOMG *= srcImage.getFileInfo(0).getResolutions()[2];
                     }
 
-                    comStr = nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
+                    comStr = "\n  Green\t\t" + nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
                                     nf.format(zCOMG);
+                    centerPt = new Vector3f();
+                    centerPt.X = (float)xCOMG;
+                    centerPt.Y = (float)yCOMG;
+                    centerPt.Z = (float)zCOMG;
+                    comStr = addScannerLabels(comStr, centerPt);
                     statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green" + "Total", comStr);
                     
                     xCOMB = totalXMassB * srcImage.getFileInfo(0).getResolutions()[0]/totalSumB;
@@ -2354,8 +2520,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         zCOMB *= srcImage.getFileInfo(0).getResolutions()[2];
                     }
 
-                    comStr = nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
+                    comStr = "\n  Blue\t\t" + nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
                                     nf.format(zCOMB);
+                    centerPt = new Vector3f();
+                    centerPt.X = (float)xCOMB;
+                    centerPt.Y = (float)yCOMB;
+                    centerPt.Z = (float)zCOMB;
+                    comStr = addScannerLabels(comStr, centerPt);
                     statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue" + "Total", comStr);
                 } else {
                     statProperty.setProperty(VOIStatisticList.minIntensity + "Total", nf.format(totalMinIntensity));
@@ -2375,12 +2546,19 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     xCOM = totalXMass * srcImage.getFileInfo(0).getResolutions()[0]/totalSum;
                     yCOM = totalYMass * srcImage.getFileInfo(0).getResolutions()[1]/totalSum;
                     zCOM = totalZMass/totalSum;
+                    unitStr = unit2DStr + "\tZ";
                     if (srcImage.getNDims() > 2) {
                         zCOM *= srcImage.getFileInfo(0).getResolutions()[2];
+                        unitStr = unit3DStr;
                     }
 
-                    comStr = nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
+                    comStr = unitStr + "\n\t\t" + nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
                                     nf.format(zCOM);
+                    centerPt = new Vector3f();
+                    centerPt.X = (float)xCOM;
+                    centerPt.Y = (float)yCOM;
+                    centerPt.Z = (float)zCOM;
+                    comStr = addScannerLabels(comStr, centerPt);
                     statProperty.setProperty(VOIStatisticList.massCenterDescription + "Total", comStr);
                 }
             }
@@ -2410,13 +2588,17 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             Vector3f selectedCOM = selectedVOI.getGeometricCenter();
             selectedCOM.X *= srcImage.getFileInfo(0).getResolutions()[0];
             selectedCOM.Y *= srcImage.getFileInfo(0).getResolutions()[1];
+            unitStr = unit2DStr + "\tZ";
 
             if (srcImage.getNDims() > 2) {
                 selectedCOM.Z *= srcImage.getFileInfo(0).getResolutions()[2];
+                unitStr = unit3DStr;
             }
 
-            String comStr = nf.format(selectedCOM.X) + "\t" + nf.format(selectedCOM.Y) + "\t" +
+            
+            String comStr = unitStr + "\n\t\t" + nf.format(selectedCOM.X) + "\t" + nf.format(selectedCOM.Y) + "\t" +
                             nf.format(selectedCOM.Z);
+            comStr = addScannerLabels(comStr, selectedCOM);
 
             statProperty.setProperty(VOIStatisticList.geometricCenterDescription, comStr);
 
@@ -2627,12 +2809,19 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 xCOMR = xMassR * srcImage.getFileInfo(0).getResolutions()[0]/sumR;
                 yCOMR = yMassR * srcImage.getFileInfo(0).getResolutions()[1]/sumR;
                 zCOMR = zMassR/sumR;
+                unitStr = unit2DStr + "\tZ";
                 if (srcImage.getNDims() > 2) {
                     zCOMR *= srcImage.getFileInfo(0).getResolutions()[2];
+                    unitStr = unit3DStr;
                 }
 
-                comStr = nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
+                comStr = unitStr + "\n  Red\t\t" + nf.format(xCOMR) + "\t" + nf.format(yCOMR) + "\t" +
                                 nf.format(zCOMR);
+                centerPt = new Vector3f();
+                centerPt.X = (float)xCOMR;
+                centerPt.Y = (float)yCOMR;
+                centerPt.Z = (float)zCOMR;
+                comStr = addScannerLabels(comStr, centerPt);
                 statProperty.setProperty(VOIStatisticList.massCenterDescription + "Red", comStr);
                 
                 xCOMG = xMassG * srcImage.getFileInfo(0).getResolutions()[0]/sumG;
@@ -2642,8 +2831,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     zCOMG *= srcImage.getFileInfo(0).getResolutions()[2];
                 }
 
-                comStr = nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
+                comStr = "\n  Green\t\t" + nf.format(xCOMG) + "\t" + nf.format(yCOMG) + "\t" +
                                 nf.format(zCOMG);
+                centerPt = new Vector3f();
+                centerPt.X = (float)xCOMG;
+                centerPt.Y = (float)yCOMG;
+                centerPt.Z = (float)zCOMG;
+                comStr = addScannerLabels(comStr, centerPt);
                 statProperty.setProperty(VOIStatisticList.massCenterDescription + "Green", comStr);
                 
                 xCOMB = xMassB * srcImage.getFileInfo(0).getResolutions()[0]/sumB;
@@ -2653,8 +2847,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     zCOMB *= srcImage.getFileInfo(0).getResolutions()[2];
                 }
 
-                comStr = nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
+                comStr = "\n  Blue\t\t" + nf.format(xCOMB) + "\t" + nf.format(yCOMB) + "\t" +
                                 nf.format(zCOMB);
+                centerPt = new Vector3f();
+                centerPt.X = (float)xCOMB;
+                centerPt.Y = (float)yCOMB;
+                centerPt.Z = (float)zCOMB;
+                comStr = addScannerLabels(comStr, centerPt);
                 statProperty.setProperty(VOIStatisticList.massCenterDescription + "Blue", comStr);
 
             } else {
@@ -2692,12 +2891,19 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 xCOM = xMass * srcImage.getFileInfo(0).getResolutions()[0]/sum;
                 yCOM = yMass * srcImage.getFileInfo(0).getResolutions()[1]/sum;
                 zCOM = zMass/sum;
+                unitStr = unit2DStr + "\tZ";
                 if (srcImage.getNDims() > 2) {
                     zCOM *= srcImage.getFileInfo(0).getResolutions()[2];
+                    unitStr = unit3DStr;
                 }
 
-                comStr = nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
+                comStr = unitStr + "\n\t\t" + nf.format(xCOM) + "\t" + nf.format(yCOM) + "\t" +
                                 nf.format(zCOM);
+                centerPt = new Vector3f();
+                centerPt.X = (float)xCOM;
+                centerPt.Y = (float)yCOM;
+                centerPt.Z = (float)zCOM;
+                comStr = addScannerLabels(comStr, centerPt);
                 statProperty.setProperty(VOIStatisticList.massCenterDescription, comStr);
             }
         }
@@ -2793,5 +2999,100 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         }
 
     }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  leadBase  DOCUMENT ME!
+     */
+    private String addScannerLabels(String baseString, Vector3f currentPt) {
+
+        String[] positions = null;
+        Vector3f scaledPt;
+
+        if ((srcImage.getFileInfo(0).getOrigin()[0] != 0) || (srcImage.getFileInfo(0).getOrigin()[1] != 0) ||
+                (srcImage.getFileInfo(0).getOrigin()[2] != 0)) {
+
+                scaledPt = new Vector3f();
+                scaledPt.X = (currentPt.X/srcImage.getFileInfo(0).getResolutions()[0]);
+                scaledPt.Y = (currentPt.Y/srcImage.getFileInfo(0).getResolutions()[1]);
+                scaledPt.Z = (currentPt.Z/srcImage.getFileInfo(0).getResolutions()[2]);
+
+
+                if (srcImage.getNDims() > 2) {
+                    positions = getScannerPositionLabels(scaledPt);
+                }
+
+                if (positions != null) {    
+                    baseString += positions[0] + " " + positions[1] + " " + positions[2];
+                } 
+
+        } 
+
+        return baseString;
+        
+    }
+
+    
+    /**
+     * Gets position data to display in message bar - for DICOM and MINC images, gives patient position as well. The
+     * image's associated transformation must be FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL, or the orientations must be
+     * set up correctly, or else the function returns null.
+     * 
+     * @param image The image the point lies within.
+     * @param position (x,y,z(slice)) position in FileCoordinates
+     * 
+     * @return An array of strings that represent patient position.
+     */
+    public String[] getScannerPositionLabels(Vector3f position) {
+        DecimalFormat nf = new DecimalFormat("#####0.0##");
+        Vector3f kOut = new Vector3f();
+        if (srcImage.getNDims() < 3) {
+            // return null;
+        }
+     
+        MipavCoordinateSystems.fileToScanner(position, kOut, srcImage);
+
+        float[] tCoord = new float[3];
+        tCoord[0] = kOut.X;
+        tCoord[1] = kOut.Y;
+        tCoord[2] = kOut.Z;
+
+        String[] labels = {"R-L: ", "A-P: ", "I-S: "};
+
+        if ( !srcImage.getRadiologicalView()) {
+            labels[0] = new String("L-R: ");
+        }
+
+        String[] strs = new String[3];
+
+        if (srcImage.getRadiologicalView()) {
+
+            if ( (tCoord[0] < 0)) {
+                strs[0] = new String("\t" + labels[0].charAt(0) + ": " + String.valueOf(nf.format(tCoord[0])));
+            } else {
+                strs[0] = new String("\t" + labels[0].charAt(2) + ": " + String.valueOf(nf.format(tCoord[0])));
+            }
+        } else {
+
+            if ( (tCoord[0] < 0)) {
+                strs[0] = new String("\t" + labels[0].charAt(2) + ": " + String.valueOf(nf.format(tCoord[0])));
+            } else {
+                strs[0] = new String("\t" + labels[0].charAt(0) + ": " + String.valueOf(nf.format(tCoord[0])));
+            }
+        }
+
+        for (int i = 1; i < 3; i++) {
+
+            if ( (tCoord[i] < 0)) {
+                strs[i] = new String("\t" + labels[i].charAt(0) + ": " + String.valueOf(nf.format(tCoord[i])));
+            } else {
+                strs[i] = new String("\t" + labels[i].charAt(2) + ": " + String.valueOf(nf.format(tCoord[i])));
+            }
+        }
+
+        return strs;
+    }
+
 
 }
