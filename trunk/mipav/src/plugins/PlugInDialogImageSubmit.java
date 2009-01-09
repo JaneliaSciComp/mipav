@@ -70,7 +70,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	/** Files selected by the user */
 	private File[] selectedFiles = new File[0];
 	
-	/** List of current files and folders to work with */
+	/** List of current files to work with (adding a folder through GUI will add all of the folder's files */
 	private Vector<String> fileList;
 	
 	/**Submission location*/
@@ -396,9 +396,26 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
     		return true;
     	}
     	
-    	tagArray = tagList.split(";");
+    	tagArray = tagList.toUpperCase().split(";");
     	return true;
        	
+    }
+    
+    /**
+     * Tests whether f already has been added to the GUI
+     * @param f
+     * @return
+     */
+    private boolean fileAlreadyAdded(File f) {
+    	boolean fileExists = false;
+    	for(int i=0; i<fileList.size(); i++) {
+    		if(f.getAbsolutePath().equals(fileList.get(i))) {
+    			fileExists = true;
+    			break;
+    		}
+    	}
+    	
+    	return fileExists;
     }
     
     /**
@@ -491,7 +508,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
             		if(!fileExists) {
             			if(selectedFiles[i].isDirectory()) {
             				for(File f : selectedFiles[i].listFiles()) {
-            					if(!f.isDirectory()) {
+            					if(!f.isDirectory() && !fileAlreadyAdded(f)) {
             						fileList.add(f.getAbsolutePath());
             					}
             				}
