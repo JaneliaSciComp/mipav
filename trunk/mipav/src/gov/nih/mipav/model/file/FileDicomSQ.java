@@ -22,8 +22,8 @@ import java.util.*;
  *   <LI>A tag indicating the end of the sequence.
  *
  *     <P>Given this encoding, the DicomSQ structure is set up as a Vector. The length variable is the length of the
- *     sequence as given in the header and NOT the length of the Vector. The Vector is a series of DicomItems. In the
- *     DicomItems the important data tag information is stored.</P>
+ *     sequence as given in the header and NOT the length of the Vector. The Vector is a series of DicomItems. Each 
+ *     DicomItem is a set of tags.</P>
  *   </LI>
  * </OL>
  *

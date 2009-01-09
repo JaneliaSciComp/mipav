@@ -11,7 +11,7 @@ import java.util.*;
 
 /**
  * <p>This class contains DICOM header information. It uses a table to store all the information about the tags. The
- * standard Hashtable listing all known tags with empty values is in DicomDictionary. Also stored here is the offset of
+ * FileDicomTagTable listing all known tags with empty values is in DicomDictionary. Also stored here is the offset of
  * the image, the image number, the resolutions, some pixel data, the bytes allocated, and the dimensions of the
  * image.</p>
  *

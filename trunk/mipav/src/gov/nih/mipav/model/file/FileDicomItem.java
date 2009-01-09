@@ -7,8 +7,8 @@ import java.util.*;
 
 
 /**
- * This class stores the item in a sequence tag. The item is just a series of DICOM tags so this storage model is very
- * similar to the FileInfoDicom model. For more information on the sequence tag, see the DICOM standard, Part 5, Section
+ * This class stores a set of FileDicomTags. This series of DICOM tags is very similar to the FileInfoDicom model. 
+ * For more information on the sequence tag, see the DICOM standard, Part 5, Section
  * 7.5. For more information on the storage model see DicomSQ.
  *
  * @author  Neva Cherniavsky
@@ -31,7 +31,7 @@ public class FileDicomItem extends ModelSerialCloneable {
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates an empty Hashtable for storing the DICOM tags and stores the length of the item.
+     * Creates an empty TreeMap for storing the DICOM tags and stores the length of the item.
      */
     public FileDicomItem() {
         dataSet = new TreeMap<String, FileDicomTag>(new KeyComparator());
@@ -146,9 +146,9 @@ public class FileDicomItem extends ModelSerialCloneable {
     }
 
     /**
-     * Puts a new tag into the dataSet Hashtable.
+     * Puts a new tag into the dataSet TreeMap.
      *
-     * @param  key    key to map to in the Hashtable
+     * @param  key    key to map to in the TreeMap
      * @param  value  value that matches the key
      */
     public final void putTag(String key, FileDicomTag value) {
@@ -158,7 +158,7 @@ public class FileDicomItem extends ModelSerialCloneable {
     /**
      * Sets the length of the tag.
      *
-     * @param  key     key to map to in the Hashtable
+     * @param  key     key to map to in the TreeMap
      * @param  length  length to set
      */
     public final void setLength(String key, int length) {
@@ -167,8 +167,8 @@ public class FileDicomItem extends ModelSerialCloneable {
     }
 
     /**
-     * Sets the value of the DicomTag in the tagsList Hashtable with the same hexadecimal tag name. The tag names are
-     * unique and that's why they are the keys to the Hashtable.
+     * Sets the value of the DicomTag in the tagsList TreeMap with the same hexadecimal tag name. The tag names are
+     * unique and that's why they are the keys to the TreeMap.
      *
      * @param  name    the key for the DicomTag in dataSet
      * @param  value   the value to set the DicomTag to
