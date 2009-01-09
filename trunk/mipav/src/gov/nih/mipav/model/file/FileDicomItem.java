@@ -25,8 +25,8 @@ public class FileDicomItem extends ModelSerialCloneable {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private Hashtable dataSet;
+    /** TreeMap containing key-tag pairs, string is like a FileDicomKey */
+    private TreeMap<String, FileDicomTag> dataSet;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ public class FileDicomItem extends ModelSerialCloneable {
      * Creates an empty Hashtable for storing the DICOM tags and stores the length of the item.
      */
     public FileDicomItem() {
-        dataSet = new Hashtable();
+        dataSet = new TreeMap<String, FileDicomTag>(new KeyComparator());
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -63,11 +63,11 @@ public class FileDicomItem extends ModelSerialCloneable {
      * @return  size of the value in bytes
      */
     public int getDataLength() {
-        FileDicomTag[] tagslist = sortDataSet();
+        Iterator<FileDicomTag> tagsItr = dataSet.values().iterator();
         int datasize = 0;
-
-        for (int i = 0; i < tagslist.length; i++) {
-            datasize += tagslist[i].getLength();
+        
+        while(tagsItr.hasNext()) {
+        	datasize += tagsItr.next().getLength();
         }
 
         return datasize;
@@ -78,7 +78,7 @@ public class FileDicomItem extends ModelSerialCloneable {
      *
      * @return  the dataSet
      */
-    public final Hashtable getDataSet() {
+    public final TreeMap<String, FileDicomTag> getDataSet() {
         return dataSet;
     }
 
@@ -89,24 +89,25 @@ public class FileDicomItem extends ModelSerialCloneable {
      *
      * @return  a Vector of the strings
      */
-    public Vector getItemDisplay() {
-        Vector display = new Vector();
+    public Vector<String> getItemDisplay() {
+        Vector<String> display = new Vector<String>();
         String value = "";
-
-        for (Enumeration e = dataSet.keys(); e.hasMoreElements();) {
-            String key = (String) e.nextElement();
-            FileDicomTag entry = (FileDicomTag) getTag(key);
-
-            if (entry.getValue(true).toString().equals("Sequence")) {
-                value = "(" + key + "): " + entry.getName() + ";;;" + "Sequence";
+        
+        Iterator<String> keyItr = dataSet.keySet().iterator();
+        while(keyItr.hasNext()) {
+        	String key = keyItr.next();
+        	FileDicomTag entry = dataSet.get(key);
+        	
+        	if (entry.getValue(true).toString().equals("Sequence")) {
+                value = "(" + key + "): " + entry.getName() + ";;;" + "Sequence"; //sequence inside a sequence support
                 display.addElement(value);
-
-                Vector sqDisplay = ((FileDicomSQ) entry.getValue(true)).getSequenceDisplay();
-
-                for (Enumeration f = sqDisplay.elements(); f.hasMoreElements();) {
+                
+                Vector<String> sqDisplay = ((FileDicomSQ) entry.getValue(true)).getSequenceDisplay();
+                
+                for (Enumeration<String> f = sqDisplay.elements(); f.hasMoreElements();) {
                     display.addElement(f.nextElement());
                 }
-            } else {
+        	} else {
                 value = "(" + key + "): " + entry.getName() + ";;;" + entry.getValue(true);
                 display.addElement(value);
             }
@@ -140,7 +141,7 @@ public class FileDicomItem extends ModelSerialCloneable {
      *
      * @return  DOCUMENT ME!
      */
-    public final Object getTag(Object key) {
+    public final FileDicomTag getTag(String key) {
         return dataSet.get(key);
     }
 
@@ -150,7 +151,7 @@ public class FileDicomItem extends ModelSerialCloneable {
      * @param  key    key to map to in the Hashtable
      * @param  value  value that matches the key
      */
-    public final void putTag(Object key, Object value) {
+    public final void putTag(String key, FileDicomTag value) {
         dataSet.put(key, value);
     }
 
@@ -160,8 +161,8 @@ public class FileDicomItem extends ModelSerialCloneable {
      * @param  key     key to map to in the Hashtable
      * @param  length  length to set
      */
-    public final void setLength(Object key, int length) {
-        FileDicomTag entry = (FileDicomTag) dataSet.get(key);
+    public final void setLength(String key, int length) {
+        FileDicomTag entry = dataSet.get(key);
         entry.setLength(length);
     }
 
@@ -173,53 +174,11 @@ public class FileDicomItem extends ModelSerialCloneable {
      * @param  value   the value to set the DicomTag to
      * @param  length  DOCUMENT ME!
      */
-    public final void setValue(Object name, Object value, int length) {
-        FileDicomTag entry = (FileDicomTag) dataSet.get(name);
+    public final void setValue(String name, FileDicomTag value, int length) {
+        FileDicomTag entry = dataSet.get(name);
         entry.setValue(value.toString(), length);
         dataSet.remove(name);
         dataSet.put(name, entry);
-    }
-
-    /**
-     * Sorts the list of tags and returns it as an array in order.
-     *
-     * @return  the sorted list
-     */
-    public FileDicomTag[] sortDataSet() {
-        Enumeration e;
-        FileDicomTag[] dicomTags;
-
-        dicomTags = new FileDicomTag[getNumberOfElements()];
-
-        int i = 0;
-
-        for (e = dataSet.keys(); e.hasMoreElements();) {
-            String name = (String) e.nextElement();
-            FileDicomTag element = (FileDicomTag) getTag(name);
-            dicomTags[i++] = element;
-        }
-
-        FileDicomTag temp;
-
-        for (int p = 1; p < dicomTags.length; p++) {
-            temp = dicomTags[p];
-
-            int gr = temp.getGroup();
-            int el = temp.getElement();
-            int j = p;
-
-            for (;
-                     (j > 0) &&
-                     ((gr < dicomTags[j - 1].getGroup()) ||
-                          ((gr == dicomTags[j - 1].getGroup()) && (el < dicomTags[j - 1].getElement()))); j--) {
-                dicomTags[j] = dicomTags[j - 1];
-            }
-
-            dicomTags[j] = temp;
-
-        }
-
-        return dicomTags;
     }
 
     /**
@@ -231,4 +190,35 @@ public class FileDicomItem extends ModelSerialCloneable {
     public String toString() {
         return "Item";
     }
+    
+    /**
+     * Compares the keys of two FileDicomItems specified by their keys
+     * 
+     * @author senseneyj
+     *
+     */
+    private class KeyComparator implements Comparator<String> {
+
+		/* (non-Javadoc)
+		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+		 */
+		public int compare(String o1, String o2) {
+			if(o1 instanceof String && o2 instanceof String) {
+				int o1group = Integer.valueOf(o1.substring(0, 4), 16);
+				int o2group = Integer.valueOf(o2.substring(0, 4), 16);
+				if(o1group == o2group) {
+					int o1element = Integer.valueOf(o1.substring(5), 16);
+					int o2element = Integer.valueOf(o2.substring(5), 16);
+					return o1element - o2element;
+				} 
+				return o1group - o2group;
+
+				/*if(((FileDicomKey) o2).getGroupNumber() == ((FileDicomKey) o1).getGroupNumber()) {
+					return ((FileDicomKey) o1).getElementNumber() - ((FileDicomKey)o2).getElementNumber();
+				}
+				return ((FileDicomKey) o1).getGroupNumber() - ((FileDicomKey)o2).getGroupNumber();*/
+			} 
+			return o1.hashCode() - o2.hashCode();
+		}		
+	}
 }
