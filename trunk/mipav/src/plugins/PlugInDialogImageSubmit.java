@@ -8,6 +8,12 @@ import java.awt.event.ActionEvent;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.file.FileDicom;
+import gov.nih.mipav.model.file.FileDicomKey;
+import gov.nih.mipav.model.file.FileDicomTag;
+import gov.nih.mipav.model.file.FileDicomTagTable;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -85,7 +91,11 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	/**File (directory) that will contain anonymized image copies*/
 	private File submitFile;
 
+	/** Array of tags from FileDicom*/
 	private String[] tagArray;
+	
+	/**InfoGathering threads to find Dicom data*/
+	private ArrayList<InformationUpdate> infoGather;
 	
 	//	~ Constructors --------------------------------------------------------------------------
 
@@ -103,6 +113,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
     public PlugInDialogImageSubmit(boolean modal) {
         super(modal); 
         fileList = new Vector<String>();
+        infoGather = new ArrayList<InformationUpdate>();
         
     	init();
     }
@@ -517,7 +528,13 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
             			}
             		}
             	}
-            	inputFileList.updateUI();
+            	inputFileList.updateUI();         	
+            	InformationUpdate update = new InformationUpdate(fileList);
+            	if(update.isActionable()) {
+            		infoGather.add(update);
+            		Thread t = new Thread(update);
+            		t.start();
+            	}
             	if(selectedFiles[0].isDirectory()) {
             		submitField.setText(selectedFiles[0] + File.separator + "submit");
             	} else {
@@ -563,14 +580,23 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
     	
         } else if(command.equalsIgnoreCase(REMOVE_ALL)) {
         	fileList.removeAllElements();
+        	clearEntries();
         	inputFileList.updateUI();
         } else if(command.equals(REMOVE)) {
         	Object[] objAr = inputFileList.getSelectedValues();
         	for(Object obj : objAr) {
         		fileList.remove(obj);
         	}
+        	if(fileList.size() == 0) {
+        		clearEntries();
+        	}
         	inputFileList.updateUI();
         } 
+    }
+    
+    private void clearEntries() {
+    	anatField.setText("");
+    	submitField.setText("");
     }
 
 	/**
@@ -592,6 +618,64 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
     }
     protected void storeParamsFromGUI() {
     	
+    }
+    
+    private class InformationUpdate implements Runnable {
+
+    	private Vector<File> fileListUpdate;
+    	private boolean likelyActionable;
+    	private FileDicom imageFile;
+    	
+		public InformationUpdate(Vector<String> fileListString) {
+			this.fileListUpdate = new Vector<File>();
+			for(int i=0; i<fileListString.size(); i++) {
+				fileListUpdate.add(new File(fileListString.get(i)));
+			}
+			this.likelyActionable = examineFileList(fileListUpdate);
+		}
+    	
+    	@Override
+		public void run() {
+			if(!likelyActionable) {
+				return;
+			}
+			FileInfoBase info = null;
+			try {
+	    		imageFile = new FileDicom(fileListUpdate.get(0).getName(), fileListUpdate.get(0).getParent()+File.separator);
+	            imageFile.setQuiet(true); // if we want quiet, we tell the reader, too.
+	            imageFile.readHeader(true); // can we read the header?	
+	            info = imageFile.getFileInfo();
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
+            if(info instanceof FileInfoDicom) {
+            	FileDicomTagTable tagTable = ((FileInfoDicom) info).getTagTable();
+            	Object obj = tagTable.get(new FileDicomKey("0018,0015"));
+            	if(obj instanceof FileDicomTag) {
+            		if(((FileDicomTag) obj).getValue(true).toString().length() > 0) {
+            			anatField.setText(((FileDicomTag) obj).getValue(true).toString());
+            		}
+            	}
+            }
+		}
+    	
+    	private boolean examineFileList(Vector<File> f) {
+    		if(f.size() == 0) {
+    			return false;
+    		} else if(f.size() == 1) {
+    			return true;
+    		} else {
+    			return true;
+    		}	
+    	}	
+    	
+    	public FileDicom getImageFile() {
+    		return imageFile;
+    	}
+    	
+    	public boolean isActionable() {
+    		return likelyActionable;
+    	}
     }
     
     public static void main(String[] args) {
