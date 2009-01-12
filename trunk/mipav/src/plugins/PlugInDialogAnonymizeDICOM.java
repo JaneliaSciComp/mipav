@@ -12,6 +12,11 @@ import java.awt.event.MouseListener;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.file.FileDicom;
+import gov.nih.mipav.model.file.FileDicomKey;
+import gov.nih.mipav.model.file.FileDicomTagTable;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -296,6 +301,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
             		}
             	}
             	inputFileList.updateUI();
+            	
             }
         } else if (command.equalsIgnoreCase("Cancel")) {
         	dispose();
@@ -336,5 +342,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
     protected void storeParamsFromGUI() {
     	
     }
+    
+    
     
 }
