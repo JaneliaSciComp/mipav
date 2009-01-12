@@ -509,6 +509,10 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	            getNextElement(endianess); // gets group, element, length
 	            name = convertGroupElement(groupWord, elementWord);
 	            
+	            if(name.equals("2005,140F")) {
+	            	System.out.println("Begin debug analysis.");
+	            }
+	            
 	            FileDicomKey key = new FileDicomKey(name);
 	            int tagVM;
 
@@ -593,7 +597,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                    Preferences
 	                            .debug("Sequence Tags: (" + name + "); length = " + len + "\n", Preferences.DEBUG_FILEIO);
 
-	                    sq = (FileDicomSQ)getSequence(endianess, len);
+	                    sq = (FileDicomSQ)getSequence(endianess, len, name);
 	                    sequenceTags.put(key, sq);
 	                    //System.err.print( "SEQUENCE DONE: Sequence Tags: (" + key + ")"+" "+type);
 	                    // Integer.toString(len, 0x10) + "\n");
@@ -729,25 +733,8 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                		System.err.println("Data corruption");
 		                	}
 		                	raFile.seek(raPtrOld);
-		                } else if (type.equals("typeSequence")) {
-		                	//System.out.println(data);
-		                	raFile.seek(bPtrOld);
-		                	writeSequence(raFile, fileInfo.vr_type, sq, endianess);
-		                	raFile.seek(raPtrOld);
-		                }
-		                
-		                //Note entire sequence tags are not eligible for anonymization, one can anonymize individual elements of a sequence tag
-		                //else if(type.equals("typeSequence")) {
-		                //	printToLogFile.println("("+key+"):\tBeginning sequence"+elementLength);
-	                    //	Vector v = sq.getSequenceDisplay();
-	                    //	for(int i=0; i<v.size(); i++) {
-	                    //		printToLogFile.println("\t"+v.get(i));
-	                    //	}
-		                //}
+		                } 
 	                }
-	                
-	                
-	                
 	            } catch (OutOfMemoryError e) {
 
 	                if ( !isQuiet()) {
@@ -1647,12 +1634,13 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	     * 
 	     * @param itemLength Length of the item in bytes.
 	     * @param endianess Big (true) or little (false).
+	     * @param sequence name
 	     * 
 	     * @return The sequence item read in.
 	     * 
 	     * @see FileDicomItem
 	     */
-	    private Object getDataSet(int itemLength, boolean endianess) throws IOException {
+	    private Object getDataSet(int itemLength, boolean endianess, String name) throws IOException {
 	        FileDicomItem item = new FileDicomItem();
 
 	        String type;
@@ -1839,17 +1827,18 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                // (type == "typeUnknown" && elementLength == -1) Implicit sequence tag if not in DICOM dictionary.
 	                else if (type.equals("typeSequence") || ( (type == "typeUnknown") && (elementLength == -1))) {
 	                    int len = elementLength;
-	                    String name = nameSQ;
-	                    Object sq2 = getSequence(endianess, len);
+	                    //name of sub-sequence
+	                    String nameTemp = nameSQ;
+	                    Object sq2 = getSequence(endianess, len, nameTemp);
 	                    entry.setValue(sq2, len);
-	                    item.putTag(name, entry);
-	                    item.setLength(name, len);
+	                    item.putTag(nameTemp, entry);
+	                    item.setLength(nameTemp, len);
 	                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type +
 	                    // "; element length = "+ elementLength + "\n", 2);
 	                }
 	                
 	                //System.out.println("At this sequence name currently: "+nameSQ);
-	                if(tagExistInAnonymizeTagIDs(nameSQ)) {
+	                if(tagExistInAnonymizeTagIDs(nameSQ) || tagExistInAnonymizeTagIDs(name)) {
 	                	//System.out.print("Writing "+nameSQ+"\t");
 	                	
 	                	long raPtrOld = raFile.getFilePointer();
@@ -2345,12 +2334,13 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	     * 
 	     * @param endianess Big or little
 	     * @param seqLength Length of this sequence, although possibly left undefined.
+	     * @param name sequence name
 	     * 
 	     * @return A DicomSQ object which stores the new tags and their info
 	     * 
 	     * @see DicomSQ
 	     */
-	    protected Object getSequence(boolean endianess, int seqLength) throws IOException {
+	    protected Object getSequence(boolean endianess, int seqLength, String name) throws IOException {
 	        FileDicomSQ sq = new FileDicomSQ();
 	        
 	        // There is no more of the tag to read if the length of the tag
@@ -2389,7 +2379,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                            FileDicomItem item = new FileDicomItem();
 	                            sq.addItem(item);
 	                        } else {
-	                            sq.addItem((FileDicomItem) getDataSet(elementLength, endianess));
+	                            sq.addItem((FileDicomItem) getDataSet(elementLength, endianess, name));
 	                        }
 	                    } else if (nameSQ.equals(SEQ_ITEM_END)) {
 
@@ -2429,7 +2419,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                        // elementLength here is the length of the
 	                        // item as it written into the File
 	                        // System.out.println("Special ele length = " + Integer.toString(elementLength, 0x10));
-	                        sq.addItem((FileDicomItem) getDataSet(elementLength, endianess));
+	                        sq.addItem((FileDicomItem) getDataSet(elementLength, endianess, name));
 	                    } else { // should never get here
 	                        Preferences.debug(
 	                                "getSequence(): sub-sequence tags not starting with " + SEQ_ITEM_BEGIN + "\n", 2);
