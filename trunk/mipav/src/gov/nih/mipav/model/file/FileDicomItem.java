@@ -3,6 +3,7 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.structures.*;
 
+import java.io.Serializable;
 import java.util.*;
 
 
@@ -197,7 +198,7 @@ public class FileDicomItem extends ModelSerialCloneable {
      * @author senseneyj
      *
      */
-    private class KeyComparator implements Comparator<String> {
+    private class KeyComparator implements Comparator<String>, Serializable {
 
 		/* (non-Javadoc)
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
