@@ -508,7 +508,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	            // ******* Gets the next element
 	            getNextElement(endianess); // gets group, element, length
 	            name = convertGroupElement(groupWord, elementWord);
-    
+	            
 	            FileDicomKey key = new FileDicomKey(name);
 	            int tagVM;
 
@@ -669,9 +669,12 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	anonymizeTags.put(key, data);
 		                	
 		                	raFile.seek(bPtrOld);
-		                	if(data instanceof Short) {
+		                	if(data instanceof Short || data instanceof Integer) {
 		                		writeShort((short)0, endianess);
-		                	} else if(data instanceof Short[]) {
+		                	} else if(data instanceof Short[] || data instanceof Integer[]) {
+		                		if(data instanceof Integer[]) {
+		                			System.err.println("Unusual data type encountered");
+		                		}
 		                		for(int i=0; i<((Short[])data).length; i++) {
 		                			writeShort((short)0, endianess);
 		                		}
@@ -701,7 +704,10 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	raFile.seek(bPtrOld);
 		                	if(data instanceof Float) {
 		                		writeFloat(0, endianess);
-		                	} else if(data instanceof Integer[]) {
+		                	} else if(data instanceof Float[] || data instanceof Double[]) {
+		                		if(data instanceof Double[]) {
+		                			System.err.println("Unusual data type encountered");
+		                		}
 		                		for(int i=0; i<((Float[])data).length; i++) {
 		                			writeFloat(0, endianess);
 		                		}
@@ -715,7 +721,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	raFile.seek(bPtrOld);
 		                	if(data instanceof Double) {
 		                		writeDouble(0, endianess);
-		                	} else if(data instanceof Integer[]) {
+		                	} else if(data instanceof Double[]) {
 		                		for(int i=0; i<((Double[])data).length; i++) {
 		                			writeDouble(0, endianess);
 		                		}
@@ -1889,9 +1895,12 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	//System.out.println(data);
 		                	
 		                	raFile.seek(bPtrOld);
-		                	if(data instanceof Short) {
+		                	if(data instanceof Short || data instanceof Integer) {
 		                		writeShort((short)0, endianess);
-		                	} else if(data instanceof Short[]) {
+		                	} else if(data instanceof Short[] || data instanceof Integer[]) {
+		                		if(data instanceof Integer[]) {
+		                			System.err.println("Unusual data type encountered");
+		                		}
 		                		for(int i=0; i<((Short[])data).length; i++) {
 		                			writeShort((short)0, endianess);
 		                		}
@@ -1917,9 +1926,12 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	//System.out.println(data);
 		                	
 		                	raFile.seek(bPtrOld);
-		                	if(data instanceof Float) {
+		                	if(data instanceof Float || data instanceof Double) {
 		                		writeFloat(0, endianess);
-		                	} else if(data instanceof Integer[]) {
+		                	} else if(data instanceof Float[] || data instanceof Double[]) {
+		                		if(data instanceof Double[]) {
+		                			System.err.println("Unusual data type encountered");
+		                		}
 		                		for(int i=0; i<((Float[])data).length; i++) {
 		                			writeFloat(0, endianess);
 		                		}
@@ -1933,7 +1945,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	raFile.seek(bPtrOld);
 		                	if(data instanceof Double) {
 		                		writeDouble(0, endianess);
-		                	} else if(data instanceof Integer[]) {
+		                	} else if(data instanceof Double[]) {
 		                		for(int i=0; i<((Double[])data).length; i++) {
 		                			writeDouble(0, endianess);
 		                		}
