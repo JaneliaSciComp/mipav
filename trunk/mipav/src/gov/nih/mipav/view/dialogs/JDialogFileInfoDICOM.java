@@ -1502,7 +1502,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 			Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 			TableCellRenderer refRenderer = table.getCellRenderer(row, 1);
-			if(refRenderer instanceof TagCodeRenderer && ((TagCodeRenderer) refRenderer).hasValidTag() && row > 20) {
+			if(refRenderer instanceof TagCodeRenderer && ((TagCodeRenderer) refRenderer).hasValidTag() && row > 16+(imageA.getNDims()-1)*2) {
 				cell.setBackground(((TagCodeRenderer) refRenderer).getBackground());
 			} else {
 				cell.setBackground(Color.white);
