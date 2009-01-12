@@ -1,10 +1,8 @@
 package gov.nih.mipav.model.file;
 
-
 import gov.nih.mipav.model.structures.*;
 
 import java.util.*;
-
 
 /**
  * This is a class for reading in a DICOM sequence tag. For more information about the DICOM sequence tag see the DICOM
