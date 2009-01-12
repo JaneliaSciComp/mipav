@@ -38,6 +38,8 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	
 	public static final String BROWSE_FILE_SUBMIT = "Browse file submit";
 
+	public static final String BROWSE_AVAILABLE_TAGS = "Browse available tags";
+	
 	public static final String REMOVE = "Remove file";
 	
 	public static final String REMOVE_ALL = "Remove all file";
@@ -59,7 +61,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
     				testingLabel, detailLabel, tagListLabel, submitFileLabel;
     
     /** Buttons **/
-    private JButton inputFileBrowseButton, submitFileBrowseButton;
+    private JButton inputFileBrowseButton, submitFileBrowseButton, tagEditorBrowseButton;
     
     private JButton removeFileButton, removeAllFileButton;
     
@@ -283,8 +285,19 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
         tagListTextField = new JTextField(45);
         imagePanel.add(tagListTextField, imageConstraints);
         
+        imageConstraints.gridx = 2;
+        imageConstraints.gridy = 5;
+        imageConstraints.anchor = GridBagConstraints.NONE;
+        imageConstraints.insets = new Insets(5, 5, 5, 5);
+        tagEditorBrowseButton = new JButton("Browse");
+        tagEditorBrowseButton.setEnabled(false);
+        tagEditorBrowseButton.addActionListener(this);
+        tagEditorBrowseButton.setActionCommand(BROWSE_AVAILABLE_TAGS);
+        imagePanel.add(tagEditorBrowseButton, imageConstraints);
+        
         imageConstraints.gridx = 1;
         imageConstraints.gridy = 6;
+        imageConstraints.anchor = GridBagConstraints.WEST;
         imageConstraints.insets = new Insets(2, 70, 5, 5);
         tagListSampleLabel = new JLabel(" Additional tags format: group,element;group,element e.g. 0002,0000;0002,0001  ");
         imagePanel.add(tagListSampleLabel, imageConstraints);
@@ -493,7 +506,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
     public void actionPerformed(ActionEvent event) {
     	
     	String command = event.getActionCommand();
-    	if (command.equalsIgnoreCase(BROWSE_FILE_INPUT)) {
+    	if (command.equals(BROWSE_FILE_INPUT)) {
 
     		fileChooser = new JFileChooser(Preferences.getImageDirectory());
         	fileChooser.setFont(MipavUtil.defaultMenuFont);
@@ -578,7 +591,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
         		callAlgorithm();
         	}
     	
-        } else if(command.equalsIgnoreCase(REMOVE_ALL)) {
+        } else if(command.equals(REMOVE_ALL)) {
         	fileList.removeAllElements();
         	clearEntries();
         	inputFileList.updateUI();
@@ -591,12 +604,15 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
         		clearEntries();
         	}
         	inputFileList.updateUI();
-        } 
+        } else if(command.equals(BROWSE_AVAILABLE_TAGS)) {
+        	System.out.println("Browse");
+        }
     }
     
     private void clearEntries() {
     	anatField.setText("");
     	submitField.setText("");
+    	tagEditorBrowseButton.setEnabled(false);
     }
 
 	/**
