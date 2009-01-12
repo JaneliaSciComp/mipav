@@ -4006,6 +4006,7 @@ public class FileAvi extends FileBase {
                                     
                                 } // else if (startCode == EOI)
                                 else if (startCode == SOS) {
+                                    System.out.println("Doing SOS");
                                     if (ls) {
                   
                                     }
@@ -4107,7 +4108,7 @@ public class FileAvi extends FileBase {
                                                 c = comp_index[i];
                                                 dataPtr[c] = 0;
                                                 if (AMVCodec) {
-                                                    dataPtr[c] += (linesize[c] * (v_scount[i] * (8 * mb_height - ((height/v_max) & 7)) - 1));
+                                                    dataPtr[c] = (linesize[c] * (v_scount[i] * (8 * mb_height - ((height/v_max) & 7)) - 1));
                                                     linesize[c] *= -1;
                                                 }
                                             } // for (i = 0; i < nb_components; i++)
@@ -4153,6 +4154,8 @@ public class FileAvi extends FileBase {
                                                              
                                                              ptr[0] = dataPtr[c] + (((linesize[c] * (v * mb_y + y) * 8) +
                                                                        (h * mb_x + x) * 8 ) >> lowres);
+                                                             Preferences.debug("c = " + c + " ptr[0] = " + ptr[0] + "\n");
+                                                             Preferences.debug("linesize[c] = " + linesize[c] + "\n");
                                                              if (interlaced && bottom_field) {
                                                                  ptr[0] += linesize[c] >> 1;
                                                              }
@@ -4529,12 +4532,15 @@ public class FileAvi extends FileBase {
                                             x_chroma_shift = 1;
                                             y_chroma_shift = 1;
                                             w2 = (imgExtents[0] + (1 << x_chroma_shift) - 1) >> x_chroma_shift;
+                                            Preferences.debug("w2 = " + w2 + "\n");
                                             linesize[0] = imgExtents[0];
                                             linesize[1] = w2;
                                             linesize[2] = w2;
                                             pSize = linesize[0] * imgExtents[1];
                                             h2 = (imgExtents[1]+ (1 << y_chroma_shift) - 1) >> y_chroma_shift;
+                                            Preferences.debug("h2 = " + h2 + "\n");
                                             size2 = linesize[1] * h2;
+                                            Preferences.debug("size2 = " + size2 + "\n");
                                             if ((data[0] == null) || (data[0].length != pSize)) {
                                                 data[0] = new byte[pSize];
                                             }
@@ -4749,6 +4755,7 @@ public class FileAvi extends FileBase {
         long row1;
         long temp;
         int a0, a1, a2, a3, b0, b1, b2, b3;
+        int destOrg = destPtr[0];
         for (i = 0; i < 8; i++) {
             row0 = (block[i*8] & 0xffffL) << 48;
             row0 |= (block[i*8+1] & 0xffffL) << 32;
@@ -4773,6 +4780,7 @@ public class FileAvi extends FileBase {
                 continue;
             } // if (((row0 & (~ROW0_MASK)) | row1) == 0)
             a0 = (W4 * block[i*8]) + ( 1 << (ROW_SHIFT - 1));
+            Preferences.debug("i = " + i + " 1st for loop a0 = " + a0 + "\n");
             a1 = a0;
             a2 = a0;
             a3 = a0;
@@ -4827,6 +4835,7 @@ public class FileAvi extends FileBase {
         
         for (i = 0; i < 8; i++) {
             a0 = W4 * (block[i] + ((1 << (COL_SHIFT-1))/W4));
+            Preferences.debug("i = " + i + " a0 = " + a0 + "\n");
             a1 = a0;
             a2 = a0;
             a3 = a0;
@@ -4838,13 +4847,11 @@ public class FileAvi extends FileBase {
             
             b0 = W1 * block[i + 8];
             b1 = W3 * block[i + 8];
-            System.out.println("1 b1 = " + b1);
             b2 = W5 * block[i + 8];
             b3 = W7 * block[i + 8];
             
             b0 += W3 * block[i + 24];
             b1 += -W7 * block[i + 24];
-            System.out.println("2 b1 = " + b1);
             b2 += -W1 * block[i + 24];
             b3 += -W5 * block[i + 24];
             
@@ -4858,7 +4865,6 @@ public class FileAvi extends FileBase {
             if (block[i + 40] != 0) {
                 b0 += W5 * block[i + 40];
                 b1 += -W1 * block[i + 40];
-                System.out.println("3 b1 = " + b1);
                 b2 += W7 * block[i + 40];
                 b3 += W3 * block[i + 40];
             } // if (block[i + 40] != 0)
@@ -4873,11 +4879,11 @@ public class FileAvi extends FileBase {
             if (block[i + 56] != 0) {
                 b0 += W7 * block[i + 56];
                 b1 += -W5 * block[i + 56];
-                System.out.println("4 b1 = " + b1);
                 b2 += W3 * block[i + 56];
                 b3 += -W1 * block[i + 56];
             } // if (block[i + 56] != 0)
             
+            destPtr[0] = destOrg;
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a0 + b0) >> COL_SHIFT)];
             destPtr[0] += line_size;
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a1 + b1) >> COL_SHIFT)];
@@ -4888,13 +4894,13 @@ public class FileAvi extends FileBase {
             destPtr[0] += line_size;
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a3 - b3) >> COL_SHIFT)];
             destPtr[0] += line_size;
+            Preferences.debug("destPtr[0] = " + destPtr[0] + " i = " + i + "\n");
+            Preferences.debug("a2 = " + a2 + " b2 = " + b2 + " (MAX_NEG_CROP + ((a2 - b2)) >> COL_SHIFT)) = " +
+                              (MAX_NEG_CROP +  ((a2 - b2) >> COL_SHIFT)) + "\n");
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a2 - b2) >> COL_SHIFT)];
             destPtr[0] += line_size;
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a1 - b1) >> COL_SHIFT)];
             destPtr[0] += line_size;
-            System.out.println("destPtr[0] = " + destPtr[0] + " i = " + i + " a0 = " + a0 + " b0 = " + b0);
-            System.out.println("(a0 - b0) = " + (a0 - b0));
-            System.out.println("((a0 - b0) >> COL_SHIFT = " + ((a0 - b0) >> COL_SHIFT));
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a0 - b0) >> COL_SHIFT)];
         } // for (i = 0; i < 8; i++)
     }
