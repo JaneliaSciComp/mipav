@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.file.DicomDictionary;
 import gov.nih.mipav.model.file.FileDicom;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
@@ -17,13 +18,17 @@ import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.TreeMap;
 import java.util.Vector;
 
 /**
@@ -98,6 +103,8 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	
 	/**InfoGathering threads to find Dicom data*/
 	private ArrayList<InformationUpdate> infoGather;
+	
+	private TagEditorDialog currentTagEditor;
 	
 	//	~ Constructors --------------------------------------------------------------------------
 
@@ -287,7 +294,8 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
         
         imageConstraints.gridx = 2;
         imageConstraints.gridy = 5;
-        imageConstraints.anchor = GridBagConstraints.NONE;
+        imageConstraints.fill = GridBagConstraints.HORIZONTAL;
+        imageConstraints.anchor = GridBagConstraints.CENTER;
         imageConstraints.insets = new Insets(5, 5, 5, 5);
         tagEditorBrowseButton = new JButton("Browse");
         tagEditorBrowseButton.setEnabled(false);
@@ -672,6 +680,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
             			anatField.setText(((FileDicomTag) obj).getValue(true).toString());
             		}
             	}
+            	currentTagEditor = new TagEditorDialog(tagTable);
             }
 		}
     	
@@ -692,6 +701,141 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
     	public boolean isActionable() {
     		return likelyActionable;
     	}
+    }
+    
+    private class TagEditorDialog extends JDialogBase {
+
+    	private static final String ADD_TAG = "Add";
+
+		private static final String CLOSE = "Close";
+
+		private TreeMap<String, ArrayList<String>> groupToElement;
+    	
+    	private TreeMap<String, String> keyToName;
+
+		private GridBagLayout subPanelGridBagLayout;
+
+		private GridBagConstraints subPanelConstraints;
+
+		private JPanel subPanel;
+
+		private JList groupList;
+
+		private JList elementList;
+
+		private JButton addButton;
+    	
+		public TagEditorDialog(FileDicomTagTable tagTable) {
+			this.groupToElement = new TreeMap<String, ArrayList<String>>();
+			this.keyToName = new TreeMap<String, String>();
+			buildGroupElementMap(tagTable);
+			
+			init();
+		}
+		
+		public void init() {
+			setForeground(Color.black);
+	        setTitle("Tag Selector Tool");
+	        
+	        subPanelGridBagLayout = new GridBagLayout();
+	        subPanelConstraints = new GridBagConstraints();
+	        subPanelConstraints.anchor = GridBagConstraints.NORTH;
+
+	        subPanel = new JPanel(mainPanelGridBagLayout);
+	        
+	        // Group Column
+	        subPanelConstraints.gridx = 1;
+	        subPanelConstraints.gridy = 0;
+	        JLabel groupLabel = new JLabel("Group:");
+	        subPanel.add(groupLabel, subPanelConstraints);
+	        
+	        subPanelConstraints.gridx = 1;
+	        subPanelConstraints.gridy = 1;
+	        Vector<String> v;
+	        groupList = new JList(v = new Vector<String>(groupToElement.keySet()));
+	        groupList.setSelectedIndex(0);
+	        groupList.setVisibleRowCount(4);
+	        groupList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+	        groupList.setMinimumSize(new Dimension(300, 94));
+	        groupList.setMaximumSize(new Dimension(300, 500));
+	        JScrollPane scrollPaneGroup = new JScrollPane(groupList);
+	        scrollPaneGroup.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+	        scrollPaneGroup.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);    
+	        scrollPaneGroup.setMinimumSize(new Dimension(300, 94));
+	        scrollPaneGroup.setPreferredSize(new Dimension(300, 94));
+	        subPanel.add(scrollPaneGroup, subPanelConstraints);
+	        
+	        // Element Column
+	        subPanelConstraints.gridx = 2;
+	        subPanelConstraints.gridy = 0;
+	        JLabel elementLabel = new JLabel("Element:");
+	        subPanel.add(elementLabel, subPanelConstraints);
+	        
+	        subPanelConstraints.gridx = 2;
+	        subPanelConstraints.gridy = 1;
+	        elementList = new JList(new Vector(groupToElement.get(v.get(0))));
+	        elementList.setVisibleRowCount(4);
+	        elementList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+	        elementList.setMinimumSize(new Dimension(300, 94));
+	        elementList.setMaximumSize(new Dimension(300, 500));
+	        JScrollPane scrollPaneElement = new JScrollPane(elementList);
+	        scrollPaneElement.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+	        scrollPaneElement.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);    
+	        scrollPaneElement.setMinimumSize(new Dimension(300, 94));
+	        scrollPaneElement.setPreferredSize(new Dimension(300, 94));
+	        subPanel.add(scrollPaneElement, subPanelConstraints);
+	        
+	        //Buttons Column
+	        subPanelConstraints.gridx = 3;
+	        subPanelConstraints.gridy = 0;
+	        addButton = new JButton("Add");
+	        addButton.setActionCommand(ADD_TAG);
+	        addButton.addActionListener(this);
+	        subPanel.add(addButton, subPanelConstraints);
+	        
+	        subPanelConstraints.gridx = 3;
+	        subPanelConstraints.gridy = 1;
+	        closeButton = new JButton("Close");
+	        closeButton.setActionCommand(CLOSE);
+	        closeButton.addActionListener(this);
+	        
+	        JPanel imagePanel = buildImagePanel();
+	        subPanelConstraints.gridx = 0;
+	        subPanelConstraints.gridy = 0;
+	        subPanelConstraints.gridwidth = 3;
+	        subPanel.add(imagePanel, subPanelConstraints);
+		}
+		
+		private void buildGroupElementMap(FileDicomTagTable tagTable) {
+			Hashtable<FileDicomKey, FileDicomTag> tagHash = tagTable.getTagList();
+			Enumeration<FileDicomKey> e = tagHash.keys();
+			while(e.hasMoreElements()) {
+				FileDicomKey key = e.nextElement();
+				ArrayList<String> allElements = groupToElement.get(key.getGroup());
+				if(allElements == null) {
+					allElements = new ArrayList<String>(); 
+					groupToElement.put(key.getGroup(), allElements);
+				}
+				allElements.add(key.getElement());
+				keyToName.put(key.toString(), DicomDictionary.getName(key));
+				System.out.println("Added "+key.toString()+" to "+printObjects(groupToElement.get(key.getGroup())));
+			}
+		}
+		
+		private String printObjects(ArrayList<String> ar) {
+			String arStr = "";
+			for(String arItem : ar) {
+				arStr += arItem+" ";
+			}
+			return arStr;
+		}
+    	
+    	@Override
+		public void actionPerformed(ActionEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+    	
     }
     
     public static void main(String[] args) {
