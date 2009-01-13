@@ -471,7 +471,6 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
     		System.gc();
     		selectedFiles = new File[fileList.size()];
     		for(int i=0; i<fileList.size(); i++) {
-    			System.out.println("Working with file "+fileList.get(i));
     			selectedFiles[i] = new File(fileList.get(i));
     		}
     		
@@ -625,9 +624,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
         	}
         	inputFileList.updateUI();
         } else if(command.equals(BROWSE_AVAILABLE_TAGS)) {
-        	currentTagEditor.setVisible();
-        	System.out.println("DICOM tag browsing");
-        	
+        	currentTagEditor.setVisible();	
         }
     }
     
@@ -822,7 +819,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	        selectorPanelConstraints.gridx = 1;
 	        selectorPanelConstraints.gridy = 0;
 	        selectorPanelConstraints.gridheight = 1;
-	        selectorPanelConstraints.anchor = GridBagConstraints.WEST;
+	        selectorPanelConstraints.anchor = GridBagConstraints.NORTHWEST;
 	        selectorPanelConstraints.insets = new Insets(5, 15, 5, 15);
 	        JLabel groupLabel = new JLabel("Group:");
 	        tagSelectorPanel.add(groupLabel, selectorPanelConstraints);
@@ -852,7 +849,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	        selectorPanelConstraints.gridx = 2;
 	        selectorPanelConstraints.gridy = 0;
 	        selectorPanelConstraints.gridheight = 1;
-	        selectorPanelConstraints.anchor = GridBagConstraints.WEST;
+	        selectorPanelConstraints.anchor = GridBagConstraints.NORTHWEST;
 	        JLabel elementLabel = new JLabel("Element:");
 	        tagSelectorPanel.add(elementLabel, selectorPanelConstraints);
 	        
@@ -916,7 +913,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	        infoPanelConstraints.gridx = 0;
 	        infoPanelConstraints.gridy = 0;
 	        infoPanelConstraints.insets = new Insets(5, 10, 5, 10);
-	        infoPanelConstraints.anchor = GridBagConstraints.WEST;
+	        infoPanelConstraints.anchor = GridBagConstraints.NORTHWEST;
 	        infoPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
 	        infoPanelConstraints.weightx = 0;
 	        JLabel nameLabel = new JLabel("Tag name:");
@@ -1137,7 +1134,6 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 				String tagName = groupCombo.getSelectedItem()+","+elementCombo.getSelectedItem();
 				nameValueSeq.setText(keyToNameSeq.get(tagName));
 				propertyValueSeq.setText(keyToValueSeq.get(tagName));
-				System.out.println(clearButton.getPreferredSize());
 				sequenceInformationPanel.updateUI();
 			}
 		}
@@ -1184,7 +1180,6 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 				}
 				nameValue.updateUI();
 				tagInformationPanel.updateUI();
-				System.out.println(nameValue.getText() + "\t" + propertyValue.getText());
 			}
 		}
     	
