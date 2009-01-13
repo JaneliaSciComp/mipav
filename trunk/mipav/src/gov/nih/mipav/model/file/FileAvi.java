@@ -4757,16 +4757,22 @@ public class FileAvi extends FileBase {
     
     private void yuvj420p_to_argb(byte dst[], byte data[][], int width, int height, int slinesize[]) {
         int width2;
+        int dlinesize = 4 * width;
         int d1;
         int d2;
         int y2;
+        int w;
         byte y1[] = data[0];
         byte cb[] = data[1];
         byte cr[] = data[2];
         width2 = (width + 1) >> 1;
         for (; height >= 2; height -= 2) {
             d1 = 0;
-            d2 = linesize[0];
+            d2 = dlinesize;
+            y2 = slinesize[0];
+            for (w = width; w >= 2; w-= 2) {
+                
+            } // for (w = width; w >= 2; w -=2)
         } // for (; height >= 2; height -=2)
     }
     
