@@ -237,7 +237,7 @@ public class FileAvi extends FileBase {
         private final int ROW_SHIFT = 11;
         private final int COL_SHIFT = 20; // 6
         
-        private final int MAX_NEG_CROP = 1024;
+        private final int MAX_NEG_CROP = 2048; // increased from 1024
 
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -3714,6 +3714,7 @@ public class FileAvi extends FileBase {
                  int ptr[] = new int[1];
                  int dataPtr[] = new int[4];
                  byte data[][] = new byte[4][];
+                 byte destBuf[] = new byte[4 * imgExtents[0] * imgExtents[1]];
                  int x_chroma_shift;
                  int y_chroma_shift;
                  int w2;
@@ -4006,7 +4007,6 @@ public class FileAvi extends FileBase {
                                     
                                 } // else if (startCode == EOI)
                                 else if (startCode == SOS) {
-                                    System.out.println("Doing SOS");
                                     if (ls) {
                   
                                     }
@@ -4025,6 +4025,9 @@ public class FileAvi extends FileBase {
                                                       buffer[bufp[0]++] = xb;
                                                   }
                                                   else if (xb != 0) {
+                                                      if (((fileBuffer[j-2] & 0xff) == 0xff) && ((fileBuffer[j-1] & 0xff) == EOI)) {
+                                                          j -= 2; // needed to recover EOI.  EOI is after SOS and EOI is before SOI.
+                                                      }
                                                       break;
                                                   }   
                                               } // if (xb == (byte)0xff)
@@ -4115,10 +4118,9 @@ public class FileAvi extends FileBase {
                                             
                                             Preferences.debug("mb_width = " + mb_width + "\n");
                                             Preferences.debug("mb_height = " + mb_height + "\n");
+                                            loopmby:
                                             for (mb_y = 0; mb_y < mb_height; mb_y++) {
-                                                Preferences.debug("mb_y = " + mb_y + "\n");
                                                 for (mb_x = 0; mb_x < mb_width; mb_x++) {
-                                                    Preferences.debug("mb_x = " + mb_x + "\n");
                                                     gbc_buffer = buffer;
                                                     gbc_buffer_end = buffer.length;
                                                     gbc_index = 8 * bufp[0];
@@ -4140,22 +4142,20 @@ public class FileAvi extends FileBase {
                                                              }
                                                              if (!progressive && decode_block(block, i, dc_index[i], ac_index[i], 
                                                                  quant_matrixes[quant_index[c]]) < 0) {
-                                                                 MipavUtil.displayError("decode_block error for mb_x = " + mb_x +
-                                                                                        " mb_y = " + mb_y);
-                                                                 return null;
+                                                                 Preferences.debug("decode_block error for mb_x = " + mb_x +
+                                                                                        " mb_y = " + mb_y + "\n");
+                                                                 break loopmby;
                                                              } // if (!progressive && decode_block)
                                                              if (progressive && decode_block_progressive(block, i, dc_index[i],
                                                                  ac_index[i], quant_matrixes[quant_index[c]], predictor, ilv,
                                                                  prev_shift, point_transform, EOBRUN) < 0) {
-                                                                 MipavUtil.displayError("decode_block_progressive error for mb_x = " +
-                                                                         mb_x + " mb_y = " + mb_y);
-                                                                 return null;
+                                                                 Preferences.debug("decode_block_progressive error for mb_x = " +
+                                                                         mb_x + " mb_y = " + mb_y + "\n");
+                                                                 break loopmby;
                                                              }
                                                              
                                                              ptr[0] = dataPtr[c] + (((linesize[c] * (v * mb_y + y) * 8) +
                                                                        (h * mb_x + x) * 8 ) >> lowres);
-                                                             Preferences.debug("c = " + c + " ptr[0] = " + ptr[0] + "\n");
-                                                             Preferences.debug("linesize[c] = " + linesize[c] + "\n");
                                                              if (interlaced && bottom_field) {
                                                                  ptr[0] += linesize[c] >> 1;
                                                              }
@@ -4199,6 +4199,12 @@ public class FileAvi extends FileBase {
                                                     }
                                                 } // for (mb_x = 0; mb_x < mb_width; mb_x++)
                                             } // for (mb_y = 0; mb_y < mb_height; mb_y++)
+                                            switch(pix_fmt) {
+                                                case PIX_FMT_YUVJ420P:
+                                                    yuvj420p_to_argb(destBuf, data, imgExtents[0], imgExtents[1],
+                                                            linesize);
+                                                    break;
+                                            }
                                         } // if (prev_shift == 0)
                                     }
                                     // emms_c();
@@ -4749,6 +4755,21 @@ public class FileAvi extends FileBase {
         }
     }
     
+    private void yuvj420p_to_argb(byte dst[], byte data[][], int width, int height, int slinesize[]) {
+        int width2;
+        int d1;
+        int d2;
+        int y2;
+        byte y1[] = data[0];
+        byte cb[] = data[1];
+        byte cr[] = data[2];
+        width2 = (width + 1) >> 1;
+        for (; height >= 2; height -= 2) {
+            d1 = 0;
+            d2 = linesize[0];
+        } // for (; height >= 2; height -=2)
+    }
+    
     private void ff_simple_idct_put(byte dest[], int destPtr[], int line_size, short block[]) {
         int i;
         long row0;
@@ -4780,7 +4801,6 @@ public class FileAvi extends FileBase {
                 continue;
             } // if (((row0 & (~ROW0_MASK)) | row1) == 0)
             a0 = (W4 * block[i*8]) + ( 1 << (ROW_SHIFT - 1));
-            Preferences.debug("i = " + i + " 1st for loop a0 = " + a0 + "\n");
             a1 = a0;
             a2 = a0;
             a3 = a0;
@@ -4835,7 +4855,6 @@ public class FileAvi extends FileBase {
         
         for (i = 0; i < 8; i++) {
             a0 = W4 * (block[i] + ((1 << (COL_SHIFT-1))/W4));
-            Preferences.debug("i = " + i + " a0 = " + a0 + "\n");
             a1 = a0;
             a2 = a0;
             a3 = a0;
@@ -4894,9 +4913,6 @@ public class FileAvi extends FileBase {
             destPtr[0] += line_size;
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a3 - b3) >> COL_SHIFT)];
             destPtr[0] += line_size;
-            Preferences.debug("destPtr[0] = " + destPtr[0] + " i = " + i + "\n");
-            Preferences.debug("a2 = " + a2 + " b2 = " + b2 + " (MAX_NEG_CROP + ((a2 - b2)) >> COL_SHIFT)) = " +
-                              (MAX_NEG_CROP +  ((a2 - b2) >> COL_SHIFT)) + "\n");
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a2 - b2) >> COL_SHIFT)];
             destPtr[0] += line_size;
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a1 - b1) >> COL_SHIFT)];
@@ -5115,8 +5131,8 @@ public class FileAvi extends FileBase {
                         block[j] = (short)(level * quant_matrix[j]);
                         break;
                     } // if (i == 63)
-                    MipavUtil.displayError("In decode_block error_count = " + i);
-                    return - 1;
+                    Preferences.debug("In decode_block error_count = " + i + "\n");
+                    return -1;
                 } // if (i >= 63)
                 j = scantable_permutated[i];
                 block[j] = (short)(level * quant_matrix[j]);
