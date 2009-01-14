@@ -1303,7 +1303,23 @@ public class FileInterfile extends FileBase {
             }
 
             file = new File(fileDir + fileName);
-            raFile = new RandomAccessFile(file, "r");
+            try {
+                raFile = new RandomAccessFile(file, "r");
+            }
+            catch (FileNotFoundException e) {
+                index = originalFileName.lastIndexOf('.');
+                String defaultFileName = originalFileName.substring(0,index) + ".img";
+                if (!defaultFileName.equalsIgnoreCase(fileName)) {
+                    MipavUtil.displayWarning("Could not find specified data file " + fileName + "\n");
+                    MipavUtil.displayWarning("Trying default file name " + defaultFileName + "\n");
+                    file = new File(fileDir + defaultFileName);
+                    raFile = new RandomAccessFile(file, "r"); 
+                }
+                else {
+                    MipavUtil.displayError("Could not find specified data file " + fileName + "\n");
+                    throw new IOException();
+                }
+            }
             fileLength = raFile.length();
 
             bufferSize = xDim * yDim;
