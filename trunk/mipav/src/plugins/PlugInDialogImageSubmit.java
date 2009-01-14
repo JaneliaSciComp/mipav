@@ -738,6 +738,9 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 
 		/**Indicates tag is a private tag*/
 		private static final String PRIVATE = "Private tag";
+		
+		/**Min/max size of all text boxes contained in scroll panes.*/
+		private final Dimension SCROLL_PANE_SIZE = new Dimension(200, 20);
 
 		/**List of all file's elements for each group of a FileDicomKey set*/
 		private TreeMap<String, ArrayList<String>> groupToElement, groupToElementSeq;
@@ -914,7 +917,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	        infoPanelConstraints.gridy = 0;
 	        infoPanelConstraints.insets = new Insets(5, 10, 5, 10);
 	        infoPanelConstraints.anchor = GridBagConstraints.NORTHWEST;
-	        infoPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
+	        infoPanelConstraints.fill = GridBagConstraints.BOTH;
 	        infoPanelConstraints.weightx = 0;
 	        JLabel nameLabel = new JLabel("Tag name:");
 	        tagInformationPanel.add(nameLabel, infoPanelConstraints);
@@ -924,7 +927,14 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	        infoPanelConstraints.weightx = 1;
 	        String tagName = groupList.getSelectedValue().toString()+","+elementList.getSelectedValue().toString();
 	        nameValue = new JLabel(keyToName.get(tagName));
-	        tagInformationPanel.add(nameValue, infoPanelConstraints);
+	        JScrollPane namePane = new JScrollPane(nameValue);
+	        namePane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+	        namePane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+	        namePane.setBorder(null);
+	        namePane.setMinimumSize(SCROLL_PANE_SIZE);
+	        namePane.setPreferredSize(SCROLL_PANE_SIZE);
+	        namePane.setPreferredSize(SCROLL_PANE_SIZE);
+	        tagInformationPanel.add(namePane, infoPanelConstraints);
 	        
 	        //tag value row
 	        infoPanelConstraints.gridx = 0;
@@ -937,7 +947,14 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	        infoPanelConstraints.gridy = 1;
 	        infoPanelConstraints.weightx = 1;
 	        propertyValue = new JLabel(keyToValue.get(tagName));
-	        tagInformationPanel.add(propertyValue, infoPanelConstraints);
+	        JScrollPane propPane = new JScrollPane(propertyValue);
+	        propPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+	        propPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+	        propPane.setMinimumSize(SCROLL_PANE_SIZE);
+	        propPane.setMaximumSize(SCROLL_PANE_SIZE);
+	        propPane.setPreferredSize(SCROLL_PANE_SIZE);
+	        propPane.setBorder(null);
+	        tagInformationPanel.add(propPane, infoPanelConstraints);
 	        
 	        return tagInformationPanel;
 		}
@@ -997,7 +1014,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	        seqPanelConstraints.gridy = 2;
 	        seqPanelConstraints.insets = new Insets(5, 10, 5, 10);
 	        seqPanelConstraints.anchor = GridBagConstraints.WEST;
-	        seqPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
+	        seqPanelConstraints.fill = GridBagConstraints.BOTH;
 	        seqPanelConstraints.weightx = 0;
 	        JLabel nameLabel = new JLabel("Tag name:");
 	        sequenceInformationPanel.add(nameLabel, seqPanelConstraints);
@@ -1005,10 +1022,16 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	        seqPanelConstraints.gridx = 1;
 	        seqPanelConstraints.gridy = 2;
 	        seqPanelConstraints.weightx = 1;
-	        seqPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
 	        seqPanelConstraints.gridwidth = 3;
 	        nameValueSeq = new JLabel("Name");
-	        sequenceInformationPanel.add(nameValueSeq, seqPanelConstraints);
+	        JScrollPane namePane = new JScrollPane(nameValueSeq);
+	        namePane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+	        namePane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+	        namePane.setBorder(null);
+	        namePane.setMinimumSize(SCROLL_PANE_SIZE);
+	        namePane.setPreferredSize(SCROLL_PANE_SIZE);
+	        namePane.setPreferredSize(SCROLL_PANE_SIZE);
+	        sequenceInformationPanel.add(namePane, seqPanelConstraints);
 	        
 	        //tag value row
 	        seqPanelConstraints.gridx = 0;
@@ -1022,8 +1045,14 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	        seqPanelConstraints.weightx = 1;
 	        seqPanelConstraints.gridwidth = 3;
 	        propertyValueSeq = new JLabel("Value");
-	        propertyValueSeq.setMaximumSize(new Dimension(200, 30));
-	        sequenceInformationPanel.add(propertyValueSeq, seqPanelConstraints);
+	        JScrollPane propPane = new JScrollPane(propertyValueSeq);
+	        propPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+	        propPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+	        propPane.setBorder(null);
+	        propPane.setMinimumSize(SCROLL_PANE_SIZE);
+	        propPane.setPreferredSize(SCROLL_PANE_SIZE);
+	        propPane.setPreferredSize(SCROLL_PANE_SIZE);
+	        sequenceInformationPanel.add(propPane, seqPanelConstraints);
 	        
 	        //button column
 	        seqPanelConstraints.gridx = 3;
