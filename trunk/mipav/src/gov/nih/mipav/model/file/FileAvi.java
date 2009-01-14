@@ -237,7 +237,7 @@ public class FileAvi extends FileBase {
         private final int ROW_SHIFT = 11;
         private final int COL_SHIFT = 20; // 6
         
-        private final int MAX_NEG_CROP = 2048; // increased from 1024
+        private final int MAX_NEG_CROP = 1024;
 
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -4118,13 +4118,13 @@ public class FileAvi extends FileBase {
                                             
                                             Preferences.debug("mb_width = " + mb_width + "\n");
                                             Preferences.debug("mb_height = " + mb_height + "\n");
+                                            gbc_buffer = buffer;
+                                            gbc_buffer_end = buffer.length;
+                                            gbc_index = 8 * bufp[0];
+                                            gbc_size_in_bits = 8 * buffer.length;
                                             loopmby:
                                             for (mb_y = 0; mb_y < mb_height; mb_y++) {
                                                 for (mb_x = 0; mb_x < mb_width; mb_x++) {
-                                                    gbc_buffer = buffer;
-                                                    gbc_buffer_end = buffer.length;
-                                                    gbc_index = 8 * bufp[0];
-                                                    gbc_size_in_bits = 8 * buffer.length;
                                                     if ((restart_interval != 0) && (restart_count == 0)) {
                                                         restart_count = restart_interval;
                                                     }
@@ -4188,11 +4188,10 @@ public class FileAvi extends FileBase {
                                                             //re_cache = re_cache << (re_index & 0x07);
                                                             // LAST_SKIP_BITS(name, gb, n)
                                                             re_index += n;
-//                                                          CLOSE_READER(re, s);
+                                                            // CLOSE_READER(re, s);
                                                             gbc_index = re_index;
                                                         }
-                                                        bufp[0] = gbc_index/8;
-                                                        bufp[0] += 2; /* Skip RSTn */
+                                                        gbc_index += 16; /* Skip RSTn */
                                                         for (i = 0; i < nb_components; i++) { /* reset dc */
                                                             last_dc[i] = 1024;
                                                         }
@@ -4205,6 +4204,17 @@ public class FileAvi extends FileBase {
                                                             linesize);
                                                     break;
                                             }
+                                            
+                                            if (one) {
+                                                imageA.importData(0, destBuf, false);
+                                            } else {
+                                                imageA.importData(4 * z * imgExtents[0] * imgExtents[1], destBuf, false);
+                                            }
+
+                                            if (actualFrames > 1) {
+                                                fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
+                                            }
+                                            z++;
                                         } // if (prev_shift == 0)
                                     }
                                     // emms_c();
@@ -4758,22 +4768,151 @@ public class FileAvi extends FileBase {
     private void yuvj420p_to_argb(byte dst[], byte data[][], int width, int height, int slinesize[]) {
         int width2;
         int dlinesize = 4 * width;
+        int d = 0;
         int d1;
         int d2;
-        int y2;
+        int y2_ptr;
         int w;
-        byte y1[] = data[0];
-        byte cb[] = data[1];
-        byte cr[] = data[2];
+        byte y_data[] = data[0];
+        int y1_ptr = 0;
+        byte cb_data[] = data[1];
+        int cb_ptr = 0;
+        byte cr_data[] = data[2];
+        int cr_ptr = 0;
+        int y;
+        int cb;
+        int cr;
+        int SCALEBITS = 10;
+        int ONE_HALF = (1 << (SCALEBITS - 1));
+        int r_add;
+        int g_add;
+        int b_add;
         width2 = (width + 1) >> 1;
         for (; height >= 2; height -= 2) {
-            d1 = 0;
-            d2 = dlinesize;
-            y2 = slinesize[0];
+            d1 = d;
+            d2 = d + dlinesize;
+            y2_ptr = y1_ptr + slinesize[0];
             for (w = width; w >= 2; w-= 2) {
-                
+              cb = (cb_data[cb_ptr] & 0xff) - 128;
+              cr = (cr_data[cr_ptr] & 0xff) - 128;
+              r_add = ((int) ((1.402) * (1 << SCALEBITS) + 0.5)) * cr + ONE_HALF;
+              g_add = -((int) ((0.34414) * (1 << SCALEBITS) + 0.5)) * cb 
+                      -((int) ((0.71414) * (1 << SCALEBITS) + 0.5)) * cr + ONE_HALF;
+              b_add = ((int) ((1.772) * (1 << SCALEBITS) + 0.5)) * cb + ONE_HALF;
+              /* output 4 pixels */
+              y = (y_data[y1_ptr] & 0xff) << SCALEBITS;
+              dst[d1] = 0;
+              dst[d1 + 1] = ff_cropTbl[MAX_NEG_CROP + ((y + r_add) >> SCALEBITS)];
+              dst[d1 + 2] = ff_cropTbl[MAX_NEG_CROP + ((y + g_add) >> SCALEBITS)];
+              dst[d1 + 3] = ff_cropTbl[MAX_NEG_CROP + ((y + b_add) >> SCALEBITS)];
+              
+              y = (y_data[y1_ptr+1] & 0xff) << SCALEBITS;
+              dst[d1 + 4] = 0;
+              dst[d1 + 5] = ff_cropTbl[MAX_NEG_CROP + ((y + r_add) >> SCALEBITS)];
+              dst[d1 + 6] = ff_cropTbl[MAX_NEG_CROP + ((y + g_add) >> SCALEBITS)];
+              dst[d1 + 7] = ff_cropTbl[MAX_NEG_CROP + ((y + b_add) >> SCALEBITS)];
+              
+              y = (y_data[y2_ptr] & 0xff) << SCALEBITS;
+              dst[d2] = 0;
+              dst[d2 + 1] = ff_cropTbl[MAX_NEG_CROP + ((y + r_add) >> SCALEBITS)];
+              dst[d2 + 2] = ff_cropTbl[MAX_NEG_CROP + ((y + g_add) >> SCALEBITS)];
+              dst[d2 + 3] = ff_cropTbl[MAX_NEG_CROP + ((y + b_add) >> SCALEBITS)];
+              
+              y = (y_data[y2_ptr+1] & 0xff) << SCALEBITS;
+              dst[d2 + 4] = 0;
+              dst[d2 + 5] = ff_cropTbl[MAX_NEG_CROP + ((y + r_add) >> SCALEBITS)];
+              dst[d2 + 6] = ff_cropTbl[MAX_NEG_CROP + ((y + g_add) >> SCALEBITS)];
+              dst[d2 + 7] = ff_cropTbl[MAX_NEG_CROP + ((y + b_add) >> SCALEBITS)];
+              
+              d1 += 8;
+              d2 += 8;
+              
+              y1_ptr += 2;
+              y2_ptr += 2;
+              cb_ptr++;
+              cr_ptr++;
             } // for (w = width; w >= 2; w -=2)
+            /* handle odd width */
+            if (w != 0) {
+                cb = (cb_data[cb_ptr] & 0xff) - 128;
+                cr = (cr_data[cr_ptr] & 0xff) - 128;
+                r_add = ((int) ((1.402) * (1 << SCALEBITS) + 0.5)) * cr + ONE_HALF;
+                g_add = -((int) ((0.34414) * (1 << SCALEBITS) + 0.5)) * cb 
+                        -((int) ((0.71414) * (1 << SCALEBITS) + 0.5)) * cr + ONE_HALF;
+                b_add = ((int) ((1.772) * (1 << SCALEBITS) + 0.5)) * cb + ONE_HALF;
+                y = (y_data[y1_ptr] & 0xff) << SCALEBITS;
+                dst[d1] = 0;
+                dst[d1 + 1] = ff_cropTbl[MAX_NEG_CROP + ((y + r_add) >> SCALEBITS)];
+                dst[d1 + 2] = ff_cropTbl[MAX_NEG_CROP + ((y + g_add) >> SCALEBITS)];
+                dst[d1 + 3] = ff_cropTbl[MAX_NEG_CROP + ((y + b_add) >> SCALEBITS)];
+                
+                y = (y_data[y2_ptr] & 0xff) << SCALEBITS;
+                dst[d2] = 0;
+                dst[d2 + 1] = ff_cropTbl[MAX_NEG_CROP + ((y + r_add) >> SCALEBITS)];
+                dst[d2 + 2] = ff_cropTbl[MAX_NEG_CROP + ((y + g_add) >> SCALEBITS)];
+                dst[d2 + 3] = ff_cropTbl[MAX_NEG_CROP + ((y + b_add) >> SCALEBITS)];
+                
+                d1 += 4;
+                d2 += 4;
+                y1_ptr++;
+                y2_ptr++;
+                cb_ptr++;
+                cr_ptr++;
+            } // if (w != 0)
+            d += 2 * dlinesize;
+            y1_ptr += 2 * slinesize[0] - width;
+            cb_ptr += slinesize[1] - width2;
+            cr_ptr += slinesize[2] - width2;
         } // for (; height >= 2; height -=2)
+        /* handle odd height */
+        if (height != 0) {
+            d1 = d;
+            for (w = width; w >= 2; w -= 2) {
+                cb = (cb_data[cb_ptr] & 0xff) - 128;
+                cr = (cr_data[cr_ptr] & 0xff) - 128;
+                r_add = ((int) ((1.402) * (1 << SCALEBITS) + 0.5)) * cr + ONE_HALF;
+                g_add = -((int) ((0.34414) * (1 << SCALEBITS) + 0.5)) * cb 
+                        -((int) ((0.71414) * (1 << SCALEBITS) + 0.5)) * cr + ONE_HALF;
+                b_add = ((int) ((1.772) * (1 << SCALEBITS) + 0.5)) * cb + ONE_HALF;
+                /* output 2 pixels */
+                y = (y_data[y1_ptr] & 0xff) << SCALEBITS;
+                dst[d1] = 0;
+                dst[d1 + 1] = ff_cropTbl[MAX_NEG_CROP + ((y + r_add) >> SCALEBITS)];
+                dst[d1 + 2] = ff_cropTbl[MAX_NEG_CROP + ((y + g_add) >> SCALEBITS)];
+                dst[d1 + 3] = ff_cropTbl[MAX_NEG_CROP + ((y + b_add) >> SCALEBITS)];
+                
+                y = (y_data[y1_ptr+1] & 0xff) << SCALEBITS;
+                dst[d1 + 4] = 0;
+                dst[d1 + 5] = ff_cropTbl[MAX_NEG_CROP + ((y + r_add) >> SCALEBITS)];
+                dst[d1 + 6] = ff_cropTbl[MAX_NEG_CROP + ((y + g_add) >> SCALEBITS)];
+                dst[d1 + 7] = ff_cropTbl[MAX_NEG_CROP + ((y + b_add) >> SCALEBITS)];
+                
+                d1 += 8;
+                y1_ptr += 2;
+                cb_ptr++;
+                cr_ptr++;
+            } // for (w = width; w >= 2; w -= 2)
+            /* handle off width */
+            if (w != 0) {
+                cb = (cb_data[cb_ptr] & 0xff) - 128;
+                cr = (cr_data[cr_ptr] & 0xff) - 128;
+                r_add = ((int) ((1.402) * (1 << SCALEBITS) + 0.5)) * cr + ONE_HALF;
+                g_add = -((int) ((0.34414) * (1 << SCALEBITS) + 0.5)) * cb 
+                        -((int) ((0.71414) * (1 << SCALEBITS) + 0.5)) * cr + ONE_HALF;
+                b_add = ((int) ((1.772) * (1 << SCALEBITS) + 0.5)) * cb + ONE_HALF;
+                /* output 1 pixel */
+                y = (y_data[y1_ptr] & 0xff) << SCALEBITS;
+                dst[d1] = 0;
+                dst[d1 + 1] = ff_cropTbl[MAX_NEG_CROP + ((y + r_add) >> SCALEBITS)];
+                dst[d1 + 2] = ff_cropTbl[MAX_NEG_CROP + ((y + g_add) >> SCALEBITS)];
+                dst[d1 + 3] = ff_cropTbl[MAX_NEG_CROP + ((y + b_add) >> SCALEBITS)];
+                
+                d1 += 4;
+                y1_ptr++;
+                cb_ptr++;
+                cr_ptr++;
+            } // if (w != 0)
+        } // if (height != 0)
     }
     
     private void ff_simple_idct_put(byte dest[], int destPtr[], int line_size, short block[]) {
@@ -4939,9 +5078,9 @@ public class FileAvi extends FileBase {
         int re_cache= 0;
         // UPDATE_CACHE(re, s)
         re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
-        re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
-        re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
-        re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+        re_cache |= (gbc_buffer[1 + (re_index>>3)] & 0xff) << 16;
+        re_cache |= (gbc_buffer[2 + (re_index>>3)] & 0xff) << 8;
+        re_cache |= (gbc_buffer[3 + (re_index>>3)] & 0xff);
         re_cache = re_cache << (re_index & 0x07);
         // index = SHOW_UBITS(name, gb, bits)
         index = re_cache >>> (32 - bits);
@@ -4953,9 +5092,9 @@ public class FileAvi extends FileBase {
             re_index += bits;
             // UPDATE_CACHE(name, gb)
             re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
-            re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
-            re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
-            re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+            re_cache |= (gbc_buffer[1 + (re_index>>3)] & 0xff) << 16;
+            re_cache |= (gbc_buffer[2 + (re_index>>3)] & 0xff) << 8;
+            re_cache |= (gbc_buffer[3 + (re_index>>3)] & 0xff);
             re_cache = re_cache << (re_index & 0x07);
             
             nb_bits = -n;
@@ -4969,9 +5108,9 @@ public class FileAvi extends FileBase {
                 re_index += nb_bits;
                 // UPDATE_CACHE(name, gb)
                 re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
-                re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
-                re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
-                re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+                re_cache |= (gbc_buffer[1 + (re_index>>3)] & 0xff) << 16;
+                re_cache |= (gbc_buffer[2 + (re_index>>3)] & 0xff) << 8;
+                re_cache |= (gbc_buffer[3 + (re_index>>3)] & 0xff);
                 re_cache = re_cache << (re_index & 0x07);
                 
                 nb_bits = -n;
@@ -4997,9 +5136,9 @@ public class FileAvi extends FileBase {
         int re_cache= 0;
         // UPDATE_CACHE(re, s)
         re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
-        re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
-        re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
-        re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+        re_cache |= (gbc_buffer[1 + (re_index>>3)] & 0xff) << 16;
+        re_cache |= (gbc_buffer[2 + (re_index>>3)] & 0xff) << 8;
+        re_cache |= (gbc_buffer[3 + (re_index>>3)] & 0xff);
         re_cache = re_cache << (re_index & 0x07);
         // cache = GET_CACHE(re, s)
         cache = re_cache;
@@ -5057,9 +5196,9 @@ public class FileAvi extends FileBase {
         for (;;) {
             // UPDATE_CACHE(re, &s->gb)
             re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
-            re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
-            re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
-            re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+            re_cache |= (gbc_buffer[1 + (re_index>>3)] & 0xff) << 16;
+            re_cache |= (gbc_buffer[2 + (re_index>>3)] & 0xff) << 8;
+            re_cache |= (gbc_buffer[3 + (re_index>>3)] & 0xff);
             re_cache = re_cache << (re_index & 0x07);
             
             // GET_VLC(code, re, &s->gb, s->vlcs[1][ac_index].table, 9, 2)
@@ -5076,9 +5215,9 @@ public class FileAvi extends FileBase {
                 re_index += bits;
                 // UPDATE_CACHE(name, gb)
                 re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
-                re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
-                re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
-                re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+                re_cache |= (gbc_buffer[1 + (re_index>>3)] & 0xff) << 16;
+                re_cache |= (gbc_buffer[2 + (re_index>>3)] & 0xff) << 8;
+                re_cache |= (gbc_buffer[3 + (re_index>>3)] & 0xff);
                 re_cache = re_cache << (re_index & 0x07);
                 
                 nb_bits = -n;
@@ -5092,9 +5231,9 @@ public class FileAvi extends FileBase {
                     re_index += nb_bits;
                     // UPDATE_CACHE(name, gb)
                     re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
-                    re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
-                    re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
-                    re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+                    re_cache |= (gbc_buffer[1 + (re_index>>3)] & 0xff) << 16;
+                    re_cache |= (gbc_buffer[2 + (re_index>>3)] & 0xff) << 8;
+                    re_cache |= (gbc_buffer[3 + (re_index>>3)] & 0xff);
                     re_cache = re_cache << (re_index & 0x07);
                     
                     nb_bits = -n;
@@ -5118,9 +5257,9 @@ public class FileAvi extends FileBase {
                 if (code > MIN_CACHE_BITS - 16) {
                     // UPDATE_CACHE(re, &s->gb)
                     re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
-                    re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
-                    re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
-                    re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+                    re_cache |= (gbc_buffer[1 + (re_index>>3)] & 0xff) << 16;
+                    re_cache |= (gbc_buffer[2 + (re_index>>3)] & 0xff) << 8;
+                    re_cache |= (gbc_buffer[3 + (re_index>>3)] & 0xff);
                     re_cache = re_cache << (re_index & 0x07);
                 }
                 // cache = GET_CACHE(re, s)
