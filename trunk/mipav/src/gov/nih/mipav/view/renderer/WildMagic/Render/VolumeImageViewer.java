@@ -54,7 +54,7 @@ public class VolumeImageViewer extends JavaApplication3D
                                           m_eBuffering, m_eMultisampling,
                                            m_iWidth, m_iHeight );
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );    
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );     
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );    
         m_kParent = kParentFrame;
         m_kVolumeImage = kVolumeImage;
     }

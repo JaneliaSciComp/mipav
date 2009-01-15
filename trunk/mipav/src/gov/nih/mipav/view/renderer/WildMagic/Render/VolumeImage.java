@@ -30,6 +30,8 @@ public class VolumeImage
     private GraphicsImage m_kVolume;
     /** Data storage for normals: */
     private GraphicsImage m_kNormal;
+    /** Data storage for Gradient normals (2nd derivative): */
+    private GraphicsImage m_kGradientNormal;
     /** Data storage for color map: */
     private GraphicsImage m_kColorMap;
     /** Data storage for opacity map: */
@@ -42,6 +44,8 @@ public class VolumeImage
     private Texture m_kOpacityMapTarget;
     /** Texture object for normal map: */
     private Texture m_kNormalMapTarget;
+    /** Texture object for Gradient normal map (2nd derivative): */
+    private Texture m_kGradientNormalMapTarget;
 
     /** Data storage for surfaces: */
     private GraphicsImage m_kSurfaceImage;
@@ -53,6 +57,8 @@ public class VolumeImage
 
     private float m_fX = 1, m_fY = 1, m_fZ = 1;
     private String m_kPostfix = null;
+    
+    private GraphicsImage m_kHisto = null;
     
     /**
      * Constructor. Stores the ModelImage Volume data.
@@ -71,9 +77,12 @@ public class VolumeImage
         m_kOpacityMap = InitOpacityMap(m_kImage, kPostfix);
         m_kOpacityMap_GM = InitOpacityMap(m_kImage, new String(kPostfix + "_GM"));
 
+        m_kHisto = 
+            new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
+                    256,256, null, new String("VolumeImageHisto") );
         /* Map the ModelImage volume data to a texture image, including for
          * the ModelImage gradient magnitude data: */
-        m_kVolume = UpdateData(m_kImage, null, m_kVolumeTarget, m_bByte, kPostfix );
+        m_kVolume = UpdateData(m_kImage, null, m_kVolumeTarget, m_bByte, kPostfix, m_kHisto );
         //new ViewJFrameImage(CreateImageFromTexture(m_kVolume), null, new java.awt.Dimension(610, 200), false);
         
         m_kVolumeTarget = new Texture();
@@ -103,6 +112,17 @@ public class VolumeImage
         m_kNormalMapTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
         m_kNormalMapTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         m_kNormalMapTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
+        
+        m_kGradientNormal = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,
+                iXBound,iYBound,iZBound,(byte[])null,
+                new String("NormalMap"+kPostfix));
+        m_kGradientNormalMapTarget = new Texture();
+        m_kGradientNormalMapTarget.SetImage(m_kGradientNormal);
+        m_kGradientNormalMapTarget.SetShared(true);
+        m_kGradientNormalMapTarget.SetFilterType(Texture.FilterType.LINEAR);
+        m_kGradientNormalMapTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
+        m_kGradientNormalMapTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
+        m_kGradientNormalMapTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
 
         m_kOpacityMapTarget_GM = new Texture();
         m_kOpacityMapTarget_GM.SetShared(true);
@@ -221,7 +241,7 @@ public class VolumeImage
      * @param kPostFix the postfix string for the image name.
      */
     public static GraphicsImage UpdateData( ModelImage kImage, GraphicsImage kVolumeImage,
-                                      Texture kVolumeTexture, boolean bByte, String kPostFix )
+            Texture kVolumeTexture, boolean bByte, String kPostFix, GraphicsImage kHisto )
     {
         int iXBound = kImage.getExtents()[0];
         int iYBound = kImage.getExtents()[1];
@@ -268,7 +288,17 @@ public class VolumeImage
             if ( bByte )
             {
                 abData = new byte[iXBound*iYBound*iZBound];
-                
+                byte[] abHisto = null;
+                float[] afCount = null;
+                if ( kHisto != null )
+                {
+                    abHisto = new byte[256*256];
+                    afCount = new float[256*256];
+                    for(int i=0; i<256*256; ++i){
+                        afCount[i] = 0;
+                    }
+                }
+                short a1, a2;
                 int i = 0;
                 for (int iZ = 0; iZ < iZBound; iZ++)
                 {
@@ -277,7 +307,21 @@ public class VolumeImage
                         for (int iX = 0; iX < iXBound; iX++)
                         {
                             float fValue = kImage.getFloat(iX,iY,iZ);
-                            abData[i++] = (byte)(255 * (fValue - fImageMin)/(fImageMax - fImageMin));
+                            abData[i] = (byte)(255 * (fValue - fImageMin)/(fImageMax - fImageMin));
+                            if ( kHisto != null )
+                            {            
+                                if ( iX < (iXBound-1))
+                                {
+                                    fValue = kImage.getFloat(iX,iY,iZ);
+                                    a1 = (short)((255 * (fValue - fImageMin)/(fImageMax - fImageMin)));
+                                    a1 = (short)(a1 & 0x00ff);
+                                    fValue = kImage.getFloat(iX+1,iY,iZ);
+                                    a2 = (short)((255 * (fValue - fImageMin)/(fImageMax - fImageMin)));
+                                    a2 = (short)(a2 & 0x00ff);
+                                    afCount[a1 +  a2 * 256] += 1;
+                                }
+                            }
+                            i++;
                         }
                     }
                 }
@@ -285,6 +329,21 @@ public class VolumeImage
                     new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
                                        iXBound,iYBound,iZBound, abData,
                                        new String( "VolumeImage" + kPostFix));
+                if ( kHisto != null )
+                {
+                    float max = 0;
+                    for(i = 0; i< 256*256; ++i)
+                    {
+                        afCount[i] = (float)Math.log(afCount[i]);
+                        max = Math.max(afCount[i], max);
+                    }
+
+                    for(i=0; i< 256*256; ++i)
+                    {
+                        abHisto[i] = new Float(afCount[i]/(float)max*255f).byteValue();
+                    }
+                    kHisto.SetData( abHisto, 256, 256 );
+                }
                 
             }
             else
@@ -496,6 +555,11 @@ public class VolumeImage
         return m_kColorMapTarget;
     }
 
+    public GraphicsImage GetHisto()
+    {
+        return m_kHisto;
+    }
+    
     /**
      * Return the ModelImage volume data.
      * @return ModelImage volume data.
@@ -522,6 +586,15 @@ public class VolumeImage
     public Texture GetNormalMapTarget()
     {
         return m_kNormalMapTarget;
+    }    
+
+    /**
+     * Return the Gradient normal Texture (2nd derivative).
+     * @return Gradient normal Texture (2nd derivative).
+     */
+    public Texture GetGradientNormalMapTarget()
+    {
+        return m_kGradientNormalMapTarget;
     }
 
     /**
@@ -667,7 +740,7 @@ public class VolumeImage
     public void UpdateData( ModelImage kImage, String kPostfix )
     {
         m_kImage = kImage;
-        VolumeImage.UpdateData( m_kImage, m_kVolume, m_kVolumeTarget, m_bByte, kPostfix );
+        VolumeImage.UpdateData( m_kImage, m_kVolume, m_kVolumeTarget, m_bByte, kPostfix, m_kHisto );
     }
     
     /**
@@ -747,6 +820,4 @@ public class VolumeImage
          kOpacityTexture.Reload(true);
          return true;
     }
-    
-    
 }

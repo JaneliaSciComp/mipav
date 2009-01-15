@@ -109,7 +109,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /** Set to true when cropping the volume in the shader. */
     private boolean m_bCrop = false;
-
+    /** Intensity level for GPU-surface extraction. */
+    private int m_iExtractLevel = 1;
     /**
      * Default Constructor.
      */
@@ -420,7 +421,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_bExtract )
         {
             m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-            VolumeImageExtract.main(m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect());
+            VolumeImageExtract.main(m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect(), m_iExtractLevel);
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             m_bExtract = false;
         }
@@ -1716,6 +1717,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 }
             }
         }
+    }
+    
+    /**
+     * Set intensity level for GPU-based surface extraction.
+     * @param iLevel
+     */
+    public void setIntenstityLevel( int iLevel )
+    {
+        m_iExtractLevel = iLevel;
     }
     
     /**

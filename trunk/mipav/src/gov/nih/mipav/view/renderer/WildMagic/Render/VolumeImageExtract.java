@@ -40,18 +40,21 @@ public class VolumeImageExtract extends VolumeImageViewer
     private VolumeClipEffect m_kClipEffect = null;
     private int[] m_aiNewExtents = new int[3];
     private float[] m_afNewResolutions = new float[3];
-    public VolumeImageExtract( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip )
+    /** Intensity level for GPU-surface extraction. */
+    private int m_iExtractLevel = 1;
+    
+    public VolumeImageExtract( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip, int iLevel  )
     {
         super(kParentFrame, kVolumeImage );
-
+        m_iExtractLevel = iLevel;
         m_kClipEffect = kClip;
     }
     /**
      * @param args
      */
-    public static void main( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip )
+    public static void main( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip, int iLevel )
     {
-        VolumeImageExtract kWorld = new VolumeImageExtract(kParentFrame, kVolumeImage, kClip);
+        VolumeImageExtract kWorld = new VolumeImageExtract(kParentFrame, kVolumeImage, kClip, iLevel);
         Frame frame = new Frame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
          final Animator animator = new Animator( kWorld.GetCanvas() );
@@ -129,26 +132,32 @@ public class VolumeImageExtract extends VolumeImageViewer
                               m_afNewResolutions[1], 
                               m_afNewResolutions[2], direction,
                           startLocation, null);
-                  TriMesh kMesh = kExtractor.getLevelSurface(20, m_kCalcImage2.TriTable);
-//                Get the adjacent triangles:
-                  VETMesh kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
-                          2 * kMesh.IBuffer.GetIndexQuantity(), .9f,
-                          2 * kMesh.GetTriangleQuantity(), .9f,
-                          kMesh.IBuffer.GetData() );
-                  kMesh.IBuffer = new IndexBuffer( kVETMesh.GetTriangles() );
-                  TriMesh[] kMeshes = new TriMesh[1];
-                  kMeshes[0] = kMesh;
-                  if ( kMeshes[0] != null )
+                  TriMesh kMesh = kExtractor.getLevelSurface(m_iExtractLevel, m_kCalcImage2.TriTable);
+                  if ( kMesh != null )
                   {
-                      m_kParent.getVolumeGPU().displayVolumeRaycast(false);
-                      String kSurfaceName = JDialogBase.makeImageName(m_kVolumeImage.GetImage().getImageName(), ms_iSurface + "_extract.sur");
-                      kMeshes[0].SetName( kSurfaceName );
-                      m_kParent.getSurfacePanel().addSurfaces(kMeshes);
-                      m_kParent.getRendererGUI().setDisplaySurfaceCheck( true );
-                      m_kParent.getRendererGUI().setDisplayVolumeCheck( false );
-                      ms_iSurface++;
+//                    Get the adjacent triangles:
+                      VETMesh kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
+                              2 * kMesh.IBuffer.GetIndexQuantity(), .9f,
+                              2 * kMesh.GetTriangleQuantity(), .9f,
+                              kMesh.IBuffer.GetData() );
+                      kMesh.IBuffer = new IndexBuffer( kVETMesh.GetTriangles() );
+                      TriMesh[] kMeshes = new TriMesh[1];
+                      kMeshes[0] = kMesh;
+                      if ( kMeshes[0] != null )
+                      {
+                          m_kParent.getVolumeGPU().displayVolumeRaycast(false);
+                          String kSurfaceName = JDialogBase.makeImageName(m_kVolumeImage.GetImage().getImageName(), ms_iSurface + "_extract.sur");
+                          kMeshes[0].SetName( kSurfaceName );
+                          m_kParent.getSurfacePanel().addSurfaces(kMeshes);
+                          m_kParent.getRendererGUI().setDisplaySurfaceCheck( true );
+                          m_kParent.getRendererGUI().setDisplayVolumeCheck( false );
+                          ms_iSurface++;
+                      }
                   }
-
+                  else
+                  {
+                    
+                  }
                   m_pkVolumeCalcTarget.dispose();
                   m_kCalcImage.dispose();
                   m_pkVolumeCalcTarget2.dispose();
@@ -214,6 +223,9 @@ public class VolumeImageExtract extends VolumeImageViewer
         m_pkPlane.AttachEffect(m_spkEffect);
         m_pkRenderer.LoadResources(m_pkPlane);
         ((VolumeCalcEffect)m_spkEffect).SetStepSize(fStep, fStep, fStep);
+        float fIsoVal = (float)(((float)m_iExtractLevel - m_kVolumeImage.GetImage().getMin()) /
+        (m_kVolumeImage.GetImage().getMax() - m_kVolumeImage.GetImage().getMin()));
+        ((VolumeCalcEffect)m_spkEffect).SetIsoVal( fIsoVal );
         m_pkPlane.DetachAllEffects();
 
         

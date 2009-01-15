@@ -18,43 +18,32 @@ void p_SurfaceExtract(
                       out float4        kPixelColor : COLOR,
                       uniform float4    StepSize,
                       uniform sampler3D VolumeImageA : TEXUNIT1, 
-                      uniform sampler1D OpacityMapA : TEXUNIT3, 
-                      uniform float4x4 WVPMatrix)
+                      uniform sampler1D OpacityMapA : TEXUNIT3)
 {
+    // texture-coordinate steps:
     float3 index3;
     float stepX[3];    stepX[0] = -StepSize.x;    stepX[1] = 0;    stepX[2] = StepSize.x;
     float stepY[3];    stepY[0] = -StepSize.y;    stepY[1] = 0;    stepY[2] = StepSize.y;
     float stepZ[3];    stepZ[0] = -StepSize.z;    stepZ[1] = 0;    stepZ[2] = StepSize.z;
 
-    int i000 = 0;
-    int i100 = 1;
-    int i010 = 2;
-    int i110 = 3;
-    int i001 = 4;
-    int i101 = 5;
-    int i011 = 6;
-    int i111 = 7;
-
+    // Look at the opacity values of all 8 corners of this voxel "Cube":
     float3 cube[8];
-    cube[ i000 ] = kBaseTCoord; // x,y,z
-    cube[ i100 ] = kBaseTCoord; cube[i100].x += StepSize.x; // x+1,y,z
-    cube[ i010 ] = kBaseTCoord; cube[i010].y += StepSize.y; // x,y+1,z
-    cube[ i110 ] = kBaseTCoord; cube[i110].x += StepSize.x; cube[i110].y += StepSize.y; //x+1,y+1,z
-    cube[ i001 ] = kBaseTCoord; cube[i001].z += StepSize.z; //x,y,z+1
-    cube[ i101 ] = kBaseTCoord; cube[i101].x += StepSize.x; cube[i101].z += StepSize.z; //x+1,y,z+1
-    cube[ i011 ] = kBaseTCoord; cube[i011].y += StepSize.y; cube[i011].z += StepSize.z; //x,y+1,z+1 
-    cube[ i111 ] = kBaseTCoord; cube[i111].x += StepSize.x; cube[i111].y += StepSize.y; cube[i111].z += StepSize.z; //x+1,y+1,z+1
-
+    cube[ 0 ] = kBaseTCoord; // x,y,z
+    cube[ 1 ] = kBaseTCoord; cube[1].x += StepSize.x; // x+1,y,z
+    cube[ 2 ] = kBaseTCoord; cube[2].y += StepSize.y; // x,y+1,z
+    cube[ 3 ] = kBaseTCoord; cube[3].x += StepSize.x; cube[3].y += StepSize.y; //x+1,y+1,z
+    cube[ 4 ] = kBaseTCoord; cube[4].z += StepSize.z; //x,y,z+1
+    cube[ 5 ] = kBaseTCoord; cube[5].x += StepSize.x; cube[5].z += StepSize.z; //x+1,y,z+1
+    cube[ 6 ] = kBaseTCoord; cube[6].y += StepSize.y; cube[6].z += StepSize.z; //x,y+1,z+1 
+    cube[ 7 ] = kBaseTCoord; cube[7].x += StepSize.x; cube[7].y += StepSize.y; cube[7].z += StepSize.z; //x+1,y+1,z+1
 
     float3 color[8];
     float opacity = 0;
-
     int iShow = 8;
     for ( int i = 0; i < 8; i++ )
     {
         color[i] = tex3D(VolumeImageA,cube[i]);
         opacity = tex1D(OpacityMapA,color[i].r).r;
-        // If the opacity is not zero:
         if ( opacity <= 0 )
         {
             color[i].r = 0;
@@ -64,10 +53,11 @@ void p_SurfaceExtract(
         }
     }
 
-    kPixelColor.r = color[i000].r;
-    kPixelColor.g = color[i000].g;
-    kPixelColor.b = color[i000].b;
-    //if ( (iShow > 0) && (iShow < 8 ) )
+    kPixelColor.r = color[0].r;
+    kPixelColor.g = color[0].g;
+    kPixelColor.b = color[0].b;
+    kPixelColor.a = 0;
+    // Alpha-value determines if voxel is part of surface:
     if ( iShow != 0 )
     {
         kPixelColor.a = 1;

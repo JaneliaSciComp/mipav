@@ -114,6 +114,9 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     /** Button for extracting a TriMesh surface based on the ray-cast volume rendered in Surface mode */
     protected JButton m_kExtractTriMesh;
     
+    /** Text box for setting the intensity level for extraction. */
+    JTextField m_kIntensityTF;
+    
 	/**
      * Constructor.
      * @param kVolumeViewer parent frame.
@@ -253,12 +256,21 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          m_kExtractTriMesh.setBorderPainted(true);
          m_kExtractTriMesh.setFocusPainted(true);
          m_kExtractTriMesh.setMargin(new Insets(0, 0, 0, 0));
-         m_kExtractTriMesh.setEnabled(false);
+         m_kExtractTriMesh.setEnabled(false);   
+         
+         m_kIntensityTF = new JTextField("50", 5);
+         m_kIntensityTF.setEnabled(true);
+         m_kIntensityTF.setFont(serif12);
+         m_kIntensityTF.addActionListener(this);
          
          JPanel extractPanel = new JPanel(new GridBagLayout());
          extractPanel.setBorder(buildTitledBorder("Surface Extraction"));
          gbc.gridy = 0;
          extractPanel.add(m_kExtractTriMesh, gbc);
+         gbc.gridx = 1;
+         extractPanel.add(new JLabel( "Intensity Level" ), gbc);
+         gbc.gridx = 2;
+         extractPanel.add(m_kIntensityTF, gbc);
          
          Box contentBox = new Box(BoxLayout.Y_AXIS);
 
@@ -328,6 +340,8 @@ public class JPanelRenderMode_WM extends JInterfaceBase
      * Empty function call
      */
     public void actionPerformed(ActionEvent event) {
+        String levelStr = m_kIntensityTF.getText();
+        rayBasedRenderWM.setIntenstityLevel(Integer.valueOf(levelStr).intValue());
     	m_kVolumeViewer.actionPerformed(event);
     	
     }

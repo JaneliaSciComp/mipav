@@ -33,13 +33,13 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelDisplay_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelGeodesic_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelMultiHistogram;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelRenderMode_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSlices_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender;
 import gov.nih.mipav.view.renderer.WildMagic.flythroughview.FlyThroughRender;
@@ -184,6 +184,10 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     protected JPanel clipPanel;
     /** 3D Slice panel container. */
     protected JPanel slicePanel;
+    /** Multihistogram panel: */
+    protected JPanelMultiHistogram multiHistogramGUI;
+    /** Display panel container */
+    protected JPanel multiHistogramPanel;
 
     /** Surface texture panel container */
     protected JPanel surfaceTexturePanel;
@@ -458,6 +462,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
                 panelToolbar.getHeight();
             clipBox.resizePanel(maxPanelWidth, height);
         } else if (command.equals("OpacityHistogram")) {
+            //insertTab("MultiHistogram", multiHistogramPanel);
+            //multiHistogramGUI.getMainPanel().setVisible(true);
             insertTab("Opacity", opacityPanel);
         } else if (command.equals("Opacity")) {
             clipBox.getMainPanel().setVisible(true);
@@ -468,6 +474,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             clipMaskUndoButton.setEnabled(true);
             clipSaveButton.setEnabled(true);
             insertTab("Opacity", opacityPanel);
+            //insertTab("MultiHistogram", multiHistogramPanel);
+            //multiHistogramGUI.getMainPanel().setVisible(true);
             updateRayTracingSteps();
             raycastRenderWM.displayVolumeRaycast( rendererGUI.getVolumeCheck().isSelected() );
         } else if ( command.equals( "VolumeRayCast") ) {
@@ -859,6 +867,13 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         maxPanelWidth = Math.max(lightPanel.getPreferredSize().width, maxPanelWidth);
     }
 
+    public void buildMultiHistogramPanel() {
+        multiHistogramPanel = new JPanel();
+        multiHistogramGUI = new JPanelMultiHistogram(this, m_kAnimator, m_kVolumeImageA);
+        multiHistogramPanel.add(multiHistogramGUI.getMainPanel());
+        maxPanelWidth = Math.max(multiHistogramPanel.getPreferredSize().width, maxPanelWidth);
+    }
+    
     /**
      * Build the volume opacity control panel for the surface render.
      */
@@ -1120,6 +1135,9 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             panelHistoRGB.disposeLocal();
             panelHistoRGB = null;
         }
+        
+        multiHistogramGUI = null;
+        multiHistogramPanel = null;
 
         for (int i = 0; i < 3; i++) {
 
@@ -2611,6 +2629,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         buildSurfaceTexturePanel();
         buildGeodesic();
         buildSculpt();
+        buildMultiHistogramPanel();
 
         setTitle();
 
@@ -2757,7 +2776,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         geodesicGUI.resizePanel(maxPanelWidth, height);
         m_kLightsPanel.resizePanel(maxPanelWidth, height);
         clipBox.resizePanel(maxPanelWidth, height);
-        
+        multiHistogramGUI.resizePanel(maxPanelWidth, height);
         if ( brainsurfaceFlattenerRender != null )
         {
             brainsurfaceFlattenerRender.resizePanel(maxPanelWidth, height);
