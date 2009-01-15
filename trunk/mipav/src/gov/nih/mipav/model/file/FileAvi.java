@@ -27,6 +27,9 @@ import javax.swing.*;
  *           by running the folowing 2 files in mipav/apps: jmf_2_1_1e-windows-i586.exe DivX412Codec.exe
  *           CVID and CYUV decoders were ported from the codecs written by Dr. Tim Ferguson at 
  *           http://www.csse.monash.edu.au/~timf/.
+ *           The MJPEG decoder is derived from the FFmpeg code, with the main source being mjpegdec.c.  The
+ *           FFmpeg MJPEG decoder is copyright in 2000, 2001 by Fabrice Bellard, in 2003 by Alex Beregszaszi, and
+ *           in 2003-2004 by Michael Niedermayer.
  *           A good source of sample avi files is http://samples.mplayerhq.hu.
  */
 
@@ -53,6 +56,7 @@ public class FileAvi extends FileBase {
     private final int EOI   = 0xd9;       /* end of image */
     private final int SOS   = 0xda;       /* start of scan */
     private final int DQT   = 0xdb;       /* define quantization tables */
+    private final int DRI   = 0xdd;       /* define restart interval */
     private final int APP0  = 0xe0;
     private final int APP1  = 0xe1;
     private final int APP2  = 0xe2;
@@ -3970,6 +3974,9 @@ public class FileAvi extends FileBase {
                                     case APP15:
                                         Preferences.debug("startCode = APP15\n");
                                         break;
+                                    case DRI:
+                                        Preferences.debug("startCode = DRI\n");
+                                        break;
                                     default:
                                         Preferences.debug("startCode = " + startCode + "\n");
                                 }
@@ -4003,6 +4010,18 @@ public class FileAvi extends FileBase {
                                         len -= 65;
                                     } // while (len >= 65)
                                 } // else if (startCode == DQT)
+                                else if (startCode == DRI) {
+                                    len = (fileBuffer[j++] & 0xff) << 8;
+                                    len |= (fileBuffer[j++] & 0xff);
+                                    if (len != 4) {
+                                        MipavUtil.displayError("len = " + len + " instead of 4 for DRI");
+                                        return null;
+                                    }
+                                    restart_interval = (fileBuffer[j++] & 0xff) << 8;
+                                    restart_interval |= (fileBuffer[j++] & 0xff);
+                                    Preferences.debug("DRI set restart_interval to " + restart_interval + "\n");
+                                    restart_count = 0;
+                                } // else if (startCode == DRI)
                                 else if (startCode == EOI) {
                                     
                                 } // else if (startCode == EOI)
@@ -4201,6 +4220,10 @@ public class FileAvi extends FileBase {
                                             switch(pix_fmt) {
                                                 case PIX_FMT_YUVJ420P:
                                                     yuvj420p_to_argb(destBuf, data, imgExtents[0], imgExtents[1],
+                                                            linesize);
+                                                    break;
+                                                case PIX_FMT_YUVJ422P:
+                                                    yuvj422p_to_argb(destBuf, data, imgExtents[0], imgExtents[1],
                                                             linesize);
                                                     break;
                                             }
@@ -4763,6 +4786,81 @@ public class FileAvi extends FileBase {
 
             throw error;
         }
+    }
+    
+    private void yuvj422p_to_argb(byte dst[], byte data[][], int width, int height, int slinesize[]) {
+        int width2;
+        int dlinesize = 4 * width;
+        int d = 0;
+        int d1;
+        int w;
+        byte y_data[] = data[0];
+        int y1_ptr = 0;
+        byte cb_data[] = data[1];
+        int cb_ptr = 0;
+        byte cr_data[] = data[2];
+        int cr_ptr = 0;
+        int y;
+        int cb;
+        int cr;
+        int SCALEBITS = 10;
+        int ONE_HALF = (1 << (SCALEBITS - 1));
+        int r_add;
+        int g_add;
+        int b_add;
+        width2 = (width + 1) >> 1;
+        for (; height >= 1; height--) {
+            d1 = d;
+            for (w = width; w >= 2; w-= 2) {
+              cb = (cb_data[cb_ptr] & 0xff) - 128;
+              cr = (cr_data[cr_ptr] & 0xff) - 128;
+              r_add = ((int) ((1.402) * (1 << SCALEBITS) + 0.5)) * cr + ONE_HALF;
+              g_add = -((int) ((0.34414) * (1 << SCALEBITS) + 0.5)) * cb 
+                      -((int) ((0.71414) * (1 << SCALEBITS) + 0.5)) * cr + ONE_HALF;
+              b_add = ((int) ((1.772) * (1 << SCALEBITS) + 0.5)) * cb + ONE_HALF;
+              /* output 4 pixels */
+              y = (y_data[y1_ptr] & 0xff) << SCALEBITS;
+              dst[d1] = 0;
+              dst[d1 + 1] = ff_cropTbl[MAX_NEG_CROP + ((y + r_add) >> SCALEBITS)];
+              dst[d1 + 2] = ff_cropTbl[MAX_NEG_CROP + ((y + g_add) >> SCALEBITS)];
+              dst[d1 + 3] = ff_cropTbl[MAX_NEG_CROP + ((y + b_add) >> SCALEBITS)];
+              
+              y = (y_data[y1_ptr+1] & 0xff) << SCALEBITS;
+              dst[d1 + 4] = 0;
+              dst[d1 + 5] = ff_cropTbl[MAX_NEG_CROP + ((y + r_add) >> SCALEBITS)];
+              dst[d1 + 6] = ff_cropTbl[MAX_NEG_CROP + ((y + g_add) >> SCALEBITS)];
+              dst[d1 + 7] = ff_cropTbl[MAX_NEG_CROP + ((y + b_add) >> SCALEBITS)];
+              
+              d1 += 8;
+              
+              y1_ptr += 2;
+              cb_ptr++;
+              cr_ptr++;
+            } // for (w = width; w >= 2; w -=2)
+            /* handle odd width */
+            if (w != 0) {
+                cb = (cb_data[cb_ptr] & 0xff) - 128;
+                cr = (cr_data[cr_ptr] & 0xff) - 128;
+                r_add = ((int) ((1.402) * (1 << SCALEBITS) + 0.5)) * cr + ONE_HALF;
+                g_add = -((int) ((0.34414) * (1 << SCALEBITS) + 0.5)) * cb 
+                        -((int) ((0.71414) * (1 << SCALEBITS) + 0.5)) * cr + ONE_HALF;
+                b_add = ((int) ((1.772) * (1 << SCALEBITS) + 0.5)) * cb + ONE_HALF;
+                y = (y_data[y1_ptr] & 0xff) << SCALEBITS;
+                dst[d1] = 0;
+                dst[d1 + 1] = ff_cropTbl[MAX_NEG_CROP + ((y + r_add) >> SCALEBITS)];
+                dst[d1 + 2] = ff_cropTbl[MAX_NEG_CROP + ((y + g_add) >> SCALEBITS)];
+                dst[d1 + 3] = ff_cropTbl[MAX_NEG_CROP + ((y + b_add) >> SCALEBITS)];
+                
+                d1 += 4;
+                y1_ptr++;
+                cb_ptr++;
+                cr_ptr++;
+            } // if (w != 0)
+            d += dlinesize;
+            y1_ptr += slinesize[0] - width;
+            cb_ptr += slinesize[1] - width2;
+            cr_ptr += slinesize[2] - width2;
+        } // for (; height >= 1; height--)
     }
     
     private void yuvj420p_to_argb(byte dst[], byte data[][], int width, int height, int slinesize[]) {
