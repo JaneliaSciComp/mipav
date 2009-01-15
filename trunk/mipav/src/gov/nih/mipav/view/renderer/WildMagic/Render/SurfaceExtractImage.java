@@ -24,6 +24,11 @@ public class SurfaceExtractImage extends GraphicsImage
         Min = Integer.MAX_VALUE;
         Max = Integer.MIN_VALUE;
     }
+    
+    public void dispose()
+    {
+        Data = null;
+    }
 
     public void SetData ( ByteBuffer kBuffer, int iZ )
     {

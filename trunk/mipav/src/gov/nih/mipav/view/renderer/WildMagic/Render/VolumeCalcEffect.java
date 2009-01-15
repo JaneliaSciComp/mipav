@@ -41,6 +41,9 @@ public class VolumeCalcEffect extends VolumeClipEffect
 
     /** stores the gradient magnitude filter on/off value: */
     private float[] m_afMinMax = new float[]{0,0,0,0};
+
+    private float[] m_afIso = new float[]{0,0,0,0};
+    private float[] m_afVolumeIndex = new float[]{0,0,0,0};
     
     /** Create a new VolumeCalcEffect shader with the VolumeImage data. This
      * fn creates the second-pass shader.
@@ -229,4 +232,37 @@ public class VolumeCalcEffect extends VolumeClipEffect
             //System.err.println( m_afExtents[0] + " " + m_afExtents[1] + " " + m_afExtents[2] );
         }
     }
+    
+    public void SetIsoVal(float fVal)
+    {
+        m_afIso[0] = fVal;
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("IsoVal") != null ) 
+        {
+            pkProgram.GetUC("IsoVal").SetDataSource(m_afIso);
+            System.err.println( fVal );
+        }
+    }
+    
+    
+    public void SetVolumeIndex(int iIndex)
+    {
+
+        m_afVolumeIndex[0] = iIndex;
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("VolumeIndex") != null ) 
+        {
+            pkProgram.GetUC("VolumeIndex").SetDataSource(m_afVolumeIndex);
+        }
+
+        if ( iIndex != 0 )
+        {        
+            if ( pkProgram.GetUC("IsColor") != null ) 
+            {
+                pkProgram.GetUC("IsColor").SetDataSource(new float[]{0,0,0,0});
+
+            }  
+        }
+    }
+    
 }
