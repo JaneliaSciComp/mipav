@@ -657,7 +657,8 @@ public class FileAvi extends FileBase {
             remainingFileLength = (int) (raFile.length() - startPosition);
 
             if (totalDataArea > remainingFileLength) {
-                MipavUtil.displayWarning("File appears to be truncated");
+                Preferences.debug("File appears to be truncated\n");
+                Preferences.debug("totalDataArea = " + totalDataArea + " remainingFileLength = " + remainingFileLength + "\n");
                 totalDataArea = remainingFileLength;
             }
 
@@ -4260,8 +4261,8 @@ public class FileAvi extends FileBase {
                                     }
                                     
                                     if ((bits != 8) && (!lossless)) {
-                                        MipavUtil.displayError("Only 8 bits/component accepted");
-                                        return null;
+                                        Preferences.debug("Only 8 bits/component accepted\n");
+                                        break loopMJPG;
                                     }
                                     
                                     height = (fileBuffer[j++] & 0xff) << 8;
@@ -5183,7 +5184,10 @@ public class FileAvi extends FileBase {
         // index = SHOW_UBITS(name, gb, bits)
         index = re_cache >>> (32 - bits);
         code = table[index][0];
+        //Preferences.debug("index = " + index + "\n");
+        //Preferences.debug("code1 = " + code + "\n");
         n = table[index][1];
+        //Preferences.debug("n1 = " + n + "\n");
         
         if ((max_depth > 1) && (n < 0)) {
             // LAST_SKIP_BITS(name, gb, bits)
@@ -5200,7 +5204,10 @@ public class FileAvi extends FileBase {
             // index = SHOW_UBITS(name, gb, nb_bits) + code;
             index = (re_cache >>> (32 - nb_bits)) + code;
             code = table[index][0];
+            //Preferences.debug("index = " + index + "\n");
+            //Preferences.debug("code2 = " + code + "\n");
             n = table[index][1];
+            //Preferences.debug("n2 = " + n + "\n");
             if ((max_depth > 2) && (n < 0)) {
                 // LAST_SKIP_BITS(name, gb, nb_bits)
                 re_index += nb_bits;
@@ -5215,7 +5222,10 @@ public class FileAvi extends FileBase {
                 // index = SHOW_UBITS(name, gb, nb_bits) + code;
                 index = (re_cache >>> (32 - nb_bits)) + code;
                 code = table[index][0];
+                //Preferences.debug("index = " + index + "\n");
+                //Preferences.debug("code3 = " + code + "\n");
                 n = table[index][1];
+                //Preferences.debug("n3 = " + n + "\n");
             } // if ((max_depth > 2) && (n < 0))
         } // if ((max_depth > 1) && (n < 0))
         // SKIP_BITS(name, gb, n)
@@ -5252,6 +5262,7 @@ public class FileAvi extends FileBase {
         int code;
         code = get_vlc2(vlcs[0][dc_index], 9, 2);
         if (code < 0) {
+            Preferences.debug("get_vlc2(vlcs[0]["+ dc_index + "], 9, 2) returned code = " + code + "\n");
             MipavUtil.displayError("mjpeg_decode_dc: bad vlcs at dc_index = " + dc_index);
             return 0xffff;
         }
@@ -5526,15 +5537,21 @@ public class FileAvi extends FileBase {
         if (table_index < 0) {
             return -1;
         }
+        //Preferences.debug("initializing table_index = " + table_index + " table_size = " + table_size + "\n");
         for (i = 0; i < table_size; i++) {
             vlcs[index0][index1][i+table_index][1] = 0; // bits
             vlcs[index0][index1][i+table_index][0] = -1; // codes
         }
         
         /* first pass: map codes and compute auxiliary table sizes */
+        //Preferences.debug("nb_codes = " + nb_codes + "\n");
+        //Preferences.debug("table_nb_bits = " + table_nb_bits + "\n");
         for (i = 0; i < nb_codes; i++) {
+            //Preferences.debug("i = " + i + "\n");
             n = bits[i]; 
+            //Preferences.debug("n = " + n + "\n");
             code = codes[i] & 0xffff;
+            //Preferences.debug("code = " + code + "\n");
             /* We accept tables with holes */
             if (n <= 0) {
                 continue;
@@ -5553,6 +5570,7 @@ public class FileAvi extends FileBase {
                     /* no need to add another table */
                     j = (code << (table_nb_bits - n)) & (table_size - 1);
                     nb = 1 << (table_nb_bits - n);
+                    //Preferences.debug("j = " + j + " nb = " + nb + "\n");
                     for (k = 0; k < nb; k++) {
                         if (vlcs[index0][index1][j+table_index][1] /* bits */ != 0) {
                             MipavUtil.displayError("Incorrect codes ");
@@ -5594,7 +5612,7 @@ public class FileAvi extends FileBase {
                     n = table_nb_bits;
                     vlcs[index0][index1][i+table_index][1] = (short)-n; // bits
                 }
-                Preferences.debug("Recursive entry into build_table\n");
+                //Preferences.debug("Recursive entry into build_table\n");
                 index = build_table(index0, index1, n, nb_codes, bits, bits_wrap, bits_size, codes, codes_wrap,
                                     codes_size, symbols, symbols_wrap, symbols_size, 
                                     ((code_prefix << table_nb_bits) | i), n_prefix + table_nb_bits);
@@ -7555,7 +7573,7 @@ public class FileAvi extends FileBase {
                 // read the LIST subCHUNK
                 CHUNKsignature = getInt(endianess);
                 
-                if (CHUNKsignature == 0x6E727473) {
+                while ((CHUNKsignature == 0x6E727473 /* strn */) || (CHUNKsignature == 0x4B4E554A /* JUNK */)) {
                     // read strn instead of CHUNK
                     int strnLength = getInt(endianess);
                     if ((strnLength % 2) == 1) {
@@ -7569,7 +7587,7 @@ public class FileAvi extends FileBase {
                         throw new IOException("strn string ends with illegal temination at loop start = " + text[strnLength - 1]);
                     }
                     CHUNKsignature = getInt(endianess);
-                } // if (CHUNKSignature == 0x6E727473)
+                } // while ((CHUNKsignature == 0x6E727473 /* strn */) || (CHUNKsignature == 0x4B4E554A /* JUNK */))
 
                 if (CHUNKsignature == 0x5453494C) {
                     // have read LIST for LIST subCHUNK with information on data decoding
@@ -8059,6 +8077,14 @@ public class FileAvi extends FileBase {
                     }
                     byte[] vedt = new byte[vedtLength];
                     raFile.read(vedt);
+                } else if (strnSignature == 0x5453494C) {
+                    // have read LIST
+                    int listLength = getInt(endianess);
+                    if ((listLength % 2) == 1) {
+                        listLength++;
+                    }
+                    marker = raFile.getFilePointer();
+                    raFile.seek(marker + listLength);
                 } else {
                     raFile.close();
                     throw new IOException("strn signature is an erroneous = " + strnSignature);
@@ -8083,14 +8109,16 @@ public class FileAvi extends FileBase {
                     LIST2Size = getInt(endianess);
                     moviPosition = raFile.getFilePointer(); 
                     CHUNKtype = getInt(endianess);
-                    if (CHUNKtype == 0x4F464E49) {
+                    if (CHUNKtype == 0x4F464E49 /* INFO */) {
                         raFile.seek(moviPosition + LIST2Size);        
                     }
                     else {
                         idx1Position = moviPosition + LIST2Size;
-                        indexPointer = idx1Position + 8;    
-                        raFile.seek(idx1Position + 4);
-                        indexSize = getInt(endianess);
+                        indexPointer = idx1Position + 8; 
+                        if ((idx1Position + 4) < raFile.length()) {
+                            raFile.seek(idx1Position + 4);
+                            indexSize = getInt(endianess);
+                        }
                         raFile.seek(moviPosition + 4);
                     }
                 }
