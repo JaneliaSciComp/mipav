@@ -1168,17 +1168,8 @@ public class JDialogVOIStats extends JDialogBase
                 seedValueTF.setEnabled(true);
                 calcButton.setEnabled(true);
                 
-                // on the asssumption that the image is a 3d image, this will work
-                try {
-                    listPanel.setSliceCount(img.getExtents()[2]);
-                } catch (ArrayIndexOutOfBoundsException aioobe) {
-
-                    // otherwise, this must be a 2d image.
-                    listPanel.setSliceCount(1);
-                } finally {
-
-                    listPanel.setCheckBoxesEnabled();
-                }
+                listPanel.setSliceCount(voi.getVOISlices());
+                listPanel.setCheckBoxesEnabled();
             }
         }
 
