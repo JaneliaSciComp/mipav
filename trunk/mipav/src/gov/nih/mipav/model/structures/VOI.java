@@ -304,6 +304,21 @@ public class VOI extends ModelSerialCloneable {
         stats[10] = new ViewList("Major axis length (only 2D)", false);
         stats[11] = new ViewList("Minor axis length (only 2D)", false);
     }
+    
+    /**
+     * Returns the number of z slices actually containing part of the voi
+     * @return
+     */
+    public int getVOISlices() {
+        int z;
+        int voiSlices = 0;
+        for (z = 0; z < zDim; z++) {
+            if (curves[z].size() > 0) {
+                voiSlices++;
+            }
+        }
+        return voiSlices;
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
