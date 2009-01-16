@@ -41,6 +41,8 @@ import gov.nih.mipav.view.ProgressBarInterface;
 
 public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 
+	public static final String ANONYMIZED = "ANONYMIZED :";
+	
 	// ~ Instance fields ---------------------------------------------------------------------------------------
 	/** File selected by the user */	
 	private File[] selectedFiles;
@@ -256,19 +258,16 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
     	return false;
     }
 	
-	private class KeyComparator implements Comparator {
+	private class KeyComparator implements Comparator<FileDicomKey> {
 
 		/* (non-Javadoc)
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 		 */
-		public int compare(Object o1, Object o2) {
-			if(o1 instanceof FileDicomKey && o2 instanceof FileDicomKey) {
-				if(((FileDicomKey) o2).getGroupNumber() == ((FileDicomKey) o1).getGroupNumber()) {
-					return ((FileDicomKey) o1).getElementNumber() - ((FileDicomKey)o2).getElementNumber();
-				}
-				return ((FileDicomKey) o1).getGroupNumber() - ((FileDicomKey)o2).getGroupNumber();
-			} 
-			return o1.hashCode() - o2.hashCode();
+		public int compare(FileDicomKey o1, FileDicomKey o2) {
+			if(((FileDicomKey) o2).getGroupNumber() == ((FileDicomKey) o1).getGroupNumber()) {
+				return ((FileDicomKey) o1).getElementNumber() - ((FileDicomKey)o2).getElementNumber();
+			}
+			return ((FileDicomKey) o1).getGroupNumber() - ((FileDicomKey)o2).getGroupNumber();
 		}		
 	}
 	
@@ -291,8 +290,8 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		
 		public HashMap<FileDicomKey, FileDicomSQ> storeSequenceTags(HashMap<FileDicomKey, FileDicomSQ> prevSliceSequenceTags) {
 			ArrayList<FileDicomKey> ar;
-			String anonymized = " ANONYMIZED:\t", seqPrefix = "";
-			Collections.sort(ar = new ArrayList(sequenceTags.keySet()), new KeyComparator());
+			String anonymized = ANONYMIZED+"\t", seqPrefix = "";
+			Collections.sort(ar = new ArrayList<FileDicomKey>(sequenceTags.keySet()), new KeyComparator());
 			Iterator<FileDicomKey> sqItr = ar.iterator();
 			while(sqItr.hasNext()) {
 				FileDicomKey key = sqItr.next();
@@ -331,7 +330,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		
 		public HashMap<FileDicomKey, Object> storeAnonymizeTags(HashMap<FileDicomKey, Object> prevSliceAnonymizeTags) {
 			ArrayList<FileDicomKey> ar;
-			Collections.sort(ar = new ArrayList(anonymizeTags.keySet()), new KeyComparator());
+			Collections.sort(ar = new ArrayList<FileDicomKey>(anonymizeTags.keySet()), new KeyComparator());
 			Iterator<FileDicomKey> prItr = ar.iterator();
 			while(prItr.hasNext()) {
 				FileDicomKey key = prItr.next();
@@ -351,9 +350,9 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		public HashMap<FileDicomKey, Object> storePrivateTags(HashMap<FileDicomKey, Object> prevSlicePrivateTags) {
 			
 			ArrayList<FileDicomKey> ar;
-			Collections.sort(ar = new ArrayList(privateTags.keySet()), new KeyComparator());
+			Collections.sort(ar = new ArrayList<FileDicomKey>(privateTags.keySet()), new KeyComparator());
 			Iterator<FileDicomKey> prItr = ar.iterator();
-			String anonymized = " ANONYMIZED:\t", prefix = "";
+			String anonymized = ANONYMIZED+"\t", prefix = "";
 			while(prItr.hasNext()) {
 				FileDicomKey key = prItr.next();
 				Object obj = privateTags.get(key);
