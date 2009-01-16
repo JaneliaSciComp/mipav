@@ -18,7 +18,7 @@ This software may NOT be used for diagnostic purposes.
 	   Center for Information Technology (CIT) 
 	     National Institutes of Health (NIH)
 
-Version:	 4.1.4  (2009-01-16)
+Version:	 4.2.0  (2009-01-16)
 
 Project Leader:
 
@@ -37,13 +37,9 @@ Current MIPAV contributors:
      Ruida Cheng, ISL, NIH
      William Gandler, ISL, NIH
      Paul Hemler, Ph.D., Hampden-Sydney College
-     Mayur Joshi, MSD
-     Ben Link, SAIC
      Evan McCreedy, ISL, NIH
      Nish Pandya, SSAI
      Justin Senseney, ISL, NIH
-     Olga Vovk, Tech Writer, MSD
-     Hailong Wang, Ph.D.
 
 ******************************************************************
 ******************************************************************
