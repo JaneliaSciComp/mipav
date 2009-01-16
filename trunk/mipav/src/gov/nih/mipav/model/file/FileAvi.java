@@ -40,6 +40,7 @@ public class FileAvi extends FileBase {
     private final int SOF1  = 0xc1;       /* extended sequential, huffman */
     private final int SOF2  = 0xc2;       /* progressive, huffman */
     private final int SOF3  = 0xc3;       /* lossless, huffman */
+    private final int DHT   = 0xc4;       /* define huffman tables */
 
     private final int SOF5  = 0xc5;       /* differential sequential, huffman */
     private final int SOF6  = 0xc6;       /* differential progressive, huffman */
@@ -73,6 +74,22 @@ public class FileAvi extends FileBase {
     private final int APP13 = 0xed;
     private final int APP14 = 0xee;
     private final int APP15 = 0xef;
+    
+    private final int JPG0  = 0xf0;
+    private final int JPG1  = 0xf1;
+    private final int JPG2  = 0xf2;
+    private final int JPG3  = 0xf3;
+    private final int JPG4  = 0xf4;
+    private final int JPG5  = 0xf5;
+    private final int JPG6  = 0xf6;
+    private final int SOF48 = 0xf7;       ///< JPEG-LS
+    private final int LSE   = 0xf8;       ///< JPEG-LS extension parameters
+    private final int JPG9  = 0xf9;
+    private final int JPG10 = 0xfa;
+    private final int JPG11 = 0xfb;
+    private final int JPG12 = 0xfc;
+    private final int JPG13 = 0xfd;
+    private final int COM   = 0xfe;       /* comment */
     
     private final int ff_zigzag_direct[] = new int[]{
             0,   1,  8, 16,  9,  2,  3, 10,
@@ -3699,6 +3716,8 @@ public class FileAvi extends FileBase {
                  */
                  int lowres = 0;
                  boolean cs_itu601 = false;
+                 // If buggy avid, it puts EOI only at every 10th frame
+                 boolean buggy_avid = false;
                  int pix_fmt = PIX_FMT_NONE;
                  byte buffer[] = null;
                  int bufp[] = new int[1];
@@ -3729,6 +3748,10 @@ public class FileAvi extends FileBase {
                  int pSize;
                  int h2;
                  int size2;
+                 int dhtClass;
+                 byte bits_table[] = null;
+                 int code_max;
+                 byte val_table[] = null;
                  int pict_type; // picture type of the frame
                  /* is this picture used as reference\
                  * The values for this are the same as the MpegEncContext.picture_structure\
@@ -3748,6 +3771,8 @@ public class FileAvi extends FileBase {
                 int n;
                 short block[] = new short[64];
                 int EOBRUN[] = new int[1];
+                byte cbuf[] = null;
+                String comStr = null;
                 //VLC vlcs[2][4];
                 //#define VLC_TYPE int16_t
 
@@ -3915,6 +3940,9 @@ public class FileAvi extends FileBase {
                                     case SOF0:
                                         Preferences.debug("startCode = SOF0\n");
                                         break;
+                                    case DHT:
+                                        Preferences.debug("startCode = DHT\n");
+                                        break;
                                     case SOI:
                                         Preferences.debug("startCode = SOI\n");
                                         break;
@@ -3977,6 +4005,12 @@ public class FileAvi extends FileBase {
                                         break;
                                     case DRI:
                                         Preferences.debug("startCode = DRI\n");
+                                        break;
+                                    case JPG13:
+                                        Preferences.debug("startCode = JPG13\n");
+                                        break;
+                                    case COM:
+                                        Preferences.debug("startCode = COM\n");
                                         break;
                                     default:
                                         Preferences.debug("startCode = " + startCode + "\n");
@@ -4631,6 +4665,63 @@ public class FileAvi extends FileBase {
                                         return null;
                                     }
                                 } // else if (startCode == SOF0)
+                                else if (startCode == DHT) {
+                                    bits_table = new byte[17];
+                                    val_table = new byte[256];
+                                    len = (fileBuffer[j++] & 0xff) << 8;
+                                    len |= (fileBuffer[j++] & 0xff);
+                                    len -= 2;
+                                    
+                                    while (len > 0) {
+                                        if (len < 17) {
+                                            MipavUtil.displayError("len < 17 for startCode == DHT");
+                                            return null;
+                                        }
+                                        dhtClass = (fileBuffer[j] & 0xf0) >> 4;
+                                        if (dhtClass >= 2) {
+                                            MipavUtil.displayError("dhtClass >= 2 for startCode == DHT");
+                                            return null;
+                                        }
+                                        index = (fileBuffer[j++] & 0x0f);
+                                        if (index >= 4) {
+                                            Preferences.debug("index >= 4 for startCode == DHT\n");
+                                            break loopMJPG;
+                                        }
+                                        n = 0;
+                                        for (i = 1; i <= 16; i++) {
+                                            bits_table[i] = fileBuffer[j++];
+                                            n += (bits_table[i] & 0xff);
+                                        }
+                                        len -= 17;
+                                        if (len < n) {
+                                            MipavUtil.displayError("len < n for startCode == DHT");
+                                            return null;
+                                        }
+                                        if (n > 256) {
+                                            MipavUtil.displayError("n > 256 for startCode == DHT");
+                                            return null;
+                                        }
+                                        code_max = 0;
+                                        for (i = 0; i < n; i++) {
+                                            v = (fileBuffer[j++] & 0xff);
+                                            if (v > code_max) {
+                                                code_max = v;
+                                            }
+                                            val_table[i] = (byte)v;
+                                        } // for (i = 0; i < n; i++)
+                                        len -= n;
+                                        
+                                        /* build VLC and flush previous vlc if present */
+                                        vlcs[dhtClass][index] = null;
+                                        vlcs_bits[dhtClass][index] = 0;
+                                        vlcs_table_size[dhtClass][index] = 0;
+                                        vlcs_table_allocated[dhtClass][index] = 0;
+                                        if (build_vlc(dhtClass, index, bits_table, val_table, code_max + 1, (dhtClass > 0)) < 0) {
+                                            MipavUtil.displayError("build_vlc failed for startCode == DHT");
+                                            return null;
+                                        }
+                                    } // while (len > 0)
+                                } // else if (startCode == DHT)
                                 else if ((startCode >= APP0) && (startCode <= APP15)) {
                                     len = (fileBuffer[j++] & 0xff) << 8;
                                     len |= (fileBuffer[j++] & 0xff);
@@ -4673,6 +4764,30 @@ public class FileAvi extends FileBase {
                                         j++;
                                     }
                                 } // else if ((startCode >= APP0) && (startCode <= APP15))
+                                else if (startCode == COM) {
+                                    len = (fileBuffer[j++] & 0xff) << 8;
+                                    len |= (fileBuffer[j++] & 0xff);
+                                    if (len >= 2) {
+                                        cbuf = new byte[len - 1];
+                                        for (i = 0; i < len - 2; i++) {
+                                            cbuf[i] = fileBuffer[j++];
+                                        }
+                                        if (i > 0 && cbuf[i-1] == '\n') {
+                                            cbuf[i-1] = 0;
+                                        }
+                                        else {
+                                            cbuf[i] = 0;
+                                        }
+                                        comStr = new String(cbuf);
+                                        Preferences.debug("Comment = " + comStr + "\n");
+                                        if (comStr.equalsIgnoreCase("AVID")) {
+                                            buggy_avid = true;
+                                        }
+                                        else if (comStr.equalsIgnoreCase("CS=ITU601")) {
+                                            cs_itu601 = true;
+                                        }
+                                    }
+                                } // else if (startCode == COM)
                                 else {
                                     
                                 }
@@ -5510,13 +5625,13 @@ public class FileAvi extends FileBase {
         int n1;
         int index;
         short temp[][];
-        Preferences.debug("Entering build_table with index0 = " + index0 + " index1 = " + index1 + "\n");
+        //Preferences.debug("Entering build_table with index0 = " + index0 + " index1 = " + index1 + "\n");
         
         table_size = 1 << table_nb_bits;
         table_index = vlcs_table_size[index0][index1];
         vlcs_table_size[index0][index1] += table_size;
         if (vlcs_table_size[index0][index1] > vlcs_table_allocated[index0][index1]) {
-            Preferences.debug("New allocation in build_table\n");
+            //Preferences.debug("New allocation in build_table\n");
             vlcs_table_allocated[index0][index1] += (1 << vlcs_bits[index0][index1]); 
             if (vlcs[index0][index1] != null) {
                 temp = new short[vlcs[index0][index1].length][2];
@@ -7573,7 +7688,8 @@ public class FileAvi extends FileBase {
                 // read the LIST subCHUNK
                 CHUNKsignature = getInt(endianess);
                 
-                while ((CHUNKsignature == 0x6E727473 /* strn */) || (CHUNKsignature == 0x4B4E554A /* JUNK */)) {
+                while ((CHUNKsignature == 0x6E727473 /* strn */) || (CHUNKsignature == 0x64727473 /* strd */) ||
+                       (CHUNKsignature == 0x4B4E554A /* JUNK */)) {
                     // read strn instead of CHUNK
                     int strnLength = getInt(endianess);
                     if ((strnLength % 2) == 1) {
@@ -7582,12 +7698,8 @@ public class FileAvi extends FileBase {
                     byte[] text = new byte[strnLength];
                     raFile.read(text);
 
-                    if (text[strnLength - 1] != 0) {
-                        raFile.close();
-                        throw new IOException("strn string ends with illegal temination at loop start = " + text[strnLength - 1]);
-                    }
                     CHUNKsignature = getInt(endianess);
-                } // while ((CHUNKsignature == 0x6E727473 /* strn */) || (CHUNKsignature == 0x4B4E554A /* JUNK */))
+                } // ((CHUNKsignature == 0x6E727473 /* strn */) || (CHUNKsignature == 0x64727473 /* strd */) ||
 
                 if (CHUNKsignature == 0x5453494C) {
                     // have read LIST for LIST subCHUNK with information on data decoding
@@ -7677,7 +7789,8 @@ public class FileAvi extends FileBase {
                     doCYUV = true;
                 } else if (handlerString.toUpperCase().startsWith("MP42")) {
                     return AlgorithmTranscode.TRANSCODE_MP42;
-                } else if (handlerString.toUpperCase().startsWith("MJPG")) {
+                } else if ((handlerString.toUpperCase().startsWith("MJPG")) ||
+                           (handlerString.toUpperCase().startsWith("AVRN"))) {
                     Preferences.debug("MJPEG (MJPG) encoding\n", Preferences.DEBUG_FILEIO);
                     doMJPEG = true;
                     //return AlgorithmTranscode.TRANSCODE_MJPG;
@@ -7865,6 +7978,12 @@ public class FileAvi extends FileBase {
                     doCYUV = true;
                 } else if (compression == 1196444237) {
                     Preferences.debug("compression is MJPEG (MJPG)\n", Preferences.DEBUG_FILEIO);
+                    doMJPEG = true;
+                } else if (compression == 1196444233) {
+                    Preferences.debug("compression is IJPG (MJPG)\n", Preferences.DEBUG_FILEIO);
+                    doMJPEG = true;
+                } else if (compression == 1850889793) {
+                    Preferences.debug("compression is AVRn\n", Preferences.DEBUG_FILEIO);
                     doMJPEG = true;
                 } else {
                     raFile.close();
@@ -8085,6 +8204,14 @@ public class FileAvi extends FileBase {
                     }
                     marker = raFile.getFilePointer();
                     raFile.seek(marker + listLength);
+                } else if (strnSignature == 0x78646E69) {
+                    // have read icdx
+                    int icdxLength = getInt(endianess);
+                    if ((icdxLength % 2) == 1) {
+                        icdxLength++;
+                    }
+                    marker = raFile.getFilePointer();
+                    raFile.seek(marker + icdxLength);
                 } else {
                     raFile.close();
                     throw new IOException("strn signature is an erroneous = " + strnSignature);
