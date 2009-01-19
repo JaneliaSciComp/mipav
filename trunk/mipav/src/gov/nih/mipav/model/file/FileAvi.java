@@ -3865,6 +3865,7 @@ public class FileAvi extends FileBase {
                 while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
                            (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
                     if (AVIF_MUSTUSEINDEX) {
+                        System.out.println("in MUSTUSEINDEX");
                         raFile.seek(indexPointer);
                         dataFound = false;
 
@@ -4703,11 +4704,11 @@ public class FileAvi extends FileBase {
                                         }
                                         code_max = 0;
                                         for (i = 0; i < n; i++) {
-                                            v = (fileBuffer[j++] & 0xff);
+                                            v = (fileBuffer[j] & 0xff);
                                             if (v > code_max) {
                                                 code_max = v;
                                             }
-                                            val_table[i] = (byte)v;
+                                            val_table[i] = fileBuffer[j++];
                                         } // for (i = 0; i < n; i++)
                                         len -= n;
                                         
@@ -5262,20 +5263,44 @@ public class FileAvi extends FileBase {
             } // if (block[i + 56] != 0)
             
             destPtr[0] = destOrg;
+            if (destPtr[0] + i >= dest.length) {
+                continue;
+            }
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a0 + b0) >> COL_SHIFT)];
             destPtr[0] += line_size;
+            if (destPtr[0] + i >= dest.length) {
+                continue;
+            }
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a1 + b1) >> COL_SHIFT)];
             destPtr[0] += line_size;
+            if (destPtr[0] + i >= dest.length) {
+                continue;
+            }
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a2 + b2) >> COL_SHIFT)];
             destPtr[0] += line_size;
+            if (destPtr[0] + i >= dest.length) {
+                continue;
+            }
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a3 + b3) >> COL_SHIFT)];
             destPtr[0] += line_size;
+            if (destPtr[0] + i >= dest.length) {
+                continue;
+            }
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a3 - b3) >> COL_SHIFT)];
             destPtr[0] += line_size;
+            if (destPtr[0] + i >= dest.length) {
+                continue;
+            }
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a2 - b2) >> COL_SHIFT)];
             destPtr[0] += line_size;
+            if (destPtr[0] + i >= dest.length) {
+                continue;
+            }
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a1 - b1) >> COL_SHIFT)];
             destPtr[0] += line_size;
+            if (destPtr[0] + i >= dest.length) {
+                continue;
+            }
             dest[destPtr[0] + i] = ff_cropTbl[MAX_NEG_CROP + ((a0 - b0) >> COL_SHIFT)];
         } // for (i = 0; i < 8; i++)
     }
@@ -5677,6 +5702,7 @@ public class FileAvi extends FileBase {
             else {
                 symbol = symbols[i];    
             }
+            //Preferences.debug("symbol = " + symbol + "\n");
             /* if code matches the prefix, it is in the table */
             n -= n_prefix;
             code_prefix2 = code >>> n;
