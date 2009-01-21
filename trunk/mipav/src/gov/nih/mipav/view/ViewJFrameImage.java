@@ -1010,6 +1010,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 if (maskImage != null) {
                     maskImage.setImageName(getActiveImage().getImageName() + "_bmask");
+                    maskImage.getMatrixHolder().replaceMatrices(getActiveImage().getMatrixHolder().getMatrices());
+                    maskImage.getFileInfo(0).setOrigin(getActiveImage().getFileInfo(0).getOrigin());
                     new ViewJFrameImage(maskImage, null, new Dimension(610, 200), false);
                 }
             } catch (OutOfMemoryError error) {
@@ -1041,6 +1043,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 if (shortImage != null) {
                     shortImage.setImageName(getActiveImage().getImageName() + "_smask");
+                    shortImage.getMatrixHolder().replaceMatrices(getActiveImage().getMatrixHolder().getMatrices());
+                    shortImage.getFileInfo(0).setOrigin(getActiveImage().getFileInfo(0).getOrigin());
                     new ViewJFrameImage(shortImage, null, new Dimension(610, 200), false);
                 }
             } catch (OutOfMemoryError error) {
@@ -1072,6 +1076,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 if (uByteImage != null) {
                     uByteImage.setImageName(getActiveImage().getImageName() + "_ubmask");
+                    uByteImage.getMatrixHolder().replaceMatrices(getActiveImage().getMatrixHolder().getMatrices());
+                    uByteImage.getFileInfo(0).setOrigin(getActiveImage().getFileInfo(0).getOrigin());
                     new ViewJFrameImage(uByteImage, null, new Dimension(610, 200), false);
                 }
             } catch (OutOfMemoryError error) {
