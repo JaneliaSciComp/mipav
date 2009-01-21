@@ -3629,41 +3629,11 @@ public class FileAvi extends FileBase {
                 // of the compressed data stream.
                 // For historical (i.e. hardware specific reasons) this field's contents are undefined.
                 // If possible, it should be set to zero.
-                int unused;
-                // This tag is used to identify that the app1 marker is actually the QuickTime M-JPEG
-                // specification.  It should contain 'mjpg'
-                byte tag[] = new byte[4];
-                // Contains the size of the image data for this field.
                 int fieldSize;
-                // The size of the image data including trailing pad bytes.  Because some hardware may
-                // generate trailing pad bytes, or require image sizes to be multiples of a particular
-                // size.
-                int paddedFieldSize;
-                // Offset to the next field of data.  In the second field, this value should be set to
-                // zero.  This value must be a multiple of 16 in size in order to ensure the alignment 
-                // of hardware decompressors.  If the frame only contains a single field, then this 
-                // field is always set to zero.
-                int nextFieldOffset;
-                // Offset to the quantization table marker.  If this field is zero, the image description
-                // should be checked for a default quantization table.
-                int quantizationTableOffset;
-                // Offset to the defualt huffman table marker.  If this field is zero, the imaage
-                // description should be checked for a default huffman table.
-                int huffmanTableOffset;
-                // Offset to the start of the image marker.  This field must be non-zero, i.e.,
-                // there must be start of image data.
-                int imageOffset;
-                // Offset to start of scan marker.  This field must be non-zero, i.e., there
-                // must be start of scan data.
-                int scanOffset;
-                // Offset to the start of the data stream.  Typically this immediately follows
-                // the start of scan data.
-                int dataOffset;
                 int len;
                 byte app0[] = new byte[4];
                 String id;
                 byte polarity;
-                byte bottomField;
                 int fieldSizeLessPadding;
                 int  v;
                 int v2;
@@ -3681,14 +3651,11 @@ public class FileAvi extends FileBase {
                 boolean rct = false; /* standard reversible colorspace transform */
                 int swidth = 0;
                 int sheight = 0;
-                int width = 0;
-                int height = 0;
                 boolean interlaced = false; /* true if interlaced */
-                boolean interlaced_frame = false; /* true if content of the picture is interlaced */
                 int org_height = imgExtents[1]; /* Size at codec init */
                 boolean first_picture = true; /* true if decoding first picture */
                 boolean bottom_field = false; /* true if bottom field */
-                boolean top_field_first = true;
+                byte bottomField = -1;
                 int nb_components = 0;
                 int h_max = 0;
                 int v_max = 0;
@@ -3704,10 +3671,7 @@ public class FileAvi extends FileBase {
                 last_dc = new int[MAX_COMPONENTS]; /* last DEQUANTIZED dc  */
                 int linesize[] = new int[MAX_COMPONENTS];                   ///< linesize << interlaced
                 int quant_index[] = new int[4];   /* quant table index for each component */
-                byte[] qscale_table;
                 boolean interlace_polarity = false; /* true for bottom field first */
-                int coded_width;
-                int coded_height;
                 int pix_fmt_id;
                 /**
                  * low resolution decoding, 1-> 1/2 size, 2->1/4 size
@@ -3723,8 +3687,6 @@ public class FileAvi extends FileBase {
                  int bufp[] = new int[1];
                  byte xb;
                  int block_size;
-                 int vmax;
-                 int hmax;
                  int idsos;
                  int predictor;
                  int ilv;
@@ -3739,12 +3701,12 @@ public class FileAvi extends FileBase {
                  int dataPtr[] = new int[4];
                  byte data[][] = new byte[4][];
                  byte destBuf[] = new byte[4 * imgExtents[0] * imgExtents[1]];
+                 int sofWidth = imgExtents[0];
+                 int sofHeight = imgExtents[1];
+                 int zs = 0;
                  int x_chroma_shift;
                  int y_chroma_shift;
                  int w2;
-                 byte pBuffer[] = null;
-                 int pBufferSize = 0;
-                 int pBufPtr[] = new int[1];
                  int pSize;
                  int h2;
                  int size2;
@@ -3752,20 +3714,7 @@ public class FileAvi extends FileBase {
                  byte bits_table[] = null;
                  int code_max;
                  byte val_table[] = null;
-                 int pict_type; // picture type of the frame
-                 /* is this picture used as reference\
-                 * The values for this are the same as the MpegEncContext.picture_structure\
-                 * variable, that is 1->top field, 2->bottom field, 3->frame/both fields.\
-                 * - encoding: unused\
-                 * - decoding: Set by libavcodec. (before get_buffer() call)).\
-                 */
-                int reference;
-                /**\
-                 * 1 -> keyframe, 0-> not\
-                 * - encoding: Set by libavcodec.\
-                 * - decoding: Set by libavcodec.\
-                 */
-                int key_frame;
+               
                 int mb_x;
                 int mb_y;
                 int n;
@@ -3773,15 +3722,6 @@ public class FileAvi extends FileBase {
                 int EOBRUN[] = new int[1];
                 byte cbuf[] = null;
                 String comStr = null;
-                //VLC vlcs[2][4];
-                //#define VLC_TYPE int16_t
-
-                //typedef struct VLC {
-                    //int bits;
-                    //VLC_TYPE (*table)[2]; ///< code, bits
-                    //int table_size, table_allocated;
-                //} VLC;
-
                 
                 if (!mjpegDecodeInit) {
                     int end;
@@ -3855,7 +3795,6 @@ public class FileAvi extends FileBase {
                 y = imgExtents[1] - 1;
                 z = 0;
 
-                int pixelIndex = 0;
                 boolean bufferFinished = false;
                 
 
@@ -3920,7 +3859,6 @@ public class FileAvi extends FileBase {
                             totalBytesRead = totalBytesRead + dataLength;
                             subchunkBytesRead += dataLength;
                             bufferFinished = false;
-                            pixelIndex = 0;
                             bigloop:
                             for (int j = 0; (j < dataLength) && (!bufferFinished);) {
                                 startCode = -1;
@@ -4098,8 +4036,6 @@ public class FileAvi extends FileBase {
                                         MipavUtil.displayError("Error on decode sos invalid len = " + len);
                                         return null;
                                     }
-                                    vmax = 0;
-                                    hmax = 0;
                                     for (i = 0; i < nb_components; i++) {
                                         idsos = (buffer[bufp[0]++] & 0xff) - 1;
                                         /* find component index */
@@ -4136,16 +4072,17 @@ public class FileAvi extends FileBase {
                                         last_dc[i] = 1024;
                                     }
                                     
+                                    Preferences.debug("In SOS: sofWidth = " + sofWidth + " sofHeight = " + sofHeight + "\n");
                                     if (nb_components > 1) {
                                         /* interleaved stream */
-                                        mb_width = (width + h_max * block_size - 1)/ (h_max * block_size);
-                                        mb_height = (height + v_max * block_size - 1)/ (v_max * block_size);
+                                        mb_width = (sofWidth + h_max * block_size - 1)/ (h_max * block_size);
+                                        mb_height = (sofHeight + v_max * block_size - 1)/ (v_max * block_size);
                                     }
                                     else if (!ls) { /* Skip this for JPEG-LS */
                                         h = h_max /h_scount[0];   
                                         v = v_max / v_scount[0];
-                                        mb_width = (width + h * block_size - 1) / (h * block_size);
-                                        mb_height = (height + v * block_size - 1) / ( v * block_size);
+                                        mb_width = (sofWidth + h * block_size - 1) / (h * block_size);
+                                        mb_height = (sofHeight + v * block_size - 1) / ( v * block_size);
                                         nb_blocks[0] = 1;
                                         h_scount[0] = 1;
                                         v_scount[0] = 1;
@@ -4166,7 +4103,7 @@ public class FileAvi extends FileBase {
                                                 c = comp_index[i];
                                                 dataPtr[c] = 0;
                                                 if (AMVCodec) {
-                                                    dataPtr[c] = (linesize[c] * (v_scount[i] * (8 * mb_height - ((height/v_max) & 7)) - 1));
+                                                    dataPtr[c] = (linesize[c] * (v_scount[i] * (8 * mb_height - ((sofHeight/v_max) & 7)) - 1));
                                                     linesize[c] *= -1;
                                                 }
                                             } // for (i = 0; i < nb_components; i++)
@@ -4209,13 +4146,24 @@ public class FileAvi extends FileBase {
                                                                  break loopmby;
                                                              }
                                                              
+                                                             if (interlaced) {
+                                                                 ptr[0] = dataPtr[c] + (((2*linesize[c] * (v * mb_y + y) * 8) +
+                                                                         (h * mb_x + x) * 8 ) >> lowres);    
+                                                             }
+                                                             else {
                                                              ptr[0] = dataPtr[c] + (((linesize[c] * (v * mb_y + y) * 8) +
                                                                        (h * mb_x + x) * 8 ) >> lowres);
-                                                             if (interlaced && bottom_field) {
-                                                                 ptr[0] += linesize[c] >> 1;
+                                                             }
+                                                             if (interlaced && ((zs % 2) == 1)) {
+                                                                 ptr[0] += linesize[c];
                                                              }
                                                              if (!progressive) {
-                                                                 ff_simple_idct_put(data[c], ptr, linesize[c], block);
+                                                                 if (interlaced) {
+                                                                     ff_simple_idct_put(data[c], ptr, 2*linesize[c], block);
+                                                                 }
+                                                                 else {
+                                                                     ff_simple_idct_put(data[c], ptr, linesize[c], block);
+                                                                 }
                                                              }
                                                              else {
                                                                  ff_simple_idct_add(data[c], ptr, linesize[c], block);
@@ -4253,29 +4201,35 @@ public class FileAvi extends FileBase {
                                                     }
                                                 } // for (mb_x = 0; mb_x < mb_width; mb_x++)
                                             } // for (mb_y = 0; mb_y < mb_height; mb_y++)
+                                            zs++;
+                                            if ((sofHeight == imgExtents[1]) || ((sofHeight < imgExtents[1]) && ((zs % 2) == 0))) {
                                             switch(pix_fmt) {
-                                                case PIX_FMT_YUVJ420P:
-                                                    yuvj420p_to_argb(destBuf, data, imgExtents[0], imgExtents[1],
-                                                            linesize);
-                                                    break;
-                                                case PIX_FMT_YUVJ422P:
-                                                    yuvj422p_to_argb(destBuf, data, imgExtents[0], imgExtents[1],
-                                                            linesize);
-                                                    break;
-                                            }
+                                                    case PIX_FMT_YUVJ420P:
+                                                        yuvj420p_to_argb(destBuf, data, imgExtents[0], imgExtents[1],
+                                                                linesize);
+                                                        break;
+                                                    case PIX_FMT_YUVJ422P:
+                                                        yuvj422p_to_argb(destBuf, data, imgExtents[0], imgExtents[1],
+                                                                linesize);
+                                                        break;
+                                                }
                                             
-                                            if (one) {
-                                                imageA.importData(0, destBuf, false);
-                                            } else {
-                                                imageA.importData(4 * z * imgExtents[0] * imgExtents[1], destBuf, false);
+                                                if (one) {
+                                                    imageA.importData(0, destBuf, false);
+                                                } else {
+                                                    imageA.importData(4 * z * imgExtents[0] * imgExtents[1], destBuf, false);
+                                                }
+    
+                                                if (actualFrames > 1) {
+                                                    fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
+                                                }
+                                                z++;
+                                                if (z == imgExtents[2]) {
+                                                    break loopMJPG;
+                                                }
                                             }
-
-                                            if (actualFrames > 1) {
-                                                fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
-                                            }
-                                            z++;
                                         } // if (prev_shift == 0)
-                                    }
+                                    } // if ((sofHeight == imgExtents[1]) || ((sofHeight < imgExtents[1]) && ((zs % 2) == 0)))
                                     // emms_c();
                                 } // else if (startCode == SOS)
                                 else if (startCode == SOF0) {
@@ -4300,20 +4254,47 @@ public class FileAvi extends FileBase {
                                         break loopMJPG;
                                     }
                                     
-                                    height = (fileBuffer[j++] & 0xff) << 8;
-                                    height |= (fileBuffer[j++] & 0xff);
-                                    Preferences.debug("height = " + height + "\n");
-                                    width = (fileBuffer[j++] & 0xff) << 8;
-                                    width |= (fileBuffer[j++] & 0xff);
-                                    Preferences.debug("width = " + width + "\n");
+                                    sofHeight = (fileBuffer[j++] & 0xff) << 8;
+                                    sofHeight |= (fileBuffer[j++] & 0xff);
+                                    Preferences.debug("sofHeight = " + sofHeight + "\n");
+                                    if (sofHeight > imgExtents[1]) {
+                                        imgExtents[1] = sofHeight;
+                                        if (bitCount == 24) {
+                                            bufferSize = 4 * imgExtents[0] * imgExtents[1];
+                                        }
+                                        else {
+                                            bufferSize = imgExtents[0] * imgExtents[1];
+                                        }
+                                        imgBuffer = new byte[bufferSize];
+                                        destBuf = new byte[4 * imgExtents[0] * imgExtents[1]];
+                                        fileInfo.setExtents(imgExtents);
+
+                                        if (one) {
+                                            moreExtents = new int[2];
+                                            moreExtents[0] = sofWidth;
+                                            moreExtents[1] = sofHeight;
+                                        } else {
+                                            moreExtents = imgExtents;
+                                        }
+
+                                        if (bitCount == 24) {
+                                            imageA = new ModelImage(ModelStorageBase.ARGB, moreExtents, fileName);
+                                        } else {
+                                            imageA = new ModelImage(ModelStorageBase.UBYTE, moreExtents, fileName);
+                                        }
+                                    } // if (sofHeight > imgExtents[1])
+                                    
+                                    sofWidth = (fileBuffer[j++] & 0xff) << 8;
+                                    sofWidth |= (fileBuffer[j++] & 0xff);
+                                    Preferences.debug("sofWidth = " + sofWidth + "\n");
                                     
                                     //HACK for odd_height.mov
-                                    if (interlaced && (swidth == width) && (sheight == (height + 1))) {
-                                        height = sheight;
+                                    if (interlaced && (swidth == sofWidth) && (sheight == (sofHeight + 1))) {
+                                        sofHeight = sheight;
                                     }
                                     
-                                    if((width <= 0) || (height <= 0) || ((width+128)*(height+128) >= Integer.MAX_VALUE/4)) {
-                                        MipavUtil.displayError("Illegal width and/or height value");
+                                    if((sofWidth <= 0) || (sofHeight <= 0) || ((sofWidth+128)*(sofHeight+128) >= Integer.MAX_VALUE/4)) {
+                                        MipavUtil.displayError("Illegal sofWidth and/or sofHeight value");
                                         return null;
                                     }
                                     
@@ -4359,27 +4340,21 @@ public class FileAvi extends FileBase {
                                     }
                                     
                                     /* If different size, reallocate/allocate picture */
-                                    if ((width != swidth) || (height != sheight)) {
-                                        qscale_table = null;
-                                        swidth =  width;
-                                        sheight = height;
+                                    if ((sofWidth != swidth) || (sofHeight != sheight)) {
+                                        swidth =  sofWidth;
+                                        sheight = sofHeight;
                                         interlaced = false;
                                         
                                         /* test interlaced mode */
                                         if (first_picture && (org_height != 0) && 
                                             (sheight < ((org_height * 3)/4))) {
                                             interlaced = true;
+                                            Preferences.debug("interlaced\n");
                                             bottom_field = interlace_polarity;
-                                            interlaced_frame = true;
-                                            top_field_first = !interlace_polarity;
-                                            height *= 2;
                                         }
                                         
-                                        coded_width = width;
-                                        coded_height= height;
-                                        swidth = -((-width )>>lowres);
-                                        sheight= -((-height)>>lowres);
-                                        qscale_table = new byte[(swidth+15)/16];
+                                        swidth = -((-sofWidth )>>lowres);
+                                        sheight= -((-sofHeight)>>lowres);
                                         first_picture = false;
                                     } // if ((width != swidth) || (height != sheight))
                                     
@@ -4651,15 +4626,6 @@ public class FileAvi extends FileBase {
                                             }
                                             break;
                                     }
-                                    reference = 0;
-                                    pict_type = FF_I_TYPE;
-                                    key_frame = 1;
-                                    
-                                    if (interlaced) {
-                                        for (i = 0; i < 3; i++) {
-                                            linesize[i] *= 2;
-                                        }
-                                    } // if (interlaced)
                                     
                                     if (len != (8+(3*nb_components))) {
                                         MipavUtil.displayError("decode_sof0 error, len = " + len);
@@ -5431,7 +5397,7 @@ public class FileAvi extends FileBase {
         int cache, sign;
         val = mjpeg_decode_dc(dc_index);
         if (val == 0xffff) {
-            MipavUtil.displayError("mjpeg_decode_dc error");
+            Preferences.debug("mjpeg_decode_dc error\n");
             return -1;
         }
         val = val * quant_matrix[0] + last_dc[component];
@@ -5443,6 +5409,10 @@ public class FileAvi extends FileBase {
         int re_index= gbc_index;
         int re_cache= 0;
         for (;;) {
+            if ((3 + (re_index>>3)) >= gbc_buffer.length) {
+                Preferences.debug("Out of memory in decode_block\n");
+                return -1;
+            }
             // UPDATE_CACHE(re, &s->gb)
             re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
             re_cache |= (gbc_buffer[1 + (re_index>>3)] & 0xff) << 16;
