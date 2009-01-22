@@ -69,6 +69,7 @@ public class FilePARREC extends FileBase {
     private float scaleSlope[];
     /** True if the 3 values are the same for all slices **/
     private boolean sameSliceScalings = true;
+    private int originalDataType;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -675,23 +676,28 @@ public class FilePARREC extends FileBase {
         }
         //Format of the "rec" file
         if(FileUtility.getExtension(getImageFiles()[0]).startsWith(".f")) {
+            originalDataType = ModelStorageBase.FLOAT;
             fileInfo.setDataType(ModelStorageBase.FLOAT);
             Preferences.debug("FilePARREC:readHeader. Floating Point" + "\n");
         } else {
             if(Integer.valueOf(bpp)==16) {
-                fileInfo.setDataType(ModelStorageBase.USHORT);
+                originalDataType = ModelStorageBase.USHORT;
                 if ((scaleSlope[0] == 1.0f) && (rescaleIntercept[0] == 0.0f) && sameSliceScalings) {
+                    fileInfo.setDataType(ModelStorageBase.USHORT);
                     Preferences.debug("FilePARREC:readHeader. Unsigned Short" + "\n");
                 }
                 else {
+                    fileInfo.setDataType(ModelStorageBase.FLOAT);
                     Preferences.debug("FilePARREC: readHeader. Raw data USHORT will scale to Float\n");
                 }
             } else if(Integer.valueOf(bpp)==8) {
-                fileInfo.setDataType(ModelStorageBase.UBYTE);
+                originalDataType = ModelStorageBase.UBYTE;
                 if ((scaleSlope[0] == 1.0f) && (rescaleIntercept[0] == 0.0f) && sameSliceScalings) {
+                    fileInfo.setDataType(ModelStorageBase.UBYTE);
                     Preferences.debug("FilePARREC:readHeader. Unsigned BYTE" + "\n");
                 }
                 else {
+                    fileInfo.setDataType(ModelStorageBase.FLOAT);
                     Preferences.debug("FilePARREC: readHeader. Raw data UBYTE will scale to Float\n");
                 }
                 
@@ -801,15 +807,8 @@ public class FilePARREC extends FileBase {
         boolean haveHeader = false;
         int k;
         int index;
-        AlgorithmChangeType changeTypeAlgo;
-        double originalMin;
-        double originalMax;
-        double newMin;
-        double newMax;
-        double offsetAdjustment;
-        float offsetAdjustmentFloat;
-        int sliceSize;
-        float floatBuffer[];
+        float scaleFactor[];
+        float offsetAdd[];
         for(k=0;k<hdrEXTENSIONS.length;k++)
         {
             if (FileUtility.getExtension(fileName).equals(FilePARREC.hdrEXTENSIONS[k])) {
@@ -870,10 +869,18 @@ public class FilePARREC extends FileBase {
                 }
             }
 
-            rawFile.readImage(image, offset);
-
-
-
+            if ((scaleSlope[0] == 1.0f) && (rescaleIntercept[0] == 0.0f) && sameSliceScalings) {
+                rawFile.readImage(image, offset);
+            }
+            else {
+                scaleFactor = new float[Slices.size()];  
+                offsetAdd = new float[Slices.size()];
+                for (int i = 0; i < Slices.size(); i++) {
+                    scaleFactor[i] = 1.0f/scaleSlope[i];
+                    offsetAdd[i] = rescaleIntercept[i]/(scaleSlope[i] * rescaleSlope[i]);
+                }
+                rawFile.readFloatImage(image, originalDataType, scaleFactor, offsetAdd, offset);
+            }
 
             if (one) {
                 fileInfo.setExtents(extents);
@@ -886,63 +893,6 @@ public class FilePARREC extends FileBase {
         if (image != null) {
             image.calcMinMax();
         }
-        if (((scaleSlope[0] != 1.0f) || (rescaleIntercept[0] != 0.0f)) && sameSliceScalings) {
-            originalMin = image.getMin();
-            originalMax = image.getMax();
-            offsetAdjustment = rescaleIntercept[0]/(scaleSlope[0] * rescaleSlope[0]);
-            newMin = originalMin/scaleSlope[0] + offsetAdjustment;
-            newMax = originalMax/scaleSlope[0] + offsetAdjustment;
-            changeTypeAlgo = new AlgorithmChangeType(image, ModelStorageBase.FLOAT, originalMin, originalMax, 
-                    newMin, newMax, false);
-            changeTypeAlgo.run();
-            
-            if (!changeTypeAlgo.isCompleted()) { // if the change algo was halted,
-                // halt the rest of this processing.
-                throw (new IOException(" PAR/REC AlgorithmChangeType failed to complete"));    
-            }
-            changeTypeAlgo.finalize();
-            changeTypeAlgo = null;
-            fileInfo.setDataType(ModelStorageBase.FLOAT);
-            image.calcMinMax();
-        }
-        else if (!sameSliceScalings) {
-            originalMin = image.getMin();
-            originalMax = image.getMax();
-            changeTypeAlgo = new AlgorithmChangeType(image, ModelStorageBase.FLOAT, originalMin, originalMax, 
-                    originalMin, originalMax, false);
-            changeTypeAlgo.run();
-            
-            if (!changeTypeAlgo.isCompleted()) { // if the change algo was halted,
-                // halt the rest of this processing.
-                throw (new IOException(" PAR/REC AlgorithmChangeType failed to complete"));    
-            }
-            changeTypeAlgo.finalize();
-            changeTypeAlgo = null;
-            fileInfo.setDataType(ModelStorageBase.FLOAT);
-            sliceSize = fileInfo.getExtents()[0] * fileInfo.getExtents()[1];
-            floatBuffer = new float[sliceSize];
-            for (int i = 0; i < Slices.size(); i++) {
-                try {
-                    image.exportData(i*sliceSize, sliceSize, floatBuffer);
-                }
-                catch(IOException e) {
-                    throw (new IOException(" PAR/REC image.exportData IOException"));
-                }
-                offsetAdjustmentFloat = rescaleIntercept[i]/(scaleSlope[i] * rescaleSlope[i]);
-                for (int j = 0; j < sliceSize; j++) {
-                    floatBuffer[j] = floatBuffer[j]/scaleSlope[i] + offsetAdjustmentFloat;
-                }
-                try {
-                    image.importData(i*sliceSize, floatBuffer, false);
-                }
-                catch(IOException e) {
-                    throw (new IOException(" PAR/REC image.importData IOException"));
-                }
-            }
-            floatBuffer = null;
-            image.calcMinMax();
-        }
-        
 
         return image;
     }
@@ -1040,7 +990,7 @@ public class FilePARREC extends FileBase {
     private int getOffset(FileInfoPARREC fileInfo) {
         int offset = fileInfo.getExtents()[0] * fileInfo.getExtents()[1] * (fileInfo.getExtents()[2] / 2);
 
-        switch (fileInfo.getDataType()) {
+        switch (originalDataType) {
 
             case ModelStorageBase.BOOLEAN:
             case ModelStorageBase.BYTE:
