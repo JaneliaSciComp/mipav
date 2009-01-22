@@ -654,6 +654,485 @@ public class FileRaw extends FileBase {
                     throw new IOException();
             }
         }
+        
+        fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+
+        // image.calcMinMax();
+        if (compressionType != 1) {
+            raFile.close();
+        }
+    }
+        
+        /**
+         * This method reads a raw image file (1D - 5D).  Then multiplies raw data by a scaleFactor[k] 
+         * and adds an offsetAdjustment[k], where k is the slice index
+         *
+         * @param      image   Image model where the data will be stored.  Either a ModelStorageBase.FLOAT
+         *                     or a ModelStorageBase.ARGB_FLOAT.
+         * @param      originalDataType
+         * @param      scaleFactor array with a multiplicative factor for each slice
+         * @param      offsetAdjustment array with an additive offset adjustmetn for each slice
+         * @param      offset  Points to where the data of the image is located. It is equal to the header length.
+         *
+         * @exception  IOException  if there is an error reading the file
+         *
+         * @see        FileInfoXML
+         * @see        FileRawChunk
+         */
+        public void readFloatImage(ModelImage image, int originalDataType, float scaleFactor[], 
+                                   float offsetAdjustment[], int offset) throws IOException {
+            int i, k;
+            int ii;
+            int[] extents;
+            int nBuffers;
+            int bufferSize;
+
+            try {
+                fireProgressStateChanged(0);
+
+                extents = new int[image.getNDims()];
+
+                for (i = 0; i < image.getNDims(); i++) {
+                    extents[i] = image.getExtents()[i];
+                }
+
+                fileInfo.setExtents(extents);
+
+                
+            } catch (OutOfMemoryError error) {
+                throw error;
+            }
+
+            if (image.getType() == ModelStorageBase.ARGB_FLOAT) {
+                fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
+            }
+            else {
+                fileInfo.setDataType(ModelStorageBase.FLOAT);
+            }
+
+            if (image.getNDims() > 1) {
+                bufferSize = extents[0] * extents[1];
+            } else {
+                bufferSize = extents[0];
+            }
+            
+            float floatBuffer[];
+            if (image.getType() == ModelStorageBase.ARGB_FLOAT) {
+                floatBuffer = new float[4 * bufferSize];
+            }
+            else {
+                floatBuffer = new float[bufferSize];
+            }
+
+            if (image.getNDims() == 5) {
+                nBuffers = extents[4] * extents[3] * extents[2];
+            } else if (image.getNDims() == 4) {
+                nBuffers = extents[3] * extents[2];
+            } else if (image.getNDims() == 3) {
+                nBuffers = extents[2];
+            } else {
+                nBuffers = 1;
+            }
+
+            // System.err.println("N BUFFERS: " + nBuffers);
+
+            for (k = 0; k < nBuffers; k++) {
+
+                fireProgressStateChanged(MipavMath.round((float) k / (nBuffers - 1) * 100));
+
+                switch (originalDataType) {
+
+                    case ModelStorageBase.BOOLEAN:
+                        try {
+                            fileRW.readImage(ModelStorageBase.BOOLEAN, (k * 8 * ((bufferSize + 63) >> 6)) + offset,
+                                             bufferSize);
+                            for (i = 0; i < bufferSize; i++) {
+                                if (fileRW.getBitSetBuffer().get(i)) {
+                                    floatBuffer[i] = scaleFactor[k] + offsetAdjustment[k];
+                                }
+                                else {
+                                    floatBuffer[i] = offsetAdjustment[k];
+                                }
+                            }
+
+                            image.importData(k * bufferSize, floatBuffer, false);
+                        } catch (IOException error) {
+                            throw error;
+                        }
+
+                        break;
+
+                    case ModelStorageBase.BYTE:
+                        try {
+                            fileRW.readImage(ModelStorageBase.BYTE, (k * bufferSize) + offset, bufferSize);
+                            byte buf[] = fileRW.getByteBuffer();
+                            for (i = 0; i < bufferSize; i++) {
+                                floatBuffer[i] = scaleFactor[k] * buf[i] + offsetAdjustment[k];
+                            }
+
+                            image.importData(k * bufferSize, floatBuffer, false);
+                        } catch (IOException error) {
+                            throw error;
+                        }
+
+                        break;
+
+                    case ModelStorageBase.UBYTE:
+                        try {
+                            fileRW.readImage(ModelStorageBase.UBYTE, (k * bufferSize) + offset, bufferSize);
+                            short buf[] = fileRW.getShortBuffer();
+                            for (i = 0; i < bufferSize; i++) {
+                                floatBuffer[i] = scaleFactor[k] * buf[i] + offsetAdjustment[k];
+                            }
+
+                            image.importData(k * bufferSize, floatBuffer, false);
+                        } catch (IOException error) {
+                            throw error;
+                        }
+
+                        break;
+
+                    case ModelStorageBase.SHORT:
+                        try {
+                            fileRW.readImage(ModelStorageBase.SHORT, (k * bufferSize * 2) + offset, bufferSize);
+                            short buf[] = fileRW.getShortBuffer();
+                            for (i = 0; i < bufferSize; i++) {
+                                floatBuffer[i] = scaleFactor[k] * buf[i] + offsetAdjustment[k];
+                            }
+
+                            image.importData(k * bufferSize, floatBuffer, false);
+                        } catch (IOException error) {
+                            throw error;
+                        }
+
+                        break;
+
+                    case ModelStorageBase.USHORT:
+                        try {
+                            fileRW.readImage(ModelStorageBase.USHORT, (k * bufferSize * 2) + offset, bufferSize);
+                            short buf[] = fileRW.getShortBuffer();
+                            for (i = 0; i < bufferSize; i++) {
+                                floatBuffer[i] = scaleFactor[k] * (buf[i] & 0xffff) + offsetAdjustment[k];
+                            }
+
+                            image.importData(k * bufferSize, floatBuffer, false);
+                        } catch (IOException error) {
+                            throw error;
+                        }
+
+                        break;
+
+                    case ModelStorageBase.INTEGER:
+                        try {
+                            fileRW.readImage(ModelStorageBase.INTEGER, (k * bufferSize * 4) + offset, bufferSize);
+                            int buf[] = fileRW.getIntBuffer();
+                            for (i = 0; i < bufferSize; i++) {
+                                floatBuffer[i] = scaleFactor[k] * buf[i] + offsetAdjustment[k];
+                            }
+
+                            image.importData(k * bufferSize, floatBuffer, false);
+                        } catch (IOException error) {
+                            throw error;
+                        }
+
+                        break;
+
+                    case ModelStorageBase.UINTEGER:
+                        try {
+                            fileRW.readImage(ModelStorageBase.UINTEGER, (k * bufferSize * 4) + offset, bufferSize);
+                            int buf[] = fileRW.getIntBuffer();
+                            for (i = 0; i < bufferSize; i++) {
+                                floatBuffer[i] = scaleFactor[k] * (buf[i] & 0xFFFFFFFFL) + offsetAdjustment[k];
+                            }
+
+                            image.importData(k * bufferSize, floatBuffer, false);
+                        } catch (IOException error) {
+                            throw error;
+                        }
+
+                        break;
+
+                    case ModelStorageBase.LONG:
+                        try {
+                            fileRW.readImage(ModelStorageBase.LONG, (k * bufferSize * 8) + offset, bufferSize);
+                            long buf[] = fileRW.getLongBuffer();
+                            for (i = 0; i < bufferSize; i++) {
+                                floatBuffer[i] = scaleFactor[k] * buf[i] + offsetAdjustment[k];
+                            }
+
+                            image.importData(k * bufferSize, floatBuffer, false);
+                        } catch (IOException error) {
+                           throw error;
+                        }
+
+                        break;
+
+                    case ModelStorageBase.FLOAT:
+                        try {
+                            fileRW.readImage(ModelStorageBase.FLOAT, (k * bufferSize * 4) + offset, bufferSize);
+                            float buf[] = fileRW.getFloatBuffer();
+                            for (i = 0; i < bufferSize; i++) {
+                                buf[i] = scaleFactor[k] * buf[i] + offsetAdjustment[k];
+                            }
+
+                            image.importData(k * bufferSize, buf, false);
+                        } catch (IOException error) {
+                           throw error;
+                        }
+
+                        break;
+
+                    case ModelStorageBase.DOUBLE:
+                        try {
+                            fileRW.readImage(ModelStorageBase.DOUBLE, (k * bufferSize * 8) + offset, bufferSize);
+                            double buf[] = fileRW.getDoubleBuffer();
+                            for (i = 0; i < bufferSize; i++) {
+                                floatBuffer[i] = (float)(scaleFactor[k] * buf[i] + offsetAdjustment[k]);
+                            }
+
+                            image.importData(k * bufferSize, floatBuffer, false);
+                        } catch (IOException error) {
+                            throw error;
+                        }
+
+                        break;
+
+                    case ModelStorageBase.ARGB:
+                        try {
+                            fileRW.readImage(ModelStorageBase.ARGB, (k * bufferSize * numColors) + offset,
+                                                                     bufferSize * numColors);
+
+                            if (numColors == 2) {
+                                if (planarConfig == 0) { // RG
+                                    
+                                    byte[] tmpBuffer = fileRW.getByteBuffer();
+        
+                                    for (i = 0, ii = 0; i < tmpBuffer.length; i += 2, ii += 4) {
+                                        floatBuffer[ii] = 1.0f;
+                                        floatBuffer[ii + 1] = scaleFactor[k] * (tmpBuffer[i] & 0xff) + offsetAdjustment[k];
+                                        floatBuffer[ii + 2] = scaleFactor[k] * (tmpBuffer[i + 1] & 0xff) + offsetAdjustment[k];
+                                        floatBuffer[ii + 3] = 0.0f;
+                                    }
+                                } else { // RRRRR GGGGG
+        
+                                    byte[] tmpBuffer = fileRW.getByteBuffer();
+                                    int bufferOffset = tmpBuffer.length / 2;
+        
+                                    for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                        floatBuffer[ii] = 1.0f;
+                                        floatBuffer[ii + 1] = scaleFactor[k] * (tmpBuffer[i] & 0xff) + offsetAdjustment[k];
+                                        floatBuffer[ii + 2] = scaleFactor[k] * (tmpBuffer[i + bufferOffset] & 0xff) + offsetAdjustment[k];
+                                        floatBuffer[ii + 3] = 0.0f;
+                                    }
+                                }    
+                            } // if (numColors == 2)
+                            else if (numColors == 3) {
+                                if (planarConfig == 0) { // RGB
+        
+                                    byte[] tmpBuffer = fileRW.getByteBuffer();
+        
+                                    for (i = 0, ii = 0; i < tmpBuffer.length; i += 3, ii += 4) {
+                                        floatBuffer[ii] = 1.0f;
+                                        floatBuffer[ii + 1] = scaleFactor[k] * (tmpBuffer[i] & 0xff) + offsetAdjustment[k];
+                                        floatBuffer[ii + 2] = scaleFactor[k] * (tmpBuffer[i + 1] & 0xff) + offsetAdjustment[k];
+                                        floatBuffer[ii + 3] = scaleFactor[k] * (tmpBuffer[i + 2] & 0xff) + offsetAdjustment[k];
+                                    }
+                                } else { // RRRRR GGGGG BBBBB
+        
+                                    byte[] tmpBuffer = fileRW.getByteBuffer();
+                                    int bufferOffset = tmpBuffer.length / 3;
+        
+                                    for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                        floatBuffer[ii] = 1.0f;
+                                        floatBuffer[ii + 1] = scaleFactor[k] * (tmpBuffer[i] & 0xff) + offsetAdjustment[k];
+                                        floatBuffer[ii + 2] = scaleFactor[k] * (tmpBuffer[i + bufferOffset] & 0xff) + offsetAdjustment[k];
+                                        floatBuffer[ii + 3] = scaleFactor[k] * (tmpBuffer[i + (2 * bufferOffset)] & 0xff) +
+                                                              offsetAdjustment[k];
+                                    }
+                                }
+                            } // else if (numColors == 3)
+                            else { // numColors == 4
+                                if (!RGBAOrder) { // ARGB order
+                                    if (planarConfig == 0) { // ARGB
+                                        
+                                        byte[] tmpBuffer = fileRW.getByteBuffer();
+            
+                                        for (i = 0; i < tmpBuffer.length; i ++) {
+                                            floatBuffer[i] = scaleFactor[k] * (tmpBuffer[i] & 0xff) + offsetAdjustment[k];
+                                        }
+                                    } else { // AAAA RRRRR GGGGG BBBBB
+            
+                                        byte[] tmpBuffer = fileRW.getByteBuffer();
+                                        int bufferOffset = tmpBuffer.length / 4;
+            
+                                        for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                            floatBuffer[ii] = scaleFactor[k] * (tmpBuffer[i] & 0xff) + offsetAdjustment[k];
+                                            floatBuffer[ii + 1] = scaleFactor[k] * (tmpBuffer[i + bufferOffset] & 0xff) +
+                                                                  offsetAdjustment[k];
+                                            floatBuffer[ii + 2] = scaleFactor[k] * (tmpBuffer[i + (2 * bufferOffset)] & 0xff) +
+                                                                  offsetAdjustment[k];
+                                            floatBuffer[ii + 3] = scaleFactor[k] * (tmpBuffer[i + (3 * bufferOffset)] & 0xff) +
+                                                                  offsetAdjustment[k];
+                                        }
+                                    }    
+                                }
+                                else { // RGBAOrder
+                                    if (planarConfig == 0) { // RGBA
+                                        
+                                        byte[] tmpBuffer = fileRW.getByteBuffer();
+            
+                                        for (i = 0; i < tmpBuffer.length; i += 4) {
+                                            floatBuffer[i] = scaleFactor[k] * (tmpBuffer[i+3] & 0xff) + offsetAdjustment[k];
+                                            floatBuffer[i + 1] = scaleFactor[k] * (tmpBuffer[i] & 0xff) + offsetAdjustment[k];
+                                            floatBuffer[i + 2] = scaleFactor[k] * (tmpBuffer[i + 1] & 0xff) + offsetAdjustment[k];
+                                            floatBuffer[i + 3] = scaleFactor[k] * (tmpBuffer[i + 2] & 0xff) + offsetAdjustment[k];
+                                        }
+                                    } else { // RRRRR GGGGG BBBBB AAAA
+            
+                                        byte[] tmpBuffer = fileRW.getByteBuffer();
+                                        int bufferOffset = tmpBuffer.length / 4;
+            
+                                        for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                            floatBuffer[ii] = scaleFactor[k] * (tmpBuffer[i + (3* bufferOffset)] & 0xff) +
+                                                              offsetAdjustment[k];
+                                            floatBuffer[ii + 1] = scaleFactor[k] * (tmpBuffer[i] & 0xff) + offsetAdjustment[k];
+                                            floatBuffer[ii + 2] = scaleFactor[k] * (tmpBuffer[i + bufferOffset] & 0xff) +
+                                                             offsetAdjustment[k];
+                                            floatBuffer[ii + 3] = scaleFactor[k] * (tmpBuffer[i + (2 * bufferOffset)] & 0xff) +
+                                                             offsetAdjustment[k];
+                                        }
+                                    }   
+                                } // else RGBAOrder
+                            } // numColors == 4
+
+                            image.importData(k * floatBuffer.length, floatBuffer, false);
+                        } catch (IOException error) {
+                            throw error;
+                        }
+
+                        break;
+
+                    case ModelStorageBase.ARGB_USHORT:
+                        try {
+                            fileRW.readImage(ModelStorageBase.ARGB_USHORT, (k * bufferSize * 2 * numColors) + offset,
+                                                                            bufferSize * numColors);
+                            
+                            if (numColors == 2) {
+                                if (planarConfig == 0) { // RG
+                                    
+                                    short[] tmpBuffer = fileRW.getShortBuffer();
+        
+                                    for (i = 0, ii = 0; i < tmpBuffer.length; i += 2, ii += 4) {
+                                        floatBuffer[ii] = 65535.0f;
+                                        floatBuffer[ii + 1] = scaleFactor[k] * (tmpBuffer[i] & 0xffff) + offsetAdjustment[k];
+                                        floatBuffer[ii + 2] = scaleFactor[k] * (tmpBuffer[i + 1] & 0xffff) + offsetAdjustment[k];
+                                        floatBuffer[ii + 3] = 0.0f;
+                                    }
+                                } else { // RRRRR GGGGG
+        
+                                    short[] tmpBuffer = fileRW.getShortBuffer();
+                                    int bufferOffset = tmpBuffer.length / 2;
+        
+                                    for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                        floatBuffer[ii] = 65535.0f;
+                                        floatBuffer[ii + 1] = scaleFactor[k] * (tmpBuffer[i] & 0xffff) + offsetAdjustment[k];
+                                        floatBuffer[ii + 2] = scaleFactor[k] * (tmpBuffer[i + bufferOffset] & 0xffff) +
+                                                              offsetAdjustment[k];
+                                        floatBuffer[ii + 3] = 0.0f;
+                                    }
+                                }    
+                            } // if (numColors == 2)
+                            else if (numColors == 3) {
+                                if (planarConfig == 0) { // RGB
+        
+                                    short[] tmpBuffer = fileRW.getShortBuffer();
+        
+                                    for (i = 0, ii = 0; i < tmpBuffer.length; i += 3, ii += 4) {
+                                        floatBuffer[ii] = 65535.0f;
+                                        floatBuffer[ii + 1] = scaleFactor[k] * (tmpBuffer[i] & 0xffff) + offsetAdjustment[k];
+                                        floatBuffer[ii + 2] = scaleFactor[k] * (tmpBuffer[i + 1] & 0xffff) + offsetAdjustment[k];
+                                        floatBuffer[ii + 3] = scaleFactor[k] * (tmpBuffer[i + 2] & 0xffff) + offsetAdjustment[k];
+                                    }
+                                } else { // RRRRR GGGGG BBBBB
+        
+                                    short[] tmpBuffer = fileRW.getShortBuffer();
+                                    int bufferOffset = tmpBuffer.length / 3;
+        
+                                    for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                        floatBuffer[ii] = 65535.0f;
+                                        floatBuffer[ii + 1] = scaleFactor[k] * (tmpBuffer[i] & 0xffff) + offsetAdjustment[k];
+                                        floatBuffer[ii + 2] = scaleFactor[k] * (tmpBuffer[i + bufferOffset] & 0xffff) +
+                                                              offsetAdjustment[k];
+                                        floatBuffer[ii + 3] = scaleFactor[k] * (tmpBuffer[i + (2 * bufferOffset)] & 0xffff) +
+                                                              offsetAdjustment[k];
+                                    }
+                                }
+                            } // else if (numColors == 3)
+                            else { // numColors == 4
+                              if (!RGBAOrder) { // ARGB order
+                                  if (planarConfig == 0) { // ARGB
+                                      
+                                      short[] tmpBuffer = fileRW.getShortBuffer();
+          
+                                      for (i = 0; i < tmpBuffer.length; i++) {
+                                          floatBuffer[i] = scaleFactor[k] * (tmpBuffer[i] & 0xffff) + offsetAdjustment[k];
+                                      }
+                                  } else { // AAAA RRRRR GGGGG BBBBB
+          
+                                      short[] tmpBuffer = fileRW.getShortBuffer();
+                                      int bufferOffset = tmpBuffer.length / 4;
+          
+                                      for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                          floatBuffer[ii] = scaleFactor[k] * (tmpBuffer[i] & 0xffff) + offsetAdjustment[k];
+                                          floatBuffer[ii + 1] = scaleFactor[k] * (tmpBuffer[i + bufferOffset] & 0xffff) +
+                                                                offsetAdjustment[k];
+                                          floatBuffer[ii + 2] = scaleFactor[k] * (tmpBuffer[i + (2 * bufferOffset)] & 0xffff) +
+                                                                offsetAdjustment[k];
+                                          floatBuffer[ii + 3] = scaleFactor[k] * (tmpBuffer[i + (3 * bufferOffset)] & 0xffff) +
+                                                                offsetAdjustment[k];
+                                      }
+                                  }    
+                              } // if (!RGBAOrder)
+                              else { // RGBAOrder 
+                                  if (planarConfig == 0) { // RGBA
+                                      
+                                      short[] tmpBuffer = fileRW.getShortBuffer();
+          
+                                      for (i = 0; i < tmpBuffer.length; i += 4) {
+                                          floatBuffer[i] = scaleFactor[k] * (tmpBuffer[i + 3] & 0xffff) + offsetAdjustment[k];
+                                          floatBuffer[i + 1] = scaleFactor[k] * (tmpBuffer[i] & 0xffff) + offsetAdjustment[k];
+                                          floatBuffer[i + 2] = scaleFactor[k] * (tmpBuffer[i + 1] & 0xffff) + offsetAdjustment[k];
+                                          floatBuffer[i + 3] = scaleFactor[k] * (tmpBuffer[i + 2] & 0xffff) + offsetAdjustment[k];
+                                      }
+                                  } else { // RRRRR GGGGG BBBBB AAAAA
+          
+                                      short[] tmpBuffer = fileRW.getShortBuffer();
+                                      int bufferOffset = tmpBuffer.length / 4;
+          
+                                      for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                          floatBuffer[ii] = scaleFactor[k] * (tmpBuffer[i + (3 * bufferOffset)] & 0xffff) +
+                                                            offsetAdjustment[k];
+                                          floatBuffer[ii + 1] = scaleFactor[k] * (tmpBuffer[i] & 0xffff) + offsetAdjustment[k];
+                                          floatBuffer[ii + 2] = scaleFactor[k] * (tmpBuffer[i + bufferOffset] & 0xffff) +
+                                                                offsetAdjustment[k];
+                                          floatBuffer[ii + 3] = scaleFactor[k] * (tmpBuffer[i + (2 * bufferOffset)] & 0xffff) +
+                                                                offsetAdjustment[k];
+                                      }
+                                  }    
+                              } // else RGBAOrder
+                            } // else numColors == 4
+
+                            image.importData(k * floatBuffer.length, floatBuffer, false);
+                        } catch (IOException error) {
+                            throw error;
+                        }
+
+                        break;
+
+                    default:
+                        throw new IOException();
+                }
+            }
 
         fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
 
