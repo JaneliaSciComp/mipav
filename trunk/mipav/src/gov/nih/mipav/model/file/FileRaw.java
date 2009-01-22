@@ -671,7 +671,7 @@ public class FileRaw extends FileBase {
          *                     or a ModelStorageBase.ARGB_FLOAT.
          * @param      originalDataType
          * @param      scaleFactor array with a multiplicative factor for each slice
-         * @param      offsetAdjustment array with an additive offset adjustmetn for each slice
+         * @param      offsetAdjustment array with an additive offset adjustment for each slice
          * @param      offset  Points to where the data of the image is located. It is equal to the header length.
          *
          * @exception  IOException  if there is an error reading the file
