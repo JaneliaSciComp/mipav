@@ -53,6 +53,15 @@ public class FileAvi extends FileBase {
     private final int SOF13 = 0xcd;       /* differential sequential, arithmetic */
     private final int SOF14 = 0xce;       /* differential progressive, arithmetic */
     private final int SOF15 = 0xcf;      /* differential lossless, arithmetic */
+    /* restart with modulo 8 count "m" */
+    private final int RST0  = 0xd0;
+    private final int RST1  = 0xd1;
+    private final int RST2  = 0xd2;
+    private final int RST3  = 0xd3;
+    private final int RST4  = 0xd4;
+    private final int RST5  = 0xd5;
+    private final int RST6  = 0xd6;
+    private final int RST7  = 0xd7;
     private final int SOI   = 0xd8;       /* start of image */
     private final int EOI   = 0xd9;       /* end of image */
     private final int SOS   = 0xda;       /* start of scan */
@@ -3880,6 +3889,30 @@ public class FileAvi extends FileBase {
                                     case SOF0:
                                         Preferences.debug("startCode = SOF0\n");
                                         break;
+                                    case RST0:
+                                        Preferences.debug("startCode = RST0\n");
+                                        break;
+                                    case RST1:
+                                        Preferences.debug("startCode = RST1\n");
+                                        break;
+                                    case RST2:
+                                        Preferences.debug("startCode = RST2\n");
+                                        break;
+                                    case RST3:
+                                        Preferences.debug("startCode = RST3\n");
+                                        break;
+                                    case RST4:
+                                        Preferences.debug("startCode = RST4\n");
+                                        break;
+                                    case RST5:
+                                        Preferences.debug("startCode = RST5\n");
+                                        break;
+                                    case RST6:
+                                        Preferences.debug("startCode = RST6\n");
+                                        break;
+                                    case RST7:
+                                        Preferences.debug("startCode = RST7\n");
+                                        break;
                                     case DHT:
                                         Preferences.debug("startCode = DHT\n");
                                         break;
@@ -4187,7 +4220,7 @@ public class FileAvi extends FileBase {
                                                     /* (< 1350) buggy workaround for Spectralfan.mov, should be fixed */
                                                     if ((restart_interval != 0) && (restart_interval < 1350) &&
                                                         ((--restart_count) == 0)) {
-                                                        n = (~gbc_index) & 0x07;
+                                                        n = (-gbc_index) & 0x07;
                                                         if (n != 0) {                                                          
                                                             // OPEN_READER(re, &s->gb)
                                                             int re_index= gbc_index;
