@@ -3814,7 +3814,6 @@ public class FileAvi extends FileBase {
                 while (((!AVIF_MUSTUSEINDEX) && (totalBytesRead < totalDataArea) && chunkRead) ||
                            (AVIF_MUSTUSEINDEX && (indexBytesRead < indexSize))) {
                     if (AVIF_MUSTUSEINDEX) {
-                        System.out.println("in MUSTUSEINDEX");
                         raFile.seek(indexPointer);
                         dataFound = false;
 
