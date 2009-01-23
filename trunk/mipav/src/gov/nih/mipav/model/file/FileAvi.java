@@ -3714,6 +3714,7 @@ public class FileAvi extends FileBase {
                  byte bits_table[] = null;
                  int code_max;
                  byte val_table[] = null;
+                 int fieldPaddingBytes = 0;
                
                 int mb_x;
                 int mb_y;
@@ -3959,6 +3960,9 @@ public class FileAvi extends FileBase {
                                     restart_count = 0;
                                 }
                                 else if (startCode == DQT) {
+                                    if (j >= fileBuffer.length) {
+                                        continue loopMJPG;
+                                    }
                                     len = (fileBuffer[j++] & 0xff) << 8;
                                     len |= (fileBuffer[j++] & 0xff);
                                     len -= 2;
@@ -4151,7 +4155,7 @@ public class FileAvi extends FileBase {
                                                                          (h * mb_x + x) * 8 ) >> lowres);    
                                                              }
                                                              else {
-                                                             ptr[0] = dataPtr[c] + (((linesize[c] * (v * mb_y + y) * 8) +
+                                                                 ptr[0] = dataPtr[c] + (((linesize[c] * (v * mb_y + y) * 8) +
                                                                        (h * mb_x + x) * 8 ) >> lowres);
                                                              }
                                                              if (interlaced && ((zs % 2) == 1)) {
@@ -4166,7 +4170,12 @@ public class FileAvi extends FileBase {
                                                                  }
                                                              }
                                                              else {
-                                                                 ff_simple_idct_add(data[c], ptr, linesize[c], block);
+                                                                 if (interlaced) {
+                                                                     ff_simple_idct_add(data[c], ptr, 2*linesize[c], block);
+                                                                 }
+                                                                 else {
+                                                                     ff_simple_idct_add(data[c], ptr, linesize[c], block);
+                                                                 }
                                                              }
                                                              if (++x == h) {
                                                                  x = 0;
@@ -4201,6 +4210,10 @@ public class FileAvi extends FileBase {
                                                     }
                                                 } // for (mb_x = 0; mb_x < mb_width; mb_x++)
                                             } // for (mb_y = 0; mb_y < mb_height; mb_y++)
+                                            bufp[0] = gbc_index/8;
+                                            for (i = fieldPaddingBytes; i > 0; i--) {
+                                                bufp[0]++;
+                                            }
                                             zs++;
                                             if ((sofHeight == imgExtents[1]) || ((sofHeight < imgExtents[1]) && ((zs % 2) == 0))) {
                                             switch(pix_fmt) {
@@ -4236,6 +4249,9 @@ public class FileAvi extends FileBase {
                                     lossless = false;
                                     ls = false;
                                     progressive = false;
+                                    if (j >= fileBuffer.length) {
+                                        continue loopMJPG;
+                                    }
                                     len = (fileBuffer[j++] & 0xff) << 8;
                                     len |= (fileBuffer[j++] & 0xff);
                                     Preferences.debug("len = " + len + "\n");
@@ -4690,6 +4706,9 @@ public class FileAvi extends FileBase {
                                     } // while (len > 0)
                                 } // else if (startCode == DHT)
                                 else if ((startCode >= APP0) && (startCode <= APP15)) {
+                                    if (j >= fileBuffer.length) {
+                                        continue loopMJPG;
+                                    }
                                     len = (fileBuffer[j++] & 0xff) << 8;
                                     len |= (fileBuffer[j++] & 0xff);
                                     Preferences.debug("len = " + len + "\n");
@@ -4726,6 +4745,10 @@ public class FileAvi extends FileBase {
                                         fieldSizeLessPadding |= (fileBuffer[j++] & 0xff);
                                         len -= 10;
                                         Preferences.debug("fieldSizeLessPadding = " + fieldSizeLessPadding + "\n");
+                                        fieldPaddingBytes = fieldSize - fieldSizeLessPadding;
+                                        if ((fieldPaddingBytes < 0) || (fieldPaddingBytes > 255)) {
+                                            fieldPaddingBytes = 0;
+                                        }
                                     } // if (id.equalsIgnoreCase("AVI1")
                                     if (--len > 0) {
                                         j++;
@@ -5369,7 +5392,7 @@ public class FileAvi extends FileBase {
         code = get_vlc2(vlcs[0][dc_index], 9, 2);
         if (code < 0) {
             Preferences.debug("get_vlc2(vlcs[0]["+ dc_index + "], 9, 2) returned code = " + code + "\n");
-            MipavUtil.displayError("mjpeg_decode_dc: bad vlcs at dc_index = " + dc_index);
+            Preferences.debug("mjpeg_decode_dc: bad vlcs at dc_index = " + dc_index + "\n");
             return 0xffff;
         }
         if (code != 0) {
