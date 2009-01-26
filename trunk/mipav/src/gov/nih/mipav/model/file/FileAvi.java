@@ -3655,7 +3655,7 @@ public class FileAvi extends FileBase {
                 boolean lossless = false;
                 boolean ls = false;
                 boolean progressive = false;
-                int bits; /* bits per component */
+                int bits = 8; /* bits per component */
                 boolean pegasus_rct = false; /* pegasus reversible colorspace transform */
                 boolean rct = false; /* standard reversible colorspace transform */
                 int swidth = 0;
@@ -3732,6 +3732,21 @@ public class FileAvi extends FileBase {
                 int EOBRUN[] = new int[1];
                 byte cbuf[] = null;
                 String comStr = null;
+                int colorSpace;
+                boolean srgb = true; // rgb direct as opposed to yuv
+                int bit_count = 0;
+                int t = 0;
+                int b = 0;
+                int cur_scan = 0; /* current scan, used by JPEG-LS */
+                int bit_left = 32;
+                int bit_buf = 0;
+                short rgb_buffer[][] = null;
+                int mask;
+                int modified_predictor = 1;
+                int left[];
+                int top[];
+                int topleft[];
+                int pred;
                 
                 if (!mjpegDecodeInit) {
                     int end;
@@ -3888,6 +3903,15 @@ public class FileAvi extends FileBase {
                                     case SOF0:
                                         Preferences.debug("startCode = SOF0\n");
                                         break;
+                                    case SOF1:
+                                        Preferences.debug("startCode = SOF1\n");
+                                        break;
+                                    case SOF2:
+                                        Preferences.debug("startCode = SOF2\n");
+                                        break;
+                                    case SOF3:
+                                        Preferences.debug("startCode = SOF3\n");
+                                        break;
                                     case RST0:
                                         Preferences.debug("startCode = RST0\n");
                                         break;
@@ -4033,15 +4057,89 @@ public class FileAvi extends FileBase {
                                     restart_count = 0;
                                 } // else if (startCode == DRI)
                                 else if (startCode == EOI) {
-                                    
+                                    cur_scan = 0;    
                                 } // else if (startCode == EOI)
                                 else if (startCode == SOS) {
+                                    buffer = new byte[dataLength - j + FF_INPUT_BUFFER_PADDING_SIZE];
+                                    bufp[0] = 0;
                                     if (ls) {
-                  
-                                    }
+                                        bit_count = 0;
+                                        t = 0;
+                                        b = 0;
+                                        
+                                        cur_scan++;
+                                        
+                                        /* find marker */
+                                        while (j + t < dataLength) {
+                                            xb = fileBuffer[j + t];
+                                            t++;
+                                            if (xb == (byte)0xff) {
+                                                while ((j + t < dataLength) && (xb == (byte)0xff)) { 
+                                                    xb = fileBuffer[j + t];
+                                                    t++;
+                                                } // while ((j + t < dataLength) && (xb == (byte)0xff))
+                                                if ((xb & 0x80) != 0) {
+                                                    t -= 2;
+                                                    break;
+                                                } // if ((xb & 0x80) != 0)
+                                            } // if (xb == (byte)0xff)
+                                        } // while (j + t < dataLength)
+                                        bit_count = 8 * t;
+                                        
+                                        bit_left = 32;
+                                        bit_buf = 0;
+                                        
+                                        /* unescape bitstream */
+                                        while (b < t) {
+                                            xb = fileBuffer[j + b];
+                                            b++;
+                                            if (8 < bit_left) {
+                                                bit_buf = (bit_buf << 8) | (xb & 0xff);
+                                                bit_left -= 8;
+                                            }
+                                            else {
+                                                bit_buf <<= bit_left;
+                                                bit_buf |= (xb & 0xff) >> (8 - bit_left);
+                                                buffer[bufp[0]] = (byte)((bit_buf >>> 24) & 0xff);
+                                                buffer[bufp[0]+1] = (byte)((bit_buf >>> 16) & 0xff);
+                                                buffer[bufp[0]+2] = (byte)((bit_buf >>> 8) & 0xff);
+                                                buffer[bufp[0]+3] = (byte)(bit_buf & 0xff);
+                                                bufp[0] += 4;
+                                                bit_left += 32 - 8;
+                                                bit_buf = (xb & 0xff);
+                                            }
+                                            if (xb == (byte)0xff) {
+                                                xb = fileBuffer[j + b];
+                                                b++;
+                                                if (7 < bit_left) {
+                                                    bit_buf = (bit_buf << 7) | (xb & 0xff);
+                                                    bit_left -= 7;
+                                                }
+                                                else {
+                                                    bit_buf <<= bit_left;
+                                                    bit_buf |= (xb & 0xff) >> (7 - bit_left);
+                                                    buffer[bufp[0]] = (byte)((bit_buf >>> 24) & 0xff);
+                                                    buffer[bufp[0]+1] = (byte)((bit_buf >>> 16) & 0xff);
+                                                    buffer[bufp[0]+2] = (byte)((bit_buf >>> 8) & 0xff);
+                                                    buffer[bufp[0]+3] = (byte)(bit_buf & 0xff);
+                                                    bufp[0] += 4;
+                                                    bit_left += 32 - 8;
+                                                    bit_buf = (xb & 0xff);
+                                                }
+                                                bit_count--;
+                                            } // if (xb == (byte)0xff)
+                                        } // while (b < t)
+                                        
+                                        bit_buf <<= bit_left;
+                                        while (bit_left < 32) {
+                                            buffer[bufp[0]++] = (byte)((bit_buf >>> 24) & 0xff);
+                                            bit_buf <<= 8;
+                                            bit_left += 8;
+                                        } // while (bit_left < 32)
+                                        bit_left = 32;
+                                        bit_buf = 0;
+                                    } // if (ls)
                                     else { // !ls
-                                        buffer = new byte[dataLength - j + FF_INPUT_BUFFER_PADDING_SIZE];
-                                        bufp[0] = 0;
                                         while (j < dataLength) {
                                           xb = fileBuffer[j++]; 
                                           buffer[bufp[0]++] = xb;
@@ -4130,9 +4228,139 @@ public class FileAvi extends FileBase {
                                     }
                                     
                                     if (lossless) {
-                                        
-                                    }
-                                    else {
+                                        if (ls) {
+                                            
+                                        }
+                                        else if (srgb) {
+                                            rgb_buffer = new short[32768][4];
+                                            left = new int[3];
+                                            top = new int[3];
+                                            topleft = new int[3];
+                                            mask = (1 << bits) - 1;
+                                            gbc_buffer = buffer;
+                                            gbc_buffer_end = buffer.length;
+                                            gbc_index = 8 * bufp[0];
+                                            gbc_size_in_bits = 8 * buffer.length;
+                                            for (i = 0; i < 3; i++) {
+                                                rgb_buffer[0][i] = (short)(1 << (bits + point_transform - 1));
+                                            }
+                                            for (mb_y = 0; mb_y < mb_height; mb_y++) {
+                                                if (mb_y > 0) {
+                                                    modified_predictor = predictor;
+                                                }
+                                                else {
+                                                    modified_predictor = 1;
+                                                }
+                                                if (interlaced) {
+                                                    ptr[0] = dataPtr[0] + (2 * linesize[0] * mb_y);
+                                                }
+                                                else {
+                                                    ptr[0] = dataPtr[0] + (linesize[0] * mb_y);
+                                                }
+                                                
+                                                if (interlaced && ((zs % 2) == 1)) {
+                                                    ptr[0] += linesize[0];
+                                                }
+                                              
+                                                for (i = 0; i < 3; i++) {
+                                                    top[i] = left[i] = topleft[i] = rgb_buffer[0][i];
+                                                }
+                                                
+                                                for (mb_x = 0; mb_x < mb_width; mb_x++) {
+                                                    if ((restart_interval != 0) && (restart_count == 0)) {
+                                                        restart_count = restart_interval;
+                                                    }
+                                                    
+                                                    for (i = 0; i < 3; i++) {
+                                                        topleft[i] = top[i];
+                                                        top[i] = rgb_buffer[mb_x][i];
+                                                        
+                                                        switch(modified_predictor) {
+                                                            case 1:
+                                                                pred = left[i];
+                                                                break;
+                                                            case 2:
+                                                                pred = top[i];
+                                                                break;
+                                                            case 3:
+                                                                pred = topleft[i];
+                                                                break;
+                                                            case 4:
+                                                                pred = left[i] + top[i] - topleft[i];
+                                                                break;
+                                                            case 5:
+                                                                pred = left[i] + ((top[i] - topleft[i]) >> 1);
+                                                                break;
+                                                            case 6:
+                                                                pred = top[i] + ((left[i] - topleft[i]) >> 1);
+                                                                break;
+                                                            case 7:
+                                                                pred = (left[i] + top[i]) >> 1;
+                                                                break;
+                                                            default:
+                                                                pred = (left[i] + top[i]) >> 1;
+                                                        } // switch(modified_predictor)
+                                                        
+                                                        left[i] = rgb_buffer[mb_x][i] = (short)(mask & (pred + mjpeg_decode_dc(dc_index[i]) <<
+                                                                  point_transform));
+                                                    } // for (i = 0; i < 3; i++)
+                                                    
+                                                    if ((restart_interval != 0) && (--restart_count == 0)) {
+                                                        n = (-gbc_index) & 0x07;
+                                                        if (n != 0) {                                                          
+                                                            // OPEN_READER(re, &s->gb)
+                                                            int re_index= gbc_index;
+                                                            //int re_cache= 0;
+                                                            //  UPDATE_CACHE(name, gb)
+                                                            //re_cache = (gbc_buffer[re_index>>3] & 0xff) << 24;
+                                                            //re_cache |= (gbc_buffer[1 + re_index>>3] & 0xff) << 16;
+                                                            //re_cache |= (gbc_buffer[2 + re_index>>3] & 0xff) << 8;
+                                                            //re_cache |= (gbc_buffer[3 + re_index>>3] & 0xff);
+                                                            //re_cache = re_cache << (re_index & 0x07);
+                                                            // LAST_SKIP_BITS(name, gb, n)
+                                                            re_index += n;
+                                                            // CLOSE_READER(re, s);
+                                                            gbc_index = re_index;
+                                                        }
+                                                        gbc_index += 16; // Skip RSTn
+                                                    } // if ((restart_interval != 0) && (--restart_count == 0))
+                                                } // for (mb_x = 0; mb_x < mb_width; mb_x++)
+                                                
+                                                if (rct) {
+                                                    for (mb_x = 0; mb_x < mb_width; mb_x++) {
+                                                        destBuf[ptr[0] + 4*mb_x + 2] = (byte)(rgb_buffer[mb_x][0] -
+                                                               ((rgb_buffer[mb_x][1] + rgb_buffer[mb_x][2] - 0x200)>>> 2));
+                                                        destBuf[ptr[0] + 4*mb_x + 1] = (byte)(rgb_buffer[mb_x][1] +
+                                                                (destBuf[ptr[0] + 4*mb_x + 2] & 0xff));
+                                                        destBuf[ptr[0] + 4*mb_x + 3] = (byte)(rgb_buffer[mb_x][2]  +
+                                                                (destBuf[ptr[0] + 4*mb_x + 2] & 0xff));
+                                                    }    
+                                                }
+                                                else if (pegasus_rct) {
+                                                    for (mb_x = 0; mb_x < mb_width; mb_x++) {
+                                                        destBuf[ptr[0] + 4*mb_x + 2] = (byte)(rgb_buffer[mb_x][0] -
+                                                               ((rgb_buffer[mb_x][1] + rgb_buffer[mb_x][2])>>> 2));
+                                                        destBuf[ptr[0] + 4*mb_x + 1] = (byte)(rgb_buffer[mb_x][1] +
+                                                                (destBuf[ptr[0] + 4*mb_x + 2] & 0xff));
+                                                        destBuf[ptr[0] + 4*mb_x + 3] = (byte)(rgb_buffer[mb_x][2]  +
+                                                                (destBuf[ptr[0] + 4*mb_x + 2] & 0xff));
+                                                    }        
+                                                }
+                                                else {
+                                                    for (mb_x = 0; mb_x < mb_width; mb_x++) {
+                                                        destBuf[ptr[0] + 4*mb_x + 1] = (byte)rgb_buffer[mb_x][0];
+                                                        destBuf[ptr[0] + 4*mb_x + 2] = (byte)rgb_buffer[mb_x][1];
+                                                        destBuf[ptr[0] + 4*mb_x + 3] = (byte)rgb_buffer[mb_x][2];
+                                                    }
+                                                }
+                                            } // for (mb_y; mb_y < mb_height; mb_y++)
+                                            bufp[0] = gbc_index/8;
+                                        } // else if (srgb)
+                                        else { // yuv
+                                            
+                                        }
+                                    } // else if (lossless)
+                                    else { // not lossless
                                         if (prev_shift == 0) {
                                             EOBRUN[0] = 0;
                                             for (i = 0; i < nb_components; i++) {
@@ -4246,41 +4474,54 @@ public class FileAvi extends FileBase {
                                             for (i = fieldPaddingBytes; i > 0; i--) {
                                                 bufp[0]++;
                                             }
-                                            zs++;
-                                            if ((sofHeight == imgExtents[1]) || ((sofHeight < imgExtents[1]) && ((zs % 2) == 0))) {
-                                            switch(pix_fmt) {
-                                                    case PIX_FMT_YUVJ420P:
-                                                        yuvj420p_to_argb(destBuf, data, imgExtents[0], imgExtents[1],
-                                                                linesize);
-                                                        break;
-                                                    case PIX_FMT_YUVJ422P:
-                                                        yuvj422p_to_argb(destBuf, data, imgExtents[0], imgExtents[1],
-                                                                linesize);
-                                                        break;
-                                                }
                                             
-                                                if (one) {
-                                                    imageA.importData(0, destBuf, false);
-                                                } else {
-                                                    imageA.importData(4 * z * imgExtents[0] * imgExtents[1], destBuf, false);
-                                                }
-    
-                                                if (actualFrames > 1) {
-                                                    fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
-                                                }
-                                                z++;
-                                                if (z == imgExtents[2]) {
-                                                    break loopMJPG;
-                                                }
-                                            }
                                         } // if (prev_shift == 0)
+                                    } 
+                                    zs++;
+                                    if ((sofHeight == imgExtents[1]) || ((sofHeight < imgExtents[1]) && ((zs % 2) == 0))) {
+                                        switch(pix_fmt) {
+                                            case PIX_FMT_YUVJ420P:
+                                                yuvj420p_to_argb(destBuf, data, imgExtents[0], imgExtents[1],
+                                                        linesize);
+                                                break;
+                                            case PIX_FMT_YUVJ422P:
+                                                yuvj422p_to_argb(destBuf, data, imgExtents[0], imgExtents[1],
+                                                        linesize);
+                                                break;
+                                        }
+                                    
+                                        if (one) {
+                                            imageA.importData(0, destBuf, false);
+                                        } else {
+                                            imageA.importData(4 * z * imgExtents[0] * imgExtents[1], destBuf, false);
+                                        }
+
+                                        if (actualFrames > 1) {
+                                            fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
+                                        }
+                                        z++;
+                                        if (z == imgExtents[2]) {
+                                            break loopMJPG;
+                                        }
                                     } // if ((sofHeight == imgExtents[1]) || ((sofHeight < imgExtents[1]) && ((zs % 2) == 0)))
                                     // emms_c();
                                 } // else if (startCode == SOS)
-                                else if (startCode == SOF0) {
-                                    lossless = false;
-                                    ls = false;
-                                    progressive = false;
+                                else if ((startCode == SOF0) || (startCode == SOF2) || (startCode == SOF3)){
+                                    if (startCode == SOF0) {
+                                        lossless = false;
+                                        ls = false;
+                                        progressive = false;
+                                    }
+                                    else if (startCode == SOF2) {
+                                        lossless = false;
+                                        ls = false;
+                                        progressive = true;
+                                    }
+                                    else if (startCode == SOF3) {
+                                        lossless = true;
+                                        ls = false;
+                                        progressive = false;
+                                    }
                                     if (j >= fileBuffer.length) {
                                         continue loopMJPG;
                                     }
@@ -4289,7 +4530,9 @@ public class FileAvi extends FileBase {
                                     Preferences.debug("len = " + len + "\n");
                                     bits = (fileBuffer[j++] & 0xff);
                                     Preferences.debug("bits = " + bits + "\n");
-                                    
+                                    if (bits > 128) {
+                                        break loopMJPG;
+                                    }
                                     if (pegasus_rct) {
                                         bits = 9;
                                     }
@@ -4305,7 +4548,10 @@ public class FileAvi extends FileBase {
                                     sofHeight = (fileBuffer[j++] & 0xff) << 8;
                                     sofHeight |= (fileBuffer[j++] & 0xff);
                                     Preferences.debug("sofHeight = " + sofHeight + "\n");
-                                    if (sofHeight > imgExtents[1]) {
+                                    if (sofHeight > 2048) {
+                                        break loopMJPG;
+                                    }
+                                    else if (sofHeight > imgExtents[1]) {
                                         imgExtents[1] = sofHeight;
                                         if (bitCount == 24) {
                                             bufferSize = 4 * imgExtents[0] * imgExtents[1];
@@ -4782,6 +5028,26 @@ public class FileAvi extends FileBase {
                                             fieldPaddingBytes = 0;
                                         }
                                     } // if (id.equalsIgnoreCase("AVI1")
+                                    else if (id.equalsIgnoreCase("LJIF")) {
+                                        Preferences.debug("Pegasus lossless jpeg header found\n");
+                                        j += 8; // Skip 8 bytes
+                                        colorSpace = (fileBuffer[j++] & 0xff);
+                                        switch (colorSpace) {
+                                            case 1:
+                                                srgb = true;
+                                                pegasus_rct = false;
+                                                Preferences.debug("pegasus_rct = false\n");
+                                                break;
+                                            case 2:
+                                                srgb = true;
+                                                pegasus_rct = true;
+                                                Preferences.debug("pegasus_rct = true\n");
+                                                break;
+                                            default:
+                                                MipavUtil.displayError("Unknown color space\n");
+                                        }
+                                        len -= 9;
+                                    } // else if (id.equalsIgnoreCase("LJIF"))
                                     if (--len > 0) {
                                         j++;
                                     }
@@ -7841,7 +8107,8 @@ public class FileAvi extends FileBase {
                 } else if (handlerString.toUpperCase().startsWith("MP42")) {
                     return AlgorithmTranscode.TRANSCODE_MP42;
                 } else if ((handlerString.toUpperCase().startsWith("MJPG")) ||
-                           (handlerString.toUpperCase().startsWith("AVRN"))) {
+                           (handlerString.toUpperCase().startsWith("AVRN")) ||
+                           (handlerString.toUpperCase().startsWith("LJPG"))) {
                     Preferences.debug("MJPEG (MJPG) encoding\n", Preferences.DEBUG_FILEIO);
                     doMJPEG = true;
                     //return AlgorithmTranscode.TRANSCODE_MJPG;
@@ -8035,6 +8302,9 @@ public class FileAvi extends FileBase {
                     doMJPEG = true;
                 } else if (compression == 1850889793) {
                     Preferences.debug("compression is AVRn\n", Preferences.DEBUG_FILEIO);
+                    doMJPEG = true;
+                } else if (compression == 1279742026) {
+                    Preferences.debug("compression is LJPG\n", Preferences.DEBUG_FILEIO);
                     doMJPEG = true;
                 } else {
                     raFile.close();
