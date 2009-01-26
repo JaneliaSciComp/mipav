@@ -8111,7 +8111,6 @@ public class FileAvi extends FileBase {
                            (handlerString.toUpperCase().startsWith("LJPG"))) {
                     Preferences.debug("MJPEG (MJPG) encoding\n", Preferences.DEBUG_FILEIO);
                     doMJPEG = true;
-                    //return AlgorithmTranscode.TRANSCODE_MJPG;
                 } else if (handlerString.toUpperCase().startsWith("DIV")) {
                     return AlgorithmTranscode.TRANSCODE_DIVX;
                 } else if (handlerString.toUpperCase().startsWith("MPG4")) {
