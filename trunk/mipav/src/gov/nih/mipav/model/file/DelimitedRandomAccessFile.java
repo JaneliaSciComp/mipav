@@ -173,10 +173,9 @@ public class DelimitedRandomAccessFile extends RandomAccessFile {
 			z = r.nextDouble();
 			c = "Comment for "+i;
 			d.writeDelimitedBytes("Point "+i);
-			d.setDelimiter(delim3);
-			d.writeDelimitedBytes(Double.toString(x));
-			d.writeDelimitedBytes(Double.toString(y));
-			d.writeDelimitedBytes(Double.toString(z));
+			d.writeDelimitedBytes(Double.toString(x), delim3);
+			d.writeDelimitedBytes(Double.toString(y), delim3);
+			d.writeDelimitedBytes(Double.toString(z), delim3);
 			d.setDelimiter(delim1);
 			d.writeDelimitedBytes(c);
 		}
