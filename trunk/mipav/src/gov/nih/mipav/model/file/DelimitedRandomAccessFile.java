@@ -84,8 +84,26 @@ public class DelimitedRandomAccessFile extends RandomAccessFile {
 	 * @see RandomAccessFile.writeChars(String)
 	 */
 	public void writeDelimitedBytes(String str) throws IOException {
-		this.writeBytes(str);
+		writeBytes(str);
 		writeByte(delim);
+	}
+	
+	/**
+	 * Allows for writing with a temporary delimiter.
+	 * 
+	 * @param tempDelim delimiter to be used for this method call only
+	 * @see writeDelimitedBytes(String)
+	 */
+	public void writeDelimitedBytes(String str, char tempDelim) throws IOException {
+		char oldDelim = delim;
+		delim = tempDelim;
+		try {
+			writeDelimitedBytes(str);
+		} finally {
+			//need to reset delimiter even though
+			//exception should not be dealt with
+			delim = oldDelim;
+		}
 	}
 	
 	
@@ -102,12 +120,28 @@ public class DelimitedRandomAccessFile extends RandomAccessFile {
 		String newString = new String();
 		char next;
 		try {
-			while((next = ((char)this.readByte())) != delim) {
+			while((next = ((char)readByte())) != delim) {
 				newString += next;
 			}
 		} catch (EOFException e) {
 			e.printStackTrace();
 		}
+		
+		return newString;
+	}
+	
+	public String readDelimitedBytes(char tempDelim) throws IOException {
+		char oldDelim = delim;
+		delim = tempDelim;
+		String newString = new String();
+		try {
+			newString = readDelimitedBytes();
+		} finally {
+			//need to reset delimiter even though
+			//exception should not be dealt with
+			delim = oldDelim;
+		}
+		
 		return newString;
 	}
 	
