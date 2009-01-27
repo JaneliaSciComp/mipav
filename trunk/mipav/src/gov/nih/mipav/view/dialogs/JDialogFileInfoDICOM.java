@@ -97,6 +97,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     
     private boolean launchFileChooser = true;
     
+    /**Maps the group word to a displayed color, private tags are not specified. **/
+    private TreeMap<String,Color> groupColorMap;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1117,6 +1119,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         getContentPane().add(scrollPaneDicom, BorderLayout.CENTER);
         getContentPane().setSize(new Dimension(700, 650));
         setSize(700, 650);
+        
+        buildColorMap();
 
     }
 
@@ -1250,6 +1254,51 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         }
 
         return false;
+    }
+    
+    /**
+     * Builds which cells to display as light blue and green.
+     */
+    private void buildColorMap() {
+    	Color green = new Color(102, 204, 153); // light green
+    	Color blue = new Color(153, 204, 255); // light blue
+    	boolean doBlue = false;
+    	Vector<FileDicomKey> v;
+    	Collections.sort(v = new Vector<FileDicomKey>(DicomInfo.getTagTable().getTagList().keySet()), new CompareGroup());
+    	Iterator<FileDicomKey> e = v.iterator();
+    	FileDicomKey next;
+    	String groupNumber = new String();
+    	groupColorMap = new TreeMap<String,Color>();
+    	Hashtable<FileDicomKey, FileDicomTagInfo> tempTable = DicomDictionary.getDicomTagTable();
+    	while(e.hasNext()) {
+    		if(tempTable.get(next = e.next()) != null && 
+    				groupColorMap.get(groupNumber = next.getGroup()) == null) {
+    			groupColorMap.put(groupNumber, doBlue ? blue : green);
+	    		doBlue = !doBlue;
+    		}
+    	}
+    }
+    
+    private class CompareGroup implements Comparator<FileDicomKey> {
+
+		public int compare(FileDicomKey o1Key, FileDicomKey o2Key) {
+			String o1 = o1Key.getGroup();
+			String o2 = o2Key.getGroup();
+			
+			if(o1.equals("50xx")) {
+				o1 = "5000";
+			} else if(o1.equals("60xx")) {
+				o1 = "6000";
+			}
+			
+			if(o2.equals("50xx")) {
+				o2 = "5000";
+			} else if(o2.equals("60xx")) {
+				o2 = "6000";
+			}
+			
+			return Integer.valueOf(o1, 16) - Integer.valueOf(o2, 16);
+		}	
     }
 
     /**
@@ -1521,43 +1570,11 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
   		  		hasValidTag = true;
 				Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
   		  		String name = ((String)value).substring(1, ((String)value).length() - 1);
-  		  		int group = Integer.valueOf(name.substring(0, 4), 16);
-  		  		int element = Integer.valueOf(name.substring(5), 16);
-  		  		Color f;
-  		  		switch(group) {
-  		  		
-  		  		case 0x0002:
-  		  			f = new Color(102, 204, 153); // light green
-  		  			break;
-  		  		case 0x0008:
-  		  			f = new Color(153, 204, 255); // light blue 
-  		  			break;
-  		  		case 0x0010:
-  		  			f = new Color(102, 204, 153); // light green
-  		  			break;
-  		  		case 0x0018:
-  		  			f = new Color(153, 204, 255); // light blue 
-  		  			break;
-  		  		case 0x0020:
-  		  			f = new Color(102, 204, 153); // light green
-  		  			break;
-  		  		case 0x0028:
-  		  			f = new Color(153, 204, 255); // light blue 
-  		  			break;
-  		  		case 0x0032:
-  		  			f = new Color(102, 204, 153); // light green
-  		  			break;
-  		  		case 0x0040:
-  		  			f = new Color(153, 204, 255); // light blue 
-  		  			break;
-  		  		case 0x7fe0:
-  		  			f = new Color(102, 204, 153); // light green
-		  			break;
-  		  		default:
+  		  		String group = name.substring(0, 4);
+  		  		Color f = groupColorMap.get(group);
+  		  		if(f == null) {
   		  			f = new Color(255, 153, 153); // light red
-  		  			break;  				
   		  		}
-  		  		
   		  		cell.setBackground(f);
   		  		return cell;
   		  	}
