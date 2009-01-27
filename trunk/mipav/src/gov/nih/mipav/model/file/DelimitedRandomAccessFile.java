@@ -190,10 +190,9 @@ public class DelimitedRandomAccessFile extends RandomAccessFile {
 		String[] name = new String[numPoints];
 		for(int i=0; i<numPoints; i++) {
 			name[i] = d2.readDelimitedBytes();
-			d2.setDelimiter(delim3);
-			xPoints[i] = d2.readDelimitedBytes();
-			yPoints[i] = d2.readDelimitedBytes();
-			zPoints[i] = d2.readDelimitedBytes();
+			xPoints[i] = d2.readDelimitedBytes(delim3);
+			yPoints[i] = d2.readDelimitedBytes(delim3);
+			zPoints[i] = d2.readDelimitedBytes(delim3);
 			d2.setDelimiter(delim1);
 			comments[i] = d2.readDelimitedBytes();
 		}
