@@ -879,6 +879,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         }
 
         tagsTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
         //tagsTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         tagsTable.getColumn(" ").setMinWidth(50);
         tagsTable.getColumn(" ").setMaxWidth(50);
@@ -896,7 +897,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         tagsTable.getColumn("Value").setCellRenderer(new TagReferenceRenderer());
 
         tagsTable.getTableHeader().addMouseListener(new HeaderListener());
-
+        tagsTable.setSelectionBackground(new Color(184, 230, 255));
+        
         // make the table high-light only 1 row at a time; (for edit tag)
         // taken from http://java.sun.com/docs/books/tutorial/uiswing/components/table.html#selection
         listSelectorDicom = tagsTable.getSelectionModel();
@@ -1549,12 +1551,24 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 	private class TagReferenceRenderer extends DefaultTableCellRenderer {
 		
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+			
 			Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+			
 			TableCellRenderer refRenderer = table.getCellRenderer(row, 1);
 			if(refRenderer instanceof TagCodeRenderer && ((TagCodeRenderer) refRenderer).hasValidTag() && row > 16+(imageA.getNDims()-1)*2) {
 				cell.setBackground(((TagCodeRenderer) refRenderer).getBackground());
 			} else {
-				cell.setBackground(Color.white);
+				int[] rows = table.getSelectedRows();
+		  		boolean rowSelected = false;
+		  		for(int i=0; i<rows.length; i++) {
+		  			if(rows[i] == row) {
+		  				rowSelected = true;
+		  				break;
+		  			}
+		  		}
+		  		if(!rowSelected) {
+		  			cell.setBackground(Color.white);
+		  		}
 			}
 			return cell;
 		}
@@ -1566,20 +1580,33 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 		private boolean hasValidTag = false;
 		
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-			if(column == 1 && value instanceof String && ((String)value).length() == 11) {
-  		  		hasValidTag = true;
-				Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-  		  		String name = ((String)value).substring(1, ((String)value).length() - 1);
-  		  		String group = name.substring(0, 4);
-  		  		Color f = groupColorMap.get(group);
-  		  		if(f == null) {
-  		  			f = new Color(255, 153, 153); // light red
-  		  		}
-  		  		cell.setBackground(f);
-  		  		return cell;
-  		  	}
-  		  	
-			return null;
+			Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+			
+			int[] rows = table.getSelectedRows();
+		  		boolean rowSelected = false;
+		  		for(int i=0; i<rows.length; i++) {
+		  			if(rows[i] == row) {
+		  				rowSelected = true;
+		  				break;
+		  			}
+		  		}
+		  		if(!rowSelected) {
+					if(column == 1 && value instanceof String && ((String)value).length() == 11 && row > 16+(imageA.getNDims()-1)*2) {
+		  		  		hasValidTag = true;
+		  		  		String name = ((String)value).substring(1, ((String)value).length() - 1);
+		  		  		String group = name.substring(0, 4);
+		  		  		Color f = groupColorMap.get(group);
+		  		  		if(f == null) {
+		  		  			f = new Color(255, 153, 153); // light red
+		  		  		}
+	
+		  		  		cell.setBackground(f);
+		  		  		return cell;
+		  		  	}
+		  		  	
+					return null;
+		  		}
+		  		return cell;
 		}
 
 		public boolean hasValidTag() {
