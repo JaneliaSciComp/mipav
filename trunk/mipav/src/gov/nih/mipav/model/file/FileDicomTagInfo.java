@@ -128,9 +128,9 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
         try {
 
             if (vr.equals("SL") || vr.equals("UL")) { // Signed Long  || Unsigned Long
-                return "typeInt";
+                return FileDicomBase.TYPE_INT;
             } else if (vr.equals("SS") || vr.equals("US")) { // Signed short || Unsigned short
-                return "typeShort";
+                return FileDicomBase.TYPE_SHORT;
             } else if (vr.equals("SH") || // Short String
                            vr.equals("DS") || // Decimal String
                            vr.equals("IS") || // Integer String
@@ -147,22 +147,22 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
                            vr.equals("AE") || // Application Entity Title
                            vr.equals("UN") || // Unknown
                            vr.equals("UT")) { // Unlimited Text
-                return "typeString";
+                return FileDicomBase.TYPE_STRING;
             } else if (vr.equals("FL")) { // Floating Point Single (float)
-                return "typeFloat";
+                return FileDicomBase.TYPE_FLOAT;
             } else if (vr.equals("FD")) { // Floating Point Double
-                return "typeDouble";
+                return FileDicomBase.TYPE_DOUBLE;
             } else if (vr.equals("OW")) {
-                return "otherWordString";
+                return FileDicomBase.OTHER_WORD_STRING;
             } else if (vr.equals("OB")) {
-                return "otherByteString";
+                return FileDicomBase.OTHER_BYTE_STRING;
             } else if (vr.equals("SQ")) {
-                return "typeSequence";
+                return FileDicomBase.TYPE_SEQUENCE;
             } else {
-                return "typeUnknown"; // unknown
+                return FileDicomBase.TYPE_UNKNOWN; // unknown
             }
         } catch (NullPointerException npe) {
-            return "typeUnknown";
+            return FileDicomBase.TYPE_UNKNOWN;
         }
     }
 

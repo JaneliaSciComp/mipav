@@ -16,6 +16,24 @@ public class FileDicomBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
+	protected static final String TYPE_STRING = "typeString";
+
+    protected static final String OTHER_BYTE_STRING = "otherByteString";
+
+    protected static final String OTHER_WORD_STRING = "otherWordString";
+
+    protected static final String TYPE_SHORT = "typeShort";
+
+	protected static final String TYPE_INT = "typeInt";
+
+	protected static final String TYPE_FLOAT = "typeFloat";
+
+	protected static final String TYPE_DOUBLE = "typeDouble";
+
+	protected static final String TYPE_UNKNOWN = "typeUnknown";
+
+	protected static final String TYPE_SEQUENCE = "typeSequence";
+	
     /** Byte order. Rightmost byte is most significant. */
     public static final boolean LITTLE_ENDIAN = false;
 
