@@ -56,8 +56,8 @@ public class FileDicom extends FileDicomBase {
 
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
-
-    /** The tag marking the start of the image data. */
+	
+	/** The tag marking the start of the image data. */
     public static final String IMAGE_TAG = "7FE0,0010";
 
     /** The tag marking the beginning of a dicom sequence. */
@@ -631,7 +631,7 @@ public class FileDicom extends FileDicomBase {
 
                 // the tag was not found in the dictionary..
                 if (type == null) {
-                    type = "typeUnknown";
+                    type = TYPE_UNKNOWN;
                     tagVM = 0;
                 }
             } else { // Explicit VR
@@ -673,13 +673,13 @@ public class FileDicom extends FileDicomBase {
 
             try {
 
-                if (type.equals("typeString")) {
+                if (type.equals(TYPE_STRING)) {
                     strValue = getString(elementLength);
                     tagTable.setValue(key, strValue, elementLength);
 
                     Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t" + type + "; value = "
                             + strValue + "; element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
-                } else if (type.equals("otherByteString")) {
+                } else if (type.equals(OTHER_BYTE_STRING)) {
 
                     if ( !name.equals(IMAGE_TAG)) {
                         data = getByte(tagVM, elementLength, endianess);
@@ -691,7 +691,7 @@ public class FileDicom extends FileDicomBase {
                             // (byte) value = " + ((Byte)(data)).byteValue() + " element length = 2" + "\n", 2);
                         }
                     }
-                } else if (type.equals("otherWordString") && !name.equals("0028,1201") && !name.equals("0028,1202")
+                } else if (type.equals(OTHER_WORD_STRING) && !name.equals("0028,1201") && !name.equals("0028,1202")
                         && !name.equals("0028,1203")) {
 
                     if ( !name.equals(IMAGE_TAG)) {
@@ -704,7 +704,7 @@ public class FileDicom extends FileDicomBase {
                             // + "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
-                } else if (type.equals("typeShort")) {
+                } else if (type.equals(TYPE_SHORT)) {
                     data = getShort(tagVM, elementLength, endianess);
                     tagTable.setValue(key, data, elementLength);
 
@@ -713,7 +713,7 @@ public class FileDicom extends FileDicomBase {
                                 + ((Short) (data)).shortValue() + " element length = 2" + "\n",
                                 Preferences.DEBUG_FILEIO);
                     }
-                } else if (type.equals("typeInt")) {
+                } else if (type.equals(TYPE_INT)) {
                     data = getInteger(tagVM, elementLength, endianess);
                     tagTable.setValue(key, data, elementLength);
 
@@ -723,7 +723,7 @@ public class FileDicom extends FileDicomBase {
                                 + ((Integer) (data)).intValue() + " element length = 4" + "\n",
                                 Preferences.DEBUG_FILEIO);
                     }
-                } else if (type.equals("typeFloat")) {
+                } else if (type.equals(TYPE_FLOAT)) {
                     data = getFloat(tagVM, elementLength, endianess);
                     tagTable.setValue(key, data, elementLength);
 
@@ -732,7 +732,7 @@ public class FileDicom extends FileDicomBase {
                                 + ((Float) (data)).floatValue() + " element length = 4" + "\n",
                                 Preferences.DEBUG_FILEIO);
                     }
-                } else if (type.equals("typeDouble")) {
+                } else if (type.equals(TYPE_DOUBLE)) {
                     data = getDouble(tagVM, elementLength, endianess);
                     tagTable.setValue(key, data, elementLength);
 
@@ -743,7 +743,7 @@ public class FileDicom extends FileDicomBase {
                     }
                 }
                 // (type == "typeUnknown" && elementLength == -1) Implicit sequence tag if not in DICOM dictionary.
-                else if (type.equals("typeSequence") || ( (type == "typeUnknown") && (elementLength == -1))) {
+                else if (type.equals(TYPE_SEQUENCE) || ( (type == TYPE_UNKNOWN) && (elementLength == -1))) {
                     int len = elementLength;
 
                     // save these values because they'll change as the sequence is read in below.
@@ -950,7 +950,7 @@ public class FileDicom extends FileDicomBase {
 
                 fileInfo.setExtents(extents);
                 flag = false; // break loop
-            } else if (type.equals("typeUnknown")) { // Private tag, may not be reading in correctly.
+            } else if (type.equals(TYPE_UNKNOWN)) { // Private tag, may not be reading in correctly.
 
                 try {
 
@@ -2436,7 +2436,7 @@ System.out.println("in read image float");
                     // the tag was not found in the dictionary..
                     entry = new FileDicomTag(new FileDicomTagInfo(new FileDicomKey(groupWord, elementWord), null, 0,
                             "PrivateTag", "Private tag"));
-                    type = "typeUnknown";
+                    type = TYPE_UNKNOWN;
                 }
             } else {
                 FileDicomTagInfo info;
@@ -2452,7 +2452,7 @@ System.out.println("in read image float");
                 }
 
                 if (fileInfo.isCurrentTagSQ) {
-                    type = "typeSequence";
+                    type = TYPE_SEQUENCE;
                 } else {
                     type = entry.getType();
                 }
@@ -2463,14 +2463,14 @@ System.out.println("in read image float");
             try {
 
                 // (type == "typeUnknown" && elementLength == -1) Implicit sequence tag if not in DICOM dictionary.
-                if (type.equals("typeUnknown") && (elementLength != -1)) {
+                if (type.equals(TYPE_UNKNOWN) && (elementLength != -1)) {
                     FileDicomTagInfo info = entry.getInfo();
 
                     entry = new FileDicomTag(info, readUnknownData());
 
                     item.putTag(nameSQ, entry);
                     item.setLength(nameSQ, elementLength);
-                } else if (type.equals("typeString") || type.equals("otherWordString")) {
+                } else if (type.equals(TYPE_STRING) || type.equals(OTHER_WORD_STRING)) {
 
                     if (elementLength == UNDEFINED_LENGTH) {
                         elementLength = 0;
@@ -2482,7 +2482,7 @@ System.out.println("in read image float");
                     item.setLength(nameSQ, elementLength);
                     // Preferences.debug("aaaaaaString Tag: (" + nameSQ + ");\t" + type + "; value = " + strValue + ";
                     // element length = "+ elementLength + "\n", 2);
-                } else if (type.equals("otherByteString")) {
+                } else if (type.equals(OTHER_BYTE_STRING)) {
 
                     if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
                         entry.setValue(readUnknownData(), elementLength);
@@ -2495,7 +2495,7 @@ System.out.println("in read image float");
                     item.setLength(nameSQ, elementLength);
                     // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue + "; element length
                     // = "+ elementLength + "\n", 2);
-                } else if (type.equals("typeShort")) {
+                } else if (type.equals(TYPE_SHORT)) {
 
                     if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
                         entry.setValue(readUnknownData(), elementLength);
@@ -2510,7 +2510,7 @@ System.out.println("in read image float");
                     item.setLength(nameSQ, elementLength);
                     // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue + "; element length
                     // = "+ elementLength + "\n", 2);
-                } else if (type.equals("typeInt")) {
+                } else if (type.equals(TYPE_INT)) {
 
                     if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
                         entry.setValue(readUnknownData(), elementLength);
@@ -2525,7 +2525,7 @@ System.out.println("in read image float");
                     item.setLength(nameSQ, elementLength);
                     // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue + "; element length
                     // = "+ elementLength + "\n", 2);
-                } else if (type.equals("typeFloat")) {
+                } else if (type.equals(TYPE_FLOAT)) {
 
                     if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
                         entry.setValue(readUnknownData(), elementLength);
@@ -2540,7 +2540,7 @@ System.out.println("in read image float");
                     item.setLength(nameSQ, elementLength);
                     // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + fValue + "; element length
                     // = "+ elementLength + "\n", 2);
-                } else if (type.equals("typeDouble")) {
+                } else if (type.equals(TYPE_DOUBLE)) {
 
                     if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
                         entry.setValue(readUnknownData(), elementLength);
@@ -2562,7 +2562,7 @@ System.out.println("in read image float");
                     // = "+ elementLength + "\n", 2);
                 }
                 // (type == "typeUnknown" && elementLength == -1) Implicit sequence tag if not in DICOM dictionary.
-                else if (type.equals("typeSequence") || ( (type == "typeUnknown") && (elementLength == -1))) {
+                else if (type.equals(TYPE_SEQUENCE) || ( (type == TYPE_UNKNOWN) && (elementLength == -1))) {
                     int len = elementLength;
                     String name = nameSQ;
                     Object sq2 = getSequence(endianess, len);
@@ -3247,7 +3247,7 @@ System.out.println("in read image float");
                     type = dicomTags[i].getType();
                 }
             } catch (NullPointerException e) {
-                type = "typeUnknown";
+                type = TYPE_UNKNOWN;
             }
 
             // System.out.println(" Name = " + dicomTags[i].toString());
@@ -3339,10 +3339,10 @@ System.out.println("in read image float");
             // write as a string if string, unknown (private), or vm > 1
             // The VM part is consistent with how we're reading it in; hopefully
             // once we have test images we'll have a better way of reading & writing
-            if ( (length == 0) && !type.equals("typeSequence")) {
+            if ( (length == 0) && !type.equals(TYPE_SEQUENCE)) {
                 // NOP to prevent other types from getting values being
                 // written when no-length, non-sequences.
-            } else if (type.equals("typeUnknown") || type.equals("otherByteString")) {
+            } else if (type.equals(TYPE_UNKNOWN) || type.equals(OTHER_BYTE_STRING)) {
 
                 // Unknowns are stored as an array of Bytes. VM does not apply ?
                 Byte[] bytesV = null;
@@ -3357,7 +3357,7 @@ System.out.println("in read image float");
 
                 outputFile.write(bytesValue);
                 // System.err.println();
-            } else if (type.equals("otherWordString")) { // OW -- word = 2 bytes
+            } else if (type.equals(OTHER_WORD_STRING)) { // OW -- word = 2 bytes
 
                 Short[] data = (Short[]) dicomTags[i].getValue(false);
 
@@ -3377,7 +3377,7 @@ System.out.println("in read image float");
                     }
                 }
 
-            } else if (type.equals("typeString")) {
+            } else if (type.equals(TYPE_STRING)) {
 
                 // VM - I don't think applies
                 outputFile.writeBytes(dicomTags[i].getValue(false).toString());
@@ -3385,7 +3385,7 @@ System.out.println("in read image float");
                 if ( (dicomTags[i].getValue(false).toString().length() % 2) != 0) {
                     outputFile.writeBytes("\0");
                 }
-            } else if (type.equals("typeFloat")) {
+            } else if (type.equals(TYPE_FLOAT)) {
 
                 if ( (vm > 1) || (nValues > 1)) {
                     Float[] data = (Float[]) dicomTags[i].getValue(false);
@@ -3396,7 +3396,7 @@ System.out.println("in read image float");
                 } else {
                     writeFloat( ((Float) dicomTags[i].getValue(false)).floatValue(), endianess);
                 }
-            } else if (type.equals("typeDouble")) {
+            } else if (type.equals(TYPE_DOUBLE)) {
 
                 if ( (vm > 1) || (nValues > 1)) {
                     Double[] data = (Double[]) dicomTags[i].getValue(false);
@@ -3407,7 +3407,7 @@ System.out.println("in read image float");
                 } else {
                     writeDouble( ((Double) dicomTags[i].getValue(false)).doubleValue(), endianess);
                 }
-            } else if (type.equals("typeShort")) {
+            } else if (type.equals(TYPE_SHORT)) {
 
                 if ( (vm > 1) || (nValues > 1)) {
                     Short[] data = (Short[]) dicomTags[i].getValue(false);
@@ -3418,7 +3418,7 @@ System.out.println("in read image float");
                 } else {
                     writeShort( ((Short) dicomTags[i].getValue(false)).shortValue(), endianess);
                 }
-            } else if (type.equals("typeInt")) {
+            } else if (type.equals(TYPE_INT)) {
 
                 if ( (vm > 1) || (nValues > 1)) {
                     Integer[] data = (Integer[]) dicomTags[i].getValue(false);
@@ -3429,7 +3429,7 @@ System.out.println("in read image float");
                 } else {
                     writeInt( ((Integer) dicomTags[i].getValue(false)).intValue(), endianess);
                 }
-            } else if (type.equals("typeSequence")) {
+            } else if (type.equals(TYPE_SEQUENCE)) {
 
                 // VM - I don't think applies
                 FileDicomSQ sq = (FileDicomSQ) dicomTags[i].getValue(false);
@@ -3553,7 +3553,7 @@ System.out.println("in read image float");
                         type = entry.getType();
                     }
                 } catch (NullPointerException error) {
-                    type = "typeUnknown";
+                    type = TYPE_UNKNOWN;
                 }
 
                 writeShort((short) entry.getGroup(), endianess);
@@ -3581,18 +3581,18 @@ System.out.println("in read image float");
                     } else {
                         writeInt(length, endianess);
                     }
-                } else if ( (vr_type == FileInfoDicom.IMPLICIT) && !type.equals("typeUnknown")
-                        && !type.equals("typeSequence")) {
+                } else if ( (vr_type == FileInfoDicom.IMPLICIT) && !type.equals(TYPE_UNKNOWN)
+                        && !type.equals(TYPE_SEQUENCE)) {
                     writeInt(length, endianess);
                 }
 
-                if (type.equals("typeString") || type.equals("otherWordString")) {
+                if (type.equals(TYPE_STRING) || type.equals(OTHER_WORD_STRING)) {
                     outputFile.writeBytes(entry.getValue(false).toString());
 
                     if ( (entry.getValue(false).toString().length() % 2) != 0) {
                         outputFile.writeBytes("\0");
                     }
-                } else if (type.equals("typeUnknown")) {
+                } else if (type.equals(TYPE_UNKNOWN)) {
 
                     // Unknowns are stored as an array of Bytes.
                     // VM does not apply?
@@ -3608,7 +3608,7 @@ System.out.println("in read image float");
 
                     writeInt(bytesV.length, endianess);
                     outputFile.write(bytesValue);
-                } else if (type.equals("otherByteString")) {
+                } else if (type.equals(OTHER_BYTE_STRING)) {
                     Byte[] bytesV = null;
                     bytesV = (Byte[]) entry.getValue(false);
 
@@ -3621,9 +3621,9 @@ System.out.println("in read image float");
 
                     // writeInt(bytesV.length, endianess);
                     outputFile.write(bytesValue);
-                } else if (type.equals("typeFloat")) {
+                } else if (type.equals(TYPE_FLOAT)) {
                     writeFloat( ((Float) entry.getValue(false)).floatValue(), endianess);
-                } else if (type.equals("typeDouble")) {
+                } else if (type.equals(TYPE_DOUBLE)) {
                 	if(entry.getValue(false) instanceof Double[]) {
                 		Double[] dArr = (Double[]) entry.getValue(false);
                 		for(int k=0; k<dArr.length; k++) {
@@ -3631,11 +3631,11 @@ System.out.println("in read image float");
                 		}
                 	} else
                 		writeDouble( ((Double) entry.getValue(false)).doubleValue(), endianess);
-                } else if (type.equals("typeShort")) {
+                } else if (type.equals(TYPE_SHORT)) {
                     writeShort( ((Short) entry.getValue(false)).shortValue(), endianess);
-                } else if (type.equals("typeInt")) {
+                } else if (type.equals(TYPE_INT)) {
                     writeInt( ((Integer) entry.getValue(false)).intValue(), endianess);
-                } else if (type.equals("typeSequence")) {
+                } else if (type.equals(TYPE_SEQUENCE)) {
                     FileDicomSQ sq2 = (FileDicomSQ) entry.getValue(false);
                     writeInt(0xFFFFFFFF, endianess);
                     writeSequence(outputFile, vr_type, sq2, endianess);
