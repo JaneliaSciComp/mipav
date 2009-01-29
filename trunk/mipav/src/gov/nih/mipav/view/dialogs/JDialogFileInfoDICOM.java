@@ -879,7 +879,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         }
 
         tagsTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-
+        tagsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        
         //tagsTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         tagsTable.getColumn(" ").setMinWidth(50);
         tagsTable.getColumn(" ").setMaxWidth(50);
@@ -902,6 +903,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         // make the table high-light only 1 row at a time; (for edit tag)
         // taken from http://java.sun.com/docs/books/tutorial/uiswing/components/table.html#selection
         listSelectorDicom = tagsTable.getSelectionModel();
+        
         listSelectorDicom.addListSelectionListener(new ListSelectionListener() {
                 public void valueChanged(ListSelectionEvent e) {
                     ListSelectionModel lsm = (ListSelectionModel) e.getSource();
@@ -1583,30 +1585,30 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 			Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 			
 			int[] rows = table.getSelectedRows();
-		  		boolean rowSelected = false;
-		  		for(int i=0; i<rows.length; i++) {
-		  			if(rows[i] == row) {
-		  				rowSelected = true;
-		  				break;
-		  			}
-		  		}
-		  		if(!rowSelected) {
-					if(column == 1 && value instanceof String && ((String)value).length() == 11 && row > 16+(imageA.getNDims()-1)*2) {
-		  		  		hasValidTag = true;
-		  		  		String name = ((String)value).substring(1, ((String)value).length() - 1);
-		  		  		String group = name.substring(0, 4);
-		  		  		Color f = groupColorMap.get(group);
-		  		  		if(f == null) {
-		  		  			f = new Color(255, 153, 153); // light red
-		  		  		}
-	
-		  		  		cell.setBackground(f);
-		  		  		return cell;
-		  		  	}
-		  		  	
-					return null;
-		  		}
-		  		return cell;
+	  		boolean rowSelected = false;
+	  		for(int i=0; i<rows.length; i++) {
+	  			if(rows[i] == row) {
+	  				rowSelected = true;
+	  				break;
+	  			}
+	  		}
+	  		if(!rowSelected) {
+				if(column == 1 && value instanceof String && ((String)value).length() == 11 && row > 16+(imageA.getNDims()-1)*2) {
+	  		  		hasValidTag = true;
+	  		  		String name = ((String)value).substring(1, ((String)value).length() - 1);
+	  		  		String group = name.substring(0, 4);
+	  		  		Color f = groupColorMap.get(group);
+	  		  		if(f == null) {
+	  		  			f = new Color(255, 153, 153); // light red
+	  		  		}
+
+	  		  		cell.setBackground(f);
+	  		  		return cell;
+	  		  	}
+	  		  	
+				return null;
+	  		}
+	  		return cell;
 		}
 
 		public boolean hasValidTag() {
