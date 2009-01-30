@@ -16,8 +16,10 @@ import gov.nih.mipav.view.ViewJProgressBar;
 
 
 /**
- * The application of this algorithm blurs an image or VOI region of the image with a Gaussian function at a user
- * defined scale (sigma - standard deviation). In essence, convolving a Gaussian function produces the same result as a
+ * The application of this algorithm blurs an image or VOI region of the image with 2 Gaussian functions. One is a Guassian at a user
+ * defined spatial scale (sigma - standard deviation) and the second is a Guassian at a user defined intensity scale. 
+ * The intensity Gaussian weighs pixels with similar intensities more heavily.
+ * In essence, convolving a Gaussian function produces the same result as a
  * low-pass or smoothing filter. A low-pass filter attenuates high frequency components of the image (i.e. edges) and
  * passes low frequency components and thus results in the blurring of the image. Smoothing filters are typically used
  * for noise reduction and for blurring. The standard deviation (SD) of the Gaussian function controls the amount of
@@ -30,9 +32,23 @@ import gov.nih.mipav.view.ViewJProgressBar;
  *
  * <p>1. Structure will not be added to the image. 2. Can be analytically calculated, as well as the Fourier Transform
  * of the Gaussian. 3. By varying the SD a Gaussian scale-space can easily be constructed.</p>
+ * 
+ * The three coordinates of CIELAB represent the lightness of the color(L* = 0 yields black and L* = 100 indicates diffuse 
+ * white; specular white may be higher), its position between red/magenta and green(a*, negative values indicate green
+ * while positive values indicate magenta) and its position between yellow and blue(b*, negative values indicate blue 
+ * and positive values indicate yellow).  The asterisk(*) after L, a, and b are part of the full name, since they represent 
+ * L*, a*, and b*, to distinguish them from Hunter's L, a, and b.
+ * 
+ * The L* coordinate ranges from 0 to 100.  The possible range of a* and b* coordinates depends on the color space that one
+ * is converting from.  When converting from sRGB, the a* coordinate fange is [-0.86, 0.98], and the b* coordinate range is 
+ * [-1.07, 0.94].
+ * 
+ * XW, YW, and ZW (also called XN, YN, ZN or X0, Y0, Z0) are reference white tristimulus values - typically the white
+ * of a perfectly reflecting diffuser under CIE standard D65 illumination(defined by x = 0.3127 and y = 0.3291 in the
+ * CIE chromatcity diagram).  The 2 degrees, D65 reference tristimulus values are: XN = 95.047, YN = 100.000, and ZN = 108.883.
  *
- * @version  0.1 Feb 11, 1998
- * @author   Matthew J. McAuliffe, Ph.D.
+ * @version  0.1 January 30, 2009
+ * @author   William Gandler
  * @see      GenerateGaussian
  * @see      AlgorithmConvolver
  */
@@ -57,6 +73,9 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
 
     /** Standard deviations of the gaussian used to calculate the kernels. */
     private float[] sigmas;
+    
+    /** percent of maximum intensity difference; it is scaled for the sigma in the intensity gaussian */
+    private float intensityFraction;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -65,11 +84,12 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
      *
      * @param  srcImg    DOCUMENT ME!
      * @param  sigmas    DOCUMENT ME!
+     * @param  intensityFraction
      * @param  maskFlag  DOCUMENT ME!
      * @param  img25D    DOCUMENT ME!
      */
-    public AlgorithmBilateralFilter(ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D) {
-        this(null, srcImg, sigmas, maskFlag, img25D);
+    public AlgorithmBilateralFilter(ModelImage srcImg, float[] sigmas, float intensityFraction, boolean maskFlag, boolean img25D) {
+        this(null, srcImg, sigmas, intensityFraction, maskFlag, img25D);
     }
 
     /**
@@ -78,14 +98,16 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
      * @param  destImg   the destination image
      * @param  srcImg    the source image
      * @param  sigmas    the sigmas
+     * @param  intensityFraction percent of maximum intensity difference; it is scaled for sigma in the intensity gaussian
      * @param  maskFlag  the mask flag
      * @param  img25D    the 2.5D indicator
      */
-    public AlgorithmBilateralFilter(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
+    public AlgorithmBilateralFilter(ModelImage destImg, ModelImage srcImg, float[] sigmas, float intensityFraction, boolean maskFlag,
                                  boolean img25D) {
         super(destImg, srcImg);
 
         this.sigmas = sigmas;
+        this.intensityFraction = intensityFraction;
         entireImage = maskFlag;
         image25D = img25D;
 
@@ -1141,5 +1163,133 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
 			this.setCompleted(true);
 		}
     }
+    
+    
+    private void convertRGBtoCIELab(float buffer[]) {
+        // Observer = 2 degrees, Illuminant = D65
+        double XN = 95.047;
+        double YN = 100.000;
+        double ZN = 108.883;
+        int i;
+        double varR, varG, varB;
+        double X, Y, Z;
+        double varX, varY, varZ;
+        double L, a, b;
+        for (i = 0; i < buffer.length; i += 4) {
+            varR = buffer[i+1]/255.0;
+            varG = buffer[i+2]/255.0;
+            varB = buffer[i+3]/255.0;
+            
+            if (varR <= 0.04045) {
+                varR = varR/12.92;
+            }
+            else {
+                varR = Math.pow((varR + 0.055)/1.055, 2.4);
+            }
+            if (varG <= 0.04045) {
+                varG = varG/12.92;
+            }
+            else {
+                varG = Math.pow((varG + 0.055)/1.055, 2.4);
+            }
+            if (varB <= 0.04045) {
+                varB = varB/12.92;
+            }
+            else {
+                varB = Math.pow((varB + 0.055)/1.055, 2.4);
+            }
+            
+            varR = 100.0 * varR;
+            varG = 100.0 * varG;
+            varB = 100.0 * varB;
+            
+            // Observer = 2 degrees, Illuminant = D65
+            X = 0.4124*varR + 0.3576*varG + 0.1805*varB;
+            Y = 0.2126*varR + 0.7152*varG + 0.0722*varB;
+            Z = 0.0193*varR + 0.1192*varG + 0.9505*varB;
+            
+            varX = X/ XN;
+            varY = Y/ YN;
+            varZ = Z/ ZN;
+            
+            if (varX > 0.008856) {
+                varX = Math.pow(varX, 1.0/3.0);
+            }
+            else {
+                varX = (7.787 * varX) + (16.0/116.0);
+            }
+            if (varY > 0.008856) {
+                varY = Math.pow(varY, 1.0/3.0);
+            }
+            else {
+                varY = (7.787 * varY) + (16.0/116.0);
+            }
+            if (varZ > 0.008856) {
+                varZ = Math.pow(varZ, 1.0/3.0);
+            }
+            else {
+                varZ = (7.787 * varZ) + (16.0/116.0);
+            }
+            
+            L = (116.0 * varY) - 16.0;
+            a = 500.0 * (varX - varY);
+            b = 200.0 * (varY - varZ);
+            
+            buffer[i+1] = (float)L;
+            buffer[i+2] = (float)a;
+            buffer[i+3] = (float)b;
+        } // for (i = 0; i < buffer.length; i += 4)
+    } // private void convertRGBtoCIELab(float buffer[])
+    
+    private void convertCIELabtoRGB(float buffer[]) {
+        // Observer = 2 degrees, Illuminant = D65
+        double XN = 95.047;
+        double YN = 100.000;
+        double ZN = 108.883;
+        int i;
+        double varX, varY, varZ;
+        double L, a, b;
+        double varX3, varY3, varZ3;
+        double X, Y, Z;
+        for (i = 0; i < buffer.length; i += 4) {
+            L = (double)buffer[i+1];
+            a = (double)buffer[i+2];
+            b = (double)buffer[i+3];
+            
+            varY = (L + 16.0)/116.0;
+            varX = a/500.0 + varY;
+            varZ = varY - b/200.0;
+            
+            varX3 = Math.pow(varX, 3.0);
+            if (varX3 > 0.008856) {
+                varX = varX3;
+            }
+            else {
+                varX = (varX - 16.0/116.0)/7.787;
+            }
+            varY3 = Math.pow(varY, 3.0);
+            if (varY3 > 0.008856) {
+                varY = varY3;
+            }
+            else {
+                varY = (varY - 16.0/116.0)/7.787;
+            }
+            varZ3 = Math.pow(varZ, 3.0);
+            if (varZ3 > 0.008856) {
+                varZ = varZ3;
+            }
+            else {
+                varZ = (varZ - 16.0/116.0)/7.787;
+            }
+            
+            X = XN * varX;
+            Y = YN * varY;
+            Z = ZN * varZ;
+            
+            varX = X / 100.0;
+            varY = Y / 100.0;
+            varZ = Z / 100.0;
+        } // for (i = 0; i < buffer.length; i += 4)
+    } // private void convertCIELabtoRGB(float buffer[])
 }
 
