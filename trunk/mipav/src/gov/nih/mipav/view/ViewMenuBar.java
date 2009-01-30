@@ -151,6 +151,7 @@ public class ViewMenuBar {
                         // menuBuilder.buildMenuItem("Adaptive smooth",
                         // "adaptiveSmooth", 0, null, false),
                         menuBuilder.buildMenuItem("Anisotropic diffusion", null, 0, null, false),
+                        menuBuilder.buildMenuItem("Bilateral filter", null, 0, null, false),
                         menuBuilder.buildMenuItem("Boundary attenuation", "BoundaryAttenuation", 0, null, false),
                         menuBuilder.buildMenuItem("Coherence-enhancing diffusion", "CoherDiff", 0, null, false),
                         menuBuilder.buildMenuItem("Color edge", "ColorEdge", 0, null, false),
