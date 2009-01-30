@@ -243,6 +243,14 @@ public class JPanelSigmas extends JPanel implements FocusListener, ItemListener 
     private String getCorrectionFactorString() {
         return MipavUtil.makeFloatString(getCorrectionFactor() * Float.parseFloat(textGaussZ.getText()), 4);
     }
+    
+    /**
+     * Set the name of the titled border
+     * @param borderName
+     */
+    public void setBorderName(String borderName) {
+        setBorder(WidgetFactory.buildTitledBorder(borderName));
+    }
 
     /**
      * Initialize the panel's GUI.
