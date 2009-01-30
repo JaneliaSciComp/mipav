@@ -7,13 +7,13 @@ import gov.nih.mipav.model.algorithms.filters.AlgorithmBilateralFilter;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.DialogDefaultsInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
-import gov.nih.mipav.view.components.JPanelColorChannels;
 import gov.nih.mipav.view.components.JPanelSigmas;
 import gov.nih.mipav.view.components.PanelManager;
 import gov.nih.mipav.view.components.WidgetFactory;
@@ -21,12 +21,17 @@ import gov.nih.mipav.view.components.WidgetFactory;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.IOException;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import javax.swing.JPanel;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 import javax.swing.JCheckBox;
 
 
@@ -73,6 +78,13 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
 
     /** DOCUMENT ME! */
     private JPanelSigmas sigmaPanel;
+    
+    private JPanel intensityPanel;
+    
+    private JLabel intensityLabel;
+    private JTextField intensityText;
+    
+    private float intensityFraction;
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -118,7 +130,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10009");
+            //MipavUtil.showHelp("");
         }
     }
 
@@ -248,6 +260,9 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
                 sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
                 sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
                 sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
+                intensityFraction = MipavUtil.getFloat(st);
+                intensityText.setText(String.valueOf(intensityFraction));
+                
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -269,7 +284,8 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
         defaultsString += sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
         defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
         defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + delim;
-        defaultsString += sigmaPanel.isResolutionCorrectionEnabled();
+        defaultsString += sigmaPanel.isResolutionCorrectionEnabled() + delim;
+        defaultsString += intensityFraction;
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
@@ -319,7 +335,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
                     }
 
                     // Make algorithm
-                    bilateralFilterAlgo = new AlgorithmBilateralFilter(resultImage, image, sigmas,
+                    bilateralFilterAlgo = new AlgorithmBilateralFilter(resultImage, image, sigmas, intensityFraction, 
                                                                  outputOptionsPanel.isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -363,7 +379,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    bilateralFilterAlgo = new AlgorithmBilateralFilter(image, sigmas,
+                    bilateralFilterAlgo = new AlgorithmBilateralFilter(image, sigmas, intensityFraction, 
                                                                  outputOptionsPanel.isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -442,7 +458,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
                     }
 
                     // Make algorithm
-                    bilateralFilterAlgo = new AlgorithmBilateralFilter(resultImage, image, sigmas,
+                    bilateralFilterAlgo = new AlgorithmBilateralFilter(resultImage, image, sigmas, intensityFraction, 
                                                                  outputOptionsPanel.isProcessWholeImageSet(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -486,7 +502,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
                 try {
 
                     // Make algorithm
-                    bilateralFilterAlgo = new AlgorithmBilateralFilter(image, sigmas,
+                    bilateralFilterAlgo = new AlgorithmBilateralFilter(image, sigmas, intensityFraction, 
                                                                  outputOptionsPanel.isProcessWholeImageSet(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -561,6 +577,8 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
         scriptParameters.setOutputOptionsGUI(outputOptionsPanel);
         setImage25D(scriptParameters.doProcess3DAs25D());
         scriptParameters.setSigmasGUI(sigmaPanel);
+        intensityFraction = scriptParameters.getParams().getFloat("intensity_fraction");
+        intensityText.setText(String.valueOf(intensityFraction));
     }
 
     /**
@@ -574,6 +592,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
 
         scriptParameters.storeProcessingOptions(outputOptionsPanel.isProcessWholeImageSet(), image25D);
         scriptParameters.storeSigmas(sigmaPanel);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("intensity_fraction", intensityFraction));
     }
 
     /**
@@ -586,6 +605,27 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
         getContentPane().setLayout(new BorderLayout());
 
         sigmaPanel = new JPanelSigmas(image);
+        sigmaPanel.setBorderName("Scale of the Spatial Gaussian");
+        
+        intensityPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        intensityPanel.setForeground(Color.black);
+        intensityPanel.setBorder(buildTitledBorder("Scale of the Intensity Gaussian"));
+        intensityLabel = new JLabel("Fraction of maximum intensity difference");
+        intensityLabel.setForeground(Color.black);
+        intensityLabel.setFont(serif12);
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        intensityPanel.add(intensityLabel, gbc);
+        intensityText = new JTextField("0.1");
+        intensityText.setFont(serif12);
+        intensityText.setColumns(5);
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridx = 1;
+        intensityPanel.add(intensityText, gbc);
 
         image25DCheckbox = WidgetFactory.buildCheckBox("Process each slice independently (2.5D)", false, this);
 
@@ -602,6 +642,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
 
         PanelManager paramPanelManager = new PanelManager();
         paramPanelManager.add(sigmaPanel);
+        paramPanelManager.addOnNextLine(intensityPanel);
         paramPanelManager.addOnNextLine(kernelOptionsPanelManager.getPanel());
         paramPanelManager.addOnNextLine(outputOptionsPanel);
 
@@ -619,6 +660,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
+        String tmpStr;
 
         if (image25DCheckbox.isSelected()) {
             image25D = true;
@@ -627,6 +669,17 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
         }
 
         if (!sigmaPanel.testSigmaValues()) {
+            return false;
+        }
+        
+        tmpStr = intensityText.getText();
+        intensityFraction = Float.parseFloat(tmpStr);
+
+        if (intensityFraction <= 0.0f) {
+            MipavUtil.displayError("intensityFraction must be greater than 0.0");
+            intensityText.requestFocus();
+            intensityText.selectAll();
+
             return false;
         }
 
