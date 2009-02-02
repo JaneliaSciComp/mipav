@@ -362,6 +362,89 @@ public class AlgorithmConvolver extends AlgorithmBase {
     }
     
     /**
+     * A static function that convolves a kernel with an image at a position.  The intensity difference between the 
+     * center pixel and the indexed pixel is used in a Gaussian in the weighing.
+     *
+     * @param   pix       index indicating location of convolution
+     * @param   iExtents  image dimensions
+     * @param   image     image data
+     * @param   kExtents  kernel dimensions
+     * @param   kernel    kernel data
+     * @param   intensitySigma
+     *
+     * @return  the value of the pixel after convolution with the kernel
+     */
+    public static final synchronized float convolveBilateral2DPt(int pix, int[] iExtents, float[] image, int[] kExtents,
+                                                        float[] kernel, float intensitySigma) {
+
+        int i, j;
+        int offsetX, offsetY;
+        int xDim = iExtents[0];
+        int yDim = iExtents[1];
+        int xKDim = kExtents[0];
+        int yKDim = kExtents[1];
+        int yLimit = xDim * yDim;
+
+        int startX, startY;
+        int endX, endY;
+        int count;
+        double sum;
+        double norm = 0;
+
+        offsetX = (pix % xDim) - (xKDim / 2);
+        offsetY = (pix / xDim) - (yKDim / 2);
+        sum = 0;
+        count = 0;
+        startY = offsetY * xDim;
+        endY = startY + (yKDim * xDim);
+        float centerIntensityValue = image[pix];
+        double intenWt1 = 1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma);
+        double intenDenom = 2.0 * intensitySigma * intensitySigma; 
+        float intensityValue;
+        double intensityGaussian;
+        float intensityDifference;
+        double weight;
+
+        for (j = startY; j < endY; j += xDim) {
+            startX = j + offsetX;
+            endX = startX + xKDim;
+
+            for (i = startX; i < endX; i++) {
+
+                if ((j >= 0) && (j < yLimit) && ((i - j) >= 0) && ((i - j) < xDim)) {
+
+                    // Needed for compiler bug
+                    // Run same image twice from AlgorithmLevelSetDiffusion and
+                    // array index out of bounds exception shows up
+                    if (count >= kernel.length) {
+                        break;
+                    }
+                    
+                    intensityValue = image[i];
+                    intensityDifference = intensityValue - centerIntensityValue;
+                    intensityGaussian = intenWt1 * Math.exp(-intensityDifference*intensityDifference/intenDenom);
+                    weight = kernel[count] * intensityGaussian;
+                    sum += weight * intensityValue;
+
+                    if (weight >= 0) {
+                        norm += weight;
+                    } else {
+                        norm += -weight;
+                    }
+                }
+
+                count++;
+            }
+        }
+
+        if (norm > 0) {
+            return (float)(sum / norm);
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
      * A static function that convolves a kernel with an image at a position.
      *
      * @param   pix       index indicating location of convolution
@@ -892,6 +975,103 @@ public class AlgorithmConvolver extends AlgorithmBase {
     }
     
     /**
+     * A static function that convolves a kernel with an CIELab image at a position.  The CIE76 intensity difference between the
+     * center pixel and the indexed pixel is used in a Gaussian in the weighing.
+     *
+     * @param   pix       index indicating location of convolution
+     * @param   iExtents  image dimensions
+     * @param   image     image data
+     * @param   kExtents  kernel dimensions
+     * @param   kernel    kernel data
+     * @param   intensitySigma
+     *
+     * @return  the L*,a*,b* of the pixel after convolution with the kernel
+     */
+    public static final float[] convolveBilateral2DCIELabPt(int pix, int[] iExtents, float[] image, int[] kExtents, float[] kernel,
+                                                          float intensitySigma) {
+
+        int i, j;
+        int offsetX, offsetY;
+        int xDim = iExtents[0];
+        int yDim = iExtents[1];
+        int yLimit = 4 * xDim * yDim;
+        int xKDim = kExtents[0];
+        int yKDim = kExtents[1];
+        int offset = 4 * xDim;
+
+        int startX, startY;
+        int endX, endY;
+        int count;
+        double sumL;
+        double suma;
+        double sumb;
+        double norm = 0;
+
+        offsetX = (pix % (offset)) - ((xKDim) / 2 * 4);
+        offsetY = (pix / (offset)) - ((yKDim) / 2);
+
+        sumL = 0;
+        suma = 0;
+        sumb = 0;
+        count = 0;
+        startY = offsetY * offset;
+        endY = startY + (yKDim * offset);
+        float centerLValue = image[pix+1];
+        float centeraValue = image[pix+2];
+        float centerbValue = image[pix+3];
+        double intenWt1 = 1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma);
+        double intenDenom = 2.0 * intensitySigma * intensitySigma; 
+        float LValue;
+        float aValue;
+        float bValue;
+        double intensityGaussian;
+        float LDifference;
+        float aDifference;
+        float bDifference;
+        double difference;
+        double weight;
+        float buf[] = new float[3];
+
+        for (j = startY; j < endY; j += offset) {
+            startX = j + offsetX;
+            endX = startX + (xKDim * 4);
+
+            for (i = startX; i < endX; i += 4) {
+
+                if ((j >= 0) && (j < yLimit) && ((i - j) >= 0) && ((i - j) < offset)) {
+                    LValue = image[i+1];
+                    aValue = image[i+2];
+                    bValue = image[i+3];
+                    LDifference = LValue - centerLValue;
+                    aDifference = aValue - centeraValue;
+                    bDifference = bValue - centerbValue;
+                    difference = Math.sqrt(LDifference*LDifference + aDifference*aDifference + bDifference*bDifference);
+                    intensityGaussian = intenWt1 * Math.exp(-difference*difference/intenDenom);
+                    weight = kernel[count] * intensityGaussian;
+                    sumL += weight * LValue;
+                    suma += weight * aValue;
+                    sumb += weight * bValue;
+
+                    if (weight >= 0) {
+                        norm += weight;
+                    } else {
+                        norm += -weight;
+                    }
+                }
+
+                count++;
+            }
+        }
+
+        if (norm > 0) {
+            buf[0] = (float)(sumL / norm);
+            buf[1] = (float)(suma / norm);
+            buf[2] = (float)(sumb / norm);
+        }
+        return buf;
+    }
+    
+    /**
      * A static function that convolves a kernel with an RGB image at a position.
      *
      * @param   pix       index indicating location of convolution
@@ -1041,6 +1221,102 @@ public class AlgorithmConvolver extends AlgorithmBase {
                 }
             }else{
             	count += kExtents[0]*kExtents[1];
+            }
+        }
+
+        if (norm > 0) {
+            return (float)(sum / norm);
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
+     * A static function that convolves a kernel with an image at a position.  The intensity difference between the 
+     * center pixel and the indexed pixel is used in a Gaussian in the weighing.
+     *
+     * @param   pix       index indicating location of convolution
+     * @param   iExtents  image dimensions
+     * @param   image     image data
+     * @param   kExtents  kernel dimensions
+     * @param   kernel    kernel data
+     * @param   intensitySigma
+     *
+     * @return  the value of the pixel after convolution with the kernel
+     */
+    public static final float convolveBilateral3DPt(int pix, int[] iExtents, float[] image, int[] kExtents, float[] kernel,
+                                                    float intensitySigma) {
+
+        int i, j, k;
+        int offsetX, offsetY, offsetZ;
+        int sliceSize = iExtents[0] * iExtents[1];
+        int volSize = sliceSize * iExtents[2];
+        int xDim = iExtents[0];
+        int xKDim = kExtents[0];
+        int indexY;
+        int stepY, stepZ;
+        int startX, startY, startZ;
+        int endX, endY, endZ;
+        int count;
+        double sum;
+        double norm = 0;
+
+        offsetX = (pix % xDim) - (kExtents[0] / 2);
+        offsetY = ((pix % sliceSize) / xDim) - (kExtents[1] / 2);
+        offsetZ = (pix / (sliceSize)) - (kExtents[2] / 2);
+
+        count = 0;
+        sum = 0;
+        indexY = offsetY * xDim;
+        stepY = kExtents[1] * xDim;
+        stepZ = kExtents[2] * sliceSize;
+        startZ = offsetZ * sliceSize;
+        endZ = startZ + stepZ;
+        float centerIntensityValue = image[pix];
+        double intenWt1 = 1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma);
+        double intenDenom = 2.0 * intensitySigma * intensitySigma; 
+        float intensityValue;
+        double intensityGaussian;
+        float intensityDifference;
+        double weight;
+
+        for (k = startZ; k < endZ; k += sliceSize) {
+
+            if ((k >= 0) && (k < volSize)) {
+                startY = k + indexY;
+                endY = startY + stepY;
+
+                for (j = startY; j < endY; j += xDim) {
+
+                    if (((j - k) >= 0) && ((j - k) < sliceSize)) {
+                        startX = j + offsetX;
+                        endX = startX + xKDim;
+
+                        for (i = startX; i < endX; i++) {
+
+                            if (((i - j) >= 0) && ((i - j) < xDim)) {
+                                intensityValue = image[i];
+                                intensityDifference = intensityValue - centerIntensityValue;
+                                intensityGaussian = intenWt1 * Math.exp(-intensityDifference*intensityDifference/intenDenom);
+                                weight = kernel[count] * intensityGaussian;
+                                sum += weight * intensityValue;
+
+                                if (weight >= 0) {
+                                    norm += weight;
+                                } else {
+                                    norm += -weight;
+                                }
+                                
+                            }
+
+                            count++;
+                        }
+                    }else{
+                        count += kExtents[0];
+                    }
+                }
+            }else{
+                count += kExtents[0]*kExtents[1];
             }
         }
 
@@ -1882,6 +2158,115 @@ public class AlgorithmConvolver extends AlgorithmBase {
         } else {
             return 0;
         }
+    }
+    
+    /**
+     * A static function that convolves a kernel with a CIELab image at a position.   The CIE76 intensity difference between the
+     * center pixel and the indexed pixel is used in a Gaussian in the weighing.
+     *
+     * @param   pix       index indicating location of convolution
+     * @param   iExtents  image dimensions
+     * @param   image     image data
+     * @param   kExtents  kernel dimensions
+     * @param   kernel    kernel data
+     * @param   intensitySigma
+     *
+     * @return  the L*,a*,b* of the pixel after convolution with the kernel
+     */
+    public static final float[] convolveBilateral3DCIELabPt(int pix, int[] iExtents, float[] image, int[] kExtents, float[] kernel,
+                                                            float intensitySigma) {
+
+        int i, j, k;
+        int offsetX, offsetY, offsetZ;
+
+        int sliceSize = iExtents[0] * iExtents[1] * 4;
+        int volSize = iExtents[2] * sliceSize;
+        int xDim = iExtents[0];
+        int xKDim = kExtents[0];
+        int indexY;
+        int stepY, stepZ;
+        int startX, startY, startZ;
+        int endX, endY, endZ;
+        int count;
+        double sumL;
+        double suma;
+        double sumb;
+        double norm = 0;
+        int offset = 4 * xDim;
+
+        offsetX = (pix % offset) - (kExtents[0] / 2 * 4);
+        offsetY = ((pix % sliceSize) / offset) - (kExtents[1] / 2);
+        offsetZ = (pix / (sliceSize)) - (kExtents[2] / 2);
+
+        count = 0;
+        sumL = 0;
+        suma = 0;
+        sumb = 0;
+        indexY = offsetY * offset;
+        stepY = kExtents[1] * offset;
+        stepZ = kExtents[2] * sliceSize;
+        startZ = offsetZ * sliceSize;
+        endZ = startZ + stepZ;
+        float centerLValue = image[pix+1];
+        float centeraValue = image[pix+2];
+        float centerbValue = image[pix+3];
+        double intenWt1 = 1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma);
+        double intenDenom = 2.0 * intensitySigma * intensitySigma; 
+        float LValue;
+        float aValue;
+        float bValue;
+        double intensityGaussian;
+        float LDifference;
+        float aDifference;
+        float bDifference;
+        double difference;
+        double weight;
+        float buf[] = new float[3];
+
+        for (k = startZ; k < endZ; k += sliceSize) {
+            startY = k + indexY;
+            endY = startY + stepY;
+
+            for (j = startY; j < endY; j += offset) {
+                startX = j + offsetX;
+                endX = startX + (xKDim * 4);
+
+                for (i = startX; i < endX; i += 4) {
+
+                    if ((k >= 0) && (k < volSize) && ((j - k) >= 0) && ((j - k) < sliceSize) && ((i - j) >= 0) &&
+                            ((i - j) < offset)) {
+                        LValue = image[i+1];
+                        aValue = image[i+2];
+                        bValue = image[i+3];
+                        LDifference = LValue - centerLValue;
+                        aDifference = aValue - centeraValue;
+                        bDifference = bValue - centerbValue;
+                        difference = Math.sqrt(LDifference*LDifference + aDifference*aDifference + bDifference*bDifference);
+                        intensityGaussian = intenWt1 * Math.exp(-difference*difference/intenDenom);
+                        weight = kernel[count] * intensityGaussian;
+                        sumL += weight * LValue;
+                        suma += weight * aValue;
+                        sumb += weight * bValue;
+
+                        if (weight >= 0) {
+                            norm += weight;
+                        } else {
+                            norm += -weight;
+                        }
+                        
+                    }
+
+                    count++;
+                }
+            }
+        }
+
+        if (norm > 0) {
+            buf[0] = (float)(sumL/norm);
+            buf[1] = (float)(suma/norm);
+            buf[2] = (float)(sumb/norm);
+        } 
+        return buf;
     }
     
     /**
