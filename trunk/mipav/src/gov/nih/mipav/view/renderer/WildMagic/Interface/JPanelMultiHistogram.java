@@ -10,17 +10,22 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 
 import com.sun.opengl.util.Animator;
 
-public class JPanelMultiHistogram extends JInterfaceBase {
+public class JPanelMultiHistogram extends JInterfaceBase implements ChangeListener {
 
 
     /** Use serialVersionUID for interoperability. */
@@ -28,6 +33,8 @@ public class JPanelMultiHistogram extends JInterfaceBase {
 
     /** Color button for changing color. */
     protected JButton colorButton;
+    protected JSlider alphaSlider;
+    private JSlider boundaryEmphasisSlider;
 
     /** The scroll pane holding the panel content. Useful when the screen is small. */
     private JScrollPane scroller;
@@ -50,6 +57,7 @@ public class JPanelMultiHistogram extends JInterfaceBase {
         m_kAnimator = kAnimator;
         m_kMultiHistogram = new VolumeImageHistogram( parent, kVolumeImage);
         m_kMultiHistogram.SetAnimator(m_kAnimator);
+        m_kMultiHistogram.SetInterface(this);
 
         //VolumeImageHistogram.main(parent, kVolumeImage, true);
         init();
@@ -84,27 +92,63 @@ public class JPanelMultiHistogram extends JInterfaceBase {
         scroller.setPreferredSize(new Dimension(iWidth, iHeight));
         scroller.setSize(new Dimension(iWidth, iHeight));
         scroller.revalidate();
-        System.err.println( "JPanelMultiHistogram: resizePanel " + panelWidth + " " + frameHeight );
     }
     
     public void setButtonColor(JButton _button, Color _color)
     {
         super.setButtonColor( _button, _color );
-        m_kMultiHistogram.setColor( new ColorRGBA( _color.getRed()/255.0f, _color.getGreen()/255.0f, _color.getBlue()/255.0f, 1.0f ) );
+        float fAlpha = alphaSlider.getValue()/100.0f;
+        m_kMultiHistogram.setColor( new ColorRGBA( _color.getRed()/255.0f, _color.getGreen()/255.0f, _color.getBlue()/255.0f, fAlpha ) );
+    }
+    
+    public void stateChanged(ChangeEvent e) {
+        Object source = e.getSource();
+
+        if (source == alphaSlider) {
+            float fAlpha = alphaSlider.getValue()/100.0f;
+            Color kColor = colorButton.getBackground();
+            m_kMultiHistogram.setColor( new ColorRGBA( kColor.getRed()/255.0f, kColor.getGreen()/255.0f, kColor.getBlue()/255.0f, fAlpha ) );
+        }
+        
+
+        if (source == boundaryEmphasisSlider) {
+            float fAlpha = boundaryEmphasisSlider.getValue()/100.0f;
+            m_kMultiHistogram.setBoundary( fAlpha );
+        }
+    }
+
+
+    public void updateColorButton( float[] afColor )
+    {
+        colorButton.setBackground( new Color( afColor[0], afColor[1], afColor[2]) );
+        alphaSlider.setValue( (int)(afColor[3] * 100) );
     }
     
     /**
      * Initializes GUI components.
      */
     private void init() {
-        JPanel buttonPanel = new JPanel();
+        JPanel buttonPanel = new JPanel( new GridLayout(4,2) );
         colorButton = new JButton();
         colorButton.setPreferredSize(new Dimension(25, 25));
         colorButton.setToolTipText("Change box frame color");
         colorButton.addActionListener(this);
-        colorButton.setBackground(Color.red);
+        colorButton.setBackground(Color.white);
         colorButton.setEnabled(true);   
+        buttonPanel.add( new JLabel( "Histogram Constant Color: ") );
         buttonPanel.add( colorButton );
+        
+        alphaSlider = new JSlider();
+        alphaSlider.addChangeListener(this);
+        buttonPanel.add( new JLabel( "Histogram opacity: ") );
+        buttonPanel.add( alphaSlider );
+        
+
+        
+        boundaryEmphasisSlider = new JSlider();
+        boundaryEmphasisSlider.addChangeListener(this);
+        buttonPanel.add( new JLabel( "Boundary Emphasis Slider: ") );
+        buttonPanel.add( boundaryEmphasisSlider );
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(m_kMultiHistogram.GetCanvas(), BorderLayout.CENTER);

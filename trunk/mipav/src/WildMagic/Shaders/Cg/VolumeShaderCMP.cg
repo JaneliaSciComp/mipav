@@ -42,16 +42,23 @@ void p_VolumeShaderCMP(  in float3 inTexCoord1    : TEXCOORD0,
                          in float4 inPos,
                          out float4 kColor	    : COLOR0,
                          uniform sampler2D SceneImage : TEXUNIT0, 
+
                          uniform sampler3D VolumeImageA : TEXUNIT1, 
                          uniform sampler1D ColorMapA : TEXUNIT2, 
                          uniform sampler1D OpacityMapA : TEXUNIT3, 
-                         uniform sampler1D OpacityMapA_GM : TEXUNIT4, 
-                         uniform sampler3D NormalMapA: TEXUNIT5, 
-                         uniform sampler3D VolumeImageB : TEXUNIT6, 
-                         uniform sampler1D ColorMapB : TEXUNIT7, 
-                         uniform sampler1D OpacityMapB : TEXUNIT8, 
-                         uniform sampler1D OpacityMapB_GM : TEXUNIT9, 
-                         uniform sampler3D NormalMapB: TEXUNIT10, 
+                         uniform sampler3D NormalMapA: TEXUNIT4, 
+                         uniform sampler3D VolumeImageGMA: TEXUNIT5, 
+                         uniform sampler1D OpacityMapA_GM : TEXUNIT6, 
+                         uniform sampler3D VolumeImageGMGMA: TEXUNIT7, 
+
+                         uniform sampler3D VolumeImageB : TEXUNIT8, 
+                         uniform sampler1D ColorMapB : TEXUNIT9, 
+                         uniform sampler1D OpacityMapB : TEXUNIT10, 
+                         uniform sampler3D NormalMapB: TEXUNIT11, 
+                         uniform sampler3D VolumeImageGMB: TEXUNIT12, 
+                         uniform sampler1D OpacityMapB_GM : TEXUNIT13, 
+                         uniform sampler3D VolumeImageGMGMB: TEXUNIT14, 
+
                          uniform float ShowB,
                          uniform float ABBlend,
                          uniform float2 MinMax,
@@ -174,11 +181,10 @@ void p_VolumeShaderCMP(  in float3 inTexCoord1    : TEXCOORD0,
             if ( !bClipped )
             {
                 color = tex3D(VolumeImageA,position);
-                //color = tex3D(NormalMapA,position);
                 opacity = tex1D(OpacityMapA,color.r).r;
                 if ( GradientMagnitude != 0 )
                 {
-                    colorGM = tex3D(NormalMapA,position).a;
+                    colorGM = tex3D(VolumeImageGMA,position).r;
                     opacityGM = tex1D(OpacityMapA_GM,colorGM).r;
                     opacity = opacity * opacityGM;
                 }
@@ -200,7 +206,7 @@ void p_VolumeShaderCMP(  in float3 inTexCoord1    : TEXCOORD0,
                     opacityB = tex1D(OpacityMapB,colorB.r).r;
                     if ( GradientMagnitudeB != 0 )
                     {
-                        colorGM_B = tex3D(NormalMapB,position).a;
+                        colorGM_B = tex3D(VolumeImageGMB,position).a;
                         opacityGM_B = tex1D(OpacityMapB_GM,colorGM_B).r;
                         opacityB = opacityB * opacityGM_B;
                     }

@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic;
 
 import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcat;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -39,6 +40,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSlices_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurface_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Render.LevWidgetState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender;
@@ -91,6 +93,7 @@ import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
 import WildMagic.LibGraphics.Shaders.ImageCatalog;
 import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
+import WildMagic.LibGraphics.Shaders.Program;
 import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 
 import com.sun.opengl.util.Animator;
@@ -474,8 +477,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             clipMaskUndoButton.setEnabled(true);
             clipSaveButton.setEnabled(true);
             insertTab("Opacity", opacityPanel);
-            //insertTab("MultiHistogram", multiHistogramPanel);
-            //multiHistogramGUI.getMainPanel().setVisible(true);
+            insertTab("MultiHistogram", multiHistogramPanel);
+            multiHistogramGUI.getMainPanel().setVisible(true);
             updateRayTracingSteps();
             raycastRenderWM.displayVolumeRaycast( rendererGUI.getVolumeCheck().isSelected() );
         } else if ( command.equals( "VolumeRayCast") ) {
@@ -1291,7 +1294,23 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
 
             imageA = transformFunct.getTransformedImage();
             imageA.calcMinMax();
+            
+            if ( imageA.getType() != ModelStorageBase.UBYTE )
+            {
+                AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(imageA, ModelStorageBase.UBYTE, 
+                        imageA.getMin(), imageA.getMax(), 
+                        0, 255, true);
+                changeTypeAlgo.setRunningInSeparateThread(false);
+                changeTypeAlgo.run();
 
+                if (changeTypeAlgo.isCompleted() == false) {
+
+                    // What to do
+                    changeTypeAlgo.finalize();
+                    changeTypeAlgo = null;
+                }
+            }
+            
             if (!imageA.isColorImage()) {
                 resetLUTMinMax(imageA, LUTa);
             }
@@ -2849,5 +2868,9 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         viewToolBar.validate();
         viewToolBar.repaint();
     }
-    
+
+    public void updateLevWidgetState( LevWidgetState kLWS, int iState )
+    {
+        raycastRenderWM.updateLevWidgetState( kLWS, iState );
+    }
 }

@@ -4,6 +4,7 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.view.renderer.WildMagic.Render.LevWidgetState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeBoundingBox;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClip;
@@ -1058,6 +1059,19 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kVolumeRayCast != null )
         {
             m_kVolumeRayCast.MIPMode(m_pkRenderer);
+        }
+        ResetShaderParamsWindow();
+    }
+    
+
+    /**
+     * Display the volume in Mullti-histo mode.
+     */
+    public void MULTIHISTOMode()
+    {
+        if ( m_kVolumeRayCast != null )
+        {
+            m_kVolumeRayCast.MULTIHISTOMode(m_pkRenderer);
         }
         ResetShaderParamsWindow();
     }
@@ -2386,6 +2400,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_kShaderParamsWindow.close();
         }
+    }
+
+    public void updateLevWidgetState( LevWidgetState kLWS, int iState )
+    {
+        m_kVolumeRayCast.updateLevWidgetState( kLWS, iState );
     }
 
     

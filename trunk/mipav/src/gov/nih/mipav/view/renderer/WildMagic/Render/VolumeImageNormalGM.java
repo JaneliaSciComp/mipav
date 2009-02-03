@@ -96,16 +96,15 @@ public class VolumeImageNormalGM extends VolumeImageViewer
             if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
             {
                 m_bDisplaySecond = false;
-                m_iSlice = 0;
-                //System.err.println("Done second pass");
-                m_pkVolumeCalcTarget.dispose();
-                m_pkVolumeCalcTarget = null;
-                m_kAnimator.stop();
-                m_kAnimator.remove(arg0);
-                m_kAnimator = null;
-                m_kFrame.setVisible(false);
             }
         }
+
+        m_pkVolumeCalcTarget.dispose();
+        m_pkVolumeCalcTarget = null;
+        m_kAnimator.stop();
+        m_kAnimator.remove(arg0);
+        m_kAnimator = null;
+        m_kFrame.setVisible(false);
     }
 
     protected void CreateScene ()
@@ -113,7 +112,7 @@ public class VolumeImageNormalGM extends VolumeImageViewer
         CreatePlaneNode();
         m_pkPlane.VBuffer.SetTCoord3(0, 3, 1,1,0.5f);
 
-        m_spkEffect = new VolumeCalcEffect( m_kVolumeImage );
+        m_spkEffect = new VolumeCalcEffect( m_kVolumeImage, m_kVolumeImage.GetVolumeTarget(), "CalcNormalsPerSlice_Pass1");
         m_pkPlane.AttachEffect(m_spkEffect);
         m_pkRenderer.LoadResources(m_pkPlane);
         ((VolumeCalcEffect)m_spkEffect).SetStepSize(m_kVolumeImage);
