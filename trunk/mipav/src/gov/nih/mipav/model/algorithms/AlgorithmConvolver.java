@@ -115,6 +115,11 @@ public class AlgorithmConvolver extends AlgorithmBase {
     // Used with 3D and 4D AlgorithmGradientMagnitude
     // 3D kernels used on slices where whole kernels fit, 2D kernels used on other slices
     private boolean combined2D3D = false;
+    
+    private float intensitySigma = 1.0f;
+    
+    // Used with AlgorithmBilateralFilter
+    private boolean bilateral = false;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     public boolean isRed() {
@@ -166,6 +171,17 @@ public class AlgorithmConvolver extends AlgorithmBase {
     	this.kExtents = kExtents;
     	this.entireImage = entireImage;
     	this.image25D = image25D;
+    }
+    
+    public AlgorithmConvolver(ModelImage srcImage, float[] kernel, int[] kExtents, boolean entireImage, boolean image25D,
+            float intensitySigma){
+        super(null, srcImage);
+        kernelBuffer = kernel;
+        this.kExtents = kExtents;
+        this.entireImage = entireImage;
+        this.image25D = image25D;
+        this.intensitySigma = intensitySigma;
+        bilateral = true;
     }
     
     public AlgorithmConvolver(ModelImage srcImage, float[] kernelX, float[] kernelY,
@@ -2527,7 +2543,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
 			if (color == true) {
 
 				for (int i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
-					progress++;
+					progress += 4;
 					if ((progress % progressModulus) == 0) {
 						fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
 					}
@@ -2588,6 +2604,64 @@ public class AlgorithmConvolver extends AlgorithmBase {
 		}
     }
     
+    private final void convolve2DBilateral(int startSlice, int endSlice){
+        boolean color = srcImage.isColorImage();
+        int cFactor = (color)?4:1;
+        int length = cFactor * srcImage.getSliceSize();
+        for (int s = startSlice; s < endSlice; s++) {
+            int start = s * length;
+            float[] buffer = new float[length];
+            float resultBuffer[] = null;
+            try {
+                srcImage.exportData(start, length, buffer); // locks and
+                                                            // releases lock
+            } catch (IOException error) {
+                errorCleanUp("Algorithm Convolver: Image(s) locked", false);
+
+                return;
+            }
+
+            if (color == true) {
+                for (int i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
+                    progress += 4;
+                    if ((progress % progressModulus) == 0) {
+                        fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
+                    }
+
+                    if ((entireImage == true) || mask.get(i / 4)) {
+                        outputBuffer[idx] = buffer[i]; // alpha
+                        resultBuffer = AlgorithmConvolver.convolveBilateral2DCIELabPt(i,
+                                srcImage.getExtents(), buffer, kExtents, kernelBuffer, intensitySigma);
+                        outputBuffer[idx+1] = resultBuffer[0];
+                        outputBuffer[idx+2] = resultBuffer[1];
+                        outputBuffer[idx+3] = resultBuffer[2];
+                    } else {
+                        outputBuffer[idx] = buffer[i];
+                        outputBuffer[idx + 1] = buffer[i + 1];
+                        outputBuffer[idx + 2] = buffer[i + 2];
+                        outputBuffer[idx + 3] = buffer[i + 3];
+                    }
+                }
+            } else {
+
+                for (int i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
+                    progress++;
+                    if ((progress % progressModulus) == 0) {
+                        fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
+                    }
+
+                    if ((entireImage == true) || mask.get(i)) {
+                        outputBuffer[idx] = AlgorithmConvolver.convolveBilateral2DPt(i,
+                                srcImage.getExtents(), buffer, kExtents,
+                                kernelBuffer, intensitySigma);
+                    } else {
+                        outputBuffer[idx] = buffer[i];
+                    }
+                }
+            }
+        }
+    }
+    
     private final void convolve2DXY(int startSlice, int endSlice){
         // Does x and y kernels separately
         boolean color = srcImage.isColorImage();
@@ -2608,7 +2682,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
             if (color == true) {
 
                 for (int i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
-                    progress++;
+                    progress += 4;
                     if ((progress % progressModulus) == 0) {
                         fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
                     }
@@ -2712,7 +2786,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
             if (color == true) {
 
                 for (int i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
-                    progress++;
+                    progress += 4;
                     if ((progress % progressModulus) == 0) {
                         fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
                     }
@@ -2904,6 +2978,50 @@ public class AlgorithmConvolver extends AlgorithmBase {
 				}
 			}
 		}
+
+    }
+    
+    private final void convolve3DBilateral(int start, int end, float[] iImage, int index){
+        float resultBuffer[] = null;
+        if(srcImage.isColorImage()){
+            for (int i = start; (i < end) && !threadStopped; i += 4) {
+                progress += 4;
+                if ((progress % progressModulus) == 0) {
+                    fireProgressStateChanged(minProgressValue + (int)(progress/progressModulus));
+                }
+
+                if ((entireImage == true) || mask.get(i / 4)) {
+                    outputBuffer[i+index] = iImage[i]; // alpha
+                    resultBuffer = AlgorithmConvolver.convolveBilateral3DCIELabPt(i,
+                            srcImage.getExtents(), iImage, kExtents, kernelBuffer, intensitySigma);
+                    outputBuffer[i + index + 1] = resultBuffer[0];
+                    outputBuffer[i + index + 2] = resultBuffer[1];
+                    outputBuffer[i + index + 3] = resultBuffer[2];
+                } else {
+                    outputBuffer[i+index] = iImage[i];
+                    outputBuffer[i+index + 1] = iImage[i + 1];
+                    outputBuffer[i+index + 2] = iImage[i + 2];
+                    outputBuffer[i+index + 3] = iImage[i + 3];
+                }
+            }
+
+        } else {
+            for (int i = start; (i < end) && !threadStopped; i++) {
+                progress++;
+                if ((progress % progressModulus) == 0) {
+                    fireProgressStateChanged(minProgressValue + (int) (progress / progressModulus));
+                    // System.out.println("Entire = " + entireImage);
+                }
+
+                if ((entireImage == true) || mask.get(i)) {
+                    outputBuffer[i + index] = AlgorithmConvolver.convolveBilateral3DPt(i,
+                            srcImage.getExtents(), iImage, kExtents,
+                            kernelBuffer, intensitySigma);
+                } else {
+                    outputBuffer[i + index] = iImage[i];
+                }
+            }
+        }
 
     }
     
@@ -3206,6 +3324,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
         else if (nms2e) {
             convolve2DNMSE(0,1);
         }
+        else if (bilateral) {
+            convolve2DBilateral(0,1);
+        }
         else {
             convolve2D(0, 1);
         }
@@ -3280,6 +3401,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
                             }
                             else if (nms2e) {
                                 convolve2DNMSE(fstart, fend);
+                            } 
+                            else if (bilateral) {
+                                convolve2DBilateral(fstart, fend);
                             }
                             else {
     						    convolve2D(fstart, fend);
@@ -3307,6 +3431,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
                 }
                 else if (nms2e) {
                     convolve2DNMSE(0, nSlices);
+                }
+                else if (bilateral) {
+                    convolve2DBilateral(0, nSlices);
                 }
                 else {
             	    convolve2D(0, nSlices);
@@ -3379,6 +3506,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
                             else if (combined2D3D) {
                                 convolve2D3D(start, end, iImage, 0, min3DLength, max3DLength);
                             }
+                            else if (bilateral) {
+                                convolve3DBilateral(start, end, iImage, 0);
+                            }
                             else {
 							    convolve3D(start, end, iImage, 0);
                             }
@@ -3406,6 +3536,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
                 }
                 else if (combined2D3D) {
                     convolve2D3D(0, length, buffer, 0, min3DLength, max3DLength);
+                }
+                else if (bilateral) {
+                    convolve3DBilateral(0, length, buffer, 0);
                 }
                 else {
         		    convolve3D(0, length, buffer, 0);
@@ -3499,6 +3632,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
                             else if (combined2D3D) {
                                 convolve2D3D(start, fend, iImage, findex, min3DLength, max3DLength);
                             }
+                            else if (bilateral) {
+                                convolve3DBilateral(start, fend, iImage, findex);
+                            }
                             else {
 							    convolve3D(start, fend, iImage, findex);
                             }
@@ -3519,6 +3655,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
                 }
                 else if (combined2D3D) {
                     convolve2D3D(0, length, buffer, index, min3DLength, max3DLength);
+                }
+                else if (bilateral) {
+                    convolve3DBilateral(0, length, buffer, index);
                 }
                 else {
 				    convolve3D(0, length, buffer, index);
