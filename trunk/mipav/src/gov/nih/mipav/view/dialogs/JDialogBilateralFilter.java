@@ -611,7 +611,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
         GridBagConstraints gbc = new GridBagConstraints();
         intensityPanel.setForeground(Color.black);
         intensityPanel.setBorder(buildTitledBorder("Scale of the Intensity Gaussian"));
-        intensityLabel = new JLabel("Fraction of maximum intensity difference");
+        intensityLabel = new JLabel("Units of maximum intensity difference");
         intensityLabel.setForeground(Color.black);
         intensityLabel.setFont(serif12);
         gbc.gridwidth = 1;
