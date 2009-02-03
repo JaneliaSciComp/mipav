@@ -340,6 +340,16 @@ public class VolumeRayCast extends VolumeObject
     {
         m_kVolumeShaderEffect.MIPMode(kRenderer);
     }
+    
+
+    /**
+     * Display the volume in Multi-histo mode.
+     * @param kRenderer the OpenGLRenderer object.
+     */
+    public void MULTIHISTOMode( Renderer kRenderer )
+    {
+        m_kVolumeShaderEffect.MULTIHISTOMode(kRenderer);
+    }
 
     /** Turns off rendering to the PBuffer. Called after all objects displayed
      * with the ray-cast volume have been pre-rendered. */
@@ -745,4 +755,11 @@ public class VolumeRayCast extends VolumeObject
         Box(iXBound,iYBound,iZBound);
         m_spkVertexColor3Shader = new VertexColor3Effect();
     }
+    
+    public void updateLevWidgetState( LevWidgetState kLWS, int iState )
+    {
+        m_kVolumeShaderEffect.updateLevWidgetState( kLWS, iState );
+    }
+
+    
 }

@@ -189,5 +189,7 @@ public abstract class JInterfaceBase extends JDialog implements ActionListener
             _button.setBackground(_color);
         }
     }
+    
+    public void updateColorButton( float[] afColor ) {}
 
 }

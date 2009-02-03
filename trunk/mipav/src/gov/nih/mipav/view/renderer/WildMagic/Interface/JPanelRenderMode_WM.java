@@ -90,6 +90,9 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     /** Radio button of the MIP mode option. */
     protected JRadioButton radioMIP;
 
+    /** Radio button of the Multi-histo mode option. */
+    protected JRadioButton radioMULTIHISTO;
+
     /** Radio button of the SURFACE mode option. */
     protected JRadioButton radioSURFACE;
 
@@ -209,12 +212,16 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          radioSURFACE = new JRadioButton("Composite Surface", false);
          radioSURFACE.setFont(serif12);
          group1.add(radioSURFACE);
+         radioMULTIHISTO = new JRadioButton("MultiHistogram", false);
+         radioMULTIHISTO.setFont(serif12);
+         group1.add(radioMULTIHISTO);
 
          radioMIP.addItemListener(this);
          radioXRAY.addItemListener(this);
          radioCOMPOSITE.addItemListener(this);
          radioSURFACE.addItemListener(this);
          radioSURFACEFAST.addItemListener(this);
+         radioMULTIHISTO.addItemListener(this);
          gbc.gridy = 0;
          renderModePanel.add(radioMIP, gbc);
          gbc.gridy = 1;
@@ -225,6 +232,8 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          renderModePanel.add(radioSURFACEFAST, gbc);
          gbc.gridy = 4;
          renderModePanel.add(radioSURFACE, gbc);
+         gbc.gridy = 5;
+         renderModePanel.add(radioMULTIHISTO, gbc);
          
          JPanel blendPanel = new JPanel();
          blendPanel.setLayout(new BoxLayout(blendPanel, BoxLayout.X_AXIS));
@@ -379,6 +388,9 @@ public class JPanelRenderMode_WM extends JInterfaceBase
             m_kVolumeViewer.updateRayTracingSteps();
         } else if (radioCOMPOSITE.isSelected() && (source == radioCOMPOSITE)) {
         	rayBasedRenderWM.CMPMode();
+            m_kVolumeViewer.updateRayTracingSteps();
+        } else if (radioMULTIHISTO.isSelected() && (source == radioMULTIHISTO)) {
+            rayBasedRenderWM.MULTIHISTOMode();
             m_kVolumeViewer.updateRayTracingSteps();
         } else if (radioSURFACE.isSelected() && (source == radioSURFACE)) {
         	rayBasedRenderWM.SURMode();

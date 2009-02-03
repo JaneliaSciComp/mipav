@@ -64,15 +64,15 @@ public class VolumeCalcEffect extends VolumeClipEffect
      * fn creates the first-pass shader.
      * @param kVolumeImageA the shared volume data and textures.
      */
-    public VolumeCalcEffect ( VolumeImage kVolumeImage )
+    public VolumeCalcEffect ( VolumeImage kVolumeImage, Texture kTexture, String kShaderName )
     {
         /* Set single-pass rendering: */
         SetPassQuantity(1);
-        SetVShader(0,new VertexShader("CalcNormalsPerSlice_Pass1" + kVolumeImage.GetPostfix()));
-        SetPShader(0,new PixelShader("CalcNormalsPerSlice_Pass1" + kVolumeImage.GetPostfix(), false));
+        SetVShader(0,new VertexShader(kShaderName + kVolumeImage.GetPostfix()));
+        SetPShader(0,new PixelShader(kShaderName + kVolumeImage.GetPostfix(), false));
         GetPShader(0).SetTextureQuantity(1);
-        GetPShader(0).SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
-        GetPShader(0).SetTexture(0, kVolumeImage.GetVolumeTarget() );
+        GetPShader(0).SetImageName(0,kTexture.GetImage().GetName());
+        GetPShader(0).SetTexture(0, kTexture );
         m_bIsColor = kVolumeImage.GetImage().isColorImage();
         m_afMinMax[0] = (float)kVolumeImage.GetImage().getMin();
         m_afMinMax[1] = (float)kVolumeImage.GetImage().getMax();

@@ -267,13 +267,13 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         m_kImageNew = kImage;
         if ( m_kVolumeImageNew == null )
         {
-            m_kVolumeImageNew = VolumeImage.UpdateData(kImage, null, m_kVolumeTextureNew, true, new String("New"), null );
+            m_kVolumeImageNew = VolumeImage.UpdateData(kImage, null, m_kVolumeTextureNew, new String("New") );
             m_kVolumeTextureNew.Release();
             m_kVolumeTextureNew.SetImage(m_kVolumeImageNew);
         }
         else
         {
-            VolumeImage.UpdateData(kImage, m_kVolumeImageNew, m_kVolumeTextureNew, true, new String("New"), null );
+            VolumeImage.UpdateData(kImage, m_kVolumeImageNew, m_kVolumeTextureNew, new String("New") );
         }
     }
 
