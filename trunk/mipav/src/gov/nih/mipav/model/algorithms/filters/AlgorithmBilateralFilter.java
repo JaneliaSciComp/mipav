@@ -85,6 +85,11 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
     private ModelImage targetImage = null;
     
     private ModelImage cieLabImage = null;
+    
+    private double imageMax;
+    
+    // Scale factor used in RGB-CIELab conversions
+    private double scaleMax = 255.0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -182,7 +187,9 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
         }
         
         srcImage.calcMinMax();
+        imageMax = (float)srcImage.getMax();
         if (srcImage.isColorImage()) {
+            scaleMax = Math.max(255.0, imageMax);
             cieLabImage = new ModelImage(ModelImage.ARGB_FLOAT, srcImage.getExtents(),srcImage.getImageName() + "cieLab");
             convertRGBtoCIELab();
         } // if (targetImage.isColorImage())
@@ -369,9 +376,9 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
                     return;
                 }
                 for (i = 0; i < buffer.length; i += 4) {
-                    varR = buffer[i+1]/255.0;
-                    varG = buffer[i+2]/255.0;
-                    varB = buffer[i+3]/255.0;
+                    varR = buffer[i+1]/scaleMax;
+                    varG = buffer[i+2]/scaleMax;
+                    varB = buffer[i+3]/scaleMax;
                     
                     if (varR <= 0.04045) {
                         varR = varR/12.92;
@@ -541,9 +548,9 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
                 varB = 12.92 * varB;
             }
             
-            R = 255.0 * varR;
-            G = 255.0 * varG;
-            B = 255.0 * varB;
+            R = scaleMax * varR;
+            G = scaleMax * varG;
+            B = scaleMax * varB;
             
             buffer[i+1] = (float)R;
             buffer[i+2] = (float)G;
