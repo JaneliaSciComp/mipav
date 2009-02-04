@@ -762,14 +762,15 @@ public class FileSurface_WM {
             if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1) || 
             	(kName.indexOf(".vtk") != -1) || (kName.indexOf(".vtp") != -1) || 
             	(kName.indexOf(".stla")!= -1) || (kName.indexOf(".stlb")!= -1) || 
-            	(kName.indexOf(".ply") != -1) || (kName.indexOf(".txt") != -1)) {
+            	(kName.indexOf(".ply") != -1) || (kName.indexOf(".txt") != -1) || 
+            	(kName.indexOf(".gii") != -1)) {
                 kSurface[i] = readSurface(kImage, akFiles[i], null);
             } else if (kName.indexOf(".xml") != -1) {
                 FileSurfaceRefXML_WM kSurfaceXML = new FileSurfaceRefXML_WM(kName, akFiles[i].getParent());
                 FileInfoSurfaceRefXML_WM kFileInfo = kSurfaceXML.readSurfaceXML(kName, akFiles[i].getParent());
                 akFiles[i] = new File(akFiles[i].getParent()+ File.separatorChar + kFileInfo.getSurfaceFileName());
                 kSurface[i] = readSurface(kImage, akFiles[i], kFileInfo.getMaterial());
-            }
+            } 
         }
 
         return kSurface;
@@ -852,6 +853,10 @@ public class FileSurface_WM {
         else if ( kExt.equals(".vtp" ) )
         {
             saveAsVTKXML(kName, kMesh);
+        } 
+        else if ( kExt.equals(".gii" ) )
+        {
+        	saveAsGiftiXML(kName, kMesh);
         }
         else if ( kExt.equals(".xml" ) )
         {
@@ -1613,6 +1618,23 @@ public class FileSurface_WM {
 
         return kMesh;
     }
+    
+    /**
+     * Read Gifti mesh from file.
+     * @param absPath file path
+     * @param fileName file name
+     * @param dir file directory
+     * @return TriMesh
+     */
+    private static TriMesh loadGiftiXMLMesh(String absPath, String fileName, String dir)
+    {
+        TriMesh kMesh = null;
+        
+        FileSurfaceGiftiXML_WM surfaceGiftiXML = new FileSurfaceGiftiXML_WM(fileName, dir);
+        kMesh = surfaceGiftiXML.readSurfaceXML(fileName, dir);
+
+        return kMesh;
+    }
    
     /**
      * Returns an array of File objects, based on the user-selected files from the FileChooser dialog.
@@ -2195,6 +2217,15 @@ public class FileSurface_WM {
             iType = 0;
             iQuantity = 1;
             isSur = false;
+        } else if ( file.getName().endsWith("gii") ) {
+            try {
+                in = new RandomAccessFile(file, "r");
+                iType = 0;
+                iQuantity = 1;
+                isSur = false;
+            } catch (IOException e) {
+                return null;
+            }
         } else {
             //has to be vtk legacy or vtk xml
             try {
@@ -2247,6 +2278,9 @@ public class FileSurface_WM {
                     	else if(file.getName().endsWith("vtp")) {
                             //vtk xml
                             akComponent[i] = loadVTKXMLMesh( file.getAbsolutePath(), file.getName(), file.getParent());
+                    	}
+                    	else if(file.getName().endsWith("gii")) {
+                            akComponent[i] = loadGiftiXMLMesh( file.getAbsolutePath(), file.getName(), file.getParent());
                     	}
                     	else if (file.getName().endsWith("stla")) {
                             akComponent[i] = loadSTLAsciiMesh( file );
@@ -2391,6 +2425,20 @@ public class FileSurface_WM {
         	surfaceVTKXML.writeXMLsurface(fileName, kMesh);
         } catch (IOException kError) { }
     }
+    
+    /**
+     * Save the TriMesh in Gifti format.
+     * @param fileName file name
+     * @param kMesh TriMesh
+     */
+    private static void saveAsGiftiXML(String fileName, TriMesh kMesh)
+    {
+    	try {
+    		FileSurfaceGiftiXML_WM surfaceGiftiXML = new FileSurfaceGiftiXML_WM(null, null);
+        	surfaceGiftiXML.writeXMLsurface(fileName, kMesh);
+        } catch (IOException kError) { }
+    }
+    
 
     /**
      * Support for saving the collapse records to a binary file. 

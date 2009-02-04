@@ -292,10 +292,12 @@ public class JPanelSurface_WM extends JInterfaceBase
      */
     public void addSurface() {
         TriMesh[] akSurfaces = FileSurface_WM.openSurfaces(m_kVolumeViewer.getImageA());
+        
         if ( akSurfaces != null )
         {
             addSurfaces(akSurfaces);
         }
+        
     }
      
     /**
