@@ -380,6 +380,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
     /**
      * A static function that convolves a kernel with an image at a position.  The intensity difference between the 
      * center pixel and the indexed pixel is used in a Gaussian in the weighing.
+     * The intensity Gaussian is (1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma))* exp(-intensityDifference**2/intenDenom)
+     * Since the same (1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma) term would appear in every weight term, it would cancel
+     * out by appearing in both the numerator and denominator in (sum / norm) and so can be omitted.
      *
      * @param   pix       index indicating location of convolution
      * @param   iExtents  image dimensions
@@ -414,7 +417,6 @@ public class AlgorithmConvolver extends AlgorithmBase {
         startY = offsetY * xDim;
         endY = startY + (yKDim * xDim);
         float centerIntensityValue = image[pix];
-        double intenWt1 = 1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma);
         double intenDenom = 2.0 * intensitySigma * intensitySigma; 
         float intensityValue;
         double intensityGaussian;
@@ -438,7 +440,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                     
                     intensityValue = image[i];
                     intensityDifference = intensityValue - centerIntensityValue;
-                    intensityGaussian = intenWt1 * Math.exp(-intensityDifference*intensityDifference/intenDenom);
+                    intensityGaussian = Math.exp(-intensityDifference*intensityDifference/intenDenom);
                     weight = kernel[count] * intensityGaussian;
                     sum += weight * intensityValue;
 
@@ -993,6 +995,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
     /**
      * A static function that convolves a kernel with an CIELab image at a position.  The CIE76 intensity difference between the
      * center pixel and the indexed pixel is used in a Gaussian in the weighing.
+     * The intensity Gaussian is (1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma))* exp(-intensityDifference**2/intenDenom)
+     * Since the same (1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma) term would appear in every weight term, it would cancel
+     * out by appearing in both the numerator and denominator in (sum / norm) and so can be omitted.
      *
      * @param   pix       index indicating location of convolution
      * @param   iExtents  image dimensions
@@ -1035,7 +1040,6 @@ public class AlgorithmConvolver extends AlgorithmBase {
         float centerLValue = image[pix+1];
         float centeraValue = image[pix+2];
         float centerbValue = image[pix+3];
-        double intenWt1 = 1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma);
         double intenDenom = 2.0 * intensitySigma * intensitySigma; 
         float LValue;
         float aValue;
@@ -1062,7 +1066,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                     aDifference = aValue - centeraValue;
                     bDifference = bValue - centerbValue;
                     difference = Math.sqrt(LDifference*LDifference + aDifference*aDifference + bDifference*bDifference);
-                    intensityGaussian = intenWt1 * Math.exp(-difference*difference/intenDenom);
+                    intensityGaussian = Math.exp(-difference*difference/intenDenom);
                     weight = kernel[count] * intensityGaussian;
                     sumL += weight * LValue;
                     suma += weight * aValue;
@@ -1250,6 +1254,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
     /**
      * A static function that convolves a kernel with an image at a position.  The intensity difference between the 
      * center pixel and the indexed pixel is used in a Gaussian in the weighing.
+     * The intensity Gaussian is (1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma))* exp(-intensityDifference**2/intenDenom)
+     * Since the same (1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma) term would appear in every weight term, it would cancel
+     * out by appearing in both the numerator and denominator in (sum / norm) and so can be omitted.
      *
      * @param   pix       index indicating location of convolution
      * @param   iExtents  image dimensions
@@ -1289,7 +1296,6 @@ public class AlgorithmConvolver extends AlgorithmBase {
         startZ = offsetZ * sliceSize;
         endZ = startZ + stepZ;
         float centerIntensityValue = image[pix];
-        double intenWt1 = 1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma);
         double intenDenom = 2.0 * intensitySigma * intensitySigma; 
         float intensityValue;
         double intensityGaussian;
@@ -1313,7 +1319,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                             if (((i - j) >= 0) && ((i - j) < xDim)) {
                                 intensityValue = image[i];
                                 intensityDifference = intensityValue - centerIntensityValue;
-                                intensityGaussian = intenWt1 * Math.exp(-intensityDifference*intensityDifference/intenDenom);
+                                intensityGaussian = Math.exp(-intensityDifference*intensityDifference/intenDenom);
                                 weight = kernel[count] * intensityGaussian;
                                 sum += weight * intensityValue;
 
@@ -2179,6 +2185,9 @@ public class AlgorithmConvolver extends AlgorithmBase {
     /**
      * A static function that convolves a kernel with a CIELab image at a position.   The CIE76 intensity difference between the
      * center pixel and the indexed pixel is used in a Gaussian in the weighing.
+     * The intensity Gaussian is (1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma))* exp(-intensityDifference**2/intenDenom)
+     * Since the same (1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma) term would appear in every weight term, it would cancel
+     * out by appearing in both the numerator and denominator in (sum / norm) and so can be omitted.
      *
      * @param   pix       index indicating location of convolution
      * @param   iExtents  image dimensions
@@ -2226,7 +2235,6 @@ public class AlgorithmConvolver extends AlgorithmBase {
         float centerLValue = image[pix+1];
         float centeraValue = image[pix+2];
         float centerbValue = image[pix+3];
-        double intenWt1 = 1.0/(Math.sqrt(2.0 * Math.PI) * intensitySigma);
         double intenDenom = 2.0 * intensitySigma * intensitySigma; 
         float LValue;
         float aValue;
@@ -2258,7 +2266,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                         aDifference = aValue - centeraValue;
                         bDifference = bValue - centerbValue;
                         difference = Math.sqrt(LDifference*LDifference + aDifference*aDifference + bDifference*bDifference);
-                        intensityGaussian = intenWt1 * Math.exp(-difference*difference/intenDenom);
+                        intensityGaussian = Math.exp(-difference*difference/intenDenom);
                         weight = kernel[count] * intensityGaussian;
                         sumL += weight * LValue;
                         suma += weight * aValue;
