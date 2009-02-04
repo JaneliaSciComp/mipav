@@ -113,8 +113,6 @@ public class LevWidgetSquare extends LevWidget
         Vector3f kPos1 = kOutline.VBuffer.GetPosition3(1);
         Vector3f kPos2 = kOutline.VBuffer.GetPosition3(2);
         Vector3f kPos3 = kOutline.VBuffer.GetPosition3(3);
-        float fTransX = (kPos0.X + kPos1.X + kPos2.X + kPos3.X)/4.0f;
-        float fTransY = (kPos0.Y + kPos1.Y + kPos2.Y + kPos3.Y)/4.0f;
 
         float fNewX = kPos0.X + fThickness;
         float fNewY = kPos0.Y + fThickness;
@@ -389,24 +387,20 @@ public class LevWidgetSquare extends LevWidget
 
         float fXOld = ((float)iX0ld/(float)m_iWidth);
         float fYOld = ((float)m_iHeight-(float)iYOld)/(float)m_iHeight;
+        float fX = ((float)e.getX()/(float)m_iWidth);
+        float fY = ((float)m_iHeight-(float)e.getY())/(float)m_iHeight;
         if ( iButton == MouseEvent.BUTTON1 )
         {
             if ( (m_kPicked == m_kBottomOutline) || (m_kPicked == m_kBottomTri) )
             {
-                float fX = ((float)e.getX()/(float)m_iWidth);
-                float fY = ((float)m_iHeight-(float)e.getY())/(float)m_iHeight;
                 ShiftSquare( fX-fXOld, fY-fYOld );
             }
             else if ( (m_kPicked == m_kLowerSphere) || (m_kPicked == m_kUpperSphere) )
             {
-                float fX = ((float)e.getX()/(float)m_iWidth);
-                float fY = ((float)m_iHeight-(float)e.getY())/(float)m_iHeight;
                 ScaleRectangle( fX-fXOld, fY-fYOld, (m_kPicked == m_kLowerSphere) );
             }
             else if ( m_kPicked == m_kMiddleSphere )
             {
-                float fX = ((float)e.getX()/(float)m_iWidth);
-                float fY = ((float)m_iHeight-(float)e.getY())/(float)m_iHeight;
                 ShiftMid(fX-fXOld, fY-fYOld);
             }
             return false;

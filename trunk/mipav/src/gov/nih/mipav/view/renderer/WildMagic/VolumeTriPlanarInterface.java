@@ -1294,23 +1294,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
 
             imageA = transformFunct.getTransformedImage();
             imageA.calcMinMax();
-            
-            if ( imageA.getType() != ModelStorageBase.UBYTE )
-            {
-                AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(imageA, ModelStorageBase.UBYTE, 
-                        imageA.getMin(), imageA.getMax(), 
-                        0, 255, true);
-                changeTypeAlgo.setRunningInSeparateThread(false);
-                changeTypeAlgo.run();
-
-                if (changeTypeAlgo.isCompleted() == false) {
-
-                    // What to do
-                    changeTypeAlgo.finalize();
-                    changeTypeAlgo = null;
-                }
-            }
-            
+                      
             if (!imageA.isColorImage()) {
                 resetLUTMinMax(imageA, LUTa);
             }

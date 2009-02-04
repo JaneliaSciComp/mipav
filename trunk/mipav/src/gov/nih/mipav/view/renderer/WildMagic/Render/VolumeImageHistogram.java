@@ -29,7 +29,7 @@ import com.sun.opengl.util.Animator;
 public class VolumeImageHistogram extends VolumeImageViewer
     implements GLEventListener, KeyListener
 {
-    public int MAX_WIDGETS = 2;
+    public int MAX_WIDGETS = 6;
     /** For processing picking: */
     protected Picker m_kPicker = new Picker();
     private int m_iMouseButton;
@@ -42,6 +42,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
     private ColorRGBA m_kCurrentColor = new ColorRGBA(ColorRGBA.WHITE);
     private boolean m_bAdded = false;
     private JInterfaceBase m_kInterface = null;
+    private String m_kWidgetType = new String( "Square" );
     
     public VolumeImageHistogram( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
     {
@@ -87,6 +88,10 @@ public class VolumeImageHistogram extends VolumeImageViewer
         if ( m_kAnimator == null )
         {
             return;
+        }
+        for ( int i = 0; i < m_akLev.size(); i++ )
+        {
+            m_akLev.get(i).clearPicked(i == m_iCurrent);
         }
         for ( int i = 0; i < MAX_WIDGETS; i++ )
         {
@@ -142,7 +147,8 @@ public class VolumeImageHistogram extends VolumeImageViewer
      */
     public void keyPressed(KeyEvent kKey)
     {
-        char ucKey = kKey.getKeyChar();
+        char ucKey = kKey.getKeyChar();            
+        int iKey = kKey.getKeyCode();
         if ( m_iCurrent != -1 )
         {
             if ( ucKey == KeyEvent.VK_DELETE )
@@ -151,6 +157,30 @@ public class VolumeImageHistogram extends VolumeImageViewer
                 m_spkScene.DetachChild( kDeleted.getWidget() );
                 kDeleted.dispose();
                 m_iCurrent = m_akLev.size() -1;
+                m_spkScene.UpdateGS();
+            }
+            else if ((iKey == KeyEvent.VK_RIGHT) || (iKey == KeyEvent.VK_KP_RIGHT))
+            {
+                m_iCurrent++;
+                if ( m_iCurrent >= m_akLev.size() )
+                {
+                    m_iCurrent = 0;
+                }
+                m_kInterface.updateColorButton(m_akLev.get(m_iCurrent).getState().Color );              
+                m_spkScene.DetachChild( m_akLev.get(m_iCurrent).getWidget() );
+                m_spkScene.AttachChild( m_akLev.get(m_iCurrent).getWidget() );
+                m_spkScene.UpdateGS();
+            }
+            else if ((iKey == KeyEvent.VK_LEFT) || (iKey == KeyEvent.VK_KP_LEFT))
+            {
+                m_iCurrent--;
+                if ( m_iCurrent < 0 )
+                {
+                    m_iCurrent = m_akLev.size()-1;
+                }
+                m_kInterface.updateColorButton(m_akLev.get(m_iCurrent).getState().Color );              
+                m_spkScene.DetachChild( m_akLev.get(m_iCurrent).getWidget() );
+                m_spkScene.AttachChild( m_akLev.get(m_iCurrent).getWidget() );
                 m_spkScene.UpdateGS();
             }
         }
@@ -183,6 +213,11 @@ public class VolumeImageHistogram extends VolumeImageViewer
         }  
     }
   
+    public void setWidget( String kWidgetType )
+    {
+        m_kWidgetType = new String(kWidgetType);
+    }
+    
     public void mouseReleased(MouseEvent e)
     {
         if ( e.getButton() == MouseEvent.BUTTON3 )
@@ -192,18 +227,19 @@ public class VolumeImageHistogram extends VolumeImageViewer
                 float fX = ((float)e.getX()/(float)m_iWidth);
                 float fY = ((float)m_iHeight-(float)e.getY())/m_iHeight;
                 m_iCurrent++;
-                LevWidget kLev = new LevWidgetSquare(fX,fY, m_kTMin, m_kTMax, m_kVolumeImage.GetHisto().GetName(), m_iWidth, m_iHeight);
+                LevWidget kLev = null;
+                if ( m_kWidgetType.equals( "Square" ) )
+                {
+                    kLev = new LevWidgetSquare(fX,fY, m_kTMin, m_kTMax, m_kVolumeImage.GetHisto().GetName(), m_iWidth, m_iHeight);
+                }
+                else
+                {
+                    kLev = new LevWidgetTri(fX,fY, m_kTMin, m_kTMax, m_kVolumeImage.GetHisto().GetName(), m_iWidth, m_iHeight);
+                }
                 m_spkScene.AttachChild(  kLev.getWidget() );
                 m_spkScene.UpdateGS();
                 m_akLev.add(kLev);
                 m_bAdded = true;
-            }
-        }
-        for ( int i = 0; i < m_akLev.size(); i++ )
-        {
-            if ( i != m_iCurrent )
-            {
-                m_akLev.get(i).clearPicked();
             }
         }
     }
@@ -307,6 +343,16 @@ public class VolumeImageHistogram extends VolumeImageViewer
             Vector3f kPos = new Vector3f(fX, fY, 10);
             Vector3f kDir = new Vector3f(0, 0, -1);
             m_bPickPending = false;
+            if ( m_iCurrent != -1 )
+            {
+                m_kPicker.Execute(m_akLev.get(m_iCurrent).getWidget(),kPos,kDir,0.0f,
+                        Float.MAX_VALUE);
+                if (m_kPicker.Records.size() > 0)
+                {
+                    m_akLev.get(m_iCurrent).setPicked( m_kPicker.Records );
+                }
+            }
+            /*
             for ( int i = 0; i < m_akLev.size(); i++ )
             {
                 m_kPicker.Execute(m_akLev.get(i).getWidget(),kPos,kDir,0.0f,
@@ -331,6 +377,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
                     }
                 }
             }
+            */
         }
     }    
 }
