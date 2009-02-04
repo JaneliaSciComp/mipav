@@ -90,7 +90,8 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
     		                       "XML files (*.xml)",  "VTK Legacy files (*.vtk)",  "VTK XML files (*.vtp)", 
     		                       "STereoLithography(STL) ASCII files (*.stla)",
     		                       "STereoLithography(STL) Binary files (*.stlb)",
-    		                       "Polygon File Format (*.ply)"};
+    		                       "Polygon File Format (*.ply)", 
+    		                       "Gifti Surface Format (*.gii)"};
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -235,6 +236,10 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
                 decimateSurfaceCB.setEnabled(false);  
             } else if (pos == 8) {
                 fileName = makeImageName(fileTF.getText(), ".ply");
+                decimateSurfaceCB.setSelected(false);
+                decimateSurfaceCB.setEnabled(false);  
+            } else if (pos == 9) {
+                fileName = makeImageName(fileTF.getText(), ".gii");
                 decimateSurfaceCB.setSelected(false);
                 decimateSurfaceCB.setEnabled(false);  
             }
@@ -694,6 +699,8 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
                 fileName = makeImageName(fileTF.getText(), ".stlb");
             } else if (pos == 8) {
             	fileName = makeImageName(fileTF.getText(), ".ply");
+            } else if (pos == 9) {
+            	fileName = makeImageName(fileTF.getText(), ".gii");
             } 
         }
 

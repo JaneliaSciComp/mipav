@@ -104,7 +104,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             "Optical (*.avi; *.bmp; *.img; *.jpg; *.pict; *.psd; *.tif; *.tiff; *.xml)", // OPTICAL
             "Project (*.xml)", // PROJECT
             "Script Files (*.sct)", // SCRIPT
-            "Surface Files (*.sur; *.wrl; *.xml; *.vtk; *.vtp; *.stla; *.stlb; *.ply)", // SURFACE
+            "Surface Files (*.sur; *.wrl; *.xml; *.vtk; *.vtp; *.stla; *.stlb; *.ply; *.gii)", // SURFACE
             "Transfer Function Files (*.fun)", // FUNCT
             "VOI Files (*.voi)", // VOI
             "Nonlinear Transformation Files (*.nlt)", "Dynamic", "Plugin Files",
@@ -329,7 +329,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         } else if ( (filterType == SURFACE)
                 && (extension.equals(".sur") || extension.equals(".wrl") || extension.equals(".xml")
                         || extension.equals(".vtk") || extension.equals(".vtp") || extension.equals(".stla")
-                        || extension.equals(".stlb") || extension.equals(".ply") )) {
+                        || extension.equals(".stlb") || extension.equals(".ply") || extension.equals(".gii"))) {
             return true;
         } else if ( (filterType == OPTICAL)
                 && ( (extension.equals(".avi")) || (extension.equals(".xml")) || (extension.equals(".bmp"))
