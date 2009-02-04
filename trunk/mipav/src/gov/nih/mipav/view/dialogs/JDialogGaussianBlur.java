@@ -389,7 +389,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         String delim = ",";
 
         String defaultsString = outputOptionsPanel.isProcessWholeImageSet() + delim;
-        defaultsString = outputOptionsPanel.isOutputNewImageSet() + delim;
+        defaultsString += outputOptionsPanel.isOutputNewImageSet() + delim;
         defaultsString += separable + delim;
         defaultsString += image25D + delim;
         defaultsString += sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
