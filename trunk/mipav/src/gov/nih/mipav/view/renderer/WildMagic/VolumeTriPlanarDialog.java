@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
 
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
@@ -408,6 +409,21 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
         try {
             if (m_kVolViewType.equals("WMVolTriplanar")) {
+                if ( imageA.getType() != ModelStorageBase.UBYTE )
+                {
+                    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(imageA, ModelStorageBase.UBYTE, 
+                            imageA.getMin(), imageA.getMax(), 
+                            0, 255, false);
+                    changeTypeAlgo.setRunningInSeparateThread(false);
+                    changeTypeAlgo.run();
+
+                    if (changeTypeAlgo.isCompleted() == false) {
+
+                        // What to do
+                        changeTypeAlgo.finalize();
+                        changeTypeAlgo = null;
+                    }
+                }
                 VolumeTriPlanarInterface kWM = new VolumeTriPlanarInterface(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB);
                 if (forcePadding) {
                     kWM.doPadding(extents, volExtents);

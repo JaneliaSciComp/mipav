@@ -37,14 +37,21 @@ public abstract class LevWidget
         m_iHeight = iHeight;
     }
     
-    public void clearPicked()
+    public void clearPicked( boolean bPicked )
     {
         for ( int i = 0; i < m_kBottomOutline.VBuffer.GetVertexQuantity(); i++ )
         {
-            m_kBottomOutline.VBuffer.SetColor3(0, i, 0f,0f,.5f);
+            if ( bPicked )
+            {
+                m_kBottomOutline.VBuffer.SetColor3(0, i, 1f,0f,0f);
+            }
+            else 
+            {
+                m_kBottomOutline.VBuffer.SetColor3(0, i, 0f,0f,.5f);       
+                m_kPicked = null;         
+            }
         }
         m_kBottomOutline.VBuffer.Release();
-        m_kPicked = null;
     }
     
     public void dispose()
@@ -98,7 +105,7 @@ public abstract class LevWidget
                 if ( kPicked.get(i).Intersected == m_kWidget.GetChild(j) )
                 {
                     m_kPicked = m_kWidget.GetChild(j);
-                    System.err.println( m_kPicked.GetName() );
+                    //System.err.println( m_kPicked.GetName() );
                 }
             }
         }
@@ -117,7 +124,7 @@ public abstract class LevWidget
             if ( kPicked.Intersected == m_kWidget.GetChild(j) )
             {
                 m_kPicked = m_kWidget.GetChild(j);
-                System.err.println( m_kPicked.GetName() );
+                //System.err.println( m_kPicked.GetName() );
                 bPicked = true;
             }
         }

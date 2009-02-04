@@ -246,8 +246,6 @@ void p_VolumeShaderMULTIHISTO(  in float3 inTexCoord1    : TEXCOORD0,
 
     float fMapX, fMapY;
 
-    float opacity0, opacity1;
-
     // For some profiles the number of loop iterations must be determined at
     // compile time:
     for( int i = 0; i < 450; i++ )
@@ -293,12 +291,12 @@ void p_VolumeShaderMULTIHISTO(  in float3 inTexCoord1    : TEXCOORD0,
                 fMapX = color.r;
                 fMapY = colorGM.r;
 
-                opacity0 = computeAlpha( fMapX, fMapY, LevMidLine0, LevLeftLine0, LevRightLine0 );
-                color.r = LevColor0.r * opacity0;
-                color.g = LevColor0.g * opacity0;
-                color.b = LevColor0.b * opacity0;
-                opacity0 *= LevColor0.a;
-                opacity = opacity0;
+                opacity =
+                    computeAlpha( fMapX, fMapY, LevMidLine0, LevLeftLine0, LevRightLine0 );
+                color.r = LevColor0.r * opacity;
+                color.g = LevColor0.g * opacity;
+                color.b = LevColor0.b * opacity;
+                opacity *= LevColor0.a;
                 // If the opacity is not zero:
                 if ( opacity > 0 )
                 {
@@ -306,12 +304,11 @@ void p_VolumeShaderMULTIHISTO(  in float3 inTexCoord1    : TEXCOORD0,
                     alpha_acc += (1 - alpha_acc) * opacity;
                 }
 
-                opacity1 = computeAlpha( fMapX, fMapY, LevMidLine1, LevLeftLine1, LevRightLine1 );
-                color.r = LevColor1.r * opacity1;
-                color.g = LevColor1.g * opacity1;
-                color.b = LevColor1.b * opacity1;
-                opacity1 *= LevColor1.a;
-                opacity = opacity1;
+                opacity = computeAlpha( fMapX, fMapY, LevMidLine1, LevLeftLine1, LevRightLine1 );
+                color.r = LevColor1.r * opacity;
+                color.g = LevColor1.g * opacity;
+                color.b = LevColor1.b * opacity;
+                opacity *= LevColor1.a;
                 
                 // If the opacity is not zero:
                 if ( opacity > 0 )
@@ -320,57 +317,57 @@ void p_VolumeShaderMULTIHISTO(  in float3 inTexCoord1    : TEXCOORD0,
                     alpha_acc += (1 - alpha_acc) * opacity;
                 }
 
-//                 opacity = computeAlpha( fMapX, fMapY, LevMidLine2, LevLeftLine2, LevRightLine2 );
-//                 opacity *= LevColor2.a;
-//                 color.r = LevColor2.r * opacity;
-//                 color.g = LevColor2.g * opacity;
-//                 color.b = LevColor2.b * opacity;
+                opacity = computeAlpha( fMapX, fMapY, LevMidLine2, LevLeftLine2, LevRightLine2 );
+                color.r = LevColor2.r * opacity;
+                color.g = LevColor2.g * opacity;
+                color.b = LevColor2.b * opacity;
+                opacity *= LevColor2.a;
 
-//                 // If the opacity is not zero:
-//                 if ( opacity > 0 )
-//                 {
-//                     color_acc += (1.0 - alpha_acc) * color * opacity;
-//                     alpha_acc += (1 - alpha_acc) * opacity;
-//                 }
+                // If the opacity is not zero:
+                if ( opacity > 0 )
+                {
+                    color_acc += (1.0 - alpha_acc) * color * opacity;
+                    alpha_acc += (1 - alpha_acc) * opacity;
+                }
 
-//                 opacity = computeAlpha( fMapX, fMapY, LevMidLine3, LevLeftLine3, LevRightLine3 );
-//                 opacity *= LevColor3.a;
-//                 color.r = LevColor3.r * opacity;
-//                 color.g = LevColor3.g * opacity;
-//                 color.b = LevColor3.b * opacity;
+                opacity = computeAlpha( fMapX, fMapY, LevMidLine3, LevLeftLine3, LevRightLine3 );
+                color.r = LevColor3.r * opacity;
+                color.g = LevColor3.g * opacity;
+                color.b = LevColor3.b * opacity;
+                opacity *= LevColor3.a;
 
-//                 // If the opacity is not zero:
-//                 if ( opacity > 0 )
-//                 {
-//                     color_acc += (1.0 - alpha_acc) * color * opacity;
-//                     alpha_acc += (1 - alpha_acc) * opacity;
-//                 }
+                // If the opacity is not zero:
+                if ( opacity > 0 )
+                {
+                    color_acc += (1.0 - alpha_acc) * color * opacity;
+                    alpha_acc += (1 - alpha_acc) * opacity;
+                }
 
-//                 opacity = computeAlpha( fMapX, fMapY, LevMidLine4, LevLeftLine4, LevRightLine4 );
-//                 opacity *= LevColor4.a;
-//                 color.r = LevColor4.r * opacity;
-//                 color.g = LevColor4.g * opacity;
-//                 color.b = LevColor4.b * opacity;
+                opacity = computeAlpha( fMapX, fMapY, LevMidLine4, LevLeftLine4, LevRightLine4 );
+                color.r = LevColor4.r * opacity;
+                color.g = LevColor4.g * opacity;
+                color.b = LevColor4.b * opacity;
+                opacity *= LevColor4.a;
 
-//                 // If the opacity is not zero:
-//                 if ( opacity > 0 )
-//                 {
-//                     color_acc += (1.0 - alpha_acc) * color * opacity;
-//                     alpha_acc += (1 - alpha_acc) * opacity;
-//                 }
+                // If the opacity is not zero:
+                if ( opacity > 0 )
+                {
+                    color_acc += (1.0 - alpha_acc) * color * opacity;
+                    alpha_acc += (1 - alpha_acc) * opacity;
+                }
 
-//                 opacity = computeAlpha( fMapX, fMapY, LevMidLine5, LevLeftLine5, LevRightLine5 );
-//                 opacity *= LevColor5.a;
-//                 color.r = LevColor5.r * opacity;
-//                 color.g = LevColor5.g * opacity;
-//                 color.b = LevColor5.b * opacity;
+                opacity = computeAlpha( fMapX, fMapY, LevMidLine5, LevLeftLine5, LevRightLine5 );
+                color.r = LevColor5.r * opacity;
+                color.g = LevColor5.g * opacity;
+                color.b = LevColor5.b * opacity;
+                opacity *= LevColor5.a;
 
-//                 // If the opacity is not zero:
-//                 if ( opacity > 0 )
-//                 {
-//                     color_acc += (1.0 - alpha_acc) * color * opacity;
-//                     alpha_acc += (1 - alpha_acc) * opacity;
-//                 }
+                // If the opacity is not zero:
+                if ( opacity > 0 )
+                {
+                    color_acc += (1.0 - alpha_acc) * color * opacity;
+                    alpha_acc += (1 - alpha_acc) * opacity;
+                }
 
             }
         }
