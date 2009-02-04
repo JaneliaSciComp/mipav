@@ -277,9 +277,8 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
      */
     public void saveDefaults() {
         String delim = ",";
-
         String defaultsString = outputOptionsPanel.isProcessWholeImageSet() + delim;
-        defaultsString = outputOptionsPanel.isOutputNewImageSet() + delim;
+        defaultsString += outputOptionsPanel.isOutputNewImageSet() + delim;
         defaultsString += image25D + delim;
         defaultsString += sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
         defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
