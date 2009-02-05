@@ -116,7 +116,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
     // 3D kernels used on slices where whole kernels fit, 2D kernels used on other slices
     private boolean combined2D3D = false;
     
-    private float intensitySigma = 1.0f;
+    private double intensityGaussianDenom = 1.0;
     
     // Used with AlgorithmBilateralFilter
     private boolean bilateral = false;
@@ -174,13 +174,13 @@ public class AlgorithmConvolver extends AlgorithmBase {
     }
     
     public AlgorithmConvolver(ModelImage srcImage, float[] kernel, int[] kExtents, boolean entireImage, boolean image25D,
-            float intensitySigma){
+            double intensityGaussianDenom){
         super(null, srcImage);
         kernelBuffer = kernel;
         this.kExtents = kExtents;
         this.entireImage = entireImage;
         this.image25D = image25D;
-        this.intensitySigma = intensitySigma;
+        this.intensityGaussianDenom = intensityGaussianDenom;
         bilateral = true;
     }
     
@@ -389,12 +389,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
      * @param   image     image data
      * @param   kExtents  kernel dimensions
      * @param   kernel    kernel data
-     * @param   intensitySigma
+     * @param   intensityGaussianDenom
      *
      * @return  the value of the pixel after convolution with the kernel
      */
     public static final synchronized float convolveBilateral2DPt(int pix, int[] iExtents, float[] image, int[] kExtents,
-                                                        float[] kernel, float intensitySigma) {
+                                                        float[] kernel, double intensityGaussianDenom) {
 
         int i, j;
         int offsetX, offsetY;
@@ -417,7 +417,6 @@ public class AlgorithmConvolver extends AlgorithmBase {
         startY = offsetY * xDim;
         endY = startY + (yKDim * xDim);
         float centerIntensityValue = image[pix];
-        double intenDenom = 2.0 * intensitySigma * intensitySigma; 
         float intensityValue;
         double intensityGaussian;
         float intensityDifference;
@@ -440,7 +439,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                     
                     intensityValue = image[i];
                     intensityDifference = intensityValue - centerIntensityValue;
-                    intensityGaussian = Math.exp(-intensityDifference*intensityDifference/intenDenom);
+                    intensityGaussian = Math.exp(-intensityDifference*intensityDifference/intensityGaussianDenom);
                     weight = kernel[count] * intensityGaussian;
                     sum += weight * intensityValue;
 
@@ -1004,12 +1003,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
      * @param   image     image data
      * @param   kExtents  kernel dimensions
      * @param   kernel    kernel data
-     * @param   intensitySigma
+     * @param   intensityGaussianDenom
      *
      * @return  the L*,a*,b* of the pixel after convolution with the kernel
      */
     public static final float[] convolveBilateral2DCIELabPt(int pix, int[] iExtents, float[] image, int[] kExtents, float[] kernel,
-                                                          float intensitySigma) {
+                                                          double intensityGaussianDenom) {
 
         int i, j;
         int offsetX, offsetY;
@@ -1040,7 +1039,6 @@ public class AlgorithmConvolver extends AlgorithmBase {
         float centerLValue = image[pix+1];
         float centeraValue = image[pix+2];
         float centerbValue = image[pix+3];
-        double intenDenom = 2.0 * intensitySigma * intensitySigma; 
         float LValue;
         float aValue;
         float bValue;
@@ -1048,7 +1046,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
         float LDifference;
         float aDifference;
         float bDifference;
-        double difference;
+        double differenceSquared;
         double weight;
         float buf[] = new float[3];
 
@@ -1065,8 +1063,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
                     LDifference = LValue - centerLValue;
                     aDifference = aValue - centeraValue;
                     bDifference = bValue - centerbValue;
-                    difference = Math.sqrt(LDifference*LDifference + aDifference*aDifference + bDifference*bDifference);
-                    intensityGaussian = Math.exp(-difference*difference/intenDenom);
+                    differenceSquared = (LDifference*LDifference + aDifference*aDifference + bDifference*bDifference);
+                    intensityGaussian = Math.exp(-differenceSquared/intensityGaussianDenom);
                     weight = kernel[count] * intensityGaussian;
                     sumL += weight * LValue;
                     suma += weight * aValue;
@@ -1263,12 +1261,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
      * @param   image     image data
      * @param   kExtents  kernel dimensions
      * @param   kernel    kernel data
-     * @param   intensitySigma
+     * @param   intensityGaussianDenom
      *
      * @return  the value of the pixel after convolution with the kernel
      */
     public static final float convolveBilateral3DPt(int pix, int[] iExtents, float[] image, int[] kExtents, float[] kernel,
-                                                    float intensitySigma) {
+                                                    double intensityGaussianDenom) {
 
         int i, j, k;
         int offsetX, offsetY, offsetZ;
@@ -1295,8 +1293,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
         stepZ = kExtents[2] * sliceSize;
         startZ = offsetZ * sliceSize;
         endZ = startZ + stepZ;
-        float centerIntensityValue = image[pix];
-        double intenDenom = 2.0 * intensitySigma * intensitySigma; 
+        float centerIntensityValue = image[pix]; 
         float intensityValue;
         double intensityGaussian;
         float intensityDifference;
@@ -1319,7 +1316,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                             if (((i - j) >= 0) && ((i - j) < xDim)) {
                                 intensityValue = image[i];
                                 intensityDifference = intensityValue - centerIntensityValue;
-                                intensityGaussian = Math.exp(-intensityDifference*intensityDifference/intenDenom);
+                                intensityGaussian = Math.exp(-intensityDifference*intensityDifference/intensityGaussianDenom);
                                 weight = kernel[count] * intensityGaussian;
                                 sum += weight * intensityValue;
 
@@ -2194,12 +2191,12 @@ public class AlgorithmConvolver extends AlgorithmBase {
      * @param   image     image data
      * @param   kExtents  kernel dimensions
      * @param   kernel    kernel data
-     * @param   intensitySigma
+     * @param   intensityGaussianDenom
      *
      * @return  the L*,a*,b* of the pixel after convolution with the kernel
      */
     public static final float[] convolveBilateral3DCIELabPt(int pix, int[] iExtents, float[] image, int[] kExtents, float[] kernel,
-                                                            float intensitySigma) {
+                                                            double intensityGaussianDenom) {
 
         int i, j, k;
         int offsetX, offsetY, offsetZ;
@@ -2235,7 +2232,6 @@ public class AlgorithmConvolver extends AlgorithmBase {
         float centerLValue = image[pix+1];
         float centeraValue = image[pix+2];
         float centerbValue = image[pix+3];
-        double intenDenom = 2.0 * intensitySigma * intensitySigma; 
         float LValue;
         float aValue;
         float bValue;
@@ -2243,7 +2239,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
         float LDifference;
         float aDifference;
         float bDifference;
-        double difference;
+        double differenceSquared;
         double weight;
         float buf[] = new float[3];
 
@@ -2265,8 +2261,8 @@ public class AlgorithmConvolver extends AlgorithmBase {
                         LDifference = LValue - centerLValue;
                         aDifference = aValue - centeraValue;
                         bDifference = bValue - centerbValue;
-                        difference = Math.sqrt(LDifference*LDifference + aDifference*aDifference + bDifference*bDifference);
-                        intensityGaussian = Math.exp(-difference*difference/intenDenom);
+                        differenceSquared = (LDifference*LDifference + aDifference*aDifference + bDifference*bDifference);
+                        intensityGaussian = Math.exp(-differenceSquared/intensityGaussianDenom);
                         weight = kernel[count] * intensityGaussian;
                         sumL += weight * LValue;
                         suma += weight * aValue;
@@ -2639,7 +2635,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                     if ((entireImage == true) || mask.get(i / 4)) {
                         outputBuffer[idx] = buffer[i]; // alpha
                         resultBuffer = AlgorithmConvolver.convolveBilateral2DCIELabPt(i,
-                                srcImage.getExtents(), buffer, kExtents, kernelBuffer, intensitySigma);
+                                srcImage.getExtents(), buffer, kExtents, kernelBuffer, intensityGaussianDenom);
                         outputBuffer[idx+1] = resultBuffer[0];
                         outputBuffer[idx+2] = resultBuffer[1];
                         outputBuffer[idx+3] = resultBuffer[2];
@@ -2661,7 +2657,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                     if ((entireImage == true) || mask.get(i)) {
                         outputBuffer[idx] = AlgorithmConvolver.convolveBilateral2DPt(i,
                                 srcImage.getExtents(), buffer, kExtents,
-                                kernelBuffer, intensitySigma);
+                                kernelBuffer, intensityGaussianDenom);
                     } else {
                         outputBuffer[idx] = buffer[i];
                     }
@@ -3001,7 +2997,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                 if ((entireImage == true) || mask.get(i / 4)) {
                     outputBuffer[i+index] = iImage[i]; // alpha
                     resultBuffer = AlgorithmConvolver.convolveBilateral3DCIELabPt(i,
-                            srcImage.getExtents(), iImage, kExtents, kernelBuffer, intensitySigma);
+                            srcImage.getExtents(), iImage, kExtents, kernelBuffer, intensityGaussianDenom);
                     outputBuffer[i + index + 1] = resultBuffer[0];
                     outputBuffer[i + index + 2] = resultBuffer[1];
                     outputBuffer[i + index + 3] = resultBuffer[2];
@@ -3024,7 +3020,7 @@ public class AlgorithmConvolver extends AlgorithmBase {
                 if ((entireImage == true) || mask.get(i)) {
                     outputBuffer[i + index] = AlgorithmConvolver.convolveBilateral3DPt(i,
                             srcImage.getExtents(), iImage, kExtents,
-                            kernelBuffer, intensitySigma);
+                            kernelBuffer, intensityGaussianDenom);
                 } else {
                     outputBuffer[i + index] = iImage[i];
                 }
