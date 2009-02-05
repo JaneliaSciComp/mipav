@@ -25,7 +25,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
-import java.io.IOException;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -40,12 +39,11 @@ import javax.swing.JCheckBox;
  * dimensions and indicate if a correction factor be applied to the z-dimension to account for differing resolutions
  * between the xy resolutions (intra-plane) and the z resolution (inter-plane). In addition to the spatial domain
  * filtering, range filtering also occurs so that pixels with similar intensity values are more heavily weighed.
- * The user has the option to generate a
- * new image or replace the source image. In addition the user can indicate if he/she wishes to have the algorithm
- * applied to whole image or to the VOI regions. It should be noted that the algorithms are executed in their own
- * thread.
+ * The user has the option to generate a new image or replace the source image. In addition the user can indicate
+ * if he/she wishes to have the algorithm applied to whole image or to the VOI regions. It should be noted that the
+ * algorithms are executed in their own thread.
  *
- * @version  0.1 January 30, 2009
+ * @version  0.1 February 5, 2009
  * @author   William Gandler
  * @see      AlgorithmBilateralFilter
  */
@@ -84,6 +82,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
     private JLabel intensityLabel;
     private JTextField intensityText;
     
+    // units of intensity range; multiplied by intensity range to create intensity sigma.
     private float intensityFraction;
 
     /** DOCUMENT ME! */
@@ -149,7 +148,6 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
-        String name = makeImageName(image.getImageName(), "_bilFil");
 
         if (algorithm instanceof AlgorithmBilateralFilter) {
             Preferences.debug("Bilateral Filter Elapsed: " + algorithm.getElapsedTime());
@@ -610,7 +608,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
         GridBagConstraints gbc = new GridBagConstraints();
         intensityPanel.setForeground(Color.black);
         intensityPanel.setBorder(buildTitledBorder("Scale of the Intensity Gaussian"));
-        intensityLabel = new JLabel("Units of maximum intensity difference");
+        intensityLabel = new JLabel("Intensity sigma in units of intensity range");
         intensityLabel.setForeground(Color.black);
         intensityLabel.setFont(serif12);
         gbc.gridwidth = 1;
