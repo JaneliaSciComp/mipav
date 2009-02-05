@@ -79,7 +79,7 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
     /** percent of maximum intensity difference; it is scaled for the sigma in the intensity gaussian */
     private float intensityFraction;
     
-    private float intensitySigma;
+    private double intensityGaussianDenom;
     
     /* Assigned to srcImage if replace image, assigned to destImage if new image */
     private ModelImage targetImage = null;
@@ -146,6 +146,7 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
      */
     public void runAlgorithm() {
         AlgorithmConvolver convolver;
+        double intensitySigma;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -194,16 +195,17 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
             convertRGBtoCIELab();
         } // if (targetImage.isColorImage())
         else {
-            intensitySigma = (float)(intensityFraction * (srcImage.getMax() - srcImage.getMin()));
+            intensitySigma = (intensityFraction * (srcImage.getMax() - srcImage.getMin()));
+            intensityGaussianDenom = (2.0  * intensitySigma * intensitySigma);
         }
 
         if (srcImage.isColorImage()) {
             convolver = new AlgorithmConvolver(cieLabImage, GaussData, kExtents,entireImage, image25D, 
-                    intensitySigma);    
+                    intensityGaussianDenom);    
         }
         else {
             convolver = new AlgorithmConvolver(srcImage, GaussData, kExtents,entireImage, image25D, 
-                                                              intensitySigma);
+                                                              intensityGaussianDenom);
         }
         convolver.setMinProgressValue(0);
         convolver.setMaxProgressValue(100);
@@ -355,7 +357,8 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
         float LRange;
         float aRange;
         float bRange;
-        float estimatedMaxDistance;
+        double maxDistance;
+        double intensitySigma;
         if (srcImage.getNDims() >= 3) {
             tDim = srcImage.getExtents()[2];
         }
@@ -470,8 +473,9 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
         LRange = maxL - minL;
         aRange = maxa - mina;
         bRange = maxb - minb;
-        estimatedMaxDistance = (float)Math.sqrt(LRange*LRange + aRange*aRange + bRange*bRange);
-        intensitySigma = intensityFraction * estimatedMaxDistance;
+        maxDistance = (float)Math.sqrt(LRange*LRange + aRange*aRange + bRange*bRange);
+        intensitySigma = intensityFraction * maxDistance;
+        intensityGaussianDenom = (2.0 * intensitySigma * intensitySigma);
     } // private void convertRGBtoCIELab()
     
     private void convertCIELabtoRGB(float buffer[]) {
