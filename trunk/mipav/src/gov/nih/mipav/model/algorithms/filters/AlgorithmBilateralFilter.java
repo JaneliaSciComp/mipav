@@ -12,22 +12,17 @@ import gov.nih.mipav.view.ViewJProgressBar;
 
 
 /**
- * The application of this algorithm blurs an image or VOI region of the image with 2 Gaussian functions. One is a Guassian at a user
- * defined spatial scale (sigma - standard deviation) and the second is a Guassian at a user defined intensity scale. 
- * The intensity Gaussian weighs pixels with similar intensities more heavily.
- * In essence, convolving a Gaussian function produces the same result as a
- * low-pass or smoothing filter. A low-pass filter attenuates high frequency components of the image (i.e. edges) and
- * passes low frequency components and thus results in the blurring of the image. Smoothing filters are typically used
- * for noise reduction and for blurring. The standard deviation (SD) of the Gaussian function controls the amount of
- * blurring:a large SD (i.e. > 2) significantly blurs while a small SD (i.e. 0.5) blurs less. If the objective is to
- * achieve noise reduction, a rank filter (median) might be more useful.
- *
+ * Bilateral filtering smooths an image or VOI region of the image while preserving edges with 2 Gaussian functions.
+ * One is a Gaussian at a user defined spatial scale (sigma - standard deviation) and the second is a Gaussian at a
+ * user defined intensity scale.  The spatial Gaussian weighs pixels with smaller spatial separations more heavily and 
+ * the intensity Gaussian weighs pixels with similar intensities more heavily.  
+ * 
+ * RGB values are converted to CIELab values and the color distance is found using the CIE76 distance metric in 
+ * CIELab space.  The convolution is performed in CIELab space.  Then CIELab is converted back to RGB.  In contrast
+ * to standard Gaussian spatial smoothing, bilateral filtering produces no phantom colors along edges in color images,
+ * and reduces phantom colors where they appear in the original image.
+ 
  * <p>1D Gaussian = (1/sqrt(2*PI*sigma*sigma))*exp(-x*x/(2*sigma*sigma));</p>
- *
- * <p>Advantages to convolving the Gaussian function to blur an image include:</p>
- *
- * <p>1. Structure will not be added to the image. 2. Can be analytically calculated, as well as the Fourier Transform
- * of the Gaussian. 3. By varying the SD a Gaussian scale-space can easily be constructed.</p>
  * 
  * The three coordinates of CIELAB represent the lightness of the color(L* = 0 yields black and L* = 100 indicates diffuse 
  * white; specular white may be higher), its position between red/magenta and green(a*, negative values indicate green
@@ -51,8 +46,16 @@ import gov.nih.mipav.view.ViewJProgressBar;
  * XW, YW, and ZW (also called XN, YN, ZN or X0, Y0, Z0) are reference white tristimulus values - typically the white
  * of a perfectly reflecting diffuser under CIE standard D65 illumination(defined by x = 0.3127 and y = 0.3291 in the
  * CIE chromatcity diagram).  The 2 degrees, D65 reference tristimulus values are: XN = 95.047, YN = 100.000, and ZN = 108.883.
+ * 
+ * References:
+ * 1.) C. Tomasi and R. Manduchi, "Bilateral Filtering for Gray and Color Images", Proceedings of the 1998 IEEE International
+ * Conference on Computer Vision, Bombay, India.
+ * 2.)Sylvain Paris, Pierre Kornprobst, Jack Tumblin, and Fredo Durand, "A Gentle Introduction to Bilateral Filtering and its
+ * Applications", SIGGRAPH 2007.
+ * 3.) http://www.easyrgb.com has XYZ -> RGB, RGB -> XYZ, XYZ -> CIEL*ab, CIEL*ab -> XYZ, and
+ *     XYZ(Tristimulus) Reference values of a perfect reflecting diffuser.
  *
- * @version  0.1 January 30, 2009
+ * @version  0.1 February 5, 2009
  * @author   William Gandler
  * @see      GenerateGaussian
  * @see      AlgorithmConvolver
@@ -76,9 +79,10 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
     /** Standard deviations of the gaussian used to calculate the kernels. */
     private float[] sigmas;
     
-    /** percent of maximum intensity difference; it is scaled for the sigma in the intensity gaussian */
+    /** units of intensity range; it is multiplied by the intensity range to create intensitySigma */
     private float intensityFraction;
     
+    // intensityGaussianDenom = 2.0 * intensitySigma * intensitySigma
     private double intensityGaussianDenom;
     
     /* Assigned to srcImage if replace image, assigned to destImage if new image */
@@ -88,7 +92,7 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
     
     private double imageMax;
     
-    // Scale factor used in RGB-CIELab conversions
+    // Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
     private double scaleMax = 255.0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -112,7 +116,7 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
      * @param  destImg   the destination image
      * @param  srcImg    the source image
      * @param  sigmas    the sigmas
-     * @param  intensityFraction percent of maximum intensity difference; it is scaled for sigma in the intensity gaussian
+     * @param  intensityFraction units of intensity range; it is multiplied by the intensity range to create intensitySigma
      * @param  maskFlag  the mask flag
      * @param  img25D    the 2.5D indicator
      */
