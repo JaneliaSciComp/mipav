@@ -1229,7 +1229,7 @@ public class FileTiff extends FileBase {
             // System.err.println("pbar visible: " + pBarVisible);
             if (fileInfo.getDataType() == ModelStorageBase.DOUBLE) {
 
-                if (doubleBuffer == null  && multiFile) {
+                if ((doubleBuffer == null)  && multiFile) {
                     doubleBuffer = new double[bufferSize];
                 }
 
