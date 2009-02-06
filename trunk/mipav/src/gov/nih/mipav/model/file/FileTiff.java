@@ -1229,7 +1229,7 @@ public class FileTiff extends FileBase {
             // System.err.println("pbar visible: " + pBarVisible);
             if (fileInfo.getDataType() == ModelStorageBase.DOUBLE) {
 
-                if (doubleBuffer == null) {
+                if (doubleBuffer == null  && multiFile) {
                     doubleBuffer = new double[bufferSize];
                 }
 
@@ -1257,7 +1257,9 @@ public class FileTiff extends FileBase {
                         throw new IOException("FileTiff: Read: " + error);
                     }
 
-                    System.arraycopy(sliceBufferDouble, 0, doubleBuffer, i * sliceSize, sliceSize);
+                    if (multiFile) {
+                        System.arraycopy(sliceBufferDouble, 0, doubleBuffer, i * sliceSize, sliceSize);
+                    }
 
                     if (multiFile == false) {
                         image.importData(i * sliceSize, sliceBufferDouble, false);
@@ -1266,7 +1268,7 @@ public class FileTiff extends FileBase {
             } else { // not ModelStorageBase.DOUBLE
 
                 // System.err.println("not buffer of doubles, type: " + fileInfo.getDataType());
-                if (imgBuffer == null) {
+                if ((imgBuffer == null) && multiFile) {
                     imgBuffer = new float[bufferSize];
                 }
 
@@ -1307,7 +1309,9 @@ public class FileTiff extends FileBase {
                         throw new IOException("FileTiff: read: " + error);
                     }
 
-                    System.arraycopy(sliceBufferFloat, 0, imgBuffer, i * sliceSize, sliceSize);
+                    if (multiFile) {
+                        System.arraycopy(sliceBufferFloat, 0, imgBuffer, i * sliceSize, sliceSize);
+                    }
 
                     if (multiFile == false) {
                         image.importData(i * sliceSize, sliceBufferFloat, false);
