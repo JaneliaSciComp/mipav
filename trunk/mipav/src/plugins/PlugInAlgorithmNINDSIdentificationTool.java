@@ -166,15 +166,13 @@ public class PlugInAlgorithmNINDSIdentificationTool extends
     		patientID = ((String)tagTable.getValue(patientIDKey)).trim();
     		
     	}
-		try {
+		
+    	try {
 			patientIDInt = new Integer(patientID).intValue();
-		}catch(NumberFormatException e) {
-			if(enableTextArea) {
-				outputTextArea.append("! Patient ID(0010,0020) value is not a valid entry \n");
-			}
-			printStream.println("! Patient ID(0010,0020) value is not a valid entry");
+		} catch(NumberFormatException e) {
+			patientIDInt = 0;
+			System.err.println("Note unusual patientID, new UID not created");
 			e.printStackTrace();
-			return false;
 		}
 		
 		studyDate = ((String)tagTable.getValue(studyDateKey)).trim();
