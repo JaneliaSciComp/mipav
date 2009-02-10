@@ -543,14 +543,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                 blueMask.set(i+xySlice+xDim+1);
                                 change = true;
                             }
+                            blueMask.clear(i);
                         } // if (blueMask.get(i))
                     } // for (x = xLow; x <= xHigh; x++)
                 } // for (y = yLow; y <= yHigh; y++)
             } // for (z = zLow; z <= zHigh; z++)
         } // while (change)
-        for (i = 0; i < length; i++) {
-            blueMask.clear(i);
-        }
     }
     
     private void zeroBlueBufferRecursion(int xDel, int yDel, int zDel) {
