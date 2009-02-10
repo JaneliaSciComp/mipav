@@ -16,7 +16,7 @@ import java.util.*;
 
 /**
  *
- * @version  February 9, 2009
+ * @version  February 10, 2009
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -58,10 +58,10 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private int twoPreviousWidth;
     private int onePreviousWidth;
     private int presentWidth;
-    private final int NONE = 0;
-    private final int RED = 1;
-    private final int GREEN = 2;
-    private final int BLUE = 3;
+    private final byte NONE = 0;
+    private final byte RED = 1;
+    private final byte GREEN = 2;
+    private final byte BLUE = 3;
     private int blueX;
     private int blueY;
     private int blueZ;
@@ -74,9 +74,10 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private int zDim = srcImage.getExtents()[2];
     private int length = xDim * yDim * zDim;
     private int xySlice = xDim * yDim;
-    private byte redBuffer[] = new byte[length];
+    private byte buffer[] = new byte[length];
     private byte greenBuffer[] = new byte[length];
     private byte blueBuffer[] = new byte[length];
+    private BitSet blueMask = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -179,9 +180,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         time = System.currentTimeMillis();
         
         try {
-            srcImage.exportRGBData(1, 0, length, redBuffer); // export red data
+            srcImage.exportRGBData(1, 0, length, buffer); // export red data
         } catch (IOException error) {
-            redBuffer = null;
+            buffer = null;
             greenBuffer = null;
             blueBuffer = null;
             errorCleanUp("Algorithm SynapseDetection reports: source image locked", true);
@@ -192,7 +193,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         try {
             srcImage.exportRGBData(2, 0, length, greenBuffer); // export green data
         } catch (IOException error) {
-            redBuffer = null;
+            buffer = null;
             greenBuffer = null;
             blueBuffer = null;
             errorCleanUp("Algorithm SynapseDetection reports: source image locked", true);
@@ -203,13 +204,42 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         try {
             srcImage.exportRGBData(3, 0, length, blueBuffer); // export blue data
         } catch (IOException error) {
-            redBuffer = null;
+            buffer = null;
             greenBuffer = null;
             blueBuffer = null;
             errorCleanUp("Algorithm SynapseDetection reports: source image locked", true);
 
             return;
         }
+        
+        for (z = 0; z < zDim; z++) {
+            zPos = z * xySlice;
+            for (y = 0; y < yDim; y++) {
+                yPos = zPos + y * xDim;
+                for (x = 0; x < xDim; x++) {
+                    pos = yPos + x;
+                    red = buffer[pos] & 0xff;
+                    green = greenBuffer[pos] & 0xff;
+                    blue = blueBuffer[pos] & 0xff;
+                    if (((red - green) >= redMargin) && ((red - blue) >= redMargin)) {
+                        buffer[pos] = RED;
+                    }
+                    else if (((green - red) >= greenMargin) && ((green - blue) >= greenMargin)) {
+                        buffer[pos] = GREEN;
+                    }
+                    else if (((blue - red) >= blueMargin) && ((blue - green) >= blueMargin)) {
+                        buffer[pos] = BLUE;
+                    }
+                    else {
+                        buffer[pos] = NONE;
+                    }
+                } // for (x = 0; x < xDim; x++)
+            } // for (y = 0; y < yDim; y++)
+        } // for (z = 0; z < zDim; z++)
+        greenBuffer = null;
+        blueBuffer = null;
+        System.gc();
+        blueMask = new BitSet(length);
         
         // Line parallel to x axis
         for (z = 0; z < zDim; z++) {
@@ -229,10 +259,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 blueStartZ = z;
                 for (x = 0; x < xDim; x++) {
                    pos = yPos + x;  
-                   red = redBuffer[pos] & 0xff;
-                   green = greenBuffer[pos] & 0xff;
-                   blue = blueBuffer[pos] & 0xff;
-                   if (((red - green) >= redMargin) && ((red - blue) >= redMargin)) {
+                   if (buffer[pos] == RED) {
                        if (presentColor == RED) {
                            presentWidth++;
                        }
@@ -247,8 +274,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                            presentWidth = 1;
                            checkForSynapse();
                        }
-                   } // if (((red - green) >= redMargin) && ((red - blue) >= redMargin))
-                   else if (((green - red) >= greenMargin) && ((green - blue) >= greenMargin)) {
+                   } // if (buffer[pos] == RED)
+                   else if (buffer[pos] == GREEN) {
                        if (presentColor == GREEN) {
                            presentWidth++;
                        }
@@ -263,8 +290,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                            presentWidth = 1;
                            checkForSynapse();
                        }    
-                   } // else if (((green - red) >= greenMargin) && ((green - blue) >= greenMargin))
-                   else if (((blue - red) >= blueMargin) && ((blue - green) >= blueMargin)) {
+                   } // else if (buffer[pos] == GREEN)
+                   else if (buffer[pos] == BLUE) {
                        if (presentColor == BLUE) {
                            presentWidth++;
                            blueX = (blueStartX + x) >> 2;
@@ -280,15 +307,15 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                            onePreviousWidth = presentWidth;
                            presentColor = BLUE;
                            presentWidth = 1;
+                           checkForSynapse();
                            blueStartX = x;
                            blueStartY = y;
                            blueStartZ = z;
                            blueX = x;
                            blueY = y;
                            blueZ = z;
-                           checkForSynapse();
                        }        
-                   } // else if (((blue - red) >= blueMargin) && ((blue - green) >= blueMargin))
+                   } // else if (buffer[pos] == BLUE)
                    else { // not RED, GREEN, or BLUE
                        if (presentColor == NONE) {
                            presentWidth++;
@@ -348,90 +375,264 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
            srcImage.registerVOI(newPtVOI);  
            numSynapses++;
            System.out.println("numSynapses = " + numSynapses);
-           zeroBlueBuffer(blueX, blueY, blueZ);
+           //zeroBlueBufferRecursion(blueX, blueY, blueZ);
+           zeroBlueBufferIteration(blueX, blueY, blueZ);
        }
     }
     
-    private void zeroBlueBuffer(int xDel, int yDel, int zDel) {
-      int i = xDel + xDim * yDel + xDim * yDim * zDel;
-      blueBuffer[i] = 0;
-      if ((xDel > 0) && ((blueBuffer[i-1] - redBuffer[i-1]) > blueMargin) && ((blueBuffer[i-1] - greenBuffer[i-1]) > blueMargin)) {
-          zeroBlueBuffer(xDel - 1, yDel, zDel);
+    private void zeroBlueBufferIteration(int xStart, int yStart, int zStart) {
+        boolean change = true;
+        int x;
+        int y;
+        int z;
+        int yPos;
+        int zPos;
+        int i = xStart + xDim * yStart + xySlice * zStart;
+        int del = -1;
+        int zLow;
+        int zHigh;
+        int yLow;
+        int yHigh;
+        int xLow;
+        int xHigh;
+        buffer[i] = NONE;
+        blueMask.set(i);
+        while (change) {
+            change = false;
+            del++;
+            xLow = Math.max(0, xStart-del);
+            xHigh = Math.min(xDim-1, xStart + del);
+            yLow = Math.max(0, yStart-del);
+            yHigh = Math.min(yDim-1, yStart + del);
+            zLow = Math.max(0, zStart-del);
+            zHigh = Math.min(zDim-1, zStart + del);
+            for (z = zLow; z <= zHigh; z++) {
+                zPos = z * xySlice;
+                for (y = yLow; y <= yHigh; y++) {
+                    yPos = zPos + y * xDim;
+                    for (x = xLow; x <= xHigh; x++) {
+                        i = yPos + x; 
+                        if (blueMask.get(i)) {
+                            if ((x > 0) && (!blueMask.get(i-1)) && (buffer[i-1] == BLUE)) {  
+                                buffer[i-1] = NONE;
+                                blueMask.set(i-1);
+                                change = true;
+                            }
+                            if ((x < xDim - 1) && (!blueMask.get(i+1)) && (buffer[i+1] == BLUE)) {
+                                buffer[i+1] = NONE;
+                                blueMask.set(i+1);
+                                change = true;
+                            }
+                            if ((y > 0)&& (!blueMask.get(i-xDim)) && (buffer[i-xDim] == BLUE)) {
+                                buffer[i-xDim] = NONE;
+                                blueMask.set(i-xDim);
+                                change = true;
+                            }
+                            if ((y < yDim - 1) && (!blueMask.get(i+xDim)) && (buffer[i+xDim] == BLUE)) {
+                                buffer[i+xDim] = NONE;
+                                blueMask.set(i+xDim);
+                                change = true;
+                            }
+                            if ((z > 0) && (!blueMask.get(i-xySlice)) && (buffer[i-xySlice] == BLUE)) {
+                                buffer[i-xySlice] = NONE;
+                                blueMask.set(i-xySlice);
+                                change = true;
+                            }
+                            if ((z < zDim - 1) && (!blueMask.get(i+xySlice)) && (buffer[i+xySlice] == BLUE)) {
+                                buffer[i+xySlice] = NONE;
+                                blueMask.set(i+xySlice);
+                                change = true;
+                            }
+                            if ((x > 0) && (y > 0) && (!blueMask.get(i-xDim-1)) && (buffer[i-xDim-1] == BLUE)) {
+                                buffer[i-xDim-1] = NONE;
+                                blueMask.set(i-xDim-1);
+                                change = true;
+                            }
+                            if ((x > 0) && (y < yDim - 1) && (!blueMask.get(i+xDim-1)) && (buffer[i+xDim-1] == BLUE)) {
+                                buffer[i+xDim-1] = NONE;
+                                blueMask.set(i+xDim-1);
+                                change = true;
+                            }
+                            if ((x < xDim-1) && (y > 0) && (!blueMask.get(i-xDim+1)) && (buffer[i-xDim+1] == BLUE)) {
+                                buffer[i-xDim+1] = NONE;
+                                blueMask.set(i-xDim+1);
+                                change = true;
+                            }
+                            if ((x < xDim - 1) && (y < yDim - 1) && (!blueMask.get(i+xDim+1)) && (buffer[i+xDim+1] == BLUE)) {
+                                buffer[i+xDim+1] = NONE;
+                                blueMask.set(i+xDim+1);
+                                change = true;
+                            }
+                            if ((x > 0) && (z > 0) && (!blueMask.get(i-xySlice-1)) && (buffer[i-xySlice-1] == BLUE)) {
+                                buffer[i-xySlice-1] = NONE;
+                                blueMask.set(i-xySlice-1);
+                                change = true;
+                            }
+                            if ((x > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-1)) && (buffer[i+xySlice-1] == BLUE)) {
+                                buffer[i+xySlice-1] = NONE;
+                                blueMask.set(i+xySlice-1);
+                                change = true;
+                            }
+                            if ((x < xDim-1) && (z > 0) && (!blueMask.get(i-xySlice+1)) && (buffer[i-xySlice+1] == BLUE)) {
+                                buffer[i-xySlice+1] = NONE;
+                                blueMask.set(i-xySlice+1);
+                                change = true;
+                            }
+                            if ((x < xDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+1)) && (buffer[i+xySlice+1] == BLUE)) {
+                                buffer[i+xySlice+1] = NONE;
+                                blueMask.set(i+xySlice+1);
+                                change = true;
+                            }
+                            if ((y > 0) && (z > 0) && (!blueMask.get(i-xySlice-xDim)) && (buffer[i-xySlice-xDim] == BLUE)) {
+                                buffer[i-xySlice-xDim] = NONE;
+                                blueMask.set(i-xySlice-xDim);
+                                change = true;
+                            }
+                            if ((y > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-xDim)) && (buffer[i+xySlice-xDim] == BLUE)) {
+                                buffer[i+xySlice-xDim] = NONE;
+                                blueMask.set(i+xySlice-xDim);
+                                change = true;
+                            }
+                            if ((y < yDim-1) && (z > 0) && (!blueMask.get(i-xySlice+xDim)) && (buffer[i-xySlice+xDim] == BLUE)) {
+                                buffer[i-xySlice+xDim] = NONE;
+                                blueMask.set(i-xySlice+xDim);
+                                change = true;
+                            }
+                            if ((y < yDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+xDim)) && (buffer[i+xySlice+xDim] == BLUE)) {
+                                buffer[i+xySlice+xDim] = NONE;
+                                blueMask.set(i+xySlice+xDim);
+                                change = true;
+                            }
+                            if ((x > 0) && (y > 0) && (z > 0)&& (!blueMask.get(i-xySlice-xDim-1)) && (buffer[i-xySlice-xDim-1] == BLUE)) {
+                                buffer[i-xySlice-xDim-1] = NONE;
+                                blueMask.set(i-xySlice-xDim-1);
+                                change = true;
+                            }
+                            if ((x > 0) && (y > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-xDim-1)) && (buffer[i+xySlice-xDim-1] == BLUE)) {
+                                buffer[i+xySlice-xDim-1] = NONE;
+                                blueMask.set(i+xySlice-xDim-1);
+                                change = true;
+                            }
+                            if ((x > 0) && (y < yDim - 1) && (z > 0)&& (!blueMask.get(i-xySlice+xDim-1)) && (buffer[i-xySlice+xDim-1] == BLUE)) {
+                                buffer[i-xySlice+xDim-1] = NONE;
+                                blueMask.set(i-xySlice+xDim-1);
+                                change = true;
+                            }
+                            if ((x > 0) && (y < yDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+xDim-1)) && (buffer[i+xySlice+xDim-1] == BLUE)) {
+                                buffer[i+xySlice+xDim-1] = NONE;
+                                blueMask.set(i+xySlice+xDim-1);
+                                change = true;
+                            }
+                            if ((x < xDim-1) && (y > 0) && (z > 0) && (!blueMask.get(i-xySlice-xDim+1)) && (buffer[i-xySlice-xDim+1] == BLUE)) {
+                                buffer[i-xySlice-xDim+1] = NONE;
+                                blueMask.set(i-xySlice-xDim+1);
+                                change = true;
+                            }
+                            if ((x < xDim-1) && (y > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-xDim+1)) && (buffer[i+xySlice-xDim+1] == BLUE)) {
+                                buffer[i+xySlice-xDim+1] = NONE;
+                                blueMask.set(i+xySlice-xDim+1);
+                                change = true;
+                            }
+                            if ((x < xDim - 1) && (y < yDim - 1) && (z > 0) && (!blueMask.get(i-xySlice+xDim+1)) && (buffer[i-xySlice+xDim+1] == BLUE)) {
+                                buffer[i-xySlice+xDim+1] = NONE;
+                                blueMask.set(i-xySlice+xDim+1);
+                                change = true;
+                            }
+                            if ((x < xDim - 1) && (y < yDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+xDim+1)) && (buffer[i+xySlice+xDim+1] == BLUE)) {
+                                buffer[i+xySlice+xDim+1] = NONE;
+                                blueMask.set(i+xySlice+xDim+1);
+                                change = true;
+                            }
+                        } // if (blueMask.get(i))
+                    } // for (x = xLow; x <= xHigh; x++)
+                } // for (y = yLow; y <= yHigh; y++)
+            } // for (z = zLow; z <= zHigh; z++)
+        } // while (change)
+        for (i = 0; i < length; i++) {
+            blueMask.clear(i);
+        }
+    }
+    
+    private void zeroBlueBufferRecursion(int xDel, int yDel, int zDel) {
+      int i = xDel + xDim * yDel + xySlice * zDel;
+      buffer[i] = NONE;
+      if ((xDel > 0) && (buffer[i-1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel - 1, yDel, zDel);
       }
-      if ((xDel < xDim - 1) && ((blueBuffer[i+1] - redBuffer[i+1]) > blueMargin) && ((blueBuffer[i+1] - greenBuffer[i+1]) > blueMargin)) {
-          zeroBlueBuffer(xDel + 1, yDel, zDel);
+      if ((xDel < xDim - 1) && (buffer[i+1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel + 1, yDel, zDel);
       }
-      if ((yDel > 0) && ((blueBuffer[i-xDim] - redBuffer[i-xDim]) > blueMargin) && ((blueBuffer[i-xDim] - greenBuffer[i-xDim]) > blueMargin)) {
-          zeroBlueBuffer(xDel, yDel - 1, zDel);
+      if ((yDel > 0) && (buffer[i-xDim] == BLUE)) {
+          zeroBlueBufferRecursion(xDel, yDel - 1, zDel);
       }
-      if ((yDel < yDim - 1) && ((blueBuffer[i+xDim] - redBuffer[i+xDim]) > blueMargin) && ((blueBuffer[i+xDim] - greenBuffer[i+xDim]) > blueMargin)) {
-          zeroBlueBuffer(xDel, yDel + 1, zDel);
+      if ((yDel < yDim - 1) && (buffer[i+xDim] == BLUE)) {
+          zeroBlueBufferRecursion(xDel, yDel + 1, zDel);
       }
-      if ((zDel > 0) && ((blueBuffer[i-xySlice] - redBuffer[i-xySlice]) > blueMargin) && ((blueBuffer[i-xySlice] - greenBuffer[i-xySlice]) > blueMargin)) {
-          zeroBlueBuffer(xDel, yDel, zDel - 1);
+      if ((zDel > 0) && (buffer[i-xySlice] == BLUE)) {
+          zeroBlueBufferRecursion(xDel, yDel, zDel - 1);
       }
-      if ((zDel < zDim - 1) && ((blueBuffer[i+xySlice] - redBuffer[i+xySlice]) > blueMargin) && ((blueBuffer[i+xySlice] - greenBuffer[i+xySlice]) > blueMargin)) {
-          zeroBlueBuffer(xDel, yDel, zDel + 1);
+      if ((zDel < zDim - 1) && (buffer[i+xySlice] == BLUE)) {
+          zeroBlueBufferRecursion(xDel, yDel, zDel + 1);
       }
-      if ((xDel > 0) && (yDel > 0) && ((blueBuffer[i-xDim-1] - redBuffer[i-xDim-1]) > blueMargin) && ((blueBuffer[i-xDim-1] - greenBuffer[i-xDim-1]) > blueMargin)) {
-          zeroBlueBuffer(xDel - 1, yDel - 1, zDel);
+      if ((xDel > 0) && (yDel > 0) && (buffer[i-xDim-1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel - 1, yDel - 1, zDel);
       }
-      if ((xDel > 0) && (yDel < yDim - 1) && ((blueBuffer[i+xDim-1] - redBuffer[i+xDim-1]) > blueMargin) && ((blueBuffer[i+xDim-1] - greenBuffer[i+xDim-1]) > blueMargin)) {
-          zeroBlueBuffer(xDel - 1, yDel + 1, zDel);
+      if ((xDel > 0) && (yDel < yDim - 1) && (buffer[i+xDim-1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel - 1, yDel + 1, zDel);
       }
-      if ((xDel < xDim-1) && (yDel > 0) && ((blueBuffer[i-xDim+1] - redBuffer[i-xDim+1]) > blueMargin) && ((blueBuffer[i-xDim+1] - greenBuffer[i-xDim+1]) > blueMargin)) {
-          zeroBlueBuffer(xDel + 1, yDel - 1, zDel);
+      if ((xDel < xDim-1) && (yDel > 0) && (buffer[i-xDim+1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel + 1, yDel - 1, zDel);
       }
-      if ((xDel < xDim - 1) && (yDel < yDim - 1) && ((blueBuffer[i+xDim+1] - redBuffer[i+xDim+1]) > blueMargin) && ((blueBuffer[i+xDim+1] - greenBuffer[i+xDim+1]) > blueMargin)) {
-          zeroBlueBuffer(xDel + 1, yDel + 1, zDel);
+      if ((xDel < xDim - 1) && (yDel < yDim - 1) && (buffer[i+xDim+1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel + 1, yDel + 1, zDel);
       }
-      if ((xDel > 0) && (zDel > 0) && ((blueBuffer[i-xySlice-1] - redBuffer[i-xySlice-1]) > blueMargin) && ((blueBuffer[i-xySlice-1] - greenBuffer[i-xySlice-1]) > blueMargin)) {
-          zeroBlueBuffer(xDel - 1, yDel, zDel - 1);
+      if ((xDel > 0) && (zDel > 0) && (buffer[i-xySlice-1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel - 1, yDel, zDel - 1);
       }
-      if ((xDel > 0) && (zDel < zDim - 1) && ((blueBuffer[i+xySlice-1] - redBuffer[i+xySlice-1]) > blueMargin) && ((blueBuffer[i+xySlice-1] - greenBuffer[i+xySlice-1]) > blueMargin)) {
-          zeroBlueBuffer(xDel - 1, yDel, zDel + 1);
+      if ((xDel > 0) && (zDel < zDim - 1) && (buffer[i+xySlice-1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel - 1, yDel, zDel + 1);
       }
-      if ((xDel < xDim-1) && (zDel > 0) && ((blueBuffer[i-xySlice+1] - redBuffer[i-xySlice+1]) > blueMargin) && ((blueBuffer[i-xySlice+1] - greenBuffer[i-xySlice+1]) > blueMargin)) {
-          zeroBlueBuffer(xDel + 1, yDel, zDel - 1);
+      if ((xDel < xDim-1) && (zDel > 0) && (buffer[i-xySlice+1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel + 1, yDel, zDel - 1);
       }
-      if ((xDel < xDim - 1) && (zDel < zDim - 1) && ((blueBuffer[i+xySlice+1] - redBuffer[i+xySlice+1]) > blueMargin) && ((blueBuffer[i+xySlice+1] - greenBuffer[i+xySlice+1]) > blueMargin)) {
-          zeroBlueBuffer(xDel + 1, yDel, zDel + 1);
+      if ((xDel < xDim - 1) && (zDel < zDim - 1) && (buffer[i+xySlice+1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel + 1, yDel, zDel + 1);
       }
-      if ((yDel > 0) && (zDel > 0) && ((blueBuffer[i-xySlice-xDim] - redBuffer[i-xySlice-xDim]) > blueMargin) && ((blueBuffer[i-xySlice-xDim] - greenBuffer[i-xySlice-xDim]) > blueMargin)) {
-          zeroBlueBuffer(xDel, yDel - 1, zDel - 1);
+      if ((yDel > 0) && (zDel > 0) && (buffer[i-xySlice-xDim] == BLUE)) {
+          zeroBlueBufferRecursion(xDel, yDel - 1, zDel - 1);
       }
-      if ((yDel > 0) && (zDel < zDim - 1) && ((blueBuffer[i+xySlice-xDim] - redBuffer[i+xySlice-xDim]) > blueMargin) && ((blueBuffer[i+xySlice-xDim] - greenBuffer[i+xySlice-xDim]) > blueMargin)) {
-          zeroBlueBuffer(xDel, yDel - 1, zDel + 1);
+      if ((yDel > 0) && (zDel < zDim - 1) && (buffer[i+xySlice-xDim] == BLUE)) {
+          zeroBlueBufferRecursion(xDel, yDel - 1, zDel + 1);
       }
-      if ((yDel < yDim-1) && (zDel > 0) && ((blueBuffer[i-xySlice+xDim] - redBuffer[i-xySlice+xDim]) > blueMargin) && ((blueBuffer[i-xySlice+xDim] - greenBuffer[i-xySlice+xDim]) > blueMargin)) {
-          zeroBlueBuffer(xDel, yDel + 1, zDel - 1);
+      if ((yDel < yDim-1) && (zDel > 0) && (buffer[i-xySlice+xDim] == BLUE)) {
+          zeroBlueBufferRecursion(xDel, yDel + 1, zDel - 1);
       }
-      if ((yDel < yDim - 1) && (zDel < zDim - 1) && ((blueBuffer[i+xySlice+xDim] - redBuffer[i+xySlice+xDim]) > blueMargin) && ((blueBuffer[i+xySlice+xDim] - greenBuffer[i+xySlice+xDim]) > blueMargin)) {
-          zeroBlueBuffer(xDel, yDel + 1, zDel + 1);
+      if ((yDel < yDim - 1) && (zDel < zDim - 1) && (buffer[i+xySlice+xDim] == BLUE)) {
+          zeroBlueBufferRecursion(xDel, yDel + 1, zDel + 1);
       }
-      if ((xDel > 0) && (yDel > 0) && (zDel > 0)&& ((blueBuffer[i-xySlice-xDim-1] - redBuffer[i-xySlice-xDim-1]) > blueMargin) && ((blueBuffer[i-xySlice-xDim-1] - greenBuffer[i-xySlice-xDim-1]) > blueMargin)) {
-          zeroBlueBuffer(xDel - 1, yDel - 1, zDel - 1);
+      if ((xDel > 0) && (yDel > 0) && (zDel > 0)&& (buffer[i-xySlice-xDim-1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel - 1, yDel - 1, zDel - 1);
       }
-      if ((xDel > 0) && (yDel > 0) && (zDel < zDim - 1) && ((blueBuffer[i+xySlice-xDim-1] - redBuffer[i+xySlice-xDim-1]) > blueMargin) && ((blueBuffer[i+xySlice-xDim-1] - greenBuffer[i+xySlice-xDim-1]) > blueMargin)) {
-          zeroBlueBuffer(xDel - 1, yDel - 1, zDel + 1);
+      if ((xDel > 0) && (yDel > 0) && (zDel < zDim - 1) && (buffer[i+xySlice-xDim-1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel - 1, yDel - 1, zDel + 1);
       }
-      if ((xDel > 0) && (yDel < yDim - 1) && (zDel > 0)&& ((blueBuffer[i-xySlice+xDim-1] - redBuffer[i-xySlice+xDim-1]) > blueMargin) && ((blueBuffer[i-xySlice+xDim-1] - greenBuffer[i-xySlice+xDim-1]) > blueMargin)) {
-          zeroBlueBuffer(xDel - 1, yDel + 1, zDel - 1);
+      if ((xDel > 0) && (yDel < yDim - 1) && (zDel > 0)&& (buffer[i-xySlice+xDim-1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel - 1, yDel + 1, zDel - 1);
       }
-      if ((xDel > 0) && (yDel < yDim - 1) && (zDel < zDim - 1) && ((blueBuffer[i+xySlice+xDim-1] - redBuffer[i+xySlice+xDim-1]) > blueMargin) && ((blueBuffer[i+xySlice+xDim-1] - greenBuffer[i+xySlice+xDim-1]) > blueMargin)) {
-          zeroBlueBuffer(xDel - 1, yDel + 1, zDel + 1);
+      if ((xDel > 0) && (yDel < yDim - 1) && (zDel < zDim - 1) && (buffer[i+xySlice+xDim-1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel - 1, yDel + 1, zDel + 1);
       }
-      if ((xDel < xDim-1) && (yDel > 0) && (zDel > 0) && ((blueBuffer[i-xySlice-xDim+1] - redBuffer[i-xySlice-xDim+1]) > blueMargin) && ((blueBuffer[i-xySlice-xDim+1] - greenBuffer[i-xySlice-xDim+1]) > blueMargin)) {
-          zeroBlueBuffer(xDel + 1, yDel - 1, zDel - 1);
+      if ((xDel < xDim-1) && (yDel > 0) && (zDel > 0) && (buffer[i-xySlice-xDim+1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel + 1, yDel - 1, zDel - 1);
       }
-      if ((xDel < xDim-1) && (yDel > 0) && (zDel < zDim - 1) && ((blueBuffer[i+xySlice-xDim+1] - redBuffer[i+xySlice-xDim+1]) > blueMargin) && ((blueBuffer[i+xySlice-xDim+1] - greenBuffer[i+xySlice-xDim+1]) > blueMargin)) {
-          zeroBlueBuffer(xDel + 1, yDel - 1, zDel + 1);
+      if ((xDel < xDim-1) && (yDel > 0) && (zDel < zDim - 1) && (buffer[i+xySlice-xDim+1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel + 1, yDel - 1, zDel + 1);
       }
-      if ((xDel < xDim - 1) && (yDel < yDim - 1) && (zDel > 0) && ((blueBuffer[i-xySlice+xDim+1] - redBuffer[i-xySlice+xDim+1]) > blueMargin) && ((blueBuffer[i-xySlice+xDim+1] - greenBuffer[i-xySlice+xDim+1]) > blueMargin)) {
-          zeroBlueBuffer(xDel + 1, yDel + 1, zDel - 1);
+      if ((xDel < xDim - 1) && (yDel < yDim - 1) && (zDel > 0) && (buffer[i-xySlice+xDim+1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel + 1, yDel + 1, zDel - 1);
       }
-      if ((xDel < xDim - 1) && (yDel < yDim - 1) && (zDel < zDim - 1) && ((blueBuffer[i+xySlice+xDim+1] - redBuffer[i+xySlice+xDim+1]) > blueMargin) && ((blueBuffer[i+xySlice+xDim+1] - greenBuffer[i+xySlice+xDim+1]) > blueMargin)) {
-          zeroBlueBuffer(xDel + 1, yDel + 1, zDel + 1);
+      if ((xDel < xDim - 1) && (yDel < yDim - 1) && (zDel < zDim - 1) && (buffer[i+xySlice+xDim+1] == BLUE)) {
+          zeroBlueBufferRecursion(xDel + 1, yDel + 1, zDel + 1);
       }
     }
 
