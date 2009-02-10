@@ -21,20 +21,25 @@ import javax.swing.border.LineBorder;
  */
 public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface {
 
+	/**Action command for ok button**/
+	protected static final String OK = "ok";
+	
     /** textfields * */
-    private JTextField inputDirectoryTextField, outputDirectoryTextField, csvFilePathTextField, csvDirTextField, csvNameTextField;
+    protected JTextField inputDirectoryTextField, outputDirectoryTextField, csvFilePathTextField, csvDirTextField, csvNameTextField;
 
     /** buttons * */
     private JButton inputDirectoryBrowseButton, outputDirectoryBrowseButton, selectCSVFileBrowseButton, selectCSVDirBrowseButton;
     
     /** radio buttons **/
-    private JRadioButton selectCSVFileRadioButton, createNewCSVFileRadioButton;
+    protected JRadioButton selectCSVFileRadioButton;
+
+	private JRadioButton createNewCSVFileRadioButton;
     
     /** button group for radio buttons **/
     private ButtonGroup optionsGroup = new ButtonGroup();;
 
     /** text area * */
-    private JTextArea outputTextArea;
+    protected JTextArea outputTextArea;
 
     /** scroll pane * */
     private JScrollPane scrollPane;
@@ -43,11 +48,14 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
     private String currDir = null;
 
     /** handle to algorithm * */
-    private PlugInAlgorithmNINDSAnonymizationTool alg;
+    protected PlugInAlgorithmNINDSAnonymizationTool alg;
 
     /** labels * */
-    private JLabel inputDirectoryLabel, outputMessageLabel, outputDirectoryLabel, errorMessageLabel,
-            enableTextAreaLabel, renameGrandParentDirLabel, csvDirLabel, csvNameLabel;
+    private JLabel inputDirectoryLabel;
+
+	protected JLabel outputMessageLabel, outputDirectoryLabel, errorMessageLabel;
+
+	private JLabel enableTextAreaLabel, renameGrandParentDirLabel, csvDirLabel, csvNameLabel;
 
     private JCheckBox enableTextAreaCheckBox, renameGrandParentDirCheckBox;
 
@@ -64,13 +72,13 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
     //private boolean enableTextArea;
 
     /** rename grandparent dir name * */
-    private boolean renameGrandParentDir;
+    protected boolean renameGrandParentDir;
     
     /** path to csv file **/
-    private String csvFilePath;
+    protected String csvFilePath;
 
     /** boolean indicating if csv file is new **/
-    private boolean newCSVFile;
+    protected boolean newCSVFile;
     /**
      * default constructor
      */
@@ -283,7 +291,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         // ok,cancel
         OKCancelPanel = new JPanel();
         buildOKButton();
-        OKButton.setActionCommand("ok");
+        OKButton.setActionCommand(OK);
         OKCancelPanel.add(OKButton, BorderLayout.WEST);
         buildCancelButton();
         cancelButton.setActionCommand("cancel");
@@ -418,7 +426,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
                 // JDialogStandaloneScriptable.windowClosing(null)
                 windowClosing(null);
             }
-        } else if (command.equalsIgnoreCase("ok")) {
+        } else if (command.equals(OK)) {
             //if (enableTextArea) {
                 //outputTextArea.setText("");
             //}

@@ -50,58 +50,62 @@ import javax.swing.JTextField;
 public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase implements ActionListener, WindowListener {
 	
 	/** input directory path **/
-	private String inputDirectoryPath;
+	protected String inputDirectoryPath;
 	
 	/** output top level directory path **/
-	private String outputDirectoryPath;
+	protected String outputDirectoryPath;
 	
 	/** output text area **/
-	private JTextArea outputTextArea;
+	protected JTextArea outputTextArea;
     
     /** boolean indicating if methods were successfule **/
-    private boolean success = false;
+    protected boolean success = false;
 
     /** input image **/
-    private ModelImage inputImage;
+    protected ModelImage inputImage;
     
     /** handle to FileIO **/
-    private FileIO fileIO;
+    protected FileIO fileIO;
     
     /** handle to FileInfoDicom **/
-    private FileInfoDicom fileInfoDicom;
+    protected FileInfoDicom fileInfoDicom;
     
     /** output File **/
-    private File outputFile;
+    protected File outputFile;
     
     /** csv file **/
-    private File csvFile;
+    protected File csvFile;
     
     /** output stream **/
-    private FileOutputStream outputStream, outputStreamCSV;
+    protected FileOutputStream outputStream;
+
+	protected FileOutputStream outputStreamCSV;
     
     /** print stream **/
-    private PrintStream printStream, printStreamCSV;
+    protected PrintStream printStream;
+
+	protected PrintStream printStreamCSV;
     
     /** outputText filename **/
-    private String outputTextFileName;
+    protected String outputTextFileName;
     
     /** message label **/
-    private JLabel errorMessageLabel;
+    protected JLabel errorMessageLabel;
     
     /** boolean if alg was canceled **/
     private boolean algCanceled = false;
     
     /** enable text area boolean **/
-    private boolean enableTextArea;
+    protected boolean enableTextArea;
     
     /** tag table **/
-    private FileDicomTagTable tagTable;
+    protected FileDicomTagTable tagTable;
     
     /** boolean indicating whether to change greadGrandParentFileDir name to the newUID **/
     private boolean renameGrandParentDir;
     
     /** newUID String **/
-    private String newUID;
+    protected String newUID;
     
     /** handle to plugin dialog **/
     private JDialog parentDialog;
@@ -116,34 +120,34 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     private JButton dobOKButton;
     
     /** boolean if user hits ok or cancel */
-    private boolean pressedOK = false;
+    protected boolean pressedOK = false;
     
     /** boolean if user cancels pop up dob dialog */
     private boolean cancel = false;
     
     /** calculated age if dob is to be supplied **/
-    private int calculatedAge = -1;
+    protected int calculatedAge = -1;
     
     /** dob textfields **/
     private JTextField dobMMTextField, dobDDTextField, dobYYYYTextField;
     
     /** hashmap of studyID and dobs **/
-    private HashMap studyIdAndDOBHashMap = new HashMap();
+    protected HashMap<String, String> studyIdAndDOBHashMap = new HashMap<String, String>();
     
     /** dates **/
     private Calendar dobCalendar, studyCalendar;
     
     /** todays date **/
-    private String todaysDateString;
+    protected String todaysDateString;
     
     /** patientIDs that have been written out...unique based on patientID, studyID, and seriesNo**/
-    private Vector donePatientIDs = new Vector();
+    protected Vector<String> donePatientIDs = new Vector<String>();
     
     /** csv file path **/
-    private String csvFilePath;
+    protected String csvFilePath;
     
     /** boolean indicating if csv file is new **/
-    private boolean newCSVFile;
+    protected boolean newCSVFile;
     
     
     private static Vector<FileDicomKey> removeTagsVector;
@@ -151,13 +155,13 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     private static Vector<FileDicomKey> encryptTagsVector;
     private static FileDicomKey key;
     
-    private static FileDicomKey patientIDKey;
-    private static FileDicomKey patientDOBKey;
-    private static FileDicomKey patientAgeKey;  
-    private static FileDicomKey studyDateKey;
-    private static FileDicomKey studyIDKey;
-    private static FileDicomKey seriesNoKey;
-    private static FileDicomKey sequenceNameKey;
+    protected static FileDicomKey patientIDKey;
+    protected static FileDicomKey patientDOBKey;
+    protected static FileDicomKey patientAgeKey;  
+    protected static FileDicomKey studyDateKey;
+    protected static FileDicomKey studyIDKey;
+    protected static FileDicomKey seriesNoKey;
+    protected static FileDicomKey sequenceNameKey;
     
     
     static {
