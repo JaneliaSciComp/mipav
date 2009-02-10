@@ -424,7 +424,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
                 alg.setAlgCanceled(true);
             } else {
                 // JDialogStandaloneScriptable.windowClosing(null)
-                windowClosing(null);
+                dispose();
             }
         } else if (command.equals(OK)) {
             //if (enableTextArea) {
