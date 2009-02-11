@@ -1189,7 +1189,7 @@ public class FileDicom extends FileDicomBase {
      * @see FileRaw
      */
     public void readImage(float[] buffer, int imageType, int imageNo) throws IOException {
-System.out.println("in read image float");
+    	//System.out.println("in read image float");
         // Read in header info, if something goes wrong, print out error
         if (hasHeaderBeenRead == false) {
 
@@ -1287,23 +1287,29 @@ System.out.println("in read image float");
         double slope = fileInfo.getRescaleSlope();
         double intercept = fileInfo.getRescaleIntercept();
 
+        if (slope == 0) slope = 1;
+        
         if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE) {
             slope = 1;
             intercept = 0;
         }
 
+        boolean setOneMinMax = false;
         for (int i = 0; i < buffer.length; i++) {
             tmp = buffer[i];
 
-            // System.out.println("buffer[i] = " + buffer[i]);
             if (tmp != pixelPad) {
-
+            	setOneMinMax = true;
                 if (tmp < min) {
                     min = tmp;
-                } else if (tmp > max) {
+                } 
+                if (tmp > max) {
                     max = tmp;
                 }
             }
+        }
+        if (setOneMinMax == false){
+        	min = max = buffer[0];
         }
 
         fileInfo.setMin(min);
@@ -1363,7 +1369,7 @@ System.out.println("in read image float");
      * @see FileRaw
      */
     public void readImage(short[] buffer, int imageType, int imageNo) throws IOException {
-    	System.out.println("in read image short");
+    	//System.out.println("in read image short");
         // Read in header info, if something goes wrong, print out error
         if (hasHeaderBeenRead == false) {
 
@@ -1457,31 +1463,41 @@ System.out.println("in read image float");
                 pixelPad = fileInfo.getPixelPadValue().shortValue();
             }
         }
-
+        //System.out.println("pixel _pad = "+ pixelPad);
+        
         float slope = (float) fileInfo.getRescaleSlope();
         float intercept = (float) fileInfo.getRescaleIntercept();
-
+        if (slope == 0) slope = 1;
+        
+        //System.out.println(" s = " + slope + " intercept = " + intercept);
+        
         if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE) {
             slope = 1;
             intercept = 0;
         }
-
+        
+        boolean setOneMinMax = false;
         for (int i = 0; i < buffer.length; i++) {
             tmp = buffer[i];
 
             if (tmp != pixelPad) {
-
+            	setOneMinMax = true;
                 if (tmp < min) {
                     min = tmp;
-                } else if (tmp > max) {
+                } 
+                if (tmp > max) {
                     max = tmp;
                 }
             }
+        }
+        if (setOneMinMax == false){
+        	min = max = buffer[0];
         }
 
         fileInfo.setMin(min);
         fileInfo.setMax(max);
 
+        //System.out.println("min = " + min + " max = " + max);
         if ( (pixelPad <= min) || (pixelPad >= max)) {
 
             for (int i = 0; i < buffer.length; i++) {
