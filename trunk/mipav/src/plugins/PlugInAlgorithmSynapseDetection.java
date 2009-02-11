@@ -16,7 +16,7 @@ import java.util.*;
 
 /**
  *
- * @version  February 10, 2009
+ * @version  February 11, 2009
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -66,6 +66,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private int blueY;
     private int blueZ;
     private int numSynapses = 0;
+    private int previousNumSynapses = 0;
     private int xArr[] = new int[1];
     private int yArr[] = new int[1];
     private int zArr[] = new int[1];
@@ -78,6 +79,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private byte greenBuffer[] = new byte[length];
     private byte blueBuffer[] = new byte[length];
     private BitSet blueMask = null;
+    int threeBandMin;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -163,7 +165,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         long time;
         int zPos;
         int yPos;
-        
+        int xPos;
         int x;
         int y;
         int z;
@@ -171,9 +173,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         int red;
         int green;
         int blue;
-        int blueStartX;
-        int blueStartY;
-        int blueStartZ;
+        int blueStartX = 0;
+        int blueStartY = 0;
+        int blueStartZ = 0;
+        int xStart;
+        int yStart;
+        int zStart;
         
         fireProgressStateChanged("Synapse detection on image");
 
@@ -212,6 +217,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
             return;
         }
         
+        // Classify all pixels as either RED, GREEN, BLUE, or NONE
         for (z = 0; z < zDim; z++) {
             zPos = z * xySlice;
             for (y = 0; y < yDim; y++) {
@@ -240,8 +246,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         blueBuffer = null;
         System.gc();
         blueMask = new BitSet(length);
+        threeBandMin = redMin + greenMin + blueMin;
         
-        // Line parallel to x axis
+        // Search along all lines parallel to x axis
         for (z = 0; z < zDim; z++) {
             zPos = z * xySlice;
             for (y = 0; y < yDim; y++) {
@@ -254,84 +261,35 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
                 presentWidth = 0;
-                blueStartX = 0;
-                blueStartY = y;
-                blueStartZ = z;
                 for (x = 0; x < xDim; x++) {
                    pos = yPos + x;  
-                   if (buffer[pos] == RED) {
-                       if (presentColor == RED) {
-                           presentWidth++;
-                       }
-                       else {
-                           threePreviousColor = twoPreviousColor;
-                           threePreviousWidth = twoPreviousWidth;
-                           twoPreviousColor = onePreviousColor;
-                           twoPreviousWidth = onePreviousWidth;
-                           onePreviousColor = presentColor;
-                           onePreviousWidth = presentWidth;
-                           presentColor = RED;
-                           presentWidth = 1;
-                           checkForSynapse();
-                       }
-                   } // if (buffer[pos] == RED)
-                   else if (buffer[pos] == GREEN) {
-                       if (presentColor == GREEN) {
-                           presentWidth++;
-                       }
-                       else {
-                           threePreviousColor = twoPreviousColor;
-                           threePreviousWidth = twoPreviousWidth;
-                           twoPreviousColor = onePreviousColor;
-                           twoPreviousWidth = onePreviousWidth;
-                           onePreviousColor = presentColor;
-                           onePreviousWidth = presentWidth;
-                           presentColor = GREEN;
-                           presentWidth = 1;
-                           checkForSynapse();
-                       }    
-                   } // else if (buffer[pos] == GREEN)
-                   else if (buffer[pos] == BLUE) {
+                   if (buffer[pos] == presentColor) {
+                       presentWidth++;
                        if (presentColor == BLUE) {
-                           presentWidth++;
                            blueX = (blueStartX + x) >> 2;
                            blueY = (blueStartY + y) >> 2;
-                           blueZ = (blueStartZ + z) >> 2;
+                           blueZ = (blueStartZ + z) >> 2;    
                        }
-                       else {
-                           threePreviousColor = twoPreviousColor;
-                           threePreviousWidth = twoPreviousWidth;
-                           twoPreviousColor = onePreviousColor;
-                           twoPreviousWidth = onePreviousWidth;
-                           onePreviousColor = presentColor;
-                           onePreviousWidth = presentWidth;
-                           presentColor = BLUE;
-                           presentWidth = 1;
-                           checkForSynapse();
+                   }
+                   else {
+                       threePreviousColor = twoPreviousColor;
+                       threePreviousWidth = twoPreviousWidth;
+                       twoPreviousColor = onePreviousColor;
+                       twoPreviousWidth = onePreviousWidth;
+                       onePreviousColor = presentColor;
+                       onePreviousWidth = presentWidth;
+                       presentColor = buffer[pos];
+                       presentWidth = 1;
+                       checkForSynapse(); 
+                       if (presentColor == BLUE) {
                            blueStartX = x;
                            blueStartY = y;
                            blueStartZ = z;
                            blueX = x;
                            blueY = y;
-                           blueZ = z;
-                       }        
-                   } // else if (buffer[pos] == BLUE)
-                   else { // not RED, GREEN, or BLUE
-                       if (presentColor == NONE) {
-                           presentWidth++;
+                           blueZ = z;    
                        }
-                       else {
-                           threePreviousColor = twoPreviousColor;
-                           threePreviousWidth = twoPreviousWidth;
-                           twoPreviousColor = onePreviousColor;
-                           twoPreviousWidth = onePreviousWidth;
-                           onePreviousColor = presentColor;
-                           onePreviousWidth = presentWidth;
-                           presentColor = NONE;
-                           presentWidth = 1;
-                           checkForSynapse();
-                       }            
-                   } // else not RED, GREEN, or BLUE
+                   }
                 } // for (x = 0; x < xDim; x++)
                 threePreviousColor = twoPreviousColor;
                 threePreviousWidth = twoPreviousWidth;
@@ -342,12 +300,1230 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 checkForSynapse();
             } // for (y = 0; y < yDim; y++)
         } // for (z = 0; z < zDim; z++)
+        System.out.println("Number of synapses found searching parallel to x axis = " + numSynapses);
+        Preferences.debug("Number of synapses found searching parallel to x axis = " + numSynapses + "\n");
+        previousNumSynapses = numSynapses;
+        
+        // Search along all lines parallel to y axis
+        for (z = 0; z < zDim; z++) {
+            zPos = z * xySlice;
+            for (x = 0; x < xDim; x++) {
+                xPos = zPos + x;
+                threePreviousColor = NONE;
+                twoPreviousColor = NONE;
+                onePreviousColor = NONE;
+                presentColor = NONE;
+                threePreviousWidth = 0;
+                twoPreviousWidth = 0;
+                onePreviousWidth = 0;
+                presentWidth = 0;
+                for (y = 0; y < yDim; y++) {
+                    pos = xPos + y * xDim;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }
+                } // for (y = 0; y < yDim; y++)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (x = 0; x < xDim; x++)
+        } // for (z = 0; z < zDim; z++)
+        System.out.println("Number of synapses found searching parallel to y axis = " + (numSynapses - previousNumSynapses));
+        Preferences.debug("Number of synapses found searching parallel to y axis = " + (numSynapses - previousNumSynapses) + "\n");
+        previousNumSynapses = numSynapses;
+        
+        // Search all lines parallel to z axis
+        for (y = 0; y < yDim; y++) {
+            yPos = y * xDim;
+            for (x = 0; x < xDim; x++) {
+                xPos = yPos + x;
+                threePreviousColor = NONE;
+                twoPreviousColor = NONE;
+                onePreviousColor = NONE;
+                presentColor = NONE;
+                threePreviousWidth = 0;
+                twoPreviousWidth = 0;
+                onePreviousWidth = 0;
+                presentWidth = 0;
+                for (z = 0; z < zDim; z++) {
+                    pos = xPos + z * xySlice;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }    
+                } // for (z = 0; z < zDim; z++)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (x = 0; x < xDim; x++)
+        } // for (y = 0; y < yDim; y++)
+        System.out.println("Number of synapses found searching parallel to z axis = " + (numSynapses - previousNumSynapses));
+        Preferences.debug("Number of synapses found searching parallel to z axis = " + (numSynapses - previousNumSynapses) + "\n");
+        previousNumSynapses = numSynapses;
+        
+        //Search all lines parallel to x = -y.
+        for (z = 0; z < zDim; z++) {
+            zPos = z * xySlice;
+            for (xStart = 0; xStart <= xDim - threeBandMin; xStart++) {
+                threePreviousColor = NONE;
+                twoPreviousColor = NONE;
+                onePreviousColor = NONE;
+                presentColor = NONE;
+                threePreviousWidth = 0;
+                twoPreviousWidth = 0;
+                onePreviousWidth = 0;
+                presentWidth = 0;
+                for (x = xStart, y = yDim-1; (x <= xDim - 1) && (y >= 0); x++, y--) {
+                    pos = zPos + y * xDim + x; 
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }    
+                } // for (x = xStart, y = yDim-1; (x <= xDim - 1) && (y >= 0); x++, y--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (xStart = 0; xStart <= xDim - threeBandMin; xStart++)
+            for (yStart = yDim - 2; yStart >= threeBandMin-1; yStart--) {
+                threePreviousColor = NONE;
+                twoPreviousColor = NONE;
+                onePreviousColor = NONE;
+                presentColor = NONE;
+                threePreviousWidth = 0;
+                twoPreviousWidth = 0;
+                onePreviousWidth = 0;
+                presentWidth = 0;
+                for (x = 0, y = yStart; (x <= xDim - 1) && (y >= 0); x++, y--) {
+                    pos = zPos + y * xDim + x; 
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }        
+                } // for (x = 0, y = yStart; (x <= xDim - 1) && (y >= 0); x++, y--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (yStart = yDim - 2; yStart >= threeBandMin-1; yStart--)
+        } // for (z = 0; z < zDim; z++)
+        System.out.println("Number of synapses found searching parallel to (x = -y) = " + (numSynapses - previousNumSynapses));
+        Preferences.debug("Number of synapses found searching parallel to (x = -y) = " + (numSynapses - previousNumSynapses) + "\n");
+        previousNumSynapses = numSynapses;
+        
+        // Search all lines parallel to x = y.
+        for (z = 0; z < zDim; z++) {
+            zPos = z * xySlice;
+            for (xStart = xDim - 1; xStart >= threeBandMin - 1; xStart--) {
+                threePreviousColor = NONE;
+                twoPreviousColor = NONE;
+                onePreviousColor = NONE;
+                presentColor = NONE;
+                threePreviousWidth = 0;
+                twoPreviousWidth = 0;
+                onePreviousWidth = 0;
+                presentWidth = 0;
+                for (x = xStart, y = yDim - 1; (x >= 0) && (y >= 0); x--, y--) {
+                    pos = zPos + y * xDim + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                
+                } // for (x = xStart, y = yDim - 1; (x >= 0) && (y >= 0); x--, y--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (xStart = xDim - 1; xStart >= threeBandMin - 1; xStart--)
+            for (yStart = yDim - 2; yStart >= threeBandMin - 1; yStart--) {
+                for (x = xDim - 1, y = yStart; (x >= 0) && (y >= 0); x--, y--) {
+                    pos = zPos + y * xDim + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (x = xDim - 1, y = yStart; (x >= 0) && (y >= 0); x--, y--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (yStart = yDim - 2; yStart >= threeBandMin - 1; yStart--)
+        } // for (z = 0; z < zDim; z++)
+        System.out.println("Number of synapses found searching parallel to (x = y) = " + (numSynapses - previousNumSynapses));
+        Preferences.debug("Number of synapses found searching parallel to (x = y) = " + (numSynapses - previousNumSynapses) + "\n");
+        previousNumSynapses = numSynapses;
+        
+        // Search all lines parallel to x = -z.
+        for (y = 0; y < yDim; y++) {
+            yPos = y * xDim;
+            for (xStart = 0; xStart <= xDim - threeBandMin; xStart++) {
+                threePreviousColor = NONE;
+                twoPreviousColor = NONE;
+                onePreviousColor = NONE;
+                presentColor = NONE;
+                threePreviousWidth = 0;
+                twoPreviousWidth = 0;
+                onePreviousWidth = 0;
+                presentWidth = 0;
+                for (x = xStart, z = zDim-1; (x <= xDim - 1) && (z >= 0); x++, z--) {
+                    pos = yPos + z * xySlice + x; 
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }    
+                } // for (x = xStart, z = zDim-1; (x <= xDim - 1) && (z >= 0); x++, z--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (xStart = 0; xStart <= xDim - threeBandMin; xStart++)
+            for (zStart = zDim - 2; zStart >= threeBandMin-1; zStart--) {
+                threePreviousColor = NONE;
+                twoPreviousColor = NONE;
+                onePreviousColor = NONE;
+                presentColor = NONE;
+                threePreviousWidth = 0;
+                twoPreviousWidth = 0;
+                onePreviousWidth = 0;
+                presentWidth = 0;
+                for (x = 0, z = zStart; (x <= xDim - 1) && (z >= 0); x++, z--) {
+                    pos = yPos + z * xySlice + x; 
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }        
+                } // for (x = 0, z = zStart; (x <= xDim - 1) && (z >= 0); x++, z--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (zStart = zDim - 2; zStart >= threeBandMin-1; zStart--)
+        } // for (y = 0; y < yDim; y++)
+        System.out.println("Number of synapses found searching parallel to (x = -z) = " + (numSynapses - previousNumSynapses));
+        Preferences.debug("Number of synapses found searching parallel to (x = -z) = " + (numSynapses - previousNumSynapses) + "\n");
+        previousNumSynapses = numSynapses;
+        
+        // Search all lines parallel to x = z.
+        for (y = 0; y < yDim; y++) {
+            yPos = y * xDim;
+            for (xStart = xDim - 1; xStart >= threeBandMin - 1; xStart--) {
+                threePreviousColor = NONE;
+                twoPreviousColor = NONE;
+                onePreviousColor = NONE;
+                presentColor = NONE;
+                threePreviousWidth = 0;
+                twoPreviousWidth = 0;
+                onePreviousWidth = 0;
+                presentWidth = 0;
+                for (x = xStart, z = zDim - 1; (x >= 0) && (z >= 0); x--, z--) {
+                    pos = yPos + z * xySlice + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                
+                } // for (x = xStart, z = zDim - 1; (x >= 0) && (z >= 0); x--, z--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (xStart = xDim - 1; xStart >= threeBandMin - 1; xStart--)
+            for (zStart = zDim - 2; zStart >= threeBandMin - 1; zStart--) {
+                for (x = xDim - 1, z = zStart; (x >= 0) && (z >= 0); x--, z--) {
+                    pos = yPos + z * xySlice + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (x = xDim - 1, z = zStart; (x >= 0) && (z >= 0); x--, z--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (zStart = zDim - 2; zStart >= threeBandMin - 1; zStart--)
+        } // for (y = 0; y < yDim; y++)
+        System.out.println("Number of synapses found searching parallel to (x = z) = " + (numSynapses - previousNumSynapses));
+        Preferences.debug("Number of synapses found searching parallel to (x = z) = " + (numSynapses - previousNumSynapses) + "\n");
+        previousNumSynapses = numSynapses;
+        
+        // Search all lines parallel to y = -z.
+        for (x = 0; x < xDim; x++) {
+            for (yStart = 0; yStart <= yDim - threeBandMin; yStart++) {
+                threePreviousColor = NONE;
+                twoPreviousColor = NONE;
+                onePreviousColor = NONE;
+                presentColor = NONE;
+                threePreviousWidth = 0;
+                twoPreviousWidth = 0;
+                onePreviousWidth = 0;
+                presentWidth = 0;
+                for (y = yStart, z = zDim-1; (y <= yDim - 1) && (z >= 0); y++, z--) {
+                    pos = x + z * xySlice + y * xDim; 
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }    
+                } // for (y = yStart, z = zDim-1; (y <= yDim - 1) && (z >= 0); y++, z--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (yStart = 0; yStart <= yDim - threeBandMin; yStart++)
+            for (zStart = zDim - 2; zStart >= threeBandMin-1; zStart--) {
+                threePreviousColor = NONE;
+                twoPreviousColor = NONE;
+                onePreviousColor = NONE;
+                presentColor = NONE;
+                threePreviousWidth = 0;
+                twoPreviousWidth = 0;
+                onePreviousWidth = 0;
+                presentWidth = 0;
+                for (y = 0, z = zStart; (y <= yDim - 1) && (z >= 0); y++, z--) {
+                    pos = x + z * xySlice + y * xDim; 
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }        
+                } // for (y = 0, z = zStart; (y <= yDim - 1) && (z >= 0); y++, z--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (zStart = zDim - 2; zStart >= threeBandMin-1; zStart--)
+        } // for (x = 0; x < xDim; x++)
+        System.out.println("Number of synapses found searching parallel to (y = -z) = " + (numSynapses - previousNumSynapses));
+        Preferences.debug("Number of synapses found searching parallel to (y = -z) = " + (numSynapses - previousNumSynapses) + "\n");
+        previousNumSynapses = numSynapses;
+        
+        // Search all lines parallel to y = z.
+        for (x = 0; x < xDim; x++) {
+            for (yStart = yDim - 1; yStart >= threeBandMin - 1; yStart--) {
+                threePreviousColor = NONE;
+                twoPreviousColor = NONE;
+                onePreviousColor = NONE;
+                presentColor = NONE;
+                threePreviousWidth = 0;
+                twoPreviousWidth = 0;
+                onePreviousWidth = 0;
+                presentWidth = 0;
+                for (y = yStart, z = zDim - 1; (y >= 0) && (z >= 0); y--, z--) {
+                    pos = x + z * xySlice + y * xDim;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                
+                } // for (y = yStart, z = zDim - 1; (y >= 0) && (z >= 0); y--, z--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (yStart = yDim - 1; yStart >= threeBandMin - 1; yStart--)
+            for (zStart = zDim - 2; zStart >= threeBandMin - 1; zStart--) {
+                for (y = yDim - 1, z = zStart; (y >= 0) && (z >= 0); y--, z--) {
+                    pos = x + z * xySlice + y * xDim;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (y = yDim - 1, z = zStart; (y >= 0) && (z >= 0); y--, z--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (zStart = zDim - 2; zStart >= threeBandMin - 1; zStart--)
+        } // for (x = 0; x < xDim; x++)
+        System.out.println("Number of synapses found searching parallel to (y = z) = " + (numSynapses - previousNumSynapses));
+        Preferences.debug("Number of synapses found searching parallel to (y = z) = " + (numSynapses - previousNumSynapses) + "\n");
+        previousNumSynapses = numSynapses;
+        
+        // Search all lines with delX = delY = delZ
+        for (zStart = 0; zStart < zDim; zStart++) {
+            for (yStart = 0; yStart < yDim; yStart++) {
+                for (x = 0, y = yStart, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z <= zDim - 1); x++, y++, z++) {
+                    pos = z * xySlice + y * xDim + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (x = 0, y = yStart, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z <= zDim - 1); x++, y++, z++)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (yStart = 0; yStart < yDim; yStart++)
+        } // for (zStart = 0; zStart < zDim; zStart++)
+        for (zStart = 0; zStart < zDim; zStart++) {
+            for (xStart = 0; xStart < xDim; xStart++) {
+                for (x = xStart, y = 0, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z <= zDim - 1); x++, y++, z++) {
+                    pos = z * xySlice + y * xDim + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (x = xStart, y = 0, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z <= zDim - 1); x++, y++, z++)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (xStart = 0; xStart < xDim; xStart++)
+        } // for (zStart = 0; zStart < zDim; zStart++)
+        for (yStart = 0; yStart < yDim; yStart++) {
+            for (xStart = 0; xStart < xDim; xStart++) {
+                for (x = xStart, y = yStart, z = 0; (x <= xDim-1) && (y <= yDim - 1) && (z <= zDim - 1); x++, y++, z++) {
+                    pos = z * xySlice + y * xDim + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (x = xStart, y = yStart, z = 0; (x <= xDim-1) && (y <= yDim - 1) && (z <= zDim - 1); x++, y++, z++)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (xStart = 0; xStart < xDim; xStart++)
+        } // for (yStart = 0; yStart < yDim; yStart++)
+        System.out.println("Number of synapses found searching parallel to (delX = delY = delZ) = " + (numSynapses - previousNumSynapses));
+        Preferences.debug("Number of synapses found searching parallel to (delX = delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n");
+        previousNumSynapses = numSynapses;
+        
+        // Search all lines with delX = delY = -delZ
+        for (zStart = 0; zStart < zDim; zStart++) {
+            for (yStart = 0; yStart < yDim; yStart++) {
+                for (x = 0, y = yStart, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z >= 0); x++, y++, z--) {
+                    pos = z * xySlice + y * xDim + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (x = 0, y = yStart, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z >= 0); x++, y++, z--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (yStart = 0; yStart < yDim; yStart++)
+        } // for (zStart = 0; zStart < zDim; zStart++)
+        for (zStart = 0; zStart < zDim; zStart++) {
+            for (xStart = 0; xStart < xDim; xStart++) {
+                for (x = xStart, y = 0, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z >= 0); x++, y++, z--) {
+                    pos = z * xySlice + y * xDim + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (x = xStart, y = 0, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z >= 0); x++, y++, z--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (xStart = 0; xStart < xDim; xStart++)
+        } // for (zStart = 0; zStart < zDim; zStart++)
+        for (yStart = 0; yStart < yDim; yStart++) {
+            for (xStart = 0; xStart < xDim; xStart++) {
+                for (x = xStart, y = yStart, z = zDim-1; (x <= xDim-1) && (y <= yDim - 1) && (z >= 0); x++, y++, z--) {
+                    pos = z * xySlice + y * xDim + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (x = xStart, y = yStart, z = zDim-1; (x <= xDim-1) && (y <= yDim - 1) && (z >= 0); x++, y++, z--)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (xStart = 0; xStart < xDim; xStart++)
+        } // for (yStart = 0; yStart < yDim; yStart++)
+        System.out.println("Number of synapses found searching parallel to (delX = delY = -delZ) = " + (numSynapses - previousNumSynapses));
+        Preferences.debug("Number of synapses found searching parallel to (delX = delY = -delZ) = " + (numSynapses - previousNumSynapses) + "\n");
+        previousNumSynapses = numSynapses;
+        
+        // Search all lines with delX = -delY = delZ
+        for (zStart = 0; zStart < zDim; zStart++) {
+            for (yStart = 0; yStart < yDim; yStart++) {
+                for (x = 0, y = yStart, z = zStart; (x <= xDim-1) && (y >= 0) && (z <= zDim - 1); x++, y--, z++) {
+                    pos = z * xySlice + y * xDim + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (x = 0, y = yStart, z = zStart; (x <= xDim-1) && (y >= 0) && (z <= zDim - 1); x++, y--, z++)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (yStart = 0; yStart < yDim; yStart++)
+        } // for (zStart = 0; zStart < zDim; zStart++)
+        for (zStart = 0; zStart < zDim; zStart++) {
+            for (xStart = 0; xStart < xDim; xStart++) {
+                for (x = xStart, y = yDim-1, z = zStart; (x <= xDim-1) && (y >= 0) && (z <= zDim - 1); x++, y--, z++) {
+                    pos = z * xySlice + y * xDim + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (x = xStart, y = yDim-1, z = zStart; (x <= xDim-1) && (y >= 0) && (z <= zDim - 1); x++, y--, z++)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (xStart = 0; xStart < xDim; xStart++)
+        } // for (zStart = 0; zStart < zDim; zStart++)
+        for (yStart = 0; yStart < yDim; yStart++) {
+            for (xStart = 0; xStart < xDim; xStart++) {
+                for (x = xStart, y = yStart, z = 0; (x <= xDim-1) && (y >= 0) && (z <= zDim - 1); x++, y--, z++) {
+                    pos = z * xySlice + y * xDim + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (x = xStart, y = yStart, z = 0; (x <= xDim-1) && (y >= 0) && (z <= zDim - 1); x++, y--, z++)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (xStart = 0; xStart < xDim; xStart++)
+        } // for (yStart = 0; yStart < yDim; yStart++)
+        System.out.println("Number of synapses found searching parallel to (delX = -delY = delZ) = " + (numSynapses - previousNumSynapses));
+        Preferences.debug("Number of synapses found searching parallel to (delX = -delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n");
+        previousNumSynapses = numSynapses;
+        
+        // Search all lines with -delX = delY = delZ
+        for (zStart = 0; zStart < zDim; zStart++) {
+            for (yStart = 0; yStart < yDim; yStart++) {
+                for (x = xDim-1, y = yStart, z = zStart; (x >= 0) && (y <= yDim - 1) && (z <= zDim - 1); x--, y++, z++) {
+                    pos = z * xySlice + y * xDim + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (x = xDim-1, y = yStart, z = zStart; (x >= 0) && (y <= yDim - 1) && (z <= zDim - 1); x--, y++, z++)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (yStart = 0; yStart < yDim; yStart++)
+        } // for (zStart = 0; zStart < zDim; zStart++)
+        for (zStart = 0; zStart < zDim; zStart++) {
+            for (xStart = 0; xStart < xDim; xStart++) {
+                for (x = xStart, y = 0, z = zStart; (x >= 0) && (y <= yDim - 1) && (z <= zDim - 1); x--, y++, z++) {
+                    pos = z * xySlice + y * xDim + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (x = xStart, y = 0, z = zStart; (x >= 0) && (y <= yDim - 1) && (z <= zDim - 1); x--, y++, z++)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (xStart = 0; xStart < xDim; xStart++)
+        } // for (zStart = 0; zStart < zDim; zStart++)
+        for (yStart = 0; yStart < yDim; yStart++) {
+            for (xStart = 0; xStart < xDim; xStart++) {
+                for (x = xStart, y = yStart, z = 0; (x >= 0) && (y <= yDim - 1) && (z <= zDim - 1); x--, y++, z++) {
+                    pos = z * xySlice + y * xDim + x;
+                    if (buffer[pos] == presentColor) {
+                        presentWidth++;
+                        if (presentColor == BLUE) {
+                            blueX = (blueStartX + x) >> 2;
+                            blueY = (blueStartY + y) >> 2;
+                            blueZ = (blueStartZ + z) >> 2;    
+                        }
+                    }
+                    else {
+                        threePreviousColor = twoPreviousColor;
+                        threePreviousWidth = twoPreviousWidth;
+                        twoPreviousColor = onePreviousColor;
+                        twoPreviousWidth = onePreviousWidth;
+                        onePreviousColor = presentColor;
+                        onePreviousWidth = presentWidth;
+                        presentColor = buffer[pos];
+                        presentWidth = 1;
+                        checkForSynapse(); 
+                        if (presentColor == BLUE) {
+                            blueStartX = x;
+                            blueStartY = y;
+                            blueStartZ = z;
+                            blueX = x;
+                            blueY = y;
+                            blueZ = z;    
+                        }
+                    }                    
+                } // for (x = xStart, y = yStart, z = 0; (x >= 0) && (y <= yDim - 1) && (z <= zDim - 1); x--, y++, z++)
+                threePreviousColor = twoPreviousColor;
+                threePreviousWidth = twoPreviousWidth;
+                twoPreviousColor = onePreviousColor;
+                twoPreviousWidth = onePreviousWidth;
+                onePreviousColor = presentColor;
+                onePreviousWidth = presentWidth;
+                checkForSynapse();
+            } // for (xStart = 0; xStart < xDim; xStart++)
+        } // for (yStart = 0; yStart < yDim; yStart++)
+        System.out.println("Number of synapses found searching parallel to (-delX = delY = delZ) = " + (numSynapses - previousNumSynapses));
+        Preferences.debug("Number of synapses found searching parallel to (-delX = delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n");
+        previousNumSynapses = numSynapses;
+
 
         if (threadStopped) {
             finalize();
 
             return;
         }
+        
+        srcImage.notifyImageDisplayListeners();
+        System.out.println("Total synapses found = " + numSynapses);
+        Preferences.debug("Total synapses found = " + numSynapses + "\n");
 
         fireProgressStateChanged(100);
         time = System.currentTimeMillis() - time;
@@ -356,6 +1532,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         
     }
     
+    // Finding red, blue, green or green, blue, red with all 3 colors in the appropriate width range
+    // means that a synapse has been found
     private void checkForSynapse() {
        VOI newPtVOI;
        if (((twoPreviousColor == BLUE) && (twoPreviousWidth >= blueMin) && (twoPreviousWidth <= blueMax)) && 
@@ -374,12 +1552,17 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
           ((VOIPoint) (newPtVOI.getCurves()[blueZ].elementAt(0))).setName(Integer.toString(numSynapses + 1));
            srcImage.registerVOI(newPtVOI);  
            numSynapses++;
-           System.out.println("numSynapses = " + numSynapses);
            //zeroBlueBufferRecursion(blueX, blueY, blueZ);
+           // If zero BlueBufferIteration is not used, before searches parallel to the x axis are completed,
+           // we run out of java heap space with numSynapses = 126,738.
            zeroBlueBufferIteration(blueX, blueY, blueZ);
        }
     }
     
+    // Change the BLUE of a detected synapse to NONE so it is not detected more than once
+    // Change all 27 neighbor connected BLUE to the original BLUE to none inside a cube
+    // of width 2 * blueMax around the originally specified BLUE pixel, so that only 1
+    // BLUE pixel from each synapse can trigger a synapse detection.
     private void zeroBlueBufferIteration(int xStart, int yStart, int zStart) {
         boolean change = true;
         int x;
@@ -397,7 +1580,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         int xHigh;
         buffer[i] = NONE;
         blueMask.set(i);
-        while (change) {
+        while (change && (del <= blueMax - 2)) {
             change = false;
             del++;
             xLow = Math.max(0, xStart-del);
@@ -548,9 +1731,10 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     } // for (x = xLow; x <= xHigh; x++)
                 } // for (y = yLow; y <= yHigh; y++)
             } // for (z = zLow; z <= zHigh; z++)
-        } // while (change)
+        } // while (change  && (del <= (blueMax - 2))
     }
     
+    // Recursion triggers a stack overflow - don't use
     private void zeroBlueBufferRecursion(int xDel, int yDel, int zDel) {
       int i = xDel + xDim * yDel + xySlice * zDel;
       buffer[i] = NONE;
