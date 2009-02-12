@@ -1,7 +1,5 @@
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileInfoDicom;
-import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.view.MipavUtil;
 
 import java.io.File;
@@ -153,14 +151,12 @@ public class PlugInAlgorithmNINDSIdentificationTool extends
     	
     	boolean validDOB = true;
     	String studyDate = "";
-    	int size;
 
     	//couple of the tags (patient name (0010,0010)and patient id(0010,0020) will be replaced with a new UID which is Suject ID + DOB
     	//example: id = 1234, DOB=9/23/1968 => 1234 + 9231968 = 9233202
     	String patientID = "";
     	String dob = "";
     	newUID = "";
-    	boolean containsDOB = false;
     	int patientIDInt = 0;
     	if(tagTable.containsTag(patientIDKey)) {
     		patientID = ((String)tagTable.getValue(patientIDKey)).trim();
@@ -189,9 +185,6 @@ public class PlugInAlgorithmNINDSIdentificationTool extends
 		String sdmmString = studyDate.substring(0, 2);
 		String sdddString = studyDate.substring(2, 4);
 		String sdyyyyString = studyDate.substring(4, 8);
-		int sdmm = Integer.valueOf(sdmmString);
-		int sddd = Integer.valueOf(sdddString);
-		int sdyyyy = Integer.valueOf(sdyyyyString);
 		
 		if(tagTable.containsTag(patientDOBKey)) {
 			dob = ((String)tagTable.getValue(patientDOBKey)).trim();
@@ -238,22 +231,6 @@ public class PlugInAlgorithmNINDSIdentificationTool extends
 			//print unknown
 		}
 
-    	//one will get replaced with current date...so get current date
-    	DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
-        Date date = new Date();
-        String currentDate = dateFormat.format(date);
-
-        //one tag will get replaced with current time...so get that
-        DateFormat timeFormat = new SimpleDateFormat("HHmmss");
-        date = new Date();
-        String currentTime = timeFormat.format(date);
-        
-        //bogus SPOID
-        String bogusSOPID = "1.2.840.999999999999999999";
-        
-        //bogus implementation ID
-        String bogusImplementationID =  "1.2.840.34379.17";
-
         //MD5
         MessageDigest digest = null;
         try {
@@ -283,14 +260,8 @@ public class PlugInAlgorithmNINDSIdentificationTool extends
         }
         
         //Study Instance UID (0020,000D) and Series Instance UID (0002,000E) need MIPAV version and time in milliseconds
-        String studyInstanceUID = "";
-        String seriesInstanceUID = "";
         String mipavVersion = MipavUtil.getVersion();
-        String fileLoc = "test";
         mipavVersion = mipavVersion.replaceAll("\\.", "");
-        long time = date.getTime();
-    	studyInstanceUID = "1.2.840.9999.9." + mipavVersion + "." + time + ".0";
-    	seriesInstanceUID = "1.2.840.9999.9." + mipavVersion + "." + time + ".1";
     	
     	//write out csvFile
     	String csvCheck = patientID + studyID + seriesNo;
@@ -299,7 +270,7 @@ public class PlugInAlgorithmNINDSIdentificationTool extends
     	if(sdmmString.startsWith("0")) {
 			sdmmString = sdmmString.substring(1,2);
 		}
-		if(sdddString.startsWith("0")) {
+		if(sdddString.startsWith ("0")) {
 			sdddString = sdddString.substring(1,2);
 		}
 		studyDate = sdmmString + "/" + sdddString + "/" + sdyyyyString;
