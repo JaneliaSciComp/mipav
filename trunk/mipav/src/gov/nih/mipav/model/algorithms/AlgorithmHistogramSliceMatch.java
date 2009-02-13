@@ -496,7 +496,7 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
         baseOffset = bufMin;
 
         // Use same totalBins as for srcImage
-        baseUnitSize = ((bufMax - bufMin + 1) / totalBins); // one unit is the distance of one totalBin-th in brightness
+        baseUnitSize = ((bufMax - bufMin) / (totalBins-1)); // one unit is the distance of one totalBin-th in brightness
 
         cumHist = new float[totalBins];
 
