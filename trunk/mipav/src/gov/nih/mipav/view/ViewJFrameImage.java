@@ -1576,13 +1576,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // JDialogAHElocal ahe =
             new JDialogAHElocal(this, getActiveImage());
-        } else if (command.equals("histMatch")) {
+        } else if (command.equals("histImageMatch")) {
 
             if (isMultipleImages() == true) {
                 new JDialogHistogramMatch(this, getActiveImage());
             } else {
                 MipavUtil.displayError("There are no other images to histogram match.");
             }
+        } else if (command.equals("histSliceMatch")) {
+            new JDialogHistogramSliceMatch(this, getActiveImage());
         } else if (command.equals("histTwoDim")) {
             new JDialogHistogram2Dim(this, getActiveImage());
         } else if (command.equals("cumHistogram")) {
