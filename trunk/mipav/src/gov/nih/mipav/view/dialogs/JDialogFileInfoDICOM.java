@@ -518,7 +518,6 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     private static boolean addRow(Object[] rowData, boolean show) {
     	if (rowData[2].toString().contains("Private Tag") || rowData[2].toString().contains("private tag") 
         		|| rowData[2].toString().contains("Private tag")) {
-        	System.out.println("Yes");
             if (show) {
                 return true;
             }
