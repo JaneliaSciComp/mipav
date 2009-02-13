@@ -206,15 +206,19 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         rowData[3] = "";
 
                         for (Enumeration f = display.elements(); f.hasMoreElements();) {
-                            tagsModel.addRow(rowData);
-
-                            StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
-
-                            rowData[2] = st.nextToken();
-
-                            if (st.hasMoreTokens()) {
-                                rowData[3] = st.nextToken();
-                            }
+                        	if(addRow(rowData, show)) {
+	                        	tagsModel.addRow(rowData);
+	
+	                            StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+	
+	                            rowData[2] = st.nextToken();
+	
+	                            if (st.hasMoreTokens()) {
+	                                rowData[3] = st.nextToken();
+	                            }
+                        	} else {
+                        		f.nextElement();
+                        	}
                         }
                 	} else {
 
@@ -455,15 +459,19 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     rowData[3] = "";
 
                     for (Enumeration f = display.elements(); f.hasMoreElements();) {
-                        tagsModel.addRow(rowData);
+                    	if(addRow(rowData, show)) {
+                        	tagsModel.addRow(rowData);
 
-                        StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
-
-                        rowData[2] = st.nextToken();
-
-                        if (st.hasMoreTokens()) {
-                            rowData[3] = st.nextToken();
-                        }
+	                        StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+	
+	                        rowData[2] = st.nextToken();
+	
+	                        if (st.hasMoreTokens()) {
+	                            rowData[3] = st.nextToken();
+	                        }
+                    	} else {
+                    		f.nextElement();
+                    	}
                     }
                 } // standard tag.  add tag.get(key).getValue(true) as-is to the table
                 else { // if ( ((FileDicomTag) tagsList.get(key)).getMultiplicity() > 1) {
@@ -493,18 +501,32 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     rowData[3] = dispString;
                 }
 
-                if (rowData[2].equals("Private Tag")) {
-
-                    if (show) {
-                        tagsModel.addRow(rowData);
-                    }
-                } else {
-                    tagsModel.addRow(rowData);
+                //instances where rowData will be a private tag are checked here for showTags
+                if(addRow(rowData, show)) {
+                	tagsModel.addRow(rowData);
                 }
             }
         }
 
         sort(tagsModel, 1, false, true);
+    }
+    
+    /**
+	 * Determines whether the given row should be shown. Show indicates whether
+	 * private tags are being displayed.
+     */
+    private static boolean addRow(Object[] rowData, boolean show) {
+    	if (rowData[2].toString().contains("Private Tag") || rowData[2].toString().contains("private tag") 
+        		|| rowData[2].toString().contains("Private tag")) {
+        	System.out.println("Yes");
+            if (show) {
+                return true;
+            }
+        } else {
+            return true;
+        }
+    	
+    	return false;
     }
 
     /**
