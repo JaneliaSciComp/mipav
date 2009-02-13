@@ -32,28 +32,13 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private ModelImage baseImage;
-
-    /** DOCUMENT ME! */
-    private boolean bChannel = true; // the blue channel
-
-    /** DOCUMENT ME! */
     private float bufMax;
 
     /** DOCUMENT ME! */
     private float bufMin;
 
     /** DOCUMENT ME! */
-    private boolean gChannel = true; // the green channel
-
-    /** DOCUMENT ME! */
     private boolean isColorImage = false; // indicates the image being messed with is a colour image
-
-    /** DOCUMENT ME! */
-    private boolean rChannel = true; // if T, filter the red channel
-
-    /** DOCUMENT ME! */
-    private int valuesPerPixel = 1; // number of elements in a pixel.  Monochrome = 1, Color = 4. (a, R, G, B)
     
     private int referenceSlice;
 
@@ -71,7 +56,6 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
-            valuesPerPixel = 4;
         }
     }
 
@@ -88,7 +72,6 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
-            valuesPerPixel = 4;
         }
     }
 
@@ -127,105 +110,120 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
     }
 
     /**
-     * Histogram matching of the source image to the base image. Replaces the original image with the filtered image.
+     * Histogram matching of slices to reference slice. Replaces the original image with the filtered image.
      */
     private void calcInPlace() {
         int colour;
         int length;
-        int baseLength;
-        int i;
+        int z;
 
-        float[] buffer;
         float[] baseBuffer;
+        float[] baseGreenBuffer = null;
+        float[] baseBlueBuffer = null;
+        float[] buffer;
+        int zDim = srcImage.getExtents()[2];
 
-        length = srcImage.getExtents()[0];
-
-        for (i = 1; i < srcImage.getNDims(); i++) {
-            length *= srcImage.getExtents()[i];
-        }
-
-        baseLength = baseImage.getExtents()[0];
-
-        for (i = 1; i < baseImage.getNDims(); i++) {
-            baseLength *= baseImage.getExtents()[i];
-        }
+        length = srcImage.getExtents()[0] * srcImage.getExtents()[1];
 
         try {
+            baseBuffer = new float[length];
             buffer = new float[length];
-            baseBuffer = new float[baseLength];
+            if (isColorImage) {
+                baseGreenBuffer = new float[length];
+                baseBlueBuffer = new float[length];
+            }
         } catch (OutOfMemoryError oome) {
             buffer = null;
+            baseGreenBuffer = null;
+            baseBlueBuffer = null;
             baseBuffer = null;
-            errorCleanUp("Algorithm Histogram Match reports: out of memory", true);
+            errorCleanUp("Algorithm Histogram Slice Match reports: out of memory", true);
 
             return;
         }
 
         try {
-            fireProgressStateChanged(srcImage.getImageName(), "Matching Histogram ...");
+            fireProgressStateChanged(srcImage.getImageName(), "Matching Slice Histogram ...");
             
 
             if (!isColorImage) {
-                srcImage.exportData(0, length, buffer); // locks and releases lock
-                baseImage.exportData(0, baseLength, baseBuffer);
+                fireProgressStateChanged("Processing Image");
+                srcImage.exportData(referenceSlice * length, length, baseBuffer); // locks and releases lock
+                for (z = 0; z < zDim; z++) {
+                    if (z != referenceSlice) {
+                        srcImage.exportData(z * length, length, buffer);
 
-                try {
-                    fireProgressStateChanged("Processing Image");
-                    fireProgressStateChanged(45); // not quite midway
-                } catch (NullPointerException npe) {
-
-                    if (threadStopped) {
-                        Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                          Preferences.DEBUG_ALGORITHM);
-                    }
-                }
-
-                this.filter(buffer, baseBuffer);
-
-                if (threadStopped) { // do BEFORE buffer has been exported to Image
-                    finalize();
-
-                    return;
-                }
-
-                srcImage.importData(0, buffer, true);
+                        try {
+                            
+                            fireProgressStateChanged(100 * z/(zDim - 1));
+                        } catch (NullPointerException npe) {
+        
+                            if (threadStopped) {
+                                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                                  Preferences.DEBUG_ALGORITHM);
+                            }
+                        }
+        
+                        this.filter(buffer, baseBuffer);
+        
+                        if (threadStopped) { // do BEFORE buffer has been exported to Image
+                            finalize();
+        
+                            return;
+                        }
+        
+                        srcImage.importData(z * length, buffer, false);
+                    } if (z != referenceSlice);
+                } // for (z = 0; z < zDim; z++)
             } else { // if (isColorImage) {
-
-                for (colour = 0; (colour < valuesPerPixel) && !threadStopped; colour++) { // for each color
-
-                 
-                	fireProgressStateChanged((int) (((float) (colour) / valuesPerPixel) * 100));
-                	fireProgressStateChanged("Processing colour " + Integer.toString(colour));
-             
-
-                    srcImage.exportRGBData(colour, 0, length, buffer); // get the slice
-                    baseImage.exportRGBData(colour, 0, baseLength, baseBuffer);
-
-                    if (((colour == 1) && rChannel) || ((colour == 2) && gChannel) // process only desired channels
-                            || ((colour == 3) && bChannel)) { // -- and not alpha channel at all --
-                        filter(buffer, baseBuffer);
-                    }
-
-                    if (threadStopped) { // do BEFORE buffer has been exported to Image
-                        finalize();
-
-                        return;
-                    }
-
-                    // then store the channel back into the destination image
-                    srcImage.importRGBData(colour, 0, buffer, false);
-                }
-
-                srcImage.calcMinMax();
+                fireProgressStateChanged("Processing Image");
+                srcImage.exportRGBData(1, 4 * referenceSlice * length, length, baseBuffer);
+                srcImage.exportRGBData(2, 4 * referenceSlice * length, length, baseGreenBuffer);
+                srcImage.exportRGBData(3, 4 * referenceSlice * length, length, baseBlueBuffer);
+                for (z = 0; z < zDim; z++) {
+                    if (z != referenceSlice) {
+                        for (colour = 1; (colour <= 3) && !threadStopped; colour++) { // for each color
+        
+                         
+                        	fireProgressStateChanged(100 * (colour + 3 * z) / (3 * zDim));
+                        	
+                     
+        
+                            srcImage.exportRGBData(colour, 4 * z * length, length, buffer); // get the slice
+                            
+        
+                            if (colour == 1) {
+                                filter(buffer, baseBuffer);
+                            }
+                            else if (colour == 2) {
+                                filter(buffer, baseGreenBuffer);
+                            }
+                            else {
+                                filter(buffer, baseBlueBuffer);
+                            }
+        
+                            if (threadStopped) { // do BEFORE buffer has been exported to Image
+                                finalize();
+        
+                                return;
+                            }
+        
+                            // then store the channel back into the destination image
+                            srcImage.importRGBData(colour, 4 * z * length, buffer, false);
+                        }
+                    } // if (z != referenceSlice)
+                } // for (z = 0; z < zDim; z++)
             }
         } catch (IOException error) {
-            errorCleanUp("AlgorithmHistogramMatch reports: source image locked", false);
+            errorCleanUp("AlgorithmHistogramSliceMatch reports: source image locked", false);
 
             return;
         } catch (OutOfMemoryError e) {
             buffer = null;
             baseBuffer = null;
-            errorCleanUp("AlgorithmHistogramMatch reports: out of memory", true);
+            baseGreenBuffer = null;
+            baseBlueBuffer = null;
+            errorCleanUp("AlgorithmHistogramSliceMatch reports: out of memory", true);
 
             return;
         }
@@ -236,113 +234,133 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
             return;
         }
 
+        srcImage.calcMinMax();
         setCompleted(true);
     }
 
     /**
-     * This function produces a new image that has had itself histogram matched to the base image. places filtered image
+     * This function produces a new image that has had all slices histogram mat ched to reference slice. places filtered image
      * in the destination image.
      */
     private void calcStoreInDest() {
         int colour;
         int length;
-        int baseLength;
-        int i;
+        int z;
 
-        float[] buffer;
         float[] baseBuffer;
+        float[] baseGreenBuffer = null;
+        float[] baseBlueBuffer = null;
+        float[] buffer;
+        int zDim = srcImage.getExtents()[2];
 
-        length = srcImage.getExtents()[0];
-
-        for (i = 1; i < srcImage.getNDims(); i++) {
-            length *= srcImage.getExtents()[i];
-        }
-
-        baseLength = baseImage.getExtents()[0];
-
-        for (i = 1; i < baseImage.getNDims(); i++) {
-            baseLength *= baseImage.getExtents()[i];
-        }
+        length = srcImage.getExtents()[0] * srcImage.getExtents()[1];
 
         try {
+            baseBuffer = new float[length];
             buffer = new float[length];
-            baseBuffer = new float[baseLength];
+            if (isColorImage) {
+                baseGreenBuffer = new float[length];
+                baseBlueBuffer = new float[length];
+            }
         } catch (OutOfMemoryError oome) {
             buffer = null;
+            baseGreenBuffer = null;
+            baseBlueBuffer = null;
             baseBuffer = null;
-            errorCleanUp("Algorithm Histogram match: Out of memory", true);
+            errorCleanUp("Algorithm Histogram Slice Match reports: out of memory", true);
 
             return;
         }
-
+        
         destImage.releaseLock(); // we need to be able to alter the dest image
 
+
         try {
-            fireProgressStateChanged(srcImage.getImageName(), "Matching Histogram ...");
+            fireProgressStateChanged(srcImage.getImageName(), "Matching Slice Histogram ...");
             
 
             if (!isColorImage) {
-                srcImage.exportData(0, length, buffer); // locks and releases lock
-                baseImage.exportData(0, baseLength, baseBuffer);
+                fireProgressStateChanged("Processing Image");
+                srcImage.exportData(referenceSlice * length, length, baseBuffer); // locks and releases lock
+                destImage.importData(referenceSlice * length, baseBuffer, false);
+                for (z = 0; z < zDim; z++) {
+                    if (z != referenceSlice) {
+                        srcImage.exportData(z * length, length, buffer);
 
-                try {
-                    fireProgressStateChanged("Processing Image");
-                    fireProgressStateChanged(45); // a little less than midway
-                } catch (NullPointerException npe) {
-
-                    if (threadStopped) {
-                        Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                          Preferences.DEBUG_ALGORITHM);
-                    }
-                }
-
-                this.filter(buffer, baseBuffer);
-
-                if (threadStopped) { // do before copying back into image
-                    finalize();
-
-                    return;
-                }
-
-                destImage.importData(0, buffer, true);
+                        try {
+                            
+                            fireProgressStateChanged(100 * z/(zDim - 1));
+                        } catch (NullPointerException npe) {
+        
+                            if (threadStopped) {
+                                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                                  Preferences.DEBUG_ALGORITHM);
+                            }
+                        }
+        
+                        this.filter(buffer, baseBuffer);
+        
+                        if (threadStopped) { // do BEFORE buffer has been exported to Image
+                            finalize();
+        
+                            return;
+                        }
+        
+                        destImage.importData(z * length, buffer, false);
+                    } if (z != referenceSlice);
+                } // for (z = 0; z < zDim; z++)
             } else { // if (isColorImage) {
-
-                for (colour = 0; (colour < valuesPerPixel) && !threadStopped; colour++) { // for each color
-
-                
-                	fireProgressStateChanged((int) (((float) (colour) / valuesPerPixel) * 100));
-                	fireProgressStateChanged("Processing colour " + Integer.toString(colour));
-           
-                    srcImage.exportRGBData(colour, 0, length, buffer); // grab the slice
-                    baseImage.exportRGBData(colour, 0, baseLength, baseBuffer);
-
-                    if (((colour == 1) && rChannel) || ((colour == 2) && gChannel) // process only desired channels
-                            || ((colour == 3) && bChannel)) { // -- and not alpha channel at all --
-                        filter(buffer, baseBuffer);
-                    }
-
-                    if (threadStopped) { // do before copying back into image
-                        finalize();
-
-                        return;
-                    }
-
-                    // then store the channel back into the destination image
-                    destImage.importRGBData(colour, 0, buffer, false);
-                }
-
-                destImage.calcMinMax();
+                fireProgressStateChanged("Processing Image");
+                srcImage.exportRGBData(1, 4 * referenceSlice * length, length, baseBuffer);
+                srcImage.exportRGBData(2, 4 * referenceSlice * length, length, baseGreenBuffer);
+                srcImage.exportRGBData(3, 4 * referenceSlice * length, length, baseBlueBuffer);
+                destImage.importRGBData(1, 4 * referenceSlice * length, baseBuffer, false);
+                destImage.importRGBData(2, 4 * referenceSlice * length, baseGreenBuffer, false);
+                destImage.importRGBData(3, 4 * referenceSlice * length, baseBlueBuffer, false);
+                for (z = 0; z < zDim; z++) {
+                    if (z != referenceSlice) {
+                        for (colour = 1; (colour <= 3) && !threadStopped; colour++) { // for each color
+        
+                         
+                            fireProgressStateChanged(100 * (colour + 3 * z) / (3 * zDim));
+                            
+                     
+        
+                            srcImage.exportRGBData(colour, 4 * z * length, length, buffer); // get the slice
+                            
+        
+                            if (colour == 1) {
+                                filter(buffer, baseBuffer);
+                            }
+                            else if (colour == 2) {
+                                filter(buffer, baseGreenBuffer);
+                            }
+                            else {
+                                filter(buffer, baseBlueBuffer);
+                            }
+        
+                            if (threadStopped) { // do BEFORE buffer has been exported to Image
+                                finalize();
+        
+                                return;
+                            }
+        
+                            // then store the channel back into the destination image
+                            destImage.importRGBData(colour, 4 * z * length, buffer, false);
+                        }
+                    } // if (z != referenceSlice)
+                } // for (z = 0; z < zDim; z++)
             }
         } catch (IOException error) {
-            displayError("Algorithm Histogram Match reports: image locked");
-            setCompleted(false);
+            errorCleanUp("AlgorithmHistogramSliceMatch reports: source image locked", false);
 
             return;
         } catch (OutOfMemoryError e) {
             buffer = null;
             baseBuffer = null;
-            displayError("Algorithm Histogram Match reports: out of memory");
-            setCompleted(false);
+            baseGreenBuffer = null;
+            baseBlueBuffer = null;
+            errorCleanUp("AlgorithmHistogramSliceMatch reports: out of memory", true);
 
             return;
         }
@@ -353,8 +371,8 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
             return;
         }
 
-        
-        setCompleted(true);
+        destImage.calcMinMax();
+        setCompleted(true);    
     }
 
     /**
@@ -454,7 +472,7 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
                 Preferences.debug("at hist: " + ((int) (srcBuffer[i] - bufMin) / unitSize) + "\n");
                 Preferences.debug("totalbins: " + totalBins + "\n");
                 Preferences.debug("</HALT>\n");
-                MipavUtil.displayError("Algorithm Histogram match reports: out of bounds");
+                MipavUtil.displayError("Algorithm Slice Histogram match reports: out of bounds");
                 setCompleted(false);
 
                 return;
@@ -504,7 +522,7 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
                 Preferences.debug("at hist: " + ((int) (baseBuffer[i] - baseOffset) / baseUnitSize) + "\n");
                 Preferences.debug("totalbins: " + totalBins + "\n");
                 Preferences.debug("</HALT>\n");
-                MipavUtil.displayError("Algorithm Histogram match reports: out of bounds");
+                MipavUtil.displayError("Algorithm Slice Histogram match reports: out of bounds");
                 setCompleted(false);
 
                 return;
