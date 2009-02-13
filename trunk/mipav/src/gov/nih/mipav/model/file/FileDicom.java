@@ -1286,13 +1286,13 @@ public class FileDicom extends FileDicomBase {
 
         double slope = fileInfo.getRescaleSlope();
         double intercept = fileInfo.getRescaleIntercept();
-
         if (slope == 0) slope = 1;
         
-        if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE) {
-            slope = 1;
-            intercept = 0;
-        }
+        //  Why is this here? It overwrites the slope and intercept. 
+        //if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE) {
+        //    slope = 1;
+        //    intercept = 0;
+        //}
 
         boolean setOneMinMax = false;
         for (int i = 0; i < buffer.length; i++) {
@@ -1468,13 +1468,13 @@ public class FileDicom extends FileDicomBase {
         float slope = (float) fileInfo.getRescaleSlope();
         float intercept = (float) fileInfo.getRescaleIntercept();
         if (slope == 0) slope = 1;
-        
-        //System.out.println(" s = " + slope + " intercept = " + intercept);
-        
-        if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE) {
-            slope = 1;
-            intercept = 0;
-        }
+      
+        //System.out.println(" slope = " + slope + " intercept = " + intercept);
+        // Why is this here? It overwrites the slope and intercept. 
+        //if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE) {
+        //    slope = 1;
+        //    intercept = 0;
+        //}
         
         boolean setOneMinMax = false;
         for (int i = 0; i < buffer.length; i++) {
@@ -1508,17 +1508,15 @@ public class FileDicom extends FileDicomBase {
                 // there are no pixel pad values stored in the buffer; they've all been
                 // converted to the minimum value.
                 if (buffer[i] != pixelPad) {
-                    buffer[i] = (short) ( (buffer[i] * slope) + intercept);
+                    buffer[i] = (short) MipavMath.round( (buffer[i] * slope) + intercept);
                 } else {
-                    buffer[i] = (short) ( (min * slope) + intercept);
+                    buffer[i] = (short) MipavMath.round( (min * slope) + intercept);
                 }
             }
         } else {
-
             if ( (slope != 1) || (intercept != 0)) {
-
                 for (int i = 0; i < buffer.length; i++) {
-                    buffer[i] = (short) ( (buffer[i] * slope) + intercept); // Rescale data
+                    buffer[i] = (short) MipavMath.round( (buffer[i] * slope) + intercept); // Rescale data
                 }
             }
         }
