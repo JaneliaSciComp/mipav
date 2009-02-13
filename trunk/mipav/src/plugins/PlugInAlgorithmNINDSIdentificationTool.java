@@ -109,9 +109,9 @@ public class PlugInAlgorithmNINDSIdentificationTool extends
         }
 
         if(enableTextArea) {
-        	outputTextArea.append("** Ending NINDS Anonymization **\n\n");
+        	outputTextArea.append("** Ending NINDS Identification **\n\n");
         }
-        printStream.println("** Ending NINDS Anonymization **");
+        printStream.println("** Ending NINDS Identification **");
         printStream.println();
 
 
