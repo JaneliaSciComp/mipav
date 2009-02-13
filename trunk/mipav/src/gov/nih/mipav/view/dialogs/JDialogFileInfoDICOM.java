@@ -1285,8 +1285,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
      * Builds which cells to display as light blue and green.
      */
     private void buildColorMap() {
-    	Color green = new Color(102, 204, 153); // light green
-    	Color blue = new Color(153, 204, 255); // light blue
+    	Color green = new Color(0xbbffbb); // light green
+    	Color blue = new Color(0xccffff); // light blue
     	boolean doBlue = false;
     	Vector<FileDicomKey> v;
     	Collections.sort(v = new Vector<FileDicomKey>(DicomInfo.getTagTable().getTagList().keySet()), new CompareGroup());
@@ -1620,7 +1620,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 	  		  		String group = name.substring(0, 4);
 	  		  		Color f = groupColorMap.get(group);
 	  		  		if(f == null) {
-	  		  			f = new Color(255, 153, 153); // light red
+	  		  			f = new Color(0xffcccc); // light red
 	  		  		}
 
 	  		  		cell.setBackground(f);
