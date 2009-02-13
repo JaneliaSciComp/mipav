@@ -2945,7 +2945,44 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
                 if ( (offscreenImage == null) || (offscreenImage.getWidth(null) != width)
                         || (offscreenImage.getHeight(null) != height)) {
-                    offscreenImage = createImage(width, height);
+                    try {
+                        offscreenImage = createImage(width, height);
+                    }
+                    catch (OutOfMemoryError error) {
+                        offscreenImage = null;
+                        System.gc();
+                        
+                        if (Preferences.is(Preferences.PREF_ZOOM_LINEAR)) {
+                            if (zoomX <= 1.0f) {
+                                zoomX = 0.5f * zoomX;
+                            }
+                            else {
+                                zoomX = zoomX - 1.0f;
+                            }
+                            
+                            if (zoomY <= 1.0f) {
+                                zoomY = 0.5f * zoomY;
+                            }
+                            else {
+                                zoomY = zoomY - 1.0f;
+                            }
+
+                        } else { // zoomMode == EXPONENTIAL
+
+                            zoomX = 0.5f * zoomX;
+                            zoomY = 0.5f * zoomY;
+                        }
+                        
+                        int xS = getScaledX(imageDim.width >> 2);
+                        int yS = getScaledY(imageDim.height >> 2);
+                        cursorMode = DEFAULT;
+                        setCursor(MipavUtil.defaultCursor);
+                        ((ViewJFrameImage) frame).updateFrame(zoomX, zoomY, xS, yS);
+                        System.err.println("Reduced zoom because createImage in " +
+                        "ComponentEditImage.paintComponent yielded OutOfMemoryError");
+
+                        return;
+                    } // catch (OutOfMemoryError error)
                 }
 
                 offscreenGraphics2d = (Graphics2D) offscreenImage.getGraphics();
