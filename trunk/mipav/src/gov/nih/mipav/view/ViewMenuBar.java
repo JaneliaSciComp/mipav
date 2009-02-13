@@ -179,7 +179,8 @@ public class ViewMenuBar {
                         menuBuilder.makeMenu("Histogram equalization", false, new JMenuItem[] {
                                 menuBuilder.buildMenuItem("Neighborhood adaptive", "performNAHE", 0, null, false),
                                 menuBuilder.buildMenuItem("Regional adaptive", "performRAHE", 0, null, false)}),
-                        menuBuilder.buildMenuItem("Histogram matching", "histMatch", 0, null, false),
+                        menuBuilder.buildMenuItem("Histogram image matching", "histImageMatch", 0, null, false),
+                        menuBuilder.buildMenuItem("Histogram slice matching", "histSliceMatch", 0, null, false),
                         menuBuilder.buildMenuItem("Histogram summary", "HistoSummary", 0, null, false),}),
                 menuBuilder.makeMenu("Hough transform", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Circle detection", "HoughCircle", 0, null, false),
@@ -970,6 +971,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Depth", false);
             menuBuilder.setMenuItemEnabled("VOI landmark", false);
             menuBuilder.setMenuItemEnabled("Reorientation / Resampling", false);
+            menuBuilder.setMenuItemEnabled("Histogram slice matching", false);
         }
 
         if (ModelImage.isColorImage(type)) {
