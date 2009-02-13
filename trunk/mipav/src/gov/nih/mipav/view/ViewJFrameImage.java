@@ -1585,6 +1585,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else if (command.equals("histSliceMatch")) {
             new JDialogHistogramSliceMatch(this, getActiveImage());
+        } else if (command.equals("histSliceEqualize")) {
+            new JDialogHistogramSliceEqualize(this, getActiveImage());
         } else if (command.equals("histTwoDim")) {
             new JDialogHistogram2Dim(this, getActiveImage());
         } else if (command.equals("cumHistogram")) {
