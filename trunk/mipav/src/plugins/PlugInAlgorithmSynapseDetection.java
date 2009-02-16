@@ -16,7 +16,7 @@ import java.util.*;
 
 /**
  *
- * @version  February 11, 2009
+ * @version  February 16, 2009
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -43,12 +43,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     
     private int blueMax = 20;
     
-    /* Minimum margin by which red exceeds green, blue */
-    private int redMargin = 1;
+    /* Minimum intensity values */
+    private int redIntensity = 55;
     
-    private int greenMargin = 1;
+    private int greenIntensity = 85;
     
-    private int blueMargin = 1;
+    private int blueIntensity = 80;
     
     private int threePreviousColor;
     private int twoPreviousColor;
@@ -101,13 +101,13 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
      * @param  greenMax       Maximum number of green pixels along line
      * @param  blueMin        Minimum number of blue pixels along line
      * @param  blueMax        Maximum number of blue pixels along line
-     * @param  redMargin      margin by which red exceeds green, blue
-     * @param  greenMargin    margin by which green exceed red, blue
-     * @param  blueMargin     margin by which blue exceeds red, green
+     * @param  redIntensity      Minimum red intensity
+     * @param  greenIntensity    Minimum green intensity
+     * @param  blueIntensity     Minimum blue intensity
      */
     public PlugInAlgorithmSynapseDetection(ModelImage srcImg, int redMin, int redMax, int greenMin,
-                                         int greenMax, int blueMin, int blueMax, int redMargin,
-                                         int greenMargin, int blueMargin) {
+                                         int greenMax, int blueMin, int blueMax, int redIntensity,
+                                         int greenIntensity, int blueIntensity) {
         super(null, srcImg);
         this.redMin = redMin;
         this.redMax = redMax;
@@ -115,9 +115,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         this.greenMax = greenMax;
         this.blueMin = blueMin;
         this.blueMax = blueMax;
-        this.redMargin = redMargin;
-        this.greenMargin = greenMargin;
-        this.blueMargin = blueMargin;
+        this.redIntensity = redIntensity;
+        this.greenIntensity = greenIntensity;
+        this.blueIntensity = blueIntensity;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -235,23 +235,29 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     red = buffer[pos] & 0xff;
                     green = greenBuffer[pos] & 0xff;
                     blue = blueBuffer[pos] & 0xff;
-                    if (((red - green) >= redMargin) && ((red - blue) >= redMargin)) {
-                        buffer[pos] = BRIGHT_RED;
-                    }
-                    else if ((red > green) && (red > blue)) {
-                        buffer[pos] = RED;
-                    }
-                    else if (((green - red) >= greenMargin) && ((green - blue) >= greenMargin)) {
-                        buffer[pos] = BRIGHT_GREEN;
+                    if ((red > green) && (red > blue)) {
+                        if (red >= redIntensity) {
+                            buffer[pos] = BRIGHT_RED;
+                        }
+                        else {
+                            buffer[pos] = RED;
+                        }
                     }
                     else if ((green > red) && (green > blue)) {
-                        buffer[pos] = GREEN;
-                    }
-                    else if (((blue - red) >= blueMargin) && ((blue - green) >= blueMargin)) {
-                        buffer[pos] = BRIGHT_BLUE;
+                        if (green >= greenIntensity) {
+                            buffer[pos] = BRIGHT_GREEN;
+                        }
+                        else {
+                            buffer[pos] = GREEN;
+                        }
                     }
                     else if ((blue > red) && (blue > green)) {
-                        buffer[pos] = BLUE;
+                        if (blue >= blueIntensity) {
+                            buffer[pos] = BRIGHT_BLUE;
+                        }
+                        else {
+                            buffer[pos] = BLUE;
+                        }
                     }
                     else {
                         buffer[pos] = NONE;
@@ -274,6 +280,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -287,9 +294,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                        presentWidth++;
                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                           blueX = (blueStartX + x) >> 2;
-                           blueY = (blueStartY + y) >> 2;
-                           blueZ = (blueStartZ + z) >> 2;    
+                           blueX = (blueStartX + x) >> 1;
+                           blueY = (blueStartY + y) >> 1;
+                           blueZ = (blueStartZ + z) >> 1; 
                        }
                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                            presentBrightness = true;
@@ -307,7 +314,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                        onePreviousBrightness = presentBrightness;
                        if (buffer[pos] < BRIGHT_RED) {
                            presentColor = buffer[pos];
-                           presentBrightColor = presentColor + 3;
+                           if (buffer[pos] == NONE) {
+                               presentBrightColor = NONE;
+                           }
+                           else {
+                               presentBrightColor = presentColor + 3;
+                           }
                            presentBrightness = false;
                        }
                        else {
@@ -353,6 +365,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -366,9 +379,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -386,7 +399,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -432,6 +450,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -445,9 +464,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -465,7 +484,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -510,6 +534,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -523,9 +548,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -543,7 +568,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -580,6 +610,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -593,9 +624,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -613,7 +644,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -658,6 +694,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -671,9 +708,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -691,7 +728,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -728,6 +770,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -741,9 +784,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -761,7 +804,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -806,6 +854,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -819,9 +868,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -839,7 +888,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -876,6 +930,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -889,9 +944,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -909,7 +964,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -954,6 +1014,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -967,9 +1028,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -987,7 +1048,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -1024,6 +1090,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -1037,9 +1104,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -1057,7 +1124,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -1101,6 +1173,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -1114,9 +1187,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -1134,7 +1207,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -1171,6 +1249,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -1184,9 +1263,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -1204,7 +1283,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -1248,6 +1332,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -1261,9 +1346,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -1281,7 +1366,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -1318,6 +1408,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -1331,9 +1422,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -1351,7 +1442,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -1395,6 +1491,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -1408,9 +1505,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -1428,7 +1525,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -1467,6 +1569,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -1480,9 +1583,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -1500,7 +1603,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -1539,6 +1647,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -1552,9 +1661,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -1572,7 +1681,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -1616,6 +1730,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -1629,9 +1744,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -1649,7 +1764,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -1688,6 +1808,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -1701,9 +1822,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -1721,7 +1842,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -1760,6 +1886,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -1773,9 +1900,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -1793,7 +1920,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -1837,6 +1969,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -1850,9 +1983,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -1870,7 +2003,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -1909,6 +2047,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -1922,9 +2061,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -1942,7 +2081,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -1981,6 +2125,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -1994,9 +2139,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -2014,7 +2159,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -2058,6 +2208,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -2071,9 +2222,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -2091,7 +2242,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -2130,6 +2286,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -2143,9 +2300,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -2163,7 +2320,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -2202,6 +2364,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
                 presentColor = NONE;
+                presentBrightColor = NONE;
                 threePreviousWidth = 0;
                 twoPreviousWidth = 0;
                 onePreviousWidth = 0;
@@ -2215,9 +2378,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
                         presentWidth++;
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
-                            blueX = (blueStartX + x) >> 2;
-                            blueY = (blueStartY + y) >> 2;
-                            blueZ = (blueStartZ + z) >> 2;    
+                            blueX = (blueStartX + x) >> 1;
+                            blueY = (blueStartY + y) >> 1;
+                            blueZ = (blueStartZ + z) >> 1;    
                         }
                         if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
                             presentBrightness = true;
@@ -2235,7 +2398,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         onePreviousBrightness = presentBrightness;
                         if (buffer[pos] < BRIGHT_RED) {
                             presentColor = buffer[pos];
-                            presentBrightColor = presentColor + 3;
+                            if (buffer[pos] == NONE) {
+                                presentBrightColor = NONE;
+                            }
+                            else {
+                                presentBrightColor = presentColor + 3;
+                            }
                             presentBrightness = false;
                         }
                         else {
@@ -2298,8 +2466,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
            (twoPreviousColor == BLUE) && (twoPreviousWidth >= blueMin) && (twoPreviousWidth <= blueMax)) && 
            (((threePreviousColor == RED) && (threePreviousWidth >= redMin) && (threePreviousWidth <= redMax) &&
            (onePreviousColor == GREEN) && (onePreviousWidth >= greenMin) && (onePreviousWidth <= greenMax)) ||
-           ((threePreviousColor == GREEN) && (threePreviousWidth >= greenMin) && (threePreviousWidth <= greenMax)) &&
-           (onePreviousColor == RED) && (onePreviousWidth >= redMin) && (onePreviousWidth <= redMax))) {
+           ((threePreviousColor == GREEN) && (threePreviousWidth >= greenMin) && (threePreviousWidth <= greenMax) &&
+           (onePreviousColor == RED) && (onePreviousWidth >= redMin) && (onePreviousWidth <= redMax)))) {
            newPtVOI = new VOI((short) (numSynapses), Integer.toString(numSynapses+1), zDim, VOI.POINT, -1.0f);
            newPtVOI.setColor(Color.white);
            xArr[0] = blueX;
