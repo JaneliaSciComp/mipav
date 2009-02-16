@@ -14,7 +14,7 @@ import javax.swing.*;
 
 
 /**
- * @version  February 9, 2009
+ * @version  February 16, 2009
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -69,24 +69,24 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
     
     private JTextField blueMaxText;
     
-    /* Margin by which red exceeds green and blue */
-    private int redMargin = 1;
+    /* Margin red value */
+    private int redIntensity = 55;
     
-    private JLabel redMarginLabel;
+    private JLabel redIntensityLabel;
     
-    private JTextField redMarginText;
+    private JTextField redIntensityText;
     
-    private int greenMargin = 1;
+    private int greenIntensity = 85;
     
-    private JLabel greenMarginLabel;
+    private JLabel greenIntensityLabel;
     
-    private JTextField greenMarginText;
+    private JTextField greenIntensityText;
     
-    private int blueMargin = 1;
+    private int blueIntensity = 80;
     
-    private JLabel blueMarginLabel;
+    private JLabel blueIntensityLabel;
     
-    private JTextField blueMarginText;
+    private JTextField blueIntensityText;
     
     /** DOCUMENT ME! */
     private ModelImage image; // source image   
@@ -196,9 +196,9 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         str += greenMax + delim;
         str += blueMin + delim;
         str += blueMax + delim;
-        str += redMargin + delim;
-        str += greenMargin + delim;
-        str += blueMargin;
+        str += redIntensity + delim;
+        str += greenIntensity + delim;
+        str += blueIntensity;
         
         return str;
     }
@@ -258,30 +258,30 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
     }
     
     /**
-     * Accessor that sets the redMargin variable, for minimum red margin over green, blue.
+     * Accessor that sets the redIntensity variable, for minimum red Intensity over green, blue.
      *
-     * @param  redMargin  minimum red margin over green, blue
+     * @param  redIntensity  minimum red Intensity over green, blue
      */
-    public void setRedMargin(int redMargin) {
-        this.redMargin = redMargin;
+    public void setRedIntensity(int redIntensity) {
+        this.redIntensity = redIntensity;
     }
     
     /**
-     * Accessor that sets the greenMargin variable, for minimum green margin over red, blue.
+     * Accessor that sets the greenIntensity variable, for minimum green Intensity over red, blue.
      *
-     * @param  greenMargin  minimum green margin over red, blue
+     * @param  greenIntensity  minimum green Intensity over red, blue
      */
-    public void setGreenMargin(int greenMargin) {
-        this.greenMargin = greenMargin;
+    public void setGreenIntensity(int greenIntensity) {
+        this.greenIntensity = greenIntensity;
     }
     
     /**
-     * Accessor that sets the blueMargin variable, for minimum blue margin over red, green.
+     * Accessor that sets the blueIntensity variable, for minimum blue Intensity over red, green.
      *
-     * @param  blueMargin  minimum blue margin over red, green
+     * @param  blueIntensity  minimum blue Intensity over red, green
      */
-    public void setBlueMargin(int blueMargin) {
-        this.blueMargin = blueMargin;
+    public void setBlueIntensity(int blueIntensity) {
+        this.blueIntensity = blueIntensity;
     }
     
     /**
@@ -292,8 +292,8 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         try {
 
             synapseDetectionAlgo = new PlugInAlgorithmSynapseDetection(image, redMin, redMax, greenMin, greenMax,
-                                                                   blueMin, blueMax, redMargin, greenMargin,
-                                                                   blueMargin);
+                                                                   blueMin, blueMax, redIntensity, greenIntensity,
+                                                                   blueIntensity);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -345,9 +345,9 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         setGreenMax(scriptParameters.getParams().getInt("green_max"));
         setBlueMin(scriptParameters.getParams().getInt("blue_min"));
         setBlueMax(scriptParameters.getParams().getInt("blue_max"));
-        setRedMargin(scriptParameters.getParams().getInt("red_margin"));
-        setGreenMargin(scriptParameters.getParams().getInt("green_margin"));
-        setBlueMargin(scriptParameters.getParams().getInt("blue_margin"));
+        setRedIntensity(scriptParameters.getParams().getInt("red_intensity"));
+        setGreenIntensity(scriptParameters.getParams().getInt("green_intensity"));
+        setBlueIntensity(scriptParameters.getParams().getInt("blue_intensity"));
     }
 
     /**
@@ -361,9 +361,9 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_max", greenMax));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_min", blueMin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_max", blueMax));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("red_margin", redMargin));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("green_margin", greenMargin));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("blue_margin", blueMargin));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("red_intensity", redIntensity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("green_intensity", greenIntensity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blue_intensity", blueIntensity));
     }
 
     /**
@@ -472,47 +472,47 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         gbc.gridy = yPos++;
         mainPanel.add(blueMaxText, gbc);
         
-        redMarginLabel = new JLabel("Minimum red margin over green, blue");
-        redMarginLabel.setForeground(Color.black);
-        redMarginLabel.setFont(serif12);
+        redIntensityLabel = new JLabel("Minimum red intensity");
+        redIntensityLabel.setForeground(Color.black);
+        redIntensityLabel.setFont(serif12);
         gbc.gridx = 0;
         gbc.gridy = yPos;
-        mainPanel.add(redMarginLabel, gbc);
+        mainPanel.add(redIntensityLabel, gbc);
 
-        redMarginText = new JTextField(10);
-        redMarginText.setText("1");
-        redMarginText.setFont(serif12);
+        redIntensityText = new JTextField(10);
+        redIntensityText.setText("55");
+        redIntensityText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
-        mainPanel.add(redMarginText, gbc);
+        mainPanel.add(redIntensityText, gbc);
         
-        greenMarginLabel = new JLabel("Minimum green margin over red, blue");
-        greenMarginLabel.setForeground(Color.black);
-        greenMarginLabel.setFont(serif12);
+        greenIntensityLabel = new JLabel("Minimum green intensity");
+        greenIntensityLabel.setForeground(Color.black);
+        greenIntensityLabel.setFont(serif12);
         gbc.gridx = 0;
         gbc.gridy = yPos;
-        mainPanel.add(greenMarginLabel, gbc);
+        mainPanel.add(greenIntensityLabel, gbc);
 
-        greenMarginText = new JTextField(10);
-        greenMarginText.setText("1");
-        greenMarginText.setFont(serif12);
+        greenIntensityText = new JTextField(10);
+        greenIntensityText.setText("85");
+        greenIntensityText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
-        mainPanel.add(greenMarginText, gbc);
+        mainPanel.add(greenIntensityText, gbc);
         
-        blueMarginLabel = new JLabel("Minimum blue margin over red, green");
-        blueMarginLabel.setForeground(Color.black);
-        blueMarginLabel.setFont(serif12);
+        blueIntensityLabel = new JLabel("Minimum blue intensity");
+        blueIntensityLabel.setForeground(Color.black);
+        blueIntensityLabel.setFont(serif12);
         gbc.gridx = 0;
         gbc.gridy = yPos;
-        mainPanel.add(blueMarginLabel, gbc);
+        mainPanel.add(blueIntensityLabel, gbc);
 
-        blueMarginText = new JTextField(10);
-        blueMarginText.setText("1");
-        blueMarginText.setFont(serif12);
+        blueIntensityText = new JTextField(10);
+        blueIntensityText.setText("80");
+        blueIntensityText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
-        mainPanel.add(blueMarginText, gbc);
+        mainPanel.add(blueIntensityText, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -634,53 +634,53 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
             return false;
         }
         
-        tmpStr = redMarginText.getText();
-        redMargin = Integer.parseInt(tmpStr);
+        tmpStr = redIntensityText.getText();
+        redIntensity = Integer.parseInt(tmpStr);
 
-        if (redMargin < 1) {
-            MipavUtil.displayError("red margin must be at least 1");
-            redMarginText.requestFocus();
-            redMarginText.selectAll();
-
-            return false;
-        } else if (redMargin > 255) {
-            MipavUtil.displayError("red margin must not exceed 255");
-            redMarginText.requestFocus();
-            redMarginText.selectAll();
+        if (redIntensity < 1) {
+            MipavUtil.displayError("red intensity must be at least 1");
+            redIntensityText.requestFocus();
+            redIntensityText.selectAll();
 
             return false;
-        }
-        
-        tmpStr = greenMarginText.getText();
-        greenMargin = Integer.parseInt(tmpStr);
-
-        if (greenMargin < 1) {
-            MipavUtil.displayError("green margin must be at least 1");
-            greenMarginText.requestFocus();
-            greenMarginText.selectAll();
-
-            return false;
-        } else if (greenMargin > 255) {
-            MipavUtil.displayError("green margin must not exceed 255");
-            greenMarginText.requestFocus();
-            greenMarginText.selectAll();
+        } else if (redIntensity > 255) {
+            MipavUtil.displayError("red intensity must not exceed 255");
+            redIntensityText.requestFocus();
+            redIntensityText.selectAll();
 
             return false;
         }
         
-        tmpStr = blueMarginText.getText();
-        blueMargin = Integer.parseInt(tmpStr);
+        tmpStr = greenIntensityText.getText();
+        greenIntensity = Integer.parseInt(tmpStr);
 
-        if (blueMargin < 1) {
-            MipavUtil.displayError("blue margin must be at least 1");
-            blueMarginText.requestFocus();
-            blueMarginText.selectAll();
+        if (greenIntensity < 1) {
+            MipavUtil.displayError("green intensity must be at least 1");
+            greenIntensityText.requestFocus();
+            greenIntensityText.selectAll();
 
             return false;
-        } else if (blueMargin > 255) {
-            MipavUtil.displayError("blue margin must not exceed 255");
-            blueMarginText.requestFocus();
-            blueMarginText.selectAll();
+        } else if (greenIntensity > 255) {
+            MipavUtil.displayError("green intensity must not exceed 255");
+            greenIntensityText.requestFocus();
+            greenIntensityText.selectAll();
+
+            return false;
+        }
+        
+        tmpStr = blueIntensityText.getText();
+        blueIntensity = Integer.parseInt(tmpStr);
+
+        if (blueIntensity < 1) {
+            MipavUtil.displayError("blue intensity must be at least 1");
+            blueIntensityText.requestFocus();
+            blueIntensityText.selectAll();
+
+            return false;
+        } else if (blueIntensity > 255) {
+            MipavUtil.displayError("blue intensity must not exceed 255");
+            blueIntensityText.requestFocus();
+            blueIntensityText.selectAll();
 
             return false;
         }
