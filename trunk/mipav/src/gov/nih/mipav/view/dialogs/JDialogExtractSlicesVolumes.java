@@ -364,7 +364,7 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
                 int endSlice;
 
                 // keep going until we find a slice that we don't want extracted
-                for (endSlice = startSlice; extractList[endSlice] && (endSlice < extractList.length); endSlice++) { }
+                for (endSlice = startSlice; (endSlice < extractList.length)  && extractList[endSlice] ; endSlice++) { }
 
                 if (endSlice == (startSlice)) {
 
