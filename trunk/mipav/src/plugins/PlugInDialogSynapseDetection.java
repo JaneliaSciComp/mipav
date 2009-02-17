@@ -8,13 +8,12 @@ import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.text.DecimalFormat;
 
 import javax.swing.*;
 
 
 /**
- * @version  February 16, 2009
+ * @version  February 17, 2009
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -57,17 +56,29 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
     
     private JTextField greenMaxText;
     
-    private int blueMin = 1;
+    private int blueMinXY = 1;
     
-    private JLabel blueMinLabel;
+    private JLabel blueMinXYLabel;
     
-    private JTextField blueMinText;
+    private JTextField blueMinXYText;
     
-    private int blueMax = 20;
+    private int blueMaxXY = 20;
     
-    private JLabel blueMaxLabel;
+    private JLabel blueMaxXYLabel;
     
-    private JTextField blueMaxText;
+    private JTextField blueMaxXYText;
+    
+    private int blueMinZ = 1;
+    
+    private JLabel blueMinZLabel;
+    
+    private JTextField blueMinZText;
+    
+    private int blueMaxZ = 20;
+    
+    private JLabel blueMaxZLabel;
+    
+    private JTextField blueMaxZText;
     
     /* Margin red value */
     private int redIntensity = 55;
@@ -194,8 +205,10 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         str += redMax + delim;
         str += greenMin + delim;
         str += greenMax + delim;
-        str += blueMin + delim;
-        str += blueMax + delim;
+        str += blueMinXY + delim;
+        str += blueMaxXY + delim;
+        str += blueMinZ + delim;
+        str += blueMaxZ + delim;
         str += redIntensity + delim;
         str += greenIntensity + delim;
         str += blueIntensity;
@@ -240,21 +253,39 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
     }
     
     /**
-     * Accessor that sets the blueMin variable, for minimum blue pixel width.
+     * Accessor that sets the blueMinXY variable, for minimum blue pixel width within a slice.
      *
-     * @param  blueMin  minimum number of blue pixels
+     * @param  blueMinXY  minimum number of blue pixels within one slice
      */
-    public void setBlueMin(int blueMin) {
-        this.blueMin = blueMin;
+    public void setBlueMinXY(int blueMinXY) {
+        this.blueMinXY = blueMinXY;
     }
     
     /**
-     * Accessor that sets the blueMax variable, for maximum blue pixel width.
+     * Accessor that sets the blueMaxXY variable, for maximum blue pixel width within a slice.
      *
-     * @param  blueMax  maximum number of blue pixels
+     * @param  blueMaxXY  maximum number of blue pixels within one slice
      */
-    public void setBlueMax(int blueMax) {
-        this.blueMax = blueMax;
+    public void setBlueMaxXY(int blueMaxXY) {
+        this.blueMaxXY = blueMaxXY;
+    }
+    
+    /**
+     * Accessor that sets the blueMinZ variable, for minimum blue pixel width between slices.
+     *
+     * @param  blueMinZ  minimum number of blue pixels between slices
+     */
+    public void setBlueMinZ(int blueMinZ) {
+        this.blueMinZ = blueMinZ;
+    }
+    
+    /**
+     * Accessor that sets the blueMaxZ variable, for maximum blue pixel width between slices.
+     *
+     * @param  blueMaxZ  maximum number of blue pixels between slices
+     */
+    public void setBlueMaxZ(int blueMaxZ) {
+        this.blueMaxZ = blueMaxZ;
     }
     
     /**
@@ -292,7 +323,8 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         try {
 
             synapseDetectionAlgo = new PlugInAlgorithmSynapseDetection(image, redMin, redMax, greenMin, greenMax,
-                                                                   blueMin, blueMax, redIntensity, greenIntensity,
+                                                                   blueMinXY, blueMaxXY, blueMinZ, blueMaxZ,
+                                                                   redIntensity, greenIntensity,
                                                                    blueIntensity);
 
             // This is very important. Adding this object as a listener allows
@@ -343,8 +375,10 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         setRedMax(scriptParameters.getParams().getInt("red_max"));
         setGreenMin(scriptParameters.getParams().getInt("green_min"));
         setGreenMax(scriptParameters.getParams().getInt("green_max"));
-        setBlueMin(scriptParameters.getParams().getInt("blue_min"));
-        setBlueMax(scriptParameters.getParams().getInt("blue_max"));
+        setBlueMinXY(scriptParameters.getParams().getInt("blue_minxy"));
+        setBlueMaxXY(scriptParameters.getParams().getInt("blue_maxxy"));
+        setBlueMinZ(scriptParameters.getParams().getInt("blue_minz"));
+        setBlueMaxZ(scriptParameters.getParams().getInt("blue_maxz"));
         setRedIntensity(scriptParameters.getParams().getInt("red_intensity"));
         setGreenIntensity(scriptParameters.getParams().getInt("green_intensity"));
         setBlueIntensity(scriptParameters.getParams().getInt("blue_intensity"));
@@ -359,8 +393,10 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         scriptParameters.getParams().put(ParameterFactory.newParameter("red_max", redMax));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_min", greenMin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_max", greenMax));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("blue_min", blueMin));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("blue_max", blueMax));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blue_minxy", blueMinXY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blue_maxxy", blueMaxXY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blue_minz", blueMinZ));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blue_maxz", blueMaxZ));
         scriptParameters.getParams().put(ParameterFactory.newParameter("red_intensity", redIntensity));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_intensity", greenIntensity));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_intensity", blueIntensity));
@@ -444,33 +480,61 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         gbc.gridy = yPos++;
         mainPanel.add(greenMaxText, gbc);
         
-        blueMinLabel = new JLabel("Minimum blue pixel width");
-        blueMinLabel.setForeground(Color.black);
-        blueMinLabel.setFont(serif12);
+        blueMinXYLabel = new JLabel("Minimum blue pixel width within a slice");
+        blueMinXYLabel.setForeground(Color.black);
+        blueMinXYLabel.setFont(serif12);
         gbc.gridx = 0;
         gbc.gridy = yPos;
-        mainPanel.add(blueMinLabel, gbc);
+        mainPanel.add(blueMinXYLabel, gbc);
 
-        blueMinText = new JTextField(10);
-        blueMinText.setText("1");
-        blueMinText.setFont(serif12);
+        blueMinXYText = new JTextField(10);
+        blueMinXYText.setText("1");
+        blueMinXYText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
-        mainPanel.add(blueMinText, gbc);
+        mainPanel.add(blueMinXYText, gbc);
         
-        blueMaxLabel = new JLabel("Maximum blue pixel width");
-        blueMaxLabel.setForeground(Color.black);
-        blueMaxLabel.setFont(serif12);
+        blueMaxXYLabel = new JLabel("Maximum blue pixel width within a slice");
+        blueMaxXYLabel.setForeground(Color.black);
+        blueMaxXYLabel.setFont(serif12);
         gbc.gridx = 0;
         gbc.gridy = yPos;
-        mainPanel.add(blueMaxLabel, gbc);
+        mainPanel.add(blueMaxXYLabel, gbc);
         
-        blueMaxText = new JTextField(10);
-        blueMaxText.setText("20");
-        blueMaxText.setFont(serif12);
+        blueMaxXYText = new JTextField(10);
+        blueMaxXYText.setText("20");
+        blueMaxXYText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
-        mainPanel.add(blueMaxText, gbc);
+        mainPanel.add(blueMaxXYText, gbc);
+        
+        blueMinZLabel = new JLabel("Minimum blue pixel width between slices");
+        blueMinZLabel.setForeground(Color.black);
+        blueMinZLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos;
+        mainPanel.add(blueMinZLabel, gbc);
+
+        blueMinZText = new JTextField(10);
+        blueMinZText.setText("1");
+        blueMinZText.setFont(serif12);
+        gbc.gridx = 1;
+        gbc.gridy = yPos++;
+        mainPanel.add(blueMinZText, gbc);
+        
+        blueMaxZLabel = new JLabel("Maximum blue pixel width  between slices");
+        blueMaxZLabel.setForeground(Color.black);
+        blueMaxZLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos;
+        mainPanel.add(blueMaxZLabel, gbc);
+        
+        blueMaxZText = new JTextField(10);
+        blueMaxZText.setText("20");
+        blueMaxZText.setFont(serif12);
+        gbc.gridx = 1;
+        gbc.gridy = yPos++;
+        mainPanel.add(blueMaxZText, gbc);
         
         redIntensityLabel = new JLabel("Minimum red intensity");
         redIntensityLabel.setForeground(Color.black);
@@ -600,36 +664,71 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
             return false;
         }
         
-        tmpStr = blueMinText.getText();
-        blueMin = Integer.parseInt(tmpStr);
+        tmpStr = blueMinXYText.getText();
+        blueMinXY = Integer.parseInt(tmpStr);
 
-        if (blueMin < 1) {
-            MipavUtil.displayError("blue minimum must be at least 1");
-            blueMinText.requestFocus();
-            blueMinText.selectAll();
+        if (blueMinXY < 1) {
+            MipavUtil.displayError("blue minimum xy must be at least 1");
+            blueMinXYText.requestFocus();
+            blueMinXYText.selectAll();
 
             return false;
-        } else if (blueMin > 200) {
-            MipavUtil.displayError("blue minimum must not exceed 200");
-            blueMinText.requestFocus();
-            blueMinText.selectAll();
+        } else if (blueMinXY > 200) {
+            MipavUtil.displayError("blue minimum xy must not exceed 200");
+            blueMinXYText.requestFocus();
+            blueMinXYText.selectAll();
 
             return false;
         }
         
-        tmpStr = blueMaxText.getText();
-        blueMax = Integer.parseInt(tmpStr);
+        tmpStr = blueMaxXYText.getText();
+        blueMaxXY = Integer.parseInt(tmpStr);
 
-        if (blueMax < blueMin) {
-            MipavUtil.displayError("blue maximum must be at least blue minimum");
-            blueMaxText.requestFocus();
-            blueMaxText.selectAll();
+        if (blueMaxXY < blueMinXY) {
+            MipavUtil.displayError("blue maximum xy must be at least blue minimum");
+            blueMaxXYText.requestFocus();
+            blueMaxXYText.selectAll();
 
             return false;
-        } else if (blueMax > 500) {
-            MipavUtil.displayError("blue maximum must not exceed 500");
-            blueMaxText.requestFocus();
-            blueMaxText.selectAll();
+        } else if (blueMaxXY > 500) {
+            MipavUtil.displayError("blue maximum xy must not exceed 500");
+            blueMaxXYText.requestFocus();
+            blueMaxXYText.selectAll();
+
+            return false;
+        }
+        
+        tmpStr = blueMinZText.getText();
+        blueMinZ = Integer.parseInt(tmpStr);
+
+        
+        if (blueMinZ < 1) {
+            MipavUtil.displayError("blue minimum z must be at least 1");
+            blueMinZText.requestFocus();
+            blueMinZText.selectAll();
+
+            return false;
+        } else if (blueMinZ > 200) {
+            MipavUtil.displayError("blue minimum z must not exceed 200");
+            blueMinZText.requestFocus();
+            blueMinZText.selectAll();
+
+            return false;
+        }
+        
+        tmpStr = blueMaxZText.getText();
+        blueMaxZ = Integer.parseInt(tmpStr);
+
+        if (blueMaxZ < blueMinZ) {
+            MipavUtil.displayError("blue maximum z must be at least blue minimum");
+            blueMaxZText.requestFocus();
+            blueMaxZText.selectAll();
+
+            return false;
+        } else if (blueMaxZ > 500) {
+            MipavUtil.displayError("blue maximum z must not exceed 500");
+            blueMaxZText.requestFocus();
+            blueMaxZText.selectAll();
 
             return false;
         }
