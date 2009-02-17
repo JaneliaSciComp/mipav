@@ -6277,7 +6277,7 @@ public class FileTiff extends FileBase {
                                       Preferences.DEBUG_FILEIO);
                 }
             } else if ((type == DOUBLE) && (count == 1) && debuggingFileIO) {
-                Preferences.debug("FileTiff.openIFD: value = " + valueDouble + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("FileTiff.openIFD: value = " + valueDouble[0] + "\n", Preferences.DEBUG_FILEIO);
             } else if ((type == FLOAT) && (count == 1) && debuggingFileIO) {
                 Preferences.debug("FileTiff.openIFD: value = " + valueFloat + "\n", Preferences.DEBUG_FILEIO);
             }
