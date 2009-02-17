@@ -16,7 +16,7 @@ import java.util.*;
 
 /**
  *
- * @version  February 16, 2009
+ * @version  February 17, 2009
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -39,9 +39,16 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     
     private int greenMax = 200;
     
-    private int blueMin = 1;
+    private int blueMinXY = 1;
     
-    private int blueMax = 20;
+    private int blueMaxXY = 20;
+    
+    private int blueMinZ = 1;
+    
+    private int blueMaxZ = 20;
+    
+    // Maximum of blueMaxXY and blueMaxZ;
+    private int blueMax;
     
     /* Minimum intensity values */
     private int redIntensity = 55;
@@ -87,7 +94,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private byte greenBuffer[] = new byte[length];
     private byte blueBuffer[] = new byte[length];
     private BitSet blueMask = null;
-    int threeBandMin;
+    private int threeBandMinXY;
+    private int threeBandMinZ;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -99,22 +107,27 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
      * @param  redMax         Maximum number of red pixels along line
      * @param  greenMin       Minimum number of green pixels along line
      * @param  greenMax       Maximum number of green pixels along line
-     * @param  blueMin        Minimum number of blue pixels along line
-     * @param  blueMax        Maximum number of blue pixels along line
+     * @param  blueMinXY      Minimum number of blue pixels along line within a slice
+     * @param  blueMaxXY      Maximum number of blue pixels along line within a slice
+     * @param  blueMinZ       Minimum number of blue pixels along line between slices
+     * @param  blueMaxZ       Maximum number of blue pixels along line between slices
      * @param  redIntensity      Minimum red intensity
      * @param  greenIntensity    Minimum green intensity
      * @param  blueIntensity     Minimum blue intensity
      */
     public PlugInAlgorithmSynapseDetection(ModelImage srcImg, int redMin, int redMax, int greenMin,
-                                         int greenMax, int blueMin, int blueMax, int redIntensity,
+                                         int greenMax, int blueMinXY, int blueMaxXY, 
+                                         int blueMinZ, int blueMaxZ, int redIntensity,
                                          int greenIntensity, int blueIntensity) {
         super(null, srcImg);
         this.redMin = redMin;
         this.redMax = redMax;
         this.greenMin = greenMin;
         this.greenMax = greenMax;
-        this.blueMin = blueMin;
-        this.blueMax = blueMax;
+        this.blueMinXY = blueMinXY;
+        this.blueMaxXY = blueMaxXY;
+        this.blueMinZ = blueMinZ;
+        this.blueMaxZ = blueMaxZ;
         this.redIntensity = redIntensity;
         this.greenIntensity = greenIntensity;
         this.blueIntensity = blueIntensity;
@@ -192,6 +205,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
 
         time = System.currentTimeMillis();
         
+        blueMax = Math.max(blueMaxXY, blueMaxZ);
+        
         try {
             srcImage.exportRGBData(1, 0, length, buffer); // export red data
         } catch (IOException error) {
@@ -226,6 +241,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         }
         
         // Classify all pixels as either BRIGHT_RED, RED, BRIGHT_GREEN, GREEN, BRIGHT_BLUE, BLUE, or NONE
+        // Note that when line profiles are taken thru a synapse the red and green have all sorts of
+        // different shapes but the blue is almost always a distinct short rectangular pulse, so the 
+        // presence of blue above a threshold intensity is the most significant factor.
         for (z = 0; z < zDim; z++) {
             zPos = z * xySlice;
             for (y = 0; y < yDim; y++) {
@@ -235,7 +253,13 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     red = buffer[pos] & 0xff;
                     green = greenBuffer[pos] & 0xff;
                     blue = blueBuffer[pos] & 0xff;
-                    if ((red > green) && (red > blue)) {
+                    if (blue >= blueIntensity) {
+                        buffer[pos] = BRIGHT_BLUE;
+                    }
+                    else if ((blue > red) && (blue > green)) {
+                        buffer[pos] = BLUE;
+                    }
+                    else if ((red > green) && (red > blue)) {
                         if (red >= redIntensity) {
                             buffer[pos] = BRIGHT_RED;
                         }
@@ -251,14 +275,6 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             buffer[pos] = GREEN;
                         }
                     }
-                    else if ((blue > red) && (blue > green)) {
-                        if (blue >= blueIntensity) {
-                            buffer[pos] = BRIGHT_BLUE;
-                        }
-                        else {
-                            buffer[pos] = BLUE;
-                        }
-                    }
                     else {
                         buffer[pos] = NONE;
                     }
@@ -269,7 +285,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         blueBuffer = null;
         System.gc();
         blueMask = new BitSet(length);
-        threeBandMin = redMin + greenMin + blueMin;
+        threeBandMinXY = redMin + greenMin + blueMinXY;
+        threeBandMinZ = redMin + greenMin + blueMinZ;
         
         // Search along all lines parallel to x axis
         for (z = 0; z < zDim; z++) {
@@ -329,7 +346,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                            
                        }
                        presentWidth = 1;
-                       checkForSynapse(); 
+                       checkForSynapseXY(); 
                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                            blueStartX = x;
                            blueStartY = y;
@@ -349,7 +366,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseXY();
             } // for (y = 0; y < yDim; y++)
         } // for (z = 0; z < zDim; z++)
         System.out.println("Number of synapses found searching parallel to x axis = " + numSynapses);
@@ -414,7 +431,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseXY(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -434,7 +451,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseXY();
             } // for (x = 0; x < xDim; x++)
         } // for (z = 0; z < zDim; z++)
         System.out.println("Number of synapses found searching parallel to y axis = " + (numSynapses - previousNumSynapses));
@@ -499,7 +516,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -519,7 +536,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseZ();
             } // for (x = 0; x < xDim; x++)
         } // for (y = 0; y < yDim; y++)
         System.out.println("Number of synapses found searching parallel to z axis = " + (numSynapses - previousNumSynapses));
@@ -529,7 +546,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         //Search all lines parallel to x = -y.
         for (z = 0; z < zDim; z++) {
             zPos = z * xySlice;
-            for (xStart = 0; xStart <= xDim - threeBandMin; xStart++) {
+            for (xStart = 0; xStart <= xDim - threeBandMinXY; xStart++) {
                 threePreviousColor = NONE;
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
@@ -583,7 +600,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseXY(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -603,9 +620,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
-            } // for (xStart = 0; xStart <= xDim - threeBandMin; xStart++)
-            for (yStart = yDim - 2; yStart >= threeBandMin-1; yStart--) {
+                checkForSynapseXY();
+            } // for (xStart = 0; xStart <= xDim - threeBandMinXY; xStart++)
+            for (yStart = yDim - 2; yStart >= threeBandMinXY-1; yStart--) {
                 threePreviousColor = NONE;
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
@@ -659,7 +676,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseXY(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -679,8 +696,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
-            } // for (yStart = yDim - 2; yStart >= threeBandMin-1; yStart--)
+                checkForSynapseXY();
+            } // for (yStart = yDim - 2; yStart >= threeBandMinXY-1; yStart--)
         } // for (z = 0; z < zDim; z++)
         System.out.println("Number of synapses found searching parallel to (x = -y) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (x = -y) = " + (numSynapses - previousNumSynapses) + "\n");
@@ -689,7 +706,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         // Search all lines parallel to x = y.
         for (z = 0; z < zDim; z++) {
             zPos = z * xySlice;
-            for (xStart = xDim - 1; xStart >= threeBandMin - 1; xStart--) {
+            for (xStart = xDim - 1; xStart >= threeBandMinXY - 1; xStart--) {
                 threePreviousColor = NONE;
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
@@ -743,7 +760,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseXY(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -763,9 +780,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
-            } // for (xStart = xDim - 1; xStart >= threeBandMin - 1; xStart--)
-            for (yStart = yDim - 2; yStart >= threeBandMin - 1; yStart--) {
+                checkForSynapseXY();
+            } // for (xStart = xDim - 1; xStart >= threeBandMinXY - 1; xStart--)
+            for (yStart = yDim - 2; yStart >= threeBandMinXY - 1; yStart--) {
                 threePreviousColor = NONE;
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
@@ -819,7 +836,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseXY(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -839,8 +856,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
-            } // for (yStart = yDim - 2; yStart >= threeBandMin - 1; yStart--)
+                checkForSynapseXY();
+            } // for (yStart = yDim - 2; yStart >= threeBandMinXY - 1; yStart--)
         } // for (z = 0; z < zDim; z++)
         System.out.println("Number of synapses found searching parallel to (x = y) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (x = y) = " + (numSynapses - previousNumSynapses) + "\n");
@@ -849,7 +866,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         // Search all lines parallel to x = -z.
         for (y = 0; y < yDim; y++) {
             yPos = y * xDim;
-            for (xStart = 0; xStart <= xDim - threeBandMin; xStart++) {
+            for (xStart = 0; xStart <= xDim - threeBandMinZ; xStart++) {
                 threePreviousColor = NONE;
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
@@ -903,7 +920,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -923,9 +940,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
-            } // for (xStart = 0; xStart <= xDim - threeBandMin; xStart++)
-            for (zStart = zDim - 2; zStart >= threeBandMin-1; zStart--) {
+                checkForSynapseZ();
+            } // for (xStart = 0; xStart <= xDim - threeBandMinZ; xStart++)
+            for (zStart = zDim - 2; zStart >= threeBandMinZ-1; zStart--) {
                 threePreviousColor = NONE;
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
@@ -979,7 +996,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -999,8 +1016,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
-            } // for (zStart = zDim - 2; zStart >= threeBandMin-1; zStart--)
+                checkForSynapseZ();
+            } // for (zStart = zDim - 2; zStart >= threeBandMinZ-1; zStart--)
         } // for (y = 0; y < yDim; y++)
         System.out.println("Number of synapses found searching parallel to (x = -z) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (x = -z) = " + (numSynapses - previousNumSynapses) + "\n");
@@ -1009,7 +1026,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         // Search all lines parallel to x = z.
         for (y = 0; y < yDim; y++) {
             yPos = y * xDim;
-            for (xStart = xDim - 1; xStart >= threeBandMin - 1; xStart--) {
+            for (xStart = xDim - 1; xStart >= threeBandMinZ - 1; xStart--) {
                 threePreviousColor = NONE;
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
@@ -1063,7 +1080,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -1083,9 +1100,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
-            } // for (xStart = xDim - 1; xStart >= threeBandMin - 1; xStart--)
-            for (zStart = zDim - 2; zStart >= threeBandMin - 1; zStart--) {
+                checkForSynapseZ();
+            } // for (xStart = xDim - 1; xStart >= threeBandMinZ - 1; xStart--)
+            for (zStart = zDim - 2; zStart >= threeBandMinZ - 1; zStart--) {
                 threePreviousColor = NONE;
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
@@ -1139,7 +1156,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -1159,8 +1176,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
-            } // for (zStart = zDim - 2; zStart >= threeBandMin - 1; zStart--)
+                checkForSynapseZ();
+            } // for (zStart = zDim - 2; zStart >= threeBandMinZ - 1; zStart--)
         } // for (y = 0; y < yDim; y++)
         System.out.println("Number of synapses found searching parallel to (x = z) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (x = z) = " + (numSynapses - previousNumSynapses) + "\n");
@@ -1168,7 +1185,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         
         // Search all lines parallel to y = -z.
         for (x = 0; x < xDim; x++) {
-            for (yStart = 0; yStart <= yDim - threeBandMin; yStart++) {
+            for (yStart = 0; yStart <= yDim - threeBandMinZ; yStart++) {
                 threePreviousColor = NONE;
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
@@ -1222,7 +1239,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -1242,9 +1259,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
-            } // for (yStart = 0; yStart <= yDim - threeBandMin; yStart++)
-            for (zStart = zDim - 2; zStart >= threeBandMin-1; zStart--) {
+                checkForSynapseZ();
+            } // for (yStart = 0; yStart <= yDim - threeBandMinZ; yStart++)
+            for (zStart = zDim - 2; zStart >= threeBandMinZ-1; zStart--) {
                 threePreviousColor = NONE;
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
@@ -1298,7 +1315,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -1318,8 +1335,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
-            } // for (zStart = zDim - 2; zStart >= threeBandMin-1; zStart--)
+                checkForSynapseZ();
+            } // for (zStart = zDim - 2; zStart >= threeBandMinZ-1; zStart--)
         } // for (x = 0; x < xDim; x++)
         System.out.println("Number of synapses found searching parallel to (y = -z) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (y = -z) = " + (numSynapses - previousNumSynapses) + "\n");
@@ -1327,7 +1344,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         
         // Search all lines parallel to y = z.
         for (x = 0; x < xDim; x++) {
-            for (yStart = yDim - 1; yStart >= threeBandMin - 1; yStart--) {
+            for (yStart = yDim - 1; yStart >= threeBandMinZ - 1; yStart--) {
                 threePreviousColor = NONE;
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
@@ -1381,7 +1398,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -1401,9 +1418,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
-            } // for (yStart = yDim - 1; yStart >= threeBandMin - 1; yStart--)
-            for (zStart = zDim - 2; zStart >= threeBandMin - 1; zStart--) {
+                checkForSynapseZ();
+            } // for (yStart = yDim - 1; yStart >= threeBandMinZ - 1; yStart--)
+            for (zStart = zDim - 2; zStart >= threeBandMinZ - 1; zStart--) {
                 threePreviousColor = NONE;
                 twoPreviousColor = NONE;
                 onePreviousColor = NONE;
@@ -1457,7 +1474,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -1477,8 +1494,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
-            } // for (zStart = zDim - 2; zStart >= threeBandMin - 1; zStart--)
+                checkForSynapseZ();
+            } // for (zStart = zDim - 2; zStart >= threeBandMinZ - 1; zStart--)
         } // for (x = 0; x < xDim; x++)
         System.out.println("Number of synapses found searching parallel to (y = z) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (y = z) = " + (numSynapses - previousNumSynapses) + "\n");
@@ -1540,7 +1557,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -1560,7 +1577,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseZ();
             } // for (yStart = 0; yStart < yDim; yStart++)
         } // for (zStart = 0; zStart < zDim; zStart++)
         for (zStart = 0; zStart < zDim; zStart++) {
@@ -1618,7 +1635,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -1638,7 +1655,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseZ();
             } // for (xStart = 0; xStart < xDim; xStart++)
         } // for (zStart = 0; zStart < zDim; zStart++)
         for (yStart = 0; yStart < yDim; yStart++) {
@@ -1696,7 +1713,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -1716,7 +1733,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseZ();
             } // for (xStart = 0; xStart < xDim; xStart++)
         } // for (yStart = 0; yStart < yDim; yStart++)
         System.out.println("Number of synapses found searching parallel to (delX = delY = delZ) = " + (numSynapses - previousNumSynapses));
@@ -1779,7 +1796,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -1799,7 +1816,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseZ();
             } // for (yStart = 0; yStart < yDim; yStart++)
         } // for (zStart = 0; zStart < zDim; zStart++)
         for (zStart = 0; zStart < zDim; zStart++) {
@@ -1857,7 +1874,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -1877,7 +1894,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseZ();
             } // for (xStart = 0; xStart < xDim; xStart++)
         } // for (zStart = 0; zStart < zDim; zStart++)
         for (yStart = 0; yStart < yDim; yStart++) {
@@ -1935,7 +1952,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -1955,7 +1972,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseZ();
             } // for (xStart = 0; xStart < xDim; xStart++)
         } // for (yStart = 0; yStart < yDim; yStart++)
         System.out.println("Number of synapses found searching parallel to (delX = delY = -delZ) = " + (numSynapses - previousNumSynapses));
@@ -2018,7 +2035,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -2038,7 +2055,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseZ();
             } // for (yStart = 0; yStart < yDim; yStart++)
         } // for (zStart = 0; zStart < zDim; zStart++)
         for (zStart = 0; zStart < zDim; zStart++) {
@@ -2096,7 +2113,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -2116,7 +2133,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseZ();
             } // for (xStart = 0; xStart < xDim; xStart++)
         } // for (zStart = 0; zStart < zDim; zStart++)
         for (yStart = 0; yStart < yDim; yStart++) {
@@ -2174,7 +2191,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -2194,7 +2211,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseZ();
             } // for (xStart = 0; xStart < xDim; xStart++)
         } // for (yStart = 0; yStart < yDim; yStart++)
         System.out.println("Number of synapses found searching parallel to (delX = -delY = delZ) = " + (numSynapses - previousNumSynapses));
@@ -2257,7 +2274,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -2277,7 +2294,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseZ();
             } // for (yStart = 0; yStart < yDim; yStart++)
         } // for (zStart = 0; zStart < zDim; zStart++)
         for (zStart = 0; zStart < zDim; zStart++) {
@@ -2335,7 +2352,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -2355,7 +2372,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseZ();
             } // for (xStart = 0; xStart < xDim; xStart++)
         } // for (zStart = 0; zStart < zDim; zStart++)
         for (yStart = 0; yStart < yDim; yStart++) {
@@ -2413,7 +2430,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             
                         }
                         presentWidth = 1;
-                        checkForSynapse(); 
+                        checkForSynapseZ(); 
                         if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
                             blueStartX = x;
                             blueStartY = y;
@@ -2433,7 +2450,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 threePreviousBrightness = twoPreviousBrightness;
                 twoPreviousBrightness = onePreviousBrightness;
                 onePreviousBrightness = presentBrightness;
-                checkForSynapse();
+                checkForSynapseZ();
             } // for (xStart = 0; xStart < xDim; xStart++)
         } // for (yStart = 0; yStart < yDim; yStart++)
         System.out.println("Number of synapses found searching parallel to (-delX = delY = delZ) = " + (numSynapses - previousNumSynapses));
@@ -2459,11 +2476,39 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     }
     
     // Finding red, blue, green or green, blue, red with all 3 colors in the appropriate width range
-    // means that a synapse has been found
-    private void checkForSynapse() {
+    // means that a synapse has been found within a plane
+    private void checkForSynapseXY() {
        VOI newPtVOI;
        if ((threePreviousBrightness && twoPreviousBrightness && onePreviousBrightness &&
-           (twoPreviousColor == BLUE) && (twoPreviousWidth >= blueMin) && (twoPreviousWidth <= blueMax)) && 
+           (twoPreviousColor == BLUE) && (twoPreviousWidth >= blueMinXY) && (twoPreviousWidth <= blueMaxXY)) && 
+           (((threePreviousColor == RED) && (threePreviousWidth >= redMin) && (threePreviousWidth <= redMax) &&
+           (onePreviousColor == GREEN) && (onePreviousWidth >= greenMin) && (onePreviousWidth <= greenMax)) ||
+           ((threePreviousColor == GREEN) && (threePreviousWidth >= greenMin) && (threePreviousWidth <= greenMax) &&
+           (onePreviousColor == RED) && (onePreviousWidth >= redMin) && (onePreviousWidth <= redMax)))) {
+           newPtVOI = new VOI((short) (numSynapses), Integer.toString(numSynapses+1), zDim, VOI.POINT, -1.0f);
+           newPtVOI.setColor(Color.white);
+           xArr[0] = blueX;
+           yArr[0] = blueY;
+           zArr[0] = blueZ;
+           newPtVOI.importCurve(xArr, yArr, zArr, blueZ);
+           ((VOIPoint) (newPtVOI.getCurves()[blueZ].elementAt(0))).setFixed(true);
+          ((VOIPoint) (newPtVOI.getCurves()[blueZ].elementAt(0))).setLabel(Integer.toString(numSynapses + 1));
+          ((VOIPoint) (newPtVOI.getCurves()[blueZ].elementAt(0))).setName(Integer.toString(numSynapses + 1));
+           srcImage.registerVOI(newPtVOI);  
+           numSynapses++;
+           //zeroBlueBufferRecursion(blueX, blueY, blueZ);
+           // If zero BlueBufferIteration is not used, before searches parallel to the x axis are completed,
+           // we run out of java heap space with numSynapses = 126,738.
+           zeroBlueBufferIteration(blueX, blueY, blueZ);
+       }
+    }
+    
+//  Finding red, blue, green or green, blue, red with all 3 colors in the appropriate width range
+    // means that a synapse has been found between planes
+    private void checkForSynapseZ() {
+       VOI newPtVOI;
+       if ((threePreviousBrightness && twoPreviousBrightness && onePreviousBrightness &&
+           (twoPreviousColor == BLUE) && (twoPreviousWidth >= blueMinZ) && (twoPreviousWidth <= blueMaxZ)) && 
            (((threePreviousColor == RED) && (threePreviousWidth >= redMin) && (threePreviousWidth <= redMax) &&
            (onePreviousColor == GREEN) && (onePreviousWidth >= greenMin) && (onePreviousWidth <= greenMax)) ||
            ((threePreviousColor == GREEN) && (threePreviousWidth >= greenMin) && (threePreviousWidth <= greenMax) &&
@@ -2507,15 +2552,19 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         int xHigh;
         buffer[i] = NONE;
         blueMask.set(i);
+        int delXY;
+        int delZ;
         while (change && (del <= blueMax - 2)) {
             change = false;
             del++;
-            xLow = Math.max(0, xStart-del);
-            xHigh = Math.min(xDim-1, xStart + del);
-            yLow = Math.max(0, yStart-del);
-            yHigh = Math.min(yDim-1, yStart + del);
-            zLow = Math.max(0, zStart-del);
-            zHigh = Math.min(zDim-1, zStart + del);
+            delXY = Math.min(blueMaxXY-1, del);
+            delZ = Math.min(blueMaxZ-1, del);
+            xLow = Math.max(0, xStart-delXY);
+            xHigh = Math.min(xDim-1, xStart + delXY);
+            yLow = Math.max(0, yStart-delXY);
+            yHigh = Math.min(yDim-1, yStart + delXY);
+            zLow = Math.max(0, zStart-delZ);
+            zHigh = Math.min(zDim-1, zStart + delZ);
             for (z = zLow; z <= zHigh; z++) {
                 zPos = z * xySlice;
                 for (y = yLow; y <= yHigh; y++) {
