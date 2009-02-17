@@ -2134,9 +2134,7 @@ public class FileVOI extends FileXML {
                                       ", " + z[index] + "\n", Preferences.DEBUG_FILEIO);
 
                     if ((ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {
-                        MipavUtil.displayWarning("VOI on file out of image bounds:  Open VOI aborted");
-
-                        return;
+                        throw new SAXException("VOI on file out of image bounds");
                     }
                 }
 
