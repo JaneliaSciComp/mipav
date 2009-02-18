@@ -1,27 +1,72 @@
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.flythroughview.*;
 
 import java.awt.*;
 
 import java.io.*;
-
-import java.text.*;
 
 import java.util.*;
 
 
 /**
  *
- * @version  February 17, 2009
+ * @version  February 18, 2009
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
- *           <p>$Logfile: /mipav/src/plugins/PlugInAlgorithmFociAndStrands.java $ $Revision: 72 $ $Date: 2/06/06 5:50p $
- *           PlugInAlgorithmFociAndStrands is used to:
+ *           PlugInAlgorithmSynapseDetection is used to place a point marker over the blue center of the synapse.
+ *           Because these files are very large, buffers must be as few and small as possible.  Maintaining separate
+ *           red, green, and blue buffers for the entire program is not feasible because of the large file sizes.
+ *           Therefore, all pixels are classified as either BRIGHT_RED, RED, BRIGHT_GREEN, GREEN, BRIGHT_BLUE, BLUE,
+ *           or NONE within a single byte buffer.  User specified redIntensity, greenIntensity, and blueIntensity 
+ *           are used to separate the BRIGHT_COLOR value from the COLOR value.
+ *           
+ *           Note that when line profiles are taken thru a synapse the red and green have all sorts of
+             different shapes but the blue is almost always a distinct 4-24 wide almost rectangular pulse, so the 
+             presence of blue >= blueIntensity is the most significant factor.  A pixel is 
+             counted as BRIGHT_BLUE as long as its blue value is >= blueIntensity even if the red and/or
+             green values at that pixel location are greater than or equal to the blue value.  This lets the well
+             defined width of the blue band be determined.  If the blue value is < blueIntensity, but the blue value
+             is greater than the red and green values, the pixel is classified as BLUE.  If blue value is less than
+             blueIntensity and the red value is greater than the green and blue values, then the pixel is classified
+             as BRIGHT_RED if red >= redIntensity and as RED if red < redIntensity.  If the blue value is less than
+             blueIntensity and the green value is greater than the red and blue values, then the pixel is classified
+             as BRIGHT_GREEN if green >= greenIntensity and as GREEN if green < greenIntensity.  If none of the above
+             conditions is met, then the buffer value is set to NONE.  After a BRIGHT_BLUE or BLUE value has been 
+             processed, the buffer value is set to NONE, so that the same BRIGHT_BLUE or BLUE pixel will not be found
+             multiple times on line searches in different directions.
+             
+             The basic idea is to find a red, blue, green or a green, blue, red sequence while traversing a line from
+             one side of the image to the opposite side.  13 sets of parallel lines are searched.  Lines parallel to:
+             1.) The x axis.
+             2.) The y axis.
+             3.) The z axis.
+             4.) x = -y
+             5.) x = y
+             6.) x = -z
+             7.) x = z
+             8.) y = -z
+             9.) y = z
+             10.) delX = delY = delZ
+             11.) delX = delY = -delZ
+             12.) delX = -delY = delZ
+             13.) -delX = delY = delZ
+             The red band must have at least one BRIGHT_RED pixel, the green band must have at least one BRIGHT_GREEN pixel, 
+             and the blue band must have at least one BRIGHT_BLUE pixel.  The widths of these bands is must fall within user
+             specified minimum and maximum values.  For red and green, the user specifies redMin, redMax, greenMin, and 
+             greenMax.  For the blue band lines within planes must fall within blueMinXY and blueMaxXY limits, and lines that
+             cross planes must fall within blueMinZ and blueMaxZ limits.
+             
+             If a red, blue, green or green, blue, red sequence meets the intensity and width requirements, then a find is
+             initially declared at the center of the blue band.  However, this initial find could be at the edge rather than
+             the center of the blue portion of the synapse.  So a search of 26 connected BRIGHT_BLUE and BLUE neighbors is
+             conducted around the initial blue find within a block of width 2 * blueMaxXY - 1, length 2 * blueMaxXY - 1, and
+             height 2 * blueMaxZ - 1.  The center of the 26 connected BRIGHT_BLUE and BLUE neighbors within this block is 
+             calculated and the center is used as the location of the point VOI for the synapse.  The values of the initial
+             BRIGHT_BLUE or BLUE pixel and of all 26 connected BRIGHT_BLUE and BLUE pixels is set to NONE so that the same
+             synapse will not be found again on another line search thru the same pixel in a different direction.  
  *           
  */
 public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
@@ -80,6 +125,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private int blueX;
     private int blueY;
     private int blueZ;
+    private int centerBlueX;
+    private int centerBlueY;
+    private int centerBlueZ;
     private int numSynapses = 0;
     private int previousNumSynapses = 0;
     private int xArr[] = new int[1];
@@ -243,7 +291,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         // Classify all pixels as either BRIGHT_RED, RED, BRIGHT_GREEN, GREEN, BRIGHT_BLUE, BLUE, or NONE
         // Note that when line profiles are taken thru a synapse the red and green have all sorts of
         // different shapes but the blue is almost always a distinct short rectangular pulse, so the 
-        // presence of blue above a threshold intensity is the most significant factor.
+        // presence of blue above a threshold intensity is the most significant factor.  A pixel is 
+        // counted as BRIGHT_BLUE as long as its blue value is >= blueIntensity even if the red and/or
+        // green values at that pixel location are greater or equal than the blue value.
         for (z = 0; z < zDim; z++) {
             zPos = z * xySlice;
             for (y = 0; y < yDim; y++) {
@@ -2485,25 +2535,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
            (onePreviousColor == GREEN) && (onePreviousWidth >= greenMin) && (onePreviousWidth <= greenMax)) ||
            ((threePreviousColor == GREEN) && (threePreviousWidth >= greenMin) && (threePreviousWidth <= greenMax) &&
            (onePreviousColor == RED) && (onePreviousWidth >= redMin) && (onePreviousWidth <= redMax)))) {
+           // If centerAndZeroBlueIteration is not used, before searches parallel to the x axis are completed,
+           // we run out of java heap space with numSynapses = 126,738.
+           centerAndZeroBlueIteration();
            newPtVOI = new VOI((short) (numSynapses), Integer.toString(numSynapses+1), zDim, VOI.POINT, -1.0f);
            newPtVOI.setColor(Color.white);
-           xArr[0] = blueX;
-           yArr[0] = blueY;
-           zArr[0] = blueZ;
-           newPtVOI.importCurve(xArr, yArr, zArr, blueZ);
-           ((VOIPoint) (newPtVOI.getCurves()[blueZ].elementAt(0))).setFixed(true);
-          ((VOIPoint) (newPtVOI.getCurves()[blueZ].elementAt(0))).setLabel(Integer.toString(numSynapses + 1));
-          ((VOIPoint) (newPtVOI.getCurves()[blueZ].elementAt(0))).setName(Integer.toString(numSynapses + 1));
+           xArr[0] = centerBlueX;
+           yArr[0] = centerBlueY;
+           zArr[0] = centerBlueZ;
+           newPtVOI.importCurve(xArr, yArr, zArr, centerBlueZ);
+           ((VOIPoint) (newPtVOI.getCurves()[centerBlueZ].elementAt(0))).setFixed(true);
+          ((VOIPoint) (newPtVOI.getCurves()[centerBlueZ].elementAt(0))).setLabel(Integer.toString(numSynapses + 1));
+          ((VOIPoint) (newPtVOI.getCurves()[centerBlueZ].elementAt(0))).setName(Integer.toString(numSynapses + 1));
            srcImage.registerVOI(newPtVOI);  
            numSynapses++;
-           //zeroBlueBufferRecursion(blueX, blueY, blueZ);
-           // If zero BlueBufferIteration is not used, before searches parallel to the x axis are completed,
-           // we run out of java heap space with numSynapses = 126,738.
-           zeroBlueBufferIteration(blueX, blueY, blueZ);
        }
     }
     
-//  Finding red, blue, green or green, blue, red with all 3 colors in the appropriate width range
+    //Finding red, blue, green or green, blue, red with all 3 colors in the appropriate width range
     // means that a synapse has been found between planes
     private void checkForSynapseZ() {
        VOI newPtVOI;
@@ -2513,36 +2562,36 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
            (onePreviousColor == GREEN) && (onePreviousWidth >= greenMin) && (onePreviousWidth <= greenMax)) ||
            ((threePreviousColor == GREEN) && (threePreviousWidth >= greenMin) && (threePreviousWidth <= greenMax) &&
            (onePreviousColor == RED) && (onePreviousWidth >= redMin) && (onePreviousWidth <= redMax)))) {
+           // If zero centerAndZeroBlueIteration is not used, before searches parallel to the x axis are completed,
+           // we run out of java heap space with numSynapses = 126,738.
+           centerAndZeroBlueIteration();
            newPtVOI = new VOI((short) (numSynapses), Integer.toString(numSynapses+1), zDim, VOI.POINT, -1.0f);
            newPtVOI.setColor(Color.white);
-           xArr[0] = blueX;
-           yArr[0] = blueY;
-           zArr[0] = blueZ;
-           newPtVOI.importCurve(xArr, yArr, zArr, blueZ);
-           ((VOIPoint) (newPtVOI.getCurves()[blueZ].elementAt(0))).setFixed(true);
-          ((VOIPoint) (newPtVOI.getCurves()[blueZ].elementAt(0))).setLabel(Integer.toString(numSynapses + 1));
-          ((VOIPoint) (newPtVOI.getCurves()[blueZ].elementAt(0))).setName(Integer.toString(numSynapses + 1));
+           xArr[0] = centerBlueX;
+           yArr[0] = centerBlueY;
+           zArr[0] = centerBlueZ;
+           newPtVOI.importCurve(xArr, yArr, zArr, centerBlueZ);
+           ((VOIPoint) (newPtVOI.getCurves()[centerBlueZ].elementAt(0))).setFixed(true);
+          ((VOIPoint) (newPtVOI.getCurves()[centerBlueZ].elementAt(0))).setLabel(Integer.toString(numSynapses + 1));
+          ((VOIPoint) (newPtVOI.getCurves()[centerBlueZ].elementAt(0))).setName(Integer.toString(numSynapses + 1));
            srcImage.registerVOI(newPtVOI);  
            numSynapses++;
-           //zeroBlueBufferRecursion(blueX, blueY, blueZ);
-           // If zero BlueBufferIteration is not used, before searches parallel to the x axis are completed,
-           // we run out of java heap space with numSynapses = 126,738.
-           zeroBlueBufferIteration(blueX, blueY, blueZ);
        }
     }
     
-    // Change the BLUE of a detected synapse to NONE so it is not detected more than once
-    // Change all 27 neighbor connected BLUE to the original BLUE to none inside a cube
-    // of width 2 * blueMax around the originally specified BLUE pixel, so that only 1
-    // BLUE pixel from each synapse can trigger a synapse detection.
-    private void zeroBlueBufferIteration(int xStart, int yStart, int zStart) {
+    // Change the BLUE or BRIGHT_BLUE of a detected synapse to NONE so it is not detected more than once.
+    // Change all 26 neighbor connected BLUE or BRIGHT_BLUE to the original BLUE or BRIGHT_BLUE to NONE inside a block
+    // of width 2 * blueMaxXY - 1, of length 2 * blueMaxXY - 1, and of height 2 * blueMaxZ - 1 around the originally 
+    // detected BLUE or BRIGHT_BLUE pixel, so that only 1 BRIGHT_BLUE or BLUE pixel from each synapse can trigger a synapse
+    // detection.  Find the center of the 26 connected BLUE and BRIGHT_BLUE pixels and use this as the synapse center.
+    private void centerAndZeroBlueIteration() {
         boolean change = true;
         int x;
         int y;
         int z;
         int yPos;
         int zPos;
-        int i = xStart + xDim * yStart + xySlice * zStart;
+        int i = blueX + xDim * blueY + xySlice * blueZ;
         int del = -1;
         int zLow;
         int zHigh;
@@ -2554,17 +2603,21 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         blueMask.set(i);
         int delXY;
         int delZ;
+        centerBlueX = blueX;
+        centerBlueY = blueY;
+        centerBlueZ = blueZ;
+        int blueCount = 1;
         while (change && (del <= blueMax - 2)) {
             change = false;
             del++;
             delXY = Math.min(blueMaxXY-1, del);
             delZ = Math.min(blueMaxZ-1, del);
-            xLow = Math.max(0, xStart-delXY);
-            xHigh = Math.min(xDim-1, xStart + delXY);
-            yLow = Math.max(0, yStart-delXY);
-            yHigh = Math.min(yDim-1, yStart + delXY);
-            zLow = Math.max(0, zStart-delZ);
-            zHigh = Math.min(zDim-1, zStart + delZ);
+            xLow = Math.max(0, blueX-delXY);
+            xHigh = Math.min(xDim-1, blueX + delXY);
+            yLow = Math.max(0, blueY-delXY);
+            yHigh = Math.min(yDim-1, blueY + delXY);
+            zLow = Math.max(0, blueZ-delZ);
+            zHigh = Math.min(zDim-1, blueZ + delZ);
             for (z = zLow; z <= zHigh; z++) {
                 zPos = z * xySlice;
                 for (y = yLow; y <= yHigh; y++) {
@@ -2576,131 +2629,235 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                 buffer[i-1] = NONE;
                                 blueMask.set(i-1);
                                 change = true;
+                                centerBlueX += (x - 1);
+                                centerBlueY += y;
+                                centerBlueZ += z;
+                                blueCount++;
                             }
                             if ((x < xDim - 1) && (!blueMask.get(i+1)) && ((buffer[i+1] == BRIGHT_BLUE) || (buffer[i+1] == BLUE))) {
                                 buffer[i+1] = NONE;
                                 blueMask.set(i+1);
                                 change = true;
+                                centerBlueX += (x + 1);
+                                centerBlueY += y;
+                                centerBlueZ += z;
+                                blueCount++;
                             }
                             if ((y > 0)&& (!blueMask.get(i-xDim)) && ((buffer[i-xDim] == BRIGHT_BLUE) || (buffer[i-xDim] == BLUE))) {
                                 buffer[i-xDim] = NONE;
                                 blueMask.set(i-xDim);
                                 change = true;
+                                centerBlueX += x;
+                                centerBlueY += (y - 1);
+                                centerBlueZ += z;
+                                blueCount++;
                             }
                             if ((y < yDim - 1) && (!blueMask.get(i+xDim)) && ((buffer[i+xDim] == BRIGHT_BLUE) || (buffer[i+xDim] == BLUE))) {
                                 buffer[i+xDim] = NONE;
                                 blueMask.set(i+xDim);
                                 change = true;
+                                centerBlueX += x;
+                                centerBlueY += (y + 1);
+                                centerBlueZ += z;
+                                blueCount++;
                             }
                             if ((z > 0) && (!blueMask.get(i-xySlice)) && ((buffer[i-xySlice] == BRIGHT_BLUE) || (buffer[i-xySlice] == BLUE))) {
                                 buffer[i-xySlice] = NONE;
                                 blueMask.set(i-xySlice);
                                 change = true;
+                                centerBlueX += x;
+                                centerBlueY += y;
+                                centerBlueZ += (z - 1);
+                                blueCount++;
                             }
                             if ((z < zDim - 1) && (!blueMask.get(i+xySlice)) && ((buffer[i+xySlice] == BRIGHT_BLUE) || (buffer[i+xySlice] == BLUE))) {
                                 buffer[i+xySlice] = NONE;
                                 blueMask.set(i+xySlice);
                                 change = true;
+                                centerBlueX += x;
+                                centerBlueY += y;
+                                centerBlueZ += (z + 1);
+                                blueCount++;
                             }
                             if ((x > 0) && (y > 0) && (!blueMask.get(i-xDim-1)) && ((buffer[i-xDim-1] == BRIGHT_BLUE) || (buffer[i-xDim-1] == BLUE))) {
                                 buffer[i-xDim-1] = NONE;
                                 blueMask.set(i-xDim-1);
                                 change = true;
+                                centerBlueX += (x - 1);
+                                centerBlueY += (y - 1);
+                                centerBlueZ += z;
+                                blueCount++;
                             }
                             if ((x > 0) && (y < yDim - 1) && (!blueMask.get(i+xDim-1)) && ((buffer[i+xDim-1] == BRIGHT_BLUE) || (buffer[i+xDim-1] == BLUE))) {
                                 buffer[i+xDim-1] = NONE;
                                 blueMask.set(i+xDim-1);
                                 change = true;
+                                centerBlueX += (x - 1);
+                                centerBlueY += (y + 1);
+                                centerBlueZ += z;
+                                blueCount++;
                             }
                             if ((x < xDim-1) && (y > 0) && (!blueMask.get(i-xDim+1)) && ((buffer[i-xDim+1] == BRIGHT_BLUE) || (buffer[i-xDim+1] == BLUE))) {
                                 buffer[i-xDim+1] = NONE;
                                 blueMask.set(i-xDim+1);
                                 change = true;
+                                centerBlueX += (x + 1);
+                                centerBlueY += (y - 1);
+                                centerBlueZ += z;
+                                blueCount++;
                             }
                             if ((x < xDim - 1) && (y < yDim - 1) && (!blueMask.get(i+xDim+1)) && ((buffer[i+xDim+1] == BRIGHT_BLUE) || (buffer[i+xDim+1] == BLUE))) {
                                 buffer[i+xDim+1] = NONE;
                                 blueMask.set(i+xDim+1);
                                 change = true;
+                                centerBlueX += (x + 1);
+                                centerBlueY += (y + 1);
+                                centerBlueZ += z;
+                                blueCount++;
                             }
                             if ((x > 0) && (z > 0) && (!blueMask.get(i-xySlice-1)) && ((buffer[i-xySlice-1] == BRIGHT_BLUE) || (buffer[i-xySlice-1] == BLUE))) {
                                 buffer[i-xySlice-1] = NONE;
                                 blueMask.set(i-xySlice-1);
                                 change = true;
+                                centerBlueX += (x - 1);
+                                centerBlueY += y;
+                                centerBlueZ += (z - 1);
+                                blueCount++;
                             }
                             if ((x > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-1)) && ((buffer[i+xySlice-1] == BRIGHT_BLUE) || (buffer[i+xySlice-1] == BLUE))) {
                                 buffer[i+xySlice-1] = NONE;
                                 blueMask.set(i+xySlice-1);
                                 change = true;
+                                centerBlueX += (x - 1);
+                                centerBlueY += y;
+                                centerBlueZ += (z + 1);
+                                blueCount++;
                             }
                             if ((x < xDim-1) && (z > 0) && (!blueMask.get(i-xySlice+1)) && ((buffer[i-xySlice+1] == BRIGHT_BLUE) || (buffer[i-xySlice+1] == BLUE))) {
                                 buffer[i-xySlice+1] = NONE;
                                 blueMask.set(i-xySlice+1);
                                 change = true;
+                                centerBlueX += (x + 1);
+                                centerBlueY += y;
+                                centerBlueZ += (z - 1);
+                                blueCount++;
                             }
                             if ((x < xDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+1)) && ((buffer[i+xySlice+1] == BRIGHT_BLUE) || (buffer[i+xySlice+1] == BLUE))) {
                                 buffer[i+xySlice+1] = NONE;
                                 blueMask.set(i+xySlice+1);
                                 change = true;
+                                centerBlueX += (x + 1);
+                                centerBlueY += y;
+                                centerBlueZ += (z + 1);
+                                blueCount++;
                             }
                             if ((y > 0) && (z > 0) && (!blueMask.get(i-xySlice-xDim)) && ((buffer[i-xySlice-xDim] == BRIGHT_BLUE) || (buffer[i-xySlice-xDim] == BLUE))) {
                                 buffer[i-xySlice-xDim] = NONE;
                                 blueMask.set(i-xySlice-xDim);
                                 change = true;
+                                centerBlueX += x;
+                                centerBlueY += (y - 1);
+                                centerBlueZ += (z - 1);
+                                blueCount++;
                             }
                             if ((y > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-xDim)) && ((buffer[i+xySlice-xDim] == BRIGHT_BLUE) || (buffer[i+xySlice-xDim] == BLUE))) {
                                 buffer[i+xySlice-xDim] = NONE;
                                 blueMask.set(i+xySlice-xDim);
                                 change = true;
+                                centerBlueX += x;
+                                centerBlueY += (y - 1);
+                                centerBlueZ += (z + 1);
+                                blueCount++;
                             }
                             if ((y < yDim-1) && (z > 0) && (!blueMask.get(i-xySlice+xDim)) && ((buffer[i-xySlice+xDim] == BRIGHT_BLUE) || (buffer[i-xySlice+xDim] == BLUE))) {
                                 buffer[i-xySlice+xDim] = NONE;
                                 blueMask.set(i-xySlice+xDim);
                                 change = true;
+                                centerBlueX += x;
+                                centerBlueY += (y + 1);
+                                centerBlueZ += (z - 1);
+                                blueCount++;
                             }
                             if ((y < yDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+xDim)) && ((buffer[i+xySlice+xDim] == BRIGHT_BLUE) || (buffer[i+xySlice+xDim] == BLUE))) {
                                 buffer[i+xySlice+xDim] = NONE;
                                 blueMask.set(i+xySlice+xDim);
                                 change = true;
+                                centerBlueX += x;
+                                centerBlueY += (y + 1);
+                                centerBlueZ += (z + 1);
+                                blueCount++;
                             }
                             if ((x > 0) && (y > 0) && (z > 0)&& (!blueMask.get(i-xySlice-xDim-1)) && ((buffer[i-xySlice-xDim-1] == BRIGHT_BLUE) || (buffer[i-xySlice-xDim-1] == BLUE))) {
                                 buffer[i-xySlice-xDim-1] = NONE;
                                 blueMask.set(i-xySlice-xDim-1);
                                 change = true;
+                                centerBlueX += (x - 1);
+                                centerBlueY += (y - 1);
+                                centerBlueZ += (z - 1);
+                                blueCount++;
                             }
                             if ((x > 0) && (y > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-xDim-1)) && ((buffer[i+xySlice-xDim-1] == BRIGHT_BLUE) ||(buffer[i+xySlice-xDim-1] == BLUE))) {
                                 buffer[i+xySlice-xDim-1] = NONE;
                                 blueMask.set(i+xySlice-xDim-1);
                                 change = true;
+                                centerBlueX += (x - 1);
+                                centerBlueY += (y - 1);
+                                centerBlueZ += (z + 1);
+                                blueCount++;
                             }
                             if ((x > 0) && (y < yDim - 1) && (z > 0)&& (!blueMask.get(i-xySlice+xDim-1)) && ((buffer[i-xySlice+xDim-1] == BRIGHT_BLUE) || (buffer[i-xySlice+xDim-1] == BLUE))) {
                                 buffer[i-xySlice+xDim-1] = NONE;
                                 blueMask.set(i-xySlice+xDim-1);
                                 change = true;
+                                centerBlueX += (x - 1);
+                                centerBlueY += (y + 1);
+                                centerBlueZ += (z - 1);
+                                blueCount++;
                             }
                             if ((x > 0) && (y < yDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+xDim-1)) && ((buffer[i+xySlice+xDim-1] == BRIGHT_BLUE) || (buffer[i+xySlice+xDim-1] == BLUE))) {
                                 buffer[i+xySlice+xDim-1] = NONE;
                                 blueMask.set(i+xySlice+xDim-1);
                                 change = true;
+                                centerBlueX += (x - 1);
+                                centerBlueY += (y + 1);
+                                centerBlueZ += (z + 1);
+                                blueCount++;
                             }
                             if ((x < xDim-1) && (y > 0) && (z > 0) && (!blueMask.get(i-xySlice-xDim+1)) && ((buffer[i-xySlice-xDim+1] == BRIGHT_BLUE) || (buffer[i-xySlice-xDim+1] == BLUE))) {
                                 buffer[i-xySlice-xDim+1] = NONE;
                                 blueMask.set(i-xySlice-xDim+1);
                                 change = true;
+                                centerBlueX += (x + 1);
+                                centerBlueY += (y - 1);
+                                centerBlueZ += (z - 1);
+                                blueCount++;
                             }
                             if ((x < xDim-1) && (y > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-xDim+1)) && ((buffer[i+xySlice-xDim+1] == BRIGHT_BLUE) || (buffer[i+xySlice-xDim+1] == BLUE))) {
                                 buffer[i+xySlice-xDim+1] = NONE;
                                 blueMask.set(i+xySlice-xDim+1);
                                 change = true;
+                                centerBlueX += (x + 1);
+                                centerBlueY += (y - 1);
+                                centerBlueZ += (z + 1);
+                                blueCount++;
                             }
                             if ((x < xDim - 1) && (y < yDim - 1) && (z > 0) && (!blueMask.get(i-xySlice+xDim+1)) && ((buffer[i-xySlice+xDim+1] == BRIGHT_BLUE) ||(buffer[i-xySlice+xDim+1] == BLUE))) {
                                 buffer[i-xySlice+xDim+1] = NONE;
                                 blueMask.set(i-xySlice+xDim+1);
                                 change = true;
+                                centerBlueX += (x + 1);
+                                centerBlueY += (y + 1);
+                                centerBlueZ += (z - 1);
+                                blueCount++;
                             }
                             if ((x < xDim - 1) && (y < yDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+xDim+1)) && ((buffer[i+xySlice+xDim+1] == BRIGHT_BLUE) || (buffer[i+xySlice+xDim+1] == BLUE))) {
                                 buffer[i+xySlice+xDim+1] = NONE;
                                 blueMask.set(i+xySlice+xDim+1);
                                 change = true;
+                                centerBlueX += (x + 1);
+                                centerBlueY += (y + 1);
+                                centerBlueZ += (z + 1);
+                                blueCount++;
                             }
                             blueMask.clear(i);
                         } // if (blueMask.get(i))
@@ -2708,6 +2865,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 } // for (y = yLow; y <= yHigh; y++)
             } // for (z = zLow; z <= zHigh; z++)
         } // while (change  && (del <= (blueMax - 2))
+        centerBlueX = Math.round((float)centerBlueX/blueCount);
+        centerBlueY = Math.round((float)centerBlueY/blueCount);
+        centerBlueZ = Math.round((float)centerBlueZ/blueCount);
     }
     
     // Recursion triggers a stack overflow - don't use
