@@ -5219,6 +5219,50 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         throw new IOException("Import data error: bounds incorrect");
     }
+    
+    /**
+     * Import byte data into data array.
+     *
+     * @param   color            color planes are interleaved, so color offsets the appropriate interleave interval
+     * @param   alphaIndexStart  indicates starting position in data array which points to the alpha value
+     * @param   values  array where data is to be acquired
+     * @param   mmFlag  whether or not to calculate min and max values for the image array
+     *
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
+     */
+    public final synchronized void importRGBData(int color, int alphaIndexStart, byte[] values, boolean mmFlag) throws IOException {
+        int length = values.length;
+        int ptr;
+        
+        if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) { // not a color image
+            return; // so don't do anything
+        }
+
+        if ((alphaIndexStart >= 0) && ((alphaIndexStart + length) <= dataSize)) {
+
+            try {
+                setLock(RW_LOCKED);
+                ptr = alphaIndexStart + color;
+
+                for (int i = 0; i < length; i++, ptr += 4) {
+                    data.setByte(ptr, values[i]);
+                }
+
+                if (mmFlag) {
+                    calcMinMax();
+                }
+            } catch (IOException error) {
+                throw error;
+            } finally {
+                releaseLock();
+            }
+
+
+            return;
+        }
+
+        throw new IOException("Import data error: bounds incorrect");
+    }
 
     /**
      * import float data into data array.
