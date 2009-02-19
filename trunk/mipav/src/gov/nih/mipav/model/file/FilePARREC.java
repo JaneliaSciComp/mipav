@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.file;
 
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.Preferences;
@@ -10,13 +9,16 @@ import java.util.HashMap;
 import java.util.Vector;
 
 /**
- * The class reads and writes Analyze Version 7.5.x files.
+ * The class reads and writes PAR/REC files.
  *
  * @version  0.1 Oct 14, 1997
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      gov.nih.mipav.model.file.FileIO
  * @see      gov.nih.mipav.model.file.FileInfoAnalyze
  * @see      gov.nih.mipav.model.file.FileRaw
+ * 
+ * A right handed coordinate system is used with the positive axis pointing (Anterior/Posterior)A->P, (Foot/Head)F->H,
+ * and (Right/Left)R->L.
  */
 
 public class FilePARREC extends FileBase {
@@ -733,6 +735,9 @@ public class FilePARREC extends FileBase {
         switch(ori) {
             case 1: //TRA
                 fileInfo.setImageOrientation(FileInfoBase.AXIAL);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 1);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_I2S_TYPE, 2);
                 if(fov1!=fov3) {
                     fov1 = Math.max(fov1,fov3); fov3=fov1;
                 }
@@ -745,6 +750,9 @@ public class FilePARREC extends FileBase {
                 break;
             case 2: //SAG
                 fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 0);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_I2S_TYPE, 1);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 2);
                 if(fov2!=fov1) {
                     fov2 = Math.max(fov2,fov1); fov1=fov2;
                 }
@@ -757,6 +765,9 @@ public class FilePARREC extends FileBase {
                 break;
             case 3: //COR
                 fileInfo.setImageOrientation(FileInfoBase.CORONAL);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_I2S_TYPE, 1);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 2);
 
                 if(fov2!=fov3) {
                     fov2 = Math.max(fov2,fov3); fov3=fov2;
