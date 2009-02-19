@@ -12,8 +12,8 @@ import java.util.*;
 
 /**
  *
- * @version  February 18, 2009
- * @author   DOCUMENT ME!
+ * @version  February 19, 2009
+ * @author   William Gandler
  * @see      AlgorithmBase
  *
  *           PlugInAlgorithmSynapseDetection is used to place a point marker over the blue center of the synapse.
@@ -142,8 +142,10 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private byte greenBuffer[] = new byte[length];
     private byte blueBuffer[] = new byte[length];
     private BitSet blueMask = null;
+    private BitSet blueMask2 = null;
     private int threeBandMinXY;
     private int threeBandMinZ;
+    private ModelImage maskImage = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -248,6 +250,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         int xStart;
         int yStart;
         int zStart;
+        int i;
         
         fireProgressStateChanged("Synapse detection on image");
 
@@ -335,6 +338,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         blueBuffer = null;
         System.gc();
         blueMask = new BitSet(length);
+        blueMask2 = new BitSet(length);
         threeBandMinXY = redMin + greenMin + blueMinXY;
         threeBandMinZ = redMin + greenMin + blueMinZ;
         
@@ -2517,6 +2521,31 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         srcImage.notifyImageDisplayListeners();
         System.out.println("Total synapses found = " + numSynapses);
         Preferences.debug("Total synapses found = " + numSynapses + "\n");
+        
+        blueMask = null;
+        for (i = 0; i < length; i++) {
+            if (blueMask2.get(i))  {
+                buffer[i] = (byte)255;
+            }
+            else {
+                buffer[i] = 0;
+            }
+        }
+        blueMask2 = null;
+        maskImage = new ModelImage(ModelStorageBase.ARGB,srcImage.getExtents(),srcImage.getImageName() + "_mask");
+        try {
+            maskImage.importRGBData(1, 0, buffer, false);
+            maskImage.importRGBData(2, 0, buffer, false);
+            maskImage.importRGBData(3, 0, buffer, true);
+        }
+        catch (IOException e) {
+            errorCleanUp("Algorithm SynapseDetection reports IOException on maskImage.importRGBData", true);
+
+            return;    
+        }
+        buffer = null;
+        new ViewJFrameImage(maskImage);
+        
 
         fireProgressStateChanged(100);
         time = System.currentTimeMillis() - time;
@@ -2601,6 +2630,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         int xHigh;
         buffer[i] = NONE;
         blueMask.set(i);
+        blueMask2.set(i);
         int delXY;
         int delZ;
         centerBlueX = blueX;
@@ -2628,6 +2658,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x > 0) && (!blueMask.get(i-1)) && ((buffer[i-1] == BRIGHT_BLUE) || (buffer[i-1] == BLUE))) {  
                                 buffer[i-1] = NONE;
                                 blueMask.set(i-1);
+                                blueMask2.set(i-1);
                                 change = true;
                                 centerBlueX += (x - 1);
                                 centerBlueY += y;
@@ -2637,6 +2668,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x < xDim - 1) && (!blueMask.get(i+1)) && ((buffer[i+1] == BRIGHT_BLUE) || (buffer[i+1] == BLUE))) {
                                 buffer[i+1] = NONE;
                                 blueMask.set(i+1);
+                                blueMask2.set(i+1);
                                 change = true;
                                 centerBlueX += (x + 1);
                                 centerBlueY += y;
@@ -2646,6 +2678,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((y > 0)&& (!blueMask.get(i-xDim)) && ((buffer[i-xDim] == BRIGHT_BLUE) || (buffer[i-xDim] == BLUE))) {
                                 buffer[i-xDim] = NONE;
                                 blueMask.set(i-xDim);
+                                blueMask2.set(i-xDim);
                                 change = true;
                                 centerBlueX += x;
                                 centerBlueY += (y - 1);
@@ -2655,6 +2688,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((y < yDim - 1) && (!blueMask.get(i+xDim)) && ((buffer[i+xDim] == BRIGHT_BLUE) || (buffer[i+xDim] == BLUE))) {
                                 buffer[i+xDim] = NONE;
                                 blueMask.set(i+xDim);
+                                blueMask2.set(i+xDim);
                                 change = true;
                                 centerBlueX += x;
                                 centerBlueY += (y + 1);
@@ -2664,6 +2698,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((z > 0) && (!blueMask.get(i-xySlice)) && ((buffer[i-xySlice] == BRIGHT_BLUE) || (buffer[i-xySlice] == BLUE))) {
                                 buffer[i-xySlice] = NONE;
                                 blueMask.set(i-xySlice);
+                                blueMask2.set(i-xySlice);
                                 change = true;
                                 centerBlueX += x;
                                 centerBlueY += y;
@@ -2673,6 +2708,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((z < zDim - 1) && (!blueMask.get(i+xySlice)) && ((buffer[i+xySlice] == BRIGHT_BLUE) || (buffer[i+xySlice] == BLUE))) {
                                 buffer[i+xySlice] = NONE;
                                 blueMask.set(i+xySlice);
+                                blueMask2.set(i+xySlice);
                                 change = true;
                                 centerBlueX += x;
                                 centerBlueY += y;
@@ -2682,6 +2718,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x > 0) && (y > 0) && (!blueMask.get(i-xDim-1)) && ((buffer[i-xDim-1] == BRIGHT_BLUE) || (buffer[i-xDim-1] == BLUE))) {
                                 buffer[i-xDim-1] = NONE;
                                 blueMask.set(i-xDim-1);
+                                blueMask2.set(i-xDim-1);
                                 change = true;
                                 centerBlueX += (x - 1);
                                 centerBlueY += (y - 1);
@@ -2691,6 +2728,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x > 0) && (y < yDim - 1) && (!blueMask.get(i+xDim-1)) && ((buffer[i+xDim-1] == BRIGHT_BLUE) || (buffer[i+xDim-1] == BLUE))) {
                                 buffer[i+xDim-1] = NONE;
                                 blueMask.set(i+xDim-1);
+                                blueMask2.set(i+xDim-1);
                                 change = true;
                                 centerBlueX += (x - 1);
                                 centerBlueY += (y + 1);
@@ -2700,6 +2738,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x < xDim-1) && (y > 0) && (!blueMask.get(i-xDim+1)) && ((buffer[i-xDim+1] == BRIGHT_BLUE) || (buffer[i-xDim+1] == BLUE))) {
                                 buffer[i-xDim+1] = NONE;
                                 blueMask.set(i-xDim+1);
+                                blueMask2.set(i-xDim+1);
                                 change = true;
                                 centerBlueX += (x + 1);
                                 centerBlueY += (y - 1);
@@ -2709,6 +2748,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x < xDim - 1) && (y < yDim - 1) && (!blueMask.get(i+xDim+1)) && ((buffer[i+xDim+1] == BRIGHT_BLUE) || (buffer[i+xDim+1] == BLUE))) {
                                 buffer[i+xDim+1] = NONE;
                                 blueMask.set(i+xDim+1);
+                                blueMask2.set(i+xDim+1);
                                 change = true;
                                 centerBlueX += (x + 1);
                                 centerBlueY += (y + 1);
@@ -2718,6 +2758,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x > 0) && (z > 0) && (!blueMask.get(i-xySlice-1)) && ((buffer[i-xySlice-1] == BRIGHT_BLUE) || (buffer[i-xySlice-1] == BLUE))) {
                                 buffer[i-xySlice-1] = NONE;
                                 blueMask.set(i-xySlice-1);
+                                blueMask2.set(i-xySlice-1);
                                 change = true;
                                 centerBlueX += (x - 1);
                                 centerBlueY += y;
@@ -2727,6 +2768,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-1)) && ((buffer[i+xySlice-1] == BRIGHT_BLUE) || (buffer[i+xySlice-1] == BLUE))) {
                                 buffer[i+xySlice-1] = NONE;
                                 blueMask.set(i+xySlice-1);
+                                blueMask2.set(i+xySlice-1);
                                 change = true;
                                 centerBlueX += (x - 1);
                                 centerBlueY += y;
@@ -2736,6 +2778,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x < xDim-1) && (z > 0) && (!blueMask.get(i-xySlice+1)) && ((buffer[i-xySlice+1] == BRIGHT_BLUE) || (buffer[i-xySlice+1] == BLUE))) {
                                 buffer[i-xySlice+1] = NONE;
                                 blueMask.set(i-xySlice+1);
+                                blueMask2.set(i-xySlice+1);
                                 change = true;
                                 centerBlueX += (x + 1);
                                 centerBlueY += y;
@@ -2745,6 +2788,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x < xDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+1)) && ((buffer[i+xySlice+1] == BRIGHT_BLUE) || (buffer[i+xySlice+1] == BLUE))) {
                                 buffer[i+xySlice+1] = NONE;
                                 blueMask.set(i+xySlice+1);
+                                blueMask2.set(i+xySlice+1);
                                 change = true;
                                 centerBlueX += (x + 1);
                                 centerBlueY += y;
@@ -2754,6 +2798,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((y > 0) && (z > 0) && (!blueMask.get(i-xySlice-xDim)) && ((buffer[i-xySlice-xDim] == BRIGHT_BLUE) || (buffer[i-xySlice-xDim] == BLUE))) {
                                 buffer[i-xySlice-xDim] = NONE;
                                 blueMask.set(i-xySlice-xDim);
+                                blueMask2.set(i-xySlice-xDim);
                                 change = true;
                                 centerBlueX += x;
                                 centerBlueY += (y - 1);
@@ -2763,6 +2808,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((y > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-xDim)) && ((buffer[i+xySlice-xDim] == BRIGHT_BLUE) || (buffer[i+xySlice-xDim] == BLUE))) {
                                 buffer[i+xySlice-xDim] = NONE;
                                 blueMask.set(i+xySlice-xDim);
+                                blueMask2.set(i+xySlice-xDim);
                                 change = true;
                                 centerBlueX += x;
                                 centerBlueY += (y - 1);
@@ -2772,6 +2818,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((y < yDim-1) && (z > 0) && (!blueMask.get(i-xySlice+xDim)) && ((buffer[i-xySlice+xDim] == BRIGHT_BLUE) || (buffer[i-xySlice+xDim] == BLUE))) {
                                 buffer[i-xySlice+xDim] = NONE;
                                 blueMask.set(i-xySlice+xDim);
+                                blueMask2.set(i-xySlice+xDim);
                                 change = true;
                                 centerBlueX += x;
                                 centerBlueY += (y + 1);
@@ -2781,6 +2828,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((y < yDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+xDim)) && ((buffer[i+xySlice+xDim] == BRIGHT_BLUE) || (buffer[i+xySlice+xDim] == BLUE))) {
                                 buffer[i+xySlice+xDim] = NONE;
                                 blueMask.set(i+xySlice+xDim);
+                                blueMask2.set(i+xySlice+xDim);
                                 change = true;
                                 centerBlueX += x;
                                 centerBlueY += (y + 1);
@@ -2790,6 +2838,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x > 0) && (y > 0) && (z > 0)&& (!blueMask.get(i-xySlice-xDim-1)) && ((buffer[i-xySlice-xDim-1] == BRIGHT_BLUE) || (buffer[i-xySlice-xDim-1] == BLUE))) {
                                 buffer[i-xySlice-xDim-1] = NONE;
                                 blueMask.set(i-xySlice-xDim-1);
+                                blueMask2.set(i-xySlice-xDim-1);
                                 change = true;
                                 centerBlueX += (x - 1);
                                 centerBlueY += (y - 1);
@@ -2799,6 +2848,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x > 0) && (y > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-xDim-1)) && ((buffer[i+xySlice-xDim-1] == BRIGHT_BLUE) ||(buffer[i+xySlice-xDim-1] == BLUE))) {
                                 buffer[i+xySlice-xDim-1] = NONE;
                                 blueMask.set(i+xySlice-xDim-1);
+                                blueMask2.set(i+xySlice-xDim-1);
                                 change = true;
                                 centerBlueX += (x - 1);
                                 centerBlueY += (y - 1);
@@ -2808,6 +2858,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x > 0) && (y < yDim - 1) && (z > 0)&& (!blueMask.get(i-xySlice+xDim-1)) && ((buffer[i-xySlice+xDim-1] == BRIGHT_BLUE) || (buffer[i-xySlice+xDim-1] == BLUE))) {
                                 buffer[i-xySlice+xDim-1] = NONE;
                                 blueMask.set(i-xySlice+xDim-1);
+                                blueMask2.set(i-xySlice+xDim-1);
                                 change = true;
                                 centerBlueX += (x - 1);
                                 centerBlueY += (y + 1);
@@ -2817,6 +2868,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x > 0) && (y < yDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+xDim-1)) && ((buffer[i+xySlice+xDim-1] == BRIGHT_BLUE) || (buffer[i+xySlice+xDim-1] == BLUE))) {
                                 buffer[i+xySlice+xDim-1] = NONE;
                                 blueMask.set(i+xySlice+xDim-1);
+                                blueMask2.set(i+xySlice+xDim-1);
                                 change = true;
                                 centerBlueX += (x - 1);
                                 centerBlueY += (y + 1);
@@ -2826,6 +2878,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x < xDim-1) && (y > 0) && (z > 0) && (!blueMask.get(i-xySlice-xDim+1)) && ((buffer[i-xySlice-xDim+1] == BRIGHT_BLUE) || (buffer[i-xySlice-xDim+1] == BLUE))) {
                                 buffer[i-xySlice-xDim+1] = NONE;
                                 blueMask.set(i-xySlice-xDim+1);
+                                blueMask2.set(i-xySlice-xDim+1);
                                 change = true;
                                 centerBlueX += (x + 1);
                                 centerBlueY += (y - 1);
@@ -2835,6 +2888,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x < xDim-1) && (y > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-xDim+1)) && ((buffer[i+xySlice-xDim+1] == BRIGHT_BLUE) || (buffer[i+xySlice-xDim+1] == BLUE))) {
                                 buffer[i+xySlice-xDim+1] = NONE;
                                 blueMask.set(i+xySlice-xDim+1);
+                                blueMask2.set(i+xySlice-xDim+1);
                                 change = true;
                                 centerBlueX += (x + 1);
                                 centerBlueY += (y - 1);
@@ -2844,6 +2898,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x < xDim - 1) && (y < yDim - 1) && (z > 0) && (!blueMask.get(i-xySlice+xDim+1)) && ((buffer[i-xySlice+xDim+1] == BRIGHT_BLUE) ||(buffer[i-xySlice+xDim+1] == BLUE))) {
                                 buffer[i-xySlice+xDim+1] = NONE;
                                 blueMask.set(i-xySlice+xDim+1);
+                                blueMask2.set(i-xySlice+xDim+1);
                                 change = true;
                                 centerBlueX += (x + 1);
                                 centerBlueY += (y + 1);
@@ -2853,6 +2908,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             if ((x < xDim - 1) && (y < yDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+xDim+1)) && ((buffer[i+xySlice+xDim+1] == BRIGHT_BLUE) || (buffer[i+xySlice+xDim+1] == BLUE))) {
                                 buffer[i+xySlice+xDim+1] = NONE;
                                 blueMask.set(i+xySlice+xDim+1);
+                                blueMask2.set(i+xySlice+xDim+1);
                                 change = true;
                                 centerBlueX += (x + 1);
                                 centerBlueY += (y + 1);
