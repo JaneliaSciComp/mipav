@@ -13,7 +13,7 @@ import javax.swing.*;
 
 
 /**
- * @version  February 17, 2009
+ * @version  February 19, 2009
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -28,8 +28,6 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
     //private static final long serialVersionUID;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-    
-    private JLabel contourLabel;
     
     /** Minimum number of red pixels in a transition */
     private int redMin = 1;
