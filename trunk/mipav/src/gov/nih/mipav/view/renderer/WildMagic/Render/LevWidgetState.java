@@ -8,7 +8,8 @@ public class LevWidgetState
     public float[] MidLine = new float[4];
     public float[] LeftLine = new float[4];
     public float[] RightLine = new float[4];
-    public float[]  BoundaryEmphasis = new float[4];
+    public float[] BoundaryEmphasis = new float[4];
+    public float[] UseWidget = new float[4];
 
     public LevWidgetState ()
     {
@@ -19,6 +20,7 @@ public class LevWidgetState
             RightLine[i] = 0f;
         } 
         BoundaryEmphasis[0] = 1.0f;
+        UseWidget[0] = 0.0f;
     }
     
     public void Copy( LevWidgetState kIn )
@@ -31,6 +33,7 @@ public class LevWidgetState
             RightLine[i] = kIn.RightLine[i];
         }
         BoundaryEmphasis[0] = kIn.BoundaryEmphasis[0];
+        UseWidget[0] = kIn.UseWidget[0];
     }
     
     public void dispose()
@@ -39,5 +42,7 @@ public class LevWidgetState
         MidLine = null;
         LeftLine = null;
         RightLine = null;
+        BoundaryEmphasis = null;
+        UseWidget = null;
     }
 }

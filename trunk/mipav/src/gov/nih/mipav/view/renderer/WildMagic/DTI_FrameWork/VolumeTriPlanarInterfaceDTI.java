@@ -362,6 +362,7 @@ implements ChangeListener {
             buildSurfacePanel();
             buildGeodesic();
             buildSculpt();
+            buildMultiHistogramPanel();
             
             panelAxial = new JPanel(new BorderLayout());
             panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);

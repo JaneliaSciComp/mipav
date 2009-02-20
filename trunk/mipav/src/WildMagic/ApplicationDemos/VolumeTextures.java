@@ -261,8 +261,8 @@ public class VolumeTextures extends JavaApplication3D
                 GraphicsImage.FormatMode.IT_RGB888,64,64,64,aucData,
                                 "VolumeImage");
 
-        VertexShader pkVShader = new VertexShader("VolumeTextures");
-        PixelShader pkPShader = new PixelShader("VolumeTextures");
+        VertexShader pkVShader = new VertexShader("VolumeTexturesV");
+        PixelShader pkPShader = new PixelShader("VolumeTexturesP");
 
         pkPShader.SetTextureQuantity(1);
         pkPShader.SetImageName(0,"VolumeImage");

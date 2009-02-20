@@ -1,14 +1,4 @@
 //----------------------------------------------------------------------------
-uniform mat4 WVPMatrix;
-void v_CalcNormalsPerSlice_Pass2()
-{
-    // Transform the position from model space to clip space.
-    gl_Position = WVPMatrix*gl_Vertex;
-
-    // Pass through the texture coordinate.
-    gl_TexCoord[0] = gl_MultiTexCoord0;
-}
-//----------------------------------------------------------------------------
 uniform vec4    StepSize;
 uniform sampler3D VolumeNormals;
 void p_CalcNormalsPerSlice_Pass2()
@@ -20,14 +10,14 @@ void p_CalcNormalsPerSlice_Pass2()
     vec3 index5 = gl_TexCoord[0].xyz; index5.z -= StepSize.z;
     vec3 index6 = gl_TexCoord[0].xyz; index6.z += StepSize.z;
 
-    vec3 half = vec3(0.5, 0.5, 0.5);
-    vec3 color = (texture3D( VolumeNormals, gl_TexCoord[0].xyz ).xyz - half.xyz);
-    color += (texture3D( VolumeNormals, index1 ).xyz - half.xyz);
-    color += (texture3D( VolumeNormals, index2 ).xyz - half.xyz);
-    color += (texture3D( VolumeNormals, index3 ).xyz - half.xyz);
-    color += (texture3D( VolumeNormals, index4 ).xyz - half.xyz);
-    color += (texture3D( VolumeNormals, index5 ).xyz - half.xyz);
-    color += (texture3D( VolumeNormals, index6 ).xyz - half.xyz);
+    vec3 shift_half = vec3(0.5, 0.5, 0.5);
+    vec3 color = (texture3D( VolumeNormals, gl_TexCoord[0].xyz ).xyz - shift_half.xyz);
+    color += (texture3D( VolumeNormals, index1 ).xyz - shift_half.xyz);
+    color += (texture3D( VolumeNormals, index2 ).xyz - shift_half.xyz);
+    color += (texture3D( VolumeNormals, index3 ).xyz - shift_half.xyz);
+    color += (texture3D( VolumeNormals, index4 ).xyz - shift_half.xyz);
+    color += (texture3D( VolumeNormals, index5 ).xyz - shift_half.xyz);
+    color += (texture3D( VolumeNormals, index6 ).xyz - shift_half.xyz);
     color = normalize(color).xyz;
     color += (1.0, 1.0, 1.0);
     color /= (2.0, 2.0, 2.0);

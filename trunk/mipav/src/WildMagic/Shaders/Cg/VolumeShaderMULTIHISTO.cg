@@ -121,6 +121,8 @@ void p_VolumeShaderMULTIHISTO(  in float3 inTexCoord1    : TEXCOORD0,
                          uniform float ShowB,
                          uniform float ABBlend,
 
+                                uniform float BoundaryEmphasis0,
+
                                 uniform float4    LevColor0,
                                 uniform float4    LevMidLine0,
                                 uniform float4    LevLeftLine0,
@@ -234,6 +236,7 @@ void p_VolumeShaderMULTIHISTO(  in float3 inTexCoord1    : TEXCOORD0,
     color.b = 0;
     color.a = 0;
     float4 colorGM = color;
+    float4 color2nd = color;
 
     // The opacity at the current position along the ray:
     float opacity = 0;
@@ -245,6 +248,7 @@ void p_VolumeShaderMULTIHISTO(  in float3 inTexCoord1    : TEXCOORD0,
     bool bClipped = false;
 
     float fMapX, fMapY;
+    float fBoundary;
 
     // For some profiles the number of loop iterations must be determined at
     // compile time:
@@ -287,9 +291,11 @@ void p_VolumeShaderMULTIHISTO(  in float3 inTexCoord1    : TEXCOORD0,
             {
                 color = tex3D(VolumeImageA,position);
                 colorGM = tex3D(VolumeImageGMA,position);
+                color2nd = tex3D(VolumeImageGMGMA,position);
 
                 fMapX = color.r;
                 fMapY = colorGM.r;
+                fBoundary = color2nd.r;
 
                 opacity =
                     computeAlpha( fMapX, fMapY, LevMidLine0, LevLeftLine0, LevRightLine0 );
@@ -297,6 +303,7 @@ void p_VolumeShaderMULTIHISTO(  in float3 inTexCoord1    : TEXCOORD0,
                 color.g = LevColor0.g * opacity;
                 color.b = LevColor0.b * opacity;
                 opacity *= LevColor0.a;
+                opacity *= (BoundaryEmphasis0*fBoundary);
                 // If the opacity is not zero:
                 if ( opacity > 0 )
                 {

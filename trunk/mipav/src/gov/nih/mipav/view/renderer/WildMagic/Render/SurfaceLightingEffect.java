@@ -23,8 +23,8 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         m_kVolumeTextureNew = new Texture();
         m_kVolumeLUTNew = new Texture();
         
-        m_kVPixelLighting = new VertexShader("MipavLightingFragment", true);
-        m_kPPixelLighting = new PixelShader("MipavLightingFragment", true);
+        m_kVPixelLighting = new VertexShader("MipavLightingFragmentV", true);
+        m_kPPixelLighting = new PixelShader("MipavLightingFragmentP", true);
         m_kPPixelLighting.SetTextureQuantity(4);
         m_kPPixelLighting.SetImageName(0,"VolumeImageA");
         m_kPPixelLighting.SetTexture(0, kImageA.GetVolumeTarget() );

@@ -15,11 +15,12 @@ public class LevWidgetEffect extends TextureEffect
     public LevWidgetEffect (final String rkBaseName)
     {
         SetPassQuantity(1);
-        m_kVShader.set(0, new VertexShader("LevWidgetEffect"));
+        m_kVShader.set(0, new VertexShader("TextureV"));
         m_kPShader.set(0, new PixelShader("LevWidgetEffect", true));
 
         m_kPShader.get(0).SetTextureQuantity(1);
         m_kPShader.get(0).SetImageName(0,rkBaseName);
+        m_kWidgetState.UseWidget[0] = 1.0f;
     }
 
     public LevWidgetState getState()

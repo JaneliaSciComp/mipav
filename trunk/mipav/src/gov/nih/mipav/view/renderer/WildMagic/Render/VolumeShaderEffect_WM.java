@@ -642,9 +642,9 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
             pkProgram.GetUC("LevRightLine"+iState).SetDataSource(m_akLevWidget[iState].RightLine);
             //System.err.println( "LevRightLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
         }
-        if ( pkProgram.GetUC("BoundaryEmphasis") != null ) 
+        if ( pkProgram.GetUC("BoundaryEmphasis"+iState) != null ) 
         {
-            pkProgram.GetUC("BoundaryEmphasis").SetDataSource(m_akLevWidget[iState].BoundaryEmphasis);
+            pkProgram.GetUC("BoundaryEmphasis"+iState).SetDataSource(m_akLevWidget[iState].BoundaryEmphasis);
         }
     }
 

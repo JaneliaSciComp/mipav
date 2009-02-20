@@ -1,13 +1,14 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransferFunction;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogGradientMagnitude;
+import gov.nih.mipav.view.dialogs.JDialogLaplacian;
 
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -132,7 +133,7 @@ public class VolumeImage
         m_kOpacityMapTarget_GM.SetShared(true);
         
 
-        m_kSurfaceImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,
+        m_kSurfaceImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,
                                        iXBound,iYBound,iZBound,(byte[])null,
                                        "SurfaceImage");
         m_kSurfaceTarget = new Texture();
@@ -457,6 +458,66 @@ public class VolumeImage
         }
     }
 
+    public GraphicsImage GenerateGMImages( ModelImage kImageGM, String kPostFix )
+    {
+        int iXBound = kImageGM.getExtents()[0];
+        int iYBound = kImageGM.getExtents()[1];
+        int iZBound = kImageGM.getExtents()[2];
+        kImageGM.calcMinMax();
+        float fImageMaxGM = (float)kImageGM.getMax();
+        float fImageMinGM = (float)kImageGM.getMin();
+
+        byte[] abData = null;
+        abData = new byte[iXBound*iYBound*iZBound];
+        int i = 0;
+        for (int iZ = 0; iZ < iZBound; iZ++)
+        {
+            for (int iY = 0; iY < iYBound; iY++)
+            {
+                for (int iX = 0; iX < iXBound; iX++)
+                {
+                    float fValue = kImageGM.getFloat(iX,iY,iZ);
+                    abData[i++] = (byte)(255 * (fValue - fImageMinGM)/(fImageMaxGM - fImageMinGM));
+                }
+            }
+        }
+        return
+            new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
+                               iXBound,iYBound,iZBound, abData,
+                               new String( "VolumeImage" + kPostFix));
+    }
+
+    public GraphicsImage GenerateImagesColor( ModelImage kImage, String kPostFix )
+    {
+        int iXBound = kImage.getExtents()[0];
+        int iYBound = kImage.getExtents()[1];
+        int iZBound = kImage.getExtents()[2];
+
+
+        byte[] aucData = new byte[4*iXBound*iYBound*iZBound];
+        byte[] aucGMData = new byte[4*iXBound*iYBound*iZBound];
+        float temp;
+        int iGM = 0;
+        try {
+            kImage.exportData( 0, kImage.getSize(), aucData );
+            for ( int i = 0; i < kImage.getSize(); i += 4)
+            {
+                temp = (aucData[i+1] + aucData[i+2] + aucData[i+3])/3.0f;
+                aucGMData[iGM++] = Float.valueOf(temp).byteValue();
+                aucGMData[iGM++] = Float.valueOf(temp).byteValue();
+                aucGMData[iGM++] = Float.valueOf(temp).byteValue();
+                aucGMData[iGM++] = Float.valueOf(temp).byteValue();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new GraphicsImage( GraphicsImage.FormatMode.IT_RGBA8888,
+                iXBound,iYBound,iZBound,aucGMData,
+                new String( "VolumeImage" + kPostFix));
+
+    }
+    
+
     /**
      * Return the Volume color map Texture.
      * @return Volume color map Texture.
@@ -465,7 +526,7 @@ public class VolumeImage
     {
         return m_kColorMapTarget;
     }
-
+    
     /**
      * Return the Gradient Magnitude Texture.
      * @return Gradient Magnitude Texture.
@@ -475,26 +536,17 @@ public class VolumeImage
         return m_kVolumeGMTarget;
     }
     
-
-    /**
-     * Return the 2nd derivative texture.
-     * @return 2nd derivative texture.
-     */
-    public Texture GetSecondDerivativeMapTarget()
-    {
-        return m_kVolumeGMGMTarget;
-    }
     
     public GraphicsImage GetHisto()
     {
         return m_kHisto;
     }
-    
-    
+
     public Vector2f[] GetHistoTCoords()
     {
         return m_akHistoTCoord;
     }
+    
 
     /**
      * Return the ModelImage volume data.
@@ -503,8 +555,7 @@ public class VolumeImage
     public ModelImage GetImage()
     {
         return m_kImage;
-    }
-    
+    }    
 
     /**
      * Return the Volume LUT.
@@ -513,7 +564,7 @@ public class VolumeImage
     public ModelLUT GetLUT()
     {
         return m_kLUT;
-    }    
+    }
 
     /**
      * Return the Volume normal Texture.
@@ -559,7 +610,7 @@ public class VolumeImage
     {
         return m_fX;
     }
-
+    
     /**
      * The ModelImage Volume y-scale factor.
      * @return Volume y-scale factor.
@@ -568,7 +619,8 @@ public class VolumeImage
     {
         return m_fY;
     }
-    
+
+
     /**
      * The ModelImage Volume z-scale factor.
      * @return Volume z-scale factor.
@@ -580,6 +632,15 @@ public class VolumeImage
 
 
     /**
+     * Return the 2nd derivative texture.
+     * @return 2nd derivative texture.
+     */
+    public Texture GetSecondDerivativeMapTarget()
+    {
+        return m_kVolumeGMGMTarget;
+    }
+
+    /**
      * Return the surface mask Texture.
      * @return surface mask Texture.
      */
@@ -587,8 +648,7 @@ public class VolumeImage
     {
         return m_kSurfaceTarget;
     }
-
-
+    
     /**
      * Return the Texture containing the volume data.
      * @return Texture containing the volume data.
@@ -597,7 +657,7 @@ public class VolumeImage
     {
         return m_kVolumeTarget;
     }
-
+    
     /**
      * Return the Texture containing the volume data.
      * @return Texture containing the volume data.
@@ -606,7 +666,7 @@ public class VolumeImage
     {
         return m_kVolumeTarget.GetImage().GetDataBuffer();
     }
-    
+
     /**
      * Initialize the textures for the opacity lookup table.
      * @param kImage the ModelImage the opacity transfer function applies to.
@@ -629,6 +689,7 @@ public class VolumeImage
                                  GraphicsImage.FormatMode.IT_L8,iLutHeight,afData,
                                  new String( "OpacityMap" + kPostFix ));
     }
+
     
     /**
      * Return true if the Volume image is a color image.
@@ -648,7 +709,6 @@ public class VolumeImage
     {
         m_kVolumeTarget.Release();
     }
-
     
     /**
      * Sets the ModelRGB for the iImage.
@@ -657,8 +717,7 @@ public class VolumeImage
     public void SetRGBT(ModelRGB kRGBT)
     {
         SetRGBT( m_kColorMapTarget, m_kColorMap, kRGBT );
-    }
-
+    }   
     /**
      * Update the image data.
      * @param kImage the modified ModelImage
@@ -668,8 +727,7 @@ public class VolumeImage
     {
         m_kImage = kImage;
         VolumeImage.UpdateData( m_kImage, m_kVolume, m_kVolumeTarget, kPostfix );
-    }
-    
+    }    
     /**
      * Update the LUT for the ModelImage.
      * @param kLUT new LUT for ModelImage.
@@ -681,7 +739,9 @@ public class VolumeImage
             this.UpdateImages( m_kColorMapTarget, m_kColorMap, kLUT );
         }
         m_kLUT = kLUT;
-    }   
+    }
+    
+
     /**
      * Update the transfer function for the image iImage.
      * @param kTransfer the new opacity transfer function
@@ -702,7 +762,9 @@ public class VolumeImage
              return UpdateImages( kImage, m_kOpacityMapTarget_GM, m_kOpacityMap_GM, kTransfer );
          }
         return false;
-    }    
+    }
+
+
     private void GenerateHistogram( GraphicsImage kImage, GraphicsImage kImageGM, String kPostFix )
     {
         float[] afCount = new float[256*256];
@@ -736,9 +798,9 @@ public class VolumeImage
             int iHisto = 0;
             for ( int i = 0; i < abData.length; i++)
             {
-                a1 = (short)(abData[i]);
+                a1 = (abData[i]);
                 a1 = (short)(a1 & 0x00ff);
-                a2 = (short)(abHistoData[iHisto]);
+                a2 = (abHistoData[iHisto]);
                 a2 = (short)(a2 & 0x00ff);
                 afCount[a1 +  a2 * 256] += 1;
                 iHisto++;
@@ -754,7 +816,7 @@ public class VolumeImage
         byte[] abHisto = new byte[256*256];
         for(int i = 0; i< 256*256; ++i)
         {
-            abHisto[i] = new Float(afCount[i]/(float)max*255f).byteValue();
+            abHisto[i] = new Float(afCount[i]/max*255f).byteValue();
         }
 
         int iMinX = 255, iMaxX = 0;
@@ -798,7 +860,7 @@ public class VolumeImage
             }
         }
 
-        System.err.println( iMinX + ", " + iMinY + "    " + iMaxX + ", " + iMaxY );
+        //System.err.println( iMinX + ", " + iMinY + "    " + iMaxX + ", " + iMaxY );
         //iMinX = 0; iMaxX = 255;
         //iMinY = 0; iMaxY = 255;
         m_akHistoTCoord[0] = new Vector2f( iMinX/255.0f, iMinY/255.0f );
@@ -811,14 +873,14 @@ public class VolumeImage
                     256,256, null, new String("VolumeImageHisto" + kPostFix) );
         m_kHisto.SetData( abHisto, 256, 256 );
     }
-    
+
 
     private void GradientMagnitudeImage(ModelImage kImage, String kPostfix)
     {
         JDialogGradientMagnitude kCalcMagnitude = new JDialogGradientMagnitude( null, kImage );
         kCalcMagnitude.setSeparateThread( false );
         kCalcMagnitude.actionPerformed( new ActionEvent(this, 0, "OK" ) );
-        ModelImage kImageGM = ViewUserInterface.getReference().getRegisteredImageByName(JDialogBase.makeImageName(kImage.getImageName(), "_gmag") );
+        ModelImage kImageGM = kCalcMagnitude.getResultImage();
         
         m_kVolumeGM =  VolumeImage.UpdateData( kImageGM, null, m_kVolumeGMTarget, "GM"+kPostfix );
         m_kVolumeGMTarget = new Texture();
@@ -830,13 +892,18 @@ public class VolumeImage
         m_kVolumeGMTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
         
         
-        
-        kCalcMagnitude = new JDialogGradientMagnitude( null, kImageGM );
-        kCalcMagnitude.setSeparateThread( false );
-        kCalcMagnitude.actionPerformed( new ActionEvent(this, 0, "OK" ) );
-        ModelImage kImageGMGM = ViewUserInterface.getReference().getRegisteredImageByName(JDialogBase.makeImageName(kImageGM.getImageName(), "_gmag") );
-        
-        m_kVolumeGMGM =  VolumeImage.UpdateData( kImageGMGM, null, m_kVolumeGMGMTarget, "GMGM"+kPostfix );
+        /*
+        JDialogLaplacian kCalcLaplacian = new JDialogLaplacian( null, kImage );
+        kCalcLaplacian.setSeparateThread( false );
+        kCalcLaplacian.actionPerformed( new ActionEvent(this, 0, "OK" ) );
+        ModelImage kImageGMGM = kCalcLaplacian.getResultImage();        
+        AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(kImageGMGM, ModelStorageBase.UBYTE, 
+                kImageGMGM.getMin(), kImageGMGM.getMax(), 
+                0, 255, false);
+        changeTypeAlgo.setRunningInSeparateThread(false);
+        changeTypeAlgo.run();
+        */
+        m_kVolumeGMGM =  m_kVolumeGM;//VolumeImage.UpdateData( kImageGMGM, null, m_kVolumeGMGMTarget, "GMGM"+kPostfix );
         m_kVolumeGMGMTarget = new Texture();
         m_kVolumeGMGMTarget.SetImage(m_kVolumeGMGM);
         m_kVolumeGMGMTarget.SetShared(true);
@@ -844,67 +911,6 @@ public class VolumeImage
         m_kVolumeGMGMTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeGMGMTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeGMGMTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
-    }
-
-
-    public GraphicsImage GenerateImagesColor( ModelImage kImage, String kPostFix )
-    {
-        int iXBound = kImage.getExtents()[0];
-        int iYBound = kImage.getExtents()[1];
-        int iZBound = kImage.getExtents()[2];
-
-
-        byte[] aucData = new byte[4*iXBound*iYBound*iZBound];
-        byte[] aucGMData = new byte[4*iXBound*iYBound*iZBound];
-        float temp;
-        int iGM = 0;
-        try {
-            kImage.exportData( 0, kImage.getSize(), aucData );
-            for ( int i = 0; i < kImage.getSize(); i += 4)
-            {
-                temp = (aucData[i+1] + aucData[i+2] + aucData[i+3])/3.0f;
-                aucGMData[iGM++] = Float.valueOf(temp).byteValue();
-                aucGMData[iGM++] = Float.valueOf(temp).byteValue();
-                aucGMData[iGM++] = Float.valueOf(temp).byteValue();
-                aucGMData[iGM++] = Float.valueOf(temp).byteValue();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return new GraphicsImage( GraphicsImage.FormatMode.IT_RGBA8888,
-                iXBound,iYBound,iZBound,aucGMData,
-                new String( "VolumeImage" + kPostFix));
-
-    }
-
-
-    public GraphicsImage GenerateGMImages( ModelImage kImageGM, String kPostFix )
-    {
-        int iXBound = kImageGM.getExtents()[0];
-        int iYBound = kImageGM.getExtents()[1];
-        int iZBound = kImageGM.getExtents()[2];
-        kImageGM.calcMinMax();
-        float fImageMaxGM = (float)kImageGM.getMax();
-        float fImageMinGM = (float)kImageGM.getMin();
-
-        byte[] abData = null;
-        abData = new byte[iXBound*iYBound*iZBound];
-        int i = 0;
-        for (int iZ = 0; iZ < iZBound; iZ++)
-        {
-            for (int iY = 0; iY < iYBound; iY++)
-            {
-                for (int iX = 0; iX < iXBound; iX++)
-                {
-                    float fValue = kImageGM.getFloat(iX,iY,iZ);
-                    abData[i++] = (byte)(255 * (fValue - fImageMinGM)/(fImageMaxGM - fImageMinGM));
-                }
-            }
-        }
-        return
-            new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
-                               iXBound,iYBound,iZBound, abData,
-                               new String( "VolumeImage" + kPostFix));
     }
     
     /**

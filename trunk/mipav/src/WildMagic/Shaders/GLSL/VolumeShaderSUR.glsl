@@ -158,33 +158,34 @@ float GetAttenuation
     return fAttn;
 }
 
-void AmbientLight(  vec3   MaterialEmissive,
+vec4 AmbientLight(  vec3   MaterialEmissive,
                     vec3   MaterialAmbient,
                     vec3   LightAmbient,
-                    vec4   LightAttenuation,
-                   out     vec4 kVertexColor)
-
+                    vec4   LightAttenuation )
 {
+    vec4 kResult = vec4(0.0,0.0,0.0,0.0);
     vec3 kLAmb = LightAttenuation.w*LightAmbient;
-    kVertexColor.rgb = MaterialEmissive + MaterialAmbient*kLAmb;
-    kVertexColor.a = 1.0;
+    kResult.rgb = MaterialEmissive + MaterialAmbient*kLAmb;
+    kResult.a = 1.0;
+    return kResult;
 }
 
-void DirectionalLight(  vec3 kModelPosition,
+vec4 DirectionalLight(  vec3 kModelPosition,
                         vec3 kModelNormal,
                         vec3   CameraWorldPosition,
                         vec3   MaterialEmissive,
                         vec3   MaterialAmbient,
-                        vec4   MaterialDiffuse,
+                        vec3   MaterialDiffuse,
                         vec4   MaterialSpecular,
                         vec3   LightDirection,
                         vec3   LightAmbient,
                         vec3   LightDiffuse,
                         vec3   LightSpecular,
-                        vec4   LightAttenuation,
-                       out     vec4 kVertexColor)
+                        vec4   LightAttenuation )
     
 {
+    vec4 kResult = vec4(0.0,0.0,0.0,0.0);
+
     float fDiff, fSpec;
     GetDirectionalLightFactors(kModelPosition,kModelNormal,
                                CameraWorldPosition,LightDirection,MaterialSpecular.a,
@@ -199,11 +200,12 @@ void DirectionalLight(  vec3 kModelPosition,
         }
     }
 
-    kVertexColor.rgb = MaterialEmissive + LightAttenuation.w*kColor;
-    kVertexColor.a = 1.0;
+    kResult.rgb = MaterialEmissive + LightAttenuation.w*kColor;
+    kResult.a = 1.0;
+    return kResult;
 }
 
-void PointLight(     vec3 kModelPosition,
+vec4 PointLight(     vec3 kModelPosition,
                      vec3 kModelNormal,
                      vec3   CameraWorldPosition,
                      vec3   MaterialEmissive,
@@ -214,9 +216,10 @@ void PointLight(     vec3 kModelPosition,
                      vec3   LightAmbient,
                      vec3   LightDiffuse,
                      vec3   LightSpecular,
-                     vec4   LightAttenuation,
-                    out     vec4 kVertexColor)
+                     vec4   LightAttenuation)
 {
+    vec4 kResult = vec4(0.0,0.0,0.0,0.0);
+
     float fDiff, fSpec;
     GetPointLightFactors(kModelPosition.xyz,kModelNormal,
                          CameraWorldPosition,LightWorldPosition,MaterialSpecular.a,
@@ -235,11 +238,12 @@ void PointLight(     vec3 kModelPosition,
         }
     }
 
-    kVertexColor.rgb = MaterialEmissive + fAttn*kColor;
-    kVertexColor.a = MaterialDiffuse.a;
+    kResult.rgb = MaterialEmissive + fAttn*kColor;
+    kResult.a = MaterialDiffuse.a;
+    return kResult;
 }
 
-void SpotLight(     vec3 kModelPosition,
+vec4 SpotLight(     vec3 kModelPosition,
                     vec3 kModelNormal,
                     vec3 CameraWorldPosition,
                     vec3 MaterialEmissive,
@@ -252,9 +256,10 @@ void SpotLight(     vec3 kModelPosition,
                     vec3 LightDiffuse,
                     vec3 LightSpecular,
                     vec4 LightSpotCutoff,
-                    vec4 LightAttenuation,
-                   out     vec4 kVertexColor)
+                    vec4 LightAttenuation)
 {
+    vec4 kResult = vec4(0.0,0.0,0.0,0.0);
+
     float fDiff, fSpec, fSpot;
     GetSpotLightFactors(kModelPosition.xyz,kModelNormal,
                         CameraWorldPosition,LightWorldPosition,MaterialSpecular.a,
@@ -277,28 +282,30 @@ void SpotLight(     vec3 kModelPosition,
         }
     }
     
-    kVertexColor.rgb = MaterialEmissive + fAttn*kColor;
-    kVertexColor.a = MaterialDiffuse.a;
+    kResult.rgb = MaterialEmissive + fAttn*kColor;
+    kResult.a = MaterialDiffuse.a;
+    return kResult;
 }
 
 
-void computeColor( vec3 kModelPosition, vec3 kModelNormal, vec3 CameraWorldPosition, 
+vec4 computeColor( vec3 kModelPosition, vec3 kModelNormal, vec3 CameraWorldPosition, 
                    vec3 MaterialEmissive, vec3 MaterialAmbient, vec4 MaterialDiffuse, vec4 MaterialSpecular,
                    vec4 LightAmbient, vec4 LightDiffuse, vec4 LightSpecular,
                    vec4 LightWorldPosition, vec4 LightWorldDirection,
                    vec4 LightSpotCutoff, vec4 LightAttenuation,
                    float LightType,
                    float Composite,
-                   inout vec4 color_sample)
+                   vec4 color)
 {
+    vec4 kResult = vec4(0.0,0.0,0.0,0.0);
     if ( LightType == -1.0 )
     {
-//         color_sample.r = kModelNormal.x;
-//         color_sample.g = kModelNormal.y;
-//         color_sample.b = kModelNormal.z;
-        color_sample.r = 0.0;
-        color_sample.g = 0.0;
-        color_sample.b = 0.0;
+//         kResult.r = kModelNormal.x;
+//         kResult.g = kModelNormal.y;
+//         kResult.b = kModelNormal.z;
+        kResult.r = 0.0;
+        kResult.g = 0.0;
+        kResult.b = 0.0;
     }
     else
     {
@@ -313,72 +320,69 @@ void computeColor( vec3 kModelPosition, vec3 kModelNormal, vec3 CameraWorldPosit
 
         if ( Composite != 0.0 )
         {
-            LocalMaterialAmbient = color_sample.xyz * MaterialAmbient;
-            LocalMaterialDiffuse = color_sample * MaterialDiffuse;
-            LocalMaterialEmissive = color_sample.xyz * MaterialEmissive;
-            LocalMaterialSpecular = color_sample * MaterialSpecular;
+            LocalMaterialAmbient = color.xyz * MaterialAmbient;
+            LocalMaterialDiffuse = color * MaterialDiffuse;
+            LocalMaterialEmissive = color.xyz * MaterialEmissive;
+            LocalMaterialSpecular = color * MaterialSpecular;
         }
 
         if ( LightType == 0.0 )
         {
-            AmbientLight( LocalMaterialEmissive,
-                          LocalMaterialAmbient,
-                          LightAmbient,
-                          LightAttenuation,
-                          color_sample );
+            kResult = AmbientLight( LocalMaterialEmissive.xyz,
+                                         LocalMaterialAmbient.xyz,
+                                         LightAmbient.xyz,
+                                         LightAttenuation.xyzw );
         }
         else if ( LightType == 1.0 )
         {
-            DirectionalLight(  kModelPosition,
-                               local_normal,
-                               CameraWorldPosition,
-                               LocalMaterialEmissive,
-                               LocalMaterialAmbient,
-                               LocalMaterialDiffuse,
-                               LocalMaterialSpecular,
-                               LightWorldDirection,
-                               LightAmbient,
-                               LightDiffuse,
-                               LightSpecular,
-                               LightAttenuation,
-                               color_sample);
+            kResult = DirectionalLight(  kModelPosition.xyz,
+                                              local_normal.xyz,
+                                              CameraWorldPosition.xyz,
+                                              LocalMaterialEmissive.xyz,
+                                              LocalMaterialAmbient.xyz,
+                                              LocalMaterialDiffuse.xyz,
+                                              LocalMaterialSpecular.xyzw,
+                                              LightWorldDirection.xyz,
+                                              LightAmbient.xyz,
+                                              LightDiffuse.xyz,
+                                              LightSpecular.xyz,
+                                              LightAttenuation.xyzw);
 
         }
         else if ( LightType == 2.0 )
         {
-            PointLight( kModelPosition,
-                        local_normal,
-                        CameraWorldPosition,
-                        LocalMaterialEmissive,
-                        LocalMaterialAmbient,
-                        LocalMaterialDiffuse,
-                        LocalMaterialSpecular,
-                        LightWorldPosition,
-                        LightAmbient,
-                        LightDiffuse,
-                        LightSpecular,
-                        LightAttenuation,
-                        color_sample);
+            kResult = PointLight( kModelPosition.xyz,
+                                       local_normal.xyz,
+                                       CameraWorldPosition,
+                                       LocalMaterialEmissive.xyz,
+                                       LocalMaterialAmbient.xyz,
+                                       LocalMaterialDiffuse.xyzw,
+                                       LocalMaterialSpecular.xyzw,
+                                       LightWorldPosition.xyz,
+                                       LightAmbient.xyz,
+                                       LightDiffuse.xyz,
+                                       LightSpecular.xyz,
+                                       LightAttenuation.xyzw);
         }
         else
         {
-            SpotLight( kModelPosition,
-                       local_normal,
-                       CameraWorldPosition,
-                       LocalMaterialEmissive,
-                       LocalMaterialAmbient,
-                       LocalMaterialDiffuse,
-                       LocalMaterialSpecular,
-                       LightWorldPosition,
-                       LightWorldDirection,
-                       LightAmbient,
-                       LightDiffuse,
-                       LightSpecular,
-                       LightSpotCutoff,
-                       LightAttenuation,
-                       color_sample);
+            kResult = SpotLight( kModelPosition.xyz,
+                                      local_normal.xyz,
+                                      CameraWorldPosition.xyz,
+                                      LocalMaterialEmissive.xyz,
+                                      LocalMaterialAmbient.xyz,
+                                      LocalMaterialDiffuse.xyzw,
+                                      LocalMaterialSpecular.xyzw,
+                                      LightWorldPosition.xyz,
+                                      LightWorldDirection.xyz,
+                                      LightAmbient.xyz,
+                                      LightDiffuse.xyz,
+                                      LightSpecular.xyz,
+                                      LightSpotCutoff.xyzw,
+                                      LightAttenuation.xyzw);
         }
     }
+    return kResult;
 }
 
 /**
@@ -428,9 +432,10 @@ uniform sampler2D aSceneImage_TEXUNIT0;
 uniform sampler3D bVolumeImageA_TEXUNIT1; 
 uniform sampler1D cColorMapA_TEXUNIT2; 
 uniform sampler1D dOpacityMapA_TEXUNIT3; 
-uniform sampler3D eVolumeImageA_GM_TEXUNIT4; 
-uniform sampler1D fOpacityMapA_GM_TEXUNIT5; 
-uniform sampler3D gNormalMapA_TEXUNIT6; 
+uniform sampler3D eNormalMapA_TEXUNIT4; 
+uniform sampler3D fVolumeImageA_GM_TEXUNIT5; 
+uniform sampler1D gOpacityMapA_GM_TEXUNIT6; 
+//uniform sampler3D VolumeImageGMGMA: TEXUNIT7, 
 uniform float stepsize;
 uniform vec4  steps;
 uniform float IsColor;
@@ -594,8 +599,8 @@ void p_VolumeShaderSUR()
                 opacity = texture1D(dOpacityMapA_TEXUNIT3,color.r).r;
                 if ( GradientMagnitude != 0.0 )
                 {
-                    colorGM = texture3D(eVolumeImageA_GM_TEXUNIT4,position);
-                    opacityGM = texture1D(fOpacityMapA_GM_TEXUNIT5,colorGM.r).r;
+                    colorGM = texture3D(fVolumeImageA_GM_TEXUNIT5,position);
+                    opacityGM = texture1D(gOpacityMapA_GM_TEXUNIT6,colorGM.r).r;
                     opacity = opacity * opacityGM;
                 }
 
@@ -615,18 +620,18 @@ void p_VolumeShaderSUR()
         if ( opacity > 0.0 )
         {
             // Surface and Composite surface display:
-            normal = texture3D(gNormalMapA_TEXUNIT6,position);
+            normal = texture3D(eNormalMapA_TEXUNIT4,position);
             normal.w = 0.0;
 
             // First light is static light:
             color0 = color;
-            computeColor( position, normal, CameraModelPosition,
-                          MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
-                          Light0Ambient, Light0Diffuse, Light0Specular,
-                          Light0ModelPosition, Light0ModelDirection,
-                          Light0SpotCutoff, Light0Attenuation,
+            computeColor( position.xyz, normal.xyz, CameraModelPosition.xyz,
+                          MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse.xyzw, MaterialSpecular.xyzw,
+                          Light0Ambient.xyzw, Light0Diffuse.xyzw, Light0Specular.xyzw,
+                          Light0ModelPosition.xyzw, Light0ModelDirection.xyzw,
+                          Light0SpotCutoff.xyzw, Light0Attenuation.xyzw,
                           Light0Type,
-                          Composite, color0 );
+                          Composite, color0.xyzw );
 
             // Assume second light is alwasy an ambient light:
             color1 = color;
@@ -635,30 +640,29 @@ void p_VolumeShaderSUR()
                 LocalMaterialAmbient = color1.xyz * MaterialAmbient.xyz;
                 LocalMaterialEmissive = color1.xyz * MaterialEmissive.xyz;
             }
-            AmbientLight( LocalMaterialEmissive,
-                          LocalMaterialAmbient,
-                          Light1Ambient,
-                          Light1Attenuation,
-                          color1 );
+            color1 = AmbientLight( LocalMaterialEmissive.xyz,
+                                   LocalMaterialAmbient.xyz,
+                                   Light1Ambient.xyz,
+                                   Light1Attenuation.xyzw );
 
             // Remaining lights:
             color2 = color;
-            computeColor( position, normal, CameraModelPosition,
-                          MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
-                          Light2Ambient, Light2Diffuse, Light2Specular,
-                          Light2WorldPosition, Light2WorldDirection,
-                          Light2SpotCutoff, Light2Attenuation,
+            computeColor( position.xyz, normal.xyz, CameraModelPosition.xyz,
+                          MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse.xyzw, MaterialSpecular.xyzw,
+                          Light2Ambient.xyzw, Light2Diffuse.xyzw, Light2Specular.xyzw,
+                          Light2WorldPosition.xyzw, Light2WorldDirection.xyzw,
+                          Light2SpotCutoff.xyzw, Light2Attenuation.xyzw,
                           Light2Type,
-                          Composite, color2 );
+                          Composite, color2.xyzw );
 
             color3 = color;
-            computeColor( position, normal, CameraModelPosition,
-                          MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
-                          Light3Ambient, Light3Diffuse, Light3Specular,
-                          Light3WorldPosition, Light3WorldDirection,
-                          Light3SpotCutoff, Light3Attenuation,
+            computeColor( position.xyz, normal.xyz, CameraModelPosition.xyz,
+                          MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse.xyzw, MaterialSpecular.xyzw,
+                          Light3Ambient.xyzw, Light3Diffuse.xyzw, Light3Specular.xyzw,
+                          Light3WorldPosition.xyzw, Light3WorldDirection.xyzw,
+                          Light3SpotCutoff.xyzw, Light3Attenuation.xyzw,
                           Light3Type,
-                          Composite, color3 );
+                          Composite, color3.xyzw );
 
             color = color0 + color1 + color2 + color3;
 
@@ -752,7 +756,7 @@ void p_VolumeShaderSUR()
                 opacity = texture1D(dOpacityMapA_TEXUNIT3,color.r).r;
                 if (opacity > 0.0)
                 {
-                    normal2 = texture3D(gNormalMapA_TEXUNIT6,position1);
+                    normal2 = texture3D(eNormalMapA_TEXUNIT4,position1);
                     local_normal2 = normal2.xyz - (0.5, 0.5, 0.5);
                     local_normal2 = normalize( local_normal2 );
                     if ( dot(local_normal.xyz, local_normal2.xyz) < 0.0 )
@@ -786,7 +790,7 @@ void p_VolumeShaderSUR()
                 opacity = texture1D(dOpacityMapA_TEXUNIT3,color.r).r;
                 if (opacity > 0.0)
                 {
-                    normal2 = texture3D(gNormalMapA_TEXUNIT6,position2);
+                    normal2 = texture3D(eNormalMapA_TEXUNIT4,position2);
                     local_normal2 = normal2.xyz - (0.5, 0.5, 0.5);
                     local_normal2 = normalize( local_normal2 );
                     if ( dot(local_normal.xyz, local_normal2.xyz) < 0.0 )
@@ -819,7 +823,7 @@ void p_VolumeShaderSUR()
                 opacity = texture1D(dOpacityMapA_TEXUNIT3,color.r).r;
                 if (opacity > 0.0)
                 {
-                    normal2 = texture3D(gNormalMapA_TEXUNIT6,position3);
+                    normal2 = texture3D(eNormalMapA_TEXUNIT4,position3);
                     local_normal2 = normal2.xyz - (0.5, 0.5, 0.5);
                     local_normal2 = normalize( local_normal2 );
                     if ( dot(local_normal.xyz, local_normal2.xyz) < 0.0 )
