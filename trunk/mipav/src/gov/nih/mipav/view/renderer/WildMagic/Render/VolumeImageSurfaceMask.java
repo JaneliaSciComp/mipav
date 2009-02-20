@@ -98,7 +98,7 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
                     }
                 }
                 m_pkRenderer.EndScene();
-                writeImage();
+                //writeImage();
             }
             m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetSurfaceTarget(), m_iSlice, false );
             //m_pkRenderer.DisplayBackBuffer();
