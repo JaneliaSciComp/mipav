@@ -28,6 +28,9 @@ public class SurfaceExtractImage extends GraphicsImage
     public void dispose()
     {
         Data = null;
+        TriTable.clear();
+        TriTable = null;
+        super.dispose();
     }
 
     public void SetData ( ByteBuffer kBuffer, int iZ )
@@ -35,7 +38,7 @@ public class SurfaceExtractImage extends GraphicsImage
         byte[] afData = kBuffer.array();
         int iType = 0;
         int iDataIndex;
-        if ( m_aucData != null )
+        if ( (m_aucData != null) && (afData != null) )
         {
             for ( int y = 0; y < m_aiBound[1]; y++ )
             {
