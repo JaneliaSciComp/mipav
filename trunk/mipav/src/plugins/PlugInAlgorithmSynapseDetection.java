@@ -49,6 +49,8 @@ import java.util.*;
              7.) x = z
              8.) y = -z
              9.) y = z
+             delX = delY = delZ means the change in X = change in Y = change in Z.  Note that the ratio of 2 del quantities gives slopes,
+             so in case 10, delY/delX = 1 and delZ/delX = 1.
              10.) delX = delY = delZ
              11.) delX = delY = -delZ
              12.) delX = -delY = delZ
@@ -67,6 +69,36 @@ import java.util.*;
              calculated and the center is used as the location of the point VOI for the synapse.  The values of the initial
              BRIGHT_BLUE or BLUE pixel and of all 26 connected BRIGHT_BLUE and BLUE pixels is set to NONE so that the same
              synapse will not be found again on another line search thru the same pixel in a different direction.  
+             
+             For the redIntensity, greenIntensity, and blueIntensity I opened your file of contours around synapses Synapse100.xml
+             on the image SynapseSpotted_d_RedGreenL4_L23_090105_1_to_59Crop3_enhanced.tif.  I drew one line segment thru each
+             synapse and noted the maximum red, green, and blue pixel intensities and the blue width.  This was not super scientific as
+             there are different ways the line segment could be drawn.
+             Slice 0 red 98, green 130, blue 150, blue width 9
+             Slice 1 left red 131, green 139, blue 175, blue width 10
+             Slice 1 right red 255, green 162, blue 82, blue width 7
+             Slice 2 red 214, green 101, blue 156, blue width 4
+             Slice 4 red 108, green 87, blue 134, blue width 11
+             Slice 7 left Not typical don’t record
+             Slice 7 right red 69, green 123, blue 146, blue width 18
+             Slice 8 red 82, green 129, blue 163, blue width 24
+             Slice 10 top red 56, green 110, blue 90, blue width 6
+             Slice 11 bottom red 111, green 98, blue 107, blue width 10
+             Slice 17 red 134, green 107, blue 218, blue width 10
+             Slice 19 red 95, green 100, blue 90, blue width 14
+             Slice 22 red 157, green 172, blue 99, blue width 9
+             Slice 27 lower order along line is green, red, blue, red   Have red 116, green 239, blue 138, blue width 19
+             Slice 27 upper order along line is red, green, blue Have red 214, green 171, blue 142, blue width 24
+             So the measured range was:
+             Red 56-255
+             Green 87-239
+             Blue 82-175
+             Blue width 4-24
+             To include most synapses I simply took the minimum of these maximum values and provided a further 1 or 2
+             of margin by rounding down to the number ending in the nearest 0 or 5.  Of course, not all your images
+             will have the same intensities, so you will have to vary these numbers with different runs.
+
+
  *           
  */
 public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
@@ -146,6 +178,19 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private int threeBandMinXY;
     private int threeBandMinZ;
     private ModelImage maskImage = null;
+    // Number of pixels in a detected and grown blue region
+    private int blueCount;
+    private String fileName;
+    private String fileDirectory;
+    private File file;
+    private RandomAccessFile raFile;
+    private String dataString = null;
+    private int minimumBlueCount = Integer.MAX_VALUE;
+    private int maximumBlueCount = Integer.MIN_VALUE;
+    private long totalBlueCount = 0;
+    private long totalBlueCountSquared = 0;
+    private double averageBlueCount;
+    private double blueStandardDeviation;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -341,8 +386,10 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         blueMask2 = new BitSet(length);
         threeBandMinXY = redMin + greenMin + blueMinXY;
         threeBandMinZ = redMin + greenMin + blueMinZ;
+        dataString = "Index     x         y         z         count\n\n";
         
         // Search along all lines parallel to x axis
+        dataString += ("Searching parallel to x axis\n");
         for (z = 0; z < zDim; z++) {
             zPos = z * xySlice;
             for (y = 0; y < yDim; y++) {
@@ -425,9 +472,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         } // for (z = 0; z < zDim; z++)
         System.out.println("Number of synapses found searching parallel to x axis = " + numSynapses);
         Preferences.debug("Number of synapses found searching parallel to x axis = " + numSynapses + "\n");
+        dataString += "\nNumber of synapses found searching parallel to x axis = " + numSynapses + "\n";
         previousNumSynapses = numSynapses;
         
         // Search along all lines parallel to y axis
+        dataString += ("\nSearching parallel to y axis\n");
         for (z = 0; z < zDim; z++) {
             zPos = z * xySlice;
             for (x = 0; x < xDim; x++) {
@@ -510,9 +559,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         } // for (z = 0; z < zDim; z++)
         System.out.println("Number of synapses found searching parallel to y axis = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to y axis = " + (numSynapses - previousNumSynapses) + "\n");
+        dataString += "\nNumber of synapses found searching parallel to y axis = " + (numSynapses - previousNumSynapses) + "\n";
         previousNumSynapses = numSynapses;
         
         // Search all lines parallel to z axis
+        dataString += ("\nSearching parallel to z axis\n");
         for (y = 0; y < yDim; y++) {
             yPos = y * xDim;
             for (x = 0; x < xDim; x++) {
@@ -595,9 +646,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         } // for (y = 0; y < yDim; y++)
         System.out.println("Number of synapses found searching parallel to z axis = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to z axis = " + (numSynapses - previousNumSynapses) + "\n");
+        dataString += "\nNumber of synapses found searching parallel to z axis = " + (numSynapses - previousNumSynapses) + "\n";
         previousNumSynapses = numSynapses;
         
         //Search all lines parallel to x = -y.
+        dataString += ("\nSearching parallel to x = -y\n");
         for (z = 0; z < zDim; z++) {
             zPos = z * xySlice;
             for (xStart = 0; xStart <= xDim - threeBandMinXY; xStart++) {
@@ -755,9 +808,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         } // for (z = 0; z < zDim; z++)
         System.out.println("Number of synapses found searching parallel to (x = -y) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (x = -y) = " + (numSynapses - previousNumSynapses) + "\n");
+        dataString += "\nNumber of synapses found searching parallel to (x = -y) = " + (numSynapses - previousNumSynapses) + "\n";
         previousNumSynapses = numSynapses;
         
         // Search all lines parallel to x = y.
+        dataString += ("\nSearching parallel to x = y\n");
         for (z = 0; z < zDim; z++) {
             zPos = z * xySlice;
             for (xStart = xDim - 1; xStart >= threeBandMinXY - 1; xStart--) {
@@ -915,9 +970,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         } // for (z = 0; z < zDim; z++)
         System.out.println("Number of synapses found searching parallel to (x = y) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (x = y) = " + (numSynapses - previousNumSynapses) + "\n");
+        dataString += "\nNumber of synapses found searching parallel to (x = y) = " + (numSynapses - previousNumSynapses) + "\n";
         previousNumSynapses = numSynapses;
         
         // Search all lines parallel to x = -z.
+        dataString += ("\nSearching parallel to x = -z\n");
         for (y = 0; y < yDim; y++) {
             yPos = y * xDim;
             for (xStart = 0; xStart <= xDim - threeBandMinZ; xStart++) {
@@ -1075,9 +1132,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         } // for (y = 0; y < yDim; y++)
         System.out.println("Number of synapses found searching parallel to (x = -z) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (x = -z) = " + (numSynapses - previousNumSynapses) + "\n");
+        dataString += "\nNumber of synapses found searching parallel to (x = -z) = " + (numSynapses - previousNumSynapses) + "\n";
         previousNumSynapses = numSynapses;
         
         // Search all lines parallel to x = z.
+        dataString += ("\nSearching parallel to x = z\n");
         for (y = 0; y < yDim; y++) {
             yPos = y * xDim;
             for (xStart = xDim - 1; xStart >= threeBandMinZ - 1; xStart--) {
@@ -1235,9 +1294,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         } // for (y = 0; y < yDim; y++)
         System.out.println("Number of synapses found searching parallel to (x = z) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (x = z) = " + (numSynapses - previousNumSynapses) + "\n");
+        dataString += "\nNumber of synapses found searching parallel to (x = z) = " + (numSynapses - previousNumSynapses) + "\n";
         previousNumSynapses = numSynapses;
         
         // Search all lines parallel to y = -z.
+        dataString += ("\nSearching parallel to y = -z\n");
         for (x = 0; x < xDim; x++) {
             for (yStart = 0; yStart <= yDim - threeBandMinZ; yStart++) {
                 threePreviousColor = NONE;
@@ -1394,9 +1455,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         } // for (x = 0; x < xDim; x++)
         System.out.println("Number of synapses found searching parallel to (y = -z) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (y = -z) = " + (numSynapses - previousNumSynapses) + "\n");
+        dataString += "\nNumber of synapses found searching parallel to (y = -z) = " + (numSynapses - previousNumSynapses) + "\n";
         previousNumSynapses = numSynapses;
         
         // Search all lines parallel to y = z.
+        dataString += ("\nSearching parallel to y = z\n");
         for (x = 0; x < xDim; x++) {
             for (yStart = yDim - 1; yStart >= threeBandMinZ - 1; yStart--) {
                 threePreviousColor = NONE;
@@ -1553,9 +1616,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         } // for (x = 0; x < xDim; x++)
         System.out.println("Number of synapses found searching parallel to (y = z) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (y = z) = " + (numSynapses - previousNumSynapses) + "\n");
+        dataString += "\nNumber of synapses found searching parallel to (y = z) = " + (numSynapses - previousNumSynapses) + "\n";
         previousNumSynapses = numSynapses;
         
         // Search all lines with delX = delY = delZ
+        dataString += ("\nSearching parallel to delX = delY = delZ\n");
         for (zStart = 0; zStart < zDim; zStart++) {
             for (yStart = 0; yStart < yDim; yStart++) {
                 threePreviousColor = NONE;
@@ -1792,9 +1857,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         } // for (yStart = 0; yStart < yDim; yStart++)
         System.out.println("Number of synapses found searching parallel to (delX = delY = delZ) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (delX = delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n");
+        dataString += "\nNumber of synapses found searching parallel to (delX = delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n";
         previousNumSynapses = numSynapses;
         
         // Search all lines with delX = delY = -delZ
+        dataString += ("\nSearching parallel to delX = delY = -delZ\n");
         for (zStart = 0; zStart < zDim; zStart++) {
             for (yStart = 0; yStart < yDim; yStart++) {
                 threePreviousColor = NONE;
@@ -2031,9 +2098,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         } // for (yStart = 0; yStart < yDim; yStart++)
         System.out.println("Number of synapses found searching parallel to (delX = delY = -delZ) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (delX = delY = -delZ) = " + (numSynapses - previousNumSynapses) + "\n");
+        dataString += "\nNumber of synapses found searching parallel to (delX = delY = -delZ) = " + (numSynapses - previousNumSynapses) + "\n";
         previousNumSynapses = numSynapses;
         
         // Search all lines with delX = -delY = delZ
+        dataString += ("\nSearching parallel to delX = -delY = delZ\n");
         for (zStart = 0; zStart < zDim; zStart++) {
             for (yStart = 0; yStart < yDim; yStart++) {
                 threePreviousColor = NONE;
@@ -2270,9 +2339,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         } // for (yStart = 0; yStart < yDim; yStart++)
         System.out.println("Number of synapses found searching parallel to (delX = -delY = delZ) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (delX = -delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n");
+        dataString += "\nNumber of synapses found searching parallel to (delX = -delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n";
         previousNumSynapses = numSynapses;
         
         // Search all lines with -delX = delY = delZ
+        dataString += ("\nSearching parallel to -delX = delY = delZ\n");
         for (zStart = 0; zStart < zDim; zStart++) {
             for (yStart = 0; yStart < yDim; yStart++) {
                 threePreviousColor = NONE;
@@ -2509,6 +2580,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         } // for (yStart = 0; yStart < yDim; yStart++)
         System.out.println("Number of synapses found searching parallel to (-delX = delY = delZ) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (-delX = delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n");
+        dataString += "\nNumber of synapses found searching parallel to (-delX = delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n";
         previousNumSynapses = numSynapses;
 
 
@@ -2521,6 +2593,31 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         srcImage.notifyImageDisplayListeners();
         System.out.println("Total synapses found = " + numSynapses);
         Preferences.debug("Total synapses found = " + numSynapses + "\n");
+        dataString += "\nTotal synapses found = " + numSynapses + "\n";
+        dataString += "Minimum blue count = " + minimumBlueCount + "\n";
+        dataString += "Maximum blue count = " + maximumBlueCount + "\n";
+        averageBlueCount = (double)totalBlueCount/numSynapses;
+        dataString += "Average blue count = " + String.format("%.2f\n",averageBlueCount);
+        blueStandardDeviation = (totalBlueCountSquared - (double)totalBlueCount * (double)totalBlueCount/numSynapses)/(numSynapses - 1);
+        blueStandardDeviation = Math.sqrt(blueStandardDeviation);
+        dataString += "Blue count standard deviation = " + String.format("%.2f\n",blueStandardDeviation);
+        fileDirectory = srcImage.getImageDirectory();
+        fileName = srcImage.getImageName() + ".txt";
+        file = new File(fileDirectory + fileName);
+
+        try {
+            raFile = new RandomAccessFile(file, "rw");
+
+            // Necessary so that if this is an overwritten file there isn't any
+            // junk at the end
+            raFile.setLength(0);
+            raFile.write(dataString.getBytes());
+            raFile.close();
+        } catch (FileNotFoundException e) {
+            MipavUtil.displayError("FileNotFoundException " + e);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException " + e);
+        }
         
         blueMask = null;
         for (i = 0; i < length; i++) {
@@ -2545,8 +2642,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         }
         buffer = null;
         new ViewJFrameImage(maskImage);
-        
-
+       
         fireProgressStateChanged(100);
         time = System.currentTimeMillis() - time;
         Preferences.debug("PlugInAlgorithmSynapseDetection elapsed time in seconds = " + (time/1000.0));
@@ -2636,7 +2732,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         centerBlueX = blueX;
         centerBlueY = blueY;
         centerBlueZ = blueZ;
-        int blueCount = 1;
+        blueCount = 1;
         while (change && (del <= blueMax - 2)) {
             change = false;
             del++;
@@ -2924,6 +3020,15 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         centerBlueX = Math.round((float)centerBlueX/blueCount);
         centerBlueY = Math.round((float)centerBlueY/blueCount);
         centerBlueZ = Math.round((float)centerBlueZ/blueCount);
+        dataString += String.format("%-10d%-10d%-10d%-10d%-10d\n",numSynapses+1, centerBlueX, centerBlueY, centerBlueZ, blueCount);
+        if (blueCount < minimumBlueCount) {
+            minimumBlueCount = blueCount;
+        }
+        if (blueCount > maximumBlueCount) {
+            maximumBlueCount = blueCount;
+        }
+        totalBlueCount += blueCount;
+        totalBlueCountSquared += blueCount * blueCount;
     }
     
     // Recursion triggers a stack overflow - don't use
