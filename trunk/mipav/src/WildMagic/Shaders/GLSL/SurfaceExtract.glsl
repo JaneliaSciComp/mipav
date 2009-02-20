@@ -1,6 +1,6 @@
 uniform vec4    StepSize;
-uniform sampler3D VolumeImageA;
-uniform sampler1D OpacityMapA;
+uniform sampler3D bVolumeImageA_TEXUNIT1; 
+uniform sampler1D dOpacityMapA_TEXUNIT3; 
 
 void p_SurfaceExtract()
 {
@@ -26,8 +26,8 @@ void p_SurfaceExtract()
     int iShow = 8;
     for ( int i = 0; i < 8; i++ )
     {
-        color[i] = texture3D(VolumeImageA,cube[i]);
-        opacity = texture1D(OpacityMapA,color[i].r).r;
+        color[i] = texture3D(bVolumeImageA_TEXUNIT1,cube[i]);
+        opacity = texture1D(dOpacityMapA_TEXUNIT3,color[i].r).r;
         if ( opacity <= 0.0 )
         {
             color[i].r = 0.0;
