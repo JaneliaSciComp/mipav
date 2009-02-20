@@ -1,14 +1,4 @@
 //----------------------------------------------------------------------------
-uniform mat4 WVPMatrix;
-void v_CalcNormalsPerSlice_Pass1()
-{
-    // Transform the position from model space to clip space.
-    gl_Position = WVPMatrix*gl_Vertex;
-
-    // Pass through the texture coordinate.
-    gl_TexCoord[0] = gl_MultiTexCoord0;
-}
-//----------------------------------------------------------------------------
 uniform vec4    StepSize;
 uniform float     IsColor;
 uniform sampler3D bVolumeImageA_TEXUNIT1; 

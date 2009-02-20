@@ -63,7 +63,7 @@ uniform vec4 clipEye;
 uniform vec4 clipEyeInv;
 
 /** Raycasting fragment program implementation */
-void p_VolumeShaderMIP()
+void main()
 {
     // find the right place to lookup in the backside buffer
     vec2 texc = ((outPos.xy / outPos.w) + 1.0) / 2.0;
@@ -123,7 +123,8 @@ void p_VolumeShaderMIP()
 
     // For some profiles the number of loop iterations must be determined at
     // compile time:
-    for( int i = 0; i < 450; i++ )
+    //for ( int i = 0; i < 450; i++ )
+    for( int i = 0; i < 1; i++ )
     {
         // axis-aligned clipping:
         if ( (DoClip != 0.0) &&
@@ -182,21 +183,25 @@ void p_VolumeShaderMIP()
                 color_max.rgb = color.rgb;
             }
         }
-        // Break early if the max is >= 1
-        if ( fMax >= 1.0)
-        {
-            break;
-        }
-        // Increment position along the ray:
-        position += delta_dir;
-        length_acc += delta_dir_len;
-        // Break when the end of the ray is reached
-        if ( length_acc >= len )
-        {
-            break;
-        }
+//         // Break early if the max is >= 1
+//         if ( fMax >= 1.0)
+//         {
+//             break;
+//         }
+//         // Increment position along the ray:
+//         position += delta_dir;
+//         length_acc += delta_dir_len;
+//         // Break when the end of the ray is reached
+//         if ( length_acc >= len )
+//         {
+//             break;
+//         }
     } 
 
+    if ( fMax >= 1.0)
+    {
+        fMax = 1.0;
+    }
     if ( IsColor != 0.0 )
     {
         gl_FragColor.r = texture1D(cColorMapA_TEXUNIT2,color_max.r).r;

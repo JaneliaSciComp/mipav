@@ -18,8 +18,8 @@ public class SurfaceClipEffect extends VolumeClipEffect
     public SurfaceClipEffect ()
     {
         SetPassQuantity(1);
-        m_kVShader.set(0, new VertexShader("SurfaceClip", true) );
-        m_kPShader.set(0, new PixelShader("SurfaceClip") );
+        m_kVShader.set(0, new VertexShader("SurfaceClipV", true) );
+        m_kPShader.set(0, new PixelShader("SurfaceClipP") );
     }
     /**
      * Scale the surface to fit the mask texture. Scaling is done inside the SurfaceClip vertex shader.

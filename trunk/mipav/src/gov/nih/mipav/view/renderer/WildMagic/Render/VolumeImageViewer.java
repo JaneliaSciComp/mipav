@@ -134,7 +134,8 @@ public class VolumeImageViewer extends JavaApplication3D
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         m_spkCamera.Perspective = false;
-        m_spkCamera.SetFrustum(90.0f,m_iWidth/(float)m_iHeight,1f,10.0f);
+        
+        m_spkCamera.SetFrustum(-1,1,-1,1,1f,10.0f);
         m_pkRenderer.OnFrustumChange();
 
         CreateScene();
@@ -193,23 +194,14 @@ public class VolumeImageViewer extends JavaApplication3D
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight)
     {
-        if ( (iWidth != m_kVolumeImage.GetImage().getExtents()[0]) || 
-             (iHeight != m_kVolumeImage.GetImage().getExtents()[1])  )
-        {
-            return;
-        }
         if (iWidth > 0 && iHeight > 0)
         {
             m_iWidth = iWidth;
             m_iHeight = iHeight;
             m_spkCamera.Perspective = false;
-            m_spkCamera.SetFrustum(90.0f,m_iWidth/(float)m_iHeight,1f,10.0f);
+            m_spkCamera.SetFrustum(-1,1,-1,1,1f,10.0f);
             m_pkRenderer.OnFrustumChange();
-
-            if (m_pkRenderer != null)
-            {
-                m_pkRenderer.Resize(iWidth,iHeight);
-            }
+            m_pkRenderer.Resize(iWidth,iHeight);
             arg0.setSize(iWidth,iHeight);
         }
     }

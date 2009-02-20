@@ -165,6 +165,8 @@ public class PlaneRender_WM extends GPURenderBase
     private float m_fUpFOV = 65f;
     /** For zooming with the mouse. */
     private float m_fMouseY;
+    
+    private boolean m_bShowSurface = false;
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -273,7 +275,7 @@ public class PlaneRender_WM extends GPURenderBase
                     kSlices = (VolumeSlices)m_kDisplayList.get(i);
                     fBlend = kSlices.GetSliceOpacity(m_iPlaneOrientation);
                     kSlices.SetSliceOpacity(m_iPlaneOrientation, 1);
-                    kSlices.ShowSurface(true);
+                    kSlices.ShowSurface(m_bShowSurface);
                     for ( int j = 0; j < 3; j++ )
                     {
                         bShowBoundingBox[j] = kSlices.GetShowBoundingBox(j);
@@ -424,7 +426,6 @@ public class PlaneRender_WM extends GPURenderBase
             m_pkRenderer.OnFrustumChange();
             m_bModified = true;
         }
-
     }
 
     /* (non-Javadoc)
@@ -526,6 +527,7 @@ public class PlaneRender_WM extends GPURenderBase
         Vector3f patientPt = new Vector3f();
         MipavCoordinateSystems.fileToPatient( center, patientPt, kImage, m_iPlaneOrientation );
         setSlice( patientPt.Z );
+        GetCanvas().display();
     }
 
     /**
@@ -535,6 +537,7 @@ public class PlaneRender_WM extends GPURenderBase
     public void SetModified ( boolean bModified )
     {
         m_bModified = bModified;
+        GetCanvas().display();
     }
 
     /**
@@ -1094,6 +1097,11 @@ public class PlaneRender_WM extends GPURenderBase
         if (iSlice != m_iSlice) {
             m_iSlice = iSlice;
         }
+    }
+    
+    public void displaySurface( boolean bOn )
+    {
+        m_bShowSurface = bOn;
     }
     
 }

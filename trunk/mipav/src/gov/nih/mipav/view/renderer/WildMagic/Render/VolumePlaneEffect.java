@@ -18,23 +18,20 @@ import WildMagic.LibGraphics.Shaders.VertexShader;
  * @see PlaneRender.java
  */
 public class VolumePlaneEffect extends ShaderEffect
-    implements StreamInterface
+implements StreamInterface
 {
     /** Shared volume data and textures. */
     private VolumeImage m_kVolumeImageA;
-    
+
     /** Shared volume data and textures. */
     private VolumeImage m_kVolumeImageB;
-    
+
     /** stores the blend function */
     private float[] m_afBlend = new float[]{1f,0,0,0};
 
-    /** turns surface display on/off */
-    private float[] m_afShowSurface = new float[]{0f,0,0,0};
-
     /** stores the background color */
     private float[] m_afBackgroundColor = new float[4];
- 
+
     /** 
      * Creates a new VolumeShaderEffect object.
      * @param kVolumeImageA the VolumeImage containing shared data and textures for rendering.
@@ -46,7 +43,7 @@ public class VolumePlaneEffect extends ShaderEffect
         m_kVolumeImageB = kVolumeImageB;
         Init( false );
     }
-    
+
     /** 
      * Creates a new VolumeShaderEffect object.
      * @param kVolumeImageA the VolumeImage containing shared data and
@@ -60,7 +57,7 @@ public class VolumePlaneEffect extends ShaderEffect
         m_kVolumeImageB = kVolumeImageB;
         Init( bUnique );
     }
-    
+
     /**
      * Sets the blend factor shader parameter between imageA and imageB.
      * @param fBlend blend factor (range = 0-1).
@@ -81,7 +78,6 @@ public class VolumePlaneEffect extends ShaderEffect
     public void dispose()
     {
         m_afBlend = null;
-        m_afShowSurface = null;
         super.dispose();
     }
 
@@ -98,7 +94,7 @@ public class VolumePlaneEffect extends ShaderEffect
      * @see WildMagic.LibGraphics.Effects.ShaderEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)
      */
     public void OnLoadPrograms (int iPass, Program pkVProgram,
-                                Program pkPProgram)
+            Program pkPProgram)
     {
         Blend(1);
         Program pkProgram = GetPProgram(0);
@@ -166,11 +162,10 @@ public class VolumePlaneEffect extends ShaderEffect
      */
     public void ShowSurface( boolean bOn )
     {
-        m_afShowSurface[0] = bOn ? 1 : 0;
         Program pkProgram = GetPProgram(0);
         if ( pkProgram != null && pkProgram.GetUC("ShowSurface") != null ) 
         {
-            pkProgram.GetUC("ShowSurface").SetDataSource(m_afShowSurface);
+            pkProgram.GetUC("ShowSurface").GetData()[0] = bOn? 1 : 0;
         } 
     }
     /** Initializes the ShaderEffect vertex and pixel shader programs. */
@@ -179,16 +174,17 @@ public class VolumePlaneEffect extends ShaderEffect
         /* Set single-pass rendering: */
         SetPassQuantity(1);
 
-        SetVShader(0,new VertexShader("Color_Opacity_Texture"));
-        SetPShader(0,new PixelShader("Color_Opacity_Texture", bUnique));
+        SetVShader(0,new VertexShader("Color_Opacity_TextureV"));
+        SetPShader(0,new PixelShader("Color_Opacity_TextureP", bUnique));
 
-        //GetPShader(0).SetTextureQuantity(3);
-        GetPShader(0).SetTextureQuantity(5);
-        GetPShader(0).SetImageName(0,"VolumeImageA");
-        GetPShader(0).SetTexture(0, m_kVolumeImageA.GetVolumeTarget() );
-        GetPShader(0).SetImageName(1, "ColorMapA");
-        GetPShader(0).SetTexture(1, m_kVolumeImageA.GetColorMapTarget() );
-
+        GetPShader(0).SetTextureQuantity(3);
+        //GetPShader(0).SetTextureQuantity(5);
+        int iTex = 0;
+        GetPShader(0).SetImageName(iTex,m_kVolumeImageA.GetVolumeTarget().GetName());
+        GetPShader(0).SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
+        GetPShader(0).SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName() );
+        GetPShader(0).SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget() );
+/*
         if ( m_kVolumeImageB != null )
         {
             GetPShader(0).SetImageName(2,"VolumeImageB");
@@ -196,8 +192,8 @@ public class VolumePlaneEffect extends ShaderEffect
             GetPShader(0).SetImageName(3, "ColorMapB");
             GetPShader(0).SetTexture(3, m_kVolumeImageB.GetColorMapTarget() );
         }
-
-        GetPShader(0).SetImageName(4, "SurfaceImage");
-        GetPShader(0).SetTexture(4, m_kVolumeImageA.GetSurfaceTarget() );
+*/
+        GetPShader(0).SetImageName(iTex, m_kVolumeImageA.GetSurfaceTarget().GetName() );
+        GetPShader(0).SetTexture(iTex++, m_kVolumeImageA.GetSurfaceTarget() );
     }
 }

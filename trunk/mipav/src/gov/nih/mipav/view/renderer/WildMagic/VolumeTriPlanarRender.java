@@ -314,7 +314,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         if ( m_kVolumeRayCast != null )
         {
-            m_kVolumeRayCast.CMPMode(m_pkRenderer);
+            m_kVolumeRayCast.CMPMode();
         }
         ResetShaderParamsWindow();
     }
@@ -333,11 +333,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /**
      * Display the volume in DDR mode.
      */
-    public void DDRMode()
+    public void DRRMode()
     {
         if ( m_kVolumeRayCast != null )
         {
-            m_kVolumeRayCast.DDRMode(m_pkRenderer);
+            m_kVolumeRayCast.DRRMode();
         }
         ResetShaderParamsWindow();
     }
@@ -362,6 +362,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         
         if ( m_bFirstRender )
         {
+            m_kVolumeRayCast.setVolumeSamples( 0 );
             m_kVolumeRayCast.SetDisplay(true);   
             m_kSlices.SetDisplay(false);   
         }
@@ -404,6 +405,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 VolumeImageNormalGM.main(m_kParent, m_kVolumeImageB);
             }
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+            m_kVolumeRayCast.setVolumeSamples( 0.5f );
             CMPMode();
         }
         if ( m_bSurfaceUpdate )
@@ -520,7 +522,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kShaderParamsWindow.setParent(this);
         }
         m_kShaderParamsWindow.close();
-        m_kShaderParamsWindow.AddUserVariables(m_kVolumeRayCast.GetShaderEffect().GetPProgram());
+        m_kShaderParamsWindow.AddUserVariables(m_kVolumeRayCast.GetShaderEffect().GetPProgram(0));
         m_kShaderParamsWindow.Display();
         m_kShaderParamsWindow.setParent(this);
     }
@@ -923,7 +925,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
         m_kAnimator.add( GetCanvas() );
-        //m_kAnimator = new Animator( GetCanvas() );
+        m_kAnimator = new Animator( GetCanvas() );
         m_kAnimator.setRunAsFastAsPossible(true); 
         m_kAnimator.start();
     }
@@ -1058,7 +1060,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         if ( m_kVolumeRayCast != null )
         {
-            m_kVolumeRayCast.MIPMode(m_pkRenderer);
+            m_kVolumeRayCast.MIPMode();
         }
         ResetShaderParamsWindow();
     }
@@ -1067,11 +1069,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /**
      * Display the volume in Mullti-histo mode.
      */
-    public void MULTIHISTOMode()
+    public void MULTIHISTOMode(boolean bOn)
     {
         if ( m_kVolumeRayCast != null )
         {
-            m_kVolumeRayCast.MULTIHISTOMode(m_pkRenderer);
+            m_kVolumeRayCast.MULTIHISTOMode(bOn);
         }
         ResetShaderParamsWindow();
     }
@@ -1981,21 +1983,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-    
-    
-    
-    /**
-     * Sets the raytracing steps size.
-     * @param fValue the steps value (0-450)
-     */
-    public void stepsSize( float fValue )
-    {
-        if ( m_kVolumeRayCast != null )
-        {
-            m_kVolumeRayCast.StepsSize(fValue);
-        }
-    }
-    
+  
     
     /**
      * Display the volume in Surface mode.
@@ -2004,7 +1992,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         if ( m_kVolumeRayCast != null )
         {
-            m_kVolumeRayCast.SURFASTMode(m_pkRenderer);
+            m_kVolumeRayCast.SURFASTMode();
         }
         ResetShaderParamsWindow();
     }
@@ -2016,7 +2004,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         if ( m_kVolumeRayCast != null )
         {
-            m_kVolumeRayCast.SURMode(m_pkRenderer);
+            m_kVolumeRayCast.SURMode();
         }
         ResetShaderParamsWindow();
     }
@@ -2407,5 +2395,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kVolumeRayCast.updateLevWidgetState( kLWS, iState );
     }
 
+    
+    public void SetCustumBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
+    {
+        m_kVolumeRayCast.SetCustumBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
+    }
+    
+    public void setVolumeSamples( float fSample )
+    {
+        m_kVolumeRayCast.setVolumeSamples( fSample );
+    }
     
 }

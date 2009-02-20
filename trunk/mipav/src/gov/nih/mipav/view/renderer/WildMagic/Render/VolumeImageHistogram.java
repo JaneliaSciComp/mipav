@@ -184,6 +184,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
                 m_spkScene.UpdateGS();
             }
         }
+        GetCanvas().display();
     }
     
     public void mouseDragged(MouseEvent e)
@@ -211,6 +212,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
         {          
             m_bPickPending = true;
         }  
+        GetCanvas().display();
     }
   
     public void setWidget( String kWidgetType )
@@ -242,6 +244,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
                 m_bAdded = true;
             }
         }
+        GetCanvas().display();
     }
     
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight)
@@ -271,6 +274,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
         {
             m_akLev.get(m_iCurrent).setColor( kColor );
         }
+        GetCanvas().display();
     }
     
     public void SetInterface( JInterfaceBase kInterface )

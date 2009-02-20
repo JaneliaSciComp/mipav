@@ -62,7 +62,7 @@ public class VolumeRayCast extends VolumeObject
 {
 
     /** VolumeShaderEffect applied to proxy-geometry: */
-    private VolumeShaderEffect_WM m_kVolumeShaderEffect = null;
+    private VolumeShaderEffectMultiPass m_kVolumeShaderEffect = null;
 
     /** Vertex-color shader effect used for the polylines and the first-pass
      * rendering of the proxy-geometry:*/
@@ -112,11 +112,10 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Display the volume in Composite mode.
-     * @param kRenderer the OpenGLRenderer object.
      */
-    public void CMPMode(Renderer kRenderer)
+    public void CMPMode()
     {
-        m_kVolumeShaderEffect.CMPMode(kRenderer);
+        m_kVolumeShaderEffect.CMPMode();
     }
 
     /**
@@ -223,25 +222,19 @@ public class VolumeRayCast extends VolumeObject
         m_kScene.GetChild(0).Local.SetTranslate( m_kTranslate );
 
         
-        m_kVolumeShaderEffect = new VolumeShaderEffect_WM( m_kVolumeImageA, m_kVolumeImageB,
+        m_kVolumeShaderEffect = new VolumeShaderEffectMultiPass( m_kVolumeImageA, m_kVolumeImageB,
                 m_pkSceneTarget);
         kRenderer.LoadResources(m_kVolumeShaderEffect);
-        m_kVolumeShaderEffect.SetPassQuantity(1);
-        m_kVolumeShaderEffect.SURMode(kRenderer);
-        m_kVolumeShaderEffect.Blend(0.75f);
-        m_kVolumeShaderEffect.setABBlend(0.5f);
-
         m_kScene.UpdateGS();
         m_kScene.UpdateRS();
     }
 
     /**
      * Display the volume in DDR mode.
-     * @param kRenderer the OpenGLRenderer object.
      */
-    public void DDRMode(Renderer kRenderer)
+    public void DRRMode()
     {
-        m_kVolumeShaderEffect.DDRMode(kRenderer);
+        m_kVolumeShaderEffect.DRRMode();
     }
 
     /** delete local memory. */
@@ -318,7 +311,7 @@ public class VolumeRayCast extends VolumeObject
     /** Returns the VolumeShaderEffect.
      * @return the VolumeShaderEffect.
      */
-    public VolumeShaderEffect_WM GetShaderEffect()
+    public VolumeShaderEffectMultiPass GetShaderEffect()
     {
         return m_kVolumeShaderEffect;
         
@@ -334,21 +327,19 @@ public class VolumeRayCast extends VolumeObject
 
     /**
      * Display the volume in MIP mode.
-     * @param kRenderer the OpenGLRenderer object.
      */
-    public void MIPMode( Renderer kRenderer )
+    public void MIPMode( )
     {
-        m_kVolumeShaderEffect.MIPMode(kRenderer);
+        m_kVolumeShaderEffect.MIPMode();
     }
     
 
     /**
      * Display the volume in Multi-histo mode.
-     * @param kRenderer the OpenGLRenderer object.
      */
-    public void MULTIHISTOMode( Renderer kRenderer )
+    public void MULTIHISTOMode(boolean bOn)
     {
-        m_kVolumeShaderEffect.MULTIHISTOMode(kRenderer);
+        m_kVolumeShaderEffect.MULTIHISTOMode(bOn);
     }
 
     /** Turns off rendering to the PBuffer. Called after all objects displayed
@@ -470,9 +461,7 @@ public class VolumeRayCast extends VolumeObject
      * @param kColor new background color.
      */
     public void SetBackgroundColor( ColorRGBA kColor )
-    {
-        m_kVolumeShaderEffect.SetBackgroundColor( kColor );
-    }
+    {}
 
     /** Sets axis-aligned clipping for the VolumeShaderEffect.
      * @param afClip the clipping parameters for axis-aligned clipping.
@@ -558,29 +547,20 @@ public class VolumeRayCast extends VolumeObject
             m_kVolumeShaderEffect.Blend(fBlend);
         }
     }
-    /**
-     * Sets the raytracing steps size.
-     * @param fValue the steps value (0-450)
-     */
-    public void StepsSize( float fValue )
-    {
-        m_kVolumeShaderEffect.setSteps(fValue);
-    }
+    
     /**
      * Display the volume in Surface mode.
-     * @param kRenderer the OpenGLRenderer object.
      */
-    public void SURFASTMode(Renderer kRenderer)
+    public void SURFASTMode()
     {
-        m_kVolumeShaderEffect.SURFASTMode(kRenderer);
+        m_kVolumeShaderEffect.SURFASTMode();
     }
     /**
      * Display the volume in Composite Surface mode.
-     * @param kRenderer the OpenGLRenderer object.
      */
-    public void SURMode(Renderer kRenderer)
+    public void SURMode()
     {
-        m_kVolumeShaderEffect.SURMode(kRenderer);
+        m_kVolumeShaderEffect.SURMode();
     }
     /**
      * Called by CreateBox. Creates the bounding-box proxy geometry (VertexBuffer, IndexBuffer).
@@ -761,5 +741,19 @@ public class VolumeRayCast extends VolumeObject
         m_kVolumeShaderEffect.updateLevWidgetState( kLWS, iState );
     }
 
+
     
+    public void SetCustumBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
+    {
+        m_kVolumeShaderEffect.SetCustumBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
+    }
+    
+    
+    public void setVolumeSamples( float fSample )
+    {
+        boolean bTemp = m_bDisplay;
+        m_bDisplay = false;
+        m_kVolumeShaderEffect.setVolumeSamples( fSample );
+        m_bDisplay = bTemp;
+    }
 }

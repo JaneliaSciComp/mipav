@@ -10,8 +10,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
-import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 
 import javax.swing.ButtonGroup;
@@ -59,6 +60,7 @@ public class JPanelMultiHistogram extends JInterfaceBase implements ChangeListen
                                 Animator kAnimator, VolumeImage kVolumeImage) {
         m_kVolumeViewer = parent;
         m_kAnimator = kAnimator;
+        //m_kAnimator = new Animator();
         m_kMultiHistogram = new VolumeImageHistogram( parent, kVolumeImage);
         m_kMultiHistogram.SetAnimator(m_kAnimator);
         m_kMultiHistogram.SetInterface(this);
@@ -190,15 +192,26 @@ public class JPanelMultiHistogram extends JInterfaceBase implements ChangeListen
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(m_kMultiHistogram.GetCanvas(), BorderLayout.CENTER);
+        panel.setPreferredSize(new Dimension(256, 256));
+        panel.setBackground(Color.white);
         //panel.add(colorButton, BorderLayout.CENTER);
-        panel.setPreferredSize(new Dimension(m_kMultiHistogram.GetWidth(), m_kMultiHistogram.GetHeight()));
-        panel.setMinimumSize(new Dimension(m_kMultiHistogram.GetWidth(), m_kMultiHistogram.GetHeight()));
+        //panel.setPreferredSize(new Dimension(m_kMultiHistogram.GetWidth(), m_kMultiHistogram.GetHeight()));
+        //panel.setMinimumSize(new Dimension(m_kMultiHistogram.GetWidth(), m_kMultiHistogram.GetHeight()));
 
         // Scroll panel that hold the control panel layout in order to use JScrollPane
+
+        GridBagLayout gbLayout = new GridBagLayout();
+        GridBagConstraints gbConstraints = new GridBagConstraints();
+        
         scrollPanel = new DrawingPanel();
-        scrollPanel.setLayout(new BorderLayout());
-        scrollPanel.add(panel, BorderLayout.CENTER);   
-        scrollPanel.add(buttonPanel, BorderLayout.SOUTH);   
+        scrollPanel.setLayout(gbLayout);
+        gbConstraints.gridx = 0;
+        gbConstraints.gridy = 0;
+        //scrollPanel.add(panel, BorderLayout.CENTER);   
+        //scrollPanel.add(buttonPanel, BorderLayout.SOUTH);   
+        scrollPanel.add(panel, gbConstraints);   
+        gbConstraints.gridy++;
+        scrollPanel.add(buttonPanel, gbConstraints);   
 
         scroller = new JScrollPane(scrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);

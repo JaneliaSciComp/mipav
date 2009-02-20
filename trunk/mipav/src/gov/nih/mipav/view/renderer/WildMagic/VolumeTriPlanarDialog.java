@@ -9,6 +9,8 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -27,6 +29,11 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
+
+import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
+import WildMagic.LibGraphics.Shaders.ImageCatalog;
+import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
+import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 
 
 /**
@@ -409,11 +416,22 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
         try {
             if (m_kVolViewType.equals("WMVolTriplanar")) {
-                if ( imageA.getType() != ModelStorageBase.UBYTE )
+                if ( (imageA.getType() != ModelStorageBase.UBYTE) ||
+                        (imageA.isColorImage() && (imageA.getType() != ModelStorageBase.ARGB)) )
                 {
-                    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(imageA, ModelStorageBase.UBYTE, 
+                    AlgorithmChangeType changeTypeAlgo = null;
+                    if ( imageA.isColorImage() )
+                    {
+                        changeTypeAlgo = new AlgorithmChangeType(imageA, ModelStorageBase.ARGB, 
+                                imageA.getMin(), imageA.getMax(), 
+                                0, 255, false);
+                    }
+                    else
+                    {
+                        changeTypeAlgo = new AlgorithmChangeType(imageA, ModelStorageBase.UBYTE, 
                             imageA.getMin(), imageA.getMax(), 
                             0, 255, false);
+                    }
                     changeTypeAlgo.setRunningInSeparateThread(false);
                     changeTypeAlgo.run();
 
@@ -424,6 +442,16 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
                         changeTypeAlgo = null;
                     }
                 }
+/*
+                String kExternalDirs = VolumeTriPlanarInterface.getExternalDirs();        
+                ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
+                VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
+                PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
+                CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+                VolumeImage kVolumeImageA = new VolumeImage(  imageA, LUTa, RGBTA, "A" );
+                VolumeImageViewer.main(null, kVolumeImageA, true);
+*/
+                
                 VolumeTriPlanarInterface kWM = new VolumeTriPlanarInterface(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB);
                 if (forcePadding) {
                     kWM.doPadding(extents, volExtents);
@@ -438,6 +466,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
                  *  // need to update the rfa target labels in case there were attached surfaces that we should show
                  * info // about kWM.getProbeDialog().updateTargetList(); }
                  */
+
                 if (forceResample) {
 
                     if (imageA != null) {

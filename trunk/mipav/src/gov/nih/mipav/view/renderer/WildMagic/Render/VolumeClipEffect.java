@@ -28,14 +28,47 @@ public abstract class VolumeClipEffect extends ShaderEffect
                                                           { 1, 1, 0, 0 } };
 
     /** stores the eye clip plane information: */
-    protected float[] m_afClipEyeData = null;
+    protected float[] m_afClipEyeData = {0f,0f,0f,0f};
 
 
     /** stores the inverse-eye clip plane information: */
-    protected float[] m_afClipEyeInvData = null;
+    protected float[] m_afClipEyeInvData = {0f,0f,0f,0f};
     
     /** stores the arbitrary clip plane information: */
-    protected float[] m_afClipArbData = null;    
+    protected float[] m_afClipArbData = {0f,0f,0f,0f};
+
+
+    /* (non-Javadoc)
+     * @see WildMagic.LibGraphics.Effects.ShaderEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)
+     */
+    public void OnLoadPrograms (int iPass, Program pkVProgram, Program pkPProgram)
+    {
+        for ( int i = 0; i < 6; i++ )
+        {       
+            if ( pkPProgram.GetUC(m_akClip[i]) != null ) 
+            {
+                pkPProgram.GetUC(m_akClip[i]).SetDataSource(m_aafClipData[i]);
+            }
+        }
+        if ( pkPProgram.GetUC("DoClip") != null ) 
+        {
+            pkPProgram.GetUC("DoClip").SetDataSource(m_afDoClip);
+        }       
+        if ( pkPProgram.GetUC("clipArb") != null ) 
+        {
+            pkPProgram.GetUC("clipArb").SetDataSource(m_afClipArbData);
+        }
+        if ( pkPProgram.GetUC("clipEye") != null ) 
+        {
+            pkPProgram.GetUC("clipEye").SetDataSource(m_afClipEyeData);
+        }
+        if ( pkPProgram.GetUC("clipEyeInv") != null ) 
+        {
+            pkPProgram.GetUC("clipEyeInv").SetDataSource(m_afClipEyeInvData);
+        }
+        super.OnLoadPrograms( iPass, pkVProgram, pkPProgram );
+    }
+
 
     /* (non-Javadoc)
      * @see WildMagic.LibGraphics.Effects.ShaderEffect#dispose()
@@ -48,40 +81,6 @@ public abstract class VolumeClipEffect extends ShaderEffect
         m_afClipArbData = null;
     }
 
-    /**
-     * Init the axis-aligned clip planes.
-     * @param afData the axis-aligned clip plane default positions.
-     */
-    public void InitClip( )
-    {
-        float[][] aafClipData =  { { 0, 0, 0, 0 },
-                { 1, 1, 0, 0 },
-                { 0, 0, 0, 0 },
-                { 1, 1, 0, 0 },
-                { 0, 0, 0, 0 },
-                { 1, 1, 0, 0 } };
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("DoClip") != null ) 
-        {
-            pkProgram.GetUC("DoClip").SetDataSource(m_afDoClip);
-        }       
-
-        for ( int i = 0; i < 6; i++ )
-        {       
-            if ( pkProgram.GetUC(m_akClip[i]) != null ) 
-            {
-                pkProgram.GetUC(m_akClip[i]).SetDataSource(aafClipData[i]);
-            }
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see WildMagic.LibGraphics.Effects.ShaderEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)
-     */
-    public void OnLoadPrograms (int iPass, Program pkVProgram, Program pkPProgram)
-    {
-        InitClip();
-    }
     /**
      * Reset the axis-aligned clip planes, eye, inverse-eye and arbitrary clip
      * planes to neutral.
@@ -118,11 +117,6 @@ public abstract class VolumeClipEffect extends ShaderEffect
         m_afClipAll[iWhich] = bEnable;
         m_aafClipData[iWhich][0] = data;
         EnableClip();
-        Program pkProgram = GetPProgram(0);
-        if ( (pkProgram != null) && (pkProgram.GetUC(m_akClip[iWhich]) != null) ) 
-        {
-            pkProgram.GetUC(m_akClip[iWhich]).SetDataSource(m_aafClipData[iWhich]);
-        }
     }
     /**
      * Enable and set the arbitrary clip plane.
@@ -131,13 +125,11 @@ public abstract class VolumeClipEffect extends ShaderEffect
     public void SetClipArb(float[] afEquation, boolean bEnable)
     {
         m_afClipAll[8] = bEnable;
-        m_afClipArbData = afEquation;
-        EnableClip();
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("clipArb") != null ) 
+        for ( int i = 0; i < 4; i++ )
         {
-            pkProgram.GetUC("clipArb").SetDataSource(afEquation);
+            m_afClipArbData[i] = afEquation[i];
         }
+        EnableClip();
     }
     /**
      * Enable and set the eye clip plane.
@@ -146,13 +138,11 @@ public abstract class VolumeClipEffect extends ShaderEffect
     public void SetClipEye(float[] afEquation, boolean bEnable)
     {
         m_afClipAll[6] = bEnable;
-        m_afClipEyeData = afEquation;
-        EnableClip();
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("clipEye") != null ) 
+        for ( int i = 0; i < 4; i++ )
         {
-            pkProgram.GetUC("clipEye").SetDataSource(afEquation);
+            m_afClipEyeData[i] = afEquation[i];
         }
+        EnableClip();
     }
     /**
      * Enable and set the inverse-eye clip plane.
@@ -161,13 +151,11 @@ public abstract class VolumeClipEffect extends ShaderEffect
     public void SetClipEyeInv(float[] afEquation, boolean bEnable)
     {
         m_afClipAll[7] = bEnable;
-        m_afClipEyeInvData = afEquation;
-        EnableClip();
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("clipEyeInv") != null ) 
+        for ( int i = 0; i < 4; i++ )
         {
-            pkProgram.GetUC("clipEyeInv").SetDataSource(afEquation);
+            m_afClipEyeInvData[i] = afEquation[i];
         }
+        EnableClip();
     }
     /**
      * Enable clipping.
@@ -180,11 +168,6 @@ public abstract class VolumeClipEffect extends ShaderEffect
             bEnable |= m_afClipAll[i];
         }
         m_afDoClip[0] = (bEnable) ? 1 : 0;
-        Program pkProgram = GetPProgram(0);
-        if ( (pkProgram != null) && (pkProgram.GetUC("DoClip") != null) ) 
-        {
-            pkProgram.GetUC("DoClip").SetDataSource(m_afDoClip);
-        }       
     }
 
 }
