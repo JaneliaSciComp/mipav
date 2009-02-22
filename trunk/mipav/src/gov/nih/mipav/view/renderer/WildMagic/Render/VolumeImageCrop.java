@@ -51,10 +51,6 @@ public class VolumeImageCrop extends VolumeImageViewer
         boolean bCrop = true;
         while ( bCrop )
         {
-            //OpenGLFrameBuffer kPBuffer = new OpenGLFrameBuffer(m_eFormat, m_eDepth, m_eStencil,
-            //        m_eBuffering, m_eMultisampling,
-            //        m_pkRenderer, m_kVolumeImage.GetVolumeTarget(),arg0,m_iSlice);
-            
             ((VolumeCalcEffect)m_spkEffect).ResetClip();
 
             float fZ = ((float)m_iSlice)/(m_kVolumeImage.GetImage().getExtents()[2] -1);
@@ -62,14 +58,12 @@ public class VolumeImageCrop extends VolumeImageViewer
             m_pkPlane.DetachAllEffects();
             m_pkPlane.AttachEffect(m_spkEffect);
             m_kCuller.ComputeVisibleSet(m_spkScene);
-            //kPBuffer.Enable();
             m_pkRenderer.ClearBuffers();
             if (m_pkRenderer.BeginScene())
             {          
                 m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
                 m_pkRenderer.EndScene();
             }
-            //kPBuffer.Disable();
             m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetVolumeTarget(), m_iSlice, true );
             //m_pkRenderer.DisplayBackBuffer();
             m_iSlice++; 
@@ -77,7 +71,6 @@ public class VolumeImageCrop extends VolumeImageViewer
             {
                 bCrop = false;
                 m_iSlice = 0;
-                //System.err.println("Done CROP");
                 m_kAnimator.stop();
                 m_kAnimator.remove(arg0);
                 m_kAnimator = null;

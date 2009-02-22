@@ -173,6 +173,7 @@ public class VolumeCalcEffect extends VolumeClipEffect
         }  
 
         SetGradientMagnitude();
+        super.OnLoadPrograms ( iPass,  pkVProgram, pkPProgram );
     }
     
     /** 
