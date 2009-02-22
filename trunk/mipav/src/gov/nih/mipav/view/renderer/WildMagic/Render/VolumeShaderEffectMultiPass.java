@@ -217,7 +217,6 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             return;
         }
         m_iWhichShader = DRR;
-        float fStepSize = 1.0f / (float)m_iPasses;
         for (int i = 1; i < (int)m_kAlphaState.size(); i++)
         {
             m_kAlphaState.set(i, new AlphaState());
@@ -225,7 +224,6 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_SRC_ALPHA;
             m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE;
             m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
-            //m_kAlphaState.get(i).ConstantColor.Set(3.0f * fStepSize, 3.0f * fStepSize, 3.0f * fStepSize, fStepSize);
         }
         Program kPProgram = m_kPShaderCMP.GetProgram();  
         if ( kPProgram.GetUC("MIP") != null )
@@ -234,7 +232,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         }
         if ( kPProgram.GetUC("DRR") != null )
         {
-            kPProgram.GetUC("DRR").GetData()[0] = 1;
+            kPProgram.GetUC("DRR").GetData()[0] = m_kVolumeImageA.getDRRNorm();
         }
         if ( kPProgram.GetUC("Composite") != null )
         {
@@ -543,7 +541,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
          * is implemented in the VolumeShaderVertex.cg file: */        
         m_pkVShader = new VertexShader("VolumeShaderVertex");
 
-        m_kPShaderCMP = new PixelShader("VolumeShaderCMPMultiPass");
+        m_kPShaderCMP = new PixelShader("VolumeShaderMultiPass");
         initTextures(m_kPShaderCMP);
          
         m_kPShaderInit = new PixelShader("LoadMIPAVTextures");

@@ -73,6 +73,7 @@ public class VolumeImage
     
     private GraphicsImage m_kHisto = null;
     private Vector2f[] m_akHistoTCoord = new Vector2f[4];
+    private float m_fDRRNormalize = 255.0f;
     
     /**
      * Constructor. Stores the ModelImage Volume data.
@@ -86,6 +87,7 @@ public class VolumeImage
     public VolumeImage( ModelImage kImage, ModelLUT kLUT, ModelRGB kRGBT, String kPostfix )
     {
         m_kImage = kImage;
+        m_fDRRNormalize = computeIntegralNormalizationFactor();
         m_kLUT = kLUT;
         m_kColorMap = InitColorMap(kLUT, kRGBT, kPostfix);
         m_kOpacityMap = InitOpacityMap(m_kImage, kPostfix);
@@ -958,4 +960,113 @@ public class VolumeImage
          kOpacityTexture.Reload(true);
          return true;
     }
+    
+    
+    /**
+     * In order to map line integrals of image intensity to RGB colors where each color channel is 8 bits, it is
+     * necessary to make sure that the integrals are in [0,255]. Producing a theoretical maximum value of a line
+     * integral is not tractable in an application. This method constructs an approximate maximum by integrating along
+     * each line of voxels in the image with line directions parallel to the coordinate axes. The 'processRay' call
+     * adjusts the line integrals using the estimate, but still clamps the integrals to 255 since the estimate might not
+     * be the true maximum.
+     *
+     * @return  float Integral normalization factor.
+     */
+    protected float computeIntegralNormalizationFactor() {       
+        int iXBound = m_kImage.getExtents()[0];
+        int iYBound = m_kImage.getExtents()[1];
+        int iZBound = m_kImage.getExtents()[2];
+
+        byte[] aucData = null;
+        if ( m_kImage.isColorImage() )
+        {
+            aucData = new byte[4*iXBound*iYBound*iZBound];
+        }
+        else
+        {
+            aucData = new byte[iXBound*iYBound*iZBound];
+        }
+
+        try {
+            m_kImage.exportData( 0, m_kImage.getSize(), aucData );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        // compute image normalization factor
+        int iX, iY, iZ, iBase, iSteps;
+        float fMaxIntegral = 0.0f;
+        float fTStep, fIntegral;
+
+        // fix y and z, integrate over x
+        for (iY = 0; iY < iYBound; iY++) {
+
+            for (iZ = 0; iZ < iZBound; iZ++) {
+                iBase = iXBound * (iY + (iYBound * iZ));
+                iSteps = iXBound - 1;
+                fIntegral = 0.5f * ((aucData[iBase] & 0x0ff) + (aucData[iBase + iSteps] & 0x0ff));
+                fTStep = 1.0f / iSteps;
+
+                for (iX = 1; iX < iSteps; iX++) {
+                    fIntegral += (aucData[iBase + iX] & 0x0ff);
+                }
+
+                fIntegral *= fTStep;
+
+                if (fIntegral > fMaxIntegral) {
+                    fMaxIntegral = fIntegral;
+                }
+            }
+        }
+        int iXYProduct = iXBound * iYBound;
+        // fix x and z, integrate over y
+        for (iX = 0; iX < iXBound; iX++) {
+
+            for (iZ = 0; iZ < iZBound; iZ++) {
+                iBase = iX + (iXYProduct * iZ);
+                iSteps = iYBound - 1;
+                fIntegral = 0.5f * ((aucData[iBase] & 0x0ff) + (aucData[iBase + (iXBound * iSteps)] & 0x0ff));
+                fTStep = 1.0f / iSteps;
+
+                for (iY = 1; iY < iSteps; iY++) {
+                    fIntegral += (aucData[iBase + (iXBound * iY)] & 0x0ff);
+                }
+
+                fIntegral *= fTStep;
+
+                if (fIntegral > fMaxIntegral) {
+                    fMaxIntegral = fIntegral;
+                }
+            }
+        }
+
+        // fix x and y, integrate over z
+        for (iX = 0; iX < iXBound; iX++) {
+
+            for (iY = 0; iY < iYBound; iY++) {
+                iBase = iX + (iXBound * iY);
+                iSteps = iZBound - 1;
+                fIntegral = 0.5f * ((aucData[iBase] & 0x0ff) + (aucData[iBase + (iXYProduct * iSteps)] & 0x0ff));
+                fTStep = 1.0f / iSteps;
+
+                for (iZ = 1; iZ < iSteps; iZ++) {
+                    fIntegral += (aucData[iBase + (iXYProduct * iZ)] & 0x0ff);
+                }
+
+                fIntegral *= fTStep;
+
+                if (fIntegral > fMaxIntegral) {
+                    fMaxIntegral = fIntegral;
+                }
+            }
+        }
+
+        return (fMaxIntegral > 0.0f) ? (1.0f / fMaxIntegral) : 0.00f;
+    }
+    
+    public float getDRRNorm()
+    {
+        return m_fDRRNormalize;
+    }
+
 }
