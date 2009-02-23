@@ -167,6 +167,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Nonmaximum suppression", "nmsuppression", 0, null, false),
                         menuBuilder.buildMenuItem("Regularized isotropic diffusion", "RegIsoDiff", 0, null, false),
                         menuBuilder.buildMenuItem("Slice averaging", "sliceAveraging", 0, null, false),
+                        menuBuilder.buildMenuItem("Trilateral filter", null, 0, null, false),
                         menuBuilder.buildMenuItem("Unsharp mask", null, 0, null, false),}),
                 menuBuilder.makeMenu("Filters (wavelet)", false, new JMenuItem[] { // menuBuilder.buildMenuItem("Maxima",
                                 // null, null, null),
@@ -842,6 +843,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Unsharp mask", false);
             menuBuilder.setMenuItemEnabled("Fill image", false);
             menuBuilder.setMenuItemEnabled("Filters (frequency)", false);
+            menuBuilder.setMenuItemEnabled("Trilateral filter", false);
             menuBuilder.setMenuItemEnabled("FRAP", false);
             menuBuilder.setMenuItemEnabled("FRET", false);
             menuBuilder.setMenuItemEnabled("FRET bleed thru", false);
@@ -918,6 +920,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
             menuBuilder.setMenuItemEnabled("Nearly circle to circle", false);
             menuBuilder.setMenuItemEnabled("Hough transform", false);
+            menuBuilder.setMenuItemEnabled("Trilateral filter", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("Align patient position", false);
             menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
