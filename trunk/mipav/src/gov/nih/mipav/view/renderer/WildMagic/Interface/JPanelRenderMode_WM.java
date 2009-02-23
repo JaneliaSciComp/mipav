@@ -357,21 +357,26 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridy = 6;
          renderModePanel.add(radioMULTIHISTO, gbc);
          
-         JPanel blendPanel = new JPanel();
-         blendPanel.setLayout(new BoxLayout(blendPanel, BoxLayout.X_AXIS));
+         JPanel blendPanel = new JPanel(new GridBagLayout());
          blendPanel.setBorder(buildTitledBorder("Blend"));
          
          JLabel kBlendLabel = new JLabel("Volume Blend" );
-         blendPanel.add(kBlendLabel);
+         gbc.gridx = 0;
+         gbc.gridy = 0;
+         blendPanel.add(kBlendLabel, gbc);
          m_kVolumeBlendSlider = new JSlider( 0, 100, 100 );
          m_kVolumeBlendSlider.addChangeListener(this);
-         blendPanel.add(m_kVolumeBlendSlider);         
+         gbc.gridx = 1;
+         blendPanel.add(m_kVolumeBlendSlider, gbc);         
          
          JLabel kSamplesLabel = new JLabel("Volume Samples" );
-         blendPanel.add(kSamplesLabel);
+         gbc.gridx = 0;
+         gbc.gridy = 1;
+         blendPanel.add(kSamplesLabel, gbc);
          m_kVolumeSamplesSlider = new JSlider( 0, 100, 50 );
          m_kVolumeSamplesSlider.addChangeListener(this);
-         blendPanel.add(m_kVolumeSamplesSlider);
+         gbc.gridx = 1;
+         blendPanel.add(m_kVolumeSamplesSlider, gbc);
          
          JButton kShaderButton = new JButton( "Shader Parameters" );
          kShaderButton.addActionListener(this);
@@ -402,6 +407,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          
          JPanel extractPanel = new JPanel(new GridBagLayout());
          extractPanel.setBorder(buildTitledBorder("Surface Extraction"));
+         gbc.gridx = 0;
          gbc.gridy = 0;
          extractPanel.add(m_kExtractTriMesh, gbc);
          gbc.gridx = 1;
