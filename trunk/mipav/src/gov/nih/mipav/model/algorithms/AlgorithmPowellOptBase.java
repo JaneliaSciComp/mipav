@@ -213,7 +213,13 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
             return null;
         }
         
-        return points[index].getPoint();
+        double[] arHolder = points[index].getPoint();
+        double[] pointsCopy = new double[arHolder.length];
+        for(int i=0; i<pointsCopy.length; i++) {
+        	pointsCopy[i] = arHolder[i];
+        }
+        
+        return pointsCopy;
     }
 
     /**
