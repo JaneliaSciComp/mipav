@@ -2,19 +2,18 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.GenerateGaussian;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import java.io.IOException;
-import gov.nih.mipav.view.ViewJProgressBar;
 
 
 /**
  * This code is ported from 2 files written by Prasun Choudhury and Jack Tumblin, Trilateral2003.h and 
- * Trilateral2003.cpp.  This code filters a 2D black and white image.
- * Trilateral filtering smooths an image or VOI region of the image towards a sharply bounded, piecewise linear
+ * Trilateral2003.cpp.  This code filters a 2D black and white image and the lumninance component of a
+ * 2D color image.
+ * 
+ * Trilateral filtering smooths an image towards a sharply bounded, piecewise linear
  * approximation with 2 bilateral stages and a min-max stack.  A bilateral stage has 2 Gaussians.
  * One is a Gaussian at a user defined spatial scale (sigma - standard deviation) and the second is a Gaussian at a
  * user defined intensity scale.  The spatial Gaussian weighs pixels with smaller spatial separations more heavily and 
@@ -43,68 +42,20 @@ import gov.nih.mipav.view.ViewJProgressBar;
  * References:
  * 1.) "Trilateral Filter for HDR Imaes and 3D Meshes", Prasun Choudhury and Jack Tumblin,
  * Proc. Eurographics Symposium on Rendering, Per. H. Christensen and Daniel Cohen eds., pp. 186-196, 2003.
- * @version  0.1 February 20, 2009
+ * @version  0.1 February 23, 2009
  * @author   William Gandler
- * @see      GenerateGaussian
- * @see      AlgorithmConvolver
  */
 public class AlgorithmTrilateralFilter extends AlgorithmBase implements AlgorithmInterface{
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /**
-     * Flag, if true, indicates that the whole image should be processed. If false on process the image over the mask
-     * areas.
-     */
-    private boolean entireImage;
+    //~ Instance fields -----------------------------------------------------------------------------------------------
     
-    /** Variance of the domain for the gradient and the detail filter */
+    /** Standard deviation of the domain for the gradient and the detail filter */
     private float sigmaC;
-
-    /** Storage location of the Gaussian kernel. */
-    private float[] GaussData;
-
-    /** Dimensionality of the kernel. */
-    private int[] kExtents;
-
-    /** Standard deviations of the gaussian used to calculate the kernels. */
-    private float[] sigmas;
-    
-    /** units of intensity range; it is multiplied by the intensity range to create intensitySigma */
-    private float intensityFraction;
-    
-    // intensityGaussianDenom = 2.0 * intensitySigma * intensitySigma
-    private double intensityGaussianDenom;
-    
-    /* Assigned to srcImage if replace image, assigned to destImage if new image */
-    private ModelImage targetImage = null;
-    
-    private ModelImage cieLabImage = null;
-    
-    private double imageMax;
     
     // Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
     private double scaleMax = 255.0;
-    private float sigmaCTheta;
-    private float beta;
-    private int filterSize;
-    private int levX;
-    private int levY;
-    private int levelMax;
     private int xDim;
     private int yDim;
-    private int sliceSize;
-    private float minGradientStack[][][] = null;
-    private float maxGradientStack[][][] = null;
-    private float xGradient[] = null;
-    private float yGradient[] = null;
-    private float xSmoothGradient[] = null;
-    private float ySmoothGradient[] = null;
-    private float fTheta[] = null;
-    private float srcBuffer[] = null;
-    private float sigmaR;
-    private float R;
-    private float sigmaRTheta;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -112,12 +63,10 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
      * Creates a new AlgorithmTrilateralFilter object.
      *
      * @param  srcImg    the srcImge
-     * @param  sigmaC    variance of the domain for the gradient and the detail filter
-     * @param  maskFlag  the mask flag
-     * @param  img25D    the 2.5D indicator
+     * @param  sigmaC    standard deviation of the domain for the gradient and the detail filter
      */
-    public AlgorithmTrilateralFilter(ModelImage srcImg, float sigmaC, boolean maskFlag, boolean img25D) {
-        this(null, srcImg, sigmaC, maskFlag, img25D);
+    public AlgorithmTrilateralFilter(ModelImage srcImg, float sigmaC) {
+        this(null, srcImg, sigmaC);
     }
 
     /**
@@ -125,17 +74,12 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
      *
      * @param  destImg   the destination image
      * @param  srcImg    the source image
-     * @param  sigmaC    variance of the domain for the gradient and the detail filter
-     * @param  maskFlag  the mask flag
-     * @param  img25D    the 2.5D indicator
+     * @param  sigmaC    standard deviation of the domain for the gradient and the detail filter
      */
-    public AlgorithmTrilateralFilter(ModelImage destImg, ModelImage srcImg, float sigmaC, boolean maskFlag,
-                                 boolean img25D) {
+    public AlgorithmTrilateralFilter(ModelImage destImg, ModelImage srcImg, float sigmaC) {
         super(destImg, srcImg);
 
         this.sigmaC = sigmaC;
-        entireImage = maskFlag;
-        image25D = img25D;
 
     }
 
@@ -145,11 +89,8 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
      * Prepares this class for destruction.
      */
     public void finalize() {
-        GaussData = null;
         destImage = null;
         srcImage = null;
-        kExtents = null;
-        sigmas = null;
         super.finalize();
     }
 
@@ -157,7 +98,30 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
      * Starts the program.
      */
     public void runAlgorithm() {
-        
+        int i;
+        float sigmaCTheta;
+        float beta;
+        int filterSize;
+        int levX;
+        int levY;
+        int levelMax;
+        int sliceSize;
+        float minGradientStack[][][] = null;
+        float maxGradientStack[][][] = null;
+        float xGradient[] = null;
+        float yGradient[] = null;
+        float xSmoothGradient[] = null;
+        float ySmoothGradient[] = null;
+        float fTheta[] = null;  // stores adaptive neighborhood size for each pixel
+        float result[] = null;
+        float srcBuffer[] = null;
+        float cieBuffer[] = null;
+        float sigmaR;
+        float R;
+        float sigmaRTheta;
+        /* Assigned to srcImage if replace image, assigned to destImage if new image */
+        ModelImage targetImage = null;
+        double imageMax;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -172,7 +136,7 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
         fireProgressStateChanged(0, srcImage.getImageName(), "Trilateral filter on image ...");
         
         // Default internal parameters
-        sigmaCTheta = sigmaC; // Variance of the Domain Filter, the only user set parameter
+        sigmaCTheta = sigmaC; // Standard deviation of the Domain Filter, the only user set parameter
         beta = 0.15f;
         filterSize = (int)sigmaC;
         
@@ -189,12 +153,30 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
             levelMax = levY + 1;
         }
         
-        try {
-            srcImage.exportData(0, sliceSize, srcBuffer);
+        srcImage.calcMinMax();
+        imageMax = srcImage.getMax();
+        srcBuffer = new float[sliceSize];
+        if (srcImage.isColorImage()) {
+            scaleMax = Math.max(255.0, imageMax);
+            cieBuffer = new float[4 * sliceSize];
+            try {
+                srcImage.exportData(0, 4 * sliceSize, cieBuffer);
+            }
+            catch (IOException e) {
+                errorCleanUp("IOException on srcImage.exportData(0, 4 * sliceSize, cieBuffer)", false);
+                return;
+            }
+            // Put Lab in cieBuffer and L in srcBuffer
+            convertRGBtoCIELab(cieBuffer, srcBuffer); 
         }
-        catch (IOException e) {
-            errorCleanUp("IOException on srcImage.exportData(0, sliceSize, srcBuffer)", false);
-            return;
+        else {
+            try {
+                srcImage.exportData(0, sliceSize, srcBuffer);
+            }
+            catch (IOException e) {
+                errorCleanUp("IOException on srcImage.exportData(0, sliceSize, srcBuffer)", false);
+                return;
+            }
         }
         
         // Allocate memory for the Min-Max Image Stack
@@ -207,6 +189,7 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
         xSmoothGradient = new float[sliceSize];
         ySmoothGradient = new float[sliceSize];
         fTheta = new float[sliceSize];
+        result = new float[sliceSize];
         
         /**
          * Compute Gradients using Forward Difference (Step 1)
@@ -214,7 +197,7 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
          * Y gradient is stored in yGradient
          **/
         
-        computeGradients(xGradient, yGradient);
+        computeGradients(srcBuffer, xGradient, yGradient);
         
         /**
          * Builds the Min-Max Image Stack consisting of Image Gradients (Step 2).
@@ -224,26 +207,76 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
         
         sigmaR = buildMinMaxImageStack(xGradient, yGradient, minGradientStack, maxGradientStack, levelMax, beta);
         
+        // Set the remaining internal parameters required for trilateral filter
+        sigmaRTheta = R = sigmaR;
+        
+        /**
+         * Bilaterally filter the X and Y gradients of the input image (Step 3, equation 4 and 5)
+         * to produce xSmoothGradient and ySmoothGradient
+         */
+        
+        bilateralGradientFilter(xGradient, yGradient, xSmoothGradient, ySmoothGradient, sigmaC, sigmaR, filterSize);
+        
+        /**
+         * Find the adaptive neighborhood fTheta for each pixel location (Step 4).  fTheta size is 
+         * given by stack level.  The min-max gradient stacks and range threshold "R" are used for this calculation.
+         * (see equation 10 in paper for details).
+         */
+        
+        findAdaptiveRegion(minGradientStack, maxGradientStack, R, levelMax, fTheta);
+        
+        /**
+         * Performs bilateral filer on the detail signal (Step 5).
+         * See equation 6, 7, 8, and 9.
+         * Output is stored in destImage or srcImage (end result of equation 8, Section 3.1)
+         */
+        detailBilateralFilter(srcBuffer, xSmoothGradient, ySmoothGradient, fTheta, sigmaCTheta, sigmaRTheta, result);
+        
+        if (srcImage.isColorImage()) {
+            for (i = 0; i < sliceSize; i++) {
+                cieBuffer[4*i+1] = result[i];
+            }
+            convertCIELabtoRGB(cieBuffer);
+        }
+        
         if (destImage == null) {
             targetImage = srcImage;
         }
-        else {
+        else {                                                                                                                                                                             
             targetImage = destImage;
         }
         
-        srcImage.calcMinMax();
-        imageMax = (float)srcImage.getMax();
+        if (srcImage.isColorImage()) {
+            try {
+                targetImage.importData(0, cieBuffer, true);
+            }
+            catch (IOException e) {
+                errorCleanUp("IOException on targetImage.importData(0, cieBuffer, true)", false);
+                return;    
+            }    
+        }
+        else {
+            try {
+                targetImage.importData(0, result, true);
+            }
+            catch (IOException e) {
+                errorCleanUp("IOException on targetImage.importData(0, result, true)", false);
+                return;    
+            }
+        }
         
+        fireProgressStateChanged(100);
         setCompleted(true);
-        System.out.println("Time consumed GB: " + (System.nanoTime()-startTime));
+        System.out.println("Time consumed: " + ((System.nanoTime()-startTime)* 1.0E-9) + " seconds");
     }
     
     /**
      * Computes the X and Y gradients using forward difference
+     * @param srcBuffer
      * @param px  X gradient is stored in px
      * @param py  Y gradient is stored in py
      */
-    private void computeGradients(float px[], float py[]) {
+    private void computeGradients(float srcBuffer[], float px[], float py[]) {
         int i;
         int j;
         int jS;
@@ -285,7 +318,7 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
      * @param pMaxStack output max stack of image gradients
      * @param levelMax height of the image stack
      * @param beta user specified parameter used to compute the range variance
-     * @return range variance (sigmaR), equation 11
+     * @return range standard deviation (sigmaR), equation 11
      */
     private float buildMinMaxImageStack(float px[], float py[], float pMinStack[][][], float pMaxStack[][][], int levelMax,
                                         float beta) {
@@ -352,113 +385,183 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
     }
     
     /**
-     * Creates 2D Gaussian kernels for the blurring process. The kernel size is always odd and proportional (8X) to the
-     * standard deviation of the Gaussian.
+     * Bilaterally filters the X and Y gradients of the input image.
+     * @param px  X gradient of the input image
+     * @param py  Y gradient of the input image
+     * @param pSmoothX  output bilaterally filtered X gradient
+     * @param pSmoothY  output bilaterally filtered Y gradient
+     * @param sigmaC  domain standard deviation of the bilateral filter
+     * @param sigmaR  range standard deviation of the bilateral filter
+     * @param filterSize  size of the filter kernel
      */
-    private void makeKernels2D() {
-        int xkDim, ykDim;
-        int[] derivOrder = new int[2];
-
-        kExtents = new int[2];
-        derivOrder[0] = 0;
-        derivOrder[1] = 0;
-
-        xkDim = Math.round(8 * sigmas[0]);
-
-        if ((xkDim % 2) == 0) {
-            xkDim++;
-        }
-
-        kExtents[0] = xkDim;
-
-        ykDim = Math.round(8 * sigmas[1]);
-
-        if ((ykDim % 2) == 0) {
-            ykDim++;
-        }
-
-        kExtents[1] = ykDim;
-
-        GaussData = new float[xkDim * ykDim];
-
-        GenerateGaussian Gauss = new GenerateGaussian(GaussData, kExtents, sigmas, derivOrder);
-        Gauss.calc(false);
-        Gauss.finalize();
-        Gauss = null;
+    private void bilateralGradientFilter(float px[], float py[], float pSmoothX[], float pSmoothY[], float sigmaC,
+                                         float sigmaR, int filterSize) {
+        int i;
+        int j;
+        int m;
+        int n;
+        int halfSize;
+        double tmpX;
+        double tmpY;
+        double posDiff;
+        double gradDiff;
+        double domainWeight;
+        double rangeWeight;
+        double normFactor;
+        double g1;
+        double g2;
+        int index;
+        int index2;
+        
+        halfSize = (filterSize - 1)/2; // size of the filter kernel
+        
+        for (i = 0; i < xDim; i++) { // X scanline
+            for (j = 0; j < yDim; j++) { // Y scanline
+                index = i + j * xDim;
+                normFactor = 0.0;
+                tmpX = 0.0;
+                tmpY = 0.0;
+                for (m = -halfSize; m <= halfSize; m++) {
+                    for (n = -halfSize; n <= halfSize; n++) {
+                        posDiff = (double)(m*m + n*n);
+                        // Compute the weight for the domain filter (domainWeight).  The domain filter
+                        // is a Gaussian lowpass filter.
+                        domainWeight = Math.exp(-posDiff/(2.0 * sigmaC * sigmaC));
+                        if ((i+m) >= 0 && (i+m) < xDim && (j+n) >= 0 && (j+n) < yDim) {
+                            index2 = (i+m) + (j+n) * xDim;
+                            g1 = px[index2]*px[index2] + py[index2]*py[index2];
+                            g2 = px[index]*px[index] + py[index]*py[index];
+                            // Compute the gradient difference between a pixel and its neighborhood pixel
+                            gradDiff = (Math.sqrt(g1) - Math.sqrt(g2));
+                            // Compute the weight for the range filter (rangeWeight).  The range filter
+                            // is a Gaussian filter defined by the difference in gradient magnitude.
+                            rangeWeight = Math.exp((-(gradDiff * gradDiff)/(2.0 * sigmaR * sigmaR)));
+                            tmpX += (float)(px[index2]*domainWeight*rangeWeight);
+                            tmpY += (float)(py[index2]*domainWeight*rangeWeight);
+                            // Bilateral filter normalized by normFactor (eq. 5, Section 3.1)
+                            normFactor += domainWeight * rangeWeight;
+                        } // if ((i+m) >= 0 && (i+m) < xDim && (j+n) >= 0 && (j+n) < yDim)
+                    } // for (n = -halfSize; n <= halfSize; n++)
+                } // for (m = -halfSize; m <= halfSize; m++)
+                tmpX = (tmpX/normFactor);
+                tmpY = (tmpY/normFactor);
+                pSmoothX[index] = (float)tmpX;
+                pSmoothY[index] = (float)tmpY;
+            } // for (j = 0; j < yDim; j++)
+        } // for (i = 0; i < xDim; i++)
     }
-
+    
     /**
-     * Creates 3D Gaussian kernels for the blurring process. The kernel size is always odd and proportional (8X) to the
-     * standard deviation of the Gaussian.
+     * Finds adaptive neighborhood for every pixel
+     * @param pMinStack Min gradient stack
+     * @param pMaxStack Max gradient stack
+     * @param R threshold value for computing fTheta
+     * @param levelMax maximum level of the image stack 
+     * @param fTheta output stack level that satisfies equation 10
      */
-    private void makeKernels3D() {
-        int xkDim, ykDim, zkDim;
-        int[] derivOrder = new int[3];
-
-        kExtents = new int[3];
-        derivOrder[0] = 0;
-        derivOrder[1] = 0;
-        derivOrder[2] = 0;
-
-        xkDim = Math.round(8 * sigmas[0]);
-        // System.out.println("Sigma 0 = " + sigmas[0]);
-        // System.out.println("Sigma 1 = " + sigmas[1]);
-        // System.out.println("Sigma 2 = " + sigmas[2]);
-
-        if ((xkDim % 2) == 0) {
-            xkDim++;
-        }
-
-        kExtents[0] = xkDim;
-
-        ykDim = Math.round(8 * sigmas[1]);
-
-        if ((ykDim % 2) == 0) {
-            ykDim++;
-        }
-
-        kExtents[1] = ykDim;
-
-        zkDim = Math.round(8 * sigmas[2]);
-
-        if ((zkDim % 2) == 0) {
-            zkDim++;
-        }
-
-        kExtents[2] = zkDim;
-
-        GaussData = new float[xkDim * ykDim * zkDim];
-
-        GenerateGaussian Gauss = new GenerateGaussian(GaussData, kExtents, sigmas, derivOrder);
-        Gauss.calc(false);
-        Gauss.finalize();
-        Gauss = null;
+    private void findAdaptiveRegion(float pMinStack[][][], float pMaxStack[][][], float R, int levelMax, float fTheta[]) {
+        int i;
+        int j;
+        int lev;
+        int index;
+        
+        for (j = 0; j < yDim; j++) {
+            for (i = 0; i < xDim; i++) {
+                for (lev = 0; lev < levelMax; lev++) {
+                    // Compute the adaptive neighborhood based on the similarity of 
+                    // the neighborhood gradients, equation 10, Section 3.2.
+                    if (pMaxStack[i][j][lev] > (pMaxStack[i][j][0] + R) ||
+                        pMinStack[i][j][lev] < (pMaxStack[i][j][0] - R)) {
+                        break;
+                    }
+                } // for (lev = 0; lev < levelMax; lev++)
+                index = i + j * xDim;
+                fTheta[index] = (float)(lev - 1);
+            } // for (i = 0; i < xDim; i++)
+        } // for (j = 0; j < yDim; j++)
     }
-
+    
+    /**
+     * Filters the detail signal and computes the output (2nd filtering pass for trilateral
+     * filter).
+     * @param srcBuffer input image filter
+     * @param pSmoothX  bilaterally filtered X gradient of srcImage
+     * @param pSmoothY  bilaterally filtered Y gradient of srcImage
+     * @param fTheta adaptive neighborhood for each pixel of srcImage    
+     * @param sigmaCTheta  domain standard deviation of the bilateral filter
+     * @param sigmaRTheta  range standard deviation of the bilateral filter
+     * @param result  trilaterally filtered output
+     */
+    private void detailBilateralFilter(float srcBuffer[], float pSmoothX[], float pSmoothY[],
+                                       float fTheta[], float sigmaCTheta, float sigmaRTheta, float result[]) {
+        int i;
+        int j;
+        int m;
+        int n;
+        int halfSize;
+        double tmp;
+        double diff;
+        double detail;
+        double domainWeight;
+        double rangeWeight;
+        double normFactor;
+        double coeffA; // coeffA = dI/dx
+        double coeffB; // coeffB = dI/dy
+        double coeffC; // coeffc = I at center pixel of the filter kernel
+        int index;
+        int index2;
+        
+        for (i = 0; i < xDim; i++) { // X scanline
+            fireProgressStateChanged(i * 100/xDim);
+            for (j = 0; j < yDim; j++) { // Y scanline
+                index = i + j * xDim;
+                normFactor = 0.0;
+                tmp = 0.0;
+                // filter window width is calculated from fTheta
+                // halfSize is half of the filter window width
+                halfSize = (int)fTheta[index];
+                halfSize = (int)(Math.pow(2.0, halfSize)/2.0);
+                
+                // Coefficients defining the centerplane (equation 6, section 3.1) is calculated
+                // from the smoothed image gradients
+                coeffA = pSmoothX[index];
+                coeffB = pSmoothY[index];
+                coeffC = srcBuffer[index];
+                for (m = -halfSize; m <= halfSize; m++) {
+                    for (n = -halfSize; n <= halfSize; n++) {
+                        diff = (double)(m*m + n*n);
+                        // Compute the weight for the domain filter (domainWieght).  The domain filter
+                        // is a Gaussian lowpass filter
+                        domainWeight = Math.exp(-diff/(2.0 * sigmaCTheta * sigmaCTheta));
+                        if ((i+m) >= 0 && (i+m) < xDim && (j+n) >= 0 && (j+n) < yDim) {
+                            // Compute the detail signal (detail) based on the difference between a
+                            // neighborhood pixel and the centerplance passing through the center-pixel
+                            // of the filter window.  See equation 7, section 3.1 for details
+                            index2 = (i+m) + (j+n) * xDim;
+                            detail = srcBuffer[index2] - coeffA * m - coeffB * n - coeffC;
+                            // Compute the weight for the range filter (rangeWeight).  The range filter
+                            // is a Gaussian filter defined by the detail signal.
+                            rangeWeight = Math.exp(-(detail*detail)/(2.0 * sigmaRTheta * sigmaRTheta));
+                            tmp += detail * domainWeight * rangeWeight;
+                            // Detail bilateral filter normalized by normFactor (eq. 9, Section 3.1)
+                            normFactor += domainWeight * rangeWeight;
+                        } // if ((i+m) >= 0 && (i+m) < xDim && (j+n) >= 0 && (j+n) < yDim)
+                    } // for (n = -halfSize; n <= halfSize; n++)
+                } // for (m = -halfSize; m <= halfSize; m++)
+                tmp = tmp/normFactor;
+                tmp += coeffC;
+                result[index] = (float)tmp;
+            } // for (j = 0; j < yDim; j++)
+        } // for (i = 0; i < xDim; i++)
+        
+    }
+    
     public void algorithmPerformed(AlgorithmBase algorithm){
-    	if(!algorithm.isCompleted()){
-    		finalize();
-    		return;
-    	}
-    	if (algorithm instanceof AlgorithmConvolver) {
-			AlgorithmConvolver convolver = (AlgorithmConvolver) algorithm;
-            if (srcImage.isColorImage()) {
-                convertCIELabtoRGB(convolver.getOutputBuffer());
-            }
-			try {
-				targetImage.importData(0, convolver.getOutputBuffer(), true);
-			} catch (IOException error) {
-				errorCleanUp("Algorithm Gaussian Blur: Image(s) locked",
-						false);
-
-				return;
-			}
-			this.setCompleted(true);
-		}
+        
     }
     
     
-    private void convertRGBtoCIELab() {
+    private void convertRGBtoCIELab(float cieBuffer[], float srcBuffer[]) {
         // Observer = 2 degrees, Illuminant = D65
         double XN = 95.047;
         double YN = 100.000;
@@ -468,140 +571,74 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
         double X, Y, Z;
         double varX, varY, varZ;
         float L, a, b;
-        int length = 4 * targetImage.getSliceSize();
-        float buffer[] = new float[length];
-        int t;
-        int z;
-        int tDim = 1;
-        int zDim = 1;
-        float minL = Float.MAX_VALUE;
-        float maxL = -Float.MAX_VALUE;
-        float mina = Float.MAX_VALUE;
-        float maxa = -Float.MAX_VALUE;
-        float minb = Float.MAX_VALUE;
-        float maxb = -Float.MAX_VALUE;
-        float LRange;
-        float aRange;
-        float bRange;
-        double maxDistance;
-        double intensitySigma;
-        if (srcImage.getNDims() >= 3) {
-            tDim = srcImage.getExtents()[2];
-        }
-        if (srcImage.getNDims() >= 4) {
-            tDim = srcImage.getExtents()[3];
-        }
         
-        for (t = 0; (t < tDim) && !threadStopped; t++) {
-            for (z = 0; (z < zDim) && !threadStopped; z++) {
-                try {
-                    srcImage.exportData((t * zDim + z) * length, length, buffer); // locks and releases lock
-                } catch (IOException error) {
-                    displayError("Algorithm Bilateral Filter: Image(s) locked");
-                    setCompleted(false);
-                    fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-                    srcImage.releaseLock();
-
-                    return;
-                }
-                for (i = 0; i < buffer.length; i += 4) {
-                    varR = buffer[i+1]/scaleMax;
-                    varG = buffer[i+2]/scaleMax;
-                    varB = buffer[i+3]/scaleMax;
-                    
-                    if (varR <= 0.04045) {
-                        varR = varR/12.92;
-                    }
-                    else {
-                        varR = Math.pow((varR + 0.055)/1.055, 2.4);
-                    }
-                    if (varG <= 0.04045) {
-                        varG = varG/12.92;
-                    }
-                    else {
-                        varG = Math.pow((varG + 0.055)/1.055, 2.4);
-                    }
-                    if (varB <= 0.04045) {
-                        varB = varB/12.92;
-                    }
-                    else {
-                        varB = Math.pow((varB + 0.055)/1.055, 2.4);
-                    }
-                    
-                    varR = 100.0 * varR;
-                    varG = 100.0 * varG;
-                    varB = 100.0 * varB;
-                    
-                    // Observer = 2 degrees, Illuminant = D65
-                    X = 0.4124*varR + 0.3576*varG + 0.1805*varB;
-                    Y = 0.2126*varR + 0.7152*varG + 0.0722*varB;
-                    Z = 0.0193*varR + 0.1192*varG + 0.9505*varB;
-                    
-                    varX = X/ XN;
-                    varY = Y/ YN;
-                    varZ = Z/ ZN;
-                    
-                    if (varX > 0.008856) {
-                        varX = Math.pow(varX, 1.0/3.0);
-                    }
-                    else {
-                        varX = (7.787 * varX) + (16.0/116.0);
-                    }
-                    if (varY > 0.008856) {
-                        varY = Math.pow(varY, 1.0/3.0);
-                    }
-                    else {
-                        varY = (7.787 * varY) + (16.0/116.0);
-                    }
-                    if (varZ > 0.008856) {
-                        varZ = Math.pow(varZ, 1.0/3.0);
-                    }
-                    else {
-                        varZ = (7.787 * varZ) + (16.0/116.0);
-                    }
-                    
-                    L = (float)((116.0 * varY) - 16.0);
-                    a = (float)(500.0 * (varX - varY));
-                    b = (float)(200.0 * (varY - varZ));
-                    
-                    if (L < minL) {
-                        minL = L;
-                    }
-                    if (L > maxL) {
-                        maxL = L;
-                    }
-                    if (a < mina) {
-                        mina = a;
-                    }
-                    if (a > maxa) {
-                        maxa = a;
-                    }
-                    if (b < minb) {
-                        minb = b;
-                    }
-                    if (b > maxb) {
-                        maxb = b;
-                    }
-                    
-                    buffer[i+1] = L;
-                    buffer[i+2] = a;
-                    buffer[i+3] = b;
-                } // for (i = 0; i < buffer.length; i += 4)
-                try {
-                    cieLabImage.importData((t * zDim + z) * length, buffer, false);
-                } catch (IOException error) {
-                    errorCleanUp("Algorithm Bilateral Filter: Image(s) locked", false);
-
-                    return;
-                }
-            } // for (z = 0; (z < zDim) && !threadStopped; z++)
-        } // for (t = 0; (t < tDim) && !threadStopped; t++)
-        LRange = maxL - minL;
-        aRange = maxa - mina;
-        bRange = maxb - minb;
-        maxDistance = (float)Math.sqrt(LRange*LRange + aRange*aRange + bRange*bRange);
-        intensitySigma = intensityFraction * maxDistance;
-        intensityGaussianDenom = (2.0 * intensitySigma * intensitySigma);
+        for (i = 0; i < cieBuffer.length; i += 4) {
+            varR = cieBuffer[i+1]/scaleMax;
+            varG = cieBuffer[i+2]/scaleMax;
+            varB = cieBuffer[i+3]/scaleMax;
+            
+            if (varR <= 0.04045) {
+                varR = varR/12.92;
+            }
+            else {
+                varR = Math.pow((varR + 0.055)/1.055, 2.4);
+            }
+            if (varG <= 0.04045) {
+                varG = varG/12.92;
+            }
+            else {
+                varG = Math.pow((varG + 0.055)/1.055, 2.4);
+            }
+            if (varB <= 0.04045) {
+                varB = varB/12.92;
+            }
+            else {
+                varB = Math.pow((varB + 0.055)/1.055, 2.4);
+            }
+            
+            varR = 100.0 * varR;
+            varG = 100.0 * varG;
+            varB = 100.0 * varB;
+            
+            // Observer = 2 degrees, Illuminant = D65
+            X = 0.4124*varR + 0.3576*varG + 0.1805*varB;
+            Y = 0.2126*varR + 0.7152*varG + 0.0722*varB;
+            Z = 0.0193*varR + 0.1192*varG + 0.9505*varB;
+            
+            varX = X/ XN;
+            varY = Y/ YN;
+            varZ = Z/ ZN;
+            
+            if (varX > 0.008856) {
+                varX = Math.pow(varX, 1.0/3.0);
+            }
+            else {
+                varX = (7.787 * varX) + (16.0/116.0);
+            }
+            if (varY > 0.008856) {
+                varY = Math.pow(varY, 1.0/3.0);
+            }
+            else {
+                varY = (7.787 * varY) + (16.0/116.0);
+            }
+            if (varZ > 0.008856) {
+                varZ = Math.pow(varZ, 1.0/3.0);
+            }
+            else {
+                varZ = (7.787 * varZ) + (16.0/116.0);
+            }
+            
+            L = (float)((116.0 * varY) - 16.0);
+            a = (float)(500.0 * (varX - varY));
+            b = (float)(200.0 * (varY - varZ));
+            
+            cieBuffer[i+1] = L;
+            srcBuffer[i >> 2] = L;
+            cieBuffer[i+2] = a;
+            cieBuffer[i+3] = b;
+        } // for (i = 0; i < buffer.length; i += 4)
+            
+        
     } // private void convertRGBtoCIELab()
     
     private void convertCIELabtoRGB(float buffer[]) {
