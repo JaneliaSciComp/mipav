@@ -201,7 +201,7 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
         
         /**
          * Builds the Min-Max Image Stack consisting of Image Gradients (Step 2).
-         * Also computes sigmaR, the range variance, (see equation 11 in the paper for further details)>
+         * Also computes sigmaR, the range standard deviation, (see equation 11 in the paper for further details)>
          * min and max gradients are stored in two separate stacks.
          **/
         
@@ -226,8 +226,8 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
         findAdaptiveRegion(minGradientStack, maxGradientStack, R, levelMax, fTheta);
         
         /**
-         * Performs bilateral filer on the detail signal (Step 5).
-         * See equation 6, 7, 8, and 9.
+         * Performs bilateral filter on the detail signal (Step 5).
+         * See equations 6, 7, 8, and 9.
          * Output is stored in destImage or srcImage (end result of equation 8, Section 3.1)
          */
         detailBilateralFilter(srcBuffer, xSmoothGradient, ySmoothGradient, fTheta, sigmaCTheta, sigmaRTheta, result);
@@ -289,7 +289,7 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
         int index;
         
         for (j = 0; j < yDim; j++) { // for each scanline
-            jS = j + 1; // addres of south neighbor
+            jS = j + 1; // address of south neighbor
             if (jS > yDim - 1) {
                 jS = yDim - 1;
             }
@@ -317,7 +317,7 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
      * @param pMinStack output min stack of image gradients
      * @param pMaxStack output max stack of image gradients
      * @param levelMax height of the image stack
-     * @param beta user specified parameter used to compute the range variance
+     * @param beta user specified parameter used to compute the range standard deviation
      * @return range standard deviation (sigmaR), equation 11
      */
     private float buildMinMaxImageStack(float px[], float py[], float pMinStack[][][], float pMaxStack[][][], int levelMax,
@@ -334,7 +334,7 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
         float tmp;
         float tmpMin;
         float tmpMax;
-        float rangeVariance;
+        float rangeStandardDeviation;
         int index;
         
         for (lev = 0; lev < levelMax; lev++) {
@@ -353,7 +353,7 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
                         pMinStack[i][j][0] = min;
                         pMaxStack[i][j][0] = max;
                     } // if (lev == 0)
-                    else { // lev > 0 Gradients at each level of the image stack are computed form the level below
+                    else { // lev > 0 Gradients at each level of the image stack are computed from the level below
                         min = pMinStack[i][j][lev-1];
                         max = pMaxStack[i][j][lev-1];
                         
@@ -379,9 +379,9 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
             } // for (j = 0; j < yDim; j++)
         } // for (lev = 0; lev < levelmax; lev++)
         
-        // range variance is computed as a ratio of difference between max and min gradient
-        rangeVariance = beta * (maxGrad - minGrad);
-        return rangeVariance;
+        // range standard deviation is computed as a ratio of difference between max and min gradient
+        rangeStandardDeviation = beta * (maxGrad - minGrad);
+        return rangeStandardDeviation;
     }
     
     /**
@@ -412,6 +412,7 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
         double g2;
         int index;
         int index2;
+        double dr;
         
         halfSize = (filterSize - 1)/2; // size of the filter kernel
         
@@ -435,11 +436,12 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
                             gradDiff = (Math.sqrt(g1) - Math.sqrt(g2));
                             // Compute the weight for the range filter (rangeWeight).  The range filter
                             // is a Gaussian filter defined by the difference in gradient magnitude.
-                            rangeWeight = Math.exp((-(gradDiff * gradDiff)/(2.0 * sigmaR * sigmaR)));
-                            tmpX += (float)(px[index2]*domainWeight*rangeWeight);
-                            tmpY += (float)(py[index2]*domainWeight*rangeWeight);
+                            rangeWeight = Math.exp(-(gradDiff * gradDiff)/(2.0 * sigmaR * sigmaR));
+                            dr = domainWeight * rangeWeight;
+                            tmpX += (px[index2]*dr);
+                            tmpY += (py[index2]*dr);
                             // Bilateral filter normalized by normFactor (eq. 5, Section 3.1)
-                            normFactor += domainWeight * rangeWeight;
+                            normFactor += dr;
                         } // if ((i+m) >= 0 && (i+m) < xDim && (j+n) >= 0 && (j+n) < yDim)
                     } // for (n = -halfSize; n <= halfSize; n++)
                 } // for (m = -halfSize; m <= halfSize; m++)
@@ -510,6 +512,7 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
         double coeffC; // coeffc = I at center pixel of the filter kernel
         int index;
         int index2;
+        double dr;
         
         for (i = 0; i < xDim; i++) { // X scanline
             fireProgressStateChanged(i * 100/xDim);
@@ -522,7 +525,7 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
                 halfSize = (int)fTheta[index];
                 halfSize = (int)(Math.pow(2.0, halfSize)/2.0);
                 
-                // Coefficients defining the centerplane (equation 6, section 3.1) is calculated
+                // Coefficients defining the centerplane (equation 6, section 3.1) are calculated
                 // from the smoothed image gradients
                 coeffA = pSmoothX[index];
                 coeffB = pSmoothY[index];
@@ -530,21 +533,22 @@ public class AlgorithmTrilateralFilter extends AlgorithmBase implements Algorith
                 for (m = -halfSize; m <= halfSize; m++) {
                     for (n = -halfSize; n <= halfSize; n++) {
                         diff = (double)(m*m + n*n);
-                        // Compute the weight for the domain filter (domainWieght).  The domain filter
+                        // Compute the weight for the domain filter (domainWeight).  The domain filter
                         // is a Gaussian lowpass filter
                         domainWeight = Math.exp(-diff/(2.0 * sigmaCTheta * sigmaCTheta));
                         if ((i+m) >= 0 && (i+m) < xDim && (j+n) >= 0 && (j+n) < yDim) {
                             // Compute the detail signal (detail) based on the difference between a
-                            // neighborhood pixel and the centerplance passing through the center-pixel
+                            // neighborhood pixel and the centerplane passing through the center-pixel
                             // of the filter window.  See equation 7, section 3.1 for details
                             index2 = (i+m) + (j+n) * xDim;
                             detail = srcBuffer[index2] - coeffA * m - coeffB * n - coeffC;
                             // Compute the weight for the range filter (rangeWeight).  The range filter
                             // is a Gaussian filter defined by the detail signal.
                             rangeWeight = Math.exp(-(detail*detail)/(2.0 * sigmaRTheta * sigmaRTheta));
-                            tmp += detail * domainWeight * rangeWeight;
+                            dr = domainWeight * rangeWeight;
+                            tmp += detail * dr;
                             // Detail bilateral filter normalized by normFactor (eq. 9, Section 3.1)
-                            normFactor += domainWeight * rangeWeight;
+                            normFactor += dr;
                         } // if ((i+m) >= 0 && (i+m) < xDim && (j+n) >= 0 && (j+n) < yDim)
                     } // for (n = -halfSize; n <= halfSize; n++)
                 } // for (m = -halfSize; m <= halfSize; m++)
