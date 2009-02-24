@@ -1796,9 +1796,12 @@ public class JPanelHistoLUT
     }
 
     /**
-     * Placeholder.
+     * update the LUT and images.   
      */
-    public void updateComponentLUT() { }
+    public void updateComponentLUT() { 
+    	updateHistoLUT(imageA, LUTa, null, null, false);
+    	updateFrames(false);
+    }
 
     /**
      * {@inheritDoc}
