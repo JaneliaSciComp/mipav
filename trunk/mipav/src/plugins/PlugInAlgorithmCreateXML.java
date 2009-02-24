@@ -206,7 +206,7 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 		
 		public boolean writeXML() {
 			try {
-			bw = new BufferedWriter(new FileWriter(new File(imageCopyDir+XML_NAME)));
+			bw = new BufferedWriter(new FileWriter(new File(imageCopyDir+File.separator+XML_NAME)));
 			
 			bw.write(XML_HEADER);
 			bw.newLine();
@@ -228,7 +228,7 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 			bw.flush();
 			bw.close();
 			
-			xmlList.add(imageCopyDir+XML_NAME);
+			xmlList.add(imageCopyDir+File.separator+XML_NAME);
 			
 			} catch(IOException e) {
 				MipavUtil.displayError("Error writing XML file for "+image.getImageDirectory());
