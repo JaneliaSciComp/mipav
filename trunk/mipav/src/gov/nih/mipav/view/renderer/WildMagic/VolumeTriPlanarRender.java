@@ -419,6 +419,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_bCrop = false;
             m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
             VolumeImageCrop.main(m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect());
+            if ( m_kVolumeImageB != null )
+            {
+                VolumeImageCrop.main(m_kParent, m_kVolumeImageB, m_kVolumeRayCast.GetClipEffect());
+            }
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         }
         if ( m_bExtract )
@@ -1323,6 +1327,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kVolumeRayCast != null )
         {
             m_kVolumeRayCast.setABBlend(fValue);
+        }
+
+        if ( m_kSlices != null )
+        {
+            m_kSlices.setABBlend(fValue);
         }
     }
 

@@ -38,7 +38,7 @@ bool myClip(const vec3 myvec,
     }
 }
 
-uniform sampler3D bVolumeImageA_TEXUNIT1; 
+uniform sampler3D jVolumeImageB_TEXUNIT9; 
 uniform float DoClip;
 uniform float clipX;
 uniform float clipXInv;
@@ -50,7 +50,7 @@ uniform vec4 clipArb;
 uniform vec4 clipEye;
 uniform vec4 clipEyeInv;
 uniform mat4 WVPMatrix;
-void p_CropClipped()
+void p_CropClippedB()
 {
     // current position along the ray: 
     vec4 position = gl_TexCoord[0];
@@ -89,7 +89,7 @@ void p_CropClipped()
     }
     else
     {
-        gl_FragColor = texture3D( bVolumeImageA_TEXUNIT1,  gl_TexCoord[0].xyz );
+        gl_FragColor = texture3D( jVolumeImageB_TEXUNIT9,  gl_TexCoord[0].xyz );
     }
     gl_FragColor.a = 1;
 }

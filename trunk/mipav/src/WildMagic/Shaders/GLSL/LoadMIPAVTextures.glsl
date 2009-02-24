@@ -10,13 +10,13 @@ uniform sampler3D hVolumeImageA_2nd_TEXUNIT7;
 
 uniform sampler3D iSurfaceImage_TEXUNIT8;
 
-// uniform sampler3D jVolumeImageB_TEXUNIT9; 
-// uniform sampler1D kColorMapB_TEXUNIT10; 
-// uniform sampler1D lOpacityMapB_TEXUNIT11; 
-// uniform sampler3D mNormalMapB_TEXUNIT12; 
-// uniform sampler3D nVolumeImageB_GM_TEXUNIT13; 
-// uniform sampler1D oOpacityMapB_GM_TEXUNIT14; 
-// uniform sampler3D pVolumeImageB_2nd_TEXUNIT15; 
+uniform sampler3D jVolumeImageB_TEXUNIT9; 
+uniform sampler1D kColorMapB_TEXUNIT10; 
+uniform sampler1D lOpacityMapB_TEXUNIT11; 
+uniform sampler3D mNormalMapB_TEXUNIT12; 
+uniform sampler3D nVolumeImageB_GM_TEXUNIT13; 
+uniform sampler1D oOpacityMapB_GM_TEXUNIT14; 
+uniform sampler3D pVolumeImageB_2nd_TEXUNIT15; 
 
 
 void p_LoadMIPAVTextures()
@@ -35,13 +35,13 @@ void p_LoadMIPAVTextures()
 
     color += texture3D( iSurfaceImage_TEXUNIT8, gl_TexCoord[0].xyz );
 
-//     color += texture3D( iVolumeImageB_TEXUNIT8, gl_TexCoord[0].xyz ); 
-//     color += texture1D( jColorMapB_TEXUNIT9, gl_TexCoord[0].x ); 
-//     color += texture1D( kOpacityMapB_TEXUNIT10, gl_TexCoord[0].x ); 
-//     color += texture3D( lNormalMapB_TEXUNIT11, gl_TexCoord[0].xyz ); 
-//     color += texture3D( mVolumeImageB_GM_TEXUNIT12, gl_TexCoord[0].xyz ); 
-//     color += texture1D( nOpacityMapB_GM_TEXUNIT13, gl_TexCoord[0].x ); 
-//     color += texture3D( oVolumeImageB_2nd_TEXUNIT14, gl_TexCoord[0].xyz ); 
+    color += texture3D( jVolumeImageB_TEXUNIT9, gl_TexCoord[0].xyz ); 
+    color += texture1D( kColorMapB_TEXUNIT10, gl_TexCoord[0].x ); 
+    color += texture1D( lOpacityMapB_TEXUNIT11, gl_TexCoord[0].x ); 
+    color += texture3D( mNormalMapB_TEXUNIT12, gl_TexCoord[0].xyz ); 
+    color += texture3D( nVolumeImageB_GM_TEXUNIT13, gl_TexCoord[0].xyz ); 
+    color += texture1D( oOpacityMapB_GM_TEXUNIT14, gl_TexCoord[0].x ); 
+    color += texture3D( pVolumeImageB_2nd_TEXUNIT15, gl_TexCoord[0].xyz ); 
 
     gl_FragColor = color;
 }

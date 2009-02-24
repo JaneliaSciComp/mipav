@@ -491,8 +491,21 @@ uniform sampler1D dOpacityMapA_TEXUNIT3;
 uniform sampler3D eNormalMapA_TEXUNIT4; 
 uniform sampler3D fVolumeImageA_GM_TEXUNIT5; 
 uniform sampler1D gOpacityMapA_GM_TEXUNIT6; 
-uniform sampler3D hVolumeImageA_2nd_TEXUNIT7; 
+// uniform sampler3D hVolumeImageA_2nd_TEXUNIT7; 
+
+// uniform sampler3D iSurfaceImage_TEXUNIT8;
+
+uniform sampler3D jVolumeImageB_TEXUNIT9; 
+uniform sampler1D kColorMapB_TEXUNIT10; 
+uniform sampler1D lOpacityMapB_TEXUNIT11; 
+uniform sampler3D mNormalMapB_TEXUNIT12; 
+uniform sampler3D nVolumeImageB_GM_TEXUNIT13; 
+uniform sampler1D oOpacityMapB_GM_TEXUNIT14; 
+// uniform sampler3D pVolumeImageB_2nd_TEXUNIT15; 
+
+
 uniform float IsColorA;
+uniform float IsColorB;
 uniform float DoClip;
 uniform float GradientMagnitude;
 uniform float clipX;
@@ -547,11 +560,15 @@ uniform vec3 CameraModelPosition;
 uniform vec3 CameraWorldPosition;
 
 uniform float Blend;
+uniform float ABBlend;
 
 uniform float MIP;
-uniform float DRR;
+uniform float DRRA;
+uniform float DRRB;
 uniform float Composite;
 uniform float Surface;
+
+uniform float SurfaceTex;
 
 uniform float MULTIHISTO;
 uniform float   UseWidget0;
@@ -598,6 +615,13 @@ void p_VolumeShaderMultiPass()
     vec2 texc = ((outPos.xy / outPos.w) + 1.0) / 2.0;
     vec4 back_position  = texture2D(aSceneImage_TEXUNIT0, texc);
 
+
+    if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
+    {
+        gl_FragColor = 0.0;
+        return;
+    }
+
     // the start position of the ray is stored in the texturecoordinate
     vec3 start = gl_TexCoord[0].xyz; 
 
@@ -634,6 +658,7 @@ void p_VolumeShaderMultiPass()
     {
         color = vec4(0.0);
         opacity = 0.0;
+        bClipped = true;
     }
     else
     {
@@ -792,15 +817,173 @@ void p_VolumeShaderMultiPass()
         }
     }
 
-    if ( DRR != 0.0 )
+    if ( DRRA != 0.0 )
     {
-        color.rgb *= DRR;
+        color.rgb *= DRRA;
     }
     if ( MIP != 0.0 )
     {
         color.rgb *= opacity;
     }
-    opacity *= Blend;
     gl_FragColor.rgb = color.rgb;
     gl_FragColor.a = opacity;
+
+
+    if ( ABBlend != 1.0 )
+    {
+        // The value is not clipped, compute the color:
+        if ( !bClipped )
+        {
+            color = texture3D(jVolumeImageB_TEXUNIT9,position);
+
+            if ( MULTIHISTO != 0.0 )
+            {
+                colorGM = texture3D(nVolumeImageB_GM_TEXUNIT13,position);
+
+                fMapX = color.r;
+                fMapY = colorGM.r;
+
+                if ( UseWidget0 != 0.0 )
+                {
+                    float opacity0 =
+                        computeAlpha( fMapX, fMapY, LevMidLine0, LevLeftLine0, LevRightLine0 );
+                    vec4 color0 = LevColor0 * opacity0;
+                    color = color0;
+                    opacity = opacity0 * LevColor0.a;
+                }
+                if ( UseWidget1 != 0.0 )
+                {
+                    float opacity1 =
+                        computeAlpha( fMapX, fMapY, LevMidLine1, LevLeftLine1, LevRightLine1 );
+                    vec4 color1 = LevColor1 * opacity1;
+                    color += color1;
+                    opacity += (opacity1 * LevColor1.a);
+                }
+                if ( UseWidget2 != 0.0 )
+                {
+                    float opacity2 =
+                        computeAlpha( fMapX, fMapY, LevMidLine2, LevLeftLine2, LevRightLine2 );
+                    vec4 color2 = LevColor2 * opacity2;
+                    color += color2;
+                    opacity += (opacity2 * LevColor2.a);
+                }
+                if ( UseWidget3 != 0.0 )
+                {
+                    float opacity3 =
+                        computeAlpha( fMapX, fMapY, LevMidLine3, LevLeftLine3, LevRightLine3 );
+                    vec4 color3 = LevColor3 * opacity3;
+                    color += color3;
+                    opacity += (opacity3 * LevColor3.a);
+                }
+                if ( UseWidget4 != 0.0 )
+                {
+                    float opacity4 =
+                        computeAlpha( fMapX, fMapY, LevMidLine4, LevLeftLine4, LevRightLine4 );
+                    vec4 color4 = LevColor4 * opacity4;
+                    color += color4;
+                    opacity += (opacity4 * LevColor4.a);
+                }
+                if ( UseWidget5 != 0.0 )
+                {
+                    float opacity5 =
+                        computeAlpha( fMapX, fMapY, LevMidLine5, LevLeftLine5, LevRightLine5 );
+                    vec4 color5 = LevColor5 * opacity5;
+                    color += color5;
+                    opacity += (opacity5 * LevColor5.a);
+                }
+            }
+            else
+            {
+                opacity = color.r;
+                opacity = texture1D(lOpacityMapB_TEXUNIT11,opacity).r;
+            
+                if ( IsColorB != 0.0 )
+                {
+                    color.r = texture1D(kColorMapB_TEXUNIT10,color.r).r;
+                    color.g = texture1D(kColorMapB_TEXUNIT10,color.g).g;
+                    color.b = texture1D(kColorMapB_TEXUNIT10,color.b).b;
+                }
+                else
+                {
+                    color = texture1D(kColorMapB_TEXUNIT10,color.r);
+                }
+
+                if ( GradientMagnitude != 0.0 )
+                {
+                    colorGM = texture3D(nVolumeImageB_GM_TEXUNIT13,position);
+                    opacityGM = texture1D(oOpacityMapB_GM_TEXUNIT14,colorGM.r).r;
+                    opacity = opacity * opacityGM;
+                }
+            }
+
+            if ( Surface != 0.0 )
+            {
+                // Surface and Composite surface display:
+                vec4 normal = texture3D(mNormalMapB_TEXUNIT12,position);
+                normal.w = 0.0;
+            
+                // First light is static light:
+                vec4 color0 = color;
+                color0 = computeColor( position.xyz, normal.xyz, CameraModelPosition.xyz,
+                                       MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse.xyzw, MaterialSpecular.xyzw,
+                                       Light0Ambient.xyzw, Light0Diffuse.xyzw, Light0Specular.xyzw,
+                                       Light0ModelPosition.xyzw, Light0ModelDirection.xyzw,
+                                       Light0SpotCutoff.xyzw, Light0Attenuation.xyzw,
+                                       Light0Type,
+                                       Composite, color0.xyzw );
+            
+                // Assume second light is alwasy an ambient light:
+                vec4 color1 = color;
+                if ( Composite != 0.0 )
+                {
+                    LocalMaterialAmbient = color1.xyz * MaterialAmbient.xyz;
+                    LocalMaterialEmissive = color1.xyz * MaterialEmissive.xyz;
+                }
+                color1 = AmbientLight( LocalMaterialEmissive.xyz,
+                                       LocalMaterialAmbient.xyz,
+                                       Light1Ambient.xyz,
+                                       Light1Attenuation.xyzw );
+            
+                // Remaining lights:
+                vec4 color2 = color;
+                color2 = computeColor( position.xyz, normal.xyz, CameraModelPosition.xyz,
+                                       MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse.xyzw, MaterialSpecular.xyzw,
+                                       Light2Ambient.xyzw, Light2Diffuse.xyzw, Light2Specular.xyzw,
+                                       Light2WorldPosition.xyzw, Light2WorldDirection.xyzw,
+                                       Light2SpotCutoff.xyzw, Light2Attenuation.xyzw,
+                                       Light2Type,
+                                       Composite, color2.xyzw );
+            
+                vec4 color3 = color;
+                color3 = computeColor( position.xyz, normal.xyz, CameraModelPosition.xyz,
+                                       MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse.xyzw, MaterialSpecular.xyzw,
+                                       Light3Ambient.xyzw, Light3Diffuse.xyzw, Light3Specular.xyzw,
+                                       Light3WorldPosition.xyzw, Light3WorldDirection.xyzw,
+                                       Light3SpotCutoff.xyzw, Light3Attenuation.xyzw,
+                                       Light3Type,
+                                       Composite, color3.xyzw );
+            
+                color = color0 + color1 + color2 + color3;
+            }
+
+            if ( DRRB != 0.0 )
+            {
+                color.rgb *= DRRB;
+            }
+            if ( MIP != 0.0 )
+            {
+                color.rgb *= opacity;
+            }
+            gl_FragColor.rgb = ABBlend * gl_FragColor.rgb + (1.0 - ABBlend) * color.rgb;
+            gl_FragColor.a = ABBlend * gl_FragColor.a + (1.0 - ABBlend) * opacity;
+        }
+    }
+//     if ( SurfaceTex != 0.0 )
+//     {
+        //gl_FragColor.rgb += texture3D(iSurfaceImage_TEXUNIT8,position);
+//     }
+    gl_FragColor.a *= Blend;
+
+
+
 }

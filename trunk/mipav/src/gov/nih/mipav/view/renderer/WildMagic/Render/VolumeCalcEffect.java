@@ -89,7 +89,7 @@ public class VolumeCalcEffect extends VolumeClipEffect
         /* Set single-pass rendering: */
         SetPassQuantity(1);
         SetVShader(0,new VertexShader("TextureV"));
-        SetPShader(0,new PixelShader("CropClipped", false));
+        SetPShader(0,new PixelShader("CropClipped" + kVolumeImage.GetPostfix(), false));
         GetPShader(0).SetTextureQuantity(1);
         GetPShader(0).SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
         GetPShader(0).SetTexture(0, kVolumeImage.GetVolumeTarget() );
