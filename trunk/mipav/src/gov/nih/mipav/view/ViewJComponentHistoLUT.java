@@ -69,6 +69,9 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
     public ViewJComponentHistoLUT(HistoLUTParent _histoFrame, ModelHistogram _histo, ModelLUT _lut, ModelImage _image) {
         super(_histoFrame, _histo, _image, new Dimension(377, 336));
         lut = _lut;
+        // set the default color LUT transfer function to linear. 
+        // otherwise, the init transfer function setup messed up. 
+        linearMode();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -769,15 +772,17 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
             max = (float) image.getMax();
         }
 
+        float xRange = ( ( max - min ) < 255 ? 255 : ( max - min ) );
+        
         x[0] = min;
         y[0] = dim.height - 1;
         z[0] = 0;
 
-        x[1] = (min + ((max - min) / 3.0f));
+        x[1] = (min + ( xRange / 3.0f));
         y[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
         z[1] = 0;
 
-        x[2] = (min + ((max - min) * 2.0f / 3.0f));
+        x[2] = (min + ( xRange * 2.0f / 3.0f));
         y[2] = (dim.height - 1) - (((dim.height - 1) * 2.0f) / 3.0f);
         z[2] = 0;
 
@@ -786,7 +791,7 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
         z[3] = 0;
 
         lut.getTransferFunction().importArrays(x, y, 4);
-
+      
         histogramParent.updateFrames(false);
         showHistogram();
     }
@@ -861,7 +866,6 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
             g.drawString(String.valueOf((int) histogramMax), offsetX + 260, offsetY + 6); // top label
 
             if ((mode == LINEAR) || (mode == CT)) {
-
                 // g.setColor(new Color(255,255,0));
                 g.setColor(Color.yellow);
                 nPts = lut.getTransferFunction().size();
