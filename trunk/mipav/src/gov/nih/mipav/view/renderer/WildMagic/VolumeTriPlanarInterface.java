@@ -1083,6 +1083,12 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             progressBar.updateValueImmed(100);
 
             this.configureFrame( true );
+            
+            // After the whole WM rendering framework built, force updating the color LUT table in order to 
+            // update both the volume viewer and tri-planar viewer.  Otherwise, the render volume turns to be black.
+            if ( panelHistoLUT != null ) 
+            	panelHistoLUT.updateComponentLUT();
+            
         } finally {
             progressBar.dispose();
         }
