@@ -144,6 +144,14 @@ public class VolumeSlices extends VolumeObject
         return m_akPlaneEffect[iIndex].GetBlend(); 
     }
     
+    public void setABBlend( float fBlend )
+    {
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlaneEffect[i].setABBlend(fBlend);
+        }
+    }
+    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#PreRender(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */

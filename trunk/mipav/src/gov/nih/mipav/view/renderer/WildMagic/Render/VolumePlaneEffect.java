@@ -26,9 +26,6 @@ implements StreamInterface
     /** Shared volume data and textures. */
     private VolumeImage m_kVolumeImageB;
 
-    /** stores the blend function */
-    private float[] m_afBlend = new float[]{1f,0,0,0};
-
     /** stores the background color */
     private float[] m_afBackgroundColor = new float[4];
 
@@ -64,20 +61,31 @@ implements StreamInterface
      */
     public void Blend(float fBlend)
     {
-        m_afBlend[0] = fBlend;
         Program pkProgram = GetPProgram(0);
-        if ( pkProgram != null && pkProgram.GetUC("blend") != null ) 
+        if ( pkProgram != null && pkProgram.GetUC("Blend") != null ) 
         {
-            pkProgram.GetUC("blend").SetDataSource(m_afBlend);
+            pkProgram.GetUC("Blend").GetData()[0] = fBlend;
         }
     }
 
+    /**
+     * Sets the blend factor shader parameter between imageA and imageB.
+     * @param fBlend blend factor (range = 0-1).
+     */
+    public void setABBlend(float fBlend)
+    {
+        Program pkProgram = GetPProgram(0);
+        if ( (pkProgram != null) && pkProgram.GetUC("ABBlend") != null ) 
+        {
+            pkProgram.GetUC("ABBlend").GetData()[0] = fBlend;
+        }
+    }
+    
     /**
      * memory cleanup.
      */
     public void dispose()
     {
-        m_afBlend = null;
         super.dispose();
     }
 
@@ -87,7 +95,12 @@ implements StreamInterface
      */
     public float GetBlend()
     {
-        return m_afBlend[0];
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram != null && pkProgram.GetUC("Blend") != null ) 
+        {
+            return pkProgram.GetUC("Blend").GetData()[0];
+        }
+        return 1.0f;
     }
 
     /* (non-Javadoc)
@@ -97,16 +110,17 @@ implements StreamInterface
             Program pkPProgram)
     {
         Blend(1);
+        setABBlend(1);
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("IsColor") != null ) 
         {
             if ( m_kVolumeImageA.GetImage().isColorImage() )
             {
-                pkProgram.GetUC("IsColor").SetDataSource(new float[]{1,0,0,0});
+                pkProgram.GetUC("IsColor").GetData()[0] = 1.0f;
             }
             else
             {
-                pkProgram.GetUC("IsColor").SetDataSource(new float[]{0,0,0,0});
+                pkProgram.GetUC("IsColor").GetData()[0] = 0.0f;
             }
         }    
         if ( m_kVolumeImageB != null )
@@ -115,17 +129,14 @@ implements StreamInterface
             {
                 if ( m_kVolumeImageB.GetImage().isColorImage() )
                 {
-                    pkProgram.GetUC("IsColorB").SetDataSource(new float[]{1,0,0,0});
+                    pkProgram.GetUC("IsColorB").GetData()[0] = 1.0f;
                 }
                 else
                 {
-                    pkProgram.GetUC("IsColorB").SetDataSource(new float[]{0,0,0,0});
+                    pkProgram.GetUC("IsColorB").GetData()[0] = 0.0f;
                 }
             }  
-            if ( pkProgram.GetUC("ShowB") != null ) 
-            {    
-                pkProgram.GetUC("ShowB").SetDataSource(new float[]{1,0,0,0});
-            }               
+            setABBlend(.5f);
         }
     }
     /* (non-Javadoc)
@@ -177,23 +188,22 @@ implements StreamInterface
         SetVShader(0,new VertexShader("Color_Opacity_TextureV"));
         SetPShader(0,new PixelShader("Color_Opacity_TextureP", bUnique));
 
-        GetPShader(0).SetTextureQuantity(3);
-        //GetPShader(0).SetTextureQuantity(5);
+        GetPShader(0).SetTextureQuantity(5);
         int iTex = 0;
         GetPShader(0).SetImageName(iTex,m_kVolumeImageA.GetVolumeTarget().GetName());
         GetPShader(0).SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
         GetPShader(0).SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName() );
         GetPShader(0).SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget() );
-/*
-        if ( m_kVolumeImageB != null )
-        {
-            GetPShader(0).SetImageName(2,"VolumeImageB");
-            GetPShader(0).SetTexture(2, m_kVolumeImageB.GetVolumeTarget() );
-            GetPShader(0).SetImageName(3, "ColorMapB");
-            GetPShader(0).SetTexture(3, m_kVolumeImageB.GetColorMapTarget() );
-        }
-*/
+        
         GetPShader(0).SetImageName(iTex, m_kVolumeImageA.GetSurfaceTarget().GetName() );
         GetPShader(0).SetTexture(iTex++, m_kVolumeImageA.GetSurfaceTarget() );
+
+        if ( m_kVolumeImageB != null )
+        {
+            GetPShader(0).SetImageName(iTex,"VolumeImageB");
+            GetPShader(0).SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget() );
+            GetPShader(0).SetImageName(iTex, "ColorMapB");
+            GetPShader(0).SetTexture(iTex++, m_kVolumeImageB.GetColorMapTarget() );
+        }
     }
 }

@@ -53,22 +53,6 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     /** Reference to the SceneImage texture: */
     private Texture m_kSceneTarget;
   
-
-
-    /** stores the self-shadow parameter on/off value: */
-    private float[] m_afSelfShadow = new float[]{0,0,0,0};
-
-    /** stores the gradient magnitude filter on/off value: */
-    private float[] m_afGradientMagnitude = new float[]{0,0,0,0};
-
-    /** Blend value for alpha-blending two volumes. */
-    private float[] m_afABBlend = new float[]{1,0,0,0};
-
-    /** Turns composite surface on/off: */
-    private float[] m_afComposite = new float[]{1,0,0,0};
-
-    private float[] m_afIsColorA = new float[]{1,0,0,0};
-    private float[] m_afIsColorB = new float[]{1,0,0,0};
     private static int ms_MaxLights = 8;
     private float[][] m_aafLight = new float[ms_MaxLights][4];
     
@@ -109,32 +93,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
                                 Program pkPProgram)
     {
         SetColorImage(pkPProgram);
-        if ( pkPProgram.GetUC("ABBlend") != null ) 
-        {
-            pkPProgram.GetUC("ABBlend").SetDataSource(m_afABBlend);
-        }
-        if ( pkPProgram.GetUC("Composite") != null )
-        {
-            pkPProgram.GetUC("Composite").SetDataSource(m_afComposite);
-        }
-        if ( pkPProgram.GetUC("IsColorA") != null ) 
-        {
-            pkPProgram.GetUC("IsColorA").SetDataSource(m_afIsColorA);
-        }                
-        if ( pkPProgram.GetUC("IsColorB") != null ) 
-        {
-            pkPProgram.GetUC("IsColorB").SetDataSource(m_afIsColorB);
-        }                
-        if ( pkPProgram.GetUC("GradientMagnitude") != null ) 
-        {
-            pkPProgram.GetUC("GradientMagnitude").SetDataSource(m_afGradientMagnitude);
-        }
-        if ( pkPProgram.GetUC("SelfShadow") != null ) 
-        {
-            pkPProgram.GetUC("SelfShadow").SetDataSource(m_afSelfShadow);
-        }
+        setABBlend(1.0f);
         if ( m_kVolumeImageB != null )
         {
+            setABBlend(0.5f);
             if ( pkPProgram.GetUC("ShowB") != null ) 
             {    
                 pkPProgram.GetUC("ShowB").SetDataSource(new float[]{1,0,0,0});
@@ -187,10 +149,14 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         if ( kPProgram.GetUC("MIP") != null )
         {
             kPProgram.GetUC("MIP").GetData()[0] = 0;
-        }  
-        if ( kPProgram.GetUC("DRR") != null )
+        }
+        if ( kPProgram.GetUC("DRRA") != null )
         {
-            kPProgram.GetUC("DRR").GetData()[0] = 0;
+            kPProgram.GetUC("DRRA").GetData()[0] = 0;
+        }
+        if ( (m_kVolumeImageB != null) && (kPProgram.GetUC("DRRB") != null) )
+        {
+            kPProgram.GetUC("DRRB").GetData()[0] = 0;
         }
         if ( kPProgram.GetUC("Composite") != null )
         {
@@ -230,9 +196,13 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             kPProgram.GetUC("MIP").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("DRR") != null )
+        if ( kPProgram.GetUC("DRRA") != null )
         {
-            kPProgram.GetUC("DRR").GetData()[0] = m_kVolumeImageA.getDRRNorm();
+            kPProgram.GetUC("DRRA").GetData()[0] = m_kVolumeImageA.getDRRNorm();
+        }
+        if ( (m_kVolumeImageB != null) && (kPProgram.GetUC("DRRB") != null) )
+        {
+            kPProgram.GetUC("DRRB").GetData()[0] = m_kVolumeImageB.getDRRNorm();
         }
         if ( kPProgram.GetUC("Composite") != null )
         {
@@ -272,10 +242,6 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         }
 
         m_kSceneTarget = null;
-
-        m_afSelfShadow = null;
-        m_afGradientMagnitude = null;
-
         super.dispose();
     }
 
@@ -303,9 +269,13 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             kPProgram.GetUC("MIP").GetData()[0] = 1;
         }
-        if ( kPProgram.GetUC("DRR") != null )
+        if ( kPProgram.GetUC("DRRA") != null )
         {
-            kPProgram.GetUC("DRR").GetData()[0] = 0;
+            kPProgram.GetUC("DRRA").GetData()[0] = 0;
+        }
+        if ( (m_kVolumeImageB != null) && (kPProgram.GetUC("DRRB") != null) )
+        {
+            kPProgram.GetUC("DRRB").GetData()[0] = 0;
         }
         if ( kPProgram.GetUC("Composite") != null )
         {
@@ -413,7 +383,11 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
      */
     public void setABBlend(float fBlend)
     {
-        m_afABBlend[0] = fBlend;
+        Program kPProgram = m_kPShaderCMP.GetProgram();  
+        if ( (kPProgram != null) && kPProgram.GetUC("ABBlend") != null ) 
+        {
+            kPProgram.GetUC("ABBlend").GetData()[0] = fBlend;
+        }
     }
 
     /** 
@@ -464,9 +438,13 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             kPProgram.GetUC("MIP").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("DRR") != null )
+        if ( kPProgram.GetUC("DRRA") != null )
         {
-            kPProgram.GetUC("DRR").GetData()[0] = 0;
+            kPProgram.GetUC("DRRA").GetData()[0] = 0;
+        }
+        if ( (m_kVolumeImageB != null) && (kPProgram.GetUC("DRRB") != null) )
+        {
+            kPProgram.GetUC("DRRB").GetData()[0] = 0;
         }
         if ( kPProgram.GetUC("Composite") != null )
         {
@@ -508,9 +486,13 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             kPProgram.GetUC("MIP").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("DRR") != null )
+        if ( kPProgram.GetUC("DRRA") != null )
         {
-            kPProgram.GetUC("DRR").GetData()[0] = 0;
+            kPProgram.GetUC("DRRA").GetData()[0] = 0;
+        }
+        if ( (m_kVolumeImageB != null) && (kPProgram.GetUC("DRRB") != null) )
+        {
+            kPProgram.GetUC("DRRB").GetData()[0] = 0;
         }
         if ( kPProgram.GetUC("Composite") != null )
         {
@@ -542,7 +524,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         m_pkVShader = new VertexShader("VolumeShaderVertex");
 
         m_kPShaderCMP = new PixelShader("VolumeShaderMultiPass");
-        initTextures(m_kPShaderCMP);
+        initTexturesVol(m_kPShaderCMP);
          
         m_kPShaderInit = new PixelShader("LoadMIPAVTextures");
         initTextures(m_kPShaderInit);
@@ -572,7 +554,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     private void initTextures( PixelShader kPShader )
     {        
         int iTex = 0;
-        kPShader.SetTextureQuantity(13);
+        kPShader.SetTextureQuantity(16);
         kPShader.SetImageName(iTex, m_kSceneTarget.GetName());
         kPShader.SetTexture(iTex++, m_kSceneTarget);
 
@@ -615,6 +597,53 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         }
     }
 
+    private void initTexturesVol( PixelShader kPShader )
+    {        
+        int iTex = 0;
+        kPShader.SetTextureQuantity(16);
+        kPShader.SetImageName(iTex, m_kSceneTarget.GetName());
+        kPShader.SetTexture(iTex++, m_kSceneTarget);
+
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetVolumeTarget().GetName() );
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName() );
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget() );
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapTarget().GetName() );
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapTarget() );
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetNormalMapTarget().GetName());
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget());
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetGradientMapTarget().GetName());
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetGradientMapTarget());
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapGMTarget().GetName() );
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapGMTarget() );
+        //kPShader.SetImageName(iTex, m_kVolumeImageA.GetSecondDerivativeMapTarget().GetName());
+        //kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSecondDerivativeMapTarget());
+        
+
+        //kPShader.SetImageName(iTex, m_kVolumeImageA.GetSurfaceTarget().GetName());
+        //kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSurfaceTarget());
+        
+        
+        if ( m_kVolumeImageB != null )
+        {
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetVolumeTarget().GetName() );
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget() );
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetColorMapTarget().GetName() );
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetColorMapTarget() );
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapTarget().GetName() );
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapTarget() );
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetNormalMapTarget().GetName());
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetNormalMapTarget());
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetGradientMapTarget().GetName());
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetGradientMapTarget());
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapGMTarget().GetName() );
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapGMTarget() );
+            //kPShader.SetImageName(iTex, m_kVolumeImageB.GetSecondDerivativeMapTarget().GetName());
+            //kPShader.SetTexture(iTex++, m_kVolumeImageB.GetSecondDerivativeMapTarget());
+        }
+    }
+
+    
     protected void SetDefaultAlphaState ()
     {
         m_kAlphaState.set(0, new AlphaState());

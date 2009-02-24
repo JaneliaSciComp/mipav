@@ -524,6 +524,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             insertTab("Clip", clipPanel);
         } else if (command.equals("CropClipVolume")) {
             raycastRenderWM.cropClipVolume();
+            setModified();
         } else if (command.equals("UndoCropVolume")) {
             updateData();
         } else if (command.equals("SaveCropVolume")) {
@@ -1050,12 +1051,9 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
 
             m_kAnimator = new Animator();
             m_akPlaneRender = new PlaneRender_WM[3];
-            m_akPlaneRender[0] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, FileInfoBase.AXIAL);
-            m_akPlaneRender[1] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, FileInfoBase.SAGITTAL);
-            m_akPlaneRender[2] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, FileInfoBase.CORONAL);
-            //m_akPlaneRender[0] = null;
-            //m_akPlaneRender[1] = null;
-            //m_akPlaneRender[2] = null;
+            m_akPlaneRender[0] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL);
+            m_akPlaneRender[1] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.SAGITTAL);
+            m_akPlaneRender[2] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.CORONAL);
             
             progressBar.setMessage("Constructing gpu renderer...");
 
@@ -2340,6 +2338,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     public void updateABBlend()
     {
         raycastRenderWM.setABBlend(1 - getBlendValue()/100.0f);
+        setModified();
     }
     
     /**
@@ -2350,8 +2349,12 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         if ( m_kVolumeImageA != null )
         {
             m_kVolumeImageA.UpdateData(imageA, "A");
-            raycastRenderWM.updateData();
         }
+        if ( m_kVolumeImageB != null )
+        {
+            m_kVolumeImageB.UpdateData(imageB, "B");
+        }
+        raycastRenderWM.updateData();
         setModified();
     }
     

@@ -186,7 +186,7 @@ public class PlaneRender_WM extends GPURenderBase
      * @param iPlane
      */
     public PlaneRender_WM(VolumeTriPlanarInterface kParent, Animator kAnimator, 
-                          VolumeImage kVolumeImageA,
+                          VolumeImage kVolumeImageA, VolumeImage kVolumeImageB,
                           int iPlane)
     {
         super();
@@ -200,6 +200,7 @@ public class PlaneRender_WM extends GPURenderBase
 
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;
+        m_kVolumeImageB = kVolumeImageB;
         m_kParent = kParent;
         m_iPlaneOrientation = iPlane;
 

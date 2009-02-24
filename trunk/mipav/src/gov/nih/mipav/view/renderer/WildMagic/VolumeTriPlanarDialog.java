@@ -442,6 +442,32 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
                         changeTypeAlgo = null;
                     }
                 }
+                if ( (imageB != null) && ((imageB.getType() != ModelStorageBase.UBYTE) ||
+                        (imageB.isColorImage() && (imageB.getType() != ModelStorageBase.ARGB))) )
+                {
+                    AlgorithmChangeType changeTypeAlgo = null;
+                    if ( imageB.isColorImage() )
+                    {
+                        changeTypeAlgo = new AlgorithmChangeType(imageB, ModelStorageBase.ARGB, 
+                                imageB.getMin(), imageB.getMax(), 
+                                0, 255, false);
+                    }
+                    else
+                    {
+                        changeTypeAlgo = new AlgorithmChangeType(imageB, ModelStorageBase.UBYTE, 
+                                imageB.getMin(), imageB.getMax(), 
+                            0, 255, false);
+                    }
+                    changeTypeAlgo.setRunningInSeparateThread(false);
+                    changeTypeAlgo.run();
+
+                    if (changeTypeAlgo.isCompleted() == false) {
+
+                        // What to do
+                        changeTypeAlgo.finalize();
+                        changeTypeAlgo = null;
+                    }
+                }
 /*
                 String kExternalDirs = VolumeTriPlanarInterface.getExternalDirs();        
                 ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      

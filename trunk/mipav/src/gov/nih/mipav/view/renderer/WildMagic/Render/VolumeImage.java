@@ -278,16 +278,27 @@ public class VolumeImage
                             iXBound,iYBound,iZBound,aucData,
                             new String( "VolumeImage" + kPostFix));
             }
+            else
+            {
+                kVolumeImage.SetData( aucData, iXBound, iYBound, iZBound );
+            }
         }
         else
         {
             aucData = new byte[iXBound*iYBound*iZBound];
             try {
                 kImage.exportData( 0, kImage.getSize(), aucData );
+                if ( kVolumeImage == null )
+                {
                 kVolumeImage =
                     new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
                             iXBound,iYBound,iZBound, aucData,
                             new String( "VolumeImage" + kPostFix));
+                }
+                else
+                {
+                    kVolumeImage.SetData( aucData, iXBound, iYBound, iZBound );
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -296,7 +307,6 @@ public class VolumeImage
 
         if ( kVolumeTexture != null )
         {
-            kVolumeTexture.GetImage().SetData( aucData, iXBound, iYBound, iZBound );
             kVolumeTexture.Release();
         }
         return kVolumeImage;
