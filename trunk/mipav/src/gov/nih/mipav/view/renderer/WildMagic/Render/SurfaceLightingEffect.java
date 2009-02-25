@@ -47,7 +47,21 @@ public class SurfaceLightingEffect extends VolumeClipEffect
     public void OnLoadPrograms (int iPass, Program pkVProgram,
                                 Program pkPProgram)
     {
+        SetColorImage(pkPProgram);
         Blend(m_fBlend);
+        super.OnLoadPrograms ( iPass,  pkVProgram, pkPProgram );
+    }
+    
+
+    /**
+     * Sets the IsColor shader parameter values.
+     */
+    private void SetColorImage(Program pkPProgram)
+    { 
+        if ( (pkPProgram.GetUC("IsColor") != null) && ((m_kVolumeImage != null)) ) 
+        {
+            pkPProgram.GetUC("IsColor").GetData()[0] = m_kVolumeImage.IsColorImage() ? 1 : 0;
+        } 
     }
     
     /**
@@ -270,6 +284,11 @@ public class SurfaceLightingEffect extends VolumeClipEffect
             m_kVolumeImageNew = VolumeImage.UpdateData(kImage, null, m_kVolumeTextureNew, new String("New") );
             m_kVolumeTextureNew.Release();
             m_kVolumeTextureNew.SetImage(m_kVolumeImageNew);
+
+            if ( m_kPPixelLighting.GetProgram().GetUC("IsColorNew") != null ) 
+            {
+                m_kPPixelLighting.GetProgram().GetUC("IsColorNew").GetData()[0] = kImage.isColorImage() ? 1 : 0;
+            } 
         }
         else
         {

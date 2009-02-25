@@ -190,6 +190,6 @@ public abstract class JInterfaceBase extends JDialog implements ActionListener
         }
     }
     
-    public void updateColorButton( float[] afColor ) {}
+    public void updateColorButton( float[] afColor, float fColor ) {}
 
 }
