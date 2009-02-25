@@ -895,10 +895,12 @@ public class VolumeImage
 
     private void GradientMagnitudeImage(ModelImage kImage, String kPostfix)
     {
-        JDialogGradientMagnitude kCalcMagnitude = new JDialogGradientMagnitude( null, kImage );
+        ModelImage kImageGM = (ModelImage)kImage.clone();
+        JDialogGradientMagnitude kCalcMagnitude = new JDialogGradientMagnitude( null, kImageGM );
+        kCalcMagnitude.setVisible(false);
+        kCalcMagnitude.setOutputNewImage( false );
         kCalcMagnitude.setSeparateThread( false );
         kCalcMagnitude.actionPerformed( new ActionEvent(this, 0, "OK" ) );
-        ModelImage kImageGM = kCalcMagnitude.getResultImage();
         kCalcMagnitude = null;        
         if ( kImageGM == null )
         {
@@ -916,10 +918,12 @@ public class VolumeImage
         m_kVolumeGMTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeGMTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
 
-        JDialogLaplacian kCalcLaplacian = new JDialogLaplacian( null, kImage );
+        ModelImage kImageGMGM = (ModelImage)kImage.clone();     
+        JDialogLaplacian kCalcLaplacian = new JDialogLaplacian( null, kImageGMGM );
+        kCalcLaplacian.setVisible(false);
+        kCalcLaplacian.setOutputNewImage( false );
         kCalcLaplacian.setSeparateThread( false );
         kCalcLaplacian.actionPerformed( new ActionEvent(this, 0, "OK" ) );
-        ModelImage kImageGMGM = kCalcLaplacian.getResultImage();      
 
         if ( kImageGMGM != null )
         {
