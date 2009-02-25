@@ -83,7 +83,7 @@ import java.util.*;
              Slice 7 right red 69, green 123, blue 146, blue width 18
              Slice 8 red 82, green 129, blue 163, blue width 24
              Slice 10 top red 56, green 110, blue 90, blue width 6
-             Slice 11 bottom red 111, green 98, blue 107, blue width 10
+             Slice 10 bottom red 111, green 98, blue 107, blue width 10
              Slice 17 red 134, green 107, blue 218, blue width 10
              Slice 19 red 95, green 100, blue 90, blue width 14
              Slice 22 red 157, green 172, blue 99, blue width 9
@@ -524,6 +524,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 checkForSynapseXY();
             } // for (y = 0; y < yDim; y++)
         } // for (z = 0; z < zDim; z++)
+        fireProgressStateChanged(100/13);
         System.out.println("Number of synapses found searching parallel to x axis = " + numSynapses);
         Preferences.debug("Number of synapses found searching parallel to x axis = " + numSynapses + "\n");
         dataString += "\nNumber of synapses found searching parallel to x axis = " + numSynapses + "\n";
@@ -638,6 +639,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 checkForSynapseXY();
             } // for (x = 0; x < xDim; x++)
         } // for (z = 0; z < zDim; z++)
+        fireProgressStateChanged(2*100/13);
         System.out.println("Number of synapses found searching parallel to y axis = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to y axis = " + (numSynapses - previousNumSynapses) + "\n");
         dataString += "\nNumber of synapses found searching parallel to y axis = " + (numSynapses - previousNumSynapses) + "\n";
@@ -752,6 +754,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 checkForSynapseZ();
             } // for (x = 0; x < xDim; x++)
         } // for (y = 0; y < yDim; y++)
+        fireProgressStateChanged(3*100/13);
         System.out.println("Number of synapses found searching parallel to z axis = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to z axis = " + (numSynapses - previousNumSynapses) + "\n");
         dataString += "\nNumber of synapses found searching parallel to z axis = " + (numSynapses - previousNumSynapses) + "\n";
@@ -968,6 +971,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 checkForSynapseXY();
             } // for (yStart = yDim - 2; yStart >= threeBandMinXY-1; yStart--)
         } // for (z = 0; z < zDim; z++)
+        fireProgressStateChanged(4*100/13);
         System.out.println("Number of synapses found searching parallel to (x = -y) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (x = -y) = " + (numSynapses - previousNumSynapses) + "\n");
         dataString += "\nNumber of synapses found searching parallel to (x = -y) = " + (numSynapses - previousNumSynapses) + "\n";
@@ -1184,6 +1188,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 checkForSynapseXY();
             } // for (yStart = yDim - 2; yStart >= threeBandMinXY - 1; yStart--)
         } // for (z = 0; z < zDim; z++)
+        fireProgressStateChanged(5*100/13);
         System.out.println("Number of synapses found searching parallel to (x = y) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (x = y) = " + (numSynapses - previousNumSynapses) + "\n");
         dataString += "\nNumber of synapses found searching parallel to (x = y) = " + (numSynapses - previousNumSynapses) + "\n";
@@ -1400,6 +1405,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 checkForSynapseZ();
             } // for (zStart = zDim - 2; zStart >= threeBandMinZ-1; zStart--)
         } // for (y = 0; y < yDim; y++)
+        fireProgressStateChanged(6*100/13);
         System.out.println("Number of synapses found searching parallel to (x = -z) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (x = -z) = " + (numSynapses - previousNumSynapses) + "\n");
         dataString += "\nNumber of synapses found searching parallel to (x = -z) = " + (numSynapses - previousNumSynapses) + "\n";
@@ -1616,6 +1622,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 checkForSynapseZ();
             } // for (zStart = zDim - 2; zStart >= threeBandMinZ - 1; zStart--)
         } // for (y = 0; y < yDim; y++)
+        fireProgressStateChanged(7*100/13);
         System.out.println("Number of synapses found searching parallel to (x = z) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (x = z) = " + (numSynapses - previousNumSynapses) + "\n");
         dataString += "\nNumber of synapses found searching parallel to (x = z) = " + (numSynapses - previousNumSynapses) + "\n";
@@ -1831,6 +1838,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 checkForSynapseZ();
             } // for (zStart = zDim - 2; zStart >= threeBandMinZ-1; zStart--)
         } // for (x = 0; x < xDim; x++)
+        fireProgressStateChanged(8*100/13);
         System.out.println("Number of synapses found searching parallel to (y = -z) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (y = -z) = " + (numSynapses - previousNumSynapses) + "\n");
         dataString += "\nNumber of synapses found searching parallel to (y = -z) = " + (numSynapses - previousNumSynapses) + "\n";
@@ -2046,6 +2054,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 checkForSynapseZ();
             } // for (zStart = zDim - 2; zStart >= threeBandMinZ - 1; zStart--)
         } // for (x = 0; x < xDim; x++)
+        fireProgressStateChanged(9*100/13);
         System.out.println("Number of synapses found searching parallel to (y = z) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (y = z) = " + (numSynapses - previousNumSynapses) + "\n");
         dataString += "\nNumber of synapses found searching parallel to (y = z) = " + (numSynapses - previousNumSynapses) + "\n";
@@ -2368,6 +2377,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 checkForSynapseZ();
             } // for (xStart = 0; xStart < xDim; xStart++)
         } // for (yStart = 0; yStart < yDim; yStart++)
+        fireProgressStateChanged(10*100/13);
         System.out.println("Number of synapses found searching parallel to (delX = delY = delZ) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (delX = delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n");
         dataString += "\nNumber of synapses found searching parallel to (delX = delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n";
@@ -2690,6 +2700,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 checkForSynapseZ();
             } // for (xStart = 0; xStart < xDim; xStart++)
         } // for (yStart = 0; yStart < yDim; yStart++)
+        fireProgressStateChanged(11*100/13);
         System.out.println("Number of synapses found searching parallel to (delX = delY = -delZ) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (delX = delY = -delZ) = " + (numSynapses - previousNumSynapses) + "\n");
         dataString += "\nNumber of synapses found searching parallel to (delX = delY = -delZ) = " + (numSynapses - previousNumSynapses) + "\n";
@@ -3012,6 +3023,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 checkForSynapseZ();
             } // for (xStart = 0; xStart < xDim; xStart++)
         } // for (yStart = 0; yStart < yDim; yStart++)
+        fireProgressStateChanged(12*100/13);
         System.out.println("Number of synapses found searching parallel to (delX = -delY = delZ) = " + (numSynapses - previousNumSynapses));
         Preferences.debug("Number of synapses found searching parallel to (delX = -delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n");
         dataString += "\nNumber of synapses found searching parallel to (delX = -delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n";
