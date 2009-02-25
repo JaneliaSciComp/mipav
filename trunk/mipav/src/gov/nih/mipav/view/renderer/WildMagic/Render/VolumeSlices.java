@@ -116,7 +116,13 @@ public class VolumeSlices extends VolumeObject
                 }
                 m_akBoundingBox = null;
             }
-            m_akColors[i] = null;
+            if ( m_akColors != null )
+            {
+                if ( m_akColors[i] != null )
+                {
+                    m_akColors[i] = null;
+                }
+            }
         }
         m_akColors = null;
         m_abShowPlanes = null;

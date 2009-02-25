@@ -135,11 +135,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void dispose()
     {
-        for ( int i = 0; i < m_kDisplayList.size(); i++ )
-        {
-            m_kDisplayList.get(i).dispose();
-        }
-
+        m_kParent = null;
+        m_kVolumeImageA = null;
+        m_kVolumeImageB = null;
+        m_kAnimator.remove(GetCanvas());
+        m_kAnimator = null;
         if ( m_spkScene != null )
         {
             m_spkScene.dispose();
@@ -156,9 +156,32 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kCuller.dispose();
             m_kCuller = null;
         }
-
         m_kTranslate = null;
-        m_akLights = null;
+        if ( m_akLights != null )
+        {
+            for ( int i = 0; i < m_akLights.length; i++ )
+            {
+                if ( m_akLights[i] != null )
+                {
+                    m_akLights[i].dispose();
+                    m_akLights[i] = null;
+                }
+            }
+            m_akLights = null;
+        }
+        
+        m_kPicker = null;
+
+        if ( m_kDisplayList != null )
+        {
+            for ( int i = 0; i < m_kDisplayList.size(); i++ )
+            {
+                m_kDisplayList.get(i).dispose();
+            }
+            m_kDisplayList.clear();
+            m_kDisplayList = null;
+        }
+        
         m_kRotate = null;
 
         super.dispose();

@@ -29,21 +29,11 @@ import WildMagic.LibGraphics.Shaders.VertexShader;
 public class VolumeCalcEffect extends VolumeClipEffect
     implements StreamInterface
 {
-
-    /** Extents of the volume data for setting the texture step size. */    
-    private float[] m_afExtents = new float[]{0,0,0,0};
-
     /** When true the volume data is color. */
     private boolean m_bIsColor = false;
 
     /** stores the gradient magnitude filter on/off value: */
-    private float[] m_afGradientMagnitude = new float[]{0,0,0,0};
-
-    /** stores the gradient magnitude filter on/off value: */
     private float[] m_afMinMax = new float[]{0,0,0,0};
-
-    private float[] m_afIso = new float[]{0,0,0,0};
-    private float[] m_afVolumeIndex = new float[]{0,0,0,0};
     
     /** Create a new VolumeCalcEffect shader with the VolumeImage data. This
      * fn creates the second-pass shader.
@@ -125,7 +115,6 @@ public class VolumeCalcEffect extends VolumeClipEffect
         GetPShader(0).SetTexture(2, kVolumeImage.GetNormalMapTarget() );
         GetPShader(0).SetImageName(3,kVolumeImage.GetOpacityMapGMTarget().GetImage().GetName());
         GetPShader(0).SetTexture(3, kVolumeImage.GetOpacityMapGMTarget() );
-        SetGradientMagnitude( bGM );
         m_bIsColor = kVolumeImage.GetImage().isColorImage();
         this.m_afClipAll = kClip.m_afClipAll;
         this.m_afDoClip = kClip.m_afDoClip;
@@ -144,7 +133,7 @@ public class VolumeCalcEffect extends VolumeClipEffect
      */
     public void dispose()
     {
-        m_afExtents = null;
+        m_afMinMax = null;
         super.dispose();
     }
     /* (non-Javadoc)
@@ -160,60 +149,32 @@ public class VolumeCalcEffect extends VolumeClipEffect
         {
             if ( m_bIsColor )
             {
-                pkProgram.GetUC("IsColor").SetDataSource(new float[]{1,0,0,0});
+                pkProgram.GetUC("IsColor").GetData()[0] = 1.0f;
             }
             else
             {
-                pkProgram.GetUC("IsColor").SetDataSource(new float[]{0,0,0,0});
+                pkProgram.GetUC("IsColor").GetData()[0] = 0.0f;
             }
         }  
         if ( pkProgram.GetUC("MinMax") != null ) 
         {
             pkProgram.GetUC("MinMax").SetDataSource(m_afMinMax);
         }  
-
-        SetGradientMagnitude();
         super.OnLoadPrograms ( iPass,  pkVProgram, pkPProgram );
     }
     
-    /** 
-     * Enables/Disables gradient magnitude filter.
-     * @param bShow gradient magnitude filter on/off.
-     */
-    public void SetGradientMagnitude(boolean bShow)
-    {
-        m_afGradientMagnitude[0] = 0;
-        if ( bShow )
-        {
-            m_afGradientMagnitude[0] = 1;
-        }
-        SetGradientMagnitude();
-    }
-    
-    /**
-     * Sets the GradientMagnitude shader parameter.
-     */
-    private void SetGradientMagnitude()
-    {
-        Program pkProgram = GetPProgram(0);
-        if ( (pkProgram != null) && (pkProgram.GetUC("GradientMagnitude") != null) ) 
-        {
-            pkProgram.GetUC("GradientMagnitude").SetDataSource(m_afGradientMagnitude);
-        }
-    }
     
     /** Sets the step size shader parameter.
      * @param kVolumeImage the shared volume data and textures.
      */
     public void SetStepSize(VolumeImage kVolumeImage)
     {
-        m_afExtents[0] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[0])-1);
-        m_afExtents[1] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[1])-1);
-        m_afExtents[2] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[2])-1);
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("StepSize") != null ) 
         {
-            pkProgram.GetUC("StepSize").SetDataSource(m_afExtents);
+            pkProgram.GetUC("StepSize").GetData()[0] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[0])-1);
+            pkProgram.GetUC("StepSize").GetData()[1] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[1])-1);
+            pkProgram.GetUC("StepSize").GetData()[2] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[2])-1);
             //System.err.println( m_afExtents[0] + " " + m_afExtents[1] + " " + m_afExtents[2] );
         }
     }
@@ -223,45 +184,39 @@ public class VolumeCalcEffect extends VolumeClipEffect
      */
     public void SetStepSize(float fX, float fY, float fZ)
     {
-        m_afExtents[0] = fX;
-        m_afExtents[1] = fY;
-        m_afExtents[2] = fZ;
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("StepSize") != null ) 
         {
-            pkProgram.GetUC("StepSize").SetDataSource(m_afExtents);
+            pkProgram.GetUC("StepSize").GetData()[0] = fX;
+            pkProgram.GetUC("StepSize").GetData()[1] = fY;
+            pkProgram.GetUC("StepSize").GetData()[2] = fZ;
             //System.err.println( m_afExtents[0] + " " + m_afExtents[1] + " " + m_afExtents[2] );
         }
     }
     
     public void SetIsoVal(float fVal)
     {
-        m_afIso[0] = fVal;
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("IsoVal") != null ) 
         {
-            pkProgram.GetUC("IsoVal").SetDataSource(m_afIso);
-            System.err.println( fVal );
+            pkProgram.GetUC("IsoVal").GetData()[0] = fVal;
         }
     }
     
     
     public void SetVolumeIndex(int iIndex)
     {
-
-        m_afVolumeIndex[0] = iIndex;
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("VolumeIndex") != null ) 
         {
-            pkProgram.GetUC("VolumeIndex").SetDataSource(m_afVolumeIndex);
+            pkProgram.GetUC("VolumeIndex").GetData()[0] = iIndex;
         }
 
         if ( iIndex != 0 )
         {        
             if ( pkProgram.GetUC("IsColor") != null ) 
             {
-                pkProgram.GetUC("IsColor").SetDataSource(new float[]{0,0,0,0});
-
+                pkProgram.GetUC("IsColor").GetData()[0] = 0.0f;
             }  
         }
     }

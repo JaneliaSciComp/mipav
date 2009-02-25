@@ -1,42 +1,3 @@
-/**
- * Clip the volume based on the x,y,z axes.
- * returns 1 when the volume is clipped, 0 when not clipped.
- */
-bool myClip(const vec3 myvec,
-            float clipX,
-            float clipXInv,
-            float clipY,
-            float clipYInv,
-            float clipZ,
-            float clipZInv )
-{
-    if ( myvec.x > clipX )
-    {
-        return true;
-    }
-    if ( myvec.x < clipXInv )
-    {
-        return true;
-    }
-    if ( myvec.y > clipY )
-    {
-        return true;
-    }
-    if ( myvec.y < clipYInv )
-    {
-        return true;
-    }
-    if ( myvec.z > clipZ )
-    {
-        return true;
-    }
-    if ( myvec.z < clipZInv )
-    {
-        return true;
-    } else {
-        return false;
-    }
-}
 
 uniform sampler3D jVolumeImageB_TEXUNIT9; 
 uniform float DoClip;
@@ -50,22 +11,46 @@ uniform vec4 clipArb;
 uniform vec4 clipEye;
 uniform vec4 clipEyeInv;
 uniform mat4 WVPMatrix;
-void p_CropClippedB()
+void main()
 {
     // current position along the ray: 
     vec4 position = gl_TexCoord[0];
-
-    bool bClipped = false;
-
+    
+    float bClipped = 0.0;
+    
     // axis-aligned clipping:
-    if ( (DoClip != 0.0) && myClip( position.xyz, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
+    if ( DoClip != 0.0 )
     {
-        bClipped = true;
-    }
-    else
-    {
-        bClipped = false;
-        if ( DoClip != 0.0 )
+        if ( position.x > clipX )
+        {
+            bClipped = 1.0;
+        }
+        else if ( position.x < clipXInv )
+        {
+            bClipped = 1.0;
+        }
+        else if ( position.y > clipY )
+        {
+            bClipped = 1.0;
+        }
+        else if ( position.y < clipYInv )
+        {
+            bClipped = 1.0;
+        }
+        else if ( position.z > clipZ )
+        {
+            bClipped = 1.0;
+        }
+        else if ( position.z < clipZInv )
+        {
+            bClipped = 1.0;
+        } 
+        else 
+        {
+            bClipped = 0.0;
+        }
+
+        if ( bClipped != 1.0 )
         {
             // eye clipping and arbitrary clipping:
             vec4 aPosition = vec4(0.0);
@@ -77,15 +62,13 @@ void p_CropClippedB()
             float fDotArb = dot( position.xyz, clipArb.xyz );
             if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w) )
             {
-                bClipped = true;
+                bClipped = 1.0;
             }
         }
     }
-    if ( bClipped )
+    if ( bClipped == 1.0 )
     {
-        gl_FragColor.r = 0.0;
-        gl_FragColor.g = 0.0;
-        gl_FragColor.b = 0.0;
+        gl_FragColor = vec4(0.0);
     }
     else
     {

@@ -405,7 +405,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 VolumeImageNormalGM.main(m_kParent, m_kVolumeImageB);
             }
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-            m_kVolumeRayCast.setVolumeSamples( 0.5f );
+            m_kVolumeRayCast.setVolumeSamples( (m_kVolumeImageA.GetImage().getExtents()[2]*2.0f)/1000.0f );
             CMPMode();
         }
         if ( m_bSurfaceUpdate )
@@ -583,6 +583,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kShaderParamsWindow != null )
         {
             m_kShaderParamsWindow.close();
+        }
+        if ( m_kPaintColor != null )
+        {
+            m_kPaintColor = null;
+        }
+        if ( m_kArbitraryClip != null )
+        {
+            m_kArbitraryClip = null;
         }
 
         super.dispose();

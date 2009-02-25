@@ -26,9 +26,6 @@ implements StreamInterface
     /** Shared volume data and textures. */
     private VolumeImage m_kVolumeImageB;
 
-    /** stores the background color */
-    private float[] m_afBackgroundColor = new float[4];
-
     /** 
      * Creates a new VolumeShaderEffect object.
      * @param kVolumeImageA the VolumeImage containing shared data and textures for rendering.
@@ -86,6 +83,8 @@ implements StreamInterface
      */
     public void dispose()
     {
+        m_kVolumeImageA = null;
+        m_kVolumeImageB = null;
         super.dispose();
     }
 
@@ -160,11 +159,10 @@ implements StreamInterface
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("BackgroundColor") != null ) 
         {
-            m_afBackgroundColor[0] = kColor.R;
-            m_afBackgroundColor[1] = kColor.G;
-            m_afBackgroundColor[2] = kColor.B;
-            m_afBackgroundColor[3] = kColor.A;
-            pkProgram.GetUC("BackgroundColor").SetDataSource(m_afBackgroundColor);
+            pkProgram.GetUC("BackgroundColor").GetData()[0] = kColor.R;
+            pkProgram.GetUC("BackgroundColor").GetData()[1] = kColor.G;
+            pkProgram.GetUC("BackgroundColor").GetData()[2] = kColor.B;
+            pkProgram.GetUC("BackgroundColor").GetData()[3] = kColor.A;
         }
     }
     /**

@@ -158,49 +158,25 @@ public class VolumeImageExtract extends VolumeImageViewer
                   {
                     
                   }
-                  m_pkVolumeCalcTarget.dispose();
-                  m_kCalcImage.dispose();
-                  m_pkVolumeCalcTarget2.dispose();
-                  m_kCalcImage2.dispose();
-                  m_spkEffect2.dispose();
-                  m_kAnimator.stop();
-                  m_kAnimator.remove(arg0);
-                  m_kAnimator = null;
-                  m_kFrame.setVisible(false);
-                  
-                  /*
-                  //System.err.println("Done second pass");
-                  ModelImage kImage = m_kVolumeImage.CreateImageFromTexture(m_pkVolumeCalcTarget2.GetImage());
-                  float[] res = new float[]{1f,1f,1f};
-                  for (int i = 0; i < kImage.getExtents()[2]; i++) {
-                      kImage.getFileInfo()[i].setResolutions(res);
-                  }
-                  kImage.calcMinMax();
-                  //new ViewJFrameImage(kImage, null, new java.awt.Dimension(610, 200), false);
-
-                  String kSurfaceName = JDialogBase.makeImageName(kImage.getImageName(), "_extract.sur");
-                  AlgorithmExtractSurfaceCubes extractSurAlgo = 
-                      new AlgorithmExtractSurfaceCubes(kImage, 50, AlgorithmExtractSurfaceCubes.LEVEL_MODE,
-                                                       false, false, 0, kSurfaceName );
-                  extractSurAlgo.extractSurface(false);  
-                  TriMesh[] kMeshes = new TriMesh[1];
-                  kMeshes[0] = extractSurAlgo.mesh;
-                  if ( kMeshes[0] != null )
-                  {
-                      m_kParent.getVolumeGPU().displayVolumeRaycast(false);
-                      kSurfaceName = JDialogBase.makeImageName(kImage.getImageName(), ms_iSurface + "_extract.sur");
-                      kMeshes[0].SetName( kSurfaceName );
-                      m_kParent.getSurfacePanel().addSurfaces(kMeshes);
-                      m_kParent.getRendererGUI().setDisplaySurfaceCheck( true );
-                      m_kParent.getRendererGUI().setDisplayVolumeCheck( false );
-                      ms_iSurface++;
-                  }
-                  kImage.disposeLocal();
-                  kImage = null;
-*/
+                  dispose(arg0);
               }
           }
     }
+
+    public void dispose(GLAutoDrawable arg0)
+    {
+        m_kClipEffect = null;
+        m_aiNewExtents = null;
+        m_afNewResolutions = null;
+        m_pkVolumeCalcTarget.dispose();
+        m_kCalcImage.dispose();
+        m_pkVolumeCalcTarget2.dispose();
+        m_kCalcImage2.dispose();
+        m_spkEffect2.dispose();
+        super.dispose(arg0);
+    }
+
+
 
     protected void CreateScene ()
     {

@@ -99,7 +99,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             setABBlend(0.5f);
             if ( pkPProgram.GetUC("ShowB") != null ) 
             {    
-                pkPProgram.GetUC("ShowB").SetDataSource(new float[]{1,0,0,0});
+                pkPProgram.GetUC("ShowB").GetData()[0] = 1;
             }   
         }
         for ( int i = 0; i < ms_MaxLights; i++ )
@@ -235,13 +235,30 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
      */
     public void dispose()
     {
+        m_kVolumeImageA = null;
+        m_kVolumeImageB = null;
+        m_kPShaderInit.dispose();
+        m_kPShaderInit = null;
+
+        m_kSceneTarget = null;;
+  
+        m_aafLight = null;
+        for ( int i = 0; i < ms_iNumLev; i++ )
+        {
+            m_akLevWidget[i] = null;
+        }
+        m_akLevWidget = null;
+        m_abLevWidgetInit = null;
+
+        m_pkVShader.dispose();
+        m_pkVShader = null;
+
         if ( m_kPShaderCMP != null )
         {
             m_kPShaderCMP.dispose();
             m_kPShaderCMP = null;
         }
 
-        m_kSceneTarget = null;
         super.dispose();
     }
 

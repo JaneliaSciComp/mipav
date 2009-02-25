@@ -91,6 +91,48 @@ public class VolumeImageViewer extends JavaApplication3D
         kWorld.SetFrame(frame);
         animator.start();
     }
+
+    public void dispose(GLAutoDrawable arg0)
+    {
+        if ( m_spkScene != null )
+        {
+            m_spkScene.dispose();
+            m_spkScene = null;
+        }
+        if ( m_kCuller !=  null )
+        {
+            m_kCuller.dispose();
+            m_kCuller = null;
+        }
+        m_kVolumeImage = null;
+        if ( m_spkEffect != null )
+        {
+            m_spkEffect.dispose();
+            m_spkEffect = null;
+        }
+        if ( m_pkPlane != null )
+        {
+            m_pkPlane.dispose();
+            m_pkPlane = null;
+        }
+        if ( m_kAnimator != null )
+        {
+            m_kAnimator.stop();
+            m_kAnimator.remove(arg0);
+            m_kAnimator = null;
+        }
+        if ( m_kFrame != null )
+        {
+            m_kFrame.setVisible(false);
+            m_kFrame.dispose();
+            m_kFrame = null;
+        }
+        m_kParent = null;
+        super.dispose();
+    }
+
+
+
     public void display(GLAutoDrawable arg0) {
         if ( m_kAnimator == null )
         {

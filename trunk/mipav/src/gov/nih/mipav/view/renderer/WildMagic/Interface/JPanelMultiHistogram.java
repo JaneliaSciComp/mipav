@@ -89,9 +89,18 @@ public class JPanelMultiHistogram extends JInterfaceBase implements ChangeListen
     /**
      * Dispose memory.
      */
-    public void dispose() {
+    public void dispose()
+    {
         colorButton = null;
         colorChooser = null;
+        boundaryEmphasisSlider = null;
+        m_kGroup = null;
+        scroller = null;
+        scrollPanel = null;
+        m_kAnimator = null;
+        m_kMultiHistogram.dispose();
+        m_kMultiHistogram = null;
+        super.dispose();
     }
 
     /**

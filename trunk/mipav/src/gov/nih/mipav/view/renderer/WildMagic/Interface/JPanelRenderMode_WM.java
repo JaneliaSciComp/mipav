@@ -241,7 +241,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         }
         if ( source == m_kVolumeSamplesSlider )
         {
-            rayBasedRenderWM.setVolumeSamples( m_kVolumeSamplesSlider.getValue()/100.0f );
+            rayBasedRenderWM.setVolumeSamples( m_kVolumeSamplesSlider.getValue()/1000.0f );
         }
     }
     
@@ -373,7 +373,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridx = 0;
          gbc.gridy = 1;
          blendPanel.add(kSamplesLabel, gbc);
-         m_kVolumeSamplesSlider = new JSlider( 0, 100, 50 );
+         m_kVolumeSamplesSlider = new JSlider( 0, 1000, (int)(m_kVolumeViewer.getImageA().getExtents()[2]*2.0f) );
          m_kVolumeSamplesSlider.addChangeListener(this);
          gbc.gridx = 1;
          blendPanel.add(m_kVolumeSamplesSlider, gbc);

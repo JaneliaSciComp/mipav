@@ -98,7 +98,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         }
         if ( pkProgram.GetUC("Blend") != null)
         {
-            pkProgram.GetUC("Blend").SetDataSource(new float[]{fValue,0,0,0});
+            pkProgram.GetUC("Blend").GetData()[0] = fValue;
         }
         m_fBlend = fValue;
     }
@@ -117,7 +117,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         }
         if ( pkProgram.GetUC("ReverseFace") != null)
         {
-            pkProgram.GetUC("ReverseFace").SetDataSource(new float[]{iReverse,0,0,0});
+            pkProgram.GetUC("ReverseFace").GetData()[0] = iReverse;
         }
         m_iReverseFace = iReverse;
     }
@@ -175,11 +175,11 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         {
             if ( bClip )
             {
-                pkProgram.GetUC("ClipEnabled").SetDataSource(new float[]{1,0,0,0});
+                pkProgram.GetUC("ClipEnabled").GetData()[0] = 1;
             }
             else
             {
-                pkProgram.GetUC("ClipEnabled").SetDataSource(new float[]{0,0,0,0});
+                pkProgram.GetUC("ClipEnabled").GetData()[0] = 0;
             }
         }
     }
@@ -203,11 +203,11 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         {
             if ( bTextureOn )
             {
-                pkProgram.GetUC("UseTexture").SetDataSource(new float[]{1,0,0,0});
+                pkProgram.GetUC("UseTexture").GetData()[0] = 1;
             }
             else
             {
-                pkProgram.GetUC("UseTexture").SetDataSource(new float[]{0,0,0,0});
+                pkProgram.GetUC("UseTexture").GetData()[0] = 0;
             }
         }
         if ( pkProgram.GetUC("UseImageNew") != null)
@@ -315,7 +315,52 @@ public class SurfaceLightingEffect extends VolumeClipEffect
     public void dispose()
     {
         m_kVolumeImage = null;
-        m_kImageNew = null;
+        if ( m_kVVertexLighting != null )
+        {
+            m_kVVertexLighting.dispose();
+            m_kVVertexLighting = null;
+        }
+
+        if ( m_kPVertexLighting != null )
+        {
+            m_kPVertexLighting.dispose();
+            m_kPVertexLighting = null;
+        }
+        if ( m_kVPixelLighting != null )
+        {
+            m_kVPixelLighting.dispose();
+            m_kVPixelLighting = null;
+        }
+        if ( m_kPPixelLighting != null )
+        {
+            m_kPPixelLighting.dispose();
+            m_kPPixelLighting = null;
+        }
+        if ( m_kVolumeTextureNew != null )
+        {
+            m_kVolumeTextureNew.dispose();
+            m_kVolumeTextureNew = null;
+        }
+        if ( m_kVolumeImageNew != null )
+        {
+            m_kVolumeImageNew.dispose();
+            m_kVolumeImageNew = null;
+        }
+        if ( m_kVolumeLUTNew != null )
+        {
+            m_kVolumeLUTNew.dispose();
+            m_kVolumeLUTNew = null;
+        }
+        if ( m_kColorMapNew != null )
+        {
+            m_kColorMapNew.dispose();
+            m_kColorMapNew = null;
+        }
+        if ( m_kImageNew != null )
+        {
+            m_kImageNew.disposeLocal();
+            m_kImageNew = null;
+        }
         super.dispose();
     }
     

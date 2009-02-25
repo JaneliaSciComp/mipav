@@ -5,6 +5,7 @@ import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransferFunction;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogGradientMagnitude;
@@ -238,6 +239,7 @@ public class VolumeImage
         {
             kTexture.Reload(true);
         }
+        oldData = null;
     }
 
     /**
@@ -336,6 +338,7 @@ public class VolumeImage
         {
             kColorTexture.Reload(true);
         }
+        oldData = null;
     }
 
     /**
@@ -418,56 +421,56 @@ public class VolumeImage
     public void dispose()
     {
         m_kImage = null;
-        if ( m_kOpacityMap_GM != null )
+
+        m_kVolume.dispose();
+        m_kVolume = null;
+        m_kVolumeTarget.dispose();
+        m_kVolumeTarget = null;
+    
+        m_kNormal.dispose();
+        m_kNormal = null;
+        m_kNormalMapTarget.dispose();
+        m_kNormalMapTarget = null;
+    
+        m_kColorMap.dispose();
+        m_kColorMap = null;
+        m_kColorMapTarget.dispose();
+        m_kColorMapTarget = null;
+    
+        m_kOpacityMap.dispose();
+        m_kOpacityMap = null;
+        m_kOpacityMapTarget.dispose();
+        m_kOpacityMapTarget = null;
+    
+        m_kVolumeGM.dispose();
+        m_kVolumeGM = null;
+        m_kVolumeGMTarget.dispose();
+        m_kVolumeGMTarget = null;
+    
+        m_kVolumeGMGM.dispose();
+        m_kVolumeGMGM = null;
+        m_kVolumeGMGMTarget.dispose();
+        m_kVolumeGMGMTarget = null;
+        
+        m_kOpacityMap_GM.dispose();
+        m_kOpacityMap_GM = null;
+        m_kOpacityMapTarget_GM.dispose();
+        m_kOpacityMapTarget_GM = null;
+
+        if ( m_kSurfaceImage != null )
         {
-            m_kOpacityMap_GM.dispose();
-            m_kOpacityMap_GM = null;
+            m_kSurfaceImage.dispose();
+            m_kSurfaceImage = null;
+            m_kSurfaceTarget.dispose();
+            m_kSurfaceTarget = null;
         }
-        if ( m_kOpacityMapTarget_GM != null )
-        {
-            m_kOpacityMapTarget_GM.dispose();
-            m_kOpacityMapTarget_GM = null;
-        }
-        if ( m_kVolume != null )
-        {
-            m_kVolume.dispose();
-            m_kVolume = null;
-        }
-        if ( m_kNormal != null )
-        {
-            m_kNormal.dispose();
-            m_kNormal = null;
-        }
-        if ( m_kColorMap != null )
-        {
-            m_kColorMap.dispose();
-            m_kColorMap = null;
-        }
-        if ( m_kOpacityMap != null )
-        {
-            m_kOpacityMap.dispose();
-            m_kOpacityMap = null;
-        }
-        if ( m_kVolumeTarget != null )
-        {
-            m_kVolumeTarget.dispose();
-            m_kVolumeTarget = null;
-        }
-        if ( m_kColorMapTarget != null )
-        {
-            m_kColorMapTarget.dispose();
-            m_kColorMapTarget = null;
-        }
-        if ( m_kOpacityMapTarget != null )
-        {
-            m_kOpacityMapTarget.dispose();
-            m_kOpacityMapTarget = null;
-        }
-        if ( m_kNormalMapTarget != null )
-        {
-            m_kNormalMapTarget.dispose();
-            m_kNormalMapTarget = null;
-        }
+
+        m_kLUT = null;
+        m_kPostfix = null;
+    
+        m_kHisto.dispose();
+        m_kHisto = null;
+        m_akHistoTCoord = null;
     }
 
     public GraphicsImage GenerateGMImages( ModelImage kImageGM, String kPostFix )
@@ -830,7 +833,8 @@ public class VolumeImage
         {
             abHisto[i] = new Float(afCount[i]/max*255f).byteValue();
         }
-
+        afCount = null;
+        
         int iMinX = 255, iMaxX = 0;
         int iIndex = 0;
         for( int i=0; i< 256; i++ )
@@ -893,6 +897,7 @@ public class VolumeImage
         kCalcMagnitude.setSeparateThread( false );
         kCalcMagnitude.actionPerformed( new ActionEvent(this, 0, "OK" ) );
         ModelImage kImageGM = kCalcMagnitude.getResultImage();
+        kCalcMagnitude = null;
         
         m_kVolumeGM =  VolumeImage.UpdateData( kImageGM, null, m_kVolumeGMTarget, "GM"+kPostfix );
         m_kVolumeGMTarget = new Texture();
@@ -923,6 +928,9 @@ public class VolumeImage
         m_kVolumeGMGMTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeGMGMTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeGMGMTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
+        
+        ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
+        kImageFrame.close();
     }
     
     /**
@@ -1070,7 +1078,7 @@ public class VolumeImage
                 }
             }
         }
-
+        aucData = null;
         return (fMaxIntegral > 0.0f) ? (1.0f / fMaxIntegral) : 0.00f;
     }
     

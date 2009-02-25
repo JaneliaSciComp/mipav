@@ -96,6 +96,7 @@ import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
 import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 
 import com.sun.opengl.util.Animator;
+import javax.media.opengl.GLAutoDrawable;
 
 public class VolumeTriPlanarInterface extends ViewJFrameBase {
 
@@ -1146,6 +1147,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
      * @param  flag  call super dispose or not
      */
     public void disposeLocal(boolean flag) {
+        //System.err.println( "Dispose Local" ) ;
         /* Geodesic panel */
         m_kGeodesicPanel = null;
 
@@ -1179,6 +1181,11 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             m_kVolumeImageA = null;
         }
 
+        if (m_kVolumeImageB != null) {
+            m_kVolumeImageB.dispose();
+            m_kVolumeImageB = null;
+        }
+
         if (raycastRenderWM != null) {
             raycastRenderWM.dispose();
             raycastRenderWM = null;
@@ -1194,10 +1201,18 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             panelHistoRGB = null;
         }
         
-        multiHistogramGUI = null;
+        if ( multiHistogramGUI != null )
+        {
+            multiHistogramGUI.dispose();
+            multiHistogramGUI = null;
+        }
         multiHistogramPanel = null;
         
-        custumBlendGUI = null;
+        if ( custumBlendGUI != null )
+        {
+            custumBlendGUI.dispose();
+            custumBlendGUI = null;
+        }
         custumBlendPanel = null;
 
         for (int i = 0; i < 3; i++) {
@@ -1209,6 +1224,12 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         }
 
         m_kAnimator.stop();
+        java.util.Iterator kDrawables = m_kAnimator.drawableIterator();
+        while ( kDrawables.hasNext() )
+        {
+            GLAutoDrawable kGL = (GLAutoDrawable)kDrawables.next();
+            m_kAnimator.remove(kGL);
+        }
         m_kAnimator = null;
 
         if (imageA != null) {
@@ -1229,6 +1250,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             viewToolBar.remove(getRendererProgressBar());
             rendererProgressBar = null;
         }
+        super.dispose();
     }
 
     /**

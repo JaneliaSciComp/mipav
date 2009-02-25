@@ -442,45 +442,6 @@ vec4 computeColor( vec3 kModelPosition, vec3 kModelNormal, vec3 CameraWorldPosit
     return kResult;
 }
 
-/**
- * Clip the volume based on the x,y,z axes.
- * returns 1 when the volume is clipped, 0 when not clipped.
- */
-bool myClip(const vec3 myvec,
-            float clipX,
-            float clipXInv,
-            float clipY,
-            float clipYInv,
-            float clipZ,
-            float clipZInv )
-{
-    if ( myvec.x > clipX )
-    {
-        return true;
-    }
-    if ( myvec.x < clipXInv )
-    {
-        return true;
-    }
-    if ( myvec.y > clipY )
-    {
-        return true;
-    }
-    if ( myvec.y < clipYInv )
-    {
-        return true;
-    }
-    if ( myvec.z > clipZ )
-    {
-        return true;
-    }
-    if ( myvec.z < clipZInv )
-    {
-        return true;
-    } else {
-        return false;
-    }
-}
 
 varying vec4 outPos;
 uniform mat4 WVPMatrix;
@@ -612,13 +573,14 @@ uniform vec4    LevRightLine5;
 void p_VolumeShaderMultiPass()
 {
     // find the right place to lookup in the backside buffer
-    vec2 texc = ((outPos.xy / outPos.w) + 1.0) / 2.0;
-    vec4 back_position  = texture2D(aSceneImage_TEXUNIT0, texc);
+    vec2 texc = ((outPos.xy / outPos.w) + 1.0) * 0.5;
+    vec3 back_position  = texture2D(aSceneImage_TEXUNIT0, texc).xyz;
 
 
-    if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
+    //if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
+    if ( back_position == 0.0 )
     {
-        gl_FragColor = 0.0;
+        gl_FragColor = vec4(0.0);
         return;
     }
 
@@ -626,7 +588,7 @@ void p_VolumeShaderMultiPass()
     vec3 start = gl_TexCoord[0].xyz; 
 
     // the ray direction
-    vec3 dir = back_position.xyz - start;
+    vec3 dir = back_position - start;
 
     // The color at the current position along the ray:
     vec4 color = vec4(0.0);
@@ -638,15 +600,12 @@ void p_VolumeShaderMultiPass()
     vec4 colorGM = vec4(0.0);
     float opacityGM = 0.0;
 
-    bool bClipped = false;
+    float bClipped = 0.0;
 
     // current position along the ray: 
     float fPos = iPass;
-    vec3 position = vec3(0.0,0.0,0.0);
-    position.x = start.x + fPos * dir.x;
-    position.y = start.y + fPos * dir.y;
-    position.z = start.z + fPos * dir.z;
-
+    vec3 position = vec3(0.0);
+    position = start + fPos * dir;
 
     vec3 LocalMaterialAmbient = MaterialAmbient;
     vec3 LocalMaterialEmissive = MaterialEmissive;
@@ -654,16 +613,38 @@ void p_VolumeShaderMultiPass()
     float fMapX, fMapY;
 
     // axis-aligned clipping:
-    if ( (DoClip != 0.0) && myClip( position, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
+    if ( DoClip != 0.0 )
     {
-        color = vec4(0.0);
-        opacity = 0.0;
-        bClipped = true;
-    }
-    else
-    {
-        bClipped = false;
-        if ( DoClip != 0.0 )
+        if ( position.x > clipX )
+        {
+            bClipped = 1.0;
+        }
+        else if ( position.x < clipXInv )
+        {
+            bClipped = 1.0;
+        }
+        else if ( position.y > clipY )
+        {
+            bClipped = 1.0;
+        }
+        else if ( position.y < clipYInv )
+        {
+            bClipped = 1.0;
+        }
+        else if ( position.z > clipZ )
+        {
+            bClipped = 1.0;
+        }
+        else if ( position.z < clipZInv )
+        {
+            bClipped = 1.0;
+        } 
+        else 
+        {
+            bClipped = 0.0;
+        }
+
+        if ( bClipped != 1.0 )
         {
             // eye clipping and arbitrary clipping:
             vec4 aPosition = vec4(0.0);
@@ -677,102 +658,112 @@ void p_VolumeShaderMultiPass()
             {
                 color = vec4(0.0);
                 opacity = 0.0;
-                bClipped = true;
+                bClipped = 1.0;
             }
         }
-        // The value is not clipped, compute the color:
-        if ( !bClipped )
+    }
+    if ( bClipped == 1.0 )
+    {
+        opacity = 0.0;
+    }
+    // The value is not clipped, compute the color:
+    else
+    {
+        color = texture3D(bVolumeImageA_TEXUNIT1,position);
+        
+        if ( MULTIHISTO != 0.0 )
         {
-            color = texture3D(bVolumeImageA_TEXUNIT1,position);
-
-            if ( MULTIHISTO != 0.0 )
+            colorGM = texture3D(fVolumeImageA_GM_TEXUNIT5,position);
+            
+            fMapX = color.r;
+            fMapY = colorGM.r;
+            
+            if ( UseWidget0 != 0.0 )
             {
-                colorGM = texture3D(fVolumeImageA_GM_TEXUNIT5,position);
-
-                fMapX = color.r;
-                fMapY = colorGM.r;
-
-                if ( UseWidget0 != 0.0 )
-                {
-                    float opacity0 =
-                        computeAlpha( fMapX, fMapY, LevMidLine0, LevLeftLine0, LevRightLine0 );
-                    vec4 color0 = LevColor0 * opacity0;
-                    color = color0;
-                    opacity = opacity0 * LevColor0.a;
-                }
-                if ( UseWidget1 != 0.0 )
-                {
-                    float opacity1 =
-                        computeAlpha( fMapX, fMapY, LevMidLine1, LevLeftLine1, LevRightLine1 );
-                    vec4 color1 = LevColor1 * opacity1;
-                    color += color1;
-                    opacity += (opacity1 * LevColor1.a);
-                }
-                if ( UseWidget2 != 0.0 )
-                {
-                    float opacity2 =
-                        computeAlpha( fMapX, fMapY, LevMidLine2, LevLeftLine2, LevRightLine2 );
-                    vec4 color2 = LevColor2 * opacity2;
-                    color += color2;
-                    opacity += (opacity2 * LevColor2.a);
-                }
-                if ( UseWidget3 != 0.0 )
-                {
-                    float opacity3 =
-                        computeAlpha( fMapX, fMapY, LevMidLine3, LevLeftLine3, LevRightLine3 );
-                    vec4 color3 = LevColor3 * opacity3;
-                    color += color3;
-                    opacity += (opacity3 * LevColor3.a);
-                }
-                if ( UseWidget4 != 0.0 )
-                {
-                    float opacity4 =
-                        computeAlpha( fMapX, fMapY, LevMidLine4, LevLeftLine4, LevRightLine4 );
-                    vec4 color4 = LevColor4 * opacity4;
-                    color += color4;
-                    opacity += (opacity4 * LevColor4.a);
-                }
-                if ( UseWidget5 != 0.0 )
-                {
-                    float opacity5 =
-                        computeAlpha( fMapX, fMapY, LevMidLine5, LevLeftLine5, LevRightLine5 );
-                    vec4 color5 = LevColor5 * opacity5;
-                    color += color5;
-                    opacity += (opacity5 * LevColor5.a);
-                }
+                float opacity0 =
+                    computeAlpha( fMapX, fMapY, LevMidLine0, LevLeftLine0, LevRightLine0 );
+                vec4 color0 = LevColor0 * opacity0;
+                color = color0;
+                opacity = opacity0 * LevColor0.a;
+            }
+            if ( UseWidget1 != 0.0 )
+            {
+                float opacity1 =
+                    computeAlpha( fMapX, fMapY, LevMidLine1, LevLeftLine1, LevRightLine1 );
+                vec4 color1 = LevColor1 * opacity1;
+                color += color1;
+                opacity += (opacity1 * LevColor1.a);
+            }
+            if ( UseWidget2 != 0.0 )
+            {
+                float opacity2 =
+                    computeAlpha( fMapX, fMapY, LevMidLine2, LevLeftLine2, LevRightLine2 );
+                vec4 color2 = LevColor2 * opacity2;
+                color += color2;
+                opacity += (opacity2 * LevColor2.a);
+            }
+            if ( UseWidget3 != 0.0 )
+            {
+                float opacity3 =
+                    computeAlpha( fMapX, fMapY, LevMidLine3, LevLeftLine3, LevRightLine3 );
+                vec4 color3 = LevColor3 * opacity3;
+                color += color3;
+                opacity += (opacity3 * LevColor3.a);
+            }
+            if ( UseWidget4 != 0.0 )
+            {
+                float opacity4 =
+                    computeAlpha( fMapX, fMapY, LevMidLine4, LevLeftLine4, LevRightLine4 );
+                vec4 color4 = LevColor4 * opacity4;
+                color += color4;
+                opacity += (opacity4 * LevColor4.a);
+            }
+            if ( UseWidget5 != 0.0 )
+            {
+                float opacity5 =
+                    computeAlpha( fMapX, fMapY, LevMidLine5, LevLeftLine5, LevRightLine5 );
+                vec4 color5 = LevColor5 * opacity5;
+                color += color5;
+                opacity += (opacity5 * LevColor5.a);
+            }
+        }
+        else
+        {
+            opacity = color.r;
+            opacity = texture1D(dOpacityMapA_TEXUNIT3,opacity).r;
+            
+            if ( IsColorA != 0.0 )
+            {
+                color.r = texture1D(cColorMapA_TEXUNIT2,color.r).r;
+                color.g = texture1D(cColorMapA_TEXUNIT2,color.g).g;
+                color.b = texture1D(cColorMapA_TEXUNIT2,color.b).b;
             }
             else
             {
-                opacity = color.r;
-                opacity = texture1D(dOpacityMapA_TEXUNIT3,opacity).r;
-            
-                if ( IsColorA != 0.0 )
-                {
-                    color.r = texture1D(cColorMapA_TEXUNIT2,color.r).r;
-                    color.g = texture1D(cColorMapA_TEXUNIT2,color.g).g;
-                    color.b = texture1D(cColorMapA_TEXUNIT2,color.b).b;
-                }
-                else
-                {
-                    color = texture1D(cColorMapA_TEXUNIT2,color.r);
-                }
-
-                if ( GradientMagnitude != 0.0 )
-                {
-                    colorGM = texture3D(fVolumeImageA_GM_TEXUNIT5,position);
-                    opacityGM = texture1D(gOpacityMapA_GM_TEXUNIT6,colorGM.r).r;
-                    opacity = opacity * opacityGM;
-                }
+                color = texture1D(cColorMapA_TEXUNIT2,color.r);
             }
-
-            if ( Surface != 0.0 )
-            {
-                // Surface and Composite surface display:
-                vec4 normal = texture3D(eNormalMapA_TEXUNIT4,position);
-                normal.w = 0.0;
             
-                // First light is static light:
-                vec4 color0 = color;
+            if ( GradientMagnitude != 0.0 )
+            {
+                colorGM = texture3D(fVolumeImageA_GM_TEXUNIT5,position);
+                opacityGM = texture1D(gOpacityMapA_GM_TEXUNIT6,colorGM.r).r;
+                opacity = opacity * opacityGM;
+            }
+        }
+        
+        if ( Surface != 0.0 )
+        {
+            // Surface and Composite surface display:
+            vec4 normal = texture3D(eNormalMapA_TEXUNIT4,position);
+            normal.w = 0.0;
+            
+            // First light is static light:
+            vec4 color0 = color;
+            vec4 color1 = color;
+            vec4 color2 = color;
+            vec4 color3 = color;
+            if ( Light0Type != -1.0 )
+            {
                 color0 = computeColor( position.xyz, normal.xyz, CameraModelPosition.xyz,
                                        MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse.xyzw, MaterialSpecular.xyzw,
                                        Light0Ambient.xyzw, Light0Diffuse.xyzw, Light0Specular.xyzw,
@@ -780,21 +771,23 @@ void p_VolumeShaderMultiPass()
                                        Light0SpotCutoff.xyzw, Light0Attenuation.xyzw,
                                        Light0Type,
                                        Composite, color0.xyzw );
+                color = color0;
+            }
+            // Assume second light is alwasy an ambient light:
+            if ( Composite != 0.0 )
+            {
+                LocalMaterialAmbient = color1.xyz * MaterialAmbient.xyz;
+                LocalMaterialEmissive = color1.xyz * MaterialEmissive.xyz;
+            }
+            color1 = AmbientLight( LocalMaterialEmissive.xyz,
+                                   LocalMaterialAmbient.xyz,
+                                   Light1Ambient.xyz,
+                                   Light1Attenuation.xyzw );
+            color += color1;
             
-                // Assume second light is alwasy an ambient light:
-                vec4 color1 = color;
-                if ( Composite != 0.0 )
-                {
-                    LocalMaterialAmbient = color1.xyz * MaterialAmbient.xyz;
-                    LocalMaterialEmissive = color1.xyz * MaterialEmissive.xyz;
-                }
-                color1 = AmbientLight( LocalMaterialEmissive.xyz,
-                                       LocalMaterialAmbient.xyz,
-                                       Light1Ambient.xyz,
-                                       Light1Attenuation.xyzw );
-            
-                // Remaining lights:
-                vec4 color2 = color;
+            // Remaining lights:
+            if ( Light2Type != -1.0 )
+            {
                 color2 = computeColor( position.xyz, normal.xyz, CameraModelPosition.xyz,
                                        MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse.xyzw, MaterialSpecular.xyzw,
                                        Light2Ambient.xyzw, Light2Diffuse.xyzw, Light2Specular.xyzw,
@@ -802,8 +795,10 @@ void p_VolumeShaderMultiPass()
                                        Light2SpotCutoff.xyzw, Light2Attenuation.xyzw,
                                        Light2Type,
                                        Composite, color2.xyzw );
-            
-                vec4 color3 = color;
+                color += color2;
+            }
+            if ( Light3Type != -1.0 )
+            {
                 color3 = computeColor( position.xyz, normal.xyz, CameraModelPosition.xyz,
                                        MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse.xyzw, MaterialSpecular.xyzw,
                                        Light3Ambient.xyzw, Light3Diffuse.xyzw, Light3Specular.xyzw,
@@ -811,8 +806,7 @@ void p_VolumeShaderMultiPass()
                                        Light3SpotCutoff.xyzw, Light3Attenuation.xyzw,
                                        Light3Type,
                                        Composite, color3.xyzw );
-            
-                color = color0 + color1 + color2 + color3;
+                color += color3;
             }
         }
     }
@@ -832,7 +826,7 @@ void p_VolumeShaderMultiPass()
     if ( ABBlend != 1.0 )
     {
         // The value is not clipped, compute the color:
-        if ( !bClipped )
+        if ( bClipped != 1.0 )
         {
             color = texture3D(jVolumeImageB_TEXUNIT9,position);
 
@@ -983,7 +977,4 @@ void p_VolumeShaderMultiPass()
         //gl_FragColor.rgb += texture3D(iSurfaceImage_TEXUNIT8,position);
 //     }
     gl_FragColor.a *= Blend;
-
-
-
 }
