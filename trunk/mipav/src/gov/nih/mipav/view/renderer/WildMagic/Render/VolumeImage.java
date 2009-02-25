@@ -899,9 +899,15 @@ public class VolumeImage
         kCalcMagnitude.setSeparateThread( false );
         kCalcMagnitude.actionPerformed( new ActionEvent(this, 0, "OK" ) );
         ModelImage kImageGM = kCalcMagnitude.getResultImage();
-        kCalcMagnitude = null;
-        
-        m_kVolumeGM =  VolumeImage.UpdateData( kImageGM, null, m_kVolumeGMTarget, "GM"+kPostfix );
+        kCalcMagnitude = null;        
+        if ( kImageGM == null )
+        {
+            System.err.println( "Gradient magnitude calculation returned null" );
+            m_kVolumeGM =  VolumeImage.UpdateData( kImage, null, m_kVolumeGMTarget, "GM"+kPostfix );
+        }
+        else {
+            m_kVolumeGM =  VolumeImage.UpdateData( kImageGM, null, m_kVolumeGMTarget, "GM"+kPostfix );
+        }
         m_kVolumeGMTarget = new Texture();
         m_kVolumeGMTarget.SetImage(m_kVolumeGM);
         m_kVolumeGMTarget.SetShared(true);
@@ -909,18 +915,39 @@ public class VolumeImage
         m_kVolumeGMTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeGMTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeGMTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
-        
+
         JDialogLaplacian kCalcLaplacian = new JDialogLaplacian( null, kImage );
         kCalcLaplacian.setSeparateThread( false );
         kCalcLaplacian.actionPerformed( new ActionEvent(this, 0, "OK" ) );
-        ModelImage kImageGMGM = kCalcLaplacian.getResultImage();        
-        AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(kImageGMGM, ModelStorageBase.UBYTE, 
-                kImageGMGM.getMin(), kImageGMGM.getMax(), 
-                0, 255, false);
-        changeTypeAlgo.setRunningInSeparateThread(false);
-        changeTypeAlgo.run();
+        ModelImage kImageGMGM = kCalcLaplacian.getResultImage();      
 
-        m_kVolumeGMGM =  VolumeImage.UpdateData( kImageGMGM, null, m_kVolumeGMGMTarget, "GMGM"+kPostfix );
+        if ( kImageGMGM != null )
+        {
+            kImageGMGM.calcMinMax();
+            AlgorithmChangeType changeTypeAlgo = null;          
+            if ( kImageGMGM.isColorImage() )
+            {
+                changeTypeAlgo = new AlgorithmChangeType(kImageGMGM, ModelStorageBase.ARGB, 
+                        kImageGMGM.getMin(), kImageGMGM.getMax(), 
+                        0, 255, false);
+            }
+            else
+            {
+                changeTypeAlgo = new AlgorithmChangeType(kImageGMGM, ModelStorageBase.UBYTE, 
+                        kImageGMGM.getMin(), kImageGMGM.getMax(), 
+                        0, 255, false);
+            }
+            changeTypeAlgo.setRunningInSeparateThread(false);
+            changeTypeAlgo.run();            
+            m_kVolumeGMGM =  VolumeImage.UpdateData( kImageGMGM, null, m_kVolumeGMGMTarget, "GMGM"+kPostfix );
+        }
+        else
+        {
+            System.err.println( "Laplacian calculation returned null" );
+            m_kVolumeGMGM = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,
+                    kImage.getExtents()[0],kImage.getExtents()[1],kImage.getExtents()[2],(byte[])null,
+                    new String("VolumeImageGMGM"+kPostfix+kPostfix));
+        }
         m_kVolumeGMGMTarget = new Texture();
         m_kVolumeGMGMTarget.SetImage(m_kVolumeGMGM);
         m_kVolumeGMGMTarget.SetShared(true);
@@ -930,9 +957,15 @@ public class VolumeImage
         m_kVolumeGMGMTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
 
         ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
-        kImageFrame.close();
+        if ( kImageFrame != null )
+        {
+            kImageFrame.close();
+        }
         kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGMGM);
-        kImageFrame.close();
+        if ( kImageFrame != null )
+        {
+            kImageFrame.close();
+        }
     }
     
     /**

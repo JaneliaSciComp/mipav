@@ -152,7 +152,10 @@ public class VolumeImageViewer extends JavaApplication3D
         m_bDisplay = false;
     }
     
-    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) { }
+    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) 
+    { 
+        m_bDisplay = true;
+    }
 
     public GLCanvas GetCanvas()
     {
