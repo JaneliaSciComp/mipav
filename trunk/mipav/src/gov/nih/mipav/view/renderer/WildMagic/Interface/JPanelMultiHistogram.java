@@ -141,10 +141,11 @@ public class JPanelMultiHistogram extends JInterfaceBase implements ChangeListen
     }
 
 
-    public void updateColorButton( float[] afColor )
+    public void updateColorButton( float[] afColor, float fColor )
     {
         colorButton.setBackground( new Color( afColor[0], afColor[1], afColor[2]) );
         alphaSlider.setValue( (int)(afColor[3] * 100) );
+        boundaryEmphasisSlider.setValue( (int)(fColor * 100) );
     }
     
     /**

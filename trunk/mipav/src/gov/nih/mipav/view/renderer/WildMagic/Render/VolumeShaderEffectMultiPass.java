@@ -64,6 +64,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     private static int ms_iMaxSamples = 1000;
 
     private VertexShader m_pkVShader;
+    private boolean m_bMultiHisto = false;
     
     /** 
      * Creates a new VolumeShaderEffect object.
@@ -223,10 +224,14 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
      */
     public void MULTIHISTOMode(boolean bOn)
     {
-        Program kPProgram = m_kPShaderCMP.GetProgram();  
-        if ( kPProgram.GetUC("MULTIHISTO") != null )
+        m_bMultiHisto = bOn;
+        if ( m_kPShaderCMP != null )
         {
-            kPProgram.GetUC("MULTIHISTO").GetData()[0] = bOn? 1 : 0;
+            Program kPProgram = m_kPShaderCMP.GetProgram();  
+            if ( (kPProgram != null) && (kPProgram.GetUC("MULTIHISTO") != null) )
+            {
+                kPProgram.GetUC("MULTIHISTO").GetData()[0] = bOn? 1 : 0;
+            }
         }
     }
     
@@ -364,6 +369,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             m_iWhichShader = -1;
             SURMode();
         }
+        MULTIHISTOMode(m_bMultiHisto);
     }
 
 

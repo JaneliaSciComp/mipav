@@ -790,7 +790,6 @@ public class VolumeImage
         short a1, a2;
         byte[] abHistoData = kImageGM.GetData();
         byte[] abData = kImage.GetData();
-        /*
         if ( m_kImage.isColorImage() )
         {
             int iHisto = 0;
@@ -799,16 +798,19 @@ public class VolumeImage
                 int iR = (abData[i]);
                 int iG = (abData[i+1]);
                 int iB = (abData[i+2]);
-                a1 = (iR + iG + iB)/3;
+                a1 = (short)(iR * 0.299 + iG * 0.587 + iB * 0.114);
                 a1 = (short)(a1 & 0x00ff);
-                a2 = (abHistoData[iHisto * 3 + 0]);
+
+                iR = (abHistoData[i]);
+                iG = (abHistoData[i+1]);
+                iB = (abHistoData[i+2]);
+                a2 = (short)(iR * 0.299 + iG * 0.587 + iB * 0.114);
                 a2 = (short)(a2 & 0x00ff);
                 afCount[a1 +  a2 * 256] += 1;
                 iHisto++;
             }
         }
         else
-        */
         {
             int iHisto = 0;
             for ( int i = 0; i < abData.length; i++)
@@ -908,8 +910,6 @@ public class VolumeImage
         m_kVolumeGMTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeGMTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
         
-        
-        /*
         JDialogLaplacian kCalcLaplacian = new JDialogLaplacian( null, kImage );
         kCalcLaplacian.setSeparateThread( false );
         kCalcLaplacian.actionPerformed( new ActionEvent(this, 0, "OK" ) );
@@ -919,8 +919,8 @@ public class VolumeImage
                 0, 255, false);
         changeTypeAlgo.setRunningInSeparateThread(false);
         changeTypeAlgo.run();
-        */
-        m_kVolumeGMGM =  m_kVolumeGM;//VolumeImage.UpdateData( kImageGMGM, null, m_kVolumeGMGMTarget, "GMGM"+kPostfix );
+
+        m_kVolumeGMGM =  VolumeImage.UpdateData( kImageGMGM, null, m_kVolumeGMGMTarget, "GMGM"+kPostfix );
         m_kVolumeGMGMTarget = new Texture();
         m_kVolumeGMGMTarget.SetImage(m_kVolumeGMGM);
         m_kVolumeGMGMTarget.SetShared(true);
@@ -928,8 +928,10 @@ public class VolumeImage
         m_kVolumeGMGMTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeGMGMTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeGMGMTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
-        
+
         ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
+        kImageFrame.close();
+        kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGMGM);
         kImageFrame.close();
     }
     

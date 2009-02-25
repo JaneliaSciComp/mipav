@@ -452,9 +452,7 @@ uniform sampler1D dOpacityMapA_TEXUNIT3;
 uniform sampler3D eNormalMapA_TEXUNIT4; 
 uniform sampler3D fVolumeImageA_GM_TEXUNIT5; 
 uniform sampler1D gOpacityMapA_GM_TEXUNIT6; 
-// uniform sampler3D hVolumeImageA_2nd_TEXUNIT7; 
-
-// uniform sampler3D iSurfaceImage_TEXUNIT8;
+uniform sampler3D hVolumeImageA_2nd_TEXUNIT7; 
 
 uniform sampler3D jVolumeImageB_TEXUNIT9; 
 uniform sampler1D kColorMapB_TEXUNIT10; 
@@ -462,7 +460,7 @@ uniform sampler1D lOpacityMapB_TEXUNIT11;
 uniform sampler3D mNormalMapB_TEXUNIT12; 
 uniform sampler3D nVolumeImageB_GM_TEXUNIT13; 
 uniform sampler1D oOpacityMapB_GM_TEXUNIT14; 
-// uniform sampler3D pVolumeImageB_2nd_TEXUNIT15; 
+uniform sampler3D pVolumeImageB_2nd_TEXUNIT15; 
 
 
 uniform float IsColorA;
@@ -529,7 +527,6 @@ uniform float DRRB;
 uniform float Composite;
 uniform float Surface;
 
-uniform float SurfaceTex;
 
 uniform float MULTIHISTO;
 uniform float   UseWidget0;
@@ -537,36 +534,42 @@ uniform vec4    LevColor0;
 uniform vec4    LevMidLine0;
 uniform vec4    LevLeftLine0;
 uniform vec4    LevRightLine0;
+uniform float BoundaryEmphasis0;
 
 uniform float    UseWidget1;
 uniform vec4    LevColor1;
 uniform vec4    LevMidLine1;
 uniform vec4    LevLeftLine1;
 uniform vec4    LevRightLine1;
+uniform float BoundaryEmphasis1;
 
 uniform float    UseWidget2;
 uniform vec4    LevColor2;
 uniform vec4    LevMidLine2;
 uniform vec4    LevLeftLine2;
 uniform vec4    LevRightLine2;
+uniform float BoundaryEmphasis2;
 
 uniform float    UseWidget3;
 uniform vec4    LevColor3;
 uniform vec4    LevMidLine3;
 uniform vec4    LevLeftLine3;
 uniform vec4    LevRightLine3;
+uniform float BoundaryEmphasis3;
 
 uniform float    UseWidget4;
 uniform vec4    LevColor4;
 uniform vec4    LevMidLine4;
 uniform vec4    LevLeftLine4;
 uniform vec4    LevRightLine4;
+uniform float BoundaryEmphasis4;
 
 uniform float    UseWidget5;
 uniform vec4    LevColor5;
 uniform vec4    LevMidLine5;
 uniform vec4    LevLeftLine5;
 uniform vec4    LevRightLine5;
+uniform float BoundaryEmphasis5;
 
 
 /** Raycasting fragment program implementation */
@@ -610,7 +613,7 @@ void p_VolumeShaderMultiPass()
     vec3 LocalMaterialAmbient = MaterialAmbient;
     vec3 LocalMaterialEmissive = MaterialEmissive;
 
-    float fMapX, fMapY;
+    float fMapX, fMapY, fMapZ;
 
     // axis-aligned clipping:
     if ( DoClip != 0.0 )
@@ -675,9 +678,18 @@ void p_VolumeShaderMultiPass()
         {
             colorGM = texture3D(fVolumeImageA_GM_TEXUNIT5,position);
             
-            fMapX = color.r;
-            fMapY = colorGM.r;
-            
+            if ( IsColorA != 0.0 )
+            {
+                fMapX = dot( color.rgb, vec3(0.299, 0.587, 0.114) );
+                fMapY = dot( colorGM.rgb, vec3(0.299, 0.587, 0.114) );
+            }
+            else
+            {
+                fMapX = color.r;
+                fMapY = colorGM.r;
+            }
+          
+            fMapZ = texture3D(pVolumeImageB_2nd_TEXUNIT15,position).r;
             if ( UseWidget0 != 0.0 )
             {
                 float opacity0 =
@@ -685,6 +697,7 @@ void p_VolumeShaderMultiPass()
                 vec4 color0 = LevColor0 * opacity0;
                 color = color0;
                 opacity = opacity0 * LevColor0.a;
+                opacity *= (1.0 - BoundaryEmphasis0 * 2.0 * (0.5 - fMapZ));
             }
             if ( UseWidget1 != 0.0 )
             {
@@ -692,7 +705,9 @@ void p_VolumeShaderMultiPass()
                     computeAlpha( fMapX, fMapY, LevMidLine1, LevLeftLine1, LevRightLine1 );
                 vec4 color1 = LevColor1 * opacity1;
                 color += color1;
-                opacity += (opacity1 * LevColor1.a);
+                opacity1 *= LevColor1.a;
+                opacity1 *= (1.0 - BoundaryEmphasis1 * 2.0 * (0.5 - fMapZ));
+                opacity += opacity1;
             }
             if ( UseWidget2 != 0.0 )
             {
@@ -700,7 +715,9 @@ void p_VolumeShaderMultiPass()
                     computeAlpha( fMapX, fMapY, LevMidLine2, LevLeftLine2, LevRightLine2 );
                 vec4 color2 = LevColor2 * opacity2;
                 color += color2;
-                opacity += (opacity2 * LevColor2.a);
+                opacity2 *= LevColor2.a;
+                opacity2 *= (1.0 - BoundaryEmphasis2 * 2.0 * (0.5 - fMapZ));
+                opacity += opacity2;
             }
             if ( UseWidget3 != 0.0 )
             {
@@ -708,7 +725,9 @@ void p_VolumeShaderMultiPass()
                     computeAlpha( fMapX, fMapY, LevMidLine3, LevLeftLine3, LevRightLine3 );
                 vec4 color3 = LevColor3 * opacity3;
                 color += color3;
-                opacity += (opacity3 * LevColor3.a);
+                opacity3 *= LevColor3.a;
+                opacity3 *= (1.0 - BoundaryEmphasis3 * 2.0 * (0.5 - fMapZ));
+                opacity += opacity3;
             }
             if ( UseWidget4 != 0.0 )
             {
@@ -716,7 +735,9 @@ void p_VolumeShaderMultiPass()
                     computeAlpha( fMapX, fMapY, LevMidLine4, LevLeftLine4, LevRightLine4 );
                 vec4 color4 = LevColor4 * opacity4;
                 color += color4;
-                opacity += (opacity4 * LevColor4.a);
+                opacity4 *= LevColor4.a;
+                opacity4 *= (1.0 - BoundaryEmphasis4 * 2.0 * (0.5 - fMapZ));
+                opacity += opacity4;
             }
             if ( UseWidget5 != 0.0 )
             {
@@ -724,7 +745,9 @@ void p_VolumeShaderMultiPass()
                     computeAlpha( fMapX, fMapY, LevMidLine5, LevLeftLine5, LevRightLine5 );
                 vec4 color5 = LevColor5 * opacity5;
                 color += color5;
-                opacity += (opacity5 * LevColor5.a);
+                opacity5 *= LevColor5.a;
+                opacity5 *= (1.0 - BoundaryEmphasis5 * 2.0 * (0.5 - fMapZ));
+                opacity += opacity5;
             }
         }
         else
@@ -834,9 +857,18 @@ void p_VolumeShaderMultiPass()
             {
                 colorGM = texture3D(nVolumeImageB_GM_TEXUNIT13,position);
 
-                fMapX = color.r;
-                fMapY = colorGM.r;
+                if ( IsColorB != 0.0 )
+                {
+                    fMapX = dot( color.rgb, vec3(0.299, 0.587, 0.114) );
+                    fMapY = dot( colorGM.rgb, vec3(0.299, 0.587, 0.114) );
+                }
+                else
+                {
+                    fMapX = color.r;
+                    fMapY = colorGM.r;
+                }
 
+                fMapZ = texture3D(pVolumeImageB_2nd_TEXUNIT15,position).r;
                 if ( UseWidget0 != 0.0 )
                 {
                     float opacity0 =
@@ -844,6 +876,7 @@ void p_VolumeShaderMultiPass()
                     vec4 color0 = LevColor0 * opacity0;
                     color = color0;
                     opacity = opacity0 * LevColor0.a;
+                    opacity *= (1.0 - BoundaryEmphasis0 * 2.0 * (0.5 - fMapZ));
                 }
                 if ( UseWidget1 != 0.0 )
                 {
@@ -851,7 +884,9 @@ void p_VolumeShaderMultiPass()
                         computeAlpha( fMapX, fMapY, LevMidLine1, LevLeftLine1, LevRightLine1 );
                     vec4 color1 = LevColor1 * opacity1;
                     color += color1;
-                    opacity += (opacity1 * LevColor1.a);
+                    opacity1 *= LevColor1.a;
+                    opacity1 *= (1.0 - BoundaryEmphasis1 * 2.0 * (0.5 - fMapZ));
+                    opacity += opacity1;
                 }
                 if ( UseWidget2 != 0.0 )
                 {
@@ -859,7 +894,9 @@ void p_VolumeShaderMultiPass()
                         computeAlpha( fMapX, fMapY, LevMidLine2, LevLeftLine2, LevRightLine2 );
                     vec4 color2 = LevColor2 * opacity2;
                     color += color2;
-                    opacity += (opacity2 * LevColor2.a);
+                    opacity2 *= LevColor2.a;
+                    opacity2 *= (1.0 - BoundaryEmphasis2 * 2.0 * (0.5 - fMapZ));
+                    opacity += opacity2;
                 }
                 if ( UseWidget3 != 0.0 )
                 {
@@ -867,7 +904,9 @@ void p_VolumeShaderMultiPass()
                         computeAlpha( fMapX, fMapY, LevMidLine3, LevLeftLine3, LevRightLine3 );
                     vec4 color3 = LevColor3 * opacity3;
                     color += color3;
-                    opacity += (opacity3 * LevColor3.a);
+                    opacity3 *= LevColor3.a;
+                    opacity3 *= (1.0 - BoundaryEmphasis3 * 2.0 * (0.5 - fMapZ));
+                    opacity += opacity3;
                 }
                 if ( UseWidget4 != 0.0 )
                 {
@@ -875,7 +914,9 @@ void p_VolumeShaderMultiPass()
                         computeAlpha( fMapX, fMapY, LevMidLine4, LevLeftLine4, LevRightLine4 );
                     vec4 color4 = LevColor4 * opacity4;
                     color += color4;
-                    opacity += (opacity4 * LevColor4.a);
+                    opacity4 *= LevColor4.a;
+                    opacity4 *= (1.0 - BoundaryEmphasis4 * 2.0 * (0.5 - fMapZ));
+                    opacity += opacity4;
                 }
                 if ( UseWidget5 != 0.0 )
                 {
@@ -883,7 +924,9 @@ void p_VolumeShaderMultiPass()
                         computeAlpha( fMapX, fMapY, LevMidLine5, LevLeftLine5, LevRightLine5 );
                     vec4 color5 = LevColor5 * opacity5;
                     color += color5;
-                    opacity += (opacity5 * LevColor5.a);
+                    opacity5 *= LevColor5.a;
+                    opacity5 *= (1.0 - BoundaryEmphasis5 * 2.0 * (0.5 - fMapZ));
+                    opacity += opacity5;
                 }
             }
             else
@@ -972,9 +1015,5 @@ void p_VolumeShaderMultiPass()
             gl_FragColor.a = ABBlend * gl_FragColor.a + (1.0 - ABBlend) * opacity;
         }
     }
-//     if ( SurfaceTex != 0.0 )
-//     {
-        //gl_FragColor.rgb += texture3D(iSurfaceImage_TEXUNIT8,position);
-//     }
     gl_FragColor.a *= Blend;
 }

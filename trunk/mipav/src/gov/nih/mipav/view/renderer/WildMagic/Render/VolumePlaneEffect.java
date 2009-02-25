@@ -111,15 +111,15 @@ implements StreamInterface
         Blend(1);
         setABBlend(1);
         Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("IsColor") != null ) 
+        if ( pkProgram.GetUC("IsColorA") != null ) 
         {
             if ( m_kVolumeImageA.GetImage().isColorImage() )
             {
-                pkProgram.GetUC("IsColor").GetData()[0] = 1.0f;
+                pkProgram.GetUC("IsColorA").GetData()[0] = 1.0f;
             }
             else
             {
-                pkProgram.GetUC("IsColor").GetData()[0] = 0.0f;
+                pkProgram.GetUC("IsColorA").GetData()[0] = 0.0f;
             }
         }    
         if ( m_kVolumeImageB != null )

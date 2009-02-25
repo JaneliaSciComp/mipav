@@ -184,7 +184,8 @@ public class VolumeImageHistogram extends VolumeImageViewer
                 {
                     m_iCurrent = 0;
                 }
-                m_kInterface.updateColorButton(m_akLev.get(m_iCurrent).getState().Color );              
+                m_kInterface.updateColorButton( m_akLev.get(m_iCurrent).getState().Color,
+                        m_akLev.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
                 m_spkScene.DetachChild( m_akLev.get(m_iCurrent).getWidget() );
                 m_spkScene.AttachChild( m_akLev.get(m_iCurrent).getWidget() );
                 m_spkScene.UpdateGS();
@@ -196,7 +197,8 @@ public class VolumeImageHistogram extends VolumeImageViewer
                 {
                     m_iCurrent = m_akLev.size()-1;
                 }
-                m_kInterface.updateColorButton(m_akLev.get(m_iCurrent).getState().Color );              
+                m_kInterface.updateColorButton( m_akLev.get(m_iCurrent).getState().Color,
+                        m_akLev.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
                 m_spkScene.DetachChild( m_akLev.get(m_iCurrent).getWidget() );
                 m_spkScene.AttachChild( m_akLev.get(m_iCurrent).getWidget() );
                 m_spkScene.UpdateGS();
