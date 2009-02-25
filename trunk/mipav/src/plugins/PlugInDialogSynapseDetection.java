@@ -13,7 +13,7 @@ import javax.swing.*;
 
 
 /**
- * @version  February 19, 2009
+ * @version  February 24, 2009
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -97,6 +97,11 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
     
     private JTextField blueIntensityText;
     
+    private JCheckBox histoInfoCheckBox;
+    
+    /** If true, provide histograms of red, green, and blue values along detection lines */
+    private boolean histoInfo = false;
+    
     /** DOCUMENT ME! */
     private ModelImage image; // source image   
 
@@ -127,6 +132,7 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         }
 
         image = im;
+        //preprocess();
         init();
     }
 
@@ -209,7 +215,8 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         str += blueMaxZ + delim;
         str += redIntensity + delim;
         str += greenIntensity + delim;
-        str += blueIntensity;
+        str += blueIntensity + delim;
+        str += histoInfo;
         
         return str;
     }
@@ -313,6 +320,30 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         this.blueIntensity = blueIntensity;
     }
     
+    public void setHistoInfo(boolean histoInfo) {
+        this.histoInfo = histoInfo;    
+    }
+    
+    private void preprocess() {
+        AlgorithmHistogram histoAlgo;
+        ModelHistogram histogram;
+        int otsuThreshold;
+        int maxEntropyThreshold;
+        int[] dimExtents = new int[1];
+        dimExtents[0] = 256;
+        histogram = new ModelHistogram(ModelStorageBase.INTEGER, dimExtents);
+        histoAlgo = new AlgorithmHistogram(histogram, 3, image, true);
+        histoAlgo.runAlgorithm();
+        otsuThreshold = histogram.getOtsuThreshold();
+        maxEntropyThreshold = histogram.getMaxEntropyThreshold();
+        System.out.println("otsuThreshold = " + otsuThreshold + "\n");
+        System.out.println("max entropy threshold = " + maxEntropyThreshold + "\n");
+        histogram = null;
+        histoAlgo.finalize();
+        histoAlgo = null;
+        
+    }
+    
     /**
      * Once all the necessary variables are set, call the Synapse Detection algorithm.
      */
@@ -323,7 +354,7 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
             synapseDetectionAlgo = new PlugInAlgorithmSynapseDetection(image, redMin, redMax, greenMin, greenMax,
                                                                    blueMinXY, blueMaxXY, blueMinZ, blueMaxZ,
                                                                    redIntensity, greenIntensity,
-                                                                   blueIntensity);
+                                                                   blueIntensity, histoInfo);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -380,6 +411,7 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         setRedIntensity(scriptParameters.getParams().getInt("red_intensity"));
         setGreenIntensity(scriptParameters.getParams().getInt("green_intensity"));
         setBlueIntensity(scriptParameters.getParams().getInt("blue_intensity"));
+        setHistoInfo(scriptParameters.getParams().getBoolean("histo_info"));
     }
 
     /**
@@ -398,6 +430,7 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         scriptParameters.getParams().put(ParameterFactory.newParameter("red_intensity", redIntensity));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_intensity", greenIntensity));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_intensity", blueIntensity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("histo_info", histoInfo));
     }
 
     /**
@@ -575,6 +608,14 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(blueIntensityText, gbc);
+        
+        histoInfoCheckBox = new JCheckBox("Obtain histograms of detected line colors");
+        histoInfoCheckBox.setFont(serif12);
+        histoInfoCheckBox.setForeground(Color.black);
+        histoInfoCheckBox.setSelected(false);
+        gbc.gridx = 0;
+        gbc.gridy = yPos++;
+        mainPanel.add(histoInfoCheckBox, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -781,6 +822,8 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
 
             return false;
         }
+        
+        histoInfo = histoInfoCheckBox.isSelected();
         
         return true;
     } // end setVariables()
