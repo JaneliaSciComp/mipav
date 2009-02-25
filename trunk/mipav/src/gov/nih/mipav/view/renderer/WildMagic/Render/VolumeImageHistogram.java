@@ -43,12 +43,14 @@ public class VolumeImageHistogram extends VolumeImageViewer
     private boolean m_bAdded = false;
     private JInterfaceBase m_kInterface = null;
     private String m_kWidgetType = new String( "Square" );
+    private boolean m_bFirstAdded = false;
     
     public VolumeImageHistogram( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
     {
         super(kParentFrame, kVolumeImage );
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );  
+        m_bDisplay = true;
     }
     /**
      * @param args
@@ -122,17 +124,18 @@ public class VolumeImageHistogram extends VolumeImageViewer
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
             m_pkRenderer.EndScene();
         }
-        m_pkRenderer.DisplayBackBuffer();
-        m_bDisplay = false;
-        
+        m_pkRenderer.DisplayBackBuffer();        
 
         if ( m_bAdded ) 
         {
             m_bAdded = false;
             m_akLev.get(m_iCurrent).setColor(m_kCurrentColor);
+            m_bFirstAdded = true;
         }
-        
-        m_bDisplay = false;
+        if ( m_bFirstAdded )
+        {
+            m_bDisplay = false;
+        }
     }
     
     public void dispose()
@@ -156,6 +159,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
         m_spkScene.UpdateGS();
         m_spkScene.UpdateRS();
         m_kAnimator.add( GetCanvas() );
+        m_bDisplay = true;
     }
     
 
