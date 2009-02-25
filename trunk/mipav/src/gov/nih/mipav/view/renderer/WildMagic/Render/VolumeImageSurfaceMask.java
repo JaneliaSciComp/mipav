@@ -107,15 +107,19 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
             {
                 bSurfaceAdded = false;
                 m_iSlice = 0;
-                //System.err.println("Done SurfaceAdded");
-                m_kAnimator.stop();
-                m_kAnimator.remove(arg0);
-                m_kAnimator = null;
-                m_kFrame.setVisible(false);
             }
         }
+        dispose(arg0);
     }
 
+    public void dispose(GLAutoDrawable arg0)
+    {
+        m_kSurfaceClip.dispose();
+        m_kSurfaceClip = null;
+        super.dispose(arg0);
+    }
+    
+    
     protected void CreateScene ()
     {
         CreatePlaneNode();

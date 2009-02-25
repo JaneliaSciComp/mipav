@@ -4,6 +4,8 @@ import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
 import java.awt.Frame;
 import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
@@ -33,18 +35,18 @@ public class VolumeImageNormalGM extends VolumeImageViewer
         VolumeImageNormalGM kWorld = new VolumeImageNormalGM(kParentFrame, kVolumeImage);
         Frame frame = new Frame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
-         final Animator animator = new Animator( kWorld.GetCanvas() );
-         // setting the frame to be undecorated removes the frame title bar and edges
-         // this prevents flashing on-screen.
-         frame.setUndecorated(true);
-         // frame must be set to visible for the gl canvas to be properly initialized.
-         frame.setVisible(true);
-         frame.setBounds(0,0,
-                 kWorld.GetWidth(), kWorld.GetHeight() );
-         frame.setVisible(false);
-         kWorld.SetAnimator(animator);
-         kWorld.SetFrame(frame);
-         animator.start();
+        Animator animator = new Animator( kWorld.GetCanvas() );
+        // setting the frame to be undecorated removes the frame title bar and edges
+        // this prevents flashing on-screen.
+        frame.setUndecorated(true);
+        // frame must be set to visible for the gl canvas to be properly initialized.
+        frame.setVisible(true);
+        frame.setBounds(0,0,
+                kWorld.GetWidth(), kWorld.GetHeight() );
+        frame.setVisible(false);
+        kWorld.SetAnimator(animator);
+        kWorld.SetFrame(frame);
+        animator.start();
     }
 
     public void display(GLAutoDrawable arg0) {
@@ -98,7 +100,7 @@ public class VolumeImageNormalGM extends VolumeImageViewer
                 m_bDisplaySecond = false;
             }
         }
-        dispose();
+        dispose(arg0);
     }
 
     public void dispose(GLAutoDrawable arg0)
