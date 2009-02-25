@@ -71,12 +71,16 @@ public class VolumeImageCrop extends VolumeImageViewer
             {
                 bCrop = false;
                 m_iSlice = 0;
-                m_kAnimator.stop();
-                m_kAnimator.remove(arg0);
-                m_kAnimator = null;
-                m_kFrame.setVisible(false);
+                dispose(arg0);
             }
         }
+    }
+
+    public void dispose(GLAutoDrawable arg0)
+    {
+        m_kClipEffect.dispose();
+        m_kClipEffect = null;
+        super.dispose(arg0);
     }
 
     protected void CreateScene ()

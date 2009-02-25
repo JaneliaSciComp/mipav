@@ -434,13 +434,8 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
                     }
                     changeTypeAlgo.setRunningInSeparateThread(false);
                     changeTypeAlgo.run();
-
-                    if (changeTypeAlgo.isCompleted() == false) {
-
-                        // What to do
-                        changeTypeAlgo.finalize();
-                        changeTypeAlgo = null;
-                    }
+                    changeTypeAlgo.finalize();
+                    changeTypeAlgo = null;
                 }
                 if ( (imageB != null) && ((imageB.getType() != ModelStorageBase.UBYTE) ||
                         (imageB.isColorImage() && (imageB.getType() != ModelStorageBase.ARGB))) )

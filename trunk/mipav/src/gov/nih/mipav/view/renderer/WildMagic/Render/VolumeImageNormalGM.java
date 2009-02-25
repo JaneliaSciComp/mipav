@@ -98,13 +98,16 @@ public class VolumeImageNormalGM extends VolumeImageViewer
                 m_bDisplaySecond = false;
             }
         }
+        dispose();
+    }
 
+    public void dispose(GLAutoDrawable arg0)
+    {
+        m_spkEffect2.dispose();
+        m_spkEffect2 = null;
         m_pkVolumeCalcTarget.dispose();
         m_pkVolumeCalcTarget = null;
-        m_kAnimator.stop();
-        m_kAnimator.remove(arg0);
-        m_kAnimator = null;
-        m_kFrame.setVisible(false);
+        super.dispose(arg0);
     }
 
     protected void CreateScene ()

@@ -23,6 +23,13 @@ public class LevWidgetEffect extends TextureEffect
         m_kWidgetState.UseWidget[0] = 1.0f;
     }
 
+    public void dispose()
+    {
+        m_kWidgetState.dispose();
+        m_kWidgetState = null;
+        super.dispose();
+    }
+    
     public LevWidgetState getState()
     {
         return m_kWidgetState;

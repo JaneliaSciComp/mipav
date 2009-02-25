@@ -366,7 +366,24 @@ public class VolumeSurface extends VolumeObject
             m_kVolumePreShader.dispose();
             m_kVolumePreShader = null;
         }
-        m_kMesh = null;
+        if ( m_kMesh != null )
+        {
+            m_kMesh.dispose();
+            m_kMesh = null;
+        }
+        if ( m_kMaterial != null )
+        {
+            m_kMaterial.dispose();
+            m_kMaterial = null;
+        }
+        if ( m_kLightShader != null )
+        {
+            m_kLightShader.dispose();
+            m_kLightShader = null;
+        }
+        
+        m_kCenter = null;
+        m_akBackupColor = null;        
     }
 
 

@@ -75,10 +75,13 @@ public abstract class VolumeClipEffect extends ShaderEffect
      */
     public void dispose()
     {
+        m_afDoClip = null;
+        m_afClipAll = null;
         m_aafClipData = null;
         m_afClipEyeData = null;
         m_afClipEyeInvData = null;
         m_afClipArbData = null;
+        super.dispose();
     }
 
     /**

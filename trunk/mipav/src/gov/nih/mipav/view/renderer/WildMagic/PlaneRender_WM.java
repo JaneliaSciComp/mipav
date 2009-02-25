@@ -54,7 +54,6 @@ public class PlaneRender_WM extends GPURenderBase
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 2025132936439496099L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
     /** Camera Locations, for rendering the different Axial, Sagittal and Coronal views. */
     Vector3f[] m_akCLoc = { new Vector3f(-1.0f,0.0f,0.0f), new Vector3f(0.0f,-1.0f,0.0f), new Vector3f(0.0f,0.0f,-1.0f) };
     /** Camera Direction, UP, and Right vectors, for rendering the different Axial, Sagittal and Coronal views. */
@@ -328,8 +327,41 @@ public class PlaneRender_WM extends GPURenderBase
         }
         m_aakColors = null;
 
+        m_akCLoc = null;
+        m_akCoords = null;
+    
+        m_kWinLevel.disposeLocal();
+        m_kWinLevel = null;
+
+        m_aiLocalImageExtents = null;
+
+        m_aaiColorSwap = null;
+
+        m_kActiveLookupTable = null;
+        m_afModelPosition = null;
+
+        m_kActiveImage = null;
         m_kLabelX = null;
+        m_kLabelXDisplay = null;
         m_kLabelY = null;
+
+        for ( int i = 0; i < m_kXArrow.length; i++ )
+        {
+            m_kXArrow[i].dispose();
+        }
+        m_kXArrow = null;
+        for ( int i = 0; i < m_kYArrow.length; i++ )
+        {
+            m_kYArrow[i].dispose();
+        }
+        m_kYArrow = null;
+    
+        m_spkScreenCamera.dispose();
+        m_spkScreenCamera = null;
+        m_aiAxisOrder = null;
+        m_abAxisFlip = null;
+
+        super.dispose();
     }
         
     /* (non-Javadoc)

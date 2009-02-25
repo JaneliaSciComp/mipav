@@ -58,7 +58,7 @@ public class VolumePreRenderEffect extends ShaderEffect
         }
         if ( pkProgram.GetUC("Blend") != null)
         {
-            pkProgram.GetUC("Blend").SetDataSource(new float[]{fValue,0,0,0});
+            pkProgram.GetUC("Blend").GetData()[0] = fValue;
         }
     }
 

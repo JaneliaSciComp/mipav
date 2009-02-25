@@ -85,6 +85,10 @@ public class VolumeImageHistogram extends VolumeImageViewer
     }
 
     public void display(GLAutoDrawable arg0) {
+        if ( !m_bDisplay )
+        {
+            return;
+        }
         if ( m_kAnimator == null )
         {
             return;
@@ -128,9 +132,23 @@ public class VolumeImageHistogram extends VolumeImageViewer
             m_akLev.get(m_iCurrent).setColor(m_kCurrentColor);
         }
         
-
+        m_bDisplay = false;
     }
     
+    public void dispose()
+    {
+        m_kPicker = null;
+        m_kTMin = null;
+        m_kTMax = null;
+        m_akLev.clear();
+        m_akLev = null;
+        m_kCurrentColor = null;
+        m_kInterface = null;
+        m_kWidgetType = null;
+        super.dispose(GetCanvas());
+    }
+
+
     public void init(GLAutoDrawable arg0) {
         super.init(arg0);
         m_spkCamera.SetFrustum(0, 1, 0, 1,1f,10.0f);
@@ -184,6 +202,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
                 m_spkScene.UpdateGS();
             }
         }
+        m_bDisplay = true;
         GetCanvas().display();
     }
     
@@ -195,6 +214,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
         }
         m_akLev.get(m_iCurrent).processMouseDrag( m_iMouseX, m_iMouseY, m_iMouseButton, e );
         m_spkScene.UpdateGS();
+        m_bDisplay = true;
         GetCanvas().display();
         
         m_iMouseX = e.getX();
@@ -212,6 +232,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
         {          
             m_bPickPending = true;
         }  
+        m_bDisplay = true;
         GetCanvas().display();
     }
   
@@ -244,6 +265,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
                 m_bAdded = true;
             }
         }
+        m_bDisplay = true;
         GetCanvas().display();
     }
     
@@ -256,6 +278,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
         m_pkRenderer.OnFrustumChange();
         m_pkRenderer.Resize(m_iWidth,m_iHeight);
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().setSize( m_iWidth, m_iHeight );   
+        m_bDisplay = true;
     }
     
     public void setBoundary( float fAlpha )
@@ -263,6 +286,8 @@ public class VolumeImageHistogram extends VolumeImageViewer
         if (  m_iCurrent != -1 )
         {
             m_akLev.get(m_iCurrent).setBoundary( fAlpha );
+            m_bDisplay = true;
+            GetCanvas().display();
         }
     }
 
@@ -274,6 +299,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
         {
             m_akLev.get(m_iCurrent).setColor( kColor );
         }
+            m_bDisplay = true;
         GetCanvas().display();
     }
     
@@ -338,6 +364,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
         m_pkRenderer.LoadResources(m_pkPlane);
         m_pkPlane.DetachAllEffects();
     }    
+
     protected void Pick()
     {
         if (m_bPickPending)
