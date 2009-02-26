@@ -462,7 +462,9 @@ uniform sampler3D nVolumeImageB_GM_TEXUNIT13;
 uniform sampler1D oOpacityMapB_GM_TEXUNIT14; 
 uniform sampler3D pVolumeImageB_2nd_TEXUNIT15; 
 
-
+uniform vec4 BackgroundColor;
+uniform vec3 ColorLUTOnA;
+uniform vec3 ColorLUTOnB;
 uniform float IsColorA;
 uniform float IsColorB;
 uniform float DoClip;
@@ -583,7 +585,7 @@ void p_VolumeShaderMultiPass()
     //if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
     if ( back_position == 0.0 )
     {
-        gl_FragColor = vec4(0.0);
+        gl_FragColor = BackgroundColor;
         return;
     }
 
@@ -757,9 +759,30 @@ void p_VolumeShaderMultiPass()
             
             if ( IsColorA != 0.0 )
             {
-                color.r = texture1D(cColorMapA_TEXUNIT2,color.r).r;
-                color.g = texture1D(cColorMapA_TEXUNIT2,color.g).g;
-                color.b = texture1D(cColorMapA_TEXUNIT2,color.b).b;
+                if ( ColorLUTOnA.x != 0.0 )
+                {
+                    color.r = texture1D(cColorMapA_TEXUNIT2,color.r).r;
+                }
+                else
+                {
+                    color.r = 0.0;
+                }
+                if ( ColorLUTOnA.y != 0.0 )
+                {
+                    color.g = texture1D(cColorMapA_TEXUNIT2,color.g).g;
+                }
+                else
+                {
+                    color.g = 0.0;
+                }
+                if ( ColorLUTOnA.z != 0.0 )
+                {
+                    color.b = texture1D(cColorMapA_TEXUNIT2,color.b).b;
+                }
+                else
+                {
+                    color.b = 0.0;
+                }
             }
             else
             {
@@ -842,6 +865,11 @@ void p_VolumeShaderMultiPass()
     {
         color.rgb *= opacity;
     }
+    if ( (ColorLUTOnA.x == 0.0) && (ColorLUTOnA.y == 0.0) && (ColorLUTOnA.z == 0.0) )
+    {
+        opacity = 0;
+    }
+
     gl_FragColor.rgb = color.rgb;
     gl_FragColor.a = opacity;
 
@@ -936,9 +964,30 @@ void p_VolumeShaderMultiPass()
             
                 if ( IsColorB != 0.0 )
                 {
-                    color.r = texture1D(kColorMapB_TEXUNIT10,color.r).r;
-                    color.g = texture1D(kColorMapB_TEXUNIT10,color.g).g;
-                    color.b = texture1D(kColorMapB_TEXUNIT10,color.b).b;
+                    if ( ColorLUTOnB.x != 0.0 )
+                    {
+                        color.r = texture1D(kColorMapB_TEXUNIT10,color.r).r;
+                    }
+                    else
+                    {
+                        color.r = 0.0;
+                    }
+                    if ( ColorLUTOnB.y != 0.0 )
+                    {
+                        color.g = texture1D(kColorMapB_TEXUNIT10,color.g).g;
+                    }
+                    else
+                    {
+                        color.g = 0.0;
+                    }
+                    if ( ColorLUTOnB.z != 0.0 )
+                    {
+                        color.b = texture1D(kColorMapB_TEXUNIT10,color.b).b;
+                    }
+                    else
+                    {
+                        color.b = 0.0;
+                    }
                 }
                 else
                 {
@@ -1010,6 +1059,10 @@ void p_VolumeShaderMultiPass()
             if ( MIP != 0.0 )
             {
                 color.rgb *= opacity;
+            }
+            if ( (ColorLUTOnB.x == 0.0) && (ColorLUTOnB.y == 0.0) && (ColorLUTOnB.z == 0.0) )
+            {
+                opacity = 0;
             }
             gl_FragColor.rgb = ABBlend * gl_FragColor.rgb + (1.0 - ABBlend) * color.rgb;
             gl_FragColor.a = ABBlend * gl_FragColor.a + (1.0 - ABBlend) * opacity;

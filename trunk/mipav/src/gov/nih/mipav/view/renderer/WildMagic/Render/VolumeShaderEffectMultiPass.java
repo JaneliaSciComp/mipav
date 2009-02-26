@@ -1,11 +1,13 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
+import gov.nih.mipav.model.structures.ModelRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
 import WildMagic.LibGraphics.ObjectSystem.StringTree;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.Texture;
+import WildMagic.LibGraphics.Rendering.AlphaState.BlendEquationMode;
 import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
 import WildMagic.LibGraphics.Shaders.PixelShader;
 import WildMagic.LibGraphics.Shaders.Program;
@@ -95,6 +97,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     {
         SetColorImage(pkPProgram);
         setABBlend(1.0f);
+        setRGBTA(null);
         if ( m_kVolumeImageB != null )
         {
             setABBlend(0.5f);
@@ -102,6 +105,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             {    
                 pkPProgram.GetUC("ShowB").GetData()[0] = 1;
             }   
+            setRGBTB(null);
         }
         for ( int i = 0; i < ms_MaxLights; i++ )
         {
@@ -413,6 +417,72 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         }
     }
 
+    /**
+     * Sets the background color.
+     * @param kColor new background color.
+     */
+    public void SetBackgroundColor( ColorRGBA kColor )
+    {
+        if ( m_kPShaderCMP != null )
+        {
+            Program kPProgram = m_kPShaderCMP.GetProgram();  
+            if ( (kPProgram != null) && (kPProgram.GetUC("BackgroundColor") != null) ) 
+            {
+                kPProgram.GetUC("BackgroundColor").GetData()[0] = kColor.R;
+                kPProgram.GetUC("BackgroundColor").GetData()[1] = kColor.G;
+                kPProgram.GetUC("BackgroundColor").GetData()[2] = kColor.B;
+                kPProgram.GetUC("BackgroundColor").GetData()[3] = kColor.A;
+            }
+        }
+    }
+    
+
+    public void setRGBTA(ModelRGB RGBT) {
+        if ( m_kPShaderCMP != null )
+        {
+            Program kPProgram = m_kPShaderCMP.GetProgram();  
+            if ( (kPProgram != null) && (kPProgram.GetUC("ColorLUTOnA") != null) ) 
+            {
+                if ( RGBT != null )
+                {
+                    kPProgram.GetUC("ColorLUTOnA").GetData()[0] = RGBT.getROn() ? 1.0f : 0.0f;
+                    kPProgram.GetUC("ColorLUTOnA").GetData()[1] = RGBT.getGOn() ? 1.0f : 0.0f;
+                    kPProgram.GetUC("ColorLUTOnA").GetData()[2] = RGBT.getBOn() ? 1.0f : 0.0f;
+
+                }
+                else
+                {
+                    kPProgram.GetUC("ColorLUTOnA").GetData()[0] = 1.0f;
+                    kPProgram.GetUC("ColorLUTOnA").GetData()[1] = 1.0f;
+                    kPProgram.GetUC("ColorLUTOnA").GetData()[2] = 1.0f;
+                }
+            }
+        }
+    }    
+    
+    public void setRGBTB(ModelRGB RGBT) {
+        if ( m_kPShaderCMP != null )
+        {
+            Program kPProgram = m_kPShaderCMP.GetProgram();  
+            if ( (kPProgram != null) && (kPProgram.GetUC("ColorLUTOnB") != null) ) 
+            {
+                if ( RGBT != null )
+                {
+                    kPProgram.GetUC("ColorLUTOnB").GetData()[0] = RGBT.getROn() ? 1.0f : 0.0f;
+                    kPProgram.GetUC("ColorLUTOnB").GetData()[1] = RGBT.getGOn() ? 1.0f : 0.0f;
+                    kPProgram.GetUC("ColorLUTOnB").GetData()[2] = RGBT.getBOn() ? 1.0f : 0.0f;
+                }
+                else
+                {
+                    kPProgram.GetUC("ColorLUTOnB").GetData()[0] = 1.0f;
+                    kPProgram.GetUC("ColorLUTOnB").GetData()[1] = 1.0f;
+                    kPProgram.GetUC("ColorLUTOnB").GetData()[2] = 1.0f;                
+                }
+            }
+        }
+    }
+    
+    
     /** 
      * Enables/Disables gradient magnitude filter.
      * @param bShow gradient magnitude filter on/off.

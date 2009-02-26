@@ -1388,6 +1388,28 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
+    public void setRGBTA(ModelRGB RGBT) {
+        if ( m_kVolumeRayCast != null )
+        {
+            m_kVolumeRayCast.setRGBTA(RGBT);
+        } 
+        if ( m_kSlices != null )
+        {
+            m_kSlices.setRGBTA(RGBT);
+        }
+    }    
+    
+    public void setRGBTB(ModelRGB RGBT) {
+        if ( m_kVolumeRayCast != null )
+        {
+            m_kVolumeRayCast.setRGBTB(RGBT);
+        } 
+        if ( m_kSlices != null )
+        {
+            m_kSlices.setRGBTB(RGBT);
+        }
+    }
+    
     /**
      * Sets the background color.
      * @param kColor new background color.
@@ -1398,6 +1420,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kVolumeRayCast != null )
         {
             m_kVolumeRayCast.SetBackgroundColor( kColor );
+        }
+        if ( m_kSlices != null )
+        {
+            m_kSlices.SetBackgroundColor( kColor );
         }
     }
 

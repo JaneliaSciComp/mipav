@@ -2112,6 +2112,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         if (m_kVolumeImageA != null) {
             m_kVolumeImageA.SetRGBT(RGBT);
         }
+        raycastRenderWM.setRGBTA(RGBT);
     }    
     
     /* (non-Javadoc)
@@ -2121,6 +2122,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         if (m_kVolumeImageB != null) {
             m_kVolumeImageB.SetRGBT(RGBT);
         }
+        raycastRenderWM.setRGBTB(RGBT);
     }    
     
     /**

@@ -263,14 +263,14 @@ public class ModelLUT extends ModelStorageBase {
         int nPtsR = kTransferLineR.size();
         int nPtsG = kTransferLineG.size();
         int nPtsB = kTransferLineB.size();
-        float xMaxR = ((Vector2f) (kTransferLineR.getPoint(nPtsR - 1))).X;
-        float xMinR = ((Vector2f) (kTransferLineR.getPoint(0))).X;
+        float xMaxR = kTransferLineR.getPoint(nPtsR - 1).X;
+        float xMinR = kTransferLineR.getPoint(0).X;
+        
+        float xMaxG = kTransferLineG.getPoint(nPtsG - 1).X;
+        float xMinG = kTransferLineG.getPoint(0).X;
 
-        float xMaxG = ((Vector2f) (kTransferLineG.getPoint(nPtsG - 1))).X;
-        float xMinG = ((Vector2f) (kTransferLineG.getPoint(0))).X;
-
-        float xMaxB = ((Vector2f) (kTransferLineB.getPoint(nPtsB - 1))).X;
-        float xMinB = ((Vector2f) (kTransferLineB.getPoint(0))).X;
+        float xMaxB = kTransferLineB.getPoint(nPtsB - 1).X;
+        float xMinB = kTransferLineB.getPoint(0).X;
 
         int remappedValue;
         int count = 0;
