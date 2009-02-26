@@ -965,10 +965,20 @@ public class VolumeImage
         {
             kImageFrame.close();
         }
+        else if ( kImageGM != null )
+        {
+            kImageGM.disposeLocal();
+            kImageGM = null;
+        }
         kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGMGM);
         if ( kImageFrame != null )
         {
             kImageFrame.close();
+        }
+        else if ( kImageGMGM != null )
+        {
+            kImageGMGM.disposeLocal();
+            kImageGMGM = null;
         }
     }
     
