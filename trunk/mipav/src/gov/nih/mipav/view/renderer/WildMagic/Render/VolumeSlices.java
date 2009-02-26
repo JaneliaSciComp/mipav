@@ -1,7 +1,9 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.model.structures.ModelRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.CullState;
@@ -155,6 +157,35 @@ public class VolumeSlices extends VolumeObject
         for ( int i = 0; i < 3; i++ )
         {
             m_akPlaneEffect[i].setABBlend(fBlend);
+        }
+    }
+    
+
+
+
+    public void setRGBTA(ModelRGB RGBT) {
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlaneEffect[i].setRGBTA(RGBT);
+        }
+    }    
+    
+    public void setRGBTB(ModelRGB RGBT) {
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlaneEffect[i].setRGBTB(RGBT);
+        }
+    }
+    
+    /**
+     * Sets the background color.
+     * @param kColor new background color.
+     */
+    public void SetBackgroundColor( ColorRGBA kColor )
+    {
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlaneEffect[i].SetBackgroundColor( kColor );
         }
     }
     

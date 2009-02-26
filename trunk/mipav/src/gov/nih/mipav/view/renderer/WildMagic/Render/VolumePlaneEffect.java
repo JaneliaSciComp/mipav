@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
+import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.view.renderer.J3D.PlaneRender;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
@@ -110,6 +111,8 @@ implements StreamInterface
     {
         Blend(1);
         setABBlend(1);
+        SetBackgroundColor(ColorRGBA.BLACK);
+        setRGBTA(null);
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("IsColorA") != null ) 
         {
@@ -136,6 +139,7 @@ implements StreamInterface
                 }
             }  
             setABBlend(.5f);
+            setRGBTB(null);
         }
     }
     /* (non-Javadoc)
@@ -156,6 +160,7 @@ implements StreamInterface
      */
     public void SetBackgroundColor( ColorRGBA kColor )
     {
+        /*
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("BackgroundColor") != null ) 
         {
@@ -164,7 +169,48 @@ implements StreamInterface
             pkProgram.GetUC("BackgroundColor").GetData()[2] = kColor.B;
             pkProgram.GetUC("BackgroundColor").GetData()[3] = kColor.A;
         }
+        */
     }
+
+
+    public void setRGBTA(ModelRGB RGBT) {
+        Program pkProgram = GetPProgram(0);
+        if ( (pkProgram != null) && (pkProgram.GetUC("ColorLUTOnA") != null) ) 
+        {
+            if ( RGBT != null )
+            {
+                pkProgram.GetUC("ColorLUTOnA").GetData()[0] = RGBT.getROn() ? 1.0f : 0.0f;
+                pkProgram.GetUC("ColorLUTOnA").GetData()[1] = RGBT.getGOn() ? 1.0f : 0.0f;
+                pkProgram.GetUC("ColorLUTOnA").GetData()[2] = RGBT.getBOn() ? 1.0f : 0.0f;
+            }
+            else
+            {
+                pkProgram.GetUC("ColorLUTOnA").GetData()[0] = 1.0f;
+                pkProgram.GetUC("ColorLUTOnA").GetData()[1] = 1.0f;
+                pkProgram.GetUC("ColorLUTOnA").GetData()[2] = 1.0f;
+            }
+        }
+    }    
+
+    public void setRGBTB(ModelRGB RGBT) {
+        Program pkProgram = GetPProgram(0);
+        if ( (pkProgram != null) && (pkProgram.GetUC("ColorLUTOnB") != null) ) 
+        {
+            if ( RGBT != null )
+            {
+                pkProgram.GetUC("ColorLUTOnB").GetData()[0] = RGBT.getROn() ? 1.0f : 0.0f;
+                pkProgram.GetUC("ColorLUTOnB").GetData()[1] = RGBT.getGOn() ? 1.0f : 0.0f;
+                pkProgram.GetUC("ColorLUTOnB").GetData()[2] = RGBT.getBOn() ? 1.0f : 0.0f;
+            }
+            else
+            {
+                pkProgram.GetUC("ColorLUTOnB").GetData()[0] = 1.0f;
+                pkProgram.GetUC("ColorLUTOnB").GetData()[1] = 1.0f;
+                pkProgram.GetUC("ColorLUTOnB").GetData()[2] = 1.0f;                
+            }
+        }
+    }
+
     /**
      * Turns rendering the planes with the surface mask on/off.
      * @param bOn on/off.

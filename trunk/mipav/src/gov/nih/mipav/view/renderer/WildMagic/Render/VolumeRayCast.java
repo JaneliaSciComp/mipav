@@ -1,5 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
+import gov.nih.mipav.model.structures.ModelRGB;
+
 import javax.media.opengl.GLAutoDrawable;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
@@ -430,8 +432,8 @@ public class VolumeRayCast extends VolumeObject
         // Draw the proxy geometry with the volume ray-tracing shader:
         m_kMesh.DetachAllEffects();
         m_kMesh.AttachEffect( m_kVolumeShaderEffect );
-        kCuller.ComputeVisibleSet(m_kScene);
-        kRenderer.DrawScene(kCuller.GetVisibleSet());
+        kCuller.ComputeVisibleSet(m_kScene);        
+        kRenderer.DrawScene(kCuller.GetVisibleSet());        
 
          // Draw scene polygon:
          //kRenderer.SetCamera(m_spkScreenCamera);
@@ -456,12 +458,24 @@ public class VolumeRayCast extends VolumeObject
         m_kVolumeShaderEffect.setABBlend(fValue);
     }
 
+
+
+    public void setRGBTA(ModelRGB RGBT) {
+        m_kVolumeShaderEffect.setRGBTA(RGBT);
+    }    
+    
+    public void setRGBTB(ModelRGB RGBT) {
+        m_kVolumeShaderEffect.setRGBTB(RGBT);
+    }
+    
     /**
      * Sets the background color.
      * @param kColor new background color.
      */
     public void SetBackgroundColor( ColorRGBA kColor )
-    {}
+    {
+        m_kVolumeShaderEffect.SetBackgroundColor( kColor );
+    }
 
     /** Sets axis-aligned clipping for the VolumeShaderEffect.
      * @param afClip the clipping parameters for axis-aligned clipping.

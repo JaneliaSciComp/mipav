@@ -5,6 +5,9 @@ uniform sampler3D iSurfaceImage_TEXUNIT8;
 uniform sampler3D jVolumeImageB_TEXUNIT9; 
 uniform sampler1D kColorMapB_TEXUNIT10; 
 
+uniform vec3 ColorLUTOnA;
+uniform vec3 ColorLUTOnB;
+
 uniform float IsColorA;
 uniform float IsColorB;
 uniform float Blend;
@@ -13,12 +16,22 @@ uniform float ShowSurface;
 
 void p_Color_Opacity_TextureP()
 {
+    gl_FragColor = vec4(0.0);
     vec4 color = texture3D(bVolumeImageA_TEXUNIT1,gl_TexCoord[0].xyz);
     if ( IsColorA != 0.0 )
     {
-        gl_FragColor.r = texture1D(cColorMapA_TEXUNIT2, color.r).r;
-        gl_FragColor.g = texture1D(cColorMapA_TEXUNIT2, color.g).r;
-        gl_FragColor.b = texture1D(cColorMapA_TEXUNIT2, color.b).r;
+        if ( ColorLUTOnA.x != 0.0 )
+        {
+            gl_FragColor.r = texture1D(cColorMapA_TEXUNIT2,color.r).r;
+        }
+        if ( ColorLUTOnA.y != 0.0 )
+        {
+            gl_FragColor.g = texture1D(cColorMapA_TEXUNIT2,color.g).g;
+        }
+        if ( ColorLUTOnA.z != 0.0 )
+        {
+            gl_FragColor.b = texture1D(cColorMapA_TEXUNIT2,color.b).b;
+        }
     }
     else
     {
@@ -29,9 +42,30 @@ void p_Color_Opacity_TextureP()
         color = texture3D(jVolumeImageB_TEXUNIT9,gl_TexCoord[0].xyz);
         if ( IsColorB != 0.0 )
         {
-            gl_FragColor.r = ABBlend * gl_FragColor.r + (1.0 - ABBlend) * texture1D(kColorMapB_TEXUNIT10, color.r).r;
-            gl_FragColor.g = ABBlend * gl_FragColor.g + (1.0 - ABBlend) * texture1D(kColorMapB_TEXUNIT10, color.g).r;
-            gl_FragColor.b = ABBlend * gl_FragColor.b + (1.0 - ABBlend) * texture1D(kColorMapB_TEXUNIT10, color.b).r;
+            if ( ColorLUTOnB.x != 0.0 )
+            {
+                gl_FragColor.r = ABBlend * gl_FragColor.r + (1.0 - ABBlend) * texture1D(kColorMapB_TEXUNIT10, color.r).r;
+            }
+            else
+            {
+                gl_FragColor.r = ABBlend * gl_FragColor.r;
+            }
+            if ( ColorLUTOnB.y != 0.0 )
+            {
+                gl_FragColor.g = ABBlend * gl_FragColor.g + (1.0 - ABBlend) * texture1D(kColorMapB_TEXUNIT10, color.g).g;
+            }
+            else
+            {
+                gl_FragColor.g = ABBlend * gl_FragColor.g;
+            }
+            if ( ColorLUTOnB.z != 0.0 )
+            {
+                gl_FragColor.b = ABBlend * gl_FragColor.b + (1.0 - ABBlend) * texture1D(kColorMapB_TEXUNIT10, color.b).b;
+            }
+            else
+            {
+                gl_FragColor.b = ABBlend * gl_FragColor.b;
+            }
         }
         else
         {
