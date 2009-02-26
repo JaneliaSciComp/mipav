@@ -438,7 +438,7 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Synapse Detection  02/09/09");
+        setTitle("Synapse Detection  02/25/09");
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
