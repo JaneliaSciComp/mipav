@@ -13,7 +13,7 @@ import javax.swing.*;
 
 
 /**
- * @version  February 24, 2009
+ * @version  February 27, 2009
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -78,24 +78,41 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
     
     private JTextField blueMaxZText;
     
-    /* Margin red value */
-    private int redIntensity = 55;
+    private int redIntensity = 5;
     
     private JLabel redIntensityLabel;
     
     private JTextField redIntensityText;
     
-    private int greenIntensity = 85;
+    private int redBrightIntensity = 55;
+    
+    private JLabel redBrightIntensityLabel;
+    
+    private JTextField redBrightIntensityText;
+    
+    private int greenIntensity = 5;
     
     private JLabel greenIntensityLabel;
     
     private JTextField greenIntensityText;
     
-    private int blueIntensity = 80;
+    private int greenBrightIntensity = 85;
+    
+    private JLabel greenBrightIntensityLabel;
+    
+    private JTextField greenBrightIntensityText;
+    
+    private int blueIntensity = 15;
     
     private JLabel blueIntensityLabel;
     
     private JTextField blueIntensityText;
+    
+    private int blueBrightIntensity = 80;
+    
+    private JLabel blueBrightIntensityLabel;
+    
+    private JTextField blueBrightIntensityText;
     
     private JCheckBox histoInfoCheckBox;
     
@@ -214,8 +231,11 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         str += blueMinZ + delim;
         str += blueMaxZ + delim;
         str += redIntensity + delim;
+        str += redBrightIntensity + delim;
         str += greenIntensity + delim;
+        str += greenBrightIntensity + delim;
         str += blueIntensity + delim;
+        str += blueBrightIntensity + delim;
         str += histoInfo;
         
         return str;
@@ -294,30 +314,57 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
     }
     
     /**
-     * Accessor that sets the redIntensity variable, for minimum red Intensity over green, blue.
+     * Accessor that sets the redIntensity variable, for minimum red intensity over green, blue.
      *
-     * @param  redIntensity  minimum red Intensity over green, blue
+     * @param  redIntensity  minimum red intensity over green, blue
      */
     public void setRedIntensity(int redIntensity) {
         this.redIntensity = redIntensity;
     }
     
     /**
-     * Accessor that sets the greenIntensity variable, for minimum green Intensity over red, blue.
+     * Accessor that sets the redBrightIntensity variable, for minimum red BrightIntensity over green, blue.
      *
-     * @param  greenIntensity  minimum green Intensity over red, blue
+     * @param  redBrightIntensity  minimum red BrightIntensity over green, blue
+     */
+    public void setRedBrightIntensity(int redBrightIntensity) {
+        this.redBrightIntensity = redBrightIntensity;
+    }
+    
+    /**
+     * Accessor that sets the greenIntensity variable, for minimum green intensity over red, blue.
+     *
+     * @param  green intensity  minimum green intensity over red, blue
      */
     public void setGreenIntensity(int greenIntensity) {
         this.greenIntensity = greenIntensity;
     }
     
     /**
-     * Accessor that sets the blueIntensity variable, for minimum blue Intensity over red, green.
+     * Accessor that sets the greenBrightIntensity variable, for minimum green BrightIntensity over red, blue.
      *
-     * @param  blueIntensity  minimum blue Intensity over red, green
+     * @param  greenBrightIntensity  minimum green BrightIntensity over red, blue
+     */
+    public void setGreenBrightIntensity(int greenBrightIntensity) {
+        this.greenBrightIntensity = greenBrightIntensity;
+    }
+    
+    /**
+     * Accessor that sets the blueIntensity variable, for minimum blue intensity over red, green.
+     *
+     * @param  blueIntensity  minimum blue intensity over red, green
      */
     public void setBlueIntensity(int blueIntensity) {
         this.blueIntensity = blueIntensity;
+    }
+    
+    /**
+     * Accessor that sets the blueBrightIntensity variable, for minimum blue BrightIntensity over red, green.
+     *
+     * @param  blueBrightIntensity  minimum blue BrightIntensity over red, green
+     */
+    public void setBlueBrightIntensity(int blueBrightIntensity) {
+        this.blueBrightIntensity = blueBrightIntensity;
     }
     
     public void setHistoInfo(boolean histoInfo) {
@@ -353,8 +400,9 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
 
             synapseDetectionAlgo = new PlugInAlgorithmSynapseDetection(image, redMin, redMax, greenMin, greenMax,
                                                                    blueMinXY, blueMaxXY, blueMinZ, blueMaxZ,
-                                                                   redIntensity, greenIntensity,
-                                                                   blueIntensity, histoInfo);
+                                                                   redIntensity, redBrightIntensity,
+                                                                   greenIntensity, greenBrightIntensity,
+                                                                   blueIntensity, blueBrightIntensity, histoInfo);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -409,8 +457,11 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         setBlueMinZ(scriptParameters.getParams().getInt("blue_minz"));
         setBlueMaxZ(scriptParameters.getParams().getInt("blue_maxz"));
         setRedIntensity(scriptParameters.getParams().getInt("red_intensity"));
+        setRedBrightIntensity(scriptParameters.getParams().getInt("red_bright_intensity"));
         setGreenIntensity(scriptParameters.getParams().getInt("green_intensity"));
+        setGreenBrightIntensity(scriptParameters.getParams().getInt("green_bright_intensity"));
         setBlueIntensity(scriptParameters.getParams().getInt("blue_intensity"));
+        setBlueBrightIntensity(scriptParameters.getParams().getInt("blue_bright_intensity"));
         setHistoInfo(scriptParameters.getParams().getBoolean("histo_info"));
     }
 
@@ -428,8 +479,11 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_minz", blueMinZ));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_maxz", blueMaxZ));
         scriptParameters.getParams().put(ParameterFactory.newParameter("red_intensity", redIntensity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("red_bright_intensity", redBrightIntensity));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_intensity", greenIntensity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("green_bright_intensity", greenBrightIntensity));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_intensity", blueIntensity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blue_bright_intensity", blueBrightIntensity));
         scriptParameters.getParams().put(ParameterFactory.newParameter("histo_info", histoInfo));
     }
 
@@ -438,7 +492,7 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Synapse Detection  02/25/09");
+        setTitle("Synapse Detection  02/27/09");
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
@@ -575,11 +629,25 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         mainPanel.add(redIntensityLabel, gbc);
 
         redIntensityText = new JTextField(10);
-        redIntensityText.setText("55");
+        redIntensityText.setText("5");
         redIntensityText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(redIntensityText, gbc);
+        
+        redBrightIntensityLabel = new JLabel("Minimum bright red intensity");
+        redBrightIntensityLabel.setForeground(Color.black);
+        redBrightIntensityLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos;
+        mainPanel.add(redBrightIntensityLabel, gbc);
+
+        redBrightIntensityText = new JTextField(10);
+        redBrightIntensityText.setText("55");
+        redBrightIntensityText.setFont(serif12);
+        gbc.gridx = 1;
+        gbc.gridy = yPos++;
+        mainPanel.add(redBrightIntensityText, gbc);
         
         greenIntensityLabel = new JLabel("Minimum green intensity");
         greenIntensityLabel.setForeground(Color.black);
@@ -589,11 +657,25 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         mainPanel.add(greenIntensityLabel, gbc);
 
         greenIntensityText = new JTextField(10);
-        greenIntensityText.setText("85");
+        greenIntensityText.setText("5");
         greenIntensityText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(greenIntensityText, gbc);
+        
+        greenBrightIntensityLabel = new JLabel("Minimum bright green intensity");
+        greenBrightIntensityLabel.setForeground(Color.black);
+        greenBrightIntensityLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos;
+        mainPanel.add(greenBrightIntensityLabel, gbc);
+
+        greenBrightIntensityText = new JTextField(10);
+        greenBrightIntensityText.setText("85");
+        greenBrightIntensityText.setFont(serif12);
+        gbc.gridx = 1;
+        gbc.gridy = yPos++;
+        mainPanel.add(greenBrightIntensityText, gbc);
         
         blueIntensityLabel = new JLabel("Minimum blue intensity");
         blueIntensityLabel.setForeground(Color.black);
@@ -603,11 +685,25 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         mainPanel.add(blueIntensityLabel, gbc);
 
         blueIntensityText = new JTextField(10);
-        blueIntensityText.setText("80");
+        blueIntensityText.setText("15");
         blueIntensityText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(blueIntensityText, gbc);
+        
+        blueBrightIntensityLabel = new JLabel("Minimum bright blue intensity");
+        blueBrightIntensityLabel.setForeground(Color.black);
+        blueBrightIntensityLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos;
+        mainPanel.add(blueBrightIntensityLabel, gbc);
+
+        blueBrightIntensityText = new JTextField(10);
+        blueBrightIntensityText.setText("80");
+        blueBrightIntensityText.setFont(serif12);
+        gbc.gridx = 1;
+        gbc.gridy = yPos++;
+        mainPanel.add(blueBrightIntensityText, gbc);
         
         histoInfoCheckBox = new JCheckBox("Obtain histograms of detected line colors");
         histoInfoCheckBox.setFont(serif12);
@@ -789,6 +885,23 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
             return false;
         }
         
+        tmpStr = redBrightIntensityText.getText();
+        redBrightIntensity = Integer.parseInt(tmpStr);
+
+        if (redBrightIntensity < redIntensity + 1) {
+            MipavUtil.displayError("red bright intensity must be at least red intensity + 1");
+            redBrightIntensityText.requestFocus();
+            redBrightIntensityText.selectAll();
+
+            return false;
+        } else if (redBrightIntensity > 255) {
+            MipavUtil.displayError("red bright intensity must not exceed 255");
+            redBrightIntensityText.requestFocus();
+            redBrightIntensityText.selectAll();
+
+            return false;
+        }
+        
         tmpStr = greenIntensityText.getText();
         greenIntensity = Integer.parseInt(tmpStr);
 
@@ -806,6 +919,23 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
             return false;
         }
         
+        tmpStr = greenBrightIntensityText.getText();
+        greenBrightIntensity = Integer.parseInt(tmpStr);
+
+        if (greenBrightIntensity < greenIntensity + 1) {
+            MipavUtil.displayError("green bright intensity must be at least green intensity + 1");
+            greenBrightIntensityText.requestFocus();
+            greenBrightIntensityText.selectAll();
+
+            return false;
+        } else if (greenBrightIntensity > 255) {
+            MipavUtil.displayError("green bright intensity must not exceed 255");
+            greenBrightIntensityText.requestFocus();
+            greenBrightIntensityText.selectAll();
+
+            return false;
+        }
+        
         tmpStr = blueIntensityText.getText();
         blueIntensity = Integer.parseInt(tmpStr);
 
@@ -819,6 +949,23 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
             MipavUtil.displayError("blue intensity must not exceed 255");
             blueIntensityText.requestFocus();
             blueIntensityText.selectAll();
+
+            return false;
+        }
+        
+        tmpStr = blueBrightIntensityText.getText();
+        blueBrightIntensity = Integer.parseInt(tmpStr);
+
+        if (blueBrightIntensity < blueIntensity + 1) {
+            MipavUtil.displayError("blue bright intensity must be at least blue intensity + 1");
+            blueBrightIntensityText.requestFocus();
+            blueBrightIntensityText.selectAll();
+
+            return false;
+        } else if (blueBrightIntensity > 255) {
+            MipavUtil.displayError("blue bright intensity must not exceed 255");
+            blueBrightIntensityText.requestFocus();
+            blueBrightIntensityText.selectAll();
 
             return false;
         }
