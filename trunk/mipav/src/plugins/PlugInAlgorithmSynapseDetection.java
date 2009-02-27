@@ -12,7 +12,7 @@ import java.util.*;
 
 /**
  *
- * @version  February 25, 2009
+ * @version  February 27, 2009
  * @author   William Gandler
  * @see      AlgorithmBase
  *
