@@ -141,8 +141,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /** boolean indicating if shift button is down. */
     private boolean isShiftDown = false;
 
-    /** DOCUMENT ME! */
-    // private int lastVOI_UID = -1;
     /**
      * used in conjuction with the above variable, stating that the paint brush has been changed but will change back to
      * previous.
