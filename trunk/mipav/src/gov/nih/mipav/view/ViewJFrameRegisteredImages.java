@@ -184,7 +184,7 @@ public class ViewJFrameRegisteredImages extends JFrame
         userPanel.add(pan, BorderLayout.CENTER);
         this.getContentPane().add(userPanel, BorderLayout.CENTER);
 
-        
+       
 
         // The constructor below will work if the Delete button is added...:
         // JPanel buttonPan = new JPanel(new GridLayout(3,1));
@@ -210,7 +210,7 @@ public class ViewJFrameRegisteredImages extends JFrame
     private JPanel buildButtonPanel() {
     	JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
     	JPanel framePanel = new JPanel(new BorderLayout());
-    	framePanel.setBorder(MipavUtil.buildTitledBorder("Frame Actions"));
+    	framePanel.setBorder(MipavUtil.buildTitledBorder("Framed Image Actions"));
     	
     	//make buttons for frame panel
     	callFrameDeleteButton = new JButton("Delete Frame");
@@ -236,7 +236,7 @@ public class ViewJFrameRegisteredImages extends JFrame
         buttonPanel.add(framePanel);
         
         JPanel imagePanel = new JPanel(new BorderLayout());
-    	imagePanel.setBorder(MipavUtil.buildTitledBorder("ImageActions"));
+    	imagePanel.setBorder(MipavUtil.buildTitledBorder("Image Actions"));
     	
     	// make buttons for image panel
         callImageDeleteButton = new JButton("Delete Image");
@@ -408,8 +408,23 @@ public class ViewJFrameRegisteredImages extends JFrame
 
         // update the list in the window
         Vector names = mon.getRegisteredNames();
-
+        
+        int selected = -1;
+        if(imageList.getModel().getSize() > 0) {
+	        selected = imageList.getSelectedIndex();
+	        if(selected != -1) {
+		        Object selectedObj = imageList.getSelectedValue();
+		        
+		        if(selectedObj != null) {
+		        	selected = names.indexOf(selectedObj);
+		        }
+	        }
+        }
         imageList.setListData(names);
+        if(selected != -1) {
+        	imageList.setSelectedIndex(selected);
+        }
+        	
         repaint();
     }
 
