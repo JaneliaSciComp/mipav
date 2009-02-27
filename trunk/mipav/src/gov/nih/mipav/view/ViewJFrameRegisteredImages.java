@@ -208,9 +208,12 @@ public class ViewJFrameRegisteredImages extends JFrame
     }
     
     private JPanel buildButtonPanel() {
-    	JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
-    	JPanel framePanel = new JPanel(new BorderLayout());
+    	JPanel buttonPanel = new JPanel(new GridBagLayout());
+    	GridLayout frameLayout = new GridLayout(3, 1);
+    	JPanel framePanel = new JPanel(frameLayout);
     	framePanel.setBorder(MipavUtil.buildTitledBorder("Framed Image Actions"));
+    	
+    	frameLayout.setVgap(14);
     	
     	//make buttons for frame panel
     	callFrameDeleteButton = new JButton("Delete Frame");
@@ -228,12 +231,16 @@ public class ViewJFrameRegisteredImages extends JFrame
         callFrameToFrontButton.setFont(MipavUtil.font12B);
         callFrameToFrontButton.addActionListener(this);
         
-        framePanel.add(callFrameDeleteButton, BorderLayout.NORTH);
-        framePanel.add(callFrameDeleteAllButton, BorderLayout.CENTER);
-        framePanel.add(callFrameToFrontButton, BorderLayout.SOUTH);
+        framePanel.add(callFrameDeleteButton);
+        framePanel.add(callFrameDeleteAllButton);
+        framePanel.add(callFrameToFrontButton);
        
-    	
-        buttonPanel.add(framePanel);
+    	GridBagConstraints gbc = new GridBagConstraints();
+    	gbc.gridx = 0;
+    	gbc.gridy = 0;
+    	gbc.gridheight = 2;
+    	gbc.fill = GridBagConstraints.VERTICAL;
+        buttonPanel.add(framePanel, gbc);
         
         JPanel imagePanel = new JPanel(new BorderLayout());
     	imagePanel.setBorder(MipavUtil.buildTitledBorder("Image Actions"));
@@ -248,16 +255,34 @@ public class ViewJFrameRegisteredImages extends JFrame
         callImageDeleteAllButton.setToolTipText("Delete all images that are not in frames");
         callImageDeleteAllButton.setFont(MipavUtil.font12B);
         callImageDeleteAllButton.addActionListener(this);
-     
+
+        imagePanel.add(callImageDeleteButton, BorderLayout.NORTH);
+        imagePanel.add(callImageDeleteAllButton, BorderLayout.CENTER);
+        
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridheight = 1;
+        buttonPanel.add(imagePanel, gbc);
+        
+        JPanel memoryPanel = new JPanel(new GridBagLayout());
+        memoryPanel.setBorder(MipavUtil.buildTitledBorder("Memory Actions"));
+        GridBagConstraints gbcInner = new GridBagConstraints();
+        
+        //make buttons for memory panel
         callGCButton = new JButton("Free memory");
         callGCButton.setFont(MipavUtil.font12B);
         callGCButton.addActionListener(this);
-    	
-        imagePanel.add(callImageDeleteButton, BorderLayout.NORTH);
-        imagePanel.add(callImageDeleteAllButton, BorderLayout.CENTER);
-        imagePanel.add(callGCButton, BorderLayout.SOUTH);
         
-        buttonPanel.add(imagePanel);
+        gbcInner.gridx = 0;
+        gbcInner.gridy = 0;
+        gbcInner.weightx = 1;
+        gbcInner.fill = GridBagConstraints.HORIZONTAL;
+        memoryPanel.add(callGCButton, gbcInner);
+        
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        buttonPanel.add(memoryPanel, gbc);
         
         return buttonPanel;
     }
