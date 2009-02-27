@@ -2,9 +2,9 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.view.CustomUIBuilder.UIParams;
+
 import java.awt.*;
 import java.awt.event.*;
-
 import java.util.*;
 
 import javax.swing.*;
@@ -15,7 +15,8 @@ import javax.swing.*;
  */
 public class ViewMenuBuilder {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Link to the file menu so that quicklist can be rebuilt and added. */
     private JMenu fileMenu;
@@ -24,7 +25,7 @@ public class ViewMenuBuilder {
     private ActionListener listener;
 
     /** Holder of all the menu items. */
-    private Vector menuItemVector;
+    private Vector<MipavMenuItem> menuItemVector;
 
     /** List that holds the last X number of recently opened images. */
     private QuickList quickList;
@@ -32,32 +33,34 @@ public class ViewMenuBuilder {
     /** Index for rebuilding quicklist. */
     private int quicklistIndex = 0;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Sets frame to add menus to, and initializes menu item vector.
-     *
-     * @param  al  class which wants notification of interations with the generated menu items
+     * 
+     * @param al class which wants notification of interations with the generated menu items
      */
     public ViewMenuBuilder(ActionListener al) {
         listener = al;
-        menuItemVector = new Vector();
+        menuItemVector = new Vector<MipavMenuItem>();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Static method for building JCheckBoxes with the given parameters.
-     *
-     * @param   text      String text to display on the box
-     * @param   cmd       String the action command
-     * @param   listener  ActionListener the action listener for the box
-     * @param   selected  boolean whether the box should be selected by default
-     *
-     * @return  JCheckBoxMenuItem the jcheckbox that is built
+     * 
+     * @param text String text to display on the box
+     * @param cmd String the action command
+     * @param listener ActionListener the action listener for the box
+     * @param selected boolean whether the box should be selected by default
+     * 
+     * @return JCheckBoxMenuItem the jcheckbox that is built
      */
     public static JCheckBoxMenuItem buildCheckBoxMenuItem(String text, String cmd, ActionListener listener,
-                                                          boolean selected) {
+            boolean selected) {
 
         JCheckBoxMenuItem menuEntry = new JCheckBoxMenuItem();
 
@@ -77,7 +80,6 @@ public class ViewMenuBuilder {
 
         paddingX += MipavUtil.DEFAULT_ICON_WIDTH;
 
-
         gbc.gridx = 0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
@@ -88,15 +90,15 @@ public class ViewMenuBuilder {
 
         menuEntry.add(menuName, gbc);
 
-        if ((cmd != null) && !cmd.equals("")) {
+        if ( (cmd != null) && !cmd.equals("")) {
             menuEntry.setActionCommand(cmd);
 
             KeyStroke ks = Preferences.getShortcut(cmd);
 
             if (ks != null) {
                 String sc = ks.toString();
-                sc = sc.replaceAll("pressed", "").replaceAll("ctrl", "Ctrl").replaceAll("shift", "Shift").replaceAll("alt",
-                                                                                                                     "Alt").trim();
+                sc = sc.replaceAll("pressed", "").replaceAll("ctrl", "Ctrl").replaceAll("shift", "Shift").replaceAll(
+                        "alt", "Alt").trim();
 
                 menuAccel.setText(sc);
                 menuAccel.setFont(MipavUtil.defaultAcceleratorFont);
@@ -129,21 +131,20 @@ public class ViewMenuBuilder {
 
     }
 
-
     /**
      * DOCUMENT ME!
-     *
-     * @param   text         DOCUMENT ME!
-     * @param   cmd          DOCUMENT ME!
-     * @param   mnemonic     DOCUMENT ME!
-     * @param   listener     DOCUMENT ME!
-     * @param   iconName     DOCUMENT ME!
-     * @param   iconPadding  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param text DOCUMENT ME!
+     * @param cmd DOCUMENT ME!
+     * @param mnemonic DOCUMENT ME!
+     * @param listener DOCUMENT ME!
+     * @param iconName DOCUMENT ME!
+     * @param iconPadding DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public static JMenuItem buildHTMLMenuItem(String text, String cmd, int mnemonic, ActionListener listener,
-                                              String iconName, boolean iconPadding) {
+            String iconName, boolean iconPadding) {
         JMenuItem menuEntry = new JMenuItem();
         menuEntry.addActionListener(listener);
 
@@ -162,14 +163,14 @@ public class ViewMenuBuilder {
 
                 menuEntry.setIcon(icon);
             }
-        } catch (Exception e) { }
+        } catch (Exception e) {}
 
         // get the size of the font (HTML SIZES)
         int size = 3;
 
         try {
             size = Integer.parseInt(Preferences.getProperty(Preferences.PREF_MENU_FONT_SIZE));
-        } catch (Exception e) { }
+        } catch (Exception e) {}
 
         // get the name of the font to be used
         String fontName = "Serif";
@@ -187,20 +188,20 @@ public class ViewMenuBuilder {
             if (index != -1) {
 
                 if (index == 0) {
-                    mnemonicStr = MipavUtil.makeHTMLFontString(Color.black, fontName, size, Font.PLAIN, true,
-                                                               text.substring(0, 1));
-                    mnemonicStr += MipavUtil.makeHTMLFontString(Color.black, fontName, size, Font.PLAIN, false,
-                                                                text.substring(1, text.length()));
+                    mnemonicStr = MipavUtil.makeHTMLFontString(Color.black, fontName, size, Font.PLAIN, true, text
+                            .substring(0, 1));
+                    mnemonicStr += MipavUtil.makeHTMLFontString(Color.black, fontName, size, Font.PLAIN, false, text
+                            .substring(1, text.length()));
 
                 } else {
-                    mnemonicStr = MipavUtil.makeHTMLFontString(Color.black, fontName, size, Font.PLAIN, false,
-                                                               text.substring(0, index));
-                    mnemonicStr += MipavUtil.makeHTMLFontString(Color.black, fontName, size, Font.PLAIN, true,
-                                                                text.substring(index, index + 1));
+                    mnemonicStr = MipavUtil.makeHTMLFontString(Color.black, fontName, size, Font.PLAIN, false, text
+                            .substring(0, index));
+                    mnemonicStr += MipavUtil.makeHTMLFontString(Color.black, fontName, size, Font.PLAIN, true, text
+                            .substring(index, index + 1));
 
                     if (index != (text.length() - 1)) {
                         mnemonicStr += MipavUtil.makeHTMLFontString(Color.black, fontName, size, Font.PLAIN, false,
-                                                                    text.substring(index + 1));
+                                text.substring(index + 1));
                     }
 
                 }
@@ -216,8 +217,8 @@ public class ViewMenuBuilder {
         JLabel menuName = new JLabel();
         JLabel menuAccel = new JLabel();
 
-        menuName.setText("<html>" + MipavUtil.makeHTMLFontString(Color.black, fontName, size, Font.PLAIN, false, text) +
-                         "</html>");
+        menuName.setText("<html>" + MipavUtil.makeHTMLFontString(Color.black, fontName, size, Font.PLAIN, false, text)
+                + "</html>");
 
         int paddingX = 5;
 
@@ -235,7 +236,7 @@ public class ViewMenuBuilder {
 
         menuEntry.add(menuName, gbc);
 
-        if ((cmd != null) && !cmd.equals("")) {
+        if ( (cmd != null) && !cmd.equals("")) {
             menuEntry.setActionCommand(cmd);
 
             KeyStroke ks = null;
@@ -244,12 +245,12 @@ public class ViewMenuBuilder {
 
             if (ks != null) {
                 String sc = ks.toString();
-                sc = sc.replaceAll("pressed", "").replaceAll("ctrl", "Ctrl").replaceAll("shift", "Shift").replaceAll("alt",
-                                                                                                                     "Alt").trim();
+                sc = sc.replaceAll("pressed", "").replaceAll("ctrl", "Ctrl").replaceAll("shift", "Shift").replaceAll(
+                        "alt", "Alt").trim();
 
-                menuAccel.setText("<html>" +
-                                  MipavUtil.makeHTMLFontString(Color.LIGHT_GRAY, fontName, size, Font.PLAIN, false, sc) +
-                                  "</html>");
+                menuAccel.setText("<html>"
+                        + MipavUtil.makeHTMLFontString(Color.LIGHT_GRAY, fontName, size, Font.PLAIN, false, sc)
+                        + "</html>");
 
                 menuAccel.setHorizontalAlignment(SwingConstants.TRAILING);
                 gbc.gridx = 1;
@@ -282,25 +283,24 @@ public class ViewMenuBuilder {
 
     /**
      * Builds a menu item that can be added to a menu.
-     *
-     * @param   text         Title of the menu item, must be non null.
-     * @param   mnemonic     Action command of the menu item, can be null.
-     * @param   iconPadding  Font of the menu item, must be non null.
-     *
-     * @return  The menu item or null if an error has occurred. public static JMenuItem buildMenuItem(String menuTitle,
-     *          String actionCommand, Font font, ActionListener listener, KeyStroke keyStroke, String iconName) { return
-     *          buildMenuItem(menuTitle, actionCommand, 0, listener, iconName, true); }
+     * 
+     * @param text Title of the menu item, must be non null.
+     * @param mnemonic Action command of the menu item, can be null.
+     * @param iconPadding Font of the menu item, must be non null.
+     * 
+     * @return The menu item or null if an error has occurred. public static JMenuItem buildMenuItem(String menuTitle,
+     *         String actionCommand, Font font, ActionListener listener, KeyStroke keyStroke, String iconName) { return
+     *         buildMenuItem(menuTitle, actionCommand, 0, listener, iconName, true); }
      */
-
 
     /**
      * Static method for building a JMenu.
-     *
-     * @param   text         String the name of the menu to be displayed
-     * @param   mnemonic     int mnemonic for the menu
-     * @param   iconPadding  boolean an empty icon (transparent) is used to properly pad the text
-     *
-     * @return  JMenu the menu that is built
+     * 
+     * @param text String the name of the menu to be displayed
+     * @param mnemonic int mnemonic for the menu
+     * @param iconPadding boolean an empty icon (transparent) is used to properly pad the text
+     * 
+     * @return JMenu the menu that is built
      */
     public static JMenu buildMenu(String text, int mnemonic, boolean iconPadding) {
         JMenu menu = new JMenu();
@@ -315,17 +315,16 @@ public class ViewMenuBuilder {
 
             try {
                 menu.setIcon(MipavUtil.getIcon("empty.gif"));
-                
+
                 try {
-                	float ver = Float.parseFloat(System.getProperty("java.version").substring(0, 3));
-                	
-                	if (ver < 1.6 && Preferences.getOS() != Preferences.OS_MAC) {
-                		menu.setIconTextGap(50);
-                	}
-                } catch (Exception e) {
-                }
-               
-            } catch (Exception e) { }
+                    float ver = Float.parseFloat(System.getProperty("java.version").substring(0, 3));
+
+                    if (ver < 1.6 && Preferences.getOS() != Preferences.OS_MAC) {
+                        menu.setIconTextGap(50);
+                    }
+                } catch (Exception e) {}
+
+            } catch (Exception e) {}
         }
 
         menu.setFont(MipavUtil.defaultMenuFont);
@@ -340,30 +339,31 @@ public class ViewMenuBuilder {
 
     /**
      * Creates a Menu Item using pre-packaged UIParams
+     * 
      * @param params UI Params
      * @param listener Action listener
      * @param iconPadding whether to use icon padding
      * @return the jmenuitem
      */
     public static JMenuItem buildMenuItem(UIParams params, ActionListener listener, boolean iconPadding) {
-    	return buildMenuItem(params.getText(), params.getActionCommand(), params.getMnemonic(), listener, 
-    			params.getIconBase(), iconPadding);
+        return buildMenuItem(params.getText(), params.getActionCommand(), params.getMnemonic(), listener, params
+                .getIconBase(), iconPadding);
     }
-    
+
     /**
      * DOCUMENT ME!
-     *
-     * @param   text         DOCUMENT ME!
-     * @param   cmd          DOCUMENT ME!
-     * @param   mnemonic     DOCUMENT ME!
-     * @param   listener     DOCUMENT ME!
-     * @param   iconName     DOCUMENT ME!
-     * @param   iconPadding  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param text DOCUMENT ME!
+     * @param cmd DOCUMENT ME!
+     * @param mnemonic DOCUMENT ME!
+     * @param listener DOCUMENT ME!
+     * @param iconName DOCUMENT ME!
+     * @param iconPadding DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public static JMenuItem buildMenuItem(String text, String cmd, int mnemonic, ActionListener listener,
-                                          String iconName, boolean iconPadding) {
+            String iconName, boolean iconPadding) {
         JMenuItem menuEntry = new JMenuItem();
         menuEntry.addActionListener(listener);
 
@@ -380,7 +380,7 @@ public class ViewMenuBuilder {
 
                 menuEntry.setIcon(icon);
             }
-        } catch (Exception e) { }
+        } catch (Exception e) {}
 
         if (mnemonic != 0) {
             menuEntry.setMnemonic(mnemonic);
@@ -412,7 +412,7 @@ public class ViewMenuBuilder {
 
         menuEntry.add(menuName, gbc);
 
-        if ((cmd != null) && !cmd.equals("")) {
+        if ( (cmd != null) && !cmd.equals("")) {
             menuEntry.setActionCommand(cmd);
 
             try {
@@ -420,8 +420,8 @@ public class ViewMenuBuilder {
 
                 if (ks != null) {
                     String sc = ks.toString();
-                    sc = sc.replaceAll("pressed", "").replaceAll("ctrl", "Ctrl").replaceAll("shift", "Shift").replaceAll("alt",
-                                                                                                                         "Alt").trim();
+                    sc = sc.replaceAll("pressed", "").replaceAll("ctrl", "Ctrl").replaceAll("shift", "Shift")
+                            .replaceAll("alt", "Alt").trim();
 
                     menuAccel.setText(sc);
                     menuAccel.setFont(MipavUtil.defaultAcceleratorFont);
@@ -464,12 +464,12 @@ public class ViewMenuBuilder {
 
     /**
      * Builds a JCheckBox with the given parameters and adds it to the Vector of menu items.
-     *
-     * @param   text      String Checkbox text
-     * @param   cmd       String actioncommand
-     * @param   selected  boolean whether the box is selected by default
-     *
-     * @return  JCheckBoxMenuItem
+     * 
+     * @param text String Checkbox text
+     * @param cmd String actioncommand
+     * @param selected boolean whether the box is selected by default
+     * 
+     * @return JCheckBoxMenuItem
      */
     public JCheckBoxMenuItem buildCheckBoxMenuItem(String text, String cmd, boolean selected) {
 
@@ -507,15 +507,15 @@ public class ViewMenuBuilder {
             cmd = new String(text);
         }
 
-        if ((cmd != null) && !cmd.equals("")) {
+        if ( (cmd != null) && !cmd.equals("")) {
             menuEntry.setActionCommand(cmd);
 
             KeyStroke ks = Preferences.getShortcut(cmd);
 
             if (ks != null) {
                 String sc = ks.toString();
-                sc = sc.replaceAll("pressed", "").replaceAll("ctrl", "Ctrl").replaceAll("shift", "Shift").replaceAll("alt",
-                                                                                                                     "Alt").trim();
+                sc = sc.replaceAll("pressed", "").replaceAll("ctrl", "Ctrl").replaceAll("shift", "Shift").replaceAll(
+                        "alt", "Alt").trim();
 
                 menuAccel.setText(sc);
                 menuAccel.setFont(MipavUtil.defaultAcceleratorFont);
@@ -552,26 +552,26 @@ public class ViewMenuBuilder {
 
     /**
      * Build a menu item using a pre-made UIParams
+     * 
      * @param params the UIParams (from CustomUIBuilder)
      * @param useIconPadding use icon padding
      * @return
      */
     public JMenuItem buildMenuItem(UIParams params, boolean useIconPadding) {
-    	return buildMenuItem(params.getText(), params.getActionCommand(), params.getMnemonic(),
-    			params.getIconBase() + ".gif", useIconPadding);
+        return buildMenuItem(params.getText(), params.getActionCommand(), params.getMnemonic(), params.getIconBase()
+                + ".gif", useIconPadding);
     }
-    
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   text            String
-     * @param   cmd             String
-     * @param   mnemonic        int
-     * @param   iconName        String
-     * @param   useIconPadding  boolean
-     *
-     * @return  JMenuItem
+     * 
+     * @param text String
+     * @param cmd String
+     * @param mnemonic int
+     * @param iconName String
+     * @param useIconPadding boolean
+     * 
+     * @return JMenuItem
      */
     public JMenuItem buildMenuItem(String text, String cmd, int mnemonic, String iconName, boolean useIconPadding) {
         JMenuItem menuEntry = new JMenuItem();
@@ -596,7 +596,7 @@ public class ViewMenuBuilder {
                 // in case someone mistakenly sends in an icon without telling it to pad....
                 useIconPadding = true;
             }
-        } catch (Exception e) { }
+        } catch (Exception e) {}
 
         if (mnemonic != 0) {
             menuEntry.setMnemonic(mnemonic);
@@ -632,7 +632,7 @@ public class ViewMenuBuilder {
             cmd = new String(text);
         }
 
-        if ((cmd != null) && !cmd.equals("")) {
+        if ( (cmd != null) && !cmd.equals("")) {
             menuEntry.setActionCommand(cmd);
 
             KeyStroke ks = null;
@@ -641,8 +641,8 @@ public class ViewMenuBuilder {
 
             if (ks != null) {
                 String sc = ks.toString();
-                sc = sc.replaceAll("pressed", "").replaceAll("ctrl", "Ctrl").replaceAll("shift", "Shift").replaceAll("alt",
-                                                                                                                     "Alt").trim();
+                sc = sc.replaceAll("pressed", "").replaceAll("ctrl", "Ctrl").replaceAll("shift", "Shift").replaceAll(
+                        "alt", "Alt").trim();
 
                 menuAccel.setText(sc);
                 menuAccel.setFont(MipavUtil.defaultAcceleratorFont);
@@ -681,8 +681,8 @@ public class ViewMenuBuilder {
 
     /**
      * Builds the quicklist for the first time.
-     *
-     * @return  QuickList
+     * 
+     * @return QuickList
      */
     public QuickList buildQuickList() {
         return new QuickList(listener);
@@ -703,15 +703,15 @@ public class ViewMenuBuilder {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   menuItemName  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param menuItemName DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public JMenuItem getMenuItem(String menuItemName) {
         for (int i = 0; i < menuItemVector.size(); i++) {
-            if (((MipavMenuItem) menuItemVector.elementAt(i)).getName().equals(menuItemName)) {
-                return (JMenuItem) ((MipavMenuItem) (menuItemVector.elementAt(i))).getItem();
+            if (menuItemVector.elementAt(i).getName().equals(menuItemName)) {
+                return menuItemVector.elementAt(i).getItem();
             }
         }
         return null;
@@ -719,10 +719,10 @@ public class ViewMenuBuilder {
 
     /**
      * Provides a method of checking the state of specified menu.
-     *
-     * @param   name  The name of the item whose state needs to be checked.
-     *
-     * @return  Whether or not the item is enabled.
+     * 
+     * @param name The name of the item whose state needs to be checked.
+     * 
+     * @return Whether or not the item is enabled.
      */
     public boolean isMenuItemEnabled(String name) {
 
@@ -731,8 +731,8 @@ public class ViewMenuBuilder {
 
         for (i = 0; i < menuItemVector.size(); i++) {
 
-            if (((MipavMenuItem) menuItemVector.elementAt(i)).getName().equals(name)) {
-                menuItem = ((MipavMenuItem) (menuItemVector.elementAt(i))).getItem();
+            if (menuItemVector.elementAt(i).getName().equals(name)) {
+                menuItem = menuItemVector.elementAt(i).getItem();
 
                 break;
             }
@@ -749,10 +749,10 @@ public class ViewMenuBuilder {
 
     /**
      * Provides a method of checking the state of specified menu.
-     *
-     * @param   name  The name of the item whose state needs to be checked.
-     *
-     * @return  Whether or not the item is selected.
+     * 
+     * @param name The name of the item whose state needs to be checked.
+     * 
+     * @return Whether or not the item is selected.
      */
     public boolean isMenuItemSelected(String name) {
 
@@ -778,14 +778,15 @@ public class ViewMenuBuilder {
 
     /**
      * Makes a menu out of the menu components, using <code>parentMenu</code> as the base for this menu.
-     *
-     * @param   parentMenu     The parent menu, must be of type <code>String</code> or a <code>JMenu</code>, cannot be
-     *                         null.
-     * @param   iconPadding    Array of menu items, must be of type<code>JMenu</code>, <code>JMenuItem</code>, <code>
-     *                         JCheckBoxMenuItem</code>, or <code>JSeparator</code>.
-     * @param   menuComponent  Parent frame, used to add as an item listener to the checkbox menu items.
-     *
-     * @return  The newly created menu.
+     * 
+     * @param parentMenu The parent menu, must be of type <code>String</code> or a <code>JMenu</code>, cannot be
+     *            null.
+     * @param iconPadding Array of menu items, must be of type<code>JMenu</code>, <code>JMenuItem</code>, <code>
+     *                         JCheckBoxMenuItem</code>,
+     *            or <code>JSeparator</code>.
+     * @param menuComponent Parent frame, used to add as an item listener to the checkbox menu items.
+     * 
+     * @return The newly created menu.
      */
     public JMenu makeMenu(Object parentMenu, boolean iconPadding, JComponent[] menuComponent) {
         JMenu menu;
@@ -807,7 +808,7 @@ public class ViewMenuBuilder {
                     menu.add((JMenu) menuComponent[i]);
                 } else if (menuComponent[i] instanceof JMenuItem) {
                     menu.add((JMenuItem) menuComponent[i]);
-                } else if ((menuComponent[i] instanceof JCheckBoxMenuItem) && (listener instanceof ItemListener)) {
+                } else if ( (menuComponent[i] instanceof JCheckBoxMenuItem) && (listener instanceof ItemListener)) {
                     JCheckBoxMenuItem checkboxItem = (JCheckBoxMenuItem) menuComponent[i];
                     checkboxItem.addItemListener((ItemListener) listener);
                     menu.add(checkboxItem);
@@ -829,15 +830,16 @@ public class ViewMenuBuilder {
     /**
      * Makes a menu out of the menu components, using <code>parentMenu</code> as the base for this menu and adding a
      * mnemonic.
-     *
-     * @param   parentMenu     The parent menu, must be of type <code>String</code> or a <code>JMenu</code>, cannot be
-     *                         null.
-     * @param   mnemonic       Mnemonic key for the parent menu name.
-     * @param   iconPadding    Array of menu items, must be of type<code>JMenu</code>, <code>JMenuItem</code>, <code>
-     *                         JCheckBoxMenuItem</code>, or <code>JSeparator</code>.
-     * @param   menuComponent  Parent frame, used to add as an item listener to the checkbox menu items.
-     *
-     * @return  The newly created menu.
+     * 
+     * @param parentMenu The parent menu, must be of type <code>String</code> or a <code>JMenu</code>, cannot be
+     *            null.
+     * @param mnemonic Mnemonic key for the parent menu name.
+     * @param iconPadding Array of menu items, must be of type<code>JMenu</code>, <code>JMenuItem</code>, <code>
+     *                         JCheckBoxMenuItem</code>,
+     *            or <code>JSeparator</code>.
+     * @param menuComponent Parent frame, used to add as an item listener to the checkbox menu items.
+     * 
+     * @return The newly created menu.
      */
     public JMenu makeMenu(Object parentMenu, char mnemonic, boolean iconPadding, JComponent[] menuComponent) {
 
@@ -864,32 +866,32 @@ public class ViewMenuBuilder {
                     menu.add((JMenu) menuComponent[i]);
                 } else if (menuComponent[i] instanceof JMenuItem) {
                     menu.add((JMenuItem) menuComponent[i]);
-                } else if ((menuComponent[i] instanceof JCheckBoxMenuItem) && (listener instanceof ItemListener)) {
+                } else if ( (menuComponent[i] instanceof JCheckBoxMenuItem) && (listener instanceof ItemListener)) {
                     JCheckBoxMenuItem checkboxItem = (JCheckBoxMenuItem) menuComponent[i];
                     checkboxItem.addItemListener((ItemListener) listener);
                     menu.add(checkboxItem);
                 } else if (menuComponent[i] instanceof JSeparator) {
                     menu.addSeparator();
                 } else if (menuComponent[i] instanceof QuickList) {
-                    Vector list = ((QuickList) menuComponent[i]).getList();
+                    Vector<JMenuItem> list = ((QuickList) menuComponent[i]).getList();
 
                     // save the index of the quicklist here for rebuilding
                     quicklistIndex = menu.getItemCount();
 
                     if (list.size() > 0) {
                         for (int j = 0; j < list.size(); j++) {
-                            menu.add((JMenuItem) list.elementAt(j));
+                            menu.add(list.elementAt(j));
                         }
                     }
-                    this.quickList = (QuickList) menuComponent[i];
 
+                    this.quickList = (QuickList) menuComponent[i];
                 }
             }
 
             menuItemVector.addElement(new MipavMenuItem(menu.getText(), menu));
 
             // if we just built the file menu, save the reference here
-            if ((parentMenu instanceof String) && ((String) parentMenu).equals("File")) {
+            if ( (parentMenu instanceof String) && ((String) parentMenu).equals("File")) {
 
                 // System.err.println("Saved file menu");
                 this.fileMenu = menu;
@@ -905,9 +907,9 @@ public class ViewMenuBuilder {
 
     /**
      * Provides a method of setting the state of specified menu.
-     *
-     * @param  name   The name of the item whose state needs to be set.
-     * @param  state  <code>true</code> sets the menu item active; <code>false</code> sets the menu item inactive.
+     * 
+     * @param name The name of the item whose state needs to be set.
+     * @param state <code>true</code> sets the menu item active; <code>false</code> sets the menu item inactive.
      */
     public void setMenuItemEnabled(String name, boolean state) {
         JMenuItem menuItem;
@@ -915,32 +917,31 @@ public class ViewMenuBuilder {
 
         for (int i = 0; i < menuItemVector.size(); i++) {
 
-            if (((MipavMenuItem) menuItemVector.elementAt(i)).getName().equals(name)) {
-                menuItem = ((MipavMenuItem) (menuItemVector.elementAt(i))).getItem();
+            if (menuItemVector.elementAt(i).getName().equals(name)) {
+                menuItem = menuItemVector.elementAt(i).getItem();
                 menuItem.setEnabled(state);
                 MipavUtil.setComponentsEnabled(menuItem, state);
                 found = true;
             }
         }
 
-        if (!found) {
+        if ( !found) {
             Preferences.debug("Unable to find menu item named " + name + "\n", Preferences.DEBUG_MINOR);
         }
     }
 
     /**
      * Provides a method for changing the status of a checkbox menu item.
-     *
-     * @param  actionCommand  The name of the action command whose state needs to be checked.
-     * @param  val            whether the checkbox should be selected.
+     * 
+     * @param actionCommand The name of the action command whose state needs to be checked.
+     * @param val whether the checkbox should be selected.
      */
     public void setMenuItemSelected(String name, boolean val) {
         JMenuItem menuItem = getMenuItem(name);
         JCheckBoxMenuItem checkItem;
 
         if (menuItem == null) {
-            Preferences.debug("called setSelected on " + name + " which does not exist.\n",
-                              Preferences.DEBUG_MINOR);
+            Preferences.debug("called setSelected on " + name + " which does not exist.\n", Preferences.DEBUG_MINOR);
 
             return;
         }
@@ -948,8 +949,7 @@ public class ViewMenuBuilder {
         try {
             checkItem = (JCheckBoxMenuItem) menuItem;
         } catch (ClassCastException e) {
-            Preferences.debug("called setSelected on " + name + " which is not a checkbox.\n",
-                              Preferences.DEBUG_MINOR);
+            Preferences.debug("called setSelected on " + name + " which is not a checkbox.\n", Preferences.DEBUG_MINOR);
 
             return;
         }
@@ -965,28 +965,29 @@ public class ViewMenuBuilder {
         // and this MUST be changed if new items are added
 
         // System.err.println("Updating quickList");
-        Vector list = quickList.getList();
+        Vector<JMenuItem> list = quickList.getList();
 
         for (int i = 0; i < list.size(); i++) {
-            fileMenu.remove((JMenuItem) list.elementAt(i));
+            fileMenu.remove(list.elementAt(i));
         }
 
         quickList.rebuild();
         list = quickList.getList();
 
         for (int i = 0; i < list.size(); i++) {
-            fileMenu.add((JMenuItem) list.elementAt(i), (quicklistIndex + i));
+            fileMenu.add(list.elementAt(i), (quicklistIndex + i));
         }
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * QuickList class uses Preferences to build a list of the most recently opened images. the frame is passed in for
      * purposes of ActionListener The QuickList is stored as JMenuItems in a Vector that can be retrieved.
-     *
-     * @author   not attributable
-     * @version  1.0
+     * 
+     * @author not attributable
+     * @version 1.0
      */
     public class QuickList extends JComponent {
 
@@ -997,25 +998,25 @@ public class ViewMenuBuilder {
         private ActionListener listener = null;
 
         /** DOCUMENT ME! */
-        private Vector quickListItems = null;
+        private Vector<JMenuItem> quickListItems = null;
 
         /**
          * Creates a new QuickList object.
-         *
-         * @param  listener  DOCUMENT ME!
+         * 
+         * @param listener DOCUMENT ME!
          */
         public QuickList(ActionListener listener) {
             this.listener = listener;
-            this.quickListItems = new Vector();
+            this.quickListItems = new Vector<JMenuItem>();
             rebuild();
         }
 
         /**
          * Returns the vector of quicklist items (JMenuItems w\ actionlistener attached).
-         *
-         * @return  Vector
+         * 
+         * @return Vector
          */
-        public Vector getList() {
+        public Vector<JMenuItem> getList() {
             return this.quickListItems;
         }
 
@@ -1023,14 +1024,13 @@ public class ViewMenuBuilder {
          * Rebuilds the QuickList by calling Preferences.getLastXImages().
          */
         private void rebuild() {
-
-            Enumeration e = quickListItems.elements();
+            Enumeration<JMenuItem> e = quickListItems.elements();
             JMenuItem temp = null;
             ActionListener[] listeners = null;
             int index = 0;
 
             while (e.hasMoreElements()) {
-                temp = (JMenuItem) e.nextElement();
+                temp = e.nextElement();
                 listeners = temp.getActionListeners();
 
                 for (index = 0; index < listeners.length; index++) {
@@ -1045,7 +1045,6 @@ public class ViewMenuBuilder {
             String[] lastImages = Preferences.getLastXImages();
 
             String tempStr;
-
 
             int numDims;
             int length;
@@ -1062,13 +1061,13 @@ public class ViewMenuBuilder {
                     if (tempStr.endsWith("M")) {
                         numDims = Integer.parseInt(tempStr.substring(length - 2, length - 1));
                         tempStr = tempStr.substring(0, tempStr.indexOf(","));
-                        temp = ViewMenuBuilder.buildMenuItem((i + 1) + " " + tempStr, "LastImage " + i, 0, listener,
-                                                             "multifile_" + numDims + "d.gif", true);
+                        temp = ViewMenuBuilder.buildMenuItem( (i + 1) + " " + tempStr, "LastImage " + i, 0, listener,
+                                "multifile_" + numDims + "d.gif", true);
                     } else {
                         numDims = Integer.parseInt(tempStr.substring(length - 1, length));
                         tempStr = tempStr.substring(0, tempStr.indexOf(","));
-                        temp = ViewMenuBuilder.buildMenuItem((i + 1) + " " + tempStr, "LastImage " + i, 0, listener,
-                                                             "singlefile_" + numDims + "d.gif", true);
+                        temp = ViewMenuBuilder.buildMenuItem( (i + 1) + " " + tempStr, "LastImage " + i, 0, listener,
+                                "singlefile_" + numDims + "d.gif", true);
                     }
 
                     temp.setToolTipText(Preferences.getLastImageAt(i));
@@ -1093,9 +1092,9 @@ public class ViewMenuBuilder {
 
         /**
          * Creates a new MipavMenuItem object.
-         *
-         * @param  name  DOCUMENT ME!
-         * @param  item  DOCUMENT ME!
+         * 
+         * @param name DOCUMENT ME!
+         * @param item DOCUMENT ME!
          */
         public MipavMenuItem(String name, JMenuItem item) {
             this.name = name;
@@ -1104,8 +1103,8 @@ public class ViewMenuBuilder {
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public JMenuItem getItem() {
             return this.item;
@@ -1113,13 +1112,11 @@ public class ViewMenuBuilder {
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public String getName() {
             return this.name;
         }
-
-
     }
 }
