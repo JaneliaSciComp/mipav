@@ -559,6 +559,11 @@ public class FileDicomTag extends ModelSerialCloneable {
         if (type.equals("typeString")) {
             String val;
 
+            // convert from byte array to string
+            if (value instanceof byte[]) {
+                value = new String((byte[]) value);
+            }
+
             if (vr.equals("AE")) { // vr: Application Entity
                 val = (String) value;
             } else if (vr.equals("AS")) { // vr: Age String
@@ -582,28 +587,6 @@ public class FileDicomTag extends ModelSerialCloneable {
                 || type.equals("otherByteString")) {
             return;
         } else {
-            // handles dicom tags with integers stored (incorrectly) as 4 byte strings. happens in dicom tags stored in
-            // a minc (or minc2) file
-            if (value instanceof byte[] && type.equals("typeInt")) {
-                final byte[] b = (byte[]) value;
-                int intValue = 0;
-                for (int j = 0; j < 4; j++) {
-                    final int shift = (4 - 1 - j) * 8;
-                    intValue += (b[j] & 0x000000FF) << shift;
-                }
-
-                value = new String("" + intValue);
-            }
-
-            // if the value is a string, replace any ells in it with ones (not sure when this should be the case..)
-            if (value instanceof String) {
-                final String valS = (String) value;
-                for (int i = 0; i < valS.length(); i++) {
-                    valS.replace('l', '1');
-                }
-                value = valS;
-            }
-
             // this made little sense. it required that any number string start with a letter l (otherwise a NPE)
             // occurs. also, it required that the value be a string.
             /*
@@ -614,35 +597,75 @@ public class FileDicomTag extends ModelSerialCloneable {
              * valT.concat("1"); } else { valT = valT.concat(valS.substring(i, i)); } }
              */
 
-            if (type.equals("typeFloat")) {
+            // TODO: might want to add a catch of NumberFormatExceptions to find malformed number strings (likely
+            // composed of the byte equivalents and stored in xxxx,0000 tags)
+            int valueLength = -1;
+            final int vm = tagInfo.getValueMultiplicity();
 
-                if (value instanceof String) {
-                    setValue(Float.valueOf((String) value), 4);
-                } else {
-                    setValue(value, 4);
+            if (value instanceof String) {
+                // if the value is a string, replace any ells in it with ones (not sure when this should be the case..)
+                final String valS = (String) value;
+                for (int i = 0; i < valS.length(); i++) {
+                    valS.replace('l', '1');
                 }
-            } else if (type.equals("typeDouble")) {
+                value = valS;
 
-                if (value instanceof String) {
-                    setValue(Float.valueOf((String) value), 8);
-                } else {
-                    setValue(value, 8);
-                }
-            } else if (type.equals("typeShort")) {
-
-                if (value instanceof String) {
-                    setValue(Short.valueOf((String) value), 2);
-                } else {
-                    setValue(value, 2);
-                }
-            } else if (type.equals("typeInt")) {
-
-                if (value instanceof String) {
-                    setValue(Integer.valueOf((String) value), 4);
-                } else {
-                    setValue(value, 4);
+                if (type.equals("typeFloat")) {
+                    value = Float.valueOf((String) value);
+                } else if (type.equals("typeDouble")) {
+                    value = Double.valueOf((String) value);
+                } else if (type.equals("typeShort")) {
+                    value = Short.valueOf((String) value);
+                } else if (type.equals("typeInt")) {
+                    value = Integer.valueOf((String) value);
                 }
             }
+
+            // TODO: not sure at all that these should always be BIG_ENDIAN. works for example Minc2 files from samir
+            // das, though.
+            if (value instanceof byte[]) {
+                Object[] array = null;
+                if (type.equals("typeFloat")) {
+                    array = FileDicomTag.toFloat((byte[]) value, vm, FileDicomBase.BIG_ENDIAN);
+                } else if (type.equals("typeDouble")) {
+                    array = FileDicomTag.toDouble((byte[]) value, vm, FileDicomBase.BIG_ENDIAN);
+                } else if (type.equals("typeShort")) {
+                    if (vr.equals("US")) {
+                        array = FileDicomTag.toUShort((byte[]) value, vm, FileDicomBase.BIG_ENDIAN);
+                    } else {
+                        array = FileDicomTag.toShort((byte[]) value, vm, FileDicomBase.BIG_ENDIAN);
+                    }
+                } else if (type.equals("typeInt")) {
+                    array = FileDicomTag.toInt((byte[]) value, vm, FileDicomBase.BIG_ENDIAN);
+                }
+
+                if (array != null) {
+                    String str = array[0].toString();
+                    if (vm > 1) {
+                        for (int i = 1; i < vm; i++) {
+                            str += "\\" + array[i];
+                        }
+                    }
+                    value = str;
+                }
+            }
+
+            if (type.equals("typeFloat")) {
+                valueLength = 4;
+            } else if (type.equals("typeDouble")) {
+                valueLength = 8;
+            } else if (type.equals("typeShort")) {
+                valueLength = 2;
+            } else if (type.equals("typeInt")) {
+                valueLength = 4;
+            } else {
+                Preferences.debug("Unrecognized tag type: " + vr + " (" + type + ") -- " + tagInfo.getKey() + "\n",
+                        Preferences.DEBUG_FILEIO);
+                System.err.println("Unrecognized tag type: " + vr + " (" + type + ") -- " + tagInfo.getKey());
+                return;
+            }
+
+            setValue(value, valueLength);
         }
     }
 
@@ -1418,5 +1441,160 @@ public class FileDicomTag extends ModelSerialCloneable {
         }
 
         return newTime.toString();
+    }
+
+    /**
+     * Converts a little-endian byte array into an array of Integers with length equal to the tag vm.
+     * 
+     * @param b The byte array.
+     * @param vm The tag VM.
+     * @param endianess True indicates big endian, false indicates little endian.
+     * @return An Integer array with length vm.
+     */
+    public static final Integer[] toInt(final byte[] b, final int vm, final boolean endianess) {
+        int offset = 0;
+        final Integer[] intArr = new Integer[vm];
+        for (int i = 0; i < vm; i++, offset += 4) {
+            if (endianess == FileDicomBase.BIG_ENDIAN) {
+                intArr[i] = ( (b[offset] & 0xff) << 24) | ( (b[offset + 1] & 0xff) << 16)
+                        | ( (b[offset + 2] & 0xff) << 8) | (b[offset + 3] & 0xff);
+            } else {
+                intArr[i] = ( (b[offset + 3] & 0xff) << 24) | ( (b[offset + 2] & 0xff) << 16)
+                        | ( (b[offset + 1] & 0xff) << 8) | (b[offset] & 0xff);
+            }
+        }
+
+        return intArr;
+    }
+
+    /**
+     * Converts a little-endian byte array into an array of Longs with length equal to the tag vm.
+     * 
+     * @param b The byte array.
+     * @param vm The tag VM.
+     * @param endianess True indicates big endian, false indicates little endian.
+     * @return A Long array with length vm.
+     */
+    public static final Long[] toUInt(final byte[] b, final int vm, final boolean endianess) {
+        int offset = 0;
+        final Long[] intArr = new Long[vm];
+        for (int i = 0; i < vm; i++, offset += 4) {
+            if (endianess == FileDicomBase.BIG_ENDIAN) {
+                intArr[i] = ( (b[offset] & 0xffL) << 24) | ( (b[offset + 1] & 0xffL) << 16)
+                        | ( (b[offset + 2] & 0xffL) << 8) | (b[offset + 3] & 0xffL); // Big Endian
+            } else {
+                intArr[i] = ( (b[offset + 3] & 0xffL) << 24) | ( (b[offset + 2] & 0xffL) << 16)
+                        | ( (b[offset + 1] & 0xffL) << 8) | (b[offset] & 0xffL);
+            }
+        }
+
+        return intArr;
+    }
+
+    /**
+     * Converts a little-endian byte array into an array of Integers with length equal to the tag vm.
+     * 
+     * @param b The byte array.
+     * @param vm The tag VM.
+     * @param endianess True indicates big endian, false indicates little endian.
+     * @return An Integer array (storing short values) with length vm.
+     */
+    public static final Integer[] toShort(final byte[] b, final int vm, final boolean endianess) {
+        int offset = 0;
+        final Integer[] shortArr = new Integer[vm];
+        for (int i = 0; i < vm; i++, offset += 2) {
+            if (endianess == FileDicomBase.BIG_ENDIAN) {
+                shortArr[i] = ( (b[offset] & 0xff) << 8) | (b[offset + 1] & 0xff);
+            } else {
+                shortArr[i] = ( (b[offset + 1] & 0xff) << 8) | (b[offset] & 0xff);
+            }
+
+            // signed
+            if ( (shortArr[i] & 0x0080) != 0) {
+                shortArr[i] = shortArr[i] | 0xff00;
+            }
+        }
+
+        return shortArr;
+    }
+
+    /**
+     * Converts a little-endian byte array into an array of Integers with length equal to the tag vm.
+     * 
+     * @param b The byte array.
+     * @param vm The tag VM.
+     * @param endianess True indicates big endian, false indicates little endian.
+     * @return An Integer array (storing short values) with length vm.
+     */
+    public static final Integer[] toUShort(final byte[] b, final int vm, final boolean endianess) {
+        int offset = 0;
+        final Integer[] shortArr = new Integer[vm];
+        for (int i = 0; i < vm; i++, offset += 2) {
+            if (endianess == FileDicomBase.BIG_ENDIAN) {
+                shortArr[i] = ( (b[offset] & 0xff) << 8) | (b[offset + 1] & 0xff);
+            } else {
+                shortArr[i] = ( (b[offset + 1] & 0xff) << 8) | (b[offset] & 0xff);
+            }
+        }
+
+        return shortArr;
+    }
+
+    /**
+     * Converts a little-endian byte array into an array of Floats with length equal to the tag vm.
+     * 
+     * @param b The byte array.
+     * @param vm The tag VM.
+     * @param endianess True indicates big endian, false indicates little endian.
+     * @return An Float array with length vm.
+     */
+    public static final Float[] toFloat(final byte[] b, final int vm, final boolean endianess) {
+        int offset = 0;
+        final Float[] floatArr = new Float[vm];
+        for (int i = 0; i < vm; i++, offset += 4) {
+            if (endianess == FileDicomBase.BIG_ENDIAN) {
+                floatArr[i] = Float.intBitsToFloat( ( ( (b[offset] & 0xff) << 24) | ( (b[offset + 1] & 0xff) << 16)
+                        | ( (b[offset + 2] & 0xff) << 8) | (b[offset + 3] & 0xff)));
+            } else {
+                floatArr[i] = Float.intBitsToFloat( ( ( (b[offset + 3] & 0xff) << 24) | ( (b[offset + 2] & 0xff) << 16)
+                        | ( (b[offset + 1] & 0xff) << 8) | (b[offset] & 0xff)));
+            }
+        }
+
+        return floatArr;
+    }
+
+    /**
+     * Converts a little-endian byte array into an array of Doubles with length equal to the tag vm.
+     * 
+     * @param b The byte array.
+     * @param vm The tag VM.
+     * @param endianess True indicates big endian, false indicates little endian.
+     * @return An Double array with length vm.
+     */
+    public static final Double[] toDouble(final byte[] b, final int vm, final boolean endianess) {
+        long b1, b2, b3, b4, b5, b6, b7, b8;
+        int offset = 0;
+        final Double[] doubleArr = new Double[vm];
+        for (int i = 0; i < vm; i++, offset += 8) {
+            b1 = (b[offset] & 0xff);
+            b2 = (b[offset + 1] & 0xff);
+            b3 = (b[offset + 2] & 0xff);
+            b4 = (b[offset + 3] & 0xff);
+            b5 = (b[offset + 4] & 0xff);
+            b6 = (b[offset + 5] & 0xff);
+            b7 = (b[offset + 6] & 0xff);
+            b8 = (b[offset + 7] & 0xff);
+
+            if (endianess == FileDicomBase.BIG_ENDIAN) {
+                doubleArr[i] = Double.longBitsToDouble( ( (b1 << 56) | (b2 << 48) | (b3 << 40) | (b4 << 32)
+                        | (b5 << 24) | (b6 << 16) | (b7 << 8) | b8));
+            } else {
+                doubleArr[i] = Double.longBitsToDouble( ( (b8 << 56) | (b7 << 48) | (b6 << 40) | (b5 << 32)
+                        | (b4 << 24) | (b3 << 16) | (b2 << 8) | b1));
+            }
+        }
+
+        return doubleArr;
     }
 }

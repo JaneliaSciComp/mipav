@@ -792,9 +792,12 @@ public class FileMincHDF extends FileBase {
         final String[] varIDString = new String[] {"MINC standard variable"};
         final String[] varTypeString = new String[] {"dimension____"};
         final String[] versionString = new String[] {"MINC Version    1.0"};
-        final String[] commentsString = new String[] {"something goes here"};
+        // TODO: not sure that these comments are accurate all of the time, but they seem to be in every minc2 this way
+        final String[] xcommentsString = new String[] {"X increases from patient left to right"};
+        final String[] ycommentsString = new String[] {"Y increases from patient posterior to anterior"};
+        final String[] zcommentsString = new String[] {"Z increases from patient inferior to superior"};
         final String[] spacingString = new String[] {"regular__"};
-        final String[] spaceTypeString = new String[] {"talairach_"};
+        final String[] spaceTypeString = new String[] {"native____"};
         final String[] alignmentString = new String[] {"centre"};
         String[] unitsString;
 
@@ -909,9 +912,9 @@ public class FileMincHDF extends FileBase {
 
         // comments
 
-        dType = fileFormat.createDatatype(Datatype.CLASS_STRING, commentsString[0].length() + 1, -1, -1);
+        dType = fileFormat.createDatatype(Datatype.CLASS_STRING, xcommentsString[0].length() + 1, -1, -1);
         final Attribute commentsAttr = new Attribute("comments", dType, attrDims);
-        commentsAttr.setValue(commentsString);
+        commentsAttr.setValue(xcommentsString);
         xSpaceObj.writeMetadata(commentsAttr);
 
         // spacing
@@ -987,6 +990,7 @@ public class FileMincHDF extends FileBase {
         ySpaceObj.writeMetadata(versionAttr);
 
         // comments
+        commentsAttr.setValue(ycommentsString);
         ySpaceObj.writeMetadata(commentsAttr);
 
         // spacing
@@ -1047,6 +1051,7 @@ public class FileMincHDF extends FileBase {
             zSpaceObj.writeMetadata(versionAttr);
 
             // comments
+            commentsAttr.setValue(zcommentsString);
             zSpaceObj.writeMetadata(commentsAttr);
 
             // spacing
@@ -1129,6 +1134,17 @@ public class FileMincHDF extends FileBase {
             final Attribute sliceThicknessAttr = new Attribute("slice_thickness", dType, dims);
             sliceThicknessAttr.setValue(new double[] {slice_thickness});
             acquisitionObject.writeMetadata(sliceThicknessAttr);
+        }
+
+        final String modality = FileMinc.getMincModality(image.getFileInfo()[0].getModality());
+        if (modality != null) {
+            final H5ScalarDS studyObject = (H5ScalarDS) fileFormat.createScalarDS("study", infoGroup, datatype, dims,
+                    maxdims, null, 0, null);
+            final Datatype dType = fileFormat.createDatatype(Datatype.CLASS_STRING, modality.length() + 1,
+                    Datatype.NATIVE, -1);
+            final Attribute modalityAttr = new Attribute("modality", dType, dims);
+            modalityAttr.setValue(new String[] {modality});
+            studyObject.writeMetadata(modalityAttr);
         }
 
         // build the dicom nodes
