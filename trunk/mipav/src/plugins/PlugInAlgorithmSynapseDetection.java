@@ -405,10 +405,10 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         blueMask = new BitSet(length);
         blueMask2 = new BitSet(length);
         if (histoInfo) {
-            threePreviousPos = new int[500];
-            twoPreviousPos = new int[500];
-            onePreviousPos = new int[500];
-            presentPos = new int[500];
+            threePreviousPos = new int[1000];
+            twoPreviousPos = new int[1000];
+            onePreviousPos = new int[1000];
+            presentPos = new int[1000];
             colorMask = new BitSet(length);
         }
         threeBandMinXY = redMin + greenMin + blueMinXY;
