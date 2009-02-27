@@ -53,35 +53,37 @@ public class ViewJFrameRegisteredImages extends JFrame
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private JButton callDeletebutton;
+    /** Buttons for dealing with image deletions */
+    private JButton callImageDeleteButton, callImageDeleteAllButton;
 
-    /** DOCUMENT ME! */
-    private JButton callGCbutton;
+    /** Button for dealing with garbage collection */
+    private JButton callGCButton;
 
-    /** DOCUMENT ME! */
-    private JButton callToFrontbutton;
+    /** Button for bringing frame to front */
+    private JButton callFrameToFrontButton;
+    
+    /** Buttons for dealing with frame deletion. */
+    private JButton callFrameDeleteButton, callFrameDeleteAllButton;
 
-    /** DOCUMENT ME! */
+    /** The list of images and frames */
     private JList imageList;
 
-    /** DOCUMENT ME! */
+    /** Button for pausing updating of currently registered images */
     private JButton pauseButton;
 
-    /** DOCUMENT ME! */
+    /** Whether currently registered images list is updating */
     private boolean paused = false; // don't update list when true
 
-    /** DOCUMENT ME! */
+    /** The rate at which to update imageList */
     private JTextField sampleRate; // user control over update period
 
-
-    /** DOCUMENT ME! */
+    /** The scroll pane containing the image list */
     private JScrollPane scrollPane;
 
     /** thread to watch image registry. */
     private ImageRegistryMonitor surf;
 
-    /** DOCUMENT ME! */
+    /** The current user interface */
     private ViewUserInterface UI;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -182,29 +184,14 @@ public class ViewJFrameRegisteredImages extends JFrame
         userPanel.add(pan, BorderLayout.CENTER);
         this.getContentPane().add(userPanel, BorderLayout.CENTER);
 
-        // make buttons, then make button panel
-        callGCbutton = new JButton("Free memory");
-        callGCbutton.setFont(MipavUtil.font12B);
-        callGCbutton.addActionListener(this);
-
-        callDeletebutton = new JButton("Delete image");
-        callDeletebutton.setToolTipText("Delete lost image not in a frame");
-        callDeletebutton.setFont(MipavUtil.font12B);
-        callDeletebutton.addActionListener(this);
-
-        callToFrontbutton = new JButton("Bring to Front");
-        callToFrontbutton.setToolTipText("Brings this image to the front");
-        callToFrontbutton.setFont(MipavUtil.font12B);
-        callToFrontbutton.addActionListener(this);
+        
 
         // The constructor below will work if the Delete button is added...:
         // JPanel buttonPan = new JPanel(new GridLayout(3,1));
         // ...other wise, use the following constructor:
-        JPanel buttonPan = new JPanel(new GridLayout(3, 1));
+        JPanel buttonPan = buildButtonPanel();
 
-        buttonPan.add(callToFrontbutton);
-        buttonPan.add(callDeletebutton);
-        buttonPan.add(callGCbutton);
+        
 
         this.getContentPane().add(buttonPan, BorderLayout.SOUTH);
 
@@ -215,9 +202,64 @@ public class ViewJFrameRegisteredImages extends JFrame
         // start the registry checker
         surf.start();
         setVisible(true);
-        setSize(250, 300);
+        setSize(330, 380);
         validate();
 
+    }
+    
+    private JPanel buildButtonPanel() {
+    	JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
+    	JPanel framePanel = new JPanel(new BorderLayout());
+    	framePanel.setBorder(MipavUtil.buildTitledBorder("Frame Actions"));
+    	
+    	//make buttons for frame panel
+    	callFrameDeleteButton = new JButton("Delete Frame");
+        callFrameDeleteButton.setToolTipText("Delete the selected frame");
+        callFrameDeleteButton.setFont(MipavUtil.font12B);
+        callFrameDeleteButton.addActionListener(this);
+        
+        callFrameDeleteAllButton = new JButton("Delete All Frames");
+        callFrameDeleteAllButton.setToolTipText("Delete all listed frames");
+        callFrameDeleteAllButton.setFont(MipavUtil.font12B);
+        callFrameDeleteAllButton.addActionListener(this);
+        
+        callFrameToFrontButton = new JButton("Bring Frame to Front");
+        callFrameToFrontButton.setToolTipText("Brings the selected frame to the front");
+        callFrameToFrontButton.setFont(MipavUtil.font12B);
+        callFrameToFrontButton.addActionListener(this);
+        
+        framePanel.add(callFrameDeleteButton, BorderLayout.NORTH);
+        framePanel.add(callFrameDeleteAllButton, BorderLayout.CENTER);
+        framePanel.add(callFrameToFrontButton, BorderLayout.SOUTH);
+       
+    	
+        buttonPanel.add(framePanel);
+        
+        JPanel imagePanel = new JPanel(new BorderLayout());
+    	imagePanel.setBorder(MipavUtil.buildTitledBorder("ImageActions"));
+    	
+    	// make buttons for image panel
+        callImageDeleteButton = new JButton("Delete Image");
+        callImageDeleteButton.setToolTipText("Delete the selected image not in a frame");
+        callImageDeleteButton.setFont(MipavUtil.font12B);
+        callImageDeleteButton.addActionListener(this);
+        
+        callImageDeleteAllButton = new JButton("Delete All Images");
+        callImageDeleteAllButton.setToolTipText("Delete all images that are not in frames");
+        callImageDeleteAllButton.setFont(MipavUtil.font12B);
+        callImageDeleteAllButton.addActionListener(this);
+     
+        callGCButton = new JButton("Free memory");
+        callGCButton.setFont(MipavUtil.font12B);
+        callGCButton.addActionListener(this);
+    	
+        imagePanel.add(callImageDeleteButton, BorderLayout.NORTH);
+        imagePanel.add(callImageDeleteAllButton, BorderLayout.CENTER);
+        imagePanel.add(callGCButton, BorderLayout.SOUTH);
+        
+        buttonPanel.add(imagePanel);
+        
+        return buttonPanel;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -234,7 +276,7 @@ public class ViewJFrameRegisteredImages extends JFrame
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
 
-        if (source == pauseButton) {
+        if (source.equals(pauseButton)) {
 
             if (paused) { // if already paused.... change the sample rate, and unpause
                 surf.start();
@@ -245,8 +287,7 @@ public class ViewJFrameRegisteredImages extends JFrame
                 paused = true;
                 pauseButton.setText("Resume");
             }
-        } else if (source == sampleRate) { }
-        else if (source == callGCbutton) { // call the garbage collector
+        } else if (source.equals(callGCButton)) { // call the garbage collector
             Runtime.getRuntime().gc();
             Runtime.getRuntime().runFinalization();
 
@@ -256,39 +297,28 @@ public class ViewJFrameRegisteredImages extends JFrame
 
             ScriptRecorder.getReference().addLine(new ActionCollectGarbage());
             ProvenanceRecorder.getReference().addLine(new ActionCollectGarbage());
-        } else if (source == callDeletebutton) {
+        } else if (source.equals(callImageDeleteButton)) {
 
             // selectedName = get selected item from the list
             String selectedName = (String) imageList.getSelectedValue();
-
-            // System.out.println("selected name = " + selectedName);
-            if (selectedName == null) {
-                return; // log nothing.
-            }
-
-            try {
-                ModelImage image = UI.getRegisteredImageByName(selectedName);
-                ViewJFrameImage frame = UI.getFrameContainingImage(image);
-
-                // Try to recover memory by deleting images that are not
-                // attached to a frame
-                if ((frame == null) && (image != null)) {
-                    image.disposeLocal();
-                }
-
-                Runtime.getRuntime().gc();
-                Runtime.getRuntime().runFinalization();
-            } catch (IllegalArgumentException iae) {
-
-                // MipavUtil.displayError("There was a problem with the " +
-                // "supplied name.\n" );
-                Preferences.debug("Illegal Argument Exception in " +
-                                  "ViewJFrameRegisteredImages when clicking on Delete. " +
-                                  "Somehow the Image list sent an incorrect name to " +
-                                  "the image image hashtable.  \n" + iae.getMessage() + "\n", 1);
-                // System.out.println("Bad argument.");
-            }
-        } else if (source == callToFrontbutton) { // bring image to front
+            deleteItem(selectedName, false);
+            
+        } else if(source.equals(callFrameDeleteButton)) {
+        	
+        	// selectedName = get selected item from the list
+            String selectedName = (String) imageList.getSelectedValue();
+            deleteItem(selectedName, true);
+        		
+    	} else if(source.equals(callImageDeleteAllButton) || source.equals(callFrameDeleteAllButton)) { 
+    		
+    		boolean doFrames = source.equals(callFrameDeleteAllButton);
+    		ListModel imageModel = imageList.getModel();
+    		for(int i=0; i<imageModel.getSize(); i++) {
+    			String name = (String)imageModel.getElementAt(i);
+    			deleteItem(name, doFrames);
+    		}
+    		
+    	} else if (source.equals(callFrameToFrontButton)) { // bring image to front
 
             String selectedName = (String) imageList.getSelectedValue();
 
@@ -311,6 +341,45 @@ public class ViewJFrameRegisteredImages extends JFrame
                                   "the image image hashtable.  \n", 2);
                 System.out.println("Bad argument.");
             }
+        }
+    }
+    
+    /**
+     * Deletes the item specified by name.  If false, only the model image is deleted
+     * @param name the object to delete
+     * @param deleteFrame whether the frame should be deleted along with the image
+     */
+    private void deleteItem(String name, boolean deleteFrame) {
+    	// System.out.println("selected name = " + selectedName);
+        if (name == null) {
+            return; // log nothing.
+        }
+
+        try {
+            ModelImage image = UI.getRegisteredImageByName(name);
+            ViewJFrameImage frame = UI.getFrameContainingImage(image);
+
+            // An image that has a frame is only deleted when deleteFrame == true
+            if (image != null && 
+            		((deleteFrame && frame != null) || (!deleteFrame && frame == null))) {
+                image.disposeLocal();
+                
+                if(deleteFrame && frame != null) {
+                	frame.dispose();
+                }
+            }
+            
+            Runtime.getRuntime().gc();
+            Runtime.getRuntime().runFinalization();
+        } catch (IllegalArgumentException iae) {
+
+            // MipavUtil.displayError("There was a problem with the " +
+            // "supplied name.\n" );
+            Preferences.debug("Illegal Argument Exception in " +
+                              "ViewJFrameRegisteredImages when clicking on Delete. " +
+                              "Somehow the Image list sent an incorrect name to " +
+                              "the image image hashtable.  \n" + iae.getMessage() + "\n", 1);
+            // System.out.println("Bad argument.");
         }
     }
 
