@@ -20,20 +20,20 @@ import java.util.*;
  *           Because these files are very large, buffers must be as few and small as possible.  Maintaining separate
  *           red, green, and blue buffers for the entire program is not feasible because of the large file sizes.
  *           Therefore, all pixels are classified as either BRIGHT_RED, RED, BRIGHT_GREEN, GREEN, BRIGHT_BLUE, BLUE,
- *           or NONE within a single byte buffer.  User specified redIntensity, greenIntensity, and blueIntensity 
- *           are used to separate the BRIGHT_COLOR value from the COLOR value.
+ *           or NONE within a single byte buffer.  User specified redBrightIntensity, greenBrightIntensity, 
+ *           and blueBrightIntensity are used to separate the BRIGHT_COLOR value from the COLOR value.
  *           
  *           Note that when line profiles are taken thru a synapse the red and green have all sorts of
              different shapes but the blue is almost always a distinct 4-24 wide almost rectangular pulse, so the 
-             presence of blue >= blueIntensity is the most significant factor.  A pixel is 
-             counted as BRIGHT_BLUE as long as its blue value is >= blueIntensity even if the red and/or
+             presence of blue >= blueBrightIntensity is the most significant factor.  A pixel is 
+             counted as BRIGHT_BLUE as long as its blue value is >= blueBrightIntensity even if the red and/or
              green values at that pixel location are greater than or equal to the blue value.  This lets the well
-             defined width of the blue band be determined.  If the blue value is < blueIntensity, but the blue value
-             is greater than the red and green values, the pixel is classified as BLUE.  If blue value is less than
-             blueIntensity and the red value is greater than the green and blue values, then the pixel is classified
-             as BRIGHT_RED if red >= redIntensity and as RED if red < redIntensity.  If the blue value is less than
-             blueIntensity and the green value is greater than the red and blue values, then the pixel is classified
-             as BRIGHT_GREEN if green >= greenIntensity and as GREEN if green < greenIntensity.  If none of the above
+             defined width of the blue band be determined.  If the blue value is < blueBrightIntensity, but the blue value
+             is greater than the red and green values and >= blueIntensity, the pixel is classified as BLUE.  
+             If blue value is less than blueBrightIntensity and the red value is greater than the green and blue values,
+             then the pixel is classified as BRIGHT_RED if red >= redBrightIntensity and as RED if red >= redIntensity.
+             If the blue value is less than blueIntensity and the green value is greater than the red and blue values, then the pixel is classified
+             as BRIGHT_GREEN if green >= greenBrightIntensity and as GREEN if green >= greenIntensity.  If none of the above
              conditions is met, then the buffer value is set to NONE.  After a BRIGHT_BLUE or BLUE value has been 
              processed, the buffer value is set to NONE, so that the same BRIGHT_BLUE or BLUE pixel will not be found
              multiple times on line searches in different directions.
@@ -128,11 +128,17 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private int blueMax;
     
     /* Minimum intensity values */
-    private int redIntensity = 55;
+    private int redIntensity = 5;
     
-    private int greenIntensity = 85;
+    private int redBrightIntensity = 55;
     
-    private int blueIntensity = 80;
+    private int greenIntensity = 5;
+    
+    private int greenBrightIntensity = 85;
+    
+    private int blueIntensity = 15;
+    
+    private int blueBrightIntensity = 80;
     
     /** If true, provide histograms of red, green, and blue values along 
      *  detected line segments.
@@ -196,10 +202,6 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private long totalBlueCountSquared = 0;
     private double averageBlueCount;
     private double blueStandardDeviation;
-    private BitSet threePreviousMask = null;
-    private BitSet twoPreviousMask = null;
-    private BitSet onePreviousMask = null;
-    private BitSet presentMask = null;
     private BitSet colorMask = null;
     private float xInit[] = null;
     private float redExtents[] = null;
@@ -213,6 +215,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private int onePreviousPos[] = null;
     private int presentPos[] = null;
     private int presentPosIndex = 0;
+    private boolean favorBlue = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -229,16 +232,19 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
      * @param  blueMinZ       Minimum number of blue pixels along line between slices
      * @param  blueMaxZ       Maximum number of blue pixels along line between slices
      * @param  redIntensity      Minimum red intensity
+     * @param  redBrightIntensity Minimum bright red intensity
      * @param  greenIntensity    Minimum green intensity
+     * @param  greenBrightIntensity Minimum bright green intensity
      * @param  blueIntensity     Minimum blue intensity
+     * @param  blueBrightIntensity Minimum bright blue intensity
      * @param  histoInfo         If true, provide histogram information of red, green, and
      *                           blue values along detected lines
      */
     public PlugInAlgorithmSynapseDetection(ModelImage srcImg, int redMin, int redMax, int greenMin,
                                          int greenMax, int blueMinXY, int blueMaxXY, 
-                                         int blueMinZ, int blueMaxZ, int redIntensity,
-                                         int greenIntensity, int blueIntensity,
-                                         boolean histoInfo) {
+                                         int blueMinZ, int blueMaxZ, int redIntensity, int redBrightIntensity,
+                                         int greenIntensity, int greenBrightIntensity, int blueIntensity,
+                                         int blueBrightIntensity, boolean histoInfo) {
         super(null, srcImg);
         this.redMin = redMin;
         this.redMax = redMax;
@@ -249,8 +255,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         this.blueMinZ = blueMinZ;
         this.blueMaxZ = blueMaxZ;
         this.redIntensity = redIntensity;
+        this.redBrightIntensity = redBrightIntensity;
         this.greenIntensity = greenIntensity;
+        this.greenBrightIntensity = greenBrightIntensity;
         this.blueIntensity = blueIntensity;
+        this.blueBrightIntensity = blueBrightIntensity;
         this.histoInfo = histoInfo;
     }
 
@@ -372,22 +381,22 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
             red = buffer[pos] & 0xff;
             green = greenBuffer[pos] & 0xff;
             blue = blueBuffer[pos] & 0xff;
-            if (blue >= blueIntensity) {
+            if (blue >= blueBrightIntensity) {
                 buffer[pos] = BRIGHT_BLUE;
             }
-            else if ((blue > red) && (blue > green)) {
+            else if ((blue > red) && (blue > green) && (blue >= blueIntensity)) {
                 buffer[pos] = BLUE;
             }
-            else if ((red > green) && (red > blue)) {
-                if (red >= redIntensity) {
+            else if ((red > green) && (red > blue) && (red >= redIntensity)) {
+                if (red >= redBrightIntensity) {
                     buffer[pos] = BRIGHT_RED;
                 }
                 else {
                     buffer[pos] = RED;
                 }
             }
-            else if ((green > red) && (green > blue)) {
-                if (green >= greenIntensity) {
+            else if ((green > red) && (green > blue) && (green >= greenIntensity)) {
+                if (green >= greenBrightIntensity) {
                     buffer[pos] = BRIGHT_GREEN;
                 }
                 else {
@@ -397,6 +406,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
             else {
                 buffer[pos] = NONE;
             }
+           
         } // for (pos = 0; pos < length; pos++)
            
         greenBuffer = null;
