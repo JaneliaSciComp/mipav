@@ -24,18 +24,88 @@ void p_SurfaceExtract()
     vec4 color[8];
     float opacity = 0.0;
     int iShow = 8;
-    for ( int i = 0; i < 8; i++ )
+
+    color[0] = texture3D(bVolumeImageA_TEXUNIT1,cube[0]);
+    opacity = texture1D(dOpacityMapA_TEXUNIT3,color[0].r).r;
+    if ( opacity <= 0.0 )
     {
-        color[i] = texture3D(bVolumeImageA_TEXUNIT1,cube[i]);
-        opacity = texture1D(dOpacityMapA_TEXUNIT3,color[i].r).r;
-        if ( opacity <= 0.0 )
-        {
-            color[i].r = 0.0;
-            color[i].g = 0.0;
-            color[i].b = 0.0;
-            iShow--;
-        }
+        color[0].r = 0.0;
+        color[0].g = 0.0;
+        color[0].b = 0.0;
+        iShow--;
     }
+
+    color[1] = texture3D(bVolumeImageA_TEXUNIT1,cube[1]);
+    opacity = texture1D(dOpacityMapA_TEXUNIT3,color[1].r).r;
+    if ( opacity <= 0.0 )
+    {
+        color[1].r = 0.0;
+        color[1].g = 0.0;
+        color[1].b = 0.0;
+        iShow--;
+    }
+
+    color[2] = texture3D(bVolumeImageA_TEXUNIT1,cube[2]);
+    opacity = texture1D(dOpacityMapA_TEXUNIT3,color[2].r).r;
+    if ( opacity <= 0.0 )
+    {
+        color[2].r = 0.0;
+        color[2].g = 0.0;
+        color[2].b = 0.0;
+        iShow--;
+    }
+
+    color[3] = texture3D(bVolumeImageA_TEXUNIT1,cube[3]);
+    opacity = texture1D(dOpacityMapA_TEXUNIT3,color[3].r).r;
+    if ( opacity <= 0.0 )
+    {
+        color[3].r = 0.0;
+        color[3].g = 0.0;
+        color[3].b = 0.0;
+        iShow--;
+    }
+
+    color[4] = texture3D(bVolumeImageA_TEXUNIT1,cube[4]);
+    opacity = texture1D(dOpacityMapA_TEXUNIT3,color[4].r).r;
+    if ( opacity <= 0.0 )
+    {
+        color[4].r = 0.0;
+        color[4].g = 0.0;
+        color[4].b = 0.0;
+        iShow--;
+    }
+
+
+    color[5] = texture3D(bVolumeImageA_TEXUNIT1,cube[5]);
+    opacity = texture1D(dOpacityMapA_TEXUNIT3,color[5].r).r;
+    if ( opacity <= 0.0 )
+    {
+        color[5].r = 0.0;
+        color[5].g = 0.0;
+        color[5].b = 0.0;
+        iShow--;
+    }
+
+    color[6] = texture3D(bVolumeImageA_TEXUNIT1,cube[6]);
+    opacity = texture1D(dOpacityMapA_TEXUNIT3,color[6].r).r;
+    if ( opacity <= 0.0 )
+    {
+        color[6].r = 0.0;
+        color[6].g = 0.0;
+        color[6].b = 0.0;
+        iShow--;
+    }
+
+    color[7] = texture3D(bVolumeImageA_TEXUNIT1,cube[7]);
+    opacity = texture1D(dOpacityMapA_TEXUNIT3,color[7].r).r;
+    if ( opacity <= 0.0 )
+    {
+        color[7].r = 0.0;
+        color[7].g = 0.0;
+        color[7].b = 0.0;
+        iShow--;
+    }
+
 
     gl_FragColor.r = color[0].r;
     gl_FragColor.g = color[0].g;

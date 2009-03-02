@@ -78,7 +78,6 @@ public class VolumeImageCrop extends VolumeImageViewer
 
     public void dispose(GLAutoDrawable arg0)
     {
-        m_kClipEffect.dispose();
         m_kClipEffect = null;
         super.dispose(arg0);
     }

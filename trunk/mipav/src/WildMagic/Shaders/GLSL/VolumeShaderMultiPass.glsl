@@ -582,8 +582,7 @@ void p_VolumeShaderMultiPass()
     vec3 back_position  = texture2D(aSceneImage_TEXUNIT0, texc).xyz;
 
 
-    //if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
-    if ( back_position == 0.0 )
+    if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
     {
         gl_FragColor = BackgroundColor;
         return;

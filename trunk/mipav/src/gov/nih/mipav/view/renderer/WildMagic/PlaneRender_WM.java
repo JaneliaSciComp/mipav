@@ -256,6 +256,7 @@ public class PlaneRender_WM extends GPURenderBase
         {
             init(arg0);
         }
+
         m_bModified = false;   
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
@@ -570,7 +571,7 @@ public class PlaneRender_WM extends GPURenderBase
     public void SetModified ( boolean bModified )
     {
         m_bModified = bModified;
-        GetCanvas().display();
+        //GetCanvas().display();
     }
 
     /**
