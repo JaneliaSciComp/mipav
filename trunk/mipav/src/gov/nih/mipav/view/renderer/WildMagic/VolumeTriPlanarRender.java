@@ -407,6 +407,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             m_kVolumeRayCast.setVolumeSamples( (m_kVolumeImageA.GetImage().getExtents()[2]*2.0f)/1000.0f );
             CMPMode();
+            m_kAnimator.setRunAsFastAsPossible(true); 
         }
         if ( m_bSurfaceUpdate )
         {
@@ -938,7 +939,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
         m_kAnimator.add( GetCanvas() );
         m_kAnimator = new Animator( GetCanvas() );
-        m_kAnimator.setRunAsFastAsPossible(true); 
         m_kAnimator.start();
     }
     
