@@ -492,7 +492,7 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Synapse Detection  02/27/09");
+        setTitle("Synapse Detection  03/02/09");
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
@@ -888,8 +888,8 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         tmpStr = redBrightIntensityText.getText();
         redBrightIntensity = Integer.parseInt(tmpStr);
 
-        if (redBrightIntensity < redIntensity + 1) {
-            MipavUtil.displayError("red bright intensity must be at least red intensity + 1");
+        if (redBrightIntensity < redIntensity) {
+            MipavUtil.displayError("red bright intensity must be at least red intensity");
             redBrightIntensityText.requestFocus();
             redBrightIntensityText.selectAll();
 
@@ -922,8 +922,8 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         tmpStr = greenBrightIntensityText.getText();
         greenBrightIntensity = Integer.parseInt(tmpStr);
 
-        if (greenBrightIntensity < greenIntensity + 1) {
-            MipavUtil.displayError("green bright intensity must be at least green intensity + 1");
+        if (greenBrightIntensity < greenIntensity) {
+            MipavUtil.displayError("green bright intensity must be at least green intensity");
             greenBrightIntensityText.requestFocus();
             greenBrightIntensityText.selectAll();
 
@@ -956,8 +956,8 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         tmpStr = blueBrightIntensityText.getText();
         blueBrightIntensity = Integer.parseInt(tmpStr);
 
-        if (blueBrightIntensity < blueIntensity + 1) {
-            MipavUtil.displayError("blue bright intensity must be at least blue intensity + 1");
+        if (blueBrightIntensity < blueIntensity) {
+            MipavUtil.displayError("blue bright intensity must be at least blue intensity");
             blueBrightIntensityText.requestFocus();
             blueBrightIntensityText.selectAll();
 
