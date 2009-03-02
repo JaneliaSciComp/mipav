@@ -12,7 +12,7 @@ import java.util.*;
 
 /**
  *
- * @version  February 27, 2009
+ * @version  March 2, 2009
  * @author   William Gandler
  * @see      AlgorithmBase
  *
@@ -59,7 +59,10 @@ import java.util.*;
              and the blue band must have at least one BRIGHT_BLUE pixel.  The widths of these bands is must fall within user
              specified minimum and maximum values.  For red and green, the user specifies redMin, redMax, greenMin, and 
              greenMax.  For the blue band lines within planes must fall within blueMinXY and blueMaxXY limits, and lines that
-             cross planes must fall within blueMinZ and blueMaxZ limits.
+             cross planes must fall within blueMinZ and blueMaxZ limits.  Note that redBrightIntensity and redIntensity can be
+             set at the same value, greenBrightIntensity and greenIntensity can be set at the same value, and
+             blueBrightIntensity and blueIntensity can be set at the same value.  If the BrightIntensity and Intensity 
+             values are the same, then the sofware treats all values as if they are BrightIntensity values.
              
              If a red, blue, green or green, blue, red sequence meets the intensity and width requirements, then a find is
              initially declared at the center of the blue band.  However, this initial find could be at the edge rather than
