@@ -478,6 +478,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
 
         DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
         int iSize = kList.getSize();
+        System.err.println("iSize = " + iSize);
         kList.add(iSize, new String("FiberBundle" + m_iBundleCount));
         m_kTractList.setSelectedIndex(iSize);
     }
@@ -720,12 +721,13 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
         int iHeaderLength = (new String("FiberBundle")).length();
 
-        for (int i = 0; i < aiSelected.length; i++) {
+        for (int i = aiSelected.length-1; i >= 0; i--) {
             if (m_kVolumeDisplay != null) {
-                String kName = ((String) (kList.elementAt(aiSelected[i])));
+            	String kName = ((String) (kList.elementAt(aiSelected[i])));
                 int iLength = kName.length();
                 int iGroup = (new Integer(kName.substring(iHeaderLength,
                         iLength))).intValue();
+                start = 0;
                 if ( (aiSelected[i] - 1) != -1 ) {
                     kName = ((String) (kList.elementAt((aiSelected[i] - 1))));
                     iLength = kName.length();
@@ -747,6 +749,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
 			}
 			m_kDTIImage = null;
              */
+        
         } else {
             m_kTractList.setSelectedIndex(kList.size());
         }
