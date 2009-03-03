@@ -12,7 +12,7 @@ import java.util.*;
 
 /**
  *
- * @version  March 2, 2009
+ * @version  March 3, 2009
  * @author   William Gandler
  * @see      AlgorithmBase
  *
@@ -24,7 +24,7 @@ import java.util.*;
  *           and blueBrightIntensity are used to separate the BRIGHT_COLOR value from the COLOR value.
  *           
  *           Note that when line profiles are taken thru a synapse the red and green have all sorts of
-             different shapes but the blue is almost always a distinct 4-24 wide almost rectangular pulse, so the 
+             different shapes but the blue is almost always a distinct almost rectangular pulse, so the 
              presence of blue >= blueBrightIntensity is the most significant factor.  A pixel is 
              counted as BRIGHT_BLUE as long as its blue value is >= blueBrightIntensity even if the red and/or
              green values at that pixel location are greater than or equal to the blue value.  This lets the well
@@ -65,13 +65,24 @@ import java.util.*;
              values are the same, then the sofware treats all values as if they are BrightIntensity values.
              
              If a red, blue, green or green, blue, red sequence meets the intensity and width requirements, then a find is
-             initially declared at the center of the blue band.  However, this initial find could be at the edge rather than
-             the center of the blue portion of the synapse.  So a search of 26 connected BRIGHT_BLUE and BLUE neighbors is
-             conducted around the initial blue find within a block of width 2 * blueMaxXY - 1, length 2 * blueMaxXY - 1, and
-             height 2 * blueMaxZ - 1.  The center of the 26 connected BRIGHT_BLUE and BLUE neighbors within this block is 
+             initially declared at the center of the blue band.  There are 2 possible cases.  The first is when the blueFraction 
+             is small, blueFraction < 0.05.  bigBlueFraction is precalculated as true or false in the dialog.  if bigBlueFraction = false,
+             the entire blue region can be assumed to be small and the entire blue region can be found with iterations of a 26
+             neighbor grow.  For this 26 neighbor grow minimumXYSep = blueMaxXY
+             and minimumZSep = blueMaxZ, the maximum blue band widths.  In this case the minimumXYSep and minimumZSep do not
+             appear in the dialog.  A search of 26 connected BRIGHT_BLUE and BLUE neighbors is
+             conducted around the initial blue find within a block of width 2 * minimumXYSep - 1, length 2 * minimumXYSep - 1, and
+             height 2 * minimumZsep - 1.  The center of the 26 connected BRIGHT_BLUE and BLUE neighbors within this block is 
              calculated and the center is used as the location of the point VOI for the synapse.  The values of the initial
              BRIGHT_BLUE or BLUE pixel and of all 26 connected BRIGHT_BLUE and BLUE pixels is set to NONE so that the same
              synapse will not be found again on another line search thru the same pixel in a different direction.  
+             
+             The second case if when the blueFraction >= 0.05.  In this case it is not possible to grow the entire blue region.
+             So a 26 neighbor grow will simply be performed for a user set arbitrary number of iterations to set BRIGHT_BLUE
+             and BLUE 26 connected neighbor pixels to NONE.  In this case the blue synapse center will always simply be taken
+             as the initial find location.  For bigBlueFraction = TRUE the dialog lets the user set minimumXYSep
+             and minimumZSep, the minimum x, y, and z distances between 2 blue synapse centers in the same blue region.  Because 
+             the blue region cannot be fully grown, in this case the blue pixel count of the synapse cannot be determined.
              
              For the redIntensity, greenIntensity, and blueIntensity I opened your file of contours around synapses Synapse100.xml
              on the image SynapseSpotted_d_RedGreenL4_L23_090105_1_to_59Crop3_enhanced.tif.  I drew one line segment thru each
@@ -127,8 +138,15 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     
     private int blueMaxZ = 20;
     
-    // Maximum of blueMaxXY and blueMaxZ;
-    private int blueMax;
+//  true if blueFraction >= 0.05
+    private boolean bigBlueFraction = false;
+    // Minimum x and y distances between blue centers of synapses
+    private int minimumXYSep;
+    // Minimum z distances between blue centers of synapses
+    private int minimumZSep;    
+    
+    // Maximum of minmumXYSep and minimumZSep
+    private int minimumSep;
     
     /* Minimum intensity values */
     private int redIntensity = 5;
@@ -210,15 +228,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private float redExtents[] = null;
     private float greenExtents[] = null;
     private float blueExtents[] = null;
-    private ViewJFrameGraph redGraph = null;
-    private ViewJFrameGraph greenGraph = null;
-    private ViewJFrameGraph blueGraph = null;
     private int threePreviousPos[] = null;
     private int twoPreviousPos[] = null;
     private int onePreviousPos[] = null;
     private int presentPos[] = null;
-    private int presentPosIndex = 0;
-    private boolean favorBlue = false;
+    private int presentPosIndex = 0;                                                                                                                     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -234,6 +248,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
      * @param  blueMaxXY      Maximum number of blue pixels along line within a slice
      * @param  blueMinZ       Minimum number of blue pixels along line between slices
      * @param  blueMaxZ       Maximum number of blue pixels along line between slices
+     * @param  bigBlueFraction true if blueFraction >= 0.05
+     * @param  minimumXYSep   Minimum x and y distances between blue centers of synapses
+     * @param  minimumZSep    Minimum z distances between blue centers of synapses
      * @param  redIntensity      Minimum red intensity
      * @param  redBrightIntensity Minimum bright red intensity
      * @param  greenIntensity    Minimum green intensity
@@ -245,7 +262,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
      */
     public PlugInAlgorithmSynapseDetection(ModelImage srcImg, int redMin, int redMax, int greenMin,
                                          int greenMax, int blueMinXY, int blueMaxXY, 
-                                         int blueMinZ, int blueMaxZ, int redIntensity, int redBrightIntensity,
+                                         int blueMinZ, int blueMaxZ, boolean bigBlueFraction,
+                                         int minimumXYSep, int minimumZSep,
+                                         int redIntensity, int redBrightIntensity,
                                          int greenIntensity, int greenBrightIntensity, int blueIntensity,
                                          int blueBrightIntensity, boolean histoInfo) {
         super(null, srcImg);
@@ -257,6 +276,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         this.blueMaxXY = blueMaxXY;
         this.blueMinZ = blueMinZ;
         this.blueMaxZ = blueMaxZ;
+        this.bigBlueFraction = bigBlueFraction;
+        this.minimumXYSep = minimumXYSep;
+        this.minimumZSep = minimumZSep;
         this.redIntensity = redIntensity;
         this.redBrightIntensity = redBrightIntensity;
         this.greenIntensity = greenIntensity;
@@ -339,7 +361,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
 
         time = System.currentTimeMillis();
         
-        blueMax = Math.max(blueMaxXY, blueMaxZ);
+        minimumSep = Math.max(minimumXYSep, minimumZSep);
         
         try {
             srcImage.exportRGBData(1, 0, length, buffer); // export red data
@@ -426,7 +448,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         }
         threeBandMinXY = redMin + greenMin + blueMinXY;
         threeBandMinZ = redMin + greenMin + blueMinZ;
-        dataString = "Index     x         y         z         count\n\n";
+        if (bigBlueFraction) {
+            dataString = "Index     x         y         z\n\n";    
+        }
+        else {
+            dataString = "Index     x         y         z         count\n\n";
+        }
         
         // Search along all lines parallel to x axis
         dataString += ("Searching parallel to x axis\n");
@@ -3382,13 +3409,15 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         System.out.println("Total synapses found = " + numSynapses);
         Preferences.debug("Total synapses found = " + numSynapses + "\n");
         dataString += "\nTotal synapses found = " + numSynapses + "\n";
-        dataString += "Minimum blue count = " + minimumBlueCount + "\n";
-        dataString += "Maximum blue count = " + maximumBlueCount + "\n";
-        averageBlueCount = (double)totalBlueCount/numSynapses;
-        dataString += "Average blue count = " + String.format("%.2f\n",averageBlueCount);
-        blueStandardDeviation = (totalBlueCountSquared - (double)totalBlueCount * (double)totalBlueCount/numSynapses)/(numSynapses - 1);
-        blueStandardDeviation = Math.sqrt(blueStandardDeviation);
-        dataString += "Blue count standard deviation = " + String.format("%.2f\n",blueStandardDeviation);
+        if (!bigBlueFraction) {
+            dataString += "Minimum blue count = " + minimumBlueCount + "\n";
+            dataString += "Maximum blue count = " + maximumBlueCount + "\n";
+            averageBlueCount = (double)totalBlueCount/numSynapses;
+            dataString += "Average blue count = " + String.format("%.2f\n",averageBlueCount);
+            blueStandardDeviation = (totalBlueCountSquared - (double)totalBlueCount * (double)totalBlueCount/numSynapses)/(numSynapses - 1);
+            blueStandardDeviation = Math.sqrt(blueStandardDeviation);
+            dataString += "Blue count standard deviation = " + String.format("%.2f\n",blueStandardDeviation);
+        } // if (!bigBlueFraction)
         fileDirectory = srcImage.getImageDirectory();
         fileName = srcImage.getImageName() + ".txt";
         file = new File(fileDirectory + fileName);
@@ -3498,9 +3527,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
             for (i = 0; i < 256; i++) {
                 xInit[i] = (float)i;
             }
-            redGraph = new ViewJFrameGraph(xInit, redExtents, "RED", "Intensity", "Count", Color.RED);
-            greenGraph = new ViewJFrameGraph(xInit, greenExtents, "GREEN", "Intensity", "Count", Color.GREEN);
-            blueGraph = new ViewJFrameGraph(xInit, blueExtents, "BLUE", "Intensity", "Count", Color.BLUE);
+            new ViewJFrameGraph(xInit, redExtents, "RED", "Intensity", "Count", Color.RED);
+            new ViewJFrameGraph(xInit, greenExtents, "GREEN", "Intensity", "Count", Color.GREEN);
+            new ViewJFrameGraph(xInit, blueExtents, "BLUE", "Intensity", "Count", Color.BLUE);
         } // if (histoInfo)
         buffer = null;
         new ViewJFrameImage(maskImage);
@@ -3619,11 +3648,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         centerBlueY = blueY;
         centerBlueZ = blueZ;
         blueCount = 1;
-        while (change && (del <= blueMax - 2)) {
+        while (change && (del <= minimumSep - 2)) {
             change = false;
             del++;
-            delXY = Math.min(blueMaxXY-1, del);
-            delZ = Math.min(blueMaxZ-1, del);
+            delXY = Math.min(minimumXYSep-1, del);
+            delZ = Math.min(minimumZSep-1, del);
             xLow = Math.max(0, blueX-delXY);
             xHigh = Math.min(xDim-1, blueX + delXY);
             yLow = Math.max(0, blueY-delXY);
@@ -3642,260 +3671,312 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                 blueMask.set(i-1);
                                 blueMask2.set(i-1);
                                 change = true;
-                                centerBlueX += (x - 1);
-                                centerBlueY += y;
-                                centerBlueZ += z;
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x - 1);
+                                    centerBlueY += y;
+                                    centerBlueZ += z;
+                                    blueCount++;
+                                }
                             }
                             if ((x < xDim - 1) && (!blueMask.get(i+1)) && ((buffer[i+1] == BRIGHT_BLUE) || (buffer[i+1] == BLUE))) {
                                 buffer[i+1] = NONE;
                                 blueMask.set(i+1);
                                 blueMask2.set(i+1);
                                 change = true;
-                                centerBlueX += (x + 1);
-                                centerBlueY += y;
-                                centerBlueZ += z;
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x + 1);
+                                    centerBlueY += y;
+                                    centerBlueZ += z;
+                                    blueCount++;
+                                }
                             }
                             if ((y > 0)&& (!blueMask.get(i-xDim)) && ((buffer[i-xDim] == BRIGHT_BLUE) || (buffer[i-xDim] == BLUE))) {
                                 buffer[i-xDim] = NONE;
                                 blueMask.set(i-xDim);
                                 blueMask2.set(i-xDim);
                                 change = true;
-                                centerBlueX += x;
-                                centerBlueY += (y - 1);
-                                centerBlueZ += z;
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += x;
+                                    centerBlueY += (y - 1);
+                                    centerBlueZ += z;
+                                    blueCount++;
+                                }
                             }
                             if ((y < yDim - 1) && (!blueMask.get(i+xDim)) && ((buffer[i+xDim] == BRIGHT_BLUE) || (buffer[i+xDim] == BLUE))) {
                                 buffer[i+xDim] = NONE;
                                 blueMask.set(i+xDim);
                                 blueMask2.set(i+xDim);
                                 change = true;
-                                centerBlueX += x;
-                                centerBlueY += (y + 1);
-                                centerBlueZ += z;
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += x;
+                                    centerBlueY += (y + 1);
+                                    centerBlueZ += z;
+                                    blueCount++;
+                                }
                             }
                             if ((z > 0) && (!blueMask.get(i-xySlice)) && ((buffer[i-xySlice] == BRIGHT_BLUE) || (buffer[i-xySlice] == BLUE))) {
                                 buffer[i-xySlice] = NONE;
                                 blueMask.set(i-xySlice);
                                 blueMask2.set(i-xySlice);
                                 change = true;
-                                centerBlueX += x;
-                                centerBlueY += y;
-                                centerBlueZ += (z - 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += x;
+                                    centerBlueY += y;
+                                    centerBlueZ += (z - 1);
+                                    blueCount++;
+                                }
                             }
                             if ((z < zDim - 1) && (!blueMask.get(i+xySlice)) && ((buffer[i+xySlice] == BRIGHT_BLUE) || (buffer[i+xySlice] == BLUE))) {
                                 buffer[i+xySlice] = NONE;
                                 blueMask.set(i+xySlice);
                                 blueMask2.set(i+xySlice);
                                 change = true;
-                                centerBlueX += x;
-                                centerBlueY += y;
-                                centerBlueZ += (z + 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += x;
+                                    centerBlueY += y;
+                                    centerBlueZ += (z + 1);
+                                    blueCount++;
+                                }
                             }
                             if ((x > 0) && (y > 0) && (!blueMask.get(i-xDim-1)) && ((buffer[i-xDim-1] == BRIGHT_BLUE) || (buffer[i-xDim-1] == BLUE))) {
                                 buffer[i-xDim-1] = NONE;
                                 blueMask.set(i-xDim-1);
                                 blueMask2.set(i-xDim-1);
                                 change = true;
-                                centerBlueX += (x - 1);
-                                centerBlueY += (y - 1);
-                                centerBlueZ += z;
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x - 1);
+                                    centerBlueY += (y - 1);
+                                    centerBlueZ += z;
+                                    blueCount++;
+                                }
                             }
                             if ((x > 0) && (y < yDim - 1) && (!blueMask.get(i+xDim-1)) && ((buffer[i+xDim-1] == BRIGHT_BLUE) || (buffer[i+xDim-1] == BLUE))) {
                                 buffer[i+xDim-1] = NONE;
                                 blueMask.set(i+xDim-1);
                                 blueMask2.set(i+xDim-1);
                                 change = true;
-                                centerBlueX += (x - 1);
-                                centerBlueY += (y + 1);
-                                centerBlueZ += z;
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x - 1);
+                                    centerBlueY += (y + 1);
+                                    centerBlueZ += z;
+                                    blueCount++;
+                                }
                             }
                             if ((x < xDim-1) && (y > 0) && (!blueMask.get(i-xDim+1)) && ((buffer[i-xDim+1] == BRIGHT_BLUE) || (buffer[i-xDim+1] == BLUE))) {
                                 buffer[i-xDim+1] = NONE;
                                 blueMask.set(i-xDim+1);
                                 blueMask2.set(i-xDim+1);
                                 change = true;
-                                centerBlueX += (x + 1);
-                                centerBlueY += (y - 1);
-                                centerBlueZ += z;
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x + 1);
+                                    centerBlueY += (y - 1);
+                                    centerBlueZ += z;
+                                    blueCount++;
+                                }
                             }
                             if ((x < xDim - 1) && (y < yDim - 1) && (!blueMask.get(i+xDim+1)) && ((buffer[i+xDim+1] == BRIGHT_BLUE) || (buffer[i+xDim+1] == BLUE))) {
                                 buffer[i+xDim+1] = NONE;
                                 blueMask.set(i+xDim+1);
                                 blueMask2.set(i+xDim+1);
                                 change = true;
-                                centerBlueX += (x + 1);
-                                centerBlueY += (y + 1);
-                                centerBlueZ += z;
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x + 1);
+                                    centerBlueY += (y + 1);
+                                    centerBlueZ += z;
+                                    blueCount++;
+                                }
                             }
                             if ((x > 0) && (z > 0) && (!blueMask.get(i-xySlice-1)) && ((buffer[i-xySlice-1] == BRIGHT_BLUE) || (buffer[i-xySlice-1] == BLUE))) {
                                 buffer[i-xySlice-1] = NONE;
                                 blueMask.set(i-xySlice-1);
                                 blueMask2.set(i-xySlice-1);
                                 change = true;
-                                centerBlueX += (x - 1);
-                                centerBlueY += y;
-                                centerBlueZ += (z - 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x - 1);
+                                    centerBlueY += y;
+                                    centerBlueZ += (z - 1);
+                                    blueCount++;
+                                }
                             }
                             if ((x > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-1)) && ((buffer[i+xySlice-1] == BRIGHT_BLUE) || (buffer[i+xySlice-1] == BLUE))) {
                                 buffer[i+xySlice-1] = NONE;
                                 blueMask.set(i+xySlice-1);
                                 blueMask2.set(i+xySlice-1);
                                 change = true;
-                                centerBlueX += (x - 1);
-                                centerBlueY += y;
-                                centerBlueZ += (z + 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x - 1);
+                                    centerBlueY += y;
+                                    centerBlueZ += (z + 1);
+                                    blueCount++;
+                                }
                             }
                             if ((x < xDim-1) && (z > 0) && (!blueMask.get(i-xySlice+1)) && ((buffer[i-xySlice+1] == BRIGHT_BLUE) || (buffer[i-xySlice+1] == BLUE))) {
                                 buffer[i-xySlice+1] = NONE;
                                 blueMask.set(i-xySlice+1);
                                 blueMask2.set(i-xySlice+1);
                                 change = true;
-                                centerBlueX += (x + 1);
-                                centerBlueY += y;
-                                centerBlueZ += (z - 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x + 1);
+                                    centerBlueY += y;
+                                    centerBlueZ += (z - 1);
+                                    blueCount++;
+                                }
                             }
                             if ((x < xDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+1)) && ((buffer[i+xySlice+1] == BRIGHT_BLUE) || (buffer[i+xySlice+1] == BLUE))) {
                                 buffer[i+xySlice+1] = NONE;
                                 blueMask.set(i+xySlice+1);
                                 blueMask2.set(i+xySlice+1);
                                 change = true;
-                                centerBlueX += (x + 1);
-                                centerBlueY += y;
-                                centerBlueZ += (z + 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x + 1);
+                                    centerBlueY += y;
+                                    centerBlueZ += (z + 1);
+                                    blueCount++;
+                                }
                             }
                             if ((y > 0) && (z > 0) && (!blueMask.get(i-xySlice-xDim)) && ((buffer[i-xySlice-xDim] == BRIGHT_BLUE) || (buffer[i-xySlice-xDim] == BLUE))) {
                                 buffer[i-xySlice-xDim] = NONE;
                                 blueMask.set(i-xySlice-xDim);
                                 blueMask2.set(i-xySlice-xDim);
                                 change = true;
-                                centerBlueX += x;
-                                centerBlueY += (y - 1);
-                                centerBlueZ += (z - 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += x;
+                                    centerBlueY += (y - 1);
+                                    centerBlueZ += (z - 1);
+                                    blueCount++;
+                                }
                             }
                             if ((y > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-xDim)) && ((buffer[i+xySlice-xDim] == BRIGHT_BLUE) || (buffer[i+xySlice-xDim] == BLUE))) {
                                 buffer[i+xySlice-xDim] = NONE;
                                 blueMask.set(i+xySlice-xDim);
                                 blueMask2.set(i+xySlice-xDim);
                                 change = true;
-                                centerBlueX += x;
-                                centerBlueY += (y - 1);
-                                centerBlueZ += (z + 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += x;
+                                    centerBlueY += (y - 1);
+                                    centerBlueZ += (z + 1);
+                                    blueCount++;
+                                }
                             }
                             if ((y < yDim-1) && (z > 0) && (!blueMask.get(i-xySlice+xDim)) && ((buffer[i-xySlice+xDim] == BRIGHT_BLUE) || (buffer[i-xySlice+xDim] == BLUE))) {
                                 buffer[i-xySlice+xDim] = NONE;
                                 blueMask.set(i-xySlice+xDim);
                                 blueMask2.set(i-xySlice+xDim);
                                 change = true;
-                                centerBlueX += x;
-                                centerBlueY += (y + 1);
-                                centerBlueZ += (z - 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += x;
+                                    centerBlueY += (y + 1);
+                                    centerBlueZ += (z - 1);
+                                    blueCount++;
+                                }
                             }
                             if ((y < yDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+xDim)) && ((buffer[i+xySlice+xDim] == BRIGHT_BLUE) || (buffer[i+xySlice+xDim] == BLUE))) {
                                 buffer[i+xySlice+xDim] = NONE;
                                 blueMask.set(i+xySlice+xDim);
                                 blueMask2.set(i+xySlice+xDim);
                                 change = true;
-                                centerBlueX += x;
-                                centerBlueY += (y + 1);
-                                centerBlueZ += (z + 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += x;
+                                    centerBlueY += (y + 1);
+                                    centerBlueZ += (z + 1);
+                                    blueCount++;
+                                }
                             }
                             if ((x > 0) && (y > 0) && (z > 0)&& (!blueMask.get(i-xySlice-xDim-1)) && ((buffer[i-xySlice-xDim-1] == BRIGHT_BLUE) || (buffer[i-xySlice-xDim-1] == BLUE))) {
                                 buffer[i-xySlice-xDim-1] = NONE;
                                 blueMask.set(i-xySlice-xDim-1);
                                 blueMask2.set(i-xySlice-xDim-1);
                                 change = true;
-                                centerBlueX += (x - 1);
-                                centerBlueY += (y - 1);
-                                centerBlueZ += (z - 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x - 1);
+                                    centerBlueY += (y - 1);
+                                    centerBlueZ += (z - 1);
+                                    blueCount++;
+                                }
                             }
                             if ((x > 0) && (y > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-xDim-1)) && ((buffer[i+xySlice-xDim-1] == BRIGHT_BLUE) ||(buffer[i+xySlice-xDim-1] == BLUE))) {
                                 buffer[i+xySlice-xDim-1] = NONE;
                                 blueMask.set(i+xySlice-xDim-1);
                                 blueMask2.set(i+xySlice-xDim-1);
                                 change = true;
-                                centerBlueX += (x - 1);
-                                centerBlueY += (y - 1);
-                                centerBlueZ += (z + 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x - 1);
+                                    centerBlueY += (y - 1);
+                                    centerBlueZ += (z + 1);
+                                    blueCount++;
+                                }
                             }
                             if ((x > 0) && (y < yDim - 1) && (z > 0)&& (!blueMask.get(i-xySlice+xDim-1)) && ((buffer[i-xySlice+xDim-1] == BRIGHT_BLUE) || (buffer[i-xySlice+xDim-1] == BLUE))) {
                                 buffer[i-xySlice+xDim-1] = NONE;
                                 blueMask.set(i-xySlice+xDim-1);
                                 blueMask2.set(i-xySlice+xDim-1);
                                 change = true;
-                                centerBlueX += (x - 1);
-                                centerBlueY += (y + 1);
-                                centerBlueZ += (z - 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x - 1);
+                                    centerBlueY += (y + 1);
+                                    centerBlueZ += (z - 1);
+                                    blueCount++;
+                                }
                             }
                             if ((x > 0) && (y < yDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+xDim-1)) && ((buffer[i+xySlice+xDim-1] == BRIGHT_BLUE) || (buffer[i+xySlice+xDim-1] == BLUE))) {
                                 buffer[i+xySlice+xDim-1] = NONE;
                                 blueMask.set(i+xySlice+xDim-1);
                                 blueMask2.set(i+xySlice+xDim-1);
                                 change = true;
-                                centerBlueX += (x - 1);
-                                centerBlueY += (y + 1);
-                                centerBlueZ += (z + 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x - 1);
+                                    centerBlueY += (y + 1);
+                                    centerBlueZ += (z + 1);
+                                    blueCount++;
+                                }
                             }
                             if ((x < xDim-1) && (y > 0) && (z > 0) && (!blueMask.get(i-xySlice-xDim+1)) && ((buffer[i-xySlice-xDim+1] == BRIGHT_BLUE) || (buffer[i-xySlice-xDim+1] == BLUE))) {
                                 buffer[i-xySlice-xDim+1] = NONE;
                                 blueMask.set(i-xySlice-xDim+1);
                                 blueMask2.set(i-xySlice-xDim+1);
                                 change = true;
-                                centerBlueX += (x + 1);
-                                centerBlueY += (y - 1);
-                                centerBlueZ += (z - 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x + 1);
+                                    centerBlueY += (y - 1);
+                                    centerBlueZ += (z - 1);
+                                    blueCount++;
+                                }
                             }
                             if ((x < xDim-1) && (y > 0) && (z < zDim - 1) && (!blueMask.get(i+xySlice-xDim+1)) && ((buffer[i+xySlice-xDim+1] == BRIGHT_BLUE) || (buffer[i+xySlice-xDim+1] == BLUE))) {
                                 buffer[i+xySlice-xDim+1] = NONE;
                                 blueMask.set(i+xySlice-xDim+1);
                                 blueMask2.set(i+xySlice-xDim+1);
                                 change = true;
-                                centerBlueX += (x + 1);
-                                centerBlueY += (y - 1);
-                                centerBlueZ += (z + 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x + 1);
+                                    centerBlueY += (y - 1);
+                                    centerBlueZ += (z + 1);
+                                    blueCount++;
+                                }
                             }
                             if ((x < xDim - 1) && (y < yDim - 1) && (z > 0) && (!blueMask.get(i-xySlice+xDim+1)) && ((buffer[i-xySlice+xDim+1] == BRIGHT_BLUE) ||(buffer[i-xySlice+xDim+1] == BLUE))) {
                                 buffer[i-xySlice+xDim+1] = NONE;
                                 blueMask.set(i-xySlice+xDim+1);
                                 blueMask2.set(i-xySlice+xDim+1);
                                 change = true;
-                                centerBlueX += (x + 1);
-                                centerBlueY += (y + 1);
-                                centerBlueZ += (z - 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x + 1);
+                                    centerBlueY += (y + 1);
+                                    centerBlueZ += (z - 1);
+                                    blueCount++;
+                                }
                             }
                             if ((x < xDim - 1) && (y < yDim - 1) && (z < zDim - 1) && (!blueMask.get(i+xySlice+xDim+1)) && ((buffer[i+xySlice+xDim+1] == BRIGHT_BLUE) || (buffer[i+xySlice+xDim+1] == BLUE))) {
                                 buffer[i+xySlice+xDim+1] = NONE;
                                 blueMask.set(i+xySlice+xDim+1);
                                 blueMask2.set(i+xySlice+xDim+1);
                                 change = true;
-                                centerBlueX += (x + 1);
-                                centerBlueY += (y + 1);
-                                centerBlueZ += (z + 1);
-                                blueCount++;
+                                if (!bigBlueFraction) {
+                                    centerBlueX += (x + 1);
+                                    centerBlueY += (y + 1);
+                                    centerBlueZ += (z + 1);
+                                    blueCount++;
+                                }
                             }
                             blueMask.clear(i);
                         } // if (blueMask.get(i))
@@ -3903,18 +3984,23 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 } // for (y = yLow; y <= yHigh; y++)
             } // for (z = zLow; z <= zHigh; z++)
         } // while (change  && (del <= (blueMax - 2))
-        centerBlueX = Math.round((float)centerBlueX/blueCount);
-        centerBlueY = Math.round((float)centerBlueY/blueCount);
-        centerBlueZ = Math.round((float)centerBlueZ/blueCount);
-        dataString += String.format("%-10d%-10d%-10d%-10d%-10d\n",numSynapses+1, centerBlueX, centerBlueY, centerBlueZ, blueCount);
-        if (blueCount < minimumBlueCount) {
-            minimumBlueCount = blueCount;
+        if (bigBlueFraction) {
+            dataString += String.format("%-10d%-10d%-10d%-10d\n",numSynapses+1, centerBlueX, centerBlueY, centerBlueZ);    
         }
-        if (blueCount > maximumBlueCount) {
-            maximumBlueCount = blueCount;
+        else {
+            centerBlueX = Math.round((float)centerBlueX/blueCount);
+            centerBlueY = Math.round((float)centerBlueY/blueCount);
+            centerBlueZ = Math.round((float)centerBlueZ/blueCount);
+            dataString += String.format("%-10d%-10d%-10d%-10d%-10d\n",numSynapses+1, centerBlueX, centerBlueY, centerBlueZ, blueCount);
+            if (blueCount < minimumBlueCount) {
+                minimumBlueCount = blueCount;
+            }
+            if (blueCount > maximumBlueCount) {
+                maximumBlueCount = blueCount;
+            }
+            totalBlueCount += blueCount;
+            totalBlueCountSquared += blueCount * blueCount;
         }
-        totalBlueCount += blueCount;
-        totalBlueCountSquared += blueCount * blueCount;
     }
     
     // Recursion triggers a stack overflow - don't use
