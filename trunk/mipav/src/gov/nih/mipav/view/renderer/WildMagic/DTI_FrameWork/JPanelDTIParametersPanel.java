@@ -478,7 +478,6 @@ implements ItemListener, ListSelectionListener, ChangeListener {
 
         DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
         int iSize = kList.getSize();
-        System.err.println("iSize = " + iSize);
         kList.add(iSize, new String("FiberBundle" + m_iBundleCount));
         m_kTractList.setSelectedIndex(iSize);
     }
