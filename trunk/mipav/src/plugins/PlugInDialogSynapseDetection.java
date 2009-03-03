@@ -8,12 +8,13 @@ import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
 
 import javax.swing.*;
 
 
 /**
- * @version  February 27, 2009
+ * @version  March 3, 2009
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -78,6 +79,18 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
     
     private JTextField blueMaxZText;
     
+    private int minimumXYSep = 20;
+    
+    private JLabel minimumXYSepLabel;
+    
+    private JTextField minimumXYSepText;
+    
+    private int minimumZSep = 20;
+    
+    private JLabel minimumZSepLabel;
+    
+    private JTextField minimumZSepText;
+    
     private int redIntensity = 5;
     
     private JLabel redIntensityLabel;
@@ -124,6 +137,9 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
 
     /** DOCUMENT ME! */
     private PlugInAlgorithmSynapseDetection synapseDetectionAlgo = null;
+    
+    // true if blueFraction >= 0.05
+    private boolean bigBlueFraction = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -149,7 +165,7 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         }
 
         image = im;
-        //preprocess();
+        preprocess();
         init();
     }
 
@@ -173,6 +189,7 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
                 callAlgorithm();
             }
         } else if (command.equals("Script")) {
+            preprocess();
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
@@ -230,6 +247,8 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         str += blueMaxXY + delim;
         str += blueMinZ + delim;
         str += blueMaxZ + delim;
+        str += minimumXYSep + delim;
+        str += minimumZSep + delim;
         str += redIntensity + delim;
         str += redBrightIntensity + delim;
         str += greenIntensity + delim;
@@ -371,24 +390,93 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         this.histoInfo = histoInfo;    
     }
     
+    public void setMinimumXYSep(int minimumXYSep) {
+        this.minimumXYSep = minimumXYSep;
+    }
+    
+    public void setMinimumZSep(int minimumZSep) {
+        this.minimumZSep = minimumZSep;
+    }
+    
     private void preprocess() {
-        AlgorithmHistogram histoAlgo;
-        ModelHistogram histogram;
-        int otsuThreshold;
-        int maxEntropyThreshold;
-        int[] dimExtents = new int[1];
-        dimExtents[0] = 256;
-        histogram = new ModelHistogram(ModelStorageBase.INTEGER, dimExtents);
-        histoAlgo = new AlgorithmHistogram(histogram, 3, image, true);
-        histoAlgo.runAlgorithm();
-        otsuThreshold = histogram.getOtsuThreshold();
-        maxEntropyThreshold = histogram.getMaxEntropyThreshold();
-        System.out.println("otsuThreshold = " + otsuThreshold + "\n");
-        System.out.println("max entropy threshold = " + maxEntropyThreshold + "\n");
-        histogram = null;
-        histoAlgo.finalize();
-        histoAlgo = null;
+        int xDim = image.getExtents()[0];
+        int yDim = image.getExtents()[1];
+        int zDim = image.getExtents()[2];
+        int length = xDim * yDim * zDim;
+        byte buffer[] = new byte[length];
+        byte greenBuffer[] = new byte[length];
+        byte blueBuffer[] = new byte[length];
+        int pos;
+        int red;
+        int green;
+        int blue;
+        int redCount = 0;
+        int greenCount = 0;
+        int blueCount = 0;
+        double redFraction;
+        double greenFraction;
+        double blueFraction;
         
+        try {
+            image.exportRGBData(1, 0, length, buffer); // export red data
+        } catch (IOException error) {
+            buffer = null;
+            greenBuffer = null;
+            blueBuffer = null;
+            MipavUtil.displayError("Plugin SynapseDetection reports: source image locked");
+
+            return;
+        }
+        
+        try {
+            image.exportRGBData(2, 0, length, greenBuffer); // export green data
+        } catch (IOException error) {
+            buffer = null;
+            greenBuffer = null;
+            blueBuffer = null;
+            MipavUtil.displayError("Plugin SynapseDetection reports: source image locked");
+
+            return;
+        }
+        
+        try {
+            image.exportRGBData(3, 0, length, blueBuffer); // export blue data
+        } catch (IOException error) {
+            buffer = null;
+            greenBuffer = null;
+            blueBuffer = null;
+            MipavUtil.displayError("Plugin SynapseDetection reports: source image locked");
+
+            return;
+        }
+        
+        
+        for (pos = 0; pos < length; pos++) {
+            red = buffer[pos] & 0xff;
+            green = greenBuffer[pos] & 0xff;
+            blue = blueBuffer[pos] & 0xff;
+            if ((red > green) && (red > blue)) {
+                redCount++;
+            }
+            else if ((green > red) && (green > blue)) {
+                greenCount++;
+            }
+            else if ((blue > red) && (blue > green)) {
+                blueCount++;
+            }
+        } // for (pos = 0; pos < length; pos++)
+        buffer = null;
+        greenBuffer = null;
+        blueBuffer = null;
+        redFraction = (double)redCount/pos;
+        greenFraction = (double)greenCount/pos;
+        blueFraction = (double)blueCount/pos;
+        Preferences.debug("redFraction = " + redFraction + "\n");
+        Preferences.debug("greenFraction = " + greenFraction + "\n");
+        Preferences.debug("blueFraction = " + blueFraction + "\n");
+        if (blueFraction >= 0.05) {
+            bigBlueFraction = true;
+        }     
     }
     
     /**
@@ -400,6 +488,7 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
 
             synapseDetectionAlgo = new PlugInAlgorithmSynapseDetection(image, redMin, redMax, greenMin, greenMax,
                                                                    blueMinXY, blueMaxXY, blueMinZ, blueMaxZ,
+                                                                   bigBlueFraction, minimumXYSep, minimumZSep,
                                                                    redIntensity, redBrightIntensity,
                                                                    greenIntensity, greenBrightIntensity,
                                                                    blueIntensity, blueBrightIntensity, histoInfo);
@@ -456,6 +545,8 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         setBlueMaxXY(scriptParameters.getParams().getInt("blue_maxxy"));
         setBlueMinZ(scriptParameters.getParams().getInt("blue_minz"));
         setBlueMaxZ(scriptParameters.getParams().getInt("blue_maxz"));
+        setMinimumXYSep(scriptParameters.getParams().getInt("minimum_xy_sep"));
+        setMinimumZSep(scriptParameters.getParams().getInt("minimum_z_sep"));
         setRedIntensity(scriptParameters.getParams().getInt("red_intensity"));
         setRedBrightIntensity(scriptParameters.getParams().getInt("red_bright_intensity"));
         setGreenIntensity(scriptParameters.getParams().getInt("green_intensity"));
@@ -478,6 +569,8 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_maxxy", blueMaxXY));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_minz", blueMinZ));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_maxz", blueMaxZ));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("minimum_xy_sep", minimumXYSep));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("minimum_z_sep", minimumZSep));
         scriptParameters.getParams().put(ParameterFactory.newParameter("red_intensity", redIntensity));
         scriptParameters.getParams().put(ParameterFactory.newParameter("red_bright_intensity", redBrightIntensity));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_intensity", greenIntensity));
@@ -492,8 +585,8 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Synapse Detection  03/02/09");
-
+        setTitle("Synapse Detection  03/03/09");
+     
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
         gbc.gridwidth = 1;
@@ -587,7 +680,12 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         mainPanel.add(blueMaxXYLabel, gbc);
         
         blueMaxXYText = new JTextField(10);
-        blueMaxXYText.setText("20");
+        if (bigBlueFraction) {
+            blueMaxXYText.setText("200");
+        }
+        else {
+            blueMaxXYText.setText("20");
+        }
         blueMaxXYText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
@@ -615,11 +713,48 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
         mainPanel.add(blueMaxZLabel, gbc);
         
         blueMaxZText = new JTextField(10);
-        blueMaxZText.setText("20");
+        if (bigBlueFraction) {
+            blueMaxZText.setText("200");
+        }
+        else {
+            blueMaxZText.setText("20");
+        }
         blueMaxZText.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(blueMaxZText, gbc);
+        
+        if (bigBlueFraction) {
+            // Cannot grow blue region to full size, so pick arbitrary minimum
+            // seaparation between synapses
+            minimumXYSepLabel = new JLabel("Minimum XY synapse separation");
+            minimumXYSepLabel.setForeground(Color.black);
+            minimumXYSepLabel.setFont(serif12);
+            gbc.gridx = 0;
+            gbc.gridy = yPos;
+            mainPanel.add(minimumXYSepLabel, gbc);
+            
+            minimumXYSepText = new JTextField(10);
+            minimumXYSepText.setText("5");
+            minimumXYSepText.setFont(serif12);
+            gbc.gridx = 1;
+            gbc.gridy = yPos++;
+            mainPanel.add(minimumXYSepText, gbc);
+            
+            minimumZSepLabel = new JLabel("Minimum Z synapse separation");
+            minimumZSepLabel.setForeground(Color.black);
+            minimumZSepLabel.setFont(serif12);
+            gbc.gridx = 0;
+            gbc.gridy = yPos;
+            mainPanel.add(minimumZSepLabel, gbc);
+            
+            minimumZSepText = new JTextField(10);
+            minimumZSepText.setText("5");
+            minimumZSepText.setFont(serif12);
+            gbc.gridx = 1;
+            gbc.gridy = yPos++;
+            mainPanel.add(minimumZSepText, gbc);
+        } // if (bigBlueFraction)
         
         redIntensityLabel = new JLabel("Minimum red intensity");
         redIntensityLabel.setForeground(Color.black);
@@ -866,6 +1001,32 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
             blueMaxZText.selectAll();
 
             return false;
+        }
+        
+        if (bigBlueFraction) {
+            tmpStr = minimumXYSepText.getText();
+            minimumXYSep = Integer.parseInt(tmpStr);
+            
+            if (minimumXYSep < 1) {
+                MipavUtil.displayError("minimum XY synapse separation must be at least 1");
+                minimumXYSepText.requestFocus();
+                minimumXYSepText.selectAll();
+                return false;
+            }
+            
+            tmpStr = minimumZSepText.getText();
+            minimumZSep = Integer.parseInt(tmpStr);
+            
+            if (minimumZSep < 1) {
+                MipavUtil.displayError("minimum Z synapse separation must be at least 1");
+                minimumZSepText.requestFocus();
+                minimumZSepText.selectAll();
+                return false;
+            }
+        } // if (bigBlueFraction)
+        else {
+            minimumXYSep = blueMaxXY;
+            minimumZSep = blueMaxZ;
         }
         
         tmpStr = redIntensityText.getText();
