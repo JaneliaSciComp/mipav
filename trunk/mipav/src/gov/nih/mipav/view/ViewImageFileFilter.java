@@ -98,7 +98,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             "Graphs (*.plt)", // PLOT
             "Look-Up-Table Files (*.lut)", // LUT
             "Matrix Files (*.mtx; *.mat; *.xfm)", // MATRIX
-            "Medical (*.dcm; *.xml, *ima; *.img; *.mnc; *.sig; *.head; *.nii; *.rec; *.frec; *.nrrd)", // TECH
+            "Medical (*.dcm; *.xml, *ima; *.img; *.mnc; *.sig; *.head; *.nii; *.rec; *.frec; *.nrrd; *.gz; *.bz2)", // TECH
             "Microscopy (*.avi; *.ics; *.liff; *.lsm; *.pic; *.stk; *.tif; *.tiff; *.xml)", // MICROSCOPY
             "Misc.(*.avi; *.bmp; *.pcx; *.png; *.tga; *.xbm; *.xpm)", // MISC
             "Optical (*.avi; *.bmp; *.img; *.jpg; *.pict; *.psd; *.tif; *.tiff; *.xml)", // OPTICAL
@@ -309,7 +309,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
                 && ( (extension.equals(".img")) || (extension.equals(".ima")) || (extension.equals(".dcm"))
                         || (extension.equals(".mnc")) || (extension.equals(".sig")) || (extension.equals(".xml"))
                         || (extension.equals(".head")) || (extension.equals(".nii")) || (extension.equals(".rec"))
-                        || (extension.equals(".frec")) || (extension.equals(".nrrd")))) {
+                        || (extension.equals(".frec")) || (extension.equals(".nrrd"))|| (extension.equals(".gz"))|| (extension.equals(".bz2")))) {
             return true;
         } else if ( (filterType == VOI) && ( (extension.equals(".voi")) || (extension.equals(".oly")))) {
             return true;
