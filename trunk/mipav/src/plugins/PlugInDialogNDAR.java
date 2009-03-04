@@ -7,6 +7,7 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.WidgetFactory;
 import gov.nih.mipav.view.srb.JDialogLoginSRB;
 
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -15,28 +16,44 @@ import java.util.List;
 import java.util.zip.*;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.event.*;
 import javax.swing.table.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeSelectionModel;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.jdom.Document;
+import org.jdom.input.SAXBuilder;
+import org.jdom.Attribute;
+import org.jdom.Element;
 
 
-public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionListener, ChangeListener, ItemListener {
+
+
+public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener {
 
     /** Scrolling text area for log output */
     private WidgetFactory.ScrollTextArea logOutputArea;
 
-    private JScrollPane listPane;
+    private JScrollPane listPane, psetPane;
 
     private JButton loadGUIDsButton;
 
     private JTable guidTable;
 
-    private JList sourceList;
+    private JList sourceList, psetList;
 
-    private JButton nextButton, previousButton, addSourceButton, removeSourceButton;
+    private JButton nextButton, previousButton, addSourceButton, removeSourceButton, addSetButton, addParamButton, editButton, deleteButton;
 
     private JTabbedPane tabbedPane;
 
     private JPanel guidPanel;
+    
+    private JPanel psetPanel;
 
     private DefaultListModel sourceModel;
 
@@ -61,15 +78,27 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     private static final int TAB_MAIN = 0;
 
     private static final int TAB_SOURCE = 1;
+    
+    private static final int TAB_PSETS = 2;
 
-    private static final int TAB_GUID = 2;
+    private static final int TAB_GUID = 3;
 
-    private static final int TAB_LOG = 3;
+    private static final int TAB_LOG = 4;
 
     /** GUID table column indices */
     private static final int GUID_TABLE_IMAGE_COLUMN = 0;
 
     private static final int GUID_TABLE_GUID_COLUMN = 1;
+    
+    private DefaultMutableTreeNode top, currentNode;
+
+
+    private JTree tree;
+    
+    private HashMap imagePsets = new HashMap();
+
+    
+
 
     public PlugInDialogNDAR() {
         super(false);
@@ -100,26 +129,36 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
                     if (response == JOptionPane.YES_OPTION) {
                         doneAddingFiles = true;
-                        generateGUIFields();
-                        tabbedPane.setEnabledAt(TAB_GUID, true);
-                        tabbedPane.setSelectedIndex(TAB_GUID);
+                        
+                        tabbedPane.setEnabledAt(TAB_PSETS, true);
+                        tabbedPane.setComponentAt(TAB_PSETS, buildPSetPanel());
+                        tabbedPane.setSelectedIndex(TAB_PSETS);
                     }
                 } else {
-                    tabbedPane.setSelectedIndex(TAB_GUID);
+                    tabbedPane.setSelectedIndex(TAB_SOURCE);
                 }
+            }else if(index == TAB_PSETS) {
+            	generateGUIFields();
+            	tabbedPane.setEnabledAt(TAB_GUID, true);
+                tabbedPane.setSelectedIndex(TAB_GUID);
+                addSetButton.setEnabled(false);
+        		addParamButton.setEnabled(false);
+        		editButton.setEnabled(false);
+        		deleteButton.setEnabled(false);
             } else if (index == TAB_GUID) {
-                tabbedPane.setEnabledAt(TAB_MAIN, true);
-                tabbedPane.setEnabledAt(TAB_SOURCE, true);
-                tabbedPane.setEnabledAt(TAB_LOG, true);
+                //tabbedPane.setEnabledAt(TAB_MAIN, true);
+                //tabbedPane.setEnabledAt(TAB_SOURCE, true);
+                //tabbedPane.setEnabledAt(TAB_LOG, true);
 
                 // move to TAB_LOG
-                tabbedPane.setSelectedIndex(index + 1);
+                tabbedPane.setSelectedIndex(TAB_LOG);
 
                 nextButton.setText("Close");
                 nextButton.setEnabled(false);
                 previousButton.setEnabled(false);
                 tabbedPane.setEnabledAt(TAB_MAIN, false);
                 tabbedPane.setEnabledAt(TAB_SOURCE, false);
+                tabbedPane.setEnabledAt(TAB_PSETS, false);
                 tabbedPane.setEnabledAt(TAB_GUID, false);
                 tabbedPane.setEnabledAt(TAB_LOG, true);
 
@@ -133,7 +172,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
                 worker.start();
             } else if (index == TAB_LOG) {
-                windowClosing(null);
+                dispose();
+            } else if (index == TAB_PSETS) {
+            	tabbedPane.setSelectedIndex(TAB_GUID);
+            	tabbedPane.setEnabledAt(TAB_GUID, true);
             } else if (tabbedPane.getTabCount() > index + 1) {
                 tabbedPane.setSelectedIndex(index + 1);
             }
@@ -150,6 +192,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 tabbedPane.setEnabledAt(TAB_SOURCE, true);
                 tabbedPane.setSelectedIndex(index - 1);
             } else if (index > 0) {
+            	if(index == TAB_PSETS) {
+            		addSetButton.setEnabled(false);
+            		addParamButton.setEnabled(false);
+            		editButton.setEnabled(false);
+            		deleteButton.setEnabled(false);
+            	}
                 tabbedPane.setSelectedIndex(index - 1);
             }
         } else if (command.equals("AddSource")) {
@@ -207,7 +255,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             }
             removeSourceButton.setEnabled(sourceModel.size() > 0);
             nextButton.setEnabled(sourceModel.size() > 0);
-
+            
             listPane.setBorder(buildTitledBorder(sourceModel.size() + " image(s) selected"));
 
         } else if (command.equals("RemoveSource")) {
@@ -248,6 +296,45 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     MipavUtil.showHelp("ISPLog01");
                     break;
             }
+        } else if (command.equals("AddSet")) {
+        	new PSetDialog(this,false);
+        } else if (command.equals("AddParam")) {
+        	new ParamDialog(this,false);
+        }else if(command.equals("edit")) {
+        	if(currentNode.getPath().length == 3) {
+        		new PSetDialog(this,true);
+        	}else {
+        		new ParamDialog(this,true);
+        	}
+        	
+        }else if(command.equals("delete")) {
+        	 int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to delte?", "Delete", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+             if (response == JOptionPane.YES_OPTION) {
+            	 if(currentNode.getPath().length == 3) {
+	            	 String imageName = "";
+	            	 DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)currentNode.getParent();
+	            	 imageName = parentNode.toString();
+	            	 HashMap pSetsHashMap = (HashMap)(imagePsets.get(imageName));
+	            	 String description = currentNode.toString();
+	            	 pSetsHashMap.remove(description);
+	            	 DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+	            	 model.removeNodeFromParent(currentNode);
+            	 }else {
+            		 String imageName = "";
+            		 DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)currentNode.getParent();
+            		 DefaultMutableTreeNode grandParentNode = (DefaultMutableTreeNode)parentNode.getParent(); 
+            		 imageName = grandParentNode.toString();
+            		 HashMap pSetsHashMap = (HashMap)(imagePsets.get(imageName));
+            		 String description = parentNode.toString();
+            		 XMLPSet p = (XMLPSet)pSetsHashMap.get(description);
+ 					 String currentParam = currentNode.toString();
+ 					 int index1 = currentParam.indexOf("::");
+					 currentParam = currentParam.substring(0, index1);
+ 					 p.removeParameter(currentParam);
+ 					 DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+	            	 model.removeNodeFromParent(currentNode); 
+            	 } 
+             }
         }
     }
 
@@ -264,9 +351,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         } else if (index == TAB_GUID) {
             previousButton.setEnabled(true);
             nextButton.setEnabled(true);
-            tabbedPane.setEnabledAt(TAB_MAIN, false);
-            tabbedPane.setEnabledAt(TAB_SOURCE, false);
-            tabbedPane.setEnabledAt(TAB_LOG, false);
+            //tabbedPane.setEnabledAt(TAB_MAIN, false);
+            //tabbedPane.setEnabledAt(TAB_SOURCE, false);
+            //tabbedPane.setEnabledAt(TAB_LOG, false);
         } else {
             nextButton.setEnabled(true);
         }
@@ -274,6 +361,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         addSourceButton.setEnabled(tabbedPane.getSelectedIndex() == TAB_SOURCE && !doneAddingFiles);
         removeSourceButton.setEnabled(tabbedPane.getSelectedIndex() == TAB_SOURCE && sourceModel.size() > 0
                 && !doneAddingFiles);
+        //addSetButton.setEnabled(tabbedPane.getSelectedIndex() == TAB_PSETS);
+        //addParamButton.setEnabled(tabbedPane.getSelectedIndex() == TAB_PSETS);
+        //editButton.setEnabled(tabbedPane.getSelectedIndex() == TAB_GUID);
+        //deleteButton.setEnabled(tabbedPane.getSelectedIndex() == TAB_GUID);
+        
         loadGUIDsButton.setEnabled(tabbedPane.getSelectedIndex() == TAB_GUID);
     }
 
@@ -321,10 +413,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Main", buildMainTab());
         tabbedPane.addTab("Images", buildSourcePanel());
+        tabbedPane.addTab("Parameter Sets", buildPSetPanel());
         tabbedPane.addTab("GUIDs", buildGUIDPane());
         tabbedPane.addTab("Log", buildLogTab());
 
         tabbedPane.setEnabledAt(TAB_SOURCE, false);
+        tabbedPane.setEnabledAt(TAB_PSETS, false);
         tabbedPane.setEnabledAt(TAB_GUID, false);
         tabbedPane.setEnabledAt(TAB_LOG, false);
 
@@ -391,9 +485,81 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         return destPanel;
     }
+    
+    private JScrollPane buildPSetPanel(){
+    	
+    	if(sourceModel.size() > 0) {
+    		DefaultMutableTreeNode imageNode = null;
+    		top = new DefaultMutableTreeNode("Images");
+    		tree = new JTree(top);
+    		tree.setCellRenderer(new MyTreeRenderer());
+    		tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    		tree.addTreeSelectionListener(this);
+    		DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
 
-    private JScrollPane buildSourcePanel() {
-        JPanel sourcePanel = new JPanel();
+    		for(int i=0;i<sourceModel.size();i++) {
+    			imageNode = new DefaultMutableTreeNode(((File)sourceModel.elementAt(i)).getName());
+    		    //top.add(imageNode);
+    		    model.insertNodeInto(imageNode, top, top.getChildCount());
+    		}
+    
+    		for (int i = 0; i < tree.getRowCount(); i++) {
+    	         tree.expandRow(i);
+    	    }
+
+	        psetPane = new JScrollPane(tree);
+
+	        return psetPane;
+    	}else {
+    		psetPane = new JScrollPane();
+            return psetPane;
+    		
+    	}
+    }
+    
+    
+    
+
+    public void valueChanged(TreeSelectionEvent e) {
+
+    	currentNode = (DefaultMutableTreeNode)tree.getLastSelectedPathComponent();
+    	
+    	if(currentNode == null) {
+    		addSetButton.setEnabled(false);
+    		addParamButton.setEnabled(false);
+    		editButton.setEnabled(false);
+    		deleteButton.setEnabled(false);
+    		return;
+    	}
+    	
+    	
+    	if(currentNode.getPath().length == 2) {
+    		addSetButton.setEnabled(true);
+    		addParamButton.setEnabled(false);
+    		editButton.setEnabled(false);
+    		deleteButton.setEnabled(false);
+    	}else if(currentNode.getPath().length == 3) {
+    		addParamButton.setEnabled(true);
+    		addSetButton.setEnabled(false);
+    		editButton.setEnabled(true);
+    		deleteButton.setEnabled(true);	
+    	}else if(currentNode.getPath().length == 4) {
+    		addParamButton.setEnabled(false);
+    		addSetButton.setEnabled(false);
+    		editButton.setEnabled(true);
+    		deleteButton.setEnabled(true);	
+    	}else {
+    		addSetButton.setEnabled(false);
+    		addParamButton.setEnabled(false);
+    		editButton.setEnabled(false);
+    		deleteButton.setEnabled(false);
+    	}
+    	
+    
+	}
+
+	private JScrollPane buildSourcePanel() {
+        //JPanel sourcePanel = new JPanel();
         GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.anchor = GridBagConstraints.NORTHWEST;
@@ -406,7 +572,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         listPane = WidgetFactory.buildScrollPane(sourceList);
         listPane.setBorder(buildTitledBorder(0 + " image(s) selected"));
-        sourcePanel.add(listPane, gbc);
+        //sourcePanel.add(listPane, gbc);
 
         return listPane;
     }
@@ -416,6 +582,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         JScrollPane guidPane = WidgetFactory.buildScrollPane(guidPanel);
 
         return guidPane;
+    }
+    
+    private void generatePSETFields() {
+    	
     }
 
     private void generateGUIFields() {
@@ -581,7 +751,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             // set the valid GUID into the NDAR data object
             ndarData.validGUID = currentGuid;
 
-            writeMetaDataFiles(outputDirBase, outputFileNameBase, imageFile, origImage);
+            String imageName = origImage.getImageFileName();
+            HashMap pSetsHashMap = (HashMap)(imagePsets.get(imageName));
+            
+
+            writeMetaDataFiles(outputDirBase, outputFileNameBase, imageFile, origImage, pSetsHashMap);
 
             origImage.disposeLocal();
 
@@ -601,7 +775,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      * @param outputFileNameBase The prefix to put on the XML header file name.
      * @param imageFile The main image file to use to read in the dataset.
      */
-    private void writeMetaDataFiles(String outputDir, String outputFileNameBase, File imageFile, ModelImage image) {
+    private void writeMetaDataFiles(String outputDir, String outputFileNameBase, File imageFile, ModelImage image, HashMap pSetsHashMap) {
         // Create the FileIO
         FileIO fileIO = new FileIO();
 
@@ -638,7 +812,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         options.setFileType(FileUtility.XML);
         options.doPutInQuicklist(false);
         options.setMultiFile(false);
+        options.setPSetsHashMap(pSetsHashMap);
         options.setOptionsSet(true);
+        
+        
+        
 
         printlnToLog("Saving XML header: " + fName + " to: " + outputDir);
 
@@ -692,19 +870,36 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     }
 
     private JPanel buildButtonPanel() {
-        JPanel buttonPanel = new JPanel();
+    	
+        JPanel buttonPanel1 = new JPanel(new GridBagLayout());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        
         previousButton = WidgetFactory.buildTextButton("Previous", "Go to previous tab", "Previous", this);
         nextButton = WidgetFactory.buildTextButton("Next", "Go to next tab", "Next", this);
         addSourceButton = WidgetFactory.buildTextButton("Add images", "Add image datasets", "AddSource", this);
-        removeSourceButton = WidgetFactory.buildTextButton("Remove images", "Remove the selected image datasets",
-                "RemoveSource", this);
+        removeSourceButton = WidgetFactory.buildTextButton("Remove images", "Remove the selected image datasets", "RemoveSource", this);
+        addSetButton= WidgetFactory.buildTextButton("Add Set", "Add Parameter Set", "AddSet", this);
+        addParamButton= WidgetFactory.buildTextButton("Add Parameter", "Add Parameter", "AddParam", this);
+        editButton= WidgetFactory.buildTextButton("Edit", "Edit", "edit", this);
+        deleteButton= WidgetFactory.buildTextButton("Delete", "Delete", "delete", this);
         loadGUIDsButton = WidgetFactory.buildTextButton("Load GUIDs", "Parse GUIDs from text file", "LoadGUIDs", this);
         helpButton = WidgetFactory.buildTextButton("Help", "Show MIPAV help", "Help", this);
+        
 
         previousButton.setPreferredSize(MipavUtil.defaultButtonSize);
         nextButton.setPreferredSize(MipavUtil.defaultButtonSize);
         addSourceButton.setPreferredSize(MipavUtil.defaultButtonSize);
         removeSourceButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        addSetButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        addParamButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        editButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        deleteButton.setPreferredSize(MipavUtil.defaultButtonSize);
         loadGUIDsButton.setPreferredSize(MipavUtil.defaultButtonSize);
         helpButton.setPreferredSize(MipavUtil.defaultButtonSize);
 
@@ -712,16 +907,35 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         nextButton.setEnabled(false);
         addSourceButton.setEnabled(false);
         removeSourceButton.setEnabled(false);
+        addSetButton.setEnabled(false);
+        addParamButton.setEnabled(false);
+        editButton.setEnabled(false);
+        deleteButton.setEnabled(false);
         loadGUIDsButton.setEnabled(false);
 
-        buttonPanel.add(previousButton);
-        buttonPanel.add(nextButton);
-        buttonPanel.add(addSourceButton);
-        buttonPanel.add(removeSourceButton);
-        buttonPanel.add(loadGUIDsButton);
-        buttonPanel.add(helpButton);
+        buttonPanel1.add(previousButton,gbc);
+        gbc.gridx = 1;
+        buttonPanel1.add(nextButton,gbc);
+        gbc.gridx = 2;
+        buttonPanel1.add(addSourceButton,gbc);
+        gbc.gridx = 3;
+        buttonPanel1.add(removeSourceButton,gbc);
+        gbc.gridx = 4;
+        buttonPanel1.add(loadGUIDsButton,gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        buttonPanel1.add(addSetButton,gbc);
+        gbc.gridx = 1;
+        buttonPanel1.add(addParamButton,gbc);
+        gbc.gridx = 2;
+        buttonPanel1.add(editButton,gbc);
+        gbc.gridx = 3;
+        buttonPanel1.add(deleteButton,gbc);
+        gbc.gridx = 4;
+        buttonPanel1.add(helpButton,gbc);
 
-        return buttonPanel;
+        return buttonPanel1;
     }
 
     private class GUIDTableModel extends AbstractTableModel {
@@ -771,4 +985,814 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             fireTableCellUpdated(row, col);
         }
     }
+    
+    
+
+    /**
+     * launches dialog for adding a new XMLParameter
+     * @author pandyan
+     *
+     */
+    private class ParamDialog extends JDialog implements ActionListener, ItemListener {
+
+    	
+    	private JPanel mainPanel;
+    	
+    	private JComboBox paramComboBox, valueTypeComboBox;
+    	
+    	private JTextArea udTextArea, valueTextArea, descTextArea;
+    	
+    	private JLabel udLabel, paramComboBoxLabel, descLabel, valueLabel, valueTypeComboBoxLabel;
+    	
+    	private String setName;
+    	
+    	private DefaultTreeModel model;
+    	
+    	private boolean editing;
+    	
+    	private String psetXMLFilePath = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "pset.xml";
+    	
+    	private ArrayList<String> predefinedParams = new ArrayList<String>();
+    	
+    	private HashMap<String,ArrayList> setsParmsMap = new HashMap<String,ArrayList>();
+
+    	private HashMap<String,String> paramsMap = new HashMap<String,String>();
+    	
+    	private Dialog owner;
+    	
+    	
+    	public ParamDialog(Dialog owner, boolean editing) {
+    		super(owner,true);
+    		this.owner = owner;
+    		if(!editing) {
+    			this.setName = currentNode.toString();
+    		}else {
+    			this.setName = currentNode.getParent().toString();
+    		}
+    		
+    		this.editing = editing;
+    		init();
+    	}
+    	
+    	
+    	private void readPsetXML() {
+    		try {
+    			Element setElement;
+    			String sName;
+    			Element paramElement;
+    			SAXBuilder builder = new SAXBuilder();
+                Document doc= builder.build(new File(psetXMLFilePath));
+
+    			String paramName;
+    			String type;
+    			String description;
+    			
+    			Element root = doc.getRootElement();
+    			List setTags = root.getChildren("set");
+    			
+    			
+    			int setTagsCount = setTags.size();
+    			for (int i = 0; i < setTagsCount; i++) {
+    				setElement = (Element)setTags.get(i);
+    				sName = setElement.getAttributeValue("name");
+    				List paramTags = setElement.getChildren("parameter");
+    				int paramTagsCount = paramTags.size();
+    				predefinedParams = new ArrayList<String>();
+    				for(int k = 0;k < paramTagsCount; k++) {
+    					paramElement = (Element)paramTags.get(k);
+    					paramName = paramElement.getAttributeValue("name");
+    					predefinedParams.add(paramName);
+    					type = paramElement.getAttributeValue("type");
+    					description = paramElement.getChild("description").getValue();
+    					paramsMap.put(paramName, type+"::"+description);
+    				}
+    				setsParmsMap.put(sName, predefinedParams);
+    				
+    			}
+    			
+    	
+    			
+    			
+    		}catch(Exception e) {
+
+    		}
+    	}
+    	
+    	private ArrayList getPredefinedParams(String sName) {
+    		ArrayList params;
+    		params = setsParmsMap.get(sName);
+    		return params;
+    	}
+    	
+    	
+    	private String getType(String paramName) {
+    		String type = "";
+    		String value = paramsMap.get(paramName);
+    		if(value != null) {
+    			type = value.substring(0,value.indexOf("::"));
+    		}
+    		return type;
+    	}
+    	
+    	
+    	private String getDescription(String paramName) {
+    		String desc = "";
+    		String value = paramsMap.get(paramName);
+    		if(value != null) {
+    			desc = value.substring(value.indexOf("::")+2,value.length());
+    		}
+    		return desc;
+    	}
+    	
+    	
+    	
+    	private void init() {
+    		 readPsetXML();
+    		 setTitle("Add Parameter for " + setName);
+             
+             model = (DefaultTreeModel)tree.getModel();
+
+             GridBagConstraints gbc = new GridBagConstraints();
+             mainPanel = new JPanel(new GridBagLayout());
+             
+             paramComboBoxLabel = new JLabel("Name");
+             
+             paramComboBox = new JComboBox();
+        	 ArrayList<String> params = getPredefinedParams(setName);
+        	 if(params != null) {
+                 for(int i=0;i<params.size();i++) {
+                	 String item = params.get(i);
+                	 paramComboBox.addItem(item);
+                 }
+        	 }
+             paramComboBox.addItem("User Defined");
+
+             paramComboBox.addItemListener(this);
+             
+            
+             
+  
+             udLabel = new JLabel("User Defined Name");
+             valueLabel = new JLabel("Value");
+             descLabel = new JLabel("Description");
+             valueTypeComboBoxLabel = new JLabel("Value Type");
+
+             
+             udTextArea = new JTextArea(3,30);
+             udTextArea.setEditable(false);
+             udTextArea.setBackground(Color.lightGray);
+             udTextArea.setBorder(new LineBorder(Color.black));
+             
+          
+             
+             
+             String selected = (String)paramComboBox.getSelectedItem();
+             if(selected.equals("User Defined")) {
+             	udTextArea.setEditable(true);
+             	udTextArea.setBackground(Color.white);
+             	
+             	
+             }else {
+            	 udTextArea.setEditable(false);
+            	 udTextArea.setText("");
+            	 udTextArea.setBackground(Color.lightGray);
+            	 
+             }
+             
+             
+             
+             
+             
+             
+             
+             valueTextArea = new JTextArea(3,30);
+             valueTextArea.setBorder(new LineBorder(Color.black));
+             
+             valueTypeComboBox = new JComboBox();
+             valueTypeComboBox.addItem("string");
+             valueTypeComboBox.addItem("ubyte");
+             valueTypeComboBox.addItem("byte");
+             valueTypeComboBox.addItem("ushort");
+             valueTypeComboBox.addItem("short");
+             valueTypeComboBox.addItem("int");
+             valueTypeComboBox.addItem("long");
+             valueTypeComboBox.addItem("float");
+             valueTypeComboBox.addItem("double");
+             valueTypeComboBox.addItem("boolean");
+             if(selected.equals("User Defined")) {
+            	 valueTypeComboBox.setEnabled(true);
+             }else {
+            	 valueTypeComboBox.setEnabled(false);
+            	 String type = getType(selected);
+            	 for(int i=0;i<valueTypeComboBox.getItemCount();i++) {
+              		if(((String)valueTypeComboBox.getItemAt(i)).equals(type)) {
+              			valueTypeComboBox.setSelectedIndex(i);
+              		}
+            	 }
+             }
+             
+
+             descTextArea = new JTextArea(3,30);
+             descTextArea.setBorder(new LineBorder(Color.black));
+             descTextArea.setEditable(false);
+             descTextArea.setBackground(Color.lightGray);
+             if(selected.equals("User Defined")) {
+            	 descTextArea.setEditable(true);
+            	 descTextArea.setText("");
+            	 descTextArea.setBackground(Color.white);
+             }else {
+            	 String desc = getDescription(selected);
+            	 descTextArea.setText(desc);
+             }
+             
+             
+             gbc.gridx = 0;
+             gbc.gridy = 0;
+             gbc.insets = new Insets(15,15,15,15);
+             gbc.anchor = GridBagConstraints.EAST;
+             mainPanel.add(paramComboBoxLabel, gbc);
+             
+             gbc.gridx = 1;
+             gbc.gridy = 0;
+             gbc.anchor = GridBagConstraints.WEST;
+             mainPanel.add(paramComboBox, gbc);
+             
+             gbc.gridx = 0;
+             gbc.gridy = 1;
+             gbc.anchor = GridBagConstraints.EAST;
+             mainPanel.add(udLabel, gbc);
+             
+             gbc.gridx = 1;
+             gbc.gridy = 1;
+             gbc.anchor = GridBagConstraints.WEST;
+             mainPanel.add(udTextArea, gbc);
+             
+             gbc.gridx = 0;
+             gbc.gridy = 2;
+             gbc.anchor = GridBagConstraints.EAST;
+             mainPanel.add(valueLabel, gbc);
+             
+             gbc.gridx = 1;
+             gbc.gridy = 2;
+             gbc.anchor = GridBagConstraints.WEST;
+             mainPanel.add(valueTextArea, gbc);  
+             
+             gbc.gridx = 0;
+             gbc.gridy = 3;
+             gbc.anchor = GridBagConstraints.EAST;
+             mainPanel.add(valueTypeComboBoxLabel, gbc);
+             
+             gbc.gridx = 1;
+             gbc.gridy = 3;
+             gbc.anchor = GridBagConstraints.WEST;
+             mainPanel.add(valueTypeComboBox, gbc);
+             
+             gbc.gridx = 0;
+             gbc.gridy = 4;
+             gbc.anchor = GridBagConstraints.EAST;
+             mainPanel.add(descLabel, gbc);
+             
+             gbc.gridx = 1;
+             gbc.gridy = 4;
+             gbc.anchor = GridBagConstraints.WEST;
+             mainPanel.add(descTextArea, gbc);
+             
+             
+             
+             JPanel OKCancelPanel = new JPanel();
+             buildOKButton();
+             OKButton.setActionCommand("ok2");
+             OKButton.addActionListener(this);
+             OKCancelPanel.add(OKButton, BorderLayout.WEST);
+             buildCancelButton();
+             cancelButton.setActionCommand("cancel2");
+             cancelButton.addActionListener(this);
+             OKCancelPanel.add(cancelButton, BorderLayout.EAST);
+             
+             if(editing) {
+             	String currentParamSet = currentNode.toString();
+             	int index1 = currentParamSet.indexOf("::");
+             	String name = currentParamSet.substring(0, index1);
+             	boolean foundMatch = false;
+             	for(int i=0;i<paramComboBox.getItemCount();i++) {
+             		if(((String)paramComboBox.getItemAt(i)).equals(name)) {
+             			paramComboBox.setSelectedIndex(i);
+             			foundMatch = true;
+             			break;
+             		}
+             	}
+             	if(!foundMatch){
+             		//set the comboBox to "user defined"
+             		for(int i=0;i<paramComboBox.getItemCount();i++) {
+                 		if(((String)paramComboBox.getItemAt(i)).equals("User Defined")) {
+                 			paramComboBox.setSelectedIndex(i);
+                 			udTextArea.setText(name);
+                 			break;
+                 		}
+                 	}
+             	}
+             	
+             	
+             	
+             	
+             	currentParamSet = currentParamSet.substring(currentParamSet.indexOf("::")+2,currentParamSet.length());
+             	index1 = currentParamSet.indexOf("::");
+             	String val = currentParamSet.substring(0, index1);
+             	//since val starts off as value="blah"...get the substring
+             	val = val.substring(6,val.length());
+             	valueTextArea.setText(val);
+             	
+             	
+             	currentParamSet = currentParamSet.substring(currentParamSet.indexOf("::")+2,currentParamSet.length());
+             	index1 = currentParamSet.indexOf("::");
+             	val = currentParamSet.substring(0, index1);
+             	//since type starts off as type="blah"...get the substring
+             	val = val.substring(5,val.length());
+             	for(int i=0;i<valueTypeComboBox.getItemCount();i++) {
+             		if(((String)valueTypeComboBox.getItemAt(i)).equals(val)) {
+             			valueTypeComboBox.setSelectedIndex(i);
+             			break;
+             		}
+             	}
+             	if(((String)paramComboBox.getSelectedItem()).equals("User Defined")) {
+             		valueTypeComboBox.setEnabled(true);
+             	}else {
+             		valueTypeComboBox.setEnabled(false);
+             	}
+             	
+             	
+             	
+             	
+             	val = currentParamSet.substring(currentParamSet.indexOf("::")+2,currentParamSet.length());
+
+                //since desc starts off as description="blah"...get the substring
+             	val = val.substring(12,val.length());
+             	descTextArea.setText(val);
+             	
+             	
+             }
+             
+             getContentPane().add(mainPanel,BorderLayout.CENTER);
+             getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
+             
+             
+             
+             pack();
+             MipavUtil.centerInWindow(owner, this);
+             setResizable(false);
+             setVisible(true);
+    	}
+    	
+    	
+    	
+    	
+		public void actionPerformed(ActionEvent e) {
+			String command = e.getActionCommand();
+			if(command.equals("ok2")) {
+				if(!editing) {
+					String paramName;
+					if(((String)paramComboBox.getSelectedItem()).equals("User Defined")) {
+						paramName = udTextArea.getText().trim();
+						if(paramName.equals("")) {
+							//display error and reurn
+							MipavUtil.displayError("You must enter a set name when choosing user defined");
+							return;
+						}
+					}else {
+						paramName = (String)paramComboBox.getSelectedItem();
+					}
+					if(valueTextArea.getText().trim().equals("")) {
+						MipavUtil.displayError("You must enter a value");
+						return;
+					}
+					DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)currentNode.getParent(); 
+           		    String imageName = parentNode.toString();
+					HashMap pSetsHashMap = (HashMap)(imagePsets.get(imageName));
+					String currentDescription = (String)currentNode.toString();
+					XMLPSet p = (XMLPSet)pSetsHashMap.get(currentDescription);
+					String value = valueTextArea.getText().trim();
+					String desc = descTextArea.getText().trim();
+					String type = (String)valueTypeComboBox.getSelectedItem();
+					if(p.getParameter(paramName) == null) {
+						p.addParameter(paramName);
+						p.getParameter(paramName).setValue(value);
+						p.getParameter(paramName).setDescription(desc);
+						p.getParameter(paramName).setValueType(type);
+
+						paramName = paramName + "::value=" + value + "::type=" + type + "::description=" + desc;
+						DefaultMutableTreeNode paramNode = new DefaultMutableTreeNode(paramName);
+						model.insertNodeInto(paramNode, currentNode, currentNode.getChildCount());
+		    		    for (int i = 0; i < tree.getRowCount(); i++) {
+		       	         tree.expandRow(i);
+		       	       }
+						
+					}else {
+						//inform that param already exists with this name
+						MipavUtil.displayError("There is already a parameter of that name");
+						return;
+					}
+					
+					
+				}else {
+					//we are editing!
+					//we are in editing mode
+					String newParamName;
+					if(((String)paramComboBox.getSelectedItem()).equals("User Defined")) {
+						newParamName = udTextArea.getText().trim();
+						if(newParamName.equals("")) {
+							//display error and reurn
+							MipavUtil.displayError("You must enter a set name when choosing user defined");
+							return;
+						}
+					}else {
+						newParamName = (String)paramComboBox.getSelectedItem();
+					}
+					if(valueTextArea.getText().trim().equals("")) {
+						MipavUtil.displayError("You must enter a value");
+						return;
+					}
+					if(descTextArea.getText().trim().equals("")) {
+						MipavUtil.displayError("You must enter a description");
+						return;
+					}
+					
+					
+					
+					
+					DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)currentNode.getParent();
+	            	DefaultMutableTreeNode grandParentNode = (DefaultMutableTreeNode)parentNode.getParent(); 
+	                String imageName = grandParentNode.toString();
+					HashMap pSetsHashMap = (HashMap)(imagePsets.get(imageName));
+					String psetDescription = (String)parentNode.toString();
+					XMLPSet p = (XMLPSet)pSetsHashMap.get(psetDescription);
+					String currentParam = currentNode.toString();
+					int index1 = currentParam.indexOf("::");
+					currentParam = currentParam.substring(0, index1);
+					p.removeParameter(currentParam);
+					String value = valueTextArea.getText().trim();
+					String desc = descTextArea.getText().trim();
+					String type = (String)valueTypeComboBox.getSelectedItem();
+					p.addParameter(newParamName);
+					p.getParameter(newParamName).setValue(value);
+					p.getParameter(newParamName).setDescription(desc);
+					p.getParameter(newParamName).setValueType(type);
+
+					newParamName = newParamName + "::value=" + value + "::type=" + type + "::description=" + desc;
+					currentNode.setUserObject(newParamName);
+					tree.repaint();
+					repaint();
+					
+					
+					
+				}
+
+				dispose();
+			}else if(command.equals("cancel2")) {
+				dispose();
+			}
+			
+		}
+
+		public void itemStateChanged(ItemEvent e) {
+			Object source = e.getSource();
+			if (e.getStateChange() == ItemEvent.SELECTED) {
+				if (source == paramComboBox) {
+		            String selected = (String)paramComboBox.getSelectedItem();
+		            if(selected.equals("User Defined")) {
+		            	udTextArea.setEditable(true);
+		            	udTextArea.setBackground(Color.white);
+		            	valueTypeComboBox.setEnabled(true);
+		            	descTextArea.setEditable(true);
+		                descTextArea.setBackground(Color.white);
+		                descTextArea.setText("");
+		                valueTextArea.setText("");
+
+		            }else {
+		            	udTextArea.setEditable(false);
+		            	udTextArea.setText("");
+		            	udTextArea.setBackground(Color.lightGray);
+		            	String type = getType(selected);
+		            	 for(int i=0;i<valueTypeComboBox.getItemCount();i++) {
+		              		if(((String)valueTypeComboBox.getItemAt(i)).equals(type)) {
+		              			valueTypeComboBox.setSelectedIndex(i);
+		              		}
+		            	 }
+		            	valueTypeComboBox.setEnabled(false);
+		            	descTextArea.setEditable(false);
+		                descTextArea.setBackground(Color.lightGray);
+		                String desc = getDescription(selected);
+		            	descTextArea.setText(desc);
+		            	valueTextArea.setText("");
+
+		            }
+		            
+				}
+				
+			}
+			
+		}
+    	
+    }
+    
+    
+    
+
+    
+    
+    
+    /**
+     * launches the dialog to add a new XMLPSet
+     * @author pandyan
+     *
+     */
+    private class PSetDialog extends JDialog implements ActionListener, ItemListener {
+    	
+    	private JPanel mainPanel;
+    	
+    	private JComboBox psetComboBox;
+    	
+    	private JTextArea udTextArea;
+    	
+    	private JLabel comboBoxLabel, udLabel;
+    	
+    	private String imageName;
+    	
+    	private DefaultTreeModel model;
+    	
+    	private boolean editing;
+    	
+    	private String psetXMLFilePath = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "pset.xml";
+    	
+    	private ArrayList<String> predefinedPsets = new ArrayList<String>();
+    	
+    	private Dialog owner;
+    	
+    	public PSetDialog(Dialog owner, boolean editing) {
+    		super(owner,true);
+    		this.owner = owner;
+    		if(!editing) {
+    			this.imageName = currentNode.toString();
+    		}else {
+    			this.imageName = currentNode.getParent().toString();
+    		}
+    		
+    		this.editing = editing;
+    		init();
+    	}
+    	
+    	private void readPsetXML() {
+    		try {
+    			Element setElement;
+    			String setName;
+    			SAXBuilder builder = new SAXBuilder();
+                Document doc= builder.build(new File(psetXMLFilePath));
+
+                Element root = doc.getRootElement();
+    			List setTags = root.getChildren("set");
+
+    			int setNodeCount = setTags.size();
+    			for (int i = 0; i < setNodeCount; i++) {
+    				setElement = (Element)setTags.get(i);
+    				setName = setElement.getAttributeValue("name");
+    				predefinedPsets.add(setName);
+    			}
+    			
+    			
+    			
+    		}catch(Exception e) {
+    			
+    		}
+    	}
+
+    	
+    	private void init() {
+    		readPsetXML();
+            setTitle("Add Set for " + imageName);
+            
+            model = (DefaultTreeModel)tree.getModel();
+
+            GridBagConstraints gbc = new GridBagConstraints();
+            mainPanel = new JPanel(new GridBagLayout());
+            
+            comboBoxLabel = new JLabel("Name");
+            
+            psetComboBox = new JComboBox();
+            for(int i=0;i<predefinedPsets.size();i++) {
+            	String item = predefinedPsets.get(i);
+            	psetComboBox.addItem(item);
+            }
+            psetComboBox.addItem("User Defined");
+            psetComboBox.addItemListener(this);
+            
+ 
+            udLabel = new JLabel("User Defined Name");
+
+            
+            udTextArea = new JTextArea(3,30);
+            udTextArea.setEditable(false);
+            udTextArea.setBackground(Color.lightGray);
+            udTextArea.setBorder(new LineBorder(Color.black));
+            
+            String selected = (String)psetComboBox.getSelectedItem();
+            if(selected.equals("User Defined")) {
+            	udTextArea.setEditable(true);
+            	udTextArea.setBackground(Color.white);
+            	
+            }else {
+            	udTextArea.setEditable(false);
+            	udTextArea.setBackground(Color.lightGray);
+            	
+            }
+            
+            
+            
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.insets = new Insets(15,15,15,15);
+            gbc.anchor = GridBagConstraints.EAST;
+            mainPanel.add(comboBoxLabel, gbc);
+            
+            gbc.gridx = 1;
+            gbc.gridy = 0;
+            gbc.anchor = GridBagConstraints.WEST;
+            mainPanel.add(psetComboBox, gbc);
+            
+            gbc.gridx = 0;
+            gbc.gridy = 1;
+            gbc.anchor = GridBagConstraints.EAST;
+            mainPanel.add(udLabel, gbc);
+            
+            gbc.gridx = 1;
+            gbc.gridy = 1;
+            gbc.anchor = GridBagConstraints.WEST;
+            mainPanel.add(udTextArea, gbc);
+            
+            
+            JPanel OKCancelPanel = new JPanel();
+            buildOKButton();
+            OKButton.setActionCommand("ok2");
+            OKButton.addActionListener(this);
+            OKCancelPanel.add(OKButton, BorderLayout.WEST);
+            buildCancelButton();
+            cancelButton.setActionCommand("cancel2");
+            cancelButton.addActionListener(this);
+            OKCancelPanel.add(cancelButton, BorderLayout.EAST);
+            
+            if(editing) {
+            	String currentPSet = currentNode.toString();
+            	boolean foundMatch = false;
+            	for(int i=0;i<psetComboBox.getItemCount();i++) {
+            		if(((String)psetComboBox.getItemAt(i)).equals(currentPSet)) {
+            			psetComboBox.setSelectedIndex(i);
+            			foundMatch = true;
+            			break;
+            		}
+            	}
+            	if(!foundMatch){
+            		//set the comboBox to "user defined"
+            		for(int i=0;i<psetComboBox.getItemCount();i++) {
+                		if(((String)psetComboBox.getItemAt(i)).equals("User Defined")) {
+                			psetComboBox.setSelectedIndex(i);
+                			udTextArea.setText(currentPSet);
+                			break;
+                		}
+                	}
+            		
+            	}
+            }
+            
+            getContentPane().add(mainPanel,BorderLayout.CENTER);
+            getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
+            
+            
+            
+            pack();
+            MipavUtil.centerInWindow(owner, this);
+            setResizable(false);
+            setVisible(true);
+            
+            
+    		
+    	}
+    	
+    	
+    	
+		public void actionPerformed(ActionEvent e) {
+			String command = e.getActionCommand();
+			if(command.equals("ok2")) {
+				if(!editing) {
+					String name;
+					if(((String)psetComboBox.getSelectedItem()).equals("User Defined")) {
+						name = udTextArea.getText().trim();
+						if(name.equals("")) {
+							//display error and reurn
+							MipavUtil.displayError("You must enter a set name when choosing user defined");
+							return;
+						}
+					}else {
+						name = (String)psetComboBox.getSelectedItem();
+					}
+					
+					HashMap pSetsHashMap = (HashMap)(imagePsets.get(imageName));
+					if(pSetsHashMap == null) {
+						pSetsHashMap = new HashMap();
+						XMLPSet p = new XMLPSet(name);
+						pSetsHashMap.put(name, p);
+						imagePsets.put(imageName, pSetsHashMap);
+						DefaultMutableTreeNode psetNode = new DefaultMutableTreeNode(name);
+						model.insertNodeInto(psetNode, currentNode, currentNode.getChildCount());
+		    		    for (int i = 0; i < tree.getRowCount(); i++) {
+		       	         tree.expandRow(i);
+		       	       }
+						
+					}else {
+	
+						XMLPSet p = (XMLPSet)pSetsHashMap.get(name);
+						if(p == null) {
+							p = new XMLPSet(name);
+							pSetsHashMap.put(name, p);
+							//imagePsets.put(imageName, pSetsHashMap);
+							DefaultMutableTreeNode psetNode = new DefaultMutableTreeNode(name);
+							//currentNode.add(psetNode);
+							model.insertNodeInto(psetNode, currentNode, currentNode.getChildCount());
+			    		    for (int i = 0; i < tree.getRowCount(); i++) {
+				       	         tree.expandRow(i);
+				       	       }
+						}else {
+							//inform user that there is already a PSet with that name
+							MipavUtil.displayError("There is already a set of that name");
+							return;
+						}
+					}
+				}else {
+					//we are in editing mode
+					String newName;
+					if(((String)psetComboBox.getSelectedItem()).equals("User Defined")) {
+						newName = udTextArea.getText().trim();
+						if(newName.equals("")) {
+							//display error and reurn
+							MipavUtil.displayError("You must enter a set name when choosing user defined");
+							return;
+						}
+					}else {
+						newName = (String)psetComboBox.getSelectedItem();
+					}
+					HashMap pSetsHashMap = (HashMap)(imagePsets.get(imageName));
+					String currentDescription = (String)currentNode.toString();
+					XMLPSet p = (XMLPSet)pSetsHashMap.get(currentDescription);
+					p.setDescription(newName);
+					pSetsHashMap.remove(currentDescription);
+					pSetsHashMap.put(newName, p);
+					currentNode.setUserObject(newName);
+					tree.repaint();
+					repaint();
+					
+					
+				}
+				dispose();
+			}else if(command.equals("cancel2")) {
+				dispose();
+			}
+			
+		}
+
+
+		public void itemStateChanged(ItemEvent e) {
+			Object source = e.getSource();
+			if (e.getStateChange() == ItemEvent.SELECTED) {
+				if (source == psetComboBox) {
+		            String selected = (String)psetComboBox.getSelectedItem();
+		            if(selected.equals("User Defined")) {
+		            	udTextArea.setEditable(true);
+		            	udTextArea.setBackground(Color.white);
+		            }else {
+		            	udTextArea.setEditable(false);
+		            	udTextArea.setText("");
+		            	udTextArea.setBackground(Color.lightGray);
+		            }
+				}
+			}
+		}	
+    }
+    
+    
+    private class MyTreeRenderer extends DefaultTreeCellRenderer {
+    	
+    	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    		Component comp = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+
+    		if(((DefaultMutableTreeNode)value).getPath().length == 4) {
+    			setIcon(this.leafIcon);
+    		}else {
+    			setIcon(this.openIcon);
+    		}
+    		
+    		
+    		return comp;
+    	}
+    	
+    	
+    }
+    
+    
 }
