@@ -690,7 +690,7 @@ void p_VolumeShaderMultiPass()
                 fMapY = colorGM.r;
             }
           
-            fMapZ = texture3D(pVolumeImageB_2nd_TEXUNIT15,position).r;
+            fMapZ = texture3D(hVolumeImageA_2nd_TEXUNIT7,position).r;
             if ( UseWidget0 != 0.0 )
             {
                 float opacity0 =
