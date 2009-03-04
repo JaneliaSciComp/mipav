@@ -187,8 +187,15 @@ public class FileInfoImageXML extends FileInfoXML {
      */
     public void createPSet(String description) {
         this.currentPSetDesc = description;
-        setTable.put(description, new PSet(description));
+        setTable.put(description, new XMLPSet(description));
     }
+    
+    public void addPset(String description, XMLPSet pset) {
+    	this.currentPSetDesc = description;
+    	setTable.put(description, pset);
+    }
+    
+    
 
     /**
      * Displays the file information.
@@ -447,12 +454,12 @@ public class FileInfoImageXML extends FileInfoXML {
         Enumeration e = getPSetKeys();
 
         while (e.hasMoreElements()) {
-            PSet temp = getPSet((String) e.nextElement());
+            XMLPSet temp = getPSet((String) e.nextElement());
             String desc = temp.getDescription();
             Enumeration pe = temp.getParameterKeys();
 
             while (pe.hasMoreElements()) {
-                Parameter tp = temp.getParameter((String) pe.nextElement());
+                XMLParameter tp = temp.getParameter((String) pe.nextElement());
 
                 dialog.appendParameter(desc, tp.getName(), tp.getDescription(), tp.getValueType(), tp.getValue(), tp
                         .getDate(), tp.getTime());
@@ -506,8 +513,8 @@ public class FileInfoImageXML extends FileInfoXML {
      * 
      * @return PSet current parameter set
      */
-    public PSet getCurrentPSet() {
-        return (PSet) setTable.get(currentPSetDesc);
+    public XMLPSet getCurrentPSet() {
+        return (XMLPSet) setTable.get(currentPSetDesc);
     }
 
     /**
@@ -651,7 +658,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * @return Hashtable parameter hashtable
      */
     public Hashtable getParameterTable(String description) {
-        return ((PSet) setTable.get(description)).getTable();
+        return ((XMLPSet) setTable.get(description)).getTable();
     }
 
     /**
@@ -670,8 +677,8 @@ public class FileInfoImageXML extends FileInfoXML {
      * 
      * @return DOCUMENT ME!
      */
-    public PSet getPSet(String description) {
-        return (PSet) setTable.get(description);
+    public XMLPSet getPSet(String description) {
+        return (XMLPSet) setTable.get(description);
     }
 
     /**
@@ -1394,346 +1401,9 @@ public class FileInfoImageXML extends FileInfoXML {
         }
     }
 
-    /**
-     * <p>
-     * Title: Parameter
-     * </p>
-     * 
-     * <p>
-     * Description: Public class to store information for a parameter associated with the image (infinite parameters
-     * allowed per)
-     * </p>
-     * 
-     * <p>
-     * Copyright: Copyright (c) 2004
-     * </p>
-     * 
-     * <p>
-     * Company:
-     * </p>
-     * 
-     * @author not attributable
-     * @version 1.0
-     */
-    public class Parameter implements Serializable {
+   
 
-        /** Use serialVersionUID for interoperability. */
-        private static final long serialVersionUID = 4475674642754924771L;
-
-        /** Parameter date. */
-        private String date;
-
-        /** Parameter description. */
-        private String description;
-
-        /** Parameter name. */
-        private String name;
-
-        /** Parameter time. */
-        private String time;
-
-        /** Parameter value. */
-        private String value;
-
-        /** Parameter value type. */
-        private String valueType;
-
-        /**
-         * Creates a new parameter by name.
-         * 
-         * @param name String parameter name
-         */
-        public Parameter(String name) {
-            this.name = name;
-        }
-
-        /**
-         * Gets the parameter's date.
-         * 
-         * @return String date
-         */
-        public String getDate() {
-            return this.date;
-        }
-
-        /**
-         * Gets the parameter's description.
-         * 
-         * @return String description
-         */
-        public String getDescription() {
-            return this.description;
-        }
-
-        /**
-         * Gets the parameter's name.
-         * 
-         * @return String parameter name
-         */
-        public String getName() {
-            return this.name;
-        }
-
-        /**
-         * Gets the parameter's time.
-         * 
-         * @return String time
-         */
-        public String getTime() {
-            return this.time;
-        }
-
-        /**
-         * Gets the parameter's value.
-         * 
-         * @return String value
-         */
-        public String getValue() {
-            return this.value;
-        }
-
-        /**
-         * Gets the parameter's value-type.
-         * 
-         * @return String value-type
-         */
-        public String getValueType() {
-            return this.valueType;
-        }
-
-        /**
-         * Sets the date for the parameter.
-         * 
-         * @param date String date
-         */
-        public void setDate(String date) {
-            this.date = date;
-        }
-
-        /**
-         * Sets the date + T + time for the parameter.
-         * 
-         * @param dateTime String date-time
-         */
-        public void setDateTime(String dateTime) {
-            StringTokenizer dt = new StringTokenizer(dateTime, "T");
-
-            if (dt.hasMoreElements()) {
-                date = dt.nextToken();
-                time = dt.nextToken();
-            }
-        }
-
-        /**
-         * Sets the description for the parameter.
-         * 
-         * @param description String description
-         */
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        /**
-         * Sets the time for the parameter.
-         * 
-         * @param time String time
-         */
-        public void setTime(String time) {
-            this.time = time;
-        }
-
-        /**
-         * Sets the value for the parameter.
-         * 
-         * @param value String value
-         */
-        public void setValue(String value) {
-            this.value = value;
-        }
-
-        /**
-         * Sets the value type for the parameter.
-         * 
-         * @param valueType String value type
-         */
-        public void setValueType(String valueType) {
-            this.valueType = valueType;
-        }
-
-        /**
-         * String representation of parameter.
-         * 
-         * @return String string representation
-         */
-        public String toString() {
-            String p = new String("<Parameters>");
-
-            p += "<Parameter-name>" + getName() + "</Parameter-name>";
-            p += "<Parameter-description>" + getDescription() + "</Parameter-description>";
-            p += "<Value-type>" + getValueType() + "</Value-type>";
-            p += "<Value>" + getValue() + "</Value>";
-            p += "<Parameter-date-time>" + getDate() + "T" + getTime() + "</Parameter-date-time>";
-            p += "</Parameters>";
-
-            return p;
-        }
-    }
-
-    /**
-     * <p>
-     * Title: PSet
-     * </p>
-     * 
-     * <p>
-     * Description: Public class to store up to an infinite number of parameters... which will be in a Hashtable with
-     * name as the key Note: there must be at least one parameter associated with each parameter set per XSD (XML
-     * Schema)
-     * </p>
-     * 
-     * <p>
-     * Copyright: Copyright (c) 2004
-     * </p>
-     * 
-     * <p>
-     * Company:
-     * </p>
-     * 
-     * @author not attributable
-     * @version 1.0
-     */
-    public class PSet implements Serializable {
-
-        /** Use serialVersionUID for interoperability. */
-        private static final long serialVersionUID = 1087870691598758048L;
-
-        /** Current parameter name. */
-        private String currentParameterName;
-
-        /** Description of parameter. */
-        private String description;
-
-        /** Parameter hashtable. */
-        private Hashtable parameterTable;
-
-        /**
-         * Create a new parameter set with the given description.
-         * 
-         * @param description String description of parameter set
-         */
-        public PSet(String description) {
-            this.description = description;
-            parameterTable = new Hashtable();
-        }
-
-        /**
-         * Adds a new parameter to the set.
-         * 
-         * @param name String name
-         */
-        public void addParameter(String name) {
-            this.currentParameterName = name;
-            parameterTable.put(name, new Parameter(name));
-        }
-
-        /**
-         * Determines if the set contains a parameter with the given name.
-         * 
-         * @param key String parameter name (key)
-         * 
-         * @return boolean set contains parameter
-         */
-        public boolean containsKey(String key) {
-            return parameterTable.containsKey(key);
-        }
-
-        /**
-         * Returns the current parameter to be modified.
-         * 
-         * @return Parameter current parameter
-         */
-        public Parameter getCurrentParameter() {
-            return (Parameter) parameterTable.get(currentParameterName);
-        }
-
-        /**
-         * Get the parameter set description.
-         * 
-         * @return String description
-         */
-        public String getDescription() {
-            return this.description;
-        }
-
-        /**
-         * Gets the parameter with the given name.
-         * 
-         * @param name DOCUMENT ME!
-         * 
-         * @return Parameter parameter
-         */
-        public Parameter getParameter(String name) {
-            return (Parameter) parameterTable.get(name);
-        }
-
-        /**
-         * Get an enumeration for the list of parameter names.
-         * 
-         * @return Enumeration enumeration for parameter name list
-         */
-        public Enumeration getParameterKeys() {
-            return parameterTable.keys();
-        }
-
-        /**
-         * Gets the hashtable of parameters.
-         * 
-         * @return Hashtable parameter hashtable
-         */
-        public Hashtable getTable() {
-            return this.parameterTable;
-        }
-
-        /**
-         * Removes the parameter with the given name from the hashtable.
-         * 
-         * @param name String parameter name
-         */
-        public void removeParameter(String name) {
-            parameterTable.remove(name);
-        }
-
-        /**
-         * Returns a String representation of the Set.
-         * 
-         * @return String string representation
-         */
-        public String toString() {
-            Enumeration e = getTable().elements();
-            StringBuffer set = new StringBuffer("<Sets>");
-
-            set.append("<Set-description>");
-            set.append(getDescription());
-            set.append("</Set-description>");
-
-            while (e.hasMoreElements()) {
-
-                try {
-                    Parameter p = (Parameter) e.nextElement();
-
-                    // set.append("<Parameters>");
-                    set.append(p.toString());
-                    // set.append("</Parameters>");
-                } catch (ClassCastException cce) {
-                    System.err.println("This element was not a Parameter.");
-                }
-            }
-
-            set.append("</Sets>");
-
-            return set.toString();
-        }
-
-    }
+    
 
     /**
      * <p>

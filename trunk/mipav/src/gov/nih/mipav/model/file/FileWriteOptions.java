@@ -4,6 +4,7 @@ package gov.nih.mipav.model.file;
 import gov.nih.mipav.model.structures.*;
 
 import java.util.BitSet;
+import java.util.HashMap;
 
 
 /**
@@ -161,6 +162,8 @@ public class FileWriteOptions {
     private boolean writeHeaderOnly = false;
 
     private NDARWriteData ndarData = null;
+    
+    private HashMap pSetsHashMap = null;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -239,8 +242,26 @@ public class FileWriteOptions {
     public void setWriteHeaderOnly(boolean headerOnly) {
         this.writeHeaderOnly = headerOnly;
     }
+    
+    
+    
+    /**
+     * gets the psets hashmap
+     * @return
+     */
+    public HashMap getPSetsHashMap() {
+		return pSetsHashMap;
+	}
 
     /**
+     * sets the pset hasmap
+     * @param setsHashMap
+     */
+	public void setPSetsHashMap(HashMap setsHashMap) {
+		pSetsHashMap = setsHashMap;
+	}
+
+	/**
      * Sets the NDAR Data that will be used to populate XML header fields
      * 
      * @param data NDAR data generated from JDialogNDAR

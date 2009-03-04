@@ -1228,6 +1228,34 @@ public class FileImageXML extends FileXML {
             ((FileInfoImageXML) fileInfo).setSubjectID(data.validGUID);
 
             ((FileInfoImageXML) fileInfo).setHistory(data.zipFileName);
+            
+            
+            //add psets and parameters
+            HashMap pSetsHashMap = options.getPSetsHashMap();
+            if(pSetsHashMap != null) {
+            	Set psetKeys = pSetsHashMap.keySet();
+            	Iterator psetIter = psetKeys.iterator();
+            	while(psetIter.hasNext()) {
+            		String psetDesc = (String)psetIter.next();
+            		XMLPSet pset = (XMLPSet)pSetsHashMap.get(psetDesc);
+            		((FileInfoImageXML) fileInfo).addPset(psetDesc, pset);
+            		Hashtable parameterTable = pset.getTable();
+            		Set paramKeys = parameterTable.keySet();
+            		Iterator paramIter = paramKeys.iterator();
+            		while(paramIter.hasNext()) {
+            			String paramName = (String)paramIter.next();
+            			XMLParameter param = (XMLParameter)parameterTable.get(paramName);
+            			String value =  param.getValue();
+            			String description = param.getDescription();
+            			String type = param.getValueType();
+            			((FileInfoImageXML) fileInfo).getPSet(psetDesc).addParameter(paramName);
+            			((FileInfoImageXML) fileInfo).getPSet(psetDesc).getParameter(paramName).setValue(value);
+            			((FileInfoImageXML) fileInfo).getPSet(psetDesc).getParameter(paramName).setValueType(type);
+            			((FileInfoImageXML) fileInfo).getPSet(psetDesc).getParameter(paramName).setDescription(description);
+            		}
+            	}
+            }
+            
         }
 
         fileName = headerName + rawExtension;
@@ -2560,7 +2588,7 @@ public class FileImageXML extends FileXML {
         boolean openTagFalseFlag = false; // Flag to specify whether end tag is needed.
 
         while (setEnum.hasMoreElements()) {
-            FileInfoImageXML.PSet currentSet = (FileInfoImageXML.PSet) setEnum.nextElement();
+            XMLPSet currentSet = (XMLPSet) setEnum.nextElement();
             Enumeration paramEnum = currentSet.getTable().elements();
             openTagFalseFlag = false;
 
@@ -2576,7 +2604,7 @@ public class FileImageXML extends FileXML {
             }
 
             while (paramEnum.hasMoreElements()) {
-                FileInfoImageXML.Parameter currentParam = (FileInfoImageXML.Parameter) paramEnum.nextElement();
+                XMLParameter currentParam = (XMLParameter) paramEnum.nextElement();
 
                 // if (!(currentParam.getValue() == null) &&
                 // !(currentParam.getValue().equals("")))
