@@ -2,13 +2,12 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.util.*;
 
 import javax.swing.*;
@@ -16,29 +15,37 @@ import javax.swing.*;
 
 /**
  * This class shows the dialog which conatains the file-info header information as used in the FileInfoBase class.
- *
- * <p>it builds two tables, and any row can be made editable when supplied with the appropriate editor to use. Entries
- * that are edited okay, reports updates to file info.</p>
- *
- * <p>It merely brings up a JDalogEditor when "edit" button is clicked.</p>
- *
- * <p><i>17 January 2002</i>: Right now, this class is set up to handle <i>only</i> FileInfoAnalyze edits. This is
- * because the</p>
- *
- * @author   parsonsd;
- * @version  0.2
+ * 
+ * <p>
+ * it builds two tables, and any row can be made editable when supplied with the appropriate editor to use. Entries that
+ * are edited okay, reports updates to file info.
+ * </p>
+ * 
+ * <p>
+ * It merely brings up a JDalogEditor when "edit" button is clicked.
+ * </p>
+ * 
+ * <p>
+ * <i>17 January 2002</i>: Right now, this class is set up to handle <i>only</i> FileInfoAnalyze edits. This is
+ * because the
+ * </p>
+ * 
+ * @author parsonsd;
+ * @version 0.2
  */
 public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -8790820691884630599L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** menu item for adding parameter. */
-    private JMenuItem addParam;
+    private final JMenuItem addParam;
 
     /** button for adding sets. */
     private JButton addSet;
@@ -56,7 +63,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
     private FileInfoImageXML fileinfo;
 
     /** model image associated with the FileInfo. */
-    private ModelImage image;
+    private final ModelImage image;
 
     /** model associated with investigator information. */
     private ViewTableModel investigatorModel;
@@ -71,7 +78,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
     private int numSets = 0;
 
     /** array of strings for parameter column names. */
-    private String[] parameterColumnNames = { "Name", "Description", "Value-Type", "Value", "Date", "Time" };
+    private final String[] parameterColumnNames = {"Name", "Description", "Value-Type", "Value", "Date", "Time"};
 
     /** model associated with primary image information. */
     private ViewTableModel primaryModel;
@@ -79,11 +86,12 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
     /** primary image information table. */
     private JTable primaryTable;
 
-
     // tpe holds the type of editor to be used; editor holds the editor dialog
     /** Type holds the type of editor, editor holds the actual editor dialog. */
-    private Hashtable primaryTypeHolder, primaryEditorHolder, subjectTypeHolder, subjectEditorHolder, scanTypeHolder,
-                      scanEditorHolder, investigatorTypeHolder, investigatorEditorHolder;
+    private final Hashtable primaryTypeHolder, primaryEditorHolder;
+
+    private Hashtable subjectTypeHolder, subjectEditorHolder, scanTypeHolder, scanEditorHolder, investigatorTypeHolder,
+            investigatorEditorHolder;
 
     /** button for removing parameters. */
     private JButton removeParam;
@@ -104,7 +112,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
     private String setDescforAddParam;
 
     /** hash table holding set information. */
-    private Hashtable setHashtable;
+    private final Hashtable setHashtable;
 
     /** model associated with subject information. */
     private ViewTableModel subjectModel;
@@ -113,21 +121,22 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
     private JTable subjectTable;
 
     /** array of strings for surface column names. */
-    private String[] surfaceColumnNames = { "Path", "Opacity", "Load" };
+    private final String[] surfaceColumnNames = {"Path", "Opacity", "Load"};
 
     /** for displaying surfaces. */
-    private SurfaceDisplay surfaces;
+    private final SurfaceDisplay surfaces;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new JDialogFileInfoXML object.
-     *
-     * @param  parent  Frame
-     * @param  title   String
-     * @param  img     ModelImage
+     * 
+     * @param parent Frame
+     * @param title String
+     * @param img ModelImage
      */
-    public JDialogFileInfoXML(Frame parent, String title, ModelImage img) {
+    public JDialogFileInfoXML(final Frame parent, final String title, final ModelImage img) {
         super(parent, false);
         setTitle(title);
         image = img;
@@ -141,17 +150,18 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         addParam.addActionListener(this);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * permits the caller to get a value out of the primary table by using the name given to the fileInfo.
-     *
-     * @param   name  DOCUMENT ME!
-     *
-     * @return  the value returned is the first value which keys to this name; any other instances of the name will be
-     *          ignored. <code>Null</code> is returned if the name cannot be found
+     * 
+     * @param name DOCUMENT ME!
+     * 
+     * @return the value returned is the first value which keys to this name; any other instances of the name will be
+     *         ignored. <code>Null</code> is returned if the name cannot be found
      */
-    public String accessPrimaryData(String name) {
+    public String accessPrimaryData(final String name) {
         String possibleValue = null;
 
         for (int i = 0; i < primaryModel.getRowCount(); i++) {
@@ -167,27 +177,33 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
     /**
      * closes the dialog when the user clicks close.
-     *
-     * <p>Creates editor dialogs to allow changing the value-field of a tag when user clicks "Edit Tag" button. This
+     * 
+     * <p>
+     * Creates editor dialogs to allow changing the value-field of a tag when user clicks "Edit Tag" button. This
      * implmentation supports virtually any number of tag editors, bringing forward any previously opened editor. Most
-     * processing occurs when this class hears an editor window close;</p>
-     *
-     * <p>will alert any open window (frame) to set title as that information may have changed.</p>
-     *
-     * <p>to make this more FileInfoBase friendly, add a public static void stateChanged(Vector) to FileInfoBase. Then
+     * processing occurs when this class hears an editor window close;
+     * </p>
+     * 
+     * <p>
+     * will alert any open window (frame) to set title as that information may have changed.
+     * </p>
+     * 
+     * <p>
+     * to make this more FileInfoBase friendly, add a public static void stateChanged(Vector) to FileInfoBase. Then
      * remove the references to the cast. Otherwise, using the editors with other varieties of FileInfo will throw
      * ClassCastExceptions. Also suggest that a distinct datatype (other than Vector) be created to handle the special
-     * needs.</p>
-     *
-     * @param  e  event that triggered this action
+     * needs.
+     * </p>
+     * 
+     * @param e event that triggered this action
      */
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(final ActionEvent e) {
         JDialogEditor editor;
 
         if (e.getActionCommand().equals("Close")) { // close
 
             // clear out the editor dialog boxes
-            for (Enumeration en = editorDialogTable.elements(); en.hasMoreElements();) {
+            for (final Enumeration en = editorDialogTable.elements(); en.hasMoreElements();) {
                 editor = (JDialogEditor) en.nextElement();
                 editor.dispose();
             }
@@ -195,23 +211,22 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
             editorDialogTable.clear();
             this.dispose(); // remove self
         } else if (e.getActionCommand().equals("RemoveParameter")) {
-            Enumeration eset = setHashtable.keys();
+            final Enumeration eset = setHashtable.keys();
             boolean atLeastOne = false;
 
             while (eset.hasMoreElements()) {
-                String psetdesc = (String) eset.nextElement();
-                PSetDisplay pset = (PSetDisplay) setHashtable.get(psetdesc);
-                int[] rows = pset.getTable().getSelectedRows();
-                boolean[] deleterows = new boolean[rows.length];
-                String[] paramNames = new String[rows.length];
+                final String psetdesc = (String) eset.nextElement();
+                final PSetDisplay pset = (PSetDisplay) setHashtable.get(psetdesc);
+                final int[] rows = pset.getTable().getSelectedRows();
+                final boolean[] deleterows = new boolean[rows.length];
+                final String[] paramNames = new String[rows.length];
 
                 for (int i = 0; i < rows.length; i++) {
                     paramNames[i] = new String((String) pset.getModel().getValueAt(rows[i], 0));
 
-                    int reply = JOptionPane.showConfirmDialog(this,
-                                                              "Remove Parameter (" + paramNames[i] + ") from Set (" +
-                                                              psetdesc + ")?", "Confirm Remove Parameter",
-                                                              JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    final int reply = JOptionPane.showConfirmDialog(this, "Remove Parameter (" + paramNames[i]
+                            + ") from Set (" + psetdesc + ")?", "Confirm Remove Parameter", JOptionPane.YES_NO_OPTION,
+                            JOptionPane.QUESTION_MESSAGE);
 
                     if (reply == JOptionPane.YES_OPTION) {
                         atLeastOne = true;
@@ -259,7 +274,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                 // Create an editor to set the Parameter Name
                 // (required and non editable post-creation)
 
-                String[] values = new String[6];
+                final String[] values = new String[6];
 
                 values[0] = new String("Name");
                 values[1] = new String("Description");
@@ -268,7 +283,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                 values[4] = new String("0000-00-00");
                 values[5] = new String("00:00:00-00:00");
 
-                int[] editors = new int[6];
+                final int[] editors = new int[6];
 
                 editors[0] = JDialogEditor.XML_SETORPARAM;
                 editors[1] = JDialogEditor.STRING;
@@ -280,62 +295,62 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                 editor.setTitle("New Parameter Data");
                 editor.setVisible(true);
 
-                Hashtable tmp = fileinfo.getParameterTable(setDescforAddParam);
+                final Hashtable tmp = fileinfo.getParameterTable(setDescforAddParam);
 
                 editor.setTable(fileinfo.getParameterTable(this.setDescforAddParam), false);
                 editor.addWindowListener(new WindowAdapter() {
 
-                        // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
-                        // were no problems with user inputted values); if it closed by okbutton, then
-                        // modify all slices if user so desired.
-                        // In addition, when the change was applied to all slices, notify the image frames
-                        // in the image frame vector to reset the title (title changes only for name,
-                        // @see ModelImage#setTitle(String)
-                        //
-                        private boolean alreadyClosed = false; // was the editor closed?
+                    // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
+                    // were no problems with user inputted values); if it closed by okbutton, then
+                    // modify all slices if user so desired.
+                    // In addition, when the change was applied to all slices, notify the image frames
+                    // in the image frame vector to reset the title (title changes only for name,
+                    // @see ModelImage#setTitle(String)
+                    //
+                    private boolean alreadyClosed = false; // was the editor closed?
 
-                        public void windowClosed(WindowEvent e) {
-                            JDialogEditor ed;
+                    public void windowClosed(final WindowEvent e) {
+                        JDialogEditor ed;
 
-                            ed = (JDialogEditor) e.getSource();
+                        ed = (JDialogEditor) e.getSource();
 
-                            if (ed.wasDialogOkay() && !alreadyClosed) {
-                                alreadyClosed = true;
+                        if (ed.wasDialogOkay() && !alreadyClosed) {
+                            alreadyClosed = true;
 
-                                String s = ed.getDisplayValueForParam();
-                                StringTokenizer dt = new StringTokenizer(s, "\\");
+                            final String s = ed.getDisplayValueForParam();
+                            final StringTokenizer dt = new StringTokenizer(s, "\\");
 
-                                if (dt.hasMoreElements()) {
-                                    String name = dt.nextToken();
-                                    String desc = dt.nextToken();
-                                    String vt = dt.nextToken();
-                                    String val = dt.nextToken();
-                                    String date = dt.nextToken();
-                                    String time = dt.nextToken();
+                            if (dt.hasMoreElements()) {
+                                final String name = dt.nextToken();
+                                final String desc = dt.nextToken();
+                                final String vt = dt.nextToken();
+                                final String val = dt.nextToken();
+                                final String date = dt.nextToken();
+                                final String time = dt.nextToken();
 
-                                    appendParameter(setDescforAddParam, name, desc, vt, val, date, time);
+                                appendParameter(setDescforAddParam, name, desc, vt, val, date, time);
 
-                                    // update fileinfo
-                                    FileInfoImageXML.PSet temp = fileinfo.getPSet(setDescforAddParam);
+                                // update fileinfo
+                                final XMLPSet temp = fileinfo.getPSet(setDescforAddParam);
 
-                                    temp.addParameter(name);
-                                    temp.getParameter(name).setDescription(desc);
-                                    temp.getParameter(name).setValueType(vt);
-                                    temp.getParameter(name).setDate(date);
-                                    temp.getParameter(name).setTime(time);
+                                temp.addParameter(name);
+                                temp.getParameter(name).setDescription(desc);
+                                temp.getParameter(name).setValueType(vt);
+                                temp.getParameter(name).setDate(date);
+                                temp.getParameter(name).setTime(time);
 
-                                    for (int q = 0; q < image.getFileInfo().length; q++) {
-                                        fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
-                                    }
+                                for (int q = 0; q < image.getFileInfo().length; q++) {
+                                    fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
                                 }
                             }
                         }
-                    });
+                    }
+                });
             }
         } else if (e.getActionCommand().equals("AddSet")) {
             this.numSets++;
 
-            String[] values = new String[7];
+            final String[] values = new String[7];
 
             values[0] = new String("Set Description");
             values[1] = new String("Parameter Name");
@@ -345,7 +360,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
             values[5] = new String("0000-00-00");
             values[6] = new String("00:00:00-00:00");
 
-            int[] editors = new int[7];
+            final int[] editors = new int[7];
 
             editors[0] = JDialogEditor.XML_SETORPARAM;
             editors[1] = JDialogEditor.STRING;
@@ -361,70 +376,70 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
             editor.addWindowListener(new WindowAdapter() {
 
-                    // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
-                    // were no problems with user inputted values); if it closed by okbutton, then
-                    // modify all slices if user so desired.
-                    // In addition, when the change was applied to all slices, notify the image frames
-                    // in the image frame vector to reset the title (title changes only for name,
-                    // @see ModelImage#setTitle(String)
-                    //
-                    private boolean alreadyClosed = false; // was the editor closed?
+                // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
+                // were no problems with user inputted values); if it closed by okbutton, then
+                // modify all slices if user so desired.
+                // In addition, when the change was applied to all slices, notify the image frames
+                // in the image frame vector to reset the title (title changes only for name,
+                // @see ModelImage#setTitle(String)
+                //
+                private boolean alreadyClosed = false; // was the editor closed?
 
-                    public void windowClosed(WindowEvent e) {
-                        JDialogEditor ed;
+                public void windowClosed(final WindowEvent e) {
+                    JDialogEditor ed;
 
-                        ed = (JDialogEditor) e.getSource();
+                    ed = (JDialogEditor) e.getSource();
 
-                        if (ed.wasDialogOkay() && !alreadyClosed) {
-                            alreadyClosed = true;
+                    if (ed.wasDialogOkay() && !alreadyClosed) {
+                        alreadyClosed = true;
 
-                            String s = ed.getDisplayValueForParam();
-                            StringTokenizer dt = new StringTokenizer(s, "\\");
+                        final String s = ed.getDisplayValueForParam();
+                        final StringTokenizer dt = new StringTokenizer(s, "\\");
 
-                            if (dt.hasMoreElements()) {
-                                String psetdesc = dt.nextToken();
-                                String name = dt.nextToken();
-                                String desc = dt.nextToken();
-                                String vt = dt.nextToken();
-                                String val = dt.nextToken();
-                                String date = dt.nextToken();
-                                String time = dt.nextToken();
+                        if (dt.hasMoreElements()) {
+                            final String psetdesc = dt.nextToken();
+                            final String name = dt.nextToken();
+                            final String desc = dt.nextToken();
+                            final String vt = dt.nextToken();
+                            final String val = dt.nextToken();
+                            final String date = dt.nextToken();
+                            final String time = dt.nextToken();
 
-                                setHashtable.put(psetdesc, new PSetDisplay(psetdesc));
+                            setHashtable.put(psetdesc, new PSetDisplay(psetdesc));
 
-                                scrollingBox.add(((PSetDisplay) setHashtable.get(psetdesc)).getLabel());
-                                scrollingBox.add(((PSetDisplay) setHashtable.get(psetdesc)).getTable().getTableHeader());
-                                scrollingBox.add(((PSetDisplay) setHashtable.get(psetdesc)).getTable());
+                            scrollingBox.add( ((PSetDisplay) setHashtable.get(psetdesc)).getLabel());
+                            scrollingBox.add( ((PSetDisplay) setHashtable.get(psetdesc)).getTable().getTableHeader());
+                            scrollingBox.add( ((PSetDisplay) setHashtable.get(psetdesc)).getTable());
 
-                                appendParameter(psetdesc, name, desc, vt, val, date, time);
-                                getContentPane().validate();
+                            appendParameter(psetdesc, name, desc, vt, val, date, time);
+                            getContentPane().validate();
 
-                                // update fileinfo
-                                fileinfo.createPSet(psetdesc);
-                                fileinfo.getPSet(psetdesc).addParameter(name);
-                                fileinfo.getPSet(psetdesc).getParameter(name).setDescription(desc);
-                                fileinfo.getPSet(psetdesc).getParameter(name).setValueType(vt);
-                                fileinfo.getPSet(psetdesc).getParameter(name).setValue(val);
-                                fileinfo.getPSet(psetdesc).getParameter(name).setDate(date);
-                                fileinfo.getPSet(psetdesc).getParameter(name).setTime(time);
+                            // update fileinfo
+                            fileinfo.createPSet(psetdesc);
+                            fileinfo.getPSet(psetdesc).addParameter(name);
+                            fileinfo.getPSet(psetdesc).getParameter(name).setDescription(desc);
+                            fileinfo.getPSet(psetdesc).getParameter(name).setValueType(vt);
+                            fileinfo.getPSet(psetdesc).getParameter(name).setValue(val);
+                            fileinfo.getPSet(psetdesc).getParameter(name).setDate(date);
+                            fileinfo.getPSet(psetdesc).getParameter(name).setTime(time);
 
-                                for (int q = 0; q < image.getFileInfo().length; q++) {
-                                    fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
-                                }
+                            for (int q = 0; q < image.getFileInfo().length; q++) {
+                                fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
                             }
-
                         }
-                    }
-                });
-        } else if (e.getActionCommand().equals("AddSurface")) {
-            String[] values = new String[3];
 
-            /// get the default directory from user interface
+                    }
+                }
+            });
+        } else if (e.getActionCommand().equals("AddSurface")) {
+            final String[] values = new String[3];
+
+            // / get the default directory from user interface
             values[0] = new String("");
             values[1] = new String("1.0");
             values[2] = new String("true");
 
-            int[] editors = new int[3];
+            final int[] editors = new int[3];
             editors[0] = JDialogEditor.FILE_STRING;
             editors[1] = JDialogEditor.STRING;
             editors[2] = JDialogEditor.BOOLEAN;
@@ -435,58 +450,57 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
             editor.addWindowListener(new WindowAdapter() {
 
-                    // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
-                    // were no problems with user inputted values); if it closed by okbutton, then
-                    // modify all slices if user so desired.
-                    // In addition, when the change was applied to all slices, notify the image frames
-                    // in the image frame vector to reset the title (title changes only for name,
-                    // @see ModelImage#setTitle(String)
-                    //
-                    private boolean alreadyClosed = false; // was the editor closed?
+                // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
+                // were no problems with user inputted values); if it closed by okbutton, then
+                // modify all slices if user so desired.
+                // In addition, when the change was applied to all slices, notify the image frames
+                // in the image frame vector to reset the title (title changes only for name,
+                // @see ModelImage#setTitle(String)
+                //
+                private boolean alreadyClosed = false; // was the editor closed?
 
-                    public void windowClosed(WindowEvent e) {
-                        JDialogEditor ed;
+                public void windowClosed(final WindowEvent e) {
+                    JDialogEditor ed;
 
-                        ed = (JDialogEditor) e.getSource();
+                    ed = (JDialogEditor) e.getSource();
 
-                        if (ed.wasDialogOkay() && !alreadyClosed) {
-                            alreadyClosed = true;
+                    if (ed.wasDialogOkay() && !alreadyClosed) {
+                        alreadyClosed = true;
 
-                            String s = ed.getDisplayValueForInfo(); // get data with #### separator
-                            StringTokenizer dt = new StringTokenizer(s, "####");
+                        final String s = ed.getDisplayValueForInfo(); // get data with #### separator
+                        final StringTokenizer dt = new StringTokenizer(s, "####");
 
-                            if (dt.hasMoreElements()) {
-                                String file = dt.nextToken();
-                                float opacity = Float.parseFloat(dt.nextToken());
-                                boolean display = Boolean.valueOf(dt.nextToken()).booleanValue();
+                        if (dt.hasMoreElements()) {
+                            final String file = dt.nextToken();
+                            final float opacity = Float.parseFloat(dt.nextToken());
+                            final boolean display = Boolean.valueOf(dt.nextToken()).booleanValue();
 
-                                surfaces.addSurface(file, opacity, display);
+                            surfaces.addSurface(file, opacity, display);
 
-                                getContentPane().validate();
+                            getContentPane().validate();
 
-                                fileinfo.addSurface(file);
-                                fileinfo.getSurface(file).setOpacity(opacity);
-                                fileinfo.getSurface(file).setDisplay(display);
+                            fileinfo.addSurface(file);
+                            fileinfo.getSurface(file).setOpacity(opacity);
+                            fileinfo.getSurface(file).setDisplay(display);
 
-                                for (int q = 0; q < image.getFileInfo().length; q++) {
-                                    fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
-                                }
+                            for (int q = 0; q < image.getFileInfo().length; q++) {
+                                fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
                             }
                         }
                     }
-                });
+                }
+            });
         } else if (e.getActionCommand().equals("RemoveSurface")) {
             boolean atLeastOne = false;
-            int[] rows = surfaces.getTable().getSelectedRows();
-            boolean[] deleterows = new boolean[rows.length];
-            String[] surPaths = new String[rows.length];
+            final int[] rows = surfaces.getTable().getSelectedRows();
+            final boolean[] deleterows = new boolean[rows.length];
+            final String[] surPaths = new String[rows.length];
 
             for (int i = 0; i < rows.length; i++) {
                 surPaths[i] = new String((String) surfaces.getModel().getValueAt(rows[i], 0));
 
-                int reply = JOptionPane.showConfirmDialog(this, "Remove Surface (" + surPaths[i] + ")?",
-                                                          "Confirm Remove Surface", JOptionPane.YES_NO_OPTION,
-                                                          JOptionPane.QUESTION_MESSAGE);
+                final int reply = JOptionPane.showConfirmDialog(this, "Remove Surface (" + surPaths[i] + ")?",
+                        "Confirm Remove Surface", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
                 if (reply == JOptionPane.YES_OPTION) {
                     atLeastOne = true;
@@ -543,7 +557,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                         objs = (Vector) primaryTypeHolder.get(named);
 
                         String[] values = new String[1]; // this is unclean design now to cover something i didn't
-                                                         // foresee
+                        // foresee
 
                         if (objs.size() > 1) { // assume seperate words mean something special
 
@@ -553,7 +567,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                             values[0] = (String) primaryTable.getValueAt(rows[i], 1);
                         }
 
-                        int[] editors = new int[objs.size()];
+                        final int[] editors = new int[objs.size()];
 
                         for (int j = 0; j < objs.size(); j++) {
                             editors[j] = ((Integer) (objs.elementAt(j))).intValue(); // what the user asked for
@@ -564,61 +578,61 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                         editor.setVisible(true);
                         editor.addWindowListener(new WindowAdapter() {
 
-                                // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
-                                // were no problems with user inputted values); if it closed by okbutton, then
-                                // modify all slices if user so desired.
-                                // In addition, when the change was applied to all slices, notify the image frames
-                                // in the image frame vector to reset the title (title changes only for name,
-                                // @see ModelImage#setTitle(String)
-                                //
-                                private boolean alreadyClosed = false; // was the editor closed?
+                            // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
+                            // were no problems with user inputted values); if it closed by okbutton, then
+                            // modify all slices if user so desired.
+                            // In addition, when the change was applied to all slices, notify the image frames
+                            // in the image frame vector to reset the title (title changes only for name,
+                            // @see ModelImage#setTitle(String)
+                            //
+                            private boolean alreadyClosed = false; // was the editor closed?
 
-                                public void windowClosed(WindowEvent e) {
-                                    JDialogEditor ed;
+                            public void windowClosed(final WindowEvent e) {
+                                JDialogEditor ed;
 
-                                    ed = (JDialogEditor) e.getSource();
+                                ed = (JDialogEditor) e.getSource();
 
-                                    Integer edID = (Integer) ed.getKey();
-                                    Vector changed = new Vector(5);
+                                final Integer edID = (Integer) ed.getKey();
+                                Vector changed = new Vector(5);
 
-                                    changed.add(0, new Integer(1)); // table
-                                    changed.add(1, edID); // line
-                                    changed.add(2, primaryModel.getValueAt(edID.intValue(), 0));
-                                    changed.add(3, ed.getValue());
-                                    changed.add(4, ed.getDisplayValue());
+                                changed.add(0, new Integer(1)); // table
+                                changed.add(1, edID); // line
+                                changed.add(2, primaryModel.getValueAt(edID.intValue(), 0));
+                                changed.add(3, ed.getValue());
+                                changed.add(4, ed.getDisplayValue());
 
-                                    if (ed.wasDialogOkay() && !alreadyClosed) {
-                                        alreadyClosed = true;
+                                if (ed.wasDialogOkay() && !alreadyClosed) {
+                                    alreadyClosed = true;
 
-                                        // to make this more FileInfoBase friendly, add a
-                                        // public static void stateChanged(Vector)
-                                        // to FileInfoBase.  Then remove the references to
-                                        // the cast.  Otherwise, using the editors with other
-                                        // varieties of FileInfo will throw ClassCastExceptions.
-                                        // Also suggest that a distinct datatype (other than Vector)
-                                        // be created to handle the special needs.
-                                        fileinfo.stateChanged(changed); // what to do to update fileinfo!?!?!
-                                        primaryModel.setValueAt(ed.getDisplayValue(), edID.intValue(), 1);
-                                        primaryEditorHolder.remove(edID);
+                                    // to make this more FileInfoBase friendly, add a
+                                    // public static void stateChanged(Vector)
+                                    // to FileInfoBase. Then remove the references to
+                                    // the cast. Otherwise, using the editors with other
+                                    // varieties of FileInfo will throw ClassCastExceptions.
+                                    // Also suggest that a distinct datatype (other than Vector)
+                                    // be created to handle the special needs.
+                                    fileinfo.stateChanged(changed); // what to do to update fileinfo!?!?!
+                                    primaryModel.setValueAt(ed.getDisplayValue(), edID.intValue(), 1);
+                                    primaryEditorHolder.remove(edID);
 
-                                        // a really nice idea: add an option (default ON, of course)
-                                        // for fileInfo propogation, that this would do in a local
-                                        // fileInfo friendly way--ie., the fileInfo knows which
-                                        // values should be propogated.
-                                        // Loop through other fileinfos from image.
-                                        for (int q = 0; q < image.getFileInfo().length; q++) {
-                                            fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
-                                        }
-                                    } else {
-                                        primaryEditorHolder.remove(edID);
-                                        changed = null; // forget it
+                                    // a really nice idea: add an option (default ON, of course)
+                                    // for fileInfo propogation, that this would do in a local
+                                    // fileInfo friendly way--ie., the fileInfo knows which
+                                    // values should be propogated.
+                                    // Loop through other fileinfos from image.
+                                    for (int q = 0; q < image.getFileInfo().length; q++) {
+                                        fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
                                     }
-
+                                } else {
+                                    primaryEditorHolder.remove(edID);
+                                    changed = null; // forget it
                                 }
-                            });
+
+                            }
+                        });
                         primaryEditorHolder.put(named, editor);
                     }
-                } else { }
+                } else {}
             }
 
             // now for subject information rows
@@ -643,7 +657,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                         objs = (Vector) subjectTypeHolder.get(named);
 
                         String[] values = new String[1]; // this is unclean design now to cover something i didn't
-                                                         // foresee
+                        // foresee
 
                         if (objs.size() > 1) { // assume seperate words mean something special
 
@@ -653,8 +667,9 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                             values[0] = (String) subjectTable.getValueAt(rows[i], 1);
                         }
 
-                        int[] editors = new int[objs.size()]; // because we tell an editor to do something based on an
-                                                              // int code
+                        final int[] editors = new int[objs.size()]; // because we tell an editor to do something based
+                        // on an
+                        // int code
 
                         for (int j = 0; j < objs.size(); j++) {
                             editors[j] = ((Integer) (objs.elementAt(j))).intValue(); // what the user asked for
@@ -665,66 +680,66 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                         editor.setVisible(true);
                         editor.addWindowListener(new WindowAdapter() {
 
-                                // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
-                                // were no problems with user inputted values); if it closed by okbutton, then
-                                // modify all slices if user so desired.
-                                // In addition, when the change was applied to all slices, notify the image frames
-                                // in the image frame vector to reset the title (title changes only for name,
-                                // @see ModelImage#setTitle(String)
-                                //
-                                private boolean alreadyClosed = false; // was the editor closed?
+                            // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
+                            // were no problems with user inputted values); if it closed by okbutton, then
+                            // modify all slices if user so desired.
+                            // In addition, when the change was applied to all slices, notify the image frames
+                            // in the image frame vector to reset the title (title changes only for name,
+                            // @see ModelImage#setTitle(String)
+                            //
+                            private boolean alreadyClosed = false; // was the editor closed?
 
-                                public void windowClosed(WindowEvent e) {
+                            public void windowClosed(final WindowEvent e) {
 
-                                    // alreadyClosed = true;
-                                    JDialogEditor ed;
+                                // alreadyClosed = true;
+                                JDialogEditor ed;
 
-                                    ed = (JDialogEditor) e.getSource();
-                                    ed.removeWindowListener(ed);
+                                ed = (JDialogEditor) e.getSource();
+                                ed.removeWindowListener(ed);
 
-                                    Integer edID = (Integer) ed.getKey();
-                                    Vector changed = new Vector(4);
+                                final Integer edID = (Integer) ed.getKey();
+                                Vector changed = new Vector(4);
 
-                                    changed.add(0, new Integer(1)); // table
-                                    changed.add(1, edID); // line
-                                    changed.add(2, subjectModel.getValueAt(edID.intValue(), 0));
-                                    changed.add(3, ed.getValue());
-                                    changed.add(4, ed.getDisplayValue());
+                                changed.add(0, new Integer(1)); // table
+                                changed.add(1, edID); // line
+                                changed.add(2, subjectModel.getValueAt(edID.intValue(), 0));
+                                changed.add(3, ed.getValue());
+                                changed.add(4, ed.getDisplayValue());
 
-                                    // System.err.println(ed.wasDialogOkay() + " " + alreadyClosed);
-                                    if (ed.wasDialogOkay() && !alreadyClosed) {
+                                // System.err.println(ed.wasDialogOkay() + " " + alreadyClosed);
+                                if (ed.wasDialogOkay() && !alreadyClosed) {
 
-                                        // to make this more FileInfoBase friendly, add a
-                                        // public static void stateChanged(Vector)
-                                        // to FileInfoBase.  Then remove the references to
-                                        // the cast.  Otherwise, using the editors with other
-                                        // varieties of FileInfo will throw ClassCastExceptions.
-                                        // Also suggest that a distinct datatype (other than Vector)
-                                        // be created to handle the special needs.
-                                        fileinfo.stateChanged(changed); // what to do to update fileinfo!?!?!
-                                        subjectModel.setValueAt(ed.getDisplayValue(), edID.intValue(), 1);
-                                        subjectEditorHolder.remove(edID);
+                                    // to make this more FileInfoBase friendly, add a
+                                    // public static void stateChanged(Vector)
+                                    // to FileInfoBase. Then remove the references to
+                                    // the cast. Otherwise, using the editors with other
+                                    // varieties of FileInfo will throw ClassCastExceptions.
+                                    // Also suggest that a distinct datatype (other than Vector)
+                                    // be created to handle the special needs.
+                                    fileinfo.stateChanged(changed); // what to do to update fileinfo!?!?!
+                                    subjectModel.setValueAt(ed.getDisplayValue(), edID.intValue(), 1);
+                                    subjectEditorHolder.remove(edID);
 
-                                        // a really nice idea: add an option (default ON, of course)
-                                        // for fileInfo propogation, that this would do in a local
-                                        // fileInfo friendly way--ie., the fileInfo knows which
-                                        // values should be propogated.
-                                        // Loop through other fileinfos from image.
-                                        if (image.getFileInfo() != null) {
+                                    // a really nice idea: add an option (default ON, of course)
+                                    // for fileInfo propogation, that this would do in a local
+                                    // fileInfo friendly way--ie., the fileInfo knows which
+                                    // values should be propogated.
+                                    // Loop through other fileinfos from image.
+                                    if (image.getFileInfo() != null) {
 
-                                            for (int q = 0; q < image.getFileInfo().length; q++) {
-                                                fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
-                                            }
+                                        for (int q = 0; q < image.getFileInfo().length; q++) {
+                                            fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
                                         }
-                                    } else {
-                                        subjectEditorHolder.remove(edID);
-                                        changed = null; // forget it
                                     }
+                                } else {
+                                    subjectEditorHolder.remove(edID);
+                                    changed = null; // forget it
                                 }
-                            });
+                            }
+                        });
                         subjectEditorHolder.put(named, editor);
                     }
-                } else { }
+                } else {}
             }
 
             // selected rows on scan table
@@ -747,7 +762,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                         objs = (Vector) scanTypeHolder.get(named);
 
                         String[] values = new String[1]; // this is unclean design now to cover something i didn't
-                                                         // foresee
+                        // foresee
 
                         if (objs.size() > 1) { // assume seperate words mean something special
 
@@ -757,8 +772,9 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                             values[0] = (String) scanTable.getValueAt(rows[i], 1);
                         }
 
-                        int[] editors = new int[objs.size()]; // because we tell an editor to do something based on an
-                                                              // int code
+                        final int[] editors = new int[objs.size()]; // because we tell an editor to do something based
+                        // on an
+                        // int code
 
                         for (int j = 0; j < objs.size(); j++) {
                             editors[j] = ((Integer) (objs.elementAt(j))).intValue(); // what the user asked for
@@ -769,61 +785,61 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                         editor.setVisible(true);
                         editor.addWindowListener(new WindowAdapter() {
 
-                                // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
-                                // were no problems with user inputted values); if it closed by okbutton, then
-                                // modify all slices if user so desired.
-                                // In addition, when the change was applied to all slices, notify the image frames
-                                // in the image frame vector to reset the title (title changes only for name,
-                                // @see ModelImage#setTitle(String)
-                                //
-                                private boolean alreadyClosed = false; // was the editor closed?
+                            // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
+                            // were no problems with user inputted values); if it closed by okbutton, then
+                            // modify all slices if user so desired.
+                            // In addition, when the change was applied to all slices, notify the image frames
+                            // in the image frame vector to reset the title (title changes only for name,
+                            // @see ModelImage#setTitle(String)
+                            //
+                            private boolean alreadyClosed = false; // was the editor closed?
 
-                                public void windowClosed(WindowEvent e) {
+                            public void windowClosed(final WindowEvent e) {
 
-                                    // alreadyClosed = true;
-                                    JDialogEditor ed;
+                                // alreadyClosed = true;
+                                JDialogEditor ed;
 
-                                    ed = (JDialogEditor) e.getSource();
+                                ed = (JDialogEditor) e.getSource();
 
-                                    Integer edID = (Integer) ed.getKey();
-                                    Vector changed = new Vector(4);
+                                final Integer edID = (Integer) ed.getKey();
+                                Vector changed = new Vector(4);
 
-                                    changed.add(0, new Integer(1)); // table
-                                    changed.add(1, edID); // line
-                                    changed.add(2, scanModel.getValueAt(edID.intValue(), 0));
-                                    changed.add(3, ed.getValue());
-                                    changed.add(4, ed.getDisplayValue());
+                                changed.add(0, new Integer(1)); // table
+                                changed.add(1, edID); // line
+                                changed.add(2, scanModel.getValueAt(edID.intValue(), 0));
+                                changed.add(3, ed.getValue());
+                                changed.add(4, ed.getDisplayValue());
 
-                                    if (ed.wasDialogOkay() && !alreadyClosed) {
+                                if (ed.wasDialogOkay() && !alreadyClosed) {
 
-                                        // to make this more FileInfoBase friendly, add a
-                                        // public static void stateChanged(Vector)
-                                        // to FileInfoBase.  Then remove the references to
-                                        // the cast.  Otherwise, using the editors with other
-                                        // varieties of FileInfo will throw ClassCastExceptions.
-                                        // Also suggest that a distinct datatype (other than Vector)
-                                        // be created to handle the special needs.
-                                        fileinfo.stateChanged(changed); // what to do to update fileinfo!?!?!
-                                        scanModel.setValueAt(ed.getDisplayValue(), edID.intValue(), 1);
-                                        scanEditorHolder.remove(edID);
+                                    // to make this more FileInfoBase friendly, add a
+                                    // public static void stateChanged(Vector)
+                                    // to FileInfoBase. Then remove the references to
+                                    // the cast. Otherwise, using the editors with other
+                                    // varieties of FileInfo will throw ClassCastExceptions.
+                                    // Also suggest that a distinct datatype (other than Vector)
+                                    // be created to handle the special needs.
+                                    fileinfo.stateChanged(changed); // what to do to update fileinfo!?!?!
+                                    scanModel.setValueAt(ed.getDisplayValue(), edID.intValue(), 1);
+                                    scanEditorHolder.remove(edID);
 
-                                        // a really nice idea: add an option (default ON, of course)
-                                        // for fileInfo propogation, that this would do in a local
-                                        // fileInfo friendly way--ie., the fileInfo knows which
-                                        // values should be propogated.
-                                        // Loop through other fileinfos from image.
-                                        for (int q = 0; q < image.getFileInfo().length; q++) {
-                                            fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
-                                        }
-                                    } else {
-                                        scanEditorHolder.remove(edID);
-                                        changed = null; // forget it
+                                    // a really nice idea: add an option (default ON, of course)
+                                    // for fileInfo propogation, that this would do in a local
+                                    // fileInfo friendly way--ie., the fileInfo knows which
+                                    // values should be propogated.
+                                    // Loop through other fileinfos from image.
+                                    for (int q = 0; q < image.getFileInfo().length; q++) {
+                                        fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
                                     }
+                                } else {
+                                    scanEditorHolder.remove(edID);
+                                    changed = null; // forget it
                                 }
-                            });
+                            }
+                        });
                         scanEditorHolder.put(named, editor);
                     }
-                } else { }
+                } else {}
             }
 
             // selected rows on investigator table
@@ -846,7 +862,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                         objs = (Vector) investigatorTypeHolder.get(named);
 
                         String[] values = new String[1]; // this is unclean design now to cover something i didn't
-                                                         // foresee
+                        // foresee
 
                         if (objs.size() > 1) { // assume seperate words mean something special
 
@@ -856,8 +872,9 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                             values[0] = (String) investigatorTable.getValueAt(rows[i], 1);
                         }
 
-                        int[] editors = new int[objs.size()]; // because we tell an editor to do something based on an
-                                                              // int code
+                        final int[] editors = new int[objs.size()]; // because we tell an editor to do something based
+                        // on an
+                        // int code
 
                         for (int j = 0; j < objs.size(); j++) {
                             editors[j] = ((Integer) (objs.elementAt(j))).intValue(); // what the user asked for
@@ -868,97 +885,6 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                         editor.setVisible(true);
                         editor.addWindowListener(new WindowAdapter() {
 
-                                // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
-                                // were no problems with user inputted values); if it closed by okbutton, then
-                                // modify all slices if user so desired.
-                                // In addition, when the change was applied to all slices, notify the image frames
-                                // in the image frame vector to reset the title (title changes only for name,
-                                // @see ModelImage#setTitle(String)
-                                //
-                                private boolean alreadyClosed = false;
-
-                                public void windowClosed(WindowEvent e) {
-
-                                    // alreadyClosed = true;
-                                    JDialogEditor ed;
-
-                                    ed = (JDialogEditor) e.getSource();
-
-                                    Integer edID = (Integer) ed.getKey();
-                                    Vector changed = new Vector(4);
-
-                                    changed.add(0, new Integer(1)); // table
-                                    changed.add(1, edID); // line
-                                    changed.add(2, investigatorModel.getValueAt(edID.intValue(), 0));
-                                    changed.add(3, ed.getValue());
-                                    changed.add(4, ed.getDisplayValue());
-
-                                    if (ed.wasDialogOkay() && !alreadyClosed) {
-
-                                        // to make this more FileInfoBase friendly, add a
-                                        // public static void stateChanged(Vector)
-                                        // to FileInfoBase.  Then remove the references to
-                                        // the cast.  Otherwise, using the editors with other
-                                        // varieties of FileInfo will throw ClassCastExceptions.
-                                        // Also suggest that a distinct datatype (other than Vector)
-                                        // be created to handle the special needs.
-                                        fileinfo.stateChanged(changed); // what to do to update fileinfo!?!?!
-                                        investigatorModel.setValueAt(ed.getDisplayValue(), edID.intValue(), 1);
-                                        investigatorEditorHolder.remove(edID);
-
-                                        // a really nice idea: add an option (default ON, of course)
-                                        // for fileInfo propogation, that this would do in a local
-                                        // fileInfo friendly way--ie., the fileInfo knows which
-                                        // values should be propogated.
-                                        // Loop through other fileinfos from image.
-                                        for (int q = 0; q < image.getFileInfo().length; q++) {
-                                            fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
-                                        }
-                                    } else {
-                                        investigatorEditorHolder.remove(edID);
-                                        changed = null; // forget it
-                                    }
-                                }
-                            });
-                        investigatorEditorHolder.put(named, editor);
-                    }
-                } else { }
-            }
-
-            // Check to see if any Parameters are highlighted
-            Enumeration eset = setHashtable.keys();
-
-            while (eset.hasMoreElements()) {
-                PSetDisplay pset = (PSetDisplay) setHashtable.get(eset.nextElement());
-
-                rows = pset.getTable().getSelectedRows();
-
-                for (int index = 0; index < rows.length; index++) {
-                    pset.getTable().removeRowSelectionInterval(rows[i], rows[i]);
-
-                    String[] values = new String[5];
-
-                    values[0] = (String) pset.getTable().getValueAt(rows[index], 1);
-                    values[1] = (String) pset.getTable().getValueAt(rows[index], 2);
-                    values[2] = (String) pset.getTable().getValueAt(rows[index], 3);
-                    values[3] = (String) pset.getTable().getValueAt(rows[index], 4);
-                    values[4] = (String) pset.getTable().getValueAt(rows[index], 5);
-
-                    int[] editors = new int[5];
-
-                    editors[0] = JDialogEditor.STRING;
-                    editors[1] = JDialogEditor.XML_VALUETYPE;
-                    editors[2] = JDialogEditor.STRING;
-                    editors[3] = JDialogEditor.XML_DATE;
-                    editors[4] = JDialogEditor.XML_TIME;
-
-                    editor = new JDialogEditor(this, pset.getDescription(), values, editors);
-                    editor.setTitle(pset.getDescription() + "-" + (String) pset.getTable().getValueAt(rows[index], 0));
-                    editor.setVisible(true);
-                    editor.setPSetDescription(pset.getDescription());
-                    editor.setRow(rows[index]);
-                    editor.addWindowListener(new WindowAdapter() {
-
                             // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
                             // were no problems with user inputted values); if it closed by okbutton, then
                             // modify all slices if user so desired.
@@ -968,74 +894,87 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                             //
                             private boolean alreadyClosed = false;
 
-                            public void windowClosed(WindowEvent e) {
+                            public void windowClosed(final WindowEvent e) {
+
+                                // alreadyClosed = true;
                                 JDialogEditor ed;
 
                                 ed = (JDialogEditor) e.getSource();
 
+                                final Integer edID = (Integer) ed.getKey();
+                                Vector changed = new Vector(4);
+
+                                changed.add(0, new Integer(1)); // table
+                                changed.add(1, edID); // line
+                                changed.add(2, investigatorModel.getValueAt(edID.intValue(), 0));
+                                changed.add(3, ed.getValue());
+                                changed.add(4, ed.getDisplayValue());
+
                                 if (ed.wasDialogOkay() && !alreadyClosed) {
-                                    alreadyClosed = true;
 
-                                    String s = ed.getDisplayValueForParam();
-                                    StringTokenizer st = new StringTokenizer(s, "\\");
+                                    // to make this more FileInfoBase friendly, add a
+                                    // public static void stateChanged(Vector)
+                                    // to FileInfoBase. Then remove the references to
+                                    // the cast. Otherwise, using the editors with other
+                                    // varieties of FileInfo will throw ClassCastExceptions.
+                                    // Also suggest that a distinct datatype (other than Vector)
+                                    // be created to handle the special needs.
+                                    fileinfo.stateChanged(changed); // what to do to update fileinfo!?!?!
+                                    investigatorModel.setValueAt(ed.getDisplayValue(), edID.intValue(), 1);
+                                    investigatorEditorHolder.remove(edID);
 
-                                    if (st.hasMoreElements()) {
-                                        String desc = st.nextToken();
-                                        String vt = st.nextToken();
-                                        String val = st.nextToken();
-                                        String date = st.nextToken();
-                                        String time = st.nextToken();
-                                        PSetDisplay temp = (PSetDisplay) setHashtable.get(ed.getPSetDescription());
-                                        int row = ed.getRow();
-
-                                        temp.getModel().setValueAt(desc, row, 1);
-                                        temp.getModel().setValueAt(vt, row, 2);
-                                        temp.getModel().setValueAt(val, row, 3);
-                                        temp.getModel().setValueAt(date, row, 4);
-                                        temp.getModel().setValueAt(time, row, 5);
-
-                                        Vector pData = new Vector(7);
-
-                                        pData.add(0, ed.getPSetDescription());
-                                        pData.add(1, temp.getModel().getValueAt(row, 0));
-                                        pData.add(2, desc);
-                                        pData.add(3, vt);
-                                        pData.add(4, val);
-                                        pData.add(5, date);
-                                        pData.add(6, time);
-                                        fileinfo.parameterChanged(pData);
-
-                                        for (int q = 0; q < image.getFileInfo().length; q++) {
-                                            fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
-                                        }
+                                    // a really nice idea: add an option (default ON, of course)
+                                    // for fileInfo propogation, that this would do in a local
+                                    // fileInfo friendly way--ie., the fileInfo knows which
+                                    // values should be propogated.
+                                    // Loop through other fileinfos from image.
+                                    for (int q = 0; q < image.getFileInfo().length; q++) {
+                                        fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
                                     }
+                                } else {
+                                    investigatorEditorHolder.remove(edID);
+                                    changed = null; // forget it
                                 }
                             }
                         });
-                }
+                        investigatorEditorHolder.put(named, editor);
+                    }
+                } else {}
             }
 
-            // surfaces
-            rows = surfaces.getTable().getSelectedRows();
+            // Check to see if any Parameters are highlighted
+            final Enumeration eset = setHashtable.keys();
 
-            for (int index = 0; index < rows.length; index++) {
-                surfaces.getTable().removeRowSelectionInterval(rows[i], rows[i]);
+            while (eset.hasMoreElements()) {
+                final PSetDisplay pset = (PSetDisplay) setHashtable.get(eset.nextElement());
 
-                String[] values = new String[3];
-                values[0] = (String) surfaces.getTable().getValueAt(rows[index], 0);
-                values[1] = (String) surfaces.getTable().getValueAt(rows[index], 1);
-                values[2] = (String) surfaces.getTable().getValueAt(rows[index], 2);
+                rows = pset.getTable().getSelectedRows();
 
-                int[] editors = new int[3];
-                editors[0] = JDialogEditor.FILE_STRING;
-                editors[1] = JDialogEditor.STRING;
-                editors[2] = JDialogEditor.BOOLEAN;
+                for (final int element : rows) {
+                    pset.getTable().removeRowSelectionInterval(rows[i], rows[i]);
 
-                editor = new JDialogEditor(this, values[0], values, editors);
-                editor.setTitle(values[0]);
-                editor.setVisible(true);
-                editor.setRow(rows[index]);
-                editor.addWindowListener(new WindowAdapter() {
+                    final String[] values = new String[5];
+
+                    values[0] = (String) pset.getTable().getValueAt(element, 1);
+                    values[1] = (String) pset.getTable().getValueAt(element, 2);
+                    values[2] = (String) pset.getTable().getValueAt(element, 3);
+                    values[3] = (String) pset.getTable().getValueAt(element, 4);
+                    values[4] = (String) pset.getTable().getValueAt(element, 5);
+
+                    final int[] editors = new int[5];
+
+                    editors[0] = JDialogEditor.STRING;
+                    editors[1] = JDialogEditor.XML_VALUETYPE;
+                    editors[2] = JDialogEditor.STRING;
+                    editors[3] = JDialogEditor.XML_DATE;
+                    editors[4] = JDialogEditor.XML_TIME;
+
+                    editor = new JDialogEditor(this, pset.getDescription(), values, editors);
+                    editor.setTitle(pset.getDescription() + "-" + (String) pset.getTable().getValueAt(element, 0));
+                    editor.setVisible(true);
+                    editor.setPSetDescription(pset.getDescription());
+                    editor.setRow(element);
+                    editor.addWindowListener(new WindowAdapter() {
 
                         // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
                         // were no problems with user inputted values); if it closed by okbutton, then
@@ -1046,7 +985,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                         //
                         private boolean alreadyClosed = false;
 
-                        public void windowClosed(WindowEvent e) {
+                        public void windowClosed(final WindowEvent e) {
                             JDialogEditor ed;
 
                             ed = (JDialogEditor) e.getSource();
@@ -1054,26 +993,34 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                             if (ed.wasDialogOkay() && !alreadyClosed) {
                                 alreadyClosed = true;
 
-                                String s = ed.getDisplayValueForInfo(); // get data with #### separator
-                                StringTokenizer st = new StringTokenizer(s, "####");
+                                final String s = ed.getDisplayValueForParam();
+                                final StringTokenizer st = new StringTokenizer(s, "\\");
 
                                 if (st.hasMoreElements()) {
-                                    String file = st.nextToken();
-                                    float opacity = Float.parseFloat(st.nextToken());
-                                    boolean display = Boolean.valueOf(st.nextToken()).booleanValue();
+                                    final String desc = st.nextToken();
+                                    final String vt = st.nextToken();
+                                    final String val = st.nextToken();
+                                    final String date = st.nextToken();
+                                    final String time = st.nextToken();
+                                    final PSetDisplay temp = (PSetDisplay) setHashtable.get(ed.getPSetDescription());
+                                    final int row = ed.getRow();
 
-                                    int row = ed.getRow();
+                                    temp.getModel().setValueAt(desc, row, 1);
+                                    temp.getModel().setValueAt(vt, row, 2);
+                                    temp.getModel().setValueAt(val, row, 3);
+                                    temp.getModel().setValueAt(date, row, 4);
+                                    temp.getModel().setValueAt(time, row, 5);
 
-                                    String oldFile = (String) surfaces.getModel().getValueAt(row, 0);
+                                    final Vector pData = new Vector(7);
 
-                                    surfaces.getModel().setValueAt(file, row, 0);
-                                    surfaces.getModel().setValueAt(new String("" + opacity), row, 1);
-                                    surfaces.getModel().setValueAt(new String("" + display), row, 2);
-
-                                    fileinfo.removeSurface(oldFile);
-                                    fileinfo.addSurface(file);
-                                    fileinfo.getSurface(file).setOpacity(opacity);
-                                    fileinfo.getSurface(file).setDisplay(display);
+                                    pData.add(0, ed.getPSetDescription());
+                                    pData.add(1, temp.getModel().getValueAt(row, 0));
+                                    pData.add(2, desc);
+                                    pData.add(3, vt);
+                                    pData.add(4, val);
+                                    pData.add(5, date);
+                                    pData.add(6, time);
+                                    fileinfo.parameterChanged(pData);
 
                                     for (int q = 0; q < image.getFileInfo().length; q++) {
                                         fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
@@ -1082,6 +1029,76 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                             }
                         }
                     });
+                }
+            }
+
+            // surfaces
+            rows = surfaces.getTable().getSelectedRows();
+
+            for (final int element : rows) {
+                surfaces.getTable().removeRowSelectionInterval(rows[i], rows[i]);
+
+                final String[] values = new String[3];
+                values[0] = (String) surfaces.getTable().getValueAt(element, 0);
+                values[1] = (String) surfaces.getTable().getValueAt(element, 1);
+                values[2] = (String) surfaces.getTable().getValueAt(element, 2);
+
+                final int[] editors = new int[3];
+                editors[0] = JDialogEditor.FILE_STRING;
+                editors[1] = JDialogEditor.STRING;
+                editors[2] = JDialogEditor.BOOLEAN;
+
+                editor = new JDialogEditor(this, values[0], values, editors);
+                editor.setTitle(values[0]);
+                editor.setVisible(true);
+                editor.setRow(element);
+                editor.addWindowListener(new WindowAdapter() {
+
+                    // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
+                    // were no problems with user inputted values); if it closed by okbutton, then
+                    // modify all slices if user so desired.
+                    // In addition, when the change was applied to all slices, notify the image frames
+                    // in the image frame vector to reset the title (title changes only for name,
+                    // @see ModelImage#setTitle(String)
+                    //
+                    private boolean alreadyClosed = false;
+
+                    public void windowClosed(final WindowEvent e) {
+                        JDialogEditor ed;
+
+                        ed = (JDialogEditor) e.getSource();
+
+                        if (ed.wasDialogOkay() && !alreadyClosed) {
+                            alreadyClosed = true;
+
+                            final String s = ed.getDisplayValueForInfo(); // get data with #### separator
+                            final StringTokenizer st = new StringTokenizer(s, "####");
+
+                            if (st.hasMoreElements()) {
+                                final String file = st.nextToken();
+                                final float opacity = Float.parseFloat(st.nextToken());
+                                final boolean display = Boolean.valueOf(st.nextToken()).booleanValue();
+
+                                final int row = ed.getRow();
+
+                                final String oldFile = (String) surfaces.getModel().getValueAt(row, 0);
+
+                                surfaces.getModel().setValueAt(file, row, 0);
+                                surfaces.getModel().setValueAt(new String("" + opacity), row, 1);
+                                surfaces.getModel().setValueAt(new String("" + display), row, 2);
+
+                                fileinfo.removeSurface(oldFile);
+                                fileinfo.addSurface(file);
+                                fileinfo.getSurface(file).setOpacity(opacity);
+                                fileinfo.getSurface(file).setDisplay(display);
+
+                                for (int q = 0; q < image.getFileInfo().length; q++) {
+                                    fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
+                                }
+                            }
+                        }
+                    }
+                });
             }
         }
 
@@ -1089,20 +1106,20 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
     /**
      * appends an editable row to the end of the investigators table.
-     *
-     * @param  name    DOCUMENT ME!
-     * @param  value   DOCUMENT ME!
-     * @param  editor  - list of editor types for editing this row
+     * 
+     * @param name DOCUMENT ME!
+     * @param value DOCUMENT ME!
+     * @param editor - list of editor types for editing this row
      */
-    public void appendInvestigatorData(String name, String value, int[] editor) {
-        String[] rose = { name, value };
+    public void appendInvestigatorData(final String name, final String value, final int[] editor) {
+        final String[] rose = {name, value};
 
         investigatorModel.addRow(rose);
 
-        Vector editorInts = new Vector();
+        final Vector editorInts = new Vector();
 
-        for (int i = 0; i < editor.length; i++) { // set the list of editors to use
-            editorInts.addElement(new Integer(editor[i]));
+        for (final int element : editor) { // set the list of editors to use
+            editorInts.addElement(new Integer(element));
         }
 
         investigatorTypeHolder.put(new Integer(investigatorModel.getRowCount() - 1), editorInts);
@@ -1110,17 +1127,17 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
     /**
      * appends an editable row with the given parameter data to the proper set display table.
-     *
-     * @param  setDesc    String
-     * @param  paramName  String
-     * @param  paramDesc  String
-     * @param  valueType  String
-     * @param  value      String
-     * @param  date       String
-     * @param  time       String
+     * 
+     * @param setDesc String
+     * @param paramName String
+     * @param paramDesc String
+     * @param valueType String
+     * @param value String
+     * @param date String
+     * @param time String
      */
-    public void appendParameter(String setDesc, String paramName, String paramDesc, String valueType, String value,
-                                String date, String time) {
+    public void appendParameter(final String setDesc, final String paramName, final String paramDesc,
+            final String valueType, final String value, String date, String time) {
 
         if (date == null) {
             date = new String("0000-01-01");
@@ -1135,27 +1152,27 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
     /**
      * appends a non editable row to the end of the primary table.
-     *
-     * @param  name   - file info parameter (ie., dimensions, extents, &c).
-     * @param  value  - value assigned to a fileinfo parameter
+     * 
+     * @param name - file info parameter (ie., dimensions, extents, &c).
+     * @param value - value assigned to a fileinfo parameter
      */
-    public void appendPrimaryData(String name, String value) {
+    public void appendPrimaryData(final String name, final String value) {
 
         if (value.indexOf('\n') == -1) { // \n doesn't occur in the value
 
-            String[] rose = { name, value };
+            final String[] rose = {name, value};
 
             primaryModel.addRow(rose);
         } else {
-            StringTokenizer stok = new StringTokenizer(value, "\n");
-            String[] values = new String[stok.countTokens()];
+            final StringTokenizer stok = new StringTokenizer(value, "\n");
+            final String[] values = new String[stok.countTokens()];
             int i = 0;
 
             while (stok.hasMoreTokens()) {
                 values[i++] = stok.nextToken();
             }
 
-            String[] rose = { name, values[0] };
+            final String[] rose = {name, values[0]};
 
             primaryModel.addRow(rose);
             i = 1;
@@ -1171,28 +1188,28 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
     /**
      * appends a row to the end of the primary info table. assigns this name/value pair to be editable and adds the
      * fileinfo to listen for this name.
-     *
-     * @param  name    file info parameter (ie., dimensions, extents, &c).
-     * @param  value   value assigned to a fileinfo parameter
-     * @param  editor  The value of editor is the editor interface to be used. Eg., a JPanelEditDefault. Specified by
-     *
-     *                 <ul>
-     *                   <li>JDialogFileInfo#IntString</li>
-     *                   <li>JDialogFileInfo#FloatString</li>
-     *                   <li>JDialogFileInfo#AnalyzeDataType</li>
-     *                   <li>JDialogFileInfo#AnalyzeDescription</li>
-     *                   <li>JDialogFileInfo#AnalyzeOrientation</li>
-     *                 </ul>
+     * 
+     * @param name file info parameter (ie., dimensions, extents, &c).
+     * @param value value assigned to a fileinfo parameter
+     * @param editor The value of editor is the editor interface to be used. Eg., a JPanelEditDefault. Specified by
+     * 
+     * <ul>
+     * <li>JDialogFileInfo#IntString</li>
+     * <li>JDialogFileInfo#FloatString</li>
+     * <li>JDialogFileInfo#AnalyzeDataType</li>
+     * <li>JDialogFileInfo#AnalyzeDescription</li>
+     * <li>JDialogFileInfo#AnalyzeOrientation</li>
+     * </ul>
      */
-    public void appendPrimaryData(String name, String value, int[] editor) {
-        String[] rose = { name, value };
+    public void appendPrimaryData(final String name, final String value, final int[] editor) {
+        final String[] rose = {name, value};
 
         primaryModel.addRow(rose);
 
-        Vector editorInts = new Vector();
+        final Vector editorInts = new Vector();
 
-        for (int i = 0; i < editor.length; i++) { // set the list of editors to use
-            editorInts.addElement(new Integer(editor[i]));
+        for (final int element : editor) { // set the list of editors to use
+            editorInts.addElement(new Integer(element));
         }
 
         primaryTypeHolder.put(new Integer(primaryModel.getRowCount() - 1), editorInts);
@@ -1200,20 +1217,20 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
     /**
      * appends an editable row to the end of the scan information table.
-     *
-     * @param  name    DOCUMENT ME!
-     * @param  value   DOCUMENT ME!
-     * @param  editor  - list of editor types for editing this row
+     * 
+     * @param name DOCUMENT ME!
+     * @param value DOCUMENT ME!
+     * @param editor - list of editor types for editing this row
      */
-    public void appendScanData(String name, String value, int[] editor) {
-        String[] rose = { name, value };
+    public void appendScanData(final String name, final String value, final int[] editor) {
+        final String[] rose = {name, value};
 
         scanModel.addRow(rose);
 
-        Vector editorInts = new Vector();
+        final Vector editorInts = new Vector();
 
-        for (int i = 0; i < editor.length; i++) { // set the list of editors to use
-            editorInts.addElement(new Integer(editor[i]));
+        for (final int element : editor) { // set the list of editors to use
+            editorInts.addElement(new Integer(element));
         }
 
         scanTypeHolder.put(new Integer(scanModel.getRowCount() - 1), editorInts);
@@ -1221,20 +1238,20 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
     /**
      * appends an editable row to the end of the subject information table.
-     *
-     * @param  name    DOCUMENT ME!
-     * @param  value   DOCUMENT ME!
-     * @param  editor  - list of editor types for editing this row
+     * 
+     * @param name DOCUMENT ME!
+     * @param value DOCUMENT ME!
+     * @param editor - list of editor types for editing this row
      */
-    public void appendSubjectData(String name, String value, int[] editor) {
-        String[] rose = { name, value };
+    public void appendSubjectData(final String name, final String value, final int[] editor) {
+        final String[] rose = {name, value};
 
         subjectModel.addRow(rose);
 
-        Vector editorInts = new Vector();
+        final Vector editorInts = new Vector();
 
-        for (int i = 0; i < editor.length; i++) { // set the list of editors to use
-            editorInts.addElement(new Integer(editor[i]));
+        for (final int element : editor) { // set the list of editors to use
+            editorInts.addElement(new Integer(element));
         }
 
         subjectTypeHolder.put(new Integer(subjectModel.getRowCount() - 1), editorInts);
@@ -1242,11 +1259,11 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
     /**
      * makes the display frame. builds the layout.
-     *
-     * @param  fileInfo  DOCUMENT ME!
+     * 
+     * @param fileInfo DOCUMENT ME!
      */
-    public void displayAboutInfo(FileInfoImageXML fileInfo) {
-        String[] columnNames = { "Name", "Value" };
+    public void displayAboutInfo(final FileInfoImageXML fileInfo) {
+        final String[] columnNames = {"Name", "Value"};
 
         try {
             this.fileinfo = fileInfo;
@@ -1278,11 +1295,11 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
             primaryModel = new ViewTableModel();
             primaryTable = new JTable(primaryModel);
             editorDialogTable = new Hashtable(); // hastable to hold editing dialogs
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("ViewFileInfo reports: Out of memory!");
 
             return;
-        } catch (IllegalArgumentException ex) {
+        } catch (final IllegalArgumentException ex) {
             MipavUtil.displayError("ViewFileInfo reports: Editing table too small!" + ex);
 
             return;
@@ -1306,7 +1323,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         primaryTable.getColumn("Value").setMaxWidth(1000);
         primaryTable.getTableHeader().setReorderingAllowed(false);
 
-        JLabel priLabel = new JLabel("Essential Image Information");
+        final JLabel priLabel = new JLabel("Essential Image Information");
 
         priLabel.setForeground(Color.black);
         scrollingBox.add(priLabel);
@@ -1319,7 +1336,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         subjectTable.getColumn("Value").setMaxWidth(1000);
         subjectTable.getTableHeader().setReorderingAllowed(false);
 
-        JLabel subjectLabel = new JLabel("Subject Information");
+        final JLabel subjectLabel = new JLabel("Subject Information");
 
         subjectLabel.setForeground(Color.black);
 
@@ -1333,7 +1350,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         scanTable.getColumn("Value").setMaxWidth(1000);
         scanTable.getTableHeader().setReorderingAllowed(false);
 
-        JLabel scanLabel = new JLabel("Scan Attributes");
+        final JLabel scanLabel = new JLabel("Scan Attributes");
 
         scanLabel.setForeground(Color.black);
 
@@ -1347,7 +1364,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         investigatorTable.getColumn("Value").setMaxWidth(1000);
         investigatorTable.getTableHeader().setReorderingAllowed(false);
 
-        JLabel investigatorLabel = new JLabel("Investigators");
+        final JLabel investigatorLabel = new JLabel("Investigators");
 
         investigatorLabel.setForeground(Color.black);
 
@@ -1359,33 +1376,33 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         Enumeration e = fileInfo.getPSetKeys();
 
         while (e.hasMoreElements()) {
-            String desc = fileInfo.getPSet((String) e.nextElement()).getDescription();
+            final String desc = fileInfo.getPSet((String) e.nextElement()).getDescription();
 
             setHashtable.put(desc, new PSetDisplay(desc));
-            scrollingBox.add(((PSetDisplay) setHashtable.get(desc)).getLabel());
-            scrollingBox.add(((PSetDisplay) setHashtable.get(desc)).getTable().getTableHeader());
-            scrollingBox.add(((PSetDisplay) setHashtable.get(desc)).getTable());
+            scrollingBox.add( ((PSetDisplay) setHashtable.get(desc)).getLabel());
+            scrollingBox.add( ((PSetDisplay) setHashtable.get(desc)).getTable().getTableHeader());
+            scrollingBox.add( ((PSetDisplay) setHashtable.get(desc)).getTable());
         }
 
         e = fileInfo.getSurfaceKeys();
 
         while (e.hasMoreElements()) {
-            String path = (String) e.nextElement();
-            surfaces.addSurface(fileInfo.getSurface(path).getPath(), fileInfo.getSurface(path).getOpacity(),
-                                fileInfo.getSurface(path).getDisplay());
+            final String path = (String) e.nextElement();
+            surfaces.addSurface(fileInfo.getSurface(path).getPath(), fileInfo.getSurface(path).getOpacity(), fileInfo
+                    .getSurface(path).getDisplay());
         }
 
         scrollingBox.add(surfaces.getLabel());
         scrollingBox.add(surfaces.getTable().getTableHeader());
         scrollingBox.add(surfaces.getTable());
 
-        masterScrollPane = new JScrollPane(scrollingBox, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                           JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        masterScrollPane = new JScrollPane(scrollingBox, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         masterScrollPane.getVerticalScrollBar().setUnitIncrement(14);
         getContentPane().add(masterScrollPane);
 
-        JButton close = new JButton("Close");
+        final JButton close = new JButton("Close");
 
         close.setActionCommand("Close");
         close.addActionListener(this);
@@ -1430,7 +1447,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         // removeSurface.setPreferredSize( MipavUtil.defaultButtonSize );
         removeSurface.setFont(serif12B);
 
-        JPanel buttonPanel = new JPanel();
+        final JPanel buttonPanel = new JPanel();
 
         buttonPanel.add(addSet);
         buttonPanel.add(edit);
@@ -1445,23 +1462,23 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  ke  DOCUMENT ME!
+     * 
+     * @param ke DOCUMENT ME!
      */
-    public void keyTyped(KeyEvent ke) {
+    public void keyTyped(final KeyEvent ke) {
         edit.doClick();
     }
 
     /**
      * Divides space separate strings into an array of strings.
-     *
-     * @param   incoming  string
-     *
-     * @return  array of separated strings
+     * 
+     * @param incoming string
+     * 
+     * @return array of separated strings
      */
-    protected String[] separateValues(String incoming) {
-        StringTokenizer stok = new StringTokenizer(incoming, " ");
-        String[] outgoing = new String[stok.countTokens()];
+    protected String[] separateValues(final String incoming) {
+        final StringTokenizer stok = new StringTokenizer(incoming, " ");
+        final String[] outgoing = new String[stok.countTokens()];
         int i = 0;
 
         while (stok.hasMoreTokens()) {
@@ -1473,13 +1490,13 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
     /**
      * Sort the tag column or name column of the table model. If reverse is true, sorts in reverse order.
-     *
-     * @param  model    the table model to sort on
-     * @param  col      column to sort on
-     * @param  reverse  whether or not to sort in reverse order.
+     * 
+     * @param model the table model to sort on
+     * @param col column to sort on
+     * @param reverse whether or not to sort in reverse order.
      */
-    private static void sort(ViewTableModel model, int col, boolean reverse) {
-        int begin = 1;
+    private static void sort(final ViewTableModel model, final int col, final boolean reverse) {
+        final int begin = 1;
 
         for (int p = begin; p < model.getRowCount(); p++) {
 
@@ -1489,14 +1506,14 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
                     if (reverse) {
 
-                        if (((String) model.getValueAt(p, col)).compareTo((String) model.getValueAt(j, col)) > 0) {
+                        if ( ((String) model.getValueAt(p, col)).compareTo((String) model.getValueAt(j, col)) > 0) {
                             model.moveRow(p, p, j);
 
                             break;
                         }
                     } else {
 
-                        if (((String) model.getValueAt(p, col)).compareTo((String) model.getValueAt(j, col)) < 0) {
+                        if ( ((String) model.getValueAt(p, col)).compareTo((String) model.getValueAt(j, col)) < 0) {
                             model.moveRow(p, p, j);
 
                             break;
@@ -1509,13 +1526,13 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
     /**
      * checks whether or not the dialog exists; if it does, it brings the dialog to front.
-     *
-     * @param   tagKey  the tag's Key. Used to dtermine if this tag already has an editor associated with it.
-     * @param   model   DOCUMENT ME!
-     *
-     * @return  true if both a tag with the tagkey existed in the list and the associated dialog was brought to front.
+     * 
+     * @param tagKey the tag's Key. Used to dtermine if this tag already has an editor associated with it.
+     * @param model DOCUMENT ME!
+     * 
+     * @return true if both a tag with the tagkey existed in the list and the associated dialog was brought to front.
      */
-    private boolean bringToFront(String tagKey, Hashtable model) {
+    private boolean bringToFront(final String tagKey, final Hashtable model) {
         JDialogEditor editor; // temporary tag editor dialog
 
         // list is empty
@@ -1532,7 +1549,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                 editor.toFront();
 
                 return true;
-            } catch (ClassCastException cce) {
+            } catch (final ClassCastException cce) {
                 return false;
             }
         } else {
@@ -1540,7 +1557,8 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         }
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * Class to hold one table, model, & label per parameter set There can be infinite parameter sets, and the sets are
@@ -1549,23 +1567,23 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
     public class PSetDisplay {
 
         /** DOCUMENT ME! */
-        private String description;
+        private final String description;
 
         /** DOCUMENT ME! */
-        private JLabel setLabel;
+        private final JLabel setLabel;
 
         /** DOCUMENT ME! */
-        private ViewTableModel setModel;
+        private final ViewTableModel setModel;
 
         /** DOCUMENT ME! */
-        private JTable setTable;
+        private final JTable setTable;
 
         /**
          * Creates a parameter set display with the given description that will be used as the key.
-         *
-         * @param  description  DOCUMENT ME!
+         * 
+         * @param description DOCUMENT ME!
          */
-        public PSetDisplay(String description) {
+        public PSetDisplay(final String description) {
             this.description = description;
 
             setLabel = new JLabel("Set: " + description);
@@ -1600,25 +1618,25 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
         /**
          * Adds a new row of parameter data to the display's table.
-         *
-         * @param  paramName  String
-         * @param  paramDesc  String
-         * @param  valueType  String
-         * @param  value      String
-         * @param  date       String
-         * @param  time       String
+         * 
+         * @param paramName String
+         * @param paramDesc String
+         * @param valueType String
+         * @param value String
+         * @param date String
+         * @param time String
          */
-        public void addParameterData(String paramName, String paramDesc, String valueType, String value, String date,
-                                     String time) {
-            String[] rose = { paramName, paramDesc, valueType, value, date, time };
+        public void addParameterData(final String paramName, final String paramDesc, final String valueType,
+                final String value, final String date, final String time) {
+            final String[] rose = {paramName, paramDesc, valueType, value, date, time};
 
             setModel.addRow(rose);
         }
 
         /**
          * Gets the set display's description.
-         *
-         * @return  description
+         * 
+         * @return description
          */
         public String getDescription() {
             return this.description;
@@ -1626,8 +1644,8 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
         /**
          * Gets the label.
-         *
-         * @return  label
+         * 
+         * @return label
          */
         public JLabel getLabel() {
             return this.setLabel;
@@ -1635,8 +1653,8 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
         /**
          * Gets the table model.
-         *
-         * @return  table model
+         * 
+         * @return table model
          */
         public ViewTableModel getModel() {
             return this.setModel;
@@ -1644,8 +1662,8 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
         /**
          * Gets the table of parameters.
-         *
-         * @return  table
+         * 
+         * @return table
          */
         public JTable getTable() {
             return this.setTable;
@@ -1659,27 +1677,27 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
             /**
              * When the user right clicks on a header, sorts the column. when the user left clicks, a popup menu gives
              * the option to add a parameter to the table, triggering a JDialog
-             *
-             * @param  e  event that triggered this method
+             * 
+             * @param e event that triggered this method
              */
 
-            public void mouseClicked(MouseEvent e) {
-                Object source = e.getSource();
-                Point p = e.getPoint();
+            public void mouseClicked(final MouseEvent e) {
+                final Object source = e.getSource();
+                final Point p = e.getPoint();
                 int col;
 
                 if (source.equals(setTable.getTableHeader()) && (e.getButton() == MouseEvent.BUTTON1)) {
                     col = setTable.columnAtPoint(p);
 
                     if (e.isShiftDown()) {
-                        sort(setModel, col, true);
+                        JDialogFileInfoXML.sort(setModel, col, true);
                     } else {
-                        sort(setModel, col, false);
+                        JDialogFileInfoXML.sort(setModel, col, false);
                     }
                 } else if (source.equals(setTable.getTableHeader()) && (e.getButton() == MouseEvent.BUTTON3)) {
                     setDescforAddParam = new String(getDescription());
 
-                    JPopupMenu popUp = new JPopupMenu();
+                    final JPopupMenu popUp = new JPopupMenu();
 
                     popUp.add(addParam);
                     popUp.show(setTable.getTableHeader(), p.x, p.y);
@@ -1688,38 +1706,38 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
             /**
              * Unchanged.
-             *
-             * @param  e  DOCUMENT ME!
+             * 
+             * @param e DOCUMENT ME!
              */
-            public void mouseDragged(MouseEvent e) { }
+            public void mouseDragged(final MouseEvent e) {}
 
             /**
              * Unchanged.
-             *
-             * @param  e  DOCUMENT ME!
+             * 
+             * @param e DOCUMENT ME!
              */
-            public void mouseEntered(MouseEvent e) { }
+            public void mouseEntered(final MouseEvent e) {}
 
             /**
              * Unchanged.
-             *
-             * @param  e  DOCUMENT ME!
+             * 
+             * @param e DOCUMENT ME!
              */
-            public void mouseExited(MouseEvent e) { }
+            public void mouseExited(final MouseEvent e) {}
 
             /**
              * Unchanged.
-             *
-             * @param  e  DOCUMENT ME!
+             * 
+             * @param e DOCUMENT ME!
              */
-            public void mousePressed(MouseEvent e) { }
+            public void mousePressed(final MouseEvent e) {}
 
             /**
              * Unchanged.
-             *
-             * @param  e  DOCUMENT ME!
+             * 
+             * @param e DOCUMENT ME!
              */
-            public void mouseReleased(MouseEvent e) { }
+            public void mouseReleased(final MouseEvent e) {}
         }
     }
 
@@ -1733,13 +1751,13 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         private String file;
 
         /** DOCUMENT ME! */
-        private JLabel surLabel;
+        private final JLabel surLabel;
 
         /** DOCUMENT ME! */
-        private ViewTableModel surModel;
+        private final ViewTableModel surModel;
 
         /** DOCUMENT ME! */
-        private JTable surTable;
+        private final JTable surTable;
 
         /**
          * Creates surface display table.
@@ -1750,8 +1768,8 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
             surModel = new ViewTableModel();
             surTable = new JTable(surModel);
 
-            for (int i = 0; i < surfaceColumnNames.length; i++) {
-                surModel.addColumn(surfaceColumnNames[i]);
+            for (final String element : surfaceColumnNames) {
+                surModel.addColumn(element);
             }
 
             surTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
@@ -1770,20 +1788,20 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
         /**
          * Add a surface to the table.
-         *
-         * @param  path     the surface file path
-         * @param  opacity  the surface opacity
-         * @param  load     whether to load the surface when opening the volume renderer
+         * 
+         * @param path the surface file path
+         * @param opacity the surface opacity
+         * @param load whether to load the surface when opening the volume renderer
          */
-        public void addSurface(String path, float opacity, boolean load) {
-            Object[] rose = { path, new String("" + opacity), new String("" + load) };
+        public void addSurface(final String path, final float opacity, final boolean load) {
+            final Object[] rose = {path, new String("" + opacity), new String("" + load)};
             surModel.addRow(rose);
         }
 
         /**
          * Gets the label.
-         *
-         * @return  label
+         * 
+         * @return label
          */
         public JLabel getLabel() {
             return this.surLabel;
@@ -1791,8 +1809,8 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
         /**
          * Gets the table model.
-         *
-         * @return  table model
+         * 
+         * @return table model
          */
         public ViewTableModel getModel() {
             return this.surModel;
@@ -1800,8 +1818,8 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
         /**
          * Gets the table of surfaces.
-         *
-         * @return  table
+         * 
+         * @return table
          */
         public JTable getTable() {
             return this.surTable;
@@ -1815,59 +1833,59 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
             /**
              * When the user right clicks on a header, sorts the column. when the user left clicks, a popup menu gives
              * the option to add a parameter to the table, triggering a JDialog
-             *
-             * @param  e  event that triggered this method
+             * 
+             * @param e event that triggered this method
              */
-            public void mouseClicked(MouseEvent e) {
-                Object source = e.getSource();
-                Point p = e.getPoint();
+            public void mouseClicked(final MouseEvent e) {
+                final Object source = e.getSource();
+                final Point p = e.getPoint();
                 int col;
 
                 if (source.equals(surTable.getTableHeader()) && (e.getButton() == MouseEvent.BUTTON1)) {
                     col = surTable.columnAtPoint(p);
 
                     if (e.isShiftDown()) {
-                        sort(surModel, col, true);
+                        JDialogFileInfoXML.sort(surModel, col, true);
                     } else {
-                        sort(surModel, col, false);
+                        JDialogFileInfoXML.sort(surModel, col, false);
                     }
                 }
             }
 
             /**
              * Unchanged.
-             *
-             * @param  e  DOCUMENT ME!
+             * 
+             * @param e DOCUMENT ME!
              */
-            public void mouseDragged(MouseEvent e) { }
+            public void mouseDragged(final MouseEvent e) {}
 
             /**
              * Unchanged.
-             *
-             * @param  e  DOCUMENT ME!
+             * 
+             * @param e DOCUMENT ME!
              */
-            public void mouseEntered(MouseEvent e) { }
+            public void mouseEntered(final MouseEvent e) {}
 
             /**
              * Unchanged.
-             *
-             * @param  e  DOCUMENT ME!
+             * 
+             * @param e DOCUMENT ME!
              */
-            public void mouseExited(MouseEvent e) { }
+            public void mouseExited(final MouseEvent e) {}
 
             /**
              * Unchanged.
-             *
-             * @param  e  DOCUMENT ME!
+             * 
+             * @param e DOCUMENT ME!
              */
-            public void mousePressed(MouseEvent e) { }
+            public void mousePressed(final MouseEvent e) {}
 
             /**
              * Unchanged.
-             *
-             * @param  e  DOCUMENT ME!
+             * 
+             * @param e DOCUMENT ME!
              */
-            public void mouseReleased(MouseEvent e) { }
+            public void mouseReleased(final MouseEvent e) {}
         }
     }
 
