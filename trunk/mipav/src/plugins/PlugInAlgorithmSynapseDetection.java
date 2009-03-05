@@ -93,7 +93,7 @@ import java.util.*;
              Slice 1 right red 255, green 162, blue 82, blue width 7
              Slice 2 red 214, green 101, blue 156, blue width 4
              Slice 4 red 108, green 87, blue 134, blue width 11
-             Slice 7 left Not typical don’t record
+             Slice 7 left Not typical don't record
              Slice 7 right red 69, green 123, blue 146, blue width 18
              Slice 8 red 82, green 129, blue 163, blue width 24
              Slice 10 top red 56, green 110, blue 90, blue width 6
