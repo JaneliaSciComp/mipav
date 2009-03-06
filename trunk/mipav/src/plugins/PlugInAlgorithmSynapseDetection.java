@@ -76,7 +76,7 @@ import java.util.*;
              the synapseBlueFound index corresponding to that blue object is set to one, so that the same synapse will not
              be found again on another line search thru the same blue region in a different direction.  Note that in 3D a small
              blue synapse region is often surrounded by multiple red and green regions, so multiple finds will occur on this same
-             small blue reigon if we only require a distinct combination of red, blue, and green objects.  
+             small blue region if we only require a distinct combination of red, blue, and green objects.  
              
              The second case if when the blueFraction >= 0.05.  In this case it is not possible to have the entire blue region
              included in the synapse.  In this case the blue synapse center will always simply be taken
