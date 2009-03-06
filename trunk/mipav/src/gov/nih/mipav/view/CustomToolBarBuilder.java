@@ -164,7 +164,7 @@ public class CustomToolBarBuilder extends ViewToolBarBuilder {
 	/** Image alternate views (triplanar/volume renderer) related buttons */
 	public static final ButtonParams PARAM_IMAGE_TRIPLANAR = new ButtonParams("Tri-planar", "Tri-Planar View", "3plane");
 	public static final ButtonParams PARAM_IMAGE_VOLUME_RENDERER = new ButtonParams("VolTriplanar", "Volume Renderer", "java3d");
-	public static final ButtonParams PARAM_IMAGE_VOLUME_RENDERER_GPU = new ButtonParams("WMVolTriplanar", "GPU-based Volume Renderer - Beta", "wm");
+	public static final ButtonParams PARAM_IMAGE_VOLUME_RENDERER_GPU = new ButtonParams("WMVolTriplanar", "GPU-based Volume Renderer - v1.0", "wm");
 	public static final ButtonParams PARAM_IMAGE_VOLUME_RENDERER_DTI = new ButtonParams("DTIStandAlone", "DTI Volume Renderer Standalone - Beta", "vr");
 	public static final ButtonParams PARAM_IMAGE_LIGHTBOX = new ButtonParams("Light box", "View Light Box", "lightbox");
 	
