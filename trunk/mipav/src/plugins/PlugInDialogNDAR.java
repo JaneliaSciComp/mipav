@@ -308,7 +308,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         	}
         	
         }else if(command.equals("delete")) {
-        	 int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to delte?", "Delete", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        	 int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete?", "Delete", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
              if (response == JOptionPane.YES_OPTION) {
             	 if(currentNode.getPath().length == 3) {
 	            	 String imageName = "";
@@ -1133,15 +1133,17 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
              
   
              udLabel = new JLabel("User Defined Name");
+             udLabel.setEnabled(false);
              valueLabel = new JLabel("Value");
              descLabel = new JLabel("Description");
+             descLabel.setEnabled(false);
              valueTypeComboBoxLabel = new JLabel("Value Type");
 
              
              udTextArea = new JTextArea(3,30);
              udTextArea.setEditable(false);
              udTextArea.setBackground(Color.lightGray);
-             udTextArea.setBorder(new LineBorder(Color.black));
+             udTextArea.setBorder(new LineBorder(Color.gray));
              
           
              
@@ -1149,11 +1151,15 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
              String selected = (String)paramComboBox.getSelectedItem();
              if(selected.equals("User Defined")) {
              	udTextArea.setEditable(true);
+             	udTextArea.setBorder(new LineBorder(Color.black));
+             	udLabel.setEnabled(true);
              	udTextArea.setBackground(Color.white);
              	
              	
              }else {
             	 udTextArea.setEditable(false);
+            	 udLabel.setEnabled(false);
+            	 udTextArea.setBorder(new LineBorder(Color.gray));
             	 udTextArea.setText("");
             	 udTextArea.setBackground(Color.lightGray);
             	 
@@ -1193,13 +1199,17 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
              
 
              descTextArea = new JTextArea(3,30);
-             descTextArea.setBorder(new LineBorder(Color.black));
+             descTextArea.setBorder(new LineBorder(Color.gray));
              descTextArea.setEditable(false);
              descTextArea.setBackground(Color.lightGray);
+             descTextArea.setForeground(Color.gray);
              if(selected.equals("User Defined")) {
             	 descTextArea.setEditable(true);
+            	 descTextArea.setBorder(new LineBorder(Color.black));
+            	 descTextArea.setForeground(Color.black);
             	 descTextArea.setText("");
             	 descTextArea.setBackground(Color.white);
+            	 descLabel.setEnabled(true);
              }else {
             	 String desc = getDescription(selected);
             	 descTextArea.setText(desc);
@@ -1349,13 +1359,17 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 		public void actionPerformed(ActionEvent e) {
 			String command = e.getActionCommand();
 			if(command.equals("ok2")) {
+				if(!validateValue()) {
+					MipavUtil.displayError("The value entered does not match its value type");
+					return;
+				}
 				if(!editing) {
 					String paramName;
 					if(((String)paramComboBox.getSelectedItem()).equals("User Defined")) {
 						paramName = udTextArea.getText().trim();
 						if(paramName.equals("")) {
 							//display error and reurn
-							MipavUtil.displayError("You must enter a set name when choosing user defined");
+							MipavUtil.displayError("You must enter a parameter name when choosing user defined");
 							return;
 						}
 					}else {
@@ -1401,7 +1415,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 						newParamName = udTextArea.getText().trim();
 						if(newParamName.equals("")) {
 							//display error and reurn
-							MipavUtil.displayError("You must enter a set name when choosing user defined");
+							MipavUtil.displayError("You must enter a parameter name when choosing user defined");
 							return;
 						}
 					}else {
@@ -1452,6 +1466,74 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 			}
 			
 		}
+		
+		
+		private boolean validateValue() {
+			boolean success = true;
+			String type = (String)valueTypeComboBox.getSelectedItem();
+			String value = valueTextArea.getText().trim();
+			if(type.equals("ubyte")) {
+				try{
+					short s = Short.valueOf(value);
+					if(s<0 || s>255) {
+						return false;
+					}
+				}catch(NumberFormatException e) {
+					success = false;
+				}
+			}else if(type.equals("byte")) {
+				try{
+					Byte.valueOf(value);
+				}catch(NumberFormatException e) {
+					success = false;
+				}
+			}else if(type.equals("ushort")) {
+				try{
+					double d = Double.valueOf(value);
+					if((d<0)|| (d>65535)) {
+						return false;
+					}
+				}catch(NumberFormatException e) {
+					success = false;
+				}
+			}else if(type.equals("short")) {
+				try{
+					Short.valueOf(value);
+				}catch(NumberFormatException e) {
+					success = false;
+				}
+			}else if(type.equals("int")) {
+				try{
+					Integer.valueOf(value);
+				}catch(NumberFormatException e) {
+					success = false;
+				}
+			}else if(type.equals("long")) {
+				try{
+					Long.valueOf(value);
+				}catch(NumberFormatException e) {
+					success = false;
+				}
+			}else if(type.equals("float")) {
+				try{
+					Float.valueOf(value);
+				}catch(NumberFormatException e) {
+					success = false;
+				}
+			}else if(type.equals("double")) {
+				try{
+					Double.valueOf(value);
+				}catch(NumberFormatException e) {
+					success = false;
+				}
+			}else if(type.equals("boolean")) {
+				if(!(value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"))) {
+					return false;
+				}
+			}
+			
+			return success;
+		}
 
 		public void itemStateChanged(ItemEvent e) {
 			Object source = e.getSource();
@@ -1460,15 +1542,22 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 		            String selected = (String)paramComboBox.getSelectedItem();
 		            if(selected.equals("User Defined")) {
 		            	udTextArea.setEditable(true);
+		            	udTextArea.setBorder(new LineBorder(Color.black));
+		            	udLabel.setEnabled(true);
 		            	udTextArea.setBackground(Color.white);
 		            	valueTypeComboBox.setEnabled(true);
 		            	descTextArea.setEditable(true);
+		            	descTextArea.setForeground(Color.black);
+		            	descTextArea.setBorder(new LineBorder(Color.black));
 		                descTextArea.setBackground(Color.white);
 		                descTextArea.setText("");
+		                descLabel.setEnabled(true);
 		                valueTextArea.setText("");
 
 		            }else {
 		            	udTextArea.setEditable(false);
+		            	udTextArea.setBorder(new LineBorder(Color.gray));
+		            	udLabel.setEnabled(false);
 		            	udTextArea.setText("");
 		            	udTextArea.setBackground(Color.lightGray);
 		            	String type = getType(selected);
@@ -1479,9 +1568,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 		            	 }
 		            	valueTypeComboBox.setEnabled(false);
 		            	descTextArea.setEditable(false);
+		            	descTextArea.setForeground(Color.gray);
+		            	descTextArea.setBorder(new LineBorder(Color.gray));
 		                descTextArea.setBackground(Color.lightGray);
 		                String desc = getDescription(selected);
 		            	descTextArea.setText(desc);
+		            	descLabel.setEnabled(false);
 		            	valueTextArea.setText("");
 
 		            }
@@ -1586,21 +1678,26 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             
  
             udLabel = new JLabel("User Defined Name");
+            udLabel.setEnabled(false);
 
             
             udTextArea = new JTextArea(3,30);
             udTextArea.setEditable(false);
             udTextArea.setBackground(Color.lightGray);
-            udTextArea.setBorder(new LineBorder(Color.black));
+            udTextArea.setBorder(new LineBorder(Color.gray));
             
             String selected = (String)psetComboBox.getSelectedItem();
             if(selected.equals("User Defined")) {
             	udTextArea.setEditable(true);
+            	udTextArea.setBorder(new LineBorder(Color.black));
+            	udLabel.setEnabled(true);
             	udTextArea.setBackground(Color.white);
             	
             }else {
             	udTextArea.setEditable(false);
+            	udLabel.setEnabled(false);
             	udTextArea.setBackground(Color.lightGray);
+            	udTextArea.setBorder(new LineBorder(Color.gray));
             	
             }
             
@@ -1764,11 +1861,15 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 		            String selected = (String)psetComboBox.getSelectedItem();
 		            if(selected.equals("User Defined")) {
 		            	udTextArea.setEditable(true);
+		            	udLabel.setEnabled(true);
 		            	udTextArea.setBackground(Color.white);
+		            	udTextArea.setBorder(new LineBorder(Color.black));
 		            }else {
 		            	udTextArea.setEditable(false);
+		            	udLabel.setEnabled(false);
 		            	udTextArea.setText("");
 		            	udTextArea.setBackground(Color.lightGray);
+		            	udTextArea.setBorder(new LineBorder(Color.gray));
 		            }
 				}
 			}
