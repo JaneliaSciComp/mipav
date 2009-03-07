@@ -479,8 +479,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             clipMaskButton.setEnabled(true);
             clipMaskUndoButton.setEnabled(true);
             clipSaveButton.setEnabled(true);
-            insertTab("Opacity", opacityPanel);
             insertTab("MultiHistogram", multiHistogramPanel);
+            insertTab("Opacity", opacityPanel);
             multiHistogramGUI.getMainPanel().setVisible(true);
             raycastRenderWM.displayVolumeRaycast( rendererGUI.getVolumeCheck().isSelected() );
         } else if ( command.equals( "VolumeRayCast") ) {
