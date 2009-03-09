@@ -15,7 +15,7 @@ import java.util.*;
 
 /**
  *
- * @version  July 14, 2008
+ * @version  March 9, 2009
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -1781,7 +1781,7 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                         UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "\t");    
                     }
                     UI.getMessageFrame().append("PlugInAlgorithmCenterDistance",df.format(centerToFarEdge[i]) +
-                    "\t" + greenFound + "\t" + df.format(voiArea) + "\t");
+                    "\t" + ((i+1) + "G" + greenFound) + "\t" + df.format(voiArea) + "\t");
                     if (df.format(voiArea).length() < 8) {
                         UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "\t");    
                     }
@@ -3485,7 +3485,7 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                         UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "\t");    
                     }
                     UI.getMessageFrame().append("PlugInAlgorithmCenterDistance",df.format(centerToFarEdge[i]) +
-                            "\t" + greenFound + "\t" + df.format(voiVolume) + "\t");
+                            "\t" + ((i+1) + "G" + greenFound) + "\t" + df.format(voiVolume) + "\t");
                     if (df.format(voiVolume).length() < 8) {
                         UI.getMessageFrame().append("PlugInAlgorithmCenterDistance", "\t");    
                     }
