@@ -899,6 +899,7 @@ public class VolumeImage
         JDialogGradientMagnitude kCalcMagnitude = new JDialogGradientMagnitude( null, kImageGM );
         kCalcMagnitude.setVisible(false);
         kCalcMagnitude.setOutputNewImage( false );
+        kCalcMagnitude.setDisplayProgressBar( false );
         kCalcMagnitude.setSeparateThread( false );
         kCalcMagnitude.actionPerformed( new ActionEvent(this, 0, "OK" ) );
         kCalcMagnitude = null;        
@@ -922,6 +923,7 @@ public class VolumeImage
         JDialogLaplacian kCalcLaplacian = new JDialogLaplacian( null, kImageGMGM );
         kCalcLaplacian.setVisible(false);
         kCalcLaplacian.setOutputNewImage( false );
+        kCalcLaplacian.setDisplayProgressBar(false);
         kCalcLaplacian.setSeparateThread( false );
         kCalcLaplacian.actionPerformed( new ActionEvent(this, 0, "OK" ) );
 

@@ -74,6 +74,9 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+    
+    /** display progress bar or not. */
+    private boolean displayProgressBar = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -297,6 +300,14 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         outputPanel.setOutputNewImage(flag);
     }
     
+    /**
+     * Set the display progress bar flag. 
+     * @param flag  display or not
+     */
+    public void setDisplayProgressBar(boolean flag) {
+    	displayProgressBar = flag;
+    }
+    
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
@@ -331,7 +342,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                     // This is made possible by implementing AlgorithmedPerformed interface
                     laplacianAlgo.addListener(this);
 
-                    createProgressBar(image.getImageName(), laplacianAlgo);
+                    if ( displayProgressBar )
+                    	createProgressBar(image.getImageName(), laplacianAlgo);
 
                     // Hide dialog
                     setVisible(false);
@@ -370,7 +382,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                     // This is made possible by implementing AlgorithmedPerformed interface
                     laplacianAlgo.addListener(this);
 
-                    createProgressBar(image.getImageName(), laplacianAlgo);
+                    if ( displayProgressBar )
+                    	createProgressBar(image.getImageName(), laplacianAlgo);
 
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
@@ -435,7 +448,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                     // This is made possible by implementing AlgorithmedPerformed interface
                     laplacianAlgo.addListener(this);
 
-                    createProgressBar(image.getImageName(), laplacianAlgo);
+                    if ( displayProgressBar )
+                    	createProgressBar(image.getImageName(), laplacianAlgo);
 
                     // Hide dialog
                     setVisible(false);
@@ -472,7 +486,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     laplacianAlgo.addListener(this);
-                    createProgressBar(image.getImageName(), laplacianAlgo);
+                    if ( displayProgressBar )
+                    	createProgressBar(image.getImageName(), laplacianAlgo);
 
                     // Hide dialog
                     setVisible(false);
