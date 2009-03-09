@@ -62,7 +62,8 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
         if (command.equals("Gaussian blur")) {
             new JDialogGaussianBlur(this, getActiveImage());
         } else if (command.equals("Gradient magnitude")) {
-            new JDialogGradientMagnitude(this, getActiveImage());
+        	JDialogGradientMagnitude gm = new JDialogGradientMagnitude(this, getActiveImage());
+        	gm.setVisible(true);
         } else if (command.equals("Open")) {
         	//ViewUserInterface.getReference().openImageFrame();
         } else if (command.equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER)) {
