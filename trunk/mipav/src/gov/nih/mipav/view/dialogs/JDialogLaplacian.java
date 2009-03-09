@@ -97,7 +97,6 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
-        setVisible(true);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -149,6 +148,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                 resultImage.clearMask();
 
                 // The algorithm has completed and produced a new image to be displayed.
+                
                 try {
                     new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
