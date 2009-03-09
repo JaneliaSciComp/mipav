@@ -93,6 +93,9 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
+    /** display progress bar or not. */
+    private boolean displayProgressBar = true;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -439,6 +442,14 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
     }
     
     /**
+     * Set the display progress bar flag. 
+     * @param flag  display or not
+     */
+    public void setDisplayProgressBar(boolean flag) {
+    	displayProgressBar = flag;
+    }
+    
+    /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
@@ -483,7 +494,8 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 				// interface
 				gradientMagSepAlgo.addListener(this);
 
-				createProgressBar(image.getImageName(), gradientMagSepAlgo);
+				if (displayProgressBar)
+					createProgressBar(image.getImageName(), gradientMagSepAlgo);
 
 				gradientMagSepAlgo.setRed(colorChannelPanel
 						.isRedProcessingRequested());
@@ -559,7 +571,8 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gradientMagAlgo.addListener(this);
 
-                    createProgressBar(image.getImageName(), gradientMagAlgo);
+                    if (displayProgressBar) 
+                    	createProgressBar(image.getImageName(), gradientMagAlgo);
 
                     gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
@@ -603,7 +616,8 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gradientMagAlgo.addListener(this);
 
-                    createProgressBar(image.getImageName(), gradientMagAlgo);
+                    if (displayProgressBar)
+                    	createProgressBar(image.getImageName(), gradientMagAlgo);
 
                     gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
@@ -681,7 +695,8 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gradientMagAlgo.addListener(this);
 
-                    createProgressBar(image.getImageName(), gradientMagAlgo);
+                    if (displayProgressBar)
+                    	createProgressBar(image.getImageName(), gradientMagAlgo);
 
                     gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
@@ -725,7 +740,8 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gradientMagAlgo.addListener(this);
 
-                    createProgressBar(image.getImageName(), gradientMagAlgo);
+                    if (displayProgressBar)
+                    	createProgressBar(image.getImageName(), gradientMagAlgo);
 
                     gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
