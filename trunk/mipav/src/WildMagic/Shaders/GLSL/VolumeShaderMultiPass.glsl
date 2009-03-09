@@ -1,46 +1,38 @@
-float computeX( 
-               float         fY,
-               vec4    LevLine )
+//----------------------------------------------------------------------------
+float computeX( float fY,
+                float fInvY0MY1,
+                vec4 LevLine )
 {
     float x0 = LevLine.x;
     float y0 = LevLine.y;
     float x1 = LevLine.z;
     float y1 = LevLine.w;
-    float t = (y0 - fY)/(y0 - y1);
+    float t = (y0 - fY) * fInvY0MY1;
     float x = x0 - x0 * t + x1 * t;
     return x;
 }
 //----------------------------------------------------------------------------
-float computeAlpha( 
-                   float         fX,
-                   float         fY,
-                   vec4    LevMidLine,
-                   vec4    LevLeftLine,
-                   vec4    LevRightLine )
+float computeAlpha( float fX,
+                    float fY,
+                    vec2  fShift,
+                    vec3  fInvY0MY1,
+                    vec4  LevMidLine,
+                    vec4  LevLeftLine,
+                    vec4  LevRightLine )
 {
     if ( (fY < LevLeftLine.y) || fY > LevLeftLine.w )
     {
         return 0.0;
     }
     float xMid = LevMidLine.x;
-    float fShiftL = 0.0;
-    float fShiftR = 0.0;
-    float fShiftX = 0.0;
-    float fIncr = 0.0;
+    float fShiftL = fShift.x;
+    float fShiftR = fShift.y;
     if ( LevMidLine.y != LevMidLine.w )
     {
-        xMid = computeX( fY, LevMidLine );
+        xMid = computeX( fY, fInvY0MY1.y, LevMidLine );
     }
-    else
-    {
-        fIncr = (LevMidLine.y - LevLeftLine.y)/(LevLeftLine.w-LevLeftLine.y);
-        fIncr = fIncr * (LevRightLine.x - LevLeftLine.x);
-        fShiftX = (LevMidLine.x - LevLeftLine.x)/(LevRightLine.x-LevLeftLine.x);
-        fShiftL = (fShiftX)*fIncr;
-        fShiftR = (1.0-fShiftX)*fIncr;
-    }
-    float xLeft = computeX( fY, LevLeftLine );
-    float xRight = computeX( fY, LevRightLine );
+    float xLeft = computeX( fY, fInvY0MY1.x, LevLeftLine );
+    float xRight = computeX( fY, fInvY0MY1.z, LevRightLine );
     
     float fAlpha = 0.0;
     if ( (fX > (xMid - fShiftL)) && (fX < (xMid + fShiftR)) )
@@ -51,12 +43,71 @@ float computeAlpha(
     {
         fAlpha = (fX - xLeft) / ((xMid-fShiftL) - xLeft);
     }
-    else if ( (fX >= (xMid+fShiftR)) && (fX <= xRight) )
+    if ( (fX >= (xMid+fShiftR)) && (fX <= xRight) )
     {
         fAlpha = (fX - xRight) / ((xMid+fShiftR) - xRight);
     }
     return fAlpha;
 }
+// float computeX( 
+//                float         fY,
+//                vec4    LevLine )
+// {
+//     float x0 = LevLine.x;
+//     float y0 = LevLine.y;
+//     float x1 = LevLine.z;
+//     float y1 = LevLine.w;
+//     float t = (y0 - fY)/(y0 - y1);
+//     float x = x0 - x0 * t + x1 * t;
+//     return x;
+// }
+// //----------------------------------------------------------------------------
+// float computeAlpha( 
+//                    float         fX,
+//                    float         fY,
+//                    vec4    LevMidLine,
+//                    vec4    LevLeftLine,
+//                    vec4    LevRightLine )
+// {
+//     if ( (fY < LevLeftLine.y) || fY > LevLeftLine.w )
+//     {
+//         return 0.0;
+//     }
+//     float xMid = LevMidLine.x;
+//     float fShiftL = 0.0;
+//     float fShiftR = 0.0;
+//     float fShiftX = 0.0;
+//     float fIncr = 0.0;
+//     if ( LevMidLine.y != LevMidLine.w )
+//     {
+//         xMid = computeX( fY, LevMidLine );
+//     }
+//     else
+//     {
+//         fIncr = (LevMidLine.y - LevLeftLine.y)/(LevLeftLine.w-LevLeftLine.y);
+//         fIncr = fIncr * (LevRightLine.x - LevLeftLine.x);
+//         fShiftX = (LevMidLine.x - LevLeftLine.x)/(LevRightLine.x-LevLeftLine.x);
+//         fShiftL = (fShiftX)*fIncr;
+//         fShiftR = (1.0-fShiftX)*fIncr;
+//     }
+//     float xLeft = computeX( fY, LevLeftLine );
+//     float xRight = computeX( fY, LevRightLine );
+    
+//     float fAlpha = 0.0;
+//     if ( (fX > (xMid - fShiftL)) && (fX < (xMid + fShiftR)) )
+//     {
+//         fAlpha = 1.0;
+//     }
+//     if ( (fX <= (xMid-fShiftL)) && (fX >= xLeft) )
+//     {
+//         fAlpha = (fX - xLeft) / ((xMid-fShiftL) - xLeft);
+//     }
+//     else if ( (fX >= (xMid+fShiftR)) && (fX <= xRight) )
+//     {
+//         fAlpha = (fX - xRight) / ((xMid+fShiftR) - xRight);
+//     }
+//     return fAlpha;
+// }
 //----------------------------------------------------------------------------
 void GetDirectionalLightFactors
 (
@@ -532,6 +583,8 @@ uniform float Surface;
 
 uniform float MULTIHISTO;
 uniform float   UseWidget0;
+uniform vec2 Shift;
+uniform vec3 InvY0MY1;
 uniform vec4    LevColor0;
 uniform vec4    LevMidLine0;
 uniform vec4    LevLeftLine0;
@@ -694,7 +747,7 @@ void p_VolumeShaderMultiPass()
             if ( UseWidget0 != 0.0 )
             {
                 float opacity0 =
-                    computeAlpha( fMapX, fMapY, LevMidLine0, LevLeftLine0, LevRightLine0 );
+                    computeAlpha( fMapX, fMapY, Shift, InvY0MY1, LevMidLine0, LevLeftLine0, LevRightLine0 );
                 vec4 color0 = LevColor0 * opacity0;
                 color = color0;
                 opacity = opacity0 * LevColor0.a;
@@ -703,7 +756,7 @@ void p_VolumeShaderMultiPass()
             if ( UseWidget1 != 0.0 )
             {
                 float opacity1 =
-                    computeAlpha( fMapX, fMapY, LevMidLine1, LevLeftLine1, LevRightLine1 );
+                    computeAlpha( fMapX, fMapY, Shift, InvY0MY1, LevMidLine1, LevLeftLine1, LevRightLine1 );
                 vec4 color1 = LevColor1 * opacity1;
                 color += color1;
                 opacity1 *= LevColor1.a;
@@ -713,7 +766,7 @@ void p_VolumeShaderMultiPass()
             if ( UseWidget2 != 0.0 )
             {
                 float opacity2 =
-                    computeAlpha( fMapX, fMapY, LevMidLine2, LevLeftLine2, LevRightLine2 );
+                    computeAlpha( fMapX, fMapY, Shift, InvY0MY1, LevMidLine2, LevLeftLine2, LevRightLine2 );
                 vec4 color2 = LevColor2 * opacity2;
                 color += color2;
                 opacity2 *= LevColor2.a;
@@ -723,7 +776,7 @@ void p_VolumeShaderMultiPass()
             if ( UseWidget3 != 0.0 )
             {
                 float opacity3 =
-                    computeAlpha( fMapX, fMapY, LevMidLine3, LevLeftLine3, LevRightLine3 );
+                    computeAlpha( fMapX, fMapY, Shift, InvY0MY1, LevMidLine3, LevLeftLine3, LevRightLine3 );
                 vec4 color3 = LevColor3 * opacity3;
                 color += color3;
                 opacity3 *= LevColor3.a;
@@ -733,7 +786,7 @@ void p_VolumeShaderMultiPass()
             if ( UseWidget4 != 0.0 )
             {
                 float opacity4 =
-                    computeAlpha( fMapX, fMapY, LevMidLine4, LevLeftLine4, LevRightLine4 );
+                    computeAlpha( fMapX, fMapY, Shift, InvY0MY1, LevMidLine4, LevLeftLine4, LevRightLine4 );
                 vec4 color4 = LevColor4 * opacity4;
                 color += color4;
                 opacity4 *= LevColor4.a;
@@ -743,7 +796,7 @@ void p_VolumeShaderMultiPass()
             if ( UseWidget5 != 0.0 )
             {
                 float opacity5 =
-                    computeAlpha( fMapX, fMapY, LevMidLine5, LevLeftLine5, LevRightLine5 );
+                    computeAlpha( fMapX, fMapY, Shift, InvY0MY1, LevMidLine5, LevLeftLine5, LevRightLine5 );
                 vec4 color5 = LevColor5 * opacity5;
                 color += color5;
                 opacity5 *= LevColor5.a;
@@ -899,7 +952,7 @@ void p_VolumeShaderMultiPass()
                 if ( UseWidget0 != 0.0 )
                 {
                     float opacity0 =
-                        computeAlpha( fMapX, fMapY, LevMidLine0, LevLeftLine0, LevRightLine0 );
+                        computeAlpha( fMapX, fMapY, Shift, InvY0MY1, LevMidLine0, LevLeftLine0, LevRightLine0 );
                     vec4 color0 = LevColor0 * opacity0;
                     color = color0;
                     opacity = opacity0 * LevColor0.a;
@@ -908,7 +961,7 @@ void p_VolumeShaderMultiPass()
                 if ( UseWidget1 != 0.0 )
                 {
                     float opacity1 =
-                        computeAlpha( fMapX, fMapY, LevMidLine1, LevLeftLine1, LevRightLine1 );
+                        computeAlpha( fMapX, fMapY, Shift, InvY0MY1, LevMidLine1, LevLeftLine1, LevRightLine1 );
                     vec4 color1 = LevColor1 * opacity1;
                     color += color1;
                     opacity1 *= LevColor1.a;
@@ -918,7 +971,7 @@ void p_VolumeShaderMultiPass()
                 if ( UseWidget2 != 0.0 )
                 {
                     float opacity2 =
-                        computeAlpha( fMapX, fMapY, LevMidLine2, LevLeftLine2, LevRightLine2 );
+                        computeAlpha( fMapX, fMapY, Shift, InvY0MY1, LevMidLine2, LevLeftLine2, LevRightLine2 );
                     vec4 color2 = LevColor2 * opacity2;
                     color += color2;
                     opacity2 *= LevColor2.a;
@@ -928,7 +981,7 @@ void p_VolumeShaderMultiPass()
                 if ( UseWidget3 != 0.0 )
                 {
                     float opacity3 =
-                        computeAlpha( fMapX, fMapY, LevMidLine3, LevLeftLine3, LevRightLine3 );
+                        computeAlpha( fMapX, fMapY, Shift, InvY0MY1, LevMidLine3, LevLeftLine3, LevRightLine3 );
                     vec4 color3 = LevColor3 * opacity3;
                     color += color3;
                     opacity3 *= LevColor3.a;
@@ -938,7 +991,7 @@ void p_VolumeShaderMultiPass()
                 if ( UseWidget4 != 0.0 )
                 {
                     float opacity4 =
-                        computeAlpha( fMapX, fMapY, LevMidLine4, LevLeftLine4, LevRightLine4 );
+                        computeAlpha( fMapX, fMapY, Shift, InvY0MY1, LevMidLine4, LevLeftLine4, LevRightLine4 );
                     vec4 color4 = LevColor4 * opacity4;
                     color += color4;
                     opacity4 *= LevColor4.a;
@@ -948,7 +1001,7 @@ void p_VolumeShaderMultiPass()
                 if ( UseWidget5 != 0.0 )
                 {
                     float opacity5 =
-                        computeAlpha( fMapX, fMapY, LevMidLine5, LevLeftLine5, LevRightLine5 );
+                        computeAlpha( fMapX, fMapY, Shift, InvY0MY1, LevMidLine5, LevLeftLine5, LevRightLine5 );
                     vec4 color5 = LevColor5 * opacity5;
                     color += color5;
                     opacity5 *= LevColor5.a;

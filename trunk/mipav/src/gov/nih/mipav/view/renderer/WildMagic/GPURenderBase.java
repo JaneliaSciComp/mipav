@@ -116,6 +116,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );       
 
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;

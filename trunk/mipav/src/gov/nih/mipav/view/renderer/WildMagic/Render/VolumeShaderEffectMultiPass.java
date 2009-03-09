@@ -795,6 +795,18 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         if ( !m_abLevWidgetInit[iState] )
         {
             m_abLevWidgetInit[iState] = true;
+            
+
+            float fIncr = (m_akLevWidget[iState].MidLine[1] - m_akLevWidget[iState].LeftLine[1]) /
+            (m_akLevWidget[iState].LeftLine[3] - m_akLevWidget[iState].LeftLine[1]);
+
+            fIncr = fIncr * (m_akLevWidget[iState].RightLine[0] - m_akLevWidget[iState].LeftLine[0]);
+
+            float fShiftX = (m_akLevWidget[iState].MidLine[0] - m_akLevWidget[iState].LeftLine[0]) /
+            (m_akLevWidget[iState].RightLine[0] - m_akLevWidget[iState].LeftLine[0]);
+            float fShiftL = (fShiftX)*fIncr;
+            float fShiftR = (1.0f-fShiftX)*fIncr;
+            
             for ( int i = 0; i < m_iPasses; i++ )
             {
                 Program pkProgram = GetPProgram(i);
@@ -827,6 +839,21 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
                 {
                     pkProgram.GetUC("BoundaryEmphasis"+iState).SetDataSource(m_akLevWidget[iState].BoundaryEmphasis);
                 }
+                if ( pkProgram.GetUC("Shift") != null ) 
+                {
+                    pkProgram.GetUC("Shift").GetData()[0] = fShiftL;
+                    pkProgram.GetUC("Shift").GetData()[1] = fShiftR;
+                }
+                if ( pkProgram.GetUC("InvY0MY1") != null ) 
+                {            
+                    float fLeftInvY0MY1 = 1.0f / (m_akLevWidget[iState].LeftLine[1] - m_akLevWidget[iState].LeftLine[3]);
+                    float fMidInvY0MY1 = 1.0f / (m_akLevWidget[iState].MidLine[1] - m_akLevWidget[iState].MidLine[3]);
+                    float fRightInvY0MY1 = 1.0f / (m_akLevWidget[iState].RightLine[1] - m_akLevWidget[iState].RightLine[3]);
+                    pkProgram.GetUC("InvY0MY1").GetData()[0] = fLeftInvY0MY1;
+                    pkProgram.GetUC("InvY0MY1").GetData()[1] = fMidInvY0MY1;
+                    pkProgram.GetUC("InvY0MY1").GetData()[2] = fRightInvY0MY1;
+  }
+                
             }
         }
     }
