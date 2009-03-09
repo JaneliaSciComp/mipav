@@ -167,11 +167,6 @@ public class PlaneRender_WM extends GPURenderBase
     
     private boolean m_bShowSurface = false;
 
-    private Vector3f currentVolumePt = new Vector3f();;
-    
-    private int currentMouseEventX;
-    private int currentMouseEventY;
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -439,7 +434,8 @@ public class PlaneRender_WM extends GPURenderBase
 
         if (m_bRightMousePressed && !kEvent.isShiftDown()) {
             processRightMouseDrag(kEvent);
-            updateLUT();
+            m_kParent.updateWinLevelLUT();
+            
         }
 
         /* Dragging the mouse with the left-mouse button held down changes the
@@ -1006,28 +1002,7 @@ public class PlaneRender_WM extends GPURenderBase
         /* Calculate the center of the mouse in local coordineates, taking into
          * account zoom and translate: */
         Vector3f localPt = new Vector3f();
-        currentMouseEventX = kEvent.getX();
-        currentMouseEventY = kEvent.getY();
         this.ScreenToLocal(kEvent.getX(), kEvent.getY(), localPt);
-
-        /* Tell the ViewJFrameVolumeView parent to update the other
-         * PlaneRenderWMs and the SurfaceRender with the changed Z position
-         * of the planes with color matching the moved bar: */
-        Vector3f patientPt = new Vector3f();
-        this.LocalToPatient( localPt, patientPt );
-        Vector3f volumePt = new Vector3f();
-        MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
-        m_kParent.setSliceFromPlane( volumePt );
-    }
-    
-    /**
-     * Update the win-level LUT with right mouse drag.
-     */
-    private void updateLUT() {
-    	 /* Calculate the center of the mouse in local coordineates, taking into
-         * account zoom and translate: */
-        Vector3f localPt = new Vector3f();
-        this.ScreenToLocal(currentMouseEventX, currentMouseEventY, localPt);
 
         /* Tell the ViewJFrameVolumeView parent to update the other
          * PlaneRenderWMs and the SurfaceRender with the changed Z position

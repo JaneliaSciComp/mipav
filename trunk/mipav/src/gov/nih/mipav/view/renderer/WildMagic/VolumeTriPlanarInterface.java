@@ -322,7 +322,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     /** Panel containing the position labels:. */
     private JPanel panelLabels = new JPanel();
     
-
     /**
      * Specific constructor call from the VolumeViewerDTI.   
      */
@@ -2150,6 +2149,19 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
      */
     public void setSlice(int slice) {}    
 
+    
+    /** update the Win-Level LUT from the tri planar slice window right mouse drag */
+    public void updateWinLevelLUT() {
+    	setPositionLabels(sliceGUI.getCenter());
+
+        for (int i = 0; i < 3; i++) {
+            if ( m_akPlaneRender[i] != null )
+            {
+                m_akPlaneRender[i].setCenter(sliceGUI.getCenter());
+            }
+        }
+    }
+    
     /**
      * Sets the position of the slices in the SurfaceRender and PlaneRender
      * objects. Called from the PlaneRender class.
@@ -2157,7 +2169,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
      */
     public void setSliceFromPlane(Vector3f center) {
         setPositionLabels(center);
-
+       
         for (int i = 0; i < 3; i++) {
             if ( m_akPlaneRender[i] != null )
             {
