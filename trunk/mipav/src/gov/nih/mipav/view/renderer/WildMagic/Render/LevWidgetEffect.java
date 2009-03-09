@@ -60,6 +60,7 @@ public class LevWidgetEffect extends TextureEffect
         {
             pkProgram.GetUC("LevMidLine").SetDataSource(m_kWidgetState.MidLine);
         }
+        computeUniformVariables();
     }
     
 
@@ -75,6 +76,7 @@ public class LevWidgetEffect extends TextureEffect
             pkProgram.GetUC("LevLeftLine").SetDataSource(m_kWidgetState.LeftLine);
             //System.err.println( fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
         }
+        computeUniformVariables();
     }
     
 
@@ -89,6 +91,7 @@ public class LevWidgetEffect extends TextureEffect
         {
             pkProgram.GetUC("LevRightLine").SetDataSource(m_kWidgetState.RightLine);
         }
+        computeUniformVariables();
     }
     
     
@@ -101,4 +104,39 @@ public class LevWidgetEffect extends TextureEffect
             pkProgram.GetUC("BoundaryEmphasis").SetDataSource(m_kWidgetState.BoundaryEmphasis);
         }
     }
+    
+    private void computeUniformVariables()
+    {
+
+        float fShiftL = 0;
+        float fShiftR = 0;
+        if ( m_kWidgetState.MidLine[1] == m_kWidgetState.MidLine[3] )
+        {
+            float fIncr = (m_kWidgetState.MidLine[1] - m_kWidgetState.LeftLine[1]) /
+            (m_kWidgetState.LeftLine[3] - m_kWidgetState.LeftLine[1]);
+
+            fIncr = fIncr * (m_kWidgetState.RightLine[0] - m_kWidgetState.LeftLine[0]);
+
+            float fShiftX = (m_kWidgetState.MidLine[0] - m_kWidgetState.LeftLine[0]) /
+            (m_kWidgetState.RightLine[0] - m_kWidgetState.LeftLine[0]);
+            fShiftL = (fShiftX)*fIncr;
+            fShiftR = (1.0f-fShiftX)*fIncr;
+        }
+        Program pkProgram = GetPProgram(0);
+        if ( (pkProgram != null) && (pkProgram.GetUC("Shift") != null) ) 
+        {
+            pkProgram.GetUC("Shift").GetData()[0] = fShiftL;
+            pkProgram.GetUC("Shift").GetData()[1] = fShiftR;
+        }
+        if ( (pkProgram != null) && (pkProgram.GetUC("InvY0MY1") != null) ) 
+        {            
+            float fLeftInvY0MY1 = 1.0f / (m_kWidgetState.LeftLine[1] - m_kWidgetState.LeftLine[3]);
+            float fMidInvY0MY1 = 1.0f / (m_kWidgetState.MidLine[1] - m_kWidgetState.MidLine[3]);
+            float fRightInvY0MY1 = 1.0f / (m_kWidgetState.RightLine[1] - m_kWidgetState.RightLine[3]);
+            pkProgram.GetUC("InvY0MY1").GetData()[0] = fLeftInvY0MY1;
+            pkProgram.GetUC("InvY0MY1").GetData()[1] = fMidInvY0MY1;
+            pkProgram.GetUC("InvY0MY1").GetData()[2] = fRightInvY0MY1;
+        }
+    }
+    
 }
