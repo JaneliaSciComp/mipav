@@ -478,10 +478,10 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             clipMaskButton.setEnabled(true);
             clipMaskUndoButton.setEnabled(true);
             clipSaveButton.setEnabled(true);
-            insertTab("MultiHistogram", multiHistogramPanel);
             insertTab("Opacity", opacityPanel);
-            multiHistogramGUI.getMainPanel().setVisible(true);
-            raycastRenderWM.displayVolumeRaycast( rendererGUI.getVolumeCheck().isSelected() );
+            raycastRenderWM.displayVolumeRaycast( true );
+            rendererGUI.setDisplayVolumeCheck(true);
+            raycastRenderWM.setVolumeBlend( rendererGUI.getBlendSliderValue()/100.0f );
         } else if ( command.equals( "VolumeRayCast") ) {
             clipBox.getMainPanel().setVisible(true);
             clipButton.setEnabled(true);
@@ -646,6 +646,23 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
 
     }
   
+    /**
+     * Update the multi-histogram tab when the MultiHistogram checkbox is checked in the renderMode panel.
+     * @param flag  MultiHistogram Check box checked or not. 
+     */
+    public void updateMultihistoTab(boolean flag) {
+    	   if ( flag ) {
+    		   insertTab("MultiHistogram", multiHistogramPanel);
+    	   } else {
+    		   removeTab("MultiHistogram");
+    	   }
+    	   rendererGUI.setDisplayVolumeCheck(true);
+    	   multiHistogramGUI.getMainPanel().setVisible(flag);
+           raycastRenderWM.displayVolumeRaycast( true );
+           raycastRenderWM.setVolumeBlend( rendererGUI.getBlendSliderValue()/100.0f );
+           
+    }
+    
     /**
      * Add a geodesic element to the surface display.
      * @param kSurface the surface the geodesic element is attached to.
@@ -1692,6 +1709,23 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         tabbedPane.addTab(_name, null, _panel);
         tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
     }
+    
+    /**
+     * remove the multi-histo tab. 
+     * @param _name
+     */
+    public void removeTab(String _name) {
+    	int i;
+
+        for (i = 0; i < tabbedPane.getTabCount(); i++) {
+
+            if ((tabbedPane.getComponentAt(i) != null) && tabbedPane.getTitleAt(i).equals(_name)) {
+                tabbedPane.remove(i);
+                return;
+            }
+        }
+    }
+    
 
     /**
      * Enables picking correspondence points between the surface renderer and

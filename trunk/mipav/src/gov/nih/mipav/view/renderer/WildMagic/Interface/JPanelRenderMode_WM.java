@@ -199,6 +199,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         }
         m_kExtractTriMesh.setEnabled(radioSURFACEFAST.isSelected());
         rayBasedRenderWM.MULTIHISTOMode(radioMULTIHISTO.isSelected());
+        m_kVolumeViewer.updateMultihistoTab(radioMULTIHISTO.isSelected());
     }
     
     /**
