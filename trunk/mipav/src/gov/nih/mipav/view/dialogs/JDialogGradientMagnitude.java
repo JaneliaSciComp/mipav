@@ -115,7 +115,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
-        setVisible(true);
+        // setVisible(true);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
