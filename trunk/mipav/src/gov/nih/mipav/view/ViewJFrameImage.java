@@ -1516,8 +1516,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogLocalNormalization(this, getActiveImage());
         } else if (command.equals("Gradient magnitude")) {
 
-            // JDialogGradientMag gm =
-            new JDialogGradientMagnitude(this, getActiveImage());
+        	JDialogGradientMagnitude gm = new JDialogGradientMagnitude(this, getActiveImage());
+            gm.setVisible(true);
         } else if (command.equals("Single channel")) {
 
             // JDialogFuzzyCMeans fcm =
