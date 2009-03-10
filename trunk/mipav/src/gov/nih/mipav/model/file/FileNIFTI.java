@@ -1822,17 +1822,17 @@ public class FileNIFTI extends FileBase {
             for (j = 0; j < 3; j++) {
 
                 if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
-                    LPSOrigin[0] = -Math.abs(LPSOrigin[0]);
+                    LPSOrigin[j] = -Math.abs(LPSOrigin[j]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
-                    LPSOrigin[0] = Math.abs(LPSOrigin[0]);
+                    LPSOrigin[j] = Math.abs(LPSOrigin[j]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
-                    LPSOrigin[1] = -Math.abs(LPSOrigin[1]);
+                    LPSOrigin[j] = -Math.abs(LPSOrigin[j]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
-                    LPSOrigin[1] = Math.abs(LPSOrigin[1]);
+                    LPSOrigin[j] = Math.abs(LPSOrigin[j]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
-                    LPSOrigin[2] = -Math.abs(LPSOrigin[2]);
+                    LPSOrigin[j] = -Math.abs(LPSOrigin[j]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
-                    LPSOrigin[2] = Math.abs(LPSOrigin[2]);
+                    LPSOrigin[j] = Math.abs(LPSOrigin[j]);
                 }
             }
 
@@ -1903,17 +1903,17 @@ public class FileNIFTI extends FileBase {
             for (j = 0; j < 3; j++) {
 
                 if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
-                    LPSOrigin[0] = -Math.abs(LPSOrigin[0]);
+                    LPSOrigin[j] = -Math.abs(LPSOrigin[j]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
-                    LPSOrigin[0] = Math.abs(LPSOrigin[0]);
+                    LPSOrigin[j] = Math.abs(LPSOrigin[j]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
-                    LPSOrigin[1] = -Math.abs(LPSOrigin[1]);
+                    LPSOrigin[j] = -Math.abs(LPSOrigin[j]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
-                    LPSOrigin[1] = Math.abs(LPSOrigin[1]);
+                    LPSOrigin[j] = Math.abs(LPSOrigin[j]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
-                    LPSOrigin[2] = -Math.abs(LPSOrigin[2]);
+                    LPSOrigin[j] = -Math.abs(LPSOrigin[j]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
-                    LPSOrigin[2] = Math.abs(LPSOrigin[2]);
+                    LPSOrigin[j] = Math.abs(LPSOrigin[j]);
                 }
             }
 
@@ -1982,17 +1982,17 @@ public class FileNIFTI extends FileBase {
             for (j = 0; j < 3; j++) {
 
                 if (axisOrientation2[j] == FileInfoBase.ORI_R2L_TYPE) {
-                    LPSOrigin2[0] = -Math.abs(LPSOrigin2[0]);
+                    LPSOrigin2[j] = -Math.abs(LPSOrigin2[j]);
                 } else if (axisOrientation2[j] == FileInfoBase.ORI_L2R_TYPE) {
-                    LPSOrigin2[0] = Math.abs(LPSOrigin2[0]);
+                    LPSOrigin2[j] = Math.abs(LPSOrigin2[j]);
                 } else if (axisOrientation2[j] == FileInfoBase.ORI_A2P_TYPE) {
-                    LPSOrigin2[1] = -Math.abs(LPSOrigin2[1]);
+                    LPSOrigin2[j] = -Math.abs(LPSOrigin2[j]);
                 } else if (axisOrientation2[j] == FileInfoBase.ORI_P2A_TYPE) {
-                    LPSOrigin2[1] = Math.abs(LPSOrigin2[1]);
+                    LPSOrigin2[j] = Math.abs(LPSOrigin2[j]);
                 } else if (axisOrientation2[j] == FileInfoBase.ORI_I2S_TYPE) {
-                    LPSOrigin2[2] = -Math.abs(LPSOrigin2[2]);
+                    LPSOrigin2[j] = -Math.abs(LPSOrigin2[j]);
                 } else if (axisOrientation2[j] == FileInfoBase.ORI_S2I_TYPE) {
-                    LPSOrigin2[2] = Math.abs(LPSOrigin2[2]);
+                    LPSOrigin2[j] = Math.abs(LPSOrigin2[j]);
                 }
             }
 
