@@ -1408,6 +1408,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         maxIterPanel.setToolTipText("Used for levelOne. Other levels are multiples of this #.");
         maxIterationsText = new JTextField(String.valueOf(maxIter), 5);
         maxIterationsText.addFocusListener(this);
+        
         maxIterPanel.add(maxIterationsText, BorderLayout.CENTER);
 
         JLabel maxIterInstruct = new JLabel("Recommended value 1-5.", JLabel.RIGHT);

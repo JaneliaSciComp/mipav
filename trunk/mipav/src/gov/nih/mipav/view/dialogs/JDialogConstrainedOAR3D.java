@@ -1449,9 +1449,9 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         // Setting panel
         JPanel settingsPanel = new JPanel();
         settingsPanel.setBorder(BorderFactory.createTitledBorder("Optimization settings"));
-        settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
+        settingsPanel.setLayout(new GridBagLayout());
         // settingsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
+       
         JPanel bracketPanel = new JPanel();
         bracketPanel.setLayout(new BorderLayout(1, 3));
 
@@ -1562,19 +1562,29 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         translatePanel.add(translateRangePanelY);
         translatePanel.add(translateRangePanelZ);
 
-        settingsPanel.add(bracketPanel);
-        settingsPanel.add(Box.createVerticalStrut(20));
-        settingsPanel.add(maxIterPanel);
-        settingsPanel.add(Box.createVerticalStrut(20));
-        settingsPanel.add(numMinPanel);
-        settingsPanel.add(Box.createVerticalStrut(20));
-        settingsPanel.add(translatePanel, BorderLayout.WEST);
-        settingsPanel.add(Box.createVerticalStrut(15));
-        settingsPanel.add(sampleCheckbox, BorderLayout.WEST);
-        settingsPanel.add(Box.createVerticalStrut(10));
-        settingsPanel.add(fastModeCheckbox, BorderLayout.WEST);
-        settingsPanel.add(Box.createVerticalStrut(10));
-        settingsPanel.add(calcCOGCheckbox, BorderLayout.WEST);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        settingsPanel.add(bracketPanel, gbc);
+        //settingsPanel.add(Box.createVerticalStrut(20));
+        gbc.gridy = 1;
+        settingsPanel.add(maxIterPanel, gbc);
+        //settingsPanel.add(Box.createVerticalStrut(20));
+        gbc.gridy = 2;
+        settingsPanel.add(numMinPanel, gbc);
+        //settingsPanel.add(Box.createVerticalStrut(20));
+        gbc.gridy = 3;
+        settingsPanel.add(translatePanel, gbc);
+        //settingsPanel.add(Box.createVerticalStrut(15));
+        gbc.gridy = 4;
+        settingsPanel.add(sampleCheckbox, gbc);
+        //settingsPanel.add(Box.createVerticalStrut(10));
+        gbc.gridy = 5;
+        settingsPanel.add(fastModeCheckbox, gbc);
+        //settingsPanel.add(Box.createVerticalStrut(10));
+        gbc.gridy = 6;
+        settingsPanel.add(calcCOGCheckbox, gbc);
 
         enableTranslationX(limitTrans);
         enableTranslationsYZ(false);
@@ -1603,7 +1613,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                                           (dialogBounds.width / 2)),
                                    (Toolkit.getDefaultToolkit().getScreenSize().height / 2) -
                                    (dialogBounds.height / 2));
-
+        advancedDialog.setPreferredSize(new Dimension(470, 460));
         advancedDialog.pack();
         advancedDialog.setVisible(true);
 
