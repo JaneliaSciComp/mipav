@@ -655,11 +655,11 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     public void updateMultihistoTab(boolean flag) {
     	   if ( flag ) {
     		   insertTab("MultiHistogram", multiHistogramPanel);
+               multiHistogramGUI.getMainPanel().setVisible(flag);
     	   } else {
     		   removeTab("MultiHistogram");
     	   }
     	   rendererGUI.setDisplayVolumeCheck(true);
-    	   multiHistogramGUI.getMainPanel().setVisible(flag);
            raycastRenderWM.displayVolumeRaycast( true );
            raycastRenderWM.setVolumeBlend( rendererGUI.getBlendSliderValue()/100.0f );
            

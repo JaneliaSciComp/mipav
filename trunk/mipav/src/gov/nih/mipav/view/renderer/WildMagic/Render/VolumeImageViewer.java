@@ -43,6 +43,7 @@ public class VolumeImageViewer extends JavaApplication3D
     protected Frame m_kFrame;
     protected VolumeTriPlanarInterface m_kParent;
     protected boolean m_bDisplay = true;
+    protected boolean m_bInit = false;
     
     public VolumeImageViewer( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
     {
@@ -163,6 +164,12 @@ public class VolumeImageViewer extends JavaApplication3D
     }
 
     public void init(GLAutoDrawable arg0) {
+        if ( m_bInit )
+        {
+            return;
+        }
+        m_bInit = true;
+        
         arg0.setAutoSwapBufferMode( false );
 
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );

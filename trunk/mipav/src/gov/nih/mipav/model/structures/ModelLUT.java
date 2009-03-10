@@ -228,10 +228,10 @@ public class ModelLUT extends ModelStorageBase {
      * @param iHeight lut height
      * @param iTable
      */
-    public static byte[] exportIndexedLUTMin(ModelLUT kLut) {
+    public static void exportIndexedLUTMin(ModelLUT kLut, byte[] remappedLUTMin ) {
         TransferFunction kTransferLine = kLut.getTransferFunction();
 
-        byte[] remappedLUTMin = null;
+        //byte[] remappedLUTMin = null;
         int remappedValue;
         int count = 0;
         int nPts = kTransferLine.size();
@@ -239,22 +239,23 @@ public class ModelLUT extends ModelStorageBase {
         float xMin = ((Vector2f) (kTransferLine.getPoint(0))).X;
         float fNew;
 
-        int lutHeight = kLut.getExtents()[1];
-        remappedLUTMin = new byte[lutHeight * 4];
+        int lutHeight = remappedLUTMin.length/4; //kLut.getExtents()[1];
+        //remappedLUTMin = new byte[lutHeight * 4];
         for (int i = 0; i < lutHeight; i++) {
             fNew = (float) (xMin + ( ((float) i / (lutHeight - 1)) * (xMax - xMin)));
             remappedValue = kLut.indexedLUT[(int) (kTransferLine.getRemappedValue(fNew, lutHeight) + 0.5f)];
             remappedLUTMin[count++] = (byte) ( (remappedValue & 0x00ff0000) >> 16);
             remappedLUTMin[count++] = (byte) ( (remappedValue & 0x0000ff00) >> 8);
             remappedLUTMin[count++] = (byte) ( (remappedValue & 0x000000ff));
-            remappedLUTMin[count++] = (byte) ( (remappedValue & 0xff000000) >> 24);
+            //remappedLUTMin[count++] = (byte) ( (remappedValue & 0xff000000) >> 24);
+            count++;
         }
-        return remappedLUTMin;
+        //return remappedLUTMin;
     }
 
     /**
      */
-    public static byte[] exportIndexedLUTMin(ModelRGB kRGBT) {
+    public static void exportIndexedLUTMin(ModelRGB kRGBT, byte[] remappedLUTMin ) {
         TransferFunction kTransferLineR = kRGBT.getRedFunction();
         TransferFunction kTransferLineG = kRGBT.getGreenFunction();
         TransferFunction kTransferLineB = kRGBT.getBlueFunction();
@@ -276,8 +277,8 @@ public class ModelLUT extends ModelStorageBase {
         int count = 0;
         float fNewR, fNewG, fNewB;
 
-        int lutHeight = kRGBT.getExtents()[1];
-        byte[] remappedLUTMin = new byte[lutHeight * 4];
+        int lutHeight = remappedLUTMin.length/4;
+        //byte[] remappedLUTMin = new byte[lutHeight * 4];
         for (int i = 0; i < lutHeight; i++) {
             fNewR = (float) (xMinR + ( ((float) i / (lutHeight - 1)) * (xMaxR - xMinR)));
             fNewG = (float) (xMinG + ( ((float) i / (lutHeight - 1)) * (xMaxG - xMinG)));
@@ -295,7 +296,7 @@ public class ModelLUT extends ModelStorageBase {
             // Alpha
             remappedLUTMin[count++] = (byte) (255);
         }
-        return remappedLUTMin;
+        //return remappedLUTMin;
     }
 
     /**
