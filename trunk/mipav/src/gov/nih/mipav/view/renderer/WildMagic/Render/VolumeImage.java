@@ -201,18 +201,18 @@ public class VolumeImage
      */
     public static GraphicsImage InitColorMap ( ModelLUT kLUT, ModelRGB kRGBT, String kPostFix )
     {
-        byte[] aucData;
+        byte[] aucData = new byte[256*4];
         if ( kLUT == null )
         {
-            aucData = ModelLUT.exportIndexedLUTMin( kRGBT );
+            ModelLUT.exportIndexedLUTMin( kRGBT, aucData );
             
         }
         else
         {
-            aucData = ModelLUT.exportIndexedLUTMin( kLUT );
+            ModelLUT.exportIndexedLUTMin( kLUT, aucData );
         }
         return new GraphicsImage(
-                                 GraphicsImage.FormatMode.IT_RGBA8888,aucData.length/4,aucData,
+                                 GraphicsImage.FormatMode.IT_RGBA8888,256,aucData,
                                  new String( "ColorMap" + kPostFix ) );
     }
 
@@ -228,18 +228,8 @@ public class VolumeImage
         {
             return;
         }
-        byte[] oldData = kImage.GetData();
-        byte[] aucData = ModelLUT.exportIndexedLUTMin( kRGBT );
-        kImage.SetData(aucData, aucData.length/4);
-        if ( oldData.length != aucData.length )
-        {
-            kTexture.Release();
-        }
-        else
-        {
-            kTexture.Reload(true);
-        }
-        oldData = null;
+        ModelLUT.exportIndexedLUTMin( kRGBT, kImage.GetData() );
+        kTexture.Reload(true);
     }
 
     /**
@@ -326,19 +316,8 @@ public class VolumeImage
         {
             return;
         }
-        byte[] oldData = kColorMap.GetData();
-        byte[] aucData = ModelLUT.exportIndexedLUTMin( kLUT );
-
-        kColorMap.SetData(aucData, aucData.length/4);
-        if ( oldData.length != aucData.length )
-        {
-            kColorTexture.Release();
-        }
-        else
-        {
-            kColorTexture.Reload(true);
-        }
-        oldData = null;
+        ModelLUT.exportIndexedLUTMin( kLUT, kColorMap.GetData() );
+        kColorTexture.Reload(true);
     }
 
     /**
@@ -767,6 +746,7 @@ public class VolumeImage
     {
         if ( iImage == 0 )
         {
+            UpdateImages2( m_kImage, m_kColorMapTarget, m_kColorMap, kTransfer );
             return UpdateImages( m_kImage, m_kOpacityMapTarget, m_kOpacityMap, kTransfer );
         }
         else if ( (iImage == 2) &&
@@ -1024,6 +1004,32 @@ public class VolumeImage
          float fDataValue = (float)kImage.getMin();
          for (int i = 0; i < iLutHeight; i++) {
              afData[i] = (kTransfer.getRemappedValue( fDataValue, iLutHeight )/255.0f);
+             fDataValue += fStep;
+         }
+         kOpacityTexture.Reload(true);
+         return true;
+    }
+    
+    /**
+     * Update the opacity transfer function.
+     * @param kImage the ModelImage the transfer function applies to.
+     * @param kOpacityTexture the opacity Texture passed to the GPU
+     * @param kOpacityMap the opacity data stored in the GraphicsImage
+     * @param kTransfer the new transfer function.
+     */
+    private boolean UpdateImages2(ModelImage kImage, Texture kOpacityTexture,
+                                  GraphicsImage kOpacityMap, TransferFunction kTransfer)
+    {
+         int iLutHeight = kOpacityMap.GetBound(0);
+         byte[] abData = kOpacityMap.GetData();
+
+         float fRange = (float)(kImage.getMax() - kImage.getMin());
+         float fStep = fRange / iLutHeight;
+         float fDataValue = (float)kImage.getMin();
+         float fVal;
+         for (int i = 0; i < iLutHeight; i++) {
+             fVal = (kTransfer.getRemappedValue( fDataValue, iLutHeight )/255.0f);
+             abData[i*4 + 3] = (byte)(fVal*255);
              fDataValue += fStep;
          }
          kOpacityTexture.Reload(true);

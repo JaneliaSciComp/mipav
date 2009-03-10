@@ -153,13 +153,17 @@ public class VolumeImageHistogram extends VolumeImageViewer
 
 
     public void init(GLAutoDrawable arg0) {
+        m_bDisplay = true;
+        if ( m_bInit )
+        {
+            return;
+        }
         super.init(arg0);
         m_spkCamera.SetFrustum(0, 1, 0, 1,1f,10.0f);
         m_pkRenderer.OnFrustumChange();
         m_spkScene.UpdateGS();
         m_spkScene.UpdateRS();
         m_kAnimator.add( GetCanvas() );
-        m_bDisplay = true;
     }
     
 

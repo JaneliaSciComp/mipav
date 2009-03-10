@@ -616,7 +616,14 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
          * is implemented in the VolumeShaderVertex.cg file: */        
         m_pkVShader = new VertexShader("VolumeShaderVertex");
 
-        m_kPShaderCMP = new PixelShader("VolumeShaderMultiPass");
+        if ( m_kVolumeImageB == null )
+        {
+            m_kPShaderCMP = new PixelShader("VolumeShaderMultiPass");
+        }
+        else
+        {
+            m_kPShaderCMP = new PixelShader("VolumeShaderABMultiPass");
+        }
         initTexturesVol(m_kPShaderCMP);
          
         m_kPShaderInit = new PixelShader("LoadMIPAVTextures");
@@ -701,16 +708,16 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
         kPShader.SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName() );
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapTarget().GetName() );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapTarget() );
+        //kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapTarget().GetName() );
+        //kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapTarget() );
         kPShader.SetImageName(iTex, m_kVolumeImageA.GetNormalMapTarget().GetName());
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget());
         kPShader.SetImageName(iTex, m_kVolumeImageA.GetGradientMapTarget().GetName());
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetGradientMapTarget());
         kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapGMTarget().GetName() );
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapGMTarget() );
-        //kPShader.SetImageName(iTex, m_kVolumeImageA.GetSecondDerivativeMapTarget().GetName());
-        //kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSecondDerivativeMapTarget());
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetSecondDerivativeMapTarget().GetName());
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSecondDerivativeMapTarget());
         
 
         //kPShader.SetImageName(iTex, m_kVolumeImageA.GetSurfaceTarget().GetName());
@@ -723,16 +730,16 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget() );
             kPShader.SetImageName(iTex, m_kVolumeImageB.GetColorMapTarget().GetName() );
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetColorMapTarget() );
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapTarget().GetName() );
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapTarget() );
+            //kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapTarget().GetName() );
+            //kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapTarget() );
             kPShader.SetImageName(iTex, m_kVolumeImageB.GetNormalMapTarget().GetName());
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetNormalMapTarget());
             kPShader.SetImageName(iTex, m_kVolumeImageB.GetGradientMapTarget().GetName());
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetGradientMapTarget());
             kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapGMTarget().GetName() );
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapGMTarget() );
-            //kPShader.SetImageName(iTex, m_kVolumeImageB.GetSecondDerivativeMapTarget().GetName());
-            //kPShader.SetTexture(iTex++, m_kVolumeImageB.GetSecondDerivativeMapTarget());
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetSecondDerivativeMapTarget().GetName());
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetSecondDerivativeMapTarget());
         }
     }
 
