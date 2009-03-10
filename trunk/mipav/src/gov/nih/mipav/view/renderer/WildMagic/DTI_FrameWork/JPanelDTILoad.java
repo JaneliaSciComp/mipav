@@ -938,8 +938,8 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
             //fileInfoBases[i].setResolutions(m_kEigenVectorImage.getFileInfo()[0].getResolutions());
             fileInfoBases[i].setResolutions(m_kDTIImage.getFileInfo()[0].getResolutions());
 	       	fileInfoBases[i].setExtents(resultImage.getExtents());
-	       	fileInfoBases[i].setImageOrientation(m_kEigenVectorImage.getFileInfo()[0].getImageOrientation());
-	       	fileInfoBases[i].setAxisOrientation(m_kEigenVectorImage.getFileInfo()[0].getAxisOrientation());
+	       	fileInfoBases[i].setImageOrientation(m_kDTIImage.getFileInfo()[0].getImageOrientation());
+	       	fileInfoBases[i].setAxisOrientation(m_kDTIImage.getFileInfo()[0].getAxisOrientation());
 	       	fileInfoBases[i].setOrigin(m_kEigenVectorImage.getFileInfo()[0].getOrigin());
 	       	fileInfoBases[i].setPixelPadValue(m_kEigenVectorImage.getFileInfo()[0].getPixelPadValue());
 	       	fileInfoBases[i].setPhotometric(m_kEigenVectorImage.getFileInfo()[0].getPhotometric());
