@@ -231,6 +231,14 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         m_kDisplayVolumeCheck.setSelected(flag);
     }
     
+    /**
+     * Set the tri-planar slices check box to true of false
+     * @param flag  true or false
+     */
+    public void setDisplaySlicesCheck(boolean flag) {
+    	m_kDisplaySlicesCheck.setSelected(flag);
+    }
+    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#stateChanged(javax.swing.event.ChangeEvent)
      */

@@ -481,6 +481,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             insertTab("Opacity", opacityPanel);
             raycastRenderWM.displayVolumeRaycast( true );
             rendererGUI.setDisplayVolumeCheck(true);
+            rendererGUI.setDisplaySlicesCheck(false);
+            raycastRenderWM.displayVolumeSlices( rendererGUI.getSlicesCheck().isSelected() );
             raycastRenderWM.setVolumeBlend( rendererGUI.getBlendSliderValue()/100.0f );
         } else if ( command.equals( "VolumeRayCast") ) {
             clipBox.getMainPanel().setVisible(true);
