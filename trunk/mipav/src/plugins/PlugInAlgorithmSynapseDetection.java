@@ -12,7 +12,7 @@ import java.util.*;
 
 /**
  *
- * @version  March 9, 2009
+ * @version  March 10, 2009
  * @author   William Gandler
  * @see      AlgorithmBase
  *
@@ -29,7 +29,8 @@ import java.util.*;
  *           is false, then only blue objects are IDed.  Every pixel in the image is examined and if that pixel is
  *           BLUE or BRIGHT_BLUE and is not already part of a blue object, then a new blue object is declared and a
  *           26 neighbor grow of that blue object is performed.  The blue count and the x, y, and z indices of the
- *           blue center are calculated only for bigBlueFraction = false.
+ *           blue center and the blue x, y, and z widths are calculated only for bigBlueFraction = false.  x width =
+ *           high x - low x + 1, y width = high y - low y + 1, z width = high z - low z + 1.
  *           
  *           Note that when line profiles are taken thru a synapse the red and green have all sorts of
              different shapes but the blue is almost always a distinct almost rectangular pulse, so the 
@@ -240,6 +241,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private ArrayList <Short>blueCenterXList;
     private ArrayList <Short>blueCenterYList;
     private ArrayList <Short>blueCenterZList;
+    private ArrayList <Short>blueXWidthList;
+    private ArrayList <Short>blueYWidthList;
+    private ArrayList <Short>blueZWidthList;
     // If bigBlueFraction will allow storage of 5 synapses for each red object
     // If not bigBlueFraction allow only 1 synapse per blue object
     private int synapseBlueFound[];
@@ -475,7 +479,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
             dataString = "Index     x         y         z\n\n";    
         }
         else {
-            dataString = "Index     x         y         z         count\n\n";
+            dataString = "Index     x         y         z         count     x width   y width   z width\n\n";
         }
         
         // Search along all lines parallel to x axis
@@ -4203,6 +4207,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private void checkForSynapseXY() {
        VOI newPtVOI;
        int i;
+       short blueXWidth;
+       short blueYWidth;
+       short blueZWidth;
        if ((threePreviousBrightness && twoPreviousBrightness && onePreviousBrightness &&
            (twoPreviousColor == BLUE) && (twoPreviousWidth >= blueMinXY) && (twoPreviousWidth <= blueMaxXY)) && 
            (((threePreviousColor == RED) && (threePreviousWidth >= redMin) && (threePreviousWidth <= redMax) &&
@@ -4256,7 +4263,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                centerBlueX = blueCenterXList.get(twoPreviousObjectIndex-1).shortValue();
                centerBlueY = blueCenterYList.get(twoPreviousObjectIndex-1).shortValue();
                centerBlueZ = blueCenterZList.get(twoPreviousObjectIndex-1).shortValue();
-               dataString += String.format("%-10d%-10d%-10d%-10d%-10d\n",numSynapses+1, centerBlueX, centerBlueY, centerBlueZ, blueCount);
+               blueXWidth = blueXWidthList.get(twoPreviousObjectIndex-1).shortValue();
+               blueYWidth = blueYWidthList.get(twoPreviousObjectIndex-1).shortValue();
+               blueZWidth = blueZWidthList.get(twoPreviousObjectIndex-1).shortValue();
+               dataString += String.format("%-10d%-10d%-10d%-10d%-10d%-10d%-10d%-10d\n",
+                       numSynapses+1, centerBlueX, centerBlueY, centerBlueZ, blueCount,
+                       blueXWidth, blueYWidth, blueZWidth);
                if (blueCount < minimumBlueCount) {
                    minimumBlueCount = blueCount;
                }
@@ -4296,6 +4308,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private void checkForSynapseZ() {
        VOI newPtVOI;
        int i;
+       short blueXWidth;
+       short blueYWidth;
+       short blueZWidth;
        if ((threePreviousBrightness && twoPreviousBrightness && onePreviousBrightness &&
            (twoPreviousColor == BLUE) && (twoPreviousWidth >= blueMinZ) && (twoPreviousWidth <= blueMaxZ)) && 
            (((threePreviousColor == RED) && (threePreviousWidth >= redMin) && (threePreviousWidth <= redMax) &&
@@ -4349,7 +4364,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                centerBlueX = blueCenterXList.get(twoPreviousObjectIndex-1).shortValue();
                centerBlueY = blueCenterYList.get(twoPreviousObjectIndex-1).shortValue();
                centerBlueZ = blueCenterZList.get(twoPreviousObjectIndex-1).shortValue();
-               dataString += String.format("%-10d%-10d%-10d%-10d%-10d\n",numSynapses+1, centerBlueX, centerBlueY, centerBlueZ, blueCount);
+               blueXWidth = blueXWidthList.get(twoPreviousObjectIndex-1).shortValue();
+               blueYWidth = blueYWidthList.get(twoPreviousObjectIndex-1).shortValue();
+               blueZWidth = blueZWidthList.get(twoPreviousObjectIndex-1).shortValue();
+               dataString += String.format("%-10d%-10d%-10d%-10d%-10d%-10d%-10d%-10d\n",
+                       numSynapses+1, centerBlueX, centerBlueY, centerBlueZ, blueCount,
+                       blueXWidth, blueYWidth, blueZWidth);
                if (blueCount < minimumBlueCount) {
                    minimumBlueCount = blueCount;
                }
@@ -4411,6 +4431,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         int z2Pos;
         int y2Pos;
         int i2;
+        int lowBlueX = 0;
+        int highBlueX = 0;
+        int lowBlueY = 0;
+        int highBlueY = 0;
+        int lowBlueZ = 0;
+        int highBlueZ = 0;
         blueObjects = new int[length];
         if (bigBlueFraction) {
             redObjects = new int[length];
@@ -4421,6 +4447,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
             blueCenterXList = new ArrayList<Short>();
             blueCenterYList = new ArrayList<Short>();
             blueCenterZList = new ArrayList<Short>();
+            blueXWidthList = new ArrayList<Short>();
+            blueYWidthList = new ArrayList<Short>();
+            blueZWidthList = new ArrayList<Short>();
         }
         for (z = 0; z < zDim; z++) {
             fireProgressStateChanged(95 * z/zDim);
@@ -4706,6 +4735,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             centerBlueX = x;
                             centerBlueY = y;
                             centerBlueZ = z;
+                            lowBlueX = x;
+                            highBlueX = x;
+                            lowBlueY = y;
+                            highBlueY = y;
+                            lowBlueZ = z;
+                            highBlueZ = z;
                         }
                         del = -1;
                         while (change) {
@@ -4734,6 +4769,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 - 1);
                                                     centerBlueY += y2;
                                                     centerBlueZ += z2;
+                                                    if ((x2 - 1) < lowBlueX) {
+                                                        lowBlueX = x2 - 1;   
+                                                    }
+                                                    if ((x2 - 1) > highBlueX) {
+                                                        highBlueX = x2 - 1;
+                                                    }
+                                                    if (y2 < lowBlueY) {
+                                                        lowBlueY = y2;
+                                                    }
+                                                    if (y2 > highBlueY) {
+                                                        highBlueY = y2;
+                                                    }
+                                                    if (z2 < lowBlueZ) {
+                                                        lowBlueZ = z2;
+                                                    }
+                                                    if (z2 > highBlueZ) {
+                                                        highBlueZ = z2;
+                                                    }
                                                 }
                                             }
                                             if ((x2 < xDim - 1) && (blueObjects[i2+1] == 0) && ((buffer[i2+1] == BRIGHT_BLUE) || (buffer[i2+1] == BLUE))) {
@@ -4744,6 +4797,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 + 1);
                                                     centerBlueY += y2;
                                                     centerBlueZ += z2;
+                                                    if ((x2 + 1) < lowBlueX) {
+                                                        lowBlueX = x2 + 1;   
+                                                    }
+                                                    if ((x2 + 1) > highBlueX) {
+                                                        highBlueX = x2 + 1;
+                                                    }
+                                                    if (y2 < lowBlueY) {
+                                                        lowBlueY = y2;
+                                                    }
+                                                    if (y2 > highBlueY) {
+                                                        highBlueY = y2;
+                                                    }
+                                                    if (z2 < lowBlueZ) {
+                                                        lowBlueZ = z2;
+                                                    }
+                                                    if (z2 > highBlueZ) {
+                                                        highBlueZ = z2;
+                                                    }
                                                 }
                                             }
                                             if ((y2 > 0)&& (blueObjects[i2-xDim] == 0) && ((buffer[i2-xDim] == BRIGHT_BLUE) || (buffer[i2-xDim] == BLUE))) {
@@ -4754,6 +4825,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += x2;
                                                     centerBlueY += (y2 - 1);
                                                     centerBlueZ += z2;
+                                                    if (x2 < lowBlueX) {
+                                                        lowBlueX = x2;
+                                                    }
+                                                    if (x2 > highBlueX) {
+                                                        highBlueX = x2;
+                                                    }
+                                                    if ((y2 - 1) < lowBlueY) {
+                                                        lowBlueY = y2 - 1;   
+                                                    }
+                                                    if ((y2 - 1) > highBlueY) {
+                                                        highBlueY = y2 - 1;
+                                                    }
+                                                    if (z2 < lowBlueZ) {
+                                                        lowBlueZ = z2;
+                                                    }
+                                                    if (z2 > highBlueZ) {
+                                                        highBlueZ = z2;
+                                                    }
                                                 }
                                             }
                                             if ((y2 < yDim - 1) && (blueObjects[i2+xDim] == 0) && ((buffer[i2+xDim] == BRIGHT_BLUE) || (buffer[i2+xDim] == BLUE))) {
@@ -4764,6 +4853,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += x2;
                                                     centerBlueY += (y2 + 1);
                                                     centerBlueZ += z2;
+                                                    if (x2 < lowBlueX) {
+                                                        lowBlueX = x2;
+                                                    }
+                                                    if (x2 > highBlueX) {
+                                                        highBlueX = x2;
+                                                    }
+                                                    if ((y2 + 1) < lowBlueY) {
+                                                        lowBlueY = y2 + 1;   
+                                                    }
+                                                    if ((y2 + 1) > highBlueY) {
+                                                        highBlueY = y2 + 1;
+                                                    }
+                                                    if (z2 < lowBlueZ) {
+                                                        lowBlueZ = z2;
+                                                    }
+                                                    if (z2 > highBlueZ) {
+                                                        highBlueZ = z2;
+                                                    }
                                                 }
                                             }
                                             if ((z2 > 0) && (blueObjects[i2-xySlice] == 0) && ((buffer[i2-xySlice] == BRIGHT_BLUE) || (buffer[i2-xySlice] == BLUE))) {
@@ -4774,6 +4881,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += x2;
                                                     centerBlueY += y2;
                                                     centerBlueZ += (z2 - 1);
+                                                    if (x2 < lowBlueX) {
+                                                        lowBlueX = x2;
+                                                    }
+                                                    if (x2 > highBlueX) {
+                                                        highBlueX = x2;
+                                                    }
+                                                    if (y2 < lowBlueY) {
+                                                        lowBlueY = y2;
+                                                    }
+                                                    if (y2 > highBlueY) {
+                                                        highBlueY = y2;
+                                                    }
+                                                    if ((z2 - 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 - 1;   
+                                                    }
+                                                    if ((z2 - 1) > highBlueZ) {
+                                                        highBlueZ = z2 - 1;
+                                                    }
                                                 }
                                             }
                                             if ((z2 < zDim - 1) && (blueObjects[i2+xySlice] == 0) && ((buffer[i2+xySlice] == BRIGHT_BLUE) || (buffer[i2+xySlice] == BLUE))) {
@@ -4784,6 +4909,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += x2;
                                                     centerBlueY += y2;
                                                     centerBlueZ += (z2 + 1);
+                                                    if (x2 < lowBlueX) {
+                                                        lowBlueX = x2;
+                                                    }
+                                                    if (x2 > highBlueX) {
+                                                        highBlueX = x2;
+                                                    }
+                                                    if (y2 < lowBlueY) {
+                                                        lowBlueY = y2;
+                                                    }
+                                                    if (y2 > highBlueY) {
+                                                        highBlueY = y2;
+                                                    }
+                                                    if ((z2 + 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 + 1;   
+                                                    }
+                                                    if ((z2 + 1) > highBlueZ) {
+                                                        highBlueZ = z2 + 1;
+                                                    }
                                                 }
                                             }
                                             if ((x2 > 0) && (y2 > 0) && (blueObjects[i2-xDim-1] == 0) && ((buffer[i2-xDim-1] == BRIGHT_BLUE) || (buffer[i2-xDim-1] == BLUE))) {
@@ -4794,6 +4937,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 - 1);
                                                     centerBlueY += (y2 - 1);
                                                     centerBlueZ += z2;
+                                                    if ((x2 - 1) < lowBlueX) {
+                                                        lowBlueX = x2 - 1;   
+                                                    }
+                                                    if ((x2 - 1) > highBlueX) {
+                                                        highBlueX = x2 - 1;
+                                                    }
+                                                    if ((y2 - 1) < lowBlueY) {
+                                                        lowBlueY = y2 - 1;   
+                                                    }
+                                                    if ((y2 - 1) > highBlueY) {
+                                                        highBlueY = y2 - 1;
+                                                    }
+                                                    if (z2 < lowBlueZ) {
+                                                        lowBlueZ = z2;
+                                                    }
+                                                    if (z2 > highBlueZ) {
+                                                        highBlueZ = z2;
+                                                    }
                                                 }
                                             }
                                             if ((x2 > 0) && (y2 < yDim - 1) && (blueObjects[i2+xDim-1] == 0) && ((buffer[i2+xDim-1] == BRIGHT_BLUE) || (buffer[i2+xDim-1] == BLUE))) {
@@ -4804,6 +4965,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 - 1);
                                                     centerBlueY += (y2 + 1);
                                                     centerBlueZ += z2;
+                                                    if ((x2 - 1) < lowBlueX) {
+                                                        lowBlueX = x2 - 1;   
+                                                    }
+                                                    if ((x2 - 1) > highBlueX) {
+                                                        highBlueX = x2 - 1;
+                                                    }
+                                                    if ((y2 + 1) < lowBlueY) {
+                                                        lowBlueY = y2 + 1;   
+                                                    }
+                                                    if ((y2 + 1) > highBlueY) {
+                                                        highBlueY = y2 + 1;
+                                                    }
+                                                    if (z2 < lowBlueZ) {
+                                                        lowBlueZ = z2;
+                                                    }
+                                                    if (z2 > highBlueZ) {
+                                                        highBlueZ = z2;
+                                                    }
                                                 }
                                             }
                                             if ((x2 < xDim-1) && (y2 > 0) && (blueObjects[i2-xDim+1] == 0) && ((buffer[i2-xDim+1] == BRIGHT_BLUE) || (buffer[i2-xDim+1] == BLUE))) {
@@ -4814,6 +4993,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 + 1);
                                                     centerBlueY += (y2 - 1);
                                                     centerBlueZ += z2;
+                                                    if ((x2 + 1) < lowBlueX) {
+                                                        lowBlueX = x2 + 1;   
+                                                    }
+                                                    if ((x2 + 1) > highBlueX) {
+                                                        highBlueX = x2 + 1;
+                                                    }
+                                                    if ((y2 - 1) < lowBlueY) {
+                                                        lowBlueY = y2 - 1;   
+                                                    }
+                                                    if ((y2 - 1) > highBlueY) {
+                                                        highBlueY = y2 - 1;
+                                                    }
+                                                    if (z2 < lowBlueZ) {
+                                                        lowBlueZ = z2;
+                                                    }
+                                                    if (z2 > highBlueZ) {
+                                                        highBlueZ = z2;
+                                                    }
                                                 }
                                             }
                                             if ((x2 < xDim - 1) && (y2 < yDim - 1) && (blueObjects[i2+xDim+1] == 0) && ((buffer[i2+xDim+1] == BRIGHT_BLUE) || (buffer[i2+xDim+1] == BLUE))) {
@@ -4824,6 +5021,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 + 1);
                                                     centerBlueY += (y2 + 1);
                                                     centerBlueZ += z2;
+                                                    if ((x2 + 1) < lowBlueX) {
+                                                        lowBlueX = x2 + 1;   
+                                                    }
+                                                    if ((x2 + 1) > highBlueX) {
+                                                        highBlueX = x2 + 1;
+                                                    }
+                                                    if ((y2 + 1) < lowBlueY) {
+                                                        lowBlueY = y2 + 1;   
+                                                    }
+                                                    if ((y2 + 1) > highBlueY) {
+                                                        highBlueY = y2 + 1;
+                                                    }
+                                                    if (z2 < lowBlueZ) {
+                                                        lowBlueZ = z2;
+                                                    }
+                                                    if (z2 > highBlueZ) {
+                                                        highBlueZ = z2;
+                                                    }
                                                 }
                                             }
                                             if ((x2 > 0) && (z2 > 0) && (blueObjects[i2-xySlice-1] == 0) && ((buffer[i2-xySlice-1] == BRIGHT_BLUE) || (buffer[i2-xySlice-1] == BLUE))) {
@@ -4834,6 +5049,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 - 1);
                                                     centerBlueY += y2;
                                                     centerBlueZ += (z2 - 1);
+                                                    if ((x2 - 1) < lowBlueX) {
+                                                        lowBlueX = x2 - 1;   
+                                                    }
+                                                    if ((x2 - 1) > highBlueX) {
+                                                        highBlueX = x2 - 1;
+                                                    }
+                                                    if (y2 < lowBlueY) {
+                                                        lowBlueY = y2;
+                                                    }
+                                                    if (y2 > highBlueY) {
+                                                        highBlueY = y2;
+                                                    }
+                                                    if ((z2 - 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 - 1;   
+                                                    }
+                                                    if ((z2 - 1) > highBlueZ) {
+                                                        highBlueZ = z2 - 1;
+                                                    }
                                                 }
                                             }
                                             if ((x2 > 0) && (z2 < zDim - 1) && (blueObjects[i2+xySlice-1] == 0) && ((buffer[i2+xySlice-1] == BRIGHT_BLUE) || (buffer[i2+xySlice-1] == BLUE))) {
@@ -4844,6 +5077,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 - 1);
                                                     centerBlueY += y2;
                                                     centerBlueZ += (z2 + 1);
+                                                    if ((x2 - 1) < lowBlueX) {
+                                                        lowBlueX = x2 - 1;   
+                                                    }
+                                                    if ((x2 - 1) > highBlueX) {
+                                                        highBlueX = x2 - 1;
+                                                    }
+                                                    if (y2 < lowBlueY) {
+                                                        lowBlueY = y2;
+                                                    }
+                                                    if (y2 > highBlueY) {
+                                                        highBlueY = y2;
+                                                    }
+                                                    if ((z2 + 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 + 1;   
+                                                    }
+                                                    if ((z2 + 1) > highBlueZ) {
+                                                        highBlueZ = z2 + 1;
+                                                    }
                                                 }
                                             }
                                             if ((x2 < xDim-1) && (z2 > 0) && (blueObjects[i2-xySlice+1] == 0) && ((buffer[i2-xySlice+1] == BRIGHT_BLUE) || (buffer[i2-xySlice+1] == BLUE))) {
@@ -4854,6 +5105,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 + 1);
                                                     centerBlueY += y2;
                                                     centerBlueZ += (z2 - 1);
+                                                    if ((x2 + 1) < lowBlueX) {
+                                                        lowBlueX = x2 + 1;   
+                                                    }
+                                                    if ((x2 + 1) > highBlueX) {
+                                                        highBlueX = x2 + 1;
+                                                    }
+                                                    if (y2 < lowBlueY) {
+                                                        lowBlueY = y2;
+                                                    }
+                                                    if (y2 > highBlueY) {
+                                                        highBlueY = y2;
+                                                    }
+                                                    if ((z2 - 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 - 1;   
+                                                    }
+                                                    if ((z2 - 1) > highBlueZ) {
+                                                        highBlueZ = z2 - 1;
+                                                    }
                                                 }
                                             }
                                             if ((x2 < xDim - 1) && (z2 < zDim - 1) && (blueObjects[i2+xySlice+1] == 0) && ((buffer[i2+xySlice+1] == BRIGHT_BLUE) || (buffer[i2+xySlice+1] == BLUE))) {
@@ -4864,6 +5133,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 + 1);
                                                     centerBlueY += y2;
                                                     centerBlueZ += (z2 + 1);
+                                                    if ((x2 + 1) < lowBlueX) {
+                                                        lowBlueX = x2 + 1;   
+                                                    }
+                                                    if ((x2 + 1) > highBlueX) {
+                                                        highBlueX = x2 + 1;
+                                                    }
+                                                    if (y2 < lowBlueY) {
+                                                        lowBlueY = y2;
+                                                    }
+                                                    if (y2 > highBlueY) {
+                                                        highBlueY = y2;
+                                                    }
+                                                    if ((z2 + 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 + 1;   
+                                                    }
+                                                    if ((z2 + 1) > highBlueZ) {
+                                                        highBlueZ = z2 + 1;
+                                                    }
                                                 }
                                             }
                                             if ((y2 > 0) && (z2 > 0) && (blueObjects[i2-xySlice-xDim] == 0) && ((buffer[i2-xySlice-xDim] == BRIGHT_BLUE) || (buffer[i2-xySlice-xDim] == BLUE))) {
@@ -4874,6 +5161,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += x2;
                                                     centerBlueY += (y2 - 1);
                                                     centerBlueZ += (z2 - 1);
+                                                    if (x2 < lowBlueX) {
+                                                        lowBlueX = x2;
+                                                    }
+                                                    if (x2 > highBlueX) {
+                                                        highBlueX = x2;
+                                                    }
+                                                    if ((y2 - 1) < lowBlueY) {
+                                                        lowBlueY = y2 - 1;   
+                                                    }
+                                                    if ((y2 - 1) > highBlueY) {
+                                                        highBlueY = y2 - 1;
+                                                    }
+                                                    if ((z2 - 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 - 1;   
+                                                    }
+                                                    if ((z2 - 1) > highBlueZ) {
+                                                        highBlueZ = z2 - 1;
+                                                    }
                                                 }
                                             }
                                             if ((y2 > 0) && (z2 < zDim - 1) && (blueObjects[i2+xySlice-xDim] == 0) && ((buffer[i2+xySlice-xDim] == BRIGHT_BLUE) || (buffer[i2+xySlice-xDim] == BLUE))) {
@@ -4884,6 +5189,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += x2;
                                                     centerBlueY += (y2 - 1);
                                                     centerBlueZ += (z2 + 1);
+                                                    if (x2 < lowBlueX) {
+                                                        lowBlueX = x2;
+                                                    }
+                                                    if (x2 > highBlueX) {
+                                                        highBlueX = x2;
+                                                    }
+                                                    if ((y2 - 1) < lowBlueY) {
+                                                        lowBlueY = y2 - 1;   
+                                                    }
+                                                    if ((y2 - 1) > highBlueY) {
+                                                        highBlueY = y2 - 1;
+                                                    }
+                                                    if ((z2 + 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 + 1;   
+                                                    }
+                                                    if ((z2 + 1) > highBlueZ) {
+                                                        highBlueZ = z2 + 1;
+                                                    }
                                                 }
                                             }
                                             if ((y2 < yDim-1) && (z2 > 0) && (blueObjects[i2-xySlice+xDim] == 0) && ((buffer[i2-xySlice+xDim] == BRIGHT_BLUE) || (buffer[i2-xySlice+xDim] == BLUE))) {
@@ -4894,6 +5217,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += x2;
                                                     centerBlueY += (y2 + 1);
                                                     centerBlueZ += (z2 - 1);
+                                                    if (x2 < lowBlueX) {
+                                                        lowBlueX = x2;
+                                                    }
+                                                    if (x2 > highBlueX) {
+                                                        highBlueX = x2;
+                                                    }
+                                                    if ((y2 + 1) < lowBlueY) {
+                                                        lowBlueY = y2 + 1;   
+                                                    }
+                                                    if ((y2 + 1) > highBlueY) {
+                                                        highBlueY = y2 + 1;
+                                                    }
+                                                    if ((z2 - 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 - 1;   
+                                                    }
+                                                    if ((z2 - 1) > highBlueZ) {
+                                                        highBlueZ = z2 - 1;
+                                                    }
                                                 }
                                             }
                                             if ((y2 < yDim - 1) && (z2 < zDim - 1) && (blueObjects[i2+xySlice+xDim] == 0) && ((buffer[i2+xySlice+xDim] == BRIGHT_BLUE) || (buffer[i2+xySlice+xDim] == BLUE))) {
@@ -4904,6 +5245,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += x2;
                                                     centerBlueY += (y2 + 1);
                                                     centerBlueZ += (z2 + 1);
+                                                    if (x2 < lowBlueX) {
+                                                        lowBlueX = x2;
+                                                    }
+                                                    if (x2 > highBlueX) {
+                                                        highBlueX = x2;
+                                                    }
+                                                    if ((y2 + 1) < lowBlueY) {
+                                                        lowBlueY = y2 + 1;   
+                                                    }
+                                                    if ((y2 + 1) > highBlueY) {
+                                                        highBlueY = y2 + 1;
+                                                    }
+                                                    if ((z2 + 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 + 1;   
+                                                    }
+                                                    if ((z2 + 1) > highBlueZ) {
+                                                        highBlueZ = z2 + 1;
+                                                    }
                                                 }
                                             }
                                             if ((x2 > 0) && (y2 > 0) && (z2 > 0)&& (blueObjects[i2-xySlice-xDim-1] == 0) && ((buffer[i2-xySlice-xDim-1] == BRIGHT_BLUE) || (buffer[i2-xySlice-xDim-1] == BLUE))) {
@@ -4914,6 +5273,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 - 1);
                                                     centerBlueY += (y2 - 1);
                                                     centerBlueZ += (z2 - 1);
+                                                    if ((x2 - 1) < lowBlueX) {
+                                                        lowBlueX = x2 - 1;   
+                                                    }
+                                                    if ((x2 - 1) > highBlueX) {
+                                                        highBlueX = x2 - 1;
+                                                    }
+                                                    if ((y2 - 1) < lowBlueY) {
+                                                        lowBlueY = y2 - 1;   
+                                                    }
+                                                    if ((y2 - 1) > highBlueY) {
+                                                        highBlueY = y2 - 1;
+                                                    }
+                                                    if ((z2 - 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 - 1;   
+                                                    }
+                                                    if ((z2 - 1) > highBlueZ) {
+                                                        highBlueZ = z2 - 1;
+                                                    }
                                                 }
                                             }
                                             if ((x2 > 0) && (y2 > 0) && (z2 < zDim - 1) && (blueObjects[i2+xySlice-xDim-1] == 0) && ((buffer[i2+xySlice-xDim-1] == BRIGHT_BLUE) ||(buffer[i2+xySlice-xDim-1] == BLUE))) {
@@ -4924,6 +5301,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 - 1);
                                                     centerBlueY += (y2 - 1);
                                                     centerBlueZ += (z2 + 1);
+                                                    if ((x2 - 1) < lowBlueX) {
+                                                        lowBlueX = x2 - 1;   
+                                                    }
+                                                    if ((x2 - 1) > highBlueX) {
+                                                        highBlueX = x2 - 1;
+                                                    }
+                                                    if ((y2 - 1) < lowBlueY) {
+                                                        lowBlueY = y2 - 1;   
+                                                    }
+                                                    if ((y2 - 1) > highBlueY) {
+                                                        highBlueY = y2 - 1;
+                                                    }
+                                                    if ((z2 + 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 + 1;   
+                                                    }
+                                                    if ((z2 + 1) > highBlueZ) {
+                                                        highBlueZ = z2 + 1;
+                                                    }
                                                 }
                                             }
                                             if ((x2 > 0) && (y2 < yDim - 1) && (z2 > 0)&& (blueObjects[i2-xySlice+xDim-1] == 0) && ((buffer[i2-xySlice+xDim-1] == BRIGHT_BLUE) || (buffer[i2-xySlice+xDim-1] == BLUE))) {
@@ -4934,6 +5329,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 - 1);
                                                     centerBlueY += (y2 + 1);
                                                     centerBlueZ += (z2 - 1);
+                                                    if ((x2 - 1) < lowBlueX) {
+                                                        lowBlueX = x2 - 1;   
+                                                    }
+                                                    if ((x2 - 1) > highBlueX) {
+                                                        highBlueX = x2 - 1;
+                                                    }
+                                                    if ((y2 + 1) < lowBlueY) {
+                                                        lowBlueY = y2 + 1;   
+                                                    }
+                                                    if ((y2 + 1) > highBlueY) {
+                                                        highBlueY = y2 + 1;
+                                                    }
+                                                    if ((z2 - 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 - 1;   
+                                                    }
+                                                    if ((z2 - 1) > highBlueZ) {
+                                                        highBlueZ = z2 - 1;
+                                                    }
                                                 }
                                             }
                                             if ((x2 > 0) && (y2 < yDim - 1) && (z2 < zDim - 1) && (blueObjects[i2+xySlice+xDim-1] == 0) && ((buffer[i2+xySlice+xDim-1] == BRIGHT_BLUE) || (buffer[i2+xySlice+xDim-1] == BLUE))) {
@@ -4944,6 +5357,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 - 1);
                                                     centerBlueY += (y2 + 1);
                                                     centerBlueZ += (z2 + 1);
+                                                    if ((x2 - 1) < lowBlueX) {
+                                                        lowBlueX = x2 - 1;   
+                                                    }
+                                                    if ((x2 - 1) > highBlueX) {
+                                                        highBlueX = x2 - 1;
+                                                    }
+                                                    if ((y2 + 1) < lowBlueY) {
+                                                        lowBlueY = y2 + 1;   
+                                                    }
+                                                    if ((y2 + 1) > highBlueY) {
+                                                        highBlueY = y2 + 1;
+                                                    }
+                                                    if ((z2 + 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 + 1;   
+                                                    }
+                                                    if ((z2 + 1) > highBlueZ) {
+                                                        highBlueZ = z2 + 1;
+                                                    }
                                                 }
                                             }
                                             if ((x2 < xDim-1) && (y2 > 0) && (z2 > 0) && (blueObjects[i2-xySlice-xDim+1] == 0) && ((buffer[i2-xySlice-xDim+1] == BRIGHT_BLUE) || (buffer[i2-xySlice-xDim+1] == BLUE))) {
@@ -4954,6 +5385,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 + 1);
                                                     centerBlueY += (y2 - 1);
                                                     centerBlueZ += (z2 - 1);
+                                                    if ((x2 + 1) < lowBlueX) {
+                                                        lowBlueX = x2 + 1;   
+                                                    }
+                                                    if ((x2 + 1) > highBlueX) {
+                                                        highBlueX = x2 + 1;
+                                                    }
+                                                    if ((y2 - 1) < lowBlueY) {
+                                                        lowBlueY = y2 - 1;   
+                                                    }
+                                                    if ((y2 - 1) > highBlueY) {
+                                                        highBlueY = y2 - 1;
+                                                    }
+                                                    if ((z2 - 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 - 1;   
+                                                    }
+                                                    if ((z2 - 1) > highBlueZ) {
+                                                        highBlueZ = z2 - 1;
+                                                    }
                                                 }
                                             }
                                             if ((x2 < xDim-1) && (y2 > 0) && (z2 < zDim - 1) && (blueObjects[i2+xySlice-xDim+1] == 0) && ((buffer[i2+xySlice-xDim+1] == BRIGHT_BLUE) || (buffer[i2+xySlice-xDim+1] == BLUE))) {
@@ -4964,6 +5413,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 + 1);
                                                     centerBlueY += (y2 - 1);
                                                     centerBlueZ += (z2 + 1);
+                                                    if ((x2 + 1) < lowBlueX) {
+                                                        lowBlueX = x2 + 1;   
+                                                    }
+                                                    if ((x2 + 1) > highBlueX) {
+                                                        highBlueX = x2 + 1;
+                                                    }
+                                                    if ((y2 - 1) < lowBlueY) {
+                                                        lowBlueY = y2 - 1;   
+                                                    }
+                                                    if ((y2 - 1) > highBlueY) {
+                                                        highBlueY = y2 - 1;
+                                                    }
+                                                    if ((z2 + 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 + 1;   
+                                                    }
+                                                    if ((z2 + 1) > highBlueZ) {
+                                                        highBlueZ = z2 + 1;
+                                                    }
                                                 }
                                             }
                                             if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 > 0) && (blueObjects[i2-xySlice+xDim+1] == 0) && ((buffer[i2-xySlice+xDim+1] == BRIGHT_BLUE) ||(buffer[i2-xySlice+xDim+1] == BLUE))) {
@@ -4974,6 +5441,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 + 1);
                                                     centerBlueY += (y2 + 1);
                                                     centerBlueZ += (z2 - 1);
+                                                    if ((x2 + 1) < lowBlueX) {
+                                                        lowBlueX = x2 + 1;   
+                                                    }
+                                                    if ((x2 + 1) > highBlueX) {
+                                                        highBlueX = x2 + 1;
+                                                    }
+                                                    if ((y2 + 1) < lowBlueY) {
+                                                        lowBlueY = y2 + 1;   
+                                                    }
+                                                    if ((y2 + 1) > highBlueY) {
+                                                        highBlueY = y2 + 1;
+                                                    }
+                                                    if ((z2 - 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 - 1;   
+                                                    }
+                                                    if ((z2 - 1) > highBlueZ) {
+                                                        highBlueZ = z2 - 1;
+                                                    }
                                                 }
                                             }
                                             if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 < zDim - 1) && (blueObjects[i2+xySlice+xDim+1] == 0) && ((buffer[i2+xySlice+xDim+1] == BRIGHT_BLUE) || (buffer[i2+xySlice+xDim+1] == BLUE))) {
@@ -4984,6 +5469,24 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     centerBlueX += (x2 + 1);
                                                     centerBlueY += (y2 + 1);
                                                     centerBlueZ += (z2 + 1);
+                                                    if ((x2 + 1) < lowBlueX) {
+                                                        lowBlueX = x2 + 1;   
+                                                    }
+                                                    if ((x2 + 1) > highBlueX) {
+                                                        highBlueX = x2 + 1;
+                                                    }
+                                                    if ((y2 + 1) < lowBlueY) {
+                                                        lowBlueY = y2 + 1;   
+                                                    }
+                                                    if ((y2 + 1) > highBlueY) {
+                                                        highBlueY = y2 + 1;
+                                                    }
+                                                    if ((z2 + 1) < lowBlueZ) {
+                                                        lowBlueZ = z2 + 1;   
+                                                    }
+                                                    if ((z2 + 1) > highBlueZ) {
+                                                        highBlueZ = z2 + 1;
+                                                    }
                                                 }
                                             }
                                         } // if (blueObjects[i2] > 0)
@@ -4999,6 +5502,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueCenterXList.add((short)centerBlueX);
                             blueCenterYList.add((short)centerBlueY);
                             blueCenterZList.add((short)centerBlueZ);
+                            blueXWidthList.add((short)(highBlueX - lowBlueX + 1));
+                            blueYWidthList.add((short)(highBlueY - lowBlueY + 1));
+                            blueZWidthList.add((short)(highBlueZ - lowBlueZ + 1));
                         }
                     } // else if ((blueObjects[i] == 0) && ((buffer[i] == BLUE) || (buffer[i] == BRIGHT_BLUE)))
                 } // for (x = 0; x < xDim; x++)
