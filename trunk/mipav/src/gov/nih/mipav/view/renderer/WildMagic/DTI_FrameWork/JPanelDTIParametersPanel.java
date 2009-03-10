@@ -752,6 +752,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         } else {
             m_kTractList.setSelectedIndex(kList.size());
         }
+        updateTractCount();
     }	
 
     /** Creates the user-interface for the Fiber Bundle Tract panel.
