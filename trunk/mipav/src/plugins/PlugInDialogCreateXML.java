@@ -33,6 +33,8 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
 	
 	public static final String REMOVE_ALL = "Remove all file";
 	
+	public static final String IMPORT_XML = "Import XML";
+	
 	// ~ Instance fields ------------------------------------------------------------------------
 	
 	/** GridBagLayout * */
@@ -52,6 +54,8 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     private JButton inputFileBrowseButton;
     
     private JButton removeFileButton, removeAllFileButton;
+    
+    private JButton importButton;
     
     /**All files to generate image information for*/
     private JList inputFileList;
@@ -227,9 +231,11 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
         JPanel subProv = new JPanel(new GridBagLayout());
         subProv.setBorder(MipavUtil.buildTitledBorder("Data provenance"));
         GridBagConstraints provConstraints = new GridBagConstraints();
+        
         provConstraints.gridx = 0;
         provConstraints.gridy = 0;
         provConstraints.weightx = 0;
+        provConstraints.fill = GridBagConstraints.NONE;
         provConstraints.insets = new Insets(15, 5, 15, 5);
         sourceNameLabel = new JLabel(" Source name:  ");
         subProv.add(sourceNameLabel, provConstraints);
@@ -238,15 +244,27 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
         provConstraints.gridy = 0;
         provConstraints.weightx = 1;
         provConstraints.anchor = GridBagConstraints.WEST;
-        provConstraints.insets = new Insets(10, 50, 5, 5);
+        provConstraints.insets = new Insets(10, 50, 5, 0);
         sourceNameField = new JTextField(45);
         subProv.add(sourceNameField, provConstraints);
+        
+        provConstraints.gridx = 2;
+        provConstraints.gridy = 0;
+        provConstraints.weightx = 0;
+        provConstraints.anchor = GridBagConstraints.EAST;
+        provConstraints.fill = GridBagConstraints.HORIZONTAL;
+        provConstraints.insets = new Insets(5, 0, 5, 5);
+        importButton = new JButton("Import XML");
+        importButton.setActionCommand(IMPORT_XML);
+        importButton.addActionListener(this);
+        subProv.add(importButton, provConstraints);
         
         //source organization
         provConstraints.gridx = 0;
         provConstraints.gridy = 1;
         provConstraints.weightx = 0;
         provConstraints.anchor = GridBagConstraints.CENTER;
+        provConstraints.fill = GridBagConstraints.NONE;
         provConstraints.insets = new Insets(15, 5, 15, 5);
         sourceOrgLabel = new JLabel(" Source organization:  ");
         subProv.add(sourceOrgLabel, provConstraints);
@@ -349,7 +367,7 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     		}
     		
     		//map keys exact xml tag to particular text
-    		HashMap<String, String> map = new HashMap();
+    		HashMap<String, String> map = new HashMap<String, String>();
     		map.put("anatomical-area", anatField.getText());
     		map.put("source-name", sourceNameField.getText());
     		map.put("source-org", sourceOrgField.getText());
@@ -435,7 +453,7 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
         	dispose();
         } else if (command.equalsIgnoreCase("OK")) {
         	callAlgorithm();
-        } else if(command.equalsIgnoreCase(REMOVE_ALL)) {
+        } else if(command.equals(REMOVE_ALL)) {
         	fileList.removeAllElements();
         	inputFileList.updateUI();
         } else if(command.equals(REMOVE)) {
@@ -444,7 +462,28 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
         		fileList.remove(obj);
         	}
         	inputFileList.updateUI();
-        } 
+        } else if(command.equals(IMPORT_XML)) {
+        	fileChooser = new JFileChooser(Preferences.getImageDirectory());
+        	fileChooser.setFont(MipavUtil.defaultMenuFont);
+        	fileChooser.setMultiSelectionEnabled(false);
+        	fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        	
+        	Dimension d = new Dimension(700, 400);
+            fileChooser.setMinimumSize(d);
+            fileChooser.setPreferredSize(d);
+            
+            int returnVal = fileChooser.showOpenDialog(null);
+                        
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+            	File xmlFile = fileChooser.getSelectedFile();
+            	Preferences.setImageDirectory(fileChooser.getCurrentDirectory());
+            	insertXmlData(xmlFile);
+            }
+        }
+    }
+    
+    private void insertXmlData(File xmlFile) {
+    	System.out.println("Xml reader not available");
     }
 
 	/**
