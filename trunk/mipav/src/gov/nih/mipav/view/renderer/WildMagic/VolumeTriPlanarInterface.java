@@ -2184,19 +2184,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
      * @see gov.nih.mipav.view.ViewImageUpdateInterface#setSlice(int)
      */
     public void setSlice(int slice) {}    
-
-    
-    /** update the Win-Level LUT from the tri planar slice window right mouse drag */
-    public void updateWinLevelLUT() {
-    	setPositionLabels(sliceGUI.getCenter());
-
-        for (int i = 0; i < 3; i++) {
-            if ( m_akPlaneRender[i] != null )
-            {
-                m_akPlaneRender[i].setCenter(sliceGUI.getCenter());
-            }
-        }
-    }
     
     /**
      * Sets the position of the slices in the SurfaceRender and PlaneRender

@@ -434,7 +434,7 @@ public class PlaneRender_WM extends GPURenderBase
 
         if (m_bRightMousePressed && !kEvent.isShiftDown()) {
             processRightMouseDrag(kEvent);
-            m_kParent.updateWinLevelLUT();
+            SetModified (true);
             
         }
 
@@ -572,7 +572,7 @@ public class PlaneRender_WM extends GPURenderBase
     public void SetModified ( boolean bModified )
     {
         m_bModified = bModified;
-        //GetCanvas().display();
+        GetCanvas().display();
     }
 
     /**
