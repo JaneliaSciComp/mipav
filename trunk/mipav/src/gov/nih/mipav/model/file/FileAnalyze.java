@@ -824,17 +824,64 @@ public class FileAnalyze extends FileBase {
         fileInfo.setVoxUnits(new String(bufferImageHeader, 56, 4));
         Preferences.debug("FileAnalyze:readHeader. Voxel unit = " + fileInfo.getVoxUnits() + "\n");
         fileInfo.setCalUnits(new String(bufferImageHeader, 60, 4));
-
-
-        fileInfo.setOrientation(bufferImageHeader[252]);
+        
+        fileInfo.setOrientation((byte) bufferImageHeader[252]);
 
         // MIPAV is hacking the analyze format to use the unused
         // variables to store axis orientation.
         fileInfo.setUnused1(getBufferShort(bufferImageHeader, 64, endianess));
         fileInfo.setUnused2(getBufferShort(bufferImageHeader, 66, endianess));
         fileInfo.setUnused3(getBufferShort(bufferImageHeader, 68, endianess));
-
-        if (fileInfo.getAxisOrientation()[0] == FileInfoBase.ORI_UNKNOWN_TYPE) {
+        
+        int xAxisOrientation = fileInfo.getAxisOrientation()[0];
+        int yAxisOrientation = fileInfo.getAxisOrientation()[1];
+        int zAxisOrientation = fileInfo.getAxisOrientation()[2];
+        if  ((xAxisOrientation == FileInfoBase.ORI_R2L_TYPE) &&
+             (yAxisOrientation ==  FileInfoBase.ORI_A2P_TYPE) &&
+             (zAxisOrientation ==  FileInfoBase.ORI_I2S_TYPE)) {
+            fileInfo.setOrientation(FileInfoSPM.TRANSVERSE_UNFLIPPED);
+        }
+        else if ((xAxisOrientation == FileInfoBase.ORI_R2L_TYPE) &&
+                (yAxisOrientation ==  FileInfoBase.ORI_P2A_TYPE) &&
+                (zAxisOrientation ==  FileInfoBase.ORI_I2S_TYPE)) {
+               fileInfo.setOrientation(FileInfoSPM.TRANSVERSE_FLIPPED);
+        }
+        else if ((xAxisOrientation == FileInfoBase.ORI_R2L_TYPE) &&
+                (yAxisOrientation ==  FileInfoBase.ORI_S2I_TYPE) &&
+                (zAxisOrientation ==  FileInfoBase.ORI_P2A_TYPE)) {
+               fileInfo.setOrientation(FileInfoSPM.CORONAL_UNFLIPPED);
+        }
+        else if ((xAxisOrientation == FileInfoBase.ORI_R2L_TYPE) &&
+                (yAxisOrientation ==  FileInfoBase.ORI_I2S_TYPE) &&
+                (zAxisOrientation ==  FileInfoBase.ORI_P2A_TYPE)) {
+               fileInfo.setOrientation(FileInfoSPM.CORONAL_FLIPPED);
+        }
+        else if ((xAxisOrientation == FileInfoBase.ORI_P2A_TYPE) &&
+                (yAxisOrientation ==  FileInfoBase.ORI_S2I_TYPE) &&
+                (zAxisOrientation ==  FileInfoBase.ORI_R2L_TYPE)) {
+               fileInfo.setOrientation(FileInfoSPM.SAGITTAL_UNFLIPPED);
+        }
+        else if ((xAxisOrientation == FileInfoBase.ORI_P2A_TYPE) &&
+                (yAxisOrientation ==  FileInfoBase.ORI_I2S_TYPE) &&
+                (zAxisOrientation ==  FileInfoBase.ORI_R2L_TYPE)) {
+               fileInfo.setOrientation(FileInfoSPM.SAGITTAL_FLIPPED);
+        }
+        else if ((xAxisOrientation != FileInfoBase.ORI_UNKNOWN_TYPE) &&
+            (yAxisOrientation != FileInfoBase.ORI_UNKNOWN_TYPE) &&
+            (zAxisOrientation != FileInfoBase.ORI_UNKNOWN_TYPE)) {
+           if ((zAxisOrientation == FileInfoBase.ORI_I2S_TYPE) ||
+               (zAxisOrientation == FileInfoBase.ORI_S2I_TYPE)) {
+               fileInfo.setImageOrientation(FileInfoBase.AXIAL);
+           }
+           else if ((zAxisOrientation == FileInfoBase.ORI_A2P_TYPE) ||
+                    (zAxisOrientation == FileInfoBase.ORI_P2A_TYPE)) {
+               fileInfo.setImageOrientation(FileInfoBase.CORONAL);
+           }
+           else {
+               fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
+           }
+        }
+        else { // an axis has type FileInfoBase.ORI_UNKNOWN_TYPE;
 
             // this call will reset the axis orientations.
             fileInfo.setOrientation((byte) bufferImageHeader[252]);
