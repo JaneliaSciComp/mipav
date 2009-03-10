@@ -208,15 +208,17 @@ public class VolumeDTI extends VolumeObject
         Integer iIGroup = new Integer(iGroup);
         if ( m_kTracts.containsKey( iIGroup ) )
         {
-            kTractNode = m_kTracts.get(iIGroup);
-            kTractNode.AttachChild(kLine);
-            kTractNode.UpdateGS();
-            kTractNode.UpdateRS();
-
-            Vector<int[]> kEllipseVector = m_kEllipsoids.get(iIGroup);
-            kEllipseVector.add(aiEllipsoids);
-            Vector<int[]> kCylinderVector = m_kCylinders.get(iIGroup);
-            kCylinderVector.add(aiCylinders);
+        	if ( kTractNode != null ) {
+	            kTractNode = m_kTracts.get(iIGroup);
+	            kTractNode.AttachChild(kLine);
+	            kTractNode.UpdateGS();
+	            kTractNode.UpdateRS();
+	
+	            Vector<int[]> kEllipseVector = m_kEllipsoids.get(iIGroup);
+	            kEllipseVector.add(aiEllipsoids);
+	            Vector<int[]> kCylinderVector = m_kCylinders.get(iIGroup);
+	            kCylinderVector.add(aiCylinders);
+        	}
         }
         
         if ( m_kTubes.containsKey( iIGroup ) )
