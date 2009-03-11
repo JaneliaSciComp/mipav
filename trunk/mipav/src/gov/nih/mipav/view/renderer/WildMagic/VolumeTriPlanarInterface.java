@@ -34,13 +34,13 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelCustumBlend;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelDisplay_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelGeodesic_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelMultiHistogram;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelMultiDimensionalTransfer;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelRenderMode_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSlices_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurface_WM;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LevWidgetState;
+import gov.nih.mipav.view.renderer.WildMagic.Render.ClassificationWidgetState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender;
@@ -188,7 +188,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     /** 3D Slice panel container. */
     protected JPanel slicePanel;
     /** Multihistogram panel: */
-    protected JPanelMultiHistogram multiHistogramGUI;
+    protected JPanelMultiDimensionalTransfer multiHistogramGUI;
     /** Display panel container */
     protected JPanel multiHistogramPanel;
     /** Multihistogram panel: */
@@ -321,7 +321,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     protected int screenWidth, screenHeight;
     /** Panel containing the position labels:. */
     private JPanel panelLabels = new JPanel();
-    
+    private JToolBar m_kVOIToolbar;
     /**
      * Specific constructor call from the VolumeViewerDTI.   
      */
@@ -644,6 +644,9 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             setRadiological(false);
         } else if (command.equals("ShaderParameters") ) {
             raycastRenderWM.displayShaderParameters();
+        } else if (command.equals("VOIToolbar") ) {
+            boolean showVOI = menuObj.isMenuItemSelected("VOI toolbar");
+            m_kVOIToolbar.setVisible(showVOI);
         }
 
     }
@@ -924,7 +927,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     
     public void buildMultiHistogramPanel() {
         multiHistogramPanel = new JPanel();
-        multiHistogramGUI = new JPanelMultiHistogram(this, m_kAnimator, m_kVolumeImageA);
+        multiHistogramGUI = new JPanelMultiDimensionalTransfer(this, m_kAnimator, m_kVolumeImageA);
         multiHistogramPanel.add(multiHistogramGUI.getMainPanel());
         maxPanelWidth = Math.max(multiHistogramPanel.getPreferredSize().width, maxPanelWidth);
     }
@@ -2505,7 +2508,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         return true;
     }
     
-    public void updateLevWidgetState( LevWidgetState kLWS, int iState )
+    public void updateLevWidgetState( ClassificationWidgetState kLWS, int iState )
     {
         raycastRenderWM.updateLevWidgetState( kLWS, iState );
     }
@@ -2596,7 +2599,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
                                      }));
         menuBar.add(menuObj.makeMenu("Toolbars", false,
                                      new JMenuItem[] {
-                                         menuObj.buildCheckBoxMenuItem("RFA toolbar", "RFAToolbar", false)
+                menuObj.buildCheckBoxMenuItem("VOI toolbar", "VOIToolbar", false)
+                //menuObj.buildCheckBoxMenuItem("RFA toolbar", "RFAToolbar", false)
                                      }));
 
         menuObj.setMenuItemEnabled("RFA toolbar", false);
@@ -2696,7 +2700,12 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         gbc.weighty = 1;
         panelToolbar.add(viewToolBar, gbc);
         
-       
+
+        gbc.gridy++;
+        ViewToolBarBuilder toolBarObj = new ViewToolBarBuilder(this);
+        m_kVOIToolbar = toolBarObj.buildVolumeTriPlanarVOIToolBar();
+        m_kVOIToolbar.setVisible(false);
+        panelToolbar.add(m_kVOIToolbar, gbc);
 
     }
     

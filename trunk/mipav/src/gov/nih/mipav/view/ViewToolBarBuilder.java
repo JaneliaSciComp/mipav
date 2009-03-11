@@ -978,6 +978,97 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         return VOIToolBar;
     }
+    
+    
+    /**
+     * Builds the VOI toolbar, with buttons for creating various types of VOIs (elliptical, square, etc.), and for cut
+     * and paste operations.
+     * @return  the VOI toolbar
+     */
+    public JToolBar buildVolumeTriPlanarVOIToolBar() {
+        JToolBar VOIToolBar = new JToolBar();
+        VOIToolBar.setBorder(etchedBorder);
+        VOIToolBar.setBorderPainted(true);
+        VOIToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
+        VOIToolBar.setFloatable(false);
+
+        //pointerVOIButton = buildToggleButton(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER, VOIGroup);
+        //VOIToolBar.add(pointerVOIButton);
+
+        //VOIToolBar.add(makeSeparator());
+        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_TEXT, VOIGroup));
+        
+        //VOIToolBar.add(makeSeparator());
+        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_POINT, VOIGroup));
+
+        //JToggleButton polysliceButton = buildToggleButton(CustomUIBuilder.PARAM_VOI_POLY_SLICE, VOIGroup);
+
+        // polysliceButton.setEnabled(false);
+        //polysliceButton.setEnabled(numberOfDimensions > 2);
+        //VOIToolBar.add(polysliceButton);
+
+
+        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LINE, VOIGroup));
+        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_PROTRACTOR, VOIGroup));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_RECTANGLE, VOIGroup));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_ELLIPSE, VOIGroup));
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_POLYGON, VOIGroup));
+
+
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LEVELSET, VOIGroup));
+        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LIVEWIRE, VOIGroup));
+
+        //JToggleButton cubeVOIButton = buildToggleButton(CustomUIBuilder.PARAM_VOI_3D_RECTANGLE, VOIGroup);
+        //VOIToolBar.add(cubeVOIButton);
+
+        //if (numberOfDimensions == 2) {
+        //    cubeVOIButton.setEnabled(false);
+        //}
+
+        
+
+        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_SPLITTER, null));
+        
+        voiColorButton = new VOIColorButton(0);
+        VOIToolBar.add(makeSeparator());
+       
+       
+        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_NEW, VOIGroup));
+        //VOIToolBar.add(makeSeparator());
+        
+        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_PROPERTIES, VOIGroup));
+        VOIToolBar.add(voiColorButton);
+
+        VOIToolBar.add(makeSeparator());
+
+        //VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_UNDO));
+
+        // VOIToolBar.add( buildButton( "deleteVOI", "Delete selected contour", "delete" ) );
+        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_CUT));
+        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_COPY));
+        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_PASTE));
+
+        VOIToolBar.add(makeSeparator());
+
+        JButton propDownVOIButton = buildButton(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN);
+        JButton propAllVOIButton = buildButton(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL);
+        JButton propUpVOIButton = buildButton(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP);
+
+        VOIToolBar.add(propDownVOIButton);
+        VOIToolBar.add(propAllVOIButton);
+        VOIToolBar.add(propUpVOIButton);
+
+        //VOIToolBar.add(makeSeparator());
+        //VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_QUICK_AND_OP));
+        //VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP));
+
+        return VOIToolBar;
+    }
+
+
+    
+    
+    
 
     /**
      * Accessor that returns the current intensity paint name (that is, the text of the intensity button, 0, 1, etc.).

@@ -59,7 +59,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     private float[][] m_aafLight = new float[ms_MaxLights][4];
     
     private static int ms_iNumLev = 10;
-    private LevWidgetState[] m_akLevWidget = new LevWidgetState[ms_iNumLev];
+    private ClassificationWidgetState[] m_akLevWidget = new ClassificationWidgetState[ms_iNumLev];
     private boolean[] m_abLevWidgetInit = new boolean[ms_iNumLev];
 
     private int m_iPasses = 1;
@@ -787,7 +787,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         setCurrentShader();
     }
     
-    public void updateLevWidgetState( LevWidgetState kLWS, int iState )
+    public void updateLevWidgetState( ClassificationWidgetState kLWS, int iState )
     {
         if ( iState >= ms_iNumLev )
         {
@@ -795,7 +795,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         }
         if ( m_akLevWidget[iState] == null )
         {
-            m_akLevWidget[iState] = new LevWidgetState();
+            m_akLevWidget[iState] = new ClassificationWidgetState();
         }
         
         m_akLevWidget[iState].Copy( kLWS );

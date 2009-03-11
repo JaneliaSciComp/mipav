@@ -17,10 +17,10 @@ import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
-public class LevWidgetSquare extends LevWidget
+public class SquareClassificationWidget extends ClassificationWidget
 {
 
-    public LevWidgetSquare(float fX, float fY, Vector2f kTMin, Vector2f kTMax, String kTexName, int iWidth, int iHeight)
+    public SquareClassificationWidget(float fX, float fY, Vector2f kTMin, Vector2f kTMax, String kTexName, int iWidth, int iHeight)
     {
         super( kTMin, kTMax, iWidth, iHeight );
         CreateSquare( fX, fY, kTexName );
@@ -57,7 +57,7 @@ public class LevWidgetSquare extends LevWidget
         kAttributes.SetTChannels(0,2);
         kSM = new StandardMesh(kAttributes);
         m_kBottomTri = kSM.Rectangle(2,2,1.0f,1.0f);
-        m_kBottomTriEffect = new LevWidgetEffect( kTexName );
+        m_kBottomTriEffect = new ClassificationWidgetEffect( kTexName );
         m_kBottomTri.AttachEffect( m_kBottomTriEffect );
         m_kBottomTri.SetName("BottomTri");
         m_kWidget.AttachChild(m_kBottomTri);

@@ -36,7 +36,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
     private int m_iMouseX, m_iMouseY;
     private Vector2f m_kTMin = new Vector2f(0,0);
     private Vector2f m_kTMax = new Vector2f(1,1);
-    private Vector<LevWidget> m_akLev = new Vector<LevWidget>();
+    private Vector<ClassificationWidget> m_akLev = new Vector<ClassificationWidget>();
     private int m_iCurrent = -1;
     private boolean m_bPickPending = false;
     private ColorRGBA m_kCurrentColor = new ColorRGBA(ColorRGBA.WHITE);
@@ -111,7 +111,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
             }
             else
             {
-                m_kParent.updateLevWidgetState( LevWidgetState.ZERO_STATE, i );
+                m_kParent.updateLevWidgetState( ClassificationWidgetState.ZERO_STATE, i );
             }            
         }
         Pick();
@@ -179,7 +179,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
         {
             if ( ucKey == KeyEvent.VK_DELETE )
             {
-                LevWidget kDeleted = m_akLev.remove(m_iCurrent);
+                ClassificationWidget kDeleted = m_akLev.remove(m_iCurrent);
                 m_spkScene.DetachChild( kDeleted.getWidget() );
                 kDeleted.dispose();
                 m_iCurrent = m_akLev.size() -1;
@@ -260,14 +260,14 @@ public class VolumeImageHistogram extends VolumeImageViewer
                 float fX = ((float)e.getX()/(float)m_iWidth);
                 float fY = ((float)m_iHeight-(float)e.getY())/m_iHeight;
                 m_iCurrent++;
-                LevWidget kLev = null;
+                ClassificationWidget kLev = null;
                 if ( m_kWidgetType.equals( "Square" ) )
                 {
-                    kLev = new LevWidgetSquare(fX,fY, m_kTMin, m_kTMax, m_kVolumeImage.GetHisto().GetName(), m_iWidth, m_iHeight);
+                    kLev = new SquareClassificationWidget(fX,fY, m_kTMin, m_kTMax, m_kVolumeImage.GetHisto().GetName(), m_iWidth, m_iHeight);
                 }
                 else
                 {
-                    kLev = new LevWidgetTri(fX,fY, m_kTMin, m_kTMax, m_kVolumeImage.GetHisto().GetName(), m_iWidth, m_iHeight);
+                    kLev = new TriangleClassificationWidget(fX,fY, m_kTMin, m_kTMax, m_kVolumeImage.GetHisto().GetName(), m_iWidth, m_iHeight);
                 }
                 m_spkScene.AttachChild(  kLev.getWidget() );
                 m_spkScene.UpdateGS();

@@ -4,7 +4,7 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LevWidgetState;
+import gov.nih.mipav.view.renderer.WildMagic.Render.ClassificationWidgetState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeBoundingBox;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClip;
@@ -331,18 +331,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
 
 
-    /**
-     * Display the volume in DDR mode.
-     */
-    public void DRRMode()
-    {
-        if ( m_kVolumeRayCast != null )
-        {
-            m_kVolumeRayCast.DRRMode();
-        }
-        ResetShaderParamsWindow();
-    }
-
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
      */
@@ -435,7 +423,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_bExtract = false;
         }
     }
-    
+
     /**
      * Displays the arbitrary clip plane position.
      * @param bDisplay on/off.
@@ -447,7 +435,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kVolumeClip.DisplayArb(bDisplay);
         }
     }
-
+    
     /**
      * Called from JPanelDisplay. Sets the bounding box display on/off.
      * @param bDisplay on/off.
@@ -596,6 +584,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
 
         super.dispose();
+    }
+
+    /**
+     * Display the volume in DDR mode.
+     */
+    public void DRRMode()
+    {
+        if ( m_kVolumeRayCast != null )
+        {
+            m_kVolumeRayCast.DRRMode();
+        }
+        ResetShaderParamsWindow();
     }
 
     /**
@@ -1079,19 +1079,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
     
 
-    /**
-     * Display the volume in Mullti-histo mode.
-     */
-    public void MULTIHISTOMode(boolean bOn)
-    {
-        if ( m_kVolumeRayCast != null )
-        {
-            m_kVolumeRayCast.MULTIHISTOMode(bOn);
-        }
-        ResetShaderParamsWindow();
-    }
-
-
     /** Rotates the object with a virtual trackball:
      * @param e the MouseEvent
      */
@@ -1121,6 +1108,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kParent.setCameraParameters();
     	m_kParent.setObjectParameters();
     }
+
 
     /** Rotates the object with a virtual trackball:
      * @param e the MouseEvent
@@ -1157,13 +1145,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
-
     /** Rotates the object with a virtual trackball:
      * @param e the MouseEvent
      */
     public void mouseReleased(MouseEvent e)
     {
     	super.mouseReleased(e);
+    }
+
+
+    /**
+     * Display the volume in Mullti-histo mode.
+     */
+    public void MULTIHISTOMode(boolean bOn)
+    {
+        if ( m_kVolumeRayCast != null )
+        {
+            m_kVolumeRayCast.MULTIHISTOMode(bOn);
+        }
+        ResetShaderParamsWindow();
     }
 
     /**
@@ -1389,28 +1389,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
-    public void setRGBTA(ModelRGB RGBT) {
-        if ( m_kVolumeRayCast != null )
-        {
-            m_kVolumeRayCast.setRGBTA(RGBT);
-        } 
-        if ( m_kSlices != null )
-        {
-            m_kSlices.setRGBTA(RGBT);
-        }
-    }    
-    
-    public void setRGBTB(ModelRGB RGBT) {
-        if ( m_kVolumeRayCast != null )
-        {
-            m_kVolumeRayCast.setRGBTB(RGBT);
-        } 
-        if ( m_kSlices != null )
-        {
-            m_kSlices.setRGBTB(RGBT);
-        }
-    }
-    
     /**
      * Sets the background color.
      * @param kColor new background color.
@@ -1426,8 +1404,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_kSlices.SetBackgroundColor( kColor );
         }
-    }
-
+    }    
+    
     /**
      * Called from JPanelDisplay. Sets the bounding box color.
      * @param kColor bounding box color.
@@ -1439,7 +1417,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kVolumeBox.SetBoundingBoxColor(kColor);
         }
     }
-
+    
     /**
      * Sets the color for the input slice frame.
      *
@@ -1564,7 +1542,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-    
+
+    public void SetCustumBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
+    {
+        m_kVolumeRayCast.SetCustumBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
+    }
+
     /** Turns on/off displaying all the ellipsoids.
      * @param bDisplay when true display all the cylinders in the volume.
      */
@@ -1586,7 +1569,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDTIDisplay.setDisplayAllEllipsoids(bDisplay);
         }
     }
-
+    
     /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
      * @param bDisplay when true display the tracts with Cylinders.
      */
@@ -1608,7 +1591,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDTIDisplay.setDisplayEllipsoids( bDisplay );
         }
     }
-    
+
     /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
      * @param bDisplay when true display the tracts with Cylinders.
      */
@@ -1619,7 +1602,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDTIDisplay.setDisplayTubes( bDisplay );
         }
     }
-
+    
     /**
      * Sets the sculpt drawing shape.
      * @param shape (0 = free-hand, 1 = rectangular)
@@ -1632,7 +1615,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         m_kSculptor.setDrawingShape(shape);
     }
-
 
     /** Sets the DTI Image for displaying the tensors as ellipsoids.
      * @param kDTIImage.
@@ -1647,6 +1629,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kDTIDisplay.setDTIImage(kDTIImage);
     }
 
+
     /** Set the m_iEllipsoidMod value. 
      * @param iMod new m_iEllipsoidMod value.
      */
@@ -1657,7 +1640,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDTIDisplay.setEllipseMod( iMod );
         }
     }
-    
+
     /**
      * Sets the eye clip plane position.
      * @param f4 clip position (same value as sSlice in JPanelClip)
@@ -1686,7 +1669,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-
+    
     /**
      * Sets the eye clip plane color.
      * @param kColor the new color.
@@ -1701,7 +1684,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kVolumeClip.setEyeColor(kColor);
         }
     }
-    
+
     /**
      * Sets the inverse-eye clip plane position.
      * @param f4 clip position (same value as sSliceInv in JPanelClip)
@@ -1729,8 +1712,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 ((VolumeSurface)m_kDisplayList.get(i)).SetClipEyeInv(afEquation, bEnable);
             }
         }
-    }    
-    
+    }
     
     /**
      * Sets the inverse-eye clip plane color.
@@ -1745,9 +1727,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_kVolumeClip.setEyeInvColor(kColor);
         }
-    }  
+    }    
     
-
+    
     /**
      * Enables/Disables Gradient Magnitude filter.
      * @param bShow gradient magnitude filter on/off
@@ -1758,8 +1740,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_kVolumeRayCast.SetGradientMagnitude(bShow);
         }
-    }
+    }  
     
+
     /**
      * Sets the ModelImage to use as an alternative to the volume ModelImage for surface texturing.
      * @param kSurfaceName the surface to modify.
@@ -1835,7 +1818,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-
     
     /**
      * Enable surface picking for the given surface.
@@ -1855,6 +1837,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
+
     
     /**
      * Set the polygon mode (FILL, LINE, POINT) for the given surface.
@@ -1874,7 +1857,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-
+    
     /** Sets the polyline color for the specified fiber bundle tract group. 
      * @param iGroup the fiber bundle group to set.
      * @param kColor the new polyline color for the specified fiber bundle tract group. 
@@ -1884,6 +1867,28 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kDTIDisplay != null )
         {
             m_kDTIDisplay.setPolylineColor(iGroup, kColor);
+        }
+    }
+
+    public void setRGBTA(ModelRGB RGBT) {
+        if ( m_kVolumeRayCast != null )
+        {
+            m_kVolumeRayCast.setRGBTA(RGBT);
+        } 
+        if ( m_kSlices != null )
+        {
+            m_kSlices.setRGBTA(RGBT);
+        }
+    }
+    
+    public void setRGBTB(ModelRGB RGBT) {
+        if ( m_kVolumeRayCast != null )
+        {
+            m_kVolumeRayCast.setRGBTB(RGBT);
+        } 
+        if ( m_kSlices != null )
+        {
+            m_kSlices.setRGBTB(RGBT);
         }
     }
     
@@ -1899,7 +1904,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kSlices.SetSliceOpacity( i, fAlpha );
         }
     }
-    
+
     /**
      * Enable/disable stereo rendering.
      * @param bEnable
@@ -1908,7 +1913,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         m_bStereo = bEnable;
     }
-
+      
     /**
      * Turns on surface texture display for the given surface. The user can use a separate ModelImage and LUT than the one displayed in the volume renderer.
      * @param kSurfaceName the name of the surface to texture.
@@ -1929,7 +1934,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-      
+    
     /** Sets the blend factor for displaying the ray-cast volume with other objects in the scene.
      * @param fBlend the blend factor for the ray-cast volume.
      */
@@ -1941,6 +1946,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
     
+    public void setVolumeSamples( float fSample )
+    {
+        m_kVolumeRayCast.setVolumeSamples( fSample );
+    }
     /** Turns on/off displaying the bounding box for the given plane.
      * @param i the plane index (0-3) in file coordinates.
      * @param bShow when true, the bounding box is displayed.
@@ -1952,7 +1961,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kSlices.ShowBoundingBox( i, bShow );
         }
     }
-    
     /** Turns on/off displaying the given plane.
      * @param i the plane index (0-3) in file coordinates.
      * @param bShow when true, the plane is displayed.
@@ -1964,6 +1972,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kSlices.ShowSlice( i, bShow );
         }
     }
+        
     /**
      * Smooth the given surface.
      * @param kSurfaceName the name of the surface to smooth.
@@ -1985,6 +1994,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
+  
+    
     /**
      * Smooth the given surface.
      * @param kSurfaceName the name of the surface to smooth.
@@ -2005,7 +2016,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-        
+    
     /**
      * Smooth the given surface.
      * @param kSurfaceName the name of the surface to smooth.
@@ -2027,8 +2038,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-  
-    
     /**
      * Display the volume in Surface mode.
      */
@@ -2051,7 +2060,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kVolumeRayCast.SURMode();
         }
         ResetShaderParamsWindow();
-    }
+    }    
+    
     /**
      * Switches between different ways of displaying the geodesic path (Euclidean, Geodesic, or Mesh).
      * @param kSurfaceName the surface the path is on.
@@ -2070,6 +2080,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
+
     
     /**
      * Changes the translation vector for the surface with the given name.
@@ -2088,7 +2099,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 }
             }
         }
-    }    
+    }
     
     /**
      * Undo applying the sculpt region to the volume.
@@ -2127,7 +2138,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         m_kParent.setModified();
     }
-
     
     /**
      * Causes the VolumeShader to update the copy of the ModelImage on the
@@ -2141,6 +2151,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kSculptor.setImage(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
         }
 
+    }    
+    
+    public void updateLevWidgetState( ClassificationWidgetState kLWS, int iState )
+    {
+        m_kVolumeRayCast.updateLevWidgetState( kLWS, iState );
     }
     
     /**
@@ -2201,7 +2216,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
         }
     }
-    
+
     /**
      * Called by the init() function. Creates and initialized the scene-graph.
      * @param arg0 the GLCanvas
@@ -2263,7 +2278,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         
         m_kParent.addSlices(m_kSlices);
-    }    
+    }
+    
     
     /**
      * Calculates the rotation for the arbitrary clip plane.
@@ -2381,7 +2397,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
         }
     }
-    
+
     
     /**
      * Render the display list objecst embedded in the ray-cast volume.
@@ -2432,22 +2448,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_kShaderParamsWindow.close();
         }
-    }
-
-    public void updateLevWidgetState( LevWidgetState kLWS, int iState )
-    {
-        m_kVolumeRayCast.updateLevWidgetState( kLWS, iState );
-    }
-
-    
-    public void SetCustumBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
-    {
-        m_kVolumeRayCast.SetCustumBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
-    }
-    
-    public void setVolumeSamples( float fSample )
-    {
-        m_kVolumeRayCast.setVolumeSamples( fSample );
     }
     
 }

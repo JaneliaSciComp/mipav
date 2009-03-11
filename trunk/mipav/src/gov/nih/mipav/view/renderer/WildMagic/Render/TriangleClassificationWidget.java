@@ -17,13 +17,13 @@ import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
-public class LevWidgetTri extends LevWidget
+public class TriangleClassificationWidget extends ClassificationWidget
 {
     private TriMesh m_kTopOutline;
     private TriMesh m_kTopTri;
 
 
-    public LevWidgetTri(float fX, float fY, Vector2f kTMin, Vector2f kTMax, String kTexName, int iWidth, int iHeight)
+    public TriangleClassificationWidget(float fX, float fY, Vector2f kTMin, Vector2f kTMax, String kTexName, int iWidth, int iHeight)
     {
         super( kTMin, kTMax, iWidth, iHeight );
         CreateTriangle(fX,fY, kTexName);
@@ -121,7 +121,7 @@ public class LevWidgetTri extends LevWidget
         kAttributes.SetTChannels(0,2);
         kVBuffer = new VertexBuffer(kAttributes, 3);
         m_kBottomTri = new TriMesh( kVBuffer, kIBuffer );
-        m_kBottomTriEffect = new LevWidgetEffect( kTexName );
+        m_kBottomTriEffect = new ClassificationWidgetEffect( kTexName );
         m_kBottomTri.AttachEffect( m_kBottomTriEffect );
         m_kBottomTri.SetName("BottomTri");
         m_kWidget.AttachChild(m_kBottomTri);

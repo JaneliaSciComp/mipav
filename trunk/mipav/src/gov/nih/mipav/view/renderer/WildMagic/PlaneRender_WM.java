@@ -194,7 +194,8 @@ public class PlaneRender_WM extends GPURenderBase
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );   
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );        
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );   
 
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;
@@ -460,6 +461,7 @@ public class PlaneRender_WM extends GPURenderBase
             m_spkCamera.SetFrustum(m_fUpFOV,m_iWidth/(float)m_iHeight,1f,5.0f);
             m_pkRenderer.OnFrustumChange();
             m_bModified = true;
+            GetCanvas().display();
         }
     }
 

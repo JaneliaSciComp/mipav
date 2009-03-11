@@ -1,9 +1,9 @@
 
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-public class LevWidgetState
+public class ClassificationWidgetState
 {
-    public static LevWidgetState ZERO_STATE = new LevWidgetState();
+    public static ClassificationWidgetState ZERO_STATE = new ClassificationWidgetState();
     public float[] Color = new float[] {1,1,1,1};
     public float[] MidLine = new float[4];
     public float[] LeftLine = new float[4];
@@ -11,7 +11,7 @@ public class LevWidgetState
     public float[] BoundaryEmphasis = new float[4];
     public float[] UseWidget = new float[4];
 
-    public LevWidgetState ()
+    public ClassificationWidgetState ()
     {
         for ( int i = 0; i < 4; i++ )
         {
@@ -23,7 +23,7 @@ public class LevWidgetState
         UseWidget[0] = 0.0f;
     }
     
-    public void Copy( LevWidgetState kIn )
+    public void Copy( ClassificationWidgetState kIn )
     {
         for ( int i = 0; i < 4; i++ )
         {
