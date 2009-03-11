@@ -4,7 +4,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageHistogram;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageMultiDimensionalTransfer;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -47,7 +47,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
     private DrawingPanel scrollPanel;
     
     private Animator m_kAnimator;
-    private VolumeImageHistogram m_kMultiHistogram;
+    private VolumeImageMultiDimensionalTransfer m_kMultiHistogram;
 
 
 
@@ -60,7 +60,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
         m_kVolumeViewer = parent;
         m_kAnimator = kAnimator;
         //m_kAnimator = new Animator();
-        m_kMultiHistogram = new VolumeImageHistogram( parent, kVolumeImage);
+        m_kMultiHistogram = new VolumeImageMultiDimensionalTransfer( parent, kVolumeImage);
         m_kMultiHistogram.SetAnimator(m_kAnimator);
         m_kMultiHistogram.SetInterface(this);
 

@@ -1,5 +1,5 @@
 
-package gov.nih.mipav.view.renderer.WildMagic.Render;
+package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 
 import java.awt.event.MouseEvent;
 import java.util.Vector;

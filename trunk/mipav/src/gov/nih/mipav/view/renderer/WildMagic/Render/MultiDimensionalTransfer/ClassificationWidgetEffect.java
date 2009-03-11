@@ -1,5 +1,5 @@
 
-package gov.nih.mipav.view.renderer.WildMagic.Render;
+package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 import WildMagic.LibGraphics.Effects.TextureEffect;
 import WildMagic.LibGraphics.Shaders.PixelShader;
 import WildMagic.LibGraphics.Shaders.Program;

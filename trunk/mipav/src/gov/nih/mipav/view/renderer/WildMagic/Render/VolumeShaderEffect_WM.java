@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
 import WildMagic.LibGraphics.ObjectSystem.StringTree;
@@ -152,21 +153,6 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     }
 
     /**
-     * Change to the Multi-histogram mode pixel shader program.
-     * @param kRenderer the Renderer displaying the scene-graph, to which the
-     * new shader program is passed.
-     */
-    public void MULTIHISTOMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
-    {
-        if ( m_iWhichShader == MULTIHISTO )
-        {
-            return;
-        }
-        m_iWhichShader = MULTIHISTO;
-        SetProgram(m_kPShaderMULTIHISTO, kRenderer);
-    }
-    
-    /**
      * memory cleanup.
      */
     public void dispose()
@@ -201,7 +187,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
         super.dispose();
     }
-
+    
     /**
      * Returns the current pixel program.
      * @return the current pixel program.
@@ -224,6 +210,21 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
         }
         m_iWhichShader = MIP;
         SetProgram( m_kPShaderMIP, kRenderer );
+    }
+
+    /**
+     * Change to the Multi-histogram mode pixel shader program.
+     * @param kRenderer the Renderer displaying the scene-graph, to which the
+     * new shader program is passed.
+     */
+    public void MULTIHISTOMode(WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    {
+        if ( m_iWhichShader == MULTIHISTO )
+        {
+            return;
+        }
+        m_iWhichShader = MULTIHISTO;
+        SetProgram(m_kPShaderMULTIHISTO, kRenderer);
     }
 
     /**
@@ -441,6 +442,40 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
             pkProgram.GetUC("CompositeB").SetDataSource(new float[] {1,0,0,0});
         }
     }
+    public void updateLevWidgetState( ClassificationWidgetState kLWS, int iState )
+    {
+        if ( m_akLevWidget[iState] == null )
+        {
+            m_akLevWidget[iState] = new ClassificationWidgetState();
+        }
+        
+        m_akLevWidget[iState].Copy( kLWS );
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("LevColor"+iState) != null ) 
+        {
+            pkProgram.GetUC("LevColor"+iState).SetDataSource(m_akLevWidget[iState].Color);
+            //System.err.println( "LevColor" + fR + " " + fG + " " + fB + " " + fA );
+        }
+        if ( pkProgram.GetUC("LevMidLine"+iState) != null ) 
+        {
+            pkProgram.GetUC("LevMidLine"+iState).SetDataSource(m_akLevWidget[iState].MidLine);
+            //System.err.println( "LevMidLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
+        }
+        if ( pkProgram.GetUC("LevLeftLine"+iState) != null ) 
+        {
+            pkProgram.GetUC("LevLeftLine"+iState).SetDataSource(m_akLevWidget[iState].LeftLine);
+            //System.err.println( "LevLeftLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
+        }
+        if ( pkProgram.GetUC("LevRightLine"+iState) != null ) 
+        {
+            pkProgram.GetUC("LevRightLine"+iState).SetDataSource(m_akLevWidget[iState].RightLine);
+            //System.err.println( "LevRightLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
+        }
+        if ( pkProgram.GetUC("BoundaryEmphasis"+iState) != null ) 
+        {
+            pkProgram.GetUC("BoundaryEmphasis"+iState).SetDataSource(m_akLevWidget[iState].BoundaryEmphasis);
+        }
+    }
     /**
      * The VolumeShaderEffect.CreateVolumeTexture() function constructs and
      * initializes the vertex and pixel shader programs for volume
@@ -490,6 +525,43 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
         /* The pixel shader defaults to CMP: */
         SetPShader(0,m_kPShaderCMP);
     }
+    private void initTextures( PixelShader kPShader )
+    {        
+        int iTex = 0;
+        kPShader.SetTextureQuantity(13);
+        kPShader.SetImageName(iTex, m_kSceneTarget.GetName());
+        kPShader.SetTexture(iTex++, m_kSceneTarget);
+
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetVolumeTarget().GetName() );
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName() );
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget() );
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapTarget().GetName() );
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapTarget() );
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetNormalMapTarget().GetName());
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget());
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetGradientMapTarget().GetName());
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetGradientMapTarget());
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapGMTarget().GetName() );
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapGMTarget() );
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetSecondDerivativeMapTarget().GetName());
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSecondDerivativeMapTarget());
+        if ( m_kVolumeImageB != null )
+        {
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetVolumeTarget().GetName());
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget());
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetColorMapTarget().GetName());
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetColorMapTarget());
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapTarget().GetName());
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapTarget());
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapGMTarget().GetName());
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapGMTarget());
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetNormalMapTarget().GetName());
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetNormalMapTarget());
+            kPShader.SetImageName(iTex, m_kVolumeImageB.GetGradientMapTarget().GetName());
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetGradientMapTarget());
+        }
+    }
     /**
      * Sets the IsColor shader parameter values.
      */
@@ -519,6 +591,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
             }
         }
     }
+
     /**
      * Sets the GradientMagnitude shader parameter.
      */
@@ -530,6 +603,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
             pkProgram.GetUC("GradientMagnitude").SetDataSource(m_afGradientMagnitude);
         }
     }
+
     /**
      * Change to the input pixel shader program.
      * @param kShader the new pixel shader program to use.
@@ -572,79 +646,6 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
         if ( pkProgram.GetUC("SelfShadow") != null ) 
         {
             pkProgram.GetUC("SelfShadow").SetDataSource(m_afSelfShadow);
-        }
-    }
-
-    private void initTextures( PixelShader kPShader )
-    {        
-        int iTex = 0;
-        kPShader.SetTextureQuantity(13);
-        kPShader.SetImageName(iTex, m_kSceneTarget.GetName());
-        kPShader.SetTexture(iTex++, m_kSceneTarget);
-
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetVolumeTarget().GetName() );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName() );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapTarget().GetName() );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetNormalMapTarget().GetName());
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget());
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetGradientMapTarget().GetName());
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetGradientMapTarget());
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapGMTarget().GetName() );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapGMTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetSecondDerivativeMapTarget().GetName());
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSecondDerivativeMapTarget());
-        if ( m_kVolumeImageB != null )
-        {
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetVolumeTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget());
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetColorMapTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetColorMapTarget());
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapTarget());
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapGMTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapGMTarget());
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetNormalMapTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetNormalMapTarget());
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetGradientMapTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetGradientMapTarget());
-        }
-    }
-
-    public void updateLevWidgetState( ClassificationWidgetState kLWS, int iState )
-    {
-        if ( m_akLevWidget[iState] == null )
-        {
-            m_akLevWidget[iState] = new ClassificationWidgetState();
-        }
-        
-        m_akLevWidget[iState].Copy( kLWS );
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("LevColor"+iState) != null ) 
-        {
-            pkProgram.GetUC("LevColor"+iState).SetDataSource(m_akLevWidget[iState].Color);
-            //System.err.println( "LevColor" + fR + " " + fG + " " + fB + " " + fA );
-        }
-        if ( pkProgram.GetUC("LevMidLine"+iState) != null ) 
-        {
-            pkProgram.GetUC("LevMidLine"+iState).SetDataSource(m_akLevWidget[iState].MidLine);
-            //System.err.println( "LevMidLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
-        }
-        if ( pkProgram.GetUC("LevLeftLine"+iState) != null ) 
-        {
-            pkProgram.GetUC("LevLeftLine"+iState).SetDataSource(m_akLevWidget[iState].LeftLine);
-            //System.err.println( "LevLeftLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
-        }
-        if ( pkProgram.GetUC("LevRightLine"+iState) != null ) 
-        {
-            pkProgram.GetUC("LevRightLine"+iState).SetDataSource(m_akLevWidget[iState].RightLine);
-            //System.err.println( "LevRightLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
-        }
-        if ( pkProgram.GetUC("BoundaryEmphasis"+iState) != null ) 
-        {
-            pkProgram.GetUC("BoundaryEmphasis"+iState).SetDataSource(m_akLevWidget[iState].BoundaryEmphasis);
         }
     }
 
