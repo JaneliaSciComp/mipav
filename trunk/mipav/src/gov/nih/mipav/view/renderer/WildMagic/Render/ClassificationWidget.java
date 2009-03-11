@@ -11,12 +11,12 @@ import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Spatial;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
-public abstract class LevWidget
+public abstract class ClassificationWidget
 {
     protected Node m_kWidget = new Node();
     protected TriMesh m_kBottomOutline = null;
     protected TriMesh m_kBottomTri;
-    protected LevWidgetEffect m_kBottomTriEffect = null; 
+    protected ClassificationWidgetEffect m_kBottomTriEffect = null; 
     protected float m_fScale = .5f;
     protected Vector2f m_kTMin = new Vector2f(0,0);
     protected Vector2f m_kTMax = new Vector2f(1,1);
@@ -27,9 +27,9 @@ public abstract class LevWidget
     protected TriMesh m_kLowerSphere;
     protected int m_iWidth, m_iHeight;
     
-    public LevWidget () {}
+    public ClassificationWidget () {}
     
-    public LevWidget(Vector2f kTMin, Vector2f kTMax, int iWidth, int iHeight)
+    public ClassificationWidget(Vector2f kTMin, Vector2f kTMax, int iWidth, int iHeight)
     {
         m_kTMin = kTMin;
         m_kTMax = kTMax;
@@ -67,7 +67,7 @@ public abstract class LevWidget
         m_kLowerSphere = null;
     }
     
-    public LevWidgetState getState()
+    public ClassificationWidgetState getState()
     {
         return m_kBottomTriEffect.getState();
     }

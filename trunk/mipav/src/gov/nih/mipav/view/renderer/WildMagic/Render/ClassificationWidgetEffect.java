@@ -5,14 +5,14 @@ import WildMagic.LibGraphics.Shaders.PixelShader;
 import WildMagic.LibGraphics.Shaders.Program;
 import WildMagic.LibGraphics.Shaders.VertexShader;
 
-public class LevWidgetEffect extends TextureEffect
+public class ClassificationWidgetEffect extends TextureEffect
 {
-    private LevWidgetState m_kWidgetState = new LevWidgetState();
+    private ClassificationWidgetState m_kWidgetState = new ClassificationWidgetState();
 
     /** Creates a new LevWidgetEffect with the texture specified.
      * @param rkBaseName the name of the texture image.
      */
-    public LevWidgetEffect (final String rkBaseName)
+    public ClassificationWidgetEffect (final String rkBaseName)
     {
         SetPassQuantity(1);
         m_kVShader.set(0, new VertexShader("TextureV"));
@@ -30,7 +30,7 @@ public class LevWidgetEffect extends TextureEffect
         super.dispose();
     }
     
-    public LevWidgetState getState()
+    public ClassificationWidgetState getState()
     {
         return m_kWidgetState;
     }

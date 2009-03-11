@@ -12,7 +12,6 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 
 import javax.swing.ButtonGroup;
@@ -29,7 +28,7 @@ import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 
 import com.sun.opengl.util.Animator;
 
-public class JPanelMultiHistogram extends JInterfaceBase implements ChangeListener {
+public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements ChangeListener {
 
 
     /** Use serialVersionUID for interoperability. */
@@ -56,7 +55,7 @@ public class JPanelMultiHistogram extends JInterfaceBase implements ChangeListen
      * Creates new dialog for turning bounding box frame on and off.
      * @param  parent  parent frame.
      */
-    public JPanelMultiHistogram(VolumeTriPlanarInterface parent,
+    public JPanelMultiDimensionalTransfer(VolumeTriPlanarInterface parent,
                                 Animator kAnimator, VolumeImage kVolumeImage) {
         m_kVolumeViewer = parent;
         m_kAnimator = kAnimator;

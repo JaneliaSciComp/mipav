@@ -86,7 +86,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     private float[] m_afABBlend = new float[]{1,0,0,0};
 
 
-    private LevWidgetState[] m_akLevWidget = new LevWidgetState[10];
+    private ClassificationWidgetState[] m_akLevWidget = new ClassificationWidgetState[10];
 
 
     /** 
@@ -613,11 +613,11 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
         }
     }
 
-    public void updateLevWidgetState( LevWidgetState kLWS, int iState )
+    public void updateLevWidgetState( ClassificationWidgetState kLWS, int iState )
     {
         if ( m_akLevWidget[iState] == null )
         {
-            m_akLevWidget[iState] = new LevWidgetState();
+            m_akLevWidget[iState] = new ClassificationWidgetState();
         }
         
         m_akLevWidget[iState].Copy( kLWS );

@@ -609,6 +609,7 @@ void p_VolumeShaderMultiPass()
     vec3 LocalMaterialEmissive = MaterialEmissive;
 
     float fMapX, fMapY, fMapZ;
+    //float fCount = 0.0;
 
     // axis-aligned clipping:
     if ( DoClip != 0.0 )
@@ -689,40 +690,45 @@ void p_VolumeShaderMultiPass()
             {
                 float opacity0 =
                     computeAlpha( fMapX, fMapY, Shift0, InvY0MY10, LevMidLine0, LevLeftLine0, LevRightLine0 );
+                opacity0 = opacity0 * LevColor0.a;
+                opacity0 *= (1.0 - BoundaryEmphasis0 * 2.0 * (0.5 - fMapZ));
                 vec4 color0 = LevColor0 * opacity0;
                 color = color0;
-                opacity = opacity0 * LevColor0.a;
-                opacity *= (1.0 - BoundaryEmphasis0 * 2.0 * (0.5 - fMapZ));
+                opacity = opacity0;
+                //fCount += 1.0;
             }
             if ( UseWidget1 != 0.0 )
             {
                 float opacity1 =
                     computeAlpha( fMapX, fMapY, Shift1, InvY0MY11, LevMidLine1, LevLeftLine1, LevRightLine1 );
-                vec4 color1 = LevColor1 * opacity1;
-                color += color1;
                 opacity1 *= LevColor1.a;
                 opacity1 *= (1.0 - BoundaryEmphasis1 * 2.0 * (0.5 - fMapZ));
+                vec4 color1 = LevColor1 * opacity1;
+                color += color1;
                 opacity += opacity1;
+                //fCount += 1.0;
             }
             if ( UseWidget2 != 0.0 )
             {
                 float opacity2 =
                     computeAlpha( fMapX, fMapY, Shift2, InvY0MY12, LevMidLine2, LevLeftLine2, LevRightLine2 );
-                vec4 color2 = LevColor2 * opacity2;
-                color += color2;
                 opacity2 *= LevColor2.a;
                 opacity2 *= (1.0 - BoundaryEmphasis2 * 2.0 * (0.5 - fMapZ));
+                vec4 color2 = LevColor2 * opacity2;
+                color += color2;
                 opacity += opacity2;
+                //fCount += 1.0;
             }
             if ( UseWidget3 != 0.0 )
             {
                 float opacity3 =
                     computeAlpha( fMapX, fMapY, Shift3, InvY0MY13, LevMidLine3, LevLeftLine3, LevRightLine3 );
                 vec4 color3 = LevColor3 * opacity3;
+                opacity3 *= (1.0 - BoundaryEmphasis3 * 2.0 * (0.5 - fMapZ));
                 color += color3;
                 opacity3 *= LevColor3.a;
-                opacity3 *= (1.0 - BoundaryEmphasis3 * 2.0 * (0.5 - fMapZ));
                 opacity += opacity3;
+                //fCount += 1.0;
             }
             if ( UseWidget4 != 0.0 )
             {
@@ -733,6 +739,7 @@ void p_VolumeShaderMultiPass()
                 opacity4 *= LevColor4.a;
                 opacity4 *= (1.0 - BoundaryEmphasis4 * 2.0 * (0.5 - fMapZ));
                 opacity += opacity4;
+                //fCount += 1.0;
             }
             if ( UseWidget5 != 0.0 )
             {
@@ -743,7 +750,12 @@ void p_VolumeShaderMultiPass()
                 opacity5 *= LevColor5.a;
                 opacity5 *= (1.0 - BoundaryEmphasis5 * 2.0 * (0.5 - fMapZ));
                 opacity += opacity5;
+                //fCount += 1.0;
             }
+            //if ( fCount != 0.0 )
+            //{
+            //opacity /= fCount;
+            //}
         }
         else
         {

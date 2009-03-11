@@ -750,7 +750,7 @@ public class VolumeRayCast extends VolumeObject
         m_spkVertexColor3Shader = new VertexColor3Effect();
     }
     
-    public void updateLevWidgetState( LevWidgetState kLWS, int iState )
+    public void updateLevWidgetState( ClassificationWidgetState kLWS, int iState )
     {
         m_kVolumeShaderEffect.updateLevWidgetState( kLWS, iState );
     }
