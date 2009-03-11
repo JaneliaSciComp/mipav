@@ -1,5 +1,5 @@
 
-package gov.nih.mipav.view.renderer.WildMagic.Render;
+package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 
 import java.awt.event.MouseEvent;
 import java.util.Vector;
@@ -79,15 +79,6 @@ public abstract class ClassificationWidget
 
     public abstract boolean processMouseDrag(int iX0ld, int iYOld, int iButton, MouseEvent e );
 
-    public void setColor( ColorRGBA kColor )
-    {
-        if ( m_kBottomTriEffect != null )
-        {
-            m_kBottomTriEffect.SetColor( kColor.R, kColor.G, kColor.B, kColor.A );
-        }
-    }
-
-    
     public void setBoundary( float fAlpha )
     {
         if ( m_kBottomTriEffect != null )
@@ -95,25 +86,14 @@ public abstract class ClassificationWidget
             m_kBottomTriEffect.setBoundary( fAlpha );
         }
     }
+
     
-    public void setPicked( Vector<PickRecord> kPicked )
+    public void setColor( ColorRGBA kColor )
     {
-        for ( int i = 0; i < kPicked.size(); i++ )
+        if ( m_kBottomTriEffect != null )
         {
-            for ( int j = 0; j < m_kWidget.GetQuantity(); j++ )
-            {
-                if ( kPicked.get(i).Intersected == m_kWidget.GetChild(j) )
-                {
-                    m_kPicked = m_kWidget.GetChild(j);
-                    //System.err.println( m_kPicked.GetName() );
-                }
-            }
+            m_kBottomTriEffect.SetColor( kColor.R, kColor.G, kColor.B, kColor.A );
         }
-        for ( int i = 0; i < m_kBottomOutline.VBuffer.GetVertexQuantity(); i++ )
-        {
-            m_kBottomOutline.VBuffer.SetColor3(0, i, 1f,0f,0f);
-        }
-        m_kBottomOutline.VBuffer.Release();
     }
     
     public boolean setPicked( PickRecord kPicked )
@@ -137,6 +117,26 @@ public abstract class ClassificationWidget
             m_kBottomOutline.VBuffer.Release();
         }
         return bPicked;
+    }
+    
+    public void setPicked( Vector<PickRecord> kPicked )
+    {
+        for ( int i = 0; i < kPicked.size(); i++ )
+        {
+            for ( int j = 0; j < m_kWidget.GetQuantity(); j++ )
+            {
+                if ( kPicked.get(i).Intersected == m_kWidget.GetChild(j) )
+                {
+                    m_kPicked = m_kWidget.GetChild(j);
+                    //System.err.println( m_kPicked.GetName() );
+                }
+            }
+        }
+        for ( int i = 0; i < m_kBottomOutline.VBuffer.GetVertexQuantity(); i++ )
+        {
+            m_kBottomOutline.VBuffer.SetColor3(0, i, 1f,0f,0f);
+        }
+        m_kBottomOutline.VBuffer.Release();
     }
 
     public abstract void updateDisplay();

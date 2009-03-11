@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
 
 import javax.media.opengl.GLAutoDrawable;
 
@@ -231,14 +232,6 @@ public class VolumeRayCast extends VolumeObject
         m_kScene.UpdateRS();
     }
 
-    /**
-     * Display the volume in DDR mode.
-     */
-    public void DRRMode()
-    {
-        m_kVolumeShaderEffect.DRRMode();
-    }
-
     /** delete local memory. */
     public void dispose()
     {
@@ -289,6 +282,14 @@ public class VolumeRayCast extends VolumeObject
             m_spkVertexColor3Shader = null;
         }
         super.dispose();
+    }
+
+    /**
+     * Display the volume in DDR mode.
+     */
+    public void DRRMode()
+    {
+        m_kVolumeShaderEffect.DRRMode();
     }
 
     /**
@@ -460,14 +461,6 @@ public class VolumeRayCast extends VolumeObject
 
 
 
-    public void setRGBTA(ModelRGB RGBT) {
-        m_kVolumeShaderEffect.setRGBTA(RGBT);
-    }    
-    
-    public void setRGBTB(ModelRGB RGBT) {
-        m_kVolumeShaderEffect.setRGBTB(RGBT);
-    }
-    
     /**
      * Sets the background color.
      * @param kColor new background color.
@@ -475,8 +468,8 @@ public class VolumeRayCast extends VolumeObject
     public void SetBackgroundColor( ColorRGBA kColor )
     {
         m_kVolumeShaderEffect.SetBackgroundColor( kColor );
-    }
-
+    }    
+    
     /** Sets axis-aligned clipping for the VolumeShaderEffect.
      * @param afClip the clipping parameters for axis-aligned clipping.
      */
@@ -484,7 +477,7 @@ public class VolumeRayCast extends VolumeObject
     {
         m_kVolumeShaderEffect.SetClip(iWhich, data, bEnable);
     }
-
+    
     /** Sets arbitrary clipping for the VolumeShaderEffect.
      * @param afEquation the arbitrary-clip plane equation.
      */
@@ -492,7 +485,7 @@ public class VolumeRayCast extends VolumeObject
     {
         m_kVolumeShaderEffect.SetClipArb(afEquation, bEnable);
     }
-    
+
     /** Sets eye clipping for the VolumeShaderEffect.
      * @param afEquation the eye clipping equation.
      */
@@ -509,6 +502,11 @@ public class VolumeRayCast extends VolumeObject
         m_kVolumeShaderEffect.SetClipEyeInv(afEquation, bEnable);
     }
     
+    public void SetCustumBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
+    {
+        m_kVolumeShaderEffect.SetCustumBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
+    }
+
     /** Sets displaying the second pass. For debugging. Rendering the first
      * pass obly displays the proxy-geometry bounding box.
      * @param bDisplay when true display both passes (the default). When
@@ -518,7 +516,7 @@ public class VolumeRayCast extends VolumeObject
     {
         m_bDisplaySecond = bDisplay;
     }
-
+    
     /**
      * Enables/Disables Gradient Magnitude filter.
      * @param bShow gradient magnitude filter on/off
@@ -527,6 +525,7 @@ public class VolumeRayCast extends VolumeObject
     {
         m_kVolumeShaderEffect.SetGradientMagnitude(bShow);
     }
+
     /** Sets lighting in the VolumeShaderEffect.
      * @param kLightType name of the light to set.
      * @param afType the type of light to set.
@@ -535,8 +534,6 @@ public class VolumeRayCast extends VolumeObject
     {
         m_kVolumeShaderEffect.SetLight(kLightType, afType);
     }
-
-
     /**
      * Called from the AdvancedMaterialProperties dialog. Sets the material
      * properties for the VolumeShaderSUR (Surface and Composite Surface
@@ -551,6 +548,15 @@ public class VolumeRayCast extends VolumeObject
         m_kMesh.UpdateMS(true);
         m_kMesh.UpdateRS();
     }
+
+
+    public void setRGBTA(ModelRGB RGBT) {
+        m_kVolumeShaderEffect.setRGBTA(RGBT);
+    }
+    public void setRGBTB(ModelRGB RGBT) {
+        m_kVolumeShaderEffect.setRGBTB(RGBT);
+    }
+    
     /** Sets the blend factor for displaying the ray-cast volume with other objects in the scene.
      * @param fBlend the blend factor for the ray-cast volume.
      */
@@ -561,7 +567,13 @@ public class VolumeRayCast extends VolumeObject
             m_kVolumeShaderEffect.Blend(fBlend);
         }
     }
-    
+    public void setVolumeSamples( float fSample )
+    {
+        boolean bTemp = m_bDisplay;
+        m_bDisplay = false;
+        m_kVolumeShaderEffect.setVolumeSamples( fSample );
+        m_bDisplay = bTemp;
+    }
     /**
      * Display the volume in Surface mode.
      */
@@ -576,6 +588,14 @@ public class VolumeRayCast extends VolumeObject
     {
         m_kVolumeShaderEffect.SURMode();
     }
+    
+    public void updateLevWidgetState( ClassificationWidgetState kLWS, int iState )
+    {
+        m_kVolumeShaderEffect.updateLevWidgetState( kLWS, iState );
+    }
+
+
+    
     /**
      * Called by CreateBox. Creates the bounding-box proxy geometry (VertexBuffer, IndexBuffer).
      * @param iXBound image x-extent.
@@ -737,6 +757,8 @@ public class VolumeRayCast extends VolumeObject
         m_kMesh.UpdateMS(true);
         return m_kMesh;
     }
+    
+    
     /**
      * Called by CreateScene. Creates the bounding-box proxy geometry scene
      * node.
@@ -748,26 +770,5 @@ public class VolumeRayCast extends VolumeObject
         int iZBound = m_kVolumeImageA.GetImage().getExtents()[2];
         Box(iXBound,iYBound,iZBound);
         m_spkVertexColor3Shader = new VertexColor3Effect();
-    }
-    
-    public void updateLevWidgetState( ClassificationWidgetState kLWS, int iState )
-    {
-        m_kVolumeShaderEffect.updateLevWidgetState( kLWS, iState );
-    }
-
-
-    
-    public void SetCustumBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
-    {
-        m_kVolumeShaderEffect.SetCustumBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
-    }
-    
-    
-    public void setVolumeSamples( float fSample )
-    {
-        boolean bTemp = m_bDisplay;
-        m_bDisplay = false;
-        m_kVolumeShaderEffect.setVolumeSamples( fSample );
-        m_bDisplay = bTemp;
     }
 }

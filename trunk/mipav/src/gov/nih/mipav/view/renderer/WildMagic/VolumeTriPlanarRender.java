@@ -4,7 +4,6 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
-import gov.nih.mipav.view.renderer.WildMagic.Render.ClassificationWidgetState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeBoundingBox;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClip;
@@ -19,6 +18,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeOrientationCube;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeRayCast;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
 
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;

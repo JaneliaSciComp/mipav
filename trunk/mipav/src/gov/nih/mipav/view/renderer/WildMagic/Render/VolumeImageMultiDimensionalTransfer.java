@@ -2,6 +2,10 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.SquareClassificationWidget;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.TriangleClassificationWidget;
 
 import java.awt.Frame;
 import java.awt.event.KeyEvent;
@@ -26,7 +30,7 @@ import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 import com.sun.opengl.util.Animator;
 
-public class VolumeImageHistogram extends VolumeImageViewer
+public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
     implements GLEventListener, KeyListener
 {
     public int MAX_WIDGETS = 6;
@@ -45,7 +49,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
     private String m_kWidgetType = new String( "Square" );
     private boolean m_bFirstAdded = false;
     
-    public VolumeImageHistogram( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
+    public VolumeImageMultiDimensionalTransfer( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
     {
         super(kParentFrame, kVolumeImage );
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
@@ -57,7 +61,7 @@ public class VolumeImageHistogram extends VolumeImageViewer
      */
     public static void main( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, boolean bShowFrame )
     {
-        final VolumeImageHistogram kWorld = new VolumeImageHistogram(kParentFrame, kVolumeImage);
+        final VolumeImageMultiDimensionalTransfer kWorld = new VolumeImageMultiDimensionalTransfer(kParentFrame, kVolumeImage);
         final Frame frame = new Frame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
         final Animator animator = new Animator( kWorld.GetCanvas() );    
@@ -246,11 +250,6 @@ public class VolumeImageHistogram extends VolumeImageViewer
         GetCanvas().display();
     }
   
-    public void setWidget( String kWidgetType )
-    {
-        m_kWidgetType = new String(kWidgetType);
-    }
-    
     public void mouseReleased(MouseEvent e)
     {
         if ( e.getButton() == MouseEvent.BUTTON3 )
@@ -300,7 +299,6 @@ public class VolumeImageHistogram extends VolumeImageViewer
             GetCanvas().display();
         }
     }
-
     
     public void setColor( ColorRGBA kColor )
     {
@@ -312,10 +310,16 @@ public class VolumeImageHistogram extends VolumeImageViewer
             m_bDisplay = true;
         GetCanvas().display();
     }
+
     
     public void SetInterface( JInterfaceBase kInterface )
     {
         m_kInterface = kInterface;
+    }
+    
+    public void setWidget( String kWidgetType )
+    {
+        m_kWidgetType = new String(kWidgetType);
     }
     
     protected void CreatePlaneNode()
