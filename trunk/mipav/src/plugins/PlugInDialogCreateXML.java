@@ -8,11 +8,18 @@ import java.awt.event.ActionEvent;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.file.FileXML;
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -483,7 +490,61 @@ public class PlugInDialogCreateXML extends JDialogStandaloneScriptablePlugin imp
     }
     
     private void insertXmlData(File xmlFile) {
-    	System.out.println("Xml reader not available");
+    	XmlReader xml = new XmlReader(xmlFile.getName(), xmlFile.getParent());
+    	xml.readHeader(xmlFile.getName(), xmlFile.getParent(), "dataset.xsd");
+    }
+    
+    private class XmlReader extends FileXML {
+    	
+    	public XmlReader(String fName, String fDir) {
+    		super(fName, fDir);
+    		
+    		m_kHandler = new DataSetHandler();
+    	}
+    	
+    }
+    
+    private class DataSetHandler extends DefaultHandler {
+    	
+    	protected JTextComponent receiver;
+    	
+    	private String text;
+    	
+    	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+    		super.startElement(uri, localName, qName, attributes);
+    		if(localName.equals("source-name")) {
+    			receiver = sourceNameField;
+    		} else if(localName.equals("source-org")) {
+    			receiver = sourceOrgField;
+    		} else if(localName.equals("source-project")) {
+    			receiver = sourceProjField;
+    		} else if(localName.equals("testing-information")) {
+    			receiver = testingArea;
+    		} else if(localName.equals("details")) {
+    			receiver = detailArea;
+    		} else if(localName.equals("anatomical-area")) {
+    			receiver = anatField;
+    		}
+    		text = new String();
+    	}
+    	
+    	public void endElement(String uri, String localName, String qName) throws SAXException {
+    		super.endElement(uri, localName, qName);
+    		if(receiver != null && text.length() > 0) {
+    			receiver.setText(text);
+    		}
+    		receiver = null;
+    		text = null;
+    	}
+    	
+    	public void characters(char[] ch, int start, int length) {
+    		if(receiver == null) {
+    			return;
+    		}
+    		for(int i=start; i<start+length; i++) {
+    			text += ch[i];
+    		}
+    	}
     }
 
 	/**
