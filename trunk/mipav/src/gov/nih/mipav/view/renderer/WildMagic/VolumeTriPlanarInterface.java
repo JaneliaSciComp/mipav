@@ -2306,6 +2306,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     public void showSlice( int i, boolean bShow )
     {
         raycastRenderWM.showSlice( i, bShow );
+        setModified();
     }
     
     
