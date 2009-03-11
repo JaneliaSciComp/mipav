@@ -18,6 +18,7 @@ import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileXML;
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -29,6 +30,11 @@ import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.text.JTextComponent;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.File;
 import java.io.Serializable;
@@ -60,6 +66,8 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	
 	public static final String REMOVE_ALL = "Remove all file";
 	
+	public static final String IMPORT_XML = "Import XML";
+	
 	// ~ Instance fields ------------------------------------------------------------------------
 	
 	/** GridBagLayout * */
@@ -80,6 +88,8 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
     private JButton inputFileBrowseButton, submitFileBrowseButton, tagEditorBrowseButton;
     
     private JButton removeFileButton, removeAllFileButton;
+    
+    private JButton importButton;
     
     /**All files to generate image information for*/
     private JList inputFileList;
@@ -332,6 +342,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
         provConstraints.gridx = 0;
         provConstraints.gridy = 0;
         provConstraints.weightx = 0;
+        provConstraints.fill = GridBagConstraints.NONE;
         provConstraints.anchor = GridBagConstraints.WEST;
         provConstraints.insets = new Insets(15, 5, 15, 5);
         sourceNameLabel = new JLabel(" Source name:  ");
@@ -340,14 +351,27 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
         provConstraints.gridx = 1;
         provConstraints.gridy = 0;
         provConstraints.weightx = 1;
-        provConstraints.insets = new Insets(10, 60, 5, 5);
+        provConstraints.insets = new Insets(10, 60, 5, 0);
         sourceNameField = new JTextField(45);
         subProv.add(sourceNameField, provConstraints);
+        
+        provConstraints.gridx = 2;
+        provConstraints.gridy = 0;
+        provConstraints.weightx = 0;
+        provConstraints.anchor = GridBagConstraints.EAST;
+        provConstraints.fill = GridBagConstraints.HORIZONTAL;
+        provConstraints.insets = new Insets(5, 0, 5, 5);
+        importButton = new JButton("Import XML");
+        importButton.setActionCommand(IMPORT_XML);
+        importButton.addActionListener(this);
+        subProv.add(importButton, provConstraints);
         
         //source organization
         provConstraints.gridx = 0;
         provConstraints.gridy = 1;
         provConstraints.weightx = 0;
+        provConstraints.anchor = GridBagConstraints.WEST;
+        provConstraints.fill = GridBagConstraints.NONE;
         provConstraints.insets = new Insets(15, 5, 15, 5);
         sourceOrgLabel = new JLabel(" Source organization:  ");
         subProv.add(sourceOrgLabel, provConstraints);
@@ -363,6 +387,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
         provConstraints.gridx = 0;
         provConstraints.gridy = 2;
         provConstraints.weightx = 0;
+        provConstraints.anchor = GridBagConstraints.WEST;
         provConstraints.insets = new Insets(15, 5, 15, 5);
         sourceProjLabel = new JLabel(" Source project:  ");
         subProv.add(sourceProjLabel, provConstraints);
@@ -625,6 +650,23 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
         	inputFileList.updateUI();
         } else if(command.equals(BROWSE_AVAILABLE_TAGS)) {
         	currentTagEditor.setVisible();	
+        } else if(command.equals(IMPORT_XML)) {
+        	fileChooser = new JFileChooser(Preferences.getImageDirectory());
+        	fileChooser.setFont(MipavUtil.defaultMenuFont);
+        	fileChooser.setMultiSelectionEnabled(false);
+        	fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        	
+        	Dimension d = new Dimension(700, 400);
+            fileChooser.setMinimumSize(d);
+            fileChooser.setPreferredSize(d);
+            
+            int returnVal = fileChooser.showOpenDialog(null);
+                        
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+            	File xmlFile = fileChooser.getSelectedFile();
+            	Preferences.setImageDirectory(fileChooser.getCurrentDirectory());
+            	insertXmlData(xmlFile);
+            }
         }
     }
     
@@ -632,6 +674,64 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
     	anatField.setText("");
     	submitField.setText("");
     	tagEditorBrowseButton.setEnabled(false);
+    }
+    
+    private void insertXmlData(File xmlFile) {
+    	XmlReader xml = new XmlReader(xmlFile.getName(), xmlFile.getParent());
+    	xml.readHeader(xmlFile.getName(), xmlFile.getParent(), "dataset.xsd");
+    }
+    
+    private class XmlReader extends FileXML {
+    	
+    	public XmlReader(String fName, String fDir) {
+    		super(fName, fDir);
+    		
+    		m_kHandler = new DataSetHandler();
+    	}
+    	
+    }
+    
+    private class DataSetHandler extends DefaultHandler {
+    	
+    	protected JTextComponent receiver;
+    	
+    	private String text;
+    	
+    	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+    		super.startElement(uri, localName, qName, attributes);
+    		if(localName.equals("source-name")) {
+    			receiver = sourceNameField;
+    		} else if(localName.equals("source-org")) {
+    			receiver = sourceOrgField;
+    		} else if(localName.equals("source-project")) {
+    			receiver = sourceProjField;
+    		} else if(localName.equals("testing-information")) {
+    			receiver = testingArea;
+    		} else if(localName.equals("details")) {
+    			receiver = detailArea;
+    		} else if(localName.equals("anatomical-area")) {
+    			receiver = anatField;
+    		}
+    		text = new String();
+    	}
+    	
+    	public void endElement(String uri, String localName, String qName) throws SAXException {
+    		super.endElement(uri, localName, qName);
+    		if(receiver != null && text.length() > 0) {
+    			receiver.setText(text);
+    		}
+    		receiver = null;
+    		text = null;
+    	}
+    	
+    	public void characters(char[] ch, int start, int length) {
+    		if(receiver == null) {
+    			return;
+    		}
+    		for(int i=start; i<start+length; i++) {
+    			text += ch[i];
+    		}
+    	}
     }
 
 	/**
