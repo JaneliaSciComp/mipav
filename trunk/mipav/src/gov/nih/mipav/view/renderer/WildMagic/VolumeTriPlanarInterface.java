@@ -534,6 +534,9 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         } else if (command.equals("Slices")) {
             sliceGUI.getMainPanel().setVisible(true);
             insertTab("Slices", slicePanel);
+            raycastRenderWM.displayVolumeRaycast( false );
+            rendererGUI.setDisplayVolumeCheck(false);
+            rendererGUI.setDisplaySlicesCheck(true);
             raycastRenderWM.displayVolumeSlices( rendererGUI.getSlicesCheck().isSelected() );
         } else if (command.equals("VolumeSlices")) {
             sliceGUI.getMainPanel().setVisible(true);
