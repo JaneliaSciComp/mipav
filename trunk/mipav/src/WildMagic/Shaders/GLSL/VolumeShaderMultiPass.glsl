@@ -704,8 +704,10 @@ void p_VolumeShaderMultiPass()
                 opacity1 *= LevColor1.a;
                 opacity1 *= (1.0 - BoundaryEmphasis1 * 2.0 * (0.5 - fMapZ));
                 vec4 color1 = LevColor1 * opacity1;
-                color += color1;
-                opacity += opacity1;
+//                 color += color1;
+//                 opacity += opacity1;
+                color = color1 + (1 - opacity1)*color;
+                opacity = opacity1 * opacity1 + (1 - opacity1) * opacity;
                 //fCount += 1.0;
             }
             if ( UseWidget2 != 0.0 )
@@ -715,8 +717,10 @@ void p_VolumeShaderMultiPass()
                 opacity2 *= LevColor2.a;
                 opacity2 *= (1.0 - BoundaryEmphasis2 * 2.0 * (0.5 - fMapZ));
                 vec4 color2 = LevColor2 * opacity2;
-                color += color2;
-                opacity += opacity2;
+//                 color += color2;
+//                 opacity += opacity2;
+                color = color2 + (1 - opacity2)*color;
+                opacity = opacity2 * opacity2 + (1 - opacity2) * opacity;
                 //fCount += 1.0;
             }
             if ( UseWidget3 != 0.0 )
