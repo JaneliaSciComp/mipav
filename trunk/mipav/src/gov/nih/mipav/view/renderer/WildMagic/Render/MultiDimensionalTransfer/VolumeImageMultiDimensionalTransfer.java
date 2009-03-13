@@ -1,11 +1,9 @@
-package gov.nih.mipav.view.renderer.WildMagic.Render;
+package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
-import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
-import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
-import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.SquareClassificationWidget;
-import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.TriangleClassificationWidget;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer;
 
 import java.awt.Frame;
 import java.awt.event.KeyEvent;

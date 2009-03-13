@@ -4,7 +4,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageMultiDimensionalTransfer;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.VolumeImageMultiDimensionalTransfer;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
