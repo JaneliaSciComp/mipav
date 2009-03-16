@@ -201,7 +201,6 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         MeasureTime();
 
         Move();
-        Pick();
 
         // Draw the scene to the back buffer/
         if (m_pkRenderer.BeginScene())
@@ -224,6 +223,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             m_bSurfaceUpdate = false;
             //((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetPerPixelLighting(m_pkRenderer, true);
             updateLighting( m_akLights );
+            GetCanvas().display();
         }
     }
 
@@ -529,6 +529,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
                 m_iXPick = e.getX();
                 m_iYPick = e.getY();
                 m_bPickPending = true;
+                Pick();
+                GetCanvas().display();
             }
         }
 
@@ -616,7 +618,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             kPolyNode.AttachChild(kPoly);
             m_kParent.addNode( kPolyNode );
         }
-        
+        m_spkScene.UpdateGS();
 
         m_kAnnotateList = new FlyPathAnnotateList_WM();
 
@@ -679,7 +681,9 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             if ( m_kLight == null )
             {
                 m_kLight = new Light(Light.LightType.LT_POINT);
+                m_kLight.Ambient.Set(.1f, .1f, .1f);
                 m_kLight.Diffuse.Set(1f, 1f, 1f);
+                m_kLight.Specular.Set(1f, 1f, 1f);
                 m_pkRenderer.SetLight( 0, m_kLight );
             }
             String kLightType = new String("Light0Type");
@@ -977,13 +981,16 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         kMesh.Local.SetTranslate(kPosition);
         kMesh.AttachEffect( m_kLightShader );
         MaterialState kMaterial = new MaterialState();
-        kMaterial.Diffuse.Set(0.0f, 1.0f, 0.0f);
-        kMaterial.Shininess = 1.0f;
+        kMaterial.Ambient.Set(0.1f, 0.1f, 0.1f);
+        kMaterial.Diffuse.Set(0.1f, 1.0f, 0.1f);
+        kMaterial.Specular.Set(1.0f, 1.0f, 1.0f);
+        kMaterial.Shininess = 10.0f;
         kMesh.AttachGlobalState(kMaterial);
         kMesh.UpdateGS();
         kMesh.UpdateRS();
         kMesh.UpdateMS();
         m_spkScene.AttachChild(kMesh);
+        m_spkScene.UpdateGS();
         m_bSurfaceUpdate = true;
     }
 
@@ -1172,5 +1179,6 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         {
             m_kControlFrame.updateOrientation(kRotate);
         }
+        GetCanvas().display();
     }
 }

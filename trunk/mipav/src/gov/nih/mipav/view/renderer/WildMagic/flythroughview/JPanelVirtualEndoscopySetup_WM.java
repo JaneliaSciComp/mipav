@@ -749,6 +749,7 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         fileIO.setQuiet(true);
         endoscopyImage = fileIO.readImage(fileName, directory, false, null);
         m_kView.setupRender(endoscopyImage, m_kOptions);
+        m_kView.GetCanvas().display();
     }
 
  /**

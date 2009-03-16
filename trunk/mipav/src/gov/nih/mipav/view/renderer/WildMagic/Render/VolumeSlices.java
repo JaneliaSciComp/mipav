@@ -131,7 +131,7 @@ public class VolumeSlices extends VolumeObject
         m_abShowBoundingBox = null;
 
     }
-    
+
     /** Return the current display status for the bounding box for the given plane.
      * @param i the plane index (0-3) in file coordinates.
      * @return true when the bounding box is displayed.
@@ -140,6 +140,16 @@ public class VolumeSlices extends VolumeObject
     {
         int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
         return m_abShowBoundingBox[iIndex];
+    }
+    
+    /** Return the current display status for the bounding box for the given plane.
+     * @param i the plane index (0-3) in file coordinates.
+     * @return true when the bounding box is displayed.
+     */
+    public boolean GetShowSlice( int i )
+    {
+        int iIndex = MipavCoordinateSystems.fileToModel(i, m_kVolumeImageA.GetImage() );
+        return m_abShowPlanes[iIndex];
     }
     /**
      * Return the opacity for the given plane.
