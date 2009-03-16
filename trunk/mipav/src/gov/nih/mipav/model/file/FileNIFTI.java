@@ -15,7 +15,40 @@ import java.io.*;
  * The class reads and writes NIFTI files. The header is intended to be "mostly compatible" with the ANALYZE (TM) 7.5
  * file format. Most of the "unused" fields in that format have been taken, and some of the lesser-used fields have been
  * co-opted for other purposes.
+ * 
+ * NIFTI origin
+Author: William Gandler (---.cit.nih.gov)
+Date:   03-13-09 18:31
+
+Are qoffset_x and srow_x[3] always meant to be an origin in the RL axis, qoffset_y and srow_y[3] always meant to be an origin in the AP axis, and are qoffset_z and srow_z[3] always meant to be an origin in the IS axis?
+
  *
+ *Re: NIFTI origin
+Author: rick reynolds (---.nimh.nih.gov)
+Date:   03-16-09 11:02
+
+Hi William,
+
+Yes. The qoffset_{x,y,z} values are explicitly LR, PA, IS, as the
+transformations always describe resulting coordinates in LPI (sign
+and order) orientaion. The sign of those coordinates corresponds
+to LPI being the negative directions.
+
+This is much like Dicom images, which give coordinates in RAI,
+regardless of the actual orientation of the data on disk. There,
+RAI are the negative directions (2 of them opposite that of NIfTI).
+
+These offset coordinates are applied after the transformation
+matrix is applied, and so they must be LR, PA and IS, respectively.
+
+The same applies for the sform matrix.
+
+See the section on "ORIENTATION AND LOCATION IN SPACE" from the
+nifti.h standard for details:
+
+http://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h
+
+- rick
  * <p>MIPAV only has 1 transformation matrix associated with an image. NIFTI can have 2 different transformaton matrices
  * associated with an image - one stored in the qform_code parameters and one stored in the sform_code parameters. While
  * MIPAV separately stores axis orientation and matrix information, NIFTI does not store axis orientation information.
