@@ -594,7 +594,7 @@ void p_MipavLightingFragmentP()
                                Light3Type );
         
         color = color0 + color1 + color2 + color3;
-        color.a = Blend * gl_Color.a;
+        color.a = Blend;  
 
         // Test normals:
         //        kVertexColor -= (color0 + color1 + color2 + color3);
