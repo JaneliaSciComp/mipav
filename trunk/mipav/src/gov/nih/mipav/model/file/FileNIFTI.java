@@ -1810,9 +1810,6 @@ public class FileNIFTI extends FileBase {
             qoffset_y = getBufferFloat(bufferByte, 272, endianess);
             qoffset_z = getBufferFloat(bufferByte, 276, endianess);
             LPSOrigin = new float[3];
-            LPSOrigin[0] = -qoffset_x;
-            LPSOrigin[1] = qoffset_y;
-            LPSOrigin[2] = qoffset_z;
 
             axisOrientation = getAxisOrientation(matrix);
             Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
@@ -1822,17 +1819,17 @@ public class FileNIFTI extends FileBase {
             for (j = 0; j < 3; j++) {
 
                 if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
-                    LPSOrigin[j] = -Math.abs(LPSOrigin[j]);
+                    LPSOrigin[j] = -Math.abs(qoffset_x);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
-                    LPSOrigin[j] = Math.abs(LPSOrigin[j]);
+                    LPSOrigin[j] = Math.abs(qoffset_x);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
-                    LPSOrigin[j] = -Math.abs(LPSOrigin[j]);
+                    LPSOrigin[j] = -Math.abs(qoffset_y);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
-                    LPSOrigin[j] = Math.abs(LPSOrigin[j]);
+                    LPSOrigin[j] = Math.abs(qoffset_y);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
-                    LPSOrigin[j] = -Math.abs(LPSOrigin[j]);
+                    LPSOrigin[j] = -Math.abs(qoffset_z);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
-                    LPSOrigin[j] = Math.abs(LPSOrigin[j]);
+                    LPSOrigin[j] = Math.abs(qoffset_z);
                 }
             }
 
@@ -1891,9 +1888,6 @@ public class FileNIFTI extends FileBase {
             matrix.set(2, 1, (double) -srow_z[1]);
             matrix.set(2, 2, (double) srow_z[2]);
             LPSOrigin = new float[3];
-            LPSOrigin[0] = -srow_x[3];
-            LPSOrigin[1] = srow_y[3];
-            LPSOrigin[2] = srow_z[3];
 
             axisOrientation = getAxisOrientation(matrix);
             Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
@@ -1903,17 +1897,17 @@ public class FileNIFTI extends FileBase {
             for (j = 0; j < 3; j++) {
 
                 if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
-                    LPSOrigin[j] = -Math.abs(LPSOrigin[j]);
+                    LPSOrigin[j] = -Math.abs(srow_x[3]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
-                    LPSOrigin[j] = Math.abs(LPSOrigin[j]);
+                    LPSOrigin[j] = Math.abs(srow_x[3]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
-                    LPSOrigin[j] = -Math.abs(LPSOrigin[j]);
+                    LPSOrigin[j] = -Math.abs(srow_y[3]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
-                    LPSOrigin[j] = Math.abs(LPSOrigin[j]);
+                    LPSOrigin[j] = Math.abs(srow_y[3]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
-                    LPSOrigin[j] = -Math.abs(LPSOrigin[j]);
+                    LPSOrigin[j] = -Math.abs(srow_z[3]);
                 } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
-                    LPSOrigin[j] = Math.abs(LPSOrigin[j]);
+                    LPSOrigin[j] = Math.abs(srow_z[3]);
                 }
             }
 
@@ -1971,9 +1965,6 @@ public class FileNIFTI extends FileBase {
             matrix2.set(2, 1, (double) -srow_z[1]);
             matrix2.set(2, 2, (double) srow_z[2]);
             LPSOrigin2 = new float[3];
-            LPSOrigin2[0] = -srow_x[3];
-            LPSOrigin2[1] = srow_y[3];
-            LPSOrigin2[2] = srow_z[3];
 
             axisOrientation2 = getAxisOrientation(matrix);
             Preferences.debug("axisOrientation2 = " + axisOrientation2[0] + "  " + axisOrientation2[1] + "  " +
@@ -1982,17 +1973,17 @@ public class FileNIFTI extends FileBase {
             for (j = 0; j < 3; j++) {
 
                 if (axisOrientation2[j] == FileInfoBase.ORI_R2L_TYPE) {
-                    LPSOrigin2[j] = -Math.abs(LPSOrigin2[j]);
+                    LPSOrigin2[j] = -Math.abs(srow_x[3]);
                 } else if (axisOrientation2[j] == FileInfoBase.ORI_L2R_TYPE) {
-                    LPSOrigin2[j] = Math.abs(LPSOrigin2[j]);
+                    LPSOrigin2[j] = Math.abs(srow_x[3]);
                 } else if (axisOrientation2[j] == FileInfoBase.ORI_A2P_TYPE) {
-                    LPSOrigin2[j] = -Math.abs(LPSOrigin2[j]);
+                    LPSOrigin2[j] = -Math.abs(srow_y[3]);
                 } else if (axisOrientation2[j] == FileInfoBase.ORI_P2A_TYPE) {
-                    LPSOrigin2[j] = Math.abs(LPSOrigin2[j]);
+                    LPSOrigin2[j] = Math.abs(srow_y[3]);
                 } else if (axisOrientation2[j] == FileInfoBase.ORI_I2S_TYPE) {
-                    LPSOrigin2[j] = -Math.abs(LPSOrigin2[j]);
+                    LPSOrigin2[j] = -Math.abs(srow_z[3]);
                 } else if (axisOrientation2[j] == FileInfoBase.ORI_S2I_TYPE) {
-                    LPSOrigin2[j] = Math.abs(LPSOrigin2[j]);
+                    LPSOrigin2[j] = Math.abs(srow_z[3]);
                 }
             }
 
