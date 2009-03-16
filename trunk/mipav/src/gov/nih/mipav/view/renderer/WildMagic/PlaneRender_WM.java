@@ -396,6 +396,8 @@ public class PlaneRender_WM extends GPURenderBase
 
         // set up camera
         m_spkCamera.SetFrustum(60.0f,1.0f,0.1f,100.0f);
+        m_pkRenderer.OnFrustumChange();
+        
         Vector3f kCLoc = new Vector3f(m_akCLoc[m_aiAxisOrder[2]]);
         Vector3f kCDir = new Vector3f(m_akCoords[m_aiAxisOrder[2]]);
         Vector3f kCUp = new Vector3f(m_akCoords[m_aiAxisOrder[1]]);
