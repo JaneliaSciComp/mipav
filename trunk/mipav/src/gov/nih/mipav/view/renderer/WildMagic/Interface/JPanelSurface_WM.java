@@ -18,6 +18,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Hashtable;
 import java.util.Random;
 import java.util.Vector;
@@ -230,9 +231,6 @@ public class JPanelSurface_WM extends JInterfaceBase
         } 
         else if (command.equals("Remove")) {
             removeSurface();
-        }
-        else if (command.equals("updatePlanes")) {
-            m_kVolumeViewer.updatePlanes();
         }
         else if (command.equals("AddPolyline")) {
             addPolyline();
@@ -935,16 +933,9 @@ public class JPanelSurface_WM extends JInterfaceBase
         removeButton.setFont(MipavUtil.font12B);
         removeButton.setPreferredSize(MipavUtil.defaultButtonSize);
         
-        JButton updatePlanes = new JButton("Update Planes");
-        updatePlanes.addActionListener(this);
-        updatePlanes.setActionCommand("updatePlanes");
-        updatePlanes.setFont(MipavUtil.font12B);
-        updatePlanes.setPreferredSize(MipavUtil.defaultButtonSize);
-
         buttonPanel.add(addButton);
         buttonPanel.add(removeButton);
-        buttonPanel.add(updatePlanes);
-
+        
         // list panel for surface filenames
         surfaceList = new JList(new DefaultListModel());
         surfaceList.addListSelectionListener(this);
@@ -1533,4 +1524,38 @@ public class JPanelSurface_WM extends JInterfaceBase
             areaText.setText("" + area);
         }
     }
+    
+    /**
+     * Pick up the selected color and call method to change the color.
+     */
+    class OkColorListener implements ActionListener {
+
+        /** Color Button */
+        JButton button;
+
+        /**
+         * Creates a new OkColorListener object.
+         *
+         * @param  _button  DOCUMENT ME!
+         */
+        OkColorListener(JButton _button) {
+            super();
+            button = _button;
+        }
+
+        /**
+         * Get color from chooser and set button and color.
+         *
+         * @param  e  Event that triggered function.
+         */
+        public void actionPerformed(ActionEvent e) {
+            Color color = colorChooser.getColor();
+
+            button.setBackground(color);
+            setButtonColor(button, color);
+            m_kVolumeViewer.updatePlanes();
+        }
+    }
+    
+    
 }
