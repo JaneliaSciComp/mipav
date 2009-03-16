@@ -337,6 +337,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             }
             m_kSurface.VBuffer.Release();
         }
+        GetCanvas().display();
     }
 
 
