@@ -1163,22 +1163,24 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         Vector3f kDir = new Vector3f();
         Vector3f kRight = new Vector3f();
         
+        if ( m_kFlyPathBehavior != null ) {
 
-        Vector3f kCUp = m_kFlyPathBehavior.getViewUp();
-        kCUp.Normalize();
-        Vector3f kCDir = m_kFlyPathBehavior.getViewDirection();
-        kCDir.Normalize();
-        Vector3f kCRight = new Vector3f();
-        kCRight.UnitCross( kCDir, kCUp );
-        
-        kRotate.Mult( kCUp, kUp );
-        kRotate.Mult( kCDir, kDir );
-        kRotate.Mult( kCRight, kRight );
-        m_spkCamera.SetFrame( m_spkCamera.GetLocation(), kDir, kUp, kRight);
-        if ( m_kControlFrame != null )
-        {
-            m_kControlFrame.updateOrientation(kRotate);
+	        Vector3f kCUp = m_kFlyPathBehavior.getViewUp();
+	        kCUp.Normalize();
+	        Vector3f kCDir = m_kFlyPathBehavior.getViewDirection();
+	        kCDir.Normalize();
+	        Vector3f kCRight = new Vector3f();
+	        kCRight.UnitCross( kCDir, kCUp );
+	        
+	        kRotate.Mult( kCUp, kUp );
+	        kRotate.Mult( kCDir, kDir );
+	        kRotate.Mult( kCRight, kRight );
+	        m_spkCamera.SetFrame( m_spkCamera.GetLocation(), kDir, kUp, kRight);
+	        if ( m_kControlFrame != null )
+	        {
+	            m_kControlFrame.updateOrientation(kRotate);
+	        }
+	        GetCanvas().display();
         }
-        GetCanvas().display();
     }
 }
