@@ -3713,13 +3713,8 @@ public class FileNIFTI extends FileBase {
                     r20 = matrixQ.get(2, 0) / resols[0];
                     r21 = -matrixQ.get(2, 1) / resols[1];
                     r22 = matrixQ.get(2, 2) / resols[2];
-                    niftiOrigin[0] = (float) -matrixQ.get(0, 3);
-                    niftiOrigin[1] = (float) matrixQ.get(1, 3);
-                    niftiOrigin[2] = (float) matrixQ.get(2, 3);
                 } // if (image.getNDims() >= 3)
                 else {
-                    niftiOrigin[0] = (float) -matrixQ.get(0, 2);
-                    niftiOrigin[1] = (float) matrixQ.get(1, 2);
                     if ((origin != null) && (origin.length > 2)) {
                         niftiOrigin[2] = origin[2];
                     }
@@ -3826,20 +3821,20 @@ public class FileNIFTI extends FileBase {
                     }
                 }
 
-                for (j = 0; j < 3; j++) {
+                for (j = 0; j < Math.min(3,image.getNDims()); j++) {
 
                     if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
-                        niftiOrigin[0] = -Math.abs(niftiOrigin[0]);
+                        niftiOrigin[0] = -Math.abs(matrixQ.get(j,3));
                     } else if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
-                        niftiOrigin[0] = Math.abs(niftiOrigin[0]);
+                        niftiOrigin[0] = Math.abs(matrix.get(j,3));
                     } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
-                        niftiOrigin[1] = -Math.abs(niftiOrigin[1]);
+                        niftiOrigin[1] = -Math.abs(matrixQ.get(j,3));
                     } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
-                        niftiOrigin[1] = Math.abs(niftiOrigin[1]);
+                        niftiOrigin[1] = Math.abs(matrixQ.get(j, 3));
                     } else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
-                        niftiOrigin[2] = -Math.abs(niftiOrigin[2]);
+                        niftiOrigin[2] = -Math.abs(matrixQ.get(j, 3));
                     } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
-                        niftiOrigin[2] = Math.abs(niftiOrigin[2]);
+                        niftiOrigin[2] = Math.abs(matrixQ.get(j, 3));
                     }
                 }
             } else { // matrixQ == null
@@ -3920,17 +3915,17 @@ public class FileNIFTI extends FileBase {
                     for (j = 0; j < 3; j++) {
 
                         if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
-                            niftiOrigin[0] = -Math.abs(origin[0]);
+                            niftiOrigin[0] = -Math.abs(origin[j]);
                         } else if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
-                            niftiOrigin[0] = Math.abs(origin[0]);
+                            niftiOrigin[0] = Math.abs(origin[j]);
                         } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
-                            niftiOrigin[1] = -Math.abs(origin[1]);
+                            niftiOrigin[1] = -Math.abs(origin[j]);
                         } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
-                            niftiOrigin[1] = Math.abs(origin[1]);
+                            niftiOrigin[1] = Math.abs(origin[j]);
                         } else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
-                            niftiOrigin[2] = -Math.abs(origin[2]);
+                            niftiOrigin[2] = -Math.abs(origin[j]);
                         } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
-                            niftiOrigin[2] = Math.abs(origin[2]);
+                            niftiOrigin[2] = Math.abs(origin[j]);
                         }
                     }
                 }
@@ -4102,24 +4097,21 @@ public class FileNIFTI extends FileBase {
 
             niftiOriginS = new float[3];
             axisOrientation = getAxisOrientation(matrixS);
-            niftiOriginS[0] = (float) -matrixS.get(0, 3);
-            niftiOriginS[1] = (float) matrixS.get(1, 3);
-            niftiOriginS[2] = (float) matrixS.get(2, 3);
 
             for (j = 0; j < 3; j++) {
 
                 if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
-                    niftiOriginS[0] = -Math.abs(niftiOriginS[0]);
+                    niftiOriginS[0] = -Math.abs(matrixS.get(j,3));
                 } else if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
-                    niftiOriginS[0] = Math.abs(niftiOriginS[0]);
+                    niftiOriginS[0] = Math.abs(matrixS.get(j, 3));
                 } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
-                    niftiOriginS[1] = -Math.abs(niftiOriginS[1]);
+                    niftiOriginS[1] = -Math.abs(matrixS.get(j, 3));
                 } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
-                    niftiOriginS[1] = Math.abs(niftiOriginS[1]);
+                    niftiOriginS[1] = Math.abs(matrixS.get(j, 3));
                 } else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
-                    niftiOriginS[2] = -Math.abs(niftiOriginS[2]);
+                    niftiOriginS[2] = -Math.abs(matrixS.get(j, 3));
                 } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
-                    niftiOriginS[2] = Math.abs(niftiOriginS[2]);
+                    niftiOriginS[2] = Math.abs(matrixS.get(j, 3));
                 }
             }
         } // if (matrixS != null)
