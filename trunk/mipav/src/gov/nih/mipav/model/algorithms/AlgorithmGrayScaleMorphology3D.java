@@ -865,11 +865,11 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
                 erode(false);
                 break;
 
-            /*case DILATE:
+            case DILATE:
                 dilate(false);
                 break;
 
-            case CLOSE:
+            /*case CLOSE:
 
                 progressValues = getProgressValues();
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
@@ -1668,12 +1668,13 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
     }*/
 
     /**
-     * Dilates a boolean, unsigned byte, or unsigned short image using the indicated kernel and the indicated number of
-     * iterations.
+     * Dilates an image using the indicated kernel and the indicated number of
+     * iterations.  The grayscale dilation is the maximum value over the reflected kernel region.
+     * For symmetric kernels the reflected kernel is the same as the kernel.
      *
      * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
      */
-    /*private void dilate(boolean returnFlag) {
+    private void dilate(boolean returnFlag) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
@@ -1692,8 +1693,7 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
         int offsetXU;
         int startX, startY, startZ;
         int endX, endY, endZ;
-        short[] tempBuffer;
-        short value;
+        double[] tempBuffer;
 
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
@@ -1728,75 +1728,72 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
                 }
 
                 if (entireImage || mask.get(pix)) {
-                    value = imgBuffer[pix];
+                    processBuffer[pix] = imgBuffer[pix];
 
-                    if (value != 0) {
-                        offsetX = (pix % xDim) - halfKDim;
-                        offsetXU = offsetX + kDimXY;
-                        offsetY = ((pix / xDim) % yDim) - halfKDim;
-                        offsetZ = (pix / (sliceSize)) - halfKDimZ;
+                    offsetX = (pix % xDim) - halfKDim;
+                    offsetXU = offsetX + kDimXY;
+                    offsetY = ((pix / xDim) % yDim) - halfKDim;
+                    offsetZ = (pix / (sliceSize)) - halfKDimZ;
 
-                        count = 0;
-                        indexY = offsetY * xDim;
-                        indexYU = indexY + stepY;
-                        startZ = offsetZ * sliceSize;
-                        endZ = startZ + stepZ;
+                    count = 0;
+                    indexY = offsetY * xDim;
+                    indexYU = indexY + stepY;
+                    startZ = offsetZ * sliceSize;
+                    endZ = startZ + stepZ;
 
-                        if (startZ < 0) {
-                            startZ = 0;
-                        }
-
-                        if (endZ > imgSize) {
-                            endZ = imgSize;
-                        }
-
-                        if (indexY < 0) {
-                            indexY = 0;
-                        }
-
-                        if (indexYU > sliceSize) {
-                            indexYU = sliceSize;
-                        }
-
-                        if (offsetX < 0) {
-                            offsetX = 0;
-                        }
-
-                        if (offsetXU > xDim) {
-                            offsetXU = xDim;
-                        }
-
-kernelLoop:
-                        for (k = startZ; k < endZ; k += sliceSize) {
-
-                            // only work on valid pixels
-                            // essentially process only the overlap between
-                            // valid image and kernel slices
-                            if (k >= 0) {
-                                startY = k + indexY;
-                                endY = k + indexYU;
-
-                                for (j = startY; j < endY; j += xDim) {
-                                    startX = j + offsetX;
-                                    endX = j + offsetXU;
-
-                                    for (i = startX; i < endX; i++) {
-
-                                        if (kernel.get(count) == true) {
-                                            processBuffer[i] = value;
-                                        }
-
-                                        count++;
-                                    }
-                                }
-                            } else {
-
-                                // jump to the next kernel slice as the current slice
-                                // overlaps invalid image slices
-                                count += kDimXY * kDimXY;
-                            } // end if (k > 0) {} else {}
-                        } // end for (k = startZ; ...)
+                    if (startZ < 0) {
+                        startZ = 0;
                     }
+
+                    if (endZ > imgSize) {
+                        endZ = imgSize;
+                    }
+
+                    if (indexY < 0) {
+                        indexY = 0;
+                    }
+
+                    if (indexYU > sliceSize) {
+                        indexYU = sliceSize;
+                    }
+
+                    if (offsetX < 0) {
+                        offsetX = 0;
+                    }
+
+                    if (offsetXU > xDim) {
+                        offsetXU = xDim;
+                    }
+
+                    for (k = startZ; k < endZ; k += sliceSize) {
+
+                        // only work on valid pixels
+                        // essentially process only the overlap between
+                        // valid image and kernel slices
+                        if (k >= 0) {
+                            startY = k + indexY;
+                            endY = k + indexYU;
+
+                            for (j = startY; j < endY; j += xDim) {
+                                startX = j + offsetX;
+                                endX = j + offsetXU;
+
+                                for (i = startX; i < endX; i++) {
+
+                                    if (kernel.get(count) && (imgBuffer[i] > processBuffer[pix])) {
+                                        processBuffer[pix] = imgBuffer[i];
+                                    }
+
+                                    count++;
+                                }
+                            }
+                        } else {
+
+                            // jump to the next kernel slice as the current slice
+                            // overlaps invalid image slices
+                            count += kDimXY * kDimXY;
+                        } // end if (k > 0) {} else {}
+                    } // end for (k = startZ; ...)
                 } else {
                     processBuffer[pix] = imgBuffer[pix];
                 }
@@ -1823,7 +1820,7 @@ kernelLoop:
 
             srcImage.importData(0, imgBuffer, true);
         } catch (IOException error) {
-            displayError("Algorithm Morphology3D: Image(s) locked");
+            displayError("Algorithm GrayScaleMorphology3D: Image(s) locked");
             setCompleted(false);
 
 
@@ -1831,7 +1828,7 @@ kernelLoop:
         }
 
         setCompleted(true);
-    }*/
+    }
 
     /**
      * Generates a Euclidian distance map.
@@ -2020,7 +2017,6 @@ kernelLoop:
             return;
         }
 
-        double value = 0;
         int c;
         int i, j, k, pix, count;
         int indexY;
@@ -2048,11 +2044,6 @@ kernelLoop:
         int mod = totalSize / 100;
         fireProgressStateChanged("Eroding image ...");
 
-        
-        for (pix = 0; pix < imgSize; pix++) {
-            processBuffer[pix] = 0;
-        }
-
         for (c = 0; (c < iterationsE) && !threadStopped; c++) {
             tmpSize = c * imgSize;
 
@@ -2064,7 +2055,7 @@ kernelLoop:
 
                 
                 if (entireImage || mask.get(pix)) {
-                    value = imgBuffer[pix];
+                    processBuffer[pix] = imgBuffer[pix];
                     
                     offsetX = (pix % xDim) - halfKDim;
                     offsetXU = offsetX + kDimXY;
@@ -2118,8 +2109,8 @@ kernelLoop:
 
                                 for (i = startX; i < endX; i++) {
 
-                                    if ((kernel.get(count) == true) && (imgBuffer[i] < value)) {
-                                        value = imgBuffer[i];
+                                    if ((kernel.get(count) == true) && (imgBuffer[i] < processBuffer[pix])) {
+                                        processBuffer[pix] = imgBuffer[i];
                                     }
 
                                     count++;
@@ -2133,8 +2124,6 @@ kernelLoop:
                         } // end if (k > 0) {} else {}
                     }
 
-                    
-                    processBuffer[pix] = value;
                 } else {
                     processBuffer[pix] = imgBuffer[pix];
                 }
