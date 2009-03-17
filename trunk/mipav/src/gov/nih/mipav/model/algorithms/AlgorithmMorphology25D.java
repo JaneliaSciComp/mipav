@@ -979,7 +979,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
                 for (pix = offsetZ; (pix < (offsetZ + sliceLength)) && !threadStopped; pix++) {
 
                         if (((((c * offsetZ) + pix) % mod) == 0)) {
-                            fireProgressStateChanged(Math.round((pix + 1 + (c * offsetZ)) /
+                            fireProgressStateChanged(Math.round((pix + 1 + (c * sliceLength * zDim)) /
                                                                    (iters * (float) sliceLength * zDim) * 100));
                         }
 
