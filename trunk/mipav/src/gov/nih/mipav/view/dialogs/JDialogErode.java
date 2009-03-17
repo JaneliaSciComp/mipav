@@ -51,6 +51,20 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
 
     /** DOCUMENT ME! */
     private AlgorithmMorphology3D erodeAlgo3D = null;
+    
+    private AlgorithmGrayScaleMorphology2D gsErodeAlgo2D = null;
+    
+    private AlgorithmGrayScaleMorphology25D gsErodeAlgo25D = null;
+    
+    private AlgorithmGrayScaleMorphology3D gsErodeAlgo3D = null;
+    
+    private ButtonGroup morphologyGroup;
+    
+    private JRadioButton binaryButton;
+    
+    private JRadioButton grayScaleButton;
+    
+    private boolean binaryMorphology = true;
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -112,9 +126,8 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
     public JDialogErode(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
 
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
+        if (im.isColorImage()) {
+            MipavUtil.displayError("Source Image cannot be a color image");
             dispose();
 
             return;
@@ -141,6 +154,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_type", kernelErode));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSizeErode));
         scriptParameters.storeNumIterations(iters);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("binary_morphology", binaryMorphology));
     }
 
     /**
@@ -151,9 +165,8 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
-        if ( (image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE)
-                && (image.getType() != ModelImage.USHORT)) {
-            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Source Image must be Boolean or UByte or UShort");
+        if (image.isColorImage()) {
+            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Source Image cannot be color");
         }
         
         outputPanel = new JPanelAlgorithmOutputOptions(image);
@@ -164,6 +177,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
         kernelErode = scriptParameters.getParams().getInt("kernel_type");
         kernelSizeErode = scriptParameters.getParams().getFloat("kernel_size");
         iters = scriptParameters.getNumIterations();
+        binaryMorphology = scriptParameters.getParams().getBoolean("binary_morphology");
     }
 
     /**
@@ -335,6 +349,134 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                 resultImage = null;
             }
         }
+        else if (algorithm instanceof AlgorithmGrayScaleMorphology2D) {
+            image.clearMask();
+
+            if ((gsErodeAlgo2D.isCompleted() == true) && (resultImage != null)) {
+                updateFileInfo(image, resultImage);
+                resultImage.clearMask();
+
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+
+                    // resultImage.setImageName("Eroded image");
+                    openNewFrame(resultImage);
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage == null) {
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    userInterface.registerFrame(parentFrame);
+                }
+
+                image.notifyImageDisplayListeners(null, true);
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+            }
+
+        } else if (algorithm instanceof AlgorithmGrayScaleMorphology25D) {
+            image.clearMask();
+
+            if ((gsErodeAlgo25D.isCompleted() == true) && (resultImage != null)) {
+                updateFileInfo(image, resultImage);
+                resultImage.clearMask();
+
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+
+                    // resultImage.setImageName("Eroded image");
+                    openNewFrame(resultImage);
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage == null) {
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    userInterface.registerFrame(parentFrame);
+                }
+
+                image.notifyImageDisplayListeners(null, true);
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+            }
+        } else if (algorithm instanceof AlgorithmGrayScaleMorphology3D) {
+            image.clearMask();
+
+            if ((gsErodeAlgo3D.isCompleted() == true) && (resultImage != null)) {
+                updateFileInfo(image, resultImage);
+                resultImage.clearMask();
+
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+
+                    // resultImage.setImageName("Eroded image");
+                    openNewFrame(resultImage);
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage == null) {
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    userInterface.registerFrame(parentFrame);
+                }
+
+                image.notifyImageDisplayListeners(null, true);
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+            }
+        }
 
         if (algorithm.isCompleted()) {
             insertScriptLine();
@@ -356,6 +498,21 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
         if (erodeAlgo3D != null) {
             erodeAlgo3D.finalize();
             erodeAlgo3D = null;
+        }
+        
+        if (gsErodeAlgo2D != null) {
+            gsErodeAlgo2D.finalize();
+            gsErodeAlgo2D = null;
+        }
+
+        if (gsErodeAlgo25D != null) {
+            gsErodeAlgo25D.finalize();
+            gsErodeAlgo25D = null;
+        }
+
+        if (gsErodeAlgo3D != null) {
+            gsErodeAlgo3D.finalize();
+            gsErodeAlgo3D = null;
         }
 
         dispose();
@@ -460,309 +617,616 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_eroded");
 
-        if (image.getNDims() == 2) { // source image is 2D
-
-            if (outputPanel.isOutputNewImageSet()) {
-
-                try {
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-
-                    // Make algorithm
-                    erodeAlgo2D = new AlgorithmMorphology2D(resultImage, kernelErode, kernelSizeErode,
-                                                            AlgorithmMorphology2D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        erodeAlgo2D.setMask(image.generateVOIMask());
-                    }
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    erodeAlgo2D.addListener(this);
-
-                    createProgressBar(image.getImageName(), erodeAlgo2D);
-                    
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (erodeAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+        if (binaryMorphology) {
+            if (image.getNDims() == 2) { // source image is 2D
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        erodeAlgo2D = new AlgorithmMorphology2D(resultImage, kernelErode, kernelSizeErode,
+                                                                AlgorithmMorphology2D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            erodeAlgo2D.setMask(image.generateVOIMask());
                         }
-                    } else {
-                        erodeAlgo2D.run();
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        erodeAlgo2D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), erodeAlgo2D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast.
+                            if (erodeAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            erodeAlgo2D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up memory of result image
+                            resultImage = null;
+                        }
+    
+                        return;
                     }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up memory of result image
-                        resultImage = null;
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        erodeAlgo2D = new AlgorithmMorphology2D(image, kernelErode, kernelSizeErode,
+                                                                AlgorithmMorphology2D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            erodeAlgo2D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        erodeAlgo2D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), erodeAlgo2D);
+                        
+                        // Hide the dialog since the algorithm is about to run.
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+    
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface.
+                            if (erodeAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            erodeAlgo2D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
+    
+                        return;
                     }
-
-                    return;
                 }
-            } else {
-
-                try {
-
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                    erodeAlgo2D = new AlgorithmMorphology2D(image, kernelErode, kernelSizeErode,
-                                                            AlgorithmMorphology2D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        erodeAlgo2D.setMask(image.generateVOIMask());
-                    }
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    erodeAlgo2D.addListener(this);
-
-                    createProgressBar(image.getImageName(), erodeAlgo2D);
-                    
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface.
-                        if (erodeAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+            } else if ((image.getNDims() == 3) && !do25D) {
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        erodeAlgo3D = new AlgorithmMorphology3D(resultImage, kernelErode, kernelSizeErode,
+                                                                AlgorithmMorphology3D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            erodeAlgo3D.setMask(image.generateVOIMask());
                         }
-                    } else {
-                        erodeAlgo2D.run();
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        erodeAlgo3D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), erodeAlgo3D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast
+                            if (erodeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            erodeAlgo3D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up image memory
+                            resultImage = null;
+                        }
+    
+                        return;
                     }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
-
-                    return;
+                } else {
+    
+                    try {
+    
+                        // Make algorithm
+                        erodeAlgo3D = new AlgorithmMorphology3D(image, kernelErode, kernelSizeErode,
+                                                                AlgorithmMorphology3D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            erodeAlgo3D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        erodeAlgo3D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), erodeAlgo3D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+    
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast
+                            if (erodeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            erodeAlgo3D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
+    
+                        return;
+                    }
+                }
+            } else if (do25D) {
+    
+                // convert to 2.5d kernel type
+                if (kernelErode == AlgorithmMorphology3D.CONNECTED6) {
+                    kernelErode = AlgorithmMorphology25D.CONNECTED4;
+                } else if (kernelErode == AlgorithmMorphology3D.CONNECTED24) {
+                    kernelErode = AlgorithmMorphology25D.CONNECTED12;
+                } else if (kernelErode == AlgorithmMorphology3D.SIZED_SPHERE) {
+                    kernelErode = AlgorithmMorphology25D.SIZED_CIRCLE;
+                }
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        erodeAlgo25D = new AlgorithmMorphology25D(resultImage, kernelErode, kernelSizeErode,
+                                                                  AlgorithmMorphology25D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            erodeAlgo25D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        erodeAlgo25D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), erodeAlgo25D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast.
+                            if (erodeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            erodeAlgo25D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up memory of result image
+                            resultImage = null;
+                        }
+    
+                        return;
+                    }
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        erodeAlgo25D = new AlgorithmMorphology25D(image, kernelErode, kernelSizeErode,
+                                                                  AlgorithmMorphology25D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            erodeAlgo25D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        erodeAlgo25D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), erodeAlgo25D);
+                        
+                        // Hide the dialog since the algorithm is about to run.
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+    
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface.
+                            if (erodeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            erodeAlgo25D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
+    
+                        return;
+                    }
                 }
             }
-        } else if ((image.getNDims() == 3) && !do25D) {
-
-            if (outputPanel.isOutputNewImageSet()) {
-
-                try {
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-
-                    // Make algorithm
-                    erodeAlgo3D = new AlgorithmMorphology3D(resultImage, kernelErode, kernelSizeErode,
-                                                            AlgorithmMorphology3D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        erodeAlgo3D.setMask(image.generateVOIMask());
-                    }
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    erodeAlgo3D.addListener(this);
-
-                    createProgressBar(image.getImageName(), erodeAlgo3D);
-                    
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (erodeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+        } // if (binaryMorphology)
+        else { // grayScaleMorphology
+            if (image.getNDims() == 2) { // source image is 2D
+                
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        gsErodeAlgo2D = new AlgorithmGrayScaleMorphology2D(resultImage, kernelErode, kernelSizeErode,
+                                                                AlgorithmGrayScaleMorphology2D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsErodeAlgo2D.setMask(image.generateVOIMask());
                         }
-                    } else {
-                        erodeAlgo3D.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up image memory
-                        resultImage = null;
-                    }
-
-                    return;
-                }
-            } else {
-
-                try {
-
-                    // Make algorithm
-                    erodeAlgo3D = new AlgorithmMorphology3D(image, kernelErode, kernelSizeErode,
-                                                            AlgorithmMorphology3D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        erodeAlgo3D.setMask(image.generateVOIMask());
-                    }
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    erodeAlgo3D.addListener(this);
-
-                    createProgressBar(image.getImageName(), erodeAlgo3D);
-                    
-                    // Hide dialog
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (erodeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsErodeAlgo2D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsErodeAlgo2D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast.
+                            if (gsErodeAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            gsErodeAlgo2D.run();
                         }
-                    } else {
-                        erodeAlgo3D.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
-
-                    return;
-                }
-            }
-        } else if (do25D) {
-
-            // convert to 2.5d kernel type
-            if (kernelErode == AlgorithmMorphology3D.CONNECTED6) {
-                kernelErode = AlgorithmMorphology25D.CONNECTED4;
-            } else if (kernelErode == AlgorithmMorphology3D.CONNECTED24) {
-                kernelErode = AlgorithmMorphology25D.CONNECTED12;
-            } else if (kernelErode == AlgorithmMorphology3D.SIZED_SPHERE) {
-                kernelErode = AlgorithmMorphology25D.SIZED_CIRCLE;
-            }
-
-            if (outputPanel.isOutputNewImageSet()) {
-
-                try {
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-
-                    // Make algorithm
-                    erodeAlgo25D = new AlgorithmMorphology25D(resultImage, kernelErode, kernelSizeErode,
-                                                              AlgorithmMorphology25D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        erodeAlgo25D.setMask(image.generateVOIMask());
-                    }
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    erodeAlgo25D.addListener(this);
-
-                    createProgressBar(image.getImageName(), erodeAlgo25D);
-                    
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (erodeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up memory of result image
+                            resultImage = null;
                         }
-                    } else {
-                        erodeAlgo25D.run();
+    
+                        return;
                     }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up memory of result image
-                        resultImage = null;
-                    }
-
-                    return;
-                }
-            } else {
-
-                try {
-
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                    erodeAlgo25D = new AlgorithmMorphology25D(image, kernelErode, kernelSizeErode,
-                                                              AlgorithmMorphology25D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        erodeAlgo25D.setMask(image.generateVOIMask());
-                    }
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    erodeAlgo25D.addListener(this);
-
-                    createProgressBar(image.getImageName(), erodeAlgo25D);
-                    
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface.
-                        if (erodeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        gsErodeAlgo2D = new AlgorithmGrayScaleMorphology2D(image, kernelErode, kernelSizeErode,
+                                                                AlgorithmGrayScaleMorphology2D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsErodeAlgo2D.setMask(image.generateVOIMask());
                         }
-                    } else {
-                        erodeAlgo25D.run();
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsErodeAlgo2D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsErodeAlgo2D);
+                        
+                        // Hide the dialog since the algorithm is about to run.
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+    
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface.
+                            if (gsErodeAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            gsErodeAlgo2D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
+    
+                        return;
                     }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
-
-                    return;
                 }
-            }
-        }
+            } else if ((image.getNDims() == 3) && !do25D) {
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        gsErodeAlgo3D = new AlgorithmGrayScaleMorphology3D(resultImage, kernelErode, kernelSizeErode,
+                                                                AlgorithmGrayScaleMorphology3D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsErodeAlgo3D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsErodeAlgo3D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsErodeAlgo3D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast
+                            if (gsErodeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            gsErodeAlgo3D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up image memory
+                            resultImage = null;
+                        }
+    
+                        return;
+                    }
+                } else {
+    
+                    try {
+    
+                        // Make algorithm
+                        gsErodeAlgo3D = new AlgorithmGrayScaleMorphology3D(image, kernelErode, kernelSizeErode,
+                                                                AlgorithmGrayScaleMorphology3D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsErodeAlgo3D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsErodeAlgo3D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsErodeAlgo3D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+    
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast
+                            if (gsErodeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            gsErodeAlgo3D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
+    
+                        return;
+                    }
+                }
+            } else if (do25D) {
+    
+                // convert to 2.5d kernel type
+                if (kernelErode == AlgorithmMorphology3D.CONNECTED6) {
+                    kernelErode = AlgorithmMorphology25D.CONNECTED4;
+                } else if (kernelErode == AlgorithmMorphology3D.CONNECTED24) {
+                    kernelErode = AlgorithmMorphology25D.CONNECTED12;
+                } else if (kernelErode == AlgorithmMorphology3D.SIZED_SPHERE) {
+                    kernelErode = AlgorithmMorphology25D.SIZED_CIRCLE;
+                }
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        gsErodeAlgo25D = new AlgorithmGrayScaleMorphology25D(resultImage, kernelErode, kernelSizeErode,
+                                                                  AlgorithmGrayScaleMorphology25D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsErodeAlgo25D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsErodeAlgo25D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsErodeAlgo25D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast.
+                            if (gsErodeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            gsErodeAlgo25D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up memory of result image
+                            resultImage = null;
+                        }
+    
+                        return;
+                    }
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        gsErodeAlgo25D = new AlgorithmGrayScaleMorphology25D(image, kernelErode, kernelSizeErode,
+                                                                  AlgorithmGrayScaleMorphology25D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsErodeAlgo25D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsErodeAlgo25D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsErodeAlgo25D);
+                        
+                        // Hide the dialog since the algorithm is about to run.
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+    
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface.
+                            if (erodeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            gsErodeAlgo25D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
+    
+                        return;
+                    }
+                }
+            }    
+        } // else grayScaleMorphology
     }
 
     /**
@@ -806,6 +1270,43 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
         textKernelSizeErode.setText("1");
         textKernelSizeErode.setFont(serif12);
         textKernelSizeErode.setEnabled(false);
+        
+        morphologyGroup = new ButtonGroup();
+        binaryButton = new JRadioButton("Binary morphology");
+        if ((image.getType() == ModelImage.BOOLEAN) || (image.getType() == ModelImage.UBYTE) ||
+            (image.getType() == ModelImage.USHORT)) {
+            binaryButton.setSelected(true);
+        }
+        else {
+            binaryButton.setSelected(false);
+        }
+        if ((image.getType() == ModelImage.UBYTE) || (image.getType() == ModelImage.USHORT)) {
+            binaryButton.setEnabled(true);
+        }
+        else {
+            binaryButton.setEnabled(false);
+        }
+        binaryButton.setFont(serif12);
+        binaryButton.setForeground(Color.black);
+        morphologyGroup.add(binaryButton);
+        
+        grayScaleButton = new JRadioButton("Gray scale morphology");
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
+            (image.getType() != ModelImage.USHORT)) {
+            grayScaleButton.setSelected(true);
+        }
+        else {
+            grayScaleButton.setSelected(false);
+        }
+        if ((image.getType() == ModelImage.UBYTE) || (image.getType() == ModelImage.USHORT)) {
+            grayScaleButton.setEnabled(true);
+        }
+        else {
+           grayScaleButton.setEnabled(false);
+        }
+        grayScaleButton.setFont(serif12);
+        grayScaleButton.setForeground(Color.black);
+        morphologyGroup.add(grayScaleButton);
 
         maskPanelErode = new JPanel(new GridBagLayout());
         maskPanelErode.setForeground(Color.black);
@@ -848,6 +1349,16 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanelErode.add(textKernelSizeErode, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        maskPanelErode.add(binaryButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        maskPanelErode.add(grayScaleButton, gbc);
 
         outputPanel = new JPanelAlgorithmOutputOptions(image);
         
@@ -937,6 +1448,13 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
             } else if (comboBoxKernelErode.getSelectedIndex() == 2) {
                 kernelErode = AlgorithmMorphology3D.SIZED_SPHERE;
             }
+        }
+        
+        if (binaryButton.isSelected()) {
+            binaryMorphology = true;
+        }
+        else {
+            binaryMorphology = false;
         }
 
         return true;
