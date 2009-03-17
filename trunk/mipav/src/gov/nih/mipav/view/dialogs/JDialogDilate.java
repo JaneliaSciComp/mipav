@@ -47,6 +47,20 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
 
     /** DOCUMENT ME! */
     private AlgorithmMorphology3D dilateAlgo3D = null;
+    
+    private AlgorithmGrayScaleMorphology2D gsDilateAlgo2D = null;
+    
+    private AlgorithmGrayScaleMorphology25D gsDilateAlgo25D = null;
+    
+    private AlgorithmGrayScaleMorphology3D gsDilateAlgo3D = null;
+    
+    private ButtonGroup morphologyGroup;
+    
+    private JRadioButton binaryButton;
+    
+    private JRadioButton grayScaleButton;
+    
+    private boolean binaryMorphology = true;
 
     /** DOCUMENT ME! */
     private boolean do25D = false;
@@ -110,10 +124,9 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
      */
     public JDialogDilate(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
+        
+        if (im.isColorImage()) {
+            MipavUtil.displayError("Source Image cannot be a color image");
             dispose();
 
             return;
@@ -140,6 +153,7 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_type", kernel));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
         scriptParameters.storeNumIterations(iters);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("binary_morphology", binaryMorphology));
     }
 
     /**
@@ -150,9 +164,8 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
-        if ( (image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE)
-                && (image.getType() != ModelImage.USHORT)) {
-            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Source Image must be Boolean or UByte or UShort");
+        if (image.isColorImage()) {
+            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Source Image cannot be color");
         }
         
         outputPanel = new JPanelAlgorithmOutputOptions(image);
@@ -163,6 +176,7 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
         kernel = scriptParameters.getParams().getInt("kernel_type");
         kernelSize = scriptParameters.getParams().getFloat("kernel_size");
         iters = scriptParameters.getNumIterations();
+        binaryMorphology = scriptParameters.getParams().getBoolean("binary_morphology");
     }
 
     /**
@@ -333,6 +347,133 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                 resultImage = null;
             }
         }
+        else if (algorithm instanceof AlgorithmGrayScaleMorphology2D) {
+            image.clearMask();
+
+            if ((gsDilateAlgo2D.isCompleted() == true) && (resultImage != null)) {
+                updateFileInfo(image, resultImage);
+                resultImage.clearMask();
+
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+
+                    // resultImage.setImageName("Dilated image");
+                    openNewFrame(resultImage);
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage == null) {
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    userInterface.registerFrame(parentFrame);
+                }
+
+                image.notifyImageDisplayListeners(null, true);
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+            }
+        } else if (algorithm instanceof AlgorithmGrayScaleMorphology25D) {
+            image.clearMask();
+
+            if ((gsDilateAlgo25D.isCompleted() == true) && (resultImage != null)) {
+                updateFileInfo(image, resultImage);
+                resultImage.clearMask();
+
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+
+                    // resultImage.setImageName("Dilated image");
+                    openNewFrame(resultImage);
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage == null) {
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    userInterface.registerFrame(parentFrame);
+                }
+
+                image.notifyImageDisplayListeners(null, true);
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+            }
+        } else if (algorithm instanceof AlgorithmGrayScaleMorphology3D) {
+            image.clearMask();
+
+            if ((gsDilateAlgo3D.isCompleted() == true) && (resultImage != null)) {
+                updateFileInfo(image, resultImage);
+                resultImage.clearMask();
+
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+
+                    // resultImage.setImageName("Dilated image");
+                    openNewFrame(resultImage);
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage == null) {
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    userInterface.registerFrame(parentFrame);
+                }
+
+                image.notifyImageDisplayListeners(null, true);
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+            }
+        }
 
         if (algorithm.isCompleted()) {
             insertScriptLine();
@@ -353,6 +494,21 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
         if (dilateAlgo3D != null) {
             dilateAlgo3D.finalize();
             dilateAlgo3D = null;
+        }
+        
+        if (gsDilateAlgo2D != null) {
+            gsDilateAlgo2D.finalize();
+            gsDilateAlgo2D = null;
+        }
+
+        if (gsDilateAlgo25D != null) {
+            gsDilateAlgo25D.finalize();
+            gsDilateAlgo25D = null;
+        }
+
+        if (gsDilateAlgo3D != null) {
+            gsDilateAlgo3D.finalize();
+            gsDilateAlgo3D = null;
         }
 
         dispose();
@@ -457,324 +613,646 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_dilate");
 
-        if (image.getNDims() == 2) { // source image is 2D
-
-            int[] destExtents = new int[2];
-            destExtents[0] = image.getExtents()[0]; // X dim
-            destExtents[1] = image.getExtents()[1]; // Y dim
-
-            if (outputPanel.isOutputNewImageSet()) {
-
-                try {
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-
-                    // Make algorithm
-                    dilateAlgo2D = new AlgorithmMorphology2D(resultImage, kernel, kernelSize,
-                                                             AlgorithmMorphology2D.DILATE, iters, 0, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        dilateAlgo2D.setMask(image.generateVOIMask());
-                    }
-
-                    // dilateAlgo2D = new AlgorithmMorphology2D(resultImage, kernel, 5,
-                    // AlgorithmMorphology2D.DILATE, iters, regionFlag);
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    dilateAlgo2D.addListener(this);
-
-                    createProgressBar(image.getImageName(), dilateAlgo2D);
-                    
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (dilateAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+        if (binaryMorphology) {
+            if (image.getNDims() == 2) { // source image is 2D
+    
+                int[] destExtents = new int[2];
+                destExtents[0] = image.getExtents()[0]; // X dim
+                destExtents[1] = image.getExtents()[1]; // Y dim
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        dilateAlgo2D = new AlgorithmMorphology2D(resultImage, kernel, kernelSize,
+                                                                 AlgorithmMorphology2D.DILATE, iters, 0, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            dilateAlgo2D.setMask(image.generateVOIMask());
                         }
-                    } else {
-                        dilateAlgo2D.run();
+    
+                        // dilateAlgo2D = new AlgorithmMorphology2D(resultImage, kernel, 5,
+                        // AlgorithmMorphology2D.DILATE, iters, regionFlag);
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        dilateAlgo2D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), dilateAlgo2D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast.
+                            if (dilateAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            dilateAlgo2D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up memory of result image
+                            resultImage = null;
+                        }
+    
+                        return;
                     }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up memory of result image
-                        resultImage = null;
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        dilateAlgo2D = new AlgorithmMorphology2D(image, kernel, kernelSize, AlgorithmMorphology2D.DILATE,
+                                                                 iters, 0, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            dilateAlgo2D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        dilateAlgo2D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), dilateAlgo2D);
+                        
+                        // Hide the dialog since the algorithm is about to run.
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface.
+                            if (dilateAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            dilateAlgo2D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
+    
+                        return;
                     }
-
-                    return;
                 }
-            } else {
-
-                try {
-
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                    dilateAlgo2D = new AlgorithmMorphology2D(image, kernel, kernelSize, AlgorithmMorphology2D.DILATE,
-                                                             iters, 0, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        dilateAlgo2D.setMask(image.generateVOIMask());
-                    }
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    dilateAlgo2D.addListener(this);
-
-                    createProgressBar(image.getImageName(), dilateAlgo2D);
-                    
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface.
-                        if (dilateAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+            } else if ((image.getNDims() == 3) && !do25D) {
+                int[] destExtents = new int[3];
+                destExtents[0] = image.getExtents()[0];
+                destExtents[1] = image.getExtents()[1];
+                destExtents[2] = image.getExtents()[2];
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        dilateAlgo3D = new AlgorithmMorphology3D(resultImage, kernel, kernelSize,
+                                                                 AlgorithmMorphology3D.DILATE, iters, 0, 0, 0,
+                                                                 outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            dilateAlgo3D.setMask(image.generateVOIMask());
                         }
-                    } else {
-                        dilateAlgo2D.run();
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        dilateAlgo3D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), dilateAlgo3D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast
+                            if (dilateAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            dilateAlgo3D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up image memory
+                            resultImage = null;
+                        }
+    
+                        return;
                     }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
-
-                    return;
+                } else {
+    
+                    try {
+    
+                        // Make algorithm
+                        dilateAlgo3D = new AlgorithmMorphology3D(image, kernel, kernelSize, AlgorithmMorphology3D.DILATE,
+                                                                 iters, 0, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            dilateAlgo3D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        dilateAlgo3D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), dilateAlgo3D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
+                            ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast
+                            if (dilateAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            dilateAlgo3D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
+    
+                        return;
+                    }
+                }
+            } else if (do25D) {
+                int[] destExtents = new int[3];
+                destExtents[0] = image.getExtents()[0]; // X dim
+                destExtents[1] = image.getExtents()[1]; // Y dim
+                destExtents[2] = image.getExtents()[2]; // Z dim
+    
+                // convert to 2.5d kernel type
+                if (kernel == AlgorithmMorphology3D.CONNECTED6) {
+                    kernel = AlgorithmMorphology25D.CONNECTED4;
+                } else if (kernel == AlgorithmMorphology3D.CONNECTED24) {
+                    kernel = AlgorithmMorphology25D.CONNECTED12;
+                } else if (kernel == AlgorithmMorphology3D.SIZED_SPHERE) {
+                    kernel = AlgorithmMorphology25D.SIZED_CIRCLE;
+                }
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        dilateAlgo25D = new AlgorithmMorphology25D(resultImage, kernel, kernelSize,
+                                                                   AlgorithmMorphology25D.DILATE, iters, 0, 0, 0,
+                                                                   outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            dilateAlgo25D.setMask(image.generateVOIMask());
+                        }
+    
+                        // dilateAlgo25D = new AlgorithmMorphology25D(resultImage, kernel, 5,
+                        // AlgorithmMorphology25D.DILATE, iters, regionFlag);
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        dilateAlgo25D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), dilateAlgo25D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast.
+                            if (dilateAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            dilateAlgo25D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up memory of result image
+                            resultImage = null;
+                        }
+    
+                        return;
+                    }
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        dilateAlgo25D = new AlgorithmMorphology25D(image, kernel, kernelSize, AlgorithmMorphology25D.DILATE,
+                                                                   iters, 0, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            dilateAlgo25D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        dilateAlgo25D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), dilateAlgo25D);
+                        
+                        // Hide the dialog since the algorithm is about to run.
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface.
+                            if (dilateAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            dilateAlgo25D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
+    
+                        return;
+                    }
                 }
             }
-        } else if ((image.getNDims() == 3) && !do25D) {
-            int[] destExtents = new int[3];
-            destExtents[0] = image.getExtents()[0];
-            destExtents[1] = image.getExtents()[1];
-            destExtents[2] = image.getExtents()[2];
-
-            if (outputPanel.isOutputNewImageSet()) {
-
-                try {
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-
-                    // Make algorithm
-                    dilateAlgo3D = new AlgorithmMorphology3D(resultImage, kernel, kernelSize,
-                                                             AlgorithmMorphology3D.DILATE, iters, 0, 0, 0,
-                                                             outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        dilateAlgo3D.setMask(image.generateVOIMask());
-                    }
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    dilateAlgo3D.addListener(this);
-
-                    createProgressBar(image.getImageName(), dilateAlgo3D);
-                    
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (dilateAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+        } // if (binaryMorphology)
+        else { // grayScaleMorphology
+            if (image.getNDims() == 2) { // source image is 2D
+                
+                int[] destExtents = new int[2];
+                destExtents[0] = image.getExtents()[0]; // X dim
+                destExtents[1] = image.getExtents()[1]; // Y dim
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        gsDilateAlgo2D = new AlgorithmGrayScaleMorphology2D(resultImage, kernel, kernelSize,
+                                                                 AlgorithmGrayScaleMorphology2D.DILATE, iters, 0, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsDilateAlgo2D.setMask(image.generateVOIMask());
                         }
-                    } else {
-                        dilateAlgo3D.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up image memory
-                        resultImage = null;
-                    }
-
-                    return;
-                }
-            } else {
-
-                try {
-
-                    // Make algorithm
-                    dilateAlgo3D = new AlgorithmMorphology3D(image, kernel, kernelSize, AlgorithmMorphology3D.DILATE,
-                                                             iters, 0, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        dilateAlgo3D.setMask(image.generateVOIMask());
-                    }
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    dilateAlgo3D.addListener(this);
-
-                    createProgressBar(image.getImageName(), dilateAlgo3D);
-                    
-                    // Hide dialog
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
-                        ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (dilateAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+    
+                        // gsDilateAlgo2D = new AlgorithmGrayScaleMorphology2D(resultImage, kernel, 5,
+                        // AlgorithmGrayScaleMorphology2D.DILATE, iters, regionFlag);
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsDilateAlgo2D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsDilateAlgo2D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast.
+                            if (gsDilateAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            gsDilateAlgo2D.run();
                         }
-                    } else {
-                        dilateAlgo3D.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
-
-                    return;
-                }
-            }
-        } else if (do25D) {
-            int[] destExtents = new int[3];
-            destExtents[0] = image.getExtents()[0]; // X dim
-            destExtents[1] = image.getExtents()[1]; // Y dim
-            destExtents[2] = image.getExtents()[2]; // Z dim
-
-            // convert to 2.5d kernel type
-            if (kernel == AlgorithmMorphology3D.CONNECTED6) {
-                kernel = AlgorithmMorphology25D.CONNECTED4;
-            } else if (kernel == AlgorithmMorphology3D.CONNECTED24) {
-                kernel = AlgorithmMorphology25D.CONNECTED12;
-            } else if (kernel == AlgorithmMorphology3D.SIZED_SPHERE) {
-                kernel = AlgorithmMorphology25D.SIZED_CIRCLE;
-            }
-
-            if (outputPanel.isOutputNewImageSet()) {
-
-                try {
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-
-                    // Make algorithm
-                    dilateAlgo25D = new AlgorithmMorphology25D(resultImage, kernel, kernelSize,
-                                                               AlgorithmMorphology25D.DILATE, iters, 0, 0, 0,
-                                                               outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        dilateAlgo25D.setMask(image.generateVOIMask());
-                    }
-
-                    // dilateAlgo25D = new AlgorithmMorphology25D(resultImage, kernel, 5,
-                    // AlgorithmMorphology25D.DILATE, iters, regionFlag);
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    dilateAlgo25D.addListener(this);
-
-                    createProgressBar(image.getImageName(), dilateAlgo25D);
-                    
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (dilateAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up memory of result image
+                            resultImage = null;
                         }
-                    } else {
-                        dilateAlgo25D.run();
+    
+                        return;
                     }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up memory of result image
-                        resultImage = null;
-                    }
-
-                    return;
-                }
-            } else {
-
-                try {
-
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                    dilateAlgo25D = new AlgorithmMorphology25D(image, kernel, kernelSize, AlgorithmMorphology25D.DILATE,
-                                                               iters, 0, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        dilateAlgo25D.setMask(image.generateVOIMask());
-                    }
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    dilateAlgo25D.addListener(this);
-
-                    createProgressBar(image.getImageName(), dilateAlgo25D);
-                    
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface.
-                        if (dilateAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        gsDilateAlgo2D = new AlgorithmGrayScaleMorphology2D(image, kernel, kernelSize, AlgorithmGrayScaleMorphology2D.DILATE,
+                                                                 iters, 0, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsDilateAlgo2D.setMask(image.generateVOIMask());
                         }
-                    } else {
-                        dilateAlgo25D.run();
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsDilateAlgo2D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsDilateAlgo2D);
+                        
+                        // Hide the dialog since the algorithm is about to run.
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface.
+                            if (gsDilateAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            gsDilateAlgo2D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
+    
+                        return;
                     }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
-
-                    return;
                 }
-            }
-        }
+            } else if ((image.getNDims() == 3) && !do25D) {
+                int[] destExtents = new int[3];
+                destExtents[0] = image.getExtents()[0];
+                destExtents[1] = image.getExtents()[1];
+                destExtents[2] = image.getExtents()[2];
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        gsDilateAlgo3D = new AlgorithmGrayScaleMorphology3D(resultImage, kernel, kernelSize,
+                                                                 AlgorithmGrayScaleMorphology3D.DILATE, iters, 0, 0, 0,
+                                                                 outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsDilateAlgo3D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsDilateAlgo3D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsDilateAlgo3D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast
+                            if (gsDilateAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            gsDilateAlgo3D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up image memory
+                            resultImage = null;
+                        }
+    
+                        return;
+                    }
+                } else {
+    
+                    try {
+    
+                        // Make algorithm
+                        gsDilateAlgo3D = new AlgorithmGrayScaleMorphology3D(image, kernel, kernelSize, AlgorithmGrayScaleMorphology3D.DILATE,
+                                                                 iters, 0, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsDilateAlgo3D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsDilateAlgo3D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsDilateAlgo3D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
+                            ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast
+                            if (gsDilateAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            gsDilateAlgo3D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
+    
+                        return;
+                    }
+                }
+            } else if (do25D) {
+                int[] destExtents = new int[3];
+                destExtents[0] = image.getExtents()[0]; // X dim
+                destExtents[1] = image.getExtents()[1]; // Y dim
+                destExtents[2] = image.getExtents()[2]; // Z dim
+    
+                // convert to 2.5d kernel type
+                if (kernel == AlgorithmMorphology3D.CONNECTED6) {
+                    kernel = AlgorithmMorphology25D.CONNECTED4;
+                } else if (kernel == AlgorithmMorphology3D.CONNECTED24) {
+                    kernel = AlgorithmMorphology25D.CONNECTED12;
+                } else if (kernel == AlgorithmMorphology3D.SIZED_SPHERE) {
+                    kernel = AlgorithmMorphology25D.SIZED_CIRCLE;
+                }
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        gsDilateAlgo25D = new AlgorithmGrayScaleMorphology25D(resultImage, kernel, kernelSize,
+                                                                   AlgorithmGrayScaleMorphology25D.DILATE, iters, 0, 0, 0,
+                                                                   outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsDilateAlgo25D.setMask(image.generateVOIMask());
+                        }
+    
+                        // dilateAlgo25D = new AlgorithmMorphology25D(resultImage, kernel, 5,
+                        // AlgorithmMorphology25D.DILATE, iters, regionFlag);
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsDilateAlgo25D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsDilateAlgo25D);
+                        
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast.
+                            if (gsDilateAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            gsDilateAlgo25D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up memory of result image
+                            resultImage = null;
+                        }
+    
+                        return;
+                    }
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        gsDilateAlgo25D = new AlgorithmGrayScaleMorphology25D(image, kernel, kernelSize, AlgorithmGrayScaleMorphology25D.DILATE,
+                                                                   iters, 0, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsDilateAlgo25D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsDilateAlgo25D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsDilateAlgo25D);
+                        
+                        // Hide the dialog since the algorithm is about to run.
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface.
+                            if (gsDilateAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            gsDilateAlgo25D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog dilate: unable to allocate enough memory");
+    
+                        return;
+                    }
+                }
+            }    
+        } // else grayScaleMorphology
     }
 
 
@@ -818,6 +1296,43 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
         textKernelSize.setText("1");
         textKernelSize.setFont(serif12);
         textKernelSize.setEnabled(false);
+        
+        morphologyGroup = new ButtonGroup();
+        binaryButton = new JRadioButton("Binary morphology");
+        if ((image.getType() == ModelImage.BOOLEAN) || (image.getType() == ModelImage.UBYTE) ||
+            (image.getType() == ModelImage.USHORT)) {
+            binaryButton.setSelected(true);
+        }
+        else {
+            binaryButton.setSelected(false);
+        }
+        if ((image.getType() == ModelImage.UBYTE) || (image.getType() == ModelImage.USHORT)) {
+            binaryButton.setEnabled(true);
+        }
+        else {
+            binaryButton.setEnabled(false);
+        }
+        binaryButton.setFont(serif12);
+        binaryButton.setForeground(Color.black);
+        morphologyGroup.add(binaryButton);
+        
+        grayScaleButton = new JRadioButton("Gray scale morphology");
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
+            (image.getType() != ModelImage.USHORT)) {
+            grayScaleButton.setSelected(true);
+        }
+        else {
+            grayScaleButton.setSelected(false);
+        }
+        if ((image.getType() == ModelImage.UBYTE) || (image.getType() == ModelImage.USHORT)) {
+            grayScaleButton.setEnabled(true);
+        }
+        else {
+           grayScaleButton.setEnabled(false);
+        }
+        grayScaleButton.setFont(serif12);
+        grayScaleButton.setForeground(Color.black);
+        morphologyGroup.add(grayScaleButton);
 
         maskPanel = new JPanel(new GridBagLayout());
         maskPanel.setForeground(Color.black);
@@ -859,6 +1374,16 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(textKernelSize, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        maskPanel.add(binaryButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        maskPanel.add(grayScaleButton, gbc);
 
         outputPanel = new JPanelAlgorithmOutputOptions(image);
 
@@ -960,6 +1485,13 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
             } else if (comboBoxKernel.getSelectedIndex() == 2) {
                 kernel = AlgorithmMorphology3D.SIZED_SPHERE;
             }
+        }
+        
+        if (binaryButton.isSelected()) {
+            binaryMorphology = true;
+        }
+        else {
+            binaryMorphology = false;
         }
 
         return true;
