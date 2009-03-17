@@ -9,8 +9,8 @@ import java.io.*;
 
 
 /**
- * Algorithm that matches the transforms a match or source image so as to make its histogram equal to the histogram of a
- * base image. In order to easily note the great similarity of the histograms, the histogram displays must both be in
+ * Algorithm that matches or transforms a match or source slice so as to make its histogram equal to the histogram of a
+ * base slice. In order to easily note the great similarity of the histograms, the histogram displays must both be in
  * linear mode rather than log mode so that small differences are not exaggerated. The algorithm is as follows: 1.) Make
  * the histogram for the match image. 2.) Make the histogram cumulative. 3.) Create the scaled cumulative histogram
  * mapping scaled so that the last bin of mapping has the range of the base image. 4.) For the base image create a
