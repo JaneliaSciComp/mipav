@@ -31,6 +31,7 @@ import WildMagic.LibGraphics.Rendering.*;
 import WildMagic.LibGraphics.SceneGraph.*;
 import WildMagic.LibGraphics.Shaders.*;
 import WildMagic.LibRenderers.OpenGLRenderer.*;
+import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
 
 public class Multitextures extends JavaApplication3D
     implements GLEventListener, KeyListener
@@ -108,10 +109,10 @@ public class Multitextures extends JavaApplication3D
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
             DrawFrameRate(8,GetHeight()-8,ColorRGBA.WHITE);
 
-            //if ( m_kSculptor.IsSculptDrawn() )
-            //{
-             //   m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
-            //}
+            if ( m_kSculptor.IsSculptDrawn() )
+            {
+                m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
+            }
             m_pkRenderer.EndScene();
         }
         m_pkRenderer.DisplayBackBuffer();
@@ -154,6 +155,7 @@ public class Multitextures extends JavaApplication3D
         InitializeCameraMotion(0.001f,0.001f);
         InitializeObjectMotion(m_spkScene);
 
+        m_kSculptor = new Sculptor_WM( GetCanvas() );
         //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
@@ -172,12 +174,6 @@ public class Multitextures extends JavaApplication3D
        // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
-    /*
-    public GLCanvas GetCanvas()
-    {
-        return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
-    }
-    */
     public GLCanvas GetCanvas()
     {
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
@@ -217,7 +213,7 @@ public class Multitextures extends JavaApplication3D
     int m_iActive;
     
     private Plane3f m_kPlane = new Plane3f( new Vector3f( .5f, -1, -1 ), new Vector3f( .5f, 1, 1), new Vector3f( .5f, -1, 1) );
-    //SculptorWm m_kSculptor;
+    Sculptor_WM m_kSculptor;
 
     public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
@@ -237,17 +233,17 @@ public class Multitextures extends JavaApplication3D
         {
         case 'e':
             {
-            //m_kSculptor.enableSculpt(true);
+            m_kSculptor.enableSculpt(true);
             return;
             }
         case 'f':
             {
-            //m_kSculptor.enableSculpt(false);
+            m_kSculptor.enableSculpt(false);
             return;
             }
         case 'i':
             {
-            //m_kSculptor.invertSculpt();
+            m_kSculptor.invertSculpt();
             return;
             }
         case 'n':
