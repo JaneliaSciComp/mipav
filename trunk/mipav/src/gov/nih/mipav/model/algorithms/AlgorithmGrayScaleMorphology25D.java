@@ -487,11 +487,11 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
                 erode(false, iterationsE);
                 break;
 
-            /*case DILATE:
+            case DILATE:
                 dilate(false, iterationsD);
                 break;
 
-            case CLOSE:
+            /*case CLOSE:
             	setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 dilate(true, iterationsD);
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
@@ -752,13 +752,14 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
     }*/
 
     /**
-     * Dilates a boolean, unsigned byte or unsigned short image using the indicated kernel and the indicated number of
-     * executions.
+     * Dilates an image using the indicated kernel and the indicated number of
+     * executions.  The grayscale dilation is the maximum value over the reflected kernel region.
+     * For symmetric kernels the reflected kernel is the same as the kernel.
      *
      * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
      * @param  iters       number of dilations
      */
-    /*private void dilate(boolean returnFlag, int iters) {
+    private void dilate(boolean returnFlag, int iters) {
 
         // if THREAD stopped already, then dump out!
         if (threadStopped) {
@@ -768,7 +769,6 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
         }
 
         int c;
-        short value = 0;
         int i, j, pix, count;
         int offsetX, offsetY, offsetZ;
         int offsetXU;
@@ -776,17 +776,12 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
         int endX, endY;
 
         int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
         int zDim = srcImage.getExtents()[2];
 
         int halfKDim = kDim / 2;
         int stepY = kDim * xDim;
-        short[] tempBuffer;
-
-        for (pix = 0; pix < imgLength; pix++) {
-            processBuffer[pix] = 0;
-        }
-
+        double[] tempBuffer;
+        
         int mod = (iters * sliceLength * zDim) / 20; // mod is 5 percent of length
 
         for (c = 0; (c < iters) && !threadStopped; c++) {
@@ -795,49 +790,53 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
                 offsetZ = curSlice * sliceLength;
 
                 for (pix = offsetZ; (pix < (offsetZ + sliceLength)) && !threadStopped; pix++) {
+                    
+                    if (((((c * offsetZ) + pix) % mod) == 0)) {
+                        fireProgressStateChanged(Math.round((pix + 1 + (c * sliceLength * zDim)) /
+                                                               (iters * (float) sliceLength * zDim) * 100));
+                    }
 
                     if (entireImage || mask.get(pix)) {
-                        value = imgBuffer[pix];
+                        processBuffer[pix] = imgBuffer[pix];
 
-                        if (value != 0) {
-                            offsetX = (pix % xDim) - halfKDim;
-                            offsetXU = offsetX + kDim;
-                            offsetY = ((pix % sliceLength) / xDim) - halfKDim;
+                        offsetX = (pix % xDim) - halfKDim;
+                        offsetXU = offsetX + kDim;
+                        offsetY = ((pix % sliceLength) / xDim) - halfKDim;
 
-                            count = 0;
-                            startY = (offsetY * xDim) + offsetZ;
-                            endY = startY + stepY;
+                        count = 0;
+                        startY = (offsetY * xDim) + offsetZ;
+                        endY = startY + stepY;
 
-                            if (startY < offsetZ) {
-                                startY = offsetZ;
-                            }
+                        if (startY < offsetZ) {
+                            startY = offsetZ;
+                        }
 
-                            if (endY > (offsetZ + sliceLength)) {
-                                endY = offsetZ + sliceLength;
-                            }
+                        if (endY > (offsetZ + sliceLength)) {
+                            endY = offsetZ + sliceLength;
+                        }
 
-                            if (offsetX < 0) {
-                                offsetX = 0;
-                            }
+                        if (offsetX < 0) {
+                            offsetX = 0;
+                        }
 
-                            if (offsetXU > xDim) {
-                                offsetXU = xDim;
-                            }
+                        if (offsetXU > xDim) {
+                            offsetXU = xDim;
+                        }
 
-                            for (j = startY; j < endY; j += xDim) {
-                                startX = j + offsetX;
-                                endX = j + offsetXU;
+                        for (j = startY; j < endY; j += xDim) {
+                            startX = j + offsetX;
+                            endX = j + offsetXU;
 
-                                for (i = startX; i < endX; i++) {
+                            for (i = startX; i < endX; i++) {
 
-                                    if (kernel.get(count) == true) {
-                                        processBuffer[i] = value;
-                                    }
-
-                                    count++;
+                                if (kernel.get(count)  && imgBuffer[i] > processBuffer[pix]) {
+                                    processBuffer[pix] = imgBuffer[i];
                                 }
+
+                                count++;
                             }
                         }
+                     
                     } else {
                         processBuffer[pix] = imgBuffer[pix];
                     }
@@ -873,7 +872,7 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
 
      
         setCompleted(true);
-    }*/
+    }
 
     /**
      * Erodes an image using the indicated kernel and the indicated number of
@@ -892,7 +891,6 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
         }
 
         int c;
-        double value = 0;
         int i, j, pix, count;
         int offsetX, offsetY, offsetZ;
         int offsetXU;
@@ -910,10 +908,6 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
         
         int mod = (iters * sliceLength * zDim) / 20; // mod is 5 percent of length
 
-        for (pix = 0; pix < imgLength; pix++) {
-            processBuffer[pix] = 0;
-        }
-
         for (c = 0; (c < iters) && !threadStopped; c++) {
 
             for (int curSlice = 0; curSlice < zDim; curSlice++) {
@@ -927,7 +921,7 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
                         }
 
                     if (entireImage || mask.get(pix)) {
-                        value = imgBuffer[pix];
+                        processBuffer[pix] = imgBuffer[pix];
 
                         
                         offsetX = (pix % xDim) - halfKDim;
@@ -960,16 +954,14 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
 
                             for (i = startX; i < endX; i++) {
 
-                                if ((kernel.get(count) == true) && (imgBuffer[i] < value)) {
-                                        value = imgBuffer[i];
+                                if ((kernel.get(count) == true) && (imgBuffer[i] < processBuffer[pix])) {
+                                        processBuffer[pix] = imgBuffer[i];
                                 }
 
                                 count++;
                             }
                         }
 
-                        
-                        processBuffer[pix] = value;
                     } else {
                         processBuffer[pix] = imgBuffer[pix];
                     }
