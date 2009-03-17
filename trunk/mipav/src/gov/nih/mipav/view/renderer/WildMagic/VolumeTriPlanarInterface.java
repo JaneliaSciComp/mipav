@@ -587,7 +587,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
                     maxPanelWidth = Math.max(m_kBrainsurfaceFlattenerPanel.getPreferredSize().width, maxPanelWidth);
                     bf_flyPanel.add( brainsurfaceFlattenerRender.GetCanvas(), BorderLayout.CENTER );
                     dualPane.setDividerLocation( 0.5f );
-                    
                     m_kLightsPanel.enableLight(0, true);
                     addNode( kMeshLines );
                 }
@@ -607,7 +606,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
                 TriMesh kSurface = raycastRenderWM.getSurface( surfaceGUI.getSelectedSurface() );
                 m_kFlyThroughRender.addSurface(kSurface, raycastRenderWM.getSurfaceCenter( surfaceGUI.getSelectedSurface()) );
                 bf_flyPanel.add( m_kFlyThroughRender.GetCanvas(), BorderLayout.CENTER );
-                dualPane.setDividerLocation( 0.5f );            
+                dualPane.setDividerLocation( 0.5f ); 
                 m_kLightsPanel.enableLight(0, true);
                 buildFlythroughPanel();
             }
@@ -2824,15 +2823,14 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
 
         gpuPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
         gpuPanel.setMinimumSize(new Dimension(250, 250));
-        
+       
         bf_flyPanel = new JPanel(new BorderLayout());
         bf_flyPanel.setBorder(compound);
         
         dualPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, gpuPanel, bf_flyPanel);
-        dualPane.setOneTouchExpandable(false);
+        dualPane.setOneTouchExpandable(true);
         dualPane.setDividerSize(6);
         dualPane.setContinuousLayout(true);
-        dualPane.setResizeWeight(1);
         
         rightPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, dualPane, triImagePanel);
         rightPane.setOneTouchExpandable(true);
@@ -2927,6 +2925,12 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         {
             flythruControl.resizePanel(maxPanelWidth, height);
         }
+        
+        if ( m_kFlyThroughPanel != null || m_kBrainsurfaceFlattenerPanel != null  ) {
+        	dualPane.setDividerLocation( 0.5f );
+        }
+        rightPane.setDividerLocation( 0.618f ); 
+        
     }
     
     /**
