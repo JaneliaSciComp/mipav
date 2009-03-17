@@ -1523,11 +1523,11 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
                 erode(false, iterationsE);
                 break;
 
-            /*case DILATE:
+            case DILATE:
                 dilate(false, iterationsD);
                 break;
 
-            case CLOSE:
+            /*case CLOSE:
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 dilate(true, iterationsD);
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
@@ -2375,13 +2375,14 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
     }*/
 
     /**
-     * Dilates a boolean, unsigned byte or unsigned short image using the indicated kernel and the indicated number of
-     * executions.
+     * Dilates an image using the indicated kernel and the indicated number of
+     * executions.  The grayscale dilation is the maximum value over the reflected kernel region.
+     * For symmetric kernels the reflected kernel is the same as the kernel.
      *
      * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
      * @param  iters       number of dilations
      */
-    /*private void dilate(boolean returnFlag, int iters) {
+    private void dilate(boolean returnFlag, int iters) {
 
         // if THREAD stopped already, then dump out!
         if (threadStopped) {
@@ -2391,7 +2392,6 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
         }
 
         int c;
-        short value = 0;
         int i, j, pix, count;
         int offsetX, offsetY;
         int offsetXU;
@@ -2404,15 +2404,10 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
         int halfKDim = kDim / 2;
         int sliceSize = xDim * yDim;
         int stepY = kDim * xDim;
-        short[] tempBuffer;
+        double[] tempBuffer;
 
         fireProgressStateChanged("Dilating image ...");
         fireProgressStateChanged(0);
-
-
-        for (pix = 0; pix < sliceSize; pix++) {
-            processBuffer[pix] = 0;
-        }
 
         int mod = (iters * sliceSize) / 20; // mod is 5 percent of length
 
@@ -2435,47 +2430,46 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
                 }
 
                 if (entireImage || mask.get(pix)) {
-                    value = imgBuffer[pix];
+                    processBuffer[pix] = imgBuffer[pix];
 
-                    if (value != 0) {
-                        offsetX = (pix % xDim) - halfKDim;
-                        offsetXU = offsetX + kDim;
-                        offsetY = (pix / xDim) - halfKDim;
+                    offsetX = (pix % xDim) - halfKDim;
+                    offsetXU = offsetX + kDim;
+                    offsetY = (pix / xDim) - halfKDim;
 
-                        count = 0;
-                        startY = offsetY * xDim;
-                        endY = startY + stepY;
+                    count = 0;
+                    startY = offsetY * xDim;
+                    endY = startY + stepY;
 
-                        if (startY < 0) {
-                            startY = 0;
-                        }
+                    if (startY < 0) {
+                        startY = 0;
+                    }
 
-                        if (endY > sliceSize) {
-                            endY = sliceSize;
-                        }
+                    if (endY > sliceSize) {
+                        endY = sliceSize;
+                    }
 
-                        if (offsetX < 0) {
-                            offsetX = 0;
-                        }
+                    if (offsetX < 0) {
+                        offsetX = 0;
+                    }
 
-                        if (offsetXU > xDim) {
-                            offsetXU = xDim;
-                        }
+                    if (offsetXU > xDim) {
+                        offsetXU = xDim;
+                    }
 
-                        for (j = startY; j < endY; j += xDim) {
-                            startX = j + offsetX;
-                            endX = j + offsetXU;
+                    for (j = startY; j < endY; j += xDim) {
+                        startX = j + offsetX;
+                        endX = j + offsetXU;
 
-                            for (i = startX; i < endX; i++) {
+                        for (i = startX; i < endX; i++) {
 
-                                if (kernel.get(count) == true) {
-                                    processBuffer[i] = value;
-                                }
-
-                                count++;
+                            if (kernel.get(count) && (imgBuffer[i] > processBuffer[pix])) {
+                                processBuffer[pix] = imgBuffer[i];
                             }
+
+                            count++;
                         }
                     }
+                       
                 } else {
                     processBuffer[pix] = imgBuffer[pix];
                 }
@@ -2487,12 +2481,12 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
         }
 
         if (showFrame) {
-            ModelImage tempImage = new ModelImage(ModelImage.USHORT, srcImage.getExtents(), "Dilate");
+            ModelImage tempImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), "Dilate");
 
             try {
                 tempImage.importData(0, imgBuffer, true);
             } catch (IOException error) {
-                displayError("Algorithm Morphology2D: Image(s) locked in Dilate");
+                displayError("Algorithm GrayScaleMorphology2D: Image(s) locked in Dilate");
                 setCompleted(false);
 
 
@@ -2516,7 +2510,7 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
 
             srcImage.importData(0, imgBuffer, true);
         } catch (IOException error) {
-            displayError("Algorithm Morphology2D: Image(s) locked");
+            displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
             setCompleted(false);
 
 
@@ -2524,7 +2518,7 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
         }
 
         setCompleted(true);
-    }*/
+    }
 
     /**
      * Euclidian distance map.
@@ -2694,7 +2688,6 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
         }
 
         int c;
-        double value = 0;
         int i, j, pix, count;
         int offsetX, offsetY;
         int offsetXU;
@@ -2734,7 +2727,7 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
                 }
 
                 if (entireImage || mask.get(pix)) {
-                    value = imgBuffer[pix];
+                    processBuffer[pix] = imgBuffer[pix];
 
                     
                     offsetX = (pix % xDim) - halfKDim;
@@ -2768,8 +2761,8 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
 
                         for (i = startX; i < endX; i++) {
 
-                            if ((kernel.get(count) == true) && (imgBuffer[i] < value)) {
-                                value = imgBuffer[i];
+                            if (kernel.get(count) && (imgBuffer[i] < processBuffer[pix])) {
+                                processBuffer[pix] = imgBuffer[i];
 
                             }
 
@@ -2777,8 +2770,6 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
                         }
                     }
 
-                    
-                    processBuffer[pix] = value;
                 } else {
 
                     processBuffer[pix] = imgBuffer[pix];
