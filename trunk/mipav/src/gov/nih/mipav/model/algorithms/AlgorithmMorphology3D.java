@@ -92,6 +92,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     public static final int CONNECTED24 = 2;
+    
+    public static final int CONNECTED26 = 3;
 
     /**
      * Parameter used in Find_Edges. Indicates that the edge extracted is formed from the voxels that are directly
@@ -2675,6 +2677,39 @@ kernelLoop:
                 kernel.set(92);
 
                 kernel.set(112);
+                break;
+                
+            case CONNECTED26:
+                kDimXY = 3;
+                kDimZ = 3;
+                kernel = new BitSet(27);
+                kernel.set(0);
+                kernel.set(1);
+                kernel.set(2);
+                kernel.set(3);
+                kernel.set(4);
+                kernel.set(5);
+                kernel.set(6);
+                kernel.set(7);
+                kernel.set(8);
+                kernel.set(9);
+                kernel.set(10);
+                kernel.set(11);
+                kernel.set(12);
+                kernel.set(13);
+                kernel.set(14);
+                kernel.set(15);
+                kernel.set(16);
+                kernel.set(17);
+                kernel.set(18);
+                kernel.set(19);
+                kernel.set(20);
+                kernel.set(21);
+                kernel.set(22);
+                kernel.set(23);
+                kernel.set(24);
+                kernel.set(25);
+                kernel.set(26);
                 break;
 
             default:
