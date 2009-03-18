@@ -29,6 +29,7 @@ import java.util.*;
  *   <li>fill holes</li>
  *   <li>find edges</li>
  *   <li>Identify objects</li>
+ *   <li>Morphological gradient</li>
  *   <li>open</li>
  *   <li>Particle Analysis</li>
  *   <li>Skeletonize with pruning option</li>
@@ -83,6 +84,8 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
     
     /** DOCUMENT ME! */
     public static final int DISTANCE_MAP_FOR_SHAPE_INTERPOLATION = 13;
+    
+    public static final int MORPHOLOGICAL_GRADIENT = 14;
 
     /** DOCUMENT ME! */
     public static final int SIZED_SPHERE = AlgorithmMorphology3D.SIZED_SPHERE;
@@ -115,7 +118,7 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
     /** DOCUMENT ME! */
     private String[] algorithmName = {
         "ERODE", "DILATE", "CLOSE", "OPEN", "ID_OBJECTS", "DELETE_OBJECTS", "DISTANCE_MAP", "BACKGROUND_DISTANCE_MAP",
-        "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE", "FIND_EDGES", "FILL_HOLES"
+        "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE", "FIND_EDGES", "FILL_HOLES", "MORPHOLOGICAL_GRADIENT"
     };
 
     /** DOCUMENT ME! */
@@ -129,6 +132,8 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
 
     /** imgBuffer that hold voxel value for the 3D slices. */
     private double[] imgBuffer;
+    
+    private double[] imgBuffer2;
 
     /** Dilation iteration times. */
     private int iterationsD;
@@ -890,6 +895,39 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
                                   ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 dilate(false);
+                break;
+                
+            case MORPHOLOGICAL_GRADIENT:
+                progressValues = getProgressValues();
+                setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
+                dilate(true);
+                imgBuffer2 = new double[imgBuffer.length];
+                System.arraycopy(imgBuffer, 0, imgBuffer2, 0, imgBuffer.length);
+                try { 
+                    srcImage.exportData(0, imgBuffer.length, imgBuffer); // locks and releases lock
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
+                    setCompleted(false);
+
+                    return;
+                }
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
+                        ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+                erode(true);
+                for (int i = 0; i < imgBuffer.length; i++) {
+                    imgBuffer2[i] = imgBuffer2[i] - imgBuffer[i];
+                }
+                try {
+                    srcImage.importData(0, imgBuffer2, true);
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+
+                setCompleted(true);
                 break;
 
             /*case FILL_HOLES:
