@@ -9,6 +9,7 @@ import gov.nih.mipav.view.renderer.JPanelRendererBase;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
@@ -23,6 +24,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -91,6 +93,10 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
     /** Show curvature colors check box. */
     private JCheckBox m_kCheckBoxShowCurvatures = new JCheckBox();
 
+    /** Surface sample reduction factor. */
+    private JComboBox m_kComboSegmentSurfaceBranchSamplesReductionFactor;
+
+    
     /** Continuous update check box. */
     private JCheckBox m_kContinueUpdate = new JCheckBox();
 
@@ -266,6 +272,7 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         m_kTextMaxNumBranches = null;
         m_kTextMinBranchLength = null;
         m_kTextPercentBSplineNumControlPoints = null;
+        m_kComboSegmentSurfaceBranchSamplesReductionFactor = null;
         m_kLabelFileName = null;
         m_kLabelDistance = null;
         m_kTextDistance = null;
@@ -495,6 +502,21 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         m_kTextPercentBSplineNumControlPoints.setText(Float.toString(m_kOptions.m_fFractionNumControlPoints));
         m_kTextPercentBSplineNumControlPoints.setFont(serif12);
 
+        // combo box to select path samples reduction factor to use when
+        // segmenting the surface
+        JLabel kLabelSegmentSurfaceBranchSamplesReductionFactor = new JLabel("Surface segmentation branch samples reduction factor");
+
+        kLabelSegmentSurfaceBranchSamplesReductionFactor.setForeground(Color.black);
+        kLabelSegmentSurfaceBranchSamplesReductionFactor.setFont(serif12);
+        kLabelSegmentSurfaceBranchSamplesReductionFactor.setAlignmentX(Component.LEFT_ALIGNMENT);
+        m_kComboSegmentSurfaceBranchSamplesReductionFactor = new JComboBox();
+        m_kComboSegmentSurfaceBranchSamplesReductionFactor.setFont(MipavUtil.font12);
+        m_kComboSegmentSurfaceBranchSamplesReductionFactor.setBackground(Color.white);
+        m_kComboSegmentSurfaceBranchSamplesReductionFactor.addItem("1 (no reduction)");
+        m_kComboSegmentSurfaceBranchSamplesReductionFactor.addItem("2");
+        m_kComboSegmentSurfaceBranchSamplesReductionFactor.addItem("4");
+        m_kComboSegmentSurfaceBranchSamplesReductionFactor.setSelectedIndex(1);
+        
         // Button: Load Surface
         flythruButtonLoadImage.setText("Select Mask Image ...");
         flythruButtonLoadImage.setActionCommand("Select Image ...");
@@ -549,6 +571,17 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         kPanelOptions.add(m_kTextPercentBSplineNumControlPoints, gbc);
 
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        kPanelOptions.add(kLabelSegmentSurfaceBranchSamplesReductionFactor, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        kPanelOptions.add(m_kComboSegmentSurfaceBranchSamplesReductionFactor, gbc);    
+        
         JPanel fileLoaderPanel = new JPanel(new GridBagLayout());
 
         gbc.gridx = 0;
@@ -796,6 +829,11 @@ public class JPanelVirtualEndoscopySetup_WM extends JPanelRendererBase {
 
             return false;
         }
+        
+        // Path samples reduction factor for segmentation of the surface.
+        m_kOptions.m_iSegmentSurfaceBranchSamplesReductionFactor = 1 <<
+        m_kComboSegmentSurfaceBranchSamplesReductionFactor.getSelectedIndex();
+       
         return true;
     }
 
