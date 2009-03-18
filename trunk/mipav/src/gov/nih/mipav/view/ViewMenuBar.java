@@ -236,6 +236,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Find edges", null, 0, null, false),
                         menuBuilder.buildMenuItem("ID objects", null, 0, null, false),
                         menuBuilder.buildMenuItem("Morphological filter", "morFilter", 0, null, false),
+                        menuBuilder.buildMenuItem("Morphological gradient", "morGradient", 0, null, false),
                         menuBuilder.buildMenuItem("Open", null, 0, null, false),
                         menuBuilder.buildMenuItem("Particle analysis", null, 0, null, false),
                         menuBuilder.buildMenuItem("Skeletonize", null, 0, null, false),
