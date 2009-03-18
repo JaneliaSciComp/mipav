@@ -1221,7 +1221,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                         if (isRunInSeparateThread()) {
     
                             // Start the thread as a low priority because we wish to still have user interface.
-                            if (erodeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            if (gsErodeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                                 MipavUtil.displayError("A thread is already running on this object");
                             }
                         } else {
