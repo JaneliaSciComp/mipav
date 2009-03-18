@@ -491,7 +491,7 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
                 dilate(false, iterationsD);
                 break;
 
-            /*case CLOSE:
+            case CLOSE:
             	setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 dilate(true, iterationsD);
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
@@ -507,7 +507,7 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
                 dilate(false, iterationsD);
                 break;
 
-            case ID_OBJECTS:
+            /*case ID_OBJECTS:
                 MipavUtil.displayError("2.5D identify objects not supported.");
 
                 // identifyObjects( false );
