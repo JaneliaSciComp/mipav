@@ -88,17 +88,18 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
     /** DOCUMENT ME! */
     public static final int DISTANCE_MAP_FOR_SHAPE_INTERPOLATION = 14;
 
+    
     /** DOCUMENT ME! */
-    public static final int SIZED_CIRCLE = 0;
+    public static final int SIZED_CIRCLE = AlgorithmMorphology2D.SIZED_CIRCLE;
 
     /** DOCUMENT ME! */
-    public static final int CONNECTED4 = 1;
+    public static final int CONNECTED4 = AlgorithmMorphology2D.CONNECTED4;
 
     /** DOCUMENT ME! */
-    public static final int CONNECTED8 = 2;
+    public static final int CONNECTED8 = AlgorithmMorphology2D.CONNECTED8;
 
     /** DOCUMENT ME! */
-    public static final int CONNECTED12 = 3;
+    public static final int CONNECTED12 = AlgorithmMorphology2D.CONNECTED12;
 
     /** DOCUMENT ME! */
     public static final int OUTER_EDGING = 0;
