@@ -23,7 +23,7 @@ import javax.swing.*;
  * source image. In addition the user selects if the algorithm is applied to whole image or to the VOI regions. It
  * should be noted that the algorithms are executed in their own threads.
  *
- * @version  0.1 Nov 17, 1998
+ * @version  1.1 March 18, 2009
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmMorphology2D
  */
@@ -44,6 +44,20 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
 
     /** DOCUMENT ME! */
     private AlgorithmMorphology3D closeAlgo3D = null;
+    
+    private AlgorithmGrayScaleMorphology2D gsCloseAlgo2D = null;
+    
+    private AlgorithmGrayScaleMorphology25D gsCloseAlgo25D = null;
+    
+    private AlgorithmGrayScaleMorphology3D gsCloseAlgo3D = null;
+    
+    private ButtonGroup morphologyGroup;
+    
+    private JRadioButton binaryButton;
+    
+    private JRadioButton grayScaleButton;
+    
+    private boolean binaryMorphology = true;
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxKernel;
@@ -120,10 +134,9 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
      */
     public JDialogClose(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
+        
+        if (im.isColorImage()) {
+            MipavUtil.displayError("Source Image cannot be a color image");
             dispose();
 
             return;
@@ -298,6 +311,135 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                 resultImage = null;
             }
         }
+        else if (algorithm instanceof AlgorithmGrayScaleMorphology2D) {
+            image.clearMask();
+
+            if ((gsCloseAlgo2D.isCompleted() == true) && (resultImage != null)) {
+
+                updateFileInfo(image, resultImage);
+                resultImage.clearMask();
+
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+
+                    // resultImage.setImageName("Closed image");
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage == null) {
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    userInterface.registerFrame(parentFrame);
+                }
+
+                image.notifyImageDisplayListeners(null, true);
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+            }
+        } else if (algorithm instanceof AlgorithmGrayScaleMorphology25D) {
+            image.clearMask();
+
+            if ((gsCloseAlgo25D.isCompleted() == true) && (resultImage != null)) {
+
+                updateFileInfo(image, resultImage);
+                resultImage.clearMask();
+
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+
+                    // resultImage.setImageName("Closed image");
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage == null) {
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    userInterface.registerFrame(parentFrame);
+                }
+
+                image.notifyImageDisplayListeners(null, true);
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+            }
+        } else if (algorithm instanceof AlgorithmGrayScaleMorphology3D) {
+            image.clearMask();
+
+            if ((gsCloseAlgo3D.isCompleted() == true) && (resultImage != null)) {
+                updateFileInfo(image, resultImage);
+                resultImage.clearMask();
+
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+
+                    // resultImage.setImageName("Closed image");
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage == null) {
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    userInterface.registerFrame(parentFrame);
+                }
+
+                image.notifyImageDisplayListeners(null, true);
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+            }
+        }
 
         if (algorithm.isCompleted()) {
             insertScriptLine();
@@ -318,6 +460,21 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
         if (closeAlgo3D != null) {
             closeAlgo3D.finalize();
             closeAlgo3D = null;
+        }
+        
+        if (gsCloseAlgo2D != null) {
+            gsCloseAlgo2D.finalize();
+            gsCloseAlgo2D = null;
+        }
+
+        if (gsCloseAlgo25D != null) {
+            gsCloseAlgo25D.finalize();
+            gsCloseAlgo25D = null;
+        }
+
+        if (gsCloseAlgo3D != null) {
+            gsCloseAlgo3D.finalize();
+            gsCloseAlgo3D = null;
         }
 
         dispose();
@@ -346,7 +503,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
 
         if (source == comboBoxKernel) {
 
-            if (comboBoxKernel.getSelectedIndex() == 2) {
+            if (comboBoxKernel.getSelectedIndex() == 3) {
                 textKernelSize.setEnabled(true);
                 labelKernelSize.setEnabled(true);
             } else {
@@ -377,8 +534,10 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
     /**
      * Accessor that sets the kernel type to use.
      *
-     * @param  krnl  the kernel type to use (either AlgorithmMorphology2D.CONNECTED4, AlgorithmMorphology2D.CONNECTED12,
+     * @param  krnl  the kernel type to use (either AlgorithmMorphology2D.CONNECTED4,
+     *               AlgorithmMorphology2D.CONNECTED8, AlgorithmMorphology2D.CONNECTED12,
      *               AlgorithmMorphology2D.SIZED_CIRCLE, AlgorithmMorphology3D.CONNECTED6,
+     *               AlgorithmMorphology3D.CONNECTED26,
      *               AlgorithmMorphology3D.CONNECTED24, AlgorithmMorphology3D.SIZED_SPHERE (or the ones in
      *               AlgorithmMorphology25D))
      */
@@ -411,333 +570,668 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_close");
 
-        if (image.getNDims() == 2) { // source image is 2D
-
-            int[] destExtents = new int[2];
-            destExtents[0] = image.getExtents()[0]; // X dim
-            destExtents[1] = image.getExtents()[1]; // Y dim
-
-            if (outputPanel.isOutputNewImageSet()) {
-
-                try {
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-
-                    // Make algorithm
-                    closeAlgo2D = new AlgorithmMorphology2D(resultImage, kernel, kernelSize,
-                                                            AlgorithmMorphology2D.CLOSE, itersD, itersE, 0, 0,
-                                                            outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        closeAlgo2D.setMask(image.generateVOIMask());
-                    }
-
-                    // closeAlgo2D.setIterations(itersD, itersE);
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    closeAlgo2D.addListener(this);
-
-                    createProgressBar(image.getImageName(), closeAlgo2D);
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (closeAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+        if (binaryMorphology) {
+            if (image.getNDims() == 2) { // source image is 2D
+    
+                int[] destExtents = new int[2];
+                destExtents[0] = image.getExtents()[0]; // X dim
+                destExtents[1] = image.getExtents()[1]; // Y dim
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        closeAlgo2D = new AlgorithmMorphology2D(resultImage, kernel, kernelSize,
+                                                                AlgorithmMorphology2D.CLOSE, itersD, itersE, 0, 0,
+                                                                outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            closeAlgo2D.setMask(image.generateVOIMask());
                         }
-                    } else {
-
-                        closeAlgo2D.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog close: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up memory of result image
-                        resultImage = null;
-                    }
-
-                    return;
-                }
-            } else {
-
-                try {
-
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                    closeAlgo2D = new AlgorithmMorphology2D(image, kernel, kernelSize, AlgorithmMorphology2D.CLOSE,
-                                                            itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        closeAlgo2D.setMask(image.generateVOIMask());
+    
                         // closeAlgo2D.setIterations(itersD, itersE);
-                    }
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    closeAlgo2D.addListener(this);
-
-                    createProgressBar(image.getImageName(), closeAlgo2D);
-
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface.
-                        if (closeAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        closeAlgo2D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), closeAlgo2D);
+    
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast.
+                            if (closeAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+    
+                            closeAlgo2D.run();
                         }
-                    } else {
-
-                        closeAlgo2D.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog close: unable to allocate enough memory");
-
-                    return;
-                }
-            }
-        } else if ((image.getNDims() == 3) && !do25D) {
-            int[] destExtents = new int[3];
-            destExtents[0] = image.getExtents()[0];
-            destExtents[1] = image.getExtents()[1];
-            destExtents[2] = image.getExtents()[2];
-
-            if (outputPanel.isOutputNewImageSet()) {
-
-                try {
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-
-                    // Make algorithm
-                    closeAlgo3D = new AlgorithmMorphology3D(resultImage, kernel, kernelSize,
-                                                            AlgorithmMorphology3D.CLOSE, itersD, itersE, 0, 0,
-                                                            outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        closeAlgo3D.setMask(image.generateVOIMask());
-                    }
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    closeAlgo3D.addListener(this);
-
-                    createProgressBar(image.getImageName(), closeAlgo3D);
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (closeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog close: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up memory of result image
+                            resultImage = null;
                         }
-                    } else {
-
-                        closeAlgo3D.run();
+    
+                        return;
                     }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog close: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up image memory
-                        resultImage = null;
-                    }
-
-                    return;
-                }
-            } else {
-
-                try {
-
-                    // Make algorithm
-                    closeAlgo3D = new AlgorithmMorphology3D(image, kernel, kernelSize, AlgorithmMorphology3D.CLOSE,
-                                                            itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        closeAlgo3D.setMask(image.generateVOIMask());
-                    }
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    closeAlgo3D.addListener(this);
-
-                    createProgressBar(image.getImageName(), closeAlgo3D);
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (closeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        closeAlgo2D = new AlgorithmMorphology2D(image, kernel, kernelSize, AlgorithmMorphology2D.CLOSE,
+                                                                itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            closeAlgo2D.setMask(image.generateVOIMask());
+                            // closeAlgo2D.setIterations(itersD, itersE);
                         }
-                    } else {
-
-                        closeAlgo3D.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog close: unable to allocate enough memory");
-
-                    return;
-                }
-            }
-        } else if (do25D) {
-            int[] destExtents = new int[3];
-            destExtents[0] = image.getExtents()[0]; // X dim
-            destExtents[1] = image.getExtents()[1]; // Y dim
-            destExtents[2] = image.getExtents()[2]; // Z dim
-
-            // convert to 2.5d kernel type
-            if (kernel == AlgorithmMorphology3D.CONNECTED6) {
-                kernel = AlgorithmMorphology25D.CONNECTED4;
-            } else if (kernel == AlgorithmMorphology3D.CONNECTED24) {
-                kernel = AlgorithmMorphology25D.CONNECTED12;
-            } else if (kernel == AlgorithmMorphology3D.SIZED_SPHERE) {
-                kernel = AlgorithmMorphology25D.SIZED_CIRCLE;
-            }
-
-            if (outputPanel.isOutputNewImageSet()) {
-
-                try {
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-
-                    // Make algorithm
-                    closeAlgo25D = new AlgorithmMorphology25D(resultImage, kernel, kernelSize,
-                                                              AlgorithmMorphology2D.CLOSE, itersD, itersE, 0, 0,
-                                                              outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        closeAlgo25D.setMask(image.generateVOIMask());
-                    }
-
-                    // closeAlgo25D.setIterations(itersD, itersE);
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    closeAlgo25D.addListener(this);
-
-                    createProgressBar(image.getImageName(), closeAlgo25D);
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (closeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        closeAlgo2D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), closeAlgo2D);
+    
+                        // Hide the dialog since the algorithm is about to run.
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                         }
-                    } else {
-
-
-                        closeAlgo25D.run();
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface.
+                            if (closeAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+    
+                            closeAlgo2D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog close: unable to allocate enough memory");
+    
+                        return;
                     }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog close: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up memory of result image
-                        resultImage = null;
-                    }
-
-                    return;
                 }
-            } else {
-
-                try {
-
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                    closeAlgo25D = new AlgorithmMorphology25D(image, kernel, kernelSize, AlgorithmMorphology25D.CLOSE,
-                                                              itersD, itersE, 0, 0,
-                                                              outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        closeAlgo25D.setMask(image.generateVOIMask());
+            } else if ((image.getNDims() == 3) && !do25D) {
+                int[] destExtents = new int[3];
+                destExtents[0] = image.getExtents()[0];
+                destExtents[1] = image.getExtents()[1];
+                destExtents[2] = image.getExtents()[2];
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        closeAlgo3D = new AlgorithmMorphology3D(resultImage, kernel, kernelSize,
+                                                                AlgorithmMorphology3D.CLOSE, itersD, itersE, 0, 0,
+                                                                outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            closeAlgo3D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        closeAlgo3D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), closeAlgo3D);
+    
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast
+                            if (closeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+    
+                            closeAlgo3D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog close: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up image memory
+                            resultImage = null;
+                        }
+    
+                        return;
+                    }
+                } else {
+    
+                    try {
+    
+                        // Make algorithm
+                        closeAlgo3D = new AlgorithmMorphology3D(image, kernel, kernelSize, AlgorithmMorphology3D.CLOSE,
+                                                                itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            closeAlgo3D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        closeAlgo3D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), closeAlgo3D);
+    
+                        // Hide dialog
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast
+                            if (closeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+    
+                            closeAlgo3D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog close: unable to allocate enough memory");
+    
+                        return;
+                    }
+                }
+            } else if (do25D) {
+                int[] destExtents = new int[3];
+                destExtents[0] = image.getExtents()[0]; // X dim
+                destExtents[1] = image.getExtents()[1]; // Y dim
+                destExtents[2] = image.getExtents()[2]; // Z dim
+    
+                // convert to 2.5d kernel type
+                if (kernel == AlgorithmMorphology3D.CONNECTED6) {
+                    kernel = AlgorithmMorphology25D.CONNECTED4;
+                } else if (kernel == AlgorithmMorphology3D.CONNECTED26) {
+                    kernel = AlgorithmMorphology25D.CONNECTED8;
+                } else if (kernel == AlgorithmMorphology3D.CONNECTED24) {
+                    kernel = AlgorithmMorphology25D.CONNECTED12;
+                } else if (kernel == AlgorithmMorphology3D.SIZED_SPHERE) {
+                    kernel = AlgorithmMorphology25D.SIZED_CIRCLE;
+                }
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        closeAlgo25D = new AlgorithmMorphology25D(resultImage, kernel, kernelSize,
+                                                                  AlgorithmMorphology2D.CLOSE, itersD, itersE, 0, 0,
+                                                                  outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            closeAlgo25D.setMask(image.generateVOIMask());
+                        }
+    
                         // closeAlgo25D.setIterations(itersD, itersE);
-                    }
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    closeAlgo25D.addListener(this);
-
-                    createProgressBar(image.getImageName(), closeAlgo25D);
-
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface.
-                        if (closeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        closeAlgo25D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), closeAlgo25D);
+    
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast.
+                            if (closeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+    
+    
+                            closeAlgo25D.run();
                         }
-                    } else {
-
-                        closeAlgo25D.run();
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog close: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up memory of result image
+                            resultImage = null;
+                        }
+    
+                        return;
                     }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog close: unable to allocate enough memory");
-
-                    return;
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        closeAlgo25D = new AlgorithmMorphology25D(image, kernel, kernelSize, AlgorithmMorphology25D.CLOSE,
+                                                                  itersD, itersE, 0, 0,
+                                                                  outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            closeAlgo25D.setMask(image.generateVOIMask());
+                            // closeAlgo25D.setIterations(itersD, itersE);
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        closeAlgo25D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), closeAlgo25D);
+    
+                        // Hide the dialog since the algorithm is about to run.
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface.
+                            if (closeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+    
+                            closeAlgo25D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog close: unable to allocate enough memory");
+    
+                        return;
+                    }
                 }
             }
-        }
+        } // if (binaryMorphology)
+        else { // grayScaleMorphology
+            if (image.getNDims() == 2) { // source image is 2D
+                
+                int[] destExtents = new int[2];
+                destExtents[0] = image.getExtents()[0]; // X dim
+                destExtents[1] = image.getExtents()[1]; // Y dim
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        gsCloseAlgo2D = new AlgorithmGrayScaleMorphology2D(resultImage, kernel, kernelSize,
+                                                                AlgorithmGrayScaleMorphology2D.CLOSE, itersD, itersE, 0, 0,
+                                                                outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsCloseAlgo2D.setMask(image.generateVOIMask());
+                        }
+    
+                        // gsCloseAlgo2D.setIterations(itersD, itersE);
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsCloseAlgo2D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsCloseAlgo2D);
+    
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast.
+                            if (gsCloseAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+    
+                            gsCloseAlgo2D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog close: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up memory of result image
+                            resultImage = null;
+                        }
+    
+                        return;
+                    }
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        gsCloseAlgo2D = new AlgorithmGrayScaleMorphology2D(image, kernel, kernelSize, AlgorithmGrayScaleMorphology2D.CLOSE,
+                                                                itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsCloseAlgo2D.setMask(image.generateVOIMask());
+                            // gsCloseAlgo2D.setIterations(itersD, itersE);
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsCloseAlgo2D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsCloseAlgo2D);
+    
+                        // Hide the dialog since the algorithm is about to run.
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface.
+                            if (gsCloseAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+    
+                            gsCloseAlgo2D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog close: unable to allocate enough memory");
+    
+                        return;
+                    }
+                }
+            } else if ((image.getNDims() == 3) && !do25D) {
+                int[] destExtents = new int[3];
+                destExtents[0] = image.getExtents()[0];
+                destExtents[1] = image.getExtents()[1];
+                destExtents[2] = image.getExtents()[2];
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        gsCloseAlgo3D = new AlgorithmGrayScaleMorphology3D(resultImage, kernel, kernelSize,
+                                                                AlgorithmGrayScaleMorphology3D.CLOSE, itersD, itersE, 0, 0,
+                                                                outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsCloseAlgo3D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsCloseAlgo3D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsCloseAlgo3D);
+    
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast
+                            if (gsCloseAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+    
+                            gsCloseAlgo3D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog close: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up image memory
+                            resultImage = null;
+                        }
+    
+                        return;
+                    }
+                } else {
+    
+                    try {
+    
+                        // Make algorithm
+                        gsCloseAlgo3D = new AlgorithmGrayScaleMorphology3D(image, kernel, kernelSize, AlgorithmGrayScaleMorphology3D.CLOSE,
+                                                                itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsCloseAlgo3D.setMask(image.generateVOIMask());
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsCloseAlgo3D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsCloseAlgo3D);
+    
+                        // Hide dialog
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast
+                            if (gsCloseAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+    
+                            gsCloseAlgo3D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog close: unable to allocate enough memory");
+    
+                        return;
+                    }
+                }
+            } else if (do25D) {
+                int[] destExtents = new int[3];
+                destExtents[0] = image.getExtents()[0]; // X dim
+                destExtents[1] = image.getExtents()[1]; // Y dim
+                destExtents[2] = image.getExtents()[2]; // Z dim
+    
+                // convert to 2.5d kernel type
+                if (kernel == AlgorithmMorphology3D.CONNECTED6) {
+                    kernel = AlgorithmMorphology25D.CONNECTED4;
+                } else if (kernel == AlgorithmMorphology3D.CONNECTED26) {
+                    kernel = AlgorithmMorphology25D.CONNECTED8;
+                } else if (kernel == AlgorithmMorphology3D.CONNECTED24) {
+                    kernel = AlgorithmMorphology25D.CONNECTED12;
+                } else if (kernel == AlgorithmMorphology3D.SIZED_SPHERE) {
+                    kernel = AlgorithmMorphology25D.SIZED_CIRCLE;
+                }
+    
+                if (outputPanel.isOutputNewImageSet()) {
+    
+                    try {
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
+    
+                        // Make algorithm
+                        gsCloseAlgo25D = new AlgorithmGrayScaleMorphology25D(resultImage, kernel, kernelSize,
+                                                                  AlgorithmGrayScaleMorphology2D.CLOSE, itersD, itersE, 0, 0,
+                                                                  outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsCloseAlgo25D.setMask(image.generateVOIMask());
+                        }
+    
+                        // gsCloseAlgo25D.setIterations(itersD, itersE);
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsCloseAlgo25D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsCloseAlgo25D);
+    
+                        // Hide dialog
+                        setVisible(false);
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface work fast.
+                            if (gsCloseAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+    
+    
+                            gsCloseAlgo25D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog close: unable to allocate enough memory");
+    
+                        if (resultImage != null) {
+                            resultImage.disposeLocal(); // Clean up memory of result image
+                            resultImage = null;
+                        }
+    
+                        return;
+                    }
+                } else {
+    
+                    try {
+    
+                        // No need to make new image space because the user has choosen to replace the source image
+                        // Make the algorithm class
+                        gsCloseAlgo25D = new AlgorithmGrayScaleMorphology25D(image, kernel, kernelSize, AlgorithmGrayScaleMorphology25D.CLOSE,
+                                                                  itersD, itersE, 0, 0,
+                                                                  outputPanel.isProcessWholeImageSet());
+    
+                        if (outputPanel.isProcessWholeImageSet() == false) {
+                            gsCloseAlgo25D.setMask(image.generateVOIMask());
+                            // gsCloseAlgo25D.setIterations(itersD, itersE);
+                        }
+    
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed or failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        gsCloseAlgo25D.addListener(this);
+    
+                        createProgressBar(image.getImageName(), gsCloseAlgo25D);
+    
+                        // Hide the dialog since the algorithm is about to run.
+                        setVisible(false);
+    
+                        // These next lines set the titles in all frames where the source image is displayed to
+                        // "locked - " image name so as to indicate that the image is now read/write locked!
+                        // The image frames are disabled and then unregisted from the userinterface until the
+                        // algorithm has completed.
+                        Vector imageFrames = image.getImageFrameVector();
+                        titles = new String[imageFrames.size()];
+    
+                        for (int i = 0; i < imageFrames.size(); i++) {
+                            titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                            ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                            ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                            userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+    
+                        if (isRunInSeparateThread()) {
+    
+                            // Start the thread as a low priority because we wish to still have user interface.
+                            if (gsCloseAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+    
+                            gsCloseAlgo25D.run();
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog close: unable to allocate enough memory");
+    
+                        return;
+                    }
+                }
+            }    
+        } // else grayScaleMorphology
     }
 
     /**
@@ -758,12 +1252,8 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
-        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
-                (image.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
+        if (image.isColorImage()) {
+            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Source Image cannot be color");
         }
 
         outputPanel = new JPanelAlgorithmOutputOptions(image);
@@ -774,6 +1264,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
         itersE = scriptParameters.getParams().getInt("erosion_iterations");
         kernel = scriptParameters.getParams().getInt("kernel_type");
         kernelSize = scriptParameters.getParams().getFloat("kernel_size");
+        binaryMorphology = scriptParameters.getParams().getBoolean("binary_morphology");
     }
 
     /**
@@ -789,6 +1280,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
         scriptParameters.getParams().put(ParameterFactory.newParameter("erosion_iterations", itersE));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_type", kernel));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("binary_morphology", binaryMorphology));
     }
 
     /**
@@ -802,10 +1294,12 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
 
         if (image.getNDims() == 2) {
             comboBoxKernel.addItem("3x3 -  4 connected");
+            comboBoxKernel.addItem("3x3 -  8 connected");
             comboBoxKernel.addItem("5x5 - 12 connected");
             comboBoxKernel.addItem("User sized circle.");
         } else if (image.getNDims() == 3) {
             comboBoxKernel.addItem("3x3x3 -  6 connected (2.5D: 4)");
+            comboBoxKernel.addItem("3x3x3 - 26 connected (2.5D: 8)");
             comboBoxKernel.addItem("5x5x5 - 24 connected (2.5D: 12)");
             comboBoxKernel.addItem("User sized sphere.");
         }
@@ -859,6 +1353,43 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
         textKernelSize.setText("1");
         textKernelSize.setFont(serif12);
         textKernelSize.setEnabled(false);
+        
+        morphologyGroup = new ButtonGroup();
+        binaryButton = new JRadioButton("Binary morphology");
+        if ((image.getType() == ModelImage.BOOLEAN) || (image.getType() == ModelImage.UBYTE) ||
+            (image.getType() == ModelImage.USHORT)) {
+            binaryButton.setSelected(true);
+        }
+        else {
+            binaryButton.setSelected(false);
+        }
+        if ((image.getType() == ModelImage.UBYTE) || (image.getType() == ModelImage.USHORT)) {
+            binaryButton.setEnabled(true);
+        }
+        else {
+            binaryButton.setEnabled(false);
+        }
+        binaryButton.setFont(serif12);
+        binaryButton.setForeground(Color.black);
+        morphologyGroup.add(binaryButton);
+        
+        grayScaleButton = new JRadioButton("Gray scale morphology");
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
+            (image.getType() != ModelImage.USHORT)) {
+            grayScaleButton.setSelected(true);
+        }
+        else {
+            grayScaleButton.setSelected(false);
+        }
+        if ((image.getType() == ModelImage.UBYTE) || (image.getType() == ModelImage.USHORT)) {
+            grayScaleButton.setEnabled(true);
+        }
+        else {
+           grayScaleButton.setEnabled(false);
+        }
+        grayScaleButton.setFont(serif12);
+        grayScaleButton.setForeground(Color.black);
+        morphologyGroup.add(grayScaleButton);
 
         maskPanel = new JPanel(new GridBagLayout());
         maskPanel.setForeground(Color.black);
@@ -910,6 +1441,16 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(textKernelSize, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        maskPanel.add(binaryButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        maskPanel.add(grayScaleButton, gbc);
 
         outputPanel = new JPanelAlgorithmOutputOptions(image);
 
@@ -1008,8 +1549,10 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
             if (comboBoxKernel.getSelectedIndex() == 0) {
                 kernel = AlgorithmMorphology2D.CONNECTED4;
             } else if (comboBoxKernel.getSelectedIndex() == 1) {
-                kernel = AlgorithmMorphology2D.CONNECTED12;
+                kernel = AlgorithmMorphology2D.CONNECTED8;
             } else if (comboBoxKernel.getSelectedIndex() == 2) {
+                kernel = AlgorithmMorphology2D.CONNECTED12;
+            } else if (comboBoxKernel.getSelectedIndex() == 3) {
                 kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
             }
         } else if (image.getNDims() == 3) {
@@ -1017,11 +1560,15 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
             if (comboBoxKernel.getSelectedIndex() == 0) {
                 kernel = AlgorithmMorphology3D.CONNECTED6;
             } else if (comboBoxKernel.getSelectedIndex() == 1) {
-                kernel = AlgorithmMorphology3D.CONNECTED24;
+                kernel = AlgorithmMorphology3D.CONNECTED26;
             } else if (comboBoxKernel.getSelectedIndex() == 2) {
+                kernel = AlgorithmMorphology3D.CONNECTED24;
+            } else if (comboBoxKernel.getSelectedIndex() == 3) {
                 kernel = AlgorithmMorphology3D.SIZED_SPHERE;
             }
         }
+        
+        binaryMorphology = binaryButton.isSelected();
 
         return true;
     }
